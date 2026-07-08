@@ -1,40 +1,77 @@
+#==============================================================================
+# VBA-Probability-Distributions .gitignore
+#------------------------------------------------------------------------------
+# PURPOSE
+#   Ignore local, temporary and generated files while keeping exported VBA source
+#   modules and intentional demo workbooks trackable.
+#==============================================================================
 
-# Office temporary files
+#------------------------------------------------------------------------------
+# OFFICE TEMPORARY / LOCK FILES
+#------------------------------------------------------------------------------
 ~$*
+~$*.xls*
+~$*.doc*
+~$*.ppt*
+*.tmp
+*.temp
+*.bak
+*.backup
+*.xlk
 
-# Access database lock files (laccdb, ldb)
-*.[lL][aA][cC][cC][dD][bB]
-*.[lL][dD][bB]
+#------------------------------------------------------------------------------
+# OPERATING SYSTEM METADATA
+#------------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+desktop.ini
 
-# The following sections constitute a list of Office file extensions that support VBA.
-# If you want to exclude Office files from your repo, uncomment the corresponding file extensions.
+#------------------------------------------------------------------------------
+# EDITOR / IDE LOCAL SETTINGS
+#------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Excel (xls, xlsb, xlsm, xlt, xltm, xla, xlam)
-#*.[xX][lL][sS]
-#*.[xX][lL][sS][bB]
-#*.[xX][lL][sS][mM]
-#*.[xX][lL][tT]
-#*.[xX][lL][tT][mM]
-#*.[xX][lL][aA]
-#*.[xX][lL][aA][mM]
+#------------------------------------------------------------------------------
+# LOGS
+#------------------------------------------------------------------------------
+*.log
 
-# Word (doc, docm, dot, dotm)
-#*.[dD][oO][cC]
-#*.[dD][oO][cC][mM]
-#*.[dD][oO][tT]
-#*.[dD][oO][tT][mM]
+#------------------------------------------------------------------------------
+# GENERATED OUTPUTS
+#------------------------------------------------------------------------------
+output/
+outputs/
+dist/
+build/
+temp/
+tmp/
 
-# Access (accda, accdb, accde, mdb, mde)
-#*.[aA][cC][cC][dD][aA]
-#*.[aA][cC][cC][dD][bB]
-#*.[aA][cC][cC][dD][eE]
-#*.[mM][dD][bB]
-#*.[mM][dD][eE]
+#------------------------------------------------------------------------------
+# TEST ARTIFACTS
+#------------------------------------------------------------------------------
+test-output/
+test-results/
+coverage/
 
-# PowerPoint (ppt, pptm, pot, potm, pps, ppsm)
-#*.[pP][pP][tT]
-#*.[pP][pP][tT][mM]
-#*.[pP][oO][tT]
-#*.[pP][oO][tT][mM]
-#*.[pP][pP][sS]
-#*.[pP][pP][sS][mM]
+#------------------------------------------------------------------------------
+# KEEP THESE FILE TYPES TRACKABLE
+#------------------------------------------------------------------------------
+# Exported VBA source:
+#   *.bas
+#   *.cls
+#   *.frm
+#   *.frx
+#
+# Intentional Excel demo files:
+#   *.xlsm
+#   *.xlam
+#
+# Documentation:
+#   *.md
+#   *.txt
