@@ -1,4 +1,5 @@
 Attribute VB_Name = "M_STATS_PROBDIST_NORMALFAMILY"
+
 Option Explicit
 
 '==============================================================================
@@ -75,11 +76,17 @@ Option Explicit
 '       Accurate to approximately 1E-15.
 '   - Inverse standard normal (PROB_NormalInvCDF):
 '       Peter J. Acklam's rational approximation (released freely for any use by
-'       the author), refined here with a single Halley iteration to reach machine
-'       precision. Raw Acklam alone is accurate to ~1.15E-9; the Halley step
-'       lifts it to ~1E-15. Public.
+'       the author), taken from the shared kernel PROB_NormalInvCDFRaw in
+'       M_STATS_CORE and refined here with a single Halley iteration. Raw Acklam
+'       alone is accurate to ~1.15E-9 relative; the Halley step lifts the central
+'       region to ~5E-16. In the tail the Halley step is bounded by the RELATIVE
+'       accuracy of PROB_NormalCDF (about 1E-10 past z = 7.07), and beyond
+'       z = 37 it is skipped entirely because the CDF has saturated. Public.
 '   - Lognormal moment and parameter formulas:
 '       Standard closed-form textbook results (method of moments). Not proprietary.
+'   The raw Acklam kernel lives in M_STATS_CORE as PROB_NormalInvCDFRaw, because
+'   the Student t quantile seeds off it too. Only the Halley refinement, which is
+'   normal-family-specific, remains here.
 '   Nothing in this module is a newly-invented algorithm; the design/packaging,
 '   validation policy and the fast Double contract are the local contribution.
 '
@@ -100,6 +107,14 @@ Option Explicit
 '     is updated only when PROB_WRITE_STATUS_BAR is True (default False).
 '   - No MsgBox is raised.
 '
+' DEPENDENCIES
+'   - M_STATS_CORE
+'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_MAX_EXP, PROB_MIN_EXP,
+'                    PROB_LARGE_NUMBER, PROB_WRITE_STATUS_BAR
+'       Predicates : PROB_IsFinite, PROB_IsValidProbabilityOpen
+'       Primitives : PROB_TryExp, PROB_NormalInvCDFRaw
+'       Diagnostics: PROB_SetStatus
+'
 ' NOTES
 '   - Lognormal parameters are the mean and standard deviation of Log(X), not of X.
 '   - K_STATS_Lognormal_ParametersFromMeanStdDev converts arithmetic mean and standard
@@ -114,29 +129,29 @@ Option Explicit
 '     Status-bar writes from a worksheet UDF are unreliable and add churn when a
 '     function is bulk-filled; the ByRef Status argument is always populated and
 '     is the intended diagnostic channel.
+'   - VBA's And and Or are not short-circuit: both operands are always evaluated.
+'     Any guard whose right operand can fault (a division, a Log of a non-positive
+'     number) must be nested, never And-ed. See K_STATS_Lognormal_Variance and
+'     K_STATS_Lognormal_StdDev.
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-09
 '==============================================================================
 
 '==============================================================================
 ' PRIVATE CONSTANTS
 '==============================================================================
 
-Private Const PROB_PI                  As Double = 3.14159265358979   'Reserved (currently unused)
-Private Const PROB_TWO_PI              As Double = 6.28318530717959   'Reserved (currently unused)
-Private Const PROB_SQRT_TWO_PI         As Double = 2.506628274631
-Private Const PROB_INV_SQRT_TWO_PI     As Double = 0.398942280401433
-Private Const PROB_EPS                 As Double = 0.000000000000001
-Private Const PROB_MAX_EXP             As Double = 709#
-Private Const PROB_MIN_EXP             As Double = -745#
-Private Const PROB_LARGE_NUMBER        As Double = 1E+100
-Private Const PROB_DOUBLE_MAX          As Double = 1.79769313486231E+308  'Approx largest finite Double
+' Shared constants (PROB_EPS, PROB_MAX_EXP, PROB_MIN_EXP, PROB_LARGE_NUMBER,
+' PROB_DOUBLE_MAX, PROB_WRITE_STATUS_BAR) now live in M_STATS_CORE. Only the
+' normal-family-specific constants remain here. PROB_PI and PROB_TWO_PI were
+' declared but never referenced and have been dropped.
+
+Private Const PROB_SQRT_TWO_PI         As Double = 2.506628274631       'Sqr(2 * Pi), correctly rounded
+Private Const PROB_INV_SQRT_TWO_PI     As Double = 0.398942280401433    '1 / Sqr(2 * Pi), correctly rounded
 Private Const PROB_PDF_TAIL_CUTOFF     As Double = 38#               'Abs(Z) beyond which the density underflows to 0
 Private Const PROB_CDF_TAIL_CUTOFF     As Double = 37#               'Abs(Z) beyond which the CDF saturates to 0/1
 Private Const PROB_CDF_SPLIT           As Double = 7.07106781186547  'Sqr(50): rational vs continued-fraction split
-
-Private Const PROB_WRITE_STATUS_BAR    As Boolean = False            'Master switch for Application.StatusBar writes
 
 
 
@@ -646,7 +661,8 @@ Public Function K_STATS_NormalStandard_InverseCumulativeFast( _
 '   None. This is a numerical helper, not a worksheet function.
 '
 ' PROVENANCE
-'   Raw Peter J. Acklam rational approximation (public). The Halley refinement
+'   Raw Peter J. Acklam rational approximation (public), via the shared kernel
+'   PROB_NormalInvCDFRaw in M_STATS_CORE. The Halley refinement
 '   used by the worksheet-facing inverse is deliberately NOT applied here: for
 '   Monte Carlo the ~1.15E-9 relative error is far below sampling error and the
 '   unrefined kernel is materially faster.
@@ -673,8 +689,8 @@ Public Function K_STATS_NormalStandard_InverseCumulativeFast( _
 '     K_STATS_Normal_InverseCumulative or K_STATS_NormalStandard_InverseCumulative.
 '
 ' DEPENDENCIES
-'   - PROB_NormalInvCDFAcklam
-'   - PROB_EPS
+'   - PROB_NormalInvCDFRaw   (M_STATS_CORE)
+'   - PROB_EPS               (M_STATS_CORE)
 '
 ' CALLED FROM
 '   - Monte Carlo engines
@@ -694,7 +710,7 @@ Public Function K_STATS_NormalStandard_InverseCumulativeFast( _
 ' RETURN RESULT
 '------------------------------------------------------------------------------
     'Return the raw inverse standard-normal quantile
-        K_STATS_NormalStandard_InverseCumulativeFast = PROB_NormalInvCDFAcklam(Probability)
+        K_STATS_NormalStandard_InverseCumulativeFast = PROB_NormalInvCDFRaw(Probability)
 End Function
 
 
@@ -1902,9 +1918,14 @@ Public Function K_STATS_Lognormal_Variance( _
     'Guard the product against overflow before multiplying
         Factor = ExpVar - 1#
 
-        If ExpShift > 0# And Factor > PROB_DOUBLE_MAX / ExpShift Then
-            FailMsg = "Lognormal variance overflows Double range"
-            GoTo Fail_Num
+    'Nested rather than And-ed: VBA's And is not short-circuit, so a single-line
+    'test would evaluate PROB_DOUBLE_MAX / ExpShift even when ExpShift has
+    'underflowed to zero, raising run-time error 11 on a valid input
+        If ExpShift > 0# Then
+            If Factor > PROB_DOUBLE_MAX / ExpShift Then
+                FailMsg = "Lognormal variance overflows Double range"
+                GoTo Fail_Num
+            End If
         End If
     'Return lognormal variance
         K_STATS_Lognormal_Variance = Factor * ExpShift
@@ -2028,9 +2049,14 @@ Public Function K_STATS_Lognormal_StdDev( _
     'Square-root factor (ExpVar >= 1 since StdDevLog > 0)
         Factor = Sqr(ExpVar - 1#)
     'Guard the product against overflow before multiplying
-        If ExpShift > 0# And Factor > PROB_DOUBLE_MAX / ExpShift Then
-            FailMsg = "Lognormal standard deviation overflows Double range"
-            GoTo Fail_Num
+    'Nested rather than And-ed: VBA's And is not short-circuit, so a single-line
+    'test would evaluate PROB_DOUBLE_MAX / ExpShift even when ExpShift has
+    'underflowed to zero, raising run-time error 11 on a valid input
+        If ExpShift > 0# Then
+            If Factor > PROB_DOUBLE_MAX / ExpShift Then
+                FailMsg = "Lognormal standard deviation overflows Double range"
+                GoTo Fail_Num
+            End If
         End If
     'Return lognormal standard deviation
         K_STATS_Lognormal_StdDev = Factor * ExpShift
@@ -2316,17 +2342,26 @@ Private Function PROB_NormalInvCDF( _
 '   machine precision (~1E-15).
 '
 ' METHOD / PROVENANCE
-'   Peter J. Acklam's rational approximation (public, released freely) as a
-'   starting estimate, refined by a single Halley iteration. Acklam alone gives
-'   ~1.15E-9 relative error; the Halley step, using the double-precision
-'   PROB_NormalCDF/PROB_NormalPDF, lifts accuracy to ~1E-15.
+'   Peter J. Acklam's rational approximation (public, released freely), taken
+'   from the shared kernel PROB_NormalInvCDFRaw in M_STATS_CORE, refined by a
+'   single Halley iteration. Acklam alone gives ~1.15E-9 relative error; the
+'   Halley step, using the double-precision PROB_NormalCDF/PROB_NormalPDF, lifts
+'   accuracy to ~1E-15.
 '
 '   The Halley update, for F = CDF, f = PDF, on solving F(x) = p:
 '       e = F(x) - p
 '       u = e / f(x)
 '       x <- x - u / (1 + x * u / 2)
-'   The refinement is skipped when f(x) has underflowed to 0 in the far tail,
-'   where the raw Acklam estimate is already the best available.
+'   The refinement is skipped when f(x) has underflowed to 0, and when F(x) has
+'   saturated to 0 or 1 beyond PROB_CDF_TAIL_CUTOFF; in both cases the raw Acklam
+'   estimate is already the best available.
+'
+' ACCURACY
+'   Relative error below 5E-16 for Probability in [0.001, 0.999]. Beyond the
+'   z = PROB_CDF_SPLIT (7.07) branch of PROB_NormalCDF the achievable accuracy is
+'   bounded by the RELATIVE accuracy of that CDF in its tail, which is about
+'   1E-10; the Hart/West arrangement is 1E-15 in ABSOLUTE terms, not relative.
+'   Tail quantiles therefore carry roughly 1E-10 relative error, not 1E-15.
 '
 ' PRECONDITION
 '   Probability must be strictly between 0 and 1.
@@ -2337,21 +2372,29 @@ Private Function PROB_NormalInvCDF( _
 '------------------------------------------------------------------------------
     Dim X                   As Double          'Acklam estimate / refined root
     Dim PdfX                As Double          'Density at the estimate
+    Dim CdfX                As Double          'Cumulative probability at the estimate
     Dim E                   As Double          'CDF(X) - Probability
     Dim U                   As Double          'Newton correction e / pdf
 '------------------------------------------------------------------------------
 ' STARTING ESTIMATE
 '------------------------------------------------------------------------------
-    'Raw Acklam rational approximation
-        X = PROB_NormalInvCDFAcklam(Probability)
+    'Raw Acklam rational approximation (shared kernel, M_STATS_CORE)
+        X = PROB_NormalInvCDFRaw(Probability)
 '------------------------------------------------------------------------------
 ' HALLEY REFINEMENT
 '------------------------------------------------------------------------------
-    'Density at the estimate; refine only where the density has not underflowed
+    'Evaluate the density and the cumulative probability at the estimate
         PdfX = PROB_NormalPDF(X)
+        CdfX = PROB_NormalCDF(X)
 
-        If PdfX > 0# Then
-            E = PROB_NormalCDF(X) - Probability
+    'Refine only where the density has not underflowed AND the CDF has not
+    'saturated. Past Abs(X) = PROB_CDF_TAIL_CUTOFF the CDF returns exactly 0 or 1,
+    'so the residual degenerates to -Probability and the step actively degrades
+    'the estimate: at Probability = 1E-300 it turns a 9.7E-11 relative error into
+    '4.9E-04. Where the CDF has saturated, the raw Acklam value is the best
+    'available answer.
+        If PdfX > 0# And CdfX > 0# And CdfX < 1# Then
+            E = CdfX - Probability
             U = E / PdfX
             X = X - U / (1# + X * U / 2#)
         End If
@@ -2360,140 +2403,6 @@ Private Function PROB_NormalInvCDF( _
 '------------------------------------------------------------------------------
     'Return the refined quantile
         PROB_NormalInvCDF = X
-End Function
-
-
-Private Function PROB_NormalInvCDFAcklam( _
-    ByVal Probability As Double) _
-    As Double
-'
-'==============================================================================
-' PROB_NormalInvCDFAcklam
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the inverse standard normal cumulative distribution function using
-'   the raw (unrefined) Acklam rational approximation.
-'
-' METHOD / PROVENANCE
-'   Peter J. Acklam's rational approximation. Public; relative error ~1.15E-9.
-'   Used directly by the fast Monte Carlo entry point and as the starting
-'   estimate for the Halley-refined PROB_NormalInvCDF.
-'
-' PRECONDITION
-'   Probability must be strictly between 0 and 1.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE CONSTANTS
-'------------------------------------------------------------------------------
-    Const A1 As Double = -39.6968302866538
-    Const A2 As Double = 220.946098424521
-    Const A3 As Double = -275.928510446969
-    Const A4 As Double = 138.357751867269
-    Const A5 As Double = -30.6647980661472
-    Const A6 As Double = 2.50662827745924
-
-    Const B1 As Double = -54.4760987982241
-    Const B2 As Double = 161.585836858041
-    Const B3 As Double = -155.698979859887
-    Const B4 As Double = 66.8013118877197
-    Const B5 As Double = -13.2806815528857
-
-    Const C1 As Double = -7.78489400243029E-03
-    Const C2 As Double = -0.322396458041136
-    Const C3 As Double = -2.40075827716184
-    Const C4 As Double = -2.54973253934373
-    Const C5 As Double = 4.37466414146497
-    Const C6 As Double = 2.93816398269878
-
-    Const D1 As Double = 7.78469570904146E-03
-    Const D2 As Double = 0.32246712907004
-    Const D3 As Double = 2.445134137143
-    Const D4 As Double = 3.75440866190742
-
-    Const P_LOW As Double = 0.02425
-    Const P_HIGH As Double = 0.97575
-'------------------------------------------------------------------------------
-' DECLARE VARIABLES
-'------------------------------------------------------------------------------
-    Dim Q                   As Double          'Working quantile variable
-    Dim R                   As Double          'Working polynomial variable
-'------------------------------------------------------------------------------
-' COMPUTE LOWER TAIL
-'------------------------------------------------------------------------------
-    'Use lower-tail approximation
-        If Probability < P_LOW Then
-            Q = Sqr(-2# * Log(Probability))
-
-            PROB_NormalInvCDFAcklam = _
-                (((((C1 * Q + C2) * Q + C3) * Q + C4) * Q + C5) * Q + C6) / _
-                ((((D1 * Q + D2) * Q + D3) * Q + D4) * Q + 1#)
-
-            Exit Function
-        End If
-'------------------------------------------------------------------------------
-' COMPUTE CENTRAL REGION
-'------------------------------------------------------------------------------
-    'Use central approximation
-        If Probability <= P_HIGH Then
-            Q = Probability - 0.5
-            R = Q * Q
-
-            PROB_NormalInvCDFAcklam = _
-                (((((A1 * R + A2) * R + A3) * R + A4) * R + A5) * R + A6) * Q / _
-                (((((B1 * R + B2) * R + B3) * R + B4) * R + B5) * R + 1#)
-
-            Exit Function
-        End If
-'------------------------------------------------------------------------------
-' COMPUTE UPPER TAIL
-'------------------------------------------------------------------------------
-    'Use upper-tail approximation
-        Q = Sqr(-2# * Log(1# - Probability))
-
-        PROB_NormalInvCDFAcklam = _
-            -(((((C1 * Q + C2) * Q + C3) * Q + C4) * Q + C5) * Q + C6) / _
-            ((((D1 * Q + D2) * Q + D3) * Q + D4) * Q + 1#)
-End Function
-
-
-Private Function PROB_TryExp( _
-    ByVal X As Double, _
-    ByRef Result As Double) _
-    As Boolean
-'
-'==============================================================================
-' PROB_TryExp
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Attempts Exp(X) with explicit overflow and underflow handling.
-'
-' CONTRACT
-'   - Overflow  (X >= PROB_MAX_EXP): returns False; Result is left unchanged.
-'   - Underflow (X <= PROB_MIN_EXP): returns True;  Result = 0 (a valid zero).
-'   - Otherwise:                     returns True;  Result = Exp(X).
-'
-' RATIONALE
-'   Overflow is a genuine failure a caller must surface (as CVErr(xlErrNum)),
-'   whereas underflow to zero is a legitimate result. Separating the two lets
-'   the public lognormal routines distinguish "too big" from "vanishingly small".
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' COMPUTE
-'------------------------------------------------------------------------------
-    'Reject overflow
-        If X >= PROB_MAX_EXP Then
-            Exit Function
-    'Treat underflow as a valid zero
-        ElseIf X <= PROB_MIN_EXP Then
-            Result = 0#
-    'Regular exponential
-        Else
-            Result = Exp(X)
-        End If
-    'Report success
-        PROB_TryExp = True
 End Function
 
 
@@ -2607,90 +2516,5 @@ Private Function PROB_ValidateLogParameters( _
 End Function
 
 
-Private Function PROB_IsValidProbabilityOpen( _
-    ByVal Probability As Double) _
-    As Boolean
-'
-'==============================================================================
-' PROB_IsValidProbabilityOpen
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns TRUE when Probability is finite and strictly inside (0, 1).
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' VALIDATE
-'------------------------------------------------------------------------------
-    'Reject non-finite probabilities
-        If Not PROB_IsFinite(Probability) Then Exit Function
-    'Reject endpoints and values outside the unit interval
-        If Probability <= 0# Or Probability >= 1# Then Exit Function
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Return success
-        PROB_IsValidProbabilityOpen = True
-End Function
-
-
-Private Function PROB_IsFinite( _
-    ByVal X As Double) _
-    As Boolean
-'
-'==============================================================================
-' PROB_IsFinite
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Performs a lightweight finite-number check for VBA Double inputs.
-'
-' NOTE
-'   The magnitude bound is PROB_LARGE_NUMBER (1E+100); a legitimate value at or
-'   beyond that magnitude reads as non-finite. This is intentional for a
-'   distribution library.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' RETURN
-'------------------------------------------------------------------------------
-    'Return TRUE when X is not NaN and is inside a conservative magnitude bound
-        PROB_IsFinite = (X = X And Abs(X) < PROB_LARGE_NUMBER)
-End Function
-
-
-Private Sub PROB_SetStatus( _
-    ByRef Status As String, _
-    ByVal Message As String)
-'
-'==============================================================================
-' PROB_SetStatus
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Writes a diagnostic message to the optional Status argument and, when
-'   enabled, to the Excel status bar.
-'
-' NOTE
-'   Status-bar writes are gated behind PROB_WRITE_STATUS_BAR (default False).
-'   Such writes from a worksheet UDF are unreliable (Excel frequently blocks
-'   object-model access from a function evaluation) and add churn when a function
-'   is bulk-filled. The On Error Resume Next guard makes any attempt harmless;
-'   the ByRef Status string is always set regardless of the switch.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' UPDATE STATUS
-'------------------------------------------------------------------------------
-    'Suppress non-critical status-bar side effects
-        On Error Resume Next
-    'Write the ByRef diagnostic message
-        Status = Message
-    'Update Excel status bar only when explicitly enabled
-        If PROB_WRITE_STATUS_BAR Then
-            If Len(Message) = 0 Then
-                Application.StatusBar = False
-            Else
-                Application.StatusBar = Message
-            End If
-        End If
-End Sub
 
 
