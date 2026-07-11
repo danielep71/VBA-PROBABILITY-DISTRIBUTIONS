@@ -3,7 +3,7 @@ Option Explicit
 Option Private Module
 
 '==============================================================================
-' M_STATS_SPECIALFUNC
+' M_STATS_PROBDIST_SPECIALFUNCS
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Provides the log-gamma, log-beta, regularized incomplete beta and
@@ -99,7 +99,7 @@ Option Private Module
 '   - PROB_LogGamma is recursive through its reflection branch, exactly once.
 '
 ' UPDATED
-'   2026-07-09
+'   2026-07-11
 '==============================================================================
 
 '==============================================================================
@@ -384,7 +384,7 @@ Public Function PROB_StirlingError( _
 '
 ' DEPENDENCIES
 '   - PROB_LogGamma
-'   - PROB_HALF_LOG_TWO_PI  (M_STATS_CORE)
+'   - PROB_HALF_LOG_TWO_PI  (M_STATS_PROBDIST_CORE)
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -834,6 +834,7 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim S2                  As Double          'AS 109 working value
     Dim HH                  As Double          'AS 109 working value
     Dim W                   As Double          'AS 109 working value
+    Dim ExpTwoW             As Double          'Exp(2 * W), overflow-guarded seed factor
     Dim Converged           As Boolean         'TRUE once the iterate has settled
     Dim IterIdx             As Long            'Iteration index
 
@@ -885,7 +886,10 @@ Public Function PROB_TryBetaInvRegularized( _
             S2 = 1# / (2# * Sb - 1#)
             HH = 2# / (S1 + S2)
             W = Z * Sqr(HH + R) / HH - (S2 - S1) * (R + 5# / 6# - 2# / (3# * HH))
-            U = Sa / (Sa + Sb * Exp(2# * W))
+            'Guard the module's one raw exponential; W is bounded above here
+            '(Target <= 0.5 forces Z <= 0) so overflow is not reachable in
+            'practice, and the seed clamp below recovers U on any failure
+            If PROB_TryExp(2# * W, ExpTwoW) Then U = Sa / (Sa + Sb * ExpTwoW)
     'Otherwise invert the leading series term I_U ~ U^Sa / (Sa * Beta(Sa, Sb))
         Else
             LogSeed = (Log(Target) + Log(Sa) + LogBetaAB) / Sa
@@ -1443,5 +1447,7 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
 
 

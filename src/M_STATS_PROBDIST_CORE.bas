@@ -89,7 +89,7 @@ Option Private Module
 '     private duplicate copies; M_STATS_PROBDIST_TEST owns regression coverage.
 '
 ' UPDATED
-'   2026-07-09
+'   2026-07-11
 '==============================================================================
 
 '==============================================================================
@@ -139,24 +139,42 @@ Public Function PROB_IsFinite( _
 ' PURPOSE
 '   Returns TRUE only when X is an IEEE-754 finite Double.
 '
+' RETURNS
+'   Boolean
+'     TRUE  => X is a finite Double.
+'     FALSE => X is a NaN or an infinity supplied by external COM code.
+'
 ' NOTES
 '   This predicate deliberately does not apply PROB_LARGE_NUMBER. A separate
-'   predicate owns that project-specific supported-magnitude policy.
+'   predicate owns that project-specific supported-magnitude policy. The
+'   subtraction X - X is zero only for a finite X: it is NaN for an infinity and
+'   raises at the overflow edge, both of which the handler catches.
 '==============================================================================
 '
-    Dim ZeroCheck As Double
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim ZeroCheck           As Double          'X - X, zero only for finite X
 
-    'External COM code can supply NaN or infinity even though ordinary VBA
-    'arithmetic raises before creating them. X - X is zero only for finite X.
-        On Error GoTo Not_Finite
+'------------------------------------------------------------------------------
+' EVALUATE
+'------------------------------------------------------------------------------
+    'Route any arithmetic fault on a non-finite input to the handler
+        On Error GoTo Err_Handler
 
+    'Reject a NaN, the only value not equal to itself
         If X <> X Then Exit Function
 
+    'A finite X gives X - X = 0; an infinity gives NaN, which fails this test
         ZeroCheck = X - X
         PROB_IsFinite = (ZeroCheck = 0#)
         Exit Function
 
-Not_Finite:
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Clear the fault and report non-finite
         Err.Clear
         PROB_IsFinite = False
 End Function
@@ -173,14 +191,27 @@ Public Function PROB_IsWithinSupportedMagnitude( _
 '   Returns TRUE when X is finite and lies inside the conservative numerical
 '   domain Abs(X) < PROB_LARGE_NUMBER.
 '
+' RETURNS
+'   Boolean
+'     TRUE  => X is finite and Abs(X) < PROB_LARGE_NUMBER.
+'     FALSE => X is non-finite or at or beyond the supported magnitude bound.
+'
 ' USE
 '   Apply this to dimensionless algorithmic parameters whose kernels are tested
 '   only inside the project-supported range. Do not use it as a synonym for
 '   mathematical finiteness.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    'A non-finite value is never within the supported magnitude
         If Not PROB_IsFinite(X) Then Exit Function
 
+'------------------------------------------------------------------------------
+' RETURN
+'------------------------------------------------------------------------------
+    'Return whether the magnitude sits inside the supported bound
         PROB_IsWithinSupportedMagnitude = (Abs(X) < PROB_LARGE_NUMBER)
 End Function
 
@@ -194,10 +225,23 @@ Public Function PROB_IsPositiveFinite( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns TRUE when X is finite and strictly positive.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => X is finite and X > 0.
+'     FALSE => X is non-finite or non-positive.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    'A non-finite value cannot be positive-finite
         If Not PROB_IsFinite(X) Then Exit Function
 
+'------------------------------------------------------------------------------
+' RETURN
+'------------------------------------------------------------------------------
+    'Return whether X is strictly positive
         PROB_IsPositiveFinite = (X > 0#)
 End Function
 
@@ -212,10 +256,23 @@ Public Function PROB_IsPositiveWithinSupportedMagnitude( _
 ' PURPOSE
 '   Returns TRUE when X is strictly positive and lies inside the supported
 '   algorithm magnitude domain.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => X > 0 and Abs(X) < PROB_LARGE_NUMBER.
+'     FALSE => X is non-positive or at or beyond the supported magnitude bound.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    'A value outside the supported magnitude fails regardless of sign
         If Not PROB_IsWithinSupportedMagnitude(X) Then Exit Function
 
+'------------------------------------------------------------------------------
+' RETURN
+'------------------------------------------------------------------------------
+    'Return whether X is strictly positive
         PROB_IsPositiveWithinSupportedMagnitude = (X > 0#)
 End Function
 
@@ -268,25 +325,42 @@ Public Function PROB_TryExp( _
 '   - Finite representable result: returns TRUE and writes Result.
 '   - Negative underflow:          returns TRUE and writes zero.
 '   - Positive overflow:           returns FALSE; Result is not contractual.
-'   - Non-finite X:                returns FALSE.
+'   - Non-finite X:                returns FALSE; Result is not contractual.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE INPUT
+'------------------------------------------------------------------------------
+    'Reject a non-finite argument outright
         If Not PROB_IsFinite(X) Then Exit Function
 
-        On Error GoTo Exp_Failure
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Route an overflow or underflow fault to the handler
+        On Error GoTo Err_Handler
 
+    'Exponentiate and reject a non-finite (overflowed) result
         Result = Exp(X)
+        If Not PROB_IsFinite(Result) Then GoTo Err_Handler
 
-        If Not PROB_IsFinite(Result) Then GoTo Exp_Failure
-
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
         PROB_TryExp = True
         Exit Function
 
-Exp_Failure:
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Clear the fault
         Err.Clear
 
-        'A negative exponential can fail only by underflow, which is a valid
-        'zero for probability densities and tail probabilities.
+    'A negative exponential can fail only by underflow, which is a valid zero
+    'for probability densities and tail probabilities; positive overflow stays
+    'a failure with Result left non-contractual
         If X < 0# Then
             Result = 0#
             PROB_TryExp = True
@@ -305,21 +379,41 @@ Public Function PROB_TryAdd( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Attempts A + B and converts predictable Double overflow into a FALSE return.
+'
+' CONTRACT
+'   - Finite representable result:  returns TRUE and writes Result.
+'   - Overflow or non-finite input: returns FALSE; Result is not contractual.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Reject non-finite operands
         If Not PROB_IsFinite(A) Then Exit Function
         If Not PROB_IsFinite(B) Then Exit Function
 
-        On Error GoTo Numeric_Failure
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Route an overflow fault to the handler
+        On Error GoTo Err_Handler
 
+    'Add and reject a non-finite (overflowed) result
         Result = A + B
-
         If Not PROB_IsFinite(Result) Then Exit Function
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
         PROB_TryAdd = True
         Exit Function
 
-Numeric_Failure:
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Clear the fault; the default FALSE return stands
         Err.Clear
 End Function
 
@@ -336,21 +430,41 @@ Public Function PROB_TryMultiply( _
 ' PURPOSE
 '   Attempts A * B and converts predictable Double overflow into a FALSE return.
 '   Underflow to zero is a valid successful result.
+'
+' CONTRACT
+'   - Finite result (including underflow to zero): returns TRUE and writes Result.
+'   - Overflow or non-finite input: returns FALSE; Result is not contractual.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Reject non-finite operands
         If Not PROB_IsFinite(A) Then Exit Function
         If Not PROB_IsFinite(B) Then Exit Function
 
-        On Error GoTo Numeric_Failure
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Route an overflow fault to the handler
+        On Error GoTo Err_Handler
 
+    'Multiply and reject a non-finite (overflowed) result
         Result = A * B
-
         If Not PROB_IsFinite(Result) Then Exit Function
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
         PROB_TryMultiply = True
         Exit Function
 
-Numeric_Failure:
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Clear the fault; the default FALSE return stands
         Err.Clear
 End Function
 
@@ -367,22 +481,43 @@ Public Function PROB_TryDivide( _
 ' PURPOSE
 '   Attempts Numerator / Denominator and converts division by zero or Double
 '   overflow into a FALSE return. Underflow to zero is a valid success.
+'
+' CONTRACT
+'   - Finite result (including underflow to zero): returns TRUE and writes Result.
+'   - Zero denominator, overflow or non-finite input: returns FALSE; Result is
+'     not contractual.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Reject non-finite operands and a zero denominator
         If Not PROB_IsFinite(Numerator) Then Exit Function
         If Not PROB_IsFinite(Denominator) Then Exit Function
         If Denominator = 0# Then Exit Function
 
-        On Error GoTo Numeric_Failure
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Route an overflow fault to the handler
+        On Error GoTo Err_Handler
 
+    'Divide and reject a non-finite (overflowed) result
         Result = Numerator / Denominator
-
         If Not PROB_IsFinite(Result) Then Exit Function
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
         PROB_TryDivide = True
         Exit Function
 
-Numeric_Failure:
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Clear the fault; the default FALSE return stands
         Err.Clear
 End Function
 
@@ -619,5 +754,3 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
-
-

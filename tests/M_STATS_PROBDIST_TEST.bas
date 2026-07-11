@@ -5,101 +5,135 @@ Option Explicit
 ' M_STATS_PROBDIST_TEST
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Single self-checking test harness for the whole probability-distribution
-'   stack: M_STATS_PROBDIST_CORE, M_STATS_PROBDIST_SPECIALFUNCS, M_STATS_PROBDIST_NORMALFAMILY and
-'   M_STATS_PROBDIST_TFAMILY. Verifies known values, symmetry, inverse
-'   round-trips, the survival surface, lognormal moments, the arithmetic-to-log
-'   parameter round-trip, interval probabilities, and the error/overflow
-'   contract.
+'   Provides the single consolidated self-checking test harness for the complete
+'   probability-distribution library:
+'
+'     - M_STATS_PROBDIST_CORE
+'     - M_STATS_PROBDIST_SPECIALFUNCS
+'     - M_STATS_PROBDIST_NORMALFAMILY
+'     - M_STATS_PROBDIST_TFAMILY
+'     - M_STATS_PROBDIST_CONTINUOUS
+'
+'   The harness verifies known values, support behavior, complement identities,
+'   symmetry, inverse round-trips, extreme tails, moment formulas, numerical
+'   overflow and underflow policy, diagnostic-status behavior, and exact CVErr
+'   classification for predictable numerical failures.
+'
+' WHY THIS EXISTS
+'   A numerical library needs one authoritative green-or-red result. Earlier
+'   test modules duplicated counters and assertion helpers, which produced
+'   fragmented summaries and allowed inconsistent error policies. This module
+'   owns the counters, assertion layer, suite order, regression registry, and
+'   final verdict for the entire distribution stack.
 '
 ' HOW TO RUN
-'   From the VBA IDE Immediate window (Ctrl+G), pick a scope:
+'   Run one of the following argument-less Public procedures from the Immediate
+'   window, the Macros dialog, or another VBA procedure:
 '
-'       Test_STATS_PROBDIST_RunAll            'everything
-'       Test_STATS_PROBDIST_RunCore           'M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS
-'       Test_STATS_PROBDIST_RunNormalFamily   'normal + lognormal
-'       Test_STATS_PROBDIST_RunTFamily        't, chi-square, F
+'       Test_STATS_PROBDIST_RunAll
+'       Test_STATS_PROBDIST_RunCore
+'       Test_STATS_PROBDIST_RunNormalFamily
+'       Test_STATS_PROBDIST_RunTFamily
+'       Test_STATS_PROBDIST_RunContinuous
 '
-'   All four are argument-less Public Subs, so they also appear in the Excel
-'   macro list (Alt+F8).
+'   Results are written with Debug.Print. Passing assertions are silent.
+'   Failures print one detailed line, followed by a consolidated summary.
 '
-'   Results print with Debug.Print. Only failures print a detail line; passing
-'   assertions are silent, so a clean run shows the suite headers, the section
-'   headers and the final summary.
+' SUITE ORDER
+'   RunAll executes suites in dependency order:
 '
-' WHY ONE MODULE
-'   The two harnesses that preceded this one each carried their own copies of
-'   mTestCount, AssertClose, AssertIsError and RecordResult, and each declared a
-'   Private Sub named Test_ErrorContract. Two counters means two summaries and no
-'   single answer to "is the library green". The section subs are prefixed
-'   Test_Core_, Test_NF_ and Test_TF_ so that nothing collides, and the counters
-'   and assertion helpers exist exactly once.
+'       1. Core and reusable special-function kernels
+'       2. Normal and lognormal family
+'       3. Student t, chi-square and F family
+'       4. Gamma, Beta, Exponential, Weibull and Uniform family
 '
-' SCOPE MAP
-'   Core suite          -> M_STATS_PROBDIST_CORE, M_STATS_PROBDIST_SPECIALFUNCS
-'   NormalFamily suite  -> M_STATS_PROBDIST_NORMALFAMILY
-'   TFamily suite       -> M_STATS_PROBDIST_TFAMILY
-'   A suite run does not implicitly run the suites it depends on. Run Core first
-'   when a lower-layer change is suspected; RunAll runs the three in dependency
-'   order, so the first FAIL line is normally the deepest one.
+' TEST DESIGN
+'   - Public UDFs return Variant and may return CVErr, so assertion helpers
+'     accept Variant and reject unexpected worksheet errors explicitly.
+'   - Exact binary equality is used for constants that are intended to match
+'     independently evaluated VBA Double values.
+'   - Absolute tolerances are used for order-one values and exact support edges.
+'   - Relative tolerances are used for deep tails, extreme quantiles and values
+'     spanning many orders of magnitude.
+'   - Error-code assertions distinguish #NUM! from #VALUE! where the numerical
+'     contract requires predictable failures to return xlErrNum.
+'   - Regression tolerances document the accuracy contract and must not be
+'     weakened merely to make a failing implementation appear green.
+'
+' TOLERANCE POLICY
+'   - TOL_ABS_TIGHT is a ten-decimal-place absolute tolerance. It is not a claim
+'     of machine precision.
+'   - TOL_ABS_LOOSE covers raw approximations and moment round-trips.
+'   - TOL_ABS_LARGE_DF covers the large-parameter special-function error floor.
+'   - TOL_ABS_ULP and TOL_ABS_FEW_ULP are used only for constant-level checks.
+'   - TOL_REL_TIGHT, TOL_REL_LOOSE and TOL_REL_TAIL cover relative comparisons.
+'
+' REGRESSION REGISTRY
+'   Core / Special Functions
+'     C1  PROB_Log1p must remain accurate at the former Taylor-series seam.
+'     C2  Incomplete-beta and incomplete-gamma kernels are tested directly for
+'         known values, complements, inverse round-trips and paired arguments.
+'     C3  PROB_LogBeta must remain stable for extremely unbalanced arguments.
+'
+'   Normal Family
+'     N1  The raw Acklam inverse-normal kernel must return its computed value.
+'     N2  Deep-tail inverse-normal refinement must not degrade saturated tails.
+'     N3  Lognormal moments must treat exponential underflow as a valid zero.
+'     N4  The normal density constant must equal the correctly rounded Double.
+'     N5  Same-tail normal interval probabilities must not collapse to zero.
+'     N6  Tiny lognormal variance and parameter conversion must use Expm1/Log1p.
+'
+'   T Family
+'     T1  Large-degree chi-square calculations must never return partial sums.
+'     T2  Student t central probabilities must retain displacement from 0.5.
+'     T3  Student t survival must preserve probabilities invisible to 1 - CDF.
+'     T4  Legal large Student t quantiles must not be rejected by an arbitrary
+'         bracket ceiling.
+'     T5  Near-median Student t quantiles must resolve the local CDF slope.
+'     T6  Small-degree and tiny-argument branches must return #NUM! for genuine
+'         overflow, never an unexpected #VALUE!.
+'     T7  Extreme F ratios must be assembled without intermediate overflow.
+'
+'   Continuous Family
+'     D1  Gamma scale-ratio overflow must saturate to the mathematical limit.
+'     D2  Exponential products and inverses must use guarded arithmetic.
+'     D3  Weibull moments must remain positive for very large shape.
+'     D4  Weibull tiny-shape failures must be classified as #NUM!.
+'     D5  Beta must validate both shape parameters under the supported-domain
+'         policy.
+'     D6  Uniform calculations must support the full finite Double range,
+'         including opposite-sign bounds whose width exceeds Double maximum.
+'
+' ERROR POLICY
+'   - A failed assertion increments the failure counter and prints one line.
+'   - The test harness itself raises no MsgBox.
+'   - Unexpected errors inside production UDFs are expected to return #VALUE!.
+'   - Predictable domain, non-convergence and overflow failures are expected to
+'     return #NUM! where the public contract states that requirement.
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
 '   - M_STATS_PROBDIST_SPECIALFUNCS
 '   - M_STATS_PROBDIST_NORMALFAMILY
 '   - M_STATS_PROBDIST_TFAMILY
+'   - M_STATS_PROBDIST_CONTINUOUS
+'
+' PUBLIC SURFACE
+'   - Test_STATS_PROBDIST_RunAll
+'   - Test_STATS_PROBDIST_RunCore
+'   - Test_STATS_PROBDIST_RunNormalFamily
+'   - Test_STATS_PROBDIST_RunTFamily
+'   - Test_STATS_PROBDIST_RunContinuous
 '
 ' NOTES
-'   - Public distribution functions return Variant and may return CVErr, so the
-'     assertion helpers accept Variant and route through IsError.
-'   - Reference constants were computed in 30- to 60-digit arithmetic and are
-'     quoted to 16 or 17 significant figures.
-'   - AssertClose compares on absolute tolerance and is used where the expected
-'     value is of order one. AssertRelClose compares on relative tolerance and is
-'     the only meaningful test for a survival probability of order 1E-37, a
-'     quantile of order 1E+34, or a normal quantile at Probability = 1E-300.
-'   - TOL_TIGHT is the machine-precision target. TOL_LOOSE covers the raw
-'     (unrefined) fast inverse and the lognormal moment round-trips.
-'     TOL_LARGE_DF covers the log-gamma error floor above df ~ 1E+4.
-'
-' REGRESSION REGISTRY
-'   Each assertion tagged REGRESSION below fails on a defect that was actually
-'   shipped. Do not weaken their tolerances.
-'
-'   Core / SpecialFunc
-'     C1  Log1p at X = 1E-8, the seam of the old Taylor threshold, where the old
-'         implementation carried a 6E-9 relative error.
-'     C2  The gamma series and beta continued fraction must report
-'         non-convergence rather than returning a partial sum.
-'
-'   NormalFamily
-'     N1  PROB_NormalInvCDFRaw must return its value. A find/replace once ate the
-'         "=" sign in the Acklam kernel, so it silently returned 0# on every
-'         branch: InverseCumulative(0.975) came back 1.1906 instead of 1.9600,
-'         and InverseCumulativeFast returned 0# for every input.
-'     N2  The Halley step must be skipped once PROB_NormalCDF has saturated.
-'         Past Abs(Z) = 37 the residual degenerates and the step turned a 9.7E-11
-'         relative error at Probability = 1E-300 into 4.9E-04.
-'     N3  Lognormal_Variance and Lognormal_StdDev must return 0 when the
-'         exponential underflows. VBA's And is not short-circuit, so the old
-'         one-line overflow guard divided by zero and returned CVErr(xlErrValue).
-'     N4  PROB_INV_SQRT_TWO_PI must be the correctly rounded Double. The old
-'         literal was 5 ulp low, biasing every normal density by 7E-16.
-'
-'   TFamily
-'     T1  Chi-square cumulative at df = 1600, 5000, 1E+6. The old 200-iteration
-'         incomplete gamma series silently returned its partial sum: a 37 percent
-'         error at df = 1E+5.
-'     T2  Student t cumulative at x = 1E-8. The old beta argument rounded to
-'         exactly 1 and the CDF collapsed to exactly 0.5, losing eight digits.
-'     T3  Student t survival at x = 20, df = 30. 1 - CDF is exactly zero there.
-'     T4  Student t inverse at p = 1E-14, df = 1. The old 1E+12 bracket cap
-'         refused a legal input whose answer is -3.18E+13.
-'     T5  Student t inverse near the median, p = 0.5 + 1E-10. The old CDF was flat
-'         at 0.5 across |x| < 1E-8 and the quantile came back 30 times too large.
+'   - Reference values were prepared with high-precision arithmetic and rounded
+'     to values suitable for comparison with IEEE-754 Double results.
+'   - The production harness does not force artificial iteration limits to test
+'     non-convergence. It verifies the public success path and failure
+'     classification through reachable numerical cases.
 '
 ' UPDATED
-'   2026-07-09
+'   2026-07-11 - House-style normalization and consolidated regression coverage.
 '==============================================================================
 
 '==============================================================================
@@ -114,15 +148,15 @@ Private mFailCount          As Long            'Assertions failed
 ' TEST TOLERANCES
 '==============================================================================
 
-Private Const TOL_TIGHT     As Double = 0.0000000001      '1E-10, absolute, machine-precision paths
-Private Const TOL_LOOSE     As Double = 0.000001          '1E-6,  absolute, fast inverse / moment round-trips
-Private Const TOL_LARGE_DF  As Double = 0.000000001       '1E-9,  absolute, large-df log-gamma error floor
-Private Const TOL_ULP       As Double = 1E-16              '1E-16, absolute, correctly-rounded constants
-Private Const TOL_FEW_ULP   As Double = 5E-16              '5E-16, absolute, constants vs a runtime-computed reference
+Private Const TOL_ABS_TIGHT     As Double = 0.0000000001  '1E-10 absolute
+Private Const TOL_ABS_LOOSE     As Double = 0.000001      '1E-6 absolute
+Private Const TOL_ABS_LARGE_DF  As Double = 0.000000001   '1E-9 absolute
+Private Const TOL_ABS_ULP       As Double = 1E-16          'Constant-level absolute
+Private Const TOL_ABS_FEW_ULP   As Double = 5E-16          'Few-ULP absolute
 
-Private Const TOL_REL_TIGHT As Double = 0.0000000001      '1E-10, relative, tails and quantiles
-Private Const TOL_REL_LOOSE As Double = 0.000001          '1E-6,  relative, extreme-parameter corners
-Private Const TOL_REL_TAIL  As Double = 0.000000001       '1E-9,  relative, normal quantile past the CDF split
+Private Const TOL_REL_TIGHT     As Double = 0.0000000001  '1E-10 relative
+Private Const TOL_REL_LOOSE     As Double = 0.000001      '1E-6 relative
+Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
 
 
 '==============================================================================
@@ -135,15 +169,43 @@ Public Sub Test_STATS_PROBDIST_RunAll()
 ' Test_STATS_PROBDIST_RunAll
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs every suite in dependency order and prints one PASS/FAIL summary.
+'   Runs all four suites in dependency order and prints one consolidated result.
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs the selected suite or suites.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' OUTPUTS
+'   - Diagnostic output in the VBA Immediate window.
+'
+' DEPENDENCIES
+'   - BeginRun
+'   - Selected suite drivers
+'   - EndRun
+'
+' CALLED FROM
+'   - VBA Immediate window
+'   - Excel Macros dialog
+'   - Other VBA procedures
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    BeginRun "ALL SUITES"
-    RunCoreSuite
-    RunNormalFamilySuite
-    RunTFamilySuite
-    RunContinuousSuite
-    EndRun
+    'Initialize the consolidated test run
+        BeginRun "ALL SUITES"
+
+    'Run the lower-level numerical infrastructure first
+        RunCoreSuite
+
+    'Run the distribution-family suites
+        RunNormalFamilySuite
+        RunTFamilySuite
+        RunContinuousSuite
+
+    'Print the consolidated result
+        EndRun
 End Sub
 
 
@@ -153,12 +215,38 @@ Public Sub Test_STATS_PROBDIST_RunCore()
 ' Test_STATS_PROBDIST_RunCore
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the M_STATS_PROBDIST_CORE and M_STATS_PROBDIST_SPECIALFUNCS suite only.
+'   Runs only the Core and Special Functions suite.
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs the selected suite or suites.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' OUTPUTS
+'   - Diagnostic output in the VBA Immediate window.
+'
+' DEPENDENCIES
+'   - BeginRun
+'   - Selected suite drivers
+'   - EndRun
+'
+' CALLED FROM
+'   - VBA Immediate window
+'   - Excel Macros dialog
+'   - Other VBA procedures
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    BeginRun "M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
-    RunCoreSuite
-    EndRun
+    'Initialize the selected test run
+        BeginRun "M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
+
+    'Run the selected suite
+        RunCoreSuite
+
+    'Print the result
+        EndRun
 End Sub
 
 
@@ -168,12 +256,38 @@ Public Sub Test_STATS_PROBDIST_RunNormalFamily()
 ' Test_STATS_PROBDIST_RunNormalFamily
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the M_STATS_PROBDIST_NORMALFAMILY suite only.
+'   Runs only the Normal and Lognormal family suite.
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs the selected suite or suites.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' OUTPUTS
+'   - Diagnostic output in the VBA Immediate window.
+'
+' DEPENDENCIES
+'   - BeginRun
+'   - Selected suite drivers
+'   - EndRun
+'
+' CALLED FROM
+'   - VBA Immediate window
+'   - Excel Macros dialog
+'   - Other VBA procedures
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    BeginRun "M_STATS_PROBDIST_NORMALFAMILY"
-    RunNormalFamilySuite
-    EndRun
+    'Initialize the selected test run
+        BeginRun "M_STATS_PROBDIST_NORMALFAMILY"
+
+    'Run the selected suite
+        RunNormalFamilySuite
+
+    'Print the result
+        EndRun
 End Sub
 
 
@@ -183,12 +297,38 @@ Public Sub Test_STATS_PROBDIST_RunTFamily()
 ' Test_STATS_PROBDIST_RunTFamily
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the M_STATS_PROBDIST_TFAMILY suite only.
+'   Runs only the Student t, chi-square and F suite.
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs the selected suite or suites.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' OUTPUTS
+'   - Diagnostic output in the VBA Immediate window.
+'
+' DEPENDENCIES
+'   - BeginRun
+'   - Selected suite drivers
+'   - EndRun
+'
+' CALLED FROM
+'   - VBA Immediate window
+'   - Excel Macros dialog
+'   - Other VBA procedures
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    BeginRun "M_STATS_PROBDIST_TFAMILY"
-    RunTFamilySuite
-    EndRun
+    'Initialize the selected test run
+        BeginRun "M_STATS_PROBDIST_TFAMILY"
+
+    'Run the selected suite
+        RunTFamilySuite
+
+    'Print the result
+        EndRun
 End Sub
 
 
@@ -198,30 +338,97 @@ Public Sub Test_STATS_PROBDIST_RunContinuous()
 ' Test_STATS_PROBDIST_RunContinuous
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the M_STATS_PROBDIST_CONTINUOUS suite only.
+'   Runs only the Gamma, Beta, Exponential, Weibull and Uniform suite.
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs the selected suite or suites.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' OUTPUTS
+'   - Diagnostic output in the VBA Immediate window.
+'
+' DEPENDENCIES
+'   - BeginRun
+'   - Selected suite drivers
+'   - EndRun
+'
+' CALLED FROM
+'   - VBA Immediate window
+'   - Excel Macros dialog
+'   - Other VBA procedures
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    BeginRun "M_STATS_PROBDIST_CONTINUOUS"
-    RunContinuousSuite
-    EndRun
+    'Initialize the selected test run
+        BeginRun "M_STATS_PROBDIST_CONTINUOUS"
+
+    'Run the selected suite
+        RunContinuousSuite
+
+    'Print the result
+        EndRun
 End Sub
 
 
-'==============================================================================
-' SUITE DRIVERS
-'==============================================================================
-
 Private Sub RunCoreSuite()
+'
+'==============================================================================
+' RunCoreSuite
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the Core and Special Functions test sections.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Test section procedures in this module
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "== SUITE: M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
     Test_Core_Constants
     Test_Core_Log1p
     Test_Core_TryExp
     Test_Core_LogGamma
+    Test_Core_SpecialFunctionKernels
     Test_Core_NormalInvRaw
 End Sub
 
 
 Private Sub RunNormalFamilySuite()
+'
+'==============================================================================
+' RunNormalFamilySuite
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the Normal and Lognormal family test sections.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Test section procedures in this module
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "== SUITE: M_STATS_PROBDIST_NORMALFAMILY"
     Test_NF_StandardNormalDensity
     Test_NF_StandardNormalCumulative
@@ -243,6 +450,28 @@ End Sub
 
 
 Private Sub RunTFamilySuite()
+'
+'==============================================================================
+' RunTFamilySuite
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the Student t, chi-square and F family test sections.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Test section procedures in this module
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "== SUITE: M_STATS_PROBDIST_TFAMILY"
     Test_TF_StudentTDensity
     Test_TF_StudentTCumulative
@@ -266,6 +495,28 @@ End Sub
 
 
 Private Sub RunContinuousSuite()
+'
+'==============================================================================
+' RunContinuousSuite
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the Gamma, Beta, Exponential, Weibull and Uniform test sections.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Test section procedures in this module
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "== SUITE: M_STATS_PROBDIST_CONTINUOUS"
     Test_CN_GammaDensity
     Test_CN_GammaCumulative
@@ -308,17 +559,42 @@ Private Sub BeginRun( _
 ' BeginRun
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Resets the counters and prints the run header.
+'   Resets the shared counters and prints the test-run header.
+'
+' INPUTS
+'   Title   Human-readable run or suite title.
+'
+' BEHAVIOR
+'   - Resets total, pass and failure counters to zero.
+'   - Prints a timestamped heading in the Immediate window.
+'
+' DEPENDENCIES
+'   - Module-level test counters
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    'Reset counters
+'------------------------------------------------------------------------------
+' RESET STATE
+'------------------------------------------------------------------------------
+    'Reset all assertion counters
         mTestCount = 0
         mPassCount = 0
         mFailCount = 0
 
-    'Header
+'------------------------------------------------------------------------------
+' PRINT HEADER
+'------------------------------------------------------------------------------
+    'Print the run separator and timestamp
         Debug.Print String(70, "=")
-        Debug.Print Title & " - test run " & Format(Now, "yyyy-mm-dd hh:nn:ss")
+        Debug.Print _
+            Title & _
+            " - test run " & _
+            Format$(Now, "yyyy-mm-dd hh:nn:ss")
         Debug.Print String(70, "=")
 End Sub
 
@@ -329,45 +605,136 @@ Private Sub EndRun()
 ' EndRun
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Prints the PASS/FAIL summary for the run.
+'   Prints the consolidated assertion counts and final test verdict.
+'
+' BEHAVIOR
+'   - Prints total, passed and failed assertion counts.
+'   - Prints a green verdict when the failure count is zero.
+'   - Prints the number of failed assertions otherwise.
+'
+' DEPENDENCIES
+'   - Module-level test counters
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    'Summary
+'------------------------------------------------------------------------------
+' PRINT COUNTS
+'------------------------------------------------------------------------------
+    'Print the summary separator
         Debug.Print String(70, "-")
-        Debug.Print "TOTAL  " & mTestCount & _
-                    "   PASS " & mPassCount & _
-                    "   FAIL " & mFailCount
 
-    'Verdict
+    'Print the assertion counters
+        Debug.Print _
+            "TOTAL  " & mTestCount & _
+            "   PASS " & mPassCount & _
+            "   FAIL " & mFailCount
+
+'------------------------------------------------------------------------------
+' PRINT VERDICT
+'------------------------------------------------------------------------------
+    'Print the final green or red result
         If mFailCount = 0 Then
             Debug.Print "RESULT: ALL TESTS PASSED"
         Else
-            Debug.Print "RESULT: " & mFailCount & " TEST(S) FAILED"
+            Debug.Print _
+                "RESULT: " & _
+                mFailCount & _
+                " TEST(S) FAILED"
         End If
 
+    'Close the run output
         Debug.Print String(70, "=")
 End Sub
 
 
-'==============================================================================
-' SUITE - CORE AND SPECIAL FUNCTIONS
-'==============================================================================
-
 Private Sub Test_Core_Constants()
-    Debug.Print "-- Core constants"
+'
+'==============================================================================
+' Test_Core_Constants
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies that shared mathematical constants equal independently evaluated
+'   VBA Double references at the exact binary level.
+'
+' WHY
+'   The VBA editor canonicalizes long decimal literals. Exact equality catches
+'   a source literal that displays plausibly but maps to the wrong Double.
+'
+' DEPENDENCIES
+'   - PROB_PI
+'   - PROB_TWO_PI
+'   - PROB_HALF_LOG_TWO_PI
+'   - PROB_HALF_LOG_PI
+'   - AssertExactlyEqual
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' EXECUTE ASSERTIONS
+'------------------------------------------------------------------------------
+    'Print the test-section heading
+        Debug.Print "-- Core constants"
 
-    'Pi must be the correctly rounded Double, not the 14-figure truncation
-    AssertClose "PROB_PI", PROB_PI, 4# * Atn(1#), TOL_ULP
+    'Verify pi against four times arctangent of one
+        AssertExactlyEqual _
+            "PROB_PI exact", _
+            PROB_PI, _
+            4# * Atn(1#)
 
-    'Half-log-two-pi, used by the Lanczos log-gamma. The reference is itself
-    'computed at run time from two rounded operations, so it is good to a few ulp
-    'only; TOL_ULP would fail on the correctly rounded constant.
-    AssertClose "PROB_HALF_LOG_TWO_PI", PROB_HALF_LOG_TWO_PI, _
-        0.5 * Log(2# * PROB_PI), TOL_FEW_ULP
+    'Verify two-pi against eight times arctangent of one
+        AssertExactlyEqual _
+            "PROB_TWO_PI exact", _
+            PROB_TWO_PI, _
+            8# * Atn(1#)
+
+    'Verify one-half log of two-pi against an independent runtime expression
+        AssertExactlyEqual _
+            "PROB_HALF_LOG_TWO_PI exact", _
+            PROB_HALF_LOG_TWO_PI, _
+            0.5 * Log(8# * Atn(1#))
+
+    'Verify one-half log of pi against an independent runtime expression
+        AssertExactlyEqual _
+            "PROB_HALF_LOG_PI exact", _
+            PROB_HALF_LOG_PI, _
+            0.5 * Log(4# * Atn(1#))
 End Sub
 
 
 Private Sub Test_Core_Log1p()
+'
+'==============================================================================
+' Test_Core_Log1p
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the cancellation-resistant PROB_Log1p implementation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Core PROB_Log1p"
 
     'REGRESSION C1: the old Log1p handed off to Log(1 + X) at |X| < 1E-8 and was
@@ -382,6 +749,29 @@ End Sub
 
 
 Private Sub Test_Core_TryExp()
+'
+'==============================================================================
+' Test_Core_TryExp
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies exponential and guarded-arithmetic Try contracts.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim ExpResult As Double
     Dim ArithmeticResult As Double
 
@@ -410,7 +800,7 @@ Private Sub Test_Core_TryExp()
     AssertClose "TryExp underflow value", ExpResult, 0#, 0#
 
     AssertTrue "TryExp regular accepted", PROB_TryExp(1#, ExpResult)
-    AssertClose "TryExp regular value", ExpResult, 2.71828182845905, TOL_TIGHT
+    AssertClose "TryExp regular value", ExpResult, 2.71828182845905, TOL_ABS_TIGHT
 
     AssertTrue "TryMultiply regular", PROB_TryMultiply(1E+150, 1E+150, ArithmeticResult)
     AssertRelClose "TryMultiply value", ArithmeticResult, 1E+300, TOL_REL_TIGHT
@@ -425,6 +815,29 @@ End Sub
 
 
 Private Sub Test_Core_LogGamma()
+'
+'==============================================================================
+' Test_Core_LogGamma
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies log-gamma, half-difference and log-beta calculations.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Core log-gamma"
 
     'Known exact values
@@ -460,7 +873,242 @@ Private Sub Test_Core_LogGamma()
 End Sub
 
 
+Private Sub Test_Core_SpecialFunctionKernels()
+'
+'==============================================================================
+' Test_Core_SpecialFunctionKernels
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the reusable incomplete-gamma and incomplete-beta kernels directly.
+'
+' WHY
+'   Distribution-level tests can hide a marshalling defect behind another
+'   wrapper. Direct kernel tests isolate lower-layer failures before the public
+'   distribution suites run.
+'
+' BEHAVIOR
+'   - Checks known lower and upper incomplete-gamma values.
+'   - Checks the P + Q complement identity.
+'   - Checks incomplete-beta and swapped-complement values.
+'   - Checks direct gamma and beta inverse round-trips.
+'
+' DEPENDENCIES
+'   - PROB_TryGammaRegularizedP
+'   - PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaInvP
+'   - PROB_TryBetaRegularized
+'   - PROB_TryBetaInvRegularized
+'   - Shared assertion helpers
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim GammaP             As Double          'Regularized lower gamma value
+    Dim GammaQ             As Double          'Regularized upper gamma value
+    Dim GammaRoot          As Double          'Inverse-gamma root
+    Dim BetaValue          As Double          'Regularized beta value
+    Dim BetaComplement     As Double          'Swapped beta complement
+    Dim BetaRoot           As Double          'Inverse-beta root
+    Dim BetaRootComplement As Double          'Complement of inverse-beta root
+    Dim Recovered          As Double          'Recovered probability
+    Dim FailMsg            As String          'Kernel diagnostic message
+
+'------------------------------------------------------------------------------
+' EXECUTE GAMMA ASSERTIONS
+'------------------------------------------------------------------------------
+    'Print the test-section heading
+        Debug.Print "-- Core special-function kernels"
+
+    'Evaluate the regularized lower incomplete gamma
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "gamma P kernel succeeds", _
+            PROB_TryGammaRegularizedP( _
+                2.5, _
+                3#, _
+                GammaP, _
+                FailMsg)
+
+    'Check the known lower-tail value
+        AssertRelClose _
+            "gamma P(2.5,3)", _
+            GammaP, _
+            0.693781081586722, _
+            TOL_REL_TIGHT
+
+    'Evaluate the regularized upper incomplete gamma
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "gamma Q kernel succeeds", _
+            PROB_TryGammaRegularizedQ( _
+                2.5, _
+                3#, _
+                GammaQ, _
+                FailMsg)
+
+    'Check the known upper-tail value
+        AssertRelClose _
+            "gamma Q(2.5,3)", _
+            GammaQ, _
+            0.306218918413278, _
+            TOL_REL_TIGHT
+
+    'Check the lower-plus-upper complement identity
+        AssertClose _
+            "gamma P + Q = 1", _
+            GammaP + GammaQ, _
+            1#, _
+            TOL_ABS_TIGHT
+
+    'Invert the lower incomplete gamma at probability 0.7
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "gamma inverse kernel succeeds", _
+            PROB_TryGammaInvP( _
+                0.7, _
+                0.3, _
+                2.5, _
+                GammaRoot, _
+                FailMsg)
+
+    'Re-evaluate the recovered gamma probability
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "gamma inverse recovery succeeds", _
+            PROB_TryGammaRegularizedP( _
+                2.5, _
+                GammaRoot, _
+                Recovered, _
+                FailMsg)
+
+    'Check the inverse round-trip
+        AssertRelClose _
+            "gamma inverse kernel round-trip", _
+            Recovered, _
+            0.7, _
+            TOL_REL_TIGHT
+
+'------------------------------------------------------------------------------
+' EXECUTE BETA ASSERTIONS
+'------------------------------------------------------------------------------
+    'Evaluate I_x(2,5) at x = 0.3
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "beta kernel succeeds", _
+            PROB_TryBetaRegularized( _
+                0.3, _
+                0.7, _
+                2#, _
+                5#, _
+                BetaValue, _
+                FailMsg)
+
+    'Check the known regularized-beta value
+        AssertRelClose _
+            "beta I(0.3;2,5)", _
+            BetaValue, _
+            0.579825, _
+            TOL_REL_TIGHT
+
+    'Evaluate the swapped complement directly
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "beta complement kernel succeeds", _
+            PROB_TryBetaRegularized( _
+                0.7, _
+                0.3, _
+                5#, _
+                2#, _
+                BetaComplement, _
+                FailMsg)
+
+    'Check the direct complement identity
+        AssertClose _
+            "beta value + complement = 1", _
+            BetaValue + BetaComplement, _
+            1#, _
+            TOL_ABS_TIGHT
+
+    'Invert the regularized beta at probability 0.6
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "beta inverse kernel succeeds", _
+            PROB_TryBetaInvRegularized( _
+                0.6, _
+                0.4, _
+                2#, _
+                5#, _
+                BetaRoot, _
+                BetaRootComplement, _
+                FailMsg)
+
+    'Check that the returned root pair remains complementary
+        AssertClose _
+            "beta inverse root pair sums to one", _
+            BetaRoot + BetaRootComplement, _
+            1#, _
+            TOL_ABS_TIGHT
+
+    'Re-evaluate the recovered beta probability
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "beta inverse recovery succeeds", _
+            PROB_TryBetaRegularized( _
+                BetaRoot, _
+                BetaRootComplement, _
+                2#, _
+                5#, _
+                Recovered, _
+                FailMsg)
+
+    'Check the inverse round-trip
+        AssertRelClose _
+            "beta inverse kernel round-trip", _
+            Recovered, _
+            0.6, _
+            TOL_REL_TIGHT
+End Sub
+
+
 Private Sub Test_Core_NormalInvRaw()
+'
+'==============================================================================
+' Test_Core_NormalInvRaw
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the shared raw inverse-normal seed kernel.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Core PROB_NormalInvCDFRaw (shared seed kernel)"
 
     'REGRESSION N1: the raw kernel must actually return its value. When the "="
@@ -469,9 +1117,9 @@ Private Sub Test_Core_NormalInvRaw()
     AssertTrue "raw kernel is not a zero stub", (Abs(PROB_NormalInvCDFRaw(0.975)) > 1#)
 
     'Raw Acklam accuracy is ~1.15E-9, so a loose tolerance is correct here
-    AssertClose "raw InvPhi(0.975)", PROB_NormalInvCDFRaw(0.975), 1.95996398454005, TOL_LOOSE
-    AssertClose "raw InvPhi(0.025)", PROB_NormalInvCDFRaw(0.025), -1.95996398454005, TOL_LOOSE
-    AssertClose "raw InvPhi(0.5)", PROB_NormalInvCDFRaw(0.5), 0#, TOL_LOOSE
+    AssertClose "raw InvPhi(0.975)", PROB_NormalInvCDFRaw(0.975), 1.95996398454005, TOL_ABS_LOOSE
+    AssertClose "raw InvPhi(0.025)", PROB_NormalInvCDFRaw(0.025), -1.95996398454005, TOL_ABS_LOOSE
+    AssertClose "raw InvPhi(0.5)", PROB_NormalInvCDFRaw(0.5), 0#, TOL_ABS_LOOSE
 
     'Each of the three branches must be exercised
     AssertTrue "raw lower branch", (PROB_NormalInvCDFRaw(0.001) < -3#)
@@ -484,16 +1132,41 @@ End Sub
 '==============================================================================
 
 Private Sub Test_NF_StandardNormalDensity()
+'
+'==============================================================================
+' Test_NF_StandardNormalDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies standard-normal density values, symmetry and tail underflow.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Standard normal density"
 
-    'REGRESSION N4: calculate the oracle independently at run time.
-    AssertClose "phi(0) correctly rounded", _
-        K_STATS_NormalStandard_Density(0#), _
-        1# / Sqr(8# * Atn(1#)), TOL_ULP
+    'REGRESSION N4: calculate the oracle independently at run time and require
+    'the exact binary Double value.
+        AssertExactlyEqual _
+            "phi(0) correctly rounded", _
+            K_STATS_NormalStandard_Density(0#), _
+            1# / Sqr(8# * Atn(1#))
 
-    AssertClose "phi(1)", K_STATS_NormalStandard_Density(1#), 0.241970724519143, TOL_TIGHT
-    AssertClose "phi(-1)", K_STATS_NormalStandard_Density(-1#), 0.241970724519143, TOL_TIGHT
-    AssertClose "phi(2)", K_STATS_NormalStandard_Density(2#), 0.053990966513188, TOL_TIGHT
+    AssertClose "phi(1)", K_STATS_NormalStandard_Density(1#), 0.241970724519143, TOL_ABS_TIGHT
+    AssertClose "phi(-1)", K_STATS_NormalStandard_Density(-1#), 0.241970724519143, TOL_ABS_TIGHT
+    AssertClose "phi(2)", K_STATS_NormalStandard_Density(2#), 0.053990966513188, TOL_ABS_TIGHT
 
     'Symmetry is exact, not approximate
     AssertClose "phi symmetric", _
@@ -506,13 +1179,36 @@ End Sub
 
 
 Private Sub Test_NF_StandardNormalCumulative()
+'
+'==============================================================================
+' Test_NF_StandardNormalCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies standard-normal cumulative probabilities and deep tails.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Standard normal cumulative"
-    AssertClose "Phi(0)", K_STATS_NormalStandard_Cumulative(0#), 0.5, TOL_TIGHT
-    AssertClose "Phi(1)", K_STATS_NormalStandard_Cumulative(1#), 0.841344746068543, TOL_TIGHT
-    AssertClose "Phi(2)", K_STATS_NormalStandard_Cumulative(2#), 0.977249868051821, TOL_TIGHT
-    AssertClose "Phi(-1)", K_STATS_NormalStandard_Cumulative(-1#), 0.158655253931457, TOL_TIGHT
+    AssertClose "Phi(0)", K_STATS_NormalStandard_Cumulative(0#), 0.5, TOL_ABS_TIGHT
+    AssertClose "Phi(1)", K_STATS_NormalStandard_Cumulative(1#), 0.841344746068543, TOL_ABS_TIGHT
+    AssertClose "Phi(2)", K_STATS_NormalStandard_Cumulative(2#), 0.977249868051821, TOL_ABS_TIGHT
+    AssertClose "Phi(-1)", K_STATS_NormalStandard_Cumulative(-1#), 0.158655253931457, TOL_ABS_TIGHT
     AssertClose "Phi(1.959963984540054)", _
-        K_STATS_NormalStandard_Cumulative(1.95996398454005), 0.975, TOL_TIGHT
+        K_STATS_NormalStandard_Cumulative(1.95996398454005), 0.975, TOL_ABS_TIGHT
 
     'Both sides of the rational / continued-fraction split at Z = Sqr(50)
     AssertClose "Phi split seam", _
@@ -535,23 +1231,69 @@ End Sub
 
 
 Private Sub Test_NF_StandardNormalInverse()
+'
+'==============================================================================
+' Test_NF_StandardNormalInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies standard-normal inverse cumulative values.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Standard normal inverse"
 
     'REGRESSION N1: the zero-stub Acklam kernel returned 1.1906 here
     AssertClose "InvPhi(0.975)", _
-        K_STATS_NormalStandard_InverseCumulative(0.975), 1.95996398454005, TOL_TIGHT
+        K_STATS_NormalStandard_InverseCumulative(0.975), 1.95996398454005, TOL_ABS_TIGHT
 
-    AssertClose "InvPhi(0.5)", K_STATS_NormalStandard_InverseCumulative(0.5), 0#, TOL_TIGHT
+    AssertClose "InvPhi(0.5)", K_STATS_NormalStandard_InverseCumulative(0.5), 0#, TOL_ABS_TIGHT
     AssertClose "InvPhi(0.95)", _
-        K_STATS_NormalStandard_InverseCumulative(0.95), 1.64485362695147, TOL_TIGHT
+        K_STATS_NormalStandard_InverseCumulative(0.95), 1.64485362695147, TOL_ABS_TIGHT
     AssertClose "InvPhi(0.025)", _
-        K_STATS_NormalStandard_InverseCumulative(0.025), -1.95996398454005, TOL_TIGHT
+        K_STATS_NormalStandard_InverseCumulative(0.025), -1.95996398454005, TOL_ABS_TIGHT
     AssertClose "InvPhi(0.005)", _
-        K_STATS_NormalStandard_InverseCumulative(0.005), -2.5758293035489, TOL_TIGHT
+        K_STATS_NormalStandard_InverseCumulative(0.005), -2.5758293035489, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_NF_InverseTails()
+'
+'==============================================================================
+' Test_NF_InverseTails
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies inverse-normal accuracy in deep representable tails.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Standard normal inverse, deep tails"
 
     'REGRESSION N2: the tail kernel must preserve the representable CDF at the
@@ -577,6 +1319,29 @@ End Sub
 
 
 Private Sub Test_NF_InverseRoundTrips()
+'
+'==============================================================================
+' Test_NF_InverseRoundTrips
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies standard-normal CDF and inverse round-trips.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim ZValues As Variant
     Dim I As Long
     Dim Z As Double
@@ -592,13 +1357,36 @@ Private Sub Test_NF_InverseRoundTrips()
             RecordResult "roundtrip z=" & Z & " (CDF errored)", False
         Else
             Back = K_STATS_NormalStandard_InverseCumulative(CDbl(P))
-            AssertClose "roundtrip z=" & Z, Back, Z, TOL_TIGHT
+            AssertClose "roundtrip z=" & Z, Back, Z, TOL_ABS_TIGHT
         End If
     Next I
 End Sub
 
 
 Private Sub Test_NF_Symmetry()
+'
+'==============================================================================
+' Test_NF_Symmetry
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies normal CDF symmetry and inverse antisymmetry.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim ZValues As Variant
     Dim I As Long
     Dim Z As Double
@@ -614,60 +1402,129 @@ Private Sub Test_NF_Symmetry()
         If IsError(Lo) Or IsError(Hi) Then
             RecordResult "symmetry z=" & Z & " (errored)", False
         Else
-            AssertClose "symmetry z=" & Z, CDbl(Lo) + CDbl(Hi), 1#, TOL_TIGHT
+            AssertClose "symmetry z=" & Z, CDbl(Lo) + CDbl(Hi), 1#, TOL_ABS_TIGHT
         End If
     Next I
 
     'Inverse antisymmetry
     AssertClose "InvPhi(p) = -InvPhi(1-p)", _
         CDbl(K_STATS_NormalStandard_InverseCumulative(0.02)) + _
-        CDbl(K_STATS_NormalStandard_InverseCumulative(0.98)), 0#, TOL_TIGHT
+        CDbl(K_STATS_NormalStandard_InverseCumulative(0.98)), 0#, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_NF_GeneralNormal()
+'
+'==============================================================================
+' Test_NF_GeneralNormal
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies general-normal density, CDF and inverse parameterization.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- General normal (mean=10, sd=2)"
     'Density at the mean equals phi(0)/sd
     AssertClose "density@mean", _
-        K_STATS_Normal_Density(10#, 10#, 2#), 0.398942280401433 / 2#, TOL_TIGHT
+        K_STATS_Normal_Density(10#, 10#, 2#), 0.398942280401433 / 2#, TOL_ABS_TIGHT
     'CDF at the mean is 0.5
-    AssertClose "cdf@mean", K_STATS_Normal_Cumulative(10#, 10#, 2#), 0.5, TOL_TIGHT
+    AssertClose "cdf@mean", K_STATS_Normal_Cumulative(10#, 10#, 2#), 0.5, TOL_ABS_TIGHT
     'CDF one sd above the mean equals Phi(1)
     AssertClose "cdf@mean+sd", _
-        K_STATS_Normal_Cumulative(12#, 10#, 2#), 0.841344746068543, TOL_TIGHT
+        K_STATS_Normal_Cumulative(12#, 10#, 2#), 0.841344746068543, TOL_ABS_TIGHT
     'Inverse at 0.975 is mean + 1.959963984540054 * sd
     AssertClose "inv@0.975", _
         K_STATS_Normal_InverseCumulative(0.975, 10#, 2#), _
-        10# + 1.95996398454005 * 2#, TOL_TIGHT
+        10# + 1.95996398454005 * 2#, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_NF_ZScore()
+'
+'==============================================================================
+' Test_NF_ZScore
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the general-normal Z-score transformation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Z-score"
-    AssertClose "z(10,4,2)", K_STATS_Normal_ZScore(10#, 4#, 2#), 3#, TOL_TIGHT
-    AssertClose "z(4,4,2)", K_STATS_Normal_ZScore(4#, 4#, 2#), 0#, TOL_TIGHT
-    AssertClose "z(1,4,2)", K_STATS_Normal_ZScore(1#, 4#, 2#), -1.5, TOL_TIGHT
+    AssertClose "z(10,4,2)", K_STATS_Normal_ZScore(10#, 4#, 2#), 3#, TOL_ABS_TIGHT
+    AssertClose "z(4,4,2)", K_STATS_Normal_ZScore(4#, 4#, 2#), 0#, TOL_ABS_TIGHT
+    AssertClose "z(1,4,2)", K_STATS_Normal_ZScore(1#, 4#, 2#), -1.5, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_NF_IntervalProbability()
+'
+'==============================================================================
+' Test_NF_IntervalProbability
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies central and same-tail normal interval probabilities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Interval probability"
     'Standard: symmetric 95% band
     AssertClose "std P(-1.96..1.96)=0.95", _
         K_STATS_NormalStandard_IntervalProbability(-1.95996398454005, 1.95996398454005), _
-        0.95, TOL_TIGHT
+        0.95, TOL_ABS_TIGHT
     'Standard: +/- 1 sd
     AssertClose "std P(-1..1)", _
-        K_STATS_NormalStandard_IntervalProbability(-1#, 1#), 0.682689492137086, TOL_TIGHT
+        K_STATS_NormalStandard_IntervalProbability(-1#, 1#), 0.682689492137086, TOL_ABS_TIGHT
     'Standard: equal bounds -> 0
     AssertClose "std P(1..1)=0", _
-        K_STATS_NormalStandard_IntervalProbability(1#, 1#), 0#, TOL_TIGHT
+        K_STATS_NormalStandard_IntervalProbability(1#, 1#), 0#, TOL_ABS_TIGHT
     'General: mean 10 sd 2, 8..12 equals P(-1..1)
     AssertClose "gen P(8..12 | 10,2)", _
-        K_STATS_Normal_IntervalProbability(8#, 12#, 10#, 2#), 0.682689492137086, TOL_TIGHT
+        K_STATS_Normal_IntervalProbability(8#, 12#, 10#, 2#), 0.682689492137086, TOL_ABS_TIGHT
     'General: full standard band via defaults
     AssertClose "gen P(-1..1 | 0,1)", _
-        K_STATS_Normal_IntervalProbability(-1#, 1#), 0.682689492137086, TOL_TIGHT
+        K_STATS_Normal_IntervalProbability(-1#, 1#), 0.682689492137086, TOL_ABS_TIGHT
 
     'REGRESSION: direct CDF subtraction returned zero because Phi(9) and
     'Phi(10) both round to one. Tail-oriented branching preserves the mass.
@@ -688,6 +1545,29 @@ End Sub
 
 
 Private Sub Test_NF_FastInverse()
+'
+'==============================================================================
+' Test_NF_FastInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the raw fast inverse-normal worksheet surface.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim R As Double
 
     Debug.Print "-- Fast inverse (raw Acklam, ~1E-9)"
@@ -699,9 +1579,9 @@ Private Sub Test_NF_FastInverse()
 
     'Accuracy against known quantile (loose tolerance)
     AssertClose "fast InvPhi(0.975)", _
-        K_STATS_NormalStandard_InverseCumulativeFast(0.975), 1.95996398454005, TOL_LOOSE
+        K_STATS_NormalStandard_InverseCumulativeFast(0.975), 1.95996398454005, TOL_ABS_LOOSE
     AssertClose "fast InvPhi(0.5)", _
-        K_STATS_NormalStandard_InverseCumulativeFast(0.5), 0#, TOL_LOOSE
+        K_STATS_NormalStandard_InverseCumulativeFast(0.5), 0#, TOL_ABS_LOOSE
     'Endpoint clipping: p=0 must not error and must return a large negative number
     R = K_STATS_NormalStandard_InverseCumulativeFast(0#)
     AssertTrue "fast InvPhi(0) clipped negative", (R < -5#)
@@ -712,42 +1592,88 @@ End Sub
 
 
 Private Sub Test_NF_LognormalCore()
+'
+'==============================================================================
+' Test_NF_LognormalCore
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies lognormal density, CDF and inverse behavior.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Lognormal core (MeanLog=0, StdDevLog=1)"
     'Density at x=1 equals phi(0)/(1*1)
     AssertClose "logn density@1", _
-        K_STATS_Lognormal_Density(1#, 0#, 1#), 0.398942280401433, TOL_TIGHT
+        K_STATS_Lognormal_Density(1#, 0#, 1#), 0.398942280401433, TOL_ABS_TIGHT
     'CDF at x=1 equals Phi(0)=0.5
-    AssertClose "logn cdf@1", K_STATS_Lognormal_Cumulative(1#, 0#, 1#), 0.5, TOL_TIGHT
+    AssertClose "logn cdf@1", K_STATS_Lognormal_Cumulative(1#, 0#, 1#), 0.5, TOL_ABS_TIGHT
     'CDF at x<=0 returns 0
-    AssertClose "logn cdf@0", K_STATS_Lognormal_Cumulative(0#, 0#, 1#), 0#, TOL_TIGHT
-    AssertClose "logn cdf@-5", K_STATS_Lognormal_Cumulative(-5#, 0#, 1#), 0#, TOL_TIGHT
+    AssertClose "logn cdf@0", K_STATS_Lognormal_Cumulative(0#, 0#, 1#), 0#, TOL_ABS_TIGHT
+    AssertClose "logn cdf@-5", K_STATS_Lognormal_Cumulative(-5#, 0#, 1#), 0#, TOL_ABS_TIGHT
     'Inverse at p=0.5 returns Exp(0)=1
     AssertClose "logn inv@0.5", _
-        K_STATS_Lognormal_InverseCumulative(0.5, 0#, 1#), 1#, TOL_TIGHT
+        K_STATS_Lognormal_InverseCumulative(0.5, 0#, 1#), 1#, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_NF_LognormalMoments()
+'
+'==============================================================================
+' Test_NF_LognormalMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies lognormal mean, variance and standard deviation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim VarV As Variant
     Dim SdV As Variant
 
     Debug.Print "-- Lognormal moments (MeanLog=0, StdDevLog=1)"
     'Mean = Exp(0.5)
     AssertClose "logn mean", _
-        K_STATS_Lognormal_Mean(0#, 1#), 1.64872127070013, TOL_TIGHT
+        K_STATS_Lognormal_Mean(0#, 1#), 1.64872127070013, TOL_ABS_TIGHT
     'Variance = (e-1)*e
     AssertClose "logn variance", _
-        K_STATS_Lognormal_Variance(0#, 1#), 4.6707742704716, TOL_TIGHT
+        K_STATS_Lognormal_Variance(0#, 1#), 4.6707742704716, TOL_ABS_TIGHT
     'StdDev = Sqr(variance)
     AssertClose "logn stddev", _
-        K_STATS_Lognormal_StdDev(0#, 1#), 2.16119741589509, TOL_TIGHT
+        K_STATS_Lognormal_StdDev(0#, 1#), 2.16119741589509, TOL_ABS_TIGHT
     'Consistency: StdDev^2 == Variance
     VarV = K_STATS_Lognormal_Variance(0#, 1#)
     SdV = K_STATS_Lognormal_StdDev(0#, 1#)
     If IsError(VarV) Or IsError(SdV) Then
         RecordResult "logn stddev^2 == variance (errored)", False
     Else
-        AssertClose "logn stddev^2 == variance", CDbl(SdV) * CDbl(SdV), CDbl(VarV), TOL_LOOSE
+        AssertClose "logn stddev^2 == variance", CDbl(SdV) * CDbl(SdV), CDbl(VarV), TOL_ABS_LOOSE
     End If
 
     'REGRESSION: Exp(sigma^2) - 1 rounded to zero at sigma = 1E-8.
@@ -762,6 +1688,29 @@ End Sub
 
 
 Private Sub Test_NF_LognormalUnderflow()
+'
+'==============================================================================
+' Test_NF_LognormalUnderflow
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies lognormal underflow and overflow classification.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Lognormal underflow (REGRESSION N3)"
 
     'VBA's And is not short-circuit. The old one-line guard
@@ -784,6 +1733,29 @@ End Sub
 
 
 Private Sub Test_NF_ParameterRoundTrip()
+'
+'==============================================================================
+' Test_NF_ParameterRoundTrip
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies arithmetic-to-log parameter conversion and round-trips.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim P As Variant
     Dim MeanLog As Double
     Dim StdDevLog As Double
@@ -799,15 +1771,15 @@ Private Sub Test_NF_ParameterRoundTrip()
     StdDevLog = P(1, 2)
 
     'Check the converted log-space parameters
-    AssertClose "MeanLog", MeanLog, 0.662834806151016, TOL_LOOSE
-    AssertClose "StdDevLog", StdDevLog, 0.246221445044987, TOL_LOOSE
+    AssertClose "MeanLog", MeanLog, 0.662834806151016, TOL_ABS_LOOSE
+    AssertClose "StdDevLog", StdDevLog, 0.246221445044987, TOL_ABS_LOOSE
 
     'Round-trip: feeding the log params back must recover Mean and StdDev.
     'This ties K_STATS_Lognormal_StdDev to the conversion.
     AssertClose "roundtrip Mean", _
-        K_STATS_Lognormal_Mean(MeanLog, StdDevLog), 2#, TOL_LOOSE
+        K_STATS_Lognormal_Mean(MeanLog, StdDevLog), 2#, TOL_ABS_LOOSE
     AssertClose "roundtrip StdDev", _
-        K_STATS_Lognormal_StdDev(MeanLog, StdDevLog), 0.5, TOL_LOOSE
+        K_STATS_Lognormal_StdDev(MeanLog, StdDevLog), 0.5, TOL_ABS_LOOSE
 
     'REGRESSION: Log(1 + CV^2) rounded to zero for CV = 1E-10.
     P = K_STATS_Lognormal_ParametersFromMeanStdDev(1#, 0.0000000001)
@@ -824,6 +1796,29 @@ End Sub
 
 
 Private Sub Test_NF_ErrorContract()
+'
+'==============================================================================
+' Test_NF_ErrorContract
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies normal-family domain errors and diagnostic-status behavior.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim Diag As String
 
     Debug.Print "-- Normal family error contract (invalid domains must return CVErr)"
@@ -852,12 +1847,35 @@ Private Sub Test_NF_ErrorContract()
     AssertTrue "NF status populated on failure", (Len(Diag) > 0 And Diag <> "stale")
 
     Diag = "stale"
-    AssertClose "normal cdf ok with status", K_STATS_Normal_Cumulative(0#, 0#, 1#, Diag), 0.5, TOL_TIGHT
+    AssertClose "normal cdf ok with status", K_STATS_Normal_Cumulative(0#, 0#, 1#, Diag), 0.5, TOL_ABS_TIGHT
     AssertTrue "NF status cleared on success", (Len(Diag) = 0)
 End Sub
 
 
 Private Sub Test_NF_OverflowContract()
+'
+'==============================================================================
+' Test_NF_OverflowContract
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies normal-family overflow and underflow policy.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Normal family overflow contract (CVErr(xlErrNum), not a sentinel)"
     'Exp argument well beyond the Double range
     AssertIsError "logn mean overflow", K_STATS_Lognormal_Mean(1000#, 1#)
@@ -877,12 +1895,35 @@ End Sub
 '==============================================================================
 
 Private Sub Test_TF_StudentTDensity()
+'
+'==============================================================================
+' Test_TF_StudentTDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t density values and large-parameter behavior.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Student t density"
-    AssertClose "t pdf(0,1)", K_STATS_StudentT_Density(0#, 1#), 0.318309886183791, TOL_TIGHT
-    AssertClose "t pdf(0,5)", K_STATS_StudentT_Density(0#, 5#), 0.379606689822494, TOL_TIGHT
-    AssertClose "t pdf(1,5)", K_STATS_StudentT_Density(1#, 5#), 0.219679797350981, TOL_TIGHT
-    AssertClose "t pdf(2,10)", K_STATS_StudentT_Density(2#, 10#), 6.11457663212182E-02, TOL_TIGHT
-    AssertClose "t pdf(0,30)", K_STATS_StudentT_Density(0#, 30#), 0.395632184894098, TOL_TIGHT
+    AssertClose "t pdf(0,1)", K_STATS_StudentT_Density(0#, 1#), 0.318309886183791, TOL_ABS_TIGHT
+    AssertClose "t pdf(0,5)", K_STATS_StudentT_Density(0#, 5#), 0.379606689822494, TOL_ABS_TIGHT
+    AssertClose "t pdf(1,5)", K_STATS_StudentT_Density(1#, 5#), 0.219679797350981, TOL_ABS_TIGHT
+    AssertClose "t pdf(2,10)", K_STATS_StudentT_Density(2#, 10#), 6.11457663212182E-02, TOL_ABS_TIGHT
+    AssertClose "t pdf(0,30)", K_STATS_StudentT_Density(0#, 30#), 0.395632184894098, TOL_ABS_TIGHT
 
     'Symmetry
     AssertClose "t pdf symmetric", _
@@ -891,7 +1932,7 @@ Private Sub Test_TF_StudentTDensity()
     'Large df must converge on the standard normal density; the old log-gamma
     'subtraction lost seven digits here
     AssertClose "t pdf(0,1e6) -> phi(0)", K_STATS_StudentT_Density(0#, 1000000#), _
-        0.398942180665875, TOL_LARGE_DF
+        0.398942180665875, TOL_ABS_LARGE_DF
 
     'Far tail underflows to a valid zero, not an error
     AssertClose "t pdf far tail = 0", K_STATS_StudentT_Density(1E+50, 30#), 0#, 0#
@@ -904,12 +1945,35 @@ End Sub
 
 
 Private Sub Test_TF_StudentTCumulative()
+'
+'==============================================================================
+' Test_TF_StudentTCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t cumulative probabilities and closed-form seams.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Student t cumulative"
     AssertClose "t cdf(0,5)", K_STATS_StudentT_Cumulative(0#, 5#), 0.5, 0#
-    AssertClose "t cdf(1,5)", K_STATS_StudentT_Cumulative(1#, 5#), 0.818391266175439, TOL_TIGHT
-    AssertClose "t cdf(2,10)", K_STATS_StudentT_Cumulative(2#, 10#), 0.96330598261463, TOL_TIGHT
-    AssertClose "t cdf(-1,1)", K_STATS_StudentT_Cumulative(-1#, 1#), 0.25, TOL_TIGHT
-    AssertClose "t cdf(2.5,3)", K_STATS_StudentT_Cumulative(2.5, 3#), 0.956146676495967, TOL_TIGHT
+    AssertClose "t cdf(1,5)", K_STATS_StudentT_Cumulative(1#, 5#), 0.818391266175439, TOL_ABS_TIGHT
+    AssertClose "t cdf(2,10)", K_STATS_StudentT_Cumulative(2#, 10#), 0.96330598261463, TOL_ABS_TIGHT
+    AssertClose "t cdf(-1,1)", K_STATS_StudentT_Cumulative(-1#, 1#), 0.25, TOL_ABS_TIGHT
+    AssertClose "t cdf(2.5,3)", K_STATS_StudentT_Cumulative(2.5, 3#), 0.956146676495967, TOL_ABS_TIGHT
 
     'The df = 2 closed form must agree with the general beta route at df = 2.0000001
     AssertClose "t cdf df=2 continuity", _
@@ -927,6 +1991,29 @@ End Sub
 
 
 Private Sub Test_TF_StudentTCentralRegion()
+'
+'==============================================================================
+' Test_TF_StudentTCentralRegion
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t central-region precision near zero.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Student t cumulative, central region (REGRESSION T2)"
 
     'The old implementation returned exactly 0.5 for every |x| below about 1E-8,
@@ -947,6 +2034,29 @@ End Sub
 
 
 Private Sub Test_TF_StudentTSurvival()
+'
+'==============================================================================
+' Test_TF_StudentTSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t right-tail survival probabilities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Student t survival (REGRESSION T3)"
 
     'These are the p-values that 1 - CDF cannot express
@@ -964,21 +2074,44 @@ Private Sub Test_TF_StudentTSurvival()
     'Survival and cumulative must sum to one in the well-conditioned region
     AssertClose "t sf + cdf = 1", _
         CDbl(K_STATS_StudentT_Survival(1.3, 9#)) + _
-        CDbl(K_STATS_StudentT_Cumulative(1.3, 9#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_StudentT_Cumulative(1.3, 9#)), 1#, TOL_ABS_TIGHT
 
     'Negative arguments are accepted, unlike Excel's T.DIST.RT
-    AssertClose "t sf(-1,1)", K_STATS_StudentT_Survival(-1#, 1#), 0.75, TOL_TIGHT
+    AssertClose "t sf(-1,1)", K_STATS_StudentT_Survival(-1#, 1#), 0.75, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_TF_StudentTInverse()
+'
+'==============================================================================
+' Test_TF_StudentTInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t inverse cumulative values and special branches.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Student t inverse"
     AssertClose "t inv(0.975,10)", K_STATS_StudentT_InverseCumulative(0.975, 10#), _
-        2.22813885198627, TOL_TIGHT
+        2.22813885198627, TOL_ABS_TIGHT
     AssertClose "t inv(0.95,5)", K_STATS_StudentT_InverseCumulative(0.95, 5#), _
-        2.01504837333302, TOL_TIGHT
+        2.01504837333302, TOL_ABS_TIGHT
     AssertClose "t inv(0.005,20)", K_STATS_StudentT_InverseCumulative(0.005, 20#), _
-        -2.84533970978611, TOL_TIGHT
+        -2.84533970978611, TOL_ABS_TIGHT
     AssertClose "t inv(0.5,7)", K_STATS_StudentT_InverseCumulative(0.5, 7#), 0#, 0#
 
     'REGRESSION T4: the old 1E+12 bracket cap returned CVErr(xlErrNum) here
@@ -1008,6 +2141,29 @@ End Sub
 
 
 Private Sub Test_TF_StudentTRoundTrips()
+'
+'==============================================================================
+' Test_TF_StudentTRoundTrips
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t inverse and cumulative round-trips.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim Quantile As Variant
 
     Debug.Print "-- Student t inverse round-trips"
@@ -1026,13 +2182,36 @@ End Sub
 
 
 Private Sub Test_TF_StudentTSymmetry()
+'
+'==============================================================================
+' Test_TF_StudentTSymmetry
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Student t symmetry identities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Student t symmetry"
     AssertClose "t cdf(-x) = 1 - cdf(x)", _
         CDbl(K_STATS_StudentT_Cumulative(-1.7, 11#)) + _
-        CDbl(K_STATS_StudentT_Cumulative(1.7, 11#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_StudentT_Cumulative(1.7, 11#)), 1#, TOL_ABS_TIGHT
     AssertClose "t inv(p) = -inv(1-p)", _
         CDbl(K_STATS_StudentT_InverseCumulative(0.02, 13#)) + _
-        CDbl(K_STATS_StudentT_InverseCumulative(0.98, 13#)), 0#, TOL_TIGHT
+        CDbl(K_STATS_StudentT_InverseCumulative(0.98, 13#)), 0#, TOL_ABS_TIGHT
     AssertClose "t sf(x) = cdf(-x)", _
         CDbl(K_STATS_StudentT_Survival(2.2, 4#)) - _
         CDbl(K_STATS_StudentT_Cumulative(-2.2, 4#)), 0#, 0#
@@ -1044,10 +2223,33 @@ End Sub
 '==============================================================================
 
 Private Sub Test_TF_ChiSquareDensity()
+'
+'==============================================================================
+' Test_TF_ChiSquareDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies chi-square density values and support edges.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Chi-square density"
-    AssertClose "chi2 pdf(1,2)", K_STATS_ChiSquare_Density(1#, 2#), 0.303265329856317, TOL_TIGHT
-    AssertClose "chi2 pdf(4,4)", K_STATS_ChiSquare_Density(4#, 4#), 0.135335283236613, TOL_TIGHT
-    AssertClose "chi2 pdf(2,1)", K_STATS_ChiSquare_Density(2#, 1#), 0.103776874355149, TOL_TIGHT
+    AssertClose "chi2 pdf(1,2)", K_STATS_ChiSquare_Density(1#, 2#), 0.303265329856317, TOL_ABS_TIGHT
+    AssertClose "chi2 pdf(4,4)", K_STATS_ChiSquare_Density(4#, 4#), 0.135335283236613, TOL_ABS_TIGHT
+    AssertClose "chi2 pdf(2,1)", K_STATS_ChiSquare_Density(2#, 1#), 0.103776874355149, TOL_ABS_TIGHT
     AssertClose "chi2 pdf(-1,3)", K_STATS_ChiSquare_Density(-1#, 3#), 0#, 0#
     AssertClose "chi2 pdf(0,2)", K_STATS_ChiSquare_Density(0#, 2#), 0.5, 0#
     AssertClose "chi2 pdf(0,3)", K_STATS_ChiSquare_Density(0#, 3#), 0#, 0#
@@ -1056,13 +2258,36 @@ End Sub
 
 
 Private Sub Test_TF_ChiSquareCumulative()
+'
+'==============================================================================
+' Test_TF_ChiSquareCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies chi-square cumulative probabilities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Chi-square cumulative"
     AssertClose "chi2 cdf(3.84,1)", K_STATS_ChiSquare_Cumulative(3.84, 1#), _
-        0.949956478751295, TOL_TIGHT
+        0.949956478751295, TOL_ABS_TIGHT
     AssertClose "chi2 cdf(11.07,5)", K_STATS_ChiSquare_Cumulative(11.07, 5#), _
-        0.949990381377595, TOL_TIGHT
+        0.949990381377595, TOL_ABS_TIGHT
     AssertClose "chi2 cdf(1,2)", K_STATS_ChiSquare_Cumulative(1#, 2#), _
-        0.393469340287367, TOL_TIGHT
+        0.393469340287367, TOL_ABS_TIGHT
     AssertClose "chi2 cdf(0,5)", K_STATS_ChiSquare_Cumulative(0#, 5#), 0#, 0#
     AssertClose "chi2 cdf(-3,5)", K_STATS_ChiSquare_Cumulative(-3#, 5#), 0#, 0#
 
@@ -1074,6 +2299,29 @@ End Sub
 
 
 Private Sub Test_TF_ChiSquareLargeDF()
+'
+'==============================================================================
+' Test_TF_ChiSquareLargeDF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies chi-square behavior at large degrees of freedom.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Chi-square, large degrees of freedom (REGRESSION T1)"
 
     'The old 200-iteration series stopped converging at about df = 1600 and
@@ -1094,6 +2342,29 @@ End Sub
 
 
 Private Sub Test_TF_ChiSquareSurvival()
+'
+'==============================================================================
+' Test_TF_ChiSquareSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies chi-square survival probabilities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Chi-square survival"
     AssertRelClose "chi2 sf(200,10)", K_STATS_ChiSquare_Survival(200#, 10#), _
         1.6139305337E-37, TOL_REL_TIGHT
@@ -1104,7 +2375,7 @@ Private Sub Test_TF_ChiSquareSurvival()
     AssertClose "chi2 sf(0,5)", K_STATS_ChiSquare_Survival(0#, 5#), 1#, 0#
     AssertClose "chi2 sf + cdf = 1", _
         CDbl(K_STATS_ChiSquare_Survival(7#, 4#)) + _
-        CDbl(K_STATS_ChiSquare_Cumulative(7#, 4#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_ChiSquare_Cumulative(7#, 4#)), 1#, TOL_ABS_TIGHT
 
     'The CDF-based route collapses; that is why Survival exists
     AssertTrue "1 - chi2 cdf(200,10) is exactly zero", _
@@ -1113,13 +2384,36 @@ End Sub
 
 
 Private Sub Test_TF_ChiSquareInverse()
+'
+'==============================================================================
+' Test_TF_ChiSquareInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies chi-square inverse values and round-trips.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Chi-square inverse"
     AssertClose "chi2 inv(0.95,1)", K_STATS_ChiSquare_InverseCumulative(0.95, 1#), _
-        3.84145882069412, TOL_TIGHT
+        3.84145882069412, TOL_ABS_TIGHT
     AssertClose "chi2 inv(0.95,5)", K_STATS_ChiSquare_InverseCumulative(0.95, 5#), _
-        11.0704976935164, TOL_TIGHT
+        11.0704976935164, TOL_ABS_TIGHT
     AssertClose "chi2 inv(0.5,4)", K_STATS_ChiSquare_InverseCumulative(0.5, 4#), _
-        3.35669398003332, TOL_TIGHT
+        3.35669398003332, TOL_ABS_TIGHT
     AssertRelClose "chi2 inv(0.99,5000)", K_STATS_ChiSquare_InverseCumulative(0.99, 5000#), _
         5235.57183813011, TOL_REL_TIGHT
 
@@ -1137,9 +2431,32 @@ End Sub
 '==============================================================================
 
 Private Sub Test_TF_FDensity()
+'
+'==============================================================================
+' Test_TF_FDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies F-density values, support edges and extreme ratios.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- F density"
-    AssertClose "F pdf(1,10,10)", K_STATS_F_Density(1#, 10#, 10#), 0.615234375, TOL_TIGHT
-    AssertClose "F pdf(2,4,8)", K_STATS_F_Density(2#, 4#, 8#), 0.15625, TOL_TIGHT
+    AssertClose "F pdf(1,10,10)", K_STATS_F_Density(1#, 10#, 10#), 0.615234375, TOL_ABS_TIGHT
+    AssertClose "F pdf(2,4,8)", K_STATS_F_Density(2#, 4#, 8#), 0.15625, TOL_ABS_TIGHT
     AssertClose "F pdf(-1,3,3)", K_STATS_F_Density(-1#, 3#, 3#), 0#, 0#
     AssertClose "F pdf(0,2,5)", K_STATS_F_Density(0#, 2#, 5#), 1#, 0#
     AssertClose "F pdf(0,3,5)", K_STATS_F_Density(0#, 3#, 5#), 0#, 0#
@@ -1150,19 +2467,42 @@ End Sub
 
 
 Private Sub Test_TF_FCumulative()
+'
+'==============================================================================
+' Test_TF_FCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies F cumulative probabilities and reciprocal identities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- F cumulative"
     AssertClose "F cdf(2.5,5,10)", K_STATS_F_Cumulative(2.5, 5#, 10#), _
-        0.89799772335573, TOL_TIGHT
-    AssertClose "F cdf(1,1,1)", K_STATS_F_Cumulative(1#, 1#, 1#), 0.5, TOL_TIGHT
+        0.89799772335573, TOL_ABS_TIGHT
+    AssertClose "F cdf(1,1,1)", K_STATS_F_Cumulative(1#, 1#, 1#), 0.5, TOL_ABS_TIGHT
     AssertClose "F cdf(4.96,3,10)", K_STATS_F_Cumulative(4.96, 3#, 10#), _
-        0.976863670854344, TOL_TIGHT
+        0.976863670854344, TOL_ABS_TIGHT
     AssertClose "F cdf(0,4,4)", K_STATS_F_Cumulative(0#, 4#, 4#), 0#, 0#
     AssertClose "F cdf(-2,4,4)", K_STATS_F_Cumulative(-2#, 4#, 4#), 0#, 0#
 
     'The reciprocal identity: F(x; a, b) = 1 - F(1/x; b, a)
     AssertClose "F reciprocal identity", _
         CDbl(K_STATS_F_Cumulative(3#, 6#, 9#)) + _
-        CDbl(K_STATS_F_Cumulative(1# / 3#, 9#, 6#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_F_Cumulative(1# / 3#, 9#, 6#)), 1#, TOL_ABS_TIGHT
 
     'Large equal degrees of freedom: the old 200-iteration beta continued fraction
     'silently stopped converging at about df = 5E+5
@@ -1174,6 +2514,29 @@ End Sub
 
 
 Private Sub Test_TF_FSurvival()
+'
+'==============================================================================
+' Test_TF_FSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies F survival probabilities and complements.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- F survival"
     AssertRelClose "F sf(100,5,5)", K_STATS_F_Survival(100#, 5#, 5#), _
         5.24291335785E-05, TOL_REL_TIGHT
@@ -1182,19 +2545,42 @@ Private Sub Test_TF_FSurvival()
     AssertClose "F sf(0,4,4)", K_STATS_F_Survival(0#, 4#, 4#), 1#, 0#
     AssertClose "F sf + cdf = 1", _
         CDbl(K_STATS_F_Survival(2#, 7#, 12#)) + _
-        CDbl(K_STATS_F_Cumulative(2#, 7#, 12#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_F_Cumulative(2#, 7#, 12#)), 1#, TOL_ABS_TIGHT
     AssertClose "F sf extreme positive log-ratio", _
         K_STATS_F_Survival(1E+308, 1E+99, 1E-99), 0#, 0#
 End Sub
 
 
 Private Sub Test_TF_FInverse()
+'
+'==============================================================================
+' Test_TF_FInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies F inverse values and round-trips.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- F inverse"
     AssertClose "F inv(0.95,3,10)", K_STATS_F_InverseCumulative(0.95, 3#, 10#), _
-        3.70826481904684, TOL_TIGHT
+        3.70826481904684, TOL_ABS_TIGHT
     AssertClose "F inv(0.95,5,20)", K_STATS_F_InverseCumulative(0.95, 5#, 20#), _
-        2.71088983720969, TOL_TIGHT
-    AssertClose "F inv(0.5,1,1)", K_STATS_F_InverseCumulative(0.5, 1#, 1#), 1#, TOL_TIGHT
+        2.71088983720969, TOL_ABS_TIGHT
+    AssertClose "F inv(0.5,1,1)", K_STATS_F_InverseCumulative(0.5, 1#, 1#), 1#, TOL_ABS_TIGHT
 
     'The extreme upper tail. The answer is 8.4623534263E+34; it survives only
     'because the beta solver returns both the root and its complement.
@@ -1214,6 +2600,29 @@ End Sub
 '==============================================================================
 
 Private Sub Test_TF_ErrorContract()
+'
+'==============================================================================
+' Test_TF_ErrorContract
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies T-family domain, overflow and error-code contracts.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim Diag As String
 
     Debug.Print "-- T family error contract (must return CVErr, never a sentinel)"
@@ -1260,6 +2669,29 @@ End Sub
 
 
 Private Sub Test_TF_SupportEdges()
+'
+'==============================================================================
+' Test_TF_SupportEdges
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies T-family support edges and fractional degrees of freedom.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- T family support edges and non-integer degrees of freedom"
 
     'Fractional degrees of freedom are legal
@@ -1277,11 +2709,11 @@ Private Sub Test_TF_SupportEdges()
 
     'Chi-square with df = 2 is exponential: cdf(x) = 1 - Exp(-x/2)
     AssertClose "chi2 df=2 is exponential", _
-        CDbl(K_STATS_ChiSquare_Cumulative(3#, 2#)), 1# - Exp(-1.5), TOL_TIGHT
+        CDbl(K_STATS_ChiSquare_Cumulative(3#, 2#)), 1# - Exp(-1.5), TOL_ABS_TIGHT
 
     'Student t with df = 1 is Cauchy: cdf(x) = 0.5 + Atn(x)/Pi
     AssertClose "t df=1 is Cauchy", _
-        CDbl(K_STATS_StudentT_Cumulative(2.7, 1#)), 0.5 + Atn(2.7) / (4# * Atn(1#)), TOL_TIGHT
+        CDbl(K_STATS_StudentT_Cumulative(2.7, 1#)), 0.5 + Atn(2.7) / (4# * Atn(1#)), TOL_ABS_TIGHT
 End Sub
 
 
@@ -1378,6 +2810,71 @@ End Sub
 ' ASSERTION HELPERS
 '==============================================================================
 
+Private Sub AssertExactlyEqual( _
+    ByVal TestName As String, _
+    ByVal Actual As Variant, _
+    ByVal Expected As Double)
+'
+'==============================================================================
+' AssertExactlyEqual
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Passes only when Actual and Expected are the same binary Double value.
+'
+' WHY
+'   Decimal formatting in VBA exposes approximately 15 significant digits and
+'   can hide a one-ULP difference. Direct equality is therefore required for
+'   constants intended to match an independently evaluated Double exactly.
+'
+' INPUTS
+'   TestName   Assertion label printed on failure.
+'   Actual     Numeric Variant returned by the code under test.
+'   Expected   Independently evaluated Double reference.
+'
+' BEHAVIOR
+'   - Rejects a CVErr Actual.
+'   - Uses direct Double equality.
+'   - Reports the numerical difference when equality fails.
+'
+' DEPENDENCIES
+'   - RecordResult
+'
+' CALLED FROM
+'   - Constant and exact-kernel tests
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' VALIDATE ACTUAL VALUE
+'------------------------------------------------------------------------------
+    'Reject worksheet errors
+        If IsError(Actual) Then
+            RecordResult _
+                TestName & " -> returned error, expected exact equality", _
+                False
+
+            Exit Sub
+        End If
+
+'------------------------------------------------------------------------------
+' COMPARE
+'------------------------------------------------------------------------------
+    'Pass only when both values map to the same Double
+        If CDbl(Actual) = Expected Then
+            RecordResult TestName, True
+        Else
+            RecordResult _
+                TestName & _
+                " -> got " & CStr(CDbl(Actual)) & _
+                ", expected " & CStr(Expected) & _
+                ", difference " & CStr(CDbl(Actual) - Expected), _
+                False
+        End If
+End Sub
+
+
 Private Sub AssertClose( _
     ByVal TestName As String, _
     ByVal Actual As Variant, _
@@ -1388,21 +2885,105 @@ Private Sub AssertClose( _
 ' AssertClose
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Passes when Actual is a number within an absolute Tolerance of Expected. A
-'   CVErr Actual is treated as a failure.
+'   Passes when Actual is numeric and lies within an absolute tolerance of the
+'   expected value.
+'
+' INPUTS
+'   TestName   Assertion label printed on failure.
+'   Actual     Numeric Variant returned by the code under test.
+'   Expected   Double reference value.
+'   Tolerance  Non-negative absolute tolerance.
+'
+' BEHAVIOR
+'   - Rejects CVErr and non-numeric values.
+'   - Forms the difference through PROB_TryAdd so an extreme mismatch cannot
+'     overflow the test harness itself.
+'   - Records one assertion result.
+'
+' DEPENDENCIES
+'   - PROB_TryAdd
+'   - RecordResult
+'
+' CALLED FROM
+'   - Test procedures throughout this module
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    'Reject error returns outright
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim ActualValue         As Double          'Actual numeric value
+    Dim Difference          As Double          'Actual minus expected
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Reject worksheet errors
         If IsError(Actual) Then
-            RecordResult TestName & " -> returned error, expected " & Expected, False
+            RecordResult _
+                TestName & _
+                " -> returned error, expected " & CStr(Expected), _
+                False
+
             Exit Sub
         End If
-    'Compare within tolerance
-        If Abs(CDbl(Actual) - Expected) <= Tolerance Then
+
+    'Reject non-numeric values
+        If Not IsNumeric(Actual) Then
+            RecordResult _
+                TestName & " -> returned a non-numeric value", _
+                False
+
+            Exit Sub
+        End If
+
+    'Reject an invalid tolerance supplied by the harness
+        If Tolerance < 0# Then
+            RecordResult _
+                TestName & " -> test tolerance must be non-negative", _
+                False
+
+            Exit Sub
+        End If
+
+'------------------------------------------------------------------------------
+' COMPUTE DIFFERENCE
+'------------------------------------------------------------------------------
+    'Convert the actual value once
+        ActualValue = CDbl(Actual)
+
+    'Form Actual - Expected without allowing the assertion helper to overflow
+        If Not PROB_TryAdd( _
+            ActualValue, _
+            -Expected, _
+            Difference) Then
+
+            RecordResult _
+                TestName & _
+                " -> absolute difference overflowed; got " & _
+                CStr(ActualValue) & _
+                ", expected " & CStr(Expected), _
+                False
+
+            Exit Sub
+        End If
+
+'------------------------------------------------------------------------------
+' RECORD RESULT
+'------------------------------------------------------------------------------
+    'Compare the absolute difference with the tolerance
+        If Abs(Difference) <= Tolerance Then
             RecordResult TestName, True
         Else
-            RecordResult TestName & " -> got " & CDbl(Actual) & _
-                         ", expected " & Expected & " (tol " & Tolerance & ")", False
+            RecordResult _
+                TestName & _
+                " -> got " & CStr(ActualValue) & _
+                ", expected " & CStr(Expected) & _
+                " (abs err " & CStr(Abs(Difference)) & _
+                ", tol " & CStr(Tolerance) & ")", _
+                False
         End If
 End Sub
 
@@ -1417,37 +2998,125 @@ Private Sub AssertRelClose( _
 ' AssertRelClose
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Passes when Actual is a number within a relative RelativeTolerance of
-'   Expected. This is the only meaningful comparison for a survival probability
-'   of order 1E-37, a quantile of order 1E+34, or a normal quantile at
-'   Probability = 1E-300, where an absolute tolerance is either vacuous or
-'   unsatisfiable.
+'   Passes when Actual is numeric and lies within a relative tolerance of the
+'   expected value.
+'
+' INPUTS
+'   TestName          Assertion label printed on failure.
+'   Actual            Numeric Variant returned by the code under test.
+'   Expected          Double reference value.
+'   RelativeTolerance Non-negative relative tolerance.
+'
+' BEHAVIOR
+'   - Rejects CVErr and non-numeric values.
+'   - Falls back to AssertClose when Expected is zero.
+'   - Computes Actual / Expected - 1 through guarded division, avoiding an
+'     overflowing subtraction between extreme values.
+'
+' DEPENDENCIES
+'   - PROB_TryDivide
+'   - AssertClose
+'   - RecordResult
+'
+' CALLED FROM
+'   - Tail, quantile and extreme-parameter tests
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    'Declare
-        Dim Difference As Double
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim ActualValue         As Double          'Actual numeric value
+    Dim Ratio               As Double          'Actual divided by expected
+    Dim RelativeError       As Double          'Absolute relative error
 
-    'Reject error returns outright
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Reject worksheet errors
         If IsError(Actual) Then
-            RecordResult TestName & " -> returned error, expected " & Expected, False
+            RecordResult _
+                TestName & _
+                " -> returned error, expected " & CStr(Expected), _
+                False
+
             Exit Sub
         End If
 
-    'Fall back to an absolute comparison at zero
+    'Reject non-numeric values
+        If Not IsNumeric(Actual) Then
+            RecordResult _
+                TestName & " -> returned a non-numeric value", _
+                False
+
+            Exit Sub
+        End If
+
+    'Reject an invalid tolerance supplied by the harness
+        If RelativeTolerance < 0# Then
+            RecordResult _
+                TestName & _
+                " -> relative tolerance must be non-negative", _
+                False
+
+            Exit Sub
+        End If
+
+'------------------------------------------------------------------------------
+' HANDLE ZERO REFERENCE
+'------------------------------------------------------------------------------
+    'Use an absolute comparison when the reference value is zero
         If Expected = 0# Then
-            AssertClose TestName, Actual, 0#, RelativeTolerance
+            AssertClose _
+                TestName, _
+                Actual, _
+                0#, _
+                RelativeTolerance
+
             Exit Sub
         End If
 
-    'Compare within relative tolerance
-        Difference = Abs(CDbl(Actual) - Expected) / Abs(Expected)
+'------------------------------------------------------------------------------
+' COMPUTE RELATIVE ERROR
+'------------------------------------------------------------------------------
+    'Convert the actual value once
+        ActualValue = CDbl(Actual)
 
-        If Difference <= RelativeTolerance Then
+    'Form the ratio without allowing the assertion helper to overflow
+        If Not PROB_TryDivide( _
+            ActualValue, _
+            Expected, _
+            Ratio) Then
+
+            RecordResult _
+                TestName & _
+                " -> relative ratio overflowed; got " & _
+                CStr(ActualValue) & _
+                ", expected " & CStr(Expected), _
+                False
+
+            Exit Sub
+        End If
+
+    'Compute the relative error from the finite ratio
+        RelativeError = Abs(Ratio - 1#)
+
+'------------------------------------------------------------------------------
+' RECORD RESULT
+'------------------------------------------------------------------------------
+    'Compare the relative error with the tolerance
+        If RelativeError <= RelativeTolerance Then
             RecordResult TestName, True
         Else
-            RecordResult TestName & " -> got " & CDbl(Actual) & _
-                         ", expected " & Expected & " (rel err " & Difference & _
-                         ", tol " & RelativeTolerance & ")", False
+            RecordResult _
+                TestName & _
+                " -> got " & CStr(ActualValue) & _
+                ", expected " & CStr(Expected) & _
+                " (rel err " & CStr(RelativeError) & _
+                ", tol " & CStr(RelativeTolerance) & ")", _
+                False
         End If
 End Sub
 
@@ -1460,20 +3129,67 @@ Private Sub AssertInUnitInterval( _
 ' AssertInUnitInterval
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Passes when Actual is a number in the closed interval [0, 1].
+'   Passes when Actual is numeric and belongs to the closed interval [0, 1].
+'
+' INPUTS
+'   TestName   Assertion label printed on failure.
+'   Actual     Probability-like Variant returned by the code under test.
+'
+' BEHAVIOR
+'   - Rejects CVErr and non-numeric values.
+'   - Records one assertion result.
+'
+' DEPENDENCIES
+'   - RecordResult
+'
+' CALLED FROM
+'   - Probability support and range tests
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
-    'Reject error returns outright
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim ActualValue         As Double          'Actual numeric value
+
+'------------------------------------------------------------------------------
+' VALIDATE ACTUAL VALUE
+'------------------------------------------------------------------------------
+    'Reject worksheet errors
         If IsError(Actual) Then
-            RecordResult TestName & " -> returned error, expected a probability", False
+            RecordResult _
+                TestName & _
+                " -> returned error, expected a probability", _
+                False
+
             Exit Sub
         End If
 
-    'Check the closed unit interval
-        If CDbl(Actual) >= 0# And CDbl(Actual) <= 1# Then
+    'Reject non-numeric values
+        If Not IsNumeric(Actual) Then
+            RecordResult _
+                TestName & " -> returned a non-numeric value", _
+                False
+
+            Exit Sub
+        End If
+
+'------------------------------------------------------------------------------
+' RECORD RESULT
+'------------------------------------------------------------------------------
+    'Convert once and test the closed unit interval
+        ActualValue = CDbl(Actual)
+
+        If ActualValue >= 0# And ActualValue <= 1# Then
             RecordResult TestName, True
         Else
-            RecordResult TestName & " -> got " & CDbl(Actual) & ", outside [0, 1]", False
+            RecordResult _
+                TestName & _
+                " -> got " & CStr(ActualValue) & _
+                ", outside [0, 1]", _
+                False
         End If
 End Sub
 
@@ -1518,21 +3234,57 @@ Private Sub AssertErrorCode( _
     ByVal ExpectedErrorCode As Long)
 '
 '==============================================================================
+' AssertErrorCode
+'------------------------------------------------------------------------------
 ' PURPOSE
-'   Passes only when Actual is the requested CVErr code. CStr is used because
-'   direct numeric coercion of a Variant/Error raises a type-mismatch error.
+'   Passes only when Actual is the requested worksheet CVErr code.
+'
+' INPUTS
+'   TestName         Assertion label printed on failure.
+'   Actual           Variant returned by the code under test.
+'   ExpectedErrorCode Excel error code, such as xlErrNum or xlErrValue.
+'
+' BEHAVIOR
+'   - Rejects a non-error Actual.
+'   - Compares the localized string representations of the two Variant/Error
+'     values because direct numeric coercion of a Variant/Error raises a type
+'     mismatch in VBA.
+'
+' DEPENDENCIES
+'   - RecordResult
+'
+' CALLED FROM
+'   - Numerical-contract tests
+'
+' UPDATED
+'   2026-07-11
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE ACTUAL VALUE
+'------------------------------------------------------------------------------
+    'Reject a non-error return
         If Not IsError(Actual) Then
-            RecordResult TestName & " -> expected error, got " & CStr(Actual), False
+            RecordResult _
+                TestName & _
+                " -> expected error, got " & CStr(Actual), _
+                False
+
             Exit Sub
         End If
 
+'------------------------------------------------------------------------------
+' COMPARE ERROR CODES
+'------------------------------------------------------------------------------
+    'Compare the requested and actual worksheet error values
         If CStr(Actual) = CStr(CVErr(ExpectedErrorCode)) Then
             RecordResult TestName, True
         Else
-            RecordResult TestName & " -> got " & CStr(Actual) & _
-                         ", expected " & CStr(CVErr(ExpectedErrorCode)), False
+            RecordResult _
+                TestName & _
+                " -> got " & CStr(Actual) & _
+                ", expected " & CStr(CVErr(ExpectedErrorCode)), _
+                False
         End If
 End Sub
 
@@ -1573,11 +3325,34 @@ End Sub
 '==============================================================================
 
 Private Sub Test_CN_GammaDensity()
+'
+'==============================================================================
+' Test_CN_GammaDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Gamma density values and ratio-overflow limits.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Gamma density"
     AssertClose "gamma pdf(3,2.5,1.5)", K_STATS_Gamma_Density(3#, 2.5, 1.5), _
-        0.19196788093578, TOL_TIGHT
+        0.19196788093578, TOL_ABS_TIGHT
     AssertClose "gamma pdf(0.5,0.5,2)", K_STATS_Gamma_Density(0.5, 0.5, 2#), _
-        0.439391289467722, TOL_TIGHT
+        0.439391289467722, TOL_ABS_TIGHT
     AssertClose "gamma pdf(-1,2.5,1.5)=0", K_STATS_Gamma_Density(-1#, 2.5, 1.5), 0#, 0#
     AssertClose "gamma pdf ratio overflow tends zero", _
         K_STATS_Gamma_Density(1E+308, 2#, 9.99988867182683E-321), 0#, 0#
@@ -1585,11 +3360,34 @@ End Sub
 
 
 Private Sub Test_CN_GammaCumulative()
+'
+'==============================================================================
+' Test_CN_GammaCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Gamma cumulative probabilities and support limits.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Gamma cumulative"
     AssertClose "gamma cdf(3,2.5,1.5)", K_STATS_Gamma_Cumulative(3#, 2.5, 1.5), _
-        0.45058404864722, TOL_TIGHT
+        0.45058404864722, TOL_ABS_TIGHT
     AssertClose "gamma cdf(1e-6,0.5,2)", K_STATS_Gamma_Cumulative(0.000001, 0.5, 2#), _
-        7.97884427822125E-04, TOL_TIGHT
+        7.97884427822125E-04, TOL_ABS_TIGHT
     AssertClose "gamma cdf(0,2.5,1.5)=0", K_STATS_Gamma_Cumulative(0#, 2.5, 1.5), 0#, 0#
     AssertClose "gamma cdf(-5,2.5,1.5)=0", K_STATS_Gamma_Cumulative(-5#, 2.5, 1.5), 0#, 0#
     AssertClose "gamma cdf ratio overflow tends one", _
@@ -1598,22 +3396,68 @@ End Sub
 
 
 Private Sub Test_CN_GammaSurvival()
+'
+'==============================================================================
+' Test_CN_GammaSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Gamma survival probabilities and complements.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Gamma survival"
     AssertClose "gamma sf(3,2.5,1.5)", K_STATS_Gamma_Survival(3#, 2.5, 1.5), _
-        0.54941595135278, TOL_TIGHT
+        0.54941595135278, TOL_ABS_TIGHT
     AssertClose "gamma sf(0,2.5,1.5)=1", K_STATS_Gamma_Survival(0#, 2.5, 1.5), 1#, 0#
     AssertClose "gamma sf(-5,2.5,1.5)=1", K_STATS_Gamma_Survival(-5#, 2.5, 1.5), 1#, 0#
 
     'CDF and survival must sum to one on the support
     AssertClose "gamma cdf+sf=1", _
         CDbl(K_STATS_Gamma_Cumulative(3#, 2.5, 1.5)) + _
-        CDbl(K_STATS_Gamma_Survival(3#, 2.5, 1.5)), 1#, TOL_TIGHT
+        CDbl(K_STATS_Gamma_Survival(3#, 2.5, 1.5)), 1#, TOL_ABS_TIGHT
     AssertClose "gamma sf ratio overflow tends zero", _
         K_STATS_Gamma_Survival(1E+308, 2#, 9.99988867182683E-321), 0#, 0#
 End Sub
 
 
 Private Sub Test_CN_GammaInverse()
+'
+'==============================================================================
+' Test_CN_GammaInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Gamma inverse cumulative values.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Gamma inverse"
     AssertRelClose "gamma inv(0.7,2.5,1.5)", K_STATS_Gamma_InverseCumulative(0.7, 2.5, 1.5), _
         4.54832248811618, TOL_REL_TIGHT
@@ -1623,18 +3467,64 @@ End Sub
 
 
 Private Sub Test_CN_GammaMoments()
+'
+'==============================================================================
+' Test_CN_GammaMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Gamma mean, variance and standard deviation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Gamma moments"
-    AssertClose "gamma mean(2.5,1.5)", K_STATS_Gamma_Mean(2.5, 1.5), 3.75, TOL_TIGHT
-    AssertClose "gamma var(2.5,1.5)", K_STATS_Gamma_Variance(2.5, 1.5), 5.625, TOL_TIGHT
+    AssertClose "gamma mean(2.5,1.5)", K_STATS_Gamma_Mean(2.5, 1.5), 3.75, TOL_ABS_TIGHT
+    AssertClose "gamma var(2.5,1.5)", K_STATS_Gamma_Variance(2.5, 1.5), 5.625, TOL_ABS_TIGHT
     AssertClose "gamma std(2.5,1.5)", K_STATS_Gamma_StdDev(2.5, 1.5), _
-        2.37170824512628, TOL_TIGHT
+        2.37170824512628, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_BetaDensity()
+'
+'==============================================================================
+' Test_CN_BetaDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Beta density values and support behavior.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Beta density"
     AssertClose "beta pdf(0.3,2,5)", K_STATS_Beta_Density(0.3, 2#, 5#), _
-        2.1609, TOL_TIGHT
+        2.1609, TOL_ABS_TIGHT
     AssertRelClose "beta pdf(0.999999,2,3)", K_STATS_Beta_Density(0.999999, 2#, 3#), _
         1.1999988E-11, TOL_REL_TAIL
     AssertClose "beta pdf(-0.1,2,5)=0", K_STATS_Beta_Density(-0.1, 2#, 5#), 0#, 0#
@@ -1643,9 +3533,32 @@ End Sub
 
 
 Private Sub Test_CN_BetaCumulative()
+'
+'==============================================================================
+' Test_CN_BetaCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Beta cumulative probabilities and support edges.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Beta cumulative"
     AssertClose "beta cdf(0.3,2,5)", K_STATS_Beta_Cumulative(0.3, 2#, 5#), _
-        0.579825, TOL_TIGHT
+        0.579825, TOL_ABS_TIGHT
     AssertClose "beta cdf(0,2,5)=0", K_STATS_Beta_Cumulative(0#, 2#, 5#), 0#, 0#
     AssertClose "beta cdf(1,2,5)=1", K_STATS_Beta_Cumulative(1#, 2#, 5#), 1#, 0#
     AssertClose "beta cdf(-0.2,2,5)=0", K_STATS_Beta_Cumulative(-0.2, 2#, 5#), 0#, 0#
@@ -1654,20 +3567,66 @@ End Sub
 
 
 Private Sub Test_CN_BetaSurvival()
+'
+'==============================================================================
+' Test_CN_BetaSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Beta survival probabilities and complements.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Beta survival"
     AssertClose "beta sf(0.3,2,5)", K_STATS_Beta_Survival(0.3, 2#, 5#), _
-        0.420175, TOL_TIGHT
+        0.420175, TOL_ABS_TIGHT
     AssertClose "beta sf(0,2,5)=1", K_STATS_Beta_Survival(0#, 2#, 5#), 1#, 0#
     AssertClose "beta sf(1,2,5)=0", K_STATS_Beta_Survival(1#, 2#, 5#), 0#, 0#
 
     'CDF and survival must sum to one on the support
     AssertClose "beta cdf+sf=1", _
         CDbl(K_STATS_Beta_Cumulative(0.3, 2#, 5#)) + _
-        CDbl(K_STATS_Beta_Survival(0.3, 2#, 5#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_Beta_Survival(0.3, 2#, 5#)), 1#, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_BetaInverse()
+'
+'==============================================================================
+' Test_CN_BetaInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Beta inverse cumulative values.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Beta inverse"
     AssertRelClose "beta inv(0.6,2,5)", K_STATS_Beta_InverseCumulative(0.6, 2#, 5#), _
         0.309444427545314, TOL_REL_TIGHT
@@ -1675,21 +3634,86 @@ End Sub
 
 
 Private Sub Test_CN_BetaMoments()
+'
+'==============================================================================
+' Test_CN_BetaMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Beta moments, including extreme balanced shapes.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Beta moments"
     AssertClose "beta mean(2,5)", K_STATS_Beta_Mean(2#, 5#), _
-        0.285714285714286, TOL_TIGHT
+        0.285714285714286, TOL_ABS_TIGHT
     AssertClose "beta var(2,5)", K_STATS_Beta_Variance(2#, 5#), _
-        2.55102040816327E-02, TOL_TIGHT
+        2.55102040816327E-02, TOL_ABS_TIGHT
     AssertClose "beta std(2,5)", K_STATS_Beta_StdDev(2#, 5#), _
-        0.159719141249985, TOL_TIGHT
+        0.159719141249985, TOL_ABS_TIGHT
+
+    'Balanced extreme shapes must retain the correct small variance.
+        AssertClose _
+            "beta mean balanced extreme shapes", _
+            K_STATS_Beta_Mean(1E+99, 1E+99), _
+            0.5, _
+            TOL_ABS_TIGHT
+
+        AssertRelClose _
+            "beta variance balanced extreme shapes", _
+            K_STATS_Beta_Variance(1E+99, 1E+99), _
+            1.25E-100, _
+            TOL_REL_LOOSE
+
+        AssertRelClose _
+            "beta stddev balanced extreme shapes", _
+            K_STATS_Beta_StdDev(1E+99, 1E+99), _
+            1.11803398874989E-50, _
+            TOL_REL_LOOSE
 End Sub
 
 
 Private Sub Test_CN_ExponentialDensity()
+'
+'==============================================================================
+' Test_CN_ExponentialDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Exponential density values and product overflow.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Exponential density"
     AssertClose "exp pdf(1,2)", K_STATS_Exponential_Density(1#, 2#), _
-        0.270670566473225, TOL_TIGHT
-    AssertClose "exp pdf(0,2)=lambda", K_STATS_Exponential_Density(0#, 2#), 2#, TOL_TIGHT
+        0.270670566473225, TOL_ABS_TIGHT
+    AssertClose "exp pdf(0,2)=lambda", K_STATS_Exponential_Density(0#, 2#), 2#, TOL_ABS_TIGHT
     AssertClose "exp pdf(-1,2)=0", K_STATS_Exponential_Density(-1#, 2#), 0#, 0#
     AssertClose "exp pdf product overflow tends zero", _
         K_STATS_Exponential_Density(1E+308, 1E+308), 0#, 0#
@@ -1697,9 +3721,32 @@ End Sub
 
 
 Private Sub Test_CN_ExponentialCumulative()
+'
+'==============================================================================
+' Test_CN_ExponentialCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Exponential cumulative probabilities and left-tail precision.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Exponential cumulative"
     AssertClose "exp cdf(1,2)", K_STATS_Exponential_Cumulative(1#, 2#), _
-        0.864664716763387, TOL_TIGHT
+        0.864664716763387, TOL_ABS_TIGHT
     'Left tail through PROB_Expm1: absolute tolerance would be vacuous here
     AssertRelClose "exp cdf(1e-10,1)", K_STATS_Exponential_Cumulative(0.0000000001, 1#), _
         9.9999999995E-11, TOL_REL_TAIL
@@ -1711,25 +3758,71 @@ End Sub
 
 
 Private Sub Test_CN_ExponentialSurvival()
+'
+'==============================================================================
+' Test_CN_ExponentialSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Exponential survival probabilities and complements.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Exponential survival"
     AssertClose "exp sf(1,2)", K_STATS_Exponential_Survival(1#, 2#), _
-        0.135335283236613, TOL_TIGHT
+        0.135335283236613, TOL_ABS_TIGHT
     AssertClose "exp sf(0,2)=1", K_STATS_Exponential_Survival(0#, 2#), 1#, 0#
     AssertClose "exp sf(-1,2)=1", K_STATS_Exponential_Survival(-1#, 2#), 1#, 0#
 
     'CDF and survival must sum to one
     AssertClose "exp cdf+sf=1", _
         CDbl(K_STATS_Exponential_Cumulative(1#, 2#)) + _
-        CDbl(K_STATS_Exponential_Survival(1#, 2#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_Exponential_Survival(1#, 2#)), 1#, TOL_ABS_TIGHT
     AssertClose "exp sf product overflow tends zero", _
         K_STATS_Exponential_Survival(1E+308, 1E+308), 0#, 0#
 End Sub
 
 
 Private Sub Test_CN_ExponentialInverse()
+'
+'==============================================================================
+' Test_CN_ExponentialInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Exponential inverse cumulative values and small probabilities.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Exponential inverse"
     AssertClose "exp inv(0.5,2)", K_STATS_Exponential_InverseCumulative(0.5, 2#), _
-        0.346573590279973, TOL_TIGHT
+        0.346573590279973, TOL_ABS_TIGHT
     'Left tail through PROB_Log1p
     AssertRelClose "exp inv(1e-12,1)", K_STATS_Exponential_InverseCumulative(0.000000000001, 1#), _
         1.0000000000005E-12, TOL_REL_TAIL
@@ -1737,17 +3830,63 @@ End Sub
 
 
 Private Sub Test_CN_WeibullDensity()
+'
+'==============================================================================
+' Test_CN_WeibullDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Weibull density values and support behavior.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Weibull density"
     AssertClose "weibull pdf(1,1.5,2)", K_STATS_Weibull_Density(1#, 1.5, 2#), _
-        0.372391688219422, TOL_TIGHT
+        0.372391688219422, TOL_ABS_TIGHT
     AssertClose "weibull pdf(-1,1.5,2)=0", K_STATS_Weibull_Density(-1#, 1.5, 2#), 0#, 0#
 End Sub
 
 
 Private Sub Test_CN_WeibullCumulative()
+'
+'==============================================================================
+' Test_CN_WeibullCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Weibull cumulative probabilities and left-tail precision.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Weibull cumulative"
     AssertClose "weibull cdf(1,1.5,2)", K_STATS_Weibull_Cumulative(1#, 1.5, 2#), _
-        0.29781149867344, TOL_TIGHT
+        0.29781149867344, TOL_ABS_TIGHT
     'Left tail through PROB_Expm1
     AssertRelClose "weibull cdf(1e-10,1,1)", K_STATS_Weibull_Cumulative(0.0000000001, 1#, 1#), _
         9.9999999995E-11, TOL_REL_TAIL
@@ -1757,33 +3896,102 @@ End Sub
 
 
 Private Sub Test_CN_WeibullSurvival()
+'
+'==============================================================================
+' Test_CN_WeibullSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Weibull survival probabilities and complements.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Weibull survival"
     AssertClose "weibull sf(1,1.5,2)", K_STATS_Weibull_Survival(1#, 1.5, 2#), _
-        0.70218850132656, TOL_TIGHT
+        0.70218850132656, TOL_ABS_TIGHT
     AssertClose "weibull sf(0,1.5,2)=1", K_STATS_Weibull_Survival(0#, 1.5, 2#), 1#, 0#
 
     'CDF and survival must sum to one on the support
     AssertClose "weibull cdf+sf=1", _
         CDbl(K_STATS_Weibull_Cumulative(1#, 1.5, 2#)) + _
-        CDbl(K_STATS_Weibull_Survival(1#, 1.5, 2#)), 1#, TOL_TIGHT
+        CDbl(K_STATS_Weibull_Survival(1#, 1.5, 2#)), 1#, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_WeibullInverse()
+'
+'==============================================================================
+' Test_CN_WeibullInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Weibull inverse cumulative values.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Weibull inverse"
     AssertClose "weibull inv(0.4,1.5,2)", K_STATS_Weibull_InverseCumulative(0.4, 1.5, 2#), _
-        1.27804195727092, TOL_TIGHT
+        1.27804195727092, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_WeibullMoments()
+'
+'==============================================================================
+' Test_CN_WeibullMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies stable Weibull moments across ordinary and extreme shapes.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Weibull moments"
     AssertClose "weibull mean(1.5,2)", K_STATS_Weibull_Mean(1.5, 2#), _
-        1.80549058590187, TOL_TIGHT
+        1.80549058590187, TOL_ABS_TIGHT
     AssertClose "weibull var(1.5,2)", K_STATS_Weibull_Variance(1.5, 2#), _
-        1.50276113925573, TOL_TIGHT
+        1.50276113925573, TOL_ABS_TIGHT
     AssertClose "weibull std(1.5,2)", K_STATS_Weibull_StdDev(1.5, 2#), _
-        1.22587158350935, TOL_TIGHT
+        1.22587158350935, TOL_ABS_TIGHT
 
     'REGRESSION: direct subtraction of two Gamma values collapsed to zero for
     'large Shape. The asymptotic branch preserves the small positive factor.
@@ -1804,29 +4012,112 @@ End Sub
 
 
 Private Sub Test_CN_UniformDensity()
+'
+'==============================================================================
+' Test_CN_UniformDensity
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Uniform density values across ordinary and extreme bounds.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Uniform density"
     AssertClose "uniform pdf(3,2,5)", K_STATS_Uniform_Density(3#, 2#, 5#), _
-        0.333333333333333, TOL_TIGHT
+        0.333333333333333, TOL_ABS_TIGHT
     AssertClose "uniform pdf(2,2,5) edge", K_STATS_Uniform_Density(2#, 2#, 5#), _
-        0.333333333333333, TOL_TIGHT
+        0.333333333333333, TOL_ABS_TIGHT
     AssertClose "uniform pdf(1,2,5)=0", K_STATS_Uniform_Density(1#, 2#, 5#), 0#, 0#
     AssertClose "uniform pdf(6,2,5)=0", K_STATS_Uniform_Density(6#, 2#, 5#), 0#, 0#
+
+    'Opposite-sign finite bounds may have a mathematical width above Double max.
+        AssertRelClose _
+            "uniform pdf full finite range", _
+            K_STATS_Uniform_Density(0#, -1E+308, 1E+308), _
+            5E-309, _
+            TOL_REL_LOOSE
 End Sub
 
 
 Private Sub Test_CN_UniformCumulative()
+'
+'==============================================================================
+' Test_CN_UniformCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Uniform cumulative probabilities across finite bounds.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Uniform cumulative"
     AssertClose "uniform cdf(3,2,5)", K_STATS_Uniform_Cumulative(3#, 2#, 5#), _
-        0.333333333333333, TOL_TIGHT
+        0.333333333333333, TOL_ABS_TIGHT
     AssertClose "uniform cdf(1,2,5)=0", K_STATS_Uniform_Cumulative(1#, 2#, 5#), 0#, 0#
     AssertClose "uniform cdf(6,2,5)=1", K_STATS_Uniform_Cumulative(6#, 2#, 5#), 1#, 0#
+
+    'Scaled coordinates must preserve the midpoint of an extreme support.
+        AssertClose _
+            "uniform cdf full finite range midpoint", _
+            K_STATS_Uniform_Cumulative(0#, -1E+308, 1E+308), _
+            0.5, _
+            TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_UniformSurvival()
+'
+'==============================================================================
+' Test_CN_UniformSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Uniform survival probabilities and complements.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Uniform survival"
     AssertClose "uniform sf(3,2,5)", K_STATS_Uniform_Survival(3#, 2#, 5#), _
-        0.666666666666667, TOL_TIGHT
+        0.666666666666667, TOL_ABS_TIGHT
     AssertClose "uniform sf(1,2,5)=1", K_STATS_Uniform_Survival(1#, 2#, 5#), 1#, 0#
     AssertClose "uniform sf(6,2,5)=0", K_STATS_Uniform_Survival(6#, 2#, 5#), 0#, 0#
 
@@ -1834,79 +4125,197 @@ Private Sub Test_CN_UniformSurvival()
     AssertClose "uniform cdf+sf=1", _
         CDbl(K_STATS_Uniform_Cumulative(3#, 2#, 5#)) + _
         CDbl(K_STATS_Uniform_Survival(3#, 2#, 5#)), 1#, 0#
+
+    'The direct right-tail calculation must preserve the extreme-support midpoint.
+        AssertClose _
+            "uniform sf full finite range midpoint", _
+            K_STATS_Uniform_Survival(0#, -1E+308, 1E+308), _
+            0.5, _
+            TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_UniformInverse()
+'
+'==============================================================================
+' Test_CN_UniformInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies stable Uniform inverse interpolation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Uniform inverse"
     AssertClose "uniform inv(0.25,2,5)", K_STATS_Uniform_InverseCumulative(0.25, 2#, 5#), _
-        2.75, TOL_TIGHT
+        2.75, TOL_ABS_TIGHT
+
+    'The stable convex combination must not form an overflowing support width.
+        AssertRelClose _
+            "uniform inv full finite range p=0.25", _
+            K_STATS_Uniform_InverseCumulative( _
+                0.25, _
+                -1E+308, _
+                1E+308), _
+            -5E+307, _
+            TOL_REL_TIGHT
+
+        AssertRelClose _
+            "uniform inv full finite range p=0.75", _
+            K_STATS_Uniform_InverseCumulative( _
+                0.75, _
+                -1E+308, _
+                1E+308), _
+            5E+307, _
+            TOL_REL_TIGHT
 End Sub
 
 
 Private Sub Test_CN_CrossFamilyIdentities()
+'
+'==============================================================================
+' Test_CN_CrossFamilyIdentities
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies distribution identities across independent public surfaces.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim BetaArg As Double
 
     Debug.Print "-- Cross-family identities (self-checks against independent oracles)"
 
     'Identity 1 (marshalling): Chi-square(v) is Gamma(shape v/2, scale 2)
     AssertClose "id chi2(3,5) via TFAMILY", K_STATS_ChiSquare_Cumulative(3#, 5#), _
-        0.300014164121372, TOL_TIGHT
+        0.300014164121372, TOL_ABS_TIGHT
     AssertClose "id chi2(3,5)=gamma(3,2.5,2)", K_STATS_Gamma_Cumulative(3#, 2.5, 2#), _
-        0.300014164121372, TOL_TIGHT
+        0.300014164121372, TOL_ABS_TIGHT
 
     'Identity 2 (marshalling): F(d1,d2) maps to Beta(d1/2, d2/2) at d1 x /(d1 x + d2)
     BetaArg = 5# * 2.5 / (5# * 2.5 + 10#)
     AssertClose "id F(2.5,5,10) via TFAMILY", K_STATS_F_Cumulative(2.5, 5#, 10#), _
-        0.89799772335573, TOL_TIGHT
+        0.89799772335573, TOL_ABS_TIGHT
     AssertClose "id F(2.5,5,10)=beta(arg,2.5,5)", K_STATS_Beta_Cumulative(BetaArg, 2.5, 5#), _
-        0.89799772335573, TOL_TIGHT
+        0.89799772335573, TOL_ABS_TIGHT
 
     'Identity 3 (real kernel test): Exponential(rate L) is Gamma(1, 1/L).
     'Note the RECIPROCAL: rate 2 maps to scale 0.5. This pits the incomplete-gamma
     'kernel at shape = 1 against the closed-form PROB_Expm1 CDF.
     AssertClose "id exp(1,2) closed form", K_STATS_Exponential_Cumulative(1#, 2#), _
-        0.864664716763387, TOL_TIGHT
+        0.864664716763387, TOL_ABS_TIGHT
     AssertClose "id exp(1,2)=gamma(1,1,0.5) kernel", K_STATS_Gamma_Cumulative(1#, 1#, 0.5), _
-        0.864664716763387, TOL_TIGHT
+        0.864664716763387, TOL_ABS_TIGHT
 
     'Identity 4 (real kernel test): Uniform(0,1) is Beta(1,1); both equal x
     AssertClose "id uniform(0.37,0,1)", K_STATS_Uniform_Cumulative(0.37, 0#, 1#), _
-        0.37, TOL_TIGHT
+        0.37, TOL_ABS_TIGHT
     AssertClose "id beta(0.37,1,1) kernel", K_STATS_Beta_Cumulative(0.37, 1#, 1#), _
-        0.37, TOL_TIGHT
+        0.37, TOL_ABS_TIGHT
 
     'Identity 5 (real kernel test): Chi-square(2) is Exponential(rate 1/2). The
     'gamma kernel (via chi-square) is checked against the closed-form Exponential.
     AssertClose "id chi2(2.4,2) kernel", K_STATS_ChiSquare_Cumulative(2.4, 2#), _
-        0.698805788087798, TOL_TIGHT
+        0.698805788087798, TOL_ABS_TIGHT
     AssertClose "id exp(2.4,0.5) closed form", K_STATS_Exponential_Cumulative(2.4, 0.5), _
-        0.698805788087798, TOL_TIGHT
+        0.698805788087798, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_RoundTrips()
+'
+'==============================================================================
+' Test_CN_RoundTrips
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies continuous-family inverse and cumulative round-trips.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Continuous inverse round-trips (CDF of quantile returns the probability)"
 
     AssertClose "gamma roundtrip p=0.7", _
         CDbl(K_STATS_Gamma_Cumulative( _
-            CDbl(K_STATS_Gamma_InverseCumulative(0.7, 2.5, 1.5)), 2.5, 1.5)), 0.7, TOL_LOOSE
+            CDbl(K_STATS_Gamma_InverseCumulative(0.7, 2.5, 1.5)), 2.5, 1.5)), 0.7, TOL_ABS_LOOSE
     AssertClose "beta roundtrip p=0.6", _
         CDbl(K_STATS_Beta_Cumulative( _
-            CDbl(K_STATS_Beta_InverseCumulative(0.6, 2#, 5#)), 2#, 5#)), 0.6, TOL_LOOSE
+            CDbl(K_STATS_Beta_InverseCumulative(0.6, 2#, 5#)), 2#, 5#)), 0.6, TOL_ABS_LOOSE
     AssertClose "exp roundtrip p=0.35", _
         CDbl(K_STATS_Exponential_Cumulative( _
-            CDbl(K_STATS_Exponential_InverseCumulative(0.35, 2#)), 2#)), 0.35, TOL_TIGHT
+            CDbl(K_STATS_Exponential_InverseCumulative(0.35, 2#)), 2#)), 0.35, TOL_ABS_TIGHT
     AssertClose "weibull roundtrip p=0.4", _
         CDbl(K_STATS_Weibull_Cumulative( _
-            CDbl(K_STATS_Weibull_InverseCumulative(0.4, 1.5, 2#)), 1.5, 2#)), 0.4, TOL_TIGHT
+            CDbl(K_STATS_Weibull_InverseCumulative(0.4, 1.5, 2#)), 1.5, 2#)), 0.4, TOL_ABS_TIGHT
     AssertClose "uniform roundtrip p=0.25", _
         CDbl(K_STATS_Uniform_Cumulative( _
-            CDbl(K_STATS_Uniform_InverseCumulative(0.25, 2#, 5#)), 2#, 5#)), 0.25, TOL_TIGHT
+            CDbl(K_STATS_Uniform_InverseCumulative(0.25, 2#, 5#)), 2#, 5#)), 0.25, TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_ErrorContract()
+'
+'==============================================================================
+' Test_CN_ErrorContract
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies continuous-family domains, error codes and diagnostics.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Dim Diag As String
 
     Debug.Print "-- Continuous error contract (must return CVErr, never a sentinel)"
@@ -1944,7 +4353,7 @@ Private Sub Test_CN_ErrorContract()
 
     Diag = "stale"
     AssertClose "gamma cdf ok with status", K_STATS_Gamma_Cumulative(3#, 2.5, 1.5, Diag), _
-        0.45058404864722, TOL_TIGHT
+        0.45058404864722, TOL_ABS_TIGHT
     AssertTrue "CN status cleared on success", (Len(Diag) = 0)
     'Full-range finite rates and scales are valid; the 1E100 cap now applies
     'only to algorithmic shape parameters.
@@ -1983,24 +4392,68 @@ Private Sub Test_CN_ErrorContract()
         K_STATS_Weibull_Variance(9.99988867182683E-321, 1#), xlErrNum
     AssertErrorCode "weibull stddev tiny-shape overflow is #NUM", _
         K_STATS_Weibull_StdDev(9.99988867182683E-321, 1#), xlErrNum
+
+    'Both Beta arguments are algorithmic shape parameters and must respect the
+    'supported-magnitude contract.
+        AssertErrorCode _
+            "beta second shape at supported boundary is #NUM", _
+            K_STATS_Beta_Cumulative( _
+                0.5, _
+                1#, _
+                PROB_LARGE_NUMBER), _
+            xlErrNum
+
+    'Full finite Uniform bounds are valid even when their width is not directly
+    'representable as a Double.
+        AssertClose _
+            "uniform full finite bounds accepted", _
+            K_STATS_Uniform_Cumulative( _
+                0#, _
+                -1E+308, _
+                1E+308), _
+            0.5, _
+            TOL_ABS_TIGHT
 End Sub
 
 
 Private Sub Test_CN_SupportEdges()
+'
+'==============================================================================
+' Test_CN_SupportEdges
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies continuous-family finite support-edge behavior.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-07-11
+'==============================================================================
+'
     Debug.Print "-- Continuous support edges (finite boundary densities)"
 
     'Gamma origin: 1/Scale at shape 1, zero above, both finite (not poles)
-    AssertClose "gamma pdf(0,1,2)=1/2", K_STATS_Gamma_Density(0#, 1#, 2#), 0.5, TOL_TIGHT
+    AssertClose "gamma pdf(0,1,2)=1/2", K_STATS_Gamma_Density(0#, 1#, 2#), 0.5, TOL_ABS_TIGHT
     AssertClose "gamma pdf(0,2,1.5)=0", K_STATS_Gamma_Density(0#, 2#, 1.5), 0#, 0#
 
     'Beta endpoints: Beta at 0 when alpha=1, Alpha at 1 when beta=1
-    AssertClose "beta pdf(0,1,3)=3", K_STATS_Beta_Density(0#, 1#, 3#), 3#, TOL_TIGHT
-    AssertClose "beta pdf(1,2,1)=2", K_STATS_Beta_Density(1#, 2#, 1#), 2#, TOL_TIGHT
+    AssertClose "beta pdf(0,1,3)=3", K_STATS_Beta_Density(0#, 1#, 3#), 3#, TOL_ABS_TIGHT
+    AssertClose "beta pdf(1,2,1)=2", K_STATS_Beta_Density(1#, 2#, 1#), 2#, TOL_ABS_TIGHT
     AssertClose "beta pdf(0,2,5)=0", K_STATS_Beta_Density(0#, 2#, 5#), 0#, 0#
     AssertClose "beta pdf(1,2,5)=0", K_STATS_Beta_Density(1#, 2#, 5#), 0#, 0#
 
     'Weibull origin: 1/Scale at shape 1, zero above
-    AssertClose "weibull pdf(0,1,2)=1/2", K_STATS_Weibull_Density(0#, 1#, 2#), 0.5, TOL_TIGHT
+    AssertClose "weibull pdf(0,1,2)=1/2", K_STATS_Weibull_Density(0#, 1#, 2#), 0.5, TOL_ABS_TIGHT
     AssertClose "weibull pdf(0,2,1.5)=0", K_STATS_Weibull_Density(0#, 2#, 1.5), 0#, 0#
 
     'All CDFs live in the unit interval
@@ -2010,5 +4463,7 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
+
+
 
 

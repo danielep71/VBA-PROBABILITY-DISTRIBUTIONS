@@ -112,10 +112,10 @@ Option Explicit
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
-'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_MAX_EXP, PROB_MIN_EXP,
-'                    PROB_LARGE_NUMBER, PROB_WRITE_STATUS_BAR
-'       Predicates : PROB_IsFinite, PROB_IsValidProbabilityOpen
-'       Primitives : PROB_TryExp, PROB_NormalInvCDFRaw
+'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_LARGE_NUMBER,
+'                    PROB_WRITE_STATUS_BAR
+'       Predicates : PROB_IsWithinSupportedMagnitude, PROB_IsValidProbabilityOpen
+'       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw
 '       Diagnostics: PROB_SetStatus
 '
 ' NOTES
@@ -138,7 +138,7 @@ Option Explicit
 '     K_STATS_Lognormal_StdDev.
 '
 ' UPDATED
-'   2026-07-09
+'   2026-07-11
 '==============================================================================
 
 '==============================================================================
@@ -165,9 +165,6 @@ Private Const PROB_TAIL_UNDERFLOW_Z As Double = 38.5
 Private Const PROB_NORMAL_TAIL_CF_TERMS As Long = 16 'Laplace continued-fraction depth
 
 Private Const PROB_CDF_SPLIT As Double = 7.07106781186547
-
-
-
 
 
 Public Function K_STATS_NormalStandard_Density( _
@@ -218,7 +215,7 @@ Public Function K_STATS_NormalStandard_Density( _
 '   - No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalPDF
 '   - PROB_SetStatus
 '
@@ -227,7 +224,7 @@ Public Function K_STATS_NormalStandard_Density( _
 '   - VBA callers
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -349,12 +346,12 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 '   - No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 
@@ -478,7 +475,7 @@ Public Function K_STATS_NormalStandard_InverseCumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -596,12 +593,12 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -736,7 +733,7 @@ Public Function K_STATS_NormalStandard_InverseCumulativeFast( _
 '   - VBA numerical routines
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -813,7 +810,7 @@ Public Function K_STATS_Normal_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -950,7 +947,7 @@ Public Function K_STATS_Normal_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1063,12 +1060,12 @@ Public Function K_STATS_Normal_InverseCumulative( _
 '
 ' DEPENDENCIES
 '   - PROB_IsValidProbabilityOpen
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalInvCDF
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1183,7 +1180,7 @@ Public Function K_STATS_Normal_ZScore( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1298,12 +1295,12 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1450,7 +1447,7 @@ Public Function K_STATS_Lognormal_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1563,12 +1560,12 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1699,13 +1696,13 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
 '
 ' DEPENDENCIES
 '   - PROB_IsValidProbabilityOpen
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalInvCDF
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1825,7 +1822,7 @@ Public Function K_STATS_Lognormal_Mean( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1927,7 +1924,7 @@ Public Function K_STATS_Lognormal_Variance( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2060,7 +2057,7 @@ Public Function K_STATS_Lognormal_StdDev( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2201,13 +2198,13 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_IsFinite
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_Log1p
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-08
+'   2026-07-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2352,19 +2349,34 @@ Private Function PROB_NormalUpperTailPositive( _
 '   the true one-sided probability rounds to zero in Double precision.
 '==============================================================================
 '
-    Dim Denominator        As Double
-    Dim Exponential        As Double
-    Dim SumA               As Double
-    Dim SumB               As Double
-    Dim TermIndex          As Long
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Denominator         As Double          'Continued-fraction denominator
+    Dim Exponential         As Double          'Exp(-Z^2 / 2), the common factor
+    Dim SumA                As Double          'Hart numerator accumulator
+    Dim SumB                As Double          'Hart denominator accumulator
+    Dim TermIndex           As Long            'Continued-fraction term index
 
+'------------------------------------------------------------------------------
+' HANDLE TRUE DOUBLE UNDERFLOW
+'------------------------------------------------------------------------------
+    'The one-sided tail rounds to zero at approximately Z = 38.49
         If Z >= PROB_TAIL_UNDERFLOW_Z Then
             PROB_NormalUpperTailPositive = 0#
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' CALCULATE COMMON EXPONENTIAL FACTOR
+'------------------------------------------------------------------------------
+    'The underflow cutoff above also prevents overflow in Z squared here
         Exponential = Exp(-0.5 * Z * Z)
 
+'------------------------------------------------------------------------------
+' MAIN REGION
+'------------------------------------------------------------------------------
+    'Use the Hart rational approximation below the tail split
         If Z < PROB_CDF_SPLIT Then
             SumA = 3.52624965998911E-02 * Z + 0.700383064443688
             SumA = SumA * Z + 6.37396220353165
@@ -2382,7 +2394,13 @@ Private Function PROB_NormalUpperTailPositive( _
             SumB = SumB * Z + 440.413735824752
 
             PROB_NormalUpperTailPositive = Exponential * SumA / SumB
+
+'------------------------------------------------------------------------------
+' FAR TAIL
+'------------------------------------------------------------------------------
         Else
+        'Evaluate the Laplace continued fraction backwards, then scale by the
+        'Mills ratio phi(Z) / Denominator
             Denominator = Z
 
             For TermIndex = PROB_NORMAL_TAIL_CF_TERMS To 1 Step -1

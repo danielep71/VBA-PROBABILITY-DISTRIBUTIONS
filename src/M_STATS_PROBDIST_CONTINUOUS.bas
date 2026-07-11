@@ -5,108 +5,135 @@ Option Explicit
 ' M_STATS_PROBDIST_CONTINUOUS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Worksheet-facing distribution functions for the five core continuous
-'   distributions that are not in the normal family: Gamma, Beta, Exponential,
-'   Weibull and the continuous Uniform. For each: density, cumulative, survival
-'   and inverse-cumulative, plus arithmetic moments (Mean, Variance, StdDev) for
-'   the three whose moments are not one-liners (Gamma, Beta, Weibull).
+'   Provides worksheet-facing functions for the Gamma, Beta, Exponential,
+'   Weibull and continuous Uniform distributions.
 '
 ' WHY THIS EXISTS
-'   These five, together with the normal and t families already written, cover
-'   essentially every continuous distribution an actuarial, reliability or
-'   risk model reaches for. Each one here is a thin wrapper over a kernel that
-'   already exists and is already tested in M_STATS_PROBDIST_SPECIALFUNCS:
-'     - Gamma and Chi-square share the regularized incomplete gamma P(a, x).
-'     - Beta and F share the regularized incomplete beta I_x(a, b).
-'     - Exponential and Weibull are closed forms built on Exp, PROB_Expm1 and
-'       PROB_Log1p, with no iteration at all.
-'   Writing them as wrappers means the hard numerics are neither duplicated nor
-'   re-verified; only the parameter marshalling is new, and that is exactly what
-'   the cross-family identities in the test harness exist to check.
+'   These distributions complete the principal continuous-distribution layer
+'   of the probability library outside the normal and Student-t families. The
+'   module exposes a consistent worksheet API while delegating special-function
+'   work to the shared numerical kernels.
 '
-' PARAMETERISATION
-'   Every distribution matches its Excel worksheet counterpart argument-for-
-'   argument, even where that makes the library internally inconsistent:
-'     - Gamma(X, Shape, ScaleParam)          -> GAMMA.DIST(X, Shape, ScaleParam, .)
-'     - Beta(X, Alpha, Beta)            -> BETA.DIST(X, Alpha, Beta, .)
-'     - Exponential(X, Lambda)          -> EXPON.DIST(X, Lambda, .)   [Lambda = RATE]
-'     - Weibull(X, Shape, ScaleParam)        -> WEIBULL.DIST(X, Shape, ScaleParam, .)
-'     - Uniform(X, LowerBound, UpperBound)
-'   Note the deliberate inconsistency: Gamma and Weibull take a SCALE, whereas
-'   Exponential takes a RATE. This is why the Exponential-to-Gamma identity
-'   carries a reciprocal: Exponential(Lambda) is Gamma(Shape = 1, ScaleParam = 1 /
-'   Lambda), NOT Gamma(1, Lambda). The reciprocal is written out explicitly
-'   wherever it appears so it can never be mistaken for a bug. Agreeing with the
-'   worksheet was judged more important than agreeing with ourselves.
+' PUBLIC API
+'   Gamma
+'     K_STATS_Gamma_Density
+'     K_STATS_Gamma_Cumulative
+'     K_STATS_Gamma_Survival
+'     K_STATS_Gamma_InverseCumulative
+'     K_STATS_Gamma_Mean
+'     K_STATS_Gamma_Variance
+'     K_STATS_Gamma_StdDev
 '
-' ALGORITHM PROVENANCE
-'   - Gamma CDF / survival:
-'       Regularized incomplete gamma, P(Shape, X / ScaleParam) and Q(Shape, X / ScaleParam),
-'       through PROB_TryGammaRegularizedP / Q. Quantile via PROB_TryGammaInvP
-'       (Wilson-Hilferty seed, safeguarded Newton), rescaled by ScaleParam.
-'   - Beta CDF / survival:
-'       Regularized incomplete beta. The survival is computed as the swapped
-'       incomplete beta I_(1-X)(B, A) rather than 1 - I_X(A, B), so the upper
-'       tail never loses precision to a subtraction from one. Quantile via
-'       PROB_TryBetaInvRegularized.
-'   - Exponential CDF:
-'       1 - Exp(-Lambda * X) evaluated as -PROB_Expm1(-Lambda * X) so the left
-'       tail keeps full relative precision. Quantile -PROB_Log1p(-P) / Lambda,
-'       the mirror trick on the P -> 0 side. No iteration.
-'   - Weibull CDF:
-'       1 - Exp(-(X / ScaleParam) ^ Shape) as -PROB_Expm1(-(X / ScaleParam) ^ Shape).
-'       Quantile ScaleParam * (-PROB_Log1p(-P)) ^ (1 / Shape). No iteration.
-'   - Uniform:
-'       Exact closed forms throughout.
-'   - Weibull moments:
-'       Mean = ScaleParam * Gamma(1 + 1 / Shape), Variance = ScaleParam^2 * (Gamma(1 + 2 /
-'       Shape) - Gamma(1 + 1 / Shape)^2), through Exp(PROB_LogGamma(.)) with an
-'       explicit overflow guard on the Gamma-function evaluation.
-'   The Try contract, the (X, Y) argument pairing and the PROB_Expm1 / PROB_Log1p
-'   left-tail treatment are the local contribution; the underlying kernels are
-'   the same published algorithms used by the t family.
+'   Beta
+'     K_STATS_Beta_Density
+'     K_STATS_Beta_Cumulative
+'     K_STATS_Beta_Survival
+'     K_STATS_Beta_InverseCumulative
+'     K_STATS_Beta_Mean
+'     K_STATS_Beta_Variance
+'     K_STATS_Beta_StdDev
+'
+'   Exponential
+'     K_STATS_Exponential_Density
+'     K_STATS_Exponential_Cumulative
+'     K_STATS_Exponential_Survival
+'     K_STATS_Exponential_InverseCumulative
+'
+'   Weibull
+'     K_STATS_Weibull_Density
+'     K_STATS_Weibull_Cumulative
+'     K_STATS_Weibull_Survival
+'     K_STATS_Weibull_InverseCumulative
+'     K_STATS_Weibull_Mean
+'     K_STATS_Weibull_Variance
+'     K_STATS_Weibull_StdDev
+'
+'   Continuous Uniform
+'     K_STATS_Uniform_Density
+'     K_STATS_Uniform_Cumulative
+'     K_STATS_Uniform_Survival
+'     K_STATS_Uniform_InverseCumulative
+'
+' PARAMETERIZATION
+'   The public signatures follow the corresponding Excel worksheet conventions:
+'
+'     Gamma(X, Shape, ScaleParam)
+'       Shape is the Gamma shape parameter.
+'       ScaleParam is the Gamma scale parameter.
+'
+'     Beta(X, Alpha, Beta)
+'       Alpha and Beta are positive shape parameters.
+'
+'     Exponential(X, Lambda)
+'       Lambda is the rate, not the scale.
+'
+'     Weibull(X, Shape, ScaleParam)
+'       Shape is the Weibull shape parameter.
+'       ScaleParam is the Weibull scale parameter.
+'
+'     Uniform(X, LowerBound, UpperBound)
+'       LowerBound and UpperBound define the finite support.
+'
+' NUMERICAL DESIGN
+'   - Gamma CDF and survival use the regularized incomplete gamma functions.
+'   - Beta CDF and survival use paired incomplete-beta arguments so the smaller
+'     tail is evaluated directly rather than by subtraction from one.
+'   - Exponential and Weibull CDFs use PROB_Expm1 in their left tails.
+'   - Exponential and Weibull quantiles are assembled in the logarithmic domain.
+'   - Weibull large-shape moments use a cancellation-free asymptotic expansion.
+'   - Gamma, Exponential and Weibull intermediate arithmetic is guarded through
+'     the shared Try-contract.
+'   - Uniform calculations use scaled or convex-combination forms so the full
+'     finite Double range can be accepted without overflowing interval widths.
 '
 ' DESIGN PRINCIPLES
-'   - Public worksheet-facing functions return Variant so they can return CVErr.
-'   - Private numerical work goes through the shared kernels; no continued
-'     fraction or series is re-implemented here.
-'   - Invalid domains fail explicitly; they are not silently repaired.
-'   - A density pole is not a representable number. Where a density diverges to
-'     positive infinity (Gamma or Weibull at X = 0 with Shape < 1, Beta at an
-'     endpoint with the corresponding shape < 1) the function returns
-'     CVErr(xlErrNum), the same contract overflow uses. Underflow of a density to
-'     zero remains a valid zero.
-'   - CDF functions return mathematically meaningful support-edge values:
-'     Cumulative below the support is 0, above it is 1.
-'   - Non-convergence or overflow returns CVErr(xlErrNum).
-'   - No MsgBox is raised by any public worksheet-facing function.
+'   - Public worksheet functions return Variant so failures can be represented
+'     by worksheet error values.
+'   - Invalid domains are rejected explicitly and are never silently repaired.
+'   - Predictable numerical failure returns CVErr(xlErrNum).
+'   - Unexpected runtime failure returns CVErr(xlErrValue).
+'   - Mathematically valid underflow returns zero.
+'   - Support-edge values are returned exactly where they are representable.
+'   - No public function raises a MsgBox.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Density poles, non-convergence and overflow return CVErr(xlErrNum).
+'   - Invalid parameters, density poles, non-convergence and predictable
+'     overflow return CVErr(xlErrNum).
 '   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - Application.StatusBar is not written by default.
+'   - Detailed diagnostics are written to the optional Status argument.
+'   - Application.StatusBar is not written by this module.
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
-'       PROB_IsFinite, PROB_IsPositiveFinite, PROB_IsValidProbabilityOpen,
-'       PROB_TryExp, PROB_Log1p, PROB_Expm1, PROB_SetStatus,
-'       PROB_MAX_EXP, PROB_DOUBLE_MAX
+'       PROB_IsFinite
+'       PROB_IsPositiveFinite
+'       PROB_IsPositiveWithinSupportedMagnitude
+'       PROB_IsValidProbabilityOpen
+'       PROB_TryAdd
+'       PROB_TryMultiply
+'       PROB_TryDivide
+'       PROB_TryExp
+'       PROB_Log1p
+'       PROB_Expm1
+'       PROB_SetStatus
+'
 '   - M_STATS_PROBDIST_SPECIALFUNCS
-'       PROB_LogGamma, PROB_TryGammaRegularizedP, PROB_TryGammaRegularizedQ,
-'       PROB_TryGammaInvP, PROB_LogBeta, PROB_TryBetaRegularized,
+'       PROB_LogGamma
+'       PROB_LogBeta
+'       PROB_TryGammaRegularizedP
+'       PROB_TryGammaRegularizedQ
+'       PROB_TryGammaInvP
+'       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
 '
-' PUBLIC SURFACE (29 UDFs)
-'   Gamma        Density Cumulative Survival InverseCumulative Mean Variance StdDev
-'   Beta         Density Cumulative Survival InverseCumulative Mean Variance StdDev
-'   Exponential  Density Cumulative Survival InverseCumulative
-'   Weibull      Density Cumulative Survival InverseCumulative Mean Variance StdDev
-'   Uniform      Density Cumulative Survival InverseCumulative
+' NOTES
+'   - Shape parameters passed to iterative or asymptotic kernels are constrained
+'     by PROB_IsPositiveWithinSupportedMagnitude.
+'   - Evaluation points, rates, scales and Uniform bounds may use the full finite
+'     Double range where the implemented formula remains numerically meaningful.
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Release Gate 3 hardening and house-style normalization.
 '==============================================================================
 
 
@@ -125,73 +152,168 @@ Public Function K_STATS_Gamma_Density( _
 ' K_STATS_Gamma_Density
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Gamma density with explicit handling of scale-ratio overflow.
+'   Returns the Gamma probability density at X.
+'
+' WHY THIS EXISTS
+'   Gamma densities are used for positive skewed quantities, waiting times and
+'   severity models. The calculation is performed in the logarithmic domain so
+'   large or small parameter combinations do not form unstable powers directly.
+'
+' WORKSHEET EQUIVALENT
+'   GAMMA.DIST(X, Shape, ScaleParam, FALSE)
+'
+' INPUTS
+'   X           Evaluation point. Values below zero have density zero.
+'   Shape       Positive Gamma shape parameter.
+'   ScaleParam  Positive Gamma scale parameter.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double density.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero below the support.
+'   - At X = 0, returns #NUM! for Shape < 1, 1 / ScaleParam for Shape = 1,
+'     and zero for Shape > 1.
+'   - If X / ScaleParam overflows, the exponential tail makes the density zero.
+'   - Mathematically valid exponential underflow returns zero.
+'
+' ERROR POLICY
+'   - Invalid parameters, a density pole or density overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'   - Diagnostics are written to Status.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateXShapeScale
+'   - PROB_TryDivide
+'   - PROB_TryExp
+'   - PROB_LogGamma
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and log-density stabilization.
 '==============================================================================
 '
-    Dim StandardX          As Double
-    Dim LogDensity         As Double
-    Dim Density            As Double
-    Dim FailMsg            As String
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim StandardX           As Double          'X divided by ScaleParam
+    Dim LogRatio            As Double          'Log(X / ScaleParam), formed safely
+    Dim LogDensity          As Double          'Logarithm of the density
+    Dim Density             As Double          'Returned density
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-        If Not PROB_CN_ValidateXAndTwoPositive( _
-            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate X, Shape and ScaleParam under their distinct numerical contracts
+        If Not PROB_CN_ValidateXShapeScale( _
+            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then
+            GoTo Fail_Num
+        End If
 
+'------------------------------------------------------------------------------
+' HANDLE SUPPORT EDGES
+'------------------------------------------------------------------------------
+    'Return zero below the positive support
         If X < 0# Then
             K_STATS_Gamma_Density = 0#
             GoTo Return_Success
         End If
 
+    'Handle the origin according to the Gamma shape
         If X = 0# Then
             If Shape < 1# Then
-                FailMsg = "Gamma density is unbounded at X = 0 when Shape < 1"
+                FailMsg = _
+                    "Gamma density is unbounded at X = 0 when Shape < 1"
                 GoTo Fail_Num
+
             ElseIf Shape = 1# Then
                 If Not PROB_TryDivide(1#, ScaleParam, Density) Then
                     FailMsg = "Gamma density overflows Double at X = 0"
                     GoTo Fail_Num
                 End If
+
                 K_STATS_Gamma_Density = Density
+
             Else
                 K_STATS_Gamma_Density = 0#
             End If
+
             GoTo Return_Success
         End If
 
-        'For positive operands, ratio overflow means X / ScaleParam is beyond
-        'Double range and the exponential tail drives the density to zero.
+'------------------------------------------------------------------------------
+' COMPUTE DENSITY
+'------------------------------------------------------------------------------
+    'Form the standardized Gamma variate with explicit overflow handling
         If Not PROB_TryDivide(X, ScaleParam, StandardX) Then
             K_STATS_Gamma_Density = 0#
             GoTo Return_Success
         End If
 
+    'Form Log(X / ScaleParam) without dividing potentially extreme operands
+        LogRatio = Log(X) - Log(ScaleParam)
+
+    'Use the scale-separated log-density to reduce cancellation
         LogDensity = _
-            (Shape - 1#) * Log(X) - _
+            (Shape - 1#) * LogRatio - _
             StandardX - _
-            Shape * Log(ScaleParam) - _
+            Log(ScaleParam) - _
             PROB_LogGamma(Shape)
 
+    'Exponentiate under the shared overflow and underflow contract
         If Not PROB_TryExp(LogDensity, Density) Then
             FailMsg = "Gamma density overflowed a Double"
             GoTo Fail_Num
         End If
 
+    'Return the density
         K_STATS_Gamma_Density = Density
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
 Return_Success:
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
 
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Gamma_Density = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Density: " & Err.Description
+    'Return worksheet value error
         K_STATS_Gamma_Density = CVErr(xlErrValue)
 End Function
 
@@ -203,44 +325,129 @@ Public Function K_STATS_Gamma_Cumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-    Dim StandardX          As Double
-    Dim Value              As Double
-    Dim FailMsg            As String
+'==============================================================================
+' K_STATS_Gamma_Cumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Gamma left-tail cumulative probability at X.
+'
+' WORKSHEET EQUIVALENT
+'   GAMMA.DIST(X, Shape, ScaleParam, TRUE)
+'
+' INPUTS
+'   X           Evaluation point.
+'   Shape       Positive Gamma shape parameter.
+'   ScaleParam  Positive Gamma scale parameter.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double cumulative probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero for X <= 0.
+'   - Evaluates P(Shape, X / ScaleParam) for positive X.
+'   - If X / ScaleParam overflows, returns the limiting value one.
+'
+' ERROR POLICY
+'   - Invalid parameters or kernel non-convergence return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateXShapeScale
+'   - PROB_TryDivide
+'   - PROB_TryGammaRegularizedP
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and overflow classification.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim StandardX           As Double          'X divided by ScaleParam
+    Dim Value               As Double          'Cumulative probability
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-        If Not PROB_CN_ValidateXAndTwoPositive( _
-            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate X, Shape and ScaleParam
+        If Not PROB_CN_ValidateXShapeScale( _
+            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then
+            GoTo Fail_Num
+        End If
 
+'------------------------------------------------------------------------------
+' HANDLE SUPPORT EDGE
+'------------------------------------------------------------------------------
+    'Return zero at and below the support origin
         If X <= 0# Then
             K_STATS_Gamma_Cumulative = 0#
             GoTo Return_Success
         End If
 
-        'A positive ratio overflow is the mathematical +infinity limit.
+'------------------------------------------------------------------------------
+' COMPUTE CUMULATIVE PROBABILITY
+'------------------------------------------------------------------------------
+    'Treat a positive standardized-ratio overflow as the +infinity limit
         If Not PROB_TryDivide(X, ScaleParam, StandardX) Then
             K_STATS_Gamma_Cumulative = 1#
             GoTo Return_Success
         End If
 
+    'Evaluate the regularized lower incomplete gamma function
         If Not PROB_TryGammaRegularizedP( _
-            Shape, StandardX, Value, FailMsg) Then GoTo Fail_Num
+            Shape, StandardX, Value, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
+    'Return the cumulative probability
         K_STATS_Gamma_Cumulative = Value
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
 Return_Success:
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
 
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Gamma_Cumulative = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Cumulative: " & Err.Description
+    'Return worksheet value error
         K_STATS_Gamma_Cumulative = CVErr(xlErrValue)
 End Function
 
@@ -252,43 +459,133 @@ Public Function K_STATS_Gamma_Survival( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-    Dim StandardX          As Double
-    Dim Value              As Double
-    Dim FailMsg            As String
+'==============================================================================
+' K_STATS_Gamma_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Gamma right-tail survival probability at X.
+'
+' WHY THIS EXISTS
+'   The upper tail is evaluated directly through the regularized incomplete
+'   gamma Q function so small probabilities are not lost to 1 minus CDF.
+'
+' WORKSHEET EQUIVALENT
+'   1 - GAMMA.DIST(X, Shape, ScaleParam, TRUE)
+'
+' INPUTS
+'   X           Evaluation point.
+'   Shape       Positive Gamma shape parameter.
+'   ScaleParam  Positive Gamma scale parameter.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double survival probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns one for X <= 0.
+'   - Evaluates Q(Shape, X / ScaleParam) for positive X.
+'   - If X / ScaleParam overflows, returns the limiting value zero.
+'
+' ERROR POLICY
+'   - Invalid parameters or kernel non-convergence return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateXShapeScale
+'   - PROB_TryDivide
+'   - PROB_TryGammaRegularizedQ
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and direct-tail preservation.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim StandardX           As Double          'X divided by ScaleParam
+    Dim Value               As Double          'Survival probability
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-        If Not PROB_CN_ValidateXAndTwoPositive( _
-            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate X, Shape and ScaleParam
+        If Not PROB_CN_ValidateXShapeScale( _
+            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then
+            GoTo Fail_Num
+        End If
 
+'------------------------------------------------------------------------------
+' HANDLE SUPPORT EDGE
+'------------------------------------------------------------------------------
+    'Return one at and below the support origin
         If X <= 0# Then
             K_STATS_Gamma_Survival = 1#
             GoTo Return_Success
         End If
 
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Treat a positive standardized-ratio overflow as the +infinity limit
         If Not PROB_TryDivide(X, ScaleParam, StandardX) Then
             K_STATS_Gamma_Survival = 0#
             GoTo Return_Success
         End If
 
+    'Evaluate the regularized upper incomplete gamma function
         If Not PROB_TryGammaRegularizedQ( _
-            Shape, StandardX, Value, FailMsg) Then GoTo Fail_Num
+            Shape, StandardX, Value, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
+    'Return the survival probability
         K_STATS_Gamma_Survival = Value
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
 Return_Success:
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
 
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Gamma_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Survival: " & Err.Description
+    'Return worksheet value error
         K_STATS_Gamma_Survival = CVErr(xlErrValue)
 End Function
 
@@ -304,44 +601,48 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 ' K_STATS_Gamma_InverseCumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Gamma quantile: the X for which P(Gamma <= X) = Probability.
+'   Returns the Gamma quantile for Probability, Shape and ScaleParam.
 '
 ' WHY THIS EXISTS
-'   Quantiles set reserve levels, capital requirements and simulation cut-offs.
-'   The inverse is solved once, in the unit-scale gamma, then rescaled by ScaleParam.
+'   The numerical inversion is performed once on the unit-scale Gamma and the
+'   result is rescaled under the shared multiplication Try-contract.
 '
 ' WORKSHEET EQUIVALENT
 '   GAMMA.INV(Probability, Shape, ScaleParam)
 '
 ' INPUTS
-'   Probability  Target cumulative probability, strictly between 0 and 1.
-'   Shape        Shape parameter k. Must be strictly positive.
-'   ScaleParam        ScaleParam parameter theta. Must be strictly positive.
+'   Probability  Target cumulative probability in the open unit interval.
+'   Shape        Positive Gamma shape parameter.
+'   ScaleParam   Positive Gamma scale parameter.
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double quantile X.
+'     Success => Double quantile.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Inverts P(Shape, .) via PROB_TryGammaInvP on the unit-scale gamma, then
-'     multiplies the result by ScaleParam.
-'   - Non-convergence returns CVErr(xlErrNum).
+'   - Inverts the regularized lower incomplete gamma function on the unit scale.
+'   - Rescales the unit quantile with explicit overflow classification.
 '
 ' ERROR POLICY
-'   - Probability outside (0, 1) or invalid parameters return CVErr(xlErrNum).
-'   - Non-convergence returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid inputs, non-convergence or rescaling overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsValidProbabilityOpen, PROB_IsPositiveFinite
-'   - PROB_TryGammaInvP, PROB_SetStatus
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_IsPositiveFinite
+'   - PROB_TryGammaInvP
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style normalization and Gate 3 overflow contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -371,7 +672,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
         End If
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
+            FailMsg = "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -435,33 +736,37 @@ Public Function K_STATS_Gamma_Mean( _
 ' K_STATS_Gamma_Mean
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the mean of the Gamma distribution, Shape * ScaleParam.
-'
-' WORKSHEET EQUIVALENT
-'   (none; Shape * ScaleParam)
+'   Returns the Gamma mean, Shape * ScaleParam.
 '
 ' INPUTS
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter theta. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
+'   Shape       Positive Gamma shape parameter.
+'   ScaleParam  Positive Gamma scale parameter.
+'   Status      Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double mean Shape * ScaleParam.
+'     Success => Double mean.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Guards the product against Double overflow before forming it.
+'   - Forms the product through PROB_TryMultiply.
 '
 ' ERROR POLICY
-'   - Invalid parameters or overflow return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid inputs or product overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_DOUBLE_MAX, PROB_SetStatus
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_IsPositiveFinite
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style normalization and Gate 3 product contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -485,7 +790,7 @@ Public Function K_STATS_Gamma_Mean( _
 '------------------------------------------------------------------------------
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
+            FailMsg = "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -545,34 +850,38 @@ Public Function K_STATS_Gamma_Variance( _
 ' K_STATS_Gamma_Variance
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the variance of the Gamma distribution, Shape * ScaleParam ^ 2.
-'
-' WORKSHEET EQUIVALENT
-'   (none; Shape * ScaleParam ^ 2)
+'   Returns the Gamma variance, Shape * ScaleParam squared.
 '
 ' INPUTS
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter theta. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
+'   Shape       Positive Gamma shape parameter.
+'   ScaleParam  Positive Gamma scale parameter.
+'   Status      Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double variance Shape * ScaleParam ^ 2.
+'     Success => Double variance.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Guards each multiplication against Double overflow, nested so the guard is
-'     never itself a division by zero.
+'   - Guards each multiplication separately so no intermediate overflow escapes
+'     into the unexpected-error handler.
 '
 ' ERROR POLICY
-'   - Invalid parameters or overflow return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid inputs or product overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_DOUBLE_MAX, PROB_SetStatus
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_IsPositiveFinite
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style normalization and Gate 3 product contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -596,7 +905,7 @@ Public Function K_STATS_Gamma_Variance( _
 '------------------------------------------------------------------------------
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
+            FailMsg = "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -661,35 +970,39 @@ Public Function K_STATS_Gamma_StdDev( _
 ' K_STATS_Gamma_StdDev
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the standard deviation of the Gamma distribution, ScaleParam * Sqr(Shape).
-'
-' WORKSHEET EQUIVALENT
-'   (none; ScaleParam * SQRT(Shape))
+'   Returns the Gamma standard deviation, ScaleParam * Sqr(Shape).
 '
 ' INPUTS
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter theta. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
+'   Shape       Positive Gamma shape parameter.
+'   ScaleParam  Positive Gamma scale parameter.
+'   Status      Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double standard deviation ScaleParam * Sqr(Shape).
+'     Success => Double standard deviation.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Uses the reduced-magnitude form ScaleParam * Sqr(Shape) rather than
-'     Sqr(Variance), so it stays finite for parameters whose variance would
-'     overflow.
+'   - Uses the reduced-magnitude closed form rather than taking the square root
+'     of a potentially overflowing variance.
+'   - Guards the final multiplication explicitly.
 '
 ' ERROR POLICY
-'   - Invalid parameters or overflow return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid inputs or product overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_DOUBLE_MAX, PROB_SetStatus
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_IsPositiveFinite
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style normalization and Gate 3 product contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -714,7 +1027,7 @@ Public Function K_STATS_Gamma_StdDev( _
 '------------------------------------------------------------------------------
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
+            FailMsg = "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -782,51 +1095,48 @@ Public Function K_STATS_Beta_Density( _
 ' K_STATS_Beta_Density
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Beta probability density at X on [0, 1] for shapes Alpha, Beta.
+'   Returns the Beta probability density at X for shapes Alpha and Beta.
 '
 ' WHY THIS EXISTS
-'   The Beta density is the conjugate prior for a proportion and the reference
-'   shape for anything bounded on [0, 1]. Evaluating it through the log-density
-'   and PROB_LogBeta avoids the overflow that a direct ratio of gamma functions
-'   would hit for large shapes.
+'   The density is evaluated in the logarithmic domain through PROB_LogBeta so
+'   large shape parameters do not form unstable Gamma-function ratios directly.
 '
 ' WORKSHEET EQUIVALENT
 '   BETA.DIST(X, Alpha, Beta, FALSE)
 '
 ' INPUTS
-'   X       Evaluation point. Outside [0, 1] the density is 0.
-'   Alpha   First shape parameter. Must be strictly positive.
-'   Beta    Second shape parameter. Must be strictly positive.
+'   X       Evaluation point. Values outside [0, 1] have density zero.
+'   Alpha   Positive first Beta shape parameter.
+'   Beta    Positive second Beta shape parameter.
 '   Status  Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double density value.
+'     Success => Double density.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 0 for X < 0 or X > 1.
-'   - At X = 0 the density is unbounded when Alpha < 1: returns CVErr(xlErrNum).
-'     When Alpha = 1 it equals Beta; when Alpha > 1 it equals 0.
-'   - At X = 1 the density is unbounded when Beta < 1: returns CVErr(xlErrNum).
-'     When Beta = 1 it equals Alpha; when Beta > 1 it equals 0.
-'   - Otherwise Exp((Alpha-1)*Log(X) + (Beta-1)*Log1p(-X) - LogBeta(Alpha,Beta)).
-'     The (1 - X) logarithm is taken through PROB_Log1p(-X) so the density keeps
-'     full relative precision as X approaches 1.
+'   - Handles both endpoint poles explicitly.
+'   - Uses PROB_Log1p(-X) near the right endpoint.
+'   - Mathematically valid underflow returns zero.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Density pole or overflow returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid inputs, endpoint poles or density overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_Log1p, PROB_LogBeta, PROB_TryExp, PROB_SetStatus
+'   - PROB_CN_ValidateXTwoShapes
+'   - PROB_Log1p
+'   - PROB_LogBeta
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Two-shape validation and house-style normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -850,7 +1160,7 @@ Public Function K_STATS_Beta_Density( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate the evaluation point and both positive parameters
-        If Not PROB_CN_ValidateXAndTwoPositive( _
+        If Not PROB_CN_ValidateXTwoShapes( _
             X, Alpha, Beta, FailMsg, "Alpha", "Beta") Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
@@ -948,44 +1258,41 @@ Public Function K_STATS_Beta_Cumulative( _
 ' K_STATS_Beta_Cumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the left-tail Beta cumulative distribution function at X.
-'
-' WHY THIS EXISTS
-'   The Beta CDF is the regularized incomplete beta itself, and is the bridge
-'   that turns an F variate into a Beta for cross-checking.
+'   Returns the Beta left-tail cumulative probability at X.
 '
 ' WORKSHEET EQUIVALENT
 '   BETA.DIST(X, Alpha, Beta, TRUE)
 '
 ' INPUTS
-'   X       Evaluation point. For X <= 0 the CDF is 0; for X >= 1 it is 1.
-'   Alpha   First shape parameter. Must be strictly positive.
-'   Beta    Second shape parameter. Must be strictly positive.
+'   X       Evaluation point.
+'   Alpha   Positive first Beta shape parameter.
+'   Beta    Positive second Beta shape parameter.
 '   Status  Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double cumulative probability I_X(Alpha, Beta).
+'     Success => Double cumulative probability in [0, 1].
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 0 for X <= 0 and 1 for X >= 1.
-'   - Otherwise the regularized incomplete beta I_X(Alpha, Beta), computed with
-'     both X and 1 - X passed to the kernel.
+'   - Returns zero for X <= 0 and one for X >= 1.
+'   - Passes X and 1 - X as a paired argument to the incomplete-beta kernel.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Non-convergence returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid inputs or kernel non-convergence return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryBetaRegularized, PROB_SetStatus
+'   - PROB_CN_ValidateXTwoShapes
+'   - PROB_TryBetaRegularized
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Two-shape validation and house-style normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1008,7 +1315,7 @@ Public Function K_STATS_Beta_Cumulative( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate the evaluation point and both positive parameters
-        If Not PROB_CN_ValidateXAndTwoPositive( _
+        If Not PROB_CN_ValidateXTwoShapes( _
             X, Alpha, Beta, FailMsg, "Alpha", "Beta") Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
@@ -1073,44 +1380,45 @@ Public Function K_STATS_Beta_Survival( _
 ' K_STATS_Beta_Survival
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the right-tail Beta survival function 1 - CDF at X.
+'   Returns the Beta right-tail survival probability at X.
 '
 ' WHY THIS EXISTS
-'   Computing the upper tail as the swapped incomplete beta I_(1-X)(Beta, Alpha)
-'   rather than 1 - I_X(Alpha, Beta) keeps the small tail accurate: the naive
-'   subtraction loses every digit once the CDF has rounded to one.
+'   The upper tail is evaluated as the swapped incomplete beta
+'   I_(1-X)(Beta, Alpha), avoiding loss of significance from 1 minus CDF.
 '
 ' WORKSHEET EQUIVALENT
 '   1 - BETA.DIST(X, Alpha, Beta, TRUE)
 '
 ' INPUTS
-'   X       Evaluation point. For X <= 0 the survival is 1; for X >= 1 it is 0.
-'   Alpha   First shape parameter. Must be strictly positive.
-'   Beta    Second shape parameter. Must be strictly positive.
+'   X       Evaluation point.
+'   Alpha   Positive first Beta shape parameter.
+'   Beta    Positive second Beta shape parameter.
 '   Status  Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double survival probability P(Beta > X) = I_(1-X)(Beta, Alpha).
+'     Success => Double survival probability in [0, 1].
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 1 for X <= 0 and 0 for X >= 1.
-'   - Otherwise the swapped regularized incomplete beta I_(1-X)(Beta, Alpha).
+'   - Returns one for X <= 0 and zero for X >= 1.
+'   - Evaluates the smaller upper tail directly.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Non-convergence returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid inputs or kernel non-convergence return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryBetaRegularized, PROB_SetStatus
+'   - PROB_CN_ValidateXTwoShapes
+'   - PROB_TryBetaRegularized
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Two-shape validation and direct-tail normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1133,7 +1441,7 @@ Public Function K_STATS_Beta_Survival( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate the evaluation point and both positive parameters
-        If Not PROB_CN_ValidateXAndTwoPositive( _
+        If Not PROB_CN_ValidateXTwoShapes( _
             X, Alpha, Beta, FailMsg, "Alpha", "Beta") Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
@@ -1198,40 +1506,42 @@ Public Function K_STATS_Beta_InverseCumulative( _
 ' K_STATS_Beta_InverseCumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Beta quantile: the X for which I_X(Alpha, Beta) = Probability.
+'   Returns the Beta quantile for Probability, Alpha and Beta.
 '
 ' WORKSHEET EQUIVALENT
 '   BETA.INV(Probability, Alpha, Beta)
 '
 ' INPUTS
-'   Probability  Target cumulative probability, strictly between 0 and 1.
-'   Alpha        First shape parameter. Must be strictly positive.
-'   Beta         Second shape parameter. Must be strictly positive.
+'   Probability  Target cumulative probability in the open unit interval.
+'   Alpha        Positive first Beta shape parameter.
+'   Beta         Positive second Beta shape parameter.
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double quantile X in (0, 1).
+'     Success => Double quantile in (0, 1).
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Inverts the regularized incomplete beta via PROB_TryBetaInvRegularized,
-'     which returns the quantile and its complement as a cancellation-free pair;
-'     this function returns the quantile.
+'   - Uses the paired beta-inverse kernel, which returns the quantile and its
+'     complement without reconstructing the smaller value by subtraction.
 '
 ' ERROR POLICY
-'   - Probability outside (0, 1) or invalid parameters return CVErr(xlErrNum).
-'   - Non-convergence returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid inputs or non-convergence return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsValidProbabilityOpen, PROB_IsPositiveFinite
-'   - PROB_TryBetaInvRegularized, PROB_SetStatus
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_TryBetaInvRegularized
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1261,12 +1571,12 @@ Public Function K_STATS_Beta_InverseCumulative( _
         End If
     'Validate first shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
-            FailMsg = "Alpha must be a finite strictly positive number"
+            FailMsg = "Alpha must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate second shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
-            FailMsg = "Beta must be a finite strictly positive number"
+            FailMsg = "Beta must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
 
@@ -1320,14 +1630,16 @@ Public Function K_STATS_Beta_Mean( _
 ' K_STATS_Beta_Mean
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the mean of the Beta distribution, Alpha / (Alpha + Beta).
+'   Returns the Beta mean, Alpha / (Alpha + Beta).
 '
-' WORKSHEET EQUIVALENT
-'   (none; Alpha / (Alpha + Beta))
+' WHY THIS EXISTS
+'   The implementation uses a ratio-scaled form rather than forming Alpha plus
+'   Beta first. This preserves the mean for highly unbalanced shapes and avoids
+'   an unnecessary intermediate-sum restriction.
 '
 ' INPUTS
-'   Alpha   First shape parameter. Must be strictly positive.
-'   Beta    Second shape parameter. Must be strictly positive.
+'   Alpha   Positive first Beta shape parameter.
+'   Beta    Positive second Beta shape parameter.
 '   Status  Optional ByRef diagnostic message.
 '
 ' RETURNS
@@ -1336,23 +1648,30 @@ Public Function K_STATS_Beta_Mean( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Rejects the case where Alpha + Beta overflows to a non-finite Double.
+'   - When Alpha >= Beta, evaluates 1 / (1 + Beta / Alpha).
+'   - Otherwise evaluates (Alpha / Beta) / (1 + Alpha / Beta).
 '
 ' ERROR POLICY
-'   - Invalid parameters or a non-finite Alpha + Beta return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid shape parameters return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_IsFinite, PROB_SetStatus
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Stable ratio formulation and house-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim Sum                 As Double          'Alpha + Beta
+    Dim Ratio               As Double          'Smaller shape divided by larger shape
+    Dim MeanValue           As Double          'Returned mean
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1368,29 +1687,34 @@ Public Function K_STATS_Beta_Mean( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate first shape
+    'Validate the first shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
-            FailMsg = "Alpha must be a finite strictly positive number"
+            FailMsg = _
+                "Alpha must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
-    'Validate second shape
+
+    'Validate the second shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
-            FailMsg = "Beta must be a finite strictly positive number"
+            FailMsg = _
+                "Beta must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
 
 '------------------------------------------------------------------------------
 ' COMPUTE MEAN
 '------------------------------------------------------------------------------
-    'Form the shape sum and reject a non-finite result
-        Sum = Alpha + Beta
-        If Not PROB_IsWithinSupportedMagnitude(Sum) Then
-            FailMsg = "Beta mean overflows Double range in Alpha + Beta"
-            GoTo Fail_Num
+    'Scale by the larger shape so the intermediate ratio is at most one
+        If Alpha >= Beta Then
+            Ratio = Beta / Alpha
+            MeanValue = 1# / (1# + Ratio)
+        Else
+            Ratio = Alpha / Beta
+            MeanValue = Ratio / (1# + Ratio)
         End If
 
     'Return the mean
-        K_STATS_Beta_Mean = Alpha / Sum
+        K_STATS_Beta_Mean = MeanValue
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -1432,15 +1756,16 @@ Public Function K_STATS_Beta_Variance( _
 ' K_STATS_Beta_Variance
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the variance of the Beta distribution,
-'   Alpha * Beta / ((Alpha + Beta) ^ 2 * (Alpha + Beta + 1)).
+'   Returns the Beta variance.
 '
-' WORKSHEET EQUIVALENT
-'   (none)
+' NUMERICAL METHOD
+'   Uses Mean * (1 - Mean) / (Alpha + Beta + 1). The mean is formed through a
+'   ratio-scaled expression and the denominator is assembled through guarded
+'   addition. The direct product Alpha * Beta is never formed.
 '
 ' INPUTS
-'   Alpha   First shape parameter. Must be strictly positive.
-'   Beta    Second shape parameter. Must be strictly positive.
+'   Alpha   Positive first Beta shape parameter.
+'   Beta    Positive second Beta shape parameter.
 '   Status  Optional ByRef diagnostic message.
 '
 ' RETURNS
@@ -1448,27 +1773,32 @@ Public Function K_STATS_Beta_Variance( _
 '     Success => Double variance in (0, 0.25].
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
-' BEHAVIOR
-'   - Uses the algebraically equal form Mean * (1 - Mean) / (Alpha + Beta + 1),
-'     which never forms the product Alpha * Beta and so cannot overflow for
-'     large shapes.
-'
 ' ERROR POLICY
-'   - Invalid parameters or a non-finite Alpha + Beta return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid shape parameters or denominator overflow return #NUM!.
+'   - Mathematically valid underflow returns zero.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_IsFinite, PROB_SetStatus
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_TryAdd
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Stable ratio formulation and guarded denominator assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim Sum                 As Double          'Alpha + Beta
-    Dim MeanValue           As Double          'Alpha / Sum
+    Dim ShapeSum            As Double          'Alpha plus Beta
+    Dim Denominator         As Double          'Alpha plus Beta plus one
+    Dim Ratio               As Double          'Smaller shape divided by larger shape
+    Dim MeanValue           As Double          'Beta mean
+    Dim VarianceValue       As Double          'Returned variance
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1484,30 +1814,50 @@ Public Function K_STATS_Beta_Variance( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate first shape
+    'Validate the first shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
-            FailMsg = "Alpha must be a finite strictly positive number"
+            FailMsg = _
+                "Alpha must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
-    'Validate second shape
+
+    'Validate the second shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
-            FailMsg = "Beta must be a finite strictly positive number"
+            FailMsg = _
+                "Beta must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
 
 '------------------------------------------------------------------------------
 ' COMPUTE VARIANCE
 '------------------------------------------------------------------------------
-    'Form the shape sum and reject a non-finite result
-        Sum = Alpha + Beta
-        If Not PROB_IsWithinSupportedMagnitude(Sum) Then
-            FailMsg = "Beta variance overflows Double range in Alpha + Beta"
+    'Form the mean through a ratio no greater than one
+        If Alpha >= Beta Then
+            Ratio = Beta / Alpha
+            MeanValue = 1# / (1# + Ratio)
+        Else
+            Ratio = Alpha / Beta
+            MeanValue = Ratio / (1# + Ratio)
+        End If
+
+    'Form Alpha + Beta under the shared arithmetic contract
+        If Not PROB_TryAdd(Alpha, Beta, ShapeSum) Then
+            FailMsg = "Beta variance overflowed in Alpha + Beta"
             GoTo Fail_Num
         End If
 
-    'Return the variance in the non-overflowing form
-        MeanValue = Alpha / Sum
-        K_STATS_Beta_Variance = MeanValue * (1# - MeanValue) / (Sum + 1#)
+    'Form Alpha + Beta + 1 under the shared arithmetic contract
+        If Not PROB_TryAdd(ShapeSum, 1#, Denominator) Then
+            FailMsg = "Beta variance denominator overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Evaluate the bounded variance expression
+        VarianceValue = _
+            MeanValue * (1# - MeanValue) / Denominator
+
+    'Return the variance
+        K_STATS_Beta_Variance = VarianceValue
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -1549,14 +1899,16 @@ Public Function K_STATS_Beta_StdDev( _
 ' K_STATS_Beta_StdDev
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the standard deviation of the Beta distribution, Sqr(Variance).
+'   Returns the Beta standard deviation.
 '
-' WORKSHEET EQUIVALENT
-'   (none)
+' NUMERICAL METHOD
+'   Forms the stable Beta variance through a ratio-scaled mean and guarded
+'   denominator, then takes its square root. The variance is bounded above by
+'   one quarter, so the square root cannot overflow.
 '
 ' INPUTS
-'   Alpha   First shape parameter. Must be strictly positive.
-'   Beta    Second shape parameter. Must be strictly positive.
+'   Alpha   Positive first Beta shape parameter.
+'   Beta    Positive second Beta shape parameter.
 '   Status  Optional ByRef diagnostic message.
 '
 ' RETURNS
@@ -1564,27 +1916,32 @@ Public Function K_STATS_Beta_StdDev( _
 '     Success => Double standard deviation.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
-' BEHAVIOR
-'   - The Beta variance is bounded above by 0.25, so Sqr(Variance) is safe and
-'     needs no separate overflow guard.
-'
 ' ERROR POLICY
-'   - Invalid parameters or a non-finite Alpha + Beta return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid shape parameters or denominator overflow return #NUM!.
+'   - Mathematically valid underflow returns zero.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_IsFinite, PROB_SetStatus
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_TryAdd
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Stable ratio formulation and guarded denominator assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim Sum                 As Double          'Alpha + Beta
-    Dim MeanValue           As Double          'Alpha / Sum
-    Dim Variance            As Double          'Beta variance
+    Dim ShapeSum            As Double          'Alpha plus Beta
+    Dim Denominator         As Double          'Alpha plus Beta plus one
+    Dim Ratio               As Double          'Smaller shape divided by larger shape
+    Dim MeanValue           As Double          'Beta mean
+    Dim VarianceValue       As Double          'Beta variance
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1600,31 +1957,50 @@ Public Function K_STATS_Beta_StdDev( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate first shape
+    'Validate the first shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
-            FailMsg = "Alpha must be a finite strictly positive number"
+            FailMsg = _
+                "Alpha must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
-    'Validate second shape
+
+    'Validate the second shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
-            FailMsg = "Beta must be a finite strictly positive number"
+            FailMsg = _
+                "Beta must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
 
 '------------------------------------------------------------------------------
 ' COMPUTE STANDARD DEVIATION
 '------------------------------------------------------------------------------
-    'Form the shape sum and reject a non-finite result
-        Sum = Alpha + Beta
-        If Not PROB_IsWithinSupportedMagnitude(Sum) Then
-            FailMsg = "Beta standard deviation overflows Double range in Alpha + Beta"
+    'Form the mean through a ratio no greater than one
+        If Alpha >= Beta Then
+            Ratio = Beta / Alpha
+            MeanValue = 1# / (1# + Ratio)
+        Else
+            Ratio = Alpha / Beta
+            MeanValue = Ratio / (1# + Ratio)
+        End If
+
+    'Form Alpha + Beta under the shared arithmetic contract
+        If Not PROB_TryAdd(Alpha, Beta, ShapeSum) Then
+            FailMsg = "Beta standard deviation overflowed in Alpha + Beta"
             GoTo Fail_Num
         End If
 
-    'Form the variance in the non-overflowing form, then take its root
-        MeanValue = Alpha / Sum
-        Variance = MeanValue * (1# - MeanValue) / (Sum + 1#)
-        K_STATS_Beta_StdDev = Sqr(Variance)
+    'Form Alpha + Beta + 1 under the shared arithmetic contract
+        If Not PROB_TryAdd(ShapeSum, 1#, Denominator) Then
+            FailMsg = _
+                "Beta standard deviation denominator overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Evaluate the variance and take its square root
+        VarianceValue = _
+            MeanValue * (1# - MeanValue) / Denominator
+
+        K_STATS_Beta_StdDev = Sqr(VarianceValue)
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -1666,48 +2042,134 @@ Public Function K_STATS_Exponential_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-    Dim LambdaX            As Double
-    Dim Density            As Double
-    Dim FailMsg            As String
+'==============================================================================
+' K_STATS_Exponential_Density
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Exponential probability density at X for rate Lambda.
+'
+' WORKSHEET EQUIVALENT
+'   EXPON.DIST(X, Lambda, FALSE)
+'
+' INPUTS
+'   X       Evaluation point. Values below zero have density zero.
+'   Lambda  Positive rate parameter.
+'   Status  Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double density.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero below the support.
+'   - Returns Lambda at X = 0.
+'   - If Lambda * X overflows, the exponential damping makes the density zero.
+'   - Mathematically valid underflow returns zero.
+'
+' ERROR POLICY
+'   - Invalid parameters or density overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateXLambda
+'   - PROB_TryMultiply
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and product-overflow hardening.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LambdaX             As Double          'Lambda multiplied by X
+    Dim Density             As Double          'Returned density
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-        If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the evaluation point and rate
+        If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
+'------------------------------------------------------------------------------
+' HANDLE SUPPORT EDGES
+'------------------------------------------------------------------------------
+    'Return zero below the support
         If X < 0# Then
             K_STATS_Exponential_Density = 0#
             GoTo Return_Success
         End If
 
+    'Return the rate at the support origin
         If X = 0# Then
             K_STATS_Exponential_Density = Lambda
             GoTo Return_Success
         End If
 
-        'Positive product overflow means the exponential damping is complete.
+'------------------------------------------------------------------------------
+' COMPUTE DENSITY
+'------------------------------------------------------------------------------
+    'Treat positive product overflow as complete exponential damping
         If Not PROB_TryMultiply(Lambda, X, LambdaX) Then
             K_STATS_Exponential_Density = 0#
             GoTo Return_Success
         End If
 
+    'Evaluate Exp(Log(Lambda) - Lambda * X) under the shared contract
         If Not PROB_TryExp(Log(Lambda) - LambdaX, Density) Then
             FailMsg = "Exponential density overflowed a Double"
             GoTo Fail_Num
         End If
 
+    'Return the density
         K_STATS_Exponential_Density = Density
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
 Return_Success:
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Exponential_Density = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_Density: " & Err.Description
+    'Return worksheet value error
         K_STATS_Exponential_Density = CVErr(xlErrValue)
 End Function
 
@@ -1718,36 +2180,120 @@ Public Function K_STATS_Exponential_Cumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-    Dim LambdaX            As Double
-    Dim FailMsg            As String
+'==============================================================================
+' K_STATS_Exponential_Cumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Exponential left-tail cumulative probability at X.
+'
+' WORKSHEET EQUIVALENT
+'   EXPON.DIST(X, Lambda, TRUE)
+'
+' INPUTS
+'   X       Evaluation point.
+'   Lambda  Positive rate parameter.
+'   Status  Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double cumulative probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero for X <= 0.
+'   - Evaluates 1 - Exp(-Lambda * X) through -PROB_Expm1(-Lambda * X).
+'   - If Lambda * X overflows, returns the limiting value one.
+'
+' ERROR POLICY
+'   - Invalid parameters return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateXLambda
+'   - PROB_TryMultiply
+'   - PROB_Expm1
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and left-tail preservation.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LambdaX             As Double          'Lambda multiplied by X
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-        If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the evaluation point and rate
+        If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
+'------------------------------------------------------------------------------
+' HANDLE SUPPORT EDGE
+'------------------------------------------------------------------------------
+    'Return zero at and below the support origin
         If X <= 0# Then
             K_STATS_Exponential_Cumulative = 0#
             GoTo Return_Success
         End If
 
+'------------------------------------------------------------------------------
+' COMPUTE CUMULATIVE PROBABILITY
+'------------------------------------------------------------------------------
+    'Treat positive product overflow as the +infinity limit
         If Not PROB_TryMultiply(Lambda, X, LambdaX) Then
             K_STATS_Exponential_Cumulative = 1#
             GoTo Return_Success
         End If
 
+    'Evaluate the CDF without cancellation in the left tail
         K_STATS_Exponential_Cumulative = -PROB_Expm1(-LambdaX)
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
 Return_Success:
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Exponential_Cumulative = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_Cumulative: " & Err.Description
+    'Return worksheet value error
         K_STATS_Exponential_Cumulative = CVErr(xlErrValue)
 End Function
 
@@ -1758,42 +2304,128 @@ Public Function K_STATS_Exponential_Survival( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-    Dim LambdaX            As Double
-    Dim Survival           As Double
-    Dim FailMsg            As String
+'==============================================================================
+' K_STATS_Exponential_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Exponential right-tail survival probability at X.
+'
+' WORKSHEET EQUIVALENT
+'   1 - EXPON.DIST(X, Lambda, TRUE)
+'
+' INPUTS
+'   X       Evaluation point.
+'   Lambda  Positive rate parameter.
+'   Status  Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double survival probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns one for X <= 0.
+'   - Evaluates Exp(-Lambda * X) directly.
+'   - If Lambda * X overflows, returns the limiting value zero.
+'
+' ERROR POLICY
+'   - Invalid parameters return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateXLambda
+'   - PROB_TryMultiply
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and direct-tail preservation.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LambdaX             As Double          'Lambda multiplied by X
+    Dim Survival            As Double          'Returned survival probability
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-        If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the evaluation point and rate
+        If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
+'------------------------------------------------------------------------------
+' HANDLE SUPPORT EDGE
+'------------------------------------------------------------------------------
+    'Return one at and below the support origin
         If X <= 0# Then
             K_STATS_Exponential_Survival = 1#
             GoTo Return_Success
         End If
 
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Treat positive product overflow as the +infinity limit
         If Not PROB_TryMultiply(Lambda, X, LambdaX) Then
             K_STATS_Exponential_Survival = 0#
             GoTo Return_Success
         End If
 
+    'Evaluate the direct survival exponential
         If Not PROB_TryExp(-LambdaX, Survival) Then
-            FailMsg = "Unexpected positive exponential argument in survival kernel"
+            FailMsg = _
+                "Unexpected positive exponential argument in survival kernel"
             GoTo Fail_Num
         End If
 
+    'Return the survival probability
         K_STATS_Exponential_Survival = Survival
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
 Return_Success:
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Exponential_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_Survival: " & Err.Description
+    'Return worksheet value error
         K_STATS_Exponential_Survival = CVErr(xlErrValue)
 End Function
 
@@ -1804,43 +2436,130 @@ Public Function K_STATS_Exponential_InverseCumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-    Dim NegLogComplement   As Double
-    Dim LogQuantile        As Double
-    Dim Quantile           As Double
-    Dim FailMsg            As String
+'==============================================================================
+' K_STATS_Exponential_InverseCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Exponential quantile for Probability and rate Lambda.
+'
+' WHY THIS EXISTS
+'   The quantile is evaluated in the logarithmic domain so very small rates and
+'   extreme probabilities are classified before a final Double overflow occurs.
+'
+' WORKSHEET EQUIVALENT
+'   EXPON.INV(Probability, Lambda)
+'
+' INPUTS
+'   Probability  Target cumulative probability in the open unit interval.
+'   Lambda       Positive rate parameter.
+'   Status       Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double quantile.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Computes -Log(1 - Probability) through PROB_Log1p.
+'   - Forms Log(Quantile) before the final guarded exponential.
+'   - A final quantile outside Double range returns #NUM!.
+'
+' ERROR POLICY
+'   - Invalid inputs or quantile overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_IsPositiveFinite
+'   - PROB_Log1p
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and log-domain overflow handling.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim NegLogComplement    As Double          '-Log(1 - Probability)
+    Dim LogQuantile         As Double          'Logarithm of the quantile
+    Dim Quantile            As Double          'Returned quantile
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the target probability
         If Not PROB_IsValidProbabilityOpen(Probability) Then
             FailMsg = "Probability must be strictly between 0 and 1"
             GoTo Fail_Num
         End If
+
+    'Validate the rate parameter
         If Not PROB_IsPositiveFinite(Lambda) Then
             FailMsg = "Lambda must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 
+'------------------------------------------------------------------------------
+' COMPUTE QUANTILE
+'------------------------------------------------------------------------------
+    'Evaluate -Log(1 - Probability) without cancellation
         NegLogComplement = -PROB_Log1p(-Probability)
+
+    'Assemble the quantile in the logarithmic domain
         LogQuantile = Log(NegLogComplement) - Log(Lambda)
 
+    'Exponentiate under the shared overflow and underflow contract
         If Not PROB_TryExp(LogQuantile, Quantile) Then
             FailMsg = "Exponential quantile overflowed a Double"
             GoTo Fail_Num
         End If
 
+    'Return the quantile
         K_STATS_Exponential_InverseCumulative = Quantile
 
-Return_Success:
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Exponential_InverseCumulative = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
+    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_InverseCumulative: " & Err.Description
+    'Return worksheet value error
         K_STATS_Exponential_InverseCumulative = CVErr(xlErrValue)
 End Function
 
@@ -1860,56 +2579,65 @@ Public Function K_STATS_Weibull_Density( _
 ' K_STATS_Weibull_Density
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Weibull probability density at X for shape k and scale lambda.
+'   Returns the Weibull probability density at X.
 '
 ' WHY THIS EXISTS
-'   The Weibull is the default life-data and time-to-failure model. The reduced
-'   variable z = (X / ScaleParam) ^ Shape is formed through PROB_TryExp so that a huge
-'   z degrades gracefully to a zero density instead of raising an overflow, and
-'   the density itself is taken from the log-density for the same reason.
+'   Weibull densities are central to reliability and time-to-failure modelling.
+'   The power term and the density are evaluated through guarded logarithmic
+'   expressions so extreme parameters are classified predictably.
 '
 ' WORKSHEET EQUIVALENT
 '   WEIBULL.DIST(X, Shape, ScaleParam, FALSE)
 '
 ' INPUTS
-'   X       Evaluation point. For X < 0 the density is 0.
-'   Shape   Shape parameter k (Excel Alpha). Must be strictly positive.
-'   ScaleParam   ScaleParam parameter lambda (Excel Beta). Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
+'   X           Evaluation point. Values below zero have density zero.
+'   Shape       Positive Weibull shape parameter.
+'   ScaleParam  Positive Weibull scale parameter.
+'   Status      Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double density value.
+'     Success => Double density.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 0 for X < 0.
-'   - At X = 0 the density is unbounded when Shape < 1: returns CVErr(xlErrNum).
-'     When Shape = 1 it equals 1 / ScaleParam; when Shape > 1 it equals 0.
-'   - When z = (X / ScaleParam) ^ Shape overflows, the density underflows to 0.
-'   - Otherwise Exp(Log(k) - Log(lambda) + (k-1)*(Log(X)-Log(lambda)) - z).
+'   - Returns zero below the support.
+'   - At X = 0, returns #NUM! for Shape < 1, 1 / ScaleParam for Shape = 1,
+'     and zero for Shape > 1.
+'   - A power term tending to positive infinity drives the density to zero.
+'   - Mathematically valid underflow returns zero.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Density pole or overflow returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid parameters, a density pole or density overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryExp, PROB_SetStatus
+'   - PROB_CN_ValidateXShapeScale
+'   - PROB_CN_TryWeibullPower
+'   - PROB_TryMultiply
+'   - PROB_TryAdd
+'   - PROB_TryDivide
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style rewrite and guarded log-density assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim LogRatio            As Double          'Log(X) - Log(ScaleParam)
-    Dim Z                   As Double          '(X / ScaleParam) ^ Shape
-    Dim Density             As Double          'Density value
+    Dim LogRatio            As Double          'Log(X / ScaleParam)
+    Dim ShapeLogRatio       As Double          '(Shape - 1) * LogRatio
+    Dim LogDensity          As Double          'Logarithm of the density
+    Dim LogDensityPartial   As Double          'Intermediate log-density sum
+    Dim PowerValue          As Double          '(X / ScaleParam) ^ Shape
+    Dim PowerIsInfinite     As Boolean         'True when the power exceeds Double
+    Dim Density             As Double          'Returned density
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1925,52 +2653,100 @@ Public Function K_STATS_Weibull_Density( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point and both positive parameters
-        If Not PROB_CN_ValidateXAndTwoPositive( _
-            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
+    'Validate X, Shape and ScaleParam
+        If Not PROB_CN_ValidateXShapeScale( _
+            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
-' HANDLE THE SUPPORT EDGE
+' HANDLE SUPPORT EDGES
 '------------------------------------------------------------------------------
-    'Return zero below the support
+    'Return zero below the positive support
         If X < 0# Then
             K_STATS_Weibull_Density = 0#
             GoTo Return_Success
         End If
 
-    'Handle the origin, where the density is 0, 1 / ScaleParam or unbounded
+    'Handle the origin according to the Weibull shape
         If X = 0# Then
             If Shape < 1# Then
-                FailMsg = "Weibull density is unbounded at X = 0 when Shape < 1"
+                FailMsg = _
+                    "Weibull density is unbounded at X = 0 when Shape < 1"
                 GoTo Fail_Num
+
             ElseIf Shape = 1# Then
                 If Not PROB_TryDivide(1#, ScaleParam, Density) Then
                     FailMsg = "Weibull density overflows Double at X = 0"
                     GoTo Fail_Num
                 End If
+
                 K_STATS_Weibull_Density = Density
+
             Else
                 K_STATS_Weibull_Density = 0#
             End If
+
             GoTo Return_Success
         End If
 
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
-    'Form the log of the scaled variable
+    'Form the logarithm of the scaled evaluation point
         LogRatio = Log(X) - Log(ScaleParam)
 
-    'Form z = (X / ScaleParam) ^ Shape; overflow means the density underflows to 0
-        If Not PROB_TryExp(Shape * LogRatio, Z) Then
+    'Evaluate the Weibull power under the shared arithmetic contract
+        If Not PROB_CN_TryWeibullPower( _
+            LogRatio, Shape, PowerValue, PowerIsInfinite, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'An infinite positive power drives the density to zero
+        If PowerIsInfinite Then
             K_STATS_Weibull_Density = 0#
             GoTo Return_Success
         End If
 
-    'Exponentiate the log-density; underflow to zero is a valid result
-        If Not PROB_TryExp( _
-            Log(Shape) - Log(ScaleParam) + (Shape - 1#) * LogRatio - Z, _
-            Density) Then
+    'Form the shape-adjusted logarithmic term with explicit overflow handling
+        If Not PROB_TryMultiply(Shape - 1#, LogRatio, ShapeLogRatio) Then
+            If (Shape - 1#) * Sgn(LogRatio) < 0# Then
+                K_STATS_Weibull_Density = 0#
+                GoTo Return_Success
+            End If
+
+            FailMsg = "Weibull log-density overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Combine the variable and power terms without an unclassified overflow
+        If Not PROB_TryAdd(ShapeLogRatio, -PowerValue, LogDensityPartial) Then
+            If ShapeLogRatio < 0# Then
+                K_STATS_Weibull_Density = 0#
+                GoTo Return_Success
+            End If
+
+            FailMsg = "Weibull log-density overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Add the shape and scale normalization terms
+        If Not PROB_TryAdd( _
+            Log(Shape) - Log(ScaleParam), _
+            LogDensityPartial, _
+            LogDensity) Then
+
+            If LogDensityPartial < 0# Then
+                K_STATS_Weibull_Density = 0#
+                GoTo Return_Success
+            End If
+
+            FailMsg = "Weibull log-density overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Exponentiate the assembled log-density
+        If Not PROB_TryExp(LogDensity, Density) Then
             FailMsg = "Weibull density overflowed a Double"
             GoTo Fail_Num
         End If
@@ -2020,50 +2796,51 @@ Public Function K_STATS_Weibull_Cumulative( _
 ' K_STATS_Weibull_Cumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the left-tail Weibull cumulative distribution function at X.
-'
-' WHY THIS EXISTS
-'   The Weibull CDF is 1 - Exp(-(X / ScaleParam) ^ Shape). Computing it as
-'   -PROB_Expm1(-(X / ScaleParam) ^ Shape) keeps the small-X tail correct to full
-'   relative precision instead of rounding it to exactly zero.
+'   Returns the Weibull left-tail cumulative probability at X.
 '
 ' WORKSHEET EQUIVALENT
 '   WEIBULL.DIST(X, Shape, ScaleParam, TRUE)
 '
 ' INPUTS
-'   X       Evaluation point. For X <= 0 the CDF is 0.
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter lambda. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
+'   X           Evaluation point.
+'   Shape       Positive Weibull shape parameter.
+'   ScaleParam  Positive Weibull scale parameter.
+'   Status      Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double cumulative probability.
+'     Success => Double cumulative probability in [0, 1].
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 0 for X <= 0.
-'   - When z = (X / ScaleParam) ^ Shape overflows, the CDF is 1.
-'   - Otherwise -PROB_Expm1(-z).
+'   - Returns zero for X <= 0.
+'   - Evaluates 1 - Exp(-(X / ScaleParam) ^ Shape) through PROB_Expm1.
+'   - A power term tending to positive infinity returns the limiting value one.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid parameters return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryExp, PROB_Expm1, PROB_SetStatus
+'   - PROB_CN_ValidateXShapeScale
+'   - PROB_CN_TryWeibullPower
+'   - PROB_Expm1
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style rewrite and guarded power evaluation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim Z                   As Double          '(X / ScaleParam) ^ Shape
+    Dim LogRatio            As Double          'Log(X / ScaleParam)
+    Dim PowerValue          As Double          '(X / ScaleParam) ^ Shape
+    Dim PowerIsInfinite     As Boolean         'True when the power exceeds Double
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -2079,27 +2856,41 @@ Public Function K_STATS_Weibull_Cumulative( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point and both positive parameters
-        If Not PROB_CN_ValidateXAndTwoPositive( _
-            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
+    'Validate X, Shape and ScaleParam
+        If Not PROB_CN_ValidateXShapeScale( _
+            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
-' COMPUTE CUMULATIVE PROBABILITY
+' HANDLE SUPPORT EDGE
 '------------------------------------------------------------------------------
-    'Return zero for values outside the positive support
+    'Return zero at and below the support origin
         If X <= 0# Then
             K_STATS_Weibull_Cumulative = 0#
             GoTo Return_Success
         End If
 
-    'Form z = (X / ScaleParam) ^ Shape; overflow saturates the CDF at 1
-        If Not PROB_TryExp(Shape * (Log(X) - Log(ScaleParam)), Z) Then
+'------------------------------------------------------------------------------
+' COMPUTE CUMULATIVE PROBABILITY
+'------------------------------------------------------------------------------
+    'Form the logarithm of the scaled evaluation point
+        LogRatio = Log(X) - Log(ScaleParam)
+
+    'Evaluate the Weibull power under the shared arithmetic contract
+        If Not PROB_CN_TryWeibullPower( _
+            LogRatio, Shape, PowerValue, PowerIsInfinite, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'An infinite positive power saturates the CDF at one
+        If PowerIsInfinite Then
             K_STATS_Weibull_Cumulative = 1#
             GoTo Return_Success
         End If
 
-    'Compute 1 - Exp(-z) without cancellation
-        K_STATS_Weibull_Cumulative = -PROB_Expm1(-Z)
+    'Evaluate one minus the survival without left-tail cancellation
+        K_STATS_Weibull_Cumulative = -PROB_Expm1(-PowerValue)
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2143,50 +2934,52 @@ Public Function K_STATS_Weibull_Survival( _
 ' K_STATS_Weibull_Survival
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the right-tail Weibull survival function Exp(-(X / ScaleParam) ^ Shape).
-'
-' WHY THIS EXISTS
-'   The survival function is the Weibull reliability function directly, and it is
-'   a bare exponential of a non-positive argument, so it needs no cancellation
-'   trick and cannot overflow.
+'   Returns the Weibull right-tail survival probability at X.
 '
 ' WORKSHEET EQUIVALENT
 '   1 - WEIBULL.DIST(X, Shape, ScaleParam, TRUE)
 '
 ' INPUTS
-'   X       Evaluation point. For X <= 0 the survival is 1.
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter lambda. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
+'   X           Evaluation point.
+'   Shape       Positive Weibull shape parameter.
+'   ScaleParam  Positive Weibull scale parameter.
+'   Status      Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double survival probability Exp(-(X / ScaleParam) ^ Shape).
+'     Success => Double survival probability in [0, 1].
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 1 for X <= 0.
-'   - When z = (X / ScaleParam) ^ Shape overflows, the survival is 0.
-'   - Otherwise Exp(-z); underflow to 0 in the far tail is a valid zero.
+'   - Returns one for X <= 0.
+'   - Evaluates Exp(-(X / ScaleParam) ^ Shape) directly.
+'   - A power term tending to positive infinity returns the limiting value zero.
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid parameters return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryExp, PROB_SetStatus
+'   - PROB_CN_ValidateXShapeScale
+'   - PROB_CN_TryWeibullPower
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style rewrite and direct-tail preservation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim Z                   As Double          '(X / ScaleParam) ^ Shape
+    Dim LogRatio            As Double          'Log(X / ScaleParam)
+    Dim PowerValue          As Double          '(X / ScaleParam) ^ Shape
+    Dim PowerIsInfinite     As Boolean         'True when the power exceeds Double
+    Dim Survival            As Double          'Returned survival probability
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -2202,27 +2995,48 @@ Public Function K_STATS_Weibull_Survival( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point and both positive parameters
-        If Not PROB_CN_ValidateXAndTwoPositive( _
-            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
+    'Validate X, Shape and ScaleParam
+        If Not PROB_CN_ValidateXShapeScale( _
+            X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
-' COMPUTE SURVIVAL PROBABILITY
+' HANDLE SUPPORT EDGE
 '------------------------------------------------------------------------------
-    'Return one for values outside the positive support
+    'Return one at and below the support origin
         If X <= 0# Then
             K_STATS_Weibull_Survival = 1#
             GoTo Return_Success
         End If
 
-    'Form z = (X / ScaleParam) ^ Shape; overflow drives the survival to 0
-        If Not PROB_TryExp(Shape * (Log(X) - Log(ScaleParam)), Z) Then
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Form the logarithm of the scaled evaluation point
+        LogRatio = Log(X) - Log(ScaleParam)
+
+    'Evaluate the Weibull power under the shared arithmetic contract
+        If Not PROB_CN_TryWeibullPower( _
+            LogRatio, Shape, PowerValue, PowerIsInfinite, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'An infinite positive power drives the survival probability to zero
+        If PowerIsInfinite Then
             K_STATS_Weibull_Survival = 0#
             GoTo Return_Success
         End If
 
-    'Compute Exp(-z); the argument is non-positive, so no overflow
-        K_STATS_Weibull_Survival = Exp(-Z)
+    'Evaluate the survival exponential under the shared contract
+        If Not PROB_TryExp(-PowerValue, Survival) Then
+            FailMsg = _
+                "Unexpected positive exponential argument in Weibull survival"
+            GoTo Fail_Num
+        End If
+
+    'Return the survival probability
+        K_STATS_Weibull_Survival = Survival
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2266,67 +3080,153 @@ Public Function K_STATS_Weibull_InverseCumulative( _
 ' K_STATS_Weibull_InverseCumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Weibull quantile for Probability in the open unit interval.
+'   Returns the Weibull quantile for Probability, Shape and ScaleParam.
 '
-' NUMERICAL METHOD
-'   Evaluates the quantile entirely in the log domain:
-'       Log(Q) = Log(ScaleParam) + Log(-Log(1-P)) / Shape.
-'   Both the division by Shape and the subsequent addition are guarded, so a
-'   tiny positive shape produces CVErr(xlErrNum), never an unexpected #VALUE!.
+' WHY THIS EXISTS
+'   The quantile is assembled in the logarithmic domain so tiny shapes, extreme
+'   probabilities and large scales are classified before a runtime overflow can
+'   escape into the worksheet error contract.
+'
+' WORKSHEET EQUIVALENT
+'   WEIBULL.INV(Probability, Shape, ScaleParam)
+'
+' INPUTS
+'   Probability  Target cumulative probability in the open unit interval.
+'   Shape        Positive Weibull shape parameter.
+'   ScaleParam   Positive Weibull scale parameter.
+'   Status       Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double quantile.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Computes Log(Quantile) as:
+'         Log(ScaleParam) + Log(-Log(1 - Probability)) / Shape.
+'   - Guards the division, addition and final exponential separately.
+'   - A final quantile outside Double range returns #NUM!.
+'
+' ERROR POLICY
+'   - Invalid inputs or predictable overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_IsPositiveFinite
+'   - PROB_Log1p
+'   - PROB_TryDivide
+'   - PROB_TryAdd
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and complete Try-contract coverage.
 '==============================================================================
 '
-    Dim NegLogComplement   As Double
-    Dim ShapeTerm          As Double
-    Dim LogQuantile        As Double
-    Dim Quantile           As Double
-    Dim FailMsg            As String
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim NegLogComplement    As Double          '-Log(1 - Probability)
+    Dim ShapeTerm           As Double          'Log(NegLogComplement) / Shape
+    Dim LogQuantile         As Double          'Logarithm of the quantile
+    Dim Quantile            As Double          'Returned quantile
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the target probability
         If Not PROB_IsValidProbabilityOpen(Probability) Then
             FailMsg = "Probability must be strictly between 0 and 1"
             GoTo Fail_Num
         End If
+
+    'Validate the shape under the supported-kernel contract
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a supported finite strictly positive number"
+            FailMsg = _
+                "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
+
+    'Validate the scale over the full finite Double range
         If Not PROB_IsPositiveFinite(ScaleParam) Then
             FailMsg = "ScaleParam must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 
+'------------------------------------------------------------------------------
+' COMPUTE QUANTILE
+'------------------------------------------------------------------------------
+    'Evaluate -Log(1 - Probability) without cancellation
         NegLogComplement = -PROB_Log1p(-Probability)
 
-        If Not PROB_TryDivide(Log(NegLogComplement), Shape, ShapeTerm) Then
+    'Divide the logarithmic probability term by Shape under the Try-contract
+        If Not PROB_TryDivide( _
+            Log(NegLogComplement), Shape, ShapeTerm) Then
+
             FailMsg = "Weibull quantile exponent overflowed a Double"
             GoTo Fail_Num
         End If
 
-        If Not PROB_TryAdd(Log(ScaleParam), ShapeTerm, LogQuantile) Then
+    'Add the logarithm of the scale under the Try-contract
+        If Not PROB_TryAdd( _
+            Log(ScaleParam), ShapeTerm, LogQuantile) Then
+
             FailMsg = "Weibull log-quantile overflowed a Double"
             GoTo Fail_Num
         End If
 
+    'Exponentiate the assembled log-quantile
         If Not PROB_TryExp(LogQuantile, Quantile) Then
             FailMsg = "Weibull quantile overflowed a Double"
             GoTo Fail_Num
         End If
 
+    'Return the quantile
         K_STATS_Weibull_InverseCumulative = Quantile
 
-Return_Success:
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Weibull_InverseCumulative = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_Weibull_InverseCumulative: " & Err.Description
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_InverseCumulative: " & Err.Description
+    'Return worksheet value error
         K_STATS_Weibull_InverseCumulative = CVErr(xlErrValue)
 End Function
 
@@ -2341,71 +3241,155 @@ Public Function K_STATS_Weibull_Mean( _
 ' K_STATS_Weibull_Mean
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns ScaleParam * Gamma(1 + 1 / Shape).
+'   Returns the Weibull mean, ScaleParam * Gamma(1 + 1 / Shape).
 '
-' NUMERICAL METHOD
-'   The reciprocal shape and final logarithmic assembly are guarded. The Gamma
-'   factor is never exponentiated separately, so a large Gamma value may still
-'   combine with a small scale when the final mean is representable.
+' WHY THIS EXISTS
+'   The Gamma factor is kept in logarithmic form until the final exponential.
+'   This permits a large Gamma factor to combine with a small scale whenever the
+'   final mean remains representable.
+'
+' INPUTS
+'   Shape       Positive Weibull shape parameter.
+'   ScaleParam  Positive Weibull scale parameter.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double mean.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Guards the reciprocal shape.
+'   - Rejects reciprocal shapes beyond the supported log-gamma range used here.
+'   - Performs the scale adjustment and final result in the logarithmic domain.
+'   - Mathematically valid underflow returns zero.
+'
+' ERROR POLICY
+'   - Invalid inputs or final-result overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_IsPositiveWithinSupportedMagnitude
+'   - PROB_IsPositiveFinite
+'   - PROB_TryDivide
+'   - PROB_TryAdd
+'   - PROB_TryExp
+'   - PROB_LogGamma
+'   - PROB_SetStatus
+'
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
+' NOTES
+'   MAX_SAFE_EPSILON is a conservative implementation boundary. Above it, the
+'   Gamma factor already exceeds what the smallest positive finite scale can
+'   offset into the representable Double range.
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite and log-domain moment assembly.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' CONSTANTS
+'------------------------------------------------------------------------------
     Const MAX_SAFE_EPSILON As Double = 1000#
 
-    Dim Epsilon            As Double
-    Dim LogMean            As Double
-    Dim MeanValue          As Double
-    Dim FailMsg            As String
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Epsilon             As Double          'Reciprocal shape
+    Dim LogMean             As Double          'Logarithm of the mean
+    Dim MeanValue           As Double          'Returned mean
+    Dim FailMsg             As String          'Detailed failure message
 
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the shape under the supported-kernel contract
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a supported finite strictly positive number"
+            FailMsg = _
+                "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
+
+    'Validate the scale over the full finite Double range
         If Not PROB_IsPositiveFinite(ScaleParam) Then
             FailMsg = "ScaleParam must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 
+'------------------------------------------------------------------------------
+' COMPUTE MEAN
+'------------------------------------------------------------------------------
+    'Form the reciprocal shape under the Try-contract
         If Not PROB_TryDivide(1#, Shape, Epsilon) Then
             FailMsg = "Weibull reciprocal shape overflowed a Double"
             GoTo Fail_Num
         End If
 
-        'For Epsilon above this bound LogGamma(1+Epsilon) already exceeds the
-        'largest offset that any positive finite scale can compensate.
+    'Reject a reciprocal shape beyond the supported compensable range
         If Epsilon > MAX_SAFE_EPSILON Then
-            FailMsg = "Weibull mean exceeds Double range for the supplied Shape"
+            FailMsg = _
+                "Weibull mean exceeds Double range for the supplied Shape"
             GoTo Fail_Num
         End If
 
+    'Add the logarithmic scale and Gamma factor under the Try-contract
         If Not PROB_TryAdd( _
             Log(ScaleParam), _
             PROB_LogGamma(1# + Epsilon), _
             LogMean) Then
+
             FailMsg = "Weibull log-mean overflowed a Double"
             GoTo Fail_Num
         End If
 
+    'Exponentiate the assembled logarithmic mean
         If Not PROB_TryExp(LogMean, MeanValue) Then
             FailMsg = "Weibull mean overflows Double range"
             GoTo Fail_Num
         End If
 
+    'Return the mean
         K_STATS_Weibull_Mean = MeanValue
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
         Exit Function
 
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
         K_STATS_Weibull_Mean = CVErr(xlErrNum)
+    'Exit before the error handler
         Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_Weibull_Mean: " & Err.Description
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_Mean: " & Err.Description
+    'Return worksheet value error
         K_STATS_Weibull_Mean = CVErr(xlErrValue)
 End Function
 
@@ -2420,73 +3404,140 @@ Public Function K_STATS_Weibull_Variance( _
 ' K_STATS_Weibull_Variance
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the variance of the Weibull distribution.
+'   Returns the Weibull variance.
 '
-' NUMERICAL METHOD
-'   The shape factor is evaluated in logarithmic form. For Shape >= 100 a
-'   dedicated asymptotic expansion avoids cancellation between two Gamma values
-'   that both round close to one. The final scale adjustment is also performed
-'   in the log domain, avoiding an intermediate ScaleParam ^ 2 overflow.
+' WHY THIS EXISTS
+'   Direct subtraction of Gamma(1 + 2 / Shape) and Gamma(1 + 1 / Shape) squared
+'   loses all precision for large Shape. The private helper returns the variance
+'   factor in logarithmic form and switches to an asymptotic expansion where
+'   necessary.
+'
+' INPUTS
+'   Shape       Positive Weibull shape parameter.
+'   ScaleParam  Positive Weibull scale parameter.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double variance.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Computes the shape factor without large-shape cancellation.
+'   - Applies ScaleParam squared in the logarithmic domain.
+'   - Mathematically valid underflow returns zero.
 '
 ' ERROR POLICY
-'   - Invalid parameters or final-result overflow return CVErr(xlErrNum).
-'   - Mathematically valid underflow returns zero.
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid inputs, unresolved shape factors or final overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
+'   - PROB_IsPositiveWithinSupportedMagnitude
 '   - PROB_IsPositiveFinite
 '   - PROB_CN_TryWeibullLogVarianceFactor
+'   - PROB_TryAdd
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style rewrite and guarded logarithmic scale adjustment.
 '==============================================================================
 '
-    Dim LogShapeFactor      As Double
-    Dim LogVariance         As Double
-    Dim VarianceValue       As Double
-    Dim FailMsg             As String
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogScaleSquared     As Double          'Two times Log(ScaleParam)
+    Dim LogShapeFactor      As Double          'Logarithm of the variance factor
+    Dim LogVariance         As Double          'Logarithm of the final variance
+    Dim VarianceValue       As Double          'Returned variance
+    Dim FailMsg             As String          'Detailed failure message
 
-    On Error GoTo Err_Handler
-    PROB_SetStatus Status, vbNullString
-    FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
 
-    If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-        FailMsg = "Shape must be a finite strictly positive number"
-        GoTo Fail_Num
-    End If
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the shape under the supported-kernel contract
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+            FailMsg = _
+                "Shape must be a supported finite strictly positive number"
+            GoTo Fail_Num
+        End If
 
-    If Not PROB_IsPositiveFinite(ScaleParam) Then
-        FailMsg = "ScaleParam must be a finite strictly positive number"
-        GoTo Fail_Num
-    End If
+    'Validate the scale over the full finite Double range
+        If Not PROB_IsPositiveFinite(ScaleParam) Then
+            FailMsg = "ScaleParam must be a finite strictly positive number"
+            GoTo Fail_Num
+        End If
 
-    If Not PROB_CN_TryWeibullLogVarianceFactor( _
-        Shape, LogShapeFactor, FailMsg) Then
-        GoTo Fail_Num
-    End If
+'------------------------------------------------------------------------------
+' COMPUTE VARIANCE
+'------------------------------------------------------------------------------
+    'Resolve the logarithm of the shape-dependent variance factor
+        If Not PROB_CN_TryWeibullLogVarianceFactor( _
+            Shape, LogShapeFactor, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
-    LogVariance = 2# * Log(ScaleParam) + LogShapeFactor
+    'Form twice the logarithm of the scale
+        LogScaleSquared = 2# * Log(ScaleParam)
 
-    If Not PROB_TryExp(LogVariance, VarianceValue) Then
-        FailMsg = "Weibull variance overflows Double range"
-        GoTo Fail_Num
-    End If
+    'Assemble the final log-variance under the Try-contract
+        If Not PROB_TryAdd( _
+            LogScaleSquared, LogShapeFactor, LogVariance) Then
 
-    K_STATS_Weibull_Variance = VarianceValue
-    PROB_SetStatus Status, vbNullString
-    Exit Function
+            FailMsg = "Weibull log-variance overflowed a Double"
+            GoTo Fail_Num
+        End If
 
+    'Exponentiate the final log-variance
+        If Not PROB_TryExp(LogVariance, VarianceValue) Then
+            FailMsg = "Weibull variance overflows Double range"
+            GoTo Fail_Num
+        End If
+
+    'Return the variance
+        K_STATS_Weibull_Variance = VarianceValue
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
-    PROB_SetStatus Status, FailMsg
-    K_STATS_Weibull_Variance = CVErr(xlErrNum)
-    Exit Function
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Weibull_Variance = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
-    PROB_SetStatus Status, _
-        "Unexpected error in K_STATS_Weibull_Variance: " & Err.Description
-    K_STATS_Weibull_Variance = CVErr(xlErrValue)
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_Variance: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Weibull_Variance = CVErr(xlErrValue)
 End Function
 
 
@@ -2500,73 +3551,139 @@ Public Function K_STATS_Weibull_StdDev( _
 ' K_STATS_Weibull_StdDev
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the standard deviation of the Weibull distribution.
+'   Returns the Weibull standard deviation.
 '
-' NUMERICAL METHOD
-'   Uses one half of the stable logarithmic variance factor and applies the
-'   scale in the log domain. This remains accurate for very large Shape and for
-'   scale/shape combinations whose intermediate variance components overflow or
-'   underflow although the final standard deviation is representable.
+' WHY THIS EXISTS
+'   The standard deviation is assembled directly from one half of the stable
+'   logarithmic variance factor. It therefore remains representable in cases
+'   where an intermediate variance would overflow.
+'
+' INPUTS
+'   Shape       Positive Weibull shape parameter.
+'   ScaleParam  Positive Weibull scale parameter.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double standard deviation.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Computes the shape factor without large-shape cancellation.
+'   - Applies the scale in the logarithmic domain.
+'   - Mathematically valid underflow returns zero.
 '
 ' ERROR POLICY
-'   - Invalid parameters or final-result overflow return CVErr(xlErrNum).
-'   - Mathematically valid underflow returns zero.
-'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Invalid inputs, unresolved shape factors or final overflow return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
+'   - PROB_IsPositiveWithinSupportedMagnitude
 '   - PROB_IsPositiveFinite
 '   - PROB_CN_TryWeibullLogVarianceFactor
+'   - PROB_TryAdd
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - House-style rewrite and direct log-standard-deviation assembly.
 '==============================================================================
 '
-    Dim LogShapeFactor      As Double
-    Dim LogStdDev           As Double
-    Dim StdDevValue         As Double
-    Dim FailMsg             As String
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim HalfLogShapeFactor  As Double          'Half of the log variance factor
+    Dim LogShapeFactor      As Double          'Logarithm of the variance factor
+    Dim LogStdDev           As Double          'Logarithm of the standard deviation
+    Dim StdDevValue         As Double          'Returned standard deviation
+    Dim FailMsg             As String          'Detailed failure message
 
-    On Error GoTo Err_Handler
-    PROB_SetStatus Status, vbNullString
-    FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
 
-    If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-        FailMsg = "Shape must be a finite strictly positive number"
-        GoTo Fail_Num
-    End If
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the shape under the supported-kernel contract
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+            FailMsg = _
+                "Shape must be a supported finite strictly positive number"
+            GoTo Fail_Num
+        End If
 
-    If Not PROB_IsPositiveFinite(ScaleParam) Then
-        FailMsg = "ScaleParam must be a finite strictly positive number"
-        GoTo Fail_Num
-    End If
+    'Validate the scale over the full finite Double range
+        If Not PROB_IsPositiveFinite(ScaleParam) Then
+            FailMsg = "ScaleParam must be a finite strictly positive number"
+            GoTo Fail_Num
+        End If
 
-    If Not PROB_CN_TryWeibullLogVarianceFactor( _
-        Shape, LogShapeFactor, FailMsg) Then
-        GoTo Fail_Num
-    End If
+'------------------------------------------------------------------------------
+' COMPUTE STANDARD DEVIATION
+'------------------------------------------------------------------------------
+    'Resolve the logarithm of the shape-dependent variance factor
+        If Not PROB_CN_TryWeibullLogVarianceFactor( _
+            Shape, LogShapeFactor, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
-    LogStdDev = Log(ScaleParam) + 0.5 * LogShapeFactor
+    'Take one half of the logarithmic variance factor
+        HalfLogShapeFactor = 0.5 * LogShapeFactor
 
-    If Not PROB_TryExp(LogStdDev, StdDevValue) Then
-        FailMsg = "Weibull standard deviation overflows Double range"
-        GoTo Fail_Num
-    End If
+    'Apply the logarithmic scale under the Try-contract
+        If Not PROB_TryAdd( _
+            Log(ScaleParam), HalfLogShapeFactor, LogStdDev) Then
 
-    K_STATS_Weibull_StdDev = StdDevValue
-    PROB_SetStatus Status, vbNullString
-    Exit Function
+            FailMsg = "Weibull log-standard-deviation overflowed a Double"
+            GoTo Fail_Num
+        End If
 
+    'Exponentiate the assembled log-standard-deviation
+        If Not PROB_TryExp(LogStdDev, StdDevValue) Then
+            FailMsg = "Weibull standard deviation overflows Double range"
+            GoTo Fail_Num
+        End If
+
+    'Return the standard deviation
+        K_STATS_Weibull_StdDev = StdDevValue
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
 Fail_Num:
-    PROB_SetStatus Status, FailMsg
-    K_STATS_Weibull_StdDev = CVErr(xlErrNum)
-    Exit Function
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Weibull_StdDev = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
-    PROB_SetStatus Status, _
-        "Unexpected error in K_STATS_Weibull_StdDev: " & Err.Description
-    K_STATS_Weibull_StdDev = CVErr(xlErrValue)
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_StdDev: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Weibull_StdDev = CVErr(xlErrValue)
 End Function
 
 
@@ -2585,48 +3702,52 @@ Public Function K_STATS_Uniform_Density( _
 ' K_STATS_Uniform_Density
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the continuous Uniform density at X on [LowerBound, UpperBound].
-'
-' WHY THIS EXISTS
-'   The continuous Uniform is the flat reference distribution and the target of
-'   the inverse-transform sampling identity. Its density is the constant
-'   1 / (UpperBound - LowerBound) on the support and 0 outside it.
-'
-' WORKSHEET EQUIVALENT
-'   (none)
+'   Returns the continuous Uniform density on [LowerBound, UpperBound].
 '
 ' INPUTS
-'   X            Evaluation point. Outside [LowerBound, UpperBound] density is 0.
-'   LowerBound   Lower support bound.
-'   UpperBound   Upper support bound. Must be strictly greater than LowerBound.
+'   X            Evaluation point.
+'   LowerBound   Finite lower support bound.
+'   UpperBound   Finite upper support bound, strictly greater than LowerBound.
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double density value.
+'     Success => Double density.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 0 for X < LowerBound or X > UpperBound.
-'   - Otherwise 1 / (UpperBound - LowerBound).
+'   - Returns zero outside the closed support.
+'   - Uses direct width arithmetic when representable.
+'   - Uses a scaled reciprocal when opposite-sign bounds make the mathematical
+'     width exceed the largest finite Double.
 '
 ' ERROR POLICY
-'   - Non-finite bounds or UpperBound <= LowerBound return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid bounds or a density beyond Double range return #NUM!.
+'   - Mathematically valid underflow returns zero.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXBounds
+'   - PROB_TryAdd
+'   - PROB_TryDivide
 '   - PROB_SetStatus
 '
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Full finite-range bounds and scaled-width handling.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim ScaleValue          As Double          'Largest absolute support bound
+    Dim Width               As Double          'Direct support width
+    Dim WidthScaled         As Double          'Support width after scaling
+    Dim ReciprocalScale     As Double          'One divided by ScaleValue
+    Dim Density             As Double          'Returned density
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -2642,12 +3763,14 @@ Public Function K_STATS_Uniform_Density( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point and the ordered bounds
+    'Validate X and the ordered finite bounds
         If Not PROB_CN_ValidateXBounds( _
-            X, LowerBound, UpperBound, FailMsg) Then GoTo Fail_Num
+            X, LowerBound, UpperBound, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
-' COMPUTE DENSITY
+' HANDLE SUPPORT
 '------------------------------------------------------------------------------
     'Return zero outside the closed support
         If X < LowerBound Or X > UpperBound Then
@@ -2655,8 +3778,44 @@ Public Function K_STATS_Uniform_Density( _
             GoTo Return_Success
         End If
 
-    'Return the constant density on the support
-        K_STATS_Uniform_Density = 1# / (UpperBound - LowerBound)
+'------------------------------------------------------------------------------
+' COMPUTE DENSITY
+'------------------------------------------------------------------------------
+    'Attempt to form the support width directly
+        If PROB_TryAdd(UpperBound, -LowerBound, Width) Then
+            If Width <= 0# Then
+                FailMsg = "Uniform support width must be strictly positive"
+                GoTo Fail_Num
+            End If
+
+            If Not PROB_TryDivide(1#, Width, Density) Then
+                FailMsg = "Uniform density overflows Double range"
+                GoTo Fail_Num
+            End If
+
+        Else
+            'Scale opposite-sign extreme bounds before forming their width
+                ScaleValue = Abs(LowerBound)
+
+                If Abs(UpperBound) > ScaleValue Then
+                    ScaleValue = Abs(UpperBound)
+                End If
+
+                WidthScaled = _
+                    UpperBound / ScaleValue - _
+                    LowerBound / ScaleValue
+
+            'Form one divided by the mathematical width without forming width
+                If Not PROB_TryDivide(1#, ScaleValue, ReciprocalScale) Then
+                    FailMsg = "Uniform density overflows Double range"
+                    GoTo Fail_Num
+                End If
+
+                Density = ReciprocalScale / WidthScaled
+        End If
+
+    'Return the density
+        K_STATS_Uniform_Density = Density
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2700,15 +3859,12 @@ Public Function K_STATS_Uniform_Cumulative( _
 ' K_STATS_Uniform_Cumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the continuous Uniform cumulative distribution function at X.
-'
-' WORKSHEET EQUIVALENT
-'   (none)
+'   Returns the continuous Uniform cumulative probability at X.
 '
 ' INPUTS
 '   X            Evaluation point.
-'   LowerBound   Lower support bound.
-'   UpperBound   Upper support bound. Must be strictly greater than LowerBound.
+'   LowerBound   Finite lower support bound.
+'   UpperBound   Finite upper support bound, strictly greater than LowerBound.
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
@@ -2717,26 +3873,37 @@ Public Function K_STATS_Uniform_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 0 for X < LowerBound and 1 for X > UpperBound.
-'   - Otherwise (X - LowerBound) / (UpperBound - LowerBound).
+'   - Returns zero below the support and one above it.
+'   - Uses direct differences when the support width is representable.
+'   - Uses scaled coordinates when the mathematical support width exceeds the
+'     largest finite Double.
 '
 ' ERROR POLICY
-'   - Non-finite bounds or UpperBound <= LowerBound return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid bounds return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXBounds
+'   - PROB_TryAdd
 '   - PROB_SetStatus
 '
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Full finite-range bounds and scaled-tail calculation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim ScaleValue          As Double          'Largest absolute support bound
+    Dim Width               As Double          'Direct support width
+    Dim Numerator           As Double          'Direct distance from LowerBound
+    Dim WidthScaled         As Double          'Scaled support width
+    Dim XScaled             As Double          'Scaled evaluation point
+    Dim LowerScaled         As Double          'Scaled lower bound
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -2752,25 +3919,53 @@ Public Function K_STATS_Uniform_Cumulative( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point and the ordered bounds
+    'Validate X and the ordered finite bounds
         If Not PROB_CN_ValidateXBounds( _
-            X, LowerBound, UpperBound, FailMsg) Then GoTo Fail_Num
+            X, LowerBound, UpperBound, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
-' COMPUTE CUMULATIVE PROBABILITY
+' HANDLE SUPPORT EDGES
 '------------------------------------------------------------------------------
-    'Return the support edges exactly
-        If X < LowerBound Then
+    'Return zero at and below the lower support edge
+        If X <= LowerBound Then
             K_STATS_Uniform_Cumulative = 0#
             GoTo Return_Success
         End If
-        If X > UpperBound Then
+
+    'Return one at and above the upper support edge
+        If X >= UpperBound Then
             K_STATS_Uniform_Cumulative = 1#
             GoTo Return_Success
         End If
 
-    'Return the linear cumulative probability on the support
-        K_STATS_Uniform_Cumulative = (X - LowerBound) / (UpperBound - LowerBound)
+'------------------------------------------------------------------------------
+' COMPUTE CUMULATIVE PROBABILITY
+'------------------------------------------------------------------------------
+    'Use direct differences when both are representable
+        If PROB_TryAdd(UpperBound, -LowerBound, Width) And _
+           PROB_TryAdd(X, -LowerBound, Numerator) Then
+
+            K_STATS_Uniform_Cumulative = Numerator / Width
+
+        Else
+            'Scale all coordinates by the largest support magnitude
+                ScaleValue = Abs(LowerBound)
+
+                If Abs(UpperBound) > ScaleValue Then
+                    ScaleValue = Abs(UpperBound)
+                End If
+
+                LowerScaled = LowerBound / ScaleValue
+                XScaled = X / ScaleValue
+                WidthScaled = _
+                    UpperBound / ScaleValue - LowerScaled
+
+            'Return the scaled linear position
+                K_STATS_Uniform_Cumulative = _
+                    (XScaled - LowerScaled) / WidthScaled
+        End If
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2814,20 +4009,12 @@ Public Function K_STATS_Uniform_Survival( _
 ' K_STATS_Uniform_Survival
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the continuous Uniform survival function 1 - CDF at X.
-'
-' WHY THIS EXISTS
-'   The survival is computed directly as (UpperBound - X) / (UpperBound -
-'   LowerBound) rather than 1 minus the CDF, so it is exact at both ends of the
-'   support.
-'
-' WORKSHEET EQUIVALENT
-'   (none)
+'   Returns the continuous Uniform survival probability at X.
 '
 ' INPUTS
 '   X            Evaluation point.
-'   LowerBound   Lower support bound.
-'   UpperBound   Upper support bound. Must be strictly greater than LowerBound.
+'   LowerBound   Finite lower support bound.
+'   UpperBound   Finite upper support bound, strictly greater than LowerBound.
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
@@ -2836,26 +4023,37 @@ Public Function K_STATS_Uniform_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns 1 for X < LowerBound and 0 for X > UpperBound.
-'   - Otherwise (UpperBound - X) / (UpperBound - LowerBound).
+'   - Returns one below the support and zero above it.
+'   - Computes the right tail directly rather than subtracting the CDF from one.
+'   - Uses scaled coordinates when the mathematical support width exceeds the
+'     largest finite Double.
 '
 ' ERROR POLICY
-'   - Non-finite bounds or UpperBound <= LowerBound return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid bounds return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXBounds
+'   - PROB_TryAdd
 '   - PROB_SetStatus
 '
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Full finite-range bounds and direct scaled right tail.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim ScaleValue          As Double          'Largest absolute support bound
+    Dim Width               As Double          'Direct support width
+    Dim Numerator           As Double          'Direct distance to UpperBound
+    Dim WidthScaled         As Double          'Scaled support width
+    Dim XScaled             As Double          'Scaled evaluation point
+    Dim UpperScaled         As Double          'Scaled upper bound
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -2871,25 +4069,53 @@ Public Function K_STATS_Uniform_Survival( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point and the ordered bounds
+    'Validate X and the ordered finite bounds
         If Not PROB_CN_ValidateXBounds( _
-            X, LowerBound, UpperBound, FailMsg) Then GoTo Fail_Num
+            X, LowerBound, UpperBound, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
-' COMPUTE SURVIVAL PROBABILITY
+' HANDLE SUPPORT EDGES
 '------------------------------------------------------------------------------
-    'Return the support edges exactly
-        If X < LowerBound Then
+    'Return one at and below the lower support edge
+        If X <= LowerBound Then
             K_STATS_Uniform_Survival = 1#
             GoTo Return_Success
         End If
-        If X > UpperBound Then
+
+    'Return zero at and above the upper support edge
+        If X >= UpperBound Then
             K_STATS_Uniform_Survival = 0#
             GoTo Return_Success
         End If
 
-    'Return the linear survival probability on the support
-        K_STATS_Uniform_Survival = (UpperBound - X) / (UpperBound - LowerBound)
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Use direct differences when both are representable
+        If PROB_TryAdd(UpperBound, -LowerBound, Width) And _
+           PROB_TryAdd(UpperBound, -X, Numerator) Then
+
+            K_STATS_Uniform_Survival = Numerator / Width
+
+        Else
+            'Scale all coordinates by the largest support magnitude
+                ScaleValue = Abs(LowerBound)
+
+                If Abs(UpperBound) > ScaleValue Then
+                    ScaleValue = Abs(UpperBound)
+                End If
+
+                UpperScaled = UpperBound / ScaleValue
+                XScaled = X / ScaleValue
+                WidthScaled = _
+                    UpperScaled - LowerBound / ScaleValue
+
+            'Return the scaled direct right tail
+                K_STATS_Uniform_Survival = _
+                    (UpperScaled - XScaled) / WidthScaled
+        End If
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2933,48 +4159,53 @@ Public Function K_STATS_Uniform_InverseCumulative( _
 ' K_STATS_Uniform_InverseCumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the continuous Uniform quantile,
-'   LowerBound + Probability * (UpperBound - LowerBound).
+'   Returns the continuous Uniform quantile.
 '
-' WHY THIS EXISTS
-'   This is the inverse-transform map that turns a Uniform(0, 1) draw into a draw
-'   on any interval, and is the reason the Uniform is the seed of Monte Carlo.
-'
-' WORKSHEET EQUIVALENT
-'   (none)
+' NUMERICAL METHOD
+'   Evaluates the quantile as the convex combination:
+'       (1 - Probability) * LowerBound + Probability * UpperBound.
+'   This avoids forming UpperBound - LowerBound when opposite-sign finite bounds
+'   have a mathematical width exceeding the largest finite Double.
 '
 ' INPUTS
-'   Probability  Target cumulative probability, strictly between 0 and 1.
-'   LowerBound   Lower support bound.
-'   UpperBound   Upper support bound. Must be strictly greater than LowerBound.
+'   Probability  Target cumulative probability in the open unit interval.
+'   LowerBound   Finite lower support bound.
+'   UpperBound   Finite upper support bound, strictly greater than LowerBound.
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
-'     Success => Double quantile in (LowerBound, UpperBound).
+'     Success => Double quantile strictly inside the support, subject to Double
+'                rounding at extremely narrow relative intervals.
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
-' BEHAVIOR
-'   - Returns LowerBound + Probability * (UpperBound - LowerBound).
-'
 ' ERROR POLICY
-'   - Probability outside (0, 1), non-finite bounds or UpperBound <= LowerBound
-'     return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   - Invalid probability or bounds return #NUM!.
+'   - Predictable arithmetic overflow returns #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_IsValidProbabilityOpen, PROB_CN_ValidateBounds
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_CN_ValidateBounds
+'   - PROB_TryMultiply
+'   - PROB_TryAdd
 '   - PROB_SetStatus
 '
+' CALLED FROM
+'   - Worksheet formulas
+'   - M_STATS_PROBDIST_TEST
+'
 ' UPDATED
-'   2026-07-11
+'   2026-07-11 - Convex-combination quantile over the full finite Double range.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim LowerWeight         As Double          'One minus Probability
+    Dim LowerTerm           As Double          'Weighted lower bound
+    Dim UpperTerm           As Double          'Weighted upper bound
+    Dim Quantile            As Double          'Returned quantile
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -2990,21 +4221,48 @@ Public Function K_STATS_Uniform_InverseCumulative( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate probability domain
+    'Validate the target probability
         If Not PROB_IsValidProbabilityOpen(Probability) Then
             FailMsg = "Probability must be strictly between 0 and 1"
             GoTo Fail_Num
         End If
-    'Validate the ordered bounds
+
+    'Validate the ordered finite bounds
         If Not PROB_CN_ValidateBounds( _
-            LowerBound, UpperBound, FailMsg) Then GoTo Fail_Num
+            LowerBound, UpperBound, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
 '------------------------------------------------------------------------------
 ' COMPUTE QUANTILE
 '------------------------------------------------------------------------------
-    'Return the linearly interpolated quantile
-        K_STATS_Uniform_InverseCumulative = _
-            LowerBound + Probability * (UpperBound - LowerBound)
+    'Form the complementary probability weight
+        LowerWeight = 1# - Probability
+
+    'Weight the lower support bound
+        If Not PROB_TryMultiply( _
+            LowerWeight, LowerBound, LowerTerm) Then
+
+            FailMsg = "Uniform lower quantile term overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Weight the upper support bound
+        If Not PROB_TryMultiply( _
+            Probability, UpperBound, UpperTerm) Then
+
+            FailMsg = "Uniform upper quantile term overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Add the two convex-combination terms
+        If Not PROB_TryAdd(LowerTerm, UpperTerm, Quantile) Then
+            FailMsg = "Uniform quantile overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+    'Return the quantile
+        K_STATS_Uniform_InverseCumulative = Quantile
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -3040,6 +4298,112 @@ End Function
 ' PRIVATE NUMERICAL HELPERS
 '==============================================================================
 
+Private Function PROB_CN_TryWeibullPower( _
+    ByVal LogRatio As Double, _
+    ByVal Shape As Double, _
+    ByRef PowerValue As Double, _
+    ByRef PowerIsInfinite As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_CN_TryWeibullPower
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates Exp(Shape * LogRatio), the Weibull power term, without allowing an
+'   intermediate multiplication or exponential overflow to escape the numerical
+'   Try-contract.
+'
+' INPUTS
+'   LogRatio  Log(X / ScaleParam), already finite.
+'   Shape     Supported positive Weibull shape parameter.
+'
+' OUTPUTS
+'   PowerValue       Finite power value, including valid underflow to zero.
+'   PowerIsInfinite  True when the mathematical power exceeds Double range.
+'   FailMsg          Detailed failure message when the helper returns False.
+'
+' RETURNS
+'   Boolean
+'     True  => The power was resolved either as a finite Double or as a known
+'              positive-infinity limit identified by PowerIsInfinite.
+'     False => An unexpected sign or arithmetic state prevented classification.
+'
+' BEHAVIOR
+'   - Positive log-power overflow is classified as a positive-infinity limit.
+'   - Negative log-power overflow is classified as valid underflow to zero.
+'   - A finite log-power is exponentiated through PROB_TryExp.
+'
+' DEPENDENCIES
+'   - PROB_TryMultiply
+'   - PROB_TryExp
+'
+' CALLED FROM
+'   - K_STATS_Weibull_Density
+'   - K_STATS_Weibull_Cumulative
+'   - K_STATS_Weibull_Survival
+'
+' UPDATED
+'   2026-07-11 - Added for centralized Weibull power classification.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogPower            As Double          'Shape multiplied by LogRatio
+
+'------------------------------------------------------------------------------
+' INITIALIZE OUTPUTS
+'------------------------------------------------------------------------------
+    'Clear all outputs before attempting the calculation
+        PowerValue = 0#
+        PowerIsInfinite = False
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' FORM LOG-POWER
+'------------------------------------------------------------------------------
+    'Multiply Shape and LogRatio under the shared arithmetic contract
+        If Not PROB_TryMultiply(Shape, LogRatio, LogPower) Then
+            If LogRatio > 0# Then
+                PowerIsInfinite = True
+                PROB_CN_TryWeibullPower = True
+                Exit Function
+            End If
+
+            If LogRatio < 0# Then
+                PowerValue = 0#
+                PROB_CN_TryWeibullPower = True
+                Exit Function
+            End If
+
+            FailMsg = "Weibull log-power could not be classified"
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' EXPONENTIATE
+'------------------------------------------------------------------------------
+    'Exponentiate the finite log-power
+        If Not PROB_TryExp(LogPower, PowerValue) Then
+            If LogPower > 0# Then
+                PowerIsInfinite = True
+                PROB_CN_TryWeibullPower = True
+                Exit Function
+            End If
+
+            FailMsg = "Weibull power could not be evaluated"
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report the finite power result
+        PROB_CN_TryWeibullPower = True
+End Function
+
+
 Private Function PROB_CN_TryWeibullLogVarianceFactor( _
     ByVal Shape As Double, _
     ByRef LogFactor As Double, _
@@ -3050,12 +4414,61 @@ Private Function PROB_CN_TryWeibullLogVarianceFactor( _
 ' PROB_CN_TryWeibullLogVarianceFactor
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the logarithm of
-'       Gamma(1 + 2 / Shape) - Gamma(1 + 1 / Shape) ^ 2
-'   without cancellation for large Shape and without an unguarded reciprocal
-'   for tiny Shape.
+'   Returns the logarithm of the Weibull variance factor:
+'
+'       Gamma(1 + 2 / Shape) - Gamma(1 + 1 / Shape) ^ 2.
+'
+' WHY THIS EXISTS
+'   For large Shape, both Gamma terms round close to one and their direct
+'   subtraction loses the complete variance factor. For moderate Shape, the
+'   factor is formed through LogGamma and Expm1. For large Shape, a dedicated
+'   asymptotic polynomial resolves the small positive difference directly.
+'
+' INPUTS
+'   Shape  Supported positive Weibull shape parameter.
+'
+' OUTPUTS
+'   LogFactor  Logarithm of the positive variance factor.
+'   FailMsg    Detailed failure message when the helper returns False.
+'
+' RETURNS
+'   Boolean
+'     True  => LogFactor contains a valid result.
+'     False => The reciprocal shape, variance factor or supported numerical
+'              range could not be resolved.
+'
+' NUMERICAL METHOD
+'   - Shape >= LARGE_SHAPE:
+'       Epsilon = 1 / Shape.
+'       Factor = Epsilon ^ 2 times a sixth-order polynomial.
+'   - Shape < LARGE_SHAPE:
+'       Delta = LogGamma(1 + 2Epsilon) - 2 LogGamma(1 + Epsilon).
+'       LogFactor = 2 LogGamma(1 + Epsilon) + Log(Exp(Delta) - 1).
+'       The final term uses PROB_Expm1 for small Delta and a complemented
+'       logarithmic expression for larger Delta.
+'
+' ERROR POLICY
+'   - Predictable numerical failure is reported through False and FailMsg.
+'   - The helper does not raise worksheet errors directly.
+'
+' DEPENDENCIES
+'   - PROB_TryDivide
+'   - PROB_TryExp
+'   - PROB_LogGamma
+'   - PROB_Expm1
+'   - PROB_Log1p
+'
+' CALLED FROM
+'   - K_STATS_Weibull_Variance
+'   - K_STATS_Weibull_StdDev
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite; numerical method unchanged.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' CONSTANTS
+'------------------------------------------------------------------------------
     Const LARGE_SHAPE As Double = 100#
     Const MAX_SAFE_EPSILON As Double = 1000#
 
@@ -3067,30 +4480,46 @@ Private Function PROB_CN_TryWeibullLogVarianceFactor( _
     Const C7 As Double = -120.625407747693
     Const C8 As Double = 247.658400419811
 
-    Dim Epsilon             As Double
-    Dim Polynomial          As Double
-    Dim Factor              As Double
-    Dim LogGamma1           As Double
-    Dim LogGamma2           As Double
-    Dim Delta               As Double
-    Dim ExpMinusDelta       As Double
-    Dim Expm1Delta          As Double
-    Dim LogExpm1Delta       As Double
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Epsilon             As Double          'Reciprocal shape
+    Dim Polynomial          As Double          'Large-shape asymptotic polynomial
+    Dim Factor              As Double          'Positive variance factor
+    Dim LogGamma1           As Double          'LogGamma(1 + Epsilon)
+    Dim LogGamma2           As Double          'LogGamma(1 + 2 * Epsilon)
+    Dim Delta               As Double          'Difference of logarithmic Gamma terms
+    Dim ExpMinusDelta       As Double          'Exp(-Delta)
+    Dim Expm1Delta          As Double          'Exp(Delta) - 1
+    Dim LogExpm1Delta       As Double          'Log(Exp(Delta) - 1)
 
+'------------------------------------------------------------------------------
+' INITIALIZE OUTPUTS
+'------------------------------------------------------------------------------
+    'Clear output values before attempting the calculation
+        LogFactor = 0#
         FailMsg = vbNullString
 
+'------------------------------------------------------------------------------
+' FORM RECIPROCAL SHAPE
+'------------------------------------------------------------------------------
+    'Form Epsilon under the shared arithmetic contract
         If Not PROB_TryDivide(1#, Shape, Epsilon) Then
             FailMsg = "Weibull reciprocal shape overflowed a Double"
             Exit Function
         End If
 
-        'Above this point the variance factor is already too large for even the
-        'smallest positive finite scale squared to bring it into Double range.
+    'Reject a reciprocal shape beyond the supported compensable range
         If Epsilon > MAX_SAFE_EPSILON Then
-            FailMsg = "Weibull variance exceeds Double range for the supplied Shape"
+            FailMsg = _
+                "Weibull variance exceeds Double range for the supplied Shape"
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' LARGE-SHAPE ASYMPTOTIC BRANCH
+'------------------------------------------------------------------------------
+    'Use the cancellation-free asymptotic expansion for large Shape
         If Shape >= LARGE_SHAPE Then
             Polynomial = C8
             Polynomial = C7 + Epsilon * Polynomial
@@ -3112,15 +4541,23 @@ Private Function PROB_CN_TryWeibullLogVarianceFactor( _
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' MODERATE-SHAPE LOG-GAMMA BRANCH
+'------------------------------------------------------------------------------
+    'Evaluate the two logarithmic Gamma terms
         LogGamma1 = PROB_LogGamma(1# + Epsilon)
         LogGamma2 = PROB_LogGamma(1# + 2# * Epsilon)
+
+    'Form the logarithmic Gamma difference
         Delta = LogGamma2 - 2# * LogGamma1
 
+    'The exact variance factor is strictly positive
         If Delta <= 0# Then
             FailMsg = "Weibull variance factor lost positivity"
             Exit Function
         End If
 
+    'Use Expm1 while Delta is small
         If Delta < 0.5 Then
             Expm1Delta = PROB_Expm1(Delta)
 
@@ -3130,15 +4567,24 @@ Private Function PROB_CN_TryWeibullLogVarianceFactor( _
             End If
 
             LogExpm1Delta = Log(Expm1Delta)
-        Else
-            If Not PROB_TryExp(-Delta, ExpMinusDelta) Then
-                ExpMinusDelta = 0#
-            End If
 
-            LogExpm1Delta = Delta + PROB_Log1p(-ExpMinusDelta)
+        Else
+            'Use Delta + Log(1 - Exp(-Delta)) for larger Delta
+                If Not PROB_TryExp(-Delta, ExpMinusDelta) Then
+                    ExpMinusDelta = 0#
+                End If
+
+                LogExpm1Delta = _
+                    Delta + PROB_Log1p(-ExpMinusDelta)
         End If
 
+    'Assemble the logarithm of the final variance factor
         LogFactor = 2# * LogGamma1 + LogExpm1Delta
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report the resolved logarithmic variance factor
         PROB_CN_TryWeibullLogVarianceFactor = True
 End Function
 
@@ -3147,37 +4593,153 @@ End Function
 ' PRIVATE VALIDATORS
 '==============================================================================
 
-Private Function PROB_CN_ValidateXAndTwoPositive( _
+Private Function PROB_CN_ValidateXShapeScale( _
     ByVal X As Double, _
-    ByVal Param1 As Double, _
-    ByVal Param2 As Double, _
+    ByVal Shape As Double, _
+    ByVal ScaleParam As Double, _
     ByRef FailMsg As String, _
-    ByVal Param1Name As String, _
-    ByVal Param2Name As String) _
+    ByVal ShapeName As String, _
+    ByVal ScaleName As String) _
     As Boolean
 '
 '==============================================================================
+' PROB_CN_ValidateXShapeScale
+'------------------------------------------------------------------------------
 ' PURPOSE
-'   Validates a finite evaluation point, one supported algorithmic shape
-'   parameter, and one full-range positive scale parameter.
+'   Validates an evaluation point, a shape parameter constrained by the shared
+'   supported-magnitude policy, and a scale parameter allowed over the full
+'   finite positive Double range.
+'
+' INPUTS
+'   X           Evaluation point.
+'   Shape       Algorithmic shape parameter.
+'   ScaleParam  Positive scale parameter.
+'   ShapeName   Name used in diagnostic messages.
+'   ScaleName   Name used in diagnostic messages.
+'
+' OUTPUTS
+'   FailMsg  Empty on success; detailed validation message on failure.
+'
+' RETURNS
+'   Boolean
+'     True  => All inputs satisfy their distinct contracts.
+'     False => At least one input is invalid.
+'
+' CALLED FROM
+'   - Gamma density, CDF and survival
+'   - Weibull density, CDF and survival
+'
+' UPDATED
+'   2026-07-11 - Split from the former ambiguous two-positive validator.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the evaluation point over the full finite Double range
         If Not PROB_IsFinite(X) Then
             FailMsg = "X must be a finite number"
             Exit Function
         End If
 
-        If Not PROB_IsPositiveWithinSupportedMagnitude(Param1) Then
-            FailMsg = Param1Name & " must be a supported finite strictly positive number"
+    'Validate the shape under the supported-kernel contract
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+            FailMsg = _
+                ShapeName & _
+                " must be a supported finite strictly positive number"
             Exit Function
         End If
 
-        If Not PROB_IsPositiveFinite(Param2) Then
-            FailMsg = Param2Name & " must be a finite strictly positive number"
+    'Validate the scale over the full finite positive Double range
+        If Not PROB_IsPositiveFinite(ScaleParam) Then
+            FailMsg = _
+                ScaleName & " must be a finite strictly positive number"
             Exit Function
         End If
 
-        PROB_CN_ValidateXAndTwoPositive = True
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report successful validation
+        PROB_CN_ValidateXShapeScale = True
+End Function
+
+
+Private Function PROB_CN_ValidateXTwoShapes( _
+    ByVal X As Double, _
+    ByVal Shape1 As Double, _
+    ByVal Shape2 As Double, _
+    ByRef FailMsg As String, _
+    ByVal Shape1Name As String, _
+    ByVal Shape2Name As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_CN_ValidateXTwoShapes
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates an evaluation point and two positive shape parameters constrained
+'   by the shared supported-magnitude policy.
+'
+' WHY THIS EXISTS
+'   Beta functions require both Alpha and Beta to satisfy the numerical-kernel
+'   shape contract. Treating the second parameter as an unrestricted scale would
+'   allow unsupported values into the incomplete-beta and log-beta kernels.
+'
+' INPUTS
+'   X           Evaluation point.
+'   Shape1      First algorithmic shape parameter.
+'   Shape2      Second algorithmic shape parameter.
+'   Shape1Name  Name used in diagnostic messages.
+'   Shape2Name  Name used in diagnostic messages.
+'
+' OUTPUTS
+'   FailMsg  Empty on success; detailed validation message on failure.
+'
+' RETURNS
+'   Boolean
+'     True  => X and both shapes are valid.
+'     False => At least one input is invalid.
+'
+' CALLED FROM
+'   - K_STATS_Beta_Density
+'   - K_STATS_Beta_Cumulative
+'   - K_STATS_Beta_Survival
+'
+' UPDATED
+'   2026-07-11 - Added to enforce the Beta two-shape contract.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the evaluation point over the full finite Double range
+        If Not PROB_IsFinite(X) Then
+            FailMsg = "X must be a finite number"
+            Exit Function
+        End If
+
+    'Validate the first shape parameter
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape1) Then
+            FailMsg = _
+                Shape1Name & _
+                " must be a supported finite strictly positive number"
+            Exit Function
+        End If
+
+    'Validate the second shape parameter
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape2) Then
+            FailMsg = _
+                Shape2Name & _
+                " must be a supported finite strictly positive number"
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report successful validation
+        PROB_CN_ValidateXTwoShapes = True
 End Function
 
 
@@ -3187,16 +4749,52 @@ Private Function PROB_CN_ValidateXLambda( _
     ByRef FailMsg As String) _
     As Boolean
 '
+'==============================================================================
+' PROB_CN_ValidateXLambda
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates a finite evaluation point and a positive finite Exponential rate.
+'
+' INPUTS
+'   X       Evaluation point.
+'   Lambda  Exponential rate parameter.
+'
+' OUTPUTS
+'   FailMsg  Empty on success; detailed validation message on failure.
+'
+' RETURNS
+'   Boolean
+'     True  => X and Lambda are valid.
+'     False => At least one input is invalid.
+'
+' CALLED FROM
+'   - K_STATS_Exponential_Density
+'   - K_STATS_Exponential_Cumulative
+'   - K_STATS_Exponential_Survival
+'
+' UPDATED
+'   2026-07-11 - House-style rewrite.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the evaluation point over the full finite Double range
         If Not PROB_IsFinite(X) Then
             FailMsg = "X must be a finite number"
             Exit Function
         End If
 
+    'Validate the rate over the full finite positive Double range
         If Not PROB_IsPositiveFinite(Lambda) Then
             FailMsg = "Lambda must be a finite strictly positive number"
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report successful validation
         PROB_CN_ValidateXLambda = True
 End Function
 
@@ -3211,40 +4809,59 @@ Private Function PROB_CN_ValidateBounds( _
 ' PROB_CN_ValidateBounds
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Validates two finite bounds with UpperBound strictly greater than
-'   LowerBound. Used by the Uniform family; the X-taking members reach it
-'   through PROB_CN_ValidateXBounds, the inverse reaches it directly.
+'   Validates two finite continuous-Uniform bounds with UpperBound strictly
+'   greater than LowerBound.
+'
+' INPUTS
+'   LowerBound  Lower support bound.
+'   UpperBound  Upper support bound.
+'
+' OUTPUTS
+'   FailMsg  Empty on success; detailed validation message on failure.
 '
 ' RETURNS
-'   True when both bounds are finite and UpperBound > LowerBound; otherwise
-'   False with FailMsg set.
+'   Boolean
+'     True  => Both bounds are finite and correctly ordered.
+'     False => At least one bound is invalid or the support is degenerate.
+'
+' BEHAVIOR
+'   - Uses true finiteness rather than the algorithmic supported-magnitude cap.
+'   - Does not form UpperBound - LowerBound during validation.
+'
+' CALLED FROM
+'   - PROB_CN_ValidateXBounds
+'   - K_STATS_Uniform_InverseCumulative
+'
+' UPDATED
+'   2026-07-11 - Full finite Double support and house-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
-' VALIDATE
+' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the lower bound
-        If Not PROB_IsWithinSupportedMagnitude(LowerBound) Then
+    'Validate the lower support bound
+        If Not PROB_IsFinite(LowerBound) Then
             FailMsg = "LowerBound must be a finite number"
             Exit Function
         End If
 
-    'Validate the upper bound
-        If Not PROB_IsWithinSupportedMagnitude(UpperBound) Then
+    'Validate the upper support bound
+        If Not PROB_IsFinite(UpperBound) Then
             FailMsg = "UpperBound must be a finite number"
             Exit Function
         End If
 
     'Require a non-degenerate, correctly ordered support
         If Not (UpperBound > LowerBound) Then
-            FailMsg = "UpperBound must be strictly greater than LowerBound"
+            FailMsg = _
+                "UpperBound must be strictly greater than LowerBound"
             Exit Function
         End If
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
-    'Report success
+    'Report successful validation
         PROB_CN_ValidateBounds = True
 End Function
 
@@ -3260,33 +4877,55 @@ Private Function PROB_CN_ValidateXBounds( _
 ' PROB_CN_ValidateXBounds
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Validates a finite evaluation point and two finite, correctly ordered bounds
-'   for the Uniform family.
+'   Validates a finite evaluation point and two finite, correctly ordered
+'   continuous-Uniform support bounds.
+'
+' INPUTS
+'   X           Evaluation point.
+'   LowerBound  Lower support bound.
+'   UpperBound  Upper support bound.
+'
+' OUTPUTS
+'   FailMsg  Empty on success; detailed validation message on failure.
 '
 ' RETURNS
-'   True when X is finite and the bounds pass PROB_CN_ValidateBounds; otherwise
-'   False with FailMsg set.
+'   Boolean
+'     True  => X and both bounds are valid.
+'     False => At least one input is invalid.
+'
+' DEPENDENCIES
+'   - PROB_CN_ValidateBounds
+'   - PROB_IsFinite
+'
+' CALLED FROM
+'   - K_STATS_Uniform_Density
+'   - K_STATS_Uniform_Cumulative
+'   - K_STATS_Uniform_Survival
+'
+' UPDATED
+'   2026-07-11 - Full finite Double support and house-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
-' VALIDATE
+' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate the evaluation point
+    'Validate the evaluation point over the full finite Double range
         If Not PROB_IsFinite(X) Then
             FailMsg = "X must be a finite number"
             Exit Function
         End If
 
-    'Validate the ordered bounds
-        If Not PROB_CN_ValidateBounds(LowerBound, UpperBound, FailMsg) Then Exit Function
+    'Validate the ordered support bounds
+        If Not PROB_CN_ValidateBounds( _
+            LowerBound, UpperBound, FailMsg) Then
+            Exit Function
+        End If
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
-    'Report success
+    'Report successful validation
         PROB_CN_ValidateXBounds = True
 End Function
-
-
 
 
