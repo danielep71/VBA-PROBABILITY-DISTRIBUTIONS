@@ -1,4 +1,5 @@
 Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"
+
 Option Explicit
 Option Private Module
 
@@ -30,6 +31,10 @@ Option Private Module
 '     - PROB_LogGammaHalfDiff
 '     - PROB_LogBeta
 '
+'   Combinatorics:
+'     - PROB_StirlingError
+'     - PROB_LogChoose
+'
 '   Incomplete beta:
 '     - PROB_TryBetaRegularized
 '     - PROB_TryBetaContinuedFraction
@@ -43,6 +48,12 @@ Option Private Module
 '     - PROB_TryGammaInvP
 '
 ' ALGORITHM PROVENANCE
+'   - PROB_StirlingError / PROB_LogChoose:
+'       Catherine Loader, "Fast and Accurate Computation of Binomial
+'       Probabilities" (2000). The Stirling error delta(N) is O(1/(12N)) and
+'       so is computed to full relative accuracy at every N; assembling
+'       Log C(N,K) from three small deltas avoids subtracting two log-gammas
+'       of size N*Log(N). Public; the arrangement used by R's dbinom.
 '   - PROB_LogGamma:
 '       Lanczos approximation, g = 7, n = 9, with the reflection formula for
 '       z < 0.5. Measured relative error against 50-digit arithmetic is below
@@ -292,6 +303,221 @@ End Function
 '==============================================================================
 ' REGULARIZED INCOMPLETE BETA
 '==============================================================================
+
+Public Function PROB_StirlingError( _
+    ByVal N As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_StirlingError
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Loader's Stirling error delta(N), defined by
+'       Log(N!) = (N + 0.5) * Log(N) - N + 0.5 * Log(2 * Pi) + delta(N)
+'   equivalently  N! = Sqr(2 * Pi * N) * (N / e) ^ N * Exp(delta(N)).
+'
+' WHY THIS EXISTS
+'   delta(N) is O(1 / (12 * N)) and is therefore computed with full relative
+'   accuracy at every N. Any quantity that would otherwise be assembled by
+'   subtracting two large log-gammas can instead be assembled from three small
+'   deltas plus an exactly-computed leading term. PROB_LogChoose is the first
+'   consumer; the binomial and Poisson mass functions will be the next.
+'
+' PRECONDITION
+'   N >= 0.
+'
+' METHOD / PROVENANCE
+'   Catherine Loader, "Fast and Accurate Computation of Binomial Probabilities"
+'   (2000), the arrangement used by R's dbinom and dpois. Public.
+'
+'   - N on the half-integer grid at or below 15: an exact stored value. The
+'     log-gamma route is accurate only to about 1E-12 RELATIVE there, and delta
+'     is small, so a stored constant is both faster and better.
+'   - N off the grid and at or below 15: the defining identity via PROB_LogGamma.
+'   - N above 15: the asymptotic series in 1 / N, truncated by magnitude.
+'
+' ACCURACY
+'   Absolute error at or below 3E-17 for every N >= 0.5. RELATIVE error is the
+'   wrong metric here: it reaches 1.5E-13 near N = 501, where delta is 1.67E-04.
+'   What propagates into a log-probability is the absolute error.
+'
+' DEPENDENCIES
+'   - PROB_LogGamma
+'   - PROB_HALF_LOG_TWO_PI  (M_STATS_CORE)
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE CONSTANTS
+'------------------------------------------------------------------------------
+    'Coefficients of the asymptotic series delta(N) ~ S0/N - S1/N^3 + S2/N^5 ...
+        Const S0 As Double = 8.33333333333333E-02     '1 / 12
+        Const S1 As Double = 2.77777777777778E-03     '1 / 360
+        Const S2 As Double = 7.93650793650794E-04     '1 / 1260
+        Const S3 As Double = 5.95238095238095E-04     '1 / 1680
+        Const S4 As Double = 8.41750841750842E-04     '1 / 1188
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim TwoN                As Double          'N doubled, to test the half-integer grid
+    Dim NSquared            As Double          'N * N, the series variable
+
+'------------------------------------------------------------------------------
+' SMALL ARGUMENT
+'------------------------------------------------------------------------------
+    'Below the smallest tabulated positive point the correction is not used
+        If N < 0.5 Then
+            PROB_StirlingError = 0#
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' TABULATED REGION
+'------------------------------------------------------------------------------
+    'Exact stored values on the half-integer grid up to 15
+        If N <= 15# Then
+            TwoN = 2# * N
+
+            If TwoN = Int(TwoN) Then
+                Select Case CLng(TwoN)
+            Case 0: PROB_StirlingError = 0#                        'delta(0)
+            Case 1: PROB_StirlingError = 0.153426409720027         'delta(0.5)
+            Case 2: PROB_StirlingError = 8.10614667953273E-02      'delta(1)
+            Case 3: PROB_StirlingError = 5.48141210519177E-02      'delta(1.5)
+            Case 4: PROB_StirlingError = 4.13406959554093E-02      'delta(2)
+            Case 5: PROB_StirlingError = 3.31628735199363E-02      'delta(2.5)
+            Case 6: PROB_StirlingError = 2.76779256849983E-02      'delta(3)
+            Case 7: PROB_StirlingError = 2.37461636562975E-02      'delta(3.5)
+            Case 8: PROB_StirlingError = 2.07906721037651E-02      'delta(4)
+            Case 9: PROB_StirlingError = 1.84884505326732E-02      'delta(4.5)
+            Case 10: PROB_StirlingError = 1.66446911898212E-02     'delta(5)
+            Case 11: PROB_StirlingError = 1.51349732219174E-02     'delta(5.5)
+            Case 12: PROB_StirlingError = 1.38761288230707E-02     'delta(6)
+            Case 13: PROB_StirlingError = 1.28104652429202E-02     'delta(6.5)
+            Case 14: PROB_StirlingError = 1.18967099458918E-02     'delta(7)
+            Case 15: PROB_StirlingError = 1.11045597582069E-02     'delta(7.5)
+            Case 16: PROB_StirlingError = 1.04112652619721E-02     'delta(8)
+            Case 17: PROB_StirlingError = 9.7994161261588E-03      'delta(8.5)
+            Case 18: PROB_StirlingError = 9.25546218271273E-03     'delta(9)
+            Case 19: PROB_StirlingError = 8.76870013413939E-03     'delta(9.5)
+            Case 20: PROB_StirlingError = 8.33056343336287E-03     'delta(10)
+            Case 21: PROB_StirlingError = 7.93411456431402E-03     'delta(10.5)
+            Case 22: PROB_StirlingError = 7.57367548795184E-03     'delta(11)
+            Case 23: PROB_StirlingError = 7.24455430132038E-03     'delta(11.5)
+            Case 24: PROB_StirlingError = 6.94284010720953E-03     'delta(12)
+            Case 25: PROB_StirlingError = 6.66524703270768E-03     'delta(12.5)
+            Case 26: PROB_StirlingError = 6.40899418800421E-03     'delta(13)
+            Case 27: PROB_StirlingError = 6.17171226303946E-03     'delta(13.5)
+            Case 28: PROB_StirlingError = 5.95137011275885E-03     'delta(14)
+            Case 29: PROB_StirlingError = 5.74621651301012E-03     'delta(14.5)
+            Case 30: PROB_StirlingError = 5.5547335519628E-03      'delta(15)
+    'Unreachable while 0.5 <= N <= 15 and TwoN is integral. Present so that a
+    'broken invariant produces a correct number rather than a silent zero.
+                    Case Else
+                        PROB_StirlingError = PROB_LogGamma(N + 1#) - _
+                                             (N + 0.5) * Log(N) + N - PROB_HALF_LOG_TWO_PI
+                End Select
+
+                Exit Function
+            End If
+
+    'Off the grid: the defining identity, well conditioned at small N
+            PROB_StirlingError = PROB_LogGamma(N + 1#) - _
+                                 (N + 0.5) * Log(N) + N - PROB_HALF_LOG_TWO_PI
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' ASYMPTOTIC SERIES
+'------------------------------------------------------------------------------
+    'Truncate by magnitude; each cut sits below the Double round-off
+        NSquared = N * N
+
+        If N > 500# Then
+            PROB_StirlingError = (S0 - S1 / NSquared) / N
+        ElseIf N > 80# Then
+            PROB_StirlingError = (S0 - (S1 - S2 / NSquared) / NSquared) / N
+        ElseIf N > 35# Then
+            PROB_StirlingError = (S0 - (S1 - (S2 - S3 / NSquared) / NSquared) / NSquared) / N
+        Else
+            PROB_StirlingError = (S0 - (S1 - (S2 - (S3 - S4 / NSquared) / NSquared) / NSquared) / NSquared) / N
+        End If
+End Function
+
+
+Public Function PROB_LogChoose( _
+    ByVal N As Double, _
+    ByVal K As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_LogChoose
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Log(C(N, K)), the natural logarithm of the binomial coefficient.
+'
+' WHY THIS EXISTS
+'   C(N, K) overflows a Double at N = 1030 while Log(C(N, K)) stays finite to
+'   N = 1E+308. Every discrete mass function, and the hypergeometric in
+'   particular, needs the logarithm rather than the coefficient.
+'
+' PRECONDITION
+'   0 <= K <= N. Callers validate; this kernel does not.
+'
+' METHOD / PROVENANCE
+'   The Stirling decomposition
+'       Log C(N,K) = 0.5 * Log(N / (2*Pi*K*(N-K)))
+'                  + K * Log1p((N-K)/K) + (N-K) * Log1p(K/(N-K))
+'                  + delta(N) - delta(K) - delta(N-K)
+'   where delta is PROB_StirlingError. Every term is computed directly; nothing
+'   large is subtracted from anything large.
+'
+' WHY NOT THE OBVIOUS ROUTES
+'   -Log(N+1) - PROB_LogBeta(N-K+1, K+1) is exact algebra and numerically poor:
+'   LogBeta subtracts two log-gammas of size N*Log(N), so its absolute error is
+'   about 1.4E-09 at N = 1E+6, and the answer at K = 3 is only 39.65. Measured
+'   relative error 3.4E-12 there, and 2.0E+00 at N = 2^53, K = 1, where N + 1
+'   rounds back to N. Three PROB_LogGamma calls fail the same way. The product
+'   form Prod (N-M+i)/i is accurate but costs Min(K, N-K) logarithms.
+'
+' ACCURACY
+'   Relative error at or below 3.2E-16 across N in [2, 2^53] and all K.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim J                   As Double          'N - K, the complementary count
+    Dim LeadingTerm         As Double          'The Sqr(N / (2*Pi*K*J)) factor, logged
+    Dim EntropyTerm         As Double          'N * H(K/N), the dominant term
+
+'------------------------------------------------------------------------------
+' BOUNDARY CASES
+'------------------------------------------------------------------------------
+    'C(N,0) = C(N,N) = 1, so the logarithm is exactly zero
+        If K <= 0# Or K >= N Then
+            PROB_LogChoose = 0#
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Complementary count
+        J = N - K
+
+    'Leading term, expanded so that K * J never overflows
+        LeadingTerm = 0.5 * (Log(N) - Log(PROB_TWO_PI) - Log(K) - Log(J))
+
+    'Entropy term. Both logarithms are of a ratio at least one, so neither
+    'cancels; Log1p carries the case where that ratio is close to one
+        EntropyTerm = K * PROB_Log1p(J / K) + J * PROB_Log1p(K / J)
+
+    'Assemble with the three small Stirling corrections
+        PROB_LogChoose = LeadingTerm + EntropyTerm + _
+                         PROB_StirlingError(N) - PROB_StirlingError(K) - PROB_StirlingError(J)
+End Function
+
 
 Public Function PROB_TryBetaRegularized( _
     ByVal X As Double, _

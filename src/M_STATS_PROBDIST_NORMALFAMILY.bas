@@ -297,9 +297,17 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 '   NORM.S.DIST(Z, TRUE)  (Excel 2010+); legacy NORMSDIST(Z).
 '
 ' PROVENANCE
-'   Hart rational/continued-fraction approximation (Hart 1968) in the
-'   double-precision arrangement popularised by Graeme West (Wilmott, 2009).
-'   Public; accurate to ~1E-15.
+'   - Standard normal CDF (PROB_NormalCDF):
+'       Hart-style high-degree rational approximation in the central region,
+'       combined with a continued-fraction approximation in the far tail. The
+'       VBA arrangement and coefficients follow the implementation described by
+'       Graeme West, "Better Approximations to Cumulative Normal Functions",
+'       Wilmott, 2002, pp. 70-76. West attributes the underlying high-precision
+'       rational approximation to Hart et al., "Computer Approximations", Wiley,
+'       1968. The method is intended to deliver double-precision accuracy over
+'       the real line, subject to normal floating-point saturation in extreme
+'       tails.
+'       Accurate to ~1E-15.
 '
 ' INPUTS
 '   Z
@@ -416,8 +424,14 @@ Public Function K_STATS_NormalStandard_InverseCumulative( _
 '   NORM.S.INV(Probability)  (Excel 2010+); legacy NORMSINV(Probability).
 '
 ' PROVENANCE
-'   Peter J. Acklam's rational approximation (public, released freely) with a
-'   single Halley refinement step. Accurate to ~1E-15.
+'   Peter J. Acklam's piecewise rational approximation for the inverse standard
+'   normal CDF is used as the starting estimate. Acklam's published algorithm is
+'   commonly reported with maximum relative error around 1.15E-9 before
+'   refinement. This module then applies one Halley-style correction using the
+'   module's standard normal CDF and PDF. In the practical central range, this is
+'   intended to reach near double-precision accuracy, subject to ordinary
+'   floating-point saturation and PDF underflow in the extreme tails.
+'   Accurate to ~1E-15.
 '
 ' INPUTS
 '   Probability
@@ -534,7 +548,12 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '   NORM.S.DIST(UpperZ, TRUE) - NORM.S.DIST(LowerZ, TRUE).
 '
 ' PROVENANCE
-'   Difference of standard normal CDFs (Hart/West). Not proprietary.
+'   Standard probability identity:
+'       P(Lower <= Z <= Upper) = Phi(Upper) - Phi(Lower).
+'   Phi is evaluated using this module's Hart/West standard normal CDF kernel.
+'   The identity is textbook material; the numerical accuracy is inherited from
+'   PROB_NormalCDF, subject to floating-point cancellation when both bounds are
+'   in the same extreme tail.
 '
 ' INPUTS
 '   LowerZ
@@ -661,11 +680,19 @@ Public Function K_STATS_NormalStandard_InverseCumulativeFast( _
 '   None. This is a numerical helper, not a worksheet function.
 '
 ' PROVENANCE
-'   Raw Peter J. Acklam rational approximation (public), via the shared kernel
-'   PROB_NormalInvCDFRaw in M_STATS_CORE. The Halley refinement
-'   used by the worksheet-facing inverse is deliberately NOT applied here: for
-'   Monte Carlo the ~1.15E-9 relative error is far below sampling error and the
-'   unrefined kernel is materially faster.
+'   Raw Peter J. Acklam piecewise rational approximation for the inverse
+'   standard normal CDF, exposed through the shared numerical kernel
+'   PROB_NormalInvCDFRaw.
+'
+'   Acklam's unrefined approximation is commonly reported with maximum relative
+'   error around 1.15E-9. The Halley-style refinement used by the worksheet-
+'   facing inverse CDF is deliberately not applied here: for Monte Carlo usage,
+'   this approximation error is typically negligible relative to simulation
+'   sampling error, while avoiding the extra CDF/PDF evaluations required by the
+'   refinement step.
+'
+'   This routine is therefore intended for validated numerical callers and tight
+'   simulation loops, not for worksheet-facing error reporting.
 '
 ' INPUTS
 '   Probability
@@ -858,7 +885,21 @@ Public Function K_STATS_Normal_Cumulative( _
 '   NORM.DIST(X, Mean, StdDev, TRUE)  (Excel 2010+).
 '
 ' PROVENANCE
-'   Hart/West standard normal CDF via standardization. Public; ~1E-15 accurate.
+'   Standard normalisation identity:
+'       P(X <= x) = Phi((x - Mean) / StdDev).
+'
+'   Phi is evaluated using this module's standard normal CDF kernel. The kernel
+'   follows the Hart-style rational approximation in the central region and a
+'   continued-fraction approximation in the far tail, in the double-precision
+'   VBA arrangement described by Graeme West, "Better Approximations to
+'   Cumulative Normal Functions", Wilmott, 2002, pp. 70-76. West attributes the
+'   underlying high-precision approximation to Hart et al., "Computer
+'   Approximations", Wiley, 1968.
+'
+'   The method is intended to deliver double-precision accuracy over the
+'   practical real line, subject to ordinary floating-point saturation in the
+'   extreme tails.
+'   Accurate to ~1E-15.
 '
 ' INPUTS
 '   X

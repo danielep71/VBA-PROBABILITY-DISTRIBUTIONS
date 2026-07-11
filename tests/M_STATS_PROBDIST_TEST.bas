@@ -1,4 +1,5 @@
 Attribute VB_Name = "M_STATS_PROBDIST_TEST"
+
 Option Explicit
 
 '==============================================================================
@@ -142,6 +143,7 @@ Public Sub Test_STATS_PROBDIST_RunAll()
     RunCoreSuite
     RunNormalFamilySuite
     RunTFamilySuite
+    RunContinuousSuite
     EndRun
 End Sub
 
@@ -187,6 +189,21 @@ Public Sub Test_STATS_PROBDIST_RunTFamily()
 '
     BeginRun "M_STATS_PROBDIST_TFAMILY"
     RunTFamilySuite
+    EndRun
+End Sub
+
+
+Public Sub Test_STATS_PROBDIST_RunContinuous()
+'
+'==============================================================================
+' Test_STATS_PROBDIST_RunContinuous
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the M_STATS_PROBDIST_CONTINUOUS suite only.
+'==============================================================================
+'
+    BeginRun "M_STATS_PROBDIST_CONTINUOUS"
+    RunContinuousSuite
     EndRun
 End Sub
 
@@ -246,6 +263,38 @@ Private Sub RunTFamilySuite()
     Test_TF_FInverse
     Test_TF_ErrorContract
     Test_TF_SupportEdges
+End Sub
+
+
+Private Sub RunContinuousSuite()
+    Debug.Print "== SUITE: M_STATS_PROBDIST_CONTINUOUS"
+    Test_CN_GammaDensity
+    Test_CN_GammaCumulative
+    Test_CN_GammaSurvival
+    Test_CN_GammaInverse
+    Test_CN_GammaMoments
+    Test_CN_BetaDensity
+    Test_CN_BetaCumulative
+    Test_CN_BetaSurvival
+    Test_CN_BetaInverse
+    Test_CN_BetaMoments
+    Test_CN_ExponentialDensity
+    Test_CN_ExponentialCumulative
+    Test_CN_ExponentialSurvival
+    Test_CN_ExponentialInverse
+    Test_CN_WeibullDensity
+    Test_CN_WeibullCumulative
+    Test_CN_WeibullSurvival
+    Test_CN_WeibullInverse
+    Test_CN_WeibullMoments
+    Test_CN_UniformDensity
+    Test_CN_UniformCumulative
+    Test_CN_UniformSurvival
+    Test_CN_UniformInverse
+    Test_CN_CrossFamilyIdentities
+    Test_CN_RoundTrips
+    Test_CN_ErrorContract
+    Test_CN_SupportEdges
 End Sub
 
 
@@ -1375,6 +1424,393 @@ Private Sub RecordResult( _
             mFailCount = mFailCount + 1
             Debug.Print "   FAIL: " & TestName
         End If
+End Sub
+
+
+
+
+'==============================================================================
+' CONTINUOUS FAMILY SECTIONS
+'   Reference values pre-verified against Python mpmath at 50 significant digits
+'   before this module was written. Kernel-driven values (Gamma / Beta CDF, both
+'   inverses) carry the same tolerances as the T family; closed-form values
+'   (Exponential, Weibull, Uniform, all moments) are checked to machine
+'   precision. Left-tail values built on PROB_Expm1 / PROB_Log1p are checked
+'   relatively, since an absolute tolerance would be vacuous at 1E-10.
+'==============================================================================
+
+Private Sub Test_CN_GammaDensity()
+    Debug.Print "-- Gamma density"
+    AssertClose "gamma pdf(3,2.5,1.5)", K_STATS_Gamma_Density(3#, 2.5, 1.5), _
+        0.19196788093578, TOL_TIGHT
+    AssertClose "gamma pdf(0.5,0.5,2)", K_STATS_Gamma_Density(0.5, 0.5, 2#), _
+        0.439391289467722, TOL_TIGHT
+    AssertClose "gamma pdf(-1,2.5,1.5)=0", K_STATS_Gamma_Density(-1#, 2.5, 1.5), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_GammaCumulative()
+    Debug.Print "-- Gamma cumulative"
+    AssertClose "gamma cdf(3,2.5,1.5)", K_STATS_Gamma_Cumulative(3#, 2.5, 1.5), _
+        0.45058404864722, TOL_TIGHT
+    AssertClose "gamma cdf(1e-6,0.5,2)", K_STATS_Gamma_Cumulative(0.000001, 0.5, 2#), _
+        7.97884427822125E-04, TOL_TIGHT
+    AssertClose "gamma cdf(0,2.5,1.5)=0", K_STATS_Gamma_Cumulative(0#, 2.5, 1.5), 0#, 0#
+    AssertClose "gamma cdf(-5,2.5,1.5)=0", K_STATS_Gamma_Cumulative(-5#, 2.5, 1.5), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_GammaSurvival()
+    Debug.Print "-- Gamma survival"
+    AssertClose "gamma sf(3,2.5,1.5)", K_STATS_Gamma_Survival(3#, 2.5, 1.5), _
+        0.54941595135278, TOL_TIGHT
+    AssertClose "gamma sf(0,2.5,1.5)=1", K_STATS_Gamma_Survival(0#, 2.5, 1.5), 1#, 0#
+    AssertClose "gamma sf(-5,2.5,1.5)=1", K_STATS_Gamma_Survival(-5#, 2.5, 1.5), 1#, 0#
+
+    'CDF and survival must sum to one on the support
+    AssertClose "gamma cdf+sf=1", _
+        CDbl(K_STATS_Gamma_Cumulative(3#, 2.5, 1.5)) + _
+        CDbl(K_STATS_Gamma_Survival(3#, 2.5, 1.5)), 1#, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_GammaInverse()
+    Debug.Print "-- Gamma inverse"
+    AssertRelClose "gamma inv(0.7,2.5,1.5)", K_STATS_Gamma_InverseCumulative(0.7, 2.5, 1.5), _
+        4.54832248811618, TOL_REL_TIGHT
+    AssertRelClose "gamma inv(0.05,2.5,1.5)", K_STATS_Gamma_InverseCumulative(0.05, 2.5, 1.5), _
+        0.859107169546327, TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_GammaMoments()
+    Debug.Print "-- Gamma moments"
+    AssertClose "gamma mean(2.5,1.5)", K_STATS_Gamma_Mean(2.5, 1.5), 3.75, TOL_TIGHT
+    AssertClose "gamma var(2.5,1.5)", K_STATS_Gamma_Variance(2.5, 1.5), 5.625, TOL_TIGHT
+    AssertClose "gamma std(2.5,1.5)", K_STATS_Gamma_StdDev(2.5, 1.5), _
+        2.37170824512628, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_BetaDensity()
+    Debug.Print "-- Beta density"
+    AssertClose "beta pdf(0.3,2,5)", K_STATS_Beta_Density(0.3, 2#, 5#), _
+        2.1609, TOL_TIGHT
+    AssertRelClose "beta pdf(0.999999,2,3)", K_STATS_Beta_Density(0.999999, 2#, 3#), _
+        1.1999988E-11, TOL_REL_TAIL
+    AssertClose "beta pdf(-0.1,2,5)=0", K_STATS_Beta_Density(-0.1, 2#, 5#), 0#, 0#
+    AssertClose "beta pdf(1.1,2,5)=0", K_STATS_Beta_Density(1.1, 2#, 5#), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_BetaCumulative()
+    Debug.Print "-- Beta cumulative"
+    AssertClose "beta cdf(0.3,2,5)", K_STATS_Beta_Cumulative(0.3, 2#, 5#), _
+        0.579825, TOL_TIGHT
+    AssertClose "beta cdf(0,2,5)=0", K_STATS_Beta_Cumulative(0#, 2#, 5#), 0#, 0#
+    AssertClose "beta cdf(1,2,5)=1", K_STATS_Beta_Cumulative(1#, 2#, 5#), 1#, 0#
+    AssertClose "beta cdf(-0.2,2,5)=0", K_STATS_Beta_Cumulative(-0.2, 2#, 5#), 0#, 0#
+    AssertClose "beta cdf(1.2,2,5)=1", K_STATS_Beta_Cumulative(1.2, 2#, 5#), 1#, 0#
+End Sub
+
+
+Private Sub Test_CN_BetaSurvival()
+    Debug.Print "-- Beta survival"
+    AssertClose "beta sf(0.3,2,5)", K_STATS_Beta_Survival(0.3, 2#, 5#), _
+        0.420175, TOL_TIGHT
+    AssertClose "beta sf(0,2,5)=1", K_STATS_Beta_Survival(0#, 2#, 5#), 1#, 0#
+    AssertClose "beta sf(1,2,5)=0", K_STATS_Beta_Survival(1#, 2#, 5#), 0#, 0#
+
+    'CDF and survival must sum to one on the support
+    AssertClose "beta cdf+sf=1", _
+        CDbl(K_STATS_Beta_Cumulative(0.3, 2#, 5#)) + _
+        CDbl(K_STATS_Beta_Survival(0.3, 2#, 5#)), 1#, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_BetaInverse()
+    Debug.Print "-- Beta inverse"
+    AssertRelClose "beta inv(0.6,2,5)", K_STATS_Beta_InverseCumulative(0.6, 2#, 5#), _
+        0.309444427545314, TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_BetaMoments()
+    Debug.Print "-- Beta moments"
+    AssertClose "beta mean(2,5)", K_STATS_Beta_Mean(2#, 5#), _
+        0.285714285714286, TOL_TIGHT
+    AssertClose "beta var(2,5)", K_STATS_Beta_Variance(2#, 5#), _
+        2.55102040816327E-02, TOL_TIGHT
+    AssertClose "beta std(2,5)", K_STATS_Beta_StdDev(2#, 5#), _
+        0.159719141249985, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_ExponentialDensity()
+    Debug.Print "-- Exponential density"
+    AssertClose "exp pdf(1,2)", K_STATS_Exponential_Density(1#, 2#), _
+        0.270670566473225, TOL_TIGHT
+    AssertClose "exp pdf(0,2)=lambda", K_STATS_Exponential_Density(0#, 2#), 2#, TOL_TIGHT
+    AssertClose "exp pdf(-1,2)=0", K_STATS_Exponential_Density(-1#, 2#), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_ExponentialCumulative()
+    Debug.Print "-- Exponential cumulative"
+    AssertClose "exp cdf(1,2)", K_STATS_Exponential_Cumulative(1#, 2#), _
+        0.864664716763387, TOL_TIGHT
+    'Left tail through PROB_Expm1: absolute tolerance would be vacuous here
+    AssertRelClose "exp cdf(1e-10,1)", K_STATS_Exponential_Cumulative(0.0000000001, 1#), _
+        9.9999999995E-11, TOL_REL_TAIL
+    AssertClose "exp cdf(0,2)=0", K_STATS_Exponential_Cumulative(0#, 2#), 0#, 0#
+    AssertClose "exp cdf(-1,2)=0", K_STATS_Exponential_Cumulative(-1#, 2#), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_ExponentialSurvival()
+    Debug.Print "-- Exponential survival"
+    AssertClose "exp sf(1,2)", K_STATS_Exponential_Survival(1#, 2#), _
+        0.135335283236613, TOL_TIGHT
+    AssertClose "exp sf(0,2)=1", K_STATS_Exponential_Survival(0#, 2#), 1#, 0#
+    AssertClose "exp sf(-1,2)=1", K_STATS_Exponential_Survival(-1#, 2#), 1#, 0#
+
+    'CDF and survival must sum to one
+    AssertClose "exp cdf+sf=1", _
+        CDbl(K_STATS_Exponential_Cumulative(1#, 2#)) + _
+        CDbl(K_STATS_Exponential_Survival(1#, 2#)), 1#, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_ExponentialInverse()
+    Debug.Print "-- Exponential inverse"
+    AssertClose "exp inv(0.5,2)", K_STATS_Exponential_InverseCumulative(0.5, 2#), _
+        0.346573590279973, TOL_TIGHT
+    'Left tail through PROB_Log1p
+    AssertRelClose "exp inv(1e-12,1)", K_STATS_Exponential_InverseCumulative(0.000000000001, 1#), _
+        1.0000000000005E-12, TOL_REL_TAIL
+End Sub
+
+
+Private Sub Test_CN_WeibullDensity()
+    Debug.Print "-- Weibull density"
+    AssertClose "weibull pdf(1,1.5,2)", K_STATS_Weibull_Density(1#, 1.5, 2#), _
+        0.372391688219422, TOL_TIGHT
+    AssertClose "weibull pdf(-1,1.5,2)=0", K_STATS_Weibull_Density(-1#, 1.5, 2#), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_WeibullCumulative()
+    Debug.Print "-- Weibull cumulative"
+    AssertClose "weibull cdf(1,1.5,2)", K_STATS_Weibull_Cumulative(1#, 1.5, 2#), _
+        0.29781149867344, TOL_TIGHT
+    'Left tail through PROB_Expm1
+    AssertRelClose "weibull cdf(1e-10,1,1)", K_STATS_Weibull_Cumulative(0.0000000001, 1#, 1#), _
+        9.9999999995E-11, TOL_REL_TAIL
+    AssertClose "weibull cdf(0,1.5,2)=0", K_STATS_Weibull_Cumulative(0#, 1.5, 2#), 0#, 0#
+    AssertClose "weibull cdf(-3,1.5,2)=0", K_STATS_Weibull_Cumulative(-3#, 1.5, 2#), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_WeibullSurvival()
+    Debug.Print "-- Weibull survival"
+    AssertClose "weibull sf(1,1.5,2)", K_STATS_Weibull_Survival(1#, 1.5, 2#), _
+        0.70218850132656, TOL_TIGHT
+    AssertClose "weibull sf(0,1.5,2)=1", K_STATS_Weibull_Survival(0#, 1.5, 2#), 1#, 0#
+
+    'CDF and survival must sum to one on the support
+    AssertClose "weibull cdf+sf=1", _
+        CDbl(K_STATS_Weibull_Cumulative(1#, 1.5, 2#)) + _
+        CDbl(K_STATS_Weibull_Survival(1#, 1.5, 2#)), 1#, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_WeibullInverse()
+    Debug.Print "-- Weibull inverse"
+    AssertClose "weibull inv(0.4,1.5,2)", K_STATS_Weibull_InverseCumulative(0.4, 1.5, 2#), _
+        1.27804195727092, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_WeibullMoments()
+    Debug.Print "-- Weibull moments"
+    AssertClose "weibull mean(1.5,2)", K_STATS_Weibull_Mean(1.5, 2#), _
+        1.80549058590187, TOL_TIGHT
+    AssertClose "weibull var(1.5,2)", K_STATS_Weibull_Variance(1.5, 2#), _
+        1.50276113925573, TOL_TIGHT
+    AssertClose "weibull std(1.5,2)", K_STATS_Weibull_StdDev(1.5, 2#), _
+        1.22587158350935, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_UniformDensity()
+    Debug.Print "-- Uniform density"
+    AssertClose "uniform pdf(3,2,5)", K_STATS_Uniform_Density(3#, 2#, 5#), _
+        0.333333333333333, TOL_TIGHT
+    AssertClose "uniform pdf(2,2,5) edge", K_STATS_Uniform_Density(2#, 2#, 5#), _
+        0.333333333333333, TOL_TIGHT
+    AssertClose "uniform pdf(1,2,5)=0", K_STATS_Uniform_Density(1#, 2#, 5#), 0#, 0#
+    AssertClose "uniform pdf(6,2,5)=0", K_STATS_Uniform_Density(6#, 2#, 5#), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_UniformCumulative()
+    Debug.Print "-- Uniform cumulative"
+    AssertClose "uniform cdf(3,2,5)", K_STATS_Uniform_Cumulative(3#, 2#, 5#), _
+        0.333333333333333, TOL_TIGHT
+    AssertClose "uniform cdf(1,2,5)=0", K_STATS_Uniform_Cumulative(1#, 2#, 5#), 0#, 0#
+    AssertClose "uniform cdf(6,2,5)=1", K_STATS_Uniform_Cumulative(6#, 2#, 5#), 1#, 0#
+End Sub
+
+
+Private Sub Test_CN_UniformSurvival()
+    Debug.Print "-- Uniform survival"
+    AssertClose "uniform sf(3,2,5)", K_STATS_Uniform_Survival(3#, 2#, 5#), _
+        0.666666666666667, TOL_TIGHT
+    AssertClose "uniform sf(1,2,5)=1", K_STATS_Uniform_Survival(1#, 2#, 5#), 1#, 0#
+    AssertClose "uniform sf(6,2,5)=0", K_STATS_Uniform_Survival(6#, 2#, 5#), 0#, 0#
+
+    'CDF and survival must sum to one on the support
+    AssertClose "uniform cdf+sf=1", _
+        CDbl(K_STATS_Uniform_Cumulative(3#, 2#, 5#)) + _
+        CDbl(K_STATS_Uniform_Survival(3#, 2#, 5#)), 1#, 0#
+End Sub
+
+
+Private Sub Test_CN_UniformInverse()
+    Debug.Print "-- Uniform inverse"
+    AssertClose "uniform inv(0.25,2,5)", K_STATS_Uniform_InverseCumulative(0.25, 2#, 5#), _
+        2.75, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_CrossFamilyIdentities()
+    Dim BetaArg As Double
+
+    Debug.Print "-- Cross-family identities (self-checks against independent oracles)"
+
+    'Identity 1 (marshalling): Chi-square(v) is Gamma(shape v/2, scale 2)
+    AssertClose "id chi2(3,5) via TFAMILY", K_STATS_ChiSquare_Cumulative(3#, 5#), _
+        0.300014164121372, TOL_TIGHT
+    AssertClose "id chi2(3,5)=gamma(3,2.5,2)", K_STATS_Gamma_Cumulative(3#, 2.5, 2#), _
+        0.300014164121372, TOL_TIGHT
+
+    'Identity 2 (marshalling): F(d1,d2) maps to Beta(d1/2, d2/2) at d1 x /(d1 x + d2)
+    BetaArg = 5# * 2.5 / (5# * 2.5 + 10#)
+    AssertClose "id F(2.5,5,10) via TFAMILY", K_STATS_F_Cumulative(2.5, 5#, 10#), _
+        0.89799772335573, TOL_TIGHT
+    AssertClose "id F(2.5,5,10)=beta(arg,2.5,5)", K_STATS_Beta_Cumulative(BetaArg, 2.5, 5#), _
+        0.89799772335573, TOL_TIGHT
+
+    'Identity 3 (real kernel test): Exponential(rate L) is Gamma(1, 1/L).
+    'Note the RECIPROCAL: rate 2 maps to scale 0.5. This pits the incomplete-gamma
+    'kernel at shape = 1 against the closed-form PROB_Expm1 CDF.
+    AssertClose "id exp(1,2) closed form", K_STATS_Exponential_Cumulative(1#, 2#), _
+        0.864664716763387, TOL_TIGHT
+    AssertClose "id exp(1,2)=gamma(1,1,0.5) kernel", K_STATS_Gamma_Cumulative(1#, 1#, 0.5), _
+        0.864664716763387, TOL_TIGHT
+
+    'Identity 4 (real kernel test): Uniform(0,1) is Beta(1,1); both equal x
+    AssertClose "id uniform(0.37,0,1)", K_STATS_Uniform_Cumulative(0.37, 0#, 1#), _
+        0.37, TOL_TIGHT
+    AssertClose "id beta(0.37,1,1) kernel", K_STATS_Beta_Cumulative(0.37, 1#, 1#), _
+        0.37, TOL_TIGHT
+
+    'Identity 5 (real kernel test): Chi-square(2) is Exponential(rate 1/2). The
+    'gamma kernel (via chi-square) is checked against the closed-form Exponential.
+    AssertClose "id chi2(2.4,2) kernel", K_STATS_ChiSquare_Cumulative(2.4, 2#), _
+        0.698805788087798, TOL_TIGHT
+    AssertClose "id exp(2.4,0.5) closed form", K_STATS_Exponential_Cumulative(2.4, 0.5), _
+        0.698805788087798, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_RoundTrips()
+    Debug.Print "-- Continuous inverse round-trips (CDF of quantile returns the probability)"
+
+    AssertClose "gamma roundtrip p=0.7", _
+        CDbl(K_STATS_Gamma_Cumulative( _
+            CDbl(K_STATS_Gamma_InverseCumulative(0.7, 2.5, 1.5)), 2.5, 1.5)), 0.7, TOL_LOOSE
+    AssertClose "beta roundtrip p=0.6", _
+        CDbl(K_STATS_Beta_Cumulative( _
+            CDbl(K_STATS_Beta_InverseCumulative(0.6, 2#, 5#)), 2#, 5#)), 0.6, TOL_LOOSE
+    AssertClose "exp roundtrip p=0.35", _
+        CDbl(K_STATS_Exponential_Cumulative( _
+            CDbl(K_STATS_Exponential_InverseCumulative(0.35, 2#)), 2#)), 0.35, TOL_TIGHT
+    AssertClose "weibull roundtrip p=0.4", _
+        CDbl(K_STATS_Weibull_Cumulative( _
+            CDbl(K_STATS_Weibull_InverseCumulative(0.4, 1.5, 2#)), 1.5, 2#)), 0.4, TOL_TIGHT
+    AssertClose "uniform roundtrip p=0.25", _
+        CDbl(K_STATS_Uniform_Cumulative( _
+            CDbl(K_STATS_Uniform_InverseCumulative(0.25, 2#, 5#)), 2#, 5#)), 0.25, TOL_TIGHT
+End Sub
+
+
+Private Sub Test_CN_ErrorContract()
+    Dim Diag As String
+
+    Debug.Print "-- Continuous error contract (must return CVErr, never a sentinel)"
+
+    'Density poles at boundaries with shape < 1 return CVErr(xlErrNum)
+    AssertIsError "gamma pdf pole(0,0.5,2)", K_STATS_Gamma_Density(0#, 0.5, 2#)
+    AssertIsError "beta pdf pole(0,0.5,2)", K_STATS_Beta_Density(0#, 0.5, 2#)
+    AssertIsError "beta pdf pole(1,2,0.5)", K_STATS_Beta_Density(1#, 2#, 0.5)
+    AssertIsError "weibull pdf pole(0,0.5,2)", K_STATS_Weibull_Density(0#, 0.5, 2#)
+
+    'Invalid parameters
+    AssertIsError "gamma pdf shape<0", K_STATS_Gamma_Density(1#, -2#, 1.5)
+    AssertIsError "gamma cdf scale=0", K_STATS_Gamma_Cumulative(1#, 2.5, 0#)
+    AssertIsError "beta cdf alpha=0", K_STATS_Beta_Cumulative(0.3, 0#, 5#)
+    AssertIsError "exp pdf lambda<0", K_STATS_Exponential_Density(1#, -2#)
+    AssertIsError "weibull cdf shape=0", K_STATS_Weibull_Cumulative(1#, 0#, 2#)
+    AssertIsError "uniform pdf hi<=lo", K_STATS_Uniform_Density(3#, 5#, 2#)
+    AssertIsError "uniform pdf hi=lo", K_STATS_Uniform_Density(3#, 2#, 2#)
+
+    'Non-finite evaluation points
+    AssertIsError "gamma cdf x huge", K_STATS_Gamma_Cumulative(1E+200, 2.5, 1.5)
+
+    'Probabilities outside the open unit interval
+    AssertIsError "gamma inv p=0", K_STATS_Gamma_InverseCumulative(0#, 2.5, 1.5)
+    AssertIsError "gamma inv p=1", K_STATS_Gamma_InverseCumulative(1#, 2.5, 1.5)
+    AssertIsError "beta inv p>1", K_STATS_Beta_InverseCumulative(1.5, 2#, 5#)
+    AssertIsError "exp inv p=1", K_STATS_Exponential_InverseCumulative(1#, 2#)
+    AssertIsError "weibull inv p=0", K_STATS_Weibull_InverseCumulative(0#, 1.5, 2#)
+    AssertIsError "uniform inv p=1", K_STATS_Uniform_InverseCumulative(1#, 2#, 5#)
+
+    'Status must be populated on failure and cleared on success
+    Diag = "stale"
+    AssertIsError "gamma cdf scale=0 with status", K_STATS_Gamma_Cumulative(1#, 2.5, 0#, Diag)
+    AssertTrue "CN status populated on failure", (Len(Diag) > 0 And Diag <> "stale")
+
+    Diag = "stale"
+    AssertClose "gamma cdf ok with status", K_STATS_Gamma_Cumulative(3#, 2.5, 1.5, Diag), _
+        0.45058404864722, TOL_TIGHT
+    AssertTrue "CN status cleared on success", (Len(Diag) = 0)
+End Sub
+
+
+Private Sub Test_CN_SupportEdges()
+    Debug.Print "-- Continuous support edges (finite boundary densities)"
+
+    'Gamma origin: 1/Scale at shape 1, zero above, both finite (not poles)
+    AssertClose "gamma pdf(0,1,2)=1/2", K_STATS_Gamma_Density(0#, 1#, 2#), 0.5, TOL_TIGHT
+    AssertClose "gamma pdf(0,2,1.5)=0", K_STATS_Gamma_Density(0#, 2#, 1.5), 0#, 0#
+
+    'Beta endpoints: Beta at 0 when alpha=1, Alpha at 1 when beta=1
+    AssertClose "beta pdf(0,1,3)=3", K_STATS_Beta_Density(0#, 1#, 3#), 3#, TOL_TIGHT
+    AssertClose "beta pdf(1,2,1)=2", K_STATS_Beta_Density(1#, 2#, 1#), 2#, TOL_TIGHT
+    AssertClose "beta pdf(0,2,5)=0", K_STATS_Beta_Density(0#, 2#, 5#), 0#, 0#
+    AssertClose "beta pdf(1,2,5)=0", K_STATS_Beta_Density(1#, 2#, 5#), 0#, 0#
+
+    'Weibull origin: 1/Scale at shape 1, zero above
+    AssertClose "weibull pdf(0,1,2)=1/2", K_STATS_Weibull_Density(0#, 1#, 2#), 0.5, TOL_TIGHT
+    AssertClose "weibull pdf(0,2,1.5)=0", K_STATS_Weibull_Density(0#, 2#, 1.5), 0#, 0#
+
+    'All CDFs live in the unit interval
+    AssertInUnitInterval "gamma cdf in [0,1]", K_STATS_Gamma_Cumulative(3#, 2.5, 1.5)
+    AssertInUnitInterval "beta cdf in [0,1]", K_STATS_Beta_Cumulative(0.3, 2#, 5#)
+    AssertInUnitInterval "exp cdf in [0,1]", K_STATS_Exponential_Cumulative(1#, 2#)
+    AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
+    AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
 
 
