@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_CONTINUOUS"
-
 Option Explicit
 
 '==============================================================================
@@ -126,143 +125,73 @@ Public Function K_STATS_Gamma_Density( _
 ' K_STATS_Gamma_Density
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Gamma probability density at X for shape k and scale theta.
-'
-' WHY THIS EXISTS
-'   The Gamma density is the workhorse of waiting-time, insurance-loss and
-'   Bayesian-conjugate models. Evaluating it through the log-density and a single
-'   guarded exponential keeps it finite deep into the tail, where the naive
-'   product of a large power and a small exponential would overflow or underflow
-'   prematurely.
-'
-' WORKSHEET EQUIVALENT
-'   GAMMA.DIST(X, Shape, ScaleParam, FALSE)
-'
-' INPUTS
-'   X       Evaluation point. For X < 0 the density is 0.
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter theta. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double density value.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns 0 for X < 0.
-'   - At X = 0 the density is unbounded when Shape < 1: returns CVErr(xlErrNum).
-'     When Shape = 1 it equals 1 / ScaleParam; when Shape > 1 it equals 0.
-'   - Otherwise Exp((k - 1)*Log(X) - X/theta - k*Log(theta) - LogGamma(k)).
-'   - Underflow to 0 in the tail is a valid zero; overflow returns CVErr(xlErrNum).
-'
-' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Density pole or overflow returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_LogGamma, PROB_TryExp, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
+'   Returns the Gamma density with explicit handling of scale-ratio overflow.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim LogDensity          As Double          'Log of the density
-    Dim Density             As Double          'Density value
-    Dim FailMsg             As String          'Detailed failure message
+    Dim StandardX          As Double
+    Dim LogDensity         As Double
+    Dim Density            As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate the evaluation point and both positive parameters
         If Not PROB_CN_ValidateXAndTwoPositive( _
             X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
 
-'------------------------------------------------------------------------------
-' HANDLE THE SUPPORT EDGE
-'------------------------------------------------------------------------------
-    'Return zero below the support
         If X < 0# Then
             K_STATS_Gamma_Density = 0#
             GoTo Return_Success
         End If
 
-    'Handle the origin, where the density is 0, 1 / ScaleParam or unbounded
         If X = 0# Then
             If Shape < 1# Then
                 FailMsg = "Gamma density is unbounded at X = 0 when Shape < 1"
                 GoTo Fail_Num
             ElseIf Shape = 1# Then
-                K_STATS_Gamma_Density = 1# / ScaleParam
+                If Not PROB_TryDivide(1#, ScaleParam, Density) Then
+                    FailMsg = "Gamma density overflows Double at X = 0"
+                    GoTo Fail_Num
+                End If
+                K_STATS_Gamma_Density = Density
             Else
                 K_STATS_Gamma_Density = 0#
             End If
             GoTo Return_Success
         End If
 
-'------------------------------------------------------------------------------
-' COMPUTE DENSITY
-'------------------------------------------------------------------------------
-    'Compute the log-density
+        'For positive operands, ratio overflow means X / ScaleParam is beyond
+        'Double range and the exponential tail drives the density to zero.
+        If Not PROB_TryDivide(X, ScaleParam, StandardX) Then
+            K_STATS_Gamma_Density = 0#
+            GoTo Return_Success
+        End If
+
         LogDensity = _
             (Shape - 1#) * Log(X) - _
-            X / ScaleParam - _
+            StandardX - _
             Shape * Log(ScaleParam) - _
             PROB_LogGamma(Shape)
 
-    'Exponentiate; underflow to zero is a valid result
         If Not PROB_TryExp(LogDensity, Density) Then
             FailMsg = "Gamma density overflowed a Double"
             GoTo Fail_Num
         End If
 
-    'Return the density
         K_STATS_Gamma_Density = Density
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
 Return_Success:
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
 
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Gamma_Density = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
 
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Density: " & Err.Description
-    'Return worksheet value error
         K_STATS_Gamma_Density = CVErr(xlErrValue)
 End Function
 
@@ -274,117 +203,44 @@ Public Function K_STATS_Gamma_Cumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Gamma_Cumulative
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the left-tail Gamma cumulative distribution function at X.
-'
-' WHY THIS EXISTS
-'   Gamma cumulative probabilities give waiting-time and aggregate-loss
-'   exceedance levels directly, and are the bridge that turns a chi-square into
-'   a Gamma(df/2, 2) for cross-checking.
-'
-' WORKSHEET EQUIVALENT
-'   GAMMA.DIST(X, Shape, ScaleParam, TRUE)
-'
-' INPUTS
-'   X       Evaluation point. For X <= 0 the cumulative probability is 0.
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter theta. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double cumulative probability P(Gamma <= X).
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns 0 for X <= 0.
-'   - Computes P(Shape, X / ScaleParam), the regularized lower incomplete gamma.
-'   - Non-convergence returns CVErr(xlErrNum); a partial sum is never returned.
-'
-' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Non-convergence returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryGammaRegularizedP, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Value               As Double          'Cumulative probability
-    Dim FailMsg             As String          'Detailed failure message
+    Dim StandardX          As Double
+    Dim Value              As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate the evaluation point and both positive parameters
         If Not PROB_CN_ValidateXAndTwoPositive( _
             X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
 
-'------------------------------------------------------------------------------
-' COMPUTE CUMULATIVE PROBABILITY
-'------------------------------------------------------------------------------
-    'Return zero for values outside the positive support
         If X <= 0# Then
             K_STATS_Gamma_Cumulative = 0#
             GoTo Return_Success
         End If
 
-    'Evaluate the regularized lower incomplete gamma function
-        If Not PROB_TryGammaRegularizedP( _
-            Shape, X / ScaleParam, Value, FailMsg) Then GoTo Fail_Num
+        'A positive ratio overflow is the mathematical +infinity limit.
+        If Not PROB_TryDivide(X, ScaleParam, StandardX) Then
+            K_STATS_Gamma_Cumulative = 1#
+            GoTo Return_Success
+        End If
 
-    'Return the cumulative probability
+        If Not PROB_TryGammaRegularizedP( _
+            Shape, StandardX, Value, FailMsg) Then GoTo Fail_Num
+
         K_STATS_Gamma_Cumulative = Value
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
 Return_Success:
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
 
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Gamma_Cumulative = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
 
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Cumulative: " & Err.Description
-    'Return worksheet value error
         K_STATS_Gamma_Cumulative = CVErr(xlErrValue)
 End Function
 
@@ -396,118 +252,43 @@ Public Function K_STATS_Gamma_Survival( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Gamma_Survival
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the right-tail Gamma survival function Q = 1 - CDF at X.
-'
-' WHY THIS EXISTS
-'   The survival function is the exceedance probability a reliability or
-'   solvency model actually asks for, and evaluating it through the upper
-'   incomplete gamma Q keeps the small tail accurate instead of computing it as
-'   1 minus a CDF that has already rounded to one.
-'
-' WORKSHEET EQUIVALENT
-'   1 - GAMMA.DIST(X, Shape, ScaleParam, TRUE)
-'
-' INPUTS
-'   X       Evaluation point. For X <= 0 the survival probability is 1.
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter theta. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double survival probability P(Gamma > X).
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns 1 for X <= 0.
-'   - Computes Q(Shape, X / ScaleParam), the regularized upper incomplete gamma.
-'   - Non-convergence returns CVErr(xlErrNum).
-'
-' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Non-convergence returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_CN_ValidateXAndTwoPositive
-'   - PROB_TryGammaRegularizedQ, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Value               As Double          'Survival probability
-    Dim FailMsg             As String          'Detailed failure message
+    Dim StandardX          As Double
+    Dim Value              As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate the evaluation point and both positive parameters
         If Not PROB_CN_ValidateXAndTwoPositive( _
             X, Shape, ScaleParam, FailMsg, "Shape", "ScaleParam") Then GoTo Fail_Num
 
-'------------------------------------------------------------------------------
-' COMPUTE SURVIVAL PROBABILITY
-'------------------------------------------------------------------------------
-    'Return one for values outside the positive support
         If X <= 0# Then
             K_STATS_Gamma_Survival = 1#
             GoTo Return_Success
         End If
 
-    'Evaluate the regularized upper incomplete gamma function
-        If Not PROB_TryGammaRegularizedQ( _
-            Shape, X / ScaleParam, Value, FailMsg) Then GoTo Fail_Num
+        If Not PROB_TryDivide(X, ScaleParam, StandardX) Then
+            K_STATS_Gamma_Survival = 0#
+            GoTo Return_Success
+        End If
 
-    'Return the survival probability
+        If Not PROB_TryGammaRegularizedQ( _
+            Shape, StandardX, Value, FailMsg) Then GoTo Fail_Num
+
         K_STATS_Gamma_Survival = Value
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
 Return_Success:
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
 
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Gamma_Survival = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
 
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Survival: " & Err.Description
-    'Return worksheet value error
         K_STATS_Gamma_Survival = CVErr(xlErrValue)
 End Function
 
@@ -567,6 +348,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim GammaQuantile       As Double          'Unit-scale gamma quantile
+    Dim RescaledQuantile    As Double          'Quantile after applying ScaleParam
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -588,7 +370,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
             GoTo Fail_Num
         End If
     'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = "Shape must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -605,8 +387,13 @@ Public Function K_STATS_Gamma_InverseCumulative( _
         If Not PROB_TryGammaInvP( _
             Probability, 1# - Probability, Shape, GammaQuantile, FailMsg) Then GoTo Fail_Num
 
-    'Rescale from the unit-scale gamma to the requested scale
-        K_STATS_Gamma_InverseCumulative = ScaleParam * GammaQuantile
+    'Rescale from the unit-scale gamma with explicit overflow classification
+        If Not PROB_TryMultiply(ScaleParam, GammaQuantile, RescaledQuantile) Then
+            FailMsg = "Gamma quantile overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Gamma_InverseCumulative = RescaledQuantile
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -680,6 +467,7 @@ Public Function K_STATS_Gamma_Mean( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim MeanValue           As Double          'Computed mean
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -696,7 +484,7 @@ Public Function K_STATS_Gamma_Mean( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = "Shape must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -709,14 +497,13 @@ Public Function K_STATS_Gamma_Mean( _
 '------------------------------------------------------------------------------
 ' COMPUTE MEAN
 '------------------------------------------------------------------------------
-    'Guard the product against overflow, then form it
-        If Shape > PROB_DOUBLE_MAX / ScaleParam Then
+    'Guard the product through the shared arithmetic contract
+        If Not PROB_TryMultiply(Shape, ScaleParam, MeanValue) Then
             FailMsg = "Gamma mean overflows Double range"
             GoTo Fail_Num
         End If
 
-    'Return the mean
-        K_STATS_Gamma_Mean = Shape * ScaleParam
+        K_STATS_Gamma_Mean = MeanValue
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -808,7 +595,7 @@ Public Function K_STATS_Gamma_Variance( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = "Shape must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -821,21 +608,18 @@ Public Function K_STATS_Gamma_Variance( _
 '------------------------------------------------------------------------------
 ' COMPUTE VARIANCE
 '------------------------------------------------------------------------------
-    'Guard and form Shape * ScaleParam
-        If Shape > PROB_DOUBLE_MAX / ScaleParam Then
-            FailMsg = "Gamma variance overflows Double range"
-            GoTo Fail_Num
-        End If
-        Partial = Shape * ScaleParam
-
-    'Guard and form (Shape * ScaleParam) * ScaleParam
-        If Partial > PROB_DOUBLE_MAX / ScaleParam Then
+    'Guard both multiplications through the shared arithmetic contract
+        If Not PROB_TryMultiply(Shape, ScaleParam, Partial) Then
             FailMsg = "Gamma variance overflows Double range"
             GoTo Fail_Num
         End If
 
-    'Return the variance
-        K_STATS_Gamma_Variance = Partial * ScaleParam
+        If Not PROB_TryMultiply(Partial, ScaleParam, Partial) Then
+            FailMsg = "Gamma variance overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Gamma_Variance = Partial
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -912,6 +696,7 @@ Public Function K_STATS_Gamma_StdDev( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim RootShape           As Double          'Sqr(Shape)
+    Dim StdDevValue         As Double          'Computed standard deviation
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -928,7 +713,7 @@ Public Function K_STATS_Gamma_StdDev( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = "Shape must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -944,14 +729,13 @@ Public Function K_STATS_Gamma_StdDev( _
     'Take the root of the shape
         RootShape = Sqr(Shape)
 
-    'Guard the product against overflow, then form it
-        If ScaleParam > PROB_DOUBLE_MAX / RootShape Then
+    'Guard the product through the shared arithmetic contract
+        If Not PROB_TryMultiply(ScaleParam, RootShape, StdDevValue) Then
             FailMsg = "Gamma standard deviation overflows Double range"
             GoTo Fail_Num
         End If
 
-    'Return the standard deviation
-        K_STATS_Gamma_StdDev = ScaleParam * RootShape
+        K_STATS_Gamma_StdDev = StdDevValue
 
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -1476,12 +1260,12 @@ Public Function K_STATS_Beta_InverseCumulative( _
             GoTo Fail_Num
         End If
     'Validate first shape
-        If Not PROB_IsPositiveFinite(Alpha) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = "Alpha must be a finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate second shape
-        If Not PROB_IsPositiveFinite(Beta) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = "Beta must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1585,12 +1369,12 @@ Public Function K_STATS_Beta_Mean( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate first shape
-        If Not PROB_IsPositiveFinite(Alpha) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = "Alpha must be a finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate second shape
-        If Not PROB_IsPositiveFinite(Beta) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = "Beta must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1600,7 +1384,7 @@ Public Function K_STATS_Beta_Mean( _
 '------------------------------------------------------------------------------
     'Form the shape sum and reject a non-finite result
         Sum = Alpha + Beta
-        If Not PROB_IsFinite(Sum) Then
+        If Not PROB_IsWithinSupportedMagnitude(Sum) Then
             FailMsg = "Beta mean overflows Double range in Alpha + Beta"
             GoTo Fail_Num
         End If
@@ -1701,12 +1485,12 @@ Public Function K_STATS_Beta_Variance( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate first shape
-        If Not PROB_IsPositiveFinite(Alpha) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = "Alpha must be a finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate second shape
-        If Not PROB_IsPositiveFinite(Beta) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = "Beta must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1716,7 +1500,7 @@ Public Function K_STATS_Beta_Variance( _
 '------------------------------------------------------------------------------
     'Form the shape sum and reject a non-finite result
         Sum = Alpha + Beta
-        If Not PROB_IsFinite(Sum) Then
+        If Not PROB_IsWithinSupportedMagnitude(Sum) Then
             FailMsg = "Beta variance overflows Double range in Alpha + Beta"
             GoTo Fail_Num
         End If
@@ -1817,12 +1601,12 @@ Public Function K_STATS_Beta_StdDev( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate first shape
-        If Not PROB_IsPositiveFinite(Alpha) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = "Alpha must be a finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate second shape
-        If Not PROB_IsPositiveFinite(Beta) Then
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = "Beta must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1832,7 +1616,7 @@ Public Function K_STATS_Beta_StdDev( _
 '------------------------------------------------------------------------------
     'Form the shape sum and reject a non-finite result
         Sum = Alpha + Beta
-        If Not PROB_IsFinite(Sum) Then
+        If Not PROB_IsWithinSupportedMagnitude(Sum) Then
             FailMsg = "Beta standard deviation overflows Double range in Alpha + Beta"
             GoTo Fail_Num
         End If
@@ -1882,123 +1666,48 @@ Public Function K_STATS_Exponential_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Exponential_Density
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the Exponential probability density at X for rate Lambda.
-'
-' WHY THIS EXISTS
-'   The Exponential is the memoryless waiting time between Poisson events. Its
-'   density is a closed form; it is written through the log-density only so that
-'   an enormous rate cannot overflow the leading factor before the exponential
-'   damps it.
-'
-' WORKSHEET EQUIVALENT
-'   EXPON.DIST(X, Lambda, FALSE)
-'
-' INPUTS
-'   X       Evaluation point. For X < 0 the density is 0.
-'   Lambda  Rate parameter (NOT a scale). Must be strictly positive. The mean is
-'           1 / Lambda.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double density value.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns 0 for X < 0.
-'   - At X = 0 the density is Lambda; it is finite for every valid Lambda, so
-'     there is no pole here (unlike Gamma or Weibull with shape < 1).
-'   - Otherwise Exp(Log(Lambda) - Lambda * X).
-'
-' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Overflow returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_CN_ValidateXLambda
-'   - PROB_TryExp, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Density             As Double          'Density value
-    Dim FailMsg             As String          'Detailed failure message
+    Dim LambdaX            As Double
+    Dim Density            As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate the evaluation point and the positive rate
         If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then GoTo Fail_Num
 
-'------------------------------------------------------------------------------
-' HANDLE THE SUPPORT EDGE
-'------------------------------------------------------------------------------
-    'Return zero below the support
         If X < 0# Then
             K_STATS_Exponential_Density = 0#
             GoTo Return_Success
         End If
 
-'------------------------------------------------------------------------------
-' COMPUTE DENSITY
-'------------------------------------------------------------------------------
-    'Exponentiate the log-density; underflow to zero is a valid result
-        If Not PROB_TryExp(Log(Lambda) - Lambda * X, Density) Then
+        If X = 0# Then
+            K_STATS_Exponential_Density = Lambda
+            GoTo Return_Success
+        End If
+
+        'Positive product overflow means the exponential damping is complete.
+        If Not PROB_TryMultiply(Lambda, X, LambdaX) Then
+            K_STATS_Exponential_Density = 0#
+            GoTo Return_Success
+        End If
+
+        If Not PROB_TryExp(Log(Lambda) - LambdaX, Density) Then
             FailMsg = "Exponential density overflowed a Double"
             GoTo Fail_Num
         End If
 
-    'Return the density
         K_STATS_Exponential_Density = Density
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
 Return_Success:
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Exponential_Density = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
-
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_Density: " & Err.Description
-    'Return worksheet value error
         K_STATS_Exponential_Density = CVErr(xlErrValue)
 End Function
 
@@ -2009,110 +1718,36 @@ Public Function K_STATS_Exponential_Cumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Exponential_Cumulative
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the left-tail Exponential cumulative distribution function at X.
-'
-' WHY THIS EXISTS
-'   The Exponential CDF is 1 - Exp(-Lambda * X). Evaluated naively that is
-'   exactly 0 for small X once Exp(-Lambda * X) rounds to 1; computing it as
-'   -PROB_Expm1(-Lambda * X) keeps full relative precision all the way down to
-'   X near zero, which matters for tiny survival complements and for the
-'   Chi-square(2)-to-Exponential identity check.
-'
-' WORKSHEET EQUIVALENT
-'   EXPON.DIST(X, Lambda, TRUE)
-'
-' INPUTS
-'   X       Evaluation point. For X <= 0 the CDF is 0.
-'   Lambda  Rate parameter. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double cumulative probability 1 - Exp(-Lambda * X).
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns 0 for X <= 0.
-'   - Otherwise -PROB_Expm1(-Lambda * X).
-'
-' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_CN_ValidateXLambda
-'   - PROB_Expm1, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim FailMsg             As String          'Detailed failure message
+    Dim LambdaX            As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate the evaluation point and the positive rate
         If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then GoTo Fail_Num
 
-'------------------------------------------------------------------------------
-' COMPUTE CUMULATIVE PROBABILITY
-'------------------------------------------------------------------------------
-    'Return zero for values outside the positive support
         If X <= 0# Then
             K_STATS_Exponential_Cumulative = 0#
             GoTo Return_Success
         End If
 
-    'Compute 1 - Exp(-Lambda * X) without cancellation
-        K_STATS_Exponential_Cumulative = -PROB_Expm1(-Lambda * X)
+        If Not PROB_TryMultiply(Lambda, X, LambdaX) Then
+            K_STATS_Exponential_Cumulative = 1#
+            GoTo Return_Success
+        End If
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
+        K_STATS_Exponential_Cumulative = -PROB_Expm1(-LambdaX)
+
 Return_Success:
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Exponential_Cumulative = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
-
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_Cumulative: " & Err.Description
-    'Return worksheet value error
         K_STATS_Exponential_Cumulative = CVErr(xlErrValue)
 End Function
 
@@ -2123,108 +1758,42 @@ Public Function K_STATS_Exponential_Survival( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Exponential_Survival
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the right-tail Exponential survival function Exp(-Lambda * X).
-'
-' WHY THIS EXISTS
-'   The survival is the exact memoryless reliability function and is the natural
-'   quantity for exceedance and time-to-failure work. It is a bare exponential,
-'   so it needs no cancellation-avoiding trick: the argument is never positive.
-'
-' WORKSHEET EQUIVALENT
-'   1 - EXPON.DIST(X, Lambda, TRUE)
-'
-' INPUTS
-'   X       Evaluation point. For X <= 0 the survival is 1.
-'   Lambda  Rate parameter. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double survival probability Exp(-Lambda * X).
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns 1 for X <= 0.
-'   - Otherwise Exp(-Lambda * X); underflow to 0 in the far tail is a valid zero.
-'
-' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_CN_ValidateXLambda
-'   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim FailMsg             As String          'Detailed failure message
+    Dim LambdaX            As Double
+    Dim Survival           As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate the evaluation point and the positive rate
         If Not PROB_CN_ValidateXLambda(X, Lambda, FailMsg) Then GoTo Fail_Num
 
-'------------------------------------------------------------------------------
-' COMPUTE SURVIVAL PROBABILITY
-'------------------------------------------------------------------------------
-    'Return one for values outside the positive support
         If X <= 0# Then
             K_STATS_Exponential_Survival = 1#
             GoTo Return_Success
         End If
 
-    'Compute Exp(-Lambda * X); the argument is non-positive, so no overflow
-        K_STATS_Exponential_Survival = Exp(-Lambda * X)
+        If Not PROB_TryMultiply(Lambda, X, LambdaX) Then
+            K_STATS_Exponential_Survival = 0#
+            GoTo Return_Success
+        End If
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
+        If Not PROB_TryExp(-LambdaX, Survival) Then
+            FailMsg = "Unexpected positive exponential argument in survival kernel"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Exponential_Survival = Survival
+
 Return_Success:
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Exponential_Survival = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
-
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_Survival: " & Err.Description
-    'Return worksheet value error
         K_STATS_Exponential_Survival = CVErr(xlErrValue)
 End Function
 
@@ -2235,108 +1804,43 @@ Public Function K_STATS_Exponential_InverseCumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Exponential_InverseCumulative
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns the Exponential quantile: the X for which the CDF equals Probability.
-'
-' WHY THIS EXISTS
-'   The quantile is -Log(1 - Probability) / Lambda. Evaluated as
-'   -PROB_Log1p(-Probability) / Lambda it keeps full relative precision as
-'   Probability approaches 0, the mirror of the PROB_Expm1 treatment in the CDF.
-'
-' WORKSHEET EQUIVALENT
-'   (none; -LN(1 - Probability) / Lambda)
-'
-' INPUTS
-'   Probability  Target cumulative probability, strictly between 0 and 1.
-'   Lambda       Rate parameter. Must be strictly positive.
-'   Status       Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double quantile X >= 0.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns -PROB_Log1p(-Probability) / Lambda.
-'
-' ERROR POLICY
-'   - Probability outside (0, 1) or invalid Lambda return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_IsValidProbabilityOpen, PROB_IsPositiveFinite
-'   - PROB_Log1p, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim FailMsg             As String          'Detailed failure message
+    Dim NegLogComplement   As Double
+    Dim LogQuantile        As Double
+    Dim Quantile           As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate probability domain
         If Not PROB_IsValidProbabilityOpen(Probability) Then
             FailMsg = "Probability must be strictly between 0 and 1"
             GoTo Fail_Num
         End If
-    'Validate rate
         If Not PROB_IsPositiveFinite(Lambda) Then
             FailMsg = "Lambda must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 
-'------------------------------------------------------------------------------
-' COMPUTE QUANTILE
-'------------------------------------------------------------------------------
-    'Compute -Log(1 - Probability) / Lambda without cancellation
-        K_STATS_Exponential_InverseCumulative = -PROB_Log1p(-Probability) / Lambda
+        NegLogComplement = -PROB_Log1p(-Probability)
+        LogQuantile = Log(NegLogComplement) - Log(Lambda)
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clear diagnostic status
+        If Not PROB_TryExp(LogQuantile, Quantile) Then
+            FailMsg = "Exponential quantile overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Exponential_InverseCumulative = Quantile
+
+Return_Success:
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Exponential_InverseCumulative = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
-
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
         PROB_SetStatus Status, "Unexpected error in K_STATS_Exponential_InverseCumulative: " & Err.Description
-    'Return worksheet value error
         K_STATS_Exponential_InverseCumulative = CVErr(xlErrValue)
 End Function
 
@@ -2440,7 +1944,11 @@ Public Function K_STATS_Weibull_Density( _
                 FailMsg = "Weibull density is unbounded at X = 0 when Shape < 1"
                 GoTo Fail_Num
             ElseIf Shape = 1# Then
-                K_STATS_Weibull_Density = 1# / ScaleParam
+                If Not PROB_TryDivide(1#, ScaleParam, Density) Then
+                    FailMsg = "Weibull density overflows Double at X = 0"
+                    GoTo Fail_Num
+                End If
+                K_STATS_Weibull_Density = Density
             Else
                 K_STATS_Weibull_Density = 0#
             End If
@@ -2758,114 +2266,67 @@ Public Function K_STATS_Weibull_InverseCumulative( _
 ' K_STATS_Weibull_InverseCumulative
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Weibull quantile: the X for which the CDF equals Probability.
+'   Returns the Weibull quantile for Probability in the open unit interval.
 '
-' WHY THIS EXISTS
-'   The quantile is ScaleParam * (-Log(1 - Probability)) ^ (1 / Shape). Taking the
-'   inner logarithm through -PROB_Log1p(-Probability) keeps full precision as
-'   Probability approaches 0.
-'
-' WORKSHEET EQUIVALENT
-'   (none; ScaleParam * (-LN(1 - Probability)) ^ (1 / Shape))
-'
-' INPUTS
-'   Probability  Target cumulative probability, strictly between 0 and 1.
-'   Shape        Shape parameter k. Must be strictly positive.
-'   ScaleParam        ScaleParam parameter lambda. Must be strictly positive.
-'   Status       Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double quantile X >= 0.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Returns ScaleParam * (-PROB_Log1p(-Probability)) ^ (1 / Shape).
-'
-' ERROR POLICY
-'   - Probability outside (0, 1) or invalid parameters return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
-'
-' DEPENDENCIES
-'   - PROB_IsValidProbabilityOpen, PROB_IsPositiveFinite
-'   - PROB_Log1p, PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
+' NUMERICAL METHOD
+'   Evaluates the quantile entirely in the log domain:
+'       Log(Q) = Log(ScaleParam) + Log(-Log(1-P)) / Shape.
+'   Both the division by Shape and the subsequent addition are guarded, so a
+'   tiny positive shape produces CVErr(xlErrNum), never an unexpected #VALUE!.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim NegLogComplement    As Double          '-Log(1 - Probability)
-    Dim FailMsg             As String          'Detailed failure message
+    Dim NegLogComplement   As Double
+    Dim ShapeTerm          As Double
+    Dim LogQuantile        As Double
+    Dim Quantile           As Double
+    Dim FailMsg            As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate probability domain
         If Not PROB_IsValidProbabilityOpen(Probability) Then
             FailMsg = "Probability must be strictly between 0 and 1"
             GoTo Fail_Num
         End If
-    'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+            FailMsg = "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
-    'Validate scale
         If Not PROB_IsPositiveFinite(ScaleParam) Then
             FailMsg = "ScaleParam must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 
-'------------------------------------------------------------------------------
-' COMPUTE QUANTILE
-'------------------------------------------------------------------------------
-    'Form -Log(1 - Probability) without cancellation
         NegLogComplement = -PROB_Log1p(-Probability)
 
-    'Return ScaleParam * (-Log(1 - Probability)) ^ (1 / Shape)
-        K_STATS_Weibull_InverseCumulative = ScaleParam * NegLogComplement ^ (1# / Shape)
+        If Not PROB_TryDivide(Log(NegLogComplement), Shape, ShapeTerm) Then
+            FailMsg = "Weibull quantile exponent overflowed a Double"
+            GoTo Fail_Num
+        End If
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clear diagnostic status
+        If Not PROB_TryAdd(Log(ScaleParam), ShapeTerm, LogQuantile) Then
+            FailMsg = "Weibull log-quantile overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_TryExp(LogQuantile, Quantile) Then
+            FailMsg = "Weibull quantile overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Weibull_InverseCumulative = Quantile
+
+Return_Success:
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Weibull_InverseCumulative = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
-
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_InverseCumulative: " & Err.Description
-    'Return worksheet value error
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Weibull_InverseCumulative: " & Err.Description
         K_STATS_Weibull_InverseCumulative = CVErr(xlErrValue)
 End Function
 
@@ -2880,111 +2341,71 @@ Public Function K_STATS_Weibull_Mean( _
 ' K_STATS_Weibull_Mean
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the mean of the Weibull distribution, ScaleParam * Gamma(1 + 1 / Shape).
+'   Returns ScaleParam * Gamma(1 + 1 / Shape).
 '
-' WORKSHEET EQUIVALENT
-'   (none; ScaleParam * EXP(GAMMALN(1 + 1 / Shape)))
-'
-' INPUTS
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter lambda. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double mean.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Evaluates the Gamma function through Exp(PROB_LogGamma(.)) with an overflow
-'     guard, then guards the product with ScaleParam before forming it.
-'
-' ERROR POLICY
-'   - Invalid parameters or overflow return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'
-' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_LogGamma, PROB_TryExp, PROB_DOUBLE_MAX,
-'     PROB_SetStatus
-'
-' UPDATED
-'   2026-07-11
+' NUMERICAL METHOD
+'   The reciprocal shape and final logarithmic assembly are guarded. The Gamma
+'   factor is never exponentiated separately, so a large Gamma value may still
+'   combine with a small scale when the final mean is representable.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim G1                  As Double          'Gamma(1 + 1 / Shape)
-    Dim FailMsg             As String          'Detailed failure message
+    Const MAX_SAFE_EPSILON As Double = 1000#
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
+    Dim Epsilon            As Double
+    Dim LogMean            As Double
+    Dim MeanValue          As Double
+    Dim FailMsg            As String
+
         On Error GoTo Err_Handler
-    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
         FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+            FailMsg = "Shape must be a supported finite strictly positive number"
             GoTo Fail_Num
         End If
-    'Validate scale
         If Not PROB_IsPositiveFinite(ScaleParam) Then
             FailMsg = "ScaleParam must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 
-'------------------------------------------------------------------------------
-' COMPUTE MEAN
-'------------------------------------------------------------------------------
-    'Evaluate Gamma(1 + 1 / Shape) through its logarithm
-        If Not PROB_TryExp(PROB_LogGamma(1# + 1# / Shape), G1) Then
-            FailMsg = "Weibull mean overflows Double range in Gamma(1 + 1 / Shape)"
+        If Not PROB_TryDivide(1#, Shape, Epsilon) Then
+            FailMsg = "Weibull reciprocal shape overflowed a Double"
             GoTo Fail_Num
         End If
 
-    'Guard the product against overflow, then form it
-        If ScaleParam > PROB_DOUBLE_MAX / G1 Then
+        'For Epsilon above this bound LogGamma(1+Epsilon) already exceeds the
+        'largest offset that any positive finite scale can compensate.
+        If Epsilon > MAX_SAFE_EPSILON Then
+            FailMsg = "Weibull mean exceeds Double range for the supplied Shape"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_TryAdd( _
+            Log(ScaleParam), _
+            PROB_LogGamma(1# + Epsilon), _
+            LogMean) Then
+            FailMsg = "Weibull log-mean overflowed a Double"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_TryExp(LogMean, MeanValue) Then
             FailMsg = "Weibull mean overflows Double range"
             GoTo Fail_Num
         End If
 
-    'Return the mean
-        K_STATS_Weibull_Mean = ScaleParam * G1
-
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clear diagnostic status
+        K_STATS_Weibull_Mean = MeanValue
         PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
         Exit Function
 
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
         K_STATS_Weibull_Mean = CVErr(xlErrNum)
-    'Exit before the error handler
         Exit Function
 
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_Mean: " & Err.Description
-    'Return worksheet value error
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Weibull_Mean: " & Err.Description
         K_STATS_Weibull_Mean = CVErr(xlErrValue)
 End Function
 
@@ -2999,133 +2420,73 @@ Public Function K_STATS_Weibull_Variance( _
 ' K_STATS_Weibull_Variance
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the variance of the Weibull distribution,
-'   ScaleParam ^ 2 * (Gamma(1 + 2 / Shape) - Gamma(1 + 1 / Shape) ^ 2).
+'   Returns the variance of the Weibull distribution.
 '
-' WORKSHEET EQUIVALENT
-'   (none)
-'
-' INPUTS
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter lambda. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double variance.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Both Gamma values are taken through Exp(PROB_LogGamma(.)) with overflow
-'     guards. The variance factor Gamma(1+2/k) - Gamma(1+1/k)^2 is non-negative
-'     in exact arithmetic; a tiny negative rounding result is clamped to 0.
-'   - The ScaleParam ^ 2 multiplication is guarded, nested, against overflow.
+' NUMERICAL METHOD
+'   The shape factor is evaluated in logarithmic form. For Shape >= 100 a
+'   dedicated asymptotic expansion avoids cancellation between two Gamma values
+'   that both round close to one. The final scale adjustment is also performed
+'   in the log domain, avoiding an intermediate ScaleParam ^ 2 overflow.
 '
 ' ERROR POLICY
-'   - Invalid parameters or overflow return CVErr(xlErrNum).
+'   - Invalid parameters or final-result overflow return CVErr(xlErrNum).
+'   - Mathematically valid underflow returns zero.
 '   - Unexpected runtime errors return CVErr(xlErrValue).
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_LogGamma, PROB_TryExp, PROB_DOUBLE_MAX,
-'     PROB_SetStatus
+'   - PROB_IsPositiveFinite
+'   - PROB_CN_TryWeibullLogVarianceFactor
+'   - PROB_TryExp
+'   - PROB_SetStatus
 '
 ' UPDATED
 '   2026-07-11
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim G1                  As Double          'Gamma(1 + 1 / Shape)
-    Dim G2                  As Double          'Gamma(1 + 2 / Shape)
-    Dim Factor              As Double          'G2 - G1 ^ 2, the shape variance
-    Dim Partial             As Double          'ScaleParam * ScaleParam, held for the guard
-    Dim FailMsg             As String          'Detailed failure message
+    Dim LogShapeFactor      As Double
+    Dim LogVariance         As Double
+    Dim VarianceValue       As Double
+    Dim FailMsg             As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
-        On Error GoTo Err_Handler
-    'Clear diagnostic status
-        PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
-        FailMsg = vbNullString
+    On Error GoTo Err_Handler
+    PROB_SetStatus Status, vbNullString
+    FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
-            GoTo Fail_Num
-        End If
-    'Validate scale
-        If Not PROB_IsPositiveFinite(ScaleParam) Then
-            FailMsg = "ScaleParam must be a finite strictly positive number"
-            GoTo Fail_Num
-        End If
+    If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+        FailMsg = "Shape must be a finite strictly positive number"
+        GoTo Fail_Num
+    End If
 
-'------------------------------------------------------------------------------
-' COMPUTE VARIANCE
-'------------------------------------------------------------------------------
-    'Evaluate Gamma(1 + 1 / Shape) and Gamma(1 + 2 / Shape) through logarithms
-        If Not PROB_TryExp(PROB_LogGamma(1# + 1# / Shape), G1) Then
-            FailMsg = "Weibull variance overflows Double range in Gamma(1 + 1 / Shape)"
-            GoTo Fail_Num
-        End If
-        If Not PROB_TryExp(PROB_LogGamma(1# + 2# / Shape), G2) Then
-            FailMsg = "Weibull variance overflows Double range in Gamma(1 + 2 / Shape)"
-            GoTo Fail_Num
-        End If
+    If Not PROB_IsPositiveFinite(ScaleParam) Then
+        FailMsg = "ScaleParam must be a finite strictly positive number"
+        GoTo Fail_Num
+    End If
 
-    'Form the shape variance factor, clamping a tiny negative rounding to zero
-        Factor = G2 - G1 * G1
-        If Factor < 0# Then Factor = 0#
+    If Not PROB_CN_TryWeibullLogVarianceFactor( _
+        Shape, LogShapeFactor, FailMsg) Then
+        GoTo Fail_Num
+    End If
 
-    'Guard and form ScaleParam * ScaleParam
-        If ScaleParam > PROB_DOUBLE_MAX / ScaleParam Then
-            FailMsg = "Weibull variance overflows Double range"
-            GoTo Fail_Num
-        End If
-        Partial = ScaleParam * ScaleParam
+    LogVariance = 2# * Log(ScaleParam) + LogShapeFactor
 
-    'Guard and form (ScaleParam * ScaleParam) * Factor
-        If Factor > 0# And Partial > PROB_DOUBLE_MAX / Factor Then
-            FailMsg = "Weibull variance overflows Double range"
-            GoTo Fail_Num
-        End If
+    If Not PROB_TryExp(LogVariance, VarianceValue) Then
+        FailMsg = "Weibull variance overflows Double range"
+        GoTo Fail_Num
+    End If
 
-    'Return the variance
-        K_STATS_Weibull_Variance = Partial * Factor
+    K_STATS_Weibull_Variance = VarianceValue
+    PROB_SetStatus Status, vbNullString
+    Exit Function
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clear diagnostic status
-        PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
-        Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
-        PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
-        K_STATS_Weibull_Variance = CVErr(xlErrNum)
-    'Exit before the error handler
-        Exit Function
+    PROB_SetStatus Status, FailMsg
+    K_STATS_Weibull_Variance = CVErr(xlErrNum)
+    Exit Function
 
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_Variance: " & Err.Description
-    'Return worksheet value error
-        K_STATS_Weibull_Variance = CVErr(xlErrValue)
+    PROB_SetStatus Status, _
+        "Unexpected error in K_STATS_Weibull_Variance: " & Err.Description
+    K_STATS_Weibull_Variance = CVErr(xlErrValue)
 End Function
 
 
@@ -3139,125 +2500,73 @@ Public Function K_STATS_Weibull_StdDev( _
 ' K_STATS_Weibull_StdDev
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the standard deviation of the Weibull distribution,
-'   ScaleParam * Sqr(Gamma(1 + 2 / Shape) - Gamma(1 + 1 / Shape) ^ 2).
+'   Returns the standard deviation of the Weibull distribution.
 '
-' WORKSHEET EQUIVALENT
-'   (none)
-'
-' INPUTS
-'   Shape   Shape parameter k. Must be strictly positive.
-'   ScaleParam   ScaleParam parameter lambda. Must be strictly positive.
-'   Status  Optional ByRef diagnostic message.
-'
-' RETURNS
-'   Variant
-'     Success => Double standard deviation.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
-'
-' BEHAVIOR
-'   - Uses the reduced-magnitude form ScaleParam * Sqr(shape variance factor) rather
-'     than Sqr(Variance), so it stays finite where the variance itself would
-'     overflow.
+' NUMERICAL METHOD
+'   Uses one half of the stable logarithmic variance factor and applies the
+'   scale in the log domain. This remains accurate for very large Shape and for
+'   scale/shape combinations whose intermediate variance components overflow or
+'   underflow although the final standard deviation is representable.
 '
 ' ERROR POLICY
-'   - Invalid parameters or overflow return CVErr(xlErrNum).
+'   - Invalid parameters or final-result overflow return CVErr(xlErrNum).
+'   - Mathematically valid underflow returns zero.
 '   - Unexpected runtime errors return CVErr(xlErrValue).
 '
 ' DEPENDENCIES
-'   - PROB_IsPositiveFinite, PROB_LogGamma, PROB_TryExp, PROB_DOUBLE_MAX,
-'     PROB_SetStatus
+'   - PROB_IsPositiveFinite
+'   - PROB_CN_TryWeibullLogVarianceFactor
+'   - PROB_TryExp
+'   - PROB_SetStatus
 '
 ' UPDATED
 '   2026-07-11
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim G1                  As Double          'Gamma(1 + 1 / Shape)
-    Dim G2                  As Double          'Gamma(1 + 2 / Shape)
-    Dim RootFactor          As Double          'Sqr(G2 - G1 ^ 2)
-    Dim FailMsg             As String          'Detailed failure message
+    Dim LogShapeFactor      As Double
+    Dim LogStdDev           As Double
+    Dim StdDevValue         As Double
+    Dim FailMsg             As String
 
-'------------------------------------------------------------------------------
-' INITIALIZE
-'------------------------------------------------------------------------------
-    'Route unexpected runtime errors to the error handler
-        On Error GoTo Err_Handler
-    'Clear diagnostic status
-        PROB_SetStatus Status, vbNullString
-    'Initialize the failure message buffer
-        FailMsg = vbNullString
+    On Error GoTo Err_Handler
+    PROB_SetStatus Status, vbNullString
+    FailMsg = vbNullString
 
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Validate shape
-        If Not PROB_IsPositiveFinite(Shape) Then
-            FailMsg = "Shape must be a finite strictly positive number"
-            GoTo Fail_Num
-        End If
-    'Validate scale
-        If Not PROB_IsPositiveFinite(ScaleParam) Then
-            FailMsg = "ScaleParam must be a finite strictly positive number"
-            GoTo Fail_Num
-        End If
+    If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
+        FailMsg = "Shape must be a finite strictly positive number"
+        GoTo Fail_Num
+    End If
 
-'------------------------------------------------------------------------------
-' COMPUTE STANDARD DEVIATION
-'------------------------------------------------------------------------------
-    'Evaluate Gamma(1 + 1 / Shape) and Gamma(1 + 2 / Shape) through logarithms
-        If Not PROB_TryExp(PROB_LogGamma(1# + 1# / Shape), G1) Then
-            FailMsg = "Weibull standard deviation overflows Double range in Gamma(1 + 1 / Shape)"
-            GoTo Fail_Num
-        End If
-        If Not PROB_TryExp(PROB_LogGamma(1# + 2# / Shape), G2) Then
-            FailMsg = "Weibull standard deviation overflows Double range in Gamma(1 + 2 / Shape)"
-            GoTo Fail_Num
-        End If
+    If Not PROB_IsPositiveFinite(ScaleParam) Then
+        FailMsg = "ScaleParam must be a finite strictly positive number"
+        GoTo Fail_Num
+    End If
 
-    'Root of the shape variance factor, clamping a tiny negative rounding to zero
-        RootFactor = G2 - G1 * G1
-        If RootFactor < 0# Then RootFactor = 0#
-        RootFactor = Sqr(RootFactor)
+    If Not PROB_CN_TryWeibullLogVarianceFactor( _
+        Shape, LogShapeFactor, FailMsg) Then
+        GoTo Fail_Num
+    End If
 
-    'Guard the product against overflow, then form it
-        If RootFactor > 0# And ScaleParam > PROB_DOUBLE_MAX / RootFactor Then
-            FailMsg = "Weibull standard deviation overflows Double range"
-            GoTo Fail_Num
-        End If
+    LogStdDev = Log(ScaleParam) + 0.5 * LogShapeFactor
 
-    'Return the standard deviation
-        K_STATS_Weibull_StdDev = ScaleParam * RootFactor
+    If Not PROB_TryExp(LogStdDev, StdDevValue) Then
+        FailMsg = "Weibull standard deviation overflows Double range"
+        GoTo Fail_Num
+    End If
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clear diagnostic status
-        PROB_SetStatus Status, vbNullString
-    'Exit before failure and error-handler blocks
-        Exit Function
+    K_STATS_Weibull_StdDev = StdDevValue
+    PROB_SetStatus Status, vbNullString
+    Exit Function
 
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
-    'Write diagnostics
-        PROB_SetStatus Status, FailMsg
-    'Return worksheet numeric error
-        K_STATS_Weibull_StdDev = CVErr(xlErrNum)
-    'Exit before the error handler
-        Exit Function
+    PROB_SetStatus Status, FailMsg
+    K_STATS_Weibull_StdDev = CVErr(xlErrNum)
+    Exit Function
 
-'------------------------------------------------------------------------------
-' ERROR HANDLER
-'------------------------------------------------------------------------------
 Err_Handler:
-    'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, "Unexpected error in K_STATS_Weibull_StdDev: " & Err.Description
-    'Return worksheet value error
-        K_STATS_Weibull_StdDev = CVErr(xlErrValue)
+    PROB_SetStatus Status, _
+        "Unexpected error in K_STATS_Weibull_StdDev: " & Err.Description
+    K_STATS_Weibull_StdDev = CVErr(xlErrValue)
 End Function
 
 
@@ -3728,6 +3037,113 @@ End Function
 
 
 '==============================================================================
+' PRIVATE NUMERICAL HELPERS
+'==============================================================================
+
+Private Function PROB_CN_TryWeibullLogVarianceFactor( _
+    ByVal Shape As Double, _
+    ByRef LogFactor As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_CN_TryWeibullLogVarianceFactor
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the logarithm of
+'       Gamma(1 + 2 / Shape) - Gamma(1 + 1 / Shape) ^ 2
+'   without cancellation for large Shape and without an unguarded reciprocal
+'   for tiny Shape.
+'==============================================================================
+'
+    Const LARGE_SHAPE As Double = 100#
+    Const MAX_SAFE_EPSILON As Double = 1000#
+
+    Const C2 As Double = 1.64493406684823
+    Const C3 As Double = -4.30307722854915
+    Const C4 As Double = 11.7183391772189
+    Const C5 As Double = -26.5314191646401
+    Const C6 As Double = 57.6761128596097
+    Const C7 As Double = -120.625407747693
+    Const C8 As Double = 247.658400419811
+
+    Dim Epsilon             As Double
+    Dim Polynomial          As Double
+    Dim Factor              As Double
+    Dim LogGamma1           As Double
+    Dim LogGamma2           As Double
+    Dim Delta               As Double
+    Dim ExpMinusDelta       As Double
+    Dim Expm1Delta          As Double
+    Dim LogExpm1Delta       As Double
+
+        FailMsg = vbNullString
+
+        If Not PROB_TryDivide(1#, Shape, Epsilon) Then
+            FailMsg = "Weibull reciprocal shape overflowed a Double"
+            Exit Function
+        End If
+
+        'Above this point the variance factor is already too large for even the
+        'smallest positive finite scale squared to bring it into Double range.
+        If Epsilon > MAX_SAFE_EPSILON Then
+            FailMsg = "Weibull variance exceeds Double range for the supplied Shape"
+            Exit Function
+        End If
+
+        If Shape >= LARGE_SHAPE Then
+            Polynomial = C8
+            Polynomial = C7 + Epsilon * Polynomial
+            Polynomial = C6 + Epsilon * Polynomial
+            Polynomial = C5 + Epsilon * Polynomial
+            Polynomial = C4 + Epsilon * Polynomial
+            Polynomial = C3 + Epsilon * Polynomial
+            Polynomial = C2 + Epsilon * Polynomial
+
+            Factor = Epsilon * Epsilon * Polynomial
+
+            If Factor <= 0# Then
+                FailMsg = "Weibull variance factor is not positive"
+                Exit Function
+            End If
+
+            LogFactor = Log(Factor)
+            PROB_CN_TryWeibullLogVarianceFactor = True
+            Exit Function
+        End If
+
+        LogGamma1 = PROB_LogGamma(1# + Epsilon)
+        LogGamma2 = PROB_LogGamma(1# + 2# * Epsilon)
+        Delta = LogGamma2 - 2# * LogGamma1
+
+        If Delta <= 0# Then
+            FailMsg = "Weibull variance factor lost positivity"
+            Exit Function
+        End If
+
+        If Delta < 0.5 Then
+            Expm1Delta = PROB_Expm1(Delta)
+
+            If Expm1Delta <= 0# Then
+                FailMsg = "Weibull variance factor could not be resolved"
+                Exit Function
+            End If
+
+            LogExpm1Delta = Log(Expm1Delta)
+        Else
+            If Not PROB_TryExp(-Delta, ExpMinusDelta) Then
+                ExpMinusDelta = 0#
+            End If
+
+            LogExpm1Delta = Delta + PROB_Log1p(-ExpMinusDelta)
+        End If
+
+        LogFactor = 2# * LogGamma1 + LogExpm1Delta
+        PROB_CN_TryWeibullLogVarianceFactor = True
+End Function
+
+
+'==============================================================================
 ' PRIVATE VALIDATORS
 '==============================================================================
 
@@ -3736,48 +3152,31 @@ Private Function PROB_CN_ValidateXAndTwoPositive( _
     ByVal Param1 As Double, _
     ByVal Param2 As Double, _
     ByRef FailMsg As String, _
-    ByVal Name1 As String, _
-    ByVal Name2 As String) _
+    ByVal Param1Name As String, _
+    ByVal Param2Name As String) _
     As Boolean
 '
 '==============================================================================
-' PROB_CN_ValidateXAndTwoPositive
-'------------------------------------------------------------------------------
 ' PURPOSE
-'   Validates a finite evaluation point and two strictly positive finite
-'   parameters. Shared by the Gamma, Beta and Weibull families, whose two
-'   parameters differ only in name (Shape/ScaleParam, Alpha/Beta, Shape/ScaleParam).
-'
-' RETURNS
-'   True when X is finite and both parameters are finite and strictly positive;
-'   otherwise False with FailMsg set to the first violation found.
+'   Validates a finite evaluation point, one supported algorithmic shape
+'   parameter, and one full-range positive scale parameter.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' VALIDATE
-'------------------------------------------------------------------------------
-    'Validate the evaluation point
         If Not PROB_IsFinite(X) Then
             FailMsg = "X must be a finite number"
             Exit Function
         End If
 
-    'Validate the first parameter
-        If Not PROB_IsPositiveFinite(Param1) Then
-            FailMsg = Name1 & " must be a finite strictly positive number"
+        If Not PROB_IsPositiveWithinSupportedMagnitude(Param1) Then
+            FailMsg = Param1Name & " must be a supported finite strictly positive number"
             Exit Function
         End If
 
-    'Validate the second parameter
         If Not PROB_IsPositiveFinite(Param2) Then
-            FailMsg = Name2 & " must be a finite strictly positive number"
+            FailMsg = Param2Name & " must be a finite strictly positive number"
             Exit Function
         End If
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Report success
         PROB_CN_ValidateXAndTwoPositive = True
 End Function
 
@@ -3788,37 +3187,16 @@ Private Function PROB_CN_ValidateXLambda( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_CN_ValidateXLambda
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Validates a finite evaluation point and a strictly positive finite rate for
-'   the Exponential family.
-'
-' RETURNS
-'   True when X is finite and Lambda is finite and strictly positive; otherwise
-'   False with FailMsg set.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' VALIDATE
-'------------------------------------------------------------------------------
-    'Validate the evaluation point
         If Not PROB_IsFinite(X) Then
             FailMsg = "X must be a finite number"
             Exit Function
         End If
 
-    'Validate the rate
         If Not PROB_IsPositiveFinite(Lambda) Then
             FailMsg = "Lambda must be a finite strictly positive number"
             Exit Function
         End If
 
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Report success
         PROB_CN_ValidateXLambda = True
 End Function
 
@@ -3846,13 +3224,13 @@ Private Function PROB_CN_ValidateBounds( _
 ' VALIDATE
 '------------------------------------------------------------------------------
     'Validate the lower bound
-        If Not PROB_IsFinite(LowerBound) Then
+        If Not PROB_IsWithinSupportedMagnitude(LowerBound) Then
             FailMsg = "LowerBound must be a finite number"
             Exit Function
         End If
 
     'Validate the upper bound
-        If Not PROB_IsFinite(UpperBound) Then
+        If Not PROB_IsWithinSupportedMagnitude(UpperBound) Then
             FailMsg = "UpperBound must be a finite number"
             Exit Function
         End If
@@ -3908,5 +3286,7 @@ Private Function PROB_CN_ValidateXBounds( _
     'Report success
         PROB_CN_ValidateXBounds = True
 End Function
+
+
 
 

@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_NORMALFAMILY"
-
 Option Explicit
 
 '==============================================================================
@@ -77,14 +76,18 @@ Option Explicit
 '   - Inverse standard normal (PROB_NormalInvCDF):
 '       Peter J. Acklam's rational approximation (released freely for any use by
 '       the author), taken from the shared kernel PROB_NormalInvCDFRaw in
-'       M_STATS_CORE and refined here with a single Halley iteration. Raw Acklam
+'       M_STATS_PROBDIST_CORE and refined here with a single Halley iteration.
+'       Raw Acklam
 '       alone is accurate to ~1.15E-9 relative; the Halley step lifts the central
 '       region to ~5E-16. In the tail the Halley step is bounded by the RELATIVE
-'       accuracy of PROB_NormalCDF (about 1E-10 past z = 7.07), and beyond
-'       z = 37 it is skipped entirely because the CDF has saturated. Public.
+'       accuracy of the Hart/West tail approximation. The dedicated tail kernel
+'       preserves representable lower-tail probabilities to approximately
+'       |z| = 38.49; refinement is skipped only after the evaluated CDF or PDF
+'       has genuinely rounded to an endpoint. Public.
 '   - Lognormal moment and parameter formulas:
 '       Standard closed-form textbook results (method of moments). Not proprietary.
-'   The raw Acklam kernel lives in M_STATS_CORE as PROB_NormalInvCDFRaw, because
+'   The raw Acklam kernel lives in M_STATS_PROBDIST_CORE as
+'   PROB_NormalInvCDFRaw, because
 '   the Student t quantile seeds off it too. Only the Halley refinement, which is
 '   normal-family-specific, remains here.
 '   Nothing in this module is a newly-invented algorithm; the design/packaging,
@@ -108,7 +111,7 @@ Option Explicit
 '   - No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - M_STATS_CORE
+'   - M_STATS_PROBDIST_CORE
 '       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_MAX_EXP, PROB_MIN_EXP,
 '                    PROB_LARGE_NUMBER, PROB_WRITE_STATUS_BAR
 '       Predicates : PROB_IsFinite, PROB_IsValidProbabilityOpen
@@ -143,15 +146,25 @@ Option Explicit
 '==============================================================================
 
 ' Shared constants (PROB_EPS, PROB_MAX_EXP, PROB_MIN_EXP, PROB_LARGE_NUMBER,
-' PROB_DOUBLE_MAX, PROB_WRITE_STATUS_BAR) now live in M_STATS_CORE. Only the
+' PROB_DOUBLE_MAX, PROB_WRITE_STATUS_BAR) now live in M_STATS_PROBDIST_CORE. Only the
 ' normal-family-specific constants remain here. PROB_PI and PROB_TWO_PI were
 ' declared but never referenced and have been dropped.
 
-Private Const PROB_SQRT_TWO_PI         As Double = 2.506628274631       'Sqr(2 * Pi), correctly rounded
-Private Const PROB_INV_SQRT_TWO_PI     As Double = 0.398942280401433    '1 / Sqr(2 * Pi), correctly rounded
-Private Const PROB_PDF_TAIL_CUTOFF     As Double = 38#               'Abs(Z) beyond which the density underflows to 0
-Private Const PROB_CDF_TAIL_CUTOFF     As Double = 37#               'Abs(Z) beyond which the CDF saturates to 0/1
-Private Const PROB_CDF_SPLIT           As Double = 7.07106781186547  'Sqr(50): rational vs continued-fraction split
+'Split expressions preserve the intended binary Double values in the VBE.
+Private Const PROB_SQRT_TWO_PI As Double = _
+    2.506628274631 + 4.44089209850063E-16
+
+Private Const PROB_INV_SQRT_TWO_PI As Double = _
+    0.398942280401432 + 7.21644966006352E-16
+
+'At approximately 38.58 the standard-normal density rounds to zero in Double.
+Private Const PROB_PDF_UNDERFLOW_Z As Double = 38.6
+
+'At approximately 38.49 the one-sided normal tail rounds to zero in Double.
+Private Const PROB_TAIL_UNDERFLOW_Z As Double = 38.5
+Private Const PROB_NORMAL_TAIL_CF_TERMS As Long = 16 'Laplace continued-fraction depth
+
+Private Const PROB_CDF_SPLIT As Double = 7.07106781186547
 
 
 
@@ -236,7 +249,7 @@ Public Function K_STATS_NormalStandard_Density( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite input
-        If Not PROB_IsFinite(Z) Then
+        If Not PROB_IsWithinSupportedMagnitude(Z) Then
             FailMsg = "Z must be a finite number"
             GoTo Fail_Num
         End If
@@ -364,7 +377,7 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite input
-        If Not PROB_IsFinite(Z) Then
+        If Not PROB_IsWithinSupportedMagnitude(Z) Then
             FailMsg = "Z must be a finite number"
             GoTo Fail_Num
         End If
@@ -552,8 +565,7 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '       P(Lower <= Z <= Upper) = Phi(Upper) - Phi(Lower).
 '   Phi is evaluated using this module's Hart/West standard normal CDF kernel.
 '   The identity is textbook material; the numerical accuracy is inherited from
-'   PROB_NormalCDF, subject to floating-point cancellation when both bounds are
-'   in the same extreme tail.
+'   PROB_NormalCDF, with tail-oriented branching for same-tail intervals.
 '
 ' INPUTS
 '   LowerZ
@@ -573,8 +585,9 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '
 ' BEHAVIOR
 '   - Validates finite bounds and UpperZ >= LowerZ.
-'   - Returns NormalCDF(UpperZ) - NormalCDF(LowerZ).
-'   - Clamps a tiny negative rounding residual to 0.
+'   - Uses survival differences in the positive tail, CDF-equivalent tail
+'     differences in the negative tail and excluded-tail subtraction across 0.
+'   - Clamps final rounding residuals to [0, 1].
 '
 ' ERROR POLICY
 '   - Invalid or reversed bounds return CVErr(xlErrNum).
@@ -584,7 +597,7 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '
 ' DEPENDENCIES
 '   - PROB_IsFinite
-'   - PROB_NormalCDF
+'   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -609,12 +622,12 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite bounds
-        If Not PROB_IsFinite(LowerZ) Then
+        If Not PROB_IsWithinSupportedMagnitude(LowerZ) Then
             FailMsg = "LowerZ must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsFinite(UpperZ) Then
+        If Not PROB_IsWithinSupportedMagnitude(UpperZ) Then
             FailMsg = "UpperZ must be a finite number"
             GoTo Fail_Num
         End If
@@ -626,10 +639,9 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '------------------------------------------------------------------------------
 ' COMPUTE INTERVAL PROBABILITY
 '------------------------------------------------------------------------------
-    'Difference of cumulative probabilities
-        Probability = PROB_NormalCDF(UpperZ) - PROB_NormalCDF(LowerZ)
-    'Clamp tiny negative rounding residual
-        If Probability < 0# Then Probability = 0#
+    'Use tail-oriented branching so same-tail intervals do not collapse
+    'through subtraction of two cumulative probabilities rounded to 1.
+        Probability = PROB_NormalIntervalProbability(LowerZ, UpperZ)
     'Return interval probability
         K_STATS_NormalStandard_IntervalProbability = Probability
 '------------------------------------------------------------------------------
@@ -716,8 +728,8 @@ Public Function K_STATS_NormalStandard_InverseCumulativeFast( _
 '     K_STATS_Normal_InverseCumulative or K_STATS_NormalStandard_InverseCumulative.
 '
 ' DEPENDENCIES
-'   - PROB_NormalInvCDFRaw   (M_STATS_CORE)
-'   - PROB_EPS               (M_STATS_CORE)
+'   - PROB_NormalInvCDFRaw   (M_STATS_PROBDIST_CORE)
+'   - PROB_EPS               (M_STATS_PROBDIST_CORE)
 '
 ' CALLED FROM
 '   - Monte Carlo engines
@@ -1082,12 +1094,12 @@ Public Function K_STATS_Normal_InverseCumulative( _
             GoTo Fail_Num
         End If
     'Validate distribution parameters
-        If Not PROB_IsFinite(Mean) Then
+        If Not PROB_IsWithinSupportedMagnitude(Mean) Then
             FailMsg = "Mean must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsFinite(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
             FailMsg = "StdDev must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1248,7 +1260,7 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '   NORM.DIST(UpperBound, Mean, StdDev, TRUE) - NORM.DIST(LowerBound, Mean, StdDev, TRUE).
 '
 ' PROVENANCE
-'   Difference of normal CDFs (Hart/West) via standardization. Not proprietary.
+'   Standardization followed by tail-oriented normal interval identities. Not proprietary.
 '
 ' INPUTS
 '   LowerBound
@@ -1276,8 +1288,8 @@ Public Function K_STATS_Normal_IntervalProbability( _
 ' BEHAVIOR
 '   - Validates finite bounds, finite Mean and positive StdDev.
 '   - Validates UpperBound >= LowerBound.
-'   - Standardizes both bounds and returns NormalCDF(zU) - NormalCDF(zL).
-'   - Clamps a tiny negative rounding residual to 0.
+'   - Standardizes both bounds and delegates to the stable interval kernel.
+'   - Clamps final rounding residuals to [0, 1].
 '
 ' ERROR POLICY
 '   - Invalid or reversed bounds return CVErr(xlErrNum).
@@ -1287,7 +1299,7 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '
 ' DEPENDENCIES
 '   - PROB_IsFinite
-'   - PROB_NormalCDF
+'   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1314,22 +1326,22 @@ Public Function K_STATS_Normal_IntervalProbability( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite bounds
-        If Not PROB_IsFinite(LowerBound) Then
+        If Not PROB_IsWithinSupportedMagnitude(LowerBound) Then
             FailMsg = "LowerBound must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsFinite(UpperBound) Then
+        If Not PROB_IsWithinSupportedMagnitude(UpperBound) Then
             FailMsg = "UpperBound must be a finite number"
             GoTo Fail_Num
         End If
     'Validate distribution parameters
-        If Not PROB_IsFinite(Mean) Then
+        If Not PROB_IsWithinSupportedMagnitude(Mean) Then
             FailMsg = "Mean must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsFinite(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
             FailMsg = "StdDev must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1344,10 +1356,8 @@ Public Function K_STATS_Normal_IntervalProbability( _
     'Standardize both bounds
         ZLower = (LowerBound - Mean) / StdDev
         ZUpper = (UpperBound - Mean) / StdDev
-    'Difference of cumulative probabilities
-        Probability = PROB_NormalCDF(ZUpper) - PROB_NormalCDF(ZLower)
-    'Clamp tiny negative rounding residual
-        If Probability < 0# Then Probability = 0#
+    'Use the stable standardized interval kernel.
+        Probability = PROB_NormalIntervalProbability(ZLower, ZUpper)
     'Return interval probability
         K_STATS_Normal_IntervalProbability = Probability
 '------------------------------------------------------------------------------
@@ -1579,17 +1589,17 @@ Public Function K_STATS_Lognormal_Cumulative( _
 ' VALIDATE PARAMETERS
 '------------------------------------------------------------------------------
     'Validate X is finite
-        If Not PROB_IsFinite(X) Then
+        If Not PROB_IsWithinSupportedMagnitude(X) Then
             FailMsg = "X must be a finite number"
             GoTo Fail_Num
         End If
     'Validate lognormal parameters
-        If Not PROB_IsFinite(MeanLog) Then
+        If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
             FailMsg = "MeanLog must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsFinite(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
             FailMsg = "StdDevLog must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1723,12 +1733,12 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
             GoTo Fail_Num
         End If
     'Validate log-space parameters
-        If Not PROB_IsFinite(MeanLog) Then
+        If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
             FailMsg = "MeanLog must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsFinite(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
             FailMsg = "StdDevLog must be a finite strictly positive number"
             GoTo Fail_Num
         End If
@@ -1913,6 +1923,7 @@ Public Function K_STATS_Lognormal_Variance( _
 ' DEPENDENCIES
 '   - PROB_ValidateLogParameters
 '   - PROB_TryExp
+'   - PROB_Expm1
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1923,9 +1934,9 @@ Public Function K_STATS_Lognormal_Variance( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim VarianceLog         As Double          'Variance of Log(X)
-    Dim ExpVar              As Double          'Exp(VarianceLog)
+    Dim ExpVarGuard         As Double          'Range-check result for Exp(VarianceLog)
     Dim ExpShift            As Double          'Exp(2*MeanLog + VarianceLog)
-    Dim Factor              As Double          'Exp(VarianceLog) - 1
+    Dim Factor              As Double          'Accurate Exp(VarianceLog) - 1
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1946,8 +1957,8 @@ Public Function K_STATS_Lognormal_Variance( _
 '------------------------------------------------------------------------------
     'Compute log variance
         VarianceLog = StdDevLog * StdDevLog
-    'Exponentiate both terms with explicit overflow detection
-        If Not PROB_TryExp(VarianceLog, ExpVar) Then
+    'Guard the positive exponential range before calling PROB_Expm1.
+        If Not PROB_TryExp(VarianceLog, ExpVarGuard) Then
             FailMsg = "Lognormal variance overflows Double range"
             GoTo Fail_Num
         End If
@@ -1956,8 +1967,9 @@ Public Function K_STATS_Lognormal_Variance( _
             FailMsg = "Lognormal variance overflows Double range"
             GoTo Fail_Num
         End If
-    'Guard the product against overflow before multiplying
-        Factor = ExpVar - 1#
+
+    'Evaluate Exp(VarianceLog) - 1 without cancellation near zero.
+        Factor = PROB_Expm1(VarianceLog)
 
     'Nested rather than And-ed: VBA's And is not short-circuit, so a single-line
     'test would evaluate PROB_DOUBLE_MAX / ExpShift even when ExpShift has
@@ -2044,6 +2056,7 @@ Public Function K_STATS_Lognormal_StdDev( _
 ' DEPENDENCIES
 '   - PROB_ValidateLogParameters
 '   - PROB_TryExp
+'   - PROB_Expm1
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -2054,9 +2067,9 @@ Public Function K_STATS_Lognormal_StdDev( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim VarianceLog         As Double          'Variance of Log(X)
-    Dim ExpVar              As Double          'Exp(VarianceLog)
+    Dim ExpVarGuard         As Double          'Range-check result for Exp(VarianceLog)
     Dim ExpShift            As Double          'Exp(MeanLog + 0.5*VarianceLog)
-    Dim Factor              As Double          'Sqr(Exp(VarianceLog) - 1)
+    Dim Factor              As Double          'Sqr of accurate Exp(VarianceLog) - 1
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -2077,8 +2090,8 @@ Public Function K_STATS_Lognormal_StdDev( _
 '------------------------------------------------------------------------------
     'Compute log variance
         VarianceLog = StdDevLog * StdDevLog
-    'Exponentiate both terms with explicit overflow detection
-        If Not PROB_TryExp(VarianceLog, ExpVar) Then
+    'Guard the positive exponential range before calling PROB_Expm1.
+        If Not PROB_TryExp(VarianceLog, ExpVarGuard) Then
             FailMsg = "Lognormal standard deviation overflows Double range"
             GoTo Fail_Num
         End If
@@ -2087,8 +2100,9 @@ Public Function K_STATS_Lognormal_StdDev( _
             FailMsg = "Lognormal standard deviation overflows Double range"
             GoTo Fail_Num
         End If
-    'Square-root factor (ExpVar >= 1 since StdDevLog > 0)
-        Factor = Sqr(ExpVar - 1#)
+
+    'Evaluate the square-root factor without cancellation near zero.
+        Factor = Sqr(PROB_Expm1(VarianceLog))
     'Guard the product against overflow before multiplying
     'Nested rather than And-ed: VBA's And is not short-circuit, so a single-line
     'test would evaluate PROB_DOUBLE_MAX / ExpShift even when ExpShift has
@@ -2171,9 +2185,9 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '
 ' BEHAVIOR
 '   - Validates strictly positive Mean and StdDev.
-'   - Computes:
-'       StdDevLog = Sqr(Log(1 + StdDev^2 / Mean^2))
-'       MeanLog   = Log(Mean) - 0.5 * StdDevLog^2
+'   - Computes the method-of-moments formulas through PROB_Log1p and a
+'     log-domain softplus branch, avoiding cancellation for tiny coefficients
+'     of variation and overflow for very large coefficients of variation.
 '
 ' NOTE
 '   StdDev = 0 is rejected: a degenerate (point-mass) lognormal has StdDevLog = 0,
@@ -2188,6 +2202,8 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '
 ' DEPENDENCIES
 '   - PROB_IsFinite
+'   - PROB_Log1p
+'   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -2198,7 +2214,11 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Result(1 To 1, 1 To 2) As Double       'Output parameter row
-    Dim VarianceRatio          As Double       'StdDev^2 / Mean^2
+    Dim CoeffVariation         As Double       'StdDev / Mean when directly safe
+    Dim VarianceRatio          As Double       'Squared coefficient of variation
+    Dim LogCoeffVariation      As Double       'Log(StdDev / Mean)
+    Dim TwiceLogCV             As Double       '2 * Log(StdDev / Mean)
+    Dim ExpNegTwiceLogCV       As Double       'Exp(-2 * LogCV) for the large-CV branch
     Dim VarianceLog            As Double       'Variance of Log(X)
     Dim FailMsg                As String       'Detailed failure message
 '------------------------------------------------------------------------------
@@ -2214,24 +2234,52 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate arithmetic mean
-        If Not PROB_IsFinite(Mean) Or Mean <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(Mean) Or Mean <= 0# Then
             FailMsg = "Mean must be a finite strictly positive number"
             GoTo Fail_Num
         End If
     'Validate arithmetic standard deviation (strictly positive)
-        If Not PROB_IsFinite(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
             FailMsg = "StdDev must be a finite strictly positive number"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
 ' COMPUTE LOGNORMAL PARAMETERS
 '------------------------------------------------------------------------------
-    'Compute variance ratio
-        VarianceRatio = (StdDev * StdDev) / (Mean * Mean)
-    'Compute log variance
-        VarianceLog = Log(1# + VarianceRatio)
-    'Populate output parameters
-        Result(1, 2) = Sqr(VarianceLog)
+    'Work in the log domain first so StdDev / Mean and its square cannot
+    'overflow for a large coefficient of variation.
+        LogCoeffVariation = Log(StdDev) - Log(Mean)
+
+    'For CV <= 1, the direct ratio is safe and PROB_Log1p preserves the tiny
+    'variance ratio. If CV^2 underflows, StdDevLog is asymptotically CV.
+        If LogCoeffVariation <= 0# Then
+            CoeffVariation = StdDev / Mean
+            VarianceRatio = CoeffVariation * CoeffVariation
+
+            If VarianceRatio = 0# Then
+                VarianceLog = 0#
+                Result(1, 2) = CoeffVariation
+            Else
+                VarianceLog = PROB_Log1p(VarianceRatio)
+                Result(1, 2) = Sqr(VarianceLog)
+            End If
+
+    'For CV > 1, evaluate Log(1 + Exp(2*LogCV)) as a stable softplus.
+        Else
+            TwiceLogCV = 2# * LogCoeffVariation
+
+            'Stable softplus: Log(1 + Exp(t)) = t + Log(1 + Exp(-t)) for t > 0.
+            'The exponential argument is non-positive, so underflow is a valid zero.
+                If Not PROB_TryExp(-TwiceLogCV, ExpNegTwiceLogCV) Then
+                    ExpNegTwiceLogCV = 0#
+                End If
+
+                VarianceLog = TwiceLogCV + PROB_Log1p(ExpNegTwiceLogCV)
+
+            Result(1, 2) = Sqr(VarianceLog)
+        End If
+
+    'Recover the log-space mean.
         Result(1, 1) = Log(Mean) - 0.5 * VarianceLog
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2276,19 +2324,73 @@ Private Function PROB_NormalPDF( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns the standard normal density using a fast Double-to-Double contract.
-'
-' PROVENANCE
-'   Closed-form density. Not proprietary.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' COMPUTE
-'------------------------------------------------------------------------------
-    'Protect against numerical underflow in the extreme tails
-        If Abs(Z) > PROB_PDF_TAIL_CUTOFF Then
+    'Avoid squaring very large inputs and return zero only once the density is
+    'below the representable Double range.
+        If Abs(Z) >= PROB_PDF_UNDERFLOW_Z Then
             PROB_NormalPDF = 0#
         Else
             PROB_NormalPDF = PROB_INV_SQRT_TWO_PI * Exp(-0.5 * Z * Z)
+        End If
+End Function
+
+
+Private Function PROB_NormalUpperTailPositive( _
+    ByVal Z As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_NormalUpperTailPositive
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Q(Z) = P(N(0,1) > Z) for Z >= 0 without subtracting from one.
+'
+' METHOD
+'   Uses the Hart rational approximation in the main region and a sixteen-level
+'   Laplace continued fraction in the far tail. The cutoff is applied only where
+'   the true one-sided probability rounds to zero in Double precision.
+'==============================================================================
+'
+    Dim Denominator        As Double
+    Dim Exponential        As Double
+    Dim SumA               As Double
+    Dim SumB               As Double
+    Dim TermIndex          As Long
+
+        If Z >= PROB_TAIL_UNDERFLOW_Z Then
+            PROB_NormalUpperTailPositive = 0#
+            Exit Function
+        End If
+
+        Exponential = Exp(-0.5 * Z * Z)
+
+        If Z < PROB_CDF_SPLIT Then
+            SumA = 3.52624965998911E-02 * Z + 0.700383064443688
+            SumA = SumA * Z + 6.37396220353165
+            SumA = SumA * Z + 33.912866078383
+            SumA = SumA * Z + 112.079291497871
+            SumA = SumA * Z + 221.213596169931
+            SumA = SumA * Z + 220.206867912376
+
+            SumB = 8.83883476483184E-02 * Z + 1.75566716318264
+            SumB = SumB * Z + 16.064177579207
+            SumB = SumB * Z + 86.7807322029461
+            SumB = SumB * Z + 296.564248779674
+            SumB = SumB * Z + 637.333633378831
+            SumB = SumB * Z + 793.826512519948
+            SumB = SumB * Z + 440.413735824752
+
+            PROB_NormalUpperTailPositive = Exponential * SumA / SumB
+        Else
+            Denominator = Z
+
+            For TermIndex = PROB_NORMAL_TAIL_CF_TERMS To 1 Step -1
+                Denominator = Z + CDbl(TermIndex) / Denominator
+            Next TermIndex
+
+            PROB_NormalUpperTailPositive = _
+                Exponential * PROB_INV_SQRT_TWO_PI / Denominator
         End If
 End Function
 
@@ -2301,73 +2403,78 @@ Private Function PROB_NormalCDF( _
 ' PROB_NormalCDF
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the standard normal cumulative distribution function.
-'
-' METHOD / PROVENANCE
-'   Hart rational + continued-fraction approximation (Hart 1968), double-
-'   precision arrangement popularised by Graeme West (Wilmott, 2009). Public.
-'   Accurate to approximately 1E-15.
+'   Returns Phi(Z), preserving representable probabilities in the negative tail.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Y                   As Double          'Absolute z value
-    Dim Exponential         As Double          'Exp(-0.5 * Y^2)
-    Dim SumA                As Double          'Numerator accumulator
-    Dim SumB                As Double          'Denominator accumulator
-    Dim TailProbability     As Double          'Lower-tail probability for |Z|
-'------------------------------------------------------------------------------
-' COMPUTE
-'------------------------------------------------------------------------------
-    'Work with absolute value
-        Y = Abs(Z)
-    'Handle extreme tails directly
-        If Y > PROB_CDF_TAIL_CUTOFF Then
-            If Z > 0# Then
-                PROB_NormalCDF = 1#
-            Else
-                PROB_NormalCDF = 0#
-            End If
+    If Z < 0# Then
+        PROB_NormalCDF = PROB_NormalUpperTailPositive(-Z)
+    Else
+        PROB_NormalCDF = 1# - PROB_NormalUpperTailPositive(Z)
+    End If
+End Function
 
-            Exit Function
-        End If
-    'Compute exponential term
-        Exponential = Exp(-0.5 * Y * Y)
-    'Use rational approximation in main region
-        If Y < PROB_CDF_SPLIT Then
-            SumA = 3.52624965998911E-02 * Y + 0.700383064443688
-            SumA = SumA * Y + 6.37396220353165
-            SumA = SumA * Y + 33.912866078383
-            SumA = SumA * Y + 112.079291497871
-            SumA = SumA * Y + 221.213596169931
-            SumA = SumA * Y + 220.206867912376
 
-            SumB = 8.83883476483184E-02 * Y + 1.75566716318264
-            SumB = SumB * Y + 16.064177579207
-            SumB = SumB * Y + 86.7807322029461
-            SumB = SumB * Y + 296.564248779674
-            SumB = SumB * Y + 637.333633378831
-            SumB = SumB * Y + 793.826512519948
-            SumB = SumB * Y + 440.413735824752
+Private Function PROB_NormalSurvival( _
+    ByVal Z As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_NormalSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Q(Z) = 1 - Phi(Z), evaluating the positive tail directly rather
+'   than subtracting a cumulative probability rounded to one.
+'==============================================================================
+'
+    If Z >= 0# Then
+        PROB_NormalSurvival = PROB_NormalUpperTailPositive(Z)
+    Else
+        PROB_NormalSurvival = 1# - PROB_NormalUpperTailPositive(-Z)
+    End If
+End Function
 
-            TailProbability = Exponential * SumA / SumB
-    'Use continued-fraction approximation in far tail
+
+Private Function PROB_NormalIntervalProbability( _
+    ByVal LowerZ As Double, _
+    ByVal UpperZ As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_NormalIntervalProbability
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns P(LowerZ <= Z <= UpperZ) using a tail-oriented branch that remains
+'   accurate when both bounds lie in the same extreme tail.
+'
+' PRECONDITION
+'   LowerZ <= UpperZ.
+'==============================================================================
+'
+    Dim Probability As Double
+
+    'Both bounds in the positive tail: subtract survival probabilities.
+        If LowerZ >= 0# Then
+            Probability = _
+                PROB_NormalSurvival(LowerZ) - PROB_NormalSurvival(UpperZ)
+
+    'Both bounds in the negative tail: use symmetry and positive tails.
+        ElseIf UpperZ <= 0# Then
+            Probability = _
+                PROB_NormalUpperTailPositive(-UpperZ) - _
+                PROB_NormalUpperTailPositive(-LowerZ)
+
+    'The interval crosses zero: subtract the two excluded tails from one.
         Else
-            SumA = Y + 0.65
-            SumA = Y + 4# / SumA
-            SumA = Y + 3# / SumA
-            SumA = Y + 2# / SumA
-            SumA = Y + 1# / SumA
+            Probability = 1# - _
+                PROB_NormalUpperTailPositive(-LowerZ) - _
+                PROB_NormalUpperTailPositive(UpperZ)
+        End If
 
-            TailProbability = Exponential / (SumA * PROB_SQRT_TWO_PI)
-        End If
-    'Reflect according to the sign of Z
-        If Z > 0# Then
-            PROB_NormalCDF = 1# - TailProbability
-        Else
-            PROB_NormalCDF = TailProbability
-        End If
+    'Protect the public probability contract from final rounding residuals.
+        If Probability < 0# Then Probability = 0#
+        If Probability > 1# Then Probability = 1#
+
+        PROB_NormalIntervalProbability = Probability
 End Function
 
 
@@ -2384,7 +2491,7 @@ Private Function PROB_NormalInvCDF( _
 '
 ' METHOD / PROVENANCE
 '   Peter J. Acklam's rational approximation (public, released freely), taken
-'   from the shared kernel PROB_NormalInvCDFRaw in M_STATS_CORE, refined by a
+'   from the shared kernel PROB_NormalInvCDFRaw in M_STATS_PROBDIST_CORE, refined by a
 '   single Halley iteration. Acklam alone gives ~1.15E-9 relative error; the
 '   Halley step, using the double-precision PROB_NormalCDF/PROB_NormalPDF, lifts
 '   accuracy to ~1E-15.
@@ -2393,8 +2500,7 @@ Private Function PROB_NormalInvCDF( _
 '       e = F(x) - p
 '       u = e / f(x)
 '       x <- x - u / (1 + x * u / 2)
-'   The refinement is skipped when f(x) has underflowed to 0, and when F(x) has
-'   saturated to 0 or 1 beyond PROB_CDF_TAIL_CUTOFF; in both cases the raw Acklam
+'   The refinement is skipped when f(x) has underflowed to 0, and when F(x) has rounded to 0 or 1; in both cases the raw Acklam
 '   estimate is already the best available.
 '
 ' ACCURACY
@@ -2419,7 +2525,7 @@ Private Function PROB_NormalInvCDF( _
 '------------------------------------------------------------------------------
 ' STARTING ESTIMATE
 '------------------------------------------------------------------------------
-    'Raw Acklam rational approximation (shared kernel, M_STATS_CORE)
+    'Raw Acklam rational approximation (shared kernel, M_STATS_PROBDIST_CORE)
         X = PROB_NormalInvCDFRaw(Probability)
 '------------------------------------------------------------------------------
 ' HALLEY REFINEMENT
@@ -2428,12 +2534,9 @@ Private Function PROB_NormalInvCDF( _
         PdfX = PROB_NormalPDF(X)
         CdfX = PROB_NormalCDF(X)
 
-    'Refine only where the density has not underflowed AND the CDF has not
-    'saturated. Past Abs(X) = PROB_CDF_TAIL_CUTOFF the CDF returns exactly 0 or 1,
-    'so the residual degenerates to -Probability and the step actively degrades
-    'the estimate: at Probability = 1E-300 it turns a 9.7E-11 relative error into
-    '4.9E-04. Where the CDF has saturated, the raw Acklam value is the best
-    'available answer.
+    'Refine only where the density is positive and the evaluated CDF has not
+    'rounded to exactly 0 or 1. At a rounded endpoint the residual is no longer
+    'informative, so the raw Acklam estimate is retained.
         If PdfX > 0# And CdfX > 0# And CdfX < 1# Then
             E = CdfX - Probability
             U = E / PdfX
@@ -2469,17 +2572,17 @@ Private Function PROB_ValidateNormalInputs( _
 ' VALIDATE
 '------------------------------------------------------------------------------
     'Validate X
-        If Not PROB_IsFinite(X) Then
+        If Not PROB_IsWithinSupportedMagnitude(X) Then
             FailMsg = "X must be a finite number"
             Exit Function
         End If
     'Validate mean
-        If Not PROB_IsFinite(Mean) Then
+        If Not PROB_IsWithinSupportedMagnitude(Mean) Then
             FailMsg = "Mean must be a finite number"
             Exit Function
         End If
     'Validate standard deviation
-        If Not PROB_IsFinite(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
             FailMsg = "StdDev must be a finite strictly positive number"
             Exit Function
         End If
@@ -2509,7 +2612,7 @@ Private Function PROB_ValidateLognormalInputs( _
 ' VALIDATE
 '------------------------------------------------------------------------------
     'Validate evaluation point
-        If Not PROB_IsFinite(X) Or X <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(X) Or X <= 0# Then
             FailMsg = "X must be a finite strictly positive number"
             Exit Function
         End If
@@ -2540,12 +2643,12 @@ Private Function PROB_ValidateLogParameters( _
 ' VALIDATE
 '------------------------------------------------------------------------------
     'Validate log mean
-        If Not PROB_IsFinite(MeanLog) Then
+        If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
             FailMsg = "MeanLog must be a finite number"
             Exit Function
         End If
     'Validate log standard deviation
-        If Not PROB_IsFinite(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
             FailMsg = "StdDevLog must be a finite strictly positive number"
             Exit Function
         End If
@@ -2555,7 +2658,5 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
-
-
 
 

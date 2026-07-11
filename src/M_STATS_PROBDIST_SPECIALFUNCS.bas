@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"
-
 Option Explicit
 Option Private Module
 
@@ -271,12 +270,29 @@ Public Function PROB_LogBeta( _
 ' PRECONDITION
 '   A > 0 and B > 0.
 '
-' NOTE
-'   The half-integer cases Beta(A, 1/2) and Beta(1/2, B) are routed through
-'   PROB_LogGammaHalfDiff because they are exactly the cancelling difference that
-'   routine exists to avoid. Student t and F both hit those cases constantly.
+' NUMERICAL POLICY
+'   - Half-integer cases use PROB_LogGammaHalfDiff.
+'   - Extremely unbalanced arguments use a direct gamma-ratio asymptotic:
+'
+'         LogGamma(Large + Small) - LogGamma(Large)
+'             = Small * Log(Large) + O(Small / Large)
+'
+'     whenever Small / Large is no greater than machine epsilon. This avoids
+'     catastrophic cancellation when Large + Small rounds to Large, and when
+'     the two large LogGamma values would otherwise erase LogGamma(Small).
+'   - All other cases use the defining identity.
+'
+' DEPENDENCIES
+'   - PROB_LogGamma, PROB_LogGammaHalfDiff
+'   - PROB_HALF_LOG_PI, PROB_EPS
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LargeArg           As Double
+    Dim SmallArg           As Double
+
 '------------------------------------------------------------------------------
 ' HALF-INTEGER SHORTCUTS
 '------------------------------------------------------------------------------
@@ -293,10 +309,35 @@ Public Function PROB_LogBeta( _
         End If
 
 '------------------------------------------------------------------------------
+' ORDER ARGUMENTS
+'------------------------------------------------------------------------------
+        If A >= B Then
+            LargeArg = A
+            SmallArg = B
+        Else
+            LargeArg = B
+            SmallArg = A
+        End If
+
+'------------------------------------------------------------------------------
+' EXTREMELY UNBALANCED ARGUMENTS
+'------------------------------------------------------------------------------
+    'In this regime the omitted correction is below Double relative precision,
+    'while the literal three-log-gamma identity can lose the entire answer.
+        If SmallArg / LargeArg <= PROB_EPS Then
+            PROB_LogBeta = _
+                PROB_LogGamma(SmallArg) - _
+                SmallArg * Log(LargeArg)
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
 ' GENERAL CASE
 '------------------------------------------------------------------------------
-    'Return the general log-beta
-        PROB_LogBeta = PROB_LogGamma(A) + PROB_LogGamma(B) - PROB_LogGamma(A + B)
+        PROB_LogBeta = _
+            PROB_LogGamma(A) + _
+            PROB_LogGamma(B) - _
+            PROB_LogGamma(A + B)
 End Function
 
 

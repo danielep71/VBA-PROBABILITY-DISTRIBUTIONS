@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_TEST"
-
 Option Explicit
 
 '==============================================================================
@@ -7,7 +6,7 @@ Option Explicit
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Single self-checking test harness for the whole probability-distribution
-'   stack: M_STATS_CORE, M_STATS_SPECIALFUNC, M_STATS_PROBDIST_NORMALFAMILY and
+'   stack: M_STATS_PROBDIST_CORE, M_STATS_PROBDIST_SPECIALFUNCS, M_STATS_PROBDIST_NORMALFAMILY and
 '   M_STATS_PROBDIST_TFAMILY. Verifies known values, symmetry, inverse
 '   round-trips, the survival surface, lognormal moments, the arithmetic-to-log
 '   parameter round-trip, interval probabilities, and the error/overflow
@@ -17,7 +16,7 @@ Option Explicit
 '   From the VBA IDE Immediate window (Ctrl+G), pick a scope:
 '
 '       Test_STATS_PROBDIST_RunAll            'everything
-'       Test_STATS_PROBDIST_RunCore           'M_STATS_CORE + M_STATS_SPECIALFUNC
+'       Test_STATS_PROBDIST_RunCore           'M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS
 '       Test_STATS_PROBDIST_RunNormalFamily   'normal + lognormal
 '       Test_STATS_PROBDIST_RunTFamily        't, chi-square, F
 '
@@ -37,7 +36,7 @@ Option Explicit
 '   and assertion helpers exist exactly once.
 '
 ' SCOPE MAP
-'   Core suite          -> M_STATS_CORE, M_STATS_SPECIALFUNC
+'   Core suite          -> M_STATS_PROBDIST_CORE, M_STATS_PROBDIST_SPECIALFUNCS
 '   NormalFamily suite  -> M_STATS_PROBDIST_NORMALFAMILY
 '   TFamily suite       -> M_STATS_PROBDIST_TFAMILY
 '   A suite run does not implicitly run the suites it depends on. Run Core first
@@ -45,8 +44,8 @@ Option Explicit
 '   order, so the first FAIL line is normally the deepest one.
 '
 ' DEPENDENCIES
-'   - M_STATS_CORE
-'   - M_STATS_SPECIALFUNC
+'   - M_STATS_PROBDIST_CORE
+'   - M_STATS_PROBDIST_SPECIALFUNCS
 '   - M_STATS_PROBDIST_NORMALFAMILY
 '   - M_STATS_PROBDIST_TFAMILY
 '
@@ -154,10 +153,10 @@ Public Sub Test_STATS_PROBDIST_RunCore()
 ' Test_STATS_PROBDIST_RunCore
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the M_STATS_CORE and M_STATS_SPECIALFUNC suite only.
+'   Runs the M_STATS_PROBDIST_CORE and M_STATS_PROBDIST_SPECIALFUNCS suite only.
 '==============================================================================
 '
-    BeginRun "M_STATS_CORE + M_STATS_SPECIALFUNC"
+    BeginRun "M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
     RunCoreSuite
     EndRun
 End Sub
@@ -213,7 +212,7 @@ End Sub
 '==============================================================================
 
 Private Sub RunCoreSuite()
-    Debug.Print "== SUITE: M_STATS_CORE + M_STATS_SPECIALFUNC"
+    Debug.Print "== SUITE: M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
     Test_Core_Constants
     Test_Core_Log1p
     Test_Core_TryExp
@@ -384,19 +383,44 @@ End Sub
 
 Private Sub Test_Core_TryExp()
     Dim ExpResult As Double
+    Dim ArithmeticResult As Double
 
-    Debug.Print "-- Core PROB_TryExp contract"
+    Debug.Print "-- Core exponential and arithmetic Try contracts"
 
-    'Overflow must fail, never return a clamped sentinel
-    AssertTrue "TryExp overflow rejected", (Not PROB_TryExp(710#, ExpResult))
+    AssertTrue "TryExp 709 accepted", PROB_TryExp(709#, ExpResult)
+    AssertRelClose "TryExp 709 value", ExpResult, 8.21840746155497E+307, 0.000000000001
 
-    'Underflow is a valid zero, not a failure
+    '709.5 is finite and was incorrectly rejected by the former 709 cutoff.
+    AssertTrue "TryExp 709.5 accepted", PROB_TryExp(709.5, ExpResult)
+    AssertTrue "TryExp 709.5 positive finite", (ExpResult > 0# And PROB_IsFinite(ExpResult))
+    AssertTrue "TryExp 709.78 accepted", PROB_TryExp(709.78, ExpResult)
+    AssertTrue "TryExp 709.79 overflow rejected", (Not PROB_TryExp(709.79, ExpResult))
+    AssertTrue "TryExp 710 overflow rejected", (Not PROB_TryExp(710#, ExpResult))
+
+    AssertTrue "true finiteness accepts 1E200", PROB_IsFinite(1E+200)
+    AssertTrue "supported magnitude rejects 1E200", _
+        (Not PROB_IsWithinSupportedMagnitude(1E+200))
+
+    AssertTrue "TryAdd finite", PROB_TryAdd(1E+200, -1E+200, ExpResult)
+    AssertClose "TryAdd cancellation", ExpResult, 0#, 0#
+    AssertTrue "TryAdd overflow rejected", _
+        (Not PROB_TryAdd(PROB_DOUBLE_MAX, PROB_DOUBLE_MAX, ExpResult))
+
     AssertTrue "TryExp underflow accepted", PROB_TryExp(-1000#, ExpResult)
     AssertClose "TryExp underflow value", ExpResult, 0#, 0#
 
-    'Regular exponential
     AssertTrue "TryExp regular accepted", PROB_TryExp(1#, ExpResult)
     AssertClose "TryExp regular value", ExpResult, 2.71828182845905, TOL_TIGHT
+
+    AssertTrue "TryMultiply regular", PROB_TryMultiply(1E+150, 1E+150, ArithmeticResult)
+    AssertRelClose "TryMultiply value", ArithmeticResult, 1E+300, TOL_REL_TIGHT
+    AssertTrue "TryMultiply overflow rejected", _
+        (Not PROB_TryMultiply(1E+200, 1E+200, ArithmeticResult))
+
+    AssertTrue "TryDivide regular", PROB_TryDivide(1#, 4#, ArithmeticResult)
+    AssertClose "TryDivide value", ArithmeticResult, 0.25, 0#
+    AssertTrue "TryDivide overflow rejected", _
+        (Not PROB_TryDivide(1E+308, 1E-308, ArithmeticResult))
 End Sub
 
 
@@ -421,6 +445,18 @@ Private Sub Test_Core_LogGamma()
         -0.207395194346071, TOL_REL_TIGHT
     AssertRelClose "LogBeta(2, 3)", PROB_LogBeta(2#, 3#), _
         -2.484906649788, TOL_REL_TIGHT
+
+    'Extremely unbalanced arguments must not lose LogGamma(Small) when the
+    'two enormous large-argument log-gammas cancel.
+    AssertClose "LogBeta extreme unbalanced", _
+        PROB_LogBeta(5E+98, 5E-100), _
+        228.64907138697, _
+        0.000000000001
+
+    AssertClose "LogBeta extreme unbalanced symmetric", _
+        PROB_LogBeta(5E-100, 5E+98), _
+        228.64907138697, _
+        0.000000000001
 End Sub
 
 
@@ -450,11 +486,10 @@ End Sub
 Private Sub Test_NF_StandardNormalDensity()
     Debug.Print "-- Standard normal density"
 
-    'REGRESSION N4: at Z = 0 the density IS the constant, so this assertion pins
-    'PROB_INV_SQRT_TWO_PI to the correctly rounded Double. The old literal
-    '0.398942280401433 is 5 ulp high and misses by 2.8E-16.
+    'REGRESSION N4: calculate the oracle independently at run time.
     AssertClose "phi(0) correctly rounded", _
-        K_STATS_NormalStandard_Density(0#), 0.398942280401433, TOL_ULP
+        K_STATS_NormalStandard_Density(0#), _
+        1# / Sqr(8# * Atn(1#)), TOL_ULP
 
     AssertClose "phi(1)", K_STATS_NormalStandard_Density(1#), 0.241970724519143, TOL_TIGHT
     AssertClose "phi(-1)", K_STATS_NormalStandard_Density(-1#), 0.241970724519143, TOL_TIGHT
@@ -484,7 +519,16 @@ Private Sub Test_NF_StandardNormalCumulative()
         CDbl(K_STATS_NormalStandard_Cumulative(-7.07106781)) - _
         CDbl(K_STATS_NormalStandard_Cumulative(-7.07106782)), 0#, 1E-16
 
-    'Saturation past the tail cutoff
+    'Representable deep tails must not be cut off prematurely.
+    AssertRelClose "Phi(-37.5) representable tail", _
+        K_STATS_NormalStandard_Cumulative(-37.5), _
+        4.60535300958195E-308, TOL_REL_TAIL
+
+    AssertRelClose "Phi(-38) subnormal tail", _
+        K_STATS_NormalStandard_Cumulative(-38#), _
+        2.88542835100396E-316, TOL_REL_LOOSE
+
+    'Only genuinely unrepresentable tails saturate.
     AssertClose "Phi(-40) saturates", K_STATS_NormalStandard_Cumulative(-40#), 0#, 0#
     AssertClose "Phi(40) saturates", K_STATS_NormalStandard_Cumulative(40#), 1#, 0#
 End Sub
@@ -510,9 +554,9 @@ End Sub
 Private Sub Test_NF_InverseTails()
     Debug.Print "-- Standard normal inverse, deep tails"
 
-    'REGRESSION N2: past Abs(Z) = PROB_CDF_TAIL_CUTOFF the CDF returns exactly 0,
-    'so the Halley residual degenerates to -Probability. Refining anyway turned
-    'a 9.7E-11 relative error into 4.9E-04; the guard restores the raw estimate.
+    'REGRESSION N2: the tail kernel must preserve the representable CDF at the
+    'Acklam seed and the Halley guard must still reject genuinely rounded
+    'endpoints. The deep-tail quantile must remain accurate.
     AssertRelClose "InvPhi(1e-300)", _
         K_STATS_NormalStandard_InverseCumulative(1E-300), _
         -37.0470962993614, TOL_REL_TAIL
@@ -624,6 +668,22 @@ Private Sub Test_NF_IntervalProbability()
     'General: full standard band via defaults
     AssertClose "gen P(-1..1 | 0,1)", _
         K_STATS_Normal_IntervalProbability(-1#, 1#), 0.682689492137086, TOL_TIGHT
+
+    'REGRESSION: direct CDF subtraction returned zero because Phi(9) and
+    'Phi(10) both round to one. Tail-oriented branching preserves the mass.
+    AssertRelClose "std P(9..10) positive tail", _
+        K_STATS_NormalStandard_IntervalProbability(9#, 10#), _
+        1.1285122074236E-19, TOL_REL_TAIL
+
+    'The negative-tail branch must preserve the symmetric interval mass.
+    AssertRelClose "std P(-10..-9) negative tail", _
+        K_STATS_NormalStandard_IntervalProbability(-10#, -9#), _
+        1.1285122074236E-19, TOL_REL_TAIL
+
+    'General-normal standardization must reach the same stable kernel.
+    AssertRelClose "gen P(18..20 | 0,2) positive tail", _
+        K_STATS_Normal_IntervalProbability(18#, 20#, 0#, 2#), _
+        1.1285122074236E-19, TOL_REL_TAIL
 End Sub
 
 
@@ -689,6 +749,15 @@ Private Sub Test_NF_LognormalMoments()
     Else
         AssertClose "logn stddev^2 == variance", CDbl(SdV) * CDbl(SdV), CDbl(VarV), TOL_LOOSE
     End If
+
+    'REGRESSION: Exp(sigma^2) - 1 rounded to zero at sigma = 1E-8.
+    AssertRelClose "logn tiny-sigma variance", _
+        K_STATS_Lognormal_Variance(0#, 0.00000001), _
+        1E-16, TOL_REL_TIGHT
+
+    AssertRelClose "logn tiny-sigma stddev", _
+        K_STATS_Lognormal_StdDev(0#, 0.00000001), _
+        0.00000001, TOL_REL_TIGHT
 End Sub
 
 
@@ -739,6 +808,18 @@ Private Sub Test_NF_ParameterRoundTrip()
         K_STATS_Lognormal_Mean(MeanLog, StdDevLog), 2#, TOL_LOOSE
     AssertClose "roundtrip StdDev", _
         K_STATS_Lognormal_StdDev(MeanLog, StdDevLog), 0.5, TOL_LOOSE
+
+    'REGRESSION: Log(1 + CV^2) rounded to zero for CV = 1E-10.
+    P = K_STATS_Lognormal_ParametersFromMeanStdDev(1#, 0.0000000001)
+
+    If IsError(P) Then
+        RecordResult "tiny-CV parameter conversion returned error", False
+    Else
+        AssertRelClose "tiny-CV StdDevLog", _
+            P(1, 2), 0.0000000001, TOL_REL_TIGHT
+        AssertClose "tiny-CV MeanLog", _
+            P(1, 1), -5E-21, 1E-20
+    End If
 End Sub
 
 
@@ -814,6 +895,11 @@ Private Sub Test_TF_StudentTDensity()
 
     'Far tail underflows to a valid zero, not an error
     AssertClose "t pdf far tail = 0", K_STATS_StudentT_Density(1E+50, 30#), 0#, 0#
+    'Small-df and huge-X paths must remain numeric, not fall into runtime errors.
+    AssertTrue "t pdf tiny df at zero numeric", _
+        (Not IsError(K_STATS_StudentT_Density(0#, 0.000000000001)))
+    AssertClose "t pdf huge x underflows", _
+        K_STATS_StudentT_Density(1E+200, 5#), 0#, 0#
 End Sub
 
 
@@ -829,6 +915,14 @@ Private Sub Test_TF_StudentTCumulative()
     AssertClose "t cdf df=2 continuity", _
         CDbl(K_STATS_StudentT_Cumulative(1.5, 2#)) - _
         CDbl(K_STATS_StudentT_Cumulative(1.5, 2.0000001)), 0#, 0.0000001
+    'Tiny Cauchy argument formerly overflowed in 1 / AbsX.
+    AssertClose "t cdf Cauchy tiny x", _
+        K_STATS_StudentT_Cumulative(9.99988867182683E-321, 1#), 0.5, 0#
+
+    'Tiny-argument local series at small degrees of freedom.
+    AssertClose "t cdf tiny x small df", _
+        K_STATS_StudentT_Cumulative(0.0000000001, 0.1), _
+        0.500000000014809, 0.000000000000002
 End Sub
 
 
@@ -892,6 +986,7 @@ Private Sub Test_TF_StudentTInverse()
         -31830988618379.1, TOL_REL_TIGHT
     AssertTrue "t inv(1e-14,0.5) is a number", _
         (Not IsError(K_STATS_StudentT_InverseCumulative(0.00000000000001, 0.5)))
+    AssertRoundTripT "t inverse small-df beta branch", 0.75, 0.1
 
     'REGRESSION T5: the old bisection could not resolve inside the flat spot and
     'returned about 1.05E-8 instead of 3.14E-10. The expected value is the exact
@@ -1049,6 +1144,8 @@ Private Sub Test_TF_FDensity()
     AssertClose "F pdf(0,2,5)", K_STATS_F_Density(0#, 2#, 5#), 1#, 0#
     AssertClose "F pdf(0,3,5)", K_STATS_F_Density(0#, 3#, 5#), 0#, 0#
     AssertIsError "F pdf(0,1,5) unbounded", K_STATS_F_Density(0#, 1#, 5#)
+    AssertClose "F pdf extreme positive log-ratio", _
+        K_STATS_F_Density(1E+308, 1E+99, 1E-99), 0#, 0#
 End Sub
 
 
@@ -1071,6 +1168,8 @@ Private Sub Test_TF_FCumulative()
     'silently stopped converging at about df = 5E+5
     AssertRelClose "F cdf(1,1e5,1e5)", K_STATS_F_Cumulative(1#, 100000#, 100000#), _
         0.5, TOL_REL_LOOSE
+    AssertClose "F cdf extreme positive log-ratio", _
+        K_STATS_F_Cumulative(1E+308, 1E+99, 1E-99), 1#, 0#
 End Sub
 
 
@@ -1084,6 +1183,8 @@ Private Sub Test_TF_FSurvival()
     AssertClose "F sf + cdf = 1", _
         CDbl(K_STATS_F_Survival(2#, 7#, 12#)) + _
         CDbl(K_STATS_F_Cumulative(2#, 7#, 12#)), 1#, TOL_TIGHT
+    AssertClose "F sf extreme positive log-ratio", _
+        K_STATS_F_Survival(1E+308, 1E+99, 1E-99), 0#, 0#
 End Sub
 
 
@@ -1128,8 +1229,8 @@ Private Sub Test_TF_ErrorContract()
     AssertIsError "F sf df1=0", K_STATS_F_Survival(1#, 0#, 5#)
 
     'Non-finite evaluation points
-    AssertIsError "t cdf x too large", K_STATS_StudentT_Cumulative(1E+200, 5#)
-    AssertIsError "chi2 cdf x too large", K_STATS_ChiSquare_Cumulative(1E+200, 5#)
+    AssertClose "t cdf x huge saturates", K_STATS_StudentT_Cumulative(1E+200, 5#), 1#, 0#
+    AssertClose "chi2 cdf x huge saturates", K_STATS_ChiSquare_Cumulative(1E+200, 5#), 1#, 0#
 
     'Probabilities outside the open unit interval
     AssertIsError "t inv p=0", K_STATS_StudentT_InverseCumulative(0#, 5#)
@@ -1148,6 +1249,13 @@ Private Sub Test_TF_ErrorContract()
     Diag = "stale"
     AssertClose "t cdf ok with status", K_STATS_StudentT_Cumulative(0#, 5#, Diag), 0.5, 0#
     AssertTrue "TF status cleared on success", (Len(Diag) = 0)
+    AssertErrorCode "t inverse tiny-df predictable overflow is #NUM", _
+        K_STATS_StudentT_InverseCumulative(0.75, 1E-200), xlErrNum
+    AssertErrorCode "Cauchy inverse overflow is #NUM", _
+        K_STATS_StudentT_InverseCumulative(9.99988867182683E-321, 1#), xlErrNum
+
+    AssertErrorCode "F inverse predictable overflow is #NUM", _
+        K_STATS_F_InverseCumulative(0.999999999999999, 1#, 0.01), xlErrNum
 End Sub
 
 
@@ -1404,6 +1512,31 @@ Private Sub AssertIsError( _
 End Sub
 
 
+Private Sub AssertErrorCode( _
+    ByVal TestName As String, _
+    ByVal Actual As Variant, _
+    ByVal ExpectedErrorCode As Long)
+'
+'==============================================================================
+' PURPOSE
+'   Passes only when Actual is the requested CVErr code. CStr is used because
+'   direct numeric coercion of a Variant/Error raises a type-mismatch error.
+'==============================================================================
+'
+        If Not IsError(Actual) Then
+            RecordResult TestName & " -> expected error, got " & CStr(Actual), False
+            Exit Sub
+        End If
+
+        If CStr(Actual) = CStr(CVErr(ExpectedErrorCode)) Then
+            RecordResult TestName, True
+        Else
+            RecordResult TestName & " -> got " & CStr(Actual) & _
+                         ", expected " & CStr(CVErr(ExpectedErrorCode)), False
+        End If
+End Sub
+
+
 Private Sub RecordResult( _
     ByVal TestName As String, _
     ByVal Passed As Boolean)
@@ -1446,6 +1579,8 @@ Private Sub Test_CN_GammaDensity()
     AssertClose "gamma pdf(0.5,0.5,2)", K_STATS_Gamma_Density(0.5, 0.5, 2#), _
         0.439391289467722, TOL_TIGHT
     AssertClose "gamma pdf(-1,2.5,1.5)=0", K_STATS_Gamma_Density(-1#, 2.5, 1.5), 0#, 0#
+    AssertClose "gamma pdf ratio overflow tends zero", _
+        K_STATS_Gamma_Density(1E+308, 2#, 9.99988867182683E-321), 0#, 0#
 End Sub
 
 
@@ -1457,6 +1592,8 @@ Private Sub Test_CN_GammaCumulative()
         7.97884427822125E-04, TOL_TIGHT
     AssertClose "gamma cdf(0,2.5,1.5)=0", K_STATS_Gamma_Cumulative(0#, 2.5, 1.5), 0#, 0#
     AssertClose "gamma cdf(-5,2.5,1.5)=0", K_STATS_Gamma_Cumulative(-5#, 2.5, 1.5), 0#, 0#
+    AssertClose "gamma cdf ratio overflow tends one", _
+        K_STATS_Gamma_Cumulative(1E+308, 2#, 9.99988867182683E-321), 1#, 0#
 End Sub
 
 
@@ -1471,6 +1608,8 @@ Private Sub Test_CN_GammaSurvival()
     AssertClose "gamma cdf+sf=1", _
         CDbl(K_STATS_Gamma_Cumulative(3#, 2.5, 1.5)) + _
         CDbl(K_STATS_Gamma_Survival(3#, 2.5, 1.5)), 1#, TOL_TIGHT
+    AssertClose "gamma sf ratio overflow tends zero", _
+        K_STATS_Gamma_Survival(1E+308, 2#, 9.99988867182683E-321), 0#, 0#
 End Sub
 
 
@@ -1552,6 +1691,8 @@ Private Sub Test_CN_ExponentialDensity()
         0.270670566473225, TOL_TIGHT
     AssertClose "exp pdf(0,2)=lambda", K_STATS_Exponential_Density(0#, 2#), 2#, TOL_TIGHT
     AssertClose "exp pdf(-1,2)=0", K_STATS_Exponential_Density(-1#, 2#), 0#, 0#
+    AssertClose "exp pdf product overflow tends zero", _
+        K_STATS_Exponential_Density(1E+308, 1E+308), 0#, 0#
 End Sub
 
 
@@ -1564,6 +1705,8 @@ Private Sub Test_CN_ExponentialCumulative()
         9.9999999995E-11, TOL_REL_TAIL
     AssertClose "exp cdf(0,2)=0", K_STATS_Exponential_Cumulative(0#, 2#), 0#, 0#
     AssertClose "exp cdf(-1,2)=0", K_STATS_Exponential_Cumulative(-1#, 2#), 0#, 0#
+    AssertClose "exp cdf product overflow tends one", _
+        K_STATS_Exponential_Cumulative(1E+308, 1E+308), 1#, 0#
 End Sub
 
 
@@ -1578,6 +1721,8 @@ Private Sub Test_CN_ExponentialSurvival()
     AssertClose "exp cdf+sf=1", _
         CDbl(K_STATS_Exponential_Cumulative(1#, 2#)) + _
         CDbl(K_STATS_Exponential_Survival(1#, 2#)), 1#, TOL_TIGHT
+    AssertClose "exp sf product overflow tends zero", _
+        K_STATS_Exponential_Survival(1E+308, 1E+308), 0#, 0#
 End Sub
 
 
@@ -1639,6 +1784,22 @@ Private Sub Test_CN_WeibullMoments()
         1.50276113925573, TOL_TIGHT
     AssertClose "weibull std(1.5,2)", K_STATS_Weibull_StdDev(1.5, 2#), _
         1.22587158350935, TOL_TIGHT
+
+    'REGRESSION: direct subtraction of two Gamma values collapsed to zero for
+    'large Shape. The asymptotic branch preserves the small positive factor.
+    AssertRelClose "weibull var(shape=1e8,scale=2)", _
+        K_STATS_Weibull_Variance(100000000#, 2#), _
+        6.57973609526982E-16, TOL_REL_TIGHT
+
+    AssertRelClose "weibull std(shape=1e8,scale=2)", _
+        K_STATS_Weibull_StdDev(100000000#, 2#), _
+        2.56509962677277E-08, TOL_REL_TIGHT
+
+    'The log-domain scale adjustment must avoid an intermediate scale^2
+    'overflow where the final variance remains representable.
+    AssertRelClose "weibull balanced large scale and shape", _
+        K_STATS_Weibull_Variance(1E+99, 1E+99), _
+        1.64493406684823, TOL_REL_LOOSE
 End Sub
 
 
@@ -1766,7 +1927,7 @@ Private Sub Test_CN_ErrorContract()
     AssertIsError "uniform pdf hi=lo", K_STATS_Uniform_Density(3#, 2#, 2#)
 
     'Non-finite evaluation points
-    AssertIsError "gamma cdf x huge", K_STATS_Gamma_Cumulative(1E+200, 2.5, 1.5)
+    AssertClose "gamma cdf x huge saturates", K_STATS_Gamma_Cumulative(1E+200, 2.5, 1.5), 1#, 0#
 
     'Probabilities outside the open unit interval
     AssertIsError "gamma inv p=0", K_STATS_Gamma_InverseCumulative(0#, 2.5, 1.5)
@@ -1785,6 +1946,43 @@ Private Sub Test_CN_ErrorContract()
     AssertClose "gamma cdf ok with status", K_STATS_Gamma_Cumulative(3#, 2.5, 1.5, Diag), _
         0.45058404864722, TOL_TIGHT
     AssertTrue "CN status cleared on success", (Len(Diag) = 0)
+    'Full-range finite rates and scales are valid; the 1E100 cap now applies
+    'only to algorithmic shape parameters.
+    AssertRelClose "gamma full-range scale accepted", _
+        K_STATS_Gamma_Mean(1#, 1E+200), 1E+200, TOL_REL_TIGHT
+    AssertRelClose "exponential full-range rate accepted", _
+        K_STATS_Exponential_Density(0#, 1E+200), 1E+200, TOL_REL_TIGHT
+    AssertRelClose "weibull full-range scale accepted", _
+        K_STATS_Weibull_Mean(1#, 1E+200), 1E+200, TOL_REL_TIGHT
+    AssertErrorCode "gamma shape at supported boundary is #NUM", _
+        K_STATS_Gamma_Mean(PROB_LARGE_NUMBER, 1#), xlErrNum
+
+    'Predictable arithmetic failures must be #NUM, never the unexpected #VALUE.
+    AssertErrorCode "gamma density origin overflow is #NUM", _
+        K_STATS_Gamma_Density(0#, 1#, 9.99988867182683E-321), xlErrNum
+    'A scale of 1E+308 is still valid because the shape-two median is about
+    '1.67835 and the rescaled quantile remains below the Double maximum.
+    AssertRelClose "gamma inverse near Double maximum remains finite", _
+        K_STATS_Gamma_InverseCumulative(0.5, 2#, 1E+308), _
+        1.67834699001668E+308, _
+        TOL_REL_TIGHT
+
+    'Using the largest finite Double as the scale makes the same rescaling
+    'mathematically exceed the representable range and must return #NUM.
+    AssertErrorCode "gamma inverse rescale overflow is #NUM", _
+        K_STATS_Gamma_InverseCumulative(0.5, 2#, PROB_DOUBLE_MAX), xlErrNum
+    AssertErrorCode "exponential inverse overflow is #NUM", _
+        K_STATS_Exponential_InverseCumulative(0.5, 9.99988867182683E-321), xlErrNum
+    AssertErrorCode "weibull inverse overflow is #NUM", _
+        K_STATS_Weibull_InverseCumulative(0.9, 1E-100, 1#), xlErrNum
+    AssertErrorCode "weibull density origin overflow is #NUM", _
+        K_STATS_Weibull_Density(0#, 1#, 9.99988867182683E-321), xlErrNum
+    AssertErrorCode "weibull mean tiny-shape overflow is #NUM", _
+        K_STATS_Weibull_Mean(9.99988867182683E-321, 1#), xlErrNum
+    AssertErrorCode "weibull variance tiny-shape overflow is #NUM", _
+        K_STATS_Weibull_Variance(9.99988867182683E-321, 1#), xlErrNum
+    AssertErrorCode "weibull stddev tiny-shape overflow is #NUM", _
+        K_STATS_Weibull_StdDev(9.99988867182683E-321, 1#), xlErrNum
 End Sub
 
 

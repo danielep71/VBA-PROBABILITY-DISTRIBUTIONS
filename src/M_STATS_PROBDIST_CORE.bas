@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_CORE"
-
 Option Explicit
 Option Private Module
 
@@ -34,11 +33,16 @@ Option Private Module
 '
 '   Predicates:
 '     - PROB_IsFinite
+'     - PROB_IsWithinSupportedMagnitude
 '     - PROB_IsPositiveFinite
+'     - PROB_IsPositiveWithinSupportedMagnitude
 '     - PROB_IsValidProbabilityOpen
 '
 '   Numeric primitives:
 '     - PROB_TryExp
+'     - PROB_TryAdd
+'     - PROB_TryMultiply
+'     - PROB_TryDivide
 '     - PROB_Log1p
 '     - PROB_Expm1
 '     - PROB_NormalInvCDFRaw
@@ -65,26 +69,24 @@ Option Private Module
 '
 ' DESIGN PRINCIPLES
 '   - Nothing here knows about any distribution. This is a numerics layer.
+'   - True finiteness and supported algorithm magnitude are separate contracts.
+'     PROB_IsFinite tests the IEEE value; PROB_IsWithinSupportedMagnitude applies
+'     the conservative 1E+100 policy only where a numerical algorithm needs it.
 '   - Overflow fails explicitly: a computation that would exceed Double range
-'     returns False rather than a clamped sentinel value. There is deliberately
-'     no PROB_SafeExp: a routine that quietly returns 1E+100 for a density is
-'     returning a wrong number, and 1E+100 is simultaneously the threshold above
-'     which PROB_IsFinite reports non-finite.
+'     returns False rather than a clamped sentinel value.
 '   - Underflow of an exponential is a valid zero, not an error.
 '   - Kernels here never validate their callers' domains and never write Status.
 '
 ' NOTES
-'   - PROB_IsFinite bounds magnitude at PROB_LARGE_NUMBER (1E+100); a legitimate
-'     value at or beyond that magnitude reads as non-finite. This is intentional
-'     for a distribution library and is inherited from NORMALFAMILY.
-'   - VBA Doubles cannot normally hold NaN (arithmetic raises error 6 first), so
-'     the X = X clause in PROB_IsFinite is defence in depth, not a contract.
-'   - MIGRATION: delete the Private copies of PROB_IsFinite,
-'     PROB_IsValidProbabilityOpen, PROB_TryExp, PROB_SetStatus and the duplicated
-'     Private Const block from M_STATS_PROBDIST_NORMALFAMILY, and delete the
-'     modules M_STATS_PROBDIST_SPECIALFUNCS and M_STATS_PROBDIST_CONTINUOUS
-'     outright. Leaving M_STATS_PROBDIST_SPECIALFUNCS in place will produce
-'     "Ambiguous name detected" against this module.
+'   - PROB_IsFinite is a true finiteness predicate. It does not impose the
+'     project magnitude policy. Use PROB_IsWithinSupportedMagnitude explicitly
+'     for shape, degree-of-freedom and other algorithmic parameters.
+'   - The subtraction X - X distinguishes finite values from externally supplied
+'     IEEE infinities while preserving the largest finite Double.
+'   - ARCHITECTURE: this module owns shared constants and elementary numeric
+'     helpers. M_STATS_PROBDIST_SPECIALFUNCS owns reusable special-function
+'     kernels; distribution-family modules consume both layers without keeping
+'     private duplicate copies; M_STATS_PROBDIST_TEST owns regression coverage.
 '
 ' UPDATED
 '   2026-07-09
@@ -94,19 +96,29 @@ Option Private Module
 ' PUBLIC CONSTANTS
 '==============================================================================
 
-Public Const PROB_PI                   As Double = 3.14159265358979      'Correctly rounded pi; the prior 3.14159265358979 was ~7 ulp low
-Public Const PROB_TWO_PI               As Double = 6.28318530717959
-Public Const PROB_HALF_LOG_TWO_PI      As Double = 0.918938533204673     '0.5 * Log(2 * Pi), correctly rounded
-Public Const PROB_HALF_LOG_PI          As Double = 0.5723649429247       '0.5 * Log(Pi)
+'The VBA editor canonicalizes long decimal literals to approximately
+'15 significant decimal digits. Split constant expressions are therefore
+'used where necessary to obtain the intended IEEE-754 Double value.
+Public Const PROB_PI As Double = _
+    3.14159265358979 + 3.10862446895044E-15
+
+Public Const PROB_TWO_PI As Double = _
+    2# * PROB_PI
+
+Public Const PROB_HALF_LOG_TWO_PI As Double = _
+    0.918938533204672 + 6.66133814775094E-16
+
+Public Const PROB_HALF_LOG_PI As Double = _
+    0.5723649429247 + 1.11022302462516E-16
 
 Public Const PROB_EPS                  As Double = 0.000000000000001     '1E-15, relative convergence target
 Public Const PROB_NUM_EPS              As Double = 0.00000000000003      '3E-14, continued-fraction / series stop
 Public Const PROB_MACH_EPS             As Double = 2.22044604925031E-16  'Double epsilon
 
-Public Const PROB_MAX_EXP              As Double = 709#                  'Exp overflows above this
-Public Const PROB_MIN_EXP              As Double = -745#                 'Exp underflows to 0 below this
+Public Const PROB_MAX_EXP              As Double = 709.782712893384      'Advisory Log(Double max)
+Public Const PROB_MIN_EXP              As Double = -745.133219101941     'Advisory round-to-zero boundary
 
-Public Const PROB_LARGE_NUMBER         As Double = 1E+100                'Finiteness magnitude bound
+Public Const PROB_LARGE_NUMBER         As Double = 1E+100                'Supported algorithm magnitude bound
 Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308 'Approx largest finite Double
 Public Const PROB_FPMIN                As Double = 1E-300                'Lentz denominator floor
 
@@ -125,19 +137,51 @@ Public Function PROB_IsFinite( _
 ' PROB_IsFinite
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Performs a lightweight finite-number check for VBA Double inputs.
+'   Returns TRUE only when X is an IEEE-754 finite Double.
 '
-' NOTE
-'   The magnitude bound is PROB_LARGE_NUMBER (1E+100); a legitimate value at or
-'   beyond that magnitude reads as non-finite. This is intentional for a
-'   distribution library.
+' NOTES
+'   This predicate deliberately does not apply PROB_LARGE_NUMBER. A separate
+'   predicate owns that project-specific supported-magnitude policy.
 '==============================================================================
 '
+    Dim ZeroCheck As Double
+
+    'External COM code can supply NaN or infinity even though ordinary VBA
+    'arithmetic raises before creating them. X - X is zero only for finite X.
+        On Error GoTo Not_Finite
+
+        If X <> X Then Exit Function
+
+        ZeroCheck = X - X
+        PROB_IsFinite = (ZeroCheck = 0#)
+        Exit Function
+
+Not_Finite:
+        Err.Clear
+        PROB_IsFinite = False
+End Function
+
+
+Public Function PROB_IsWithinSupportedMagnitude( _
+    ByVal X As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_IsWithinSupportedMagnitude
 '------------------------------------------------------------------------------
-' RETURN
-'------------------------------------------------------------------------------
-    'Return TRUE when X is not NaN and is inside a conservative magnitude bound
-        PROB_IsFinite = (X = X And Abs(X) < PROB_LARGE_NUMBER)
+' PURPOSE
+'   Returns TRUE when X is finite and lies inside the conservative numerical
+'   domain Abs(X) < PROB_LARGE_NUMBER.
+'
+' USE
+'   Apply this to dimensionless algorithmic parameters whose kernels are tested
+'   only inside the project-supported range. Do not use it as a synonym for
+'   mathematical finiteness.
+'==============================================================================
+'
+        If Not PROB_IsFinite(X) Then Exit Function
+
+        PROB_IsWithinSupportedMagnitude = (Abs(X) < PROB_LARGE_NUMBER)
 End Function
 
 
@@ -152,11 +196,27 @@ Public Function PROB_IsPositiveFinite( _
 '   Returns TRUE when X is finite and strictly positive.
 '==============================================================================
 '
+        If Not PROB_IsFinite(X) Then Exit Function
+
+        PROB_IsPositiveFinite = (X > 0#)
+End Function
+
+
+Public Function PROB_IsPositiveWithinSupportedMagnitude( _
+    ByVal X As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_IsPositiveWithinSupportedMagnitude
 '------------------------------------------------------------------------------
-' RETURN
-'------------------------------------------------------------------------------
-    'Return TRUE for positive finite numbers
-        PROB_IsPositiveFinite = (PROB_IsFinite(X) And X > 0#)
+' PURPOSE
+'   Returns TRUE when X is strictly positive and lies inside the supported
+'   algorithm magnitude domain.
+'==============================================================================
+'
+        If Not PROB_IsWithinSupportedMagnitude(X) Then Exit Function
+
+        PROB_IsPositiveWithinSupportedMagnitude = (X > 0#)
 End Function
 
 
@@ -201,34 +261,129 @@ Public Function PROB_TryExp( _
 ' PROB_TryExp
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Attempts Exp(X) with explicit overflow and underflow handling.
+'   Attempts Exp(X) using the actual VBA floating-point boundary rather than a
+'   prematurely rounded decimal cutoff.
 '
 ' CONTRACT
-'   - Overflow  (X >= PROB_MAX_EXP): returns False; Result is left unchanged.
-'   - Underflow (X <= PROB_MIN_EXP): returns True;  Result = 0 (a valid zero).
-'   - Otherwise:                     returns True;  Result = Exp(X).
-'
-' RATIONALE
-'   Overflow is a genuine failure a caller must surface (as CVErr(xlErrNum)),
-'   whereas underflow to zero is a legitimate result. Separating the two lets
-'   the public routines distinguish "too big" from "vanishingly small".
+'   - Finite representable result: returns TRUE and writes Result.
+'   - Negative underflow:          returns TRUE and writes zero.
+'   - Positive overflow:           returns FALSE; Result is not contractual.
+'   - Non-finite X:                returns FALSE.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' COMPUTE
-'------------------------------------------------------------------------------
-    'Reject overflow
-        If X >= PROB_MAX_EXP Then
-            Exit Function
-    'Treat underflow as a valid zero
-        ElseIf X <= PROB_MIN_EXP Then
-            Result = 0#
-    'Regular exponential
-        Else
-            Result = Exp(X)
-        End If
-    'Report success
+        If Not PROB_IsFinite(X) Then Exit Function
+
+        On Error GoTo Exp_Failure
+
+        Result = Exp(X)
+
+        If Not PROB_IsFinite(Result) Then GoTo Exp_Failure
+
         PROB_TryExp = True
+        Exit Function
+
+Exp_Failure:
+        Err.Clear
+
+        'A negative exponential can fail only by underflow, which is a valid
+        'zero for probability densities and tail probabilities.
+        If X < 0# Then
+            Result = 0#
+            PROB_TryExp = True
+        End If
+End Function
+
+
+Public Function PROB_TryAdd( _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryAdd
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Attempts A + B and converts predictable Double overflow into a FALSE return.
+'==============================================================================
+'
+        If Not PROB_IsFinite(A) Then Exit Function
+        If Not PROB_IsFinite(B) Then Exit Function
+
+        On Error GoTo Numeric_Failure
+
+        Result = A + B
+
+        If Not PROB_IsFinite(Result) Then Exit Function
+
+        PROB_TryAdd = True
+        Exit Function
+
+Numeric_Failure:
+        Err.Clear
+End Function
+
+
+Public Function PROB_TryMultiply( _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryMultiply
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Attempts A * B and converts predictable Double overflow into a FALSE return.
+'   Underflow to zero is a valid successful result.
+'==============================================================================
+'
+        If Not PROB_IsFinite(A) Then Exit Function
+        If Not PROB_IsFinite(B) Then Exit Function
+
+        On Error GoTo Numeric_Failure
+
+        Result = A * B
+
+        If Not PROB_IsFinite(Result) Then Exit Function
+
+        PROB_TryMultiply = True
+        Exit Function
+
+Numeric_Failure:
+        Err.Clear
+End Function
+
+
+Public Function PROB_TryDivide( _
+    ByVal Numerator As Double, _
+    ByVal Denominator As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryDivide
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Attempts Numerator / Denominator and converts division by zero or Double
+'   overflow into a FALSE return. Underflow to zero is a valid success.
+'==============================================================================
+'
+        If Not PROB_IsFinite(Numerator) Then Exit Function
+        If Not PROB_IsFinite(Denominator) Then Exit Function
+        If Denominator = 0# Then Exit Function
+
+        On Error GoTo Numeric_Failure
+
+        Result = Numerator / Denominator
+
+        If Not PROB_IsFinite(Result) Then Exit Function
+
+        PROB_TryDivide = True
+        Exit Function
+
+Numeric_Failure:
+        Err.Clear
 End Function
 
 
@@ -286,11 +441,10 @@ Public Function PROB_Expm1( _
 '   Returns Exp(X) - 1 accurately for every X, including X near zero.
 '
 ' PRECONDITION
-'   None on correctness. For X at or above PROB_MAX_EXP the true value overflows
-'   a Double and VBA raises overflow error 6; callers that may pass large
-'   positive X should guard with PROB_TryExp instead. Every caller in this
-'   library passes X <= 0, where Exp(X) lies in (0, 1] and no overflow is
-'   possible.
+'   None on mathematical correctness. For sufficiently large positive X the
+'   true value overflows a Double and VBA raises overflow error 6. Callers that
+'   may pass positive X must first guard the exponential range with
+'   PROB_TryExp or an equivalent explicit range check. Negative X is always safe.
 '
 ' RATIONALE
 '   The naive Exp(X) - 1# loses accuracy because Exp(X) rounds to a value near 1
@@ -465,7 +619,5 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
-
-
 
 
