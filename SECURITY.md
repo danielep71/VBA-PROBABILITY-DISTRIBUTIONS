@@ -1,9 +1,9 @@
 # 🔒 Security Policy
 
 <p align="left">
-  <img alt="Reporting" src="https://img.shields.io/badge/reporting-private-orange">
-  <img alt="Scope" src="https://img.shields.io/badge/scope-VBA_source-6f42c1">
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Excel_VBA-blue">
+  <img alt="Reporting" src="https://img.shields.io/badge/Reporting-Private-orange">
+  <img alt="Scope" src="https://img.shields.io/badge/Scope-VBA_source-6f42c1">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-Excel_VBA-blue">
 </p>
 
 This project ships **VBA source only** — a set of `.bas` modules that are
