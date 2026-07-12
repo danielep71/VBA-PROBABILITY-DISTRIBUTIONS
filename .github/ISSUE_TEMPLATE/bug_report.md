@@ -1,8 +1,8 @@
 ---
-Name: 🐞 Bug report
-About: Report a wrong result, wrong error code, or crash
-Title: "[Bug]: "
-Labels: bug
+name: 🐞 Bug report
+about: Report a wrong result, wrong error code, or crash
+title: "[Bug]: "
+labels: bug
 ---
 
 ## 🐞 Description
