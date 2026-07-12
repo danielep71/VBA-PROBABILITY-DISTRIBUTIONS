@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation (Wiki)
+    url: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki
+    about: Check the wiki first — Getting Started, API Reference, Numerical Accuracy, and Troubleshooting.
+  - name: 🔒 Report a security issue
+    url: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/security/policy
+    about: Please report vulnerabilities privately, not as a public issue.
