@@ -21,6 +21,12 @@
 
 ---
 
+<img width="3520" height="1395" alt="Home" src="https://github.com/user-attachments/assets/4522143c-8c8c-43b2-b097-a3b5f2cc2780" />
+
+
+---
+
+
 > [!IMPORTANT]
 > This repository is a numerical library, not a thin wrapper around `Application.WorksheetFunction`.
 > Distribution calculations, special functions, validation, tail handling, overflow policy and diagnostics are implemented in native VBA.
@@ -557,7 +563,7 @@ Potential future modules include:
 
 ## 📄 License
 
-Add the repository license here. MIT is a natural choice for a reusable numerical VBA library, but the final license should reflect the maintainer’s intended distribution terms.
+MIT
 
 ---
 
