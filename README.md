@@ -8,7 +8,7 @@
 <p align="center">
   <img alt="Platform" src="https://img.shields.io/badge/Platform-Excel_VBA-217346">
   <img alt="Distributions" src="https://img.shields.io/badge/Distributions-10-6f42c1">
-  <img alt="Worksheet UDFs" src="https://img.shields.io/badge/Worksheet_UDFs-58-00A3E0">
+  <img alt="Worksheet UDFs" src="https://img.shields.io/badge/Worksheet_UDFs-61-00A3E0">
   <img alt="Numerical Kernels" src="https://img.shields.io/badge/Numerical_Kernels-26-orange">
   <img alt="Tests" src="https://img.shields.io/badge/Tests-Consolidated-brightgreen">
   <img alt="Dependencies" src="https://img.shields.io/badge/External_Dependencies-None-lightgrey">
@@ -47,7 +47,7 @@
 
 The library exposes:
 
-- **58 worksheet-facing `K_STATS_*` functions**
+- **61 worksheet-facing `K_STATS_*` functions**
 - **26 project-scoped `PROB_*` routines and numerical kernels**
 - **one consolidated self-checking regression harness**
 
@@ -55,7 +55,7 @@ The public surface covers ten distributions, with a dedicated Standard Normal co
 
 | Family | Distributions | Capabilities |
 |---|---|---|
-| Normal family | Normal, Lognormal, Standard Normal API | Density, CDF, inverse CDF, interval probability, z-score, moments, parameter conversion |
+| Normal family | Normal, Lognormal, Standard Normal API | Density, CDF, survival, inverse CDF, interval probability, z-score, moments, parameter conversion |
 | Classical test-statistic family | Student t, Chi-square, F | Density, CDF, survival, inverse CDF |
 | Positive continuous family | Gamma, Exponential, Weibull | Density, CDF, survival, inverse CDF, selected moments |
 | Bounded continuous family | Beta, Uniform | Density, CDF, survival, inverse CDF, selected moments |
@@ -117,7 +117,7 @@ Examples:
 
 ### 🎯 Direct survival functions
 
-Small upper tails are evaluated directly for Student t, Chi-square, F, Gamma, Beta, Exponential, Weibull, and Uniform.
+Small upper tails are evaluated directly across the entire library — the Standard Normal API, Normal, Lognormal, Student t, Chi-square, F, Gamma, Beta, Exponential, Weibull, and Uniform.
 
 Although mathematically:
 
@@ -181,9 +181,9 @@ Iterative kernels return a Boolean success flag and never publish a non-converge
 
 | Distribution | Density | CDF | Survival | Inverse | Other |
 |---|---:|---:|---:|---:|---|
-| Standard Normal API | ✅ | ✅ | — | ✅ | Interval probability, fast inverse |
-| Normal | ✅ | ✅ | — | ✅ | Z-score, interval probability |
-| Lognormal | ✅ | ✅ | — | ✅ | Mean, variance, standard deviation, parameter conversion |
+| Standard Normal API | ✅ | ✅ | ✅ | ✅ | Interval probability, fast inverse |
+| Normal | ✅ | ✅ | ✅ | ✅ | Z-score, interval probability |
+| Lognormal | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation, parameter conversion |
 
 ### Classical test-statistic family
 
@@ -569,7 +569,7 @@ Read:
 Potential future work includes:
 
 - discrete distributions;
-- additional survival and interval functions;
+- additional interval probability functions;
 - bivariate and multivariate distributions;
 - random variate generation;
 - an example workbook;
