@@ -2,125 +2,157 @@
 
 <p align="left">
   <img alt="Reporting" src="https://img.shields.io/badge/Reporting-Private-orange">
-  <img alt="Scope" src="https://img.shields.io/badge/Scope-VBA_source-6f42c1">
-  <img alt="Platform" src="https://img.shields.io/badge/Platform-Excel_VBA-blue">
+  <img alt="Scope" src="https://img.shields.io/badge/Scope-VBA_Source-6f42c1">
+  <img alt="Stable version" src="https://img.shields.io/badge/Stable_Tag-v1.0.0-217346">
+  <img alt="Development branch" src="https://img.shields.io/badge/Main-Unreleased-lightgrey">
 </p>
 
-This project ships **VBA source only** — a set of `.bas` modules that are
-imported into an Excel workbook and run with the user's Excel and Windows
-privileges. There is no add-in, no installer, no external DLL and no worksheet-
-function marshalling. The attack surface is therefore small, but security reports
-are still taken seriously. This page explains what is supported, how to report an
-issue privately, and what is in scope.
+This project distributes plain-text Excel VBA source modules. There is no installer,
+external DLL, compiled executable, or background service.
+
+The attack surface is therefore limited, but responsible disclosure still matters.
+This policy explains which versions are supported, what should be reported privately,
+and which numerical issues should instead be submitted as ordinary bug reports.
 
 ---
 
 ## 📦 Supported versions
 
-<p align="left">
-  <img alt="Support" src="https://img.shields.io/badge/Support-Latest_release-217346">
-</p>
+| Version or branch | Support status |
+|---|---|
+| `v1.0.0` — latest tagged stable version | ✅ Supported |
+| `main` — unreleased development code | ⚠️ Best effort |
+| Older tags, snapshots, and copied third-party versions | ❌ Not supported |
 
-Security fixes are applied to the latest release. Older tags are not patched —
-please upgrade before reporting.
+Security fixes are normally developed on `main` and included in the next tagged
+version.
 
-| Version | Supported |
-| --- | --- |
-| `v1.0.0` (latest) | ✅ |
-| earlier / unreleased | ❌ |
+When reporting an issue, identify the exact source state you used:
+
+- a release tag, such as `v1.0.0`; or
+- the full Git commit SHA when testing `main` or another snapshot.
+
+Do not report only “latest,” because the default branch can change after the issue
+is observed.
 
 ---
 
 ## 📣 Reporting a vulnerability
 
-<p align="left">
-  <img alt="Channel" src="https://img.shields.io/badge/Channel-Private_disclosure-orange">
-  <img alt="Public_issues" src="https://img.shields.io/badge/Public_issues-Do_not_use-red">
-</p>
+**Do not open a public GitHub issue for a suspected security vulnerability.**
 
-**Please do not open a public issue for a security problem**, and do not post
-proof-of-concept exploit code in a public thread.
+Use one of these private channels:
 
-Report privately through either:
+1. **GitHub private vulnerability reporting**
+   - Open the repository’s **Security** tab.
+   - Choose **Report a vulnerability**.
 
-- **GitHub private vulnerability reporting** — on the repository, go to the
-  **Security** tab → **Report a vulnerability** (enable it under
-  *Settings → Security* if it is not already on), or
-- email the maintainer at:
+2. **Email the maintainer**
 
 ```text
 danielep71@gmail.com
 ```
 
-Helpful details to include:
+Include:
 
-- Affected version (`v1.0.0`, etc.) and Excel version / bitness / OS
-- The specific module and, if applicable, the `K_STATS_*` call and arguments
-- A clear description of the issue and its impact
-- Minimal reproduction steps
-- Any suggested remediation, if you have one
+- the affected tag or full commit SHA;
+- the affected module and procedure;
+- the exact `K_STATS_*` or `PROB_*` call, where applicable;
+- Excel version, Office bitness, and operating system;
+- minimal reproduction steps;
+- observed behavior;
+- expected behavior;
+- practical security impact;
+- any proposed remediation.
 
----
-
-## ⏱️ What to expect
-
-<p align="left">
-  <img alt="Response" src="https://img.shields.io/badge/response-best_effort-blue">
-</p>
-
-This is a solo-maintained project, so responses are best-effort rather than
-guaranteed within a fixed window. You can expect:
-
-- Acknowledgement of your report,
-- An assessment of validity and severity,
-- A fix in a new release when a valid issue is confirmed,
-- Credit in the release notes if you would like it.
-
-Please allow reasonable time for a fix before any public disclosure.
+Please do not attach workbooks containing confidential, personal, client, or
+production data.
 
 ---
 
-## 🎯 Scope
+## 🎯 What qualifies as a security issue
 
-<p align="left">
-  <img alt="In_scope" src="https://img.shields.io/badge/In_scope-This_project-217346">
-  <img alt="Out_of_scope" src="https://img.shields.io/badge/Out_of_scope-Host_environment-orange">
-</p>
+Examples that should be reported privately include:
 
-**In scope**
+- execution of unintended code;
+- unintended modification of workbook data or VBA projects;
+- disclosure of information outside the documented calculation result;
+- uncontrolled or effectively non-terminating resource consumption;
+- a crafted input that causes Excel to hang persistently or exhaust resources;
+- a numerical defect that creates a concrete security, control, or integrity impact.
 
-- The VBA source under `src/` (`CORE`, `SPECIALFUNCS`, and the distribution-
-  family modules)
-- The regression harness under `tests/`
-- Behavior that could cause the library to return a **silently wrong numerical
-  result** where the error contract says it should fail (this is treated as a
-  correctness-security issue, not just a bug)
-- Any input that causes uncontrolled resource consumption (e.g. a non-terminating
-  iteration in an inverse/root-finding routine)
+### Ordinary numerical bugs
 
-**Out of scope**
+A wrong numerical result is important, but it is not automatically a security
+vulnerability.
 
-- Microsoft Excel, Office, Windows, or the VBA runtime themselves
-- Issues that require the user to disable Excel macro security or to import
-  untrusted code unrelated to this project
-- Copies of the modules obtained from anywhere other than this repository
-- General numerical inaccuracy within documented tolerances — report these as
-  ordinary issues, not security reports
+Use the public **Bug report** template when the issue is:
+
+- an incorrect density, CDF, survival probability, quantile, or moment;
+- an accuracy problem within an otherwise terminating calculation;
+- a wrong `#NUM!` versus `#VALUE!` classification;
+- a documentation or parameterization inconsistency;
+- a discrepancy with an independent reference implementation;
+- a performance problem that does not create a security or availability impact.
+
+When uncertain, report privately. The maintainer can reclassify the report safely.
 
 ---
 
-## 🧰 Safe use guidance
+## 🧭 Scope
 
-<p align="left">
-  <img alt="Trust" src="https://img.shields.io/badge/Import-Official_source_only-217346">
-</p>
+### In scope
 
-- Obtain the modules only from this repository. All code is published in plain
-  text under `src/`, so you can review it before importing.
-- If a `.bas` file reaches you as a download, right-click the file →
-  **Properties** → **Unblock** before importing it into the VBE.
-- Keep Excel macro security at its default protected level; nothing in this
-  library requires lowering it.
+- VBA source under `src/`;
+- the regression harness under `tests/`;
+- repository-supplied example or release artifacts;
+- numerical kernels that fail to terminate or consume uncontrolled resources;
+- behavior that violates the documented security or integrity boundary.
+
+### Out of scope
+
+- vulnerabilities in Microsoft Excel, Office, Windows, macOS, or the VBA runtime;
+- macro-security configuration controlled by the user or organization;
+- unrelated VBA code in the host workbook;
+- modified copies obtained from third parties;
+- unsupported historical snapshots;
+- ordinary numerical differences within documented tolerances.
+
+---
+
+## ⏱️ Disclosure process
+
+This is a solo-maintained open-source project, so response times are best effort.
+
+The expected process is:
+
+1. The report is acknowledged.
+2. The issue is assessed and reproduced where possible.
+3. A remediation and release approach is agreed.
+4. A fix is developed on a private or controlled branch when necessary.
+5. A corrected tagged version is published.
+6. Public disclosure follows after users have had reasonable time to update.
+
+Please allow reasonable time for investigation and remediation before public
+disclosure.
+
+Credit will be included in release notes when requested.
+
+---
+
+## 🧰 Safe-use guidance
+
+- Obtain the source only from the official repository or a tagged release.
+- Review the plain-text `.bas` files before importing them.
+- Keep Excel macro security enabled at the organization’s approved level.
+- Do not lower macro-security settings for this library.
+- Compile the project after importing the modules.
+- Run `Test_STATS_PROBDIST_RunAll` before production use.
+- Record the tag or commit SHA used in controlled workbooks and validation evidence.
+- Do not treat an unreviewed `main` snapshot as a stable release.
+
+If Windows marks downloaded source files as blocked, review their origin before
+using **Properties → Unblock**.
 
 ---
 
