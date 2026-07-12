@@ -22,7 +22,7 @@
 ---
 
 <p align="center">
-  <img src="assets/Home.jpg"
+  <img src="assets/Home2.jpg"
        alt="VBA Probability Distributions"
        width="100%">
 </p>
