@@ -5,8 +5,6 @@
   Normal & Lognormal • Student t • Chi-square • F • Gamma • Beta • Exponential • Weibull • Uniform
 </p>
 
-
-
 <p align="center">
   <img alt="Platform" src="https://img.shields.io/badge/Platform-Excel_VBA-217346">
   <img alt="Office" src="https://img.shields.io/badge/Office-32%2F64--bit-blue">
