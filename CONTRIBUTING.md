@@ -10,7 +10,7 @@
 </p>
 
 Thanks for your interest in improving the library. This is a numerical project,
-and it values **small, surgical, well-documented and numerically verified**
+and it values **well-documented and numerically verified**
 changes that match the existing conventions over large rewrites. This guide
 explains how to work with the VBA source, and — just as importantly — what a
 change to a distribution or kernel has to prove before it can be merged.
