@@ -1,22 +1,22 @@
 # VBA-PROBABILITY-DISTRIBUTIONS
 
 <p align="center">
-  <b>A robust, worksheet-friendly probability-distribution library written entirely in Excel VBA</b><br>
-  Normal & Lognormal • Student t • Chi-square • F • Gamma • Beta • Exponential • Weibull • Uniform
+  <b>A self-contained, accurate numerical library for probability distributions, implemented entirely in Excel VBA</b><br>
+  Complete native implementations for the supported distribution families — not a thin wrapper around worksheet functions
 </p>
 
 <p align="center">
   <img alt="Platform" src="https://img.shields.io/badge/Platform-Excel_VBA-217346">
-  <img alt="Office" src="https://img.shields.io/badge/Office-32%2F64--bit-blue">
   <img alt="Distributions" src="https://img.shields.io/badge/Distributions-10-6f42c1">
   <img alt="Worksheet UDFs" src="https://img.shields.io/badge/Worksheet_UDFs-58-00A3E0">
   <img alt="Numerical Kernels" src="https://img.shields.io/badge/Numerical_Kernels-26-orange">
   <img alt="Tests" src="https://img.shields.io/badge/Tests-Consolidated-brightgreen">
   <img alt="Dependencies" src="https://img.shields.io/badge/External_Dependencies-None-lightgrey">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
 <p align="center">
-  <b>📦 No add-in • No installer • No external DLL • No worksheet-function marshalling — import the VBA modules and use them directly.</b>
+  <b>📦 No add-in • No installer • No external DLL • No worksheet-function marshalling</b>
 </p>
 
 ---
@@ -27,34 +27,35 @@
        width="100%">
 </p>
 
-
 ---
-
 
 > [!IMPORTANT]
-> This repository is a numerical library, not a thin wrapper around `Application.WorksheetFunction`.
-> Distribution calculations, special functions, validation, tail handling, overflow policy and diagnostics are implemented in native VBA.
-
----
+> **This repository is a native numerical library, not a thin wrapper around `Application.WorksheetFunction`.**
+>
+> Distribution calculations, special functions, validation, direct tail evaluation, overflow and underflow handling, iterative convergence policy, worksheet-error mapping, and diagnostics are implemented in VBA.
 
 ## ✨ Overview
 
-**VBA-PROBABILITY-DISTRIBUTIONS** provides a consistent set of probability-distribution functions for:
+**VBA-PROBABILITY-DISTRIBUTIONS** provides a consistent statistical API for:
 
 - 📊 Excel worksheet formulas
 - 🧮 VBA analytical models
 - 🎲 Monte Carlo engines
-- 📈 financial-risk calculations
+- 📈 finance and risk calculations
 - 🎓 teaching and numerical demonstrations
-- 🧪 regression-tested statistical tooling
+- 🧪 model validation and regression testing
 
-The library exposes **58 worksheet-facing `K_STATS_*` functions** and a separate project-scoped numerical layer containing **26 reusable `PROB_*` helpers and special-function kernels**.
+The library exposes:
 
-The public worksheet surface covers:
+- **58 worksheet-facing `K_STATS_*` functions**
+- **26 project-scoped `PROB_*` routines and numerical kernels**
+- **one consolidated self-checking regression harness**
+
+The public surface covers ten distributions, with a dedicated Standard Normal convenience API.
 
 | Family | Distributions | Capabilities |
 |---|---|---|
-| Normal family | Standard Normal, Normal, Lognormal | Density, CDF, inverse CDF, interval probability, z-score, moments, parameter conversion |
+| Normal family | Normal, Lognormal, Standard Normal API | Density, CDF, inverse CDF, interval probability, z-score, moments, parameter conversion |
 | Classical test-statistic family | Student t, Chi-square, F | Density, CDF, survival, inverse CDF |
 | Positive continuous family | Gamma, Exponential, Weibull | Density, CDF, survival, inverse CDF, selected moments |
 | Bounded continuous family | Beta, Uniform | Density, CDF, survival, inverse CDF, selected moments |
@@ -63,25 +64,26 @@ The public worksheet surface covers:
 
 ## ⭐ Why this exists
 
-Excel already includes many probability functions, but native worksheet functions are not always an ideal computational interface for VBA projects.
+Excel includes many statistical worksheet functions, but `Application.WorksheetFunction` is not always an appropriate numerical foundation for a VBA project.
 
-`Application.WorksheetFunction`:
+A worksheet-function wrapper:
 
-- introduces per-call COM and worksheet-function marshalling overhead;
-- raises runtime errors for invalid inputs rather than returning worksheet errors naturally;
-- does not expose the reusable special-function kernels needed by a broader distribution library;
-- encourages inconsistent validation and error handling across separate VBA procedures;
-- can lose critical tail precision when callers compute `1 - CDF` instead of evaluating a survival function directly.
+- introduces worksheet-function marshalling on every call;
+- raises VBA runtime errors for invalid inputs;
+- does not expose reusable incomplete-beta and incomplete-gamma kernels;
+- encourages inconsistent validation and failure handling;
+- makes it easy to lose small upper-tail probabilities through `1 - CDF`;
+- provides limited control over overflow, underflow, convergence, and diagnostics.
 
-This repository provides a single VBA-native numerical stack with:
+This repository instead provides:
 
-- 🧱 a shared elementary-numerics layer;
-- 🧠 reusable incomplete-beta and incomplete-gamma kernels;
-- 📐 consistent distribution parameterization;
-- 🛡️ explicit domain, overflow and non-convergence handling;
-- 🎯 direct evaluation of small tails;
+- 🧱 shared elementary numerical primitives;
+- 🧠 reusable special-function kernels;
+- 📐 explicit and documented parameterization;
+- 🎯 direct evaluation of small survival tails;
+- 🛡️ guarded arithmetic and predictable error classification;
 - 🧾 optional diagnostic status messages;
-- 🧪 one consolidated self-checking regression harness.
+- 🧪 regression tests for values, boundaries, tails, inverses, and former defects.
 
 ---
 
@@ -89,11 +91,11 @@ This repository provides a single VBA-native numerical stack with:
 
 <p align="left">
   <img alt="Native VBA" src="https://img.shields.io/badge/Native_VBA-Yes-217346">
-  <img alt="Worksheet safe" src="https://img.shields.io/badge/Worksheet_errors-CVErr-blue">
-  <img alt="Tail safe" src="https://img.shields.io/badge/Tails-Direct_evaluation-6f42c1">
-  <img alt="Overflow safe" src="https://img.shields.io/badge/Overflow-Guarded-orange">
-  <img alt="Status" src="https://img.shields.io/badge/Diagnostics-Optional_Status-lightgrey">
-  <img alt="Testing" src="https://img.shields.io/badge/Regression_harness-Self--checking-brightgreen">
+  <img alt="Worksheet-safe errors" src="https://img.shields.io/badge/Worksheet_Errors-CVErr-blue">
+  <img alt="Direct tails" src="https://img.shields.io/badge/Tails-Direct_Evaluation-6f42c1">
+  <img alt="Guarded arithmetic" src="https://img.shields.io/badge/Overflow-Guarded-orange">
+  <img alt="Diagnostics" src="https://img.shields.io/badge/Diagnostics-Optional_Status-lightgrey">
+  <img alt="Regression tests" src="https://img.shields.io/badge/Regression_Harness-Self--Checking-brightgreen">
 </p>
 
 ### 📊 Consistent worksheet API
@@ -115,87 +117,119 @@ Examples:
 
 ### 🎯 Direct survival functions
 
-Small upper-tail probabilities are evaluated directly for Student t, Chi-square, F, Gamma, Beta, Exponential, Weibull and Uniform distributions.
+Small upper tails are evaluated directly for Student t, Chi-square, F, Gamma, Beta, Exponential, Weibull, and Uniform.
 
-This matters because:
+Although mathematically:
 
 ```text
 Survival(x) = 1 - CDF(x)
 ```
 
-is mathematically correct but can be numerically wrong when `CDF(x)` rounds to exactly `1`.
+the subtraction can be numerically wrong when the CDF has rounded to exactly `1`.
 
-### 🛡️ Explicit numerical contracts
+### 🛡️ Explicit numerical contract
 
 - Invalid domains return `CVErr(xlErrNum)`.
-- Predictable overflow and non-convergence return `CVErr(xlErrNum)`.
-- Unexpected runtime errors return `CVErr(xlErrValue)`.
-- Mathematically valid underflow returns zero.
-- Public worksheet functions do not raise `MsgBox`.
-- Detailed diagnostics can be returned through an optional `ByRef Status As String`.
+- Predictable overflow returns `CVErr(xlErrNum)`.
+- Iterative non-convergence returns `CVErr(xlErrNum)`.
+- Unexpected VBA runtime failures return `CVErr(xlErrValue)`.
+- Mathematically valid exponential underflow returns `0`.
+- Public UDFs do not display `MsgBox`.
+- Detailed diagnostics are available through an optional `ByRef Status As String`.
 
 ### ⚡ Fast inverse-normal helper
 
-`K_STATS_NormalStandard_InverseCumulativeFast` exposes the raw Acklam inverse-normal kernel for validated, high-volume numerical callers such as Monte Carlo engines.
+`K_STATS_NormalStandard_InverseCumulativeFast` exposes the raw Acklam inverse-normal approximation for validated, high-volume VBA callers such as Monte Carlo engines.
 
 It returns `Double`, avoids worksheet-facing `Variant` and `CVErr` overhead, and intentionally omits the final Halley refinement.
 
+> [!CAUTION]
+> Use the validated inverse when you require full domain checking, worksheet-error behavior, and diagnostic status.
+
 ### 🧮 Stable elementary primitives
 
-The shared core includes guarded arithmetic and cancellation-resistant primitives:
+The core layer includes:
 
-- `PROB_Log1p`
-- `PROB_Expm1`
-- `PROB_TryExp`
-- `PROB_TryAdd`
-- `PROB_TryMultiply`
-- `PROB_TryDivide`
+```text
+PROB_Log1p
+PROB_Expm1
+PROB_TryExp
+PROB_TryAdd
+PROB_TryMultiply
+PROB_TryDivide
+```
 
-These protect tiny probabilities, extreme parameters and full-range finite `Double` inputs.
+These routines protect tiny probabilities, moment calculations, extreme parameters, and full-range finite `Double` inputs.
 
 ### 🧠 Reusable special functions
 
-The project-scoped special-function module provides:
+The project-scoped numerical layer provides:
 
 - log-gamma and log-beta;
 - stable log-combination;
-- regularized incomplete beta;
-- inverse regularized incomplete beta;
+- regularized incomplete beta and its inverse;
 - regularized incomplete gamma `P` and `Q`;
 - inverse regularized incomplete gamma.
 
-Iterative kernels return a Boolean success flag and never silently publish a non-converged partial result.
+Iterative kernels return a Boolean success flag and never publish a non-converged partial result.
 
 ---
 
-## 📦 Repository structure
+## 🧩 Distribution catalogue
+
+### Normal family
+
+| Distribution | Density | CDF | Survival | Inverse | Other |
+|---|---:|---:|---:|---:|---|
+| Standard Normal API | ✅ | ✅ | — | ✅ | Interval probability, fast inverse |
+| Normal | ✅ | ✅ | — | ✅ | Z-score, interval probability |
+| Lognormal | ✅ | ✅ | — | ✅ | Mean, variance, standard deviation, parameter conversion |
+
+### Classical test-statistic family
+
+| Distribution | Density | CDF | Survival | Inverse |
+|---|---:|---:|---:|---:|
+| Student t | ✅ | ✅ | ✅ | ✅ |
+| Chi-square | ✅ | ✅ | ✅ | ✅ |
+| F | ✅ | ✅ | ✅ | ✅ |
+
+### Other continuous distributions
+
+| Distribution | Density | CDF | Survival | Inverse | Moments |
+|---|---:|---:|---:|---:|---:|
+| Gamma | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
+| Beta | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
+| Exponential | ✅ | ✅ | ✅ | ✅ | — |
+| Weibull | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
+| Uniform | ✅ | ✅ | ✅ | ✅ | — |
+
+---
+
+## 🧾 Parameterization at a glance
+
+| Distribution | Parameters |
+|---|---|
+| Normal | Arithmetic mean and standard deviation |
+| Lognormal | Mean and standard deviation of `Log(X)` |
+| Student t | Positive real degrees of freedom |
+| Chi-square | Positive real degrees of freedom |
+| F | Positive real numerator and denominator degrees of freedom |
+| Gamma | Shape and **scale** |
+| Beta | Positive shape parameters `Alpha` and `Beta` |
+| Exponential | **Rate** `Lambda`, not scale |
+| Weibull | Shape and **scale** |
+| Uniform | Finite lower and upper bounds with `LowerBound < UpperBound` |
+
+> [!NOTE]
+> Gamma and Weibull use a **scale** parameter, while Exponential uses a **rate** parameter. Shape parameters entering iterative kernels use a conservative supported-magnitude policy; evaluation points, scales, rates, and Uniform bounds use the full finite `Double` domain where mathematically meaningful.
+
+Inverse functions require:
 
 ```text
-VBA-PROBABILITY-DISTRIBUTIONS/
-├─ src/
-│  ├─ M_STATS_PROBDIST_CORE.bas
-│  ├─ M_STATS_PROBDIST_SPECIALFUNCS.bas
-│  ├─ M_STATS_PROBDIST_NORMALFAMILY.bas
-│  ├─ M_STATS_PROBDIST_TFAMILY.bas
-│  ├─ M_STATS_PROBDIST_CONTINUOUS.bas
-│  └─ M_STATS_PROBDIST_TEST.bas
-├─ wiki/
-│  ├─ Home.md
-│  ├─ Getting-Started.md
-│  ├─ Architecture.md
-│  ├─ API-Reference.md
-│  ├─ Normal-and-Lognormal-Family.md
-│  ├─ StudentT-ChiSquare-and-F-Family.md
-│  ├─ Continuous-Distributions.md
-│  ├─ Special-Functions-and-Numerical-Kernels.md
-│  ├─ Numerical-Accuracy-and-Design.md
-│  ├─ Error-Handling-and-Diagnostics.md
-│  ├─ Testing-and-Regression-Harness.md
-│  ├─ Troubleshooting.md
-│  └─ Coding-Style-and-Contributing.md
-├─ README.md
-└─ LICENSE
+0 < Probability < 1
 ```
+
+Invalid values are not silently clipped or repaired.
 
 ---
 
@@ -227,113 +261,100 @@ flowchart TD
     TEST --> CT
 ```
 
-### Layer 1 — `M_STATS_PROBDIST_CORE`
+| Layer | Module | Responsibility |
+|---|---|---|
+| 1 | `M_STATS_PROBDIST_CORE` | Constants, finiteness predicates, guarded arithmetic, `Log1p`, `Expm1`, raw inverse-normal seed, diagnostics |
+| 2 | `M_STATS_PROBDIST_SPECIALFUNCS` | Log-gamma, log-beta, incomplete beta/gamma, continued fractions, series, safeguarded inverses |
+| 3 | Distribution-family modules | Parameterization, support rules, validation, public UDFs, worksheet-error mapping |
+| 4 | `M_STATS_PROBDIST_TEST` | Assertions, reference values, suite orchestration, regression registry, final verdict |
 
-Shared constants, domain predicates, guarded arithmetic, compensated elementary functions, raw inverse-normal kernel and diagnostic writer.
-
-The module uses `Option Private Module`, so its public names remain visible across the VBA project but do not appear as worksheet functions.
-
-### Layer 2 — `M_STATS_PROBDIST_SPECIALFUNCS`
-
-Distribution-agnostic special-function kernels.
-
-It also uses `Option Private Module` because these routines are internal numerical infrastructure rather than end-user worksheet functions.
-
-### Layer 3 — Distribution families
-
-- `M_STATS_PROBDIST_NORMALFAMILY`
-- `M_STATS_PROBDIST_TFAMILY`
-- `M_STATS_PROBDIST_CONTINUOUS`
-
-These modules validate public inputs, call the shared kernels, translate predictable numerical failures into worksheet errors, and expose the `K_STATS_*` API.
-
-### Layer 4 — `M_STATS_PROBDIST_TEST`
-
-One consolidated test harness owns assertion helpers, counters, suite order, reference values, regression cases and the final pass/fail verdict.
-
-See the [Architecture wiki page](wiki/Architecture.md) for the full dependency model.
+`CORE` and `SPECIALFUNCS` use `Option Private Module`: their `Public PROB_*` names are project-visible but hidden from the worksheet Function Wizard.
 
 ---
 
-## 🧩 Distribution catalogue
+## 📦 Repository structure
 
-### Normal and Lognormal
+```text
+VBA-PROBABILITY-DISTRIBUTIONS/
+├─ .github/
+│  ├─ ISSUE_TEMPLATE/
+│  └─ PULL_REQUEST_TEMPLATE.md
+├─ assets/
+│  ├─ Home.jpg
+│  └─ social.png
+├─ docs/
+├─ examples/
+├─ src/
+│  ├─ M_STATS_PROBDIST_CORE.bas
+│  ├─ M_STATS_PROBDIST_SPECIALFUNCS.bas
+│  ├─ M_STATS_PROBDIST_NORMALFAMILY.bas
+│  ├─ M_STATS_PROBDIST_TFAMILY.bas
+│  └─ M_STATS_PROBDIST_CONTINUOUS.bas
+├─ tests/
+│  └─ M_STATS_PROBDIST_TEST.bas
+├─ .gitignore
+├─ CODE_OF_CONDUCT.md
+├─ CONTRIBUTING.md
+├─ LICENSE
+├─ README.md
+└─ SECURITY.md
+```
 
-| Distribution | Density | CDF | Survival | Inverse | Other |
-|---|---:|---:|---:|---:|---|
-| Standard Normal | ✅ | ✅ | — | ✅ | Interval probability, fast inverse |
-| Normal | ✅ | ✅ | — | ✅ | Z-score, interval probability |
-| Lognormal | ✅ | ✅ | — | ✅ | Mean, variance, standard deviation, parameter conversion |
+The GitHub Wiki is maintained separately through:
 
-### Student t, Chi-square and F
-
-| Distribution | Density | CDF | Survival | Inverse |
-|---|---:|---:|---:|---:|
-| Student t | ✅ | ✅ | ✅ | ✅ |
-| Chi-square | ✅ | ✅ | ✅ | ✅ |
-| F | ✅ | ✅ | ✅ | ✅ |
-
-### Other continuous distributions
-
-| Distribution | Density | CDF | Survival | Inverse | Moments |
-|---|---:|---:|---:|---:|---:|
-| Gamma | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
-| Beta | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
-| Exponential | ✅ | ✅ | ✅ | ✅ | — |
-| Weibull | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
-| Uniform | ✅ | ✅ | ✅ | ✅ | — |
+```text
+VBA-PROBABILITY-DISTRIBUTIONS.wiki.git
+```
 
 ---
 
 ## 🛠️ Installation
 
-### Option 1 — Import into an existing workbook
+### Production library
 
 1. Open the target workbook.
 2. Press `Alt + F11`.
-3. In the VBA Editor, choose **File → Import File**.
-4. Import all six modules:
+3. Choose **File → Import File**.
+4. Import:
 
 ```text
-M_STATS_PROBDIST_CORE.bas
-M_STATS_PROBDIST_SPECIALFUNCS.bas
-M_STATS_PROBDIST_NORMALFAMILY.bas
-M_STATS_PROBDIST_TFAMILY.bas
-M_STATS_PROBDIST_CONTINUOUS.bas
-M_STATS_PROBDIST_TEST.bas
+src/M_STATS_PROBDIST_CORE.bas
+src/M_STATS_PROBDIST_SPECIALFUNCS.bas
+src/M_STATS_PROBDIST_NORMALFAMILY.bas
+src/M_STATS_PROBDIST_TFAMILY.bas
+src/M_STATS_PROBDIST_CONTINUOUS.bas
 ```
 
 5. Choose **Debug → Compile VBAProject**.
-6. Save the workbook as `.xlsm` or `.xlsb`.
-7. Run `Test_STATS_PROBDIST_RunAll`.
+6. Save as `.xlsm` or `.xlsb`.
 
-No references beyond the standard Excel/VBA environment are required.
+### Development and release validation
 
-### Option 2 — Import only the production library
-
-The test module is not required at runtime. Production-only deployment may import the first five modules and omit:
+Also import:
 
 ```text
-M_STATS_PROBDIST_TEST.bas
+tests/M_STATS_PROBDIST_TEST.bas
 ```
 
-Keeping the test harness in development and release workbooks is strongly recommended.
+Then run:
+
+```vba
+Test_STATS_PROBDIST_RunAll
+```
+
+No external DLL, add-in, COM component, or non-standard reference is required.
 
 ---
 
 ## ⚡ Quick start
 
-### Worksheet examples
+### Worksheet formulas
 
 ```excel
 =K_STATS_NormalStandard_Cumulative(1.64485362695147)
 ```
 
-Returns approximately:
-
-```text
-0.95
-```
+Returns approximately `0.95`.
 
 ```excel
 =K_STATS_Normal_InverseCumulative(0.99, 100, 15)
@@ -345,15 +366,15 @@ Returns the 99th percentile of a normal distribution with mean `100` and standar
 =K_STATS_StudentT_Survival(3, 12)
 ```
 
-Returns the direct upper-tail probability for a Student t variable.
+Returns the direct upper-tail probability.
 
 ```excel
 =K_STATS_Weibull_InverseCumulative(0.9, 1.5, 100)
 ```
 
-Returns the 90th percentile of a Weibull distribution with shape `1.5` and scale `100`.
+Returns the 90th percentile of a Weibull distribution.
 
-### VBA examples
+### VBA call with diagnostics
 
 ```vba
 Option Explicit
@@ -367,98 +388,68 @@ Public Sub Example_NormalQuantile()
 
     If IsError(Result) Then
         Debug.Print "Calculation failed: " & Status
-    Else
-        Debug.Print "99th percentile: "; CDbl(Result)
+        Exit Sub
     End If
 
-End Sub
-```
-
-High-volume validated numerical loop:
-
-```vba
-Option Explicit
-
-Public Sub Example_FastInverseNormal()
-
-    Dim I As Long
-    Dim P As Double
-    Dim Z As Double
-
-    For I = 1 To 100000
-        P = (I - 0.5) / 100000#
-        Z = K_STATS_NormalStandard_InverseCumulativeFast(P)
-    Next I
+    Debug.Print "99th percentile: "; CDbl(Result)
 
 End Sub
 ```
 
-> [!CAUTION]
-> The fast helper returns `Double` and is intended for already validated probabilities. Use the worksheet-facing inverse function when you require full validation, `CVErr` behavior and diagnostic status.
-
 ---
 
-## 🧾 Parameterization
-
-| Distribution | Parameters |
-|---|---|
-| Normal | Arithmetic mean and standard deviation |
-| Lognormal | Mean and standard deviation of `Log(X)` |
-| Student t | Positive real degrees of freedom |
-| Chi-square | Positive real degrees of freedom |
-| F | Positive real numerator and denominator degrees of freedom |
-| Gamma | Shape and scale |
-| Beta | Positive shape parameters `Alpha` and `Beta` |
-| Exponential | Rate `Lambda`, not scale |
-| Weibull | Shape and scale |
-| Uniform | Finite lower and upper bounds with `LowerBound < UpperBound` |
-
-Probabilities supplied to inverse functions use the open interval:
-
-```text
-0 < Probability < 1
-```
-
----
-
-## 🧯 Error policy
+## 🧯 Error and diagnostics policy
 
 | Condition | Public result |
 |---|---|
 | Invalid parameter or probability domain | `#NUM!` |
-| Predictable overflow | `#NUM!` |
-| Density pole that is not representable as finite `Double` | `#NUM!` |
-| Iterative kernel does not converge | `#NUM!` |
+| Predictable arithmetic overflow | `#NUM!` |
+| Non-representable density pole | `#NUM!` |
+| Iterative non-convergence | `#NUM!` |
 | Unexpected VBA runtime failure | `#VALUE!` |
 | Mathematically valid exponential underflow | `0` |
 
-Every worksheet-facing function accepts an optional final argument:
+Most worksheet-facing functions accept:
 
 ```vba
 Optional ByRef Status As String = ""
 ```
 
-Use it from VBA to retrieve a detailed failure explanation.
+Example:
 
-See [Error Handling and Diagnostics](wiki/Error-Handling-and-Diagnostics.md).
+```vba
+Dim Status As String
+Dim Result As Variant
+
+Result = K_STATS_Gamma_Density(-1#, 2#, 3#, Status)
+
+Debug.Print Result
+Debug.Print Status
+```
+
+See [Error Handling and Diagnostics](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Error-Handling-and-Diagnostics).
 
 ---
 
-## 🎯 Numerical design highlights
+## 🎯 Numerical design
 
-- Hart/West standard-normal CDF approximation.
-- Acklam inverse-normal approximation with Halley refinement for the validated public inverse.
-- Kahan-style compensated `Log1p` and `Expm1`.
-- Lanczos log-gamma with reflection.
-- Modified Lentz continued fractions.
-- Direct series evaluation for the lower incomplete-gamma region.
-- Safeguarded Newton iteration with bisection fallback for inverse special functions.
-- Paired complementary arguments to avoid reconstructing `1 - x` by cancellation.
-- Direct survival-tail evaluation.
-- Log-domain reconstruction for extreme F, Gamma, Exponential and Weibull calculations.
-- Scaled and convex-combination formulas for Uniform calculations across the full finite `Double` range.
+The implementation uses established numerical methods, including:
 
-The implementation uses published numerical methods. The project contribution is their VBA packaging, validation, tail orientation, failure contracts, integration and regression coverage.
+- Hart/West Standard Normal CDF approximation;
+- Acklam inverse-normal approximation;
+- guarded Halley refinement;
+- Kahan-style `Log1p` and `Expm1`;
+- Lanczos log-gamma;
+- stable log-beta and log-combination assembly;
+- modified Lentz continued fractions;
+- direct incomplete-gamma series and upper-tail continued fractions;
+- safeguarded Newton iteration with bisection fallback;
+- paired complementary beta arguments;
+- direct survival-tail evaluation;
+- log-domain reconstruction for extreme calculations;
+- full-range Uniform scaling and convex-combination formulas.
+
+The methods come from published numerical literature. The project contribution is their integration into a coherent VBA architecture with consistent validation, tail orientation, guarded arithmetic, failure contracts, diagnostics, and regression coverage.
 
 ---
 
@@ -479,9 +470,9 @@ Test_STATS_PROBDIST_RunTFamily
 Test_STATS_PROBDIST_RunContinuous
 ```
 
-Passing assertions are silent. Failures print a detailed line, followed by a consolidated summary.
+Passing assertions are silent. Failures print a detailed line and the run closes with a consolidated summary.
 
-The test harness covers:
+The harness covers:
 
 - known reference values;
 - support and boundary behavior;
@@ -490,31 +481,32 @@ The test harness covers:
 - extreme tails and quantiles;
 - moment formulas;
 - guarded overflow and valid underflow;
-- diagnostic status behavior;
+- diagnostic status;
 - exact `#NUM!` versus `#VALUE!` classification;
-- named regression cases for previously vulnerable numerical paths.
+- named regression cases.
 
-See [Testing and Regression Harness](wiki/Testing-and-Regression-Harness.md).
+> [!NOTE]
+> Accept a release only after a clean VBE compilation and a green `Test_STATS_PROBDIST_RunAll` execution in Excel.
+
+See [Testing and Regression Harness](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Testing-and-Regression-Harness).
 
 ---
 
-## 📚 Wiki
+## 📚 Documentation
 
 | Page | Purpose |
 |---|---|
-| [Home](wiki/Home.md) | Documentation index and navigation |
-| [Getting Started](wiki/Getting-Started.md) | Installation, first formulas and first VBA calls |
-| [Architecture](wiki/Architecture.md) | Layering, dependencies and design boundaries |
-| [API Reference](wiki/API-Reference.md) | Complete public function catalogue |
-| [Normal and Lognormal Family](wiki/Normal-and-Lognormal-Family.md) | Formulas, parameterization and examples |
-| [Student t, Chi-square and F](wiki/StudentT-ChiSquare-and-F-Family.md) | Test-statistic family and direct tails |
-| [Continuous Distributions](wiki/Continuous-Distributions.md) | Gamma, Beta, Exponential, Weibull and Uniform |
-| [Special Functions and Kernels](wiki/Special-Functions-and-Numerical-Kernels.md) | Internal beta/gamma architecture |
-| [Numerical Accuracy and Design](wiki/Numerical-Accuracy-and-Design.md) | Stability techniques and algorithm provenance |
-| [Error Handling and Diagnostics](wiki/Error-Handling-and-Diagnostics.md) | `CVErr`, status and failure contracts |
-| [Testing and Regression Harness](wiki/Testing-and-Regression-Harness.md) | Test execution and regression registry |
-| [Troubleshooting](wiki/Troubleshooting.md) | Common installation and runtime issues |
-| [Coding Style and Contributing](wiki/Coding-Style-and-Contributing.md) | Repository conventions and contribution gates |
+| [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
+| [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
+| [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture) | Layering and dependency boundaries |
+| [Module Reference](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Module-Reference) | Technical guide to all six modules |
+| [API Reference](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/API-Reference) | Complete callable surface |
+| [Normal and Lognormal](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Normal-and-Lognormal-Family) | Gaussian-family behavior |
+| [Student t, Chi-square, and F](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/StudentT-ChiSquare-and-F-Family) | Classical test-statistic family |
+| [Continuous Distributions](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Continuous-Distributions) | Gamma, Beta, Exponential, Weibull, Uniform |
+| [Special Functions](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Special-Functions-and-Numerical-Kernels) | Beta/gamma numerical engine |
+| [Numerical Accuracy and Design](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design) | Stability and provenance |
+| [Troubleshooting](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Troubleshooting) | Common integration issues |
 
 ---
 
@@ -523,18 +515,16 @@ See [Testing and Regression Harness](wiki/Testing-and-Regression-Harness.md).
 The source follows a structured VBA house style:
 
 - `Option Explicit`
-- `Option Private Module` for internal project-scoped modules
+- `Option Private Module` for internal numerical layers
 - section banners
 - structured procedure headers
-- comments above related executable lines
-- inline comments primarily for declarations
-- explicit `Exit Function` / fail-safe paths
-- no `MsgBox` from numerical UDFs
-- clear separation between public validation wrappers and private numerical kernels
-- predictable worksheet-error classification
-- regression tests for numerical defect fixes
+- comments above related executable statements
+- explicit success and failure paths
+- no modal UI from numerical UDFs
+- clear separation between wrappers and kernels
+- regression tests for numerical fixes
 
-Typical procedure headers include:
+Typical headers include relevant fields such as:
 
 ```text
 PURPOSE
@@ -549,25 +539,49 @@ CALLED FROM
 UPDATED
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and numerical-verification requirements.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome, particularly:
+
+- reproducible numerical defects;
+- accuracy improvements backed by independent references;
+- new distributions or moments;
+- additional tail or interval functions;
+- regression tests;
+- documentation corrections.
+
+For non-trivial work, open an issue first.
+
+Read:
+
+- [Contributing Guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security Policy](SECURITY.md)
+
 ---
 
 ## 🧭 Roadmap
 
-Potential future modules include:
+Potential future work includes:
 
-- discrete distributions: Binomial, Poisson, Geometric and Negative Binomial;
-- multivariate and bivariate distributions;
+- discrete distributions;
+- additional survival and interval functions;
+- bivariate and multivariate distributions;
 - random variate generation;
-- additional interval-probability helpers;
-- worksheet examples and demonstration workbook;
-- automated source export and release validation;
-- benchmark comparisons against high-precision references.
+- an example workbook;
+- reproducible external reference-generation scripts;
+- automated static repository checks;
+- benchmark grids for extreme parameters.
 
 ---
 
 ## 📄 License
 
-MIT
+Released under the [MIT License](LICENSE).
 
 ---
 
@@ -576,3 +590,5 @@ MIT
 <p align="left">
   <img alt="Maintainer" src="https://img.shields.io/badge/Maintainer-Daniele_Penza-orange">
 </p>
+
+Maintained by **Daniele Penza**.
