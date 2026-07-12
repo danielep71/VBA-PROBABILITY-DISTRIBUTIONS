@@ -3,317 +3,460 @@
 <p align="left">
   <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-217346">
   <img alt="Language" src="https://img.shields.io/badge/Language-Excel_VBA-blue">
-  <img alt="Style" src="https://img.shields.io/badge/Style-House_conventions-6f42c1">
+  <img alt="Style" src="https://img.shields.io/badge/Style-House_Conventions-6f42c1">
   <img alt="Tests" src="https://img.shields.io/badge/Tests-Test__STATS__PROBDIST__RunAll-orange">
-  <img alt="Verified against" src="https://img.shields.io/badge/Verified-SciPy_%2F_mpmath-00A3E0">
+  <img alt="Verification" src="https://img.shields.io/badge/Verification-Independent_Reference-00A3E0">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
-Thanks for your interest in improving the library. This is a numerical project,
-and it values **well-documented and numerically verified**
-changes that match the existing conventions over large rewrites. This guide
-explains how to work with the VBA source, and — just as importantly — what a
-change to a distribution or kernel has to prove before it can be merged.
+Thank you for your interest in improving the library.
+
+This is a numerical project. It therefore prioritizes:
+
+- small and reviewable changes;
+- explicit statistical parameterization;
+- documented numerical methods;
+- predictable failure contracts;
+- independently calculated reference values;
+- regression tests that protect the corrected behavior.
+
+A contribution is not complete merely because it compiles. It must also explain and
+verify the numerical behavior it changes.
 
 ---
 
 ## 💬 Before you start
 
 <p align="left">
-  <img alt="Step" src="https://img.shields.io/badge/Step-Open_an_issue_first-217346">
+  <img alt="Step" src="https://img.shields.io/badge/Step-Open_an_Issue_First-217346">
 </p>
 
-Please **open an issue before starting non-trivial work** so the approach can be
-agreed up front. Good issues to raise:
+Open an issue before beginning non-trivial work so the intended API, numerical
+method, and scope can be agreed in advance.
 
-- a clear bug with reproduction steps (Excel version, 32/64-bit, OS, the exact
-  `K_STATS_*` call and arguments, and the returned value or error code)
-- a numerical-accuracy report (observed value, expected value, and the
-  independent reference you computed it against)
-- a focused enhancement with a concrete use case (a new distribution, moment,
-  or tail routine)
-- a documentation gap or inaccuracy
+Good issues include:
 
-Tiny fixes (typos, comment corrections, obvious one-line bugs) can go straight to
-a pull request without a prior issue.
+- a reproducible wrong result or wrong worksheet-error code;
+- a numerical-accuracy problem supported by an independent reference;
+- a focused new distribution, moment, tail, or interval function;
+- a convergence, overflow, underflow, or performance concern;
+- a documentation gap or inaccurate parameter description.
+
+Tiny corrections such as typographical fixes, comment corrections, or obvious
+one-line defects may go directly to a pull request.
+
+Suspected security vulnerabilities must be reported privately under
+[SECURITY.md](SECURITY.md), not through a public issue.
 
 ---
 
-## 🧰 Project layout and toolchain
+## 🧰 Project layout
 
 <p align="left">
   <img alt="Source" src="https://img.shields.io/badge/Source-Exported_VBA-217346">
-  <img alt="Tool" src="https://img.shields.io/badge/Tool-GitHub_Desktop-blue">
-  <img alt="Add-in" src="https://img.shields.io/badge/Add--in-None-lightgrey">
+  <img alt="Tooling" src="https://img.shields.io/badge/Workflow-Import_Edit_Export-blue">
+  <img alt="External runtime" src="https://img.shields.io/badge/External_Runtime-None-lightgrey">
 </p>
 
-The repository stores **exported VBA source**, not a binary workbook. There is
-**no add-in, no installer and no external DLL** — the modules are imported into
-the VBE and used directly.
+The repository stores exported VBA source rather than a binary production
+workbook.
 
 ```text
-src/M_STATS_PROBDIST_CORE.bas          # shared constants, predicates, safe Exp/Log, inverse-normal seed, status writer
-src/M_STATS_PROBDIST_SPECIALFUNCS.bas  # reusable special-function kernels (gamma, regularized beta/gamma, erf, ...)
-src/M_STATS_PROBDIST_NORMALFAMILY.bas  # Standard Normal, Normal, Lognormal
-src/M_STATS_PROBDIST_TFAMILY.bas       # Student t, Chi-square, F
-src/M_STATS_PROBDIST_CONTINUOUS.bas    # Gamma, Beta, Exponential, Weibull, Uniform + cross-family identities
-tests/M_STATS_PROBDIST_TEST.bas        # consolidated regression harness (counters, assertions, suites)
-docs/                                  # code review and supporting notes
-examples/                              # usage examples
+src/M_STATS_PROBDIST_CORE.bas
+    Shared constants, predicates, guarded arithmetic, Log1p, Expm1,
+    the raw inverse-normal seed, and diagnostic status support.
+
+src/M_STATS_PROBDIST_SPECIALFUNCS.bas
+    Log-gamma, log-beta, stable log-combination, regularized incomplete
+    beta and gamma functions, continued fractions, series expansions,
+    and safeguarded inverse special functions.
+
+src/M_STATS_PROBDIST_NORMALFAMILY.bas
+    Standard Normal, Normal, and Lognormal worksheet functions.
+
+src/M_STATS_PROBDIST_TFAMILY.bas
+    Student t, Chi-square, and F worksheet functions.
+
+src/M_STATS_PROBDIST_CONTINUOUS.bas
+    Gamma, Beta, Exponential, Weibull, and continuous Uniform functions.
+
+tests/M_STATS_PROBDIST_TEST.bas
+    Consolidated assertions, family suites, reference values, and
+    regression tests.
 ```
 
-The two lower layers (`CORE`, `SPECIALFUNCS`) are the numerics foundation; the
-family modules consume them without keeping private duplicate copies. Read a few
-procedures in `M_STATS_PROBDIST_CORE.bas` and `M_STATS_PROBDIST_NORMALFAMILY.bas`
-before contributing — they are the reference for both style and structure.
-
-You do not need the git command line. The maintainer works through **GitHub
-Desktop**, and that is the recommended workflow for contributors too.
+`M_STATS_PROBDIST_CORE` and `M_STATS_PROBDIST_SPECIALFUNCS` are the shared
+numerical foundation. Distribution-family modules consume those routines rather
+than maintaining private duplicate implementations.
 
 ---
 
 ## 🔁 Edit and export workflow
 
-<p align="left">
-  <img alt="Flow" src="https://img.shields.io/badge/Flow-Import_Edit_Export-217346">
-</p>
+1. Import the required `.bas` files into a macro-enabled Excel workbook.
 
-Because the source lives as exported files, the working loop is:
+   Recommended dependency order:
 
-1. Import the relevant `.bas` files into an Excel workbook through the VBE
-   (`File → Import File...`). The dependency order is `CORE` → `SPECIALFUNCS` →
-   family modules → `TEST`.
-2. Make your change in the VBE and **compile** (`Debug → Compile VBAProject`)
-   until it is clean.
-3. Run the regression harness (see below) and, for anything numerical, validate
-   against an independent reference (see **Numerical verification**).
-4. **Re-export** each changed module (`File → Export File...`) back over the
-   matching file in `src/` (or `tests/`), preserving the existing layout.
-5. Commit the changed text files only.
+   ```text
+   CORE → SPECIALFUNCS → distribution-family modules → TEST
+   ```
 
-Do not commit the host workbook you used for editing.
+2. Make the change in the VBA Editor.
+
+3. Compile with:
+
+   ```text
+   Debug → Compile VBAProject
+   ```
+
+4. Run the relevant family suite and then the complete regression harness.
+
+5. For any numerical change, compare the result with an independent reference.
+
+6. Re-export each changed module over the matching file under `src/` or `tests/`.
+
+7. Review the textual diff before committing.
+
+Do not commit the workbook used to edit or test the source.
 
 ---
 
-## 🧱 Coding standards (house style)
+## 🧱 Coding standards
 
 <p align="left">
-  <img alt="Explicit" src="https://img.shields.io/badge/Option-Explicit_required-217346">
-  <img alt="Banners" src="https://img.shields.io/badge/Doc-Banner_per_procedure-blue">
-  <img alt="Prefixes" src="https://img.shields.io/badge/Naming-Prefix_namespaced-6f42c1">
+  <img alt="Option Explicit" src="https://img.shields.io/badge/Option_Explicit-Required-217346">
+  <img alt="Procedure headers" src="https://img.shields.io/badge/Procedure_Headers-Required-blue">
+  <img alt="Naming" src="https://img.shields.io/badge/Naming-Namespaced-6f42c1">
 </p>
 
-New code must match the existing conventions exactly.
+### Module visibility
 
-**Module hygiene**
+- Every module must use `Option Explicit`.
+- `M_STATS_PROBDIST_CORE` and `M_STATS_PROBDIST_SPECIALFUNCS` use
+  `Option Private Module`.
+- Distribution-family modules must remain worksheet-visible and therefore must
+  not use `Option Private Module`.
+- The consolidated test module exposes only its intended public runner procedures.
 
-- `Option Explicit` at the top of every module.
-- `Option Private Module` on the **numerics layers** (`CORE`, `SPECIALFUNCS`) so
-  their `PROB_*` surface stays project-visible but invisible to the worksheet.
-- Do **not** add `Option Private Module` to the distribution-family modules —
-  their `K_STATS_*` functions must remain worksheet-visible.
+### Procedure headers
 
-**Banners**
+Every module and procedure uses a structured banner.
 
-Every module and every procedure carries a banner doc-block. Module banners open
-with a full rule of 78 `=` characters after a single leading quote; sub-rules use
-`-`. Procedure banners use these labels:
-
-```vb
-'==============================================================================
-' PROCEDURE_NAME
-'------------------------------------------------------------------------------
-' PURPOSE
-'   ...
-' INPUTS
-'   ...
-' RETURNS
-'   ...
-' BEHAVIOR
-'   ...
-' ERROR POLICY
-'   ...
-' DEPENDENCIES
-'   ...
-' UPDATED
-'   YYYY-MM-DD
-'==============================================================================
-```
-
-Where relevant, keep the `WHY THIS EXISTS`, `ALGORITHM PROVENANCE` and
-`DESIGN PRINCIPLES` sections — provenance statements must be **honest and
-specific** (e.g. "Acklam's rational approximation, ~1.15E-9, used as a
-root-finder seed, not a final answer"), never a vague "high accuracy".
-
-**Body structure**
-
-Order the body with sectioned sub-banners in this sequence, using only those a
-routine needs:
+Include the fields relevant to the routine:
 
 ```text
-DECLARE / INITIALIZE / VALIDATE INPUTS / COMPUTE / RETURN SUCCESS / FAIL - NUMERIC / ERROR HANDLER
+PURPOSE
+WHY
+INPUTS
+RETURNS
+BEHAVIOR
+ERROR POLICY
+DEPENDENCIES
+NOTES
+CALLED FROM
+UPDATED
 ```
 
-Put a short intent comment **above** each meaningful statement. Align
-declarations `Dim Name As Type  'comment`. Use the literal forms `0#`, `1#` and
-`vbNullString`.
+Where relevant, preserve specific sections such as:
 
-**Naming and prefixes**
+```text
+ALGORITHM PROVENANCE
+DESIGN PRINCIPLES
+ACCURACY
+```
 
-| Prefix | Scope | Return type |
-| --- | --- | --- |
-| `K_STATS_` | public worksheet-facing UDFs | `Variant` (so they can return `CVErr`) |
-| `PROB_` | project-scoped private numerical kernels and helpers | `Double` |
-| `Test_STATS_PROBDIST_` | regression-harness entry points | — |
+Provenance and accuracy statements must be specific and supportable. Do not use
+an unqualified phrase such as “high accuracy.”
 
-**Error-handling contract**
+### Body structure
 
-The public error policy is a contract the tests enforce — match it exactly:
+Use only the sections a routine needs, generally in this order:
 
-- `On Error GoTo Err_Handler` at the top of the executable body.
-- A predictable numerical failure (invalid domain, non-finite input, density
-  pole, overflow, non-convergence) does `GoTo Fail_Num`, and the `Fail_Num:`
-  block returns `CVErr(xlErrNum)` (`#NUM!`).
-- The `Err_Handler:` block returns `CVErr(xlErrValue)` (`#VALUE!`) for
-  unexpected runtime errors only.
-- Underflow of an exponential is a **valid zero**, not an error.
-- Reserve `On Error Resume Next` for genuinely best-effort `Try*` primitives, not
-  for normal logic.
+```text
+DECLARE
+INITIALIZE
+VALIDATE INPUTS
+COMPUTE
+RETURN SUCCESS
+FAIL - NUMERIC
+ERROR HANDLER
+```
 
-**Kernel discipline**
+Place explanatory comments above the code they describe. Use inline comments
+primarily for declarations.
 
-- `PROB_*` kernels never validate their callers' domains and never write Status.
-- Use `PROB_TryExp` / `PROB_TryMultiply` / `PROB_TryAdd` / `PROB_TryDivide` for
-  overflow-aware arithmetic rather than raw operators where range is a concern;
-  guard overflow with `PROB_DOUBLE_MAX`.
-- Use `PROB_Log1p` / `PROB_Expm1` for left-tail precision (Exponential, Weibull)
-  instead of `Log(1 + x)` / `Exp(x) - 1`.
-- Beware non-short-circuit `And`/`Or` in guards: VBA evaluates both sides, so a
-  left condition does **not** protect a right-side division. Split the guard.
+Use the established literal and string forms where applicable:
+
+```vba
+0#
+1#
+vbNullString
+```
 
 ---
 
-## 🔬 Numerical verification (required)
+## 🧩 Naming and callable contracts
+
+The prefix identifies the intended scope, but **does not by itself imply one
+universal VBA return type**.
+
+| Naming pattern | Scope | Typical callable contract |
+|---|---|---|
+| `K_STATS_*` | Worksheet-facing statistical API | Normally `Variant`, returning either a numerical value or `CVErr` |
+| `K_STATS_NormalStandard_InverseCumulativeFast` | Specialized fast public helper | `Double`; intentionally lighter validation and error contract |
+| `PROB_Is*` | Project-scoped predicates | `Boolean` |
+| `PROB_Try*` | Guarded arithmetic or iterative numerical operations | `Boolean`, with results returned through `ByRef` arguments |
+| Other `PROB_*` functions | Project-scoped numerical helpers and kernels | Usually `Double`, but may be another explicitly documented type |
+| `PROB_SetStatus` | Project-scoped diagnostic writer | `Sub` |
+| `Test_STATS_PROBDIST_*` | Public test-harness entry points | Argument-less `Sub` |
+
+Do not document all `PROB_*` routines as returning `Double`. The current
+project-scoped API deliberately includes Boolean predicates, Boolean Try
+contracts, Double-valued kernels, and a status-writing Sub.
+
+---
+
+## 🧯 Public error-handling contract
+
+For ordinary worksheet-facing UDFs:
+
+- use `On Error GoTo Err_Handler`;
+- invalid domains, predictable overflow, density poles, and non-convergence route
+  to `Fail_Num:`;
+- `Fail_Num:` returns `CVErr(xlErrNum)` (`#NUM!`);
+- unexpected runtime errors route to `Err_Handler:`;
+- `Err_Handler:` returns `CVErr(xlErrValue)` (`#VALUE!`);
+- mathematically valid exponential underflow returns zero;
+- no numerical UDF displays a `MsgBox`;
+- the optional `Status` argument is the detailed diagnostic channel.
+
+The fast inverse-normal helper is a documented exception with a deliberately
+lighter `Double`-returning contract.
+
+---
+
+## 🧠 Numerical-kernel discipline
+
+### Domain responsibility
+
+Do not apply one blanket rule to every `PROB_*` routine.
+
+- Predicates such as `PROB_IsFinite` and
+  `PROB_IsValidProbabilityOpen` exist specifically to test domains.
+- Public distribution wrappers own end-user parameter validation and worksheet
+  error mapping.
+- Low-level numerical kernels generally assume that their documented
+  preconditions have already been checked.
+- `PROB_SetStatus` is the deliberate project-scoped status writer; ordinary
+  numerical kernels should not write user-facing diagnostics directly.
+
+### Guarded arithmetic
+
+Use:
+
+```text
+PROB_TryExp
+PROB_TryAdd
+PROB_TryMultiply
+PROB_TryDivide
+```
+
+when an intermediate result may overflow or when failure classification matters.
+
+Use:
+
+```text
+PROB_Log1p
+PROB_Expm1
+```
+
+for cancellation-sensitive expressions such as:
+
+```text
+Log(1 + x)
+Exp(x) - 1
+```
+
+Do not reconstruct a small upper tail as `1 - CDF` when a direct survival kernel
+is available.
+
+### VBA Boolean operators
+
+VBA does not short-circuit `And` and `Or`.
+
+This is unsafe:
+
+```vba
+If Denominator <> 0# And Numerator / Denominator > Limit Then
+```
+
+Use separate guards:
+
+```vba
+If Denominator = 0# Then
+    GoTo Fail_Num
+End If
+
+If Numerator / Denominator > Limit Then
+    GoTo Fail_Num
+End If
+```
+
+---
+
+## 🔬 Numerical verification
 
 <p align="left">
   <img alt="Reference" src="https://img.shields.io/badge/Reference-SciPy_%2F_mpmath-217346">
-  <img alt="Precision" src="https://img.shields.io/badge/Precision-40--60_digits-blue">
-  <img alt="Literals" src="https://img.shields.io/badge/Test_literals-Computed_not_typed-red">
+  <img alt="Precision" src="https://img.shields.io/badge/Precision-40--60_Digits-blue">
+  <img alt="Test values" src="https://img.shields.io/badge/Expected_Values-Independently_Calculated-red">
 </p>
 
-This is the part that makes this project different from a thin wrapper. **Every
-expected value used to assert correctness must be computed independently — never
-estimated, rounded from memory, or typed by hand.**
+Every new or changed expected value must be calculated independently.
 
-- Verify new or changed results against an independent reference, typically
-  Python with **SciPy** and **mpmath** at 40–60 significant digits, and check the
-  density, CDF, survival, and inverse across the body **and** both tails.
-- Cross-family identities (e.g. χ²(2) ≡ Exponential, F ≡ Beta relationships) are
-  welcome as genuine kernel-level checks — but make sure they route through
-  independent code paths rather than reducing to a tautology that both sides
-  satisfy trivially.
-- Any reference constant that appears in an `AssertClose` / `AssertRelClose` must
-  be the computed value, to the precision the assertion needs. A placeholder
-  literal is a defect, not a TODO.
-- State the accuracy you are claiming, and how you verified it, in the PR.
+Do not:
+
+- estimate a value from a chart;
+- round a remembered value;
+- copy a value produced by the same VBA code path being tested;
+- insert a placeholder literal and weaken the tolerance around it.
+
+For a numerical change, verify as applicable:
+
+- density;
+- CDF;
+- survival;
+- inverse CDF;
+- moments;
+- support boundaries;
+- central-region behavior;
+- lower and upper tails;
+- round-trip identities;
+- overflow and valid underflow;
+- exact worksheet-error classification.
+
+Suitable independent references include SciPy, mpmath, R, Julia, MATLAB, or
+authoritative published tables and formulas.
+
+State in the pull request:
+
+- the reference system and version;
+- the precision used;
+- the points tested;
+- the maximum observed absolute or relative error;
+- the tolerance justified by that evidence.
+
+Cross-family identities are valuable, but they should exercise independent
+calculation paths rather than compare two wrappers around the same kernel.
 
 ---
 
 ## 🧪 Testing
 
-<p align="left">
-  <img alt="Harness" src="https://img.shields.io/badge/Harness-M__STATS__PROBDIST__TEST-217346">
-  <img alt="Entry" src="https://img.shields.io/badge/Entry-Test__STATS__PROBDIST__RunAll-blue">
-</p>
+Import `tests/M_STATS_PROBDIST_TEST.bas` and run:
 
-Import `tests/M_STATS_PROBDIST_TEST.bas` and run the suite from the VBE
-**Immediate window** (`Ctrl+G`) before submitting. All entry points are
-argument-less public subs, so they also run via `F5` or `Alt+F8`:
-
-```vb
-Test_STATS_PROBDIST_RunAll            ' full suite
-Test_STATS_PROBDIST_RunCore           ' constants, predicates, primitives, inverse-normal seed
-Test_STATS_PROBDIST_RunNormalFamily   ' Standard Normal, Normal, Lognormal
-Test_STATS_PROBDIST_RunTFamily        ' Student t, Chi-square, F
-Test_STATS_PROBDIST_RunContinuous     ' Gamma, Beta, Exponential, Weibull, Uniform
+```vba
+Test_STATS_PROBDIST_RunAll
 ```
 
-Results are written with `Debug.Print`: passing assertions are **silent**, each
-failure prints one detailed line, and a consolidated PASS/FAIL summary closes the
-run.
+Family runners:
 
-- All existing suites must still pass.
-- If you change or add behavior, extend the matching suite with the existing
-  `Assert*` helpers. Assertions accept `Variant` and reject unexpected worksheet
-  errors explicitly; use the error-code assertions to pin `#NUM!` vs `#VALUE!`
-  where the numerical contract requires a predictable failure.
-- Never weaken a genuine assertion merely to make a failing implementation look
-  green.
+```vba
+Test_STATS_PROBDIST_RunCore
+Test_STATS_PROBDIST_RunNormalFamily
+Test_STATS_PROBDIST_RunTFamily
+Test_STATS_PROBDIST_RunContinuous
+```
+
+Passing assertions are silent. Failures print detailed output to the Immediate
+Window, followed by a consolidated verdict.
+
+Requirements:
+
+- all existing suites must pass;
+- changed behavior must be covered by the relevant family suite;
+- a corrected numerical defect must receive a regression test;
+- use exact error-code assertions where `#NUM!` versus `#VALUE!` is contractual;
+- do not weaken a valid test merely to make a changed implementation pass.
 
 ---
 
 ## 📚 Documentation expectations
 
-<p align="left">
-  <img alt="Docs" src="https://img.shields.io/badge/Docs-Kept_in_sync-6f42c1">
-</p>
+Documentation is part of the pull request.
 
-Documentation is part of the change, not a follow-up. When your change affects a
-user-facing surface, update the matching pages in the same pull request:
+Update the relevant pages when changing:
 
-- **public UDF surface** changed → the README function table **and** the
-  [API-Reference](../../wiki/API-Reference) wiki page
-- **kernels / algorithms** changed → [Special-Functions-and-Numerical-Kernels](../../wiki/Special-Functions-and-Numerical-Kernels)
-  and [Numerical-Accuracy-and-Design](../../wiki/Numerical-Accuracy-and-Design)
-- **error behavior** changed → [Error-Handling-and-Diagnostics](../../wiki/Error-Handling-and-Diagnostics)
-- **new distribution / family** → the relevant family page and the
-  [Module-Reference](../../wiki/Module-Reference)
+- **public UDFs**  
+  [API Reference](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/API-Reference)
+
+- **architecture or module boundaries**  
+  [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture)  
+  [Module Reference](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Module-Reference)
+
+- **special-function kernels or algorithms**  
+  [Special Functions and Numerical Kernels](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Special-Functions-and-Numerical-Kernels)  
+  [Numerical Accuracy and Design](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design)
+
+- **error behavior**  
+  [Error Handling and Diagnostics](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Error-Handling-and-Diagnostics)
+
+- **test behavior or regression cases**  
+  [Testing and Regression Harness](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Testing-and-Regression-Harness)
+
+Also update the README when a change affects:
+
+- distribution coverage;
+- function counts;
+- installation;
+- parameterization;
+- public examples;
+- the repository structure.
 
 ---
 
 ## 📦 What not to commit
 
-<p align="left">
-  <img alt="Excluded" src="https://img.shields.io/badge/Excluded-Workbooks_and_Locks-red">
-</p>
+Do not commit:
 
-- The Excel workbook you used to edit or run the source.
-- Excel lock / owner files (`~$*`).
-- Local scratch sheets, generated outputs, or machine-specific paths.
+- the workbook used to edit or test the source;
+- Excel lock or owner files such as `~$*`;
+- local scratch files;
+- generated output;
+- machine-specific paths or settings;
+- client, personal, or confidential data;
+- manually edited `.bas` files that were not re-exported and checked against the
+  VBE version.
 
-See `.gitignore` for the full list.
+See `.gitignore` for the current exclusion policy.
 
 ---
 
-## 🚀 Submitting changes
+## 🚀 Submitting a pull request
 
-<p align="left">
-  <img alt="PR" src="https://img.shields.io/badge/PR-Small_and_focused-217346">
-</p>
+1. Fork the repository and create a focused branch.
+2. Keep one logical change per pull request.
+3. Complete every applicable section of the pull-request template.
+4. State the numerical method and independent reference.
+5. Confirm the project compiles.
+6. Run the relevant family suite.
+7. Run `Test_STATS_PROBDIST_RunAll`.
+8. Re-export changed modules.
+9. Update the documentation.
+10. Review the final text diff.
 
-1. Fork the repository and create a branch for your change.
-2. Keep the pull request **small and focused** — one logical change per PR.
-3. In the PR description, state the problem, the approach, **the independent
-   reference you validated against**, and which suites you ran.
-4. Confirm: project compiles cleanly, `Test_STATS_PROBDIST_RunAll` passes,
-   banners / naming / error policy follow the house style, numerical results are
-   verified, and docs are updated.
-
-The maintainer reviews changes selectively and may adopt, adapt, or decline a
-contribution to keep the library coherent. Clear, well-scoped, numerically
-justified PRs are the most likely to be merged.
+The maintainer may adopt, adapt, defer, or decline a contribution to preserve the
+coherence of the library.
 
 ---
 
 ## 📄 License
 
-By contributing, you agree that your contributions are licensed under the
-project's **MIT License**.
+By contributing, you agree that your contribution is licensed under the
+project’s [MIT License](LICENSE).
 
 ---
 
 ## 👤 Maintainer
 
-Maintained by **Daniele Penza**. For anything that is not a code change — design
-questions, larger proposals, or general feedback — open an issue to start the
-conversation.
+Maintained by **Daniele Penza**.
