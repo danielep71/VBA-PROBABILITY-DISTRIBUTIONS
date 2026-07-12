@@ -591,4 +591,3 @@ Released under the [MIT License](LICENSE).
   <img alt="Maintainer" src="https://img.shields.io/badge/Maintainer-Daniele_Penza-orange">
 </p>
 
-Maintained by **Daniele Penza**.
