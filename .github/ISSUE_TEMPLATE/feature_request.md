@@ -1,8 +1,8 @@
 ---
-Name: ✨ Feature request
-About: Suggest a new distribution, routine, or enhancement
-Title: "[Feature]: "
-Labels: enhancement
+name: ✨ Feature request
+about: Suggest a new distribution, routine, or enhancement
+title: "[Feature]: "
+labels: enhancement
 ---
 
 ## ✨ Problem / use case
