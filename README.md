@@ -21,7 +21,11 @@
 
 ---
 
-
+<p align="center">
+  <img src="assets/Home.jpg"
+       alt="VBA Probability Distributions"
+       width="100%">
+</p>
 
 ---
 
