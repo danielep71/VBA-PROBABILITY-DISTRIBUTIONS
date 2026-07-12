@@ -6,7 +6,7 @@
   <img alt="Enforcement" src="https://img.shields.io/badge/Enforcement-Maintainer-6f42c1">
 </p>
 
-This project is a small, focused open-source effort. The goal of this Code of
+This project is a focused open-source effort. The goal of this Code of
 Conduct is simple: keep every interaction around the library respectful,
 technical, and welcoming, so that people feel comfortable reporting bugs,
 proposing changes, and asking questions.
@@ -19,8 +19,8 @@ proposing changes, and asking questions.
   <img alt="Pledge" src="https://img.shields.io/badge/Pledge-Respect_and_inclusion-217346">
 </p>
 
-Everyone who participates — by opening an issue, submitting a pull request,
-commenting, or contributing in any other way — is expected to help make this a
+Everyone who participates (by opening an issue, submitting a pull request,
+commenting, or contributing in any other way) is expected to help make this a
 harassment-free experience for all, regardless of experience level, background,
 identity, or personal characteristics.
 
@@ -63,8 +63,8 @@ identity, or personal characteristics.
   <img alt="Where" src="https://img.shields.io/badge/Where-Project_spaces-217346">
 </p>
 
-This Code of Conduct applies to all project spaces — the repository, issues,
-pull requests, discussions, the wiki, and release threads — and to any situation
+This Code of Conduct applies to all project spaces (the repository, issues,
+pull requests, discussions, the wiki, and release threads) and to any situation
 where someone is representing the project in public.
 
 ---
@@ -90,7 +90,7 @@ links or context that help.
 ## ⚖️ Enforcement
 
 <p align="left">
-  <img alt="Action" src="https://img.shields.io/badge/action-proportionate-6f42c1">
+  <img alt="Action" src="https://img.shields.io/badge/Action-Proportionate-6f42c1">
 </p>
 
 The maintainer is responsible for clarifying and enforcing this Code of Conduct
