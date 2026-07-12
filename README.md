@@ -21,7 +21,11 @@
 
 ---
 
-<img width="3520" height="1395" alt="Home" src="https://github.com/user-attachments/assets/4522143c-8c8c-43b2-b097-a3b5f2cc2780" />
+<p align="center">
+  <img src="assets/Home.jpg"
+       alt="VBA Probability Distributions"
+       width="100%">
+</p>
 
 
 ---
