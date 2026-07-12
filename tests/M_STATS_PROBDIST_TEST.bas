@@ -439,6 +439,7 @@ Private Sub RunNormalFamilySuite()
     Test_NF_GeneralNormal
     Test_NF_ZScore
     Test_NF_IntervalProbability
+    Test_NF_Survival
     Test_NF_FastInverse
     Test_NF_LognormalCore
     Test_NF_LognormalMoments
@@ -1832,6 +1833,9 @@ Private Sub Test_NF_ErrorContract()
     'Lognormal domain
     AssertIsError "logn density x=0", K_STATS_Lognormal_Density(0#, 0#, 1#)
     AssertIsError "logn density sd=0", K_STATS_Lognormal_Density(1#, 0#, 0#)
+    'Survival honours the same domain contract as the CDF
+    AssertIsError "normal survival sd=0", K_STATS_Normal_Survival(0#, 0#, 0#)
+    AssertIsError "logn survival sd=0", K_STATS_Lognormal_Survival(1#, 0#, 0#)
     'Parameter conversion rejects StdDev = 0 and non-positive Mean
     AssertIsError "param StdDev=0", K_STATS_Lognormal_ParametersFromMeanStdDev(2#, 0#)
     AssertIsError "param Mean=0", K_STATS_Lognormal_ParametersFromMeanStdDev(0#, 1#)
@@ -1849,6 +1853,82 @@ Private Sub Test_NF_ErrorContract()
     Diag = "stale"
     AssertClose "normal cdf ok with status", K_STATS_Normal_Cumulative(0#, 0#, 1#, Diag), 0.5, TOL_ABS_TIGHT
     AssertTrue "NF status cleared on success", (Len(Diag) = 0)
+End Sub
+
+
+Private Sub Test_NF_Survival()
+'
+'==============================================================================
+' Test_NF_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies normal-family upper-tail survival Q(x) = 1 - F(x), including the
+'   deep tails where a 1 - CDF subtraction collapses to zero.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-12
+'==============================================================================
+'
+    Debug.Print "-- Normal family survival (upper tail)"
+
+    'Standard survival known values
+    AssertClose "std Q(0)", K_STATS_NormalStandard_Survival(0#), 0.5, TOL_ABS_TIGHT
+    AssertClose "std Q(1)", K_STATS_NormalStandard_Survival(1#), 0.158655253931457, TOL_ABS_TIGHT
+    AssertClose "std Q(1.96)", _
+        K_STATS_NormalStandard_Survival(1.95996398454005), 0.025, TOL_ABS_TIGHT
+    AssertClose "std Q(-1.96)", _
+        K_STATS_NormalStandard_Survival(-1.95996398454005), 0.975, TOL_ABS_TIGHT
+
+    'Deep right tails: the p-values that 1 - CDF cannot express
+    AssertRelClose "std Q(6) tail", _
+        K_STATS_NormalStandard_Survival(6#), 9.86587645037695E-10, TOL_REL_TAIL
+    AssertRelClose "std Q(9) tail", _
+        K_STATS_NormalStandard_Survival(9#), 1.12858840595383E-19, TOL_REL_TAIL
+
+    'Survival preserves representable tails to the same depth as the CDF, by
+    'symmetry Q(z) = Phi(-z).
+    AssertRelClose "std Q(37.5) representable tail", _
+        K_STATS_NormalStandard_Survival(37.5), 4.60535300958195E-308, TOL_REL_TAIL
+    AssertRelClose "std Q(38) subnormal tail", _
+        K_STATS_NormalStandard_Survival(38#), 2.88542835100396E-316, TOL_REL_LOOSE
+
+    'The CDF-based route really does collapse, which is why Survival exists.
+    AssertTrue "1 - Phi(9) is exactly zero", _
+        ((1# - CDbl(K_STATS_NormalStandard_Cumulative(9#))) = 0#)
+
+    'Survival and cumulative sum to one in the well-conditioned region.
+    AssertClose "std Q + Phi = 1", _
+        CDbl(K_STATS_NormalStandard_Survival(1.3)) + _
+        CDbl(K_STATS_NormalStandard_Cumulative(1.3)), 1#, TOL_ABS_TIGHT
+
+    'General normal survival
+    AssertClose "gen Q(12 | 10,2)", _
+        K_STATS_Normal_Survival(12#, 10#, 2#), 0.158655253931457, TOL_ABS_TIGHT
+    AssertClose "gen Q(mean)", K_STATS_Normal_Survival(10#, 10#, 2#), 0.5, TOL_ABS_TIGHT
+
+    'Lognormal survival
+    AssertClose "logn Q(1 | 0,1)", _
+        K_STATS_Lognormal_Survival(1#, 0#, 1#), 0.5, TOL_ABS_TIGHT
+    'Non-positive points carry the full mass above them (mirrors CDF = 0 there)
+    AssertClose "logn Q(0) = 1", K_STATS_Lognormal_Survival(0#, 0#, 1#), 1#, TOL_ABS_TIGHT
+    AssertClose "logn Q(-5) = 1", K_STATS_Lognormal_Survival(-5#, 0#, 1#), 1#, TOL_ABS_TIGHT
+
+    'Lognormal complement  Q(x) + F(x) = 1
+    AssertClose "logn Q + F = 1 at x=2", _
+        CDbl(K_STATS_Lognormal_Survival(2#, 0#, 1#)) + _
+        CDbl(K_STATS_Lognormal_Cumulative(2#, 0#, 1#)), 1#, TOL_ABS_TIGHT
 End Sub
 
 
@@ -4463,7 +4543,5 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
-
-
 
 

@@ -27,6 +27,7 @@ Option Explicit
 '   Standard normal:
 '     - K_STATS_NormalStandard_Density
 '     - K_STATS_NormalStandard_Cumulative
+'     - K_STATS_NormalStandard_Survival
 '     - K_STATS_NormalStandard_InverseCumulative
 '     - K_STATS_NormalStandard_IntervalProbability
 '     - K_STATS_NormalStandard_InverseCumulativeFast
@@ -34,6 +35,7 @@ Option Explicit
 '   General normal:
 '     - K_STATS_Normal_Density
 '     - K_STATS_Normal_Cumulative
+'     - K_STATS_Normal_Survival
 '     - K_STATS_Normal_InverseCumulative
 '     - K_STATS_Normal_ZScore
 '     - K_STATS_Normal_IntervalProbability
@@ -41,6 +43,7 @@ Option Explicit
 '   Lognormal:
 '     - K_STATS_Lognormal_Density
 '     - K_STATS_Lognormal_Cumulative
+'     - K_STATS_Lognormal_Survival
 '     - K_STATS_Lognormal_InverseCumulative
 '     - K_STATS_Lognormal_Mean
 '     - K_STATS_Lognormal_Variance
@@ -50,16 +53,19 @@ Option Explicit
 ' WORKSHEET EQUIVALENTS (native Excel, 2010+ unless noted)
 '   K_STATS_NormalStandard_Density              NORM.S.DIST(z, FALSE)
 '   K_STATS_NormalStandard_Cumulative           NORM.S.DIST(z, TRUE)   [legacy NORMSDIST]
+'   K_STATS_NormalStandard_Survival             1 - NORM.S.DIST(z, TRUE)   [upper tail, stable]
 '   K_STATS_NormalStandard_InverseCumulative    NORM.S.INV(p)          [legacy NORMSINV]
 '   K_STATS_NormalStandard_IntervalProbability  NORM.S.DIST(b,TRUE) - NORM.S.DIST(a,TRUE)
 '   K_STATS_NormalStandard_InverseCumulativeFast (none - numeric helper)
 '   K_STATS_Normal_Density                      NORM.DIST(x, m, s, FALSE)
 '   K_STATS_Normal_Cumulative                   NORM.DIST(x, m, s, TRUE)
+'   K_STATS_Normal_Survival                     1 - NORM.DIST(x, m, s, TRUE)   [upper tail, stable]
 '   K_STATS_Normal_InverseCumulative            NORM.INV(p, m, s)
 '   K_STATS_Normal_ZScore                       STANDARDIZE(x, m, s)
 '   K_STATS_Normal_IntervalProbability          NORM.DIST(b,m,s,TRUE) - NORM.DIST(a,m,s,TRUE)
 '   K_STATS_Lognormal_Density                   LOGNORM.DIST(x, m, s, FALSE)
 '   K_STATS_Lognormal_Cumulative                LOGNORM.DIST(x, m, s, TRUE) [legacy LOGNORMDIST, cumulative only]
+'   K_STATS_Lognormal_Survival                  1 - LOGNORM.DIST(x, m, s, TRUE)   [upper tail, stable]
 '   K_STATS_Lognormal_InverseCumulative         LOGNORM.INV(p, m, s)        [legacy LOGINV]
 '   K_STATS_Lognormal_Mean                      (none - use EXP(m + 0.5*s^2))
 '   K_STATS_Lognormal_Variance                  (none)
@@ -412,6 +418,120 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_NormalStandard_Cumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_NormalStandard_Cumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NormalStandard_Survival( _
+    ByVal Z As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_NormalStandard_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the standard normal survival function Q(Z) = 1 - Phi(Z) at Z.
+'
+' WHY THIS EXISTS
+'   The survival (upper-tail) probability is needed for one-sided p-values,
+'   exceedance probabilities and probability-of-default style calculations.
+'   Evaluating it as 1 - Cumulative loses all precision once the cumulative
+'   probability rounds to one; this routine evaluates the positive tail directly
+'   and stays accurate deep into the tail.
+'
+' WORKSHEET EQUIVALENT
+'   1 - NORM.S.DIST(Z, TRUE). The subtraction form collapses in the far upper
+'   tail (once Q falls below ~1E-16); this routine does not.
+'
+' PROVENANCE
+'   Same Hart/West standard normal tail kernel as PROB_NormalCDF, evaluated on
+'   the upper tail without subtracting from one. Public; accurate to ~1E-15.
+'
+' INPUTS
+'   Z
+'     Standard-normal variate.
+'
+'   Status
+'     Optional ByRef diagnostic message.
+'     Empty on success.
+'     Populated on failure.
+'
+' RETURNS
+'   Variant
+'     Success => Double upper-tail probability.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Validates that Z is finite.
+'   - Returns PROB_NormalSurvival(Z) = P(N(0,1) > Z).
+'
+' ERROR POLICY
+'   - Non-finite inputs return CVErr(xlErrNum).
+'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Detailed diagnostic messages are written to Status (status bar only when
+'     PROB_WRITE_STATUS_BAR is True).
+'   - No MsgBox is raised.
+'
+' DEPENDENCIES
+'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_NormalSurvival
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-12
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim FailMsg             As String          'Detailed failure message
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate finite input
+        If Not PROB_IsWithinSupportedMagnitude(Z) Then
+            FailMsg = "Z must be a finite number"
+            GoTo Fail_Num
+        End If
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Return standard normal upper-tail probability
+        K_STATS_NormalStandard_Survival = PROB_NormalSurvival(Z)
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NormalStandard_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_NormalStandard_Survival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NormalStandard_Survival = CVErr(xlErrValue)
 End Function
 
 
@@ -1001,6 +1121,126 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_Normal_Cumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_Normal_Cumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Normal_Survival( _
+    ByVal X As Double, _
+    Optional ByVal Mean As Double = 0#, _
+    Optional ByVal StdDev As Double = 1#, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_Normal_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the normal survival function P(X > x) = 1 - Phi((x - Mean) / StdDev).
+'
+' WHY THIS EXISTS
+'   Upper-tail probabilities on a general normal are used for exceedance,
+'   one-sided significance and reliability calculations. The subtraction form
+'   1 - Cumulative loses precision once the cumulative rounds to one; this
+'   routine evaluates the tail directly.
+'
+' WORKSHEET EQUIVALENT
+'   1 - NORM.DIST(X, Mean, StdDev, TRUE), but stable in the far upper tail.
+'
+' PROVENANCE
+'   Standard normalisation identity P(X > x) = Q((x - Mean) / StdDev), with Q the
+'   directly-evaluated standard normal upper tail. Not proprietary.
+'
+' INPUTS
+'   X
+'     Evaluation point.
+'
+'   Mean
+'     Distribution mean.
+'
+'   StdDev
+'     Distribution standard deviation.
+'     Must be strictly positive.
+'
+'   Status
+'     Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double upper-tail probability.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Validates finite X, Mean and StdDev.
+'   - Validates positive StdDev.
+'   - Standardizes X into Z = (X - Mean) / StdDev.
+'   - Returns PROB_NormalSurvival(Z).
+'
+' ERROR POLICY
+'   - Invalid numeric domains return CVErr(xlErrNum).
+'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Detailed diagnostic messages are written to Status (status bar only when
+'     PROB_WRITE_STATUS_BAR is True).
+'
+' DEPENDENCIES
+'   - PROB_ValidateNormalInputs
+'   - PROB_NormalSurvival
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-12
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Z                   As Double          'Standardized variate
+    Dim FailMsg             As String          'Detailed failure message
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate normal distribution inputs
+        If Not PROB_ValidateNormalInputs(X, Mean, StdDev, FailMsg) Then GoTo Fail_Num
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Compute the standardized variate
+        Z = (X - Mean) / StdDev
+    'Return the normal upper-tail probability
+        K_STATS_Normal_Survival = PROB_NormalSurvival(Z)
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Normal_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Normal_Survival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Normal_Survival = CVErr(xlErrValue)
 End Function
 
 
@@ -1638,6 +1878,142 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_Lognormal_Cumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_Lognormal_Cumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Lognormal_Survival( _
+    ByVal X As Double, _
+    ByVal MeanLog As Double, _
+    ByVal StdDevLog As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_Lognormal_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the lognormal survival function P(X > x) = 1 - F(x).
+'
+' WHY THIS EXISTS
+'   Upper-tail probabilities for positive variables (asset prices, loss sizes,
+'   time-to-event) are common in risk work. Evaluating the tail directly keeps
+'   precision where 1 - Cumulative would round to zero.
+'
+' WORKSHEET EQUIVALENT
+'   1 - LOGNORM.DIST(X, MeanLog, StdDevLog, TRUE), but stable in the far upper
+'   tail. For X <= 0 this routine returns 1 (all positive-support mass lies
+'   above any non-positive point), whereas the native form errors.
+'
+' PROVENANCE
+'   Standard normal upper tail of the standardized log variate. Not proprietary.
+'
+' INPUTS
+'   X
+'     Evaluation point.
+'     For X <= 0, the survival probability is 1.
+'
+'   MeanLog
+'     Mean of Log(X).
+'
+'   StdDevLog
+'     Standard deviation of Log(X).
+'     Must be strictly positive.
+'
+' RETURNS
+'   Variant
+'     Success => Double upper-tail probability.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Validates X, MeanLog and StdDevLog.
+'   - Returns 1 when X <= 0.
+'   - Otherwise returns PROB_NormalSurvival((Log(X) - MeanLog) / StdDevLog).
+'
+' ERROR POLICY
+'   - Invalid parameters return CVErr(xlErrNum).
+'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Detailed diagnostic messages are written to Status (status bar only when
+'     PROB_WRITE_STATUS_BAR is True).
+'
+' DEPENDENCIES
+'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_NormalSurvival
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-12
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Z                   As Double          'Standardized log variate
+    Dim FailMsg             As String          'Detailed failure message
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' VALIDATE PARAMETERS
+'------------------------------------------------------------------------------
+    'Validate X is finite
+        If Not PROB_IsWithinSupportedMagnitude(X) Then
+            FailMsg = "X must be a finite number"
+            GoTo Fail_Num
+        End If
+    'Validate lognormal parameters
+        If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
+            FailMsg = "MeanLog must be a finite number"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+            FailMsg = "StdDevLog must be a finite strictly positive number"
+            GoTo Fail_Num
+        End If
+'------------------------------------------------------------------------------
+' COMPUTE SURVIVAL PROBABILITY
+'------------------------------------------------------------------------------
+    'Return one for non-positive evaluation points
+        If X <= 0# Then
+            K_STATS_Lognormal_Survival = 1#
+            PROB_SetStatus Status, vbNullString
+            Exit Function
+        End If
+    'Compute standardized log variate
+        Z = (Log(X) - MeanLog) / StdDevLog
+    'Return lognormal upper-tail probability
+        K_STATS_Lognormal_Survival = PROB_NormalSurvival(Z)
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Lognormal_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Lognormal_Survival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Lognormal_Survival = CVErr(xlErrValue)
 End Function
 
 
@@ -2676,5 +3052,7 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
+
+
 
 
