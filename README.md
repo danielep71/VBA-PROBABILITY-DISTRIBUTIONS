@@ -557,7 +557,7 @@ Potential future modules include:
 
 ## 📄 License
 
-Add the repository license here. MIT is a natural choice for a reusable numerical VBA library, but the final license should reflect the maintainer’s intended distribution terms.
+MIT
 
 ---
 
