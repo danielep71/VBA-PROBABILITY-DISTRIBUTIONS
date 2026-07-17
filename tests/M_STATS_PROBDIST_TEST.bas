@@ -440,6 +440,7 @@ Private Sub RunNormalFamilySuite()
     Test_NF_ZScore
     Test_NF_IntervalProbability
     Test_NF_Survival
+    Test_NF_InverseSurvival
     Test_NF_FastInverse
     Test_NF_LognormalCore
     Test_NF_LognormalMoments
@@ -1344,15 +1345,15 @@ Private Sub Test_NF_InverseRoundTrips()
 '==============================================================================
 '
     Dim ZValues As Variant
-    Dim I As Long
+    Dim i As Long
     Dim Z As Double
     Dim P As Variant
     Dim Back As Variant
 
     Debug.Print "-- Inverse round-trips  InvPhi(Phi(z)) = z"
     ZValues = Array(-3#, -2#, -0.5, 0#, 0.5, 2#, 3#)
-    For I = LBound(ZValues) To UBound(ZValues)
-        Z = ZValues(I)
+    For i = LBound(ZValues) To UBound(ZValues)
+        Z = ZValues(i)
         P = K_STATS_NormalStandard_Cumulative(Z)
         If IsError(P) Then
             RecordResult "roundtrip z=" & Z & " (CDF errored)", False
@@ -1360,7 +1361,7 @@ Private Sub Test_NF_InverseRoundTrips()
             Back = K_STATS_NormalStandard_InverseCumulative(CDbl(P))
             AssertClose "roundtrip z=" & Z, Back, Z, TOL_ABS_TIGHT
         End If
-    Next I
+    Next i
 End Sub
 
 
@@ -1389,15 +1390,15 @@ Private Sub Test_NF_Symmetry()
 '==============================================================================
 '
     Dim ZValues As Variant
-    Dim I As Long
+    Dim i As Long
     Dim Z As Double
     Dim Lo As Variant
     Dim Hi As Variant
 
     Debug.Print "-- Symmetry  Phi(z) + Phi(-z) = 1"
     ZValues = Array(0.25, 1#, 2.5, 4#)
-    For I = LBound(ZValues) To UBound(ZValues)
-        Z = ZValues(I)
+    For i = LBound(ZValues) To UBound(ZValues)
+        Z = ZValues(i)
         Lo = K_STATS_NormalStandard_Cumulative(-Z)
         Hi = K_STATS_NormalStandard_Cumulative(Z)
         If IsError(Lo) Or IsError(Hi) Then
@@ -1405,7 +1406,7 @@ Private Sub Test_NF_Symmetry()
         Else
             AssertClose "symmetry z=" & Z, CDbl(Lo) + CDbl(Hi), 1#, TOL_ABS_TIGHT
         End If
-    Next I
+    Next i
 
     'Inverse antisymmetry
     AssertClose "InvPhi(p) = -InvPhi(1-p)", _
@@ -1569,7 +1570,7 @@ Private Sub Test_NF_FastInverse()
 '   2026-07-11
 '==============================================================================
 '
-    Dim R As Double
+    Dim r As Double
 
     Debug.Print "-- Fast inverse (raw Acklam, ~1E-9)"
 
@@ -1584,11 +1585,11 @@ Private Sub Test_NF_FastInverse()
     AssertClose "fast InvPhi(0.5)", _
         K_STATS_NormalStandard_InverseCumulativeFast(0.5), 0#, TOL_ABS_LOOSE
     'Endpoint clipping: p=0 must not error and must return a large negative number
-    R = K_STATS_NormalStandard_InverseCumulativeFast(0#)
-    AssertTrue "fast InvPhi(0) clipped negative", (R < -5#)
+    r = K_STATS_NormalStandard_InverseCumulativeFast(0#)
+    AssertTrue "fast InvPhi(0) clipped negative", (r < -5#)
     'Endpoint clipping: p=1 must return a large positive number
-    R = K_STATS_NormalStandard_InverseCumulativeFast(1#)
-    AssertTrue "fast InvPhi(1) clipped positive", (R > 5#)
+    r = K_STATS_NormalStandard_InverseCumulativeFast(1#)
+    AssertTrue "fast InvPhi(1) clipped positive", (r > 5#)
 End Sub
 
 
@@ -1836,6 +1837,11 @@ Private Sub Test_NF_ErrorContract()
     'Survival honours the same domain contract as the CDF
     AssertIsError "normal survival sd=0", K_STATS_Normal_Survival(0#, 0#, 0#)
     AssertIsError "logn survival sd=0", K_STATS_Lognormal_Survival(1#, 0#, 0#)
+    'Inverse survival honours the same probability and parameter contract
+    AssertIsError "std inv survival p=0", K_STATS_NormalStandard_InverseSurvival(0#)
+    AssertIsError "std inv survival p=1", K_STATS_NormalStandard_InverseSurvival(1#)
+    AssertIsError "normal inv survival sd=0", K_STATS_Normal_InverseSurvival(0.025, 0#, 0#)
+    AssertIsError "logn inv survival sd=0", K_STATS_Lognormal_InverseSurvival(0.5, 0#, 0#)
     'Parameter conversion rejects StdDev = 0 and non-positive Mean
     AssertIsError "param StdDev=0", K_STATS_Lognormal_ParametersFromMeanStdDev(2#, 0#)
     AssertIsError "param Mean=0", K_STATS_Lognormal_ParametersFromMeanStdDev(0#, 1#)
@@ -1929,6 +1935,120 @@ Private Sub Test_NF_Survival()
     AssertClose "logn Q + F = 1 at x=2", _
         CDbl(K_STATS_Lognormal_Survival(2#, 0#, 1#)) + _
         CDbl(K_STATS_Lognormal_Cumulative(2#, 0#, 1#)), 1#, TOL_ABS_TIGHT
+End Sub
+
+
+Private Sub Test_NF_InverseSurvival()
+'
+'==============================================================================
+' Test_NF_InverseSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the normal-family inverse survival (upper-tail quantile), including
+'   the small exceedance probabilities where InverseCumulative(1 - q) fails
+'   because 1 - q has rounded to exactly one.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-16
+'==============================================================================
+'
+    Dim QValues             As Variant         'Exceedance probabilities
+    Dim i                   As Long            'Loop index
+    Dim Q                   As Double          'One exceedance probability
+    Dim Z                   As Variant         'Recovered quantile
+    Dim Back                As Variant         'Round-tripped probability
+
+    Debug.Print "-- Normal family inverse survival (upper-tail quantile)"
+
+    'Known one-sided critical values
+    AssertClose "std isf(0.5) = 0", _
+        K_STATS_NormalStandard_InverseSurvival(0.5), 0#, TOL_ABS_TIGHT
+    AssertClose "std isf(0.025) = 1.96", _
+        K_STATS_NormalStandard_InverseSurvival(0.025), 1.95996398454005, TOL_ABS_TIGHT
+    AssertClose "std isf(0.05) = 1.645", _
+        K_STATS_NormalStandard_InverseSurvival(0.05), 1.64485362695147, TOL_ABS_TIGHT
+    AssertClose "std isf(0.001) = 3.09", _
+        K_STATS_NormalStandard_InverseSurvival(0.001), 3.09023230616781, TOL_ABS_TIGHT
+    'Half of 0.1% in each tail: the 99.9% central interval half-width
+    AssertClose "std isf(0.0005) = 3.2905 sigma", _
+        K_STATS_NormalStandard_InverseSurvival(0.0005), 3.29052673149189, TOL_ABS_TIGHT
+
+    'Deep tails: exceedance probabilities far below the central range
+    AssertRelClose "std isf(1E-10)", _
+        K_STATS_NormalStandard_InverseSurvival(0.0000000001), 6.36134090240406, TOL_REL_TAIL
+    AssertRelClose "std isf(1E-15)", _
+        K_STATS_NormalStandard_InverseSurvival(0.000000000000001), 7.941345326171, TOL_REL_TAIL
+    AssertRelClose "std isf(1E-18)", _
+        K_STATS_NormalStandard_InverseSurvival(1E-18), 8.75729034878232, TOL_REL_TAIL
+
+    'The composed route really does fail, which is why this function exists:
+    '1 - 1E-18 rounds to exactly one, which the inverse cumulative must reject.
+    AssertTrue "1 - 1E-18 rounds to exactly one", ((1# - 1E-18) = 1#)
+    AssertIsError "InverseCumulative(1 - 1E-18) fails", _
+        K_STATS_NormalStandard_InverseCumulative(1# - 1E-18)
+
+    'Reflection identity  isf(q) = -InverseCumulative(q)
+    QValues = Array(0.3, 0.025, 0.000001, 0.000000000000001)
+    For i = LBound(QValues) To UBound(QValues)
+        Q = QValues(i)
+        Z = K_STATS_NormalStandard_InverseSurvival(Q)
+        Back = K_STATS_NormalStandard_InverseCumulative(Q)
+        If IsError(Z) Or IsError(Back) Then
+            RecordResult "isf = -invcdf at q=" & Q & " (errored)", False
+        Else
+            AssertClose "isf = -invcdf at q=" & Q, CDbl(Z), -CDbl(Back), TOL_ABS_TIGHT
+        End If
+    Next i
+
+    'Round-trip  Survival(isf(q)) = q
+    QValues = Array(0.25, 0.025, 0.001, 0.000001)
+    For i = LBound(QValues) To UBound(QValues)
+        Q = QValues(i)
+        Z = K_STATS_NormalStandard_InverseSurvival(Q)
+        If IsError(Z) Then
+            RecordResult "isf round-trip q=" & Q & " (errored)", False
+        Else
+            Back = K_STATS_NormalStandard_Survival(CDbl(Z))
+            If IsError(Back) Then
+                RecordResult "isf round-trip q=" & Q & " (survival errored)", False
+            Else
+                AssertRelClose "isf round-trip q=" & Q, CDbl(Back), Q, TOL_REL_TAIL
+            End If
+        End If
+    Next i
+
+    'General normal
+    AssertClose "gen isf(0.025 | 10,2)", _
+        K_STATS_Normal_InverseSurvival(0.025, 10#, 2#), 13.9199279690801, TOL_ABS_TIGHT
+    AssertClose "gen isf(0.5 | 10,2) = mean", _
+        K_STATS_Normal_InverseSurvival(0.5, 10#, 2#), 10#, TOL_ABS_TIGHT
+
+    'Lognormal
+    AssertClose "logn isf(0.5 | 0,1) = 1", _
+        K_STATS_Lognormal_InverseSurvival(0.5, 0#, 1#), 1#, TOL_ABS_TIGHT
+    AssertClose "logn isf(0.025 | 0,1)", _
+        K_STATS_Lognormal_InverseSurvival(0.025, 0#, 1#), 7.09907138423134, TOL_ABS_TIGHT
+
+    'Lognormal round-trip  Survival(isf(q)) = q
+    Z = K_STATS_Lognormal_InverseSurvival(0.001, 0#, 1#)
+    If IsError(Z) Then
+        RecordResult "logn isf round-trip (errored)", False
+    Else
+        AssertRelClose "logn isf round-trip q=0.001", _
+            K_STATS_Lognormal_Survival(CDbl(Z), 0#, 1#), 0.001, TOL_REL_TAIL
+    End If
 End Sub
 
 
@@ -4543,5 +4663,9 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
+
+
+
+
 
 

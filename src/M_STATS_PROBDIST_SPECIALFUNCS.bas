@@ -138,7 +138,7 @@ Public Function PROB_LogGamma( _
 '------------------------------------------------------------------------------
 ' DECLARE CONSTANTS
 '------------------------------------------------------------------------------
-    Const G  As Double = 7#
+    Const g  As Double = 7#
     Const P0 As Double = 0.99999999999981
     Const P1 As Double = 676.520368121885
     Const P2 As Double = -1259.1392167224
@@ -184,7 +184,7 @@ Public Function PROB_LogGamma( _
         X = X + P8 / (Zm1 + 8#)
 
     'Compute the shifted argument
-        T = Zm1 + G + 0.5
+        T = Zm1 + g + 0.5
 
 '------------------------------------------------------------------------------
 ' RETURN RESULT
@@ -488,7 +488,7 @@ End Function
 
 Public Function PROB_LogChoose( _
     ByVal N As Double, _
-    ByVal K As Double) _
+    ByVal k As Double) _
     As Double
 '
 '==============================================================================
@@ -528,7 +528,7 @@ Public Function PROB_LogChoose( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim J                   As Double          'N - K, the complementary count
+    Dim j                   As Double          'N - K, the complementary count
     Dim LeadingTerm         As Double          'The Sqr(N / (2*Pi*K*J)) factor, logged
     Dim EntropyTerm         As Double          'N * H(K/N), the dominant term
 
@@ -536,7 +536,7 @@ Public Function PROB_LogChoose( _
 ' BOUNDARY CASES
 '------------------------------------------------------------------------------
     'C(N,0) = C(N,N) = 1, so the logarithm is exactly zero
-        If K <= 0# Or K >= N Then
+        If k <= 0# Or k >= N Then
             PROB_LogChoose = 0#
             Exit Function
         End If
@@ -545,18 +545,18 @@ Public Function PROB_LogChoose( _
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Complementary count
-        J = N - K
+        j = N - k
 
     'Leading term, expanded so that K * J never overflows
-        LeadingTerm = 0.5 * (Log(N) - Log(PROB_TWO_PI) - Log(K) - Log(J))
+        LeadingTerm = 0.5 * (Log(N) - Log(PROB_TWO_PI) - Log(k) - Log(j))
 
     'Entropy term. Both logarithms are of a ratio at least one, so neither
     'cancels; Log1p carries the case where that ratio is close to one
-        EntropyTerm = K * PROB_Log1p(J / K) + J * PROB_Log1p(K / J)
+        EntropyTerm = k * PROB_Log1p(j / k) + j * PROB_Log1p(k / j)
 
     'Assemble with the three small Stirling corrections
         PROB_LogChoose = LeadingTerm + EntropyTerm + _
-                         PROB_StirlingError(N) - PROB_StirlingError(K) - PROB_StirlingError(J)
+                         PROB_StirlingError(N) - PROB_StirlingError(k) - PROB_StirlingError(j)
 End Function
 
 
@@ -693,9 +693,9 @@ Public Function PROB_TryBetaContinuedFraction( _
     Dim Qab                 As Double          'A + B
     Dim Qap                 As Double          'A + 1
     Dim Qam                 As Double          'A - 1
-    Dim C                   As Double          'Lentz c accumulator
+    Dim c                   As Double          'Lentz c accumulator
     Dim D                   As Double          'Lentz d accumulator
-    Dim H                   As Double          'Continued-fraction value
+    Dim h                   As Double          'Continued-fraction value
     Dim Aa                  As Double          'Coefficient
     Dim Del                 As Double          'Multiplicative increment
     Dim M                   As Long            'Iteration index
@@ -710,13 +710,13 @@ Public Function PROB_TryBetaContinuedFraction( _
         Qam = A - 1#
 
     'Initialize Lentz's method
-        C = 1#
+        c = 1#
         D = 1# - Qab * X / Qap
 
         If Abs(D) < PROB_FPMIN Then D = PROB_FPMIN
 
         D = 1# / D
-        H = D
+        h = D
 
 '------------------------------------------------------------------------------
 ' ITERATE CONTINUED FRACTION
@@ -731,11 +731,11 @@ Public Function PROB_TryBetaContinuedFraction( _
                 D = 1# + Aa * D
                 If Abs(D) < PROB_FPMIN Then D = PROB_FPMIN
 
-                C = 1# + Aa / C
-                If Abs(C) < PROB_FPMIN Then C = PROB_FPMIN
+                c = 1# + Aa / c
+                If Abs(c) < PROB_FPMIN Then c = PROB_FPMIN
 
                 D = 1# / D
-                H = H * D * C
+                h = h * D * c
 
             'Odd step
                 Aa = -(A + M) * (Qab + M) * X / ((A + M2) * (Qap + M2))
@@ -743,16 +743,16 @@ Public Function PROB_TryBetaContinuedFraction( _
                 D = 1# + Aa * D
                 If Abs(D) < PROB_FPMIN Then D = PROB_FPMIN
 
-                C = 1# + Aa / C
-                If Abs(C) < PROB_FPMIN Then C = PROB_FPMIN
+                c = 1# + Aa / c
+                If Abs(c) < PROB_FPMIN Then c = PROB_FPMIN
 
                 D = 1# / D
-                Del = D * C
-                H = H * Del
+                Del = D * c
+                h = h * Del
 
             'Return on convergence
                 If Abs(Del - 1#) <= PROB_NUM_EPS Then
-                    Result = H
+                    Result = h
                     PROB_TryBetaContinuedFraction = True
                     Exit Function
                 End If
@@ -829,7 +829,7 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim LogDensity          As Double          'Log of the beta density at U
     Dim LogSeed             As Double          'Log of the series-inverted seed
     Dim Z                   As Double          'Normal seed
-    Dim R                   As Double          'AS 109 working value
+    Dim r                   As Double          'AS 109 working value
     Dim S1                  As Double          'AS 109 working value
     Dim S2                  As Double          'AS 109 working value
     Dim HH                  As Double          'AS 109 working value
@@ -881,11 +881,11 @@ Public Function PROB_TryBetaInvRegularized( _
     'Use the AS 109 normal approximation when both shapes exceed one
         If Sa > 1# And Sb > 1# Then
             Z = PROB_NormalInvCDFRaw(Target)
-            R = (Z * Z - 3#) / 6#
+            r = (Z * Z - 3#) / 6#
             S1 = 1# / (2# * Sa - 1#)
             S2 = 1# / (2# * Sb - 1#)
             HH = 2# / (S1 + S2)
-            W = Z * Sqr(HH + R) / HH - (S2 - S1) * (R + 5# / 6# - 2# / (3# * HH))
+            W = Z * Sqr(HH + r) / HH - (S2 - S1) * (r + 5# / 6# - 2# / (3# * HH))
             'Guard the module's one raw exponential; W is bounded above here
             '(Target <= 0.5 forces Z <= 0) so overflow is not reachable in
             'practice, and the seed clamp below recovers U on any failure
@@ -1205,9 +1205,9 @@ Public Function PROB_TryGammaContinuedFractionQ( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim B                   As Double          'Continued-fraction b value
-    Dim C                   As Double          'Lentz c accumulator
+    Dim c                   As Double          'Lentz c accumulator
     Dim D                   As Double          'Lentz d accumulator
-    Dim H                   As Double          'Continued-fraction value
+    Dim h                   As Double          'Continued-fraction value
     Dim An                  As Double          'Coefficient
     Dim Del                 As Double          'Multiplicative increment
     Dim Factor              As Double          'Exp(-X + A*Log(X) - LogGamma(A))
@@ -1221,9 +1221,9 @@ Public Function PROB_TryGammaContinuedFractionQ( _
 
         If Abs(B) < PROB_FPMIN Then B = PROB_FPMIN
 
-        C = 1# / PROB_FPMIN
+        c = 1# / PROB_FPMIN
         D = 1# / B
-        H = D
+        h = D
 
 '------------------------------------------------------------------------------
 ' CONTINUED FRACTION ITERATION
@@ -1236,12 +1236,12 @@ Public Function PROB_TryGammaContinuedFractionQ( _
             D = An * D + B
             If Abs(D) < PROB_FPMIN Then D = PROB_FPMIN
 
-            C = B + An / C
-            If Abs(C) < PROB_FPMIN Then C = PROB_FPMIN
+            c = B + An / c
+            If Abs(c) < PROB_FPMIN Then c = PROB_FPMIN
 
             D = 1# / D
-            Del = D * C
-            H = H * Del
+            Del = D * c
+            h = h * Del
 
             'Return on convergence
                 If Abs(Del - 1#) <= PROB_NUM_EPS Then
@@ -1250,7 +1250,7 @@ Public Function PROB_TryGammaContinuedFractionQ( _
                         Exit Function
                     End If
 
-                    Result = Factor * H
+                    Result = Factor * h
                     PROB_TryGammaContinuedFractionQ = True
                     Exit Function
                 End If

@@ -29,6 +29,7 @@ Option Explicit
 '     - K_STATS_NormalStandard_Cumulative
 '     - K_STATS_NormalStandard_Survival
 '     - K_STATS_NormalStandard_InverseCumulative
+'     - K_STATS_NormalStandard_InverseSurvival
 '     - K_STATS_NormalStandard_IntervalProbability
 '     - K_STATS_NormalStandard_InverseCumulativeFast
 '
@@ -37,6 +38,7 @@ Option Explicit
 '     - K_STATS_Normal_Cumulative
 '     - K_STATS_Normal_Survival
 '     - K_STATS_Normal_InverseCumulative
+'     - K_STATS_Normal_InverseSurvival
 '     - K_STATS_Normal_ZScore
 '     - K_STATS_Normal_IntervalProbability
 '
@@ -45,6 +47,7 @@ Option Explicit
 '     - K_STATS_Lognormal_Cumulative
 '     - K_STATS_Lognormal_Survival
 '     - K_STATS_Lognormal_InverseCumulative
+'     - K_STATS_Lognormal_InverseSurvival
 '     - K_STATS_Lognormal_Mean
 '     - K_STATS_Lognormal_Variance
 '     - K_STATS_Lognormal_StdDev
@@ -55,18 +58,21 @@ Option Explicit
 '   K_STATS_NormalStandard_Cumulative           NORM.S.DIST(z, TRUE)   [legacy NORMSDIST]
 '   K_STATS_NormalStandard_Survival             1 - NORM.S.DIST(z, TRUE)   [upper tail, stable]
 '   K_STATS_NormalStandard_InverseCumulative    NORM.S.INV(p)          [legacy NORMSINV]
+'   K_STATS_NormalStandard_InverseSurvival      NORM.S.INV(1 - q)          [upper tail, stable]
 '   K_STATS_NormalStandard_IntervalProbability  NORM.S.DIST(b,TRUE) - NORM.S.DIST(a,TRUE)
 '   K_STATS_NormalStandard_InverseCumulativeFast (none - numeric helper)
 '   K_STATS_Normal_Density                      NORM.DIST(x, m, s, FALSE)
 '   K_STATS_Normal_Cumulative                   NORM.DIST(x, m, s, TRUE)
 '   K_STATS_Normal_Survival                     1 - NORM.DIST(x, m, s, TRUE)   [upper tail, stable]
 '   K_STATS_Normal_InverseCumulative            NORM.INV(p, m, s)
+'   K_STATS_Normal_InverseSurvival              NORM.INV(1 - q, m, s)      [upper tail, stable]
 '   K_STATS_Normal_ZScore                       STANDARDIZE(x, m, s)
 '   K_STATS_Normal_IntervalProbability          NORM.DIST(b,m,s,TRUE) - NORM.DIST(a,m,s,TRUE)
 '   K_STATS_Lognormal_Density                   LOGNORM.DIST(x, m, s, FALSE)
 '   K_STATS_Lognormal_Cumulative                LOGNORM.DIST(x, m, s, TRUE) [legacy LOGNORMDIST, cumulative only]
 '   K_STATS_Lognormal_Survival                  1 - LOGNORM.DIST(x, m, s, TRUE)   [upper tail, stable]
 '   K_STATS_Lognormal_InverseCumulative         LOGNORM.INV(p, m, s)        [legacy LOGINV]
+'   K_STATS_Lognormal_InverseSurvival           LOGNORM.INV(1 - q, m, s)    [upper tail, stable]
 '   K_STATS_Lognormal_Mean                      (none - use EXP(m + 0.5*s^2))
 '   K_STATS_Lognormal_Variance                  (none)
 '   K_STATS_Lognormal_StdDev                    (none - SQRT of lognormal variance)
@@ -655,6 +661,129 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_NormalStandard_InverseCumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_NormalStandard_InverseCumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NormalStandard_InverseSurvival( _
+    ByVal Probability As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_NormalStandard_InverseSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the standard-normal quantile Z whose upper-tail probability is
+'   Probability, that is the Z solving Q(Z) = Probability.
+'
+' WHY THIS EXISTS
+'   This is the inverse of K_STATS_NormalStandard_Survival and completes the
+'   upper-tail pair. It converts a small exceedance probability - a one-sided
+'   p-value, a 1-in-N event, a confidence level expressed as a tail - into the
+'   sigma level that produces it. Composing the inverse cumulative instead, as
+'   InverseCumulative(1 - q), reintroduces the very subtraction the survival
+'   function exists to avoid: for q below about 1E-16 the term 1 - q rounds to
+'   exactly one and the call fails, even though the quantile is an ordinary
+'   number. This routine inverts the small probability directly.
+'
+' WORKSHEET EQUIVALENT
+'   NORM.S.INV(1 - Probability). The subtraction form fails for Probability
+'   below roughly 1E-16, where 1 - Probability rounds to one and Excel returns
+'   #NUM!; this routine does not.
+'
+' PROVENANCE
+'   Standard-normal reflection Phi^-1(1 - q) = -Phi^-1(q) applied to the
+'   Halley-refined Acklam inverse. No new approximation is introduced; accuracy
+'   follows PROB_NormalInvCDF.
+'
+' INPUTS
+'   Probability
+'     Upper-tail (exceedance) probability.
+'     Must be strictly between 0 and 1.
+'
+'   Status
+'     Optional ByRef diagnostic message.
+'     Empty on success.
+'     Populated on failure.
+'
+' RETURNS
+'   Variant
+'     Success => Double standard-normal quantile.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Validates that Probability is finite and strictly inside (0, 1).
+'   - Returns -PROB_NormalInvCDF(Probability), never forming 1 - Probability.
+'   - Probability = 0.5 returns 0; smaller probabilities return positive
+'     quantiles, larger ones negative.
+'
+' ERROR POLICY
+'   - Invalid probabilities return CVErr(xlErrNum).
+'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Detailed diagnostic messages are written to Status (status bar only when
+'     PROB_WRITE_STATUS_BAR is True).
+'   - No MsgBox is raised.
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_NormalInvSurvival
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-16
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim FailMsg             As String          'Detailed failure message
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate probability domain
+        If Not PROB_IsValidProbabilityOpen(Probability) Then
+            FailMsg = "Probability must be strictly between 0 and 1"
+            GoTo Fail_Num
+        End If
+'------------------------------------------------------------------------------
+' COMPUTE QUANTILE
+'------------------------------------------------------------------------------
+    'Return the upper-tail quantile
+        K_STATS_NormalStandard_InverseSurvival = PROB_NormalInvSurvival(Probability)
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NormalStandard_InverseSurvival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_NormalStandard_InverseSurvival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NormalStandard_InverseSurvival = CVErr(xlErrValue)
 End Function
 
 
@@ -1372,6 +1501,142 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_Normal_InverseCumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_Normal_InverseCumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Normal_InverseSurvival( _
+    ByVal Probability As Double, _
+    Optional ByVal Mean As Double = 0#, _
+    Optional ByVal StdDev As Double = 1#, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_Normal_InverseSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the normal quantile x whose upper-tail probability is Probability,
+'   that is the x solving P(X > x) = Probability.
+'
+' WHY THIS EXISTS
+'   Exceedance thresholds on a general normal - a loss level breached with
+'   probability q, a reliability limit, a one-sided critical value - are stated
+'   as a small upper-tail probability. Routing through InverseCumulative(1 - q)
+'   loses the probability entirely once q falls below about 1E-16, because
+'   1 - q rounds to one. This routine inverts the tail directly.
+'
+' WORKSHEET EQUIVALENT
+'   NORM.INV(1 - Probability, Mean, StdDev), but stable for small Probability.
+'
+' PROVENANCE
+'   Standard-normal reflection Phi^-1(1 - q) = -Phi^-1(q), rescaled by
+'   Mean + StdDev * Z. Not proprietary.
+'
+' INPUTS
+'   Probability
+'     Upper-tail (exceedance) probability.
+'     Must be strictly between 0 and 1.
+'
+'   Mean
+'     Distribution mean.
+'
+'   StdDev
+'     Distribution standard deviation.
+'     Must be strictly positive.
+'
+'   Status
+'     Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double normal quantile.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Validates Probability, Mean and StdDev.
+'   - Computes Z = PROB_NormalInvSurvival(Probability).
+'   - Returns Mean + StdDev * Z.
+'
+' ERROR POLICY
+'   - Invalid numeric domains return CVErr(xlErrNum).
+'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Detailed diagnostic messages are written to Status (status bar only when
+'     PROB_WRITE_STATUS_BAR is True).
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_NormalInvSurvival
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-16
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Z                   As Double          'Standard normal quantile
+    Dim FailMsg             As String          'Detailed failure message
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate probability domain
+        If Not PROB_IsValidProbabilityOpen(Probability) Then
+            FailMsg = "Probability must be strictly between 0 and 1"
+            GoTo Fail_Num
+        End If
+    'Validate distribution parameters
+        If Not PROB_IsWithinSupportedMagnitude(Mean) Then
+            FailMsg = "Mean must be a finite number"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
+            FailMsg = "StdDev must be a finite strictly positive number"
+            GoTo Fail_Num
+        End If
+'------------------------------------------------------------------------------
+' COMPUTE QUANTILE
+'------------------------------------------------------------------------------
+    'Compute the standard normal upper-tail quantile
+        Z = PROB_NormalInvSurvival(Probability)
+    'Return the normal quantile
+        K_STATS_Normal_InverseSurvival = Mean + StdDev * Z
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Normal_InverseSurvival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Normal_InverseSurvival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Normal_InverseSurvival = CVErr(xlErrValue)
 End Function
 
 
@@ -2157,6 +2422,154 @@ Err_Handler:
 End Function
 
 
+Public Function K_STATS_Lognormal_InverseSurvival( _
+    ByVal Probability As Double, _
+    ByVal MeanLog As Double, _
+    ByVal StdDevLog As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_Lognormal_InverseSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the lognormal quantile x whose upper-tail probability is
+'   Probability, that is the x solving P(X > x) = Probability.
+'
+' WHY THIS EXISTS
+'   Positive-support exceedance levels - a price breached with probability q, a
+'   severe loss quantile, a right-tail stress point - are naturally stated as a
+'   small upper-tail probability. InverseCumulative(1 - q) discards that
+'   probability once q falls below about 1E-16. This routine inverts the tail
+'   directly and then maps through Exp().
+'
+' WORKSHEET EQUIVALENT
+'   LOGNORM.INV(1 - Probability, MeanLog, StdDevLog), but stable for small
+'   Probability.
+'
+' PROVENANCE
+'   Standard-normal reflection Phi^-1(1 - q) = -Phi^-1(q) mapped through Exp().
+'   Not proprietary.
+'
+' INPUTS
+'   Probability
+'     Upper-tail (exceedance) probability.
+'     Must be strictly between 0 and 1.
+'
+'   MeanLog
+'     Mean of Log(X).
+'
+'   StdDevLog
+'     Standard deviation of Log(X).
+'     Must be strictly positive.
+'
+'   Status
+'     Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double positive lognormal quantile.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Validates probability and lognormal parameters.
+'   - Computes Z = PROB_NormalInvSurvival(Probability).
+'   - Returns Exp(MeanLog + StdDevLog * Z), or CVErr(xlErrNum) on overflow.
+'
+' ERROR POLICY
+'   - Invalid numeric domains return CVErr(xlErrNum).
+'   - Overflow of the exponential returns CVErr(xlErrNum).
+'   - Unexpected runtime errors return CVErr(xlErrValue).
+'   - Detailed diagnostic messages are written to Status (status bar only when
+'     PROB_WRITE_STATUS_BAR is True).
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_NormalInvSurvival
+'   - PROB_TryExp
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-16
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Z                   As Double          'Standard normal quantile
+    Dim LogQuantile         As Double          'Lognormal log-quantile
+    Dim Quantile            As Double          'Lognormal quantile
+    Dim FailMsg             As String          'Detailed failure message
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate probability domain
+        If Not PROB_IsValidProbabilityOpen(Probability) Then
+            FailMsg = "Probability must be strictly between 0 and 1"
+            GoTo Fail_Num
+        End If
+    'Validate log-space parameters
+        If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
+            FailMsg = "MeanLog must be a finite number"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+            FailMsg = "StdDevLog must be a finite strictly positive number"
+            GoTo Fail_Num
+        End If
+'------------------------------------------------------------------------------
+' COMPUTE QUANTILE
+'------------------------------------------------------------------------------
+    'Compute standard normal upper-tail quantile
+        Z = PROB_NormalInvSurvival(Probability)
+    'Compute log-quantile
+        LogQuantile = MeanLog + StdDevLog * Z
+    'Exponentiate with explicit overflow detection
+        If Not PROB_TryExp(LogQuantile, Quantile) Then
+            FailMsg = "Lognormal quantile overflows Double range"
+            GoTo Fail_Num
+        End If
+    'Return lognormal quantile
+        K_STATS_Lognormal_InverseSurvival = Quantile
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Lognormal_InverseSurvival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_Lognormal_InverseSurvival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Lognormal_InverseSurvival = CVErr(xlErrValue)
+End Function
+
+
 Public Function K_STATS_Lognormal_Mean( _
     ByVal MeanLog As Double, _
     ByVal StdDevLog As Double, _
@@ -2914,7 +3327,7 @@ Private Function PROB_NormalInvCDF( _
     Dim X                   As Double          'Acklam estimate / refined root
     Dim PdfX                As Double          'Density at the estimate
     Dim CdfX                As Double          'Cumulative probability at the estimate
-    Dim E                   As Double          'CDF(X) - Probability
+    Dim e                   As Double          'CDF(X) - Probability
     Dim U                   As Double          'Newton correction e / pdf
 '------------------------------------------------------------------------------
 ' STARTING ESTIMATE
@@ -2932,8 +3345,8 @@ Private Function PROB_NormalInvCDF( _
     'rounded to exactly 0 or 1. At a rounded endpoint the residual is no longer
     'informative, so the raw Acklam estimate is retained.
         If PdfX > 0# And CdfX > 0# And CdfX < 1# Then
-            E = CdfX - Probability
-            U = E / PdfX
+            e = CdfX - Probability
+            U = e / PdfX
             X = X - U / (1# + X * U / 2#)
         End If
 '------------------------------------------------------------------------------
@@ -2941,6 +3354,32 @@ Private Function PROB_NormalInvCDF( _
 '------------------------------------------------------------------------------
     'Return the refined quantile
         PROB_NormalInvCDF = X
+End Function
+
+
+Private Function PROB_NormalInvSurvival( _
+    ByVal Probability As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_NormalInvSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the standard-normal quantile Z satisfying Q(Z) = Probability, where
+'   Q is the upper-tail survival function.
+'
+' METHOD
+'   By the symmetry of the standard normal, Phi^-1(1 - q) = -Phi^-1(q). The
+'   quantile is therefore obtained from the small probability q directly, with
+'   no 1 - q subtraction. That subtraction is exactly what destroys the answer
+'   for small q: once q falls below the spacing of one, 1 - q rounds to one and
+'   the inverse cumulative can no longer distinguish it from the endpoint.
+'
+' PRECONDITION
+'   Probability must be strictly between 0 and 1.
+'==============================================================================
+'
+    PROB_NormalInvSurvival = -PROB_NormalInvCDF(Probability)
 End Function
 
 

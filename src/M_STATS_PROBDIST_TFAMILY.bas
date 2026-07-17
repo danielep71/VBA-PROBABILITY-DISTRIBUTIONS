@@ -280,8 +280,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_StudentT_Density: " & Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_StudentT_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_StudentT_Density = CVErr(xlErrValue)
 End Function
@@ -407,8 +406,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_StudentT_Cumulative: " & Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_StudentT_Cumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_StudentT_Cumulative = CVErr(xlErrValue)
 End Function
@@ -530,8 +528,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_StudentT_Survival: " & Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_StudentT_Survival: " & Err.Description
     'Return worksheet value error
         K_STATS_StudentT_Survival = CVErr(xlErrValue)
 End Function
@@ -679,9 +676,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_StudentT_InverseCumulative: " & _
-            Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_StudentT_InverseCumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_StudentT_InverseCumulative = CVErr(xlErrValue)
 End Function
@@ -844,8 +839,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_ChiSquare_Density: " & Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_ChiSquare_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_ChiSquare_Density = CVErr(xlErrValue)
 End Function
@@ -979,9 +973,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_ChiSquare_Cumulative: " & _
-            Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_ChiSquare_Cumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_ChiSquare_Cumulative = CVErr(xlErrValue)
 End Function
@@ -1109,9 +1101,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_ChiSquare_Survival: " & _
-            Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_ChiSquare_Survival: " & Err.Description
     'Return worksheet value error
         K_STATS_ChiSquare_Survival = CVErr(xlErrValue)
 End Function
@@ -1251,9 +1241,7 @@ Fail_Num:
 '------------------------------------------------------------------------------
 Err_Handler:
     'Write unexpected runtime errors to diagnostics
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_ChiSquare_InverseCumulative: " & _
-            Err.Description
+        PROB_SetStatus Status, "Unexpected error in K_STATS_ChiSquare_InverseCumulative: " & Err.Description
     'Return worksheet value error
         K_STATS_ChiSquare_InverseCumulative = CVErr(xlErrValue)
 End Function
@@ -1338,13 +1326,11 @@ Public Function K_STATS_F_Density( _
 '------------------------------------------------------------------------------
 ' INITIALIZE
 '------------------------------------------------------------------------------
-    'Route unexpected runtime failures to the error handler
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-
-    'Clear the diagnostic output
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-
-    'Initialize the failure message
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
 '------------------------------------------------------------------------------
@@ -1435,9 +1421,8 @@ Public Function K_STATS_F_Density( _
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
 Return_Success:
-    'Clear the diagnostic output
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-
     'Exit before failure and error-handler blocks
         Exit Function
 
@@ -1445,24 +1430,20 @@ Return_Success:
 ' FAIL - NUMERIC
 '------------------------------------------------------------------------------
 Fail_Num:
-    'Write the detailed diagnostic
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-
-    'Return the worksheet numeric error
+    'Return worksheet numeric error
         K_STATS_F_Density = CVErr(xlErrNum)
-
-    'Exit before the unexpected-error handler
+    'Exit before the error handler
         Exit Function
 
 '------------------------------------------------------------------------------
 ' ERROR HANDLER
 '------------------------------------------------------------------------------
 Err_Handler:
-    'Write the unexpected runtime diagnostic
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_F_Density: " & Err.Description
-
-    'Return the worksheet value error
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_F_Density: " & Err.Description
+    'Return worksheet value error
         K_STATS_F_Density = CVErr(xlErrValue)
 End Function
 
@@ -1536,13 +1517,11 @@ Public Function K_STATS_F_Cumulative( _
 '------------------------------------------------------------------------------
 ' INITIALIZE
 '------------------------------------------------------------------------------
-    'Route unexpected runtime failures to the error handler
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-
-    'Clear the diagnostic output
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-
-    'Initialize the failure message
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
 '------------------------------------------------------------------------------
@@ -1596,9 +1575,8 @@ Public Function K_STATS_F_Cumulative( _
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
 Return_Success:
-    'Clear the diagnostic output
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-
     'Exit before failure and error-handler blocks
         Exit Function
 
@@ -1606,24 +1584,20 @@ Return_Success:
 ' FAIL - NUMERIC
 '------------------------------------------------------------------------------
 Fail_Num:
-    'Write the detailed diagnostic
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-
-    'Return the worksheet numeric error
+    'Return worksheet numeric error
         K_STATS_F_Cumulative = CVErr(xlErrNum)
-
-    'Exit before the unexpected-error handler
+    'Exit before the error handler
         Exit Function
 
 '------------------------------------------------------------------------------
 ' ERROR HANDLER
 '------------------------------------------------------------------------------
 Err_Handler:
-    'Write the unexpected runtime diagnostic
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_F_Cumulative: " & Err.Description
-
-    'Return the worksheet value error
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_F_Cumulative: " & Err.Description
+    'Return worksheet value error
         K_STATS_F_Cumulative = CVErr(xlErrValue)
 End Function
 
@@ -1695,13 +1669,11 @@ Public Function K_STATS_F_Survival( _
 '------------------------------------------------------------------------------
 ' INITIALIZE
 '------------------------------------------------------------------------------
-    'Route unexpected runtime failures to the error handler
+    'Route unexpected runtime errors to the error handler
         On Error GoTo Err_Handler
-
-    'Clear the diagnostic output
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-
-    'Initialize the failure message
+    'Initialize the failure message buffer
         FailMsg = vbNullString
 
 '------------------------------------------------------------------------------
@@ -1755,9 +1727,8 @@ Public Function K_STATS_F_Survival( _
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
 Return_Success:
-    'Clear the diagnostic output
+    'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
-
     'Exit before failure and error-handler blocks
         Exit Function
 
@@ -1765,24 +1736,20 @@ Return_Success:
 ' FAIL - NUMERIC
 '------------------------------------------------------------------------------
 Fail_Num:
-    'Write the detailed diagnostic
+    'Write diagnostics
         PROB_SetStatus Status, FailMsg
-
-    'Return the worksheet numeric error
+    'Return worksheet numeric error
         K_STATS_F_Survival = CVErr(xlErrNum)
-
-    'Exit before the unexpected-error handler
+    'Exit before the error handler
         Exit Function
 
 '------------------------------------------------------------------------------
 ' ERROR HANDLER
 '------------------------------------------------------------------------------
 Err_Handler:
-    'Write the unexpected runtime diagnostic
-        PROB_SetStatus Status, _
-            "Unexpected error in K_STATS_F_Survival: " & Err.Description
-
-    'Return the worksheet value error
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, "Unexpected error in K_STATS_F_Survival: " & Err.Description
+    'Return worksheet value error
         K_STATS_F_Survival = CVErr(xlErrValue)
 End Function
 
@@ -3318,5 +3285,7 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
+
+
 
 
