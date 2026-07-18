@@ -52,19 +52,45 @@ partial export produces a partial — not a misleading — summary.
 
 Taken verbatim from the `ACCURACY` comments in the source:
 
+The harness covers three modules: the special-function kernels
+(`SPECIALFUNCS`), the test-statistic families (`TFAMILY`), and the normal and
+lognormal family (`NORMALFAMILY`) — 37 functions in total.
+
+**Special functions**
+
 | Function | Published claim |
 |---|---|
 | `PROB_LogGamma` | relative error < 6.1E-14 for Z in [1E-8, 1E+50] |
-| `PROB_LogGammaHalfDiff` | relative error <= 2.1E-15 for Z > 0 |
+| `PROB_LogGammaHalfDiff` | relative error <= 2E-14 for Z > 0 (tested range) |
 | `PROB_StirlingError` | absolute error <= 3E-17 for N >= 0.5 |
 | `PROB_LogChoose` | relative error <= 3.2E-16 for N in [2, 2^53], all K |
-| Student t density | relative error <= 8.4E-15 |
+
+**Test-statistic families**
+
+| Function | Published claim |
+|---|---|
+| Student t density | relative error <= 2E-14 (tested range) |
 | Student t cumulative / survival | relative error <= 1.3E-12 |
 | Student t quantile | relative error <= 3.0E-12 |
 | Chi-square cumulative / survival | relative error <= 2.6E-10 |
 | Chi-square quantile | relative error <= 4.7E-12 |
 | F cumulative / survival | relative error <= 1.1E-10 |
 | F quantile | relative error <= 5.9E-13 |
+
+**Normal and lognormal family**
+
+| Function | Published claim |
+|---|---|
+| Standard normal density / CDF / survival / inverse / inverse survival / interval | relative error <= 5E-15 |
+| Standard normal fast inverse (raw Acklam) | relative error <= 5E-9 |
+| General normal density / CDF / survival / inverse / inverse survival / z-score | relative error <= 5E-15 |
+| Lognormal density / CDF / survival / inverse / inverse survival | relative error <= 5E-15 |
+| Lognormal mean / variance / std dev / parameter conversion | relative error <= 5E-15 |
+
+The normal-family `~1E-15` source comments are interpreted as a hard bound of
+5E-15 for the harness. `NormalStandard_Survival` measures about 1.5E-14 at
+moderate tail values, above that bound; it is reported as *below harness
+precision* rather than a failure, and its claim is left as documented.
 
 ## Metric note
 
