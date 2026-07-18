@@ -944,6 +944,23 @@ Private Sub Test_Core_LogGamma()
         PROB_LogBeta(5E-100, 5E+98), _
         228.64907138697, _
         0.000000000001
+
+    'Expected-limitation guard for the moderately-unbalanced middle band.
+    'PROB_LogBeta is known to miss the 5E-15 Beta claim for moderately unbalanced
+    'non-half-integer arguments: the defining identity cancels while the one-term
+    'asymptotic only engages below ratio 1E-15 (see the ACCURACY LIMITATION note
+    'in M_STATS_PROBDIST_SPECIALFUNCS and benchmark/logbeta_study). This assertion
+    'documents that gap inside the authoritative suite: it passes WHILE the
+    'limitation is present and FAILS if PROB_LogBeta becomes accurate here, which
+    'is the signal to update the accuracy claim and promote this point into the
+    'main accuracy grid. Reference: mpmath, LogBeta(800000, 0.8) = -10.7218338269202.
+    Dim LbMid               As Double          'PROB_LogBeta at the middle-band point
+    Dim LbMidRelErr         As Double          'Its relative error against the reference
+    LbMid = PROB_LogBeta(800000#, 0.8)
+    LbMidRelErr = Abs(LbMid - (-10.7218338269202)) / Abs(-10.7218338269202)
+    AssertTrue _
+        "LogBeta middle-band limitation present (ratio 1E-6) - a fix must update docs and grid", _
+        (LbMidRelErr > 0.000000000000005)
 End Sub
 
 
@@ -4844,5 +4861,7 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
+
+
 
 
