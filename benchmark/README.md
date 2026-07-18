@@ -22,7 +22,7 @@ and the macro never reads the reference column.
 |---|---|
 | `generate_reference_values.py` | Builds the input grid and 50-digit mpmath reference values. Phase 1. |
 | `probability_accuracy_grid.csv` | The grid: inputs, reference, and an empty `observed_vba` column. |
-| `M_STATS_PROBDIST_ACCURACY_EXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
+| `M_STATS_PROBDIST_ACCURACYEXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
 | `compute_errors.py` | Joins observed vs reference, finds max-error locations, checks each claim, writes the summary. Phase 3. |
 | `accuracy_summary.md` | The generated verdict table. |
 | `environment.txt` | Python and dependency versions, reference precision, date. |
@@ -34,7 +34,7 @@ and the macro never reads the reference column.
 python generate_reference_values.py            # -> probability_accuracy_grid.csv
 
 # Phase 2 — observed (Excel)
-#   Import M_STATS_PROBDIST_ACCURACY_EXPORT.bas into the workbook,
+#   Import M_STATS_PROBDIST_ACCURACYEXPORT.bas into the workbook,
 #   put probability_accuracy_grid.csv beside the workbook,
 #   run Export_Accuracy_Observations. It fills the observed_vba column.
 
@@ -45,6 +45,8 @@ python compute_errors.py                       # -> accuracy_summary.md
 `compute_errors.py` degrades honestly: any row whose `observed_vba` is still
 empty is reported as *not measured* and excluded from the pass/fail check, so a
 partial export produces a partial — not a misleading — summary.
+
+> **Observed-value format.** VBA writes each observation as a two-part sum `hi;lo` (two 15-digit numbers), because VBA cannot emit more than ~15 significant digits in one literal. `compute_errors.py` sums the parts to recover the full-precision Double, so the harness measures accuracy below the 15-digit floor. A single number is also accepted for backward compatibility.
 
 ## Claims under test
 
