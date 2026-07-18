@@ -147,6 +147,11 @@ Option Explicit
 '   - Those density poles return CVErr(xlErrNum).
 '   - The survival functions should be used for small right-tail probabilities;
 '     subtracting a CDF from one loses the tail once the CDF rounds to one.
+'   - Degrees of freedom validate against the 1E100 representational bound, which
+'     is not a convergence guarantee: the underlying incomplete-gamma and beta
+'     kernels converge to roughly 1E9 and 1E7 (see M_STATS_PROBDIST_SPECIALFUNCS).
+'     A df between that range and 1E100 is accepted, attempted, and returns a
+'     clean non-convergence error rather than a wrong answer.
 '
 ' UPDATED
 '   2026-07-11 - House-style rewrite and numerical-contract hardening.
@@ -3077,7 +3082,7 @@ Private Function PROB_TF_ValidateDF( _
         If Not PROB_IsPositiveWithinSupportedMagnitude(DegreesFreedom) Then
             FailMsg = _
                 DFName & _
-                " must be a supported finite strictly positive number"
+                " must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
 
@@ -3285,6 +3290,8 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
+
+
 
 
 

@@ -95,7 +95,13 @@ Option Private Module
 '     terms at its worst point (x = a); the beta continued fraction needs about
 '     0.27 * Sqr(df). Typical degrees of freedom below 100 converge in under 70
 '     iterations. PROB_GAMMA_MAX_ITER = 100000 covers df up to roughly 1E+9;
-'     PROB_BETA_MAX_ITER = 100000 covers df up to roughly 1E+7.
+'     PROB_BETA_MAX_ITER = 100000 covers df up to roughly 1E+7. These convergence
+'     ranges are narrower than the 1E100 representational validation bound
+'     (PROB_PARAMETER_MAGNITUDE_GUARD): a parameter between a kernel's convergence range and
+'     1E100 is accepted by validation, attempted, and then returns a clean
+'     parameter-named non-convergence error rather than a wrong answer. The
+'     ranges are approximate because the true boundary depends on the companion
+'     arguments, so they are documented rather than enforced as hard cliffs.
 '   - PROB_LogGamma is recursive through its reflection branch, exactly once.
 '
 ' UPDATED
@@ -1456,5 +1462,7 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
 
 

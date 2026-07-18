@@ -128,7 +128,12 @@ Option Explicit
 '
 ' NOTES
 '   - Shape parameters passed to iterative or asymptotic kernels are constrained
-'     by PROB_IsPositiveWithinSupportedMagnitude.
+'     by PROB_IsPositiveWithinSupportedMagnitude. That 1E100 bound is
+'     representational, not a convergence guarantee: the incomplete-gamma and
+'     incomplete-beta kernels converge over a smaller range (roughly 1E9 and 1E7;
+'     see M_STATS_PROBDIST_SPECIALFUNCS). A shape between that range and 1E100 is
+'     accepted, attempted, and returns a clean non-convergence error, not a wrong
+'     answer.
 '   - Evaluation points, rates, scales and Uniform bounds may use the full finite
 '     Double range where the implemented formula remains numerically meaningful.
 '
@@ -672,7 +677,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
         End If
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a supported finite strictly positive number"
+            FailMsg = "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -790,7 +795,7 @@ Public Function K_STATS_Gamma_Mean( _
 '------------------------------------------------------------------------------
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a supported finite strictly positive number"
+            FailMsg = "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -905,7 +910,7 @@ Public Function K_STATS_Gamma_Variance( _
 '------------------------------------------------------------------------------
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a supported finite strictly positive number"
+            FailMsg = "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -1027,7 +1032,7 @@ Public Function K_STATS_Gamma_StdDev( _
 '------------------------------------------------------------------------------
     'Validate shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
-            FailMsg = "Shape must be a supported finite strictly positive number"
+            FailMsg = "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate scale
@@ -1571,12 +1576,12 @@ Public Function K_STATS_Beta_InverseCumulative( _
         End If
     'Validate first shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
-            FailMsg = "Alpha must be a supported finite strictly positive number"
+            FailMsg = "Alpha must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate second shape
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
-            FailMsg = "Beta must be a supported finite strictly positive number"
+            FailMsg = "Beta must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -1690,14 +1695,14 @@ Public Function K_STATS_Beta_Mean( _
     'Validate the first shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = _
-                "Alpha must be a supported finite strictly positive number"
+                "Alpha must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
     'Validate the second shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = _
-                "Beta must be a supported finite strictly positive number"
+                "Beta must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -1817,14 +1822,14 @@ Public Function K_STATS_Beta_Variance( _
     'Validate the first shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = _
-                "Alpha must be a supported finite strictly positive number"
+                "Alpha must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
     'Validate the second shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = _
-                "Beta must be a supported finite strictly positive number"
+                "Beta must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -1960,14 +1965,14 @@ Public Function K_STATS_Beta_StdDev( _
     'Validate the first shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Alpha) Then
             FailMsg = _
-                "Alpha must be a supported finite strictly positive number"
+                "Alpha must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
     'Validate the second shape parameter
         If Not PROB_IsPositiveWithinSupportedMagnitude(Beta) Then
             FailMsg = _
-                "Beta must be a supported finite strictly positive number"
+                "Beta must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -3160,7 +3165,7 @@ Public Function K_STATS_Weibull_InverseCumulative( _
     'Validate the shape under the supported-kernel contract
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = _
-                "Shape must be a supported finite strictly positive number"
+                "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -3319,7 +3324,7 @@ Public Function K_STATS_Weibull_Mean( _
     'Validate the shape under the supported-kernel contract
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = _
-                "Shape must be a supported finite strictly positive number"
+                "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -3472,7 +3477,7 @@ Public Function K_STATS_Weibull_Variance( _
     'Validate the shape under the supported-kernel contract
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = _
-                "Shape must be a supported finite strictly positive number"
+                "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -3618,7 +3623,7 @@ Public Function K_STATS_Weibull_StdDev( _
     'Validate the shape under the supported-kernel contract
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = _
-                "Shape must be a supported finite strictly positive number"
+                "Shape must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 
@@ -4646,7 +4651,7 @@ Private Function PROB_CN_ValidateXShapeScale( _
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape) Then
             FailMsg = _
                 ShapeName & _
-                " must be a supported finite strictly positive number"
+                " must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
 
@@ -4723,7 +4728,7 @@ Private Function PROB_CN_ValidateXTwoShapes( _
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape1) Then
             FailMsg = _
                 Shape1Name & _
-                " must be a supported finite strictly positive number"
+                " must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
 
@@ -4731,7 +4736,7 @@ Private Function PROB_CN_ValidateXTwoShapes( _
         If Not PROB_IsPositiveWithinSupportedMagnitude(Shape2) Then
             FailMsg = _
                 Shape2Name & _
-                " must be a supported finite strictly positive number"
+                " must be a finite strictly positive number within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
 
@@ -4927,5 +4932,7 @@ Private Function PROB_CN_ValidateXBounds( _
     'Report successful validation
         PROB_CN_ValidateXBounds = True
 End Function
+
+
 
 

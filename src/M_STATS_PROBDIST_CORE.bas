@@ -28,7 +28,7 @@ Option Private Module
 '     - PROB_PI, PROB_TWO_PI, PROB_HALF_LOG_TWO_PI, PROB_HALF_LOG_PI
 '     - PROB_EPS, PROB_NUM_EPS, PROB_MACH_EPS
 '     - PROB_MAX_EXP, PROB_MIN_EXP
-'     - PROB_LARGE_NUMBER, PROB_DOUBLE_MAX, PROB_FPMIN
+'     - PROB_PARAMETER_MAGNITUDE_GUARD, PROB_DOUBLE_MAX, PROB_FPMIN
 '     - PROB_WRITE_STATUS_BAR
 '
 '   Predicates:
@@ -120,7 +120,7 @@ Public Const PROB_MACH_EPS             As Double = 2.22044604925031E-16  'Double
 Public Const PROB_MAX_EXP              As Double = 709.782712893384      'Advisory Log(Double max)
 Public Const PROB_MIN_EXP              As Double = -745.133219101941     'Advisory round-to-zero boundary
 
-Public Const PROB_LARGE_NUMBER         As Double = 1E+100                'Supported algorithm magnitude bound
+Public Const PROB_PARAMETER_MAGNITUDE_GUARD As Double = 1E+100    'Coarse defensive parameter-magnitude guard (not a convergence or accuracy boundary)
 Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308 'Approx largest finite Double
 Public Const PROB_SQRT_DOUBLE_MAX      As Double = 1.34E+154            'Approx sqrt(Double max); guards squaring overflow
 Public Const PROB_FPMIN                As Double = 1E-300                'Lentz denominator floor
@@ -148,7 +148,7 @@ Public Function PROB_IsFinite( _
 '     FALSE => X is a NaN or an infinity supplied by external COM code.
 '
 ' NOTES
-'   This predicate deliberately does not apply PROB_LARGE_NUMBER. A separate
+'   This predicate deliberately does not apply PROB_PARAMETER_MAGNITUDE_GUARD. A separate
 '   predicate owns that project-specific supported-magnitude policy. The
 '   subtraction X - X is zero only for a finite X: it is NaN for an infinity and
 '   raises at the overflow edge, both of which the handler catches.
@@ -192,17 +192,27 @@ Public Function PROB_IsWithinSupportedMagnitude( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns TRUE when X is finite and lies inside the conservative numerical
-'   domain Abs(X) < PROB_LARGE_NUMBER.
+'   domain Abs(X) < PROB_PARAMETER_MAGNITUDE_GUARD.
 '
 ' RETURNS
 '   Boolean
-'     TRUE  => X is finite and Abs(X) < PROB_LARGE_NUMBER.
+'     TRUE  => X is finite and Abs(X) < PROB_PARAMETER_MAGNITUDE_GUARD.
 '     FALSE => X is non-finite or at or beyond the supported magnitude bound.
 '
 ' USE
 '   Apply this to dimensionless algorithmic parameters whose kernels are tested
 '   only inside the project-supported range. Do not use it as a synonym for
 '   mathematical finiteness.
+'
+' TWO-TIER DOMAIN
+'   PROB_PARAMETER_MAGNITUDE_GUARD (1E100) is a REPRESENTATIONAL bound: it keeps intermediate
+'   quantities finite. It is NOT a convergence guarantee. The iterative special
+'   functions converge over a smaller, kernel-specific range (see the iteration-
+'   budget note in M_STATS_PROBDIST_SPECIALFUNCS: incomplete gamma to roughly
+'   1E9, incomplete beta to roughly 1E7). A parameter that passes this predicate
+'   but exceeds a kernel's convergence range does not corrupt: the routine
+'   exhausts its iteration budget and returns a clean, parameter-named non-
+'   convergence error, never a partial sum.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -215,7 +225,7 @@ Public Function PROB_IsWithinSupportedMagnitude( _
 ' RETURN
 '------------------------------------------------------------------------------
     'Return whether the magnitude sits inside the supported bound
-        PROB_IsWithinSupportedMagnitude = (Abs(X) < PROB_LARGE_NUMBER)
+        PROB_IsWithinSupportedMagnitude = (Abs(X) < PROB_PARAMETER_MAGNITUDE_GUARD)
 End Function
 
 
@@ -262,7 +272,7 @@ Public Function PROB_IsPositiveWithinSupportedMagnitude( _
 '
 ' RETURNS
 '   Boolean
-'     TRUE  => X > 0 and Abs(X) < PROB_LARGE_NUMBER.
+'     TRUE  => X > 0 and Abs(X) < PROB_PARAMETER_MAGNITUDE_GUARD.
 '     FALSE => X is non-positive or at or beyond the supported magnitude bound.
 '==============================================================================
 '
@@ -856,6 +866,8 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
+
+
 
 
 

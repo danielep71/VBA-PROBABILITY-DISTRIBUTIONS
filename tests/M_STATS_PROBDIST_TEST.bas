@@ -4745,7 +4745,7 @@ Private Sub Test_CN_ErrorContract()
     AssertRelClose "weibull full-range scale accepted", _
         K_STATS_Weibull_Mean(1#, 1E+200), 1E+200, TOL_REL_TIGHT
     AssertErrorCode "gamma shape at supported boundary is #NUM", _
-        K_STATS_Gamma_Mean(PROB_LARGE_NUMBER, 1#), xlErrNum
+        K_STATS_Gamma_Mean(PROB_PARAMETER_MAGNITUDE_GUARD, 1#), xlErrNum
 
     'Predictable arithmetic failures must be #NUM, never the unexpected #VALUE.
     AssertErrorCode "gamma density origin overflow is #NUM", _
@@ -4781,7 +4781,7 @@ Private Sub Test_CN_ErrorContract()
             K_STATS_Beta_Cumulative( _
                 0.5, _
                 1#, _
-                PROB_LARGE_NUMBER), _
+                PROB_PARAMETER_MAGNITUDE_GUARD), _
             xlErrNum
 
     'Full finite Uniform bounds are valid even when their width is not directly
@@ -4844,13 +4844,5 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
-
-
-
-
-
-
-
-
 
 

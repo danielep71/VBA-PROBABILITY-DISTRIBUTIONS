@@ -124,7 +124,7 @@ Option Explicit
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
-'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_LARGE_NUMBER,
+'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_PARAMETER_MAGNITUDE_GUARD,
 '                    PROB_WRITE_STATUS_BAR
 '       Predicates : PROB_IsWithinSupportedMagnitude, PROB_IsValidProbabilityOpen
 '       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw
@@ -191,7 +191,7 @@ Option Explicit
 ' PRIVATE CONSTANTS
 '==============================================================================
 
-' Shared constants (PROB_EPS, PROB_MAX_EXP, PROB_MIN_EXP, PROB_LARGE_NUMBER,
+' Shared constants (PROB_EPS, PROB_MAX_EXP, PROB_MIN_EXP, PROB_PARAMETER_MAGNITUDE_GUARD,
 ' PROB_DOUBLE_MAX, PROB_WRITE_STATUS_BAR) now live in M_STATS_PROBDIST_CORE. Only the
 ' normal-family-specific constants remain here. PROB_PI and PROB_TWO_PI were
 ' declared but never referenced and have been dropped.
@@ -1525,12 +1525,12 @@ Public Function K_STATS_Normal_InverseCumulative( _
         End If
     'Validate distribution parameters
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
+            FailMsg = "Mean must be within the parameter-magnitude guard (|Mean| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -1667,12 +1667,12 @@ Public Function K_STATS_Normal_InverseSurvival( _
         End If
     'Validate distribution parameters
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
+            FailMsg = "Mean must be within the parameter-magnitude guard (|Mean| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -1915,22 +1915,22 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '------------------------------------------------------------------------------
     'Validate finite bounds
         If Not PROB_IsWithinSupportedMagnitude(LowerBound) Then
-            FailMsg = "LowerBound must be within the supported magnitude (|LowerBound| < 1E100)"
+            FailMsg = "LowerBound must be within the parameter-magnitude guard (|LowerBound| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(UpperBound) Then
-            FailMsg = "UpperBound must be within the supported magnitude (|UpperBound| < 1E100)"
+            FailMsg = "UpperBound must be within the parameter-magnitude guard (|UpperBound| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate distribution parameters
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
+            FailMsg = "Mean must be within the parameter-magnitude guard (|Mean| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate ordering
@@ -2075,17 +2075,17 @@ Public Function K_STATS_Lognormal_Density( _
 '------------------------------------------------------------------------------
     'Validate X is finite
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
+            FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate lognormal parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            FailMsg = "MeanLog must be within the parameter-magnitude guard (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2233,17 +2233,17 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '------------------------------------------------------------------------------
     'Validate X is finite
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
+            FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate lognormal parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            FailMsg = "MeanLog must be within the parameter-magnitude guard (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2373,17 +2373,17 @@ Public Function K_STATS_Lognormal_Survival( _
 '------------------------------------------------------------------------------
     'Validate X is finite
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
+            FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate lognormal parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            FailMsg = "MeanLog must be within the parameter-magnitude guard (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2521,12 +2521,12 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
         End If
     'Validate log-space parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            FailMsg = "MeanLog must be within the parameter-magnitude guard (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2673,12 +2673,12 @@ Public Function K_STATS_Lognormal_InverseSurvival( _
         End If
     'Validate log-space parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            FailMsg = "MeanLog must be within the parameter-magnitude guard (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -3183,12 +3183,12 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '------------------------------------------------------------------------------
     'Validate arithmetic mean
         If Not PROB_IsWithinSupportedMagnitude(Mean) Or Mean <= 0# Then
-            FailMsg = "Mean must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "Mean must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate arithmetic standard deviation (non-negative)
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev < 0# Then
-            FailMsg = "StdDev must be non-negative and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDev must be non-negative and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -3579,17 +3579,17 @@ Private Function PROB_ValidateNormalInputs( _
 '------------------------------------------------------------------------------
     'Validate X
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
+            FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             Exit Function
         End If
     'Validate mean
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
+            FailMsg = "Mean must be within the parameter-magnitude guard (|Mean| < 1E100)"
             Exit Function
         End If
     'Validate standard deviation
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
 '------------------------------------------------------------------------------
@@ -3632,12 +3632,12 @@ Private Function PROB_ValidateLogParameters( _
 '------------------------------------------------------------------------------
     'Validate log mean
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            FailMsg = "MeanLog must be within the parameter-magnitude guard (|MeanLog| < 1E100)"
             Exit Function
         End If
     'Validate log standard deviation
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
 '------------------------------------------------------------------------------
@@ -3646,5 +3646,7 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
+
+
 
 
