@@ -1,4 +1,5 @@
 Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"
+Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"
 Option Explicit
 Option Private Module
 
@@ -382,6 +383,13 @@ Public Function PROB_StirlingError( _
 '   wrong metric here: it reaches 1.5E-13 near N = 501, where delta is 1.67E-04.
 '   What propagates into a log-probability is the absolute error.
 '
+'   The small-N table constants are written as a two-part sum, hi + lo, where hi
+'   is the value to 15 significant digits and lo is the residual. VBA source
+'   literals hold only about 15 significant digits, so a single literal of a
+'   value near 0.15 could not reach 3E-17; the residual term restores the missing
+'   low-order bits at load time. Each part is itself a <= 15-digit literal that
+'   the editor preserves.
+'
 ' DEPENDENCIES
 '   - PROB_LogGamma
 '   - PROB_HALF_LOG_TWO_PI  (M_STATS_PROBDIST_CORE)
@@ -422,36 +430,36 @@ Public Function PROB_StirlingError( _
             If TwoN = Int(TwoN) Then
                 Select Case CLng(TwoN)
             Case 0: PROB_StirlingError = 0#                        'delta(0)
-            Case 1: PROB_StirlingError = 0.153426409720027      'delta(0.5)
-            Case 2: PROB_StirlingError = 8.10614667953273E-02   'delta(1)
-            Case 3: PROB_StirlingError = 5.48141210519177E-02   'delta(1.5)
-            Case 4: PROB_StirlingError = 4.13406959554093E-02   'delta(2)
-            Case 5: PROB_StirlingError = 3.31628735199363E-02   'delta(2.5)
-            Case 6: PROB_StirlingError = 2.76779256849983E-02   'delta(3)
-            Case 7: PROB_StirlingError = 2.37461636562975E-02   'delta(3.5)
-            Case 8: PROB_StirlingError = 2.07906721037651E-02   'delta(4)
-            Case 9: PROB_StirlingError = 1.84884505326732E-02   'delta(4.5)
-            Case 10: PROB_StirlingError = 1.66446911898212E-02   'delta(5)
-            Case 11: PROB_StirlingError = 1.51349732219174E-02   'delta(5.5)
-            Case 12: PROB_StirlingError = 1.38761288230707E-02   'delta(6)
-            Case 13: PROB_StirlingError = 1.28104652429202E-02   'delta(6.5)
-            Case 14: PROB_StirlingError = 1.18967099458918E-02   'delta(7)
-            Case 15: PROB_StirlingError = 1.11045597582069E-02   'delta(7.5)
-            Case 16: PROB_StirlingError = 1.04112652619721E-02   'delta(8)
-            Case 17: PROB_StirlingError = 9.7994161261588E-03    'delta(8.5)
-            Case 18: PROB_StirlingError = 9.25546218271273E-03   'delta(9)
-            Case 19: PROB_StirlingError = 8.76870013413939E-03   'delta(9.5)
-            Case 20: PROB_StirlingError = 8.33056343336287E-03   'delta(10)
-            Case 21: PROB_StirlingError = 7.93411456431402E-03   'delta(10.5)
-            Case 22: PROB_StirlingError = 7.57367548795184E-03   'delta(11)
-            Case 23: PROB_StirlingError = 7.24455430132038E-03   'delta(11.5)
-            Case 24: PROB_StirlingError = 6.94284010720953E-03   'delta(12)
-            Case 25: PROB_StirlingError = 6.66524703270768E-03   'delta(12.5)
-            Case 26: PROB_StirlingError = 6.40899418800421E-03   'delta(13)
-            Case 27: PROB_StirlingError = 6.17171226303946E-03   'delta(13.5)
-            Case 28: PROB_StirlingError = 5.95137011275885E-03   'delta(14)
-            Case 29: PROB_StirlingError = 5.74621651301012E-03   'delta(14.5)
-            Case 30: PROB_StirlingError = 5.5547335519628E-03    'delta(15)
+            Case 1: PROB_StirlingError = 0.153426409720027 + 3.45291383939271E-16   'delta(0.5)
+            Case 2: PROB_StirlingError = 8.10614667953273E-02 - 4.17803297364056E-17 'delta(1)
+            Case 3: PROB_StirlingError = 5.48141210519177E-02 - 4.61038612976516E-17 'delta(1.5)
+            Case 4: PROB_StirlingError = 4.13406959554093E-02 - 5.90617791859288E-18 'delta(2)
+            Case 5: PROB_StirlingError = 3.31628735199363E-02 - 1.25148894902589E-17 'delta(2.5)
+            Case 6: PROB_StirlingError = 2.76779256849983E-02 + 3.91487892927462E-17 'delta(3)
+            Case 7: PROB_StirlingError = 2.37461636562975E-02 - 4.02866972090991E-18 'delta(3.5)
+            Case 8: PROB_StirlingError = 2.07906721037651E-02 - 6.88847722823215E-18 'delta(4)
+            Case 9: PROB_StirlingError = 1.84884505326732E-02 - 1.47692206425174E-17 'delta(4.5)
+            Case 10: PROB_StirlingError = 1.66446911898212E-02 - 7.83680513462641E-18 'delta(5)
+            Case 11: PROB_StirlingError = 1.51349732219174E-02 - 2.11264861631178E-17 'delta(5.5)
+            Case 12: PROB_StirlingError = 1.38761288230707E-02 + 4.79987457270238E-17 'delta(6)
+            Case 13: PROB_StirlingError = 1.28104652429202E-02 + 2.69242506552811E-17 'delta(6.5)
+            Case 14: PROB_StirlingError = 1.18967099458918E-02 - 2.99049442758823E-17 'delta(7)
+            Case 15: PROB_StirlingError = 1.11045597582069E-02 + 1.73266307551973E-17 'delta(7.5)
+            Case 16: PROB_StirlingError = 1.04112652619721E-02 - 3.50252143286747E-18 'delta(8)
+            Case 17: PROB_StirlingError = 9.7994161261588E-03 + 3.29839037340201E-18   'delta(8.5)
+            Case 18: PROB_StirlingError = 9.25546218271273E-03 + 2.9177286366331E-18   'delta(9)
+            Case 19: PROB_StirlingError = 8.76870013413939E-03 - 4.53704495273054E-18  'delta(9.5)
+            Case 20: PROB_StirlingError = 8.33056343336287E-03 + 1.25646931865963E-18  'delta(10)
+            Case 21: PROB_StirlingError = 7.93411456431402E-03 + 5.47249562490943E-19  'delta(10.5)
+            Case 22: PROB_StirlingError = 7.57367548795184E-03 + 7.94972024211595E-19  'delta(11)
+            Case 23: PROB_StirlingError = 7.24455430132038E-03 + 3.17954619660155E-18  'delta(11.5)
+            Case 24: PROB_StirlingError = 6.94284010720953E-03 - 1.34335847336525E-19  'delta(12)
+            Case 25: PROB_StirlingError = 6.66524703270768E-03 + 2.4423561808954E-18   'delta(12.5)
+            Case 26: PROB_StirlingError = 6.40899418800421E-03 - 2.93156036891702E-18  'delta(13)
+            Case 27: PROB_StirlingError = 6.17171226303946E-03 - 2.35246539520223E-18  'delta(13.5)
+            Case 28: PROB_StirlingError = 5.95137011275885E-03 - 2.26437558395353E-18  'delta(14)
+            Case 29: PROB_StirlingError = 5.74621651301012E-03 - 4.31797389752291E-18  'delta(14.5)
+            Case 30: PROB_StirlingError = 5.5547335519628E-03 + 1.37103868995979E-18   'delta(15)
     'Unreachable while 0.5 <= N <= 15 and TwoN is integral. Present so that a
     'broken invariant produces a correct number rather than a silent zero.
                     Case Else
@@ -1447,6 +1455,8 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
 
 
 
