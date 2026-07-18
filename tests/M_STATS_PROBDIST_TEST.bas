@@ -143,6 +143,7 @@ Option Explicit
 Private mTestCount          As Long            'Total assertions executed
 Private mPassCount          As Long            'Assertions passed
 Private mFailCount          As Long            'Assertions failed
+Private mFailureLog         As String          'Accumulated failure lines for CI reporting
 
 '==============================================================================
 ' TEST TOLERANCES
@@ -589,6 +590,7 @@ Private Sub BeginRun( _
         mTestCount = 0
         mPassCount = 0
         mFailCount = 0
+        mFailureLog = vbNullString
 
 '------------------------------------------------------------------------------
 ' PRINT HEADER
@@ -3686,6 +3688,7 @@ Private Sub RecordResult( _
         Else
             mFailCount = mFailCount + 1
             Debug.Print "   FAIL: " & TestName
+            mFailureLog = mFailureLog & TestName & vbCrLf
         End If
 End Sub
 
@@ -4841,6 +4844,8 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
+
+
 
 
 
