@@ -11,6 +11,10 @@ $ErrorActionPreference = "Stop"
 
 $excel = $null
 $workbook = $null
+$vbProject = $null
+$testComponent = $null
+$codeModule = $null
+
 $workbookPath = Join-Path $ArtifactDirectory "VBA_Probability_Distributions_CI.xlsm"
 $resultPath = Join-Path $ArtifactDirectory "test-result.txt"
 
@@ -34,6 +38,10 @@ function Release-ComObjectSafely {
 try {
     New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
     Set-Content -LiteralPath $resultPath -Value "" -Encoding UTF8
+
+    if (Test-Path -LiteralPath $workbookPath) {
+        Remove-Item -LiteralPath $workbookPath -Force
+    }
 
     Write-CiLog "Repository root: $RepositoryRoot"
     Write-CiLog "Creating isolated Excel workbook for VBA regression execution."
