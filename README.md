@@ -4,7 +4,7 @@
 
 ### Professional-grade numerical probability distributions for pure Excel VBA
 
-**Native special-function kernels · Stable tail algorithms · Direct survival functions · Safeguarded inverses · Regression-tested numerical contracts**
+**Native special-function kernels · Stable tail algorithms · Direct survival and inverse-survival functions · Safeguarded inverses · Regression-tested numerical contracts**
 
 <br>
 
@@ -12,9 +12,17 @@
 [![Pure VBA](https://img.shields.io/badge/Implementation-Pure_VBA-00599C?style=for-the-badge)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
 [![No WorksheetFunction](https://img.shields.io/badge/WorksheetFunction-Not_Required-8A2BE2?style=for-the-badge)](#why-not-worksheetfunction)
 [![No External DLL](https://img.shields.io/badge/External_DLL-None-555555?style=for-the-badge)](#installation)
+[![Tail Aware](https://img.shields.io/badge/Tail_API-Survival_%2B_Inverse_Survival-c2185b?style=for-the-badge)](#why-direct-survival-and-inverse-survival-functions-matter)
 
 <br>
 
+[![License](https://img.shields.io/github/license/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=2ea44f)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=6f42c1)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/stargazers)
+[![Forks](https://img.shields.io/github/forks/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=0969da)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/network/members)
+[![Issues](https://img.shields.io/github/issues/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=d73a49)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues)
+[![Last commit](https://img.shields.io/github/last-commit/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=orange)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/commits/main)
+
+<br>
 
 **No add-in · No installer · No COM component · No external numerical runtime**
 
@@ -60,7 +68,10 @@ The project is designed for:
 
 > **Positioning**
 >
-> A professional-grade numerical probability distribution library for pure Excel VBA, implementing its own special-function kernels, cancellation-resistant algorithms, direct survival functions, inverse distributions, guarded arithmetic, and automated regression tests—without relying on Excel's `WorksheetFunction` API.
+> A professional-grade numerical probability distribution library for pure Excel VBA, implementing its own special-function kernels, cancellation-resistant algorithms, direct survival and inverse-survival functions, guarded arithmetic, and automated regression tests—without relying on Excel's `WorksheetFunction` API.
+
+> [!NOTE]
+> The public surface is described by capability rather than by a fixed distribution or UDF count. The library is expected to evolve without making the repository's headline positioning obsolete.
 
 ---
 
@@ -71,6 +82,7 @@ The project is designed for:
 | Native distribution algorithms | — | Sometimes | ✅ |
 | Reusable incomplete-beta and incomplete-gamma kernels | — | Rarely | ✅ |
 | Direct upper-tail survival functions | Depends on Excel | Rarely | ✅ |
+| Direct inverse-survival functions | Usually reconstructed as `INV(1-q)` | Rarely | ✅ |
 | Safeguarded inverse solvers | Hidden | Rarely | ✅ |
 | Cancellation-resistant `Log1p` / `Expm1` paths | Hidden | Rarely | ✅ |
 | Explicit overflow and non-convergence policy | — | Rarely | ✅ |
@@ -91,7 +103,7 @@ This is not an attempt to reproduce every feature of R, SciPy, Boost.Math, or a 
 
 ### 🧠 Native numerical engine
 
-The library implements shared constants, stable elementary functions, special functions, distribution kernels, and inverse solvers directly in VBA.
+The library implements shared constants, stable elementary functions, special functions, distribution kernels, direct-tail evaluators, and inverse solvers directly in VBA.
 
 </td>
 <td width="33%" valign="top">
@@ -140,29 +152,29 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 
 ### Normal and lognormal family
 
-| Distribution surface | Density | CDF | Direct survival | Inverse | Additional operations |
-|---|:---:|:---:|:---:|:---:|---|
-| Standard Normal API | ✅ | ✅ | — | ✅ | Stable interval probability, fast inverse helper |
-| Normal | ✅ | ✅ | — | ✅ | Z-score, stable interval probability |
-| Lognormal | ✅ | ✅ | — | ✅ | Mean, variance, standard deviation, parameter conversion |
+| Distribution surface | Density | CDF | Survival | Inverse CDF | Inverse survival | Additional operations |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| Standard Normal API | ✅ | ✅ | ✅ | ✅ | ✅ | Stable interval probability, fast inverse helper |
+| Normal | ✅ | ✅ | ✅ | ✅ | ✅ | Z-score, stable interval probability |
+| Lognormal | ✅ | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation, parameter conversion |
 
 ### Classical test-statistic family
 
-| Distribution | Density | CDF | Direct survival | Inverse |
-|---|:---:|:---:|:---:|:---:|
-| Student t | ✅ | ✅ | ✅ | ✅ |
-| Chi-square | ✅ | ✅ | ✅ | ✅ |
-| F | ✅ | ✅ | ✅ | ✅ |
+| Distribution | Density | CDF | Survival | Inverse CDF | Inverse survival |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Student t | ✅ | ✅ | ✅ | ✅ | — |
+| Chi-square | ✅ | ✅ | ✅ | ✅ | — |
+| F | ✅ | ✅ | ✅ | ✅ | — |
 
 ### Other continuous distributions
 
-| Distribution | Density | CDF | Direct survival | Inverse | Moments |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Gamma | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
-| Beta | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
-| Exponential | ✅ | ✅ | ✅ | ✅ | — |
-| Weibull | ✅ | ✅ | ✅ | ✅ | Mean, variance, standard deviation |
-| Uniform | ✅ | ✅ | ✅ | ✅ | — |
+| Distribution | Density | CDF | Survival | Inverse CDF | Inverse survival | Moments |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Gamma | ✅ | ✅ | ✅ | ✅ | — | Mean, variance, standard deviation |
+| Beta | ✅ | ✅ | ✅ | ✅ | — | Mean, variance, standard deviation |
+| Exponential | ✅ | ✅ | ✅ | ✅ | — | — |
+| Weibull | ✅ | ✅ | ✅ | ✅ | — | Mean, variance, standard deviation |
+| Uniform | ✅ | ✅ | ✅ | ✅ | — | — |
 
 The catalogue is intentionally described by **capability**, not by a fixed UDF count. The public surface and internal numerical layer can evolve without making the repository's positioning obsolete.
 
@@ -203,6 +215,18 @@ Returns approximately `0.95`.
 ```
 
 Returns the 99th percentile of a normal distribution with mean `100` and standard deviation `15`.
+
+```excel
+=K_STATS_NormalStandard_InverseSurvival(1E-18)
+```
+
+Returns the standard-normal threshold associated with an upper-tail exceedance probability of `1E-18` without forming `1 - 1E-18`.
+
+```excel
+=K_STATS_Lognormal_InverseSurvival(0.001,0,1)
+```
+
+Returns the lognormal threshold exceeded with probability `0.001`.
 
 ```excel
 =K_STATS_StudentT_Survival(3,12)
@@ -268,7 +292,9 @@ End Sub
 
 ---
 
-## 🎯 Why direct survival functions matter
+## 🎯 Why direct survival and inverse-survival functions matter
+
+### Direct survival
 
 Mathematically:
 
@@ -276,9 +302,9 @@ Mathematically:
 Survival(x) = 1 - CDF(x)
 ```
 
-Numerically, that identity may fail when `CDF(x)` has already rounded to exactly `1`.
+Numerically, that subtraction may destroy the result when `CDF(x)` has already rounded to exactly `1`.
 
-For example, the Student t right tail at a sufficiently large statistic can remain representable even though:
+For example, a Student t right tail can remain representable even though:
 
 ```vba
 1# - K_STATS_StudentT_Cumulative(X, DegreesFreedom)
@@ -289,6 +315,9 @@ returns zero.
 The library therefore exposes direct survival functions for the relevant distributions:
 
 ```excel
+=K_STATS_NormalStandard_Survival(Z)
+=K_STATS_Normal_Survival(X,Mean,StdDev)
+=K_STATS_Lognormal_Survival(X,MeanLog,StdDevLog)
 =K_STATS_StudentT_Survival(X,DegreesFreedom)
 =K_STATS_ChiSquare_Survival(X,DegreesFreedom)
 =K_STATS_F_Survival(X,DegreesFreedom1,DegreesFreedom2)
@@ -299,8 +328,30 @@ The library therefore exposes direct survival functions for the relevant distrib
 =K_STATS_Uniform_Survival(X,LowerBound,UpperBound)
 ```
 
+### Direct inverse survival
+
+The same issue appears in reverse.
+
+A small exceedance probability `q` is often converted to a threshold through:
+
+```text
+InverseCDF(1 - q)
+```
+
+But when `q` is below machine resolution near one, `1 - q` rounds to exactly `1` and the inverse CDF fails—even though the required quantile is finite.
+
+The Normal family therefore exposes direct inverse-survival functions:
+
+```excel
+=K_STATS_NormalStandard_InverseSurvival(q)
+=K_STATS_Normal_InverseSurvival(q,Mean,StdDev)
+=K_STATS_Lognormal_InverseSurvival(q,MeanLog,StdDevLog)
+```
+
+These functions invert the upper tail directly and never reconstruct it through `1 - q`.
+
 > [!TIP]
-> Use a direct survival function whenever the upper tail is the quantity of interest. Do not compute a small p-value by subtracting a CDF from one unless you have independently established that the subtraction is well-conditioned.
+> Use a direct survival function when the requested output is a small upper-tail probability. Use a direct inverse-survival function when the input is a small exceedance probability. These APIs preserve information that subtraction from one may erase.
 
 ---
 
@@ -476,6 +527,20 @@ Invalid probabilities and parameters are not silently clipped or repaired.
 
 ---
 
+## ✅ Validation posture
+
+The repository contains a consolidated deterministic regression harness covering the numerical core, special functions, all distribution families, direct tails, inverse round-trips, support edges, error codes, and named historical regressions.
+
+The harness is currently executed inside Excel/VBA. Until an automated Windows/Excel CI workflow is added, the README deliberately does **not** display a live passing-build badge. A release is considered verified only after the current exported modules compile and the complete harness reports:
+
+```text
+RESULT: ALL TESTS PASSED
+```
+
+Numerical results intended for regulated, financial, actuarial, engineering, or safety-critical use should also be validated against an independent high-precision implementation and the exact tagged release or commit used.
+
+---
+
 ## 🧪 Testing and release discipline
 
 Import:
@@ -505,6 +570,7 @@ The suite covers:
 - ✅ exact constants and boundary behavior;
 - ✅ density symmetry and CDF complement identities;
 - ✅ direct survival-tail accuracy;
+- ✅ direct inverse-survival reference values and round-trips;
 - ✅ inverse-CDF round-trips;
 - ✅ cross-distribution identities;
 - ✅ stable moment formulas;
@@ -707,7 +773,34 @@ The purpose is not to claim that Excel's native functions are unsuitable. It is 
 
 ---
 
+## 🔍 Validation boundary
+
+This project is designed to make numerical behavior inspectable and testable, but it is not an independently certified numerical package.
+
+Current boundaries:
+
+- regression execution is manual inside Excel/VBA;
+- benchmark claims should be backed by committed reproducible external artifacts;
+- floating-point behavior remains subject to IEEE-754 `Double` limits and the documented supported domains;
+- users remain responsible for independent validation in their intended application;
+- release tags or commit SHAs should be recorded whenever reproducibility matters.
+
+This explicit boundary is a feature, not a disclaimer hidden in fine print: numerical software is trustworthy when its assumptions, limits, and verification process are visible.
+
+---
+
 ## 🧭 Roadmap
+
+### Numerical assurance and repository automation
+
+- reproducible Python reference-generation scripts;
+- committed accuracy grids and maximum-error summaries;
+- static GitHub Actions checks for exported VBA modules;
+- automated README/API consistency checks;
+- investigation of Windows/Excel regression execution in CI;
+- performance benchmarks with recorded environments.
+
+### Library expansion
 
 Potential future work includes:
 
@@ -717,8 +810,6 @@ Potential future work includes:
 - random variate generation;
 - parameter estimation;
 - goodness-of-fit utilities;
-- reproducible external reference-generation scripts;
-- static repository checks;
 - benchmark grids for extreme parameters;
 - a reusable VBA numerical-testing framework.
 
@@ -797,6 +888,13 @@ The `Status` argument allows VBA callers to receive a detailed diagnostic messag
 <summary><strong>Why are some upper tails exposed as separate functions?</strong></summary>
 
 Because `1 - CDF` can lose every significant digit when the CDF rounds to one. A direct survival function preserves the small upper tail.
+
+</details>
+
+<details>
+<summary><strong>Why does the Normal family expose inverse survival?</strong></summary>
+
+Because `InverseCDF(1 - q)` fails when a very small `q` is lost in the subtraction from one. The inverse-survival functions invert the upper-tail probability directly and preserve exceedance probabilities far below `1E-16`.
 
 </details>
 
