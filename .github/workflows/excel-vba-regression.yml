@@ -1,0 +1,62 @@
+name: Excel VBA Regression
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "ci/**"
+      - ".github/workflows/excel-vba-regression.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "ci/**"
+      - ".github/workflows/excel-vba-regression.yml"
+
+concurrency:
+  group: excel-vba-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    name: Run Excel/VBA regression harness
+
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+      - excel
+
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run complete VBA regression suite through Excel COM
+        shell: pwsh
+        run: >-
+          ./ci/Run-ExcelVbaTests.ps1
+          -RepositoryRoot "${{ github.workspace }}"
+
+      - name: Upload VBA test result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: excel-vba-regression-${{ github.run_id }}
+          path: artifacts/excel-vba-ci/test-result.txt
+          if-no-files-found: warn
+          retention-days: 30
