@@ -140,6 +140,22 @@ Err_Handler:
     Test_STATS_PROBDIST_RunAll_CI = _
         "ERROR=" & CStr(Err.Number) & ";DESCRIPTION=" & Err.Description
 End Function
+
+
+Public Function Test_STATS_PROBDIST_GetFailureLog_CI() As String
+'
+'==============================================================================
+' Test_STATS_PROBDIST_GetFailureLog_CI
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the accumulated failure lines from the most recent run so the CI
+'   runner can surface each failed assertion's name, actual, expected and
+'   tolerance, not just the failure count. Read after Test_STATS_PROBDIST_RunAll_CI
+'   in the same session; it does not reset the buffer.
+'==============================================================================
+'
+    Test_STATS_PROBDIST_GetFailureLog_CI = mFailureLog
+End Function
 '@
 
     $insertLine = $codeModule.CountOfLines + 1
@@ -167,6 +183,23 @@ End Function
     Write-CiLog "Assertions executed: $total"
     Write-CiLog "Assertions passed: $passed"
     Write-CiLog "Assertions failed: $failed"
+
+    if ($failed -gt 0) {
+        $logMacro = "'" + $workbook.Name + "'!Test_STATS_PROBDIST_GetFailureLog_CI"
+        $failureLog = [string]$excel.Run($logMacro)
+
+        if ([string]::IsNullOrWhiteSpace($failureLog)) {
+            Write-CiLog "Failed assertions reported but the failure log was empty."
+        }
+        else {
+            Write-CiLog "Failed assertions:"
+            foreach ($line in ($failureLog -split "`r?`n")) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    Write-CiLog "  $line"
+                }
+            }
+        }
+    }
 
     if ($total -le 0) {
         throw "The VBA harness reported zero executed assertions."
