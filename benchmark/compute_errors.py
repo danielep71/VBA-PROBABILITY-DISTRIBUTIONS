@@ -17,10 +17,14 @@ Usage:
 """
 import argparse
 import sys
+from decimal import Decimal, getcontext, InvalidOperation
 import csv
 import datetime as _dt
 import math
 import re
+
+
+getcontext().prec = 50  # exact-enough for Double reconstruction and error ratios
 
 
 def parse_claim(claim):
@@ -28,7 +32,11 @@ def parse_claim(claim):
     m = re.match(r"(rel|abs)\s*<?=?\s*([0-9.eE+-]+)", claim)
     if not m:
         return None, None
-    return m.group(1), float(m.group(2))
+    try:
+        return m.group(1), Decimal(m.group(2))
+    except InvalidOperation:
+        return m.group(1), None
+    # (unreachable legacy line below retained for clarity)
 
 
 def load_contract(path=None):
@@ -78,15 +86,24 @@ def parse_observed(s):
     s = s.strip()
     if s == "" or s.upper() == "ERROR":
         return None
-    return sum(float(part) for part in s.split(";"))
+    # Sum the two-part 'hi;lo' export in Decimal so the full Double is preserved
+    # and the later obs-ref subtraction does not cancel in binary float.
+    total = Decimal(0)
+    for part in s.split(";"):
+        total += Decimal(part.strip())
+    return total
 
 
 def errors(observed, reference, metric):
-    o, r = parse_observed(observed), float(reference)
+    o = parse_observed(observed)
     if o is None:
         raise ValueError("no observed value")
+    r = Decimal(str(reference).strip())
     abs_e = abs(o - r)
-    rel_e = abs_e / abs(r) if r != 0 else (0.0 if o == 0 else math.inf)
+    if r != 0:
+        rel_e = abs_e / abs(r)
+    else:
+        rel_e = Decimal(0) if o == 0 else Decimal("Infinity")
     return abs_e, (abs_e if metric == "abs" else rel_e)
 
 
@@ -124,6 +141,7 @@ def main():
     contract = load_contract() or {}
     n_fail = 0
     n_known = 0
+    n_char = 0
     n_pending = 0
     any_measured = False
     for fn in sorted(by_fn):
@@ -141,42 +159,35 @@ def main():
                          f"0/{len(grp)} | ⏳ PENDING |")
             continue
         any_measured = True
-        worst_e, worst_at = -1.0, ""
+        worst_e, worst_at = Decimal(-1), ""
         for r in measured:
             try:
                 _, e = errors(r["observed_vba"], r["reference"], cmetric)
-            except (ValueError, ZeroDivisionError):
-                e = math.inf
+            except (ValueError, ZeroDivisionError, InvalidOperation):
+                e = Decimal("Infinity")
             if e > worst_e:
                 worst_e = e
                 args_str = ", ".join(a for a in (r["arg1"], r["arg2"], r["arg3"]) if a)
                 worst_at = args_str
-        # Measurement floor: observed values are a VBA Double rendered to ~15-16
-        # significant digits in the CSV, so a RELATIVE claim tighter than ~1E-14
-        # cannot be confirmed or denied by this harness. Report it honestly.
-        FLOOR = 1e-14
-        below_floor = (cmetric == "rel" and threshold is not None and threshold < FLOOR)
-        if cmetric == "abs" and threshold is not None:
-            # Absolute claim below the double/CSV precision at the value's magnitude
-            # cannot be verified. Use the largest reference magnitude in the group.
-            mags = [abs(float(r["reference"])) for r in measured
-                    if r["reference"].strip() not in ("", "0")]
-            ref_mag = max(mags) if mags else 1.0
-            if threshold < ref_mag * 2.2e-16:
-                below_floor = True
+        # A measured error is judged directly against the contract threshold in
+        # Decimal. There is no blanket precision-floor exemption: the two-part
+        # hi;lo export preserves the full Double, so a miss is a miss unless the
+        # contract explicitly classifies the function otherwise.
         ok = threshold is not None and worst_e <= threshold
         if fn_status == "known_limitation":
             # Documented defect: not a silent pass, not a hard fail.
             n_known += 1
             verdict = "🔷 KNOWN LIMITATION"
-        elif below_floor and not ok:
-            verdict = "⚠️ below harness precision"
+        elif fn_status == "characterization_only":
+            # Measured for the record, not held to a pass/fail claim.
+            n_char += 1
+            verdict = "🧪 CHARACTERIZATION ONLY"
         elif ok:
             verdict = "✅ PASS"
         else:
             n_fail += 1
             verdict = "❌ FAIL"
-        lines.append(f"| {fn} | {claim} | {cmetric} | {worst_e:.2e} | "
+        lines.append(f"| {fn} | {claim} | {cmetric} | {float(worst_e):.2e} | "
                      f"`{worst_at}` | {n_meas}/{len(grp)} | {verdict} |")
 
     # Surface documented known-limitation contracts that have no measured grid rows
@@ -196,30 +207,40 @@ def main():
                      "fill the `observed_vba` column, then re-run `compute_errors.py`.")
     else:
         lines.append(f"> **Verdict tally** — FAIL: {n_fail}, KNOWN LIMITATION: {n_known}, "
-                     f"PENDING: {n_pending}.")
+                     f"CHARACTERIZATION ONLY: {n_char}, PENDING: {n_pending}.")
         lines.append("")
         lines.append("> States: **PASS** meets the contract; **FAIL** exceeds it and must be "
                      "investigated; **KNOWN LIMITATION** is a documented defect tracked in "
-                     "`accuracy_contracts.csv` (does not read as green); **PENDING** is not yet "
-                     "measured. Rows marked *below harness precision* have relative claims "
-                     "tighter than a 15-16 digit CSV round-trip can verify and are not failures.")
+                     "`accuracy_contracts.csv` (does not read as green); **CHARACTERIZATION "
+                     "ONLY** is measured for the record but not held to a pass/fail claim; "
+                     "**PENDING** is not yet measured. Errors are computed in Decimal from the "
+                     "two-part hi;lo export, so a miss is a real miss (no precision-floor "
+                     "exemption).")
 
     with open(args.out, "w") as f:
         f.write("\n".join(lines) + "\n")
 
-    # ---- release gate ----
-    # Strict (default): any FAIL or KNOWN LIMITATION blocks the gate, so a release
-    # cannot report a fully green numerical contract while a documented defect
-    # (e.g. the LogBeta imbalance band) is still present. Development mode
-    # (--allow-known-limitations) blocks only on FAIL.
-    blocking = n_fail if args.allow_known_limitations else (n_fail + n_known)
+    # ---- release gate (granular exit codes) ----
+    #   exit 1 : a hard FAIL, or (strict mode) an unresolved KNOWN LIMITATION.
+    #   exit 2 : required observations are missing (PENDING) with nothing worse.
+    #   exit 0 : all active contracts pass.
+    # CHARACTERIZATION ONLY never blocks. Development mode
+    # (--allow-known-limitations) does not block on KNOWN LIMITATION, but FAIL
+    # and PENDING still apply.
     mode = "development (known limitations allowed)" if args.allow_known_limitations else "strict"
-    print(f"{args.out}: FAIL={n_fail} KNOWN_LIMITATION={n_known} PENDING={n_pending} "
-          f"[gate: {mode}]")
-    if blocking:
-        print(f"  gate FAILED: {blocking} blocking item(s).")
+    print(f"{args.out}: FAIL={n_fail} KNOWN_LIMITATION={n_known} "
+          f"CHARACTERIZATION_ONLY={n_char} PENDING={n_pending} [gate: {mode}]")
+
+    fail_block = n_fail + (0 if args.allow_known_limitations else n_known)
+    if fail_block:
+        print(f"  gate FAILED (exit 1): {fail_block} blocking item(s) "
+              f"[FAIL={n_fail}"
+              f"{'' if args.allow_known_limitations else f', KNOWN LIMITATION={n_known}'}].")
         sys.exit(1)
-    print("  gate passed.")
+    if n_pending:
+        print(f"  gate INCOMPLETE (exit 2): {n_pending} function(s) not yet measured.")
+        sys.exit(2)
+    print("  gate passed (exit 0).")
     sys.exit(0)
     print(f"wrote {args.out} ({sum(1 for r in rows if r['observed_vba'].strip())} "
           f"observed of {len(rows)} rows)")

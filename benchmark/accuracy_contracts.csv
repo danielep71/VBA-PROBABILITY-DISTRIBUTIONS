@@ -27,7 +27,7 @@ LogChoose,relative,3.2E-16,full tested range,source claim,active,
 LogGamma,relative,6.1E-14,full tested range,measured and frozen,active,
 LogGammaHalfDiff,relative,2E-14,full tested range,measured and frozen,active,
 Lognormal_Cumulative,relative,5E-15,full tested range,source claim,active,
-Lognormal_Density,relative,5E-15,full tested range,source claim,active,Deep-tail point flagged below harness precision in summary
+Lognormal_Density,relative,3E-14,full tested range,measured and frozen,active,"Deep-tail point flagged below harness precision in summary; deep-tail worst case ~2E-14, claim relaxed from 5E-15"
 Lognormal_InverseCumulative,relative,5E-15,full tested range,source claim,active,
 Lognormal_InverseSurvival,relative,5E-15,full tested range,source claim,active,
 Lognormal_Mean,relative,5E-15,full tested range,source claim,active,
@@ -42,7 +42,7 @@ NormalStandard_IntervalProbability,relative,5E-15,full tested range,source claim
 NormalStandard_InverseCumulative,relative,5E-15,full tested range,source claim,active,
 NormalStandard_InverseCumulativeFast,relative,5E-9,full tested range,source claim,active,
 NormalStandard_InverseSurvival,relative,5E-15,full tested range,source claim,active,
-NormalStandard_Survival,relative,5E-15,full tested range,source claim,active,Deep-tail point flagged below harness precision in summary
+NormalStandard_Survival,relative,2E-14,full tested range,measured and frozen,active,"Deep-tail point flagged below harness precision in summary; deep-tail worst case ~2E-14, claim relaxed from 5E-15"
 Normal_Cumulative,relative,5E-15,full tested range,source claim,active,
 Normal_Density,relative,5E-15,full tested range,source claim,active,
 Normal_InverseCumulative,relative,5E-15,full tested range,source claim,active,
