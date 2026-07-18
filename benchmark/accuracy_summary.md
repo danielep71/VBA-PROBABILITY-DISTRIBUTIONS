@@ -34,7 +34,7 @@ Reference values are mpmath at 50 digits (see `generate_reference_values.py`). O
 | LogGamma | rel<6.1E-14 | rel | 3.82e-15 | `8.376776400682919` | 40/40 | ✅ pass |
 | LogGammaHalfDiff | rel<=2E-14 | rel | 1.53e-14 | `1.6102620275609393` | 30/30 | ✅ pass |
 | Lognormal_Cumulative | rel<=5E-15 | rel | 2.27e-16 | `0.5, 0.0, 1.0` | 3/3 | ✅ pass |
-| Lognormal_Density | rel<=5E-15 | rel | 1.88e-16 | `2.0, 0.5, 0.25` | 3/3 | ✅ pass |
+| Lognormal_Density | rel<=5E-15 | rel | 2.36e-14 | `3.720075976020836e-44, 0.0, 2.5` | 4/4 | ⚠️ below harness precision |
 | Lognormal_InverseCumulative | rel<=5E-15 | rel | 1.97e-16 | `0.025, 0.0, 1.0` | 2/2 | ✅ pass |
 | Lognormal_InverseSurvival | rel<=5E-15 | rel | 2.50e-16 | `0.025, 0.0, 1.0` | 2/2 | ✅ pass |
 | Lognormal_Mean | rel<=5E-15 | rel | 0.00e+00 | `0.0, 1.0` | 2/2 | ✅ pass |
@@ -51,7 +51,7 @@ Reference values are mpmath at 50 digits (see `generate_reference_values.py`). O
 | NormalStandard_InverseSurvival | rel<=5E-15 | rel | 1.72e-15 | `0.999` | 5/5 | ✅ pass |
 | NormalStandard_Survival | rel<=5E-15 | rel | 1.51e-14 | `3.0` | 6/6 | ⚠️ below harness precision |
 | Normal_Cumulative | rel<=5E-15 | rel | 0.00e+00 | `1.96, 0.0, 1.0` | 3/3 | ✅ pass |
-| Normal_Density | rel<=5E-15 | rel | 1.63e-16 | `110.0, 100.0, 15.0` | 3/3 | ✅ pass |
+| Normal_Density | rel<=5E-15 | rel | 2.37e-16 | `1.96, 0.0, 1.0` | 3/3 | ✅ pass |
 | Normal_InverseCumulative | rel<=5E-15 | rel | 2.11e-16 | `0.99, 100.0, 15.0` | 2/2 | ✅ pass |
 | Normal_InverseSurvival | rel<=5E-15 | rel | 2.18e-16 | `0.99, 100.0, 15.0` | 2/2 | ✅ pass |
 | Normal_Survival | rel<=5E-15 | rel | 8.33e-16 | `1.96, 0.0, 1.0` | 3/3 | ✅ pass |
