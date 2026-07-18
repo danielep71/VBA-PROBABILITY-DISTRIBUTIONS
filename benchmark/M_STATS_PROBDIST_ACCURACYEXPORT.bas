@@ -222,6 +222,32 @@ Private Function EvaluateOne( _
         Case "F_Survival":                   V = K_STATS_F_Survival(A1, A2, A3)
         Case "F_InverseCumulative":          V = K_STATS_F_InverseCumulative(A1, A2, A3)
 
+        Case "NormalStandard_Density":       V = K_STATS_NormalStandard_Density(A1)
+        Case "NormalStandard_Cumulative":    V = K_STATS_NormalStandard_Cumulative(A1)
+        Case "NormalStandard_Survival":      V = K_STATS_NormalStandard_Survival(A1)
+        Case "NormalStandard_InverseCumulative":     V = K_STATS_NormalStandard_InverseCumulative(A1)
+        Case "NormalStandard_InverseSurvival":       V = K_STATS_NormalStandard_InverseSurvival(A1)
+        Case "NormalStandard_InverseCumulativeFast": V = K_STATS_NormalStandard_InverseCumulativeFast(A1)
+        Case "NormalStandard_IntervalProbability":   V = K_STATS_NormalStandard_IntervalProbability(A1, A2)
+
+        Case "Normal_Density":               V = K_STATS_Normal_Density(A1, A2, A3)
+        Case "Normal_Cumulative":            V = K_STATS_Normal_Cumulative(A1, A2, A3)
+        Case "Normal_Survival":              V = K_STATS_Normal_Survival(A1, A2, A3)
+        Case "Normal_InverseCumulative":     V = K_STATS_Normal_InverseCumulative(A1, A2, A3)
+        Case "Normal_InverseSurvival":       V = K_STATS_Normal_InverseSurvival(A1, A2, A3)
+        Case "Normal_ZScore":                V = K_STATS_Normal_ZScore(A1, A2, A3)
+
+        Case "Lognormal_Density":            V = K_STATS_Lognormal_Density(A1, A2, A3)
+        Case "Lognormal_Cumulative":         V = K_STATS_Lognormal_Cumulative(A1, A2, A3)
+        Case "Lognormal_Survival":           V = K_STATS_Lognormal_Survival(A1, A2, A3)
+        Case "Lognormal_InverseCumulative":  V = K_STATS_Lognormal_InverseCumulative(A1, A2, A3)
+        Case "Lognormal_InverseSurvival":    V = K_STATS_Lognormal_InverseSurvival(A1, A2, A3)
+        Case "Lognormal_Mean":               V = K_STATS_Lognormal_Mean(A1, A2)
+        Case "Lognormal_Variance":           V = K_STATS_Lognormal_Variance(A1, A2)
+        Case "Lognormal_StdDev":             V = K_STATS_Lognormal_StdDev(A1, A2)
+        Case "Lognormal_ParamMeanLog":       V = ExtractParam(A1, A2, 1)
+        Case "Lognormal_ParamStdDevLog":     V = ExtractParam(A1, A2, 2)
+
         Case Else:                           EvaluateOne = "ERROR": Exit Function
     End Select
 
@@ -233,6 +259,29 @@ Private Function EvaluateOne( _
     Exit Function
 Fail:
     EvaluateOne = "ERROR"
+End Function
+
+
+Private Function ExtractParam( _
+    ByVal Mean As Double, _
+    ByVal StdDev As Double, _
+    ByVal Which As Long) _
+    As Variant
+'
+'==============================================================================
+' ExtractParam
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls K_STATS_Lognormal_ParametersFromMeanStdDev (which returns a 1x2 array)
+'   and returns element Which (1 = MeanLog, 2 = StdDevLog), so each output can be
+'   measured as its own grid row.
+'==============================================================================
+'
+    Dim R                   As Variant         'Parameter array
+
+    R = K_STATS_Lognormal_ParametersFromMeanStdDev(Mean, StdDev)
+    If IsError(R) Then ExtractParam = CVErr(xlErrNum): Exit Function
+    ExtractParam = R(1, Which)
 End Function
 
 

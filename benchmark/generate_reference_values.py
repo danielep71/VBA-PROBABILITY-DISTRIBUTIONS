@@ -147,6 +147,31 @@ def logspace(lo, hi, n):
     return [mp.e ** (mp.log(lo) + (mp.log(hi) - mp.log(lo)) * i / (n - 1)) for i in range(n)]
 
 
+
+def _phi(z):
+    z = mp.mpf(z)
+    return mp.e ** (-z * z / 2) / mp.sqrt(2 * mp.pi)
+
+
+def _Phi(z):
+    return mp.ncdf(mp.mpf(z))
+
+
+def _Phi_sf(z):
+    return mp.ncdf(-mp.mpf(z))
+
+
+def _Phi_inv(p):
+    p = mp.mpf(p)
+    return _bisect(lambda z: _Phi(z) - p, mp.mpf("-40"), mp.mpf("40"))
+
+
+def _lognorm_params(mean, sd):
+    mean, sd = mp.mpf(mean), mp.mpf(sd)
+    varlog = mp.log(1 + (sd / mean) ** 2)
+    return mp.log(mean) - varlog / 2, mp.sqrt(varlog)
+
+
 def build_rows():
     rows = []
 
@@ -209,6 +234,54 @@ def build_rows():
             add("F_Survival", "K_STATS_F_Survival", "rel<=1.1E-10", "rel", (x, d1, d2), _f_sf(x, d1, d2))
         for p in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95")]:
             add("F_InverseCumulative", "K_STATS_F_InverseCumulative", "rel<=5.9E-13", "rel", (p, d1, d2), _f_ppf(p, d1, d2))
+
+
+    # ===================== NORMAL FAMILY =====================
+    FIVE_E15 = "rel<=5E-15"
+
+    # --- Standard Normal ---
+    for z in [mp.mpf("-2"), mp.mpf("-0.5"), mp.mpf("0.5"), mp.mpf(1), mp.mpf("1.96"), mp.mpf(3)]:
+        add("NormalStandard_Density", "K_STATS_NormalStandard_Density", FIVE_E15, "rel", (z,), _phi(z))
+        add("NormalStandard_Cumulative", "K_STATS_NormalStandard_Cumulative", FIVE_E15, "rel", (z,), _Phi(z))
+        add("NormalStandard_Survival", "K_STATS_NormalStandard_Survival", FIVE_E15, "rel", (z,), _Phi_sf(z))
+    for pq in [mp.mpf("0.01"), mp.mpf("0.25"), mp.mpf("0.5"), mp.mpf("0.975"), mp.mpf("0.999")]:
+        add("NormalStandard_InverseCumulative", "K_STATS_NormalStandard_InverseCumulative", FIVE_E15, "rel", (pq,), _Phi_inv(pq))
+        add("NormalStandard_InverseSurvival", "K_STATS_NormalStandard_InverseSurvival", FIVE_E15, "rel", (pq,), -_Phi_inv(pq))
+        add("NormalStandard_InverseCumulativeFast", "K_STATS_NormalStandard_InverseCumulativeFast", "rel<=5E-9", "rel", (pq,), _Phi_inv(pq))
+    for lo, up in [(mp.mpf("-1.96"), mp.mpf("1.96")), (mp.mpf("-1"), mp.mpf(2)), (mp.mpf("0"), mp.mpf(3))]:
+        add("NormalStandard_IntervalProbability", "K_STATS_NormalStandard_IntervalProbability", FIVE_E15, "rel", (lo, up), _Phi(up) - _Phi(lo))
+
+    # --- General Normal ---
+    for (x, m, sd) in [(mp.mpf("1.96"), mp.mpf(0), mp.mpf(1)), (mp.mpf(110), mp.mpf(100), mp.mpf(15)),
+                       (mp.mpf(3), mp.mpf(5), mp.mpf(2))]:
+        z = (x - m) / sd
+        add("Normal_Density", "K_STATS_Normal_Density", FIVE_E15, "rel", (x, m, sd), _phi(z) / sd)
+        add("Normal_Cumulative", "K_STATS_Normal_Cumulative", FIVE_E15, "rel", (x, m, sd), _Phi(z))
+        add("Normal_Survival", "K_STATS_Normal_Survival", FIVE_E15, "rel", (x, m, sd), _Phi_sf(z))
+        add("Normal_ZScore", "K_STATS_Normal_ZScore", FIVE_E15, "rel", (x, m, sd), z)
+    for (pq, m, sd) in [(mp.mpf("0.99"), mp.mpf(100), mp.mpf(15)), (mp.mpf("0.025"), mp.mpf(10), mp.mpf(2))]:
+        add("Normal_InverseCumulative", "K_STATS_Normal_InverseCumulative", FIVE_E15, "rel", (pq, m, sd), m + sd * _Phi_inv(pq))
+        add("Normal_InverseSurvival", "K_STATS_Normal_InverseSurvival", FIVE_E15, "rel", (pq, m, sd), m - sd * _Phi_inv(pq))
+
+    # --- Lognormal ---
+    for (x, ml, sl) in [(mp.mpf(1), mp.mpf(0), mp.mpf(1)), (mp.mpf(2), mp.mpf("0.5"), mp.mpf("0.25")),
+                        (mp.mpf("0.5"), mp.mpf(0), mp.mpf(1))]:
+        zz = (mp.log(x) - ml) / sl
+        add("Lognormal_Density", "K_STATS_Lognormal_Density", FIVE_E15, "rel", (x, ml, sl), _phi(zz) / (x * sl))
+        add("Lognormal_Cumulative", "K_STATS_Lognormal_Cumulative", FIVE_E15, "rel", (x, ml, sl), _Phi(zz))
+        add("Lognormal_Survival", "K_STATS_Lognormal_Survival", FIVE_E15, "rel", (x, ml, sl), _Phi_sf(zz))
+    for (pq, ml, sl) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(1)), (mp.mpf("0.025"), mp.mpf(0), mp.mpf(1))]:
+        add("Lognormal_InverseCumulative", "K_STATS_Lognormal_InverseCumulative", FIVE_E15, "rel", (pq, ml, sl), mp.e ** (ml + sl * _Phi_inv(pq)))
+        add("Lognormal_InverseSurvival", "K_STATS_Lognormal_InverseSurvival", FIVE_E15, "rel", (pq, ml, sl), mp.e ** (ml - sl * _Phi_inv(pq)))
+    for (ml, sl) in [(mp.mpf(0), mp.mpf(1)), (mp.mpf("0.5"), mp.mpf("0.25"))]:
+        add("Lognormal_Mean", "K_STATS_Lognormal_Mean", FIVE_E15, "rel", (ml, sl), mp.e ** (ml + sl * sl / 2))
+        add("Lognormal_Variance", "K_STATS_Lognormal_Variance", FIVE_E15, "rel", (ml, sl), (mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl))
+        add("Lognormal_StdDev", "K_STATS_Lognormal_StdDev", FIVE_E15, "rel", (ml, sl), mp.sqrt((mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl)))
+    # ParametersFromMeanStdDev returns a 1x2 array; test each output separately
+    for (mean, sd) in [(mp.mpf(2), mp.mpf("0.5")), (mp.mpf(10), mp.mpf(3))]:
+        mlref, slref = _lognorm_params(mean, sd)
+        add("Lognormal_ParamMeanLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", FIVE_E15, "rel", (mean, sd), mlref)
+        add("Lognormal_ParamStdDevLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", FIVE_E15, "rel", (mean, sd), slref)
 
     return rows
 
