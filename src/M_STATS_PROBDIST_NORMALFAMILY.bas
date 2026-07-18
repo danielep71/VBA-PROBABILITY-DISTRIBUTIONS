@@ -130,6 +130,37 @@ Option Explicit
 '       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw
 '       Diagnostics: PROB_SetStatus
 '
+' MAGNITUDE POLICY
+'   Core separates true IEEE-754 finiteness (PROB_IsFinite) from the project's
+'   conservative supported-magnitude domain (PROB_IsWithinSupportedMagnitude,
+'   1E100), and reserves the latter for algorithms that genuinely need it. This
+'   module follows that split:
+'
+'     PROB_IsFinite                     the standard-normal Z arguments and the
+'                                       standard-normal interval bounds. The
+'                                       kernels cut off at Abs(Z) > 37 or 38 and
+'                                       return 0 or 1 without arithmetic, so no
+'                                       magnitude restriction is needed.
+'
+'     PROB_IsWithinSupportedMagnitude   the log-space lognormal parameters, where
+'                                       StdDevLog is squared by the moment
+'                                       routines and would overflow above
+'                                       1.34E154; and the general-normal X, Mean
+'                                       and StdDev, which are standardized by a
+'                                       division (see the caveat below).
+'
+'   Diagnostics name the test that was actually applied: a bounded argument is
+'   reported as outside the supported magnitude, never as "not finite", because
+'   1E200 is a perfectly finite Double.
+'
+' KNOWN GAP
+'   The 1E100 bound on the general-normal arguments is neither necessary nor
+'   sufficient: Z = (X - Mean) / StdDev can still overflow for a StdDev small
+'   enough, for example X = 9E99 with StdDev = 1E-300, which raises a VBA
+'   overflow and returns CVErr(xlErrValue) where the correct density is 0. The
+'   bound is retained as a partial guard until the standardization is made
+'   overflow-safe in its own right.
+'
 ' NOTES
 '   - Lognormal parameters are the mean and standard deviation of Log(X), not of X.
 '   - K_STATS_Lognormal_ParametersFromMeanStdDev converts arithmetic mean and standard
@@ -227,7 +258,7 @@ Public Function K_STATS_NormalStandard_Density( _
 '   - No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsFinite
 '   - PROB_NormalPDF
 '   - PROB_SetStatus
 '
@@ -258,7 +289,7 @@ Public Function K_STATS_NormalStandard_Density( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite input
-        If Not PROB_IsWithinSupportedMagnitude(Z) Then
+        If Not PROB_IsFinite(Z) Then
             FailMsg = "Z must be a finite number"
             GoTo Fail_Num
         End If
@@ -358,7 +389,7 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 '   - No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsFinite
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
 '
@@ -386,7 +417,7 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite input
-        If Not PROB_IsWithinSupportedMagnitude(Z) Then
+        If Not PROB_IsFinite(Z) Then
             FailMsg = "Z must be a finite number"
             GoTo Fail_Num
         End If
@@ -479,7 +510,7 @@ Public Function K_STATS_NormalStandard_Survival( _
 '   - No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsFinite
 '   - PROB_NormalSurvival
 '   - PROB_SetStatus
 '
@@ -504,7 +535,7 @@ Public Function K_STATS_NormalStandard_Survival( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite input
-        If Not PROB_IsWithinSupportedMagnitude(Z) Then
+        If Not PROB_IsFinite(Z) Then
             FailMsg = "Z must be a finite number"
             GoTo Fail_Num
         End If
@@ -842,7 +873,7 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsFinite
 '   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
 '
@@ -868,12 +899,12 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate finite bounds
-        If Not PROB_IsWithinSupportedMagnitude(LowerZ) Then
+        If Not PROB_IsFinite(LowerZ) Then
             FailMsg = "LowerZ must be a finite number"
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(UpperZ) Then
+        If Not PROB_IsFinite(UpperZ) Then
             FailMsg = "UpperZ must be a finite number"
             GoTo Fail_Num
         End If
@@ -1042,7 +1073,7 @@ Public Function K_STATS_Normal_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Validates finite X, Mean and StdDev.
+'   - Validates X, Mean and StdDev against the supported magnitude.
 '   - Validates positive StdDev.
 '   - Standardizes X into Z = (X - Mean) / StdDev.
 '   - Returns StandardNormalDensity(Z) / StdDev.
@@ -1179,7 +1210,7 @@ Public Function K_STATS_Normal_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Validates finite X, Mean and StdDev.
+'   - Validates X, Mean and StdDev against the supported magnitude.
 '   - Validates positive StdDev.
 '   - Standardizes X into Z = (X - Mean) / StdDev.
 '   - Returns StandardNormalCDF(Z).
@@ -1299,7 +1330,7 @@ Public Function K_STATS_Normal_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Validates finite X, Mean and StdDev.
+'   - Validates X, Mean and StdDev against the supported magnitude.
 '   - Validates positive StdDev.
 '   - Standardizes X into Z = (X - Mean) / StdDev.
 '   - Returns PROB_NormalSurvival(Z).
@@ -1461,12 +1492,12 @@ Public Function K_STATS_Normal_InverseCumulative( _
         End If
     'Validate distribution parameters
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be a finite number"
+            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be a finite strictly positive number"
+            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -1597,12 +1628,12 @@ Public Function K_STATS_Normal_InverseSurvival( _
         End If
     'Validate distribution parameters
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be a finite number"
+            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be a finite strictly positive number"
+            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -1788,7 +1819,8 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Validates finite bounds, finite Mean and positive StdDev.
+'   - Validates bounds, Mean and StdDev against the supported magnitude,
+'     and requires a positive StdDev.
 '   - Validates UpperBound >= LowerBound.
 '   - Standardizes both bounds and delegates to the stable interval kernel.
 '   - Clamps final rounding residuals to [0, 1].
@@ -1829,22 +1861,22 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '------------------------------------------------------------------------------
     'Validate finite bounds
         If Not PROB_IsWithinSupportedMagnitude(LowerBound) Then
-            FailMsg = "LowerBound must be a finite number"
+            FailMsg = "LowerBound must be within the supported magnitude (|LowerBound| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(UpperBound) Then
-            FailMsg = "UpperBound must be a finite number"
+            FailMsg = "UpperBound must be within the supported magnitude (|UpperBound| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate distribution parameters
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be a finite number"
+            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be a finite strictly positive number"
+            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate ordering
@@ -1909,7 +1941,11 @@ Public Function K_STATS_Lognormal_Density( _
 '   or economic quantities.
 '
 ' WORKSHEET EQUIVALENT
-'   LOGNORM.DIST(X, MeanLog, StdDevLog, FALSE)  (Excel 2010+).
+'   LOGNORM.DIST(X, MeanLog, StdDevLog, FALSE)  (Excel 2010+). Note the native
+'   function returns #NUM! for X <= 0 whereas this routine returns 0, which is
+'   the density of a positive-support variable outside its support. This matches
+'   K_STATS_Lognormal_Cumulative, which returns 0 there, and
+'   K_STATS_Lognormal_Survival, which returns 1.
 '
 ' PROVENANCE
 '   Closed-form lognormal density built on the standard normal density.
@@ -1918,7 +1954,7 @@ Public Function K_STATS_Lognormal_Density( _
 ' INPUTS
 '   X
 '     Evaluation point.
-'     Must be strictly positive.
+'     For X <= 0, the density is 0.
 '
 '   MeanLog
 '     Mean of Log(X).
@@ -1936,9 +1972,11 @@ Public Function K_STATS_Lognormal_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Validates X, MeanLog and StdDevLog.
-'   - Computes Z = (Log(X) - MeanLog) / StdDevLog.
-'   - Returns StandardNormalDensity(Z) / (X * StdDevLog).
+'   - Validates MeanLog and StdDevLog.
+'   - Returns 0 when X <= 0: the density of a positive-support variable is zero
+'     outside its support, so this is a value, not a domain error.
+'   - Otherwise computes Z = (Log(X) - MeanLog) / StdDevLog and returns
+'     StandardNormalDensity(Z) / (X * StdDevLog).
 '
 ' ERROR POLICY
 '   - Invalid numeric domains return CVErr(xlErrNum).
@@ -1947,7 +1985,7 @@ Public Function K_STATS_Lognormal_Density( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_ValidateLognormalInputs
+'   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalPDF
 '   - PROB_SetStatus
 '
@@ -1970,13 +2008,32 @@ Public Function K_STATS_Lognormal_Density( _
     'Initialize the failure message buffer
         FailMsg = vbNullString
 '------------------------------------------------------------------------------
-' VALIDATE INPUTS
+' VALIDATE PARAMETERS
 '------------------------------------------------------------------------------
-    'Validate lognormal distribution inputs
-        If Not PROB_ValidateLognormalInputs(X, MeanLog, StdDevLog, FailMsg) Then GoTo Fail_Num
+    'Validate X is finite
+        If Not PROB_IsWithinSupportedMagnitude(X) Then
+            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
+            GoTo Fail_Num
+        End If
+    'Validate lognormal parameters
+        If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
+            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
+            GoTo Fail_Num
+        End If
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
+    'Return zero outside the positive support
+        If X <= 0# Then
+            K_STATS_Lognormal_Density = 0#
+            PROB_SetStatus Status, vbNullString
+            Exit Function
+        End If
     'Compute standardized log variate
         Z = (Log(X) - MeanLog) / StdDevLog
     'Return lognormal density
@@ -2092,17 +2149,17 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '------------------------------------------------------------------------------
     'Validate X is finite
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be a finite number"
+            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate lognormal parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be a finite number"
+            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be a finite strictly positive number"
+            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2228,17 +2285,17 @@ Public Function K_STATS_Lognormal_Survival( _
 '------------------------------------------------------------------------------
     'Validate X is finite
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be a finite number"
+            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
             GoTo Fail_Num
         End If
     'Validate lognormal parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be a finite number"
+            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be a finite strictly positive number"
+            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2372,12 +2429,12 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
         End If
     'Validate log-space parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be a finite number"
+            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be a finite strictly positive number"
+            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2520,12 +2577,12 @@ Public Function K_STATS_Lognormal_InverseSurvival( _
         End If
     'Validate log-space parameters
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be a finite number"
+            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
             GoTo Fail_Num
         End If
 
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be a finite strictly positive number"
+            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
@@ -2960,7 +3017,7 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '
 '   StdDev
 '     Arithmetic standard deviation of X.
-'     Must be strictly positive.
+'     Must be non-negative.
 '
 ' RETURNS
 '   Variant
@@ -2970,15 +3027,21 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Validates strictly positive Mean and StdDev.
+'   - Validates strictly positive Mean and non-negative StdDev.
+'   - Returns MeanLog = Log(Mean), StdDevLog = 0 when StdDev = 0.
 '   - Computes the method-of-moments formulas through PROB_Log1p and a
 '     log-domain softplus branch, avoiding cancellation for tiny coefficients
 '     of variation and overflow for very large coefficients of variation.
 '
 ' NOTE
-'   StdDev = 0 is rejected: a degenerate (point-mass) lognormal has StdDevLog = 0,
-'   which every density/cumulative/inverse routine rejects. Requiring a strictly
-'   positive StdDev keeps the produced parameters usable downstream.
+'   StdDev = 0 is accepted and yields StdDevLog = 0 with MeanLog = Log(Mean), a
+'   degenerate point-mass lognormal. The conversion is well defined there: the
+'   variance ratio is 0, so VarianceLog is Log(1) = 0, and the returned pair
+'   reproduces the input moments exactly. That output is mathematically valid but
+'   WILL be rejected by the density/cumulative/inverse routines, which require
+'   StdDevLog > 0. This routine converts moments; it does not police what a
+'   caller does with the result. Feed a strictly positive StdDev if the
+'   parameters are to be used downstream.
 '
 ' ERROR POLICY
 '   - Invalid numeric domains return CVErr(xlErrNum).
@@ -3021,17 +3084,28 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '------------------------------------------------------------------------------
     'Validate arithmetic mean
         If Not PROB_IsWithinSupportedMagnitude(Mean) Or Mean <= 0# Then
-            FailMsg = "Mean must be a finite strictly positive number"
+            FailMsg = "Mean must be strictly positive and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
-    'Validate arithmetic standard deviation (strictly positive)
-        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be a finite strictly positive number"
+    'Validate arithmetic standard deviation (non-negative)
+        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev < 0# Then
+            FailMsg = "StdDev must be non-negative and within the supported magnitude (< 1E100)"
             GoTo Fail_Num
         End If
 '------------------------------------------------------------------------------
 ' COMPUTE LOGNORMAL PARAMETERS
 '------------------------------------------------------------------------------
+    'Handle the degenerate point-mass case before the log domain below, where
+    'Log(StdDev) would be Log(0) and raise a runtime error. The variance ratio is
+    'zero, so VarianceLog is Log(1) = 0, StdDevLog is 0 and MeanLog is Log(Mean).
+        If StdDev = 0# Then
+            Result(1, 2) = 0#
+            Result(1, 1) = Log(Mean)
+            K_STATS_Lognormal_ParametersFromMeanStdDev = Result
+            PROB_SetStatus Status, vbNullString
+            Exit Function
+        End If
+
     'Work in the log domain first so StdDev / Mean and its square cannot
     'overflow for a large coefficient of variation.
         LogCoeffVariation = Log(StdDev) - Log(Mean)
@@ -3327,7 +3401,7 @@ Private Function PROB_NormalInvCDF( _
     Dim X                   As Double          'Acklam estimate / refined root
     Dim PdfX                As Double          'Density at the estimate
     Dim CdfX                As Double          'Cumulative probability at the estimate
-    Dim e                   As Double          'CDF(X) - Probability
+    Dim E                   As Double          'CDF(X) - Probability
     Dim U                   As Double          'Newton correction e / pdf
 '------------------------------------------------------------------------------
 ' STARTING ESTIMATE
@@ -3345,8 +3419,8 @@ Private Function PROB_NormalInvCDF( _
     'rounded to exactly 0 or 1. At a rounded endpoint the residual is no longer
     'informative, so the raw Acklam estimate is retained.
         If PdfX > 0# And CdfX > 0# And CdfX < 1# Then
-            e = CdfX - Probability
-            U = e / PdfX
+            E = CdfX - Probability
+            U = E / PdfX
             X = X - U / (1# + X * U / 2#)
         End If
 '------------------------------------------------------------------------------
@@ -3406,17 +3480,17 @@ Private Function PROB_ValidateNormalInputs( _
 '------------------------------------------------------------------------------
     'Validate X
         If Not PROB_IsWithinSupportedMagnitude(X) Then
-            FailMsg = "X must be a finite number"
+            FailMsg = "X must be within the supported magnitude (|X| < 1E100)"
             Exit Function
         End If
     'Validate mean
         If Not PROB_IsWithinSupportedMagnitude(Mean) Then
-            FailMsg = "Mean must be a finite number"
+            FailMsg = "Mean must be within the supported magnitude (|Mean| < 1E100)"
             Exit Function
         End If
     'Validate standard deviation
         If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
-            FailMsg = "StdDev must be a finite strictly positive number"
+            FailMsg = "StdDev must be strictly positive and within the supported magnitude (< 1E100)"
             Exit Function
         End If
 '------------------------------------------------------------------------------
@@ -3424,38 +3498,6 @@ Private Function PROB_ValidateNormalInputs( _
 '------------------------------------------------------------------------------
     'Return success
         PROB_ValidateNormalInputs = True
-End Function
-
-
-Private Function PROB_ValidateLognormalInputs( _
-    ByVal X As Double, _
-    ByVal MeanLog As Double, _
-    ByVal StdDevLog As Double, _
-    ByRef FailMsg As String) _
-    As Boolean
-'
-'==============================================================================
-' PROB_ValidateLognormalInputs
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Validates inputs for lognormal density calculations.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' VALIDATE
-'------------------------------------------------------------------------------
-    'Validate evaluation point
-        If Not PROB_IsWithinSupportedMagnitude(X) Or X <= 0# Then
-            FailMsg = "X must be a finite strictly positive number"
-            Exit Function
-        End If
-    'Validate log-space parameters
-        If Not PROB_ValidateLogParameters(MeanLog, StdDevLog, FailMsg) Then Exit Function
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Return success
-        PROB_ValidateLognormalInputs = True
 End Function
 
 
@@ -3469,7 +3511,21 @@ Private Function PROB_ValidateLogParameters( _
 ' PROB_ValidateLogParameters
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Validates log-space lognormal parameters.
+'   Validates log-space lognormal parameters against the supported magnitude.
+'
+' WHY THE SUPPORTED-MAGNITUDE BOUND AND NOT PLAIN FINITENESS
+'   Per the Core policy, PROB_IsWithinSupportedMagnitude is applied only where an
+'   algorithm genuinely needs the restriction. It does here: the lognormal moment
+'   routines evaluate StdDevLog * StdDevLog, which overflows a Double once
+'   StdDevLog exceeds Sqr(1.79E308) = 1.34E154. The 1E100 bound keeps that square
+'   inside range (1E100 squared is 1E200), so the moments fail as a clean
+'   CVErr(xlErrNum) rather than raising a VBA overflow that would surface as
+'   CVErr(xlErrValue).
+'
+'   This is a real constraint, not defensive habit: a merely finite StdDevLog of
+'   1E155 would square to infinity. The standard-normal routines carry no such
+'   constraint - their kernels cut off at Abs(Z) > 37 and return 0 or 1 without
+'   arithmetic - and therefore validate with PROB_IsFinite instead.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3477,12 +3533,12 @@ Private Function PROB_ValidateLogParameters( _
 '------------------------------------------------------------------------------
     'Validate log mean
         If Not PROB_IsWithinSupportedMagnitude(MeanLog) Then
-            FailMsg = "MeanLog must be a finite number"
+            FailMsg = "MeanLog must be within the supported magnitude (|MeanLog| < 1E100)"
             Exit Function
         End If
     'Validate log standard deviation
         If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
-            FailMsg = "StdDevLog must be a finite strictly positive number"
+            FailMsg = "StdDevLog must be strictly positive and within the supported magnitude (< 1E100)"
             Exit Function
         End If
 '------------------------------------------------------------------------------

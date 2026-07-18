@@ -829,7 +829,7 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim LogDensity          As Double          'Log of the beta density at U
     Dim LogSeed             As Double          'Log of the series-inverted seed
     Dim Z                   As Double          'Normal seed
-    Dim r                   As Double          'AS 109 working value
+    Dim R                   As Double          'AS 109 working value
     Dim S1                  As Double          'AS 109 working value
     Dim S2                  As Double          'AS 109 working value
     Dim HH                  As Double          'AS 109 working value
@@ -881,11 +881,11 @@ Public Function PROB_TryBetaInvRegularized( _
     'Use the AS 109 normal approximation when both shapes exceed one
         If Sa > 1# And Sb > 1# Then
             Z = PROB_NormalInvCDFRaw(Target)
-            r = (Z * Z - 3#) / 6#
+            R = (Z * Z - 3#) / 6#
             S1 = 1# / (2# * Sa - 1#)
             S2 = 1# / (2# * Sb - 1#)
             HH = 2# / (S1 + S2)
-            W = Z * Sqr(HH + r) / HH - (S2 - S1) * (r + 5# / 6# - 2# / (3# * HH))
+            W = Z * Sqr(HH + R) / HH - (S2 - S1) * (R + 5# / 6# - 2# / (3# * HH))
             'Guard the module's one raw exponential; W is bounded above here
             '(Target <= 0.5 forces Z <= 0) so overflow is not reachable in
             'practice, and the seed clamp below recovers U on any failure

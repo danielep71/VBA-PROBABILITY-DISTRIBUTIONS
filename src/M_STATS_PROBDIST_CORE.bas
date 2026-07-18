@@ -676,7 +676,7 @@ Public Function PROB_NormalInvCDFRaw( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Q                   As Double          'Rational-approximation argument
-    Dim r                   As Double          'Q squared, central branch
+    Dim R                   As Double          'Q squared, central branch
 
 '------------------------------------------------------------------------------
 ' COMPUTE
@@ -698,10 +698,10 @@ Public Function PROB_NormalInvCDFRaw( _
     'Central region
         Else
             Q = Probability - 0.5
-            r = Q * Q
+            R = Q * Q
             PROB_NormalInvCDFRaw = _
-                (((((A1 * r + A2) * r + A3) * r + A4) * r + A5) * r + A6) * Q / _
-                (((((B1 * r + B2) * r + B3) * r + B4) * r + B5) * r + 1#)
+                (((((A1 * R + A2) * R + A3) * R + A4) * R + A5) * R + A6) * Q / _
+                (((((B1 * R + B2) * R + B3) * R + B4) * R + B5) * R + 1#)
         End If
 End Function
 

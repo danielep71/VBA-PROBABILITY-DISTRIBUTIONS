@@ -400,6 +400,7 @@ Private Sub RunCoreSuite()
     Test_Core_Constants
     Test_Core_Log1p
     Test_Core_TryExp
+    Test_Core_AffineAndStandardize
     Test_Core_LogGamma
     Test_Core_SpecialFunctionKernels
     Test_Core_NormalInvRaw
@@ -440,6 +441,7 @@ Private Sub RunNormalFamilySuite()
     Test_NF_ZScore
     Test_NF_IntervalProbability
     Test_NF_Survival
+    Test_NF_MagnitudePolicy
     Test_NF_InverseSurvival
     Test_NF_FastInverse
     Test_NF_LognormalCore
@@ -813,6 +815,74 @@ Private Sub Test_Core_TryExp()
     AssertClose "TryDivide value", ArithmeticResult, 0.25, 0#
     AssertTrue "TryDivide overflow rejected", _
         (Not PROB_TryDivide(1E+308, 1E-308, ArithmeticResult))
+End Sub
+
+
+Private Sub Test_Core_AffineAndStandardize()
+'
+'==============================================================================
+' Test_Core_AffineAndStandardize
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the guarded location-scale reconstruction PROB_TryAffineTransform
+'   and the guarded standardization PROB_TryStandardize: correct values for
+'   ordinary inputs, FALSE on overflow, and FALSE on a zero scale.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-17
+'==============================================================================
+'
+    Dim R                   As Double          'Guarded result
+
+    Debug.Print "-- Core affine reconstruction and standardization Try contracts"
+
+    'Affine: Offset + Scale * Value
+    AssertTrue "affine ordinary accepted", _
+        PROB_TryAffineTransform(100#, 15#, 2.326, R)
+    AssertClose "affine value 100 + 15*2.326", R, 134.89, TOL_ABS_TIGHT
+    AssertTrue "affine negative scale", _
+        PROB_TryAffineTransform(0#, -2#, 3#, R)
+    AssertClose "affine -2*3", R, -6#, TOL_ABS_TIGHT
+
+    'Affine overflow of the product is rejected
+    AssertTrue "affine product overflow rejected", _
+        (Not PROB_TryAffineTransform(0#, 1E+308, 8#, R))
+    'Affine overflow of the sum is rejected
+    AssertTrue "affine sum overflow rejected", _
+        (Not PROB_TryAffineTransform(1E+308, 1#, 1E+308, R))
+
+    'Standardize: (Value - Location) / ScaleParam
+    AssertTrue "standardize ordinary accepted", _
+        PROB_TryStandardize(10#, 4#, 2#, R)
+    AssertClose "standardize (10-4)/2", R, 3#, TOL_ABS_TIGHT
+    AssertTrue "standardize negative result", _
+        PROB_TryStandardize(1#, 1.96, 1#, R)
+    AssertClose "standardize (1-1.96)/1", R, -0.96, TOL_ABS_TIGHT
+
+    'Zero scale is rejected (division guard)
+    AssertTrue "standardize zero scale rejected", _
+        (Not PROB_TryStandardize(1#, 0#, 0#, R))
+
+    'The closed gap: a tiny scale that would overflow returns FALSE, not a fault
+    AssertTrue "standardize tiny scale overflow rejected", _
+        (Not PROB_TryStandardize(9E+99, 0#, 1E-300, R))
+
+    'Underflow of the quotient to zero is a valid success
+    AssertTrue "standardize underflow accepted", _
+        PROB_TryStandardize(1#, 0#, 1E+300, R)
+    AssertClose "standardize underflow value", R, 0#, TOL_ABS_TIGHT
 End Sub
 
 
@@ -1345,15 +1415,15 @@ Private Sub Test_NF_InverseRoundTrips()
 '==============================================================================
 '
     Dim ZValues As Variant
-    Dim i As Long
+    Dim I As Long
     Dim Z As Double
     Dim P As Variant
     Dim Back As Variant
 
     Debug.Print "-- Inverse round-trips  InvPhi(Phi(z)) = z"
     ZValues = Array(-3#, -2#, -0.5, 0#, 0.5, 2#, 3#)
-    For i = LBound(ZValues) To UBound(ZValues)
-        Z = ZValues(i)
+    For I = LBound(ZValues) To UBound(ZValues)
+        Z = ZValues(I)
         P = K_STATS_NormalStandard_Cumulative(Z)
         If IsError(P) Then
             RecordResult "roundtrip z=" & Z & " (CDF errored)", False
@@ -1361,7 +1431,7 @@ Private Sub Test_NF_InverseRoundTrips()
             Back = K_STATS_NormalStandard_InverseCumulative(CDbl(P))
             AssertClose "roundtrip z=" & Z, Back, Z, TOL_ABS_TIGHT
         End If
-    Next i
+    Next I
 End Sub
 
 
@@ -1390,15 +1460,15 @@ Private Sub Test_NF_Symmetry()
 '==============================================================================
 '
     Dim ZValues As Variant
-    Dim i As Long
+    Dim I As Long
     Dim Z As Double
     Dim Lo As Variant
     Dim Hi As Variant
 
     Debug.Print "-- Symmetry  Phi(z) + Phi(-z) = 1"
     ZValues = Array(0.25, 1#, 2.5, 4#)
-    For i = LBound(ZValues) To UBound(ZValues)
-        Z = ZValues(i)
+    For I = LBound(ZValues) To UBound(ZValues)
+        Z = ZValues(I)
         Lo = K_STATS_NormalStandard_Cumulative(-Z)
         Hi = K_STATS_NormalStandard_Cumulative(Z)
         If IsError(Lo) Or IsError(Hi) Then
@@ -1406,7 +1476,7 @@ Private Sub Test_NF_Symmetry()
         Else
             AssertClose "symmetry z=" & Z, CDbl(Lo) + CDbl(Hi), 1#, TOL_ABS_TIGHT
         End If
-    Next i
+    Next I
 
     'Inverse antisymmetry
     AssertClose "InvPhi(p) = -InvPhi(1-p)", _
@@ -1570,7 +1640,7 @@ Private Sub Test_NF_FastInverse()
 '   2026-07-11
 '==============================================================================
 '
-    Dim r As Double
+    Dim R As Double
 
     Debug.Print "-- Fast inverse (raw Acklam, ~1E-9)"
 
@@ -1585,11 +1655,11 @@ Private Sub Test_NF_FastInverse()
     AssertClose "fast InvPhi(0.5)", _
         K_STATS_NormalStandard_InverseCumulativeFast(0.5), 0#, TOL_ABS_LOOSE
     'Endpoint clipping: p=0 must not error and must return a large negative number
-    r = K_STATS_NormalStandard_InverseCumulativeFast(0#)
-    AssertTrue "fast InvPhi(0) clipped negative", (r < -5#)
+    R = K_STATS_NormalStandard_InverseCumulativeFast(0#)
+    AssertTrue "fast InvPhi(0) clipped negative", (R < -5#)
     'Endpoint clipping: p=1 must return a large positive number
-    r = K_STATS_NormalStandard_InverseCumulativeFast(1#)
-    AssertTrue "fast InvPhi(1) clipped positive", (r > 5#)
+    R = K_STATS_NormalStandard_InverseCumulativeFast(1#)
+    AssertTrue "fast InvPhi(1) clipped positive", (R > 5#)
 End Sub
 
 
@@ -1623,6 +1693,12 @@ Private Sub Test_NF_LognormalCore()
         K_STATS_Lognormal_Density(1#, 0#, 1#), 0.398942280401433, TOL_ABS_TIGHT
     'CDF at x=1 equals Phi(0)=0.5
     AssertClose "logn cdf@1", K_STATS_Lognormal_Cumulative(1#, 0#, 1#), 0.5, TOL_ABS_TIGHT
+    'Density at x<=0 returns 0: a positive-support density is zero outside its
+    'support, matching the CDF returning 0 and the survival returning 1 there.
+    AssertClose "logn density@0 = 0", _
+        K_STATS_Lognormal_Density(0#, 0#, 1#), 0#, TOL_ABS_TIGHT
+    AssertClose "logn density@-5 = 0", _
+        K_STATS_Lognormal_Density(-5#, 0#, 1#), 0#, TOL_ABS_TIGHT
     'CDF at x<=0 returns 0
     AssertClose "logn cdf@0", K_STATS_Lognormal_Cumulative(0#, 0#, 1#), 0#, TOL_ABS_TIGHT
     AssertClose "logn cdf@-5", K_STATS_Lognormal_Cumulative(-5#, 0#, 1#), 0#, TOL_ABS_TIGHT
@@ -1776,6 +1852,18 @@ Private Sub Test_NF_ParameterRoundTrip()
     AssertClose "MeanLog", MeanLog, 0.662834806151016, TOL_ABS_LOOSE
     AssertClose "StdDevLog", StdDevLog, 0.246221445044987, TOL_ABS_LOOSE
 
+    'Degenerate point mass: StdDev = 0 is a valid conversion, not a domain error.
+    'MeanLog = Log(Mean), StdDevLog = 0, which reproduces the input moments.
+    P = K_STATS_Lognormal_ParametersFromMeanStdDev(2#, 0#)
+    If IsError(P) Then
+        RecordResult "param StdDev=0 returned error", False
+    Else
+        AssertClose "param StdDev=0 -> MeanLog = Log(2)", P(1, 1), 0.693147180559945, TOL_ABS_TIGHT
+        AssertClose "param StdDev=0 -> StdDevLog = 0", P(1, 2), 0#, TOL_ABS_TIGHT
+    End If
+    'Negative StdDev is still rejected
+    AssertIsError "param StdDev<0", K_STATS_Lognormal_ParametersFromMeanStdDev(2#, -1#)
+
     'Round-trip: feeding the log params back must recover Mean and StdDev.
     'This ties K_STATS_Lognormal_StdDev to the conversion.
     AssertClose "roundtrip Mean", _
@@ -1832,7 +1920,6 @@ Private Sub Test_NF_ErrorContract()
     AssertIsError "inv p=1", K_STATS_NormalStandard_InverseCumulative(1#)
     AssertIsError "inv p=1.5", K_STATS_NormalStandard_InverseCumulative(1.5)
     'Lognormal domain
-    AssertIsError "logn density x=0", K_STATS_Lognormal_Density(0#, 0#, 1#)
     AssertIsError "logn density sd=0", K_STATS_Lognormal_Density(1#, 0#, 0#)
     'Survival honours the same domain contract as the CDF
     AssertIsError "normal survival sd=0", K_STATS_Normal_Survival(0#, 0#, 0#)
@@ -1843,7 +1930,6 @@ Private Sub Test_NF_ErrorContract()
     AssertIsError "normal inv survival sd=0", K_STATS_Normal_InverseSurvival(0.025, 0#, 0#)
     AssertIsError "logn inv survival sd=0", K_STATS_Lognormal_InverseSurvival(0.5, 0#, 0#)
     'Parameter conversion rejects StdDev = 0 and non-positive Mean
-    AssertIsError "param StdDev=0", K_STATS_Lognormal_ParametersFromMeanStdDev(2#, 0#)
     AssertIsError "param Mean=0", K_STATS_Lognormal_ParametersFromMeanStdDev(0#, 1#)
     'Reversed interval bounds
     AssertIsError "std interval reversed", _
@@ -1938,6 +2024,68 @@ Private Sub Test_NF_Survival()
 End Sub
 
 
+Private Sub Test_NF_MagnitudePolicy()
+'
+'==============================================================================
+' Test_NF_MagnitudePolicy
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Locks the Core magnitude split in place for the normal family: the standard
+'   normal routines accept any finite argument, while the routines that genuinely
+'   need the 1E100 restriction keep rejecting beyond it.
+'
+' WHY
+'   1E200 is a finite Double. The standard-normal kernels cut off at Abs(Z) > 37
+'   or 38 and return 0 or 1 without arithmetic, so there is nothing for a
+'   magnitude bound to protect. The lognormal moment routines square StdDevLog
+'   and the general-normal routines standardize by a division, so they keep the
+'   conservative domain.
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-07-17
+'==============================================================================
+'
+    Debug.Print "-- Normal family magnitude policy (finite vs supported magnitude)"
+
+    'The Core predicates really do differ
+    AssertTrue "PROB_IsFinite accepts 1E200", PROB_IsFinite(1E+200)
+    AssertTrue "supported magnitude rejects 1E200", _
+        (Not PROB_IsWithinSupportedMagnitude(1E+200))
+
+    'Standard normal: any finite Z is accepted and saturates through the cutoffs
+    AssertClose "std density(1E200) = 0", _
+        K_STATS_NormalStandard_Density(1E+200), 0#, TOL_ABS_TIGHT
+    AssertClose "std density(-1E200) = 0", _
+        K_STATS_NormalStandard_Density(-1E+200), 0#, TOL_ABS_TIGHT
+    AssertClose "std cumulative(1E200) = 1", _
+        K_STATS_NormalStandard_Cumulative(1E+200), 1#, TOL_ABS_TIGHT
+    AssertClose "std cumulative(-1E200) = 0", _
+        K_STATS_NormalStandard_Cumulative(-1E+200), 0#, TOL_ABS_TIGHT
+    AssertClose "std survival(1E200) = 0", _
+        K_STATS_NormalStandard_Survival(1E+200), 0#, TOL_ABS_TIGHT
+    AssertClose "std survival(-1E200) = 1", _
+        K_STATS_NormalStandard_Survival(-1E+200), 1#, TOL_ABS_TIGHT
+    AssertClose "std interval(-1E200, 1E200) = 1", _
+        K_STATS_NormalStandard_IntervalProbability(-1E+200, 1E+200), 1#, TOL_ABS_TIGHT
+
+    'Routines that need the restriction still enforce it
+    AssertIsError "logn mean rejects MeanLog 1E200", _
+        K_STATS_Lognormal_Mean(1E+200, 1#)
+    AssertIsError "logn mean rejects StdDevLog 1E200", _
+        K_STATS_Lognormal_Mean(0#, 1E+200)
+    AssertIsError "normal density rejects X 1E200", _
+        K_STATS_Normal_Density(1E+200, 0#, 1#)
+
+    'Standardization overflow (formerly the KNOWN GAP) is now a clean numeric
+    'error via PROB_TryStandardize, not an unexpected xlErrValue.
+    AssertIsError "normal density tiny StdDev overflow -> xlErrNum", _
+        K_STATS_Normal_Density(9E+99, 0#, 1E-300)
+End Sub
+
+
 Private Sub Test_NF_InverseSurvival()
 '
 '==============================================================================
@@ -1965,10 +2113,12 @@ Private Sub Test_NF_InverseSurvival()
 '==============================================================================
 '
     Dim QValues             As Variant         'Exceedance probabilities
-    Dim i                   As Long            'Loop index
+    Dim I                   As Long            'Loop index
     Dim Q                   As Double          'One exceedance probability
     Dim Z                   As Variant         'Recovered quantile
     Dim Back                As Variant         'Round-tripped probability
+    Dim OverflowStatus      As String          'Captured diagnostic message
+    Dim OverflowResult      As Variant         'Result of an overflow call
 
     Debug.Print "-- Normal family inverse survival (upper-tail quantile)"
 
@@ -2001,8 +2151,8 @@ Private Sub Test_NF_InverseSurvival()
 
     'Reflection identity  isf(q) = -InverseCumulative(q)
     QValues = Array(0.3, 0.025, 0.000001, 0.000000000000001)
-    For i = LBound(QValues) To UBound(QValues)
-        Q = QValues(i)
+    For I = LBound(QValues) To UBound(QValues)
+        Q = QValues(I)
         Z = K_STATS_NormalStandard_InverseSurvival(Q)
         Back = K_STATS_NormalStandard_InverseCumulative(Q)
         If IsError(Z) Or IsError(Back) Then
@@ -2010,12 +2160,12 @@ Private Sub Test_NF_InverseSurvival()
         Else
             AssertClose "isf = -invcdf at q=" & Q, CDbl(Z), -CDbl(Back), TOL_ABS_TIGHT
         End If
-    Next i
+    Next I
 
     'Round-trip  Survival(isf(q)) = q
     QValues = Array(0.25, 0.025, 0.001, 0.000001)
-    For i = LBound(QValues) To UBound(QValues)
-        Q = QValues(i)
+    For I = LBound(QValues) To UBound(QValues)
+        Q = QValues(I)
         Z = K_STATS_NormalStandard_InverseSurvival(Q)
         If IsError(Z) Then
             RecordResult "isf round-trip q=" & Q & " (errored)", False
@@ -2027,7 +2177,7 @@ Private Sub Test_NF_InverseSurvival()
                 AssertRelClose "isf round-trip q=" & Q, CDbl(Back), Q, TOL_REL_TAIL
             End If
         End If
-    Next i
+    Next I
 
     'General normal
     AssertClose "gen isf(0.025 | 10,2)", _
@@ -2049,6 +2199,34 @@ Private Sub Test_NF_InverseSurvival()
         AssertRelClose "logn isf round-trip q=0.001", _
             K_STATS_Lognormal_Survival(CDbl(Z), 0#, 1#), 0.001, TOL_REL_TAIL
     End If
+
+'------------------------------------------------------------------------------
+' OVERFLOW AND BOUNDARY CONTRACT
+'------------------------------------------------------------------------------
+    'General normal near the supported magnitude boundary is a SUCCESS, not an
+    'error: StdDev = 9E99 passes the 1E100 cap and 9E99 * isf(0.025) stays finite.
+    AssertRelClose "normal isf near-boundary rescaling is finite", _
+        K_STATS_Normal_InverseSurvival(0.025, 0#, 9E+99), _
+        1.76396758608605E+100, TOL_REL_TIGHT
+
+    'Lognormal inverse survival: the exponential of the reconstructed log-quantile
+    'overflows. MeanLog = 700, StdDevLog = 20, isf(1E-100) ~ 21.27, so the
+    'log-quantile ~ 1125 and Exp(1125) overflows. This must be a clean xlErrNum.
+    AssertErrorCode "lognormal isf exponential overflow is #NUM", _
+        K_STATS_Lognormal_InverseSurvival(1E-100, 700#, 20#), xlErrNum
+
+    'The overflow must also populate the diagnostic Status with an explanatory
+    'message rather than failing silently.
+    OverflowStatus = vbNullString
+    OverflowResult = K_STATS_Lognormal_InverseSurvival(1E-100, 700#, 20#, OverflowStatus)
+    AssertTrue "lognormal isf overflow is an error", IsError(OverflowResult)
+    AssertTrue "lognormal isf overflow status mentions overflow", _
+        (InStr(1, LCase$(OverflowStatus), "overflow") > 0)
+
+    'A valid inverse survival must leave Status empty (no false diagnostics).
+    OverflowStatus = "sentinel"
+    OverflowResult = K_STATS_Lognormal_InverseSurvival(0.5, 0#, 1#, OverflowStatus)
+    AssertTrue "lognormal isf success clears status", (OverflowStatus = vbNullString)
 End Sub
 
 
@@ -4663,6 +4841,8 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
 End Sub
+
+
 
 
 
