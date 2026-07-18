@@ -180,17 +180,12 @@ The Gamma and Beta inverse functions are iterative, yet measure near machine
 epsilon (Gamma 9.7E-15, Beta 5.7E-16), so they hold the same tight bounds as
 the closed-form functions.
 
-**Unbalanced-argument caveat (Beta, F).** These Beta bounds, and the F functions
-that depend on the incomplete beta, were verified for balanced-to-moderately-
-unbalanced arguments (shape ratio min/max down to about 0.1). For more extreme
-imbalance the accuracy degrades: `PROB_LogBeta`'s defining three-log-gamma
-identity cancels, with measured relative error growing from roughly 1E-14 near
-ratio 1E-2 to a few percent near ratio 1E-14, before a one-term asymptotic
-restores full precision below ratio 1E-15. The closed-form Beta mean, variance
-and standard deviation do not use `PROB_LogBeta` and are unaffected; Student t is
-largely protected by its half-integer normalization. See `logbeta_study/` for the
-measured curve. Repositioning or extending the asymptotic switch is deferred to a
-validated future pass.
+**Unbalanced-argument limitation (Beta, F).** For strongly unbalanced shapes or
+degrees of freedom the Beta and F functions do not meet the tabulated bounds,
+because `PROB_LogBeta` loses precision in that regime (tracked as a KNOWN
+LIMITATION in `accuracy_contracts.csv`). Full measurements, the reason a threshold
+change alone cannot fix it, and the proposed remedy are in
+[`logbeta_study/`](logbeta_study/README.md).
 
 ## Metric note
 
