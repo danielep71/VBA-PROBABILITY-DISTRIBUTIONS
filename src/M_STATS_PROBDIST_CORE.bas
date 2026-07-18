@@ -122,6 +122,7 @@ Public Const PROB_MIN_EXP              As Double = -745.133219101941     'Adviso
 
 Public Const PROB_LARGE_NUMBER         As Double = 1E+100                'Supported algorithm magnitude bound
 Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308 'Approx largest finite Double
+Public Const PROB_SQRT_DOUBLE_MAX      As Double = 1.34E+154            'Approx sqrt(Double max); guards squaring overflow
 Public Const PROB_FPMIN                As Double = 1E-300                'Lentz denominator floor
 
 Public Const PROB_WRITE_STATUS_BAR     As Boolean = False                'Master switch for Application.StatusBar writes
@@ -855,5 +856,7 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
+
+
 
 

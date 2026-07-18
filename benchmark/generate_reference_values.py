@@ -317,6 +317,13 @@ def build_rows():
         add("Lognormal_Density", "K_STATS_Lognormal_Density", FIVE_E15, "rel", (x, ml, sl), _phi(zz) / (x * sl))
         add("Lognormal_Cumulative", "K_STATS_Lognormal_Cumulative", FIVE_E15, "rel", (x, ml, sl), _Phi(zz))
         add("Lognormal_Survival", "K_STATS_Lognormal_Survival", FIVE_E15, "rel", (x, ml, sl), _Phi_sf(zz))
+    # Deep-underflow regression for the log-domain density reconstruction: |Z| = 40,
+    # so the naive phi(Z)/(X*sl) underflows its numerator to zero, yet the density
+    # (~1.6E-305) is representable. MeanLog = 0 keeps Z clean, isolating the density
+    # path from input conditioning. This row fails on the old form, passes on the fix.
+    for (x, ml, sl) in [(mp.e ** -100, mp.mpf(0), mp.mpf("2.5"))]:
+        zz = (mp.log(x) - ml) / sl
+        add("Lognormal_Density", "K_STATS_Lognormal_Density", FIVE_E15, "rel", (x, ml, sl), _phi(zz) / (x * sl))
     for (pq, ml, sl) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(1)), (mp.mpf("0.025"), mp.mpf(0), mp.mpf(1))]:
         add("Lognormal_InverseCumulative", "K_STATS_Lognormal_InverseCumulative", FIVE_E15, "rel", (pq, ml, sl), mp.e ** (ml + sl * _Phi_inv(pq)))
         add("Lognormal_InverseSurvival", "K_STATS_Lognormal_InverseSurvival", FIVE_E15, "rel", (pq, ml, sl), mp.e ** (ml - sl * _Phi_inv(pq)))

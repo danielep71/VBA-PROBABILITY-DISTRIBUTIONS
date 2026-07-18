@@ -262,7 +262,7 @@ Public Function K_STATS_NormalStandard_Density( _
 '
 ' DEPENDENCIES
 '   - PROB_IsFinite
-'   - PROB_NormalPDF
+'   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -1079,7 +1079,8 @@ Public Function K_STATS_Normal_Density( _
 '   - Validates X, Mean and StdDev against the supported magnitude.
 '   - Validates positive StdDev.
 '   - Standardizes X into Z = (X - Mean) / StdDev.
-'   - Returns StandardNormalDensity(Z) / StdDev.
+'   - Reconstructs the density in the logarithmic domain to stay finite when
+'     the numerator and a tiny StdDev underflow independently.
 '
 ' ERROR POLICY
 '   - Invalid numeric domains return CVErr(xlErrNum).
@@ -1090,7 +1091,7 @@ Public Function K_STATS_Normal_Density( _
 ' DEPENDENCIES
 '   - PROB_TryStandardize
 '   - PROB_ValidateNormalInputs
-'   - PROB_NormalPDF
+'   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1127,8 +1128,23 @@ Public Function K_STATS_Normal_Density( _
             FailMsg = "Standardized variate overflows the supported Double range"
             GoTo Fail_Num
         End If
-    'Return the normal density
-        K_STATS_Normal_Density = PROB_NormalPDF(Z) / StdDev
+    'Reconstruct the density in the logarithmic domain so a numerator that
+    'underflows (large |Z|) and a tiny StdDev still yield a finite ratio rather
+    'than 0 / 0. Guard only the squaring; PROB_TryExp treats genuine underflow as
+    'a valid zero and reports only true overflow as a failure.
+        Dim LogDensity      As Double          'Density in the logarithmic domain
+        Dim Density         As Double          'Reconstructed density value
+
+        If Abs(Z) >= PROB_SQRT_DOUBLE_MAX Then
+            K_STATS_Normal_Density = 0#
+        Else
+            LogDensity = -0.5 * Z * Z - Log(StdDev) - PROB_HALF_LOG_TWO_PI
+            If Not PROB_TryExp(LogDensity, Density) Then
+                FailMsg = "Normal density overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+            K_STATS_Normal_Density = Density
+        End If
 '
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
@@ -2020,8 +2036,9 @@ Public Function K_STATS_Lognormal_Density( _
 '   - Validates MeanLog and StdDevLog.
 '   - Returns 0 when X <= 0: the density of a positive-support variable is zero
 '     outside its support, so this is a value, not a domain error.
-'   - Otherwise computes Z = (Log(X) - MeanLog) / StdDevLog and returns
-'     StandardNormalDensity(Z) / (X * StdDevLog).
+'   - Otherwise computes Z = (Log(X) - MeanLog) / StdDevLog and reconstructs
+'     the density in the logarithmic domain to stay finite when the numerator
+'     and denominator underflow independently.
 '
 ' ERROR POLICY
 '   - Invalid numeric domains return CVErr(xlErrNum).
@@ -2032,7 +2049,7 @@ Public Function K_STATS_Lognormal_Density( _
 ' DEPENDENCIES
 '   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
-'   - PROB_NormalPDF
+'   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -2085,8 +2102,25 @@ Public Function K_STATS_Lognormal_Density( _
             FailMsg = "Standardized log-variate overflows the supported Double range"
             GoTo Fail_Num
         End If
-    'Return lognormal density
-        K_STATS_Lognormal_Density = PROB_NormalPDF(Z) / (X * StdDevLog)
+    'Reconstruct the density in the logarithmic domain. A numerator that
+    'underflows (large |Z|) and a denominator that underflows (tiny X or
+    'StdDevLog) can each round to zero while their ratio is finite; the log form
+    'avoids the 0 / 0. Guard only the squaring, so an enormous but finite Z (its
+    'density already zero) cannot overflow. PROB_TryExp treats genuine underflow
+    'as a valid zero and reports only true overflow as a failure.
+        Dim LogDensity      As Double          'Density in the logarithmic domain
+        Dim Density         As Double          'Reconstructed density value
+
+        If Abs(Z) >= PROB_SQRT_DOUBLE_MAX Then
+            K_STATS_Lognormal_Density = 0#
+        Else
+            LogDensity = -0.5 * Z * Z - Log(X) - Log(StdDevLog) - PROB_HALF_LOG_TWO_PI
+            If Not PROB_TryExp(LogDensity, Density) Then
+                FailMsg = "Lognormal density overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+            K_STATS_Lognormal_Density = Density
+        End If
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -3612,9 +3646,5 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
-
-
-
-
 
 
