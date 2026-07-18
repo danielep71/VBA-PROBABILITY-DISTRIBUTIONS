@@ -1,0 +1,17 @@
+# Enforce CRLF for VBA source so exported/committed .bas files always carry the
+# line endings the VBE and the house style require, regardless of contributor OS.
+*.bas   text eol=crlf
+*.cls   text eol=crlf
+*.frm   text eol=crlf
+
+# Normal text files: normalized to LF in the repo, native on checkout
+*.md    text
+*.py    text eol=lf
+*.csv   text eol=lf
+*.ps1   text eol=crlf
+
+# Binary: never normalize
+*.xlsm  binary
+*.xlsx  binary
+*.png   binary
+*.jpg   binary
