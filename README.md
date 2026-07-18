@@ -39,7 +39,7 @@
 ---
 
 <p align="center">
-  <img src="assets/Home.jpg"
+  <img src="assets/Home2.jpg"
        alt="VBA Probability Distributions — native numerical probability library for Excel VBA"
        width="100%">
 </p>
