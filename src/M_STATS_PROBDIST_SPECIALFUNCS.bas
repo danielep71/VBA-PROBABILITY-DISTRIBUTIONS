@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"
-
 Option Explicit
 Option Private Module
 
