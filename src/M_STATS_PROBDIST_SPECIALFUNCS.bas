@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"
-
 Option Explicit
 Option Private Module
 
@@ -220,8 +219,10 @@ Public Function PROB_LogGammaHalfDiff( _
 '   asymptotic expansion computes the difference directly.
 '
 ' ACCURACY
-'   Relative error at or below 2.1E-15 for every Z > 0, against 60-digit
-'   arithmetic. The direct-difference branch is used only where it is accurate.
+'   Relative error at or below 2E-14 across the tested range (Z > 0), measured
+'   against a 50-digit mpmath reference; typically near machine epsilon, with the
+'   worst case near Z = 1.6. The direct-difference branch is used only where it
+'   is accurate.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1455,11 +1456,5 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
-
-
-
-
-
-
 
 

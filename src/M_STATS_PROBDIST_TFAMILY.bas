@@ -108,7 +108,7 @@ Option Explicit
 ' ACCURACY REFERENCE
 '   The current regression grid targets approximately:
 '
-'     Student t density                 <= 8.4E-15 relative error
+'     Student t density                 <= 2E-14 relative error (tested range)
 '     Student t cumulative / survival   <= 1.3E-12 relative error
 '     Student t quantile                <= 3.0E-12 relative error
 '     Chi-square cumulative / survival  <= 2.6E-10 relative error
@@ -3285,7 +3285,6 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
-
 
 
 

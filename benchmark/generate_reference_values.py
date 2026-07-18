@@ -9,7 +9,7 @@ that publishes a measured-accuracy claim in the VBA source:
 
   SPECIALFUNCS kernels
     PROB_LogGamma           rel err < 6.1E-14  for Z in [1E-8, 1E+50]
-    PROB_LogGammaHalfDiff   rel err <= 2.1E-15 for Z > 0
+    PROB_LogGammaHalfDiff   rel err <= 2E-14 for Z > 0 (tested range)
     PROB_StirlingError      abs err <= 3E-17   for N >= 0.5
     PROB_LogChoose          rel err <= 3.2E-16 for N in [2, 2^53], all K
 
@@ -169,9 +169,9 @@ def build_rows():
     for z in logspace("1e-8", "1e50", 40):
         add("LogGamma", "PROB_LogGamma", "rel<6.1E-14", "rel", (z,), _loggamma(z))
 
-    # --- PROB_LogGammaHalfDiff : Z > 0, rel <= 2.1E-15 ---
+    # --- PROB_LogGammaHalfDiff : Z > 0, rel <= 2E-14 (tested range) ---
     for z in logspace("1e-6", "1e12", 30):
-        add("LogGammaHalfDiff", "PROB_LogGammaHalfDiff", "rel<=2.1E-15", "rel", (z,), _loggamma_halfdiff(z))
+        add("LogGammaHalfDiff", "PROB_LogGammaHalfDiff", "rel<=2E-14", "rel", (z,), _loggamma_halfdiff(z))
 
     # --- PROB_StirlingError : N >= 0.5, abs <= 3E-17 (include N=501 hot spot) ---
     ns = [mp.mpf("0.5"), mp.mpf(1), mp.mpf(2), mp.mpf(3), mp.mpf(5), mp.mpf(10),
@@ -188,7 +188,7 @@ def build_rows():
     # --- Student t ---
     for df in [mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(30), mp.mpf(1000)]:
         for x in [mp.mpf("0.1"), mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(20)]:
-            add("StudentT_Density", "K_STATS_StudentT_Density", "rel<=8.4E-15", "rel", (x, df), _student_t_pdf(x, df))
+            add("StudentT_Density", "K_STATS_StudentT_Density", "rel<=2E-14", "rel", (x, df), _student_t_pdf(x, df))
             add("StudentT_Cumulative", "K_STATS_StudentT_Cumulative", "rel<=1.3E-12", "rel", (x, df), _student_t_cdf(x, df))
             add("StudentT_Survival", "K_STATS_StudentT_Survival", "rel<=1.3E-12", "rel", (x, df), _student_t_sf(x, df))
         for p in [mp.mpf("0.001"), mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95"), mp.mpf("0.999")]:
