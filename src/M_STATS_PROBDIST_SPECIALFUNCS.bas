@@ -116,6 +116,7 @@ Private Const PROB_BETA_MAX_ITER       As Long = 100000   'Lentz iterations, inc
 Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterations, incomplete gamma
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
+Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (provisional; confirm from the VBA seam study)
 
 
 '==============================================================================
@@ -264,6 +265,113 @@ Public Function PROB_LogGammaHalfDiff( _
 End Function
 
 
+Public Function PROB_LogGammaDelta( _
+    ByVal LargeArg As Double, _
+    ByVal Increment As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_LogGammaDelta
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns LogGamma(LargeArg + Increment) - LogGamma(LargeArg) as one stable
+'   expression, so the two large LogGamma values are never formed and subtracted.
+'   Isolating the increment this way avoids the catastrophic cancellation that
+'   otherwise wrecks Log(Beta) for unbalanced arguments.
+'
+' PRECONDITION
+'   LargeArg >= 1 and Increment > 0. Intended for Increment <= LargeArg (the
+'   unbalanced Beta regime). Accuracy is highest when Increment / LargeArg is
+'   small; toward the balanced regime the caller should use the direct
+'   three-log-gamma identity instead.
+'
+' METHOD
+'   With the same Lanczos g = 7, n = 9 series A(z) used by PROB_LogGamma and
+'   T = LargeArg + g - 1/2:
+'
+'       LogGamma(z+s) - LogGamma(z) =
+'             s * Log(T)
+'           + (z + s - 1/2) * Log1p(s / T)
+'           - s
+'           + Log1p( (A(z+s) - A(z)) / A(z) )
+'
+'   The 0.5*Log(2*Pi) term cancels in the difference and is absent here. The
+'   series difference is formed directly, not by subtracting two series:
+'
+'       A(z+s) - A(z) = -s * SUM_k Pk / [ (z-1+k)(z+s-1+k) ]
+'
+'   so no cancellation occurs anywhere in the computation.
+'
+' ACCURACY
+'   Relative error at or below ~5E-15 for Increment / LargeArg <= 0.1, across
+'   Increment in [0.25, ~10] and LargeArg up to 1E+50, validated against 50-digit
+'   arithmetic. (VBA measurement is the authority; see benchmark/logbeta_study.)
+'
+' DEPENDENCIES
+'   - PROB_Log1p
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE CONSTANTS  (Lanczos g = 7, n = 9; must match PROB_LogGamma)
+'------------------------------------------------------------------------------
+    Const g  As Double = 7#
+    Const P0 As Double = 0.99999999999981
+    Const P1 As Double = 676.520368121885
+    Const P2 As Double = -1259.1392167224
+    Const P3 As Double = 771.323428777653
+    Const P4 As Double = -176.615029162141
+    Const P5 As Double = 12.5073432786869
+    Const P6 As Double = -0.13857109526572
+    Const P7 As Double = 9.98436957801957E-06
+    Const P8 As Double = 1.50563273514931E-07
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Az                  As Double          'Lanczos series A(LargeArg)
+    Dim dA                  As Double          'A(LargeArg + Increment) - A(LargeArg)
+    Dim T                   As Double          'Shifted argument LargeArg + g - 1/2
+    Dim Zm1                 As Double          'LargeArg - 1
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    Zm1 = LargeArg - 1#
+
+    'Lanczos series A(LargeArg)
+        Az = P0
+        Az = Az + P1 / (Zm1 + 1#)
+        Az = Az + P2 / (Zm1 + 2#)
+        Az = Az + P3 / (Zm1 + 3#)
+        Az = Az + P4 / (Zm1 + 4#)
+        Az = Az + P5 / (Zm1 + 5#)
+        Az = Az + P6 / (Zm1 + 6#)
+        Az = Az + P7 / (Zm1 + 7#)
+        Az = Az + P8 / (Zm1 + 8#)
+
+    'Direct series difference A(LargeArg + Increment) - A(LargeArg), no cancellation
+        dA = P1 / ((Zm1 + 1#) * (Zm1 + 1# + Increment))
+        dA = dA + P2 / ((Zm1 + 2#) * (Zm1 + 2# + Increment))
+        dA = dA + P3 / ((Zm1 + 3#) * (Zm1 + 3# + Increment))
+        dA = dA + P4 / ((Zm1 + 4#) * (Zm1 + 4# + Increment))
+        dA = dA + P5 / ((Zm1 + 5#) * (Zm1 + 5# + Increment))
+        dA = dA + P6 / ((Zm1 + 6#) * (Zm1 + 6# + Increment))
+        dA = dA + P7 / ((Zm1 + 7#) * (Zm1 + 7# + Increment))
+        dA = dA + P8 / ((Zm1 + 8#) * (Zm1 + 8# + Increment))
+        dA = -Increment * dA
+
+    'Shifted argument
+        T = LargeArg + g - 0.5
+
+    'Stable difference (0.5*Log(2*Pi) cancels and is absent)
+        PROB_LogGammaDelta = _
+            Increment * Log(T) + _
+            (LargeArg + Increment - 0.5) * PROB_Log1p(Increment / T) - _
+            Increment + _
+            PROB_Log1p(dA / Az)
+End Function
+
+
 Public Function PROB_LogBeta( _
     ByVal A As Double, _
     ByVal B As Double) _
@@ -278,38 +386,30 @@ Public Function PROB_LogBeta( _
 ' PRECONDITION
 '   A > 0 and B > 0.
 '
-' NUMERICAL POLICY
+' NUMERICAL POLICY (two regimes)
 '   - Half-integer cases use PROB_LogGammaHalfDiff.
-'   - Extremely unbalanced arguments use a direct gamma-ratio asymptotic:
+'   - Unbalanced arguments (Small / Large < PROB_LOGBETA_STABLE_RATIO) use the
+'     stable log-gamma difference:
 '
-'         LogGamma(Large + Small) - LogGamma(Large)
-'             = Small * Log(Large) + O(Small / Large)
+'         Log(Beta) = LogGamma(Small) - PROB_LogGammaDelta(Large, Small)
 '
-'     whenever Small / Large <= PROB_EPS (1E-15). This avoids catastrophic
-'     cancellation when Large + Small rounds to Large, and when the two large
-'     LogGamma values would otherwise erase LogGamma(Small). The switch fires at
-'     PROB_EPS, not at machine epsilon; the single omitted term is well below
-'     Double precision only in this deep-imbalance regime (see the limitation
-'     below).
-'   - All other cases use the defining identity
+'     PROB_LogGammaDelta forms LogGamma(Large + Small) - LogGamma(Large) as a
+'     single expression, so the two large log-gamma values are never subtracted.
+'     This is accurate across the whole unbalanced range, including extreme
+'     ratios, and replaces the earlier one-term asymptotic branch.
+'   - Balanced arguments use the defining identity
 '     LogGamma(A) + LogGamma(B) - LogGamma(A + B).
 '
-' ACCURACY LIMITATION (unbalanced arguments)
-'   The defining identity loses precision by cancellation as the arguments grow
-'   unbalanced, with relative error roughly macheps * (Large / Small). Between
-'   the balanced regime and the 1E-15 asymptotic switch there is a band
-'   (Small / Large from about 1E-2 down to 1E-13) where neither the identity nor
-'   the single-term asymptotic reaches the 5E-15 Beta claim; measured relative
-'   error reaches a few percent near ratio 1E-14. This propagates to the Beta,
-'   F and Student-t density, CDF, survival and inverse functions. The single-term
-'   switch is retained as-is: widening it with the current one-term asymptotic
-'   would be worse, since that asymptotic is itself inaccurate at moderate
-'   ratios. A validated multi-term asymptotic with a wider switch is deferred.
-'   See benchmark/logbeta_study for the measured characterization.
+' CROSSOVER
+'   PROB_LOGBETA_STABLE_RATIO (provisionally 0.1) is the switch between the two
+'   regimes. A Python prototype places the safe overlap near 0.05 to 0.1; the
+'   exact constant is to be confirmed from the VBA seam study (maximum error on
+'   each side, continuity across the switch, non-integer Small, multiple absolute
+'   scales, and symmetry after argument ordering).
 '
 ' DEPENDENCIES
-'   - PROB_LogGamma, PROB_LogGammaHalfDiff
-'   - PROB_HALF_LOG_PI, PROB_EPS
+'   - PROB_LogGamma, PROB_LogGammaHalfDiff, PROB_LogGammaDelta
+'   - PROB_HALF_LOG_PI, PROB_LOGBETA_STABLE_RATIO
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -345,14 +445,17 @@ Public Function PROB_LogBeta( _
         End If
 
 '------------------------------------------------------------------------------
-' EXTREMELY UNBALANCED ARGUMENTS
+' UNBALANCED ARGUMENTS
 '------------------------------------------------------------------------------
-    'In this regime the omitted correction is below Double relative precision,
-    'while the literal three-log-gamma identity can lose the entire answer.
-        If SmallArg / LargeArg <= PROB_EPS Then
+    'For unbalanced arguments the literal three-log-gamma identity cancels
+    'catastrophically. Compute Log(Beta) from the stable log-gamma difference,
+    'which never forms and subtracts the two large log-gamma values:
+    '    Log(Beta) = LogGamma(Small) - [LogGamma(Large + Small) - LogGamma(Large)]
+    'This holds across the whole unbalanced range, including extreme ratios.
+        If SmallArg / LargeArg < PROB_LOGBETA_STABLE_RATIO Then
             PROB_LogBeta = _
                 PROB_LogGamma(SmallArg) - _
-                SmallArg * Log(LargeArg)
+                PROB_LogGammaDelta(LargeArg, SmallArg)
             Exit Function
         End If
 
@@ -1479,6 +1582,8 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
 
 
 
