@@ -285,10 +285,27 @@ Public Function PROB_LogBeta( _
 '         LogGamma(Large + Small) - LogGamma(Large)
 '             = Small * Log(Large) + O(Small / Large)
 '
-'     whenever Small / Large is no greater than machine epsilon. This avoids
-'     catastrophic cancellation when Large + Small rounds to Large, and when
-'     the two large LogGamma values would otherwise erase LogGamma(Small).
-'   - All other cases use the defining identity.
+'     whenever Small / Large <= PROB_EPS (1E-15). This avoids catastrophic
+'     cancellation when Large + Small rounds to Large, and when the two large
+'     LogGamma values would otherwise erase LogGamma(Small). The switch fires at
+'     PROB_EPS, not at machine epsilon; the single omitted term is well below
+'     Double precision only in this deep-imbalance regime (see the limitation
+'     below).
+'   - All other cases use the defining identity
+'     LogGamma(A) + LogGamma(B) - LogGamma(A + B).
+'
+' ACCURACY LIMITATION (unbalanced arguments)
+'   The defining identity loses precision by cancellation as the arguments grow
+'   unbalanced, with relative error roughly macheps * (Large / Small). Between
+'   the balanced regime and the 1E-15 asymptotic switch there is a band
+'   (Small / Large from about 1E-2 down to 1E-13) where neither the identity nor
+'   the single-term asymptotic reaches the 5E-15 Beta claim; measured relative
+'   error reaches a few percent near ratio 1E-14. This propagates to the Beta,
+'   F and Student-t density, CDF, survival and inverse functions. The single-term
+'   switch is retained as-is: widening it with the current one-term asymptotic
+'   would be worse, since that asymptotic is itself inaccurate at moderate
+'   ratios. A validated multi-term asymptotic with a wider switch is deferred.
+'   See benchmark/logbeta_study for the measured characterization.
 '
 ' DEPENDENCIES
 '   - PROB_LogGamma, PROB_LogGammaHalfDiff
@@ -1462,6 +1479,8 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
 
 
 
