@@ -103,15 +103,29 @@ by rate (Lambda), not scale.
 |---|---|
 | Gamma density / CDF / survival / inverse | relative error <= 2E-14 |
 | Gamma mean / variance / std dev | relative error <= 5E-15 |
-| Beta density / CDF / survival / inverse / mean / variance / std dev | relative error <= 5E-15 |
+| Beta density / survival / inverse / mean / variance / std dev | relative error <= 5E-15 |
+| Beta CDF | relative error <= 2E-14 |
 | Exponential density / CDF / survival / inverse | relative error <= 5E-15 |
 | Weibull density / CDF / survival / inverse | relative error <= 5E-15 |
-| Weibull mean / variance / std dev | relative error <= 2E-14 |
+| Weibull mean / variance | relative error <= 2E-14 |
+| Weibull std dev | relative error <= 5E-15 |
 | Uniform density / CDF / survival / inverse | relative error <= 5E-15 |
 
 The Gamma and Beta inverse functions are iterative, yet measure near machine
 epsilon (Gamma 9.7E-15, Beta 5.7E-16), so they hold the same tight bounds as
 the closed-form functions.
+
+**Unbalanced-argument caveat (Beta, F).** These Beta bounds, and the F functions
+that depend on the incomplete beta, were verified for balanced-to-moderately-
+unbalanced arguments (shape ratio min/max down to about 0.1). For more extreme
+imbalance the accuracy degrades: `PROB_LogBeta`'s defining three-log-gamma
+identity cancels, with measured relative error growing from roughly 1E-14 near
+ratio 1E-2 to a few percent near ratio 1E-14, before a one-term asymptotic
+restores full precision below ratio 1E-15. The closed-form Beta mean, variance
+and standard deviation do not use `PROB_LogBeta` and are unaffected; Student t is
+largely protected by its half-integer normalization. See `logbeta_study/` for the
+measured curve. Repositioning or extending the asymptotic switch is deferred to a
+validated future pass.
 
 ## Metric note
 
