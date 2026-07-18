@@ -18,6 +18,15 @@ The defining identity cancels catastrophically as the arguments become unbalance
 (`LogGamma(Large)` and `LogGamma(Large + Small)` are large and nearly equal). The
 study measures where this matters and whether the switch is well placed.
 
+## Tested values
+
+- **Small values** (the smaller argument), chosen to include non-integer cases:
+  `0.8, 1, 1.5, 3, 10`. (Half-integer `0.5` is excluded — it takes the
+  `PROB_LogGammaHalfDiff` shortcut.)
+- **Ratios** `Small / Large`, swept in decades from `1E-1` down to `1E-18`
+  (18 points), so `Large` ranges from `10 x Small` up to `1E18 x Small`.
+- Full grid: 5 x 18 = 90 points, each with a 50+ digit mpmath reference.
+
 ## Files
 
 - `generate_logbeta_switch.py` — writes `logbeta_switch_grid.csv` (90 rows: 5
@@ -64,6 +73,20 @@ Directly affected: Beta density; Beta CDF/survival via incomplete-beta
 normalization; Beta inverse; F with disparate degrees of freedom. Student t is
 largely protected — its `Beta(df/2, 1/2)` normalization trips the half-integer
 shortcut for `df >= 2`, and `df = 1` is `Beta(0.5, 0.5)` (balanced).
+
+## How to reproduce
+
+1. Import `logbeta_study.bas` into the workbook and `Debug > Compile`.
+2. Run `Export_LogBeta_Study`; when prompted, select `logbeta_switch_grid.csv`.
+   This fills the `observed_vba` column by calling `PROB_LogBeta` directly.
+3. Commit the filled CSV.
+4. Analyze: `python3 analyze_logbeta_switch.py` prints the measured relative
+   error versus ratio per `Small`, flagging rows over the 5E-15 Beta claim and
+   marking where the asymptotic branch engages.
+
+To regenerate the references from scratch: `python3 generate_logbeta_switch.py`
+(requires mpmath). This overwrites `logbeta_switch_grid.csv` with empty
+observations, so re-run the export afterwards.
 
 ## Current production status
 
