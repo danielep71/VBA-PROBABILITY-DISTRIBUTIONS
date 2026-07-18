@@ -259,79 +259,53 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
 ' FormatFullPrecision
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Renders a Double as the shortest decimal string (15 to 17 significant
-'   digits) that reads back to the identical Double, so no precision is lost
-'   when the CSV is parsed in Python.
+'   Renders a Double as a two-part sum "hi;lo", where hi and lo are each written
+'   to 15 significant digits (the most VBA emits reliably) and hi + lo, summed
+'   in Double precision on the Python side, reproduces the original Double
+'   exactly. This removes the ~15-digit export floor without asking VBA to write
+'   more digits than it can.
 '
-' WHY NOT Format$
-'   Format$ and Str$ round a Double to about 15 significant digits before
-'   producing the string, which is coarser than several published accuracy
-'   claims. This routine builds the mantissa with the Decimal type, which is not
-'   capped at 15 digits, and returns the first digit count whose value round-
-'   trips exactly through CDbl.
+' WHY TWO PARTS
+'   Format$, Str$ and CDec all cap a Double at about 15 significant digits, which
+'   is coarser than several published accuracy claims. Writing hi (the value to
+'   15 digits) and lo (the exact residual X - hi, also to 15 digits) lets the
+'   analysis recover the full Double: lo carries the low-order bits hi dropped.
+'   compute_errors.py sums the parts.
 '==============================================================================
 '
-    Dim Digits              As Long            'Trial significant-digit count
-    Dim Candidate           As String          'Formatted candidate
+    Dim HiStr               As String          'Value to 15 significant digits
+    Dim Hi                  As Double          'The Double that HiStr denotes
+    Dim Lo                  As Double          'Exact residual X - Hi
 
-    If X = 0# Then FormatFullPrecision = "0.0E+000": Exit Function
+    If X = 0# Then FormatFullPrecision = "0E+000;0E+000": Exit Function
 
-    'Return the shortest representation that round-trips exactly
-        For Digits = 15 To 17
-            Candidate = SciFormat(X, Digits)
-            If CDbl(Candidate) = X Then
-                FormatFullPrecision = Candidate
-                Exit Function
-            End If
-        Next Digits
+    HiStr = Fmt15(X)
+    Hi = CDbl(HiStr)
+    Lo = X - Hi
 
-    'Fall back to the fullest representation (extreme exponents may not
-    'round-trip because 10 ^ E is not exactly representable there)
-        FormatFullPrecision = Candidate
+    FormatFullPrecision = HiStr & ";" & Fmt15(Lo)
 End Function
 
 
-Private Function SciFormat( _
-    ByVal X As Double, _
-    ByVal Sig As Long) _
-    As String
+Private Function Fmt15(ByVal X As Double) As String
 '
 '==============================================================================
-' SciFormat
+' Fmt15
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Formats X in scientific notation with Sig significant digits and a US
-'   decimal point, using Decimal arithmetic for the mantissa so the digit count
-'   is not capped at 15.
+'   Formats X to exactly 15 significant digits in scientific notation with a US
+'   decimal point. This is within VBA's reliable precision, so the output is not
+'   silently re-rounded.
 '==============================================================================
 '
-    Dim Sign                As String          'Leading minus or empty
-    Dim Ax                  As Double          'Absolute value
-    Dim E                   As Long            'Decimal exponent
-    Dim Mant                As Double          'Mantissa in [1, 10)
-    Dim MantStr             As String          'Rounded mantissa text
+    Dim S                   As String          'Formatted value
 
-    If X < 0# Then
-        Sign = "-": Ax = -X
-    Else
-        Sign = vbNullString: Ax = X
-    End If
+    If X = 0# Then Fmt15 = "0E+000": Exit Function
 
-    'Decimal exponent, then normalize the mantissa into [1, 10)
-        E = Int(Log(Ax) / Log(10#))
-        Mant = Ax / (10# ^ E)
-        Do While Mant >= 10#
-            Mant = Mant / 10#: E = E + 1
-        Loop
-        Do While Mant < 1#
-            Mant = Mant * 10#: E = E - 1
-        Loop
-
-    'Round the mantissa to Sig significant digits with Decimal (uncapped)
-        MantStr = Replace(CStr(Round(CDec(Mant), Sig - 1)), ",", ".")
-        If InStr(MantStr, ".") = 0 Then MantStr = MantStr & ".0"
-
-    SciFormat = Sign & MantStr & "E" & IIf(E >= 0, "+", "-") & Format$(Abs(E), "000")
+    S = Format$(X, "0.00000000000000E+000")    '1 + 14 = 15 significant digits
+    Fmt15 = Replace(S, ",", ".")               'Force US decimal regardless of locale
 End Function
+
+
 
 

@@ -30,8 +30,19 @@ def parse_claim(claim):
     return m.group(1), float(m.group(2))
 
 
+def parse_observed(s):
+    """Observed values may be a single number or a two-part 'hi;lo' sum that the
+    export macro writes to preserve full Double precision. Sum the parts."""
+    s = s.strip()
+    if s == "" or s.upper() == "ERROR":
+        return None
+    return sum(float(part) for part in s.split(";"))
+
+
 def errors(observed, reference, metric):
-    o, r = float(observed), float(reference)
+    o, r = parse_observed(observed), float(reference)
+    if o is None:
+        raise ValueError("no observed value")
     abs_e = abs(o - r)
     rel_e = abs_e / abs(r) if r != 0 else (0.0 if o == 0 else math.inf)
     return abs_e, (abs_e if metric == "abs" else rel_e)
@@ -68,7 +79,9 @@ def main():
         grp = by_fn[fn]
         claim = grp[0]["claim"]
         cmetric, threshold = parse_claim(claim)
-        measured = [r for r in grp if r["observed_vba"].strip() != ""]
+        measured = [r for r in grp
+                    if r["observed_vba"].strip() != ""
+                    and r["observed_vba"].strip().upper() != "ERROR"]
         n_meas = len(measured)
         if n_meas == 0:
             lines.append(f"| {fn} | {claim} | {cmetric or ''} | — | not measured | "
