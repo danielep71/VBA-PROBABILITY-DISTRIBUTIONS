@@ -1,3 +1,4 @@
+Attribute VB_Name = "M_STATS_PROBDIST_ACCURACYEXPORT"
 Option Explicit
 
 '==============================================================================
@@ -69,10 +70,10 @@ Public Sub Export_Accuracy_Observations()
 ' INITIALIZE
 '------------------------------------------------------------------------------
     On Error GoTo Err_Handler
-    'Resolve the grid path
-        Path = ACCURACY_GRID_PATH
-        If Len(Path) = 0 Then Path = ThisWorkbook.Path & Application.PathSeparator & _
-            "probability_accuracy_grid.csv"
+    'Resolve the grid path (robust to OneDrive / SharePoint, where
+    'ThisWorkbook.Path returns an http URL that Open cannot use)
+        Path = ResolveGridPath()
+        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
     'Read the whole file
         FileNo = FreeFile
         Open Path For Input As #FileNo
@@ -126,6 +127,59 @@ Err_Handler:
     Close #FileNo
     MsgBox "Accuracy export failed: " & Err.Description, vbExclamation
 End Sub
+
+
+Private Function ResolveGridPath() As String
+'
+'==============================================================================
+' ResolveGridPath
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns a usable LOCAL path to probability_accuracy_grid.csv, or an empty
+'   string if the user cancels.
+'
+' WHY THIS EXISTS
+'   ThisWorkbook.Path returns an http(s) URL when the workbook lives on OneDrive
+'   or SharePoint, and VBA's Open statement cannot read a URL. This resolver
+'   prefers an explicit local path, then the workbook folder only when that is a
+'   real local path containing the file, and finally falls back to a file picker.
+'==============================================================================
+'
+    Dim Candidate           As String          'Path being tested
+    Dim BookPath            As String          'Workbook folder
+    Dim Picked              As Variant          'File-dialog result
+
+    '1. Explicit constant wins when it points at a real file
+        If Len(ACCURACY_GRID_PATH) > 0 Then
+            If Len(Dir$(ACCURACY_GRID_PATH)) > 0 Then
+                ResolveGridPath = ACCURACY_GRID_PATH
+                Exit Function
+            End If
+        End If
+
+    '2. Workbook folder, but only if it is a LOCAL path (URLs start with http)
+        BookPath = ThisWorkbook.Path
+        If Len(BookPath) > 0 And LCase$(Left$(BookPath, 4)) <> "http" Then
+            Candidate = BookPath & Application.PathSeparator & "probability_accuracy_grid.csv"
+            If Len(Dir$(Candidate)) > 0 Then
+                ResolveGridPath = Candidate
+                Exit Function
+            End If
+        End If
+
+    '3. Ask the user to locate the file
+        MsgBox "Could not locate probability_accuracy_grid.csv automatically " & _
+               "(the workbook may be on OneDrive/SharePoint). Please select it.", _
+               vbInformation, "Locate accuracy grid"
+        Picked = Application.GetOpenFilename( _
+            FileFilter:="Accuracy grid (*.csv),*.csv", _
+            Title:="Select probability_accuracy_grid.csv")
+        If VarType(Picked) = vbBoolean Then
+            ResolveGridPath = vbNullString
+        Else
+            ResolveGridPath = CStr(Picked)
+        End If
+End Function
 
 
 Private Function EvaluateOne( _
@@ -205,12 +259,79 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
 ' FormatFullPrecision
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Renders a Double with 17 significant digits and a US decimal point, so no
-'   precision is lost when the CSV is read back in Python.
+'   Renders a Double as the shortest decimal string (15 to 17 significant
+'   digits) that reads back to the identical Double, so no precision is lost
+'   when the CSV is parsed in Python.
+'
+' WHY NOT Format$
+'   Format$ and Str$ round a Double to about 15 significant digits before
+'   producing the string, which is coarser than several published accuracy
+'   claims. This routine builds the mantissa with the Decimal type, which is not
+'   capped at 15 digits, and returns the first digit count whose value round-
+'   trips exactly through CDbl.
 '==============================================================================
 '
-    Dim S                   As String          'Formatted value
-    S = Format$(X, "0.#################E+000")
-    S = Replace(S, ",", ".")                   'Force US decimal regardless of locale
-    FormatFullPrecision = S
+    Dim Digits              As Long            'Trial significant-digit count
+    Dim Candidate           As String          'Formatted candidate
+
+    If X = 0# Then FormatFullPrecision = "0.0E+000": Exit Function
+
+    'Return the shortest representation that round-trips exactly
+        For Digits = 15 To 17
+            Candidate = SciFormat(X, Digits)
+            If CDbl(Candidate) = X Then
+                FormatFullPrecision = Candidate
+                Exit Function
+            End If
+        Next Digits
+
+    'Fall back to the fullest representation (extreme exponents may not
+    'round-trip because 10 ^ E is not exactly representable there)
+        FormatFullPrecision = Candidate
 End Function
+
+
+Private Function SciFormat( _
+    ByVal X As Double, _
+    ByVal Sig As Long) _
+    As String
+'
+'==============================================================================
+' SciFormat
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Formats X in scientific notation with Sig significant digits and a US
+'   decimal point, using Decimal arithmetic for the mantissa so the digit count
+'   is not capped at 15.
+'==============================================================================
+'
+    Dim Sign                As String          'Leading minus or empty
+    Dim Ax                  As Double          'Absolute value
+    Dim E                   As Long            'Decimal exponent
+    Dim Mant                As Double          'Mantissa in [1, 10)
+    Dim MantStr             As String          'Rounded mantissa text
+
+    If X < 0# Then
+        Sign = "-": Ax = -X
+    Else
+        Sign = vbNullString: Ax = X
+    End If
+
+    'Decimal exponent, then normalize the mantissa into [1, 10)
+        E = Int(Log(Ax) / Log(10#))
+        Mant = Ax / (10# ^ E)
+        Do While Mant >= 10#
+            Mant = Mant / 10#: E = E + 1
+        Loop
+        Do While Mant < 1#
+            Mant = Mant * 10#: E = E - 1
+        Loop
+
+    'Round the mantissa to Sig significant digits with Decimal (uncapped)
+        MantStr = Replace(CStr(Round(CDec(Mant), Sig - 1)), ",", ".")
+        If InStr(MantStr, ".") = 0 Then MantStr = MantStr & ".0"
+
+    SciFormat = Sign & MantStr & "E" & IIf(E >= 0, "+", "-") & Format$(Abs(E), "000")
+End Function
+
+
