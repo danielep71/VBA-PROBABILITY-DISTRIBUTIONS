@@ -248,6 +248,40 @@ Private Function EvaluateOne( _
         Case "Lognormal_ParamMeanLog":       V = ExtractParam(A1, A2, 1)
         Case "Lognormal_ParamStdDevLog":     V = ExtractParam(A1, A2, 2)
 
+        Case "Gamma_Density":                V = K_STATS_Gamma_Density(A1, A2, A3)
+        Case "Gamma_Cumulative":             V = K_STATS_Gamma_Cumulative(A1, A2, A3)
+        Case "Gamma_Survival":               V = K_STATS_Gamma_Survival(A1, A2, A3)
+        Case "Gamma_InverseCumulative":      V = K_STATS_Gamma_InverseCumulative(A1, A2, A3)
+        Case "Gamma_Mean":                   V = K_STATS_Gamma_Mean(A1, A2)
+        Case "Gamma_Variance":               V = K_STATS_Gamma_Variance(A1, A2)
+        Case "Gamma_StdDev":                 V = K_STATS_Gamma_StdDev(A1, A2)
+
+        Case "Beta_Density":                 V = K_STATS_Beta_Density(A1, A2, A3)
+        Case "Beta_Cumulative":              V = K_STATS_Beta_Cumulative(A1, A2, A3)
+        Case "Beta_Survival":                V = K_STATS_Beta_Survival(A1, A2, A3)
+        Case "Beta_InverseCumulative":       V = K_STATS_Beta_InverseCumulative(A1, A2, A3)
+        Case "Beta_Mean":                    V = K_STATS_Beta_Mean(A1, A2)
+        Case "Beta_Variance":                V = K_STATS_Beta_Variance(A1, A2)
+        Case "Beta_StdDev":                  V = K_STATS_Beta_StdDev(A1, A2)
+
+        Case "Exponential_Density":          V = K_STATS_Exponential_Density(A1, A2)
+        Case "Exponential_Cumulative":       V = K_STATS_Exponential_Cumulative(A1, A2)
+        Case "Exponential_Survival":         V = K_STATS_Exponential_Survival(A1, A2)
+        Case "Exponential_InverseCumulative": V = K_STATS_Exponential_InverseCumulative(A1, A2)
+
+        Case "Weibull_Density":              V = K_STATS_Weibull_Density(A1, A2, A3)
+        Case "Weibull_Cumulative":           V = K_STATS_Weibull_Cumulative(A1, A2, A3)
+        Case "Weibull_Survival":             V = K_STATS_Weibull_Survival(A1, A2, A3)
+        Case "Weibull_InverseCumulative":    V = K_STATS_Weibull_InverseCumulative(A1, A2, A3)
+        Case "Weibull_Mean":                 V = K_STATS_Weibull_Mean(A1, A2)
+        Case "Weibull_Variance":             V = K_STATS_Weibull_Variance(A1, A2)
+        Case "Weibull_StdDev":               V = K_STATS_Weibull_StdDev(A1, A2)
+
+        Case "Uniform_Density":              V = K_STATS_Uniform_Density(A1, A2, A3)
+        Case "Uniform_Cumulative":           V = K_STATS_Uniform_Cumulative(A1, A2, A3)
+        Case "Uniform_Survival":             V = K_STATS_Uniform_Survival(A1, A2, A3)
+        Case "Uniform_InverseCumulative":    V = K_STATS_Uniform_InverseCumulative(A1, A2, A3)
+
         Case Else:                           EvaluateOne = "ERROR": Exit Function
     End Select
 

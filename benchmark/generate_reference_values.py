@@ -172,6 +172,53 @@ def _lognorm_params(mean, sd):
     return mp.log(mean) - varlog / 2, mp.sqrt(varlog)
 
 
+
+def _gamma_pdf(x, k, th):
+    x, k, th = mp.mpf(x), mp.mpf(k), mp.mpf(th)
+    return x ** (k - 1) * mp.e ** (-x / th) / (th ** k * mp.gamma(k))
+
+
+def _gamma_cdf(x, k, th):
+    return mp.gammainc(mp.mpf(k), 0, mp.mpf(x) / mp.mpf(th), regularized=True)
+
+
+def _gamma_sf(x, k, th):
+    return mp.gammainc(mp.mpf(k), mp.mpf(x) / mp.mpf(th), mp.inf, regularized=True)
+
+
+def _gamma_ppf(pq, k, th):
+    k, th = mp.mpf(k), mp.mpf(th)
+    return _bisect(lambda x: _gamma_cdf(x, k, th) - mp.mpf(pq), mp.mpf("1e-30"), k * th * 100 + 1000) 
+
+
+def _beta_pdf(x, a, b):
+    x, a, b = mp.mpf(x), mp.mpf(a), mp.mpf(b)
+    return x ** (a - 1) * (1 - x) ** (b - 1) / mp.beta(a, b)
+
+
+def _beta_cdf(x, a, b):
+    return mp.betainc(mp.mpf(a), mp.mpf(b), 0, mp.mpf(x), regularized=True)
+
+
+def _beta_sf(x, a, b):
+    return mp.betainc(mp.mpf(a), mp.mpf(b), mp.mpf(x), 1, regularized=True)
+
+
+def _beta_ppf(pq, a, b):
+    a, b = mp.mpf(a), mp.mpf(b)
+    return _bisect(lambda x: _beta_cdf(x, a, b) - mp.mpf(pq), mp.mpf("1e-30"), mp.mpf(1) - mp.mpf("1e-30"))
+
+
+def _weibull_mean(k, lam):
+    k, lam = mp.mpf(k), mp.mpf(lam)
+    return lam * mp.gamma(1 + 1 / k)
+
+
+def _weibull_var(k, lam):
+    k, lam = mp.mpf(k), mp.mpf(lam)
+    return lam ** 2 * (mp.gamma(1 + 2 / k) - mp.gamma(1 + 1 / k) ** 2)
+
+
 def build_rows():
     rows = []
 
@@ -282,6 +329,70 @@ def build_rows():
         mlref, slref = _lognorm_params(mean, sd)
         add("Lognormal_ParamMeanLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", FIVE_E15, "rel", (mean, sd), mlref)
         add("Lognormal_ParamStdDevLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", FIVE_E15, "rel", (mean, sd), slref)
+
+
+    # ===================== CONTINUOUS FAMILY =====================
+    # Provisional loose bound (1E-8) so nothing false-flags; tighten after
+    # measuring. Exponential is parameterized by RATE (Lambda), not scale.
+    PROV = "rel<=1E-8"
+
+    # --- Gamma(X, Shape k, ScaleParam theta) ---
+    for (x, k, th) in [(mp.mpf(2), mp.mpf(2), mp.mpf(1)), (mp.mpf(5), mp.mpf(3), mp.mpf(2)),
+                       (mp.mpf("0.5"), mp.mpf("1.5"), mp.mpf(1))]:
+        add("Gamma_Density", "K_STATS_Gamma_Density", PROV, "rel", (x, k, th), _gamma_pdf(x, k, th))
+        add("Gamma_Cumulative", "K_STATS_Gamma_Cumulative", PROV, "rel", (x, k, th), _gamma_cdf(x, k, th))
+        add("Gamma_Survival", "K_STATS_Gamma_Survival", PROV, "rel", (x, k, th), _gamma_sf(x, k, th))
+    for (pq, k, th) in [(mp.mpf("0.5"), mp.mpf(2), mp.mpf(1)), (mp.mpf("0.95"), mp.mpf(3), mp.mpf(2))]:
+        add("Gamma_InverseCumulative", "K_STATS_Gamma_InverseCumulative", PROV, "rel", (pq, k, th), _gamma_ppf(pq, k, th))
+    for (k, th) in [(mp.mpf(2), mp.mpf(3)), (mp.mpf(5), mp.mpf(2))]:
+        add("Gamma_Mean", "K_STATS_Gamma_Mean", PROV, "rel", (k, th), mp.mpf(k) * mp.mpf(th))
+        add("Gamma_Variance", "K_STATS_Gamma_Variance", PROV, "rel", (k, th), mp.mpf(k) * mp.mpf(th) ** 2)
+        add("Gamma_StdDev", "K_STATS_Gamma_StdDev", PROV, "rel", (k, th), mp.sqrt(mp.mpf(k)) * mp.mpf(th))
+
+    # --- Beta(X, Alpha a, Beta b) ---
+    for (x, a, b) in [(mp.mpf("0.5"), mp.mpf(2), mp.mpf(2)), (mp.mpf("0.3"), mp.mpf(2), mp.mpf(5)),
+                      (mp.mpf("0.8"), mp.mpf(5), mp.mpf(1))]:
+        add("Beta_Density", "K_STATS_Beta_Density", PROV, "rel", (x, a, b), _beta_pdf(x, a, b))
+        add("Beta_Cumulative", "K_STATS_Beta_Cumulative", PROV, "rel", (x, a, b), _beta_cdf(x, a, b))
+        add("Beta_Survival", "K_STATS_Beta_Survival", PROV, "rel", (x, a, b), _beta_sf(x, a, b))
+    for (pq, a, b) in [(mp.mpf("0.5"), mp.mpf(2), mp.mpf(2)), (mp.mpf("0.95"), mp.mpf(2), mp.mpf(5))]:
+        add("Beta_InverseCumulative", "K_STATS_Beta_InverseCumulative", PROV, "rel", (pq, a, b), _beta_ppf(pq, a, b))
+    for (a, b) in [(mp.mpf(2), mp.mpf(3)), (mp.mpf(5), mp.mpf(2))]:
+        add("Beta_Mean", "K_STATS_Beta_Mean", PROV, "rel", (a, b), mp.mpf(a) / (mp.mpf(a) + mp.mpf(b)))
+        add("Beta_Variance", "K_STATS_Beta_Variance", PROV, "rel", (a, b), mp.mpf(a) * mp.mpf(b) / ((mp.mpf(a) + mp.mpf(b)) ** 2 * (mp.mpf(a) + mp.mpf(b) + 1)))
+        add("Beta_StdDev", "K_STATS_Beta_StdDev", PROV, "rel", (a, b), mp.sqrt(mp.mpf(a) * mp.mpf(b) / ((mp.mpf(a) + mp.mpf(b)) ** 2 * (mp.mpf(a) + mp.mpf(b) + 1))))
+
+    # --- Exponential(X, Lambda=rate) ---
+    for (x, lam) in [(mp.mpf(1), mp.mpf(1)), (mp.mpf("0.5"), mp.mpf(2)), (mp.mpf(3), mp.mpf("0.5"))]:
+        lam = mp.mpf(lam)
+        add("Exponential_Density", "K_STATS_Exponential_Density", PROV, "rel", (x, lam), lam * mp.e ** (-lam * mp.mpf(x)))
+        add("Exponential_Cumulative", "K_STATS_Exponential_Cumulative", PROV, "rel", (x, lam), 1 - mp.e ** (-lam * mp.mpf(x)))
+        add("Exponential_Survival", "K_STATS_Exponential_Survival", PROV, "rel", (x, lam), mp.e ** (-lam * mp.mpf(x)))
+    for (pq, lam) in [(mp.mpf("0.5"), mp.mpf(1)), (mp.mpf("0.95"), mp.mpf(2))]:
+        add("Exponential_InverseCumulative", "K_STATS_Exponential_InverseCumulative", PROV, "rel", (pq, lam), -mp.log(1 - mp.mpf(pq)) / mp.mpf(lam))
+
+    # --- Weibull(X, Shape k, ScaleParam lam) ---
+    for (x, k, lam) in [(mp.mpf(1), mp.mpf("1.5"), mp.mpf(1)), (mp.mpf(2), mp.mpf(2), mp.mpf(2)),
+                        (mp.mpf("0.5"), mp.mpf(3), mp.mpf(1))]:
+        k2, lam2 = mp.mpf(k), mp.mpf(lam)
+        add("Weibull_Density", "K_STATS_Weibull_Density", PROV, "rel", (x, k, lam), (k2 / lam2) * (mp.mpf(x) / lam2) ** (k2 - 1) * mp.e ** (-(mp.mpf(x) / lam2) ** k2))
+        add("Weibull_Cumulative", "K_STATS_Weibull_Cumulative", PROV, "rel", (x, k, lam), 1 - mp.e ** (-(mp.mpf(x) / lam2) ** k2))
+        add("Weibull_Survival", "K_STATS_Weibull_Survival", PROV, "rel", (x, k, lam), mp.e ** (-(mp.mpf(x) / lam2) ** k2))
+    for (pq, k, lam) in [(mp.mpf("0.5"), mp.mpf("1.5"), mp.mpf(1)), (mp.mpf("0.95"), mp.mpf(2), mp.mpf(2))]:
+        add("Weibull_InverseCumulative", "K_STATS_Weibull_InverseCumulative", PROV, "rel", (pq, k, lam), mp.mpf(lam) * (-mp.log(1 - mp.mpf(pq))) ** (1 / mp.mpf(k)))
+    for (k, lam) in [(mp.mpf("1.5"), mp.mpf(1)), (mp.mpf(2), mp.mpf(2))]:
+        add("Weibull_Mean", "K_STATS_Weibull_Mean", PROV, "rel", (k, lam), _weibull_mean(k, lam))
+        add("Weibull_Variance", "K_STATS_Weibull_Variance", PROV, "rel", (k, lam), _weibull_var(k, lam))
+        add("Weibull_StdDev", "K_STATS_Weibull_StdDev", PROV, "rel", (k, lam), mp.sqrt(_weibull_var(k, lam)))
+
+    # --- Uniform(X, LowerBound a, UpperBound b) ---
+    for (x, a, b) in [(mp.mpf(3), mp.mpf(0), mp.mpf(10)), (mp.mpf("2.5"), mp.mpf(1), mp.mpf(4))]:
+        a2, b2 = mp.mpf(a), mp.mpf(b)
+        add("Uniform_Density", "K_STATS_Uniform_Density", PROV, "rel", (x, a, b), 1 / (b2 - a2))
+        add("Uniform_Cumulative", "K_STATS_Uniform_Cumulative", PROV, "rel", (x, a, b), (mp.mpf(x) - a2) / (b2 - a2))
+        add("Uniform_Survival", "K_STATS_Uniform_Survival", PROV, "rel", (x, a, b), (b2 - mp.mpf(x)) / (b2 - a2))
+    for (pq, a, b) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(10)), (mp.mpf("0.9"), mp.mpf(1), mp.mpf(4))]:
+        add("Uniform_InverseCumulative", "K_STATS_Uniform_InverseCumulative", PROV, "rel", (pq, a, b), mp.mpf(a) + mp.mpf(pq) * (mp.mpf(b) - mp.mpf(a)))
 
     return rows
 
