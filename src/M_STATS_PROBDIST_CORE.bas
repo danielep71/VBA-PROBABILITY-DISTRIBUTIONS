@@ -43,6 +43,8 @@ Option Private Module
 '     - PROB_TryAdd
 '     - PROB_TryMultiply
 '     - PROB_TryDivide
+'     - PROB_TryAffineTransform
+'     - PROB_TryStandardize
 '     - PROB_Log1p
 '     - PROB_Expm1
 '     - PROB_NormalInvCDFRaw
@@ -521,6 +523,105 @@ Err_Handler:
         Err.Clear
 End Function
 
+Public Function PROB_TryAffineTransform( _
+    ByVal Offset As Double, _
+    ByVal ScaleParam As Double, _
+    ByVal Value As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryAffineTransform
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Attempts the affine (location-scale) reconstruction Offset + ScaleParam * Value
+'   and converts any Double overflow into a FALSE return. This is the shape used
+'   to map a standard variate back to a distribution scale, for example
+'   Mean + StdDev * Z or MeanLog + StdDevLog * Z.
+'
+' CONTRACT
+'   - Finite result (including underflow to zero): returns TRUE and writes Result.
+'   - Overflow or non-finite input: returns FALSE; Result is not contractual.
+'
+' METHOD
+'   Composed from PROB_TryMultiply then PROB_TryAdd, so overflow of either the
+'   product or the sum is caught by the primitive that performs it. No On Error
+'   block is needed here because each primitive already guards its own step.
+'
+' NOT OVERFLOW-SAFE AGAINST CANCELLATION
+'   The product ScaleParam * Value is formed before the addition, so a case where the
+'   true result is finite only through cancellation of a large product against a
+'   large opposite-signed Offset will still return FALSE. The location-scale uses
+'   in this library never trigger that, but a caller relying on cancellation must
+'   not use this helper.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Scaled              As Double          'Guarded product ScaleParam * Value
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Guard the product
+        If Not PROB_TryMultiply(ScaleParam, Value, Scaled) Then Exit Function
+    'Guard the sum
+        If Not PROB_TryAdd(Offset, Scaled, Result) Then Exit Function
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
+        PROB_TryAffineTransform = True
+End Function
+
+
+Public Function PROB_TryStandardize( _
+    ByVal Value As Double, _
+    ByVal Location As Double, _
+    ByVal ScaleParam As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryStandardize
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Attempts the standardizing transform (Value - Location) / ScaleParam and converts
+'   a zero ScaleParam or any Double overflow into a FALSE return. This is the inverse
+'   shape of PROB_TryAffineTransform and is used to map a distribution variate to
+'   a standard score, for example (X - Mean) / StdDev.
+'
+' CONTRACT
+'   - Finite result (including underflow to zero): returns TRUE and writes Result.
+'   - Zero ScaleParam, overflow or non-finite input: returns FALSE; Result is not
+'     contractual.
+'
+' METHOD
+'   The centred difference Value - Location is formed as PROB_TryAdd(Value,
+'   -Location): negating a finite Double never overflows, and PROB_TryAdd then
+'   guards the subtraction itself. PROB_TryDivide guards the division and rejects
+'   a zero ScaleParam. This is what makes a small ScaleParam fail as a clean FALSE rather
+'   than raising an overflow that would surface as an unexpected error.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Centered            As Double          'Guarded difference Value - Location
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Guard the centred difference (subtraction via negated addition)
+        If Not PROB_TryAdd(Value, -Location, Centered) Then Exit Function
+    'Guard the division by ScaleParam
+        If Not PROB_TryDivide(Centered, ScaleParam, Result) Then Exit Function
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
+        PROB_TryStandardize = True
+End Function
+
 
 Public Function PROB_Log1p( _
     ByVal X As Double) _
@@ -754,3 +855,5 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
+
+

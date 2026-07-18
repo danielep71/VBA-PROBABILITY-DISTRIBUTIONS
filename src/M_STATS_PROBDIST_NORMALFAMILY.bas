@@ -146,20 +146,23 @@ Option Explicit
 '                                       StdDevLog is squared by the moment
 '                                       routines and would overflow above
 '                                       1.34E154; and the general-normal X, Mean
-'                                       and StdDev, which are standardized by a
-'                                       division (see the caveat below).
+'                                       and StdDev. The standardization and
+'                                       reconstruction arithmetic is itself now
+'                                       overflow-guarded (see below).
 '
 '   Diagnostics name the test that was actually applied: a bounded argument is
 '   reported as outside the supported magnitude, never as "not finite", because
 '   1E200 is a perfectly finite Double.
 '
-' KNOWN GAP
-'   The 1E100 bound on the general-normal arguments is neither necessary nor
-'   sufficient: Z = (X - Mean) / StdDev can still overflow for a StdDev small
-'   enough, for example X = 9E99 with StdDev = 1E-300, which raises a VBA
-'   overflow and returns CVErr(xlErrValue) where the correct density is 0. The
-'   bound is retained as a partial guard until the standardization is made
-'   overflow-safe in its own right.
+' STANDARDIZATION OVERFLOW (resolved)
+'   Every standardization Z = (X - Mean) / StdDev and location-scale
+'   reconstruction Mean + StdDev * Z now routes through PROB_TryStandardize and
+'   PROB_TryAffineTransform. An overflow - for example X = 9E99 with
+'   StdDev = 1E-300 - is caught and returned as CVErr(xlErrNum) with a diagnostic,
+'   rather than falling through to the unexpected-error handler as
+'   CVErr(xlErrValue). The 1E100 bound on the general-normal arguments is now
+'   redundant for overflow protection and could be relaxed to PROB_IsFinite in a
+'   later pass; it is retained for now as a conservative, harmless restriction.
 '
 ' NOTES
 '   - Lognormal parameters are the mean and standard deviation of Log(X), not of X.
@@ -1085,6 +1088,7 @@ Public Function K_STATS_Normal_Density( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_ValidateNormalInputs
 '   - PROB_NormalPDF
 '   - PROB_SetStatus
@@ -1118,8 +1122,11 @@ Public Function K_STATS_Normal_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
-    'Compute the standardized variate
-        Z = (X - Mean) / StdDev
+    'Compute the standardized variate, guarding the division by StdDev
+        If Not PROB_TryStandardize(X, Mean, StdDev, Z) Then
+            FailMsg = "Standardized variate overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Return the normal density
         K_STATS_Normal_Density = PROB_NormalPDF(Z) / StdDev
 '
@@ -1222,6 +1229,7 @@ Public Function K_STATS_Normal_Cumulative( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_ValidateNormalInputs
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
@@ -1252,8 +1260,11 @@ Public Function K_STATS_Normal_Cumulative( _
 '------------------------------------------------------------------------------
 ' COMPUTE CUMULATIVE PROBABILITY
 '------------------------------------------------------------------------------
-    'Compute the standardized variate
-        Z = (X - Mean) / StdDev
+    'Compute the standardized variate, guarding the division by StdDev
+        If Not PROB_TryStandardize(X, Mean, StdDev, Z) Then
+            FailMsg = "Standardized variate overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Return the normal cumulative probability
         K_STATS_Normal_Cumulative = PROB_NormalCDF(Z)
 '------------------------------------------------------------------------------
@@ -1342,6 +1353,7 @@ Public Function K_STATS_Normal_Survival( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_ValidateNormalInputs
 '   - PROB_NormalSurvival
 '   - PROB_SetStatus
@@ -1372,8 +1384,11 @@ Public Function K_STATS_Normal_Survival( _
 '------------------------------------------------------------------------------
 ' COMPUTE SURVIVAL PROBABILITY
 '------------------------------------------------------------------------------
-    'Compute the standardized variate
-        Z = (X - Mean) / StdDev
+    'Compute the standardized variate, guarding the division by StdDev
+        If Not PROB_TryStandardize(X, Mean, StdDev, Z) Then
+            FailMsg = "Standardized variate overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Return the normal upper-tail probability
         K_STATS_Normal_Survival = PROB_NormalSurvival(Z)
 '------------------------------------------------------------------------------
@@ -1459,6 +1474,7 @@ Public Function K_STATS_Normal_InverseCumulative( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalInvCDF
@@ -1472,6 +1488,7 @@ Public Function K_STATS_Normal_InverseCumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standard normal quantile
+    Dim Quantile            As Double          'Location-scale reconstruction
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1505,8 +1522,12 @@ Public Function K_STATS_Normal_InverseCumulative( _
 '------------------------------------------------------------------------------
     'Compute the standard normal quantile
         Z = PROB_NormalInvCDF(Probability)
-    'Return the normal quantile
-        K_STATS_Normal_InverseCumulative = Mean + StdDev * Z
+    'Return the normal quantile, guarding the location-scale reconstruction
+        If Not PROB_TryAffineTransform(Mean, StdDev, Z, Quantile) Then
+            FailMsg = "Normal quantile overflows the supported Double range"
+            GoTo Fail_Num
+        End If
+        K_STATS_Normal_InverseCumulative = Quantile
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -1595,6 +1616,7 @@ Public Function K_STATS_Normal_InverseSurvival( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalInvSurvival
@@ -1608,6 +1630,7 @@ Public Function K_STATS_Normal_InverseSurvival( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standard normal quantile
+    Dim Quantile            As Double          'Location-scale reconstruction
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1641,8 +1664,12 @@ Public Function K_STATS_Normal_InverseSurvival( _
 '------------------------------------------------------------------------------
     'Compute the standard normal upper-tail quantile
         Z = PROB_NormalInvSurvival(Probability)
-    'Return the normal quantile
-        K_STATS_Normal_InverseSurvival = Mean + StdDev * Z
+    'Return the normal quantile, guarding the location-scale reconstruction
+        If Not PROB_TryAffineTransform(Mean, StdDev, Z, Quantile) Then
+            FailMsg = "Normal quantile overflows the supported Double range"
+            GoTo Fail_Num
+        End If
+        K_STATS_Normal_InverseSurvival = Quantile
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -1715,6 +1742,11 @@ Public Function K_STATS_Normal_ZScore( _
 '   - Detailed diagnostic messages are written to Status (status bar only when
 '     PROB_WRITE_STATUS_BAR is True).
 '
+' DEPENDENCIES
+'   - PROB_ValidateNormalInputs
+'   - PROB_TryStandardize
+'   - PROB_SetStatus
+'
 ' UPDATED
 '   2026-07-11
 '==============================================================================
@@ -1722,6 +1754,7 @@ Public Function K_STATS_Normal_ZScore( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim Score               As Double          'Standardized score
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1740,8 +1773,12 @@ Public Function K_STATS_Normal_ZScore( _
 '------------------------------------------------------------------------------
 ' COMPUTE Z-SCORE
 '------------------------------------------------------------------------------
-    'Return z-score
-        K_STATS_Normal_ZScore = (X - Mean) / StdDev
+    'Return z-score, guarding the division by StdDev
+        If Not PROB_TryStandardize(X, Mean, StdDev, Score) Then
+            FailMsg = "Standardized score overflows the supported Double range"
+            GoTo Fail_Num
+        End If
+        K_STATS_Normal_ZScore = Score
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -1832,6 +1869,7 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
@@ -1888,8 +1926,15 @@ Public Function K_STATS_Normal_IntervalProbability( _
 ' COMPUTE INTERVAL PROBABILITY
 '------------------------------------------------------------------------------
     'Standardize both bounds
-        ZLower = (LowerBound - Mean) / StdDev
-        ZUpper = (UpperBound - Mean) / StdDev
+        If Not PROB_TryStandardize(LowerBound, Mean, StdDev, ZLower) Then
+            FailMsg = "Standardized lower bound overflows the supported Double range"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_TryStandardize(UpperBound, Mean, StdDev, ZUpper) Then
+            FailMsg = "Standardized upper bound overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Use the stable standardized interval kernel.
         Probability = PROB_NormalIntervalProbability(ZLower, ZUpper)
     'Return interval probability
@@ -1985,6 +2030,7 @@ Public Function K_STATS_Lognormal_Density( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalPDF
 '   - PROB_SetStatus
@@ -2035,7 +2081,10 @@ Public Function K_STATS_Lognormal_Density( _
             Exit Function
         End If
     'Compute standardized log variate
-        Z = (Log(X) - MeanLog) / StdDevLog
+        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z) Then
+            FailMsg = "Standardized log-variate overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Return lognormal density
         K_STATS_Lognormal_Density = PROB_NormalPDF(Z) / (X * StdDevLog)
 '------------------------------------------------------------------------------
@@ -2122,6 +2171,7 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
@@ -2172,7 +2222,10 @@ Public Function K_STATS_Lognormal_Cumulative( _
             Exit Function
         End If
     'Compute standardized log variate
-        Z = (Log(X) - MeanLog) / StdDevLog
+        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z) Then
+            FailMsg = "Standardized log-variate overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Return lognormal cumulative probability
         K_STATS_Lognormal_Cumulative = PROB_NormalCDF(Z)
 '------------------------------------------------------------------------------
@@ -2258,6 +2311,7 @@ Public Function K_STATS_Lognormal_Survival( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalSurvival
 '   - PROB_SetStatus
@@ -2308,7 +2362,10 @@ Public Function K_STATS_Lognormal_Survival( _
             Exit Function
         End If
     'Compute standardized log variate
-        Z = (Log(X) - MeanLog) / StdDevLog
+        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z) Then
+            FailMsg = "Standardized log-variate overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Return lognormal upper-tail probability
         K_STATS_Lognormal_Survival = PROB_NormalSurvival(Z)
 '------------------------------------------------------------------------------
@@ -2393,6 +2450,7 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalInvCDF
@@ -2442,8 +2500,11 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
 '------------------------------------------------------------------------------
     'Compute standard normal quantile
         Z = PROB_NormalInvCDF(Probability)
-    'Compute log-quantile
-        LogQuantile = MeanLog + StdDevLog * Z
+    'Compute the log-quantile, guarding the location-scale reconstruction
+        If Not PROB_TryAffineTransform(MeanLog, StdDevLog, Z, LogQuantile) Then
+            FailMsg = "Lognormal quantile overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Exponentiate with explicit overflow detection
         If Not PROB_TryExp(LogQuantile, Quantile) Then
             FailMsg = "Lognormal quantile overflows Double range"
@@ -2541,6 +2602,7 @@ Public Function K_STATS_Lognormal_InverseSurvival( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
+'   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
 '   - PROB_NormalInvSurvival
@@ -2590,8 +2652,11 @@ Public Function K_STATS_Lognormal_InverseSurvival( _
 '------------------------------------------------------------------------------
     'Compute standard normal upper-tail quantile
         Z = PROB_NormalInvSurvival(Probability)
-    'Compute log-quantile
-        LogQuantile = MeanLog + StdDevLog * Z
+    'Compute the log-quantile, guarding the location-scale reconstruction
+        If Not PROB_TryAffineTransform(MeanLog, StdDevLog, Z, LogQuantile) Then
+            FailMsg = "Lognormal quantile overflows the supported Double range"
+            GoTo Fail_Num
+        End If
     'Exponentiate with explicit overflow detection
         If Not PROB_TryExp(LogQuantile, Quantile) Then
             FailMsg = "Lognormal quantile overflows Double range"
@@ -3547,6 +3612,8 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
+
+
 
 
 
