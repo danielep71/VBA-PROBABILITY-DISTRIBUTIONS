@@ -52,9 +52,10 @@ partial export produces a partial — not a misleading — summary.
 
 Taken verbatim from the `ACCURACY` comments in the source:
 
-The harness covers three modules: the special-function kernels
-(`SPECIALFUNCS`), the test-statistic families (`TFAMILY`), and the normal and
-lognormal family (`NORMALFAMILY`) — 37 functions in total.
+The harness covers four modules: the special-function kernels
+(`SPECIALFUNCS`), the test-statistic families (`TFAMILY`), the normal and
+lognormal family (`NORMALFAMILY`), and the continuous distributions
+(`CONTINUOUS`) — 66 functions in total.
 
 **Special functions**
 
@@ -91,6 +92,26 @@ The normal-family `~1E-15` source comments are interpreted as a hard bound of
 5E-15 for the harness. `NormalStandard_Survival` measures about 1.5E-14 at
 moderate tail values, above that bound; it is reported as *below harness
 precision* rather than a failure, and its claim is left as documented.
+
+**Continuous distributions**
+
+Bounds were set from the measured worst-case error over the tested grid, not
+from source comments (the module publishes none). Exponential is parameterized
+by rate (Lambda), not scale.
+
+| Function | Bound |
+|---|---|
+| Gamma density / CDF / survival / inverse | relative error <= 2E-14 |
+| Gamma mean / variance / std dev | relative error <= 5E-15 |
+| Beta density / CDF / survival / inverse / mean / variance / std dev | relative error <= 5E-15 |
+| Exponential density / CDF / survival / inverse | relative error <= 5E-15 |
+| Weibull density / CDF / survival / inverse | relative error <= 5E-15 |
+| Weibull mean / variance / std dev | relative error <= 2E-14 |
+| Uniform density / CDF / survival / inverse | relative error <= 5E-15 |
+
+The Gamma and Beta inverse functions are iterative, yet measure near machine
+epsilon (Gamma 9.7E-15, Beta 5.7E-16), so they hold the same tight bounds as
+the closed-form functions.
 
 ## Metric note
 
