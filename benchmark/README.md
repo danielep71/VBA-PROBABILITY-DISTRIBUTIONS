@@ -99,17 +99,82 @@ Bounds were set from the measured worst-case error over the tested grid, not
 from source comments (the module publishes none). Exponential is parameterized
 by rate (Lambda), not scale.
 
-| Function | Bound |
-|---|---|
-| Gamma density / CDF / survival / inverse | relative error <= 2E-14 |
-| Gamma mean / variance / std dev | relative error <= 5E-15 |
-| Beta density / survival / inverse / mean / variance / std dev | relative error <= 5E-15 |
-| Beta CDF | relative error <= 2E-14 |
-| Exponential density / CDF / survival / inverse | relative error <= 5E-15 |
-| Weibull density / CDF / survival / inverse | relative error <= 5E-15 |
-| Weibull mean / variance | relative error <= 2E-14 |
-| Weibull std dev | relative error <= 5E-15 |
-| Uniform density / CDF / survival / inverse | relative error <= 5E-15 |
+<!-- Generated from accuracy_contracts.csv by render_contract_table.py. Do not hand-edit. -->
+
+| Function | Metric | Threshold | Domain |
+|---|---|---|---|
+| Beta_Cumulative | relative | 2E-14 | balanced to moderately unbalanced arguments |
+| Beta_Density | relative | 5E-15 | balanced to moderately unbalanced arguments |
+| Beta_InverseCumulative | relative | 5E-15 | balanced to moderately unbalanced arguments |
+| Beta_Mean | relative | 5E-15 | balanced to moderately unbalanced arguments |
+| Beta_StdDev | relative | 5E-15 | balanced to moderately unbalanced arguments |
+| Beta_Survival | relative | 5E-15 | balanced to moderately unbalanced arguments |
+| Beta_Variance | relative | 5E-15 | balanced to moderately unbalanced arguments |
+| ChiSquare_Cumulative | relative | 2.6E-10 | full tested range |
+| ChiSquare_InverseCumulative | relative | 4.7E-12 | full tested range |
+| ChiSquare_Survival | relative | 2.6E-10 | full tested range |
+| Exponential_Cumulative | relative | 5E-15 | full tested range |
+| Exponential_Density | relative | 5E-15 | full tested range |
+| Exponential_InverseCumulative | relative | 5E-15 | full tested range |
+| Exponential_Survival | relative | 5E-15 | full tested range |
+| F_Cumulative | relative | 1.1E-10 | balanced to moderately unbalanced arguments |
+| F_InverseCumulative | relative | 5.9E-13 | balanced to moderately unbalanced arguments |
+| F_Survival | relative | 1.1E-10 | balanced to moderately unbalanced arguments |
+| Gamma_Cumulative | relative | 2E-14 | full tested range |
+| Gamma_Density | relative | 2E-14 | full tested range |
+| Gamma_InverseCumulative | relative | 2E-14 | full tested range |
+| Gamma_Mean | relative | 5E-15 | full tested range |
+| Gamma_StdDev | relative | 5E-15 | full tested range |
+| Gamma_Survival | relative | 2E-14 | full tested range |
+| Gamma_Variance | relative | 5E-15 | full tested range |
+| LogChoose | relative | 3.2E-16 | full tested range |
+| LogGamma | relative | 6.1E-14 | full tested range |
+| LogGammaHalfDiff | relative | 2E-14 | full tested range |
+| Lognormal_Cumulative | relative | 5E-15 | full tested range |
+| Lognormal_Density | relative | 5E-15 | full tested range |
+| Lognormal_InverseCumulative | relative | 5E-15 | full tested range |
+| Lognormal_InverseSurvival | relative | 5E-15 | full tested range |
+| Lognormal_Mean | relative | 5E-15 | full tested range |
+| Lognormal_ParamMeanLog | relative | 5E-15 | full tested range |
+| Lognormal_ParamStdDevLog | relative | 5E-15 | full tested range |
+| Lognormal_StdDev | relative | 5E-15 | full tested range |
+| Lognormal_Survival | relative | 5E-15 | full tested range |
+| Lognormal_Variance | relative | 5E-15 | full tested range |
+| NormalStandard_Cumulative | relative | 5E-15 | full tested range |
+| NormalStandard_Density | relative | 5E-15 | full tested range |
+| NormalStandard_IntervalProbability | relative | 5E-15 | full tested range |
+| NormalStandard_InverseCumulative | relative | 5E-15 | full tested range |
+| NormalStandard_InverseCumulativeFast | relative | 5E-9 | full tested range |
+| NormalStandard_InverseSurvival | relative | 5E-15 | full tested range |
+| NormalStandard_Survival | relative | 5E-15 | full tested range |
+| Normal_Cumulative | relative | 5E-15 | full tested range |
+| Normal_Density | relative | 5E-15 | full tested range |
+| Normal_InverseCumulative | relative | 5E-15 | full tested range |
+| Normal_InverseSurvival | relative | 5E-15 | full tested range |
+| Normal_Survival | relative | 5E-15 | full tested range |
+| Normal_ZScore | relative | 5E-15 | full tested range |
+| StirlingError | absolute | 3E-17 | full tested range |
+| StudentT_Cumulative | relative | 1.3E-12 | full tested range |
+| StudentT_Density | relative | 2E-14 | full tested range |
+| StudentT_InverseCumulative | relative | 3.0E-12 | full tested range |
+| StudentT_Survival | relative | 1.3E-12 | full tested range |
+| Uniform_Cumulative | relative | 5E-15 | full tested range |
+| Uniform_Density | relative | 5E-15 | full tested range |
+| Uniform_InverseCumulative | relative | 5E-15 | full tested range |
+| Uniform_Survival | relative | 5E-15 | full tested range |
+| Weibull_Cumulative | relative | 5E-15 | full tested range |
+| Weibull_Density | relative | 5E-15 | full tested range |
+| Weibull_InverseCumulative | relative | 5E-15 | full tested range |
+| Weibull_Mean | relative | 2E-14 | full tested range |
+| Weibull_StdDev | relative | 5E-15 | full tested range |
+| Weibull_Survival | relative | 5E-15 | full tested range |
+| Weibull_Variance | relative | 2E-14 | full tested range |
+
+**Known limitations**
+
+| Function | Domain | Notes |
+|---|---|---|
+| PROB_LogBeta | shape ratio >= 1E-1, or <= 1E-15 | Middle band (ratio 1E-2..1E-13) does not meet claim; see logbeta_study |
 
 The Gamma and Beta inverse functions are iterative, yet measure near machine
 epsilon (Gamma 9.7E-15, Beta 5.7E-16), so they hold the same tight bounds as

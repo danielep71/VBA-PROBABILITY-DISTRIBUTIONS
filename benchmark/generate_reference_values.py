@@ -219,10 +219,31 @@ def _weibull_var(k, lam):
     return lam ** 2 * (mp.gamma(1 + 2 / k) - mp.gamma(1 + 1 / k) ** 2)
 
 
+def _load_contracts(path=None):
+    """Load the accuracy contract (single source of truth) keyed by function."""
+    import csv, os
+    if path is None:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "accuracy_contracts.csv")
+    contracts = {}
+    with open(path, newline="") as f:
+        for row in csv.DictReader(f):
+            m = "rel" if row["metric"].strip().lower().startswith("rel") else "abs"
+            contracts[row["function"]] = {"metric": m, "claim": f'{m}<={row["threshold"].strip()}'}
+    return contracts
+
+
+_CONTRACTS = _load_contracts()
+
+
 def build_rows():
     rows = []
 
-    def add(func, vba_kernel, claim, metric, args, ref):
+    def add(func, vba_kernel, args, ref):
+        # Claim and metric come from the single source of truth,
+        # benchmark/accuracy_contracts.csv, so grid, summary, and README cannot drift.
+        contract = _CONTRACTS[func]
+        claim = contract["claim"]
+        metric = contract["metric"]
         rows.append(
             {
                 "function": func,
@@ -239,48 +260,48 @@ def build_rows():
 
     # --- PROB_LogGamma : Z in [1E-8, 1E+50], rel < 6.1E-14 ---
     for z in logspace("1e-8", "1e50", 40):
-        add("LogGamma", "PROB_LogGamma", "rel<6.1E-14", "rel", (z,), _loggamma(z))
+        add("LogGamma", "PROB_LogGamma", (z,), _loggamma(z))
 
     # --- PROB_LogGammaHalfDiff : Z > 0, rel <= 2E-14 (tested range) ---
     for z in logspace("1e-6", "1e12", 30):
-        add("LogGammaHalfDiff", "PROB_LogGammaHalfDiff", "rel<=2E-14", "rel", (z,), _loggamma_halfdiff(z))
+        add("LogGammaHalfDiff", "PROB_LogGammaHalfDiff", (z,), _loggamma_halfdiff(z))
 
     # --- PROB_StirlingError : N >= 0.5, abs <= 3E-17 (include N=501 hot spot) ---
     ns = [mp.mpf("0.5"), mp.mpf(1), mp.mpf(2), mp.mpf(3), mp.mpf(5), mp.mpf(10),
           mp.mpf(50), mp.mpf(100), mp.mpf(500), mp.mpf(501), mp.mpf(1000), mp.mpf(1e6)]
     for n in ns:
-        add("StirlingError", "PROB_StirlingError", "abs<=3E-17", "abs", (n,), _stirling_error(n))
+        add("StirlingError", "PROB_StirlingError", (n,), _stirling_error(n))
 
     # --- PROB_LogChoose : N in [2, 2^53], all K, rel <= 3.2E-16 ---
     for n in [mp.mpf(2), mp.mpf(10), mp.mpf(100), mp.mpf(1030), mp.mpf(1e6), mp.mpf(2) ** 53]:
         for frac in [mp.mpf("0.0"), mp.mpf("0.01"), mp.mpf("0.5"), mp.mpf("0.99"), mp.mpf("1.0")]:
             k = mp.floor(n * frac)
-            add("LogChoose", "PROB_LogChoose", "rel<=3.2E-16", "rel", (n, k), _logchoose(n, k))
+            add("LogChoose", "PROB_LogChoose", (n, k), _logchoose(n, k))
 
     # --- Student t ---
     for df in [mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(30), mp.mpf(1000)]:
         for x in [mp.mpf("0.1"), mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(20)]:
-            add("StudentT_Density", "K_STATS_StudentT_Density", "rel<=2E-14", "rel", (x, df), _student_t_pdf(x, df))
-            add("StudentT_Cumulative", "K_STATS_StudentT_Cumulative", "rel<=1.3E-12", "rel", (x, df), _student_t_cdf(x, df))
-            add("StudentT_Survival", "K_STATS_StudentT_Survival", "rel<=1.3E-12", "rel", (x, df), _student_t_sf(x, df))
+            add("StudentT_Density", "K_STATS_StudentT_Density", (x, df), _student_t_pdf(x, df))
+            add("StudentT_Cumulative", "K_STATS_StudentT_Cumulative", (x, df), _student_t_cdf(x, df))
+            add("StudentT_Survival", "K_STATS_StudentT_Survival", (x, df), _student_t_sf(x, df))
         for p in [mp.mpf("0.001"), mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95"), mp.mpf("0.999")]:
-            add("StudentT_InverseCumulative", "K_STATS_StudentT_InverseCumulative", "rel<=3.0E-12", "rel", (p, df), _student_t_ppf(p, df))
+            add("StudentT_InverseCumulative", "K_STATS_StudentT_InverseCumulative", (p, df), _student_t_ppf(p, df))
 
     # --- Chi-square ---
     for df in [mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(30), mp.mpf(100)]:
         for x in [mp.mpf("0.5"), mp.mpf(1), mp.mpf(5), mp.mpf(20), mp.mpf(80)]:
-            add("ChiSquare_Cumulative", "K_STATS_ChiSquare_Cumulative", "rel<=2.6E-10", "rel", (x, df), _chi2_cdf(x, df))
-            add("ChiSquare_Survival", "K_STATS_ChiSquare_Survival", "rel<=2.6E-10", "rel", (x, df), _chi2_sf(x, df))
+            add("ChiSquare_Cumulative", "K_STATS_ChiSquare_Cumulative", (x, df), _chi2_cdf(x, df))
+            add("ChiSquare_Survival", "K_STATS_ChiSquare_Survival", (x, df), _chi2_sf(x, df))
         for p in [mp.mpf("0.001"), mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95"), mp.mpf("0.999")]:
-            add("ChiSquare_InverseCumulative", "K_STATS_ChiSquare_InverseCumulative", "rel<=4.7E-12", "rel", (p, df), _chi2_ppf(p, df))
+            add("ChiSquare_InverseCumulative", "K_STATS_ChiSquare_InverseCumulative", (p, df), _chi2_ppf(p, df))
 
     # --- F ---
     for d1, d2 in [(mp.mpf(1), mp.mpf(1)), (mp.mpf(5), mp.mpf(2)), (mp.mpf(10), mp.mpf(30)), (mp.mpf(100), mp.mpf(100))]:
         for x in [mp.mpf("0.25"), mp.mpf(1), mp.mpf(2), mp.mpf(10)]:
-            add("F_Cumulative", "K_STATS_F_Cumulative", "rel<=1.1E-10", "rel", (x, d1, d2), _f_cdf(x, d1, d2))
-            add("F_Survival", "K_STATS_F_Survival", "rel<=1.1E-10", "rel", (x, d1, d2), _f_sf(x, d1, d2))
+            add("F_Cumulative", "K_STATS_F_Cumulative", (x, d1, d2), _f_cdf(x, d1, d2))
+            add("F_Survival", "K_STATS_F_Survival", (x, d1, d2), _f_sf(x, d1, d2))
         for p in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95")]:
-            add("F_InverseCumulative", "K_STATS_F_InverseCumulative", "rel<=5.9E-13", "rel", (p, d1, d2), _f_ppf(p, d1, d2))
+            add("F_InverseCumulative", "K_STATS_F_InverseCumulative", (p, d1, d2), _f_ppf(p, d1, d2))
 
 
     # ===================== NORMAL FAMILY =====================
@@ -288,54 +309,54 @@ def build_rows():
 
     # --- Standard Normal ---
     for z in [mp.mpf("-2"), mp.mpf("-0.5"), mp.mpf("0.5"), mp.mpf(1), mp.mpf("1.96"), mp.mpf(3)]:
-        add("NormalStandard_Density", "K_STATS_NormalStandard_Density", FIVE_E15, "rel", (z,), _phi(z))
-        add("NormalStandard_Cumulative", "K_STATS_NormalStandard_Cumulative", FIVE_E15, "rel", (z,), _Phi(z))
-        add("NormalStandard_Survival", "K_STATS_NormalStandard_Survival", FIVE_E15, "rel", (z,), _Phi_sf(z))
+        add("NormalStandard_Density", "K_STATS_NormalStandard_Density", (z,), _phi(z))
+        add("NormalStandard_Cumulative", "K_STATS_NormalStandard_Cumulative", (z,), _Phi(z))
+        add("NormalStandard_Survival", "K_STATS_NormalStandard_Survival", (z,), _Phi_sf(z))
     for pq in [mp.mpf("0.01"), mp.mpf("0.25"), mp.mpf("0.5"), mp.mpf("0.975"), mp.mpf("0.999")]:
-        add("NormalStandard_InverseCumulative", "K_STATS_NormalStandard_InverseCumulative", FIVE_E15, "rel", (pq,), _Phi_inv(pq))
-        add("NormalStandard_InverseSurvival", "K_STATS_NormalStandard_InverseSurvival", FIVE_E15, "rel", (pq,), -_Phi_inv(pq))
-        add("NormalStandard_InverseCumulativeFast", "K_STATS_NormalStandard_InverseCumulativeFast", "rel<=5E-9", "rel", (pq,), _Phi_inv(pq))
+        add("NormalStandard_InverseCumulative", "K_STATS_NormalStandard_InverseCumulative", (pq,), _Phi_inv(pq))
+        add("NormalStandard_InverseSurvival", "K_STATS_NormalStandard_InverseSurvival", (pq,), -_Phi_inv(pq))
+        add("NormalStandard_InverseCumulativeFast", "K_STATS_NormalStandard_InverseCumulativeFast", (pq,), _Phi_inv(pq))
     for lo, up in [(mp.mpf("-1.96"), mp.mpf("1.96")), (mp.mpf("-1"), mp.mpf(2)), (mp.mpf("0"), mp.mpf(3))]:
-        add("NormalStandard_IntervalProbability", "K_STATS_NormalStandard_IntervalProbability", FIVE_E15, "rel", (lo, up), _Phi(up) - _Phi(lo))
+        add("NormalStandard_IntervalProbability", "K_STATS_NormalStandard_IntervalProbability", (lo, up), _Phi(up) - _Phi(lo))
 
     # --- General Normal ---
     for (x, m, sd) in [(mp.mpf("1.96"), mp.mpf(0), mp.mpf(1)), (mp.mpf(110), mp.mpf(100), mp.mpf(15)),
                        (mp.mpf(3), mp.mpf(5), mp.mpf(2))]:
         z = (x - m) / sd
-        add("Normal_Density", "K_STATS_Normal_Density", FIVE_E15, "rel", (x, m, sd), _phi(z) / sd)
-        add("Normal_Cumulative", "K_STATS_Normal_Cumulative", FIVE_E15, "rel", (x, m, sd), _Phi(z))
-        add("Normal_Survival", "K_STATS_Normal_Survival", FIVE_E15, "rel", (x, m, sd), _Phi_sf(z))
-        add("Normal_ZScore", "K_STATS_Normal_ZScore", FIVE_E15, "rel", (x, m, sd), z)
+        add("Normal_Density", "K_STATS_Normal_Density", (x, m, sd), _phi(z) / sd)
+        add("Normal_Cumulative", "K_STATS_Normal_Cumulative", (x, m, sd), _Phi(z))
+        add("Normal_Survival", "K_STATS_Normal_Survival", (x, m, sd), _Phi_sf(z))
+        add("Normal_ZScore", "K_STATS_Normal_ZScore", (x, m, sd), z)
     for (pq, m, sd) in [(mp.mpf("0.99"), mp.mpf(100), mp.mpf(15)), (mp.mpf("0.025"), mp.mpf(10), mp.mpf(2))]:
-        add("Normal_InverseCumulative", "K_STATS_Normal_InverseCumulative", FIVE_E15, "rel", (pq, m, sd), m + sd * _Phi_inv(pq))
-        add("Normal_InverseSurvival", "K_STATS_Normal_InverseSurvival", FIVE_E15, "rel", (pq, m, sd), m - sd * _Phi_inv(pq))
+        add("Normal_InverseCumulative", "K_STATS_Normal_InverseCumulative", (pq, m, sd), m + sd * _Phi_inv(pq))
+        add("Normal_InverseSurvival", "K_STATS_Normal_InverseSurvival", (pq, m, sd), m - sd * _Phi_inv(pq))
 
     # --- Lognormal ---
     for (x, ml, sl) in [(mp.mpf(1), mp.mpf(0), mp.mpf(1)), (mp.mpf(2), mp.mpf("0.5"), mp.mpf("0.25")),
                         (mp.mpf("0.5"), mp.mpf(0), mp.mpf(1))]:
         zz = (mp.log(x) - ml) / sl
-        add("Lognormal_Density", "K_STATS_Lognormal_Density", FIVE_E15, "rel", (x, ml, sl), _phi(zz) / (x * sl))
-        add("Lognormal_Cumulative", "K_STATS_Lognormal_Cumulative", FIVE_E15, "rel", (x, ml, sl), _Phi(zz))
-        add("Lognormal_Survival", "K_STATS_Lognormal_Survival", FIVE_E15, "rel", (x, ml, sl), _Phi_sf(zz))
+        add("Lognormal_Density", "K_STATS_Lognormal_Density", (x, ml, sl), _phi(zz) / (x * sl))
+        add("Lognormal_Cumulative", "K_STATS_Lognormal_Cumulative", (x, ml, sl), _Phi(zz))
+        add("Lognormal_Survival", "K_STATS_Lognormal_Survival", (x, ml, sl), _Phi_sf(zz))
     # Deep-underflow regression for the log-domain density reconstruction: |Z| = 40,
     # so the naive phi(Z)/(X*sl) underflows its numerator to zero, yet the density
     # (~1.6E-305) is representable. MeanLog = 0 keeps Z clean, isolating the density
     # path from input conditioning. This row fails on the old form, passes on the fix.
     for (x, ml, sl) in [(mp.e ** -100, mp.mpf(0), mp.mpf("2.5"))]:
         zz = (mp.log(x) - ml) / sl
-        add("Lognormal_Density", "K_STATS_Lognormal_Density", FIVE_E15, "rel", (x, ml, sl), _phi(zz) / (x * sl))
+        add("Lognormal_Density", "K_STATS_Lognormal_Density", (x, ml, sl), _phi(zz) / (x * sl))
     for (pq, ml, sl) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(1)), (mp.mpf("0.025"), mp.mpf(0), mp.mpf(1))]:
-        add("Lognormal_InverseCumulative", "K_STATS_Lognormal_InverseCumulative", FIVE_E15, "rel", (pq, ml, sl), mp.e ** (ml + sl * _Phi_inv(pq)))
-        add("Lognormal_InverseSurvival", "K_STATS_Lognormal_InverseSurvival", FIVE_E15, "rel", (pq, ml, sl), mp.e ** (ml - sl * _Phi_inv(pq)))
+        add("Lognormal_InverseCumulative", "K_STATS_Lognormal_InverseCumulative", (pq, ml, sl), mp.e ** (ml + sl * _Phi_inv(pq)))
+        add("Lognormal_InverseSurvival", "K_STATS_Lognormal_InverseSurvival", (pq, ml, sl), mp.e ** (ml - sl * _Phi_inv(pq)))
     for (ml, sl) in [(mp.mpf(0), mp.mpf(1)), (mp.mpf("0.5"), mp.mpf("0.25"))]:
-        add("Lognormal_Mean", "K_STATS_Lognormal_Mean", FIVE_E15, "rel", (ml, sl), mp.e ** (ml + sl * sl / 2))
-        add("Lognormal_Variance", "K_STATS_Lognormal_Variance", FIVE_E15, "rel", (ml, sl), (mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl))
-        add("Lognormal_StdDev", "K_STATS_Lognormal_StdDev", FIVE_E15, "rel", (ml, sl), mp.sqrt((mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl)))
+        add("Lognormal_Mean", "K_STATS_Lognormal_Mean", (ml, sl), mp.e ** (ml + sl * sl / 2))
+        add("Lognormal_Variance", "K_STATS_Lognormal_Variance", (ml, sl), (mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl))
+        add("Lognormal_StdDev", "K_STATS_Lognormal_StdDev", (ml, sl), mp.sqrt((mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl)))
     # ParametersFromMeanStdDev returns a 1x2 array; test each output separately
     for (mean, sd) in [(mp.mpf(2), mp.mpf("0.5")), (mp.mpf(10), mp.mpf(3))]:
         mlref, slref = _lognorm_params(mean, sd)
-        add("Lognormal_ParamMeanLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", FIVE_E15, "rel", (mean, sd), mlref)
-        add("Lognormal_ParamStdDevLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", FIVE_E15, "rel", (mean, sd), slref)
+        add("Lognormal_ParamMeanLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", (mean, sd), mlref)
+        add("Lognormal_ParamStdDevLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", (mean, sd), slref)
 
 
     # ===================== CONTINUOUS FAMILY =====================
@@ -347,60 +368,60 @@ def build_rows():
     # --- Gamma(X, Shape k, ScaleParam theta) ---
     for (x, k, th) in [(mp.mpf(2), mp.mpf(2), mp.mpf(1)), (mp.mpf(5), mp.mpf(3), mp.mpf(2)),
                        (mp.mpf("0.5"), mp.mpf("1.5"), mp.mpf(1))]:
-        add("Gamma_Density", "K_STATS_Gamma_Density", "rel<=2E-14", "rel", (x, k, th), _gamma_pdf(x, k, th))
-        add("Gamma_Cumulative", "K_STATS_Gamma_Cumulative", "rel<=2E-14", "rel", (x, k, th), _gamma_cdf(x, k, th))
-        add("Gamma_Survival", "K_STATS_Gamma_Survival", "rel<=2E-14", "rel", (x, k, th), _gamma_sf(x, k, th))
+        add("Gamma_Density", "K_STATS_Gamma_Density", (x, k, th), _gamma_pdf(x, k, th))
+        add("Gamma_Cumulative", "K_STATS_Gamma_Cumulative", (x, k, th), _gamma_cdf(x, k, th))
+        add("Gamma_Survival", "K_STATS_Gamma_Survival", (x, k, th), _gamma_sf(x, k, th))
     for (pq, k, th) in [(mp.mpf("0.5"), mp.mpf(2), mp.mpf(1)), (mp.mpf("0.95"), mp.mpf(3), mp.mpf(2))]:
-        add("Gamma_InverseCumulative", "K_STATS_Gamma_InverseCumulative", "rel<=2E-14", "rel", (pq, k, th), _gamma_ppf(pq, k, th))
+        add("Gamma_InverseCumulative", "K_STATS_Gamma_InverseCumulative", (pq, k, th), _gamma_ppf(pq, k, th))
     for (k, th) in [(mp.mpf(2), mp.mpf(3)), (mp.mpf(5), mp.mpf(2))]:
-        add("Gamma_Mean", "K_STATS_Gamma_Mean", "rel<=5E-15", "rel", (k, th), mp.mpf(k) * mp.mpf(th))
-        add("Gamma_Variance", "K_STATS_Gamma_Variance", "rel<=5E-15", "rel", (k, th), mp.mpf(k) * mp.mpf(th) ** 2)
-        add("Gamma_StdDev", "K_STATS_Gamma_StdDev", "rel<=5E-15", "rel", (k, th), mp.sqrt(mp.mpf(k)) * mp.mpf(th))
+        add("Gamma_Mean", "K_STATS_Gamma_Mean", (k, th), mp.mpf(k) * mp.mpf(th))
+        add("Gamma_Variance", "K_STATS_Gamma_Variance", (k, th), mp.mpf(k) * mp.mpf(th) ** 2)
+        add("Gamma_StdDev", "K_STATS_Gamma_StdDev", (k, th), mp.sqrt(mp.mpf(k)) * mp.mpf(th))
 
     # --- Beta(X, Alpha a, Beta b) ---
     for (x, a, b) in [(mp.mpf("0.5"), mp.mpf(2), mp.mpf(2)), (mp.mpf("0.3"), mp.mpf(2), mp.mpf(5)),
                       (mp.mpf("0.8"), mp.mpf(5), mp.mpf(1))]:
-        add("Beta_Density", "K_STATS_Beta_Density", "rel<=5E-15", "rel", (x, a, b), _beta_pdf(x, a, b))
-        add("Beta_Cumulative", "K_STATS_Beta_Cumulative", "rel<=2E-14", "rel", (x, a, b), _beta_cdf(x, a, b))
-        add("Beta_Survival", "K_STATS_Beta_Survival", "rel<=5E-15", "rel", (x, a, b), _beta_sf(x, a, b))
+        add("Beta_Density", "K_STATS_Beta_Density", (x, a, b), _beta_pdf(x, a, b))
+        add("Beta_Cumulative", "K_STATS_Beta_Cumulative", (x, a, b), _beta_cdf(x, a, b))
+        add("Beta_Survival", "K_STATS_Beta_Survival", (x, a, b), _beta_sf(x, a, b))
     for (pq, a, b) in [(mp.mpf("0.5"), mp.mpf(2), mp.mpf(2)), (mp.mpf("0.95"), mp.mpf(2), mp.mpf(5))]:
-        add("Beta_InverseCumulative", "K_STATS_Beta_InverseCumulative", "rel<=5E-15", "rel", (pq, a, b), _beta_ppf(pq, a, b))
+        add("Beta_InverseCumulative", "K_STATS_Beta_InverseCumulative", (pq, a, b), _beta_ppf(pq, a, b))
     for (a, b) in [(mp.mpf(2), mp.mpf(3)), (mp.mpf(5), mp.mpf(2))]:
-        add("Beta_Mean", "K_STATS_Beta_Mean", "rel<=5E-15", "rel", (a, b), mp.mpf(a) / (mp.mpf(a) + mp.mpf(b)))
-        add("Beta_Variance", "K_STATS_Beta_Variance", "rel<=5E-15", "rel", (a, b), mp.mpf(a) * mp.mpf(b) / ((mp.mpf(a) + mp.mpf(b)) ** 2 * (mp.mpf(a) + mp.mpf(b) + 1)))
-        add("Beta_StdDev", "K_STATS_Beta_StdDev", "rel<=5E-15", "rel", (a, b), mp.sqrt(mp.mpf(a) * mp.mpf(b) / ((mp.mpf(a) + mp.mpf(b)) ** 2 * (mp.mpf(a) + mp.mpf(b) + 1))))
+        add("Beta_Mean", "K_STATS_Beta_Mean", (a, b), mp.mpf(a) / (mp.mpf(a) + mp.mpf(b)))
+        add("Beta_Variance", "K_STATS_Beta_Variance", (a, b), mp.mpf(a) * mp.mpf(b) / ((mp.mpf(a) + mp.mpf(b)) ** 2 * (mp.mpf(a) + mp.mpf(b) + 1)))
+        add("Beta_StdDev", "K_STATS_Beta_StdDev", (a, b), mp.sqrt(mp.mpf(a) * mp.mpf(b) / ((mp.mpf(a) + mp.mpf(b)) ** 2 * (mp.mpf(a) + mp.mpf(b) + 1))))
 
     # --- Exponential(X, Lambda=rate) ---
     for (x, lam) in [(mp.mpf(1), mp.mpf(1)), (mp.mpf("0.5"), mp.mpf(2)), (mp.mpf(3), mp.mpf("0.5"))]:
         lam = mp.mpf(lam)
-        add("Exponential_Density", "K_STATS_Exponential_Density", "rel<=5E-15", "rel", (x, lam), lam * mp.e ** (-lam * mp.mpf(x)))
-        add("Exponential_Cumulative", "K_STATS_Exponential_Cumulative", "rel<=5E-15", "rel", (x, lam), 1 - mp.e ** (-lam * mp.mpf(x)))
-        add("Exponential_Survival", "K_STATS_Exponential_Survival", "rel<=5E-15", "rel", (x, lam), mp.e ** (-lam * mp.mpf(x)))
+        add("Exponential_Density", "K_STATS_Exponential_Density", (x, lam), lam * mp.e ** (-lam * mp.mpf(x)))
+        add("Exponential_Cumulative", "K_STATS_Exponential_Cumulative", (x, lam), 1 - mp.e ** (-lam * mp.mpf(x)))
+        add("Exponential_Survival", "K_STATS_Exponential_Survival", (x, lam), mp.e ** (-lam * mp.mpf(x)))
     for (pq, lam) in [(mp.mpf("0.5"), mp.mpf(1)), (mp.mpf("0.95"), mp.mpf(2))]:
-        add("Exponential_InverseCumulative", "K_STATS_Exponential_InverseCumulative", "rel<=5E-15", "rel", (pq, lam), -mp.log(1 - mp.mpf(pq)) / mp.mpf(lam))
+        add("Exponential_InverseCumulative", "K_STATS_Exponential_InverseCumulative", (pq, lam), -mp.log(1 - mp.mpf(pq)) / mp.mpf(lam))
 
     # --- Weibull(X, Shape k, ScaleParam lam) ---
     for (x, k, lam) in [(mp.mpf(1), mp.mpf("1.5"), mp.mpf(1)), (mp.mpf(2), mp.mpf(2), mp.mpf(2)),
                         (mp.mpf("0.5"), mp.mpf(3), mp.mpf(1))]:
         k2, lam2 = mp.mpf(k), mp.mpf(lam)
-        add("Weibull_Density", "K_STATS_Weibull_Density", "rel<=5E-15", "rel", (x, k, lam), (k2 / lam2) * (mp.mpf(x) / lam2) ** (k2 - 1) * mp.e ** (-(mp.mpf(x) / lam2) ** k2))
-        add("Weibull_Cumulative", "K_STATS_Weibull_Cumulative", "rel<=5E-15", "rel", (x, k, lam), 1 - mp.e ** (-(mp.mpf(x) / lam2) ** k2))
-        add("Weibull_Survival", "K_STATS_Weibull_Survival", "rel<=5E-15", "rel", (x, k, lam), mp.e ** (-(mp.mpf(x) / lam2) ** k2))
+        add("Weibull_Density", "K_STATS_Weibull_Density", (x, k, lam), (k2 / lam2) * (mp.mpf(x) / lam2) ** (k2 - 1) * mp.e ** (-(mp.mpf(x) / lam2) ** k2))
+        add("Weibull_Cumulative", "K_STATS_Weibull_Cumulative", (x, k, lam), 1 - mp.e ** (-(mp.mpf(x) / lam2) ** k2))
+        add("Weibull_Survival", "K_STATS_Weibull_Survival", (x, k, lam), mp.e ** (-(mp.mpf(x) / lam2) ** k2))
     for (pq, k, lam) in [(mp.mpf("0.5"), mp.mpf("1.5"), mp.mpf(1)), (mp.mpf("0.95"), mp.mpf(2), mp.mpf(2))]:
-        add("Weibull_InverseCumulative", "K_STATS_Weibull_InverseCumulative", "rel<=5E-15", "rel", (pq, k, lam), mp.mpf(lam) * (-mp.log(1 - mp.mpf(pq))) ** (1 / mp.mpf(k)))
+        add("Weibull_InverseCumulative", "K_STATS_Weibull_InverseCumulative", (pq, k, lam), mp.mpf(lam) * (-mp.log(1 - mp.mpf(pq))) ** (1 / mp.mpf(k)))
     for (k, lam) in [(mp.mpf("1.5"), mp.mpf(1)), (mp.mpf(2), mp.mpf(2))]:
-        add("Weibull_Mean", "K_STATS_Weibull_Mean", "rel<=2E-14", "rel", (k, lam), _weibull_mean(k, lam))
-        add("Weibull_Variance", "K_STATS_Weibull_Variance", "rel<=2E-14", "rel", (k, lam), _weibull_var(k, lam))
-        add("Weibull_StdDev", "K_STATS_Weibull_StdDev", "rel<=5E-15", "rel", (k, lam), mp.sqrt(_weibull_var(k, lam)))
+        add("Weibull_Mean", "K_STATS_Weibull_Mean", (k, lam), _weibull_mean(k, lam))
+        add("Weibull_Variance", "K_STATS_Weibull_Variance", (k, lam), _weibull_var(k, lam))
+        add("Weibull_StdDev", "K_STATS_Weibull_StdDev", (k, lam), mp.sqrt(_weibull_var(k, lam)))
 
     # --- Uniform(X, LowerBound a, UpperBound b) ---
     for (x, a, b) in [(mp.mpf(3), mp.mpf(0), mp.mpf(10)), (mp.mpf("2.5"), mp.mpf(1), mp.mpf(4))]:
         a2, b2 = mp.mpf(a), mp.mpf(b)
-        add("Uniform_Density", "K_STATS_Uniform_Density", "rel<=5E-15", "rel", (x, a, b), 1 / (b2 - a2))
-        add("Uniform_Cumulative", "K_STATS_Uniform_Cumulative", "rel<=5E-15", "rel", (x, a, b), (mp.mpf(x) - a2) / (b2 - a2))
-        add("Uniform_Survival", "K_STATS_Uniform_Survival", "rel<=5E-15", "rel", (x, a, b), (b2 - mp.mpf(x)) / (b2 - a2))
+        add("Uniform_Density", "K_STATS_Uniform_Density", (x, a, b), 1 / (b2 - a2))
+        add("Uniform_Cumulative", "K_STATS_Uniform_Cumulative", (x, a, b), (mp.mpf(x) - a2) / (b2 - a2))
+        add("Uniform_Survival", "K_STATS_Uniform_Survival", (x, a, b), (b2 - mp.mpf(x)) / (b2 - a2))
     for (pq, a, b) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(10)), (mp.mpf("0.9"), mp.mpf(1), mp.mpf(4))]:
-        add("Uniform_InverseCumulative", "K_STATS_Uniform_InverseCumulative", "rel<=5E-15", "rel", (pq, a, b), mp.mpf(a) + mp.mpf(pq) * (mp.mpf(b) - mp.mpf(a)))
+        add("Uniform_InverseCumulative", "K_STATS_Uniform_InverseCumulative", (pq, a, b), mp.mpf(a) + mp.mpf(pq) * (mp.mpf(b) - mp.mpf(a)))
 
     return rows
 

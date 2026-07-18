@@ -30,6 +30,41 @@ def parse_claim(claim):
     return m.group(1), float(m.group(2))
 
 
+def load_contract(path=None):
+    """Single source of truth for thresholds; used to cross-check grid claims."""
+    import os
+    if path is None:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "accuracy_contracts.csv")
+    out = {}
+    try:
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                m = "rel" if row["metric"].strip().lower().startswith("rel") else "abs"
+                out[row["function"]] = (m, row["threshold"].strip())
+    except FileNotFoundError:
+        return None
+    return out
+
+
+def check_contract_consistency(rows):
+    """Warn if any grid claim disagrees with accuracy_contracts.csv."""
+    contract = load_contract()
+    if contract is None:
+        return
+    seen = set()
+    for r in rows:
+        fn = r["function"]
+        if fn in seen:
+            continue
+        seen.add(fn)
+        cm, ct = parse_claim(r["claim"])
+        if fn in contract:
+            gm, gt = contract[fn]
+            if cm != gm or float(ct) != float(gt):
+                print(f"  WARNING: grid claim for {fn} ({r['claim']}) disagrees with "
+                      f"accuracy_contracts.csv ({gm}<={gt})")
+
+
 def parse_observed(s):
     """Observed values may be a single number or a two-part 'hi;lo' sum that the
     export macro writes to preserve full Double precision. Sum the parts."""
@@ -55,6 +90,8 @@ def main():
     args = ap.parse_args()
 
     rows = list(csv.DictReader(open(args.grid)))
+
+    check_contract_consistency(rows)
     by_fn = {}
     for r in rows:
         by_fn.setdefault(r["function"], []).append(r)
