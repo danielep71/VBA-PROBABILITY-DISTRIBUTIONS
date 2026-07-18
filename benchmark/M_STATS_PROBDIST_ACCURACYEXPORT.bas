@@ -280,7 +280,7 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
     If X = 0# Then FormatFullPrecision = "0E+000;0E+000": Exit Function
 
     HiStr = Fmt15(X)
-    Hi = CDbl(HiStr)
+    Hi = Val(HiStr)                            'Val is locale-independent; CDbl is not
     Lo = X - Hi
 
     FormatFullPrecision = HiStr & ";" & Fmt15(Lo)
