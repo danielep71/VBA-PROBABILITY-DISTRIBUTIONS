@@ -1,141 +1,87 @@
-# Accuracy benchmarks
+# Unbalanced-Beta switch study (PROB_LogBeta)
 
-Reproducible evidence for the accuracy claims published in the VBA source
-comments — so those claims are artifacts a contributor can regenerate, not
-statements that have to be taken on trust.
+This is the study report for the `PROB_LogBeta` accuracy investigation. It records
+the measured behavior of the current implementation across the balanced-to-
+extremely-unbalanced argument range, the conclusion that a threshold change alone
+cannot fix it, and the remediation that would.
 
-Each function that publishes a measured error level (in `SPECIALFUNCS` and
-`TFAMILY`) is evaluated on a fixed input grid, compared against a 50-digit
-mpmath reference, and checked against its own claim.
+## Purpose
 
-## Why two phases
+`PROB_LogBeta(A, B)` = `Log(Beta(A, B))` selects among three routes:
 
-The reference values are computed in Python (mpmath). The library under test is
-VBA and can only run inside Excel. So the harness is split: Python owns the
-reference and the error analysis; a small Excel macro owns the observed values.
-Neither side trusts the other's numbers — Python never sees the library's code,
-and the macro never reads the reference column.
+- half-integer shortcuts (`A = 1/2` or `B = 1/2`) via `PROB_LogGammaHalfDiff`;
+- a one-term asymptotic `LogGamma(Small) - Small*Log(Large)` when
+  `Small/Large <= PROB_EPS` (1E-15);
+- otherwise the defining identity `LogGamma(A) + LogGamma(B) - LogGamma(A + B)`.
+
+The defining identity cancels catastrophically as the arguments become unbalanced
+(`LogGamma(Large)` and `LogGamma(Large + Small)` are large and nearly equal). The
+study measures where this matters and whether the switch is well placed.
 
 ## Files
 
-| File | Role |
-|---|---|
-| `generate_reference_values.py` | Builds the input grid and 50-digit mpmath reference values. Phase 1. |
-| `probability_accuracy_grid.csv` | The grid: inputs, reference, and an empty `observed_vba` column. |
-| `M_STATS_PROBDIST_ACCURACYEXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
-| `compute_errors.py` | Joins observed vs reference, finds max-error locations, checks each claim, writes the summary. Phase 3. |
-| `accuracy_summary.md` | The generated verdict table. |
-| `environment.txt` | Python and dependency versions, reference precision, date. |
+- `generate_logbeta_switch.py` — writes `logbeta_switch_grid.csv` (90 rows: 5
+  `Small` values x 18 ratios) with 50+ digit mpmath references.
+- `logbeta_switch_grid.csv` — the grid; `arg1 = Large`, `arg2 = Small`.
+- `logbeta_study.bas` — standalone export macro (`Export_LogBeta_Study`) that
+  fills `observed_vba` by calling `PROB_LogBeta` directly.
+- `analyze_logbeta_switch.py` — prints measured relative error vs ratio per
+  `Small`, flags rows over the 5E-15 Beta claim, marks where the branch fires.
 
-## Running it
+## Measured results (actual VBA `PROB_LogBeta`)
 
-```
-# Phase 1 — reference (Python)
-python generate_reference_values.py            # -> probability_accuracy_grid.csv
+Best achievable from the current two methods (choosing the better of general
+identity and one-term asymptotic at each ratio), worst case over `Small`:
 
-# Phase 2 — observed (Excel)
-#   Import M_STATS_PROBDIST_ACCURACYEXPORT.bas into the workbook,
-#   put probability_accuracy_grid.csv beside the workbook,
-#   run Export_Accuracy_Observations. It fills the observed_vba column.
+| Small / Large | best achievable | meets 5E-15 |
+|---:|---:|:--:|
+| 1E-1 | 8.9E-16 | yes |
+| 1E-2 | 1.4E-14 | no |
+| 1E-3 | 2.9E-13 | no |
+| 1E-4 | 3.6E-12 | no |
+| 1E-6 | 1.8E-10 | no |
+| 1E-10 | 1.9E-12 | no |
+| 1E-13 | 1.3E-15 | yes |
+| 1E-14 | 2.9E-16 | yes |
+| <= 1E-15 | ~1E-16 (branch) | yes |
 
-# Phase 3 — analysis (Python)
-python compute_errors.py                       # -> accuracy_summary.md
-```
+**No single switch position meets 5E-15 across ratios ~1E-2 to 1E-13.** Moving the
+threshold only chooses which method's mediocre error applies in the middle band.
 
-`compute_errors.py` degrades honestly: any row whose `observed_vba` is still
-empty is reported as *not measured* and excluded from the pass/fail check, so a
-partial export produces a partial — not a misleading — summary.
+## Integer vs non-integer `Small`
 
-> **Observed-value format.** VBA writes each observation as a two-part sum `hi;lo` (two 15-digit numbers), because VBA cannot emit more than ~15 significant digits in one literal. `compute_errors.py` sums the parts to recover the full-precision Double, so the harness measures accuracy below the 15-digit floor. A single number is also accepted for backward compatibility.
+The one-term asymptotic is *exact* for integer `Small` (the Gamma recurrence makes
+`LogGamma(Large+n) - LogGamma(Large)` telescope to `Log(Large)` terms), but has
+material truncation error for non-integer `Small` at moderate ratios (about 1.3%
+at ratio 1E-1). An early hypothesis that the branch is "accurate everywhere, just
+widen the switch" was an artifact of testing mostly integer `Small`; the benchmark
+disproved it. Widening the one-term switch would have produced large errors for
+non-integer `Small` — the study prevented an incorrect change.
 
-## Claims under test
+## Public exposure
 
-Taken verbatim from the `ACCURACY` comments in the source:
+Directly affected: Beta density; Beta CDF/survival via incomplete-beta
+normalization; Beta inverse; F with disparate degrees of freedom. Student t is
+largely protected — its `Beta(df/2, 1/2)` normalization trips the half-integer
+shortcut for `df >= 2`, and `df = 1` is `Beta(0.5, 0.5)` (balanced).
 
-The harness covers four modules: the special-function kernels
-(`SPECIALFUNCS`), the test-statistic families (`TFAMILY`), the normal and
-lognormal family (`NORMALFAMILY`), and the continuous distributions
-(`CONTINUOUS`) — 66 functions in total.
+## Current production status
 
-**Special functions**
+The limitation is documented (this study, the `PROB_LogBeta` ACCURACY LIMITATION
+note, the benchmark README caveat) and guarded by an expected-limitation test in
+`M_STATS_PROBDIST_TEST` that trips if the gap is ever closed. The switch itself is
+left unchanged, because widening it with the current one-term asymptotic is worse.
 
-| Function | Published claim |
-|---|---|
-| `PROB_LogGamma` | relative error < 6.1E-14 for Z in [1E-8, 1E+50] |
-| `PROB_LogGammaHalfDiff` | relative error <= 2E-14 for Z > 0 (tested range) |
-| `PROB_StirlingError` | absolute error <= 3E-17 for N >= 0.5 |
-| `PROB_LogChoose` | relative error <= 3.2E-16 for N in [2, 2^53], all K |
+## Proposed remediation (deferred, validated feature)
 
-**Test-statistic families**
+A stable log-gamma increment kernel `PROB_LogGammaDelta(Large, Increment)` =
+`LogGamma(Large + Increment) - LogGamma(Large)` computed without subtracting two
+large independently rounded values, dispatched in three regimes:
 
-| Function | Published claim |
-|---|---|
-| Student t density | relative error <= 2E-14 (tested range) |
-| Student t cumulative / survival | relative error <= 1.3E-12 |
-| Student t quantile | relative error <= 3.0E-12 |
-| Chi-square cumulative / survival | relative error <= 2.6E-10 |
-| Chi-square quantile | relative error <= 4.7E-12 |
-| F cumulative / survival | relative error <= 1.1E-10 |
-| F quantile | relative error <= 5.9E-13 |
+- balanced -> direct identity;
+- moderately unbalanced -> cancellation-free Lanczos log-gamma difference;
+- strongly unbalanced -> validated multi-term digamma/Bernoulli expansion.
 
-**Normal and lognormal family**
-
-| Function | Published claim |
-|---|---|
-| Standard normal density / CDF / survival / inverse / inverse survival / interval | relative error <= 5E-15 |
-| Standard normal fast inverse (raw Acklam) | relative error <= 5E-9 |
-| General normal density / CDF / survival / inverse / inverse survival / z-score | relative error <= 5E-15 |
-| Lognormal density / CDF / survival / inverse / inverse survival | relative error <= 5E-15 |
-| Lognormal mean / variance / std dev / parameter conversion | relative error <= 5E-15 |
-
-The normal-family `~1E-15` source comments are interpreted as a hard bound of
-5E-15 for the harness. `NormalStandard_Survival` measures about 1.5E-14 at
-moderate tail values, above that bound; it is reported as *below harness
-precision* rather than a failure, and its claim is left as documented.
-
-**Continuous distributions**
-
-Bounds were set from the measured worst-case error over the tested grid, not
-from source comments (the module publishes none). Exponential is parameterized
-by rate (Lambda), not scale.
-
-| Function | Bound |
-|---|---|
-| Gamma density / CDF / survival / inverse | relative error <= 2E-14 |
-| Gamma mean / variance / std dev | relative error <= 5E-15 |
-| Beta density / CDF / survival / inverse / mean / variance / std dev | relative error <= 5E-15 |
-| Exponential density / CDF / survival / inverse | relative error <= 5E-15 |
-| Weibull density / CDF / survival / inverse | relative error <= 5E-15 |
-| Weibull mean / variance / std dev | relative error <= 2E-14 |
-| Uniform density / CDF / survival / inverse | relative error <= 5E-15 |
-
-The Gamma and Beta inverse functions are iterative, yet measure near machine
-epsilon (Gamma 9.7E-15, Beta 5.7E-16), so they hold the same tight bounds as
-the closed-form functions.
-
-**Unbalanced-argument caveat (Beta, F, Student-t).** These Beta bounds, and the
-F and Student-t functions that depend on the incomplete beta, were verified for
-balanced-to-moderately-unbalanced arguments (shape ratio min/max down to about
-0.1). For more extreme imbalance the accuracy degrades, because `PROB_LogBeta`'s
-defining three-log-gamma identity cancels catastrophically: measured relative
-error grows from roughly 1E-14 near ratio 1E-2 to a few percent near ratio
-1E-14, before a single-term asymptotic restores full precision below ratio
-1E-15. The closed-form Beta mean, variance and standard deviation do not use
-`PROB_LogBeta` and are unaffected. See `logbeta_study/` for the measured curve.
-Repositioning or extending the asymptotic switch is deferred to a validated
-future pass rather than moved on a single threshold.
-
-## Metric note
-
-`PROB_StirlingError` is checked on **absolute** error, not relative: its source
-comment explains that relative error is the wrong metric there (it reaches
-1.5E-13 near N = 501, where delta itself is 1.67E-04), because what propagates
-into a log-probability is the absolute error. The harness honours that choice
-per function via the `metric` column.
-
-## Reference integrity
-
-The mpmath references were cross-checked against SciPy for every function; the
-two independent oracles agree to about 1E-14 or better across the grid. The
-survival references are computed on the upper tail directly (never `1 - CDF`),
-so they stay accurate in the deep tail where a naive subtraction would collapse.
+Acceptance: the ratio x non-integer-`Small` x absolute-`Large` grid, switch-seam
+continuity, public Beta/F paths, and `LogBeta(A,B) = LogBeta(B,A)` symmetry.
+Accuracy claims are tightened only after independent validation.
