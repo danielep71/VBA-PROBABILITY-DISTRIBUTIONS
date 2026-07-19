@@ -99,93 +99,108 @@ Bounds were set from the measured worst-case error over the tested grid, not
 from source comments (the module publishes none). Exponential is parameterized
 by rate (Lambda), not scale.
 
-<!-- Generated from accuracy_contracts.csv by render_contract_table.py. Do not hand-edit. -->
+<!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-| Function | Metric | Threshold | Domain |
-|---|---|---|---|
-| Beta_Cumulative | relative | 2E-14 | balanced to moderately unbalanced arguments |
-| Beta_Density | relative | 5E-15 | balanced to moderately unbalanced arguments |
-| Beta_InverseCumulative | relative | 5E-15 | balanced to moderately unbalanced arguments |
-| Beta_Mean | relative | 5E-15 | balanced to moderately unbalanced arguments |
-| Beta_StdDev | relative | 5E-15 | balanced to moderately unbalanced arguments |
-| Beta_Survival | relative | 5E-15 | balanced to moderately unbalanced arguments |
-| Beta_Variance | relative | 5E-15 | balanced to moderately unbalanced arguments |
-| ChiSquare_Cumulative | relative | 2.6E-10 | full tested range |
-| ChiSquare_InverseCumulative | relative | 4.7E-12 | full tested range |
-| ChiSquare_Survival | relative | 2.6E-10 | full tested range |
-| Exponential_Cumulative | relative | 5E-15 | full tested range |
-| Exponential_Density | relative | 5E-15 | full tested range |
-| Exponential_InverseCumulative | relative | 5E-15 | full tested range |
-| Exponential_Survival | relative | 5E-15 | full tested range |
-| F_Cumulative | relative | 1.1E-10 | balanced to moderately unbalanced arguments |
-| F_InverseCumulative | relative | 5.9E-13 | balanced to moderately unbalanced arguments |
-| F_Survival | relative | 1.1E-10 | balanced to moderately unbalanced arguments |
-| Gamma_Cumulative | relative | 2E-14 | full tested range |
-| Gamma_Density | relative | 2E-14 | full tested range |
-| Gamma_InverseCumulative | relative | 2E-14 | full tested range |
-| Gamma_Mean | relative | 5E-15 | full tested range |
-| Gamma_StdDev | relative | 5E-15 | full tested range |
-| Gamma_Survival | relative | 2E-14 | full tested range |
-| Gamma_Variance | relative | 5E-15 | full tested range |
-| LogChoose | relative | 3.2E-16 | full tested range |
-| LogGamma | relative | 6.1E-14 | full tested range |
-| LogGammaHalfDiff | relative | 2E-14 | full tested range |
-| Lognormal_Cumulative | relative | 5E-15 | full tested range |
-| Lognormal_Density | relative | 5E-15 | full tested range |
-| Lognormal_InverseCumulative | relative | 5E-15 | full tested range |
-| Lognormal_InverseSurvival | relative | 5E-15 | full tested range |
-| Lognormal_Mean | relative | 5E-15 | full tested range |
-| Lognormal_ParamMeanLog | relative | 5E-15 | full tested range |
-| Lognormal_ParamStdDevLog | relative | 5E-15 | full tested range |
-| Lognormal_StdDev | relative | 5E-15 | full tested range |
-| Lognormal_Survival | relative | 5E-15 | full tested range |
-| Lognormal_Variance | relative | 5E-15 | full tested range |
-| NormalStandard_Cumulative | relative | 5E-15 | full tested range |
-| NormalStandard_Density | relative | 5E-15 | full tested range |
-| NormalStandard_IntervalProbability | relative | 5E-15 | full tested range |
-| NormalStandard_InverseCumulative | relative | 5E-15 | full tested range |
-| NormalStandard_InverseCumulativeFast | relative | 5E-9 | full tested range |
-| NormalStandard_InverseSurvival | relative | 5E-15 | full tested range |
-| NormalStandard_Survival | relative | 5E-15 | full tested range |
-| Normal_Cumulative | relative | 5E-15 | full tested range |
-| Normal_Density | relative | 5E-15 | full tested range |
-| Normal_InverseCumulative | relative | 5E-15 | full tested range |
-| Normal_InverseSurvival | relative | 5E-15 | full tested range |
-| Normal_Survival | relative | 5E-15 | full tested range |
-| Normal_ZScore | relative | 5E-15 | full tested range |
-| StirlingError | absolute | 3E-17 | full tested range |
-| StudentT_Cumulative | relative | 1.3E-12 | full tested range |
-| StudentT_Density | relative | 2E-14 | full tested range |
-| StudentT_InverseCumulative | relative | 3.0E-12 | full tested range |
-| StudentT_Survival | relative | 1.3E-12 | full tested range |
-| Uniform_Cumulative | relative | 5E-15 | full tested range |
-| Uniform_Density | relative | 5E-15 | full tested range |
-| Uniform_InverseCumulative | relative | 5E-15 | full tested range |
-| Uniform_Survival | relative | 5E-15 | full tested range |
-| Weibull_Cumulative | relative | 5E-15 | full tested range |
-| Weibull_Density | relative | 5E-15 | full tested range |
-| Weibull_InverseCumulative | relative | 5E-15 | full tested range |
-| Weibull_Mean | relative | 2E-14 | full tested range |
-| Weibull_StdDev | relative | 5E-15 | full tested range |
-| Weibull_Survival | relative | 5E-15 | full tested range |
-| Weibull_Variance | relative | 2E-14 | full tested range |
+| Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
+|---|---|---|---|---|---|---|
+| Beta_Cumulative.balanced.output_rel | Beta_Cumulative | balanced | output_error | relative | 2E-14 | source claim |
+| Beta_Cumulative.unbalanced.output_rel | Beta_Cumulative | unbalanced | output_error | relative | 1E-10 | validated and frozen |
+| Beta_Density.balanced.output_rel | Beta_Density | balanced | output_error | relative | 5E-15 | source claim |
+| Beta_Density.unbalanced.output_rel | Beta_Density | unbalanced | output_error | relative | 4E-12 | validated and frozen |
+| Beta_InverseCumulative.balanced.quantile_rel | Beta_InverseCumulative | balanced | quantile_error | relative | 5E-15 | source claim |
+| Beta_InverseCumulative.unbalanced.quantile_rel | Beta_InverseCumulative | unbalanced | quantile_error | relative | 1E-10 | validated and frozen |
+| Beta_InverseCumulative.unbalanced.tail_rel | Beta_InverseCumulative | unbalanced | tail_probability_residual | relative | 1E-9 | validated and frozen |
+| Beta_Mean.all.output | Beta_Mean | all | output_error | relative | 5E-15 | source claim |
+| Beta_StdDev.all.output | Beta_StdDev | all | output_error | relative | 5E-15 | source claim |
+| Beta_Survival.balanced.output_rel | Beta_Survival | balanced | output_error | relative | 5E-15 | source claim |
+| Beta_Survival.unbalanced.output_rel | Beta_Survival | unbalanced | output_error | relative | 2E-10 | validated and frozen |
+| Beta_Variance.all.output | Beta_Variance | all | output_error | relative | 5E-15 | source claim |
+| ChiSquare_Cumulative.all.output | ChiSquare_Cumulative | all | output_error | relative | 2.6E-10 | measured and frozen |
+| ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | measured and frozen |
+| ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | measured and frozen |
+| Exponential_Cumulative.all.output | Exponential_Cumulative | all | output_error | relative | 5E-15 | source claim |
+| Exponential_Density.all.output | Exponential_Density | all | output_error | relative | 5E-15 | source claim |
+| Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 5E-15 | source claim |
+| Exponential_Survival.all.output | Exponential_Survival | all | output_error | relative | 5E-15 | source claim |
+| F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | measured and frozen |
+| F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | validated and frozen |
+| F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | validated and frozen |
+| F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | measured and frozen |
+| Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 2E-14 | measured and frozen |
+| Gamma_Density.all.output | Gamma_Density | all | output_error | relative | 2E-14 | measured and frozen |
+| Gamma_InverseCumulative.all.output | Gamma_InverseCumulative | all | output_error | relative | 2E-14 | measured and frozen |
+| Gamma_Mean.all.output | Gamma_Mean | all | output_error | relative | 5E-15 | source claim |
+| Gamma_StdDev.all.output | Gamma_StdDev | all | output_error | relative | 5E-15 | source claim |
+| Gamma_Survival.all.output | Gamma_Survival | all | output_error | relative | 2E-14 | measured and frozen |
+| Gamma_Variance.all.output | Gamma_Variance | all | output_error | relative | 5E-15 | source claim |
+| LogChoose.all.output | LogChoose | all | output_error | relative | 3.2E-16 | source claim |
+| LogGamma.all.output | LogGamma | all | output_error | relative | 6.1E-14 | measured and frozen |
+| LogGammaHalfDiff.all.output | LogGammaHalfDiff | all | output_error | relative | 2E-14 | measured and frozen |
+| Lognormal_Cumulative.all.output | Lognormal_Cumulative | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_Density.all.output | Lognormal_Density | all | output_error | relative | 3E-14 | measured and frozen |
+| Lognormal_InverseCumulative.all.output | Lognormal_InverseCumulative | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_InverseSurvival.all.output | Lognormal_InverseSurvival | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_Mean.all.output | Lognormal_Mean | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_ParamMeanLog.all.output | Lognormal_ParamMeanLog | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_ParamStdDevLog.all.output | Lognormal_ParamStdDevLog | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_StdDev.all.output | Lognormal_StdDev | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_Survival.all.output | Lognormal_Survival | all | output_error | relative | 5E-15 | source claim |
+| Lognormal_Variance.all.output | Lognormal_Variance | all | output_error | relative | 5E-15 | source claim |
+| NormalStandard_Cumulative.all.output | NormalStandard_Cumulative | all | output_error | relative | 5E-15 | source claim |
+| NormalStandard_Density.all.output | NormalStandard_Density | all | output_error | relative | 5E-15 | source claim |
+| NormalStandard_IntervalProbability.all.output | NormalStandard_IntervalProbability | all | output_error | relative | 5E-15 | source claim |
+| NormalStandard_InverseCumulative.all.output | NormalStandard_InverseCumulative | all | output_error | relative | 5E-15 | source claim |
+| NormalStandard_InverseCumulativeFast.all.output | NormalStandard_InverseCumulativeFast | all | output_error | relative | 5E-9 | source claim |
+| NormalStandard_InverseSurvival.all.output | NormalStandard_InverseSurvival | all | output_error | relative | 5E-15 | source claim |
+| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 2E-14 | measured and frozen |
+| Normal_Cumulative.all.output | Normal_Cumulative | all | output_error | relative | 5E-15 | source claim |
+| Normal_Density.all.output | Normal_Density | all | output_error | relative | 5E-15 | source claim |
+| Normal_InverseCumulative.all.output | Normal_InverseCumulative | all | output_error | relative | 5E-15 | source claim |
+| Normal_InverseSurvival.all.output | Normal_InverseSurvival | all | output_error | relative | 5E-15 | source claim |
+| Normal_Survival.all.output | Normal_Survival | all | output_error | relative | 5E-15 | source claim |
+| Normal_ZScore.all.output | Normal_ZScore | all | output_error | relative | 5E-15 | source claim |
+| PROB_LogBeta.all.log_abs | PROB_LogBeta | all | log_absolute_error | absolute | 2E-13 | validated and frozen |
+| StirlingError.all.output | StirlingError | all | output_error | absolute | 3E-17 | source claim |
+| StudentT_Cumulative.all.output | StudentT_Cumulative | all | output_error | relative | 1.3E-12 | measured and frozen |
+| StudentT_Density.all.output | StudentT_Density | all | output_error | relative | 2E-14 | measured and frozen |
+| StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | measured and frozen |
+| StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | measured and frozen |
+| Uniform_Cumulative.all.output | Uniform_Cumulative | all | output_error | relative | 5E-15 | source claim |
+| Uniform_Density.all.output | Uniform_Density | all | output_error | relative | 5E-15 | source claim |
+| Uniform_InverseCumulative.all.output | Uniform_InverseCumulative | all | output_error | relative | 5E-15 | source claim |
+| Uniform_Survival.all.output | Uniform_Survival | all | output_error | relative | 5E-15 | source claim |
+| Weibull_Cumulative.all.output | Weibull_Cumulative | all | output_error | relative | 5E-15 | source claim |
+| Weibull_Density.all.output | Weibull_Density | all | output_error | relative | 5E-15 | source claim |
+| Weibull_InverseCumulative.all.output | Weibull_InverseCumulative | all | output_error | relative | 5E-15 | source claim |
+| Weibull_Mean.all.output | Weibull_Mean | all | output_error | relative | 2E-14 | measured and frozen |
+| Weibull_StdDev.all.output | Weibull_StdDev | all | output_error | relative | 5E-15 | source claim |
+| Weibull_Survival.all.output | Weibull_Survival | all | output_error | relative | 5E-15 | source claim |
+| Weibull_Variance.all.output | Weibull_Variance | all | output_error | relative | 2E-14 | measured and frozen |
 
-**Known limitations**
+**Numerical limitations** (documented, not accuracy contracts)
 
-| Function | Domain | Notes |
-|---|---|---|
-| PROB_LogBeta | shape ratio >= 1E-1, or <= 1E-15 | Middle band (ratio 1E-2..1E-13) does not meet claim; see logbeta_study |
+| Limitation | Affected | Domain | Observed effect | Status |
+|---|---|---|---|---|
+| IncompleteBeta.ExtremeShape | F_Cumulative;F_Survival;F_InverseCumulative | at least one incomplete-beta shape parameter above the operationally validated range of approximately 1E7 | errors observed up to approximately 4E-7 | known |
 
-The Gamma and Beta inverse functions are iterative, yet measure near machine
-epsilon (Gamma 9.7E-15, Beta 5.7E-16), so they hold the same tight bounds as
-the closed-form functions.
 
-**Unbalanced-argument limitation (Beta, F).** For strongly unbalanced shapes or
-degrees of freedom the Beta and F functions do not meet the tabulated bounds,
-because `PROB_LogBeta` loses precision in that regime (tracked as a KNOWN
-LIMITATION in `accuracy_contracts.csv`). Full measurements, the reason a threshold
-change alone cannot fix it, and the proposed remedy are in
-[`logbeta_study/`](logbeta_study/README.md).
+<!-- END generated -->
+
+**Regime-aware contracts.** Each real function may carry several contracts, one
+per regime and measure. Balanced Beta/F keep their tight bounds; the strongly
+unbalanced regime carries its own measured bound (the stable Lanczos log-gamma
+difference removed the earlier catastrophic cancellation in `PROB_LogBeta`).
+Inverse functions are judged both on quantile error and on the forward-probability
+residual `|F(x_VBA) - p| / min(p, 1-p)`. `PROB_LogBeta` is judged on absolute
+error, since downstream code computes `exp(-LogBeta)`. Every unbalanced/inverse
+threshold was confirmed on an independent holdout (see `holdout/`) before being
+frozen.
+
+**Residual limitation.** The only accuracy limitation outside these contracts is
+the incomplete-beta convergence range: for F with a shape parameter beyond
+about 1E7, accuracy degrades (up to ~4E-7). This is a pre-existing convergence
+limit, *not* the LogBeta normalization, and is recorded in
+`numerical_limitations.csv` rather than as a contract it cannot meet.
 
 ## Metric note
 

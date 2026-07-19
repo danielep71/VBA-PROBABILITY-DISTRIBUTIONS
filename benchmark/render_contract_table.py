@@ -37,5 +37,28 @@ def render(contracts_path=None, limitations_path=None):
     return out
 
 
+def write_into_readme(readme_path=None):
+    """Splice the rendered table between the BEGIN/END generated markers in README.md."""
+    if readme_path is None:
+        readme_path = os.path.join(HERE, "README.md")
+    begin = "<!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->"
+    end = "<!-- END generated -->"
+    with open(readme_path, "r", newline="") as f:
+        raw = f.read()
+    text = raw.replace("\r\n", "\n")
+    i = text.find(begin); j = text.find(end)
+    if i == -1 or j == -1 or j < i:
+        raise SystemExit("README markers not found; add the BEGIN/END generated markers first.")
+    new_block = begin + "\n\n" + render() + "\n\n" + end
+    text = text[:i] + new_block + text[j + len(end):]
+    with open(readme_path, "w", newline="") as f:
+        f.write(text.replace("\n", "\r\n"))
+    print(f"updated {readme_path} between generated markers")
+
+
 if __name__ == "__main__":
-    print(render())
+    import sys
+    if "--write" in sys.argv:
+        write_into_readme()
+    else:
+        print(render())
