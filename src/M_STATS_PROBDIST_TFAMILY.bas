@@ -148,10 +148,14 @@ Option Explicit
 '   - The survival functions should be used for small right-tail probabilities;
 '     subtracting a CDF from one loses the tail once the CDF rounds to one.
 '   - Degrees of freedom validate against the 1E100 representational bound, which
-'     is not a convergence guarantee: the underlying incomplete-gamma and beta
-'     kernels converge to roughly 1E9 and 1E7 (see M_STATS_PROBDIST_SPECIALFUNCS).
-'     A df between that range and 1E100 is accepted, attempted, and returns a
-'     clean non-convergence error rather than a wrong answer.
+'     is NOT an accuracy guarantee. The underlying incomplete-gamma and beta
+'     kernels are accuracy-validated only to roughly 1E9 and 1E7 respectively
+'     (see M_STATS_PROBDIST_SPECIALFUNCS and benchmark/numerical_limitations.csv).
+'     A df between the validated range and 1E100 is accepted and attempted, but a
+'     successful return there does NOT imply contract-level accuracy: the
+'     continued fraction can satisfy its local convergence test yet return a value
+'     in error by up to ~4E-7 without raising an error. This is the
+'     IncompleteBeta.ExtremeShape limitation, distinct from LogBeta normalization.
 '
 ' UPDATED
 '   2026-07-11 - House-style rewrite and numerical-contract hardening.
@@ -3290,8 +3294,5 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
-
-
-
 
 
