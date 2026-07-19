@@ -1945,11 +1945,12 @@ Private Sub Test_NF_LognormalUnderflow()
     AssertRelClose "logn stddev underflow-recovery", _
         K_STATS_Lognormal_StdDev(-425#, 10#), 7.14979156944533E-142, TOL_REL_TIGHT
 
-    'Degenerate zero log-variance: X is constant, so both moments are exactly 0.
-    AssertClose "logn variance sigma=0 -> 0", _
-        K_STATS_Lognormal_Variance(2#, 0#), 0#, 0#
-    AssertClose "logn stddev sigma=0 -> 0", _
-        K_STATS_Lognormal_StdDev(2#, 0#), 0#, 0#
+    'StdDevLog = 0 is an invalid parameter by contract (strictly positive), so
+    'both moments must return a worksheet error, not a value.
+    AssertIsError "logn variance sigma=0 invalid", _
+        K_STATS_Lognormal_Variance(2#, 0#)
+    AssertIsError "logn stddev sigma=0 invalid", _
+        K_STATS_Lognormal_StdDev(2#, 0#)
 End Sub
 
 
@@ -5550,5 +5551,9 @@ Private Sub Test_DS_SupportEdges()
     AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
         0#, 0#
 End Sub
+
+
+
+
 
 
