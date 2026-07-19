@@ -1951,6 +1951,32 @@ Private Sub Test_NF_LognormalUnderflow()
         K_STATS_Lognormal_Variance(2#, 0#)
     AssertIsError "logn stddev sigma=0 invalid", _
         K_STATS_Lognormal_StdDev(2#, 0#)
+
+    Debug.Print "-- Lognormal moment LogExpm1 branch boundary (REGRESSION N5)"
+
+    'These cases pin BOTH branches of PROB_LogExpm1 (the v >= 709 crossover) and
+    'the underflow/overflow recovery the single-log reconstruction provides.
+    'Large log-variance (v = StdDevLog^2 >= 709) must take the v-direct branch:
+    'forming Exp(v) first would overflow even though the moment is finite.
+    'v = 800 (large-v branch); the moment is ~1 by exact cancellation.
+    AssertRelClose "logn variance v=800 -> ~1", _
+        K_STATS_Lognormal_Variance(-800#, Sqr(800#)), 1.00000000000012, TOL_REL_TIGHT
+    AssertRelClose "logn stddev v=800 -> ~1", _
+        K_STATS_Lognormal_StdDev(-800#, Sqr(800#)), 1.00000000000006, TOL_REL_TIGHT
+    'v = 700 (small-v branch) with a deep negative mean: underflow recovery to
+    'Exp(-100), which the old separate-factor code lost as zero.
+    AssertRelClose "logn variance v=700 underflow-recovery", _
+        K_STATS_Lognormal_Variance(-750#, Sqr(700#)), 3.72007597602063E-44, TOL_REL_TIGHT
+    'Straddle the v = 709 branch: v = 708 uses Log(Expm1) (Expm1 still finite),
+    'v = 710 uses the v-direct branch (Expm1 would overflow). Both must be finite.
+    AssertRelClose "logn variance v=708 (small-v branch)", _
+        K_STATS_Lognormal_Variance(-700#, Sqr(708#)), 8886110.52050715, TOL_REL_TIGHT
+    AssertRelClose "logn variance v=710 (large-v branch)", _
+        K_STATS_Lognormal_Variance(-710#, Sqr(710#)), 1.00000000000017, TOL_REL_TIGHT
+    AssertRelClose "logn stddev v=708 (small-v branch)", _
+        K_STATS_Lognormal_StdDev(-700#, Sqr(708#)), 2980.95798704161, TOL_REL_TIGHT
+    AssertRelClose "logn stddev v=710 (large-v branch)", _
+        K_STATS_Lognormal_StdDev(-710#, Sqr(710#)), 1.00000000000008, TOL_REL_TIGHT
 End Sub
 
 
@@ -5551,9 +5577,5 @@ Private Sub Test_DS_SupportEdges()
     AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
         0#, 0#
 End Sub
-
-
-
-
 
 
