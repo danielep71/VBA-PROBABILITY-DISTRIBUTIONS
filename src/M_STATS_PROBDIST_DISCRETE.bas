@@ -2793,16 +2793,16 @@ Private Function PROB_DS_TryBinomialInverse( _
 '==============================================================================
 '
     'Bracket is [0, N]; CDF(N) = 1 >= Probability for Probability < 1
-        Dim Lo As Double, Hi As Double, Mid As Double, CdfMid As Double
+        Dim Lo As Double, Hi As Double, MidPoint As Double, CdfMid As Double
         Lo = 0#
         Hi = N
         Do While Lo < Hi
-            Mid = Int((Lo + Hi) / 2#)
-            If Not PROB_DS_TryBinomialCDF(Mid, N, P, CdfMid, FailMsg) Then Exit Function
+            MidPoint = Int((Lo + Hi) / 2#)
+            If Not PROB_DS_TryBinomialCDF(MidPoint, N, P, CdfMid, FailMsg) Then Exit Function
             If CdfMid >= Probability Then
-                Hi = Mid
+                Hi = MidPoint
             Else
-                Lo = Mid + 1#
+                Lo = MidPoint + 1#
             End If
         Loop
         Result = Lo
@@ -2828,7 +2828,7 @@ Private Function PROB_DS_TryPoissonInverse( _
 '   2026-07-19
 '==============================================================================
 '
-        Dim Lo As Double, Hi As Double, Mid As Double
+        Dim Lo As Double, Hi As Double, MidPoint As Double
         Dim CdfHi As Double, CdfMid As Double
     'A zero mean is a point mass at zero
         If Lambda <= 0# Then
@@ -2851,12 +2851,12 @@ Private Function PROB_DS_TryPoissonInverse( _
         Loop
     'Integer bisection over [Lo, Hi]
         Do While Lo < Hi
-            Mid = Int((Lo + Hi) / 2#)
-            If Not PROB_DS_TryPoissonCDF(Mid, Lambda, CdfMid, FailMsg) Then Exit Function
+            MidPoint = Int((Lo + Hi) / 2#)
+            If Not PROB_DS_TryPoissonCDF(MidPoint, Lambda, CdfMid, FailMsg) Then Exit Function
             If CdfMid >= Probability Then
-                Hi = Mid
+                Hi = MidPoint
             Else
-                Lo = Mid + 1#
+                Lo = MidPoint + 1#
             End If
         Loop
         Result = Lo
@@ -2903,3 +2903,5 @@ Private Function PROB_DS_TryGeometricInverse( _
         Result = Seed
         PROB_DS_TryGeometricInverse = True
 End Function
+
+

@@ -204,6 +204,7 @@ Public Sub Test_STATS_PROBDIST_RunAll()
         RunNormalFamilySuite
         RunTFamilySuite
         RunContinuousSuite
+        RunDiscreteSuite
 
     'Print the consolidated result
         EndRun
@@ -368,6 +369,47 @@ Public Sub Test_STATS_PROBDIST_RunContinuous()
 
     'Run the selected suite
         RunContinuousSuite
+
+    'Print the result
+        EndRun
+End Sub
+
+
+Public Sub Test_STATS_PROBDIST_RunDiscrete()
+'
+'==============================================================================
+' Test_STATS_PROBDIST_RunDiscrete
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs only the Binomial, Poisson and Geometric suite.
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs the selected suite or suites.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' OUTPUTS
+'   - Diagnostic output in the VBA Immediate window.
+'
+' DEPENDENCIES
+'   - BeginRun
+'   - Selected suite drivers
+'   - EndRun
+'
+' CALLED FROM
+'   - VBA Immediate window
+'   - Excel Macros dialog
+'   - Other VBA procedures
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    'Initialize the selected test run
+        BeginRun "M_STATS_PROBDIST_DISCRETE"
+
+    'Run the selected suite
+        RunDiscreteSuite
 
     'Print the result
         EndRun
@@ -550,6 +592,50 @@ Private Sub RunContinuousSuite()
     Test_CN_RoundTrips
     Test_CN_ErrorContract
     Test_CN_SupportEdges
+End Sub
+
+
+Private Sub RunDiscreteSuite()
+'
+'==============================================================================
+' RunDiscreteSuite
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the Binomial, Poisson and Geometric test sections.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' DEPENDENCIES
+'   - Test section procedures in this module
+'
+' CALLED FROM
+'   - Public test entry points
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "== SUITE: M_STATS_PROBDIST_DISCRETE"
+    Test_DS_BinomialPMF
+    Test_DS_BinomialCumulative
+    Test_DS_BinomialSurvival
+    Test_DS_BinomialInverse
+    Test_DS_BinomialMoments
+    Test_DS_PoissonPMF
+    Test_DS_PoissonCumulative
+    Test_DS_PoissonSurvival
+    Test_DS_PoissonInverse
+    Test_DS_PoissonMoments
+    Test_DS_GeometricPMF
+    Test_DS_GeometricCumulative
+    Test_DS_GeometricSurvival
+    Test_DS_GeometricInverse
+    Test_DS_GeometricMoments
+    Test_DS_ErrorContract
+    Test_DS_SupportEdges
 End Sub
 
 
@@ -4873,6 +4959,571 @@ Private Sub Test_CN_SupportEdges()
     AssertInUnitInterval "exp cdf in [0,1]", K_STATS_Exponential_Cumulative(1#, 2#)
     AssertInUnitInterval "weibull cdf in [0,1]", K_STATS_Weibull_Cumulative(1#, 1.5, 2#)
     AssertInUnitInterval "uniform cdf in [0,1]", K_STATS_Uniform_Cumulative(3#, 2#, 5#)
+End Sub
+
+
+Private Sub Test_DS_BinomialPMF()
+'
+'==============================================================================
+' Test_DS_BinomialPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Binomial mass values, count truncation and degenerate p.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Binomial PMF"
+    AssertClose "binom pmf(7,20,.35)", K_STATS_Binomial_PMF(7#, 20#, 0.35), _
+        0.184401186383931, TOL_ABS_TIGHT
+    AssertClose "binom pmf(0,20,.35)", K_STATS_Binomial_PMF(0#, 20#, 0.35), _
+        1.8124545836335E-04, TOL_ABS_TIGHT
+    AssertRelClose "binom pmf(20,20,.35)", K_STATS_Binomial_PMF(20#, 20#, 0.35), _
+        7.60958350158805E-10, TOL_REL_TIGHT
+    AssertClose "binom pmf truncates k=7.9", K_STATS_Binomial_PMF(7.9, 20#, 0.35), _
+        0.184401186383931, TOL_ABS_TIGHT
+    AssertClose "binom pmf p=0 at k=0", K_STATS_Binomial_PMF(0#, 20#, 0#), _
+        1#, 0#
+    AssertClose "binom pmf p=1 at k=n", K_STATS_Binomial_PMF(20#, 20#, 1#), _
+        1#, 0#
+End Sub
+
+
+Private Sub Test_DS_BinomialCumulative()
+'
+'==============================================================================
+' Test_DS_BinomialCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Binomial left-tail probabilities via the beta identity.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Binomial cumulative"
+    AssertClose "binom cdf(7,20,.35)", K_STATS_Binomial_Cumulative(7#, 20#, 0.35), _
+        0.601026604603164, TOL_ABS_TIGHT
+    AssertClose "binom cdf(480,1000,.5)", K_STATS_Binomial_Cumulative(480#, 1000#, 0.5), _
+        0.10872414660207, TOL_ABS_TIGHT
+    AssertClose "binom cdf(50,10000,.004)", K_STATS_Binomial_Cumulative(50#, 10000#, 0.004), _
+        0.947726326387241, TOL_ABS_TIGHT
+    AssertClose "binom cdf(20,20,.35)=1", K_STATS_Binomial_Cumulative(20#, 20#, 0.35), _
+        1#, 0#
+End Sub
+
+
+Private Sub Test_DS_BinomialSurvival()
+'
+'==============================================================================
+' Test_DS_BinomialSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Binomial right-tail probabilities computed directly.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Binomial survival"
+    AssertClose "binom sf(7,20,.35)", K_STATS_Binomial_Survival(7#, 20#, 0.35), _
+        0.398973395396836, TOL_ABS_TIGHT
+    AssertClose "binom sf(480,1000,.5)", K_STATS_Binomial_Survival(480#, 1000#, 0.5), _
+        0.89127585339793, TOL_ABS_TIGHT
+    AssertRelClose "binom sf(150,200,.5) tail", K_STATS_Binomial_Survival(150#, 200#, 0.5), _
+        1.37214281800074E-13, TOL_REL_TAIL
+    AssertClose "binom sf(20,20,.35)=0", K_STATS_Binomial_Survival(20#, 20#, 0.35), _
+        0#, 0#
+End Sub
+
+
+Private Sub Test_DS_BinomialInverse()
+'
+'==============================================================================
+' Test_DS_BinomialInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the Binomial quantile as the least k with CDF at least p.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Binomial inverse"
+    AssertClose "binom inv(.601,20,.35)=7", K_STATS_Binomial_InverseCumulative(0.601, 20#, 0.35), _
+        7#, 0#
+    AssertClose "binom inv(.5,1000,.5)=500", K_STATS_Binomial_InverseCumulative(0.5, 1000#, 0.5), _
+        500#, 0#
+    AssertClose "binom inv(.975,20,.35)=11", K_STATS_Binomial_InverseCumulative(0.975, 20#, 0.35), _
+        11#, 0#
+    AssertClose "binom inv(.05,20,.35)=4", K_STATS_Binomial_InverseCumulative(0.05, 20#, 0.35), _
+        4#, 0#
+End Sub
+
+
+Private Sub Test_DS_BinomialMoments()
+'
+'==============================================================================
+' Test_DS_BinomialMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Binomial mean, variance and standard deviation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Binomial moments"
+    AssertClose "binom mean(20,.35)", K_STATS_Binomial_Mean(20#, 0.35), _
+        7#, TOL_ABS_TIGHT
+    AssertClose "binom var(20,.35)", K_STATS_Binomial_Variance(20#, 0.35), _
+        4.55, TOL_ABS_TIGHT
+    AssertClose "binom std(20,.35)", K_STATS_Binomial_StdDev(20#, 0.35), _
+        2.13307290077015, TOL_ABS_TIGHT
+End Sub
+
+
+Private Sub Test_DS_PoissonPMF()
+'
+'==============================================================================
+' Test_DS_PoissonPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Poisson mass values including a deep-tail case Excel returns as zero.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Poisson PMF"
+    AssertClose "pois pmf(7,3)", K_STATS_Poisson_PMF(7#, 3#), _
+        2.16040314524838E-02, TOL_ABS_TIGHT
+    AssertClose "pois pmf(160,150)", K_STATS_Poisson_PMF(160#, 150#), _
+        2.27495558810425E-02, TOL_ABS_TIGHT
+    AssertRelClose "pois pmf(2,50) tail", K_STATS_Poisson_PMF(2#, 50#), _
+        2.4109373099549E-19, TOL_REL_TAIL
+    AssertRelClose "pois pmf(0,700) deep tail", K_STATS_Poisson_PMF(0#, 700#), _
+        9.85967654375977E-305, TOL_REL_TAIL
+    AssertClose "pois pmf mean=0 at k=0", K_STATS_Poisson_PMF(0#, 0#), _
+        1#, 0#
+End Sub
+
+
+Private Sub Test_DS_PoissonCumulative()
+'
+'==============================================================================
+' Test_DS_PoissonCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Poisson left-tail probabilities via the gamma identity.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Poisson cumulative"
+    AssertClose "pois cdf(7,3)", K_STATS_Poisson_Cumulative(7#, 3#), _
+        0.988095496143643, TOL_ABS_TIGHT
+    AssertClose "pois cdf(160,150)", K_STATS_Poisson_Cumulative(160#, 150#), _
+        0.805398685507147, TOL_ABS_TIGHT
+    AssertRelClose "pois cdf(2,50) tail", K_STATS_Poisson_Cumulative(2#, 50#), _
+        2.50930355220106E-19, TOL_REL_TAIL
+    AssertClose "pois cdf mean=0=1", K_STATS_Poisson_Cumulative(0#, 0#), _
+        1#, 0#
+End Sub
+
+
+Private Sub Test_DS_PoissonSurvival()
+'
+'==============================================================================
+' Test_DS_PoissonSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Poisson right-tail probabilities computed directly.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Poisson survival"
+    AssertClose "pois sf(7,3)", K_STATS_Poisson_Survival(7#, 3#), _
+        1.19045038563574E-02, TOL_ABS_TIGHT
+    AssertClose "pois sf(160,150)", K_STATS_Poisson_Survival(160#, 150#), _
+        0.194601314492853, TOL_ABS_TIGHT
+    AssertClose "pois sf mean=0=0", K_STATS_Poisson_Survival(0#, 0#), _
+        0#, 0#
+End Sub
+
+
+Private Sub Test_DS_PoissonInverse()
+'
+'==============================================================================
+' Test_DS_PoissonInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the Poisson quantile via exponential-search bracketing.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Poisson inverse"
+    AssertClose "pois inv(.5,3)=3", K_STATS_Poisson_InverseCumulative(0.5, 3#), _
+        3#, 0#
+    AssertClose "pois inv(.975,3)=7", K_STATS_Poisson_InverseCumulative(0.975, 3#), _
+        7#, 0#
+    AssertClose "pois inv(.999,3)=10", K_STATS_Poisson_InverseCumulative(0.999, 3#), _
+        10#, 0#
+    AssertClose "pois inv(.5,150)=150", K_STATS_Poisson_InverseCumulative(0.5, 150#), _
+        150#, 0#
+End Sub
+
+
+Private Sub Test_DS_PoissonMoments()
+'
+'==============================================================================
+' Test_DS_PoissonMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Poisson mean, variance and standard deviation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Poisson moments"
+    AssertClose "pois mean(3)", K_STATS_Poisson_Mean(3#), _
+        3#, 0#
+    AssertClose "pois var(3)", K_STATS_Poisson_Variance(3#), _
+        3#, 0#
+    AssertClose "pois std(3)", K_STATS_Poisson_StdDev(3#), _
+        1.73205080756888, TOL_ABS_TIGHT
+End Sub
+
+
+Private Sub Test_DS_GeometricPMF()
+'
+'==============================================================================
+' Test_DS_GeometricPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Geometric mass values under the failures-before-success convention.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Geometric PMF"
+    AssertClose "geo pmf(0,.3)", K_STATS_Geometric_PMF(0#, 0.3), _
+        0.3, TOL_ABS_TIGHT
+    AssertClose "geo pmf(5,.3)", K_STATS_Geometric_PMF(5#, 0.3), _
+        0.050421, TOL_ABS_TIGHT
+    AssertRelClose "geo pmf(100,.3) tail", K_STATS_Geometric_PMF(100#, 0.3), _
+        9.70342952887429E-17, TOL_REL_TAIL
+    AssertClose "geo pmf(50,1e-6)", K_STATS_Geometric_PMF(50#, 0.000001), _
+        9.9995000122498E-07, TOL_ABS_TIGHT
+    AssertClose "geo pmf p=1 at k=0", K_STATS_Geometric_PMF(0#, 1#), _
+        1#, 0#
+End Sub
+
+
+Private Sub Test_DS_GeometricCumulative()
+'
+'==============================================================================
+' Test_DS_GeometricCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Geometric left-tail probabilities via Expm1.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Geometric cumulative"
+    AssertClose "geo cdf(0,.3)", K_STATS_Geometric_Cumulative(0#, 0.3), _
+        0.3, TOL_ABS_TIGHT
+    AssertClose "geo cdf(5,.3)", K_STATS_Geometric_Cumulative(5#, 0.3), _
+        0.882351, TOL_ABS_TIGHT
+    AssertRelClose "geo cdf(50,1e-6) small", K_STATS_Geometric_Cumulative(50#, 0.000001), _
+        5.09987250208248E-05, TOL_REL_TAIL
+End Sub
+
+
+Private Sub Test_DS_GeometricSurvival()
+'
+'==============================================================================
+' Test_DS_GeometricSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Geometric right-tail probabilities computed directly.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Geometric survival"
+    AssertClose "geo sf(0,.3)", K_STATS_Geometric_Survival(0#, 0.3), _
+        0.7, TOL_ABS_TIGHT
+    AssertClose "geo sf(5,.3)", K_STATS_Geometric_Survival(5#, 0.3), _
+        0.117649, TOL_ABS_TIGHT
+    AssertClose "geo sf(50,1e-6)", K_STATS_Geometric_Survival(50#, 0.000001), _
+        0.999949001274979, TOL_ABS_TIGHT
+End Sub
+
+
+Private Sub Test_DS_GeometricInverse()
+'
+'==============================================================================
+' Test_DS_GeometricInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the Geometric quantile via closed-form seed and correction.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Geometric inverse"
+    AssertClose "geo inv(.5,.3)=1", K_STATS_Geometric_InverseCumulative(0.5, 0.3), _
+        1#, 0#
+    AssertClose "geo inv(.9,.3)=6", K_STATS_Geometric_InverseCumulative(0.9, 0.3), _
+        6#, 0#
+    AssertClose "geo inv(.999,.3)=19", K_STATS_Geometric_InverseCumulative(0.999, 0.3), _
+        19#, 0#
+    AssertClose "geo inv(.5,1e-6)=693146", K_STATS_Geometric_InverseCumulative(0.5, 0.000001), _
+        693146#, 0#
+End Sub
+
+
+Private Sub Test_DS_GeometricMoments()
+'
+'==============================================================================
+' Test_DS_GeometricMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies Geometric mean, variance and standard deviation.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Geometric moments"
+    AssertClose "geo mean(.3)", K_STATS_Geometric_Mean(0.3), _
+        2.33333333333333, TOL_ABS_TIGHT
+    AssertClose "geo var(.3)", K_STATS_Geometric_Variance(0.3), _
+        7.77777777777778, TOL_ABS_TIGHT
+    AssertClose "geo std(.3)", K_STATS_Geometric_StdDev(0.3), _
+        2.78886675511359, TOL_ABS_TIGHT
+End Sub
+
+
+Private Sub Test_DS_ErrorContract()
+'
+'==============================================================================
+' Test_DS_ErrorContract
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies discrete-family domains, error codes and diagnostics.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Dim Diag As String
+
+    Debug.Print "-- Discrete error contract (must return CVErr, never a sentinel)"
+
+    'Invalid counts and probabilities
+    AssertIsError "binom pmf trials<0", K_STATS_Binomial_PMF(1#, -5#, 0.5)
+    AssertIsError "binom pmf k>n", K_STATS_Binomial_PMF(6#, 5#, 0.5)
+    AssertIsError "binom pmf p>1", K_STATS_Binomial_PMF(1#, 5#, 1.5)
+    AssertIsError "binom pmf p<0", K_STATS_Binomial_PMF(1#, 5#, -0.1)
+    AssertIsError "binom cdf k<0", K_STATS_Binomial_Cumulative(-1#, 5#, 0.5)
+    AssertIsError "pois pmf mean<0", K_STATS_Poisson_PMF(1#, -2#)
+    AssertIsError "pois pmf k<0", K_STATS_Poisson_PMF(-1#, 3#)
+    AssertIsError "geo pmf p=0", K_STATS_Geometric_PMF(1#, 0#)
+    AssertIsError "geo pmf p>1", K_STATS_Geometric_PMF(1#, 1.5)
+
+    'Inverse probabilities outside the open unit interval
+    AssertIsError "binom inv p=0", K_STATS_Binomial_InverseCumulative(0#, 20#, 0.35)
+    AssertIsError "binom inv p=1", K_STATS_Binomial_InverseCumulative(1#, 20#, 0.35)
+    AssertIsError "pois inv p=1", K_STATS_Poisson_InverseCumulative(1#, 3#)
+    AssertIsError "geo inv p=0", K_STATS_Geometric_InverseCumulative(0#, 0.3)
+    AssertIsError "geo inv p>1", K_STATS_Geometric_InverseCumulative(1.5, 0.3)
+
+    'Status must be populated on failure and cleared on success
+    Diag = "stale"
+    AssertIsError "binom pmf p>1 with status", K_STATS_Binomial_PMF(1#, 5#, 1.5, Diag)
+    AssertTrue "DS status populated on failure", (Len(Diag) > 0 And Diag <> "stale")
+    Diag = "stale"
+    AssertClose "binom pmf ok with status", K_STATS_Binomial_PMF(7#, 20#, 0.35, Diag), _
+        0.184401186383931, TOL_ABS_TIGHT
+    AssertTrue "DS status cleared on success", (Len(Diag) = 0)
+End Sub
+
+
+Private Sub Test_DS_SupportEdges()
+'
+'==============================================================================
+' Test_DS_SupportEdges
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies degenerate parameters and support boundaries across the family.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    Debug.Print "-- Discrete support edges"
+    AssertClose "binom p=0 cdf=1", K_STATS_Binomial_Cumulative(0#, 20#, 0#), _
+        1#, 0#
+    AssertClose "binom p=1 sf(19)=1", K_STATS_Binomial_Survival(19#, 20#, 1#), _
+        1#, 0#
+    AssertClose "pois mean=0 pmf(1)=0", K_STATS_Poisson_PMF(1#, 0#), _
+        0#, 0#
+    AssertClose "geo p=1 cdf(0)=1", K_STATS_Geometric_Cumulative(0#, 1#), _
+        1#, 0#
+    AssertClose "geo p=1 sf(0)=0", K_STATS_Geometric_Survival(0#, 1#), _
+        0#, 0#
+    AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
+        0#, 0#
 End Sub
 
 
