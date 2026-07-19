@@ -148,14 +148,16 @@ Option Explicit
 '   - The survival functions should be used for small right-tail probabilities;
 '     subtracting a CDF from one loses the tail once the CDF rounds to one.
 '   - Degrees of freedom validate against the 1E100 representational bound, which
-'     is NOT an accuracy guarantee. The underlying incomplete-gamma and beta
-'     kernels are accuracy-validated only to roughly 1E9 and 1E7 respectively
-'     (see M_STATS_PROBDIST_SPECIALFUNCS and benchmark/numerical_limitations.csv).
-'     A df between the validated range and 1E100 is accepted and attempted, but a
-'     successful return there does NOT imply contract-level accuracy: the
-'     continued fraction can satisfy its local convergence test yet return a value
-'     in error by up to ~4E-7 without raising an error. This is the
-'     IncompleteBeta.ExtremeShape limitation, distinct from LogBeta normalization.
+'     is NOT an accuracy guarantee. Accuracy is governed separately per kernel:
+'     * The F functions (incomplete beta) enforce a MEASURED accuracy envelope:
+'       df above 1E5 are REJECTED with CVErr(xlErrNum) rather than returning a
+'       silently inaccurate value, because beyond that the continued fraction can
+'       pass its local convergence test yet drift outside the contract (see
+'       PROB_F_ValidateEnvelope, benchmark/f_envelope and numerical_limitations.csv).
+'       F_Density is closed-form and is deliberately NOT enveloped.
+'     * The Student t and chi-square functions (incomplete gamma) are accuracy-
+'       validated to roughly 1E9; a larger df up to 1E100 is accepted and
+'       attempted, but a successful return there does NOT imply contract accuracy.
 '
 ' UPDATED
 '   2026-07-11 - House-style rewrite and numerical-contract hardening.
@@ -168,6 +170,7 @@ Option Explicit
 
 'Maximum safeguarded Newton iterations for the Student t quantile
 Private Const PROB_T_INV_MAX_ITER As Long = 500
+Private Const PROB_F_MAX_DF       As Double = 100000# 'Validated F accuracy envelope; both df must be <= this (measured, benchmark/f_envelope)
 
 '==============================================================================
 ' PUBLIC - STUDENT T
@@ -1542,6 +1545,13 @@ Public Function K_STATS_F_Cumulative( _
             GoTo Fail_Num
         End If
 
+    'Enforce the measured F accuracy envelope (incomplete-beta path only; density
+    'is closed-form and unrestricted). A clean CVErr beats a silent 4E-7 error.
+        If Not PROB_F_ValidateEnvelope( _
+            DegreesFreedom1, DegreesFreedom2, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
 '------------------------------------------------------------------------------
 ' HANDLE SUPPORT EDGE
 '------------------------------------------------------------------------------
@@ -1691,6 +1701,13 @@ Public Function K_STATS_F_Survival( _
     'Validate X and both degree parameters
         If Not PROB_TF_ValidateXAndTwoDF( _
             X, DegreesFreedom1, DegreesFreedom2, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'Enforce the measured F accuracy envelope (incomplete-beta path only; density
+    'is closed-form and unrestricted). A clean CVErr beats a silent 4E-7 error.
+        If Not PROB_F_ValidateEnvelope( _
+            DegreesFreedom1, DegreesFreedom2, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -1856,6 +1873,12 @@ Public Function K_STATS_F_InverseCumulative( _
 
     'Validate both degree parameters and their half-degree kernel arguments
         If Not PROB_TF_ValidateTwoDF( _
+            DegreesFreedom1, DegreesFreedom2, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'Enforce the measured F accuracy envelope (incomplete-beta path only).
+        If Not PROB_F_ValidateEnvelope( _
             DegreesFreedom1, DegreesFreedom2, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -3106,6 +3129,47 @@ Private Function PROB_TF_ValidateDF( _
 End Function
 
 
+Private Function PROB_F_ValidateEnvelope( _
+    ByVal DegreesFreedom1 As Double, _
+    ByVal DegreesFreedom2 As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_F_ValidateEnvelope
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Enforces the measured F accuracy envelope. The incomplete-beta path behind
+'   F_Cumulative, F_Survival and F_InverseCumulative meets the 1.1E-10 contract
+'   only while BOTH degrees of freedom stay within PROB_F_MAX_DF. Beyond that the
+'   continued fraction can satisfy its local convergence test yet return a value
+'   in error by up to ~4E-7 without raising an error (see benchmark/f_envelope
+'   and benchmark/numerical_limitations.csv). This restricts the public F surface
+'   to its validated domain and returns a clean CVErr rather than a silent
+'   inaccurate result. F_Density is closed-form and is deliberately NOT restricted.
+'
+' RETURNS
+'   Boolean
+'     True when both degrees of freedom are within PROB_F_MAX_DF.
+'
+' UPDATED
+'   2026-07-19 - Strict validated-domain policy for the incomplete-beta F path.
+'==============================================================================
+'
+    FailMsg = vbNullString
+
+    If DegreesFreedom1 > PROB_F_MAX_DF Or DegreesFreedom2 > PROB_F_MAX_DF Then
+        FailMsg = _
+            "F degrees of freedom exceed the validated accuracy envelope " & _
+            "(both must be <= 1E5); the incomplete-beta kernel is not " & _
+            "accuracy-validated beyond this range"
+        Exit Function
+    End If
+
+    PROB_F_ValidateEnvelope = True
+End Function
+
+
 Private Function PROB_TF_ValidateTwoDF( _
     ByVal DegreesFreedom1 As Double, _
     ByVal DegreesFreedom2 As Double, _
@@ -3294,5 +3358,7 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
+
+
 
 
