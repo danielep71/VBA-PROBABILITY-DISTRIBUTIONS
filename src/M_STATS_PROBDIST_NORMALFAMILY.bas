@@ -2899,9 +2899,10 @@ Public Function K_STATS_Lognormal_Variance( _
 '------------------------------------------------------------------------------
     'Compute log variance
         VarianceLog = StdDevLog * StdDevLog
-    'Degenerate case: a zero log-variance means Log(X) is constant, so X is a
-    'constant and the arithmetic variance is exactly zero. Guard it here because
-    'Log(Exp(0) - 1) = Log(0) is undefined.
+    'StdDevLog is validated strictly positive upstream, but StdDevLog * StdDevLog
+    'can still underflow to zero for an extremely small StdDevLog. The Double-
+    'rounded variance is then zero; guarding it also keeps PROB_LogExpm1 from
+    'evaluating Log(0).
         If VarianceLog = 0# Then
             K_STATS_Lognormal_Variance = 0#
         Else
@@ -3024,8 +3025,10 @@ Public Function K_STATS_Lognormal_StdDev( _
 '------------------------------------------------------------------------------
     'Compute log variance
         VarianceLog = StdDevLog * StdDevLog
-    'Degenerate case: a zero log-variance means X is constant, so the standard
-    'deviation is exactly zero. Guard it because Log(Exp(0) - 1) is undefined.
+    'StdDevLog is validated strictly positive upstream, but StdDevLog * StdDevLog
+    'can still underflow to zero for an extremely small StdDevLog. The Double-
+    'rounded standard deviation is then zero; guarding it also keeps
+    'PROB_LogExpm1 from evaluating Log(0).
         If VarianceLog = 0# Then
             K_STATS_Lognormal_StdDev = 0#
         Else
@@ -3628,6 +3631,5 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
-
 
 
