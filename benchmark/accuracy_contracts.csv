@@ -1,68 +1,74 @@
-function,metric,threshold,domain,provenance,status,notes
-Beta_Cumulative,relative,2E-14,balanced to moderately unbalanced arguments,measured and frozen,active,Incomplete-beta path; excludes documented LogBeta imbalance band
-Beta_Density,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,Excludes documented LogBeta imbalance band
-Beta_InverseCumulative,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,Excludes documented LogBeta imbalance band
-Beta_Mean,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,
-Beta_StdDev,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,
-Beta_Survival,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,Excludes documented LogBeta imbalance band
-Beta_Variance,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,
-ChiSquare_Cumulative,relative,2.6E-10,full tested range,measured and frozen,active,
-ChiSquare_InverseCumulative,relative,4.7E-12,full tested range,measured and frozen,active,
-ChiSquare_Survival,relative,2.6E-10,full tested range,measured and frozen,active,
-Exponential_Cumulative,relative,5E-15,full tested range,source claim,active,
-Exponential_Density,relative,5E-15,full tested range,source claim,active,
-Exponential_InverseCumulative,relative,5E-15,full tested range,source claim,active,
-Exponential_Survival,relative,5E-15,full tested range,source claim,active,
-F_Cumulative,relative,1.1E-10,balanced to moderately unbalanced arguments,measured and frozen,active,Excludes documented LogBeta imbalance band for disparate df
-F_InverseCumulative,relative,5.9E-13,balanced to moderately unbalanced arguments,measured and frozen,active,Excludes documented LogBeta imbalance band for disparate df
-F_Survival,relative,1.1E-10,balanced to moderately unbalanced arguments,measured and frozen,active,Excludes documented LogBeta imbalance band for disparate df
-Gamma_Cumulative,relative,2E-14,full tested range,measured and frozen,active,
-Gamma_Density,relative,2E-14,full tested range,measured and frozen,active,
-Gamma_InverseCumulative,relative,2E-14,full tested range,measured and frozen,active,
-Gamma_Mean,relative,5E-15,full tested range,source claim,active,
-Gamma_StdDev,relative,5E-15,full tested range,source claim,active,
-Gamma_Survival,relative,2E-14,full tested range,measured and frozen,active,
-Gamma_Variance,relative,5E-15,full tested range,source claim,active,
-LogChoose,relative,3.2E-16,full tested range,source claim,active,
-LogGamma,relative,6.1E-14,full tested range,measured and frozen,active,
-LogGammaHalfDiff,relative,2E-14,full tested range,measured and frozen,active,
-Lognormal_Cumulative,relative,5E-15,full tested range,source claim,active,
-Lognormal_Density,relative,3E-14,full tested range,measured and frozen,active,"Deep-tail point flagged below harness precision in summary; deep-tail worst case ~2E-14, claim relaxed from 5E-15"
-Lognormal_InverseCumulative,relative,5E-15,full tested range,source claim,active,
-Lognormal_InverseSurvival,relative,5E-15,full tested range,source claim,active,
-Lognormal_Mean,relative,5E-15,full tested range,source claim,active,
-Lognormal_ParamMeanLog,relative,5E-15,full tested range,source claim,active,
-Lognormal_ParamStdDevLog,relative,5E-15,full tested range,source claim,active,
-Lognormal_StdDev,relative,5E-15,full tested range,source claim,active,
-Lognormal_Survival,relative,5E-15,full tested range,source claim,active,
-Lognormal_Variance,relative,5E-15,full tested range,source claim,active,
-NormalStandard_Cumulative,relative,5E-15,full tested range,source claim,active,
-NormalStandard_Density,relative,5E-15,full tested range,source claim,active,
-NormalStandard_IntervalProbability,relative,5E-15,full tested range,source claim,active,
-NormalStandard_InverseCumulative,relative,5E-15,full tested range,source claim,active,
-NormalStandard_InverseCumulativeFast,relative,5E-9,full tested range,source claim,active,
-NormalStandard_InverseSurvival,relative,5E-15,full tested range,source claim,active,
-NormalStandard_Survival,relative,2E-14,full tested range,measured and frozen,active,"Deep-tail point flagged below harness precision in summary; deep-tail worst case ~2E-14, claim relaxed from 5E-15"
-Normal_Cumulative,relative,5E-15,full tested range,source claim,active,
-Normal_Density,relative,5E-15,full tested range,source claim,active,
-Normal_InverseCumulative,relative,5E-15,full tested range,source claim,active,
-Normal_InverseSurvival,relative,5E-15,full tested range,source claim,active,
-Normal_Survival,relative,5E-15,full tested range,source claim,active,
-Normal_ZScore,relative,5E-15,full tested range,source claim,active,
-StirlingError,absolute,3E-17,full tested range,source claim,active,
-StudentT_Cumulative,relative,1.3E-12,full tested range,measured and frozen,active,
-StudentT_Density,relative,2E-14,full tested range,measured and frozen,active,
-StudentT_InverseCumulative,relative,3.0E-12,full tested range,measured and frozen,active,
-StudentT_Survival,relative,1.3E-12,full tested range,measured and frozen,active,
-Uniform_Cumulative,relative,5E-15,full tested range,source claim,active,
-Uniform_Density,relative,5E-15,full tested range,source claim,active,
-Uniform_InverseCumulative,relative,5E-15,full tested range,source claim,active,
-Uniform_Survival,relative,5E-15,full tested range,source claim,active,
-Weibull_Cumulative,relative,5E-15,full tested range,source claim,active,
-Weibull_Density,relative,5E-15,full tested range,source claim,active,
-Weibull_InverseCumulative,relative,5E-15,full tested range,source claim,active,
-Weibull_Mean,relative,2E-14,full tested range,measured and frozen,active,
-Weibull_StdDev,relative,5E-15,full tested range,source claim,active,
-Weibull_Survival,relative,5E-15,full tested range,source claim,active,
-Weibull_Variance,relative,2E-14,full tested range,measured and frozen,active,
-PROB_LogBeta,relative,5E-15,"shape ratio >= 1E-1, or <= 1E-15",source claim,known_limitation,Middle band (ratio 1E-2..1E-13) does not meet claim; see logbeta_study
+contract_id,function,regime,measure,metric,threshold,domain,provenance,status,evidence,notes
+Beta_Mean.all.output,Beta_Mean,all,output_error,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,main grid,
+Beta_StdDev.all.output,Beta_StdDev,all,output_error,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,main grid,
+Beta_Variance.all.output,Beta_Variance,all,output_error,relative,5E-15,balanced to moderately unbalanced arguments,source claim,active,main grid,
+ChiSquare_Cumulative.all.output,ChiSquare_Cumulative,all,output_error,relative,2.6E-10,full tested range,measured and frozen,active,main grid,
+ChiSquare_InverseCumulative.all.output,ChiSquare_InverseCumulative,all,output_error,relative,4.7E-12,full tested range,measured and frozen,active,main grid,
+ChiSquare_Survival.all.output,ChiSquare_Survival,all,output_error,relative,2.6E-10,full tested range,measured and frozen,active,main grid,
+Exponential_Cumulative.all.output,Exponential_Cumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Exponential_Density.all.output,Exponential_Density,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Exponential_InverseCumulative.all.output,Exponential_InverseCumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Exponential_Survival.all.output,Exponential_Survival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Gamma_Cumulative.all.output,Gamma_Cumulative,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+Gamma_Density.all.output,Gamma_Density,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+Gamma_InverseCumulative.all.output,Gamma_InverseCumulative,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+Gamma_Mean.all.output,Gamma_Mean,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Gamma_StdDev.all.output,Gamma_StdDev,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Gamma_Survival.all.output,Gamma_Survival,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+Gamma_Variance.all.output,Gamma_Variance,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+LogChoose.all.output,LogChoose,all,output_error,relative,3.2E-16,full tested range,source claim,active,main grid,
+LogGamma.all.output,LogGamma,all,output_error,relative,6.1E-14,full tested range,measured and frozen,active,main grid,
+LogGammaHalfDiff.all.output,LogGammaHalfDiff,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+Lognormal_Cumulative.all.output,Lognormal_Cumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_Density.all.output,Lognormal_Density,all,output_error,relative,3E-14,full tested range,measured and frozen,active,main grid,"Deep-tail point flagged below harness precision in summary; deep-tail worst case ~2E-14, claim relaxed from 5E-15"
+Lognormal_InverseCumulative.all.output,Lognormal_InverseCumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_InverseSurvival.all.output,Lognormal_InverseSurvival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_Mean.all.output,Lognormal_Mean,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_ParamMeanLog.all.output,Lognormal_ParamMeanLog,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_ParamStdDevLog.all.output,Lognormal_ParamStdDevLog,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_StdDev.all.output,Lognormal_StdDev,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_Survival.all.output,Lognormal_Survival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Lognormal_Variance.all.output,Lognormal_Variance,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+NormalStandard_Cumulative.all.output,NormalStandard_Cumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+NormalStandard_Density.all.output,NormalStandard_Density,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+NormalStandard_IntervalProbability.all.output,NormalStandard_IntervalProbability,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+NormalStandard_InverseCumulative.all.output,NormalStandard_InverseCumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+NormalStandard_InverseCumulativeFast.all.output,NormalStandard_InverseCumulativeFast,all,output_error,relative,5E-9,full tested range,source claim,active,main grid,
+NormalStandard_InverseSurvival.all.output,NormalStandard_InverseSurvival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+NormalStandard_Survival.all.output,NormalStandard_Survival,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,"Deep-tail point flagged below harness precision in summary; deep-tail worst case ~2E-14, claim relaxed from 5E-15"
+Normal_Cumulative.all.output,Normal_Cumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Normal_Density.all.output,Normal_Density,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Normal_InverseCumulative.all.output,Normal_InverseCumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Normal_InverseSurvival.all.output,Normal_InverseSurvival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Normal_Survival.all.output,Normal_Survival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Normal_ZScore.all.output,Normal_ZScore,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+StirlingError.all.output,StirlingError,all,output_error,absolute,3E-17,full tested range,source claim,active,main grid,
+StudentT_Cumulative.all.output,StudentT_Cumulative,all,output_error,relative,1.3E-12,full tested range,measured and frozen,active,main grid,
+StudentT_Density.all.output,StudentT_Density,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+StudentT_InverseCumulative.all.output,StudentT_InverseCumulative,all,output_error,relative,3.0E-12,full tested range,measured and frozen,active,main grid,
+StudentT_Survival.all.output,StudentT_Survival,all,output_error,relative,1.3E-12,full tested range,measured and frozen,active,main grid,
+Uniform_Cumulative.all.output,Uniform_Cumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Uniform_Density.all.output,Uniform_Density,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Uniform_InverseCumulative.all.output,Uniform_InverseCumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Uniform_Survival.all.output,Uniform_Survival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Weibull_Cumulative.all.output,Weibull_Cumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Weibull_Density.all.output,Weibull_Density,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Weibull_InverseCumulative.all.output,Weibull_InverseCumulative,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Weibull_Mean.all.output,Weibull_Mean,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+Weibull_StdDev.all.output,Weibull_StdDev,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Weibull_Survival.all.output,Weibull_Survival,all,output_error,relative,5E-15,full tested range,source claim,active,main grid,
+Weibull_Variance.all.output,Weibull_Variance,all,output_error,relative,2E-14,full tested range,measured and frozen,active,main grid,
+PROB_LogBeta.all.log_abs,PROB_LogBeta,all,log_absolute_error,absolute,2E-13,committed balanced and unbalanced positive-argument grid,measured provisional,active,delta_seam_study,Catastrophic cancellation removed; residual error currently dominated by the underlying Double-precision log-gamma evaluations
+Beta_Density.balanced.output_rel,Beta_Density,balanced,output_error,relative,5E-15,min(shape)/max(shape) >= 0.1,source claim,active,main grid,"Established balanced contract, unchanged"
+Beta_Density.unbalanced.output_rel,Beta_Density,unbalanced,output_error,relative,4E-12,min(shape)/max(shape) < 0.1,measured provisional,active,beta_f_unbalanced,Worst measured 1.23E-12
+Beta_Cumulative.balanced.output_rel,Beta_Cumulative,balanced,output_error,relative,2E-14,min(shape)/max(shape) >= 0.1,source claim,active,main grid,"Established balanced contract, unchanged"
+Beta_Cumulative.unbalanced.output_rel,Beta_Cumulative,unbalanced,output_error,relative,1E-10,min(shape)/max(shape) < 0.1,measured provisional,active,beta_f_unbalanced,Worst measured 5.3E-11
+Beta_Survival.balanced.output_rel,Beta_Survival,balanced,output_error,relative,5E-15,min(shape)/max(shape) >= 0.1,source claim,active,main grid,"Established balanced contract, unchanged"
+Beta_Survival.unbalanced.output_rel,Beta_Survival,unbalanced,output_error,relative,2E-10,min(shape)/max(shape) < 0.1,measured provisional,active,beta_f_unbalanced,Worst measured 9.2E-11
+Beta_InverseCumulative.balanced.quantile_rel,Beta_InverseCumulative,balanced,quantile_error,relative,5E-15,min(shape)/max(shape) >= 0.1,source claim,active,main grid,"Established balanced contract, unchanged"
+Beta_InverseCumulative.unbalanced.quantile_rel,Beta_InverseCumulative,unbalanced,quantile_error,relative,1E-10,min(shape)/max(shape) < 0.1,measured provisional,active,beta_f_inverse,Worst measured quantile relative error 4.7E-11
+Beta_InverseCumulative.unbalanced.tail_rel,Beta_InverseCumulative,unbalanced,tail_probability_residual,relative,1E-9,min(shape)/max(shape) < 0.1,measured provisional,active,beta_f_inverse,Worst measured tail-relative residual 3.9E-10
+F_Cumulative.validated.output_rel,F_Cumulative,validated,output_error,relative,1.1E-10,both incomplete-beta shape parameters within the operationally validated range (~1E7),measured and frozen,active,main grid,Holds within validated incomplete-beta range; beyond it see numerical_limitations.csv
+F_Survival.validated.output_rel,F_Survival,validated,output_error,relative,1.1E-10,both incomplete-beta shape parameters within the operationally validated range (~1E7),measured and frozen,active,main grid,Holds within validated incomplete-beta range; beyond it see numerical_limitations.csv
+F_InverseCumulative.validated.quantile_rel,F_InverseCumulative,validated,quantile_error,relative,2E-10,both incomplete-beta shape parameters within the operationally validated range,measured provisional,active,beta_f_inverse,Worst measured quantile relative error 7.8E-11
+F_InverseCumulative.validated.tail_rel,F_InverseCumulative,validated,tail_probability_residual,relative,2E-10,both incomplete-beta shape parameters within the operationally validated range,measured provisional,active,beta_f_inverse,Worst measured tail-relative residual 6.9E-11

@@ -219,8 +219,20 @@ def _weibull_var(k, lam):
     return lam ** 2 * (mp.gamma(1 + 2 / k) - mp.gamma(1 + 1 / k) ** 2)
 
 
+_BETA_BAL = {"Beta_Density", "Beta_Cumulative", "Beta_Survival", "Beta_InverseCumulative"}
+_F_VAL = {"F_Cumulative", "F_Survival", "F_InverseCumulative"}
+
+
+def _regime_for(func):
+    if func in _BETA_BAL:
+        return "balanced"
+    if func in _F_VAL:
+        return "validated"
+    return "all"
+
+
 def _load_contracts(path=None):
-    """Load the accuracy contract (single source of truth) keyed by function."""
+    """Load the regime-aware contract, keyed by (function, regime)."""
     import csv, os
     if path is None:
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "accuracy_contracts.csv")
@@ -228,7 +240,8 @@ def _load_contracts(path=None):
     with open(path, newline="") as f:
         for row in csv.DictReader(f):
             m = "rel" if row["metric"].strip().lower().startswith("rel") else "abs"
-            contracts[row["function"]] = {"metric": m, "claim": f'{m}<={row["threshold"].strip()}'}
+            contracts[(row["function"], row["regime"])] = {
+                "metric": m, "claim": f'{m}<={row["threshold"].strip()}'}
     return contracts
 
 
@@ -241,7 +254,8 @@ def build_rows():
     def add(func, vba_kernel, args, ref):
         # Claim and metric come from the single source of truth,
         # benchmark/accuracy_contracts.csv, so grid, summary, and README cannot drift.
-        contract = _CONTRACTS[func]
+        regime = _regime_for(func)
+        contract = _CONTRACTS.get((func, regime)) or _CONTRACTS.get((func, "all"))
         claim = contract["claim"]
         metric = contract["metric"]
         rows.append(
@@ -255,6 +269,8 @@ def build_rows():
                 "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
                 "reference": mp.nstr(ref, 25),
                 "observed_vba": "",
+                "regime": regime,
+                "evidence_set": "main grid",
             }
         )
 
@@ -436,7 +452,8 @@ def main():
     rows = build_rows()
 
     fields = ["function", "vba_kernel", "claim", "metric",
-              "arg1", "arg2", "arg3", "reference", "observed_vba"]
+              "arg1", "arg2", "arg3", "reference", "observed_vba",
+              "regime", "evidence_set"]
     with open(args.out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()

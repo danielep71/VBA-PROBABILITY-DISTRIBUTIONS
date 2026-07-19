@@ -1,0 +1,2 @@
+limitation_id,affected_functions,domain,cause,observed_effect,evidence,status,notes
+IncompleteBeta.ExtremeShape,F_Cumulative;F_Survival;F_InverseCumulative,at least one incomplete-beta shape parameter above the operationally validated range of approximately 1E7,pre-existing incomplete-beta convergence and accuracy limitation,errors observed up to approximately 4E-7,beta_f_unbalanced,known,Separate from the corrected LogBeta normalization defect
