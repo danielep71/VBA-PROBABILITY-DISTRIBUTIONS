@@ -86,6 +86,23 @@ Option Explicit
 '   - Uniform calculations use scaled or convex-combination forms so the full
 '     finite Double range can be accepted without overflowing interval widths.
 '
+' BETA ACCURACY REGIMES
+'   Beta accuracy is regime-specific and is governed by the machine-readable
+'   contract in benchmark/accuracy_contracts.csv (rendered in benchmark/README).
+'   The regime is set by the shape ratio min(Alpha, Beta) / max(Alpha, Beta):
+'   - Balanced shapes (ratio >= 0.1) retain the tight contract: density and
+'     survival to 5E-15, CDF to 2E-14, inverse quantile to 5E-15 (relative).
+'   - Strongly unbalanced shapes (ratio < 0.1) carry SEPARATE MEASURED thresholds,
+'     validated on an independent holdout and frozen: density 4E-12, CDF 1E-10,
+'     survival 2E-10, inverse quantile 1E-10, and inverse forward-tail residual
+'     1E-9 (relative).
+'   - In the unbalanced regime PROB_LogBeta forms Log(Beta) from a stable
+'     log-gamma difference, so the catastrophic cancellation of the naive
+'     three-log-gamma identity is removed.
+'   - With that cancellation gone, residual unbalanced accuracy is dominated by
+'     the downstream incomplete-beta evaluation (CDF, survival, inverse), not by
+'     LogBeta normalization.
+'
 ' DESIGN PRINCIPLES
 '   - Public worksheet functions return Variant so failures can be represented
 '     by worksheet error values.
@@ -4932,7 +4949,5 @@ Private Function PROB_CN_ValidateXBounds( _
     'Report successful validation
         PROB_CN_ValidateXBounds = True
 End Function
-
-
 
 
