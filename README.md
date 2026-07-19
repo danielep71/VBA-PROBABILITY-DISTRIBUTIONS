@@ -33,7 +33,7 @@
 &nbsp;·&nbsp;
 [Inspect the accuracy summary](benchmark/accuracy_summary.md)
 &nbsp;·&nbsp;
-[Open the demo workbook](examples/Probability_Distributions_Demo.xlsm)
+[Open the demo workbook](examples/STATS-Distributions%20demo.xlsm)
 &nbsp;·&nbsp;
 [View the Wiki](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki)
 
@@ -879,7 +879,7 @@ Examples of questions the benchmark framework is intended to answer:
 
 The repository includes a macro-enabled demonstration workbook:
 
-[![Open demo workbook](https://img.shields.io/badge/Open-Demo_Workbook-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](examples/Probability_Distributions_Demo.xlsm)
+[![Open demo workbook](https://img.shields.io/badge/Open-Demo_Workbook-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](examples/STATS-Distributions%20demo.xlsm)
 
 The workbook is intended to provide:
 
@@ -899,32 +899,105 @@ The workbook is intended to provide:
 
 # 📁 Repository structure
 
+The structure below reflects the inspected `main` branch at commit `e77d0a75f676439514c8ca5089b46160d144d6b3`.
+
 ```text
 VBA-PROBABILITY-DISTRIBUTIONS/
+├─ .gitattributes
 ├─ .github/
 │  ├─ ISSUE_TEMPLATE/
+│  │  ├─ bug_report.md
+│  │  ├─ config.yml
+│  │  └─ feature_request.md
 │  ├─ workflows/
 │  │  └─ excel-vba-regression.yml
 │  └─ PULL_REQUEST_TEMPLATE.md
+├─ .gitignore
 ├─ assets/
+│  ├─ Home2.jpg
+│  ├─ banner2.png
+│  └─ social3.jpg
 ├─ benchmark/
-│  └─ accuracy_summary.md
+│  ├─ beta_f_unbalanced/
+│  │  ├─ __pycache__/
+│  │  │  ├─ _ibeta.cpython-311.pyc
+│  │  │  └─ _ibeta.cpython-313.pyc
+│  │  ├─ M_STATS_PROBDIST_BETAF_INV.bas
+│  │  ├─ M_STATS_PROBDIST_BETAF_UNBAL.bas
+│  │  ├─ README.md
+│  │  ├─ _ibeta.py
+│  │  ├─ analyze_beta_f_inverse.py
+│  │  ├─ analyze_beta_f_unbalanced.py
+│  │  ├─ beta_f_inverse.bas
+│  │  ├─ beta_f_inverse_grid.csv
+│  │  ├─ beta_f_unbalanced.bas
+│  │  ├─ beta_f_unbalanced_grid.csv
+│  │  ├─ generate_beta_f_inverse.py
+│  │  └─ generate_beta_f_unbalanced.py
+│  ├─ delta_seam_study/
+│  │  ├─ M_STATS_PROBDIST_DELTA_SEAM.bas
+│  │  ├─ README.md
+│  │  ├─ analyze_delta_seam.py
+│  │  ├─ delta_seam.bas
+│  │  ├─ delta_seam_grid.csv
+│  │  └─ generate_delta_seam.py
+│  ├─ f_envelope/
+│  │  ├─ README.md
+│  │  ├─ _ibeta.py
+│  │  ├─ analyze_f_envelope.py
+│  │  ├─ f_envelope.bas
+│  │  ├─ f_envelope_bothlarge.bas
+│  │  ├─ f_envelope_bothlarge_grid.csv
+│  │  ├─ f_envelope_gap.bas
+│  │  ├─ f_envelope_gap_grid.csv
+│  │  ├─ f_envelope_grid.csv
+│  │  ├─ generate_f_envelope.py
+│  │  ├─ generate_f_envelope_bothlarge.py
+│  │  └─ generate_f_envelope_gap.py
+│  ├─ holdout/
+│  │  ├─ M_STATS_PROBDIST_HOLDOUT.bas
+│  │  ├─ README.md
+│  │  ├─ _ibeta.py
+│  │  ├─ analyze_holdout.py
+│  │  ├─ generate_holdout.py
+│  │  ├─ holdout.bas
+│  │  └─ holdout_grid.csv
+│  ├─ logbeta_study/
+│  │  ├─ LogGammaDelta_design.md
+│  │  ├─ M_STATS_PROBDIST_LOGBETA_STUDY.bas
+│  │  ├─ README.md
+│  │  ├─ analyze_logbeta_switch.py
+│  │  ├─ generate_logbeta_switch.py
+│  │  ├─ logbeta_study.bas
+│  │  └─ logbeta_switch_grid.csv
+│  ├─ M_STATS_PROBDIST_ACCURACYEXPORT.bas
+│  ├─ README.md
+│  ├─ accuracy_contracts.csv
+│  ├─ accuracy_summary.md
+│  ├─ compute_errors.py
+│  ├─ environment.txt
+│  ├─ generate_reference_values.py
+│  ├─ numerical_limitations.csv
+│  ├─ probability_accuracy_grid.csv
+│  └─ render_contract_table.py
 ├─ ci/
 │  └─ Run-ExcelVbaTests.ps1
 ├─ docs/
+│  ├─ CODE_REVIEW_CHATGPT5.5_2026-07-19.md
+│  ├─ CODE_REVIEW_FABLE5_2026-07-19.md
 │  └─ EXCEL_VBA_CI.md
 ├─ examples/
-│  └─ Probability_Distributions_Demo.xlsm
+│  ├─ .gitkeep
+│  └─ STATS-Distributions demo.xlsm
 ├─ src/
-│  ├─ M_STATS_PROBDIST_CORE.bas
-│  ├─ M_STATS_PROBDIST_SPECIALFUNCS.bas
-│  ├─ M_STATS_PROBDIST_NORMALFAMILY.bas
-│  ├─ M_STATS_PROBDIST_TFAMILY.bas
 │  ├─ M_STATS_PROBDIST_CONTINUOUS.bas
-│  └─ M_STATS_PROBDIST_DISCRETE.bas
+│  ├─ M_STATS_PROBDIST_CORE.bas
+│  ├─ M_STATS_PROBDIST_DISCRETE.bas
+│  ├─ M_STATS_PROBDIST_NORMALFAMILY.bas
+│  ├─ M_STATS_PROBDIST_SPECIALFUNCS.bas
+│  └─ M_STATS_PROBDIST_TFAMILY.bas
 ├─ tests/
 │  └─ M_STATS_PROBDIST_TEST.bas
-├─ .gitignore
 ├─ CODE_OF_CONDUCT.md
 ├─ CONTRIBUTING.md
 ├─ LICENSE
@@ -932,7 +1005,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 └─ SECURITY.md
 ```
 
-The Wiki is maintained separately through the repository's Wiki interface.
+The Wiki is maintained separately through the repository's Wiki interface. A documentation package aligned to this tree is available under the accompanying `wiki/` directory in this update bundle.
 
 ---
 
@@ -948,11 +1021,14 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Normal and Lognormal](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Normal-and-Lognormal-Family) | Gaussian-family behavior |
 | [Student t, Chi-square, and F](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/StudentT-ChiSquare-and-F-Family) | Classical test-statistic family |
 | [Continuous Distributions](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Continuous-Distributions) | Gamma, Beta, Exponential, Weibull, Uniform |
-| [Special Functions and Kernels](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Special-Functions-and-Numerical-Kernels) | Internal beta/gamma numerical engine |
-| [Numerical Accuracy and Design](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design) | Algorithms, stability, and provenance |
+| [Discrete Distributions](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Discrete-Distributions) | Binomial, Poisson, and Geometric distributions and supported domains |
+| [Special Functions and Kernels](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Special-Functions-and-Numerical-Kernels) | Internal beta/gamma, combinatorial, and elementary numerical engine |
+| [Numerical Accuracy and Design](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design) | Algorithms, stability, supported domains, and provenance |
+| [Benchmarking and Accuracy Contracts](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Benchmarking-and-Accuracy-Contracts) | Reproducible mpmath/VBA benchmark pipeline and dedicated numerical studies |
+| [Repository Structure](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Repository-Structure) | Exact source, benchmark, CI, evidence, and documentation layout |
 | [Error Handling and Diagnostics](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Error-Handling-and-Diagnostics) | Public failure contract |
 | [Testing and Regression Harness](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Testing-and-Regression-Harness) | Test structure and release checks |
-| [Excel VBA CI](docs/EXCEL_VBA_CI.md) | Self-hosted Windows/Excel regression workflow |
+| [Excel VBA CI](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Excel-VBA-CI) | Self-hosted Windows/Excel regression workflow and security model |
 | [Accuracy Summary](benchmark/accuracy_summary.md) | Generated regime-aware accuracy verdicts |
 | [Troubleshooting](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Troubleshooting) | Common integration issues |
 
