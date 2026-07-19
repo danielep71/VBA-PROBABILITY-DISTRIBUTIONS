@@ -1925,6 +1925,31 @@ Private Sub Test_NF_LognormalUnderflow()
 
     'Overflow must still fail loudly; the guard is not simply removed
     AssertIsError "logn variance still overflows", K_STATS_Lognormal_Variance(1000#, 1#)
+
+    Debug.Print "-- Lognormal moment log-reconstruction (REGRESSION N4)"
+
+    'Magnitudes that are extreme but REPRESENTABLE were previously lost: the old
+    'code evaluated the large and small exponential factors separately, so an
+    'intermediate factor overflowed (-> #NUM!) or underflowed (-> 0) even though
+    'the final moment is finite. The single-log reconstruction returns it.
+    'Overflow-side: small sigma pulls the large exponential back into range
+    '(old code returned #NUM!).
+    AssertRelClose "logn variance overflow-recovery", _
+        K_STATS_Lognormal_Variance(354.995, 0.1), 2.24520206650824E+306, TOL_REL_TIGHT
+    AssertRelClose "logn stddev overflow-recovery", _
+        K_STATS_Lognormal_StdDev(354.995, 0.1), 1.49839983532708E+153, TOL_REL_TIGHT
+    'Underflow-side: large sigma lifts the tiny exponential back into range
+    '(old code returned 0).
+    AssertRelClose "logn variance underflow-recovery", _
+        K_STATS_Lognormal_Variance(-425#, 10#), 5.11195194865116E-283, TOL_REL_TIGHT
+    AssertRelClose "logn stddev underflow-recovery", _
+        K_STATS_Lognormal_StdDev(-425#, 10#), 7.14979156944533E-142, TOL_REL_TIGHT
+
+    'Degenerate zero log-variance: X is constant, so both moments are exactly 0.
+    AssertClose "logn variance sigma=0 -> 0", _
+        K_STATS_Lognormal_Variance(2#, 0#), 0#, 0#
+    AssertClose "logn stddev sigma=0 -> 0", _
+        K_STATS_Lognormal_StdDev(2#, 0#), 0#, 0#
 End Sub
 
 
@@ -5525,7 +5550,5 @@ Private Sub Test_DS_SupportEdges()
     AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
         0#, 0#
 End Sub
-
-
 
 

@@ -2859,26 +2859,26 @@ Public Function K_STATS_Lognormal_Variance( _
 '
 ' ERROR POLICY
 '   - Invalid parameters return CVErr(xlErrNum).
-'   - Overflow of either exponential or of the product returns CVErr(xlErrNum).
+'   - Overflow of the result returns CVErr(xlErrNum); small-but-representable
+'     results are returned, never floored to zero.
 '   - Unexpected runtime errors return CVErr(xlErrValue).
 '
 ' DEPENDENCIES
 '   - PROB_ValidateLogParameters
+'   - PROB_LogExpm1
 '   - PROB_TryExp
-'   - PROB_Expm1
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-19
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim VarianceLog         As Double          'Variance of Log(X)
-    Dim ExpVarGuard         As Double          'Range-check result for Exp(VarianceLog)
-    Dim ExpShift            As Double          'Exp(2*MeanLog + VarianceLog)
-    Dim Factor              As Double          'Accurate Exp(VarianceLog) - 1
+    Dim LogVariance         As Double          'Log of the arithmetic variance
+    Dim Result              As Double          'Reconstructed arithmetic variance
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -2899,31 +2899,23 @@ Public Function K_STATS_Lognormal_Variance( _
 '------------------------------------------------------------------------------
     'Compute log variance
         VarianceLog = StdDevLog * StdDevLog
-    'Guard the positive exponential range before calling PROB_Expm1.
-        If Not PROB_TryExp(VarianceLog, ExpVarGuard) Then
-            FailMsg = "Lognormal variance overflows Double range"
-            GoTo Fail_Num
-        End If
-
-        If Not PROB_TryExp(2# * MeanLog + VarianceLog, ExpShift) Then
-            FailMsg = "Lognormal variance overflows Double range"
-            GoTo Fail_Num
-        End If
-
-    'Evaluate Exp(VarianceLog) - 1 without cancellation near zero.
-        Factor = PROB_Expm1(VarianceLog)
-
-    'Nested rather than And-ed: VBA's And is not short-circuit, so a single-line
-    'test would evaluate PROB_DOUBLE_MAX / ExpShift even when ExpShift has
-    'underflowed to zero, raising run-time error 11 on a valid input
-        If ExpShift > 0# Then
-            If Factor > PROB_DOUBLE_MAX / ExpShift Then
+    'Degenerate case: a zero log-variance means Log(X) is constant, so X is a
+    'constant and the arithmetic variance is exactly zero. Guard it here because
+    'Log(Exp(0) - 1) = Log(0) is undefined.
+        If VarianceLog = 0# Then
+            K_STATS_Lognormal_Variance = 0#
+        Else
+    'Reconstruct the moment in ONE logarithmic expression so the result overflows
+    'or underflows only when the true variance does, not when a large or small
+    'intermediate exponential factor does on its own:
+    '   Var = Exp( Log(Exp(sigma^2) - 1) + 2*MeanLog + sigma^2 )
+            LogVariance = PROB_LogExpm1(VarianceLog) + 2# * MeanLog + VarianceLog
+            If Not PROB_TryExp(LogVariance, Result) Then
                 FailMsg = "Lognormal variance overflows Double range"
                 GoTo Fail_Num
             End If
+            K_STATS_Lognormal_Variance = Result
         End If
-    'Return lognormal variance
-        K_STATS_Lognormal_Variance = Factor * ExpShift
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -2992,26 +2984,26 @@ Public Function K_STATS_Lognormal_StdDev( _
 '
 ' ERROR POLICY
 '   - Invalid parameters return CVErr(xlErrNum).
-'   - Overflow of either exponential or of the product returns CVErr(xlErrNum).
+'   - Overflow of the result returns CVErr(xlErrNum); small-but-representable
+'     results are returned, never floored to zero.
 '   - Unexpected runtime errors return CVErr(xlErrValue).
 '
 ' DEPENDENCIES
 '   - PROB_ValidateLogParameters
+'   - PROB_LogExpm1
 '   - PROB_TryExp
-'   - PROB_Expm1
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-19
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim VarianceLog         As Double          'Variance of Log(X)
-    Dim ExpVarGuard         As Double          'Range-check result for Exp(VarianceLog)
-    Dim ExpShift            As Double          'Exp(MeanLog + 0.5*VarianceLog)
-    Dim Factor              As Double          'Sqr of accurate Exp(VarianceLog) - 1
+    Dim LogStdDev           As Double          'Log of the arithmetic std deviation
+    Dim Result              As Double          'Reconstructed std deviation
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -3032,31 +3024,21 @@ Public Function K_STATS_Lognormal_StdDev( _
 '------------------------------------------------------------------------------
     'Compute log variance
         VarianceLog = StdDevLog * StdDevLog
-    'Guard the positive exponential range before calling PROB_Expm1.
-        If Not PROB_TryExp(VarianceLog, ExpVarGuard) Then
-            FailMsg = "Lognormal standard deviation overflows Double range"
-            GoTo Fail_Num
-        End If
-
-        If Not PROB_TryExp(MeanLog + 0.5 * VarianceLog, ExpShift) Then
-            FailMsg = "Lognormal standard deviation overflows Double range"
-            GoTo Fail_Num
-        End If
-
-    'Evaluate the square-root factor without cancellation near zero.
-        Factor = Sqr(PROB_Expm1(VarianceLog))
-    'Guard the product against overflow before multiplying
-    'Nested rather than And-ed: VBA's And is not short-circuit, so a single-line
-    'test would evaluate PROB_DOUBLE_MAX / ExpShift even when ExpShift has
-    'underflowed to zero, raising run-time error 11 on a valid input
-        If ExpShift > 0# Then
-            If Factor > PROB_DOUBLE_MAX / ExpShift Then
+    'Degenerate case: a zero log-variance means X is constant, so the standard
+    'deviation is exactly zero. Guard it because Log(Exp(0) - 1) is undefined.
+        If VarianceLog = 0# Then
+            K_STATS_Lognormal_StdDev = 0#
+        Else
+    'Reconstruct in ONE logarithmic expression so the result overflows or
+    'underflows only when the true standard deviation does:
+    '   SD = Exp( 0.5*Log(Exp(sigma^2) - 1) + MeanLog + 0.5*sigma^2 )
+            LogStdDev = 0.5 * PROB_LogExpm1(VarianceLog) + MeanLog + 0.5 * VarianceLog
+            If Not PROB_TryExp(LogStdDev, Result) Then
                 FailMsg = "Lognormal standard deviation overflows Double range"
                 GoTo Fail_Num
             End If
+            K_STATS_Lognormal_StdDev = Result
         End If
-    'Return lognormal standard deviation
-        K_STATS_Lognormal_StdDev = Factor * ExpShift
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -3646,7 +3628,6 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
-
 
 
 

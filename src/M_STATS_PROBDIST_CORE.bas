@@ -732,6 +732,46 @@ Public Function PROB_Expm1( _
 End Function
 
 
+Public Function PROB_LogExpm1( _
+    ByVal X As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_LogExpm1
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Log(Exp(X) - 1) for X > 0, stable across the full Double range.
+'
+' WHY THIS EXISTS
+'   Callers that need the logarithm of Exp(X) - 1 (for example, reconstructing a
+'   lognormal moment in one logarithmic expression) cannot form PROB_Expm1(X)
+'   first: it overflows for X above ~709 even though its logarithm is finite.
+'
+' INPUTS
+'   X
+'     Strictly positive. For X <= 0 the value is undefined (Log of a
+'     non-positive number); callers must guard the degenerate X = 0 case.
+'
+' RETURNS
+'   Double
+'     Log(Exp(X) - 1). For X in (0, 709) via Log(PROB_Expm1(X)); at or above 709
+'     the term Exp(-X) is below Double precision, so Log(Exp(X) - 1) = X exactly.
+'
+' DEPENDENCIES
+'   - PROB_Expm1
+'
+' UPDATED
+'   2026-07-19
+'==============================================================================
+'
+    If X >= 709# Then
+        PROB_LogExpm1 = X
+    Else
+        PROB_LogExpm1 = Log(PROB_Expm1(X))
+    End If
+End Function
+
+
 Public Function PROB_NormalInvCDFRaw( _
     ByVal Probability As Double) _
     As Double
@@ -866,9 +906,5 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
-
-
-
-
 
 

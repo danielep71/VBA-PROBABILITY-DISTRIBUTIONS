@@ -623,7 +623,7 @@ End Function
 
 Public Function PROB_LogChoose( _
     ByVal N As Double, _
-    ByVal k As Double) _
+    ByVal K As Double) _
     As Double
 '
 '==============================================================================
@@ -671,7 +671,7 @@ Public Function PROB_LogChoose( _
 ' BOUNDARY CASES
 '------------------------------------------------------------------------------
     'C(N,0) = C(N,N) = 1, so the logarithm is exactly zero
-        If k <= 0# Or k >= N Then
+        If K <= 0# Or K >= N Then
             PROB_LogChoose = 0#
             Exit Function
         End If
@@ -680,18 +680,18 @@ Public Function PROB_LogChoose( _
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Complementary count
-        j = N - k
+        j = N - K
 
     'Leading term, expanded so that K * J never overflows
-        LeadingTerm = 0.5 * (Log(N) - Log(PROB_TWO_PI) - Log(k) - Log(j))
+        LeadingTerm = 0.5 * (Log(N) - Log(PROB_TWO_PI) - Log(K) - Log(j))
 
     'Entropy term. Both logarithms are of a ratio at least one, so neither
     'cancels; Log1p carries the case where that ratio is close to one
-        EntropyTerm = k * PROB_Log1p(j / k) + j * PROB_Log1p(k / j)
+        EntropyTerm = K * PROB_Log1p(j / K) + j * PROB_Log1p(K / j)
 
     'Assemble with the three small Stirling corrections
         PROB_LogChoose = LeadingTerm + EntropyTerm + _
-                         PROB_StirlingError(N) - PROB_StirlingError(k) - PROB_StirlingError(j)
+                         PROB_StirlingError(N) - PROB_StirlingError(K) - PROB_StirlingError(j)
 End Function
 
 
