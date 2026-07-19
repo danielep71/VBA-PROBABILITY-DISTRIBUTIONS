@@ -27,6 +27,15 @@ getcontext().prec = 50
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+try:
+    sys.path.insert(0, os.path.join(HERE, "beta_f_unbalanced"))
+    from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf
+    import mpmath as _mp
+    _mp.mp.dps = 50
+    _HAVE_IBETA = True
+except Exception:
+    _HAVE_IBETA = False
+
 
 def load_contracts(path=None):
     if path is None:
@@ -67,6 +76,24 @@ def measure_error(rows, metric):
     return (worst, worst_at, n) if n else (None, "", 0)
 
 
+def tail_residual(rows, fn):
+    if not _HAVE_IBETA:
+        return None, "", 0
+    worst = Decimal(-1); worst_at = ""; cnt = 0
+    for r in rows:
+        xo = parse_observed(r["observed_vba"])
+        if xo is None:
+            continue
+        p = _mp.mpf(r["arg1"]); a2v = _mp.mpf(r["arg2"]); a3v = _mp.mpf(r["arg3"])
+        xv = _mp.mpf(str(xo))
+        recovered = _ibeta_cdf(xv, a2v, a3v) if fn == "Beta_InverseCumulative" else _f_cdf(xv, a2v, a3v)
+        e = Decimal(str(abs(recovered - p) / min(p, 1 - p)))
+        cnt += 1
+        if e > worst:
+            worst = e; worst_at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)
+    return (worst, worst_at, cnt) if cnt else (None, "", 0)
+
+
 def main():
     ap = argparse.ArgumentParser(description="Regime-aware accuracy verdicts + release gate.")
     ap.add_argument("--grid", default=os.path.join(HERE, "probability_accuracy_grid.csv"))
@@ -100,9 +127,19 @@ def main():
 
         matched = grid_by.get((fn, regime), [])
 
-        # tail_probability_residual is a derived measure not carried directly in the
-        # grid; it is verified in its evidence directory.
         if measure == "tail_probability_residual":
+            mt = grid_by.get((fn, regime), [])
+            if mt and _HAVE_IBETA:
+                worst, at, nn = tail_residual(mt, fn)
+                if worst is not None:
+                    ok = threshold is not None and worst <= threshold
+                    if ok:
+                        verdict = "\u2705 PASS"
+                    else:
+                        n_fail += 1; verdict = "\u274c FAIL"
+                    lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
+                                 f"{float(worst):.2e} | {nn}/{len(mt)} | {verdict} |")
+                    continue
             n_char += 1
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
                          f"study | \U0001f9ea CHARACTERIZATION ONLY |")
