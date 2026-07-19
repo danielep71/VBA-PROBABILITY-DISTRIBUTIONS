@@ -27,6 +27,7 @@ Option Private Module
 ' PUBLIC (PROJECT-SCOPED) SURFACE
 '   Logarithmic gamma:
 '     - PROB_LogGamma
+'     - PROB_LogGammaDelta
 '     - PROB_LogGammaHalfDiff
 '     - PROB_LogBeta
 '
@@ -116,7 +117,20 @@ Private Const PROB_BETA_MAX_ITER       As Long = 100000   'Lentz iterations, inc
 Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterations, incomplete gamma
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
-Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (provisional; confirm from the VBA seam study)
+Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (validated by the committed seam study and independent holdout)
+
+'Lanczos g = 7, n = 9 series coefficients. SINGLE SOURCE OF TRUTH shared by
+'PROB_LogGamma and PROB_LogGammaDelta, which must evaluate the identical series.
+Private Const PROB_LANCZOS_G  As Double = 7#
+Private Const PROB_LANCZOS_P0 As Double = 0.99999999999981
+Private Const PROB_LANCZOS_P1 As Double = 676.520368121885
+Private Const PROB_LANCZOS_P2 As Double = -1259.1392167224
+Private Const PROB_LANCZOS_P3 As Double = 771.323428777653
+Private Const PROB_LANCZOS_P4 As Double = -176.615029162141
+Private Const PROB_LANCZOS_P5 As Double = 12.5073432786869
+Private Const PROB_LANCZOS_P6 As Double = -0.13857109526572
+Private Const PROB_LANCZOS_P7 As Double = 9.98436957801957E-06
+Private Const PROB_LANCZOS_P8 As Double = 1.50563273514931E-07
 
 
 '==============================================================================
@@ -145,16 +159,6 @@ Public Function PROB_LogGamma( _
 '------------------------------------------------------------------------------
 ' DECLARE CONSTANTS
 '------------------------------------------------------------------------------
-    Const g  As Double = 7#
-    Const P0 As Double = 0.99999999999981
-    Const P1 As Double = 676.520368121885
-    Const P2 As Double = -1259.1392167224
-    Const P3 As Double = 771.323428777653
-    Const P4 As Double = -176.615029162141
-    Const P5 As Double = 12.5073432786869
-    Const P6 As Double = -0.13857109526572
-    Const P7 As Double = 9.98436957801957E-06
-    Const P8 As Double = 1.50563273514931E-07
 
 '------------------------------------------------------------------------------
 ' DECLARE
@@ -180,18 +184,18 @@ Public Function PROB_LogGamma( _
         Zm1 = Z - 1#
 
     'Compute the Lanczos series
-        X = P0
-        X = X + P1 / (Zm1 + 1#)
-        X = X + P2 / (Zm1 + 2#)
-        X = X + P3 / (Zm1 + 3#)
-        X = X + P4 / (Zm1 + 4#)
-        X = X + P5 / (Zm1 + 5#)
-        X = X + P6 / (Zm1 + 6#)
-        X = X + P7 / (Zm1 + 7#)
-        X = X + P8 / (Zm1 + 8#)
+        X = PROB_LANCZOS_P0
+        X = X + PROB_LANCZOS_P1 / (Zm1 + 1#)
+        X = X + PROB_LANCZOS_P2 / (Zm1 + 2#)
+        X = X + PROB_LANCZOS_P3 / (Zm1 + 3#)
+        X = X + PROB_LANCZOS_P4 / (Zm1 + 4#)
+        X = X + PROB_LANCZOS_P5 / (Zm1 + 5#)
+        X = X + PROB_LANCZOS_P6 / (Zm1 + 6#)
+        X = X + PROB_LANCZOS_P7 / (Zm1 + 7#)
+        X = X + PROB_LANCZOS_P8 / (Zm1 + 8#)
 
     'Compute the shifted argument
-        T = Zm1 + g + 0.5
+        T = Zm1 + PROB_LANCZOS_G + 0.5
 
 '------------------------------------------------------------------------------
 ' RETURN RESULT
@@ -312,18 +316,8 @@ Public Function PROB_LogGammaDelta( _
 '==============================================================================
 '
 '------------------------------------------------------------------------------
-' DECLARE CONSTANTS  (Lanczos g = 7, n = 9; must match PROB_LogGamma)
+' The Lanczos series uses the shared module-level PROB_LANCZOS_* coefficients.
 '------------------------------------------------------------------------------
-    Const g  As Double = 7#
-    Const P0 As Double = 0.99999999999981
-    Const P1 As Double = 676.520368121885
-    Const P2 As Double = -1259.1392167224
-    Const P3 As Double = 771.323428777653
-    Const P4 As Double = -176.615029162141
-    Const P5 As Double = 12.5073432786869
-    Const P6 As Double = -0.13857109526572
-    Const P7 As Double = 9.98436957801957E-06
-    Const P8 As Double = 1.50563273514931E-07
 
 '------------------------------------------------------------------------------
 ' DECLARE
@@ -339,29 +333,29 @@ Public Function PROB_LogGammaDelta( _
     Zm1 = LargeArg - 1#
 
     'Lanczos series A(LargeArg)
-        Az = P0
-        Az = Az + P1 / (Zm1 + 1#)
-        Az = Az + P2 / (Zm1 + 2#)
-        Az = Az + P3 / (Zm1 + 3#)
-        Az = Az + P4 / (Zm1 + 4#)
-        Az = Az + P5 / (Zm1 + 5#)
-        Az = Az + P6 / (Zm1 + 6#)
-        Az = Az + P7 / (Zm1 + 7#)
-        Az = Az + P8 / (Zm1 + 8#)
+        Az = PROB_LANCZOS_P0
+        Az = Az + PROB_LANCZOS_P1 / (Zm1 + 1#)
+        Az = Az + PROB_LANCZOS_P2 / (Zm1 + 2#)
+        Az = Az + PROB_LANCZOS_P3 / (Zm1 + 3#)
+        Az = Az + PROB_LANCZOS_P4 / (Zm1 + 4#)
+        Az = Az + PROB_LANCZOS_P5 / (Zm1 + 5#)
+        Az = Az + PROB_LANCZOS_P6 / (Zm1 + 6#)
+        Az = Az + PROB_LANCZOS_P7 / (Zm1 + 7#)
+        Az = Az + PROB_LANCZOS_P8 / (Zm1 + 8#)
 
     'Direct series difference A(LargeArg + Increment) - A(LargeArg), no cancellation
-        dA = P1 / ((Zm1 + 1#) * (Zm1 + 1# + Increment))
-        dA = dA + P2 / ((Zm1 + 2#) * (Zm1 + 2# + Increment))
-        dA = dA + P3 / ((Zm1 + 3#) * (Zm1 + 3# + Increment))
-        dA = dA + P4 / ((Zm1 + 4#) * (Zm1 + 4# + Increment))
-        dA = dA + P5 / ((Zm1 + 5#) * (Zm1 + 5# + Increment))
-        dA = dA + P6 / ((Zm1 + 6#) * (Zm1 + 6# + Increment))
-        dA = dA + P7 / ((Zm1 + 7#) * (Zm1 + 7# + Increment))
-        dA = dA + P8 / ((Zm1 + 8#) * (Zm1 + 8# + Increment))
+        dA = PROB_LANCZOS_P1 / ((Zm1 + 1#) * (Zm1 + 1# + Increment))
+        dA = dA + PROB_LANCZOS_P2 / ((Zm1 + 2#) * (Zm1 + 2# + Increment))
+        dA = dA + PROB_LANCZOS_P3 / ((Zm1 + 3#) * (Zm1 + 3# + Increment))
+        dA = dA + PROB_LANCZOS_P4 / ((Zm1 + 4#) * (Zm1 + 4# + Increment))
+        dA = dA + PROB_LANCZOS_P5 / ((Zm1 + 5#) * (Zm1 + 5# + Increment))
+        dA = dA + PROB_LANCZOS_P6 / ((Zm1 + 6#) * (Zm1 + 6# + Increment))
+        dA = dA + PROB_LANCZOS_P7 / ((Zm1 + 7#) * (Zm1 + 7# + Increment))
+        dA = dA + PROB_LANCZOS_P8 / ((Zm1 + 8#) * (Zm1 + 8# + Increment))
         dA = -Increment * dA
 
     'Shifted argument
-        T = LargeArg + g - 0.5
+        T = LargeArg + PROB_LANCZOS_G - 0.5
 
     'Stable difference (0.5*Log(2*Pi) cancels and is absent)
         PROB_LogGammaDelta = _
@@ -401,11 +395,12 @@ Public Function PROB_LogBeta( _
 '     LogGamma(A) + LogGamma(B) - LogGamma(A + B).
 '
 ' CROSSOVER
-'   PROB_LOGBETA_STABLE_RATIO (provisionally 0.1) is the switch between the two
-'   regimes. A Python prototype places the safe overlap near 0.05 to 0.1; the
-'   exact constant is to be confirmed from the VBA seam study (maximum error on
-'   each side, continuity across the switch, non-integer Small, multiple absolute
-'   scales, and symmetry after argument ordering).
+'   PROB_LOGBETA_STABLE_RATIO (0.1) is the switch between the two regimes. The
+'   constant is validated by the committed VBA seam study (maximum error on each
+'   side, continuity across the switch, non-integer Small, multiple absolute
+'   scales, and symmetry after argument ordering) and by an independent holdout
+'   that straddles the seam (ratios 0.099, 0.101, 0.11). The corresponding
+'   PROB_LogBeta accuracy contracts are validated and frozen.
 '
 ' DEPENDENCIES
 '   - PROB_LogGamma, PROB_LogGammaHalfDiff, PROB_LogGammaDelta
@@ -1582,11 +1577,5 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
-
-
-
-
-
-
 
 
