@@ -89,6 +89,21 @@ tests/M_STATS_PROBDIST_TEST.bas
 numerical foundation. Distribution-family modules consume those routines rather
 than maintaining private duplicate implementations.
 
+### Two test tiers
+
+Accuracy is protected at two levels, with different tolerances by design:
+
+- The **VBA suite** (`tests/M_STATS_PROBDIST_TEST.bas`) is a fast deterministic
+  regression and public-contract smoke test, run in Excel with broad tolerances
+  (about 1E-10 absolute/relative, 1E-9 tail, 1E-6 loose).
+- The **external benchmark** (`benchmark/`) is the measured high-precision
+  accuracy gate: 50-digit mpmath references enforcing `accuracy_contracts.csv`
+  (down to 5E-15 where claimed).
+
+Keep this separation when adding tests. Tight per-regime accuracy belongs in the
+benchmark contracts; the VBA suite should stay fast and deterministic and assert
+the public contract, not re-derive the benchmark's precision.
+
 ---
 
 ## 🔁 Edit and export workflow

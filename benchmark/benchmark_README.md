@@ -16,6 +16,27 @@ reference and the error analysis; a small Excel macro owns the observed values.
 Neither side trusts the other's numbers — Python never sees the library's code,
 and the macro never reads the reference column.
 
+## Two test tiers, two roles
+
+Accuracy is protected at two levels with deliberately different tolerances, and
+the distinction is intentional:
+
+- **The VBA suite** (`tests/M_STATS_PROBDIST_TEST.bas`) is a fast, deterministic
+  regression and public-contract smoke test. It runs entirely inside Excel with
+  no high-precision oracle, so it uses broad tolerances (typically 1E-10
+  absolute/relative, 1E-9 tail, 1E-6 loose). Its job is to catch regressions and
+  confirm the public contract holds across many inputs — not to certify the
+  tightest achievable accuracy.
+- **This external benchmark** is the measured high-precision accuracy gate. It
+  compares the library against 50-digit mpmath references and enforces the
+  machine-readable contracts in `accuracy_contracts.csv` (down to 5E-15 where
+  claimed). This is where the tight, per-regime accuracy levels are certified.
+
+The VBA tolerances are therefore *broader by design* than several benchmark
+contracts. A green VBA suite means "no regression and the public contract holds";
+a green benchmark gate means "the measured accuracy contracts are met". Both are
+required, and they answer different questions.
+
 ## Files
 
 | File | Role |
