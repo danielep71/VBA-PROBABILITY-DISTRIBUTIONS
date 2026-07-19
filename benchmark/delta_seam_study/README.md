@@ -1,58 +1,58 @@
-# Delta seam study (PROB_LogGammaDelta + LogBeta crossover)
+# Step-6 study: public Beta/F accuracy at unbalanced arguments
 
-Validates the new `PROB_LogGammaDelta` kernel and selects the two-regime
-`PROB_LogBeta` crossover (`PROB_LOGBETA_STABLE_RATIO`) from measured VBA data —
-implementing steps 2 and 4 of the LogBeta correction plan.
+Measures the PUBLIC Beta and F worksheet functions directly at strongly
+disparate shapes / degrees of freedom, now that `PROB_LogBeta` uses the stable
+Lanczos log-gamma difference. This produces the function-level numbers that
+freeze the regime-scoped accuracy contracts.
 
-## What it measures
+## Why measure the functions, not the LogBeta proxy
 
-For each `(Large, Small)` point, three quantities are exported and compared to
-50+ digit mpmath references:
+Downstream code uses `exp(-LogBeta)`, so to first order the relative error of an
+exponentiated quantity is the ABSOLUTE error of `LogBeta`. That means:
 
-- `LogGammaDelta`  — `PROB_LogGammaDelta(Large, Small)` (validates the kernel);
-- `LogBeta_ident`  — `Log(Beta)` via the direct three-log-gamma identity;
-- `LogBeta_stable` — `Log(Beta)` via `LogGamma(Small) - PROB_LogGammaDelta`.
+- `PROB_LogBeta` should be judged by ABSOLUTE error (done in the delta seam study);
+- the public Beta/F functions must be judged by their OWN relative error, because
+  the incomplete-beta continued fraction, tail selection and inverse solver damp
+  or amplify the normalization error differently for each function.
 
-The two LogBeta rows share the reference; measuring each *route* at every ratio
-is what lets the crossover be chosen from evidence rather than theory.
+So this study measures each of `Beta_Density`, `Beta_Cumulative`, `Beta_Survival`,
+`F_Cumulative`, `F_Survival` separately. Do NOT infer one common threshold.
 
 ## Grid
 
-- **Small**: 0.25, 0.7, 1.3, 2.5, 5.75, 10.25 (non-integer cases included).
-- **Seam ratios**: 0.5, 0.2, 0.15, 0.1, 0.08, 0.05, 0.03, 0.02, 0.01, 0.005.
-- **Deep ratios**: 1E-3 down to 1E-18.
-- **Absolute scales**: fixed Large in {1E2, 1E4, 1E8, 1E12, 1E20, 1E50}.
-
-References are mpmath at 120 digits (needed so `loggamma(Large+Small) -
-loggamma(Large)` stays accurate when the two large values nearly cancel).
+- **Beta**: strongly disparate `(Alpha, Beta)` — e.g. (0.7, 1000), (2.5, 1E6),
+  (10.25, 68), (0.8, 1E4), (1000, 0.8), (1E5, 2.5) — evaluated at X near the
+  distribution's mass (the mean and a mode-ish point).
+- **F**: strongly asymmetric `(df1, df2)` — (1, 1E4), (2.5, 1E8), (10, 1E10),
+  (1E6, 3) — at X = 1 and near the mean.
+- 64 points; references are mpmath at 60 digits.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `generate_delta_seam.py` | Writes `delta_seam_grid.csv` (396 rows, 120-digit refs). |
-| `delta_seam_grid.csv` | The grid; `arg1 = Large`, `arg2 = Small`. |
-| `delta_seam.bas` | Standalone export macro `Export_Delta_Seam` (deps: `PROB_LogGamma`, `PROB_LogGammaDelta`). |
-| `analyze_delta_seam.py` | Delta validation (production regime vs full grid) + crossover envelope. |
+| `generate_beta_f_unbalanced.py` | Writes `beta_f_unbalanced_grid.csv` (64 rows, 60-digit refs). |
+| `beta_f_unbalanced_grid.csv` | The grid; `arg1 = X`, `arg2 = Alpha/df1`, `arg3 = Beta/df2`. |
+| `beta_f_unbalanced.bas` | Standalone macro `Export_BetaF_Unbalanced` (calls the 5 public functions; handles CVErr). |
+| `analyze_beta_f_unbalanced.py` | Per-function worst-case relative error + suggested frozen thresholds. |
 
 ## How to run
 
-1. Import `delta_seam.bas` into the workbook and `Debug > Compile`.
-2. Run `Export_Delta_Seam`; select `delta_seam_grid.csv` when prompted.
+1. Import `beta_f_unbalanced.bas` into the workbook and `Debug > Compile`.
+2. Run `Export_BetaF_Unbalanced`; select `beta_f_unbalanced_grid.csv` when prompted.
 3. Commit the filled CSV.
-4. Analysis (done for you): `python3 analyze_delta_seam.py`.
+4. Analysis (done for you): `python3 analyze_beta_f_unbalanced.py`.
 
-## Reading the result
+## Freezing the contracts (completion criteria 5-7)
 
-- **Delta validation** is reported for the *production regime* (ratio < 0.1,
-  where the delta is actually used) separately from the full grid. Points at
-  ratio >= 0.1 use the identity, so a larger delta error there is expected and
-  harmless.
-- **Crossover**: the analyzer prints, per ratio, the worst identity error and
-  worst stable error and recommends `PROB_LOGBETA_STABLE_RATIO` from the clean
-  overlap where both routes are within 5E-15. A Python prototype places this near
-  0.1; the VBA measurement is the authority.
+The analyzer prints, per function, the measured worst-case relative error and a
+suggested frozen threshold (worst measured, rounded up with headroom). Then:
 
-The crossover currently coded (`0.1`) is provisional. Adjust the constant in
-`M_STATS_PROBDIST_SPECIALFUNCS` only if the measured VBA envelope indicates a
-different value.
+1. Set SEPARATE balanced and unbalanced contracts in `accuracy_contracts.csv`
+   (the balanced claim stays tight; the unbalanced claim uses the measured value).
+2. Replace the broad `known_limitation` with the precise scoped contracts.
+3. Retain a `known_limitation` ONLY where a measured public function still exceeds
+   its revised contract.
+
+The measured VBA numbers are the authority; freeze only after running against the
+final module.
