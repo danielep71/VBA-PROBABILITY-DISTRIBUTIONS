@@ -94,7 +94,16 @@ def tail_residual(rows, fn):
     return (worst, worst_at, cnt) if cnt else (None, "", 0)
 
 
+def _force_utf8_stdout():
+    # Windows consoles default to cp1252 and cannot print the verdict icons.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+
 def main():
+    _force_utf8_stdout()
     ap = argparse.ArgumentParser(description="Regime-aware accuracy verdicts + release gate.")
     ap.add_argument("--grid", default=os.path.join(HERE, "probability_accuracy_grid.csv"))
     ap.add_argument("--out", default=os.path.join(HERE, "accuracy_summary.md"))
@@ -180,7 +189,7 @@ def main():
               "pass/fail claim (or verified in a study directory); **PENDING** is not yet "
               "measured in the main grid. Errors are Decimal from the two-part hi;lo export."]
 
-    with open(args.out, "w") as f:
+    with open(args.out, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
     mode = "development (known limitations allowed)" if args.allow_known_limitations else "strict"
