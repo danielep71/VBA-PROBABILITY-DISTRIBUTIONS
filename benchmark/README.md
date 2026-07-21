@@ -233,7 +233,14 @@ per function via the `metric` column.
 
 ## Reference integrity
 
-The mpmath references were cross-checked against SciPy for every function; the
-two independent oracles agree to about 1E-14 or better across the grid. The
-survival references are computed on the upper tail directly (never `1 - CDF`),
+The continued-fraction / mpmath references are cross-checked against SciPy, an
+INDEPENDENT implementation, wherever SciPy is reliable (incomplete-beta shape
+parameter <= 1E7). This cross-check is a regenerable artifact,
+`cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion: at the
+current grids 242 points are independently confirmed by SciPy (worst relative
+difference about 7E-11, i.e. SciPy's own double-precision limit), and 8 extreme
+points lie beyond SciPy's reliable range and instead rest on the reference's
+50-vs-80-digit self-consistency. SciPy corroborates the reference where it can
+compute; it cannot certify the extreme-parameter points it cannot itself evaluate.
+The survival references are computed on the upper tail directly (never `1 - CDF`),
 so they stay accurate in the deep tail where a naive subtraction would collapse.
