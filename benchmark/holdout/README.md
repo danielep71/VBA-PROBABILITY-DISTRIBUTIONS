@@ -10,12 +10,18 @@ can be frozen (`measured provisional` -> `validated and frozen`).
   (7.7,200), (250,1.15), (0.9,250000), (4.4,90000) — new non-integer shapes.
 - **F df (validated range, param < ~1E7)**: (3,5000), (1.5,200000), (7,50000),
   (500000,4).
-- **Probabilities**: 0.0001, 0.005, 0.25, 0.75, 0.995, 0.9999 (extra tails).
 - **PROB_LogBeta**: fresh Small 0.42/1.9/3.3/7.7 x near-seam and between-decade
-  ratios 0.3, 0.15, 0.11, 0.101, 0.099, 0.09, 0.075, 0.03, 0.003, 3E-4, 3E-6, 3E-9
-  (stresses the 0.1 crossover from both sides).
+  ratios (stresses the 0.1 crossover from both sides).
+- **Discrete (Binomial / Poisson / Geometric)**: fresh parameters disjoint from
+  the main grid — Binomial n in {50, 5000, 500000, 5000000}, Poisson mean in
+  {10, 200, 100000}, Geometric p in {0.2, 0.01, 1e-4}.
+- **Negative Binomial**: fresh (r, p) in {(2,0.3), (20,0.6), (200,0.4), (2000,0.75)}.
+- **Hypergeometric**: fresh (n, K, N) in {(20,30,80), (60,300,500), (200,2000,50000)}.
+- **Probabilities**: 0.0001, 0.005, 0.25, 0.75, 0.995, 0.9999 for the continuous
+  families; non-tie probabilities for the discrete inverses.
 
-134 points; references are mpmath / continued-fraction incomplete beta at 50 digits.
+320 points; references are mpmath / continued-fraction incomplete beta /
+incomplete gamma at 50 digits.
 
 ## Files
 
@@ -23,13 +29,13 @@ can be frozen (`measured provisional` -> `validated and frozen`).
 |---|---|
 | `generate_holdout.py` | Writes `holdout_grid.csv` (references). |
 | `_ibeta.py` | Continued-fraction incomplete beta (shared with the inverse study). |
-| `holdout_grid.csv` | Fresh grid; main-grid schema. |
-| `holdout.bas` | Export macro `Export_Holdout` (7 public functions + `PROB_LogBeta`). |
+| `holdout_grid.csv` | Fresh grid; 12-column `arg4` schema (Hypergeometric needs four parameters). |
+| `M_STATS_PROBDIST_HOLDOUT.bas` | Export macro `Export_Holdout` for all contracted public functions (Beta/F, `PROB_LogBeta`, and the five discrete families). |
 | `analyze_holdout.py` | Per-contract holdout worst vs frozen threshold + margin. |
 
 ## How to run
 
-1. Import `holdout.bas`, `Debug > Compile`.
+1. Import `M_STATS_PROBDIST_HOLDOUT.bas`, `Debug > Compile`.
 2. Run `Export_Holdout`; select `holdout_grid.csv`.
 3. Commit the filled CSV.
 4. `python3 analyze_holdout.py` (reads `../accuracy_contracts.csv`).
@@ -40,3 +46,9 @@ can be frozen (`measured provisional` -> `validated and frozen`).
   `validated and frozen` in `accuracy_contracts.csv`.
 - **Any contract exceeds its threshold** -> do not freeze; adjust that single
   threshold to the honest holdout-inclusive worst and record why.
+
+## Known gap
+
+`Export_Holdout` cannot compute F at the extreme validated-range df (200000,
+500000); those rows carry `ERROR` and are covered instead by the F study
+harnesses. They do not affect the strict gate, which runs on the main grid.
