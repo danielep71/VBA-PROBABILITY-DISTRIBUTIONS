@@ -469,7 +469,7 @@ End Function
 '==============================================================================
 
 Public Function PROB_StirlingError( _
-    ByVal N As Double) _
+    ByVal n As Double) _
     As Double
 '
 '==============================================================================
@@ -537,7 +537,7 @@ Public Function PROB_StirlingError( _
 ' SMALL ARGUMENT
 '------------------------------------------------------------------------------
     'Below the smallest tabulated positive point the correction is not used
-        If N < 0.5 Then
+        If n < 0.5 Then
             PROB_StirlingError = 0#
             Exit Function
         End If
@@ -546,8 +546,8 @@ Public Function PROB_StirlingError( _
 ' TABULATED REGION
 '------------------------------------------------------------------------------
     'Exact stored values on the half-integer grid up to 15
-        If N <= 15# Then
-            TwoN = 2# * N
+        If n <= 15# Then
+            TwoN = 2# * n
 
             If TwoN = Int(TwoN) Then
                 Select Case CLng(TwoN)
@@ -585,16 +585,16 @@ Public Function PROB_StirlingError( _
     'Unreachable while 0.5 <= N <= 15 and TwoN is integral. Present so that a
     'broken invariant produces a correct number rather than a silent zero.
                     Case Else
-                        PROB_StirlingError = PROB_LogGamma(N + 1#) - _
-                                             (N + 0.5) * Log(N) + N - PROB_HALF_LOG_TWO_PI
+                        PROB_StirlingError = PROB_LogGamma(n + 1#) - _
+                                             (n + 0.5) * Log(n) + n - PROB_HALF_LOG_TWO_PI
                 End Select
 
                 Exit Function
             End If
 
     'Off the grid: the defining identity, well conditioned at small N
-            PROB_StirlingError = PROB_LogGamma(N + 1#) - _
-                                 (N + 0.5) * Log(N) + N - PROB_HALF_LOG_TWO_PI
+            PROB_StirlingError = PROB_LogGamma(n + 1#) - _
+                                 (n + 0.5) * Log(n) + n - PROB_HALF_LOG_TWO_PI
             Exit Function
         End If
 
@@ -602,22 +602,22 @@ Public Function PROB_StirlingError( _
 ' ASYMPTOTIC SERIES
 '------------------------------------------------------------------------------
     'Truncate by magnitude; each cut sits below the Double round-off
-        NSquared = N * N
+        NSquared = n * n
 
-        If N > 500# Then
-            PROB_StirlingError = (S0 - S1 / NSquared) / N
-        ElseIf N > 80# Then
-            PROB_StirlingError = (S0 - (S1 - S2 / NSquared) / NSquared) / N
-        ElseIf N > 35# Then
-            PROB_StirlingError = (S0 - (S1 - (S2 - S3 / NSquared) / NSquared) / NSquared) / N
+        If n > 500# Then
+            PROB_StirlingError = (S0 - S1 / NSquared) / n
+        ElseIf n > 80# Then
+            PROB_StirlingError = (S0 - (S1 - S2 / NSquared) / NSquared) / n
+        ElseIf n > 35# Then
+            PROB_StirlingError = (S0 - (S1 - (S2 - S3 / NSquared) / NSquared) / NSquared) / n
         Else
-            PROB_StirlingError = (S0 - (S1 - (S2 - (S3 - S4 / NSquared) / NSquared) / NSquared) / NSquared) / N
+            PROB_StirlingError = (S0 - (S1 - (S2 - (S3 - S4 / NSquared) / NSquared) / NSquared) / NSquared) / n
         End If
 End Function
 
 
 Public Function PROB_LogChoose( _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal K As Double) _
     As Double
 '
@@ -666,7 +666,7 @@ Public Function PROB_LogChoose( _
 ' BOUNDARY CASES
 '------------------------------------------------------------------------------
     'C(N,0) = C(N,N) = 1, so the logarithm is exactly zero
-        If K <= 0# Or K >= N Then
+        If K <= 0# Or K >= n Then
             PROB_LogChoose = 0#
             Exit Function
         End If
@@ -675,10 +675,10 @@ Public Function PROB_LogChoose( _
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Complementary count
-        j = N - K
+        j = n - K
 
     'Leading term, expanded so that K * J never overflows
-        LeadingTerm = 0.5 * (Log(N) - Log(PROB_TWO_PI) - Log(K) - Log(j))
+        LeadingTerm = 0.5 * (Log(n) - Log(PROB_TWO_PI) - Log(K) - Log(j))
 
     'Entropy term. Both logarithms are of a ratio at least one, so neither
     'cancels; Log1p carries the case where that ratio is close to one
@@ -686,7 +686,7 @@ Public Function PROB_LogChoose( _
 
     'Assemble with the three small Stirling corrections
         PROB_LogChoose = LeadingTerm + EntropyTerm + _
-                         PROB_StirlingError(N) - PROB_StirlingError(K) - PROB_StirlingError(j)
+                         PROB_StirlingError(n) - PROB_StirlingError(K) - PROB_StirlingError(j)
 End Function
 
 
