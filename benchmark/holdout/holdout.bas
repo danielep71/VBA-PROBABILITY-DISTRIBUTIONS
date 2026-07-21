@@ -15,9 +15,11 @@ Attribute VB_Name = "M_STATS_PROBDIST_HOLDOUT"
 '   - K_STATS_Beta_Density/Cumulative/Survival/InverseCumulative
 '   - K_STATS_F_Cumulative/Survival/InverseCumulative
 '   - PROB_LogBeta
+'   - K_STATS_Binomial_* / Poisson_* / Geometric_* (PMF/LogPMF/Cumulative/
+'     Survival/InverseCumulative/Mean/Variance/StdDev)
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-21
 '==============================================================================
 Option Explicit
 
@@ -26,11 +28,9 @@ Public Sub Export_Holdout()
     Dim Path                As String
     Dim FileNum             As Integer
     Dim OutNum              As Integer
-    Dim Line                As String
+    Dim Raw                 As String
     Dim Cols                As Variant
     Dim Lines()             As String
-    Dim LineCount           As Long
-    Dim IsHeader            As Boolean
     Dim A1                  As Double
     Dim A2                  As Double
     Dim A3                  As Double
@@ -40,47 +40,41 @@ Public Sub Export_Holdout()
     Path = ResolveGridPath()
     If Len(Path) = 0 Then Exit Sub
 
-    ReDim Lines(0 To 100000)
-    LineCount = 0
-    IsHeader = True
     Filled = 0
 
+    'Read the whole file and normalize line endings, so LF-only, CR-only, and
+    'CRLF grids all parse. VBA Line Input is CR-delimited and would swallow an
+    'entire LF-only file (our .gitattributes stores *.csv as eol=lf) as one line.
     FileNum = FreeFile
     Open Path For Input As #FileNum
-    Do While Not EOF(FileNum)
-        Line Input #FileNum, Line
+    Raw = Input$(LOF(FileNum), FileNum)
+    Close #FileNum
+    Raw = Replace(Raw, vbCrLf, vbLf)
+    Raw = Replace(Raw, vbCr, vbLf)
+    Lines = Split(Raw, vbLf)
 
-        If IsHeader Then
-            Lines(LineCount) = Line
-            LineCount = LineCount + 1
-            IsHeader = False
-            GoTo ContinueLoop
-        End If
+    'Lines(0) is the header, kept verbatim; data starts at row 1.
+    'Columns: function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,evidence_set
+    For I = 1 To UBound(Lines)
+        If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
-        If Len(Trim$(Line)) = 0 Then GoTo ContinueLoop
-
-        'Columns: function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,evidence_set
-        Cols = Split(Line, ",")
+        Cols = Split(Lines(I), ",")
         If UBound(Cols) >= 8 Then
             A1 = Val(Cols(4))
             A2 = Val(Cols(5))
             A3 = Val(Cols(6))
             Cols(8) = EvaluateHoldout(Cols(0), A1, A2, A3)
-            Line = Join(Cols, ",")
+            Lines(I) = Join(Cols, ",")
             Filled = Filled + 1
         End If
 
-        Lines(LineCount) = Line
-        LineCount = LineCount + 1
-
-ContinueLoop:
-    Loop
-    Close #FileNum
+ContinueRow:
+    Next I
 
     OutNum = FreeFile
     Open Path For Output As #OutNum
-    For I = 0 To LineCount - 1
-        Print #OutNum, Lines(I)
+    For I = 0 To UBound(Lines)
+        If I < UBound(Lines) Or Len(Lines(I)) > 0 Then Print #OutNum, Lines(I)
     Next I
     Close #OutNum
 
@@ -109,6 +103,30 @@ Private Function EvaluateHoldout( _
         Case "F_Survival":              V = K_STATS_F_Survival(A1, A2, A3)
         Case "F_InverseCumulative":     V = K_STATS_F_InverseCumulative(A1, A2, A3)
         Case "PROB_LogBeta":            V = PROB_LogBeta(A1, A2)
+        Case "Binomial_PMF":            V = K_STATS_Binomial_PMF(A1, A2, A3)
+        Case "Binomial_LogPMF":         V = K_STATS_Binomial_LogPMF(A1, A2, A3)
+        Case "Binomial_Cumulative":     V = K_STATS_Binomial_Cumulative(A1, A2, A3)
+        Case "Binomial_Survival":       V = K_STATS_Binomial_Survival(A1, A2, A3)
+        Case "Binomial_InverseCumulative": V = K_STATS_Binomial_InverseCumulative(A1, A2, A3)
+        Case "Binomial_Mean":           V = K_STATS_Binomial_Mean(A1, A2)
+        Case "Binomial_Variance":       V = K_STATS_Binomial_Variance(A1, A2)
+        Case "Binomial_StdDev":         V = K_STATS_Binomial_StdDev(A1, A2)
+        Case "Poisson_PMF":             V = K_STATS_Poisson_PMF(A1, A2)
+        Case "Poisson_LogPMF":          V = K_STATS_Poisson_LogPMF(A1, A2)
+        Case "Poisson_Cumulative":      V = K_STATS_Poisson_Cumulative(A1, A2)
+        Case "Poisson_Survival":        V = K_STATS_Poisson_Survival(A1, A2)
+        Case "Poisson_InverseCumulative": V = K_STATS_Poisson_InverseCumulative(A1, A2)
+        Case "Poisson_Mean":            V = K_STATS_Poisson_Mean(A1)
+        Case "Poisson_Variance":        V = K_STATS_Poisson_Variance(A1)
+        Case "Poisson_StdDev":          V = K_STATS_Poisson_StdDev(A1)
+        Case "Geometric_PMF":           V = K_STATS_Geometric_PMF(A1, A2)
+        Case "Geometric_LogPMF":        V = K_STATS_Geometric_LogPMF(A1, A2)
+        Case "Geometric_Cumulative":    V = K_STATS_Geometric_Cumulative(A1, A2)
+        Case "Geometric_Survival":      V = K_STATS_Geometric_Survival(A1, A2)
+        Case "Geometric_InverseCumulative": V = K_STATS_Geometric_InverseCumulative(A1, A2)
+        Case "Geometric_Mean":          V = K_STATS_Geometric_Mean(A1)
+        Case "Geometric_Variance":      V = K_STATS_Geometric_Variance(A1)
+        Case "Geometric_StdDev":        V = K_STATS_Geometric_StdDev(A1)
         Case Else
             EvaluateHoldout = "ERROR"
             Exit Function

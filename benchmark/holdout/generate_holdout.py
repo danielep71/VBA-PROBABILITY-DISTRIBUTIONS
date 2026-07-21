@@ -45,6 +45,87 @@ def row(fn,kernel,a1,a2,a3,ref,regime):
             "arg1":a1,"arg2":a2,"arg3":a3,"reference":mp.nstr(ref,30),
             "observed_vba":"","regime":regime,"evidence_set":"holdout"}
 
+
+# --- Discrete references (fresh holdout; none of these points set any threshold) ---
+def _b_pmf(k,n,pr): k,n,pr=mp.mpf(k),mp.mpf(n),mp.mpf(pr); return mp.binomial(n,k)*pr**k*(1-pr)**(n-k)
+def _b_log(k,n,pr): k,n,pr=mp.mpf(k),mp.mpf(n),mp.mpf(pr); return mp.log(mp.binomial(n,k))+k*mp.log(pr)+(n-k)*mp.log(1-pr)
+def _b_cdf(k,n,pr):
+    k,n,pr=mp.mpf(k),mp.mpf(n),mp.mpf(pr)
+    return mp.mpf(1) if k>=n else ibeta(1-pr, n-k, k+1)
+def _b_sf(k,n,pr):
+    k,n,pr=mp.mpf(k),mp.mpf(n),mp.mpf(pr)
+    return mp.mpf(0) if k>=n else ibeta(pr, k+1, n-k)
+def _b_inv(prob,n,pr):
+    prob=mp.mpf(prob); lo,hi=-1,int(n)
+    while hi-lo>1:
+        m=(lo+hi)//2
+        if _b_cdf(m,n,pr)>=prob: hi=m
+        else: lo=m
+    return mp.mpf(hi)
+def _p_pmf(k,lam): k,lam=mp.mpf(k),mp.mpf(lam); return mp.e**(k*mp.log(lam)-lam-mp.loggamma(k+1))
+def _p_log(k,lam): k,lam=mp.mpf(k),mp.mpf(lam); return k*mp.log(lam)-lam-mp.loggamma(k+1)
+def _p_cdf(k,lam): return mp.gammainc(mp.mpf(k)+1, mp.mpf(lam), mp.inf, regularized=True)
+def _p_sf(k,lam):  return mp.gammainc(mp.mpf(k)+1, 0, mp.mpf(lam), regularized=True)
+def _p_inv(prob,lam):
+    prob=mp.mpf(prob); lo=-1; hi=int(mp.floor(mp.mpf(lam)+12*mp.sqrt(mp.mpf(lam))+40))
+    while hi-lo>1:
+        m=(lo+hi)//2
+        if _p_cdf(m,lam)>=prob: hi=m
+        else: lo=m
+    return mp.mpf(hi)
+def _g_pmf(k,pr): k,pr=mp.mpf(k),mp.mpf(pr); return pr*(1-pr)**k
+def _g_log(k,pr): k,pr=mp.mpf(k),mp.mpf(pr); return mp.log(pr)+k*mp.log(1-pr)
+def _g_cdf(k,pr): k,pr=mp.mpf(k),mp.mpf(pr); return 1-(1-pr)**(k+1)
+def _g_sf(k,pr):  k,pr=mp.mpf(k),mp.mpf(pr); return (1-pr)**(k+1)
+def _g_inv(prob,pr):
+    prob,pr=mp.mpf(prob),mp.mpf(pr); k=int(mp.ceil(mp.log(1-prob)/mp.log(1-pr)-1))
+    if k<0: k=0
+    while k>0 and _g_cdf(k-1,pr)>=prob: k-=1
+    while _g_cdf(k,pr)<prob: k+=1
+    return mp.mpf(k)
+
+def _discrete_holdout_rows():
+    out=[]
+    def R(fn,kern,a1,a2,a3,ref): out.append(row(fn,kern,a1,a2,a3,ref,"all"))
+    import math as _m
+    # Binomial: fresh (n,p) not in the main grid {20,1000,1e5,1e6,1e7}x{.02,.5,.9}
+    for n,pr in [(50,0.1),(50,0.75),(5000,0.35),(500000,0.1),(5000000,0.75)]:
+        sd=_m.sqrt(n*pr*(1-pr)); k=int(min(n, _m.floor(n*pr+2*sd)))
+        R("Binomial_PMF","K_STATS_Binomial_PMF",k,n,pr,_b_pmf(k,n,pr))
+        R("Binomial_LogPMF","K_STATS_Binomial_LogPMF",k,n,pr,_b_log(k,n,pr))
+        R("Binomial_Cumulative","K_STATS_Binomial_Cumulative",k,n,pr,_b_cdf(k,n,pr))
+        R("Binomial_Survival","K_STATS_Binomial_Survival",k,n,pr,_b_sf(k,n,pr))
+        for prob in [0.1,0.9]:
+            R("Binomial_InverseCumulative","K_STATS_Binomial_InverseCumulative",prob,n,pr,_b_inv(prob,n,pr))
+        R("Binomial_Mean","K_STATS_Binomial_Mean",n,pr,"",mp.mpf(n)*pr)
+        R("Binomial_Variance","K_STATS_Binomial_Variance",n,pr,"",mp.mpf(n)*pr*(1-pr))
+        R("Binomial_StdDev","K_STATS_Binomial_StdDev",n,pr,"",mp.sqrt(mp.mpf(n)*pr*(1-pr)))
+    # Poisson: fresh mean not in {3,50,1000,1e6}
+    for lam in [10,200,100000]:
+        sd=_m.sqrt(lam); k=int(_m.floor(lam+2*sd))
+        R("Poisson_PMF","K_STATS_Poisson_PMF",k,lam,"",_p_pmf(k,lam))
+        R("Poisson_LogPMF","K_STATS_Poisson_LogPMF",k,lam,"",_p_log(k,lam))
+        R("Poisson_Cumulative","K_STATS_Poisson_Cumulative",k,lam,"",_p_cdf(k,lam))
+        R("Poisson_Survival","K_STATS_Poisson_Survival",k,lam,"",_p_sf(k,lam))
+        for prob in [0.1,0.9]:
+            R("Poisson_InverseCumulative","K_STATS_Poisson_InverseCumulative",prob,lam,"",_p_inv(prob,lam))
+        R("Poisson_Mean","K_STATS_Poisson_Mean",lam,"","",mp.mpf(lam))
+        R("Poisson_Variance","K_STATS_Poisson_Variance",lam,"","",mp.mpf(lam))
+        R("Poisson_StdDev","K_STATS_Poisson_StdDev",lam,"","",mp.sqrt(mp.mpf(lam)))
+    # Geometric: fresh p not in {.5,.05,.001,1e-6}
+    for pr in [0.2,0.01,1e-4]:
+        mean=(1-pr)/pr; k=int(_m.floor(mean))
+        R("Geometric_PMF","K_STATS_Geometric_PMF",k,pr,"",_g_pmf(k,pr))
+        R("Geometric_LogPMF","K_STATS_Geometric_LogPMF",k,pr,"",_g_log(k,pr))
+        R("Geometric_Cumulative","K_STATS_Geometric_Cumulative",k,pr,"",_g_cdf(k,pr))
+        R("Geometric_Survival","K_STATS_Geometric_Survival",k,pr,"",_g_sf(k,pr))
+        for prob in [0.25,0.9]:
+            R("Geometric_InverseCumulative","K_STATS_Geometric_InverseCumulative",prob,pr,"",_g_inv(prob,pr))
+        R("Geometric_Mean","K_STATS_Geometric_Mean",pr,"","",(1-mp.mpf(pr))/mp.mpf(pr))
+        R("Geometric_Variance","K_STATS_Geometric_Variance",pr,"","",(1-mp.mpf(pr))/mp.mpf(pr)**2)
+        R("Geometric_StdDev","K_STATS_Geometric_StdDev",pr,"","",mp.sqrt(1-mp.mpf(pr))/mp.mpf(pr))
+    return out
+
 def build():
     rows=[]
     # Beta forward unbalanced (density/CDF/survival), X at the mass
@@ -76,6 +157,7 @@ def build():
             small=mp.mpf(sm); large=small/mp.mpf(r)
             rows.append(row("PROB_LogBeta","PROB_LogBeta",mp.nstr(large,17),mp.nstr(small,17),"",
                             logbeta(large,small),"all"))
+    rows += _discrete_holdout_rows()
     return rows
 
 def main():
