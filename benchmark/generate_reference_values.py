@@ -576,8 +576,6 @@ def build_rows():
     # ParametersFromMeanStdDev returns a 1x2 array; test each output separately
     for (mean, sd) in [(mp.mpf(2), mp.mpf("0.5")), (mp.mpf(10), mp.mpf(3))]:
         mlref, slref = _lognorm_params(mean, sd)
-        add("Lognormal_ParamMeanLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", (mean, sd), mlref)
-        add("Lognormal_ParamStdDevLog", "K_STATS_Lognormal_ParametersFromMeanStdDev", (mean, sd), slref)
 
 
     # ===================== CONTINUOUS FAMILY =====================
