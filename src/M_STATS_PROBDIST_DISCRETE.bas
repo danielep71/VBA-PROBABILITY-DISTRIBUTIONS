@@ -19,6 +19,7 @@ Option Explicit
 ' PUBLIC API
 '   Binomial
 '     K_STATS_Binomial_PMF
+'     K_STATS_Binomial_LogPMF
 '     K_STATS_Binomial_Cumulative
 '     K_STATS_Binomial_Survival
 '     K_STATS_Binomial_InverseCumulative
@@ -28,6 +29,7 @@ Option Explicit
 '
 '   Poisson
 '     K_STATS_Poisson_PMF
+'     K_STATS_Poisson_LogPMF
 '     K_STATS_Poisson_Cumulative
 '     K_STATS_Poisson_Survival
 '     K_STATS_Poisson_InverseCumulative
@@ -37,6 +39,7 @@ Option Explicit
 '
 '   Geometric (failures before the first success)
 '     K_STATS_Geometric_PMF
+'     K_STATS_Geometric_LogPMF
 '     K_STATS_Geometric_Cumulative
 '     K_STATS_Geometric_Survival
 '     K_STATS_Geometric_InverseCumulative
@@ -101,6 +104,12 @@ Option Explicit
 '   - Detailed diagnostics are written to the optional ByRef Status argument.
 '   - No MsgBox is raised.
 '
+'
+' LOG-SPACE MASS
+'   The _LogPMF functions return the natural log of the mass. They stay finite
+'   and accurate where the ordinary _PMF underflows a Double to zero (for
+'   example ln P well below -700), and return #NUM! only when the outcome has
+'   probability exactly zero.
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
 '       PROB_HALF_LOG_TWO_PI
@@ -274,6 +283,85 @@ Err_Handler:
             "Unexpected error in K_STATS_Binomial_PMF: " & Err.Description
     'Return worksheet value error
         K_STATS_Binomial_PMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Binomial_LogPMF( _
+    ByVal NumberSuccesses As Double, _
+    ByVal Trials As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Successes as a truncated integer
+    Dim N                   As Double          'Trials as a truncated integer
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate counts and probability for the Loader mass kernel
+        If Not PROB_DS_ValidateBinomialMassInputs( _
+            NumberSuccesses, Trials, ProbSuccess, K, N, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Assemble the log mass through Loader's stable deviance arrangement
+        If Not PROB_DS_TryBinomialLogMass( _
+            K, N, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+    'A zero-probability outcome has no defined log-mass
+        If IsCertainZero Then
+            FailMsg = "Log-mass is undefined: the outcome has probability zero"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Binomial_LogPMF = LogMass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Binomial_LogPMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Binomial_LogPMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Binomial_LogPMF = CVErr(xlErrValue)
 End Function
 
 '==============================================================================
@@ -1116,6 +1204,83 @@ Err_Handler:
         K_STATS_Poisson_PMF = CVErr(xlErrValue)
 End Function
 
+
+Public Function K_STATS_Poisson_LogPMF( _
+    ByVal NumberEvents As Double, _
+    ByVal Mean As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Events as a truncated integer
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible under a zero mean
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the Loader mass domain
+        If Not PROB_DS_ValidatePoissonPMFInputs( _
+            NumberEvents, Mean, K, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Assemble the log mass through Loader's stable deviance arrangement
+        If Not PROB_DS_TryPoissonLogMass( _
+            K, Mean, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+    'A zero-probability outcome has no defined log-mass
+        If IsCertainZero Then
+            FailMsg = "Log-mass is undefined: the outcome has probability zero"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Poisson_LogPMF = LogMass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Poisson_LogPMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Poisson_LogPMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Poisson_LogPMF = CVErr(xlErrValue)
+End Function
+
 '==============================================================================
 ' K_STATS_Poisson_Cumulative
 '------------------------------------------------------------------------------
@@ -1883,6 +2048,83 @@ Err_Handler:
             "Unexpected error in K_STATS_Geometric_PMF: " & Err.Description
     'Return worksheet value error
         K_STATS_Geometric_PMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Geometric_LogPMF( _
+    ByVal NumberFailures As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Failures as a truncated integer
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the failure count and success probability
+        If Not PROB_DS_ValidateGeometricInputs( _
+            NumberFailures, ProbSuccess, K, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Assemble the log mass in the logarithmic domain
+        If Not PROB_DS_TryGeometricLogMass( _
+            K, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+    'A zero-probability outcome has no defined log-mass
+        If IsCertainZero Then
+            FailMsg = "Log-mass is undefined: the outcome has probability zero"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Geometric_LogPMF = LogMass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Geometric_LogPMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Geometric_LogPMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Geometric_LogPMF = CVErr(xlErrValue)
 End Function
 
 '==============================================================================
@@ -3184,52 +3426,58 @@ Private Function PROB_DS_TryDeviancePart( _
 End Function
 
 
-Private Function PROB_DS_TryBinomialPMF( _
+Private Function PROB_DS_TryBinomialLogMass( _
     ByVal K As Double, _
     ByVal N As Double, _
     ByVal ProbSuccess As Double, _
-    ByRef Result As Double, _
+    ByRef LogMass As Double, _
+    ByRef IsCertainZero As Boolean, _
     ByRef FailMsg As String) _
     As Boolean
 '
 '==============================================================================
-' PROB_DS_TryBinomialPMF
+' PROB_DS_TryBinomialLogMass
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the Binomial mass through Loader's stable Stirling/deviance
-'   arrangement.
+'   Computes the natural log of the Binomial mass through Loader's stable
+'   Stirling/deviance arrangement, without exponentiating.
 '
-' PRECONDITION
-'   0 <= K <= N, N <= 2^53 - 1 and ProbSuccess in [0, 1].
+'   IsCertainZero is returned True when the outcome has probability exactly
+'   zero or a log-mass below the representable Double range; in both cases the
+'   mass is zero and the log-mass is undefined.
+'
+'   PRECONDITION
+'     0 <= K <= N, N <= 2^53 - 1 and ProbSuccess in [0, 1].
 '
 ' UPDATED
-'   2026-07-19 - Replaces the cancellation-prone log-choose likelihood sum.
+'   2026-07-19 - Extracted shared log-mass; PMF now exponentiates it.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
     Dim Q                   As Double          'Failure probability 1-p
     Dim j                   As Double          'Failure count N-K
     Dim Np                  As Double          'N * p
     Dim Nq                  As Double          'N * q
     Dim DevianceK           As Double          'bd0(K, Np)
     Dim DevianceJ           As Double          'bd0(J, Nq)
-    Dim LogMass             As Double          'Natural logarithm of the mass
     Dim LogP                As Double          'Accurate logarithm of p
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        IsCertainZero = False
 
 '------------------------------------------------------------------------------
 ' HANDLE DEGENERATE PROBABILITIES
 '------------------------------------------------------------------------------
         If ProbSuccess <= 0# Then
-            If K = 0# Then Result = 1# Else Result = 0#
-            PROB_DS_TryBinomialPMF = True
+            If K = 0# Then LogMass = 0# Else IsCertainZero = True
+            PROB_DS_TryBinomialLogMass = True
             Exit Function
         End If
 
         If ProbSuccess >= 1# Then
-            If K = N Then Result = 1# Else Result = 0#
-            PROB_DS_TryBinomialPMF = True
+            If K = N Then LogMass = 0# Else IsCertainZero = True
+            PROB_DS_TryBinomialLogMass = True
             Exit Function
         End If
 
@@ -3241,17 +3489,9 @@ Private Function PROB_DS_TryBinomialPMF( _
     'At K = 0, Log(PMF) = N * Log(1-p); Log1p keeps small p accurate
         If K <= 0# Then
             If Not PROB_TryMultiply(N, PROB_Log1p(-ProbSuccess), LogMass) Then
-                Result = 0#
-                PROB_DS_TryBinomialPMF = True
-                Exit Function
+                IsCertainZero = True
             End If
-
-            If Not PROB_TryExp(LogMass, Result) Then
-                FailMsg = "Binomial mass exponentiation failed"
-                Exit Function
-            End If
-
-            PROB_DS_TryBinomialPMF = True
+            PROB_DS_TryBinomialLogMass = True
             Exit Function
         End If
 
@@ -3264,17 +3504,9 @@ Private Function PROB_DS_TryBinomialPMF( _
             End If
 
             If Not PROB_TryMultiply(N, LogP, LogMass) Then
-                Result = 0#
-                PROB_DS_TryBinomialPMF = True
-                Exit Function
+                IsCertainZero = True
             End If
-
-            If Not PROB_TryExp(LogMass, Result) Then
-                FailMsg = "Binomial mass exponentiation failed"
-                Exit Function
-            End If
-
-            PROB_DS_TryBinomialPMF = True
+            PROB_DS_TryBinomialLogMass = True
             Exit Function
         End If
 
@@ -3308,9 +3540,41 @@ Private Function PROB_DS_TryBinomialPMF( _
             PROB_HALF_LOG_TWO_PI - _
             0.5 * (Log(K) + Log(j) - Log(N))
 
+        PROB_DS_TryBinomialLogMass = True
+End Function
+
+
+Private Function PROB_DS_TryBinomialPMF( _
+    ByVal K As Double, _
+    ByVal N As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryBinomialPMF
 '------------------------------------------------------------------------------
-' EXPONENTIATE
-'------------------------------------------------------------------------------
+' PURPOSE
+'   Computes the Binomial mass by exponentiating the shared log-mass kernel.
+'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'
+' UPDATED
+'   2026-07-19 - Now a thin exponentiation over PROB_DS_TryBinomialLogMass.
+'==============================================================================
+'
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
+
+        If Not PROB_DS_TryBinomialLogMass( _
+            K, N, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+
+        If IsCertainZero Then
+            Result = 0#
+            PROB_DS_TryBinomialPMF = True
+            Exit Function
+        End If
+
     'The true mass cannot overflow; negative underflow is a valid zero
         If Not PROB_TryExp(LogMass, Result) Then
             FailMsg = "Binomial mass exponentiation failed"
@@ -3325,53 +3589,54 @@ Private Function PROB_DS_TryBinomialPMF( _
 End Function
 
 
-Private Function PROB_DS_TryPoissonPMF( _
+Private Function PROB_DS_TryPoissonLogMass( _
     ByVal K As Double, _
     ByVal Mean As Double, _
-    ByRef Result As Double, _
+    ByRef LogMass As Double, _
+    ByRef IsCertainZero As Boolean, _
     ByRef FailMsg As String) _
     As Boolean
 '
 '==============================================================================
-' PROB_DS_TryPoissonPMF
+' PROB_DS_TryPoissonLogMass
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the Poisson mass through Loader's stable Stirling/deviance
-'   arrangement.
+'   Computes the natural log of the Poisson mass through Loader's stable
+'   Stirling/deviance arrangement, without exponentiating.
 '
-' PRECONDITION
-'   K is an exact non-negative integer and Mean is in [0, 2^53 - 1].
+'   IsCertainZero is returned True only for the impossible outcome under a
+'   zero mean (K > 0 with Mean = 0).
+'
+'   PRECONDITION
+'     K is an exact non-negative integer and Mean is in [0, 2^53 - 1].
 '
 ' UPDATED
-'   2026-07-19 - Replaces k*Log(lambda)-lambda-LogGamma(k+1).
+'   2026-07-19 - Extracted shared log-mass; PMF now exponentiates it.
 '==============================================================================
 '
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
     Dim Deviance            As Double          'bd0(K, Mean)
-    Dim LogMass             As Double          'Natural logarithm of the mass
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        IsCertainZero = False
 
 '------------------------------------------------------------------------------
 ' HANDLE ZERO MEAN
 '------------------------------------------------------------------------------
         If Mean <= 0# Then
-            If K = 0# Then Result = 1# Else Result = 0#
-            PROB_DS_TryPoissonPMF = True
+            If K = 0# Then LogMass = 0# Else IsCertainZero = True
+            PROB_DS_TryPoissonLogMass = True
             Exit Function
         End If
 
 '------------------------------------------------------------------------------
 ' HANDLE ZERO COUNT
 '------------------------------------------------------------------------------
-    'At K = 0, PMF = Exp(-Mean)
+    'At K = 0, Log(PMF) = -Mean
         If K <= 0# Then
-            If Not PROB_TryExp(-Mean, Result) Then
-                FailMsg = "Poisson mass exponentiation failed"
-                Exit Function
-            End If
-
-            PROB_DS_TryPoissonPMF = True
+            LogMass = -Mean
+            PROB_DS_TryPoissonLogMass = True
             Exit Function
         End If
 
@@ -3386,9 +3651,40 @@ Private Function PROB_DS_TryPoissonPMF( _
             PROB_HALF_LOG_TWO_PI - _
             0.5 * Log(K)
 
+        PROB_DS_TryPoissonLogMass = True
+End Function
+
+
+Private Function PROB_DS_TryPoissonPMF( _
+    ByVal K As Double, _
+    ByVal Mean As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryPoissonPMF
 '------------------------------------------------------------------------------
-' EXPONENTIATE
-'------------------------------------------------------------------------------
+' PURPOSE
+'   Computes the Poisson mass by exponentiating the shared log-mass kernel.
+'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'
+' UPDATED
+'   2026-07-19 - Now a thin exponentiation over PROB_DS_TryPoissonLogMass.
+'==============================================================================
+'
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible under a zero mean
+
+        If Not PROB_DS_TryPoissonLogMass( _
+            K, Mean, LogMass, IsCertainZero, FailMsg) Then Exit Function
+
+        If IsCertainZero Then
+            Result = 0#
+            PROB_DS_TryPoissonPMF = True
+            Exit Function
+        End If
+
         If Not PROB_TryExp(LogMass, Result) Then
             FailMsg = "Poisson mass exponentiation failed"
             Exit Function
@@ -3560,6 +3856,65 @@ Private Function PROB_DS_TryPoissonSF( _
 End Function
 
 
+Private Function PROB_DS_TryGeometricLogMass( _
+    ByVal K As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef LogMass As Double, _
+    ByRef IsCertainZero As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryGeometricLogMass
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Computes Log(p) + K * Log(1-p), the natural log of the Geometric mass,
+'   with guarded logarithmic multiplication and addition.
+'
+'   IsCertainZero is returned True for the impossible outcome under certain
+'   success (K > 0 with p = 1) or when the log-mass falls below Double range.
+'
+' UPDATED
+'   2026-07-19 - Extracted shared log-mass; PMF now exponentiates it.
+'==============================================================================
+'
+    Dim LogPower            As Double          'K * Log(1-p)
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        IsCertainZero = False
+
+'------------------------------------------------------------------------------
+' HANDLE CERTAIN SUCCESS
+'------------------------------------------------------------------------------
+        If ProbSuccess >= 1# Then
+            If K = 0# Then LogMass = 0# Else IsCertainZero = True
+            PROB_DS_TryGeometricLogMass = True
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' ASSEMBLE LOG MASS
+'------------------------------------------------------------------------------
+    'A negative product overflow means the power is certainly zero
+        If Not PROB_TryMultiply(K, PROB_Log1p(-ProbSuccess), LogPower) Then
+            IsCertainZero = True
+            PROB_DS_TryGeometricLogMass = True
+            Exit Function
+        End If
+
+    'A negative addition overflow likewise implies a zero mass
+        If Not PROB_TryAdd(Log(ProbSuccess), LogPower, LogMass) Then
+            IsCertainZero = True
+            PROB_DS_TryGeometricLogMass = True
+            Exit Function
+        End If
+
+        PROB_DS_TryGeometricLogMass = True
+End Function
+
+
 Private Function PROB_DS_TryGeometricPMF( _
     ByVal K As Double, _
     ByVal ProbSuccess As Double, _
@@ -3571,30 +3926,20 @@ Private Function PROB_DS_TryGeometricPMF( _
 ' PROB_DS_TryGeometricPMF
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes p*(1-p)^K with guarded logarithmic multiplication.
+'   Computes p*(1-p)^K by exponentiating the shared log-mass kernel.
+'   A certain-zero outcome or deep-tail underflow is a valid zero.
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-19 - Now a thin exponentiation over PROB_DS_TryGeometricLogMass.
 '==============================================================================
 '
-    Dim LogPower            As Double          'K * Log(1-p)
-    Dim LogMass             As Double          'Log(p) plus LogPower
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
 
-        If ProbSuccess >= 1# Then
-            If K = 0# Then Result = 1# Else Result = 0#
-            PROB_DS_TryGeometricPMF = True
-            Exit Function
-        End If
+        If Not PROB_DS_TryGeometricLogMass( _
+            K, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
 
-    'A negative product overflow means the power is certainly zero
-        If Not PROB_TryMultiply(K, PROB_Log1p(-ProbSuccess), LogPower) Then
-            Result = 0#
-            PROB_DS_TryGeometricPMF = True
-            Exit Function
-        End If
-
-    'A negative addition overflow likewise implies a zero mass
-        If Not PROB_TryAdd(Log(ProbSuccess), LogPower, LogMass) Then
+        If IsCertainZero Then
             Result = 0#
             PROB_DS_TryGeometricPMF = True
             Exit Function
@@ -3829,31 +4174,155 @@ Private Function PROB_DS_TryBinomialInverse( _
 '   Returns the least integer K in [0,N] satisfying F(K) >= Probability.
 '
 ' METHOD
-'   Maintains a failing lower sentinel and a qualifying upper bound, then applies
-'   overflow-safe integer bisection. The objective uses the smaller direct tail.
+'   - Starts from a normal/Cornish-Fisher approximation using the Binomial
+'     skewness (1-2p)/Sqr(npq).
+'   - Expands downward or upward to a failing/qualifying bracket, capped at N.
+'   - Refines with smaller-tail integer bisection.
+'   The objective uses the smaller direct tail via PROB_DS_TryBinomialQualifies.
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-19 - Cornish-Fisher seed replaces the full-range bisection.
 '==============================================================================
 '
-    Dim ComplementProbability As Double        '1 - target probability
+    Dim ComplementProbability   As Double      '1 - target probability
+    Dim Z                   As Double          'Normal quantile seed
+    Dim Np                  As Double          'Expected success count n*p
+    Dim Npq                 As Double          'Variance n*p*(1-p)
+    Dim SeedReal            As Double          'Cornish-Fisher real seed
+    Dim Seed                As Double          'Truncated integer seed
+    Dim StepSize            As Double          'Bracket expansion step
+    Dim Candidate           As Double          'Candidate bracket point
     Dim Lo                  As Double          'Known failing integer or -1 sentinel
     Dim Hi                  As Double          'Known qualifying integer
-    Dim MidPoint            As Double          'Overflow-safe integer midpoint
-    Dim Qualifies           As Boolean         'Objective result at MidPoint
+    Dim MidPoint            As Double          'Integer bisection midpoint
+    Dim Qualifies           As Boolean         'Objective result
+    Dim BracketFound        As Boolean         'TRUE once Lo and Hi are established
     Dim IterIdx             As Long            'Iteration index
 
-        ComplementProbability = 1# - Probability
-        Lo = -1#
-        Hi = N
-
+'------------------------------------------------------------------------------
+' HANDLE DEGENERATE SUPPORT
+'------------------------------------------------------------------------------
     'N = 0 is the point mass at zero
-        If Hi <= 0# Then
+        If N <= 0# Then
             Result = 0#
             PROB_DS_TryBinomialInverse = True
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' BUILD SEED
+'------------------------------------------------------------------------------
+        ComplementProbability = 1# - Probability
+        Np = N * ProbSuccess
+        Npq = Np * (1# - ProbSuccess)
+
+        If Probability <= 0.5 Then
+            Z = PROB_NormalInvCDFRaw(Probability)
+        Else
+            Z = -PROB_NormalInvCDFRaw(ComplementProbability)
+        End If
+
+    'Normal seed with the first Cornish-Fisher skewness correction
+        SeedReal = Np + Sqr(Npq) * Z + (1# - 2# * ProbSuccess) / 6# * (Z * Z - 1#)
+
+        If SeedReal <= 0# Then
+            Seed = 0#
+        ElseIf SeedReal >= N Then
+            Seed = N
+        Else
+            Seed = Int(SeedReal)
+        End If
+
+'------------------------------------------------------------------------------
+' EVALUATE SEED
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryBinomialQualifies( _
+            Seed, Probability, ComplementProbability, N, ProbSuccess, _
+            Qualifies, FailMsg) Then Exit Function
+
+        StepSize = Int(Sqr(Npq)) + 1#
+        If StepSize < 1# Then StepSize = 1#
+
+'------------------------------------------------------------------------------
+' FIND BRACKET
+'------------------------------------------------------------------------------
+        BracketFound = False
+
+        If Qualifies Then
+            Hi = Seed
+
+            If Hi <= 0# Then
+                Lo = -1#
+                BracketFound = True
+            Else
+                For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
+                    Candidate = Hi - StepSize
+                    If Candidate < 0# Then Candidate = 0#
+
+                    If Not PROB_DS_TryBinomialQualifies( _
+                        Candidate, Probability, ComplementProbability, N, ProbSuccess, _
+                        Qualifies, FailMsg) Then Exit Function
+
+                    If Qualifies Then
+                        Hi = Candidate
+
+                        If Hi <= 0# Then
+                            Lo = -1#
+                            BracketFound = True
+                            Exit For
+                        End If
+
+                        StepSize = StepSize * 2#
+                    Else
+                        Lo = Candidate
+                        BracketFound = True
+                        Exit For
+                    End If
+                Next IterIdx
+
+                If Not BracketFound Then
+                    FailMsg = "Binomial inverse downward bracketing failed in " & _
+                              PROB_DS_MAX_BRACKET_ITER & " iterations"
+                    Exit Function
+                End If
+            End If
+        Else
+            Lo = Seed
+
+            For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
+                Candidate = Lo + StepSize
+                If Candidate >= N Then Candidate = N
+
+                If Not PROB_DS_TryBinomialQualifies( _
+                    Candidate, Probability, ComplementProbability, N, ProbSuccess, _
+                    Qualifies, FailMsg) Then Exit Function
+
+                If Qualifies Then
+                    Hi = Candidate
+                    BracketFound = True
+                    Exit For
+                End If
+
+    'The full count N always qualifies for Probability < 1
+                If Candidate >= N Then
+                    FailMsg = "Binomial inverse failed to bracket at the full count"
+                    Exit Function
+                End If
+
+                Lo = Candidate
+                StepSize = StepSize * 2#
+            Next IterIdx
+
+            If Not BracketFound Then
+                FailMsg = "Binomial inverse upward bracketing failed in " & _
+                          PROB_DS_MAX_BRACKET_ITER & " iterations"
+                Exit Function
+            End If
+        End If
+
+'------------------------------------------------------------------------------
+' BISECT BRACKET
+'------------------------------------------------------------------------------
         For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
             If Hi - Lo <= 1# Then
                 Result = Hi
@@ -3864,13 +4333,8 @@ Private Function PROB_DS_TryBinomialInverse( _
             MidPoint = Lo + Int((Hi - Lo) / 2#)
 
             If Not PROB_DS_TryBinomialQualifies( _
-                MidPoint, _
-                Probability, _
-                ComplementProbability, _
-                N, _
-                ProbSuccess, _
-                Qualifies, _
-                FailMsg) Then Exit Function
+                MidPoint, Probability, ComplementProbability, N, ProbSuccess, _
+                Qualifies, FailMsg) Then Exit Function
 
             If Qualifies Then
                 Hi = MidPoint
@@ -4197,5 +4661,7 @@ Private Function PROB_DS_TryGeometricInverse( _
 
         FailMsg = "Geometric inverse exceeded the upward correction budget"
 End Function
+
+
 
 
