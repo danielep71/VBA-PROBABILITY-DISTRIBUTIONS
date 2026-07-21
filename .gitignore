@@ -75,3 +75,13 @@ coverage/
 # Documentation:
 #   *.md
 #   *.txt
+
+# -----------------------------------------------------------------------------
+# Python (benchmark reference + gate tooling)
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
