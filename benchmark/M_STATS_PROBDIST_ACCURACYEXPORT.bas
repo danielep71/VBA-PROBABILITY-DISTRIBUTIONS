@@ -92,7 +92,12 @@ Public Sub Export_Accuracy_Observations()
             If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
             Cols = Split(Lines(I), Sep)
-            If UBound(Cols) < 8 Then GoTo ContinueRow
+            If UBound(Cols) < 10 Then GoTo ContinueRow
+
+            'This macro owns only the main grid. Study-sourced rows
+            '(evidence_set <> "main grid") are populated by their own study
+            'harnesses and must be left byte-for-byte untouched.
+            If Trim$(Cols(10)) <> "main grid" Then GoTo ContinueRow
 
             FuncName = Trim$(Cols(0))
             HasA1 = (Len(Trim$(Cols(4))) > 0)
