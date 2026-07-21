@@ -1,5 +1,5 @@
 # environment.txt — dependency versions used to generate the reference grid
-generated_date       = 2026-07-18
+generated_date       = 2026-07-21
 python               = 3.12.3
 platform             = Linux-6.18.5-x86_64-with-glibc2.39
 mpmath               = 1.3.0
