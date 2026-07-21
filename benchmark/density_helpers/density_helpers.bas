@@ -1,16 +1,16 @@
-Attribute VB_Name = "M_STATS_PROBDIST_F04EXPORT"
+Attribute VB_Name = "M_STATS_PROBDIST_DENSHELP"
 '==============================================================================
-' M_STATS_PROBDIST_F04EXPORT
+' M_STATS_PROBDIST_DENSHELP
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Fills observed_vba for the four previously unbenchmarked public UDFs
 '   (ChiSquare_Density, F_Density, Normal_IntervalProbability, and
 '   Lognormal_ParametersFromMeanStdDev) in probability_accuracy_grid.csv. It
-'   touches ONLY rows whose evidence_set is "f04_coverage" and leaves every other
+'   touches ONLY rows whose evidence_set is "density_helpers" and leaves every other
 '   observation untouched, so it can run against the full main grid safely.
 '
 ' USAGE
-'   Run Export_F04 and select probability_accuracy_grid.csv in the dialog.
+'   Run Export_DensityHelpers and select probability_accuracy_grid.csv in the dialog.
 '
 ' NOTES
 '   - Normal_IntervalProbability is exercised with Mean = 0 and StdDev = arg3.
@@ -23,7 +23,7 @@ Attribute VB_Name = "M_STATS_PROBDIST_F04EXPORT"
 Option Explicit
 
 
-Public Sub Export_F04()
+Public Sub Export_DensityHelpers()
     Dim Path                As String
     Dim FileNum             As Integer
     Dim OutNum              As Integer
@@ -60,7 +60,7 @@ Public Sub Export_F04()
         'Columns: function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,evidence_set
         Cols = Split(Line, ",")
         If UBound(Cols) >= 10 Then
-            If Cols(10) = "f04_coverage" Then
+            If Cols(10) = "density_helpers" Then
                 Cols(8) = EvaluateF04(Cols(0), Cols(9), _
                                       Val(Cols(4)), Val(Cols(5)), Cols(6))
                 Line = Join(Cols, ",")
@@ -82,8 +82,8 @@ ContinueLoop:
     Next I
     Close #OutNum
 
-    MsgBox "F-04 coverage export complete: " & Filled & " observation(s) written to " & vbCrLf & Path, _
-           vbInformation, "F04 export"
+    MsgBox "Density-helpers coverage export complete: " & Filled & " observation(s) written to " & vbCrLf & Path, _
+           vbInformation, "Density helpers export"
 End Sub
 
 
