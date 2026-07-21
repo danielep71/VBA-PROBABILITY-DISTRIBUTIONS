@@ -113,19 +113,19 @@ Public Const PROB_HALF_LOG_TWO_PI As Double = _
 Public Const PROB_HALF_LOG_PI As Double = _
     0.5723649429247 + 1.11022302462516E-16
 
-Public Const PROB_EPS                  As Double = 0.000000000000001     '1E-15, relative convergence target
-Public Const PROB_NUM_EPS              As Double = 0.00000000000003      '3E-14, continued-fraction / series stop
-Public Const PROB_MACH_EPS             As Double = 2.22044604925031E-16  'Double epsilon
+Public Const PROB_EPS                  As Double = 0.000000000000001        '1E-15, relative convergence target
+Public Const PROB_NUM_EPS              As Double = 0.00000000000003         '3E-14, continued-fraction / series stop
+Public Const PROB_MACH_EPS             As Double = 2.22044604925031E-16     'Double epsilon
 
-Public Const PROB_MAX_EXP              As Double = 709.782712893384      'Advisory Log(Double max)
-Public Const PROB_MIN_EXP              As Double = -745.133219101941     'Advisory round-to-zero boundary
+Public Const PROB_MAX_EXP              As Double = 709.782712893384         'Advisory Log(Double max)
+Public Const PROB_MIN_EXP              As Double = -745.133219101941        'Advisory round-to-zero boundary
 
-Public Const PROB_PARAMETER_MAGNITUDE_GUARD As Double = 1E+100    'Coarse defensive parameter-magnitude guard (not a convergence or accuracy boundary)
-Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308 'Approx largest finite Double
-Public Const PROB_SQRT_DOUBLE_MAX      As Double = 1.34E+154            'Approx sqrt(Double max); guards squaring overflow
-Public Const PROB_FPMIN                As Double = 1E-300                'Lentz denominator floor
+Public Const PROB_PARAMETER_MAGNITUDE_GUARD As Double = 1E+100              'Coarse defensive parameter-magnitude guard (not a convergence or accuracy boundary)
+Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308    'Approx largest finite Double
+Public Const PROB_SQRT_DOUBLE_MAX      As Double = 1.34E+154                'Approx sqrt(Double max); guards squaring overflow
+Public Const PROB_FPMIN                As Double = 1E-300                   'Lentz denominator floor
 
-Public Const PROB_WRITE_STATUS_BAR     As Boolean = False                'Master switch for Application.StatusBar writes
+Public Const PROB_WRITE_STATUS_BAR     As Boolean = False                   'Master switch for Application.StatusBar writes
 
 
 '==============================================================================
@@ -619,6 +619,7 @@ Public Function PROB_TryStandardize( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Centered            As Double          'Guarded difference Value - Location
+
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
@@ -626,6 +627,7 @@ Public Function PROB_TryStandardize( _
         If Not PROB_TryAdd(Value, -Location, Centered) Then Exit Function
     'Guard the division by ScaleParam
         If Not PROB_TryDivide(Centered, ScaleParam, Result) Then Exit Function
+
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
