@@ -636,6 +636,7 @@ Private Sub RunDiscreteSuite()
     Test_DS_GeometricMoments
     Test_DS_NegativeBinomial
     Test_DS_Hypergeometric
+    Test_DS_LogPMF
     Test_DS_ErrorContract
     Test_DS_SupportEdges
 End Sub
@@ -5639,6 +5640,65 @@ End Sub
 
 
 
+Private Sub Test_DS_LogPMF()
+'
+'==============================================================================
+' Test_DS_LogPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the three public log-mass functions: finite log where the plain
+'   PMF underflows, LogPMF = 0 at certain outcomes, #NUM! at impossible
+'   outcomes, and PMF = Exp(LogPMF) where the mass is representable.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Discrete log-mass (finite where PMF underflows)"
+    AssertClose "binom logpmf(7,20,.35)", K_STATS_Binomial_LogPMF(7#, 20#, 0.35), _
+        -1.690641534128, TOL_ABS_TIGHT
+    AssertRelClose "binom logpmf(9000,10000,.5) deep tail", _
+        K_STATS_Binomial_LogPMF(9000#, 10000#, 0.5), -3684.96229185909, TOL_REL_TIGHT
+    AssertClose "binom pmf(9000,10000,.5) underflows to 0", _
+        K_STATS_Binomial_PMF(9000#, 10000#, 0.5), 0#, 0#
+    AssertClose "pois logpmf(7,3)", K_STATS_Poisson_LogPMF(7#, 3#), _
+        -3.83487534038865, TOL_ABS_TIGHT
+    AssertClose "pois logpmf(0,800) (PMF underflows)", K_STATS_Poisson_LogPMF(0#, 800#), _
+        -800#, TOL_ABS_TIGHT
+    AssertClose "pois pmf(0,800) underflows to 0", K_STATS_Poisson_PMF(0#, 800#), 0#, 0#
+    AssertClose "geo logpmf(5,.3)", K_STATS_Geometric_LogPMF(5#, 0.3), _
+        -2.9873475240196, TOL_ABS_TIGHT
+    AssertClose "geo logpmf(100,.3)", K_STATS_Geometric_LogPMF(100#, 0.3), _
+        -36.8714671981992, TOL_ABS_TIGHT
+
+    Debug.Print "-- Discrete log-mass at certain outcomes (LogPMF = 0)"
+    AssertClose "binom logpmf(0,20,0) p=0 k=0", K_STATS_Binomial_LogPMF(0#, 20#, 0#), _
+        0#, TOL_ABS_TIGHT
+    AssertClose "binom logpmf(20,20,1) p=1 k=n", K_STATS_Binomial_LogPMF(20#, 20#, 1#), _
+        0#, TOL_ABS_TIGHT
+    AssertClose "geo logpmf(0,1) p=1 k=0", K_STATS_Geometric_LogPMF(0#, 1#), 0#, TOL_ABS_TIGHT
+    AssertClose "pois logpmf(0,0) mean=0 k=0", K_STATS_Poisson_LogPMF(0#, 0#), 0#, TOL_ABS_TIGHT
+
+    Debug.Print "-- Discrete PMF = Exp(LogPMF) where PMF is representable"
+    AssertRelClose "binom identity(7,20,.35)", _
+        Exp(K_STATS_Binomial_LogPMF(7#, 20#, 0.35)), K_STATS_Binomial_PMF(7#, 20#, 0.35), TOL_REL_TIGHT
+    AssertRelClose "pois identity(7,3)", _
+        Exp(K_STATS_Poisson_LogPMF(7#, 3#)), K_STATS_Poisson_PMF(7#, 3#), TOL_REL_TIGHT
+    AssertRelClose "geo identity(5,.3)", _
+        Exp(K_STATS_Geometric_LogPMF(5#, 0.3)), K_STATS_Geometric_PMF(5#, 0.3), TOL_REL_TIGHT
+
+    Debug.Print "-- Discrete LogPMF impossible outcomes return CVErr"
+    AssertIsError "binom logpmf p=0 k>0", K_STATS_Binomial_LogPMF(3#, 20#, 0#)
+    AssertIsError "binom logpmf p=1 k<n", K_STATS_Binomial_LogPMF(3#, 20#, 1#)
+    AssertIsError "geo logpmf p=1 k>0", K_STATS_Geometric_LogPMF(3#, 1#)
+    AssertIsError "pois logpmf mean=0 k>0", K_STATS_Poisson_LogPMF(3#, 0#)
+    AssertIsError "binom logpmf k>n", K_STATS_Binomial_LogPMF(21#, 20#, 0.5)
+End Sub
+
+
 Private Sub Test_DS_ErrorContract()
 '
 '==============================================================================
@@ -5726,7 +5786,5 @@ Private Sub Test_DS_SupportEdges()
     AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
         0#, 0#
 End Sub
-
-
 
 
