@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run complete VBA regression suite through Excel COM
-        shell: pwsh
+        shell: powershell
         run: >-
           ./ci/Run-ExcelVbaTests.ps1
           -RepositoryRoot "${{ github.workspace }}"
