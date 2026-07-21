@@ -193,6 +193,22 @@ def main():
                          f"0 | \u23f3 PENDING |")
             continue
 
+        # Strict mode: an ACTIVE contract must have every matched grid row
+        # observed. Passing on the observed subset while some rows are blank is a
+        # hygiene defect (a contract could report PASS on 2 of 6 points). Any
+        # unobserved matched row therefore BLOCKS as PENDING rather than being
+        # silently ignored.
+        if status == "active":
+            n_missing = sum(1 for r in matched if not r["observed_vba"].strip())
+            if n_missing:
+                n_pending += 1
+                unevaluated.append((cid, f"{n_missing}/{len(matched)} grid rows unobserved; "
+                                    "strict mode requires full observation"))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"{len(matched) - n_missing}/{len(matched)} | "
+                             f"\u23f3 PENDING - partial observation |")
+                continue
+
         worst, at, n = measure_error(matched, metric)
         if worst is None:
             n_pending += 1
