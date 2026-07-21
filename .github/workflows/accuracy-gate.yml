@@ -1,0 +1,57 @@
+name: Accuracy Gate
+
+# The accuracy gate is pure Python and needs no Excel, so unlike the Excel/VBA
+# regression harness (self-hosted, not reproducible by outsiders) it runs on a
+# standard GitHub-hosted runner and CAN be reproduced by anyone. It checks that
+# the committed benchmark grid still meets every active accuracy contract, in
+# STRICT mode, and that the gate itself still blocks when its reference helper
+# is unavailable.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "benchmark/**"
+      - ".github/workflows/accuracy-gate.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "benchmark/**"
+      - ".github/workflows/accuracy-gate.yml"
+
+concurrency:
+  group: accuracy-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  accuracy-gate:
+    name: Strict accuracy gate (pure Python, no Excel)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install reference dependencies
+        run: python -m pip install --upgrade pip mpmath
+
+      - name: Run strict accuracy gate on the committed grid
+        working-directory: benchmark
+        # No --allow-known-limitations: strict mode. Non-zero exit (blocking
+        # FAIL, or an unevaluated active contract) fails the job.
+        run: python compute_errors.py --out "${RUNNER_TEMP}/accuracy_summary.md"
+
+      - name: Verify the gate blocks when the reference helper is unavailable
+        working-directory: benchmark
+        # Guards the "active contract silently downgraded to non-blocking
+        # characterization" defect: this must exit 0 (meaning the gate correctly
+        # exits non-zero and marks the contracts PENDING when the helper is gone).
+        run: python test_gate_degradation.py
