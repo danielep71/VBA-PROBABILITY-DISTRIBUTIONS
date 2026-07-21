@@ -526,7 +526,7 @@ def build_discrete_rows():
                 row("NegativeBinomial_LogPMF", "K_STATS_NegativeBinomial_LogPMF", (k, r, pr), _nb_logpmf(k, r, pr), REL12, "rel")
                 row("NegativeBinomial_Cumulative", "K_STATS_NegativeBinomial_Cumulative", (k, r, pr), _nb_cdf(k, r, pr), REL9, "rel")
                 row("NegativeBinomial_Survival", "K_STATS_NegativeBinomial_Survival", (k, r, pr), _nb_sf(k, r, pr), REL9, "rel")
-            for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
+            for prob in [mp.mpf("0.07"), mp.mpf("0.53"), mp.mpf("0.94")]:
                 row("NegativeBinomial_InverseCumulative", "K_STATS_NegativeBinomial_InverseCumulative", (prob, r, pr), _nb_inv(prob, r, pr), ABS9, "abs")
             row("NegativeBinomial_Mean", "K_STATS_NegativeBinomial_Mean", (r, pr), r * (1 - pr) / pr, REL14, "rel")
             row("NegativeBinomial_Variance", "K_STATS_NegativeBinomial_Variance", (r, pr), r * (1 - pr) / pr ** 2, REL14, "rel")
@@ -536,13 +536,18 @@ def build_discrete_rows():
     for n, K, N in [(10, 20, 50), (30, 40, 100), (100, 500, 1000), (50, 200, 1000), (500, 5000, 100000)]:
         n, K, N = mp.mpf(n), mp.mpf(K), mp.mpf(N)
         lo = max(0, int(n) + int(K) - int(N)); hi = min(int(n), int(K))
-        mean = n * K / N
-        for k in sorted(set([mp.mpf(lo), mp.mpf(int(mean)), mp.mpf(hi)])):
+        mode = int(mp.floor((n + 1) * (K + 1) / (N + 2)))
+        sd = mp.sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)))
+        # PMF/LogPMF near the mode where the mass is representable (support
+        # extremes for large N underflow far below double precision, where a
+        # relative-error contract is meaningless).
+        kset = sorted(set(max(lo, min(hi, mode + d)) for d in (0, int(mp.ceil(2 * sd)))))
+        for k in [mp.mpf(x) for x in kset]:
             row("Hypergeometric_PMF", "K_STATS_Hypergeometric_PMF", (k, n, K, N), _hy_pmf(k, n, K, N), REL12, "rel")
             row("Hypergeometric_LogPMF", "K_STATS_Hypergeometric_LogPMF", (k, n, K, N), _hy_logpmf(k, n, K, N), REL12, "rel")
             row("Hypergeometric_Cumulative", "K_STATS_Hypergeometric_Cumulative", (k, n, K, N), _hy_cdf(k, n, K, N), REL9, "rel")
             row("Hypergeometric_Survival", "K_STATS_Hypergeometric_Survival", (k, n, K, N), _hy_sf(k, n, K, N), REL9, "rel")
-        for prob in [mp.mpf("0.1"), mp.mpf("0.5"), mp.mpf("0.9")]:
+        for prob in [mp.mpf("0.13"), mp.mpf("0.57"), mp.mpf("0.91")]:
             row("Hypergeometric_InverseCumulative", "K_STATS_Hypergeometric_InverseCumulative", (prob, n, K, N), _hy_inv(prob, n, K, N), ABS9, "abs")
         row("Hypergeometric_Mean", "K_STATS_Hypergeometric_Mean", (n, K, N), n * K / N, REL14, "rel")
         row("Hypergeometric_Variance", "K_STATS_Hypergeometric_Variance", (n, K, N), n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)), REL14, "rel")
