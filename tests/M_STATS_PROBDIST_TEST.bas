@@ -133,7 +133,7 @@ Option Explicit
 '     classification through reachable numerical cases.
 '
 ' UPDATED
-'   2026-07-21 - House-style normalization and consolidated regression coverage.
+'   2026-07-21
 '==============================================================================
 
 '==============================================================================

@@ -160,7 +160,7 @@ Option Explicit
 '       attempted, but a successful return there does NOT imply contract accuracy.
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 
 
@@ -230,7 +230,7 @@ Public Function K_STATS_StudentT_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -352,7 +352,7 @@ Public Function K_STATS_StudentT_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ Public Function K_STATS_StudentT_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -607,7 +607,7 @@ Public Function K_STATS_StudentT_InverseCumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -751,7 +751,7 @@ Public Function K_STATS_ChiSquare_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -912,7 +912,7 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1040,7 +1040,7 @@ Public Function K_STATS_ChiSquare_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1174,7 +1174,7 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1320,7 +1320,7 @@ Public Function K_STATS_F_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; log-ratio hardening retained.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1514,7 +1514,7 @@ Public Function K_STATS_F_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; log-ratio hardening retained.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1673,7 +1673,7 @@ Public Function K_STATS_F_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; reflected-tail hardening retained.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1840,7 +1840,7 @@ Public Function K_STATS_F_InverseCumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and numerical-contract hardening.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2006,7 +2006,7 @@ Private Function PROB_TryStudentTPDF( _
 '   - PROB_TF_TryStudentTCentralMass
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; numerical method unchanged.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2106,7 +2106,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TryStudentTInvTail
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; tiny-argument branches retained.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2285,7 +2285,7 @@ Private Function PROB_TryStudentTInvTail( _
 '   - K_STATS_StudentT_InverseCumulative
 '
 ' UPDATED
-'   2026-07-21 - Removed artificial search ceiling; stable midpoint added.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2578,7 +2578,7 @@ Private Function PROB_TF_LogOnePlusExp( _
 '   - PROB_TF_TryLogOnePlusSquareRatio
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; numerical method unchanged.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2640,7 +2640,7 @@ Private Sub PROB_TF_LogisticPair( _
 '   - PROB_TF_TrySquareRatioPair
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; numerical method unchanged.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2710,7 +2710,7 @@ Private Function PROB_TF_TryLogOnePlusSquareRatio( _
 '   - PROB_TryStudentTPDF
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; direct squaring remains eliminated.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2778,7 +2778,7 @@ Private Function PROB_TF_TrySquareRatioPair( _
 '   - PROB_TryStudentTTail
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; direct squaring remains eliminated.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2864,7 +2864,7 @@ Private Function PROB_TF_TryStudentTCentralMass( _
 '   public error result.
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; local expansion unchanged.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2976,7 +2976,7 @@ Private Function PROB_TF_TryStudentTInvTailSmallDF( _
 '   - PROB_TryStudentTInvTail
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite; small-DF branch unchanged.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3093,7 +3093,7 @@ Private Function PROB_TF_ValidateDF( _
 '   - PROB_TF_ValidateXAndDF
 '
 ' UPDATED
-'   2026-07-21 - Centralized degree validation and diagnostics.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3201,7 +3201,7 @@ Private Function PROB_TF_ValidateTwoDF( _
 '   - PROB_TF_ValidateXAndTwoDF
 '
 ' UPDATED
-'   2026-07-21 - Added shared two-degree validator.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3261,7 +3261,7 @@ Private Function PROB_TF_ValidateXAndDF( _
 '   - Chi-square density, cumulative and survival wrappers
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and validator centralization.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3328,7 +3328,7 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
 '   - K_STATS_F_Survival
 '
 ' UPDATED
-'   2026-07-21 - House-style rewrite and validator centralization.
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
