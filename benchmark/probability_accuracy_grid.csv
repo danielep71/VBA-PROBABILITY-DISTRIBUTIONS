@@ -402,10 +402,6 @@ Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,0.0,1.0,,2.161197415895
 Lognormal_Mean,K_STATS_Lognormal_Mean,rel<=5E-15,rel,0.5,0.25,,1.701057301848400679406183,1.70105730184840E+000;6.66133814775094E-016,all,main grid
 Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,0.5,0.25,,0.1866209047462703035303866,1.86620904746270E-001;3.05311331771918E-016,all,main grid
 Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,0.5,0.25,,0.4319964175155510517400816,4.31996417515551E-001;5.55111512312578E-017,all,main grid
-Lognormal_ParamMeanLog,K_STATS_Lognormal_ParametersFromMeanStdDev,rel<=5E-15,rel,2.0,0.5,,0.6628348696517278881269291,6.62834869651728E-001;-1.11022302462516E-016,all,main grid
-Lognormal_ParamStdDevLog,K_STATS_Lognormal_ParametersFromMeanStdDev,rel<=5E-15,rel,2.0,0.5,,0.2462206770692397445885749,2.46220677069240E-001;-2.49800180540660E-016,all,main grid
-Lognormal_ParamMeanLog,K_STATS_Lognormal_ParametersFromMeanStdDev,rel<=5E-15,rel,10.0,3.0,,2.259496244873519517847325,2.25949624487352E+000;-4.44089209850063E-016,all,main grid
-Lognormal_ParamStdDevLog,K_STATS_Lognormal_ParametersFromMeanStdDev,rel<=5E-15,rel,10.0,3.0,,0.2935603792085238677557562,2.93560379208524E-001;-1.66533453693773E-016,all,main grid
 Gamma_Density,K_STATS_Gamma_Density,rel<=2E-14,rel,2.0,2.0,1.0,0.270670566473225383787999,2.70670566473223E-001;-2.77555756156289E-016,all,main grid
 Gamma_Cumulative,K_STATS_Gamma_Cumulative,rel<=2E-14,rel,2.0,2.0,1.0,0.5939941502901619243180015,5.93994150290155E-001;4.44089209850063E-016,all,main grid
 Gamma_Survival,K_STATS_Gamma_Survival,rel<=2E-14,rel,2.0,2.0,1.0,0.4060058497098380756819985,4.06005849709845E-001;-4.44089209850063E-016,all,main grid
@@ -684,14 +680,6 @@ PROB_LogBeta,PROB_LogBeta,abs<=2E-13,abs,102500000000.0,10.25,,-246.501544843116
 PROB_LogBeta,PROB_LogBeta,abs<=2E-13,abs,10250000000000.0,10.25,,-293.704539249036473985363100501,-2.93704539249036E+002;-5.11590769747272E-013,all,delta_seam_study
 PROB_LogBeta,PROB_LogBeta,abs<=2E-13,abs,10250000000000000.0,10.25,,-364.509030858598758393916339199,-3.64509030858599E+002;2.27373675443232E-013,all,delta_seam_study
 PROB_LogBeta,PROB_LogBeta,abs<=2E-13,abs,1.025e+19,10.25,,-435.31352246816565855709457643,-4.35313522468166E+002;3.41060513164848E-013,all,delta_seam_study
-Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,354.995,0.10000000000000001,,2.245202066508235162706102e+306,,all,lognormal extreme-magnitude
-Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,354.995,0.10000000000000001,,1.498399835327084905745174e+153,,all,lognormal extreme-magnitude
-Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,-425.0,10.0,,5.111951948651156246842396e-283,,all,lognormal extreme-magnitude
-Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,-425.0,10.0,,7.149791569445333311172056e-142,,all,lognormal extreme-magnitude
-Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,300.0,0.20000000000000001,,1.602639176179959582330462e+259,,all,lognormal extreme-magnitude
-Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,300.0,0.20000000000000001,,4.003297610945206234918319e+129,,all,lognormal extreme-magnitude
-Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,-350.0,8.0,,3.833154737956259736181401e-249,,all,lognormal extreme-magnitude
-Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,-350.0,8.0,,6.191247643210744430140831e-125,,all,lognormal extreme-magnitude
 ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,2,5,,0.138369165806864901113422749814,1.38369165806863E-001;8.32667268468867E-017,all,density_helpers
 ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,5,5,,0.122041521349387392610002463652,1.22041521349386E-001;-1.94289029309402E-016,all,density_helpers
 ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,1,1,,0.241970724519143349797830192936,2.41970724519143E-001;-5.55111512312578E-017,all,density_helpers
