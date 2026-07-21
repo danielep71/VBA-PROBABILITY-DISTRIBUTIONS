@@ -634,6 +634,8 @@ Private Sub RunDiscreteSuite()
     Test_DS_GeometricSurvival
     Test_DS_GeometricInverse
     Test_DS_GeometricMoments
+    Test_DS_NegativeBinomial
+    Test_DS_Hypergeometric
     Test_DS_ErrorContract
     Test_DS_SupportEdges
 End Sub
@@ -5525,6 +5527,118 @@ Private Sub Test_DS_GeometricMoments()
 End Sub
 
 
+Private Sub Test_DS_NegativeBinomial()
+'
+'==============================================================================
+' Test_DS_NegativeBinomial
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Negative binomial mass, deep-tail log-mass, tails, moments, inverse and errors.
+'
+' CALLED FROM
+'   - RunDiscreteSuite (add the registration line, see foot of file)
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Negative binomial mass and log-mass"
+    AssertClose "nb pmf(5,3,.4)", K_STATS_NegativeBinomial_PMF(5#, 3#, 0.4), _
+        0.10450944, TOL_ABS_TIGHT
+    AssertClose "nb logpmf(5,3,.4)", K_STATS_NegativeBinomial_LogPMF(5#, 3#, 0.4), _
+        -2.258477876729, TOL_ABS_TIGHT
+    'Deep tail: ordinary mass underflows a Double to zero, log-mass stays finite
+    AssertRelClose "nb logpmf(9000,10,.5) deep tail", _
+        K_STATS_NegativeBinomial_LogPMF(9000#, 10#, 0.5), -6176.10810737666, TOL_REL_TIGHT
+    AssertClose "nb pmf(9000,10,.5) underflows to 0", _
+        K_STATS_NegativeBinomial_PMF(9000#, 10#, 0.5), 0#, 0#
+    AssertRelClose "nb pmf=exp(logpmf)", _
+        Exp(K_STATS_NegativeBinomial_LogPMF(5#, 3#, 0.4)), _
+        K_STATS_NegativeBinomial_PMF(5#, 3#, 0.4), TOL_REL_TIGHT
+
+    Debug.Print "-- Negative binomial tails"
+    AssertRelClose "nb cdf(5,3,.4)", K_STATS_NegativeBinomial_Cumulative(5#, 3#, 0.4), _
+        0.68460544, TOL_REL_TIGHT
+    AssertRelClose "nb sf(5,3,.4)", K_STATS_NegativeBinomial_Survival(5#, 3#, 0.4), _
+        0.31539456, TOL_REL_TIGHT
+    AssertClose "nb cdf+sf=1", _
+        K_STATS_NegativeBinomial_Cumulative(5#, 3#, 0.4) + _
+        K_STATS_NegativeBinomial_Survival(5#, 3#, 0.4), 1#, TOL_ABS_TIGHT
+    AssertClose "nb inv(.5,3,.4)=4", _
+        K_STATS_NegativeBinomial_InverseCumulative(0.5, 3#, 0.4), 4#, 0#
+
+    Debug.Print "-- Negative binomial moments"
+    AssertClose "nb mean(3,.4)", K_STATS_NegativeBinomial_Mean(3#, 0.4), 4.5, TOL_ABS_TIGHT
+    AssertClose "nb var(3,.4)", K_STATS_NegativeBinomial_Variance(3#, 0.4), 11.25, TOL_ABS_TIGHT
+    AssertClose "nb sd(3,.4)", K_STATS_NegativeBinomial_StdDev(3#, 0.4), _
+        3.35410196624968, TOL_ABS_TIGHT
+
+    Debug.Print "-- Negative binomial error contract"
+    AssertIsError "nb successes < 1", K_STATS_NegativeBinomial_PMF(5#, 0#, 0.4)
+    AssertIsError "nb prob = 0", K_STATS_NegativeBinomial_PMF(5#, 3#, 0#)
+    AssertIsError "nb prob > 1", K_STATS_NegativeBinomial_Cumulative(5#, 3#, 1.5)
+    AssertIsError "nb inverse prob = 1", K_STATS_NegativeBinomial_InverseCumulative(1#, 3#, 0.4)
+End Sub
+
+
+Private Sub Test_DS_Hypergeometric()
+'
+'==============================================================================
+' Test_DS_Hypergeometric
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Hypergeometric mass, directional-summation tails, moments, inverse and support errors.
+'
+' CALLED FROM
+'   - RunDiscreteSuite (add the registration line, see foot of file)
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Hypergeometric mass and log-mass"
+    AssertClose "hyp pmf(2,4,5,10)", K_STATS_Hypergeometric_PMF(2#, 4#, 5#, 10#), _
+        0.476190476190476, TOL_ABS_TIGHT
+    AssertClose "hyp logpmf(2,4,5,10)", K_STATS_Hypergeometric_LogPMF(2#, 4#, 5#, 10#), _
+        -0.741937344729377, TOL_ABS_TIGHT
+    AssertRelClose "hyp pmf=exp(logpmf)", _
+        Exp(K_STATS_Hypergeometric_LogPMF(2#, 4#, 5#, 10#)), _
+        K_STATS_Hypergeometric_PMF(2#, 4#, 5#, 10#), TOL_REL_TIGHT
+    AssertRelClose "hyp pmf(500,1000,5000,10000)", _
+        K_STATS_Hypergeometric_PMF(500#, 1000#, 5000#, 10000#), 0.026589429961294, TOL_REL_TAIL
+
+    Debug.Print "-- Hypergeometric tails (both summation directions)"
+    AssertRelClose "hyp cdf(2,4,5,10)", K_STATS_Hypergeometric_Cumulative(2#, 4#, 5#, 10#), _
+        0.738095238095238, TOL_REL_TIGHT
+    AssertRelClose "hyp sf(2,4,5,10)", K_STATS_Hypergeometric_Survival(2#, 4#, 5#, 10#), _
+        0.261904761904762, TOL_REL_TIGHT
+    AssertRelClose "hyp cdf(10,20,50,100) mid", _
+        K_STATS_Hypergeometric_Cumulative(10#, 20#, 50#, 100#), 0.598435608853275, TOL_REL_TIGHT
+    AssertClose "hyp cdf+sf=1", _
+        K_STATS_Hypergeometric_Cumulative(10#, 20#, 50#, 100#) + _
+        K_STATS_Hypergeometric_Survival(10#, 20#, 50#, 100#), 1#, TOL_ABS_TIGHT
+    AssertClose "hyp inv(.5,20,50,100)=10", _
+        K_STATS_Hypergeometric_InverseCumulative(0.5, 20#, 50#, 100#), 10#, 0#
+
+    Debug.Print "-- Hypergeometric moments"
+    AssertClose "hyp mean(20,50,100)", K_STATS_Hypergeometric_Mean(20#, 50#, 100#), 10#, TOL_ABS_TIGHT
+    AssertClose "hyp var(20,50,100)", K_STATS_Hypergeometric_Variance(20#, 50#, 100#), _
+        4.04040404040404, TOL_ABS_TIGHT
+    AssertClose "hyp sd(20,50,100)", K_STATS_Hypergeometric_StdDev(20#, 50#, 100#), _
+        2.01007563051842, TOL_ABS_TIGHT
+
+    Debug.Print "-- Hypergeometric support and clamping"
+    'Mass is #NUM! outside [max(0,n+K-N), min(n,K)] (Excel HYPGEOM.DIST parity)
+    AssertIsError "hyp pmf above support", K_STATS_Hypergeometric_PMF(5#, 4#, 5#, 10#)
+    AssertIsError "hyp pmf below support", K_STATS_Hypergeometric_PMF(30#, 50#, 90#, 100#)
+    'Cumulative clamps instead of erroring
+    AssertClose "hyp cdf at kmax = 1", K_STATS_Hypergeometric_Cumulative(4#, 4#, 5#, 10#), _
+        1#, TOL_ABS_TIGHT
+    AssertIsError "hyp population < 1", K_STATS_Hypergeometric_PMF(0#, 0#, 0#, 0#)
+End Sub
+
+
+
 Private Sub Test_DS_ErrorContract()
 '
 '==============================================================================
@@ -5612,5 +5726,7 @@ Private Sub Test_DS_SupportEdges()
     AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
         0#, 0#
 End Sub
+
+
 
 
