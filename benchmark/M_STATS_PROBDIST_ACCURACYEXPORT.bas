@@ -282,6 +282,34 @@ Private Function EvaluateOne( _
         Case "Uniform_Survival":             V = K_STATS_Uniform_Survival(A1, A2, A3)
         Case "Uniform_InverseCumulative":    V = K_STATS_Uniform_InverseCumulative(A1, A2, A3)
 
+
+        Case "Binomial_PMF":                V = K_STATS_Binomial_PMF(A1, A2, A3)
+        Case "Binomial_LogPMF":             V = K_STATS_Binomial_LogPMF(A1, A2, A3)
+        Case "Binomial_Cumulative":         V = K_STATS_Binomial_Cumulative(A1, A2, A3)
+        Case "Binomial_Survival":           V = K_STATS_Binomial_Survival(A1, A2, A3)
+        Case "Binomial_InverseCumulative":  V = K_STATS_Binomial_InverseCumulative(A1, A2, A3)
+        Case "Binomial_Mean":               V = K_STATS_Binomial_Mean(A1, A2)
+        Case "Binomial_Variance":           V = K_STATS_Binomial_Variance(A1, A2)
+        Case "Binomial_StdDev":             V = K_STATS_Binomial_StdDev(A1, A2)
+
+        Case "Poisson_PMF":                 V = K_STATS_Poisson_PMF(A1, A2)
+        Case "Poisson_LogPMF":              V = K_STATS_Poisson_LogPMF(A1, A2)
+        Case "Poisson_Cumulative":          V = K_STATS_Poisson_Cumulative(A1, A2)
+        Case "Poisson_Survival":            V = K_STATS_Poisson_Survival(A1, A2)
+        Case "Poisson_InverseCumulative":   V = K_STATS_Poisson_InverseCumulative(A1, A2)
+        Case "Poisson_Mean":                V = K_STATS_Poisson_Mean(A1)
+        Case "Poisson_Variance":            V = K_STATS_Poisson_Variance(A1)
+        Case "Poisson_StdDev":              V = K_STATS_Poisson_StdDev(A1)
+
+        Case "Geometric_PMF":               V = K_STATS_Geometric_PMF(A1, A2)
+        Case "Geometric_LogPMF":            V = K_STATS_Geometric_LogPMF(A1, A2)
+        Case "Geometric_Cumulative":        V = K_STATS_Geometric_Cumulative(A1, A2)
+        Case "Geometric_Survival":          V = K_STATS_Geometric_Survival(A1, A2)
+        Case "Geometric_InverseCumulative": V = K_STATS_Geometric_InverseCumulative(A1, A2)
+        Case "Geometric_Mean":              V = K_STATS_Geometric_Mean(A1)
+        Case "Geometric_Variance":          V = K_STATS_Geometric_Variance(A1)
+        Case "Geometric_StdDev":            V = K_STATS_Geometric_StdDev(A1)
+
         Case Else:                           EvaluateOne = "ERROR": Exit Function
     End Select
 

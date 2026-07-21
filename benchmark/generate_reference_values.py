@@ -248,16 +248,221 @@ def _load_contracts(path=None):
 _CONTRACTS = _load_contracts()
 
 
+
+# ===========================================================================
+# DISCRETE FAMILY (Binomial / Poisson / Geometric)
+#   Self-contained so it can be generated independently of the contract-backed
+#   families. CDF/survival go through the same regularized incomplete beta /
+#   gamma the VBA kernels use, so large n and large mean are exercised. Rows
+#   carry a provisional claim and empty observed_vba until the Excel export and
+#   holdout freeze (Phase 2); no discrete contract is active yet, so the strict
+#   accuracy gate does not evaluate them.
+# ===========================================================================
+def _betacf(a, b, x):
+    tiny = mp.mpf("1e-300"); qab = a + b; qap = a + 1; qam = a - 1
+    c = mp.mpf(1); d = 1 - qab * x / qap
+    if abs(d) < tiny: d = tiny
+    d = 1 / d; h = d
+    for m in range(1, 20000):
+        m2 = 2 * m
+        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+        d = 1 + aa * d
+        if abs(d) < tiny: d = tiny
+        c = 1 + aa / c
+        if abs(c) < tiny: c = tiny
+        d = 1 / d; h *= d * c
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+        d = 1 + aa * d
+        if abs(d) < tiny: d = tiny
+        c = 1 + aa / c
+        if abs(c) < tiny: c = tiny
+        d = 1 / d; de = d * c; h *= de
+        if abs(de - 1) < mp.mpf("1e-45"): break
+    return h
+
+
+def _ibeta(x, a, b):
+    x, a, b = mp.mpf(x), mp.mpf(a), mp.mpf(b)
+    if x <= 0: return mp.mpf(0)
+    if x >= 1: return mp.mpf(1)
+    lbt = mp.loggamma(a + b) - mp.loggamma(a) - mp.loggamma(b) + a * mp.log(x) + b * mp.log(1 - x)
+    bt = mp.e ** lbt
+    if x < (a + 1) / (a + b + 2): return bt * _betacf(a, b, x) / a
+    return 1 - bt * _betacf(b, a, 1 - x) / b
+
+
+def _binom_pmf(k, n, pr):
+    k, n, pr = mp.mpf(k), mp.mpf(n), mp.mpf(pr)
+    return mp.binomial(n, k) * pr ** k * (1 - pr) ** (n - k)
+
+
+def _binom_logpmf(k, n, pr):
+    k, n, pr = mp.mpf(k), mp.mpf(n), mp.mpf(pr)
+    return mp.log(mp.binomial(n, k)) + k * mp.log(pr) + (n - k) * mp.log(1 - pr)
+
+
+def _binom_cdf(k, n, pr):
+    k, n, pr = mp.mpf(k), mp.mpf(n), mp.mpf(pr)
+    if k >= n:
+        return mp.mpf(1)
+    return _ibeta(1 - pr, n - k, k + 1)
+
+
+def _binom_sf(k, n, pr):
+    k, n, pr = mp.mpf(k), mp.mpf(n), mp.mpf(pr)
+    if k >= n:
+        return mp.mpf(0)
+    return _ibeta(pr, k + 1, n - k)
+
+
+def _binom_inv(prob, n, pr):
+    prob = mp.mpf(prob)
+    lo, hi = -1, int(n)
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if _binom_cdf(mid, n, pr) >= prob:
+            hi = mid
+        else:
+            lo = mid
+    return mp.mpf(hi)
+
+
+def _pois_pmf(k, lam):
+    k, lam = mp.mpf(k), mp.mpf(lam)
+    return mp.e ** (k * mp.log(lam) - lam - mp.loggamma(k + 1))
+
+
+def _pois_logpmf(k, lam):
+    k, lam = mp.mpf(k), mp.mpf(lam)
+    return k * mp.log(lam) - lam - mp.loggamma(k + 1)
+
+
+def _pois_cdf(k, lam):
+    return mp.gammainc(mp.mpf(k) + 1, mp.mpf(lam), mp.inf, regularized=True)
+
+
+def _pois_sf(k, lam):
+    return mp.gammainc(mp.mpf(k) + 1, 0, mp.mpf(lam), regularized=True)
+
+
+def _pois_inv(prob, lam):
+    prob = mp.mpf(prob)
+    lo = -1
+    hi = int(mp.floor(mp.mpf(lam) + 12 * mp.sqrt(mp.mpf(lam)) + 40))
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if _pois_cdf(mid, lam) >= prob:
+            hi = mid
+        else:
+            lo = mid
+    return mp.mpf(hi)
+
+
+def _geo_pmf(k, pr):
+    k, pr = mp.mpf(k), mp.mpf(pr)
+    return pr * (1 - pr) ** k
+
+
+def _geo_logpmf(k, pr):
+    k, pr = mp.mpf(k), mp.mpf(pr)
+    return mp.log(pr) + k * mp.log(1 - pr)
+
+
+def _geo_cdf(k, pr):
+    k, pr = mp.mpf(k), mp.mpf(pr)
+    return 1 - (1 - pr) ** (k + 1)
+
+
+def _geo_sf(k, pr):
+    k, pr = mp.mpf(k), mp.mpf(pr)
+    return (1 - pr) ** (k + 1)
+
+
+def _geo_inv(prob, pr):
+    prob, pr = mp.mpf(prob), mp.mpf(pr)
+    k = int(mp.ceil(mp.log(1 - prob) / mp.log(1 - pr) - 1))
+    if k < 0:
+        k = 0
+    while k > 0 and _geo_cdf(k - 1, pr) >= prob:
+        k -= 1
+    while _geo_cdf(k, pr) < prob:
+        k += 1
+    return mp.mpf(k)
+
+
+def build_discrete_rows():
+    rows = []
+    REL12, REL9, REL14, ABS9 = "rel<=1E-12", "rel<=1E-9", "rel<=1E-14", "abs<=1E-9"
+
+    def row(func, kernel, args, ref, claim, metric):
+        rows.append({
+            "function": func, "vba_kernel": kernel, "claim": claim, "metric": metric,
+            "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
+            "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
+            "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": "all", "evidence_set": "main grid",
+        })
+
+    for n in [mp.mpf(20), mp.mpf(1000), mp.mpf(100000), mp.mpf(1000000), mp.mpf(10000000)]:
+        for pr in [mp.mpf("0.02"), mp.mpf("0.5"), mp.mpf("0.9")]:
+            sd = mp.sqrt(n * pr * (1 - pr))
+            kmid = mp.floor(n * pr)
+            ktail = mp.floor(n * pr + 3 * sd)
+            if ktail > n:
+                ktail = n
+            for k in sorted(set([mp.mpf(kmid), mp.mpf(ktail)])):
+                row("Binomial_PMF", "K_STATS_Binomial_PMF", (k, n, pr), _binom_pmf(k, n, pr), REL12, "rel")
+                row("Binomial_LogPMF", "K_STATS_Binomial_LogPMF", (k, n, pr), _binom_logpmf(k, n, pr), REL12, "rel")
+                row("Binomial_Cumulative", "K_STATS_Binomial_Cumulative", (k, n, pr), _binom_cdf(k, n, pr), REL9, "rel")
+                row("Binomial_Survival", "K_STATS_Binomial_Survival", (k, n, pr), _binom_sf(k, n, pr), REL9, "rel")
+            for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
+                row("Binomial_InverseCumulative", "K_STATS_Binomial_InverseCumulative", (prob, n, pr), _binom_inv(prob, n, pr), ABS9, "abs")
+            row("Binomial_Mean", "K_STATS_Binomial_Mean", (n, pr), n * pr, REL14, "rel")
+            row("Binomial_Variance", "K_STATS_Binomial_Variance", (n, pr), n * pr * (1 - pr), REL14, "rel")
+            row("Binomial_StdDev", "K_STATS_Binomial_StdDev", (n, pr), mp.sqrt(n * pr * (1 - pr)), REL14, "rel")
+
+    for lam in [mp.mpf(3), mp.mpf(50), mp.mpf(1000), mp.mpf(1000000)]:
+        sd = mp.sqrt(lam)
+        for k in sorted(set([mp.mpf(mp.floor(lam)), mp.mpf(mp.floor(lam + 3 * sd))])):
+            row("Poisson_PMF", "K_STATS_Poisson_PMF", (k, lam), _pois_pmf(k, lam), REL12, "rel")
+            row("Poisson_LogPMF", "K_STATS_Poisson_LogPMF", (k, lam), _pois_logpmf(k, lam), REL12, "rel")
+            row("Poisson_Cumulative", "K_STATS_Poisson_Cumulative", (k, lam), _pois_cdf(k, lam), REL9, "rel")
+            row("Poisson_Survival", "K_STATS_Poisson_Survival", (k, lam), _pois_sf(k, lam), REL9, "rel")
+        row("Poisson_LogPMF", "K_STATS_Poisson_LogPMF", (mp.mpf(0), lam), _pois_logpmf(0, lam), REL12, "rel")
+        for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
+            row("Poisson_InverseCumulative", "K_STATS_Poisson_InverseCumulative", (prob, lam), _pois_inv(prob, lam), ABS9, "abs")
+        row("Poisson_Mean", "K_STATS_Poisson_Mean", (lam,), lam, REL14, "rel")
+        row("Poisson_Variance", "K_STATS_Poisson_Variance", (lam,), lam, REL14, "rel")
+        row("Poisson_StdDev", "K_STATS_Poisson_StdDev", (lam,), mp.sqrt(lam), REL14, "rel")
+
+    for pr in [mp.mpf("0.5"), mp.mpf("0.05"), mp.mpf("0.001"), mp.mpf("1e-6")]:
+        mean = (1 - pr) / pr
+        for k in sorted(set([mp.mpf(0), mp.mpf(mp.floor(mean)), mp.mpf(mp.floor(3 * mean + 5))])):
+            row("Geometric_PMF", "K_STATS_Geometric_PMF", (k, pr), _geo_pmf(k, pr), REL12, "rel")
+            row("Geometric_LogPMF", "K_STATS_Geometric_LogPMF", (k, pr), _geo_logpmf(k, pr), REL12, "rel")
+            row("Geometric_Cumulative", "K_STATS_Geometric_Cumulative", (k, pr), _geo_cdf(k, pr), REL9, "rel")
+            row("Geometric_Survival", "K_STATS_Geometric_Survival", (k, pr), _geo_sf(k, pr), REL9, "rel")
+        for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
+            row("Geometric_InverseCumulative", "K_STATS_Geometric_InverseCumulative", (prob, pr), _geo_inv(prob, pr), ABS9, "abs")
+        row("Geometric_Mean", "K_STATS_Geometric_Mean", (pr,), (1 - pr) / pr, REL14, "rel")
+        row("Geometric_Variance", "K_STATS_Geometric_Variance", (pr,), (1 - pr) / pr ** 2, REL14, "rel")
+        row("Geometric_StdDev", "K_STATS_Geometric_StdDev", (pr,), mp.sqrt(1 - pr) / pr, REL14, "rel")
+
+    return rows
+
+
 def build_rows():
     rows = []
 
-    def add(func, vba_kernel, args, ref):
+    def add(func, vba_kernel, args, ref, claim=None, metric=None):
         # Claim and metric come from the single source of truth,
         # benchmark/accuracy_contracts.csv, so grid, summary, and README cannot drift.
         regime = _regime_for(func)
-        contract = _CONTRACTS.get((func, regime)) or _CONTRACTS.get((func, "all"))
-        claim = contract["claim"]
-        metric = contract["metric"]
+        if claim is None:
+            contract = _CONTRACTS.get((func, regime)) or _CONTRACTS.get((func, "all"))
+            claim = contract["claim"]
+            metric = contract["metric"]
         rows.append(
             {
                 "function": func,
@@ -439,6 +644,7 @@ def build_rows():
     for (pq, a, b) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(10)), (mp.mpf("0.9"), mp.mpf(1), mp.mpf(4))]:
         add("Uniform_InverseCumulative", "K_STATS_Uniform_InverseCumulative", (pq, a, b), mp.mpf(a) + mp.mpf(pq) * (mp.mpf(b) - mp.mpf(a)))
 
+    rows += build_discrete_rows()
     return rows
 
 
