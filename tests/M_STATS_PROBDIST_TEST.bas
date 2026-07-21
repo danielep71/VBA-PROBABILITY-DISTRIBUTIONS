@@ -1051,6 +1051,21 @@ Private Sub Test_Core_LogGamma()
         PROB_LogGammaDelta(10000#, 0.7) + PROB_LogGammaDelta(10000.7, 5.05), _
         TOL_REL_TIGHT
 
+    'PROB_LogGammaDelta with 0 < LargeArg < 1 (the both-subunit Beta path, where
+    'PROB_LogBeta calls the delta with max(Alpha,Beta) below one). The committed
+    'accuracy grids primarily cover LargeArg >= 1, so pin the structural identities
+    'here; they must hold regardless of regime.
+    AssertClose "LogGammaDelta(z,0)=0 (z=0.2)", _
+        PROB_LogGammaDelta(0.2, 0#), 0#, TOL_ABS_TIGHT
+    AssertRelClose "LogGammaDelta(z,1)=Log(z) (z=0.2)", _
+        PROB_LogGammaDelta(0.2, 1#), Log(0.2), TOL_REL_TIGHT
+    AssertRelClose "LogGammaDelta(z,1)=Log(z) (z=0.55)", _
+        PROB_LogGammaDelta(0.55, 1#), Log(0.55), TOL_REL_TIGHT
+    AssertRelClose "LogGammaDelta composition (z=0.5, subunit)", _
+        PROB_LogGammaDelta(0.5, 0.7), _
+        PROB_LogGammaDelta(0.5, 0.3) + PROB_LogGammaDelta(0.8, 0.4), _
+        TOL_REL_TIGHT
+
     'LogBeta unbalanced regression: the middle band (ratio ~1E-2 to 1E-13) that
     'the previous one-term asymptotic could not reach is now handled by the stable
     'log-gamma difference. References are 50-digit mpmath values.
@@ -3056,8 +3071,25 @@ Private Sub Test_TF_FCumulative()
     'silently stopped converging at about df = 5E+5
     AssertRelClose "F cdf(1,1e5,1e5)", K_STATS_F_Cumulative(1#, 100000#, 100000#), _
         0.5, TOL_REL_LOOSE
-    AssertClose "F cdf extreme positive log-ratio", _
-        K_STATS_F_Cumulative(1E+308, 1E+99, 1E-99), 1#, 0#
+    'F accuracy envelope (strict validated-domain policy): below / near / above.
+    'BELOW: both df well within 1E5 are accepted (return a value, not an error).
+    AssertTrue "F cdf below envelope (5e4,5e4) accepted", _
+        (Not IsError(K_STATS_F_Cumulative(1#, 50000#, 50000#)))
+    'NEAR: df at the 1E5 boundary is accepted.
+    AssertTrue "F cdf at envelope boundary (1e5,1e5) accepted", _
+        (Not IsError(K_STATS_F_Cumulative(1#, 100000#, 100000#)))
+    'ABOVE: df beyond the envelope are REJECTED with a clean error, not a silent
+    'inaccurate value. (This extreme input previously returned the limiting value
+    '1; strict policy now rejects df > 1E5.)
+    AssertIsError "F cdf just above envelope (1.1e5)", _
+        K_STATS_F_Cumulative(1#, 110000#, 10#)
+    AssertIsError "F cdf above envelope both df (3e5)", _
+        K_STATS_F_Cumulative(1#, 300000#, 300000#)
+    AssertIsError "F cdf df1 far beyond envelope", _
+        K_STATS_F_Cumulative(1E+308, 1E+99, 1E-99)
+    'Density is closed-form and NOT enveloped: still returns a value far above.
+    AssertClose "F density not enveloped (large df)", _
+        K_STATS_F_Density(1E+308, 1E+99, 1E-99), 0#, 0#
 End Sub
 
 
@@ -3094,8 +3126,11 @@ Private Sub Test_TF_FSurvival()
     AssertClose "F sf + cdf = 1", _
         CDbl(K_STATS_F_Survival(2#, 7#, 12#)) + _
         CDbl(K_STATS_F_Cumulative(2#, 7#, 12#)), 1#, TOL_ABS_TIGHT
-    AssertClose "F sf extreme positive log-ratio", _
-        K_STATS_F_Survival(1E+308, 1E+99, 1E-99), 0#, 0#
+    'F envelope: survival above the range is rejected; density stays unrestricted.
+    AssertIsError "F sf above envelope (2e5)", _
+        K_STATS_F_Survival(1#, 10#, 200000#)
+    AssertIsError "F sf df far beyond envelope", _
+        K_STATS_F_Survival(1E+308, 1E+99, 1E-99)
 End Sub
 
 

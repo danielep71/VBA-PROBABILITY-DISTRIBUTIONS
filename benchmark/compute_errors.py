@@ -27,14 +27,19 @@ getcontext().prec = 50
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+_IBETA_IMPORT_ERROR = None
 try:
     sys.path.insert(0, os.path.join(HERE, "beta_f_unbalanced"))
     from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf
     import mpmath as _mp
     _mp.mp.dps = 50
     _HAVE_IBETA = True
-except Exception:
+except (ImportError, ModuleNotFoundError, SyntaxError) as _e:
+    # Missing, corrupt, or incompatible reference helper. Retain the exact reason;
+    # an ACTIVE contract that needs this evaluator must then BLOCK, never silently
+    # downgrade to a non-blocking CHARACTERIZATION ONLY verdict.
     _HAVE_IBETA = False
+    _IBETA_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
 
 
 def load_contracts(path=None):
@@ -125,6 +130,7 @@ def main():
              "|---|---|---|---|---:|---:|---|"]
 
     n_fail = n_known = n_char = n_pending = 0
+    unevaluated = []   # (contract_id, reason) for active contracts that could not be evaluated
 
     for c in sorted(contracts, key=lambda c: c["contract_id"]):
         cid = c["contract_id"]; fn = c["function"]; regime = c["regime"]
@@ -138,20 +144,47 @@ def main():
 
         if measure == "tail_probability_residual":
             mt = grid_by.get((fn, regime), [])
-            if mt and _HAVE_IBETA:
+            # CHARACTERIZATION ONLY is reserved for contracts EXPLICITLY marked so.
+            if status == "characterization_only":
+                n_char += 1
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"study | \U0001f9ea CHARACTERIZATION ONLY |")
+                continue
+            # An ACTIVE tail contract that cannot be evaluated must BLOCK.
+            if not _HAVE_IBETA:
+                n_pending += 1
+                unevaluated.append((cid, "reference helper unavailable: "
+                                    + (_IBETA_IMPORT_ERROR or "unknown import failure")))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"evaluator | \u23f3 PENDING - evaluator unavailable |")
+                continue
+            if not mt:
+                n_pending += 1
+                unevaluated.append((cid, "no matching observations in the grid"))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"0 | \u23f3 PENDING - no observations |")
+                continue
+            try:
                 worst, at, nn = tail_residual(mt, fn)
-                if worst is not None:
-                    ok = threshold is not None and worst <= threshold
-                    if ok:
-                        verdict = "\u2705 PASS"
-                    else:
-                        n_fail += 1; verdict = "\u274c FAIL"
-                    lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
-                                 f"{float(worst):.2e} | {nn}/{len(mt)} | {verdict} |")
-                    continue
-            n_char += 1
-            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
-                         f"study | \U0001f9ea CHARACTERIZATION ONLY |")
+            except Exception as _te:
+                n_pending += 1
+                unevaluated.append((cid, f"evaluator error: {type(_te).__name__}: {_te}"))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"evaluator | \u23f3 PENDING - evaluator error |")
+                continue
+            if worst is None:
+                n_pending += 1
+                unevaluated.append((cid, "no usable observations"))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"0/{len(mt)} | \u23f3 PENDING |")
+                continue
+            ok = threshold is not None and worst <= threshold
+            if ok:
+                verdict = "\u2705 PASS"
+            else:
+                n_fail += 1; verdict = "\u274c FAIL"
+            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
+                         f"{float(worst):.2e} | {nn}/{len(mt)} | {verdict} |")
             continue
 
         if not matched:
@@ -195,12 +228,20 @@ def main():
     mode = "development (known limitations allowed)" if args.allow_known_limitations else "strict"
     print(f"{os.path.basename(args.out)}: FAIL={n_fail} KNOWN_LIMITATION={n_known} "
           f"CHARACTERIZATION_ONLY={n_char} PENDING={n_pending} [gate: {mode}]")
+    if _IBETA_IMPORT_ERROR:
+        print(f"  WARNING: reference helper failed to load ({_IBETA_IMPORT_ERROR}); "
+              f"tail-residual contracts cannot be evaluated.")
+    for cid, reason in unevaluated:
+        print(f"  UNEVALUATED active contract: {cid} - {reason}")
+
     fail_block = n_fail + (0 if args.allow_known_limitations else n_known)
     if fail_block:
         print(f"  gate FAILED (exit 1): {fail_block} blocking item(s).")
         sys.exit(1)
     if n_pending:
-        print(f"  gate INCOMPLETE (exit 2): {n_pending} contract(s) not yet measured.")
+        print(f"  gate INCOMPLETE (exit 2): {n_pending} contract(s) unevaluated "
+              f"(not measured, or evaluator unavailable). The strict gate never "
+              f"passes with an active contract unevaluated.")
         sys.exit(2)
     print("  gate passed (exit 0).")
     sys.exit(0)
