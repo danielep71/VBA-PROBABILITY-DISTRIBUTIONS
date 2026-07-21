@@ -4,7 +4,6 @@ Normal_Survival,K_STATS_Normal_Survival,holdout,rel,1.35,0.4,1.7,0.2881410812950
 Normal_Cumulative,K_STATS_Normal_Cumulative,holdout,rel,-2.1,0.4,1.7,0.0707012537433064659885555411753,7.07012537433064E-002;4.16333634234434E-017,all,holdout_older
 Normal_Survival,K_STATS_Normal_Survival,holdout,rel,-2.1,0.4,1.7,0.929298746256693534011444458825,9.29298746256694E-001;-4.44089209850063E-016,all,holdout_older
 Normal_Cumulative,K_STATS_Normal_Cumulative,holdout,rel,5.2,1.1,0.8,0.999999851231126812233714994401,9.99999851231127E-001;-2.22044604925031E-016,all,holdout_older
-Normal_Survival,K_STATS_Normal_Survival,holdout,rel,5.2,1.1,0.8,0.000000148768873187766285005599186339,1.48768873197798E-007;0E+000,all,holdout_older
 Normal_Density,K_STATS_Normal_Density,holdout,rel,1.35,0.4,1.7,0.200747244399207251541185598891,2.00747244399207E-001;3.05311331771918E-016,all,holdout_older
 Normal_InverseCumulative,K_STATS_Normal_InverseCumulative,holdout,rel,0.137,0.4,1.7,-1.45962549942584384133688005996,-1.45962549942584E+000;-3.77475828372553E-015,all,holdout_older
 Normal_InverseSurvival,K_STATS_Normal_InverseSurvival,holdout,rel,0.137,0.4,1.7,2.25962549942584384133688005996,2.25962549942584E+000;3.55271367880050E-015,all,holdout_older
@@ -35,7 +34,6 @@ Lognormal_Survival,K_STATS_Lognormal_Survival,holdout,rel,2.3,0.2,0.6,0.14574730
 Lognormal_Cumulative,K_STATS_Lognormal_Cumulative,holdout,rel,0.45,0.2,0.6,0.0480382823841077618261844906368,4.80382823841077E-002;4.16333634234434E-017,all,holdout_older
 Lognormal_Survival,K_STATS_Lognormal_Survival,holdout,rel,0.45,0.2,0.6,0.951961717615892238173815509363,9.51961717615892E-001;2.22044604925031E-016,all,holdout_older
 Lognormal_Cumulative,K_STATS_Lognormal_Cumulative,holdout,rel,12.0,0.9,0.4,0.999962879217940276484050717437,9.99962879217940E-001;2.22044604925031E-016,all,holdout_older
-Lognormal_Survival,K_STATS_Lognormal_Survival,holdout,rel,12.0,0.9,0.4,0.0000371207820597235159492825626828,3.71207820597166E-005;0E+000,all,holdout_older
 Lognormal_Density,K_STATS_Lognormal_Density,holdout,rel,2.3,0.2,0.6,0.165733408964433401363575171869,1.65733408964433E-001;4.71844785465692E-016,all,holdout_older
 Lognormal_InverseCumulative,K_STATS_Lognormal_InverseCumulative,holdout,rel,0.137,0.2,0.6,0.633599383456722268274512384467,6.33599383456722E-001;4.44089209850063E-016,all,holdout_older
 Lognormal_InverseSurvival,K_STATS_Lognormal_InverseSurvival,holdout,rel,0.137,0.2,0.6,2.35452359423447696311949379583,2.35452359423448E+000;-3.55271367880050E-015,all,holdout_older
