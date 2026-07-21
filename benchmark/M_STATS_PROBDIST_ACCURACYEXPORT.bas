@@ -62,8 +62,8 @@ Public Sub Export_Accuracy_Observations()
     Dim I                   As Long            'Row index
     Dim Cols                As Variant         'Split fields of one row
     Dim FuncName            As String          'Function under test
-    Dim A1 As Double, A2 As Double, A3 As Double  'Parsed arguments
-    Dim HasA1 As Boolean, HasA2 As Boolean, HasA3 As Boolean
+    Dim A1 As Double, A2 As Double, A3 As Double, A4 As Double  'Parsed arguments
+    Dim HasA1 As Boolean, HasA2 As Boolean, HasA3 As Boolean, HasA4 As Boolean
     Dim Observed            As String          'Observed value token
     Dim Sep                 As String          'Field separator
 '------------------------------------------------------------------------------
@@ -92,25 +92,28 @@ Public Sub Export_Accuracy_Observations()
             If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
             Cols = Split(Lines(I), Sep)
-            If UBound(Cols) < 10 Then GoTo ContinueRow
+            If UBound(Cols) < 11 Then GoTo ContinueRow
 
             'This macro owns only the main grid. Study-sourced rows
             '(evidence_set <> "main grid") are populated by their own study
             'harnesses and must be left byte-for-byte untouched.
-            If Trim$(Cols(10)) <> "main grid" Then GoTo ContinueRow
+            If Trim$(Cols(11)) <> "main grid" Then GoTo ContinueRow
 
             FuncName = Trim$(Cols(0))
             HasA1 = (Len(Trim$(Cols(4))) > 0)
             HasA2 = (Len(Trim$(Cols(5))) > 0)
             HasA3 = (Len(Trim$(Cols(6))) > 0)
+            HasA4 = (Len(Trim$(Cols(7))) > 0)
             If HasA1 Then A1 = ParseDouble(Cols(4))
             If HasA2 Then A2 = ParseDouble(Cols(5))
             If HasA3 Then A3 = ParseDouble(Cols(6))
+            If HasA4 Then A4 = ParseDouble(Cols(7))
 
-            Observed = EvaluateOne(FuncName, A1, A2, A3, HasA2, HasA3)
+            Observed = EvaluateOne(FuncName, A1, A2, A3, A4, HasA2, HasA3, HasA4)
 
-            'Rebuild the row with observed_vba (last field) filled
-            Cols(8) = Observed
+            'Rebuild the row with observed_vba filled (column index 9 in the
+            '12-column arg4 schema)
+            Cols(9) = Observed
             Lines(I) = Join(Cols, Sep)
 ContinueRow:
         Next I
@@ -192,8 +195,10 @@ Private Function EvaluateOne( _
     ByVal A1 As Double, _
     ByVal A2 As Double, _
     ByVal A3 As Double, _
+    ByVal A4 As Double, _
     ByVal HasA2 As Boolean, _
-    ByVal HasA3 As Boolean) _
+    ByVal HasA3 As Boolean, _
+    ByVal HasA4 As Boolean) _
     As String
 '
 '==============================================================================
@@ -314,6 +319,25 @@ Private Function EvaluateOne( _
         Case "Geometric_Mean":              V = K_STATS_Geometric_Mean(A1)
         Case "Geometric_Variance":          V = K_STATS_Geometric_Variance(A1)
         Case "Geometric_StdDev":            V = K_STATS_Geometric_StdDev(A1)
+
+
+        Case "NegativeBinomial_PMF":         V = K_STATS_NegativeBinomial_PMF(A1, A2, A3)
+        Case "NegativeBinomial_LogPMF":      V = K_STATS_NegativeBinomial_LogPMF(A1, A2, A3)
+        Case "NegativeBinomial_Cumulative":  V = K_STATS_NegativeBinomial_Cumulative(A1, A2, A3)
+        Case "NegativeBinomial_Survival":    V = K_STATS_NegativeBinomial_Survival(A1, A2, A3)
+        Case "NegativeBinomial_InverseCumulative": V = K_STATS_NegativeBinomial_InverseCumulative(A1, A2, A3)
+        Case "NegativeBinomial_Mean":        V = K_STATS_NegativeBinomial_Mean(A1, A2)
+        Case "NegativeBinomial_Variance":    V = K_STATS_NegativeBinomial_Variance(A1, A2)
+        Case "NegativeBinomial_StdDev":      V = K_STATS_NegativeBinomial_StdDev(A1, A2)
+
+        Case "Hypergeometric_PMF":           V = K_STATS_Hypergeometric_PMF(A1, A2, A3, A4)
+        Case "Hypergeometric_LogPMF":        V = K_STATS_Hypergeometric_LogPMF(A1, A2, A3, A4)
+        Case "Hypergeometric_Cumulative":    V = K_STATS_Hypergeometric_Cumulative(A1, A2, A3, A4)
+        Case "Hypergeometric_Survival":      V = K_STATS_Hypergeometric_Survival(A1, A2, A3, A4)
+        Case "Hypergeometric_InverseCumulative": V = K_STATS_Hypergeometric_InverseCumulative(A1, A2, A3, A4)
+        Case "Hypergeometric_Mean":          V = K_STATS_Hypergeometric_Mean(A1, A2, A3)
+        Case "Hypergeometric_Variance":      V = K_STATS_Hypergeometric_Variance(A1, A2, A3)
+        Case "Hypergeometric_StdDev":        V = K_STATS_Hypergeometric_StdDev(A1, A2, A3)
 
         Case Else:                           EvaluateOne = "ERROR": Exit Function
     End Select

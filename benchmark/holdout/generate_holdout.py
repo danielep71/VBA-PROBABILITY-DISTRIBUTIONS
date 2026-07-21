@@ -40,9 +40,9 @@ def logbeta(a,b):
     a,b=mp.mpf(a),mp.mpf(b)
     return mp.loggamma(a)+mp.loggamma(b)-mp.loggamma(a+b)
 
-def row(fn,kernel,a1,a2,a3,ref,regime):
+def row(fn,kernel,a1,a2,a3,ref,regime,a4=""):
     return {"function":fn,"vba_kernel":kernel,"claim":"","metric":"",
-            "arg1":a1,"arg2":a2,"arg3":a3,"reference":mp.nstr(ref,30),
+            "arg1":a1,"arg2":a2,"arg3":a3, "arg4":a4,"reference":mp.nstr(ref,30),
             "observed_vba":"","regime":regime,"evidence_set":"holdout"}
 
 
@@ -158,12 +158,74 @@ def build():
             rows.append(row("PROB_LogBeta","PROB_LogBeta",mp.nstr(large,17),mp.nstr(small,17),"",
                             logbeta(large,small),"all"))
     rows += _discrete_holdout_rows()
+    rows += _discrete2_holdout_rows()
     return rows
+
+
+def _nbh_pmf(k,r,pr): 
+    import mpmath as mp; k,r,pr=mp.mpf(k),mp.mpf(r),mp.mpf(pr); return mp.binomial(k+r-1,k)*pr**r*(1-pr)**k
+def _nbh_log(k,r,pr):
+    import mpmath as mp; k,r,pr=mp.mpf(k),mp.mpf(r),mp.mpf(pr); return mp.log(mp.binomial(k+r-1,k))+r*mp.log(pr)+k*mp.log(1-pr)
+def _nbh_cdf(k,r,pr): return ibeta(mp.mpf(pr),mp.mpf(r),mp.mpf(k)+1)
+def _nbh_sf(k,r,pr):  return ibeta(1-mp.mpf(pr),mp.mpf(k)+1,mp.mpf(r))
+def _nbh_inv(prob,r,pr):
+    prob=mp.mpf(prob); mean=float(r)*(1-float(pr))/float(pr); import math as _m
+    lo,hi=-1,int(mean+40*(mean**0.5 if mean>0 else 1)/float(pr)+60)
+    while hi-lo>1:
+        m=(lo+hi)//2
+        if _nbh_cdf(m,r,pr)>=prob: hi=m
+        else: lo=m
+    return mp.mpf(hi)
+def _hyh_pmf(k,n,K,N):
+    k,n,K,N=mp.mpf(k),mp.mpf(n),mp.mpf(K),mp.mpf(N); return mp.binomial(K,k)*mp.binomial(N-K,n-k)/mp.binomial(N,n)
+def _hyh_log(k,n,K,N):
+    k,n,K,N=mp.mpf(k),mp.mpf(n),mp.mpf(K),mp.mpf(N); return mp.log(mp.binomial(K,k))+mp.log(mp.binomial(N-K,n-k))-mp.log(mp.binomial(N,n))
+def _hyh_cdf(k,n,K,N):
+    lo=max(0,int(n)+int(K)-int(N)); return sum((_hyh_pmf(j,n,K,N) for j in range(lo,int(k)+1)),mp.mpf(0))
+def _hyh_sf(k,n,K,N):
+    hi=min(int(n),int(K)); return sum((_hyh_pmf(j,n,K,N) for j in range(int(k)+1,hi+1)),mp.mpf(0))
+def _hyh_inv(prob,n,K,N):
+    prob=mp.mpf(prob); cum=mp.mpf(0)
+    for j in range(max(0,int(n)+int(K)-int(N)),min(int(n),int(K))+1):
+        cum+=_hyh_pmf(j,n,K,N)
+        if cum>=prob: return mp.mpf(j)
+    return mp.mpf(min(int(n),int(K)))
+
+def _discrete2_holdout_rows():
+    import math as _m
+    out=[]
+    def R(fn,kern,a1,a2,a3,ref,a4=""): out.append(row(fn,kern,a1,a2,a3,ref,"all",a4=a4))
+    # Negative Binomial: fresh r,p not in main grid {1,5,50,500,5000}x{.2,.5,.85}
+    for r,pr in [(2,0.3),(20,0.6),(200,0.4),(2000,0.75)]:
+        mean=r*(1-pr)/pr; sd=(r*(1-pr))**0.5/pr; k=int(_m.floor(mean+2*sd))
+        R("NegativeBinomial_PMF","K_STATS_NegativeBinomial_PMF",k,r,pr,_nbh_pmf(k,r,pr))
+        R("NegativeBinomial_LogPMF","K_STATS_NegativeBinomial_LogPMF",k,r,pr,_nbh_log(k,r,pr))
+        R("NegativeBinomial_Cumulative","K_STATS_NegativeBinomial_Cumulative",k,r,pr,_nbh_cdf(k,r,pr))
+        R("NegativeBinomial_Survival","K_STATS_NegativeBinomial_Survival",k,r,pr,_nbh_sf(k,r,pr))
+        for prob in [0.1,0.9]:
+            R("NegativeBinomial_InverseCumulative","K_STATS_NegativeBinomial_InverseCumulative",prob,r,pr,_nbh_inv(prob,r,pr))
+        R("NegativeBinomial_Mean","K_STATS_NegativeBinomial_Mean",r,pr,"",mp.mpf(r)*(1-mp.mpf(pr))/mp.mpf(pr))
+        R("NegativeBinomial_Variance","K_STATS_NegativeBinomial_Variance",r,pr,"",mp.mpf(r)*(1-mp.mpf(pr))/mp.mpf(pr)**2)
+        R("NegativeBinomial_StdDev","K_STATS_NegativeBinomial_StdDev",r,pr,"",mp.sqrt(mp.mpf(r)*(1-mp.mpf(pr)))/mp.mpf(pr))
+    # Hypergeometric: fresh (n,K,N) not in main grid
+    for n,K,N in [(20,30,80),(60,300,500),(200,2000,50000)]:
+        lo=max(0,n+K-N); hi=min(n,K); mean=n*K/N; k=int((lo+hi)//2)
+        for kk in sorted(set([lo,k,hi])):
+            R("Hypergeometric_PMF","K_STATS_Hypergeometric_PMF",kk,n,K,_hyh_pmf(kk,n,K,N),a4=N)
+            R("Hypergeometric_LogPMF","K_STATS_Hypergeometric_LogPMF",kk,n,K,_hyh_log(kk,n,K,N),a4=N)
+            R("Hypergeometric_Cumulative","K_STATS_Hypergeometric_Cumulative",kk,n,K,_hyh_cdf(kk,n,K,N),a4=N)
+            R("Hypergeometric_Survival","K_STATS_Hypergeometric_Survival",kk,n,K,_hyh_sf(kk,n,K,N),a4=N)
+        for prob in [0.25,0.75]:
+            R("Hypergeometric_InverseCumulative","K_STATS_Hypergeometric_InverseCumulative",prob,n,K,_hyh_inv(prob,n,K,N),a4=N)
+        R("Hypergeometric_Mean","K_STATS_Hypergeometric_Mean",n,K,N,mp.mpf(n)*mp.mpf(K)/mp.mpf(N))
+        R("Hypergeometric_Variance","K_STATS_Hypergeometric_Variance",n,K,N,mp.mpf(n)*(mp.mpf(K)/N)*((mp.mpf(N)-K)/N)*((mp.mpf(N)-n)/(mp.mpf(N)-1)))
+        R("Hypergeometric_StdDev","K_STATS_Hypergeometric_StdDev",n,K,N,mp.sqrt(mp.mpf(n)*(mp.mpf(K)/N)*((mp.mpf(N)-K)/N)*((mp.mpf(N)-n)/(mp.mpf(N)-1))))
+    return out
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--out",default="holdout_grid.csv"); a=ap.parse_args()
     rows=build()
-    fields=["function","vba_kernel","claim","metric","arg1","arg2","arg3","reference","observed_vba","regime","evidence_set"]
+    fields=["function","vba_kernel","claim","metric","arg1","arg2","arg3","arg4","reference","observed_vba","regime","evidence_set"]
     with open(a.out,"w",newline="") as f:
         w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(rows)
     print(f"wrote {a.out}: {len(rows)} rows")

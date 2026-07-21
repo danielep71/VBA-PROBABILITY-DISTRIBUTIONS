@@ -35,6 +35,7 @@ Public Sub Export_Holdout()
     Dim A1                  As Double
     Dim A2                  As Double
     Dim A3                  As Double
+    Dim A4                  As Double
     Dim Filled              As Long
     Dim I                   As Long
 
@@ -60,11 +61,12 @@ Public Sub Export_Holdout()
         If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
         Cols = Split(Lines(I), ",")
-        If UBound(Cols) >= 8 Then
+        If UBound(Cols) >= 9 Then
             A1 = Val(Cols(4))
             A2 = Val(Cols(5))
             A3 = Val(Cols(6))
-            Cols(8) = EvaluateHoldout(Cols(0), A1, A2, A3)
+            A4 = Val(Cols(7))
+            Cols(9) = EvaluateHoldout(Cols(0), A1, A2, A3, A4)
             Lines(I) = Join(Cols, ",")
             Filled = Filled + 1
         End If
@@ -88,7 +90,8 @@ Private Function EvaluateHoldout( _
     ByVal FuncName As String, _
     ByVal A1 As Double, _
     ByVal A2 As Double, _
-    ByVal A3 As Double) _
+    ByVal A3 As Double, _
+    ByVal A4 As Double) _
     As String
 '
     Dim V                   As Variant
@@ -128,6 +131,22 @@ Private Function EvaluateHoldout( _
         Case "Geometric_Mean":          V = K_STATS_Geometric_Mean(A1)
         Case "Geometric_Variance":      V = K_STATS_Geometric_Variance(A1)
         Case "Geometric_StdDev":        V = K_STATS_Geometric_StdDev(A1)
+        Case "NegativeBinomial_PMF":         V = K_STATS_NegativeBinomial_PMF(A1, A2, A3)
+        Case "NegativeBinomial_LogPMF":      V = K_STATS_NegativeBinomial_LogPMF(A1, A2, A3)
+        Case "NegativeBinomial_Cumulative":  V = K_STATS_NegativeBinomial_Cumulative(A1, A2, A3)
+        Case "NegativeBinomial_Survival":    V = K_STATS_NegativeBinomial_Survival(A1, A2, A3)
+        Case "NegativeBinomial_InverseCumulative": V = K_STATS_NegativeBinomial_InverseCumulative(A1, A2, A3)
+        Case "NegativeBinomial_Mean":        V = K_STATS_NegativeBinomial_Mean(A1, A2)
+        Case "NegativeBinomial_Variance":    V = K_STATS_NegativeBinomial_Variance(A1, A2)
+        Case "NegativeBinomial_StdDev":      V = K_STATS_NegativeBinomial_StdDev(A1, A2)
+        Case "Hypergeometric_PMF":           V = K_STATS_Hypergeometric_PMF(A1, A2, A3, A4)
+        Case "Hypergeometric_LogPMF":        V = K_STATS_Hypergeometric_LogPMF(A1, A2, A3, A4)
+        Case "Hypergeometric_Cumulative":    V = K_STATS_Hypergeometric_Cumulative(A1, A2, A3, A4)
+        Case "Hypergeometric_Survival":      V = K_STATS_Hypergeometric_Survival(A1, A2, A3, A4)
+        Case "Hypergeometric_InverseCumulative": V = K_STATS_Hypergeometric_InverseCumulative(A1, A2, A3, A4)
+        Case "Hypergeometric_Mean":          V = K_STATS_Hypergeometric_Mean(A1, A2, A3)
+        Case "Hypergeometric_Variance":      V = K_STATS_Hypergeometric_Variance(A1, A2, A3)
+        Case "Hypergeometric_StdDev":        V = K_STATS_Hypergeometric_StdDev(A1, A2, A3)
         Case Else
             EvaluateHoldout = "ERROR"
             Exit Function

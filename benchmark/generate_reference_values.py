@@ -390,6 +390,72 @@ def _geo_inv(prob, pr):
     return mp.mpf(k)
 
 
+
+def _nb_pmf(k, r, pr):
+    k, r, pr = mp.mpf(k), mp.mpf(r), mp.mpf(pr)
+    return mp.binomial(k + r - 1, k) * pr ** r * (1 - pr) ** k
+
+
+def _nb_logpmf(k, r, pr):
+    k, r, pr = mp.mpf(k), mp.mpf(r), mp.mpf(pr)
+    return mp.log(mp.binomial(k + r - 1, k)) + r * mp.log(pr) + k * mp.log(1 - pr)
+
+
+def _nb_cdf(k, r, pr):
+    return _ibeta(mp.mpf(pr), mp.mpf(r), mp.mpf(k) + 1)
+
+
+def _nb_sf(k, r, pr):
+    return _ibeta(1 - mp.mpf(pr), mp.mpf(k) + 1, mp.mpf(r))
+
+
+def _nb_inv(prob, r, pr):
+    prob = mp.mpf(prob)
+    mean = float(r) * (1 - float(pr)) / float(pr)
+    sd = mean ** 0.5 / float(pr) if pr < 1 else 1.0
+    lo, hi = -1, int(mean + 40 * sd + 60)
+    while hi - lo > 1:
+        m = (lo + hi) // 2
+        if _nb_cdf(m, r, pr) >= prob:
+            hi = m
+        else:
+            lo = m
+    return mp.mpf(hi)
+
+
+def _hy_pmf(k, n, K, N):
+    k, n, K, N = mp.mpf(k), mp.mpf(n), mp.mpf(K), mp.mpf(N)
+    return mp.binomial(K, k) * mp.binomial(N - K, n - k) / mp.binomial(N, n)
+
+
+def _hy_logpmf(k, n, K, N):
+    k, n, K, N = mp.mpf(k), mp.mpf(n), mp.mpf(K), mp.mpf(N)
+    return (mp.log(mp.binomial(K, k)) + mp.log(mp.binomial(N - K, n - k))
+            - mp.log(mp.binomial(N, n)))
+
+
+def _hy_cdf(k, n, K, N):
+    lo = max(0, int(n) + int(K) - int(N))
+    return sum((_hy_pmf(j, n, K, N) for j in range(lo, int(k) + 1)), mp.mpf(0))
+
+
+def _hy_sf(k, n, K, N):
+    hi = min(int(n), int(K))
+    return sum((_hy_pmf(j, n, K, N) for j in range(int(k) + 1, hi + 1)), mp.mpf(0))
+
+
+def _hy_inv(prob, n, K, N):
+    prob = mp.mpf(prob)
+    lo = max(0, int(n) + int(K) - int(N)) - 1
+    hi = min(int(n), int(K))
+    cum = mp.mpf(0); k = lo
+    for j in range(max(0, int(n) + int(K) - int(N)), hi + 1):
+        cum += _hy_pmf(j, n, K, N)
+        if cum >= prob:
+            return mp.mpf(j)
+    return mp.mpf(hi)
+
+
 def build_discrete_rows():
     rows = []
     REL12, REL9, REL14, ABS9 = "rel<=1E-12", "rel<=1E-9", "rel<=1E-14", "abs<=1E-9"
@@ -400,6 +466,7 @@ def build_discrete_rows():
             "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
             "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
             "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
+            "arg4": mp.nstr(args[3], 17) if len(args) > 3 else "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": "all", "evidence_set": "main grid",
         })
@@ -449,6 +516,38 @@ def build_discrete_rows():
         row("Geometric_Variance", "K_STATS_Geometric_Variance", (pr,), (1 - pr) / pr ** 2, REL14, "rel")
         row("Geometric_StdDev", "K_STATS_Geometric_StdDev", (pr,), mp.sqrt(1 - pr) / pr, REL14, "rel")
 
+    # --- Negative Binomial (failures before r-th success; args k, r, p) ---
+    for r in [mp.mpf(1), mp.mpf(5), mp.mpf(50), mp.mpf(500), mp.mpf(5000)]:
+        for pr in [mp.mpf("0.2"), mp.mpf("0.5"), mp.mpf("0.85")]:
+            mean = r * (1 - pr) / pr
+            sd = mp.sqrt(r * (1 - pr)) / pr
+            for k in sorted(set([mp.mpf(mp.floor(mean)), mp.mpf(mp.floor(mean + 3 * sd))])):
+                row("NegativeBinomial_PMF", "K_STATS_NegativeBinomial_PMF", (k, r, pr), _nb_pmf(k, r, pr), REL12, "rel")
+                row("NegativeBinomial_LogPMF", "K_STATS_NegativeBinomial_LogPMF", (k, r, pr), _nb_logpmf(k, r, pr), REL12, "rel")
+                row("NegativeBinomial_Cumulative", "K_STATS_NegativeBinomial_Cumulative", (k, r, pr), _nb_cdf(k, r, pr), REL9, "rel")
+                row("NegativeBinomial_Survival", "K_STATS_NegativeBinomial_Survival", (k, r, pr), _nb_sf(k, r, pr), REL9, "rel")
+            for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
+                row("NegativeBinomial_InverseCumulative", "K_STATS_NegativeBinomial_InverseCumulative", (prob, r, pr), _nb_inv(prob, r, pr), ABS9, "abs")
+            row("NegativeBinomial_Mean", "K_STATS_NegativeBinomial_Mean", (r, pr), r * (1 - pr) / pr, REL14, "rel")
+            row("NegativeBinomial_Variance", "K_STATS_NegativeBinomial_Variance", (r, pr), r * (1 - pr) / pr ** 2, REL14, "rel")
+            row("NegativeBinomial_StdDev", "K_STATS_NegativeBinomial_StdDev", (r, pr), mp.sqrt(r * (1 - pr)) / pr, REL14, "rel")
+
+    # --- Hypergeometric (args k, n, K, N: sample succ, sample size, pop succ, pop size) ---
+    for n, K, N in [(10, 20, 50), (30, 40, 100), (100, 500, 1000), (50, 200, 1000), (500, 5000, 100000)]:
+        n, K, N = mp.mpf(n), mp.mpf(K), mp.mpf(N)
+        lo = max(0, int(n) + int(K) - int(N)); hi = min(int(n), int(K))
+        mean = n * K / N
+        for k in sorted(set([mp.mpf(lo), mp.mpf(int(mean)), mp.mpf(hi)])):
+            row("Hypergeometric_PMF", "K_STATS_Hypergeometric_PMF", (k, n, K, N), _hy_pmf(k, n, K, N), REL12, "rel")
+            row("Hypergeometric_LogPMF", "K_STATS_Hypergeometric_LogPMF", (k, n, K, N), _hy_logpmf(k, n, K, N), REL12, "rel")
+            row("Hypergeometric_Cumulative", "K_STATS_Hypergeometric_Cumulative", (k, n, K, N), _hy_cdf(k, n, K, N), REL9, "rel")
+            row("Hypergeometric_Survival", "K_STATS_Hypergeometric_Survival", (k, n, K, N), _hy_sf(k, n, K, N), REL9, "rel")
+        for prob in [mp.mpf("0.1"), mp.mpf("0.5"), mp.mpf("0.9")]:
+            row("Hypergeometric_InverseCumulative", "K_STATS_Hypergeometric_InverseCumulative", (prob, n, K, N), _hy_inv(prob, n, K, N), ABS9, "abs")
+        row("Hypergeometric_Mean", "K_STATS_Hypergeometric_Mean", (n, K, N), n * K / N, REL14, "rel")
+        row("Hypergeometric_Variance", "K_STATS_Hypergeometric_Variance", (n, K, N), n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)), REL14, "rel")
+        row("Hypergeometric_StdDev", "K_STATS_Hypergeometric_StdDev", (n, K, N), mp.sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1))), REL14, "rel")
+
     return rows
 
 
@@ -472,6 +571,7 @@ def build_rows():
                 "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
                 "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
                 "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
+                "arg4": mp.nstr(args[3], 17) if len(args) > 3 else "",
                 "reference": mp.nstr(ref, 25),
                 "observed_vba": "",
                 "regime": regime,
@@ -656,7 +756,7 @@ def main():
     rows = build_rows()
 
     fields = ["function", "vba_kernel", "claim", "metric",
-              "arg1", "arg2", "arg3", "reference", "observed_vba",
+              "arg1", "arg2", "arg3", "arg4", "reference", "observed_vba",
               "regime", "evidence_set"]
     with open(args.out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
