@@ -52,6 +52,7 @@ try {
         "src\M_STATS_PROBDIST_NORMALFAMILY.bas",
         "src\M_STATS_PROBDIST_TFAMILY.bas",
         "src\M_STATS_PROBDIST_CONTINUOUS.bas",
+        "src\M_STATS_PROBDIST_DISCRETE.bas",
         "tests\M_STATS_PROBDIST_TEST.bas"
     )
 
@@ -128,6 +129,7 @@ Public Function Test_STATS_PROBDIST_RunAll_CI() As String
     RunNormalFamilySuite
     RunTFamilySuite
     RunContinuousSuite
+    RunDiscreteSuite
     EndRun
 
     Test_STATS_PROBDIST_RunAll_CI = _
