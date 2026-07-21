@@ -13,6 +13,7 @@ Option Explicit
 '     - M_STATS_PROBDIST_NORMALFAMILY
 '     - M_STATS_PROBDIST_TFAMILY
 '     - M_STATS_PROBDIST_CONTINUOUS
+'     - M_STATS_PROBDIST_DISCRETE
 '
 '   The harness verifies known values, support behavior, complement identities,
 '   symmetry, inverse round-trips, extreme tails, moment formulas, numerical
@@ -35,6 +36,7 @@ Option Explicit
 '       Test_STATS_PROBDIST_RunNormalFamily
 '       Test_STATS_PROBDIST_RunTFamily
 '       Test_STATS_PROBDIST_RunContinuous
+'       Test_STATS_PROBDIST_RunDiscrete
 '
 '   Results are written with Debug.Print. Passing assertions are silent.
 '   Failures print one detailed line, followed by a consolidated summary.
@@ -45,7 +47,9 @@ Option Explicit
 '       1. Core and reusable special-function kernels
 '       2. Normal and lognormal family
 '       3. Student t, chi-square and F family
-'       4. Gamma, Beta, Exponential, Weibull and Uniform family
+'       4. Gamma, Beta, Exponential, Weibull and continuous Uniform family
+'       5. Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric and
+'          Discrete Uniform family
 '
 ' TEST DESIGN
 '   - Public UDFs return Variant and may return CVErr, so assertion helpers
@@ -104,6 +108,16 @@ Option Explicit
 '     D6  Uniform calculations must support the full finite Double range,
 '         including opposite-sign bounds whose width exceeds Double maximum.
 '
+'   Discrete Family
+'     DS1 Loader-style Binomial and Poisson mass kernels must remain stable near
+'         the mode and in deep tails; LogPMF must remain finite after PMF underflow.
+'     DS2 Binomial, Poisson, Geometric, Negative Binomial and Hypergeometric
+'         direct-tail identities and inverse least-integer contracts must hold.
+'     DS3 Discrete Uniform must preserve signed supports, real-threshold step
+'         behavior, direct survival, quantile jump boundaries and exact moments.
+'     DS4 Predictable discrete domain and range failures must return #NUM!, never
+'         a sentinel value or an unexpected #VALUE!.
+'
 ' ERROR POLICY
 '   - A failed assertion increments the failure counter and prints one line.
 '   - The test harness itself raises no MsgBox.
@@ -117,6 +131,7 @@ Option Explicit
 '   - M_STATS_PROBDIST_NORMALFAMILY
 '   - M_STATS_PROBDIST_TFAMILY
 '   - M_STATS_PROBDIST_CONTINUOUS
+'   - M_STATS_PROBDIST_DISCRETE
 '
 ' PUBLIC SURFACE
 '   - Test_STATS_PROBDIST_RunAll
@@ -124,6 +139,7 @@ Option Explicit
 '   - Test_STATS_PROBDIST_RunNormalFamily
 '   - Test_STATS_PROBDIST_RunTFamily
 '   - Test_STATS_PROBDIST_RunContinuous
+'   - Test_STATS_PROBDIST_RunDiscrete
 '
 ' NOTES
 '   - Reference values were prepared with high-precision arithmetic and rounded
@@ -381,7 +397,8 @@ Public Sub Test_STATS_PROBDIST_RunDiscrete()
 ' Test_STATS_PROBDIST_RunDiscrete
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs only the Binomial, Poisson and Geometric suite.
+'   Runs only the complete discrete-distribution suite: Binomial, Poisson,
+'   Geometric, Negative Binomial, Hypergeometric and Discrete Uniform.
 '
 ' BEHAVIOR
 '   - Resets the shared counters.
@@ -402,7 +419,7 @@ Public Sub Test_STATS_PROBDIST_RunDiscrete()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-21
 '==============================================================================
 '
     'Initialize the selected test run
@@ -601,7 +618,8 @@ Private Sub RunDiscreteSuite()
 ' RunDiscreteSuite
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the Binomial, Poisson and Geometric test sections.
+'   Runs all discrete-family test sections in dependency order: mass functions,
+'   tails, inverses, moments, LogPMF behavior, errors and support edges.
 '
 ' BEHAVIOR
 '   - Prints one section heading.
@@ -615,7 +633,7 @@ Private Sub RunDiscreteSuite()
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_DISCRETE"
@@ -636,6 +654,11 @@ Private Sub RunDiscreteSuite()
     Test_DS_GeometricMoments
     Test_DS_NegativeBinomial
     Test_DS_Hypergeometric
+    Test_DS_DiscreteUniformPMF
+    Test_DS_DiscreteUniformCumulative
+    Test_DS_DiscreteUniformSurvival
+    Test_DS_DiscreteUniformInverse
+    Test_DS_DiscreteUniformMoments
     Test_DS_LogPMF
     Test_DS_ErrorContract
     Test_DS_SupportEdges
@@ -5537,7 +5560,7 @@ Private Sub Test_DS_NegativeBinomial()
 '   Negative binomial mass, deep-tail log-mass, tails, moments, inverse and errors.
 '
 ' CALLED FROM
-'   - RunDiscreteSuite (add the registration line, see foot of file)
+'   - RunDiscreteSuite
 '
 ' UPDATED
 '   2026-07-21
@@ -5640,15 +5663,283 @@ End Sub
 
 
 
+Private Sub Test_DS_DiscreteUniformPMF()
+'
+'==============================================================================
+' Test_DS_DiscreteUniformPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies ordinary, signed, truncated-bound, off-support and maximum-support
+'   probability masses for the integer-valued Discrete Uniform distribution.
+'
+' BEHAVIOR
+'   - PMF is constant on every integer in the inclusive support.
+'   - A finite non-integer X carries zero mass; X is never truncated.
+'   - Signed bounds are truncated toward zero under the public count policy.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Discrete Uniform PMF"
+
+    'Ordinary positive support: {1,2,3,4,5,6}
+    AssertClose "du pmf(1,1,6)=1/6", _
+        K_STATS_DiscreteUniform_PMF(1#, 1#, 6#), _
+        0.166666666666667, TOL_ABS_TIGHT
+    AssertClose "du pmf(4,1,6)=1/6", _
+        K_STATS_DiscreteUniform_PMF(4#, 1#, 6#), _
+        0.166666666666667, TOL_ABS_TIGHT
+    AssertClose "du pmf(6,1,6)=1/6", _
+        K_STATS_DiscreteUniform_PMF(6#, 1#, 6#), _
+        0.166666666666667, TOL_ABS_TIGHT
+
+    'Signed support and bound truncation: Fix(-2.9)=-2, Fix(2.9)=2
+    AssertClose "du pmf(-2,-2.9,2.9)=1/5", _
+        K_STATS_DiscreteUniform_PMF(-2#, -2.9, 2.9), _
+        0.2, TOL_ABS_TIGHT
+    AssertClose "du pmf(0,-2,2)=1/5", _
+        K_STATS_DiscreteUniform_PMF(0#, -2#, 2#), _
+        0.2, TOL_ABS_TIGHT
+
+    'PMF support contract
+    AssertClose "du pmf noninteger=0", _
+        K_STATS_DiscreteUniform_PMF(0.25, -2#, 2#), _
+        0#, 0#
+    AssertClose "du pmf below support=0", _
+        K_STATS_DiscreteUniform_PMF(-3#, -2#, 2#), _
+        0#, 0#
+    AssertClose "du pmf above support=0", _
+        K_STATS_DiscreteUniform_PMF(3#, -2#, 2#), _
+        0#, 0#
+
+    'Largest accepted support cardinality: Upper=2^53-2, count=2^53-1
+    AssertRelClose "du pmf maximum exact support", _
+        K_STATS_DiscreteUniform_PMF(0#, 0#, 9.00719925474099E+15), _
+        1.11022302462516E-16, TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_DS_DiscreteUniformCumulative()
+'
+'==============================================================================
+' Test_DS_DiscreteUniformCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the right-continuous Discrete Uniform step CDF over positive and
+'   negative real thresholds.
+'
+' BEHAVIOR
+'   - The threshold X is not truncated; the kernel uses Floor(X).
+'   - Left-tail support points are counted directly.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Discrete Uniform cumulative"
+
+    'Support {-2,-1,0,1,2}; the real-line CDF steps at each support integer
+    AssertClose "du cdf below support", _
+        K_STATS_DiscreteUniform_Cumulative(-3#, -2#, 2#), _
+        0#, 0#
+    AssertClose "du cdf at lower bound", _
+        K_STATS_DiscreteUniform_Cumulative(-2#, -2#, 2#), _
+        0.2, TOL_ABS_TIGHT
+    AssertClose "du cdf negative real threshold floors correctly", _
+        K_STATS_DiscreteUniform_Cumulative(-1.2, -2#, 2#), _
+        0.2, TOL_ABS_TIGHT
+    AssertClose "du cdf at -1", _
+        K_STATS_DiscreteUniform_Cumulative(-1#, -2#, 2#), _
+        0.4, TOL_ABS_TIGHT
+    AssertClose "du cdf at -0.2", _
+        K_STATS_DiscreteUniform_Cumulative(-0.2, -2#, 2#), _
+        0.4, TOL_ABS_TIGHT
+    AssertClose "du cdf at zero", _
+        K_STATS_DiscreteUniform_Cumulative(0#, -2#, 2#), _
+        0.6, TOL_ABS_TIGHT
+    AssertClose "du cdf just below upper", _
+        K_STATS_DiscreteUniform_Cumulative(1.999, -2#, 2#), _
+        0.8, TOL_ABS_TIGHT
+    AssertClose "du cdf at upper bound", _
+        K_STATS_DiscreteUniform_Cumulative(2#, -2#, 2#), _
+        1#, 0#
+    AssertClose "du cdf above support", _
+        K_STATS_DiscreteUniform_Cumulative(200#, -2#, 2#), _
+        1#, 0#
+End Sub
+
+
+Private Sub Test_DS_DiscreteUniformSurvival()
+'
+'==============================================================================
+' Test_DS_DiscreteUniformSurvival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies direct Discrete Uniform upper tails and CDF/SF complement identities
+'   at integer and non-integer thresholds.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Discrete Uniform survival"
+
+    'Support {-2,-1,0,1,2}; P(Y > X) counts the upper support directly
+    AssertClose "du sf below support", _
+        K_STATS_DiscreteUniform_Survival(-3#, -2#, 2#), _
+        1#, 0#
+    AssertClose "du sf at lower bound", _
+        K_STATS_DiscreteUniform_Survival(-2#, -2#, 2#), _
+        0.8, TOL_ABS_TIGHT
+    AssertClose "du sf negative real threshold floors correctly", _
+        K_STATS_DiscreteUniform_Survival(-1.2, -2#, 2#), _
+        0.8, TOL_ABS_TIGHT
+    AssertClose "du sf at -1", _
+        K_STATS_DiscreteUniform_Survival(-1#, -2#, 2#), _
+        0.6, TOL_ABS_TIGHT
+    AssertClose "du sf at -0.2", _
+        K_STATS_DiscreteUniform_Survival(-0.2, -2#, 2#), _
+        0.6, TOL_ABS_TIGHT
+    AssertClose "du sf at zero", _
+        K_STATS_DiscreteUniform_Survival(0#, -2#, 2#), _
+        0.4, TOL_ABS_TIGHT
+    AssertClose "du sf just below upper", _
+        K_STATS_DiscreteUniform_Survival(1.999, -2#, 2#), _
+        0.2, TOL_ABS_TIGHT
+    AssertClose "du sf at upper bound", _
+        K_STATS_DiscreteUniform_Survival(2#, -2#, 2#), _
+        0#, 0#
+
+    'Each direct tail counts a disjoint partition of the support
+    AssertClose "du cdf+sf=1 at negative real threshold", _
+        K_STATS_DiscreteUniform_Cumulative(-1.2, -2#, 2#) + _
+        K_STATS_DiscreteUniform_Survival(-1.2, -2#, 2#), _
+        1#, TOL_ABS_TIGHT
+    AssertClose "du cdf+sf=1 at zero", _
+        K_STATS_DiscreteUniform_Cumulative(0#, -2#, 2#) + _
+        K_STATS_DiscreteUniform_Survival(0#, -2#, 2#), _
+        1#, TOL_ABS_TIGHT
+    AssertClose "du cdf+sf=1 just below upper", _
+        K_STATS_DiscreteUniform_Cumulative(1.999, -2#, 2#) + _
+        K_STATS_DiscreteUniform_Survival(1.999, -2#, 2#), _
+        1#, TOL_ABS_TIGHT
+End Sub
+
+
+Private Sub Test_DS_DiscreteUniformInverse()
+'
+'==============================================================================
+' Test_DS_DiscreteUniformInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the least-integer quantile definition at ordinary probabilities,
+'   exact CDF jumps and values immediately above a jump.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Discrete Uniform inverse"
+
+    'Support {-2,-1,0,1,2}; CDF jumps are 0.2,0.4,0.6,0.8,1
+    AssertClose "du inv(.01,-2,2)=-2", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.01, -2#, 2#), _
+        -2#, 0#
+    AssertClose "du inv(.2,-2,2)=-2 jump boundary", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.2, -2#, 2#), _
+        -2#, 0#
+    AssertClose "du inv(just above .2,-2,2)=-1", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.200000000000001, -2#, 2#), _
+        -1#, 0#
+    AssertClose "du inv(.4,-2,2)=-1 jump boundary", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.4, -2#, 2#), _
+        -1#, 0#
+    AssertClose "du inv(.5,-2,2)=0", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.5, -2#, 2#), _
+        0#, 0#
+    AssertClose "du inv(.8,-2,2)=1 jump boundary", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.8, -2#, 2#), _
+        1#, 0#
+    AssertClose "du inv(.999999999999999,-2,2)=2", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.999999999999999, -2#, 2#), _
+        2#, 0#
+
+    'Positive support and exact decimal jump
+    AssertClose "du inv(.3,0,9)=2", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.3, 0#, 9#), _
+        2#, 0#
+End Sub
+
+
+Private Sub Test_DS_DiscreteUniformMoments()
+'
+'==============================================================================
+' Test_DS_DiscreteUniformMoments
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies mean, variance and standard deviation for ordinary, signed,
+'   degenerate and very wide supports.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Debug.Print "-- Discrete Uniform moments"
+
+    'Six-point support {1,...,6}
+    AssertClose "du mean(1,6)", _
+        K_STATS_DiscreteUniform_Mean(1#, 6#), _
+        3.5, TOL_ABS_TIGHT
+    AssertClose "du var(1,6)", _
+        K_STATS_DiscreteUniform_Variance(1#, 6#), _
+        2.91666666666667, TOL_ABS_TIGHT
+    AssertClose "du std(1,6)", _
+        K_STATS_DiscreteUniform_StdDev(1#, 6#), _
+        1.70782512765993, TOL_ABS_TIGHT
+
+    'Symmetric signed support {-3,...,3}
+    AssertClose "du mean(-3,3)=0", _
+        K_STATS_DiscreteUniform_Mean(-3#, 3#), _
+        0#, 0#
+    AssertClose "du var(-3,3)=4", _
+        K_STATS_DiscreteUniform_Variance(-3#, 3#), _
+        4#, TOL_ABS_TIGHT
+    AssertClose "du std(-3,3)=2", _
+        K_STATS_DiscreteUniform_StdDev(-3#, 3#), _
+        2#, TOL_ABS_TIGHT
+
+    'Wide opposite-signed support: stable midpoint, no direct-sum overflow
+    AssertClose "du mean wide symmetric support=0", _
+        K_STATS_DiscreteUniform_Mean(-4.5E+15, 4.5E+15), _
+        0#, 0#
+End Sub
+
+
 Private Sub Test_DS_LogPMF()
 '
 '==============================================================================
 ' Test_DS_LogPMF
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Verifies the three public log-mass functions: finite log where the plain
-'   PMF underflows, LogPMF = 0 at certain outcomes, #NUM! at impossible
-'   outcomes, and PMF = Exp(LogPMF) where the mass is representable.
+'   Verifies the shared LogPMF contract across all discrete families: finite
+'   logarithms after ordinary PMF underflow, zero at certain outcomes, #NUM! at
+'   zero-probability outcomes, and PMF = Exp(LogPMF) where representable.
 '
 ' CALLED FROM
 '   - RunDiscreteSuite
@@ -5673,6 +5964,9 @@ Private Sub Test_DS_LogPMF()
         -2.9873475240196, TOL_ABS_TIGHT
     AssertClose "geo logpmf(100,.3)", K_STATS_Geometric_LogPMF(100#, 0.3), _
         -36.8714671981992, TOL_ABS_TIGHT
+    AssertClose "du logpmf(0,-2,2)", _
+        K_STATS_DiscreteUniform_LogPMF(0#, -2#, 2#), _
+        -1.6094379124341, TOL_ABS_TIGHT
 
     Debug.Print "-- Discrete log-mass at certain outcomes (LogPMF = 0)"
     AssertClose "binom logpmf(0,20,0) p=0 k=0", K_STATS_Binomial_LogPMF(0#, 20#, 0#), _
@@ -5681,6 +5975,9 @@ Private Sub Test_DS_LogPMF()
         0#, TOL_ABS_TIGHT
     AssertClose "geo logpmf(0,1) p=1 k=0", K_STATS_Geometric_LogPMF(0#, 1#), 0#, TOL_ABS_TIGHT
     AssertClose "pois logpmf(0,0) mean=0 k=0", K_STATS_Poisson_LogPMF(0#, 0#), 0#, TOL_ABS_TIGHT
+    AssertClose "du logpmf one-point support", _
+        K_STATS_DiscreteUniform_LogPMF(7#, 7#, 7#), _
+        0#, TOL_ABS_TIGHT
 
     Debug.Print "-- Discrete PMF = Exp(LogPMF) where PMF is representable"
     AssertRelClose "binom identity(7,20,.35)", _
@@ -5689,6 +5986,9 @@ Private Sub Test_DS_LogPMF()
         Exp(K_STATS_Poisson_LogPMF(7#, 3#)), K_STATS_Poisson_PMF(7#, 3#), TOL_REL_TIGHT
     AssertRelClose "geo identity(5,.3)", _
         Exp(K_STATS_Geometric_LogPMF(5#, 0.3)), K_STATS_Geometric_PMF(5#, 0.3), TOL_REL_TIGHT
+    AssertRelClose "du identity(0,-2,2)", _
+        Exp(K_STATS_DiscreteUniform_LogPMF(0#, -2#, 2#)), _
+        K_STATS_DiscreteUniform_PMF(0#, -2#, 2#), TOL_REL_TIGHT
 
     Debug.Print "-- Discrete LogPMF impossible outcomes return CVErr"
     AssertIsError "binom logpmf p=0 k>0", K_STATS_Binomial_LogPMF(3#, 20#, 0#)
@@ -5696,6 +5996,10 @@ Private Sub Test_DS_LogPMF()
     AssertIsError "geo logpmf p=1 k>0", K_STATS_Geometric_LogPMF(3#, 1#)
     AssertIsError "pois logpmf mean=0 k>0", K_STATS_Poisson_LogPMF(3#, 0#)
     AssertIsError "binom logpmf k>n", K_STATS_Binomial_LogPMF(21#, 20#, 0.5)
+    AssertErrorCode "du logpmf noninteger", _
+        K_STATS_DiscreteUniform_LogPMF(0.25, -2#, 2#), xlErrNum
+    AssertErrorCode "du logpmf outside support", _
+        K_STATS_DiscreteUniform_LogPMF(3#, -2#, 2#), xlErrNum
 End Sub
 
 
@@ -5716,7 +6020,7 @@ Private Sub Test_DS_ErrorContract()
 '   - RunDiscreteSuite
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-21
 '==============================================================================
 '
     Dim Diag As String
@@ -5734,12 +6038,26 @@ Private Sub Test_DS_ErrorContract()
     AssertIsError "geo pmf p=0", K_STATS_Geometric_PMF(1#, 0#)
     AssertIsError "geo pmf p>1", K_STATS_Geometric_PMF(1#, 1.5)
 
+    'Discrete Uniform bound and support-size errors
+    AssertErrorCode "du lower>upper", _
+        K_STATS_DiscreteUniform_PMF(0#, 2#, 1#), xlErrNum
+    AssertErrorCode "du lower>upper after truncation", _
+        K_STATS_DiscreteUniform_PMF(0#, 2.9, 1.9), xlErrNum
+    AssertErrorCode "du support cardinality above 2^53-1", _
+        K_STATS_DiscreteUniform_PMF(0#, -9E+15, 9E+15), xlErrNum
+    AssertErrorCode "du bound outside exact-integer domain", _
+        K_STATS_DiscreteUniform_PMF(0#, 0#, 1E+16), xlErrNum
+
     'Inverse probabilities outside the open unit interval
     AssertIsError "binom inv p=0", K_STATS_Binomial_InverseCumulative(0#, 20#, 0.35)
     AssertIsError "binom inv p=1", K_STATS_Binomial_InverseCumulative(1#, 20#, 0.35)
     AssertIsError "pois inv p=1", K_STATS_Poisson_InverseCumulative(1#, 3#)
     AssertIsError "geo inv p=0", K_STATS_Geometric_InverseCumulative(0#, 0.3)
     AssertIsError "geo inv p>1", K_STATS_Geometric_InverseCumulative(1.5, 0.3)
+    AssertErrorCode "du inv p=0", _
+        K_STATS_DiscreteUniform_InverseCumulative(0#, -2#, 2#), xlErrNum
+    AssertErrorCode "du inv p=1", _
+        K_STATS_DiscreteUniform_InverseCumulative(1#, -2#, 2#), xlErrNum
 
     'Status must be populated on failure and cleared on success
     Diag = "stale"
@@ -5749,6 +6067,17 @@ Private Sub Test_DS_ErrorContract()
     AssertClose "binom pmf ok with status", K_STATS_Binomial_PMF(7#, 20#, 0.35, Diag), _
         0.184401186383931, TOL_ABS_TIGHT
     AssertTrue "DS status cleared on success", (Len(Diag) = 0)
+
+    'Discrete Uniform follows the same diagnostic contract
+    Diag = "stale"
+    AssertErrorCode "du invalid bounds with status", _
+        K_STATS_DiscreteUniform_PMF(0#, 2#, 1#, Diag), xlErrNum
+    AssertTrue "du status populated on failure", (Len(Diag) > 0 And Diag <> "stale")
+    Diag = "stale"
+    AssertClose "du pmf ok with status", _
+        K_STATS_DiscreteUniform_PMF(0#, -2#, 2#, Diag), _
+        0.2, TOL_ABS_TIGHT
+    AssertTrue "du status cleared on success", (Len(Diag) = 0)
 End Sub
 
 
@@ -5769,7 +6098,7 @@ Private Sub Test_DS_SupportEdges()
 '   - RunDiscreteSuite
 '
 ' UPDATED
-'   2026-07-19
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Discrete support edges"
@@ -5785,6 +6114,37 @@ Private Sub Test_DS_SupportEdges()
         0#, 0#
     AssertClose "geo p=1 inv=0", K_STATS_Geometric_InverseCumulative(0.5, 1#), _
         0#, 0#
+
+    'One-point Discrete Uniform support
+    AssertClose "du one-point pmf=1", _
+        K_STATS_DiscreteUniform_PMF(7#, 7#, 7#), _
+        1#, 0#
+    AssertClose "du one-point cdf below=0", _
+        K_STATS_DiscreteUniform_Cumulative(6.999, 7#, 7#), _
+        0#, 0#
+    AssertClose "du one-point cdf at support=1", _
+        K_STATS_DiscreteUniform_Cumulative(7#, 7#, 7#), _
+        1#, 0#
+    AssertClose "du one-point sf below=1", _
+        K_STATS_DiscreteUniform_Survival(6.999, 7#, 7#), _
+        1#, 0#
+    AssertClose "du one-point sf at support=0", _
+        K_STATS_DiscreteUniform_Survival(7#, 7#, 7#), _
+        0#, 0#
+    AssertClose "du one-point inverse=7", _
+        K_STATS_DiscreteUniform_InverseCumulative(0.5, 7#, 7#), _
+        7#, 0#
+    AssertClose "du one-point mean=7", _
+        K_STATS_DiscreteUniform_Mean(7#, 7#), _
+        7#, 0#
+    AssertClose "du one-point variance=0", _
+        K_STATS_DiscreteUniform_Variance(7#, 7#), _
+        0#, 0#
+    AssertClose "du one-point stddev=0", _
+        K_STATS_DiscreteUniform_StdDev(7#, 7#), _
+        0#, 0#
 End Sub
+
+
 
 
