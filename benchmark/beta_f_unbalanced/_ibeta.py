@@ -34,7 +34,7 @@ def ibeta(x, a, b):
 
 def beta_invcdf(p, a, b):
     p, a, b = mp.mpf(p), mp.mpf(a), mp.mpf(b)
-    lo, hi = mp.mpf(0), mp.mpf(1)
+    lo, hi = mp.mpf(0), mp.mpf(1)   # exact support of the Beta quantile; not a cap
     for _ in range(230):
         mid = (lo + hi) / 2
         if ibeta(mid, a, b) < p: lo = mid
@@ -46,9 +46,17 @@ def f_cdf(x, d1, d2):
     return ibeta(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2)
 
 def f_invcdf(p, d1, d2):
-    lo, hi = mp.mpf(0), mp.mpf('1e12')
+    # Upper bracket derived from the target probability rather than a fixed cap:
+    # expand until the CDF exceeds p, so extreme upper-tail quantiles are not
+    # silently clipped (a fixed 1e12 cap previously returned the wrong quantile
+    # for probabilities whose true value exceeds 1e12). The 1e300 guard keeps the
+    # expansion below Double overflow.
+    p = mp.mpf(p)
+    lo, hi = mp.mpf(0), mp.mpf(1)
+    while f_cdf(hi, d1, d2) < p and hi < mp.mpf('1e300'):
+        hi *= 16
     for _ in range(270):
         mid = (lo + hi) / 2
-        if f_cdf(mid, d1, d2) < mp.mpf(p): lo = mid
+        if f_cdf(mid, d1, d2) < p: lo = mid
         else: hi = mid
     return (lo + hi) / 2

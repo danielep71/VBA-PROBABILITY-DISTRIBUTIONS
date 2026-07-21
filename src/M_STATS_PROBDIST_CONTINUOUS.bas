@@ -155,7 +155,7 @@ Option Explicit
 '     Double range where the implemented formula remains numerically meaningful.
 '
 ' UPDATED
-'   2026-07-11 - Release Gate 3 hardening and house-style normalization.
+'   2026-07-21 - Release Gate 3 hardening and house-style normalization.
 '==============================================================================
 
 
@@ -219,7 +219,7 @@ Public Function K_STATS_Gamma_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and log-density stabilization.
+'   2026-07-21 - House-style rewrite and log-density stabilization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -387,7 +387,7 @@ Public Function K_STATS_Gamma_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and overflow classification.
+'   2026-07-21 - House-style rewrite and overflow classification.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -525,7 +525,7 @@ Public Function K_STATS_Gamma_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and direct-tail preservation.
+'   2026-07-21 - House-style rewrite and direct-tail preservation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -664,7 +664,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style normalization and Gate 3 overflow contract.
+'   2026-07-21 - House-style normalization and Gate 3 overflow contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -788,7 +788,7 @@ Public Function K_STATS_Gamma_Mean( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style normalization and Gate 3 product contract.
+'   2026-07-21 - House-style normalization and Gate 3 product contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -903,7 +903,7 @@ Public Function K_STATS_Gamma_Variance( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style normalization and Gate 3 product contract.
+'   2026-07-21 - House-style normalization and Gate 3 product contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1024,7 +1024,7 @@ Public Function K_STATS_Gamma_StdDev( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style normalization and Gate 3 product contract.
+'   2026-07-21 - House-style normalization and Gate 3 product contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1158,7 +1158,7 @@ Public Function K_STATS_Beta_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Two-shape validation and house-style normalization.
+'   2026-07-21 - Two-shape validation and house-style normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1314,7 +1314,7 @@ Public Function K_STATS_Beta_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Two-shape validation and house-style normalization.
+'   2026-07-21 - Two-shape validation and house-style normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1440,7 +1440,7 @@ Public Function K_STATS_Beta_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Two-shape validation and direct-tail normalization.
+'   2026-07-21 - Two-shape validation and direct-tail normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1563,7 +1563,7 @@ Public Function K_STATS_Beta_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style normalization.
+'   2026-07-21 - House-style normalization.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1686,7 +1686,7 @@ Public Function K_STATS_Beta_Mean( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Stable ratio formulation and house-style rewrite.
+'   2026-07-21 - Stable ratio formulation and house-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1810,7 +1810,7 @@ Public Function K_STATS_Beta_Variance( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Stable ratio formulation and guarded denominator assembly.
+'   2026-07-21 - Stable ratio formulation and guarded denominator assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1953,7 +1953,7 @@ Public Function K_STATS_Beta_StdDev( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Stable ratio formulation and guarded denominator assembly.
+'   2026-07-21 - Stable ratio formulation and guarded denominator assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2104,7 +2104,7 @@ Public Function K_STATS_Exponential_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and product-overflow hardening.
+'   2026-07-21 - House-style rewrite and product-overflow hardening.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2241,7 +2241,7 @@ Public Function K_STATS_Exponential_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and left-tail preservation.
+'   2026-07-21 - House-style rewrite and left-tail preservation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2365,7 +2365,7 @@ Public Function K_STATS_Exponential_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and direct-tail preservation.
+'   2026-07-21 - House-style rewrite and direct-tail preservation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2502,7 +2502,7 @@ Public Function K_STATS_Exponential_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and log-domain overflow handling.
+'   2026-07-21 - House-style rewrite and log-domain overflow handling.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2647,7 +2647,7 @@ Public Function K_STATS_Weibull_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and guarded log-density assembly.
+'   2026-07-21 - House-style rewrite and guarded log-density assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2854,7 +2854,7 @@ Public Function K_STATS_Weibull_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and guarded power evaluation.
+'   2026-07-21 - House-style rewrite and guarded power evaluation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2992,7 +2992,7 @@ Public Function K_STATS_Weibull_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and direct-tail preservation.
+'   2026-07-21 - House-style rewrite and direct-tail preservation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3148,7 +3148,7 @@ Public Function K_STATS_Weibull_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and complete Try-contract coverage.
+'   2026-07-21 - House-style rewrite and complete Try-contract coverage.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3309,7 +3309,7 @@ Public Function K_STATS_Weibull_Mean( _
 '   offset into the representable Double range.
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and log-domain moment assembly.
+'   2026-07-21 - House-style rewrite and log-domain moment assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3466,7 +3466,7 @@ Public Function K_STATS_Weibull_Variance( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and guarded logarithmic scale adjustment.
+'   2026-07-21 - House-style rewrite and guarded logarithmic scale adjustment.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3612,7 +3612,7 @@ Public Function K_STATS_Weibull_StdDev( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite and direct log-standard-deviation assembly.
+'   2026-07-21 - House-style rewrite and direct log-standard-deviation assembly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3759,7 +3759,7 @@ Public Function K_STATS_Uniform_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Full finite-range bounds and scaled-width handling.
+'   2026-07-21 - Full finite-range bounds and scaled-width handling.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3914,7 +3914,7 @@ Public Function K_STATS_Uniform_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Full finite-range bounds and scaled-tail calculation.
+'   2026-07-21 - Full finite-range bounds and scaled-tail calculation.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4064,7 +4064,7 @@ Public Function K_STATS_Uniform_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Full finite-range bounds and direct scaled right tail.
+'   2026-07-21 - Full finite-range bounds and direct scaled right tail.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4218,7 +4218,7 @@ Public Function K_STATS_Uniform_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-11 - Convex-combination quantile over the full finite Double range.
+'   2026-07-21 - Convex-combination quantile over the full finite Double range.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4366,7 +4366,7 @@ Private Function PROB_CN_TryWeibullPower( _
 '   - K_STATS_Weibull_Survival
 '
 ' UPDATED
-'   2026-07-11 - Added for centralized Weibull power classification.
+'   2026-07-21 - Added for centralized Weibull power classification.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4485,7 +4485,7 @@ Private Function PROB_CN_TryWeibullLogVarianceFactor( _
 '   - K_STATS_Weibull_StdDev
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite; numerical method unchanged.
+'   2026-07-21 - House-style rewrite; numerical method unchanged.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4652,7 +4652,7 @@ Private Function PROB_CN_ValidateXShapeScale( _
 '   - Weibull density, CDF and survival
 '
 ' UPDATED
-'   2026-07-11 - Split from the former ambiguous two-positive validator.
+'   2026-07-21 - Split from the former ambiguous two-positive validator.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4729,7 +4729,7 @@ Private Function PROB_CN_ValidateXTwoShapes( _
 '   - K_STATS_Beta_Survival
 '
 ' UPDATED
-'   2026-07-11 - Added to enforce the Beta two-shape contract.
+'   2026-07-21 - Added to enforce the Beta two-shape contract.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4795,7 +4795,7 @@ Private Function PROB_CN_ValidateXLambda( _
 '   - K_STATS_Exponential_Survival
 '
 ' UPDATED
-'   2026-07-11 - House-style rewrite.
+'   2026-07-21 - House-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4855,7 +4855,7 @@ Private Function PROB_CN_ValidateBounds( _
 '   - K_STATS_Uniform_InverseCumulative
 '
 ' UPDATED
-'   2026-07-11 - Full finite Double support and house-style rewrite.
+'   2026-07-21 - Full finite Double support and house-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -4925,7 +4925,7 @@ Private Function PROB_CN_ValidateXBounds( _
 '   - K_STATS_Uniform_Survival
 '
 ' UPDATED
-'   2026-07-11 - Full finite Double support and house-style rewrite.
+'   2026-07-21 - Full finite Double support and house-style rewrite.
 '==============================================================================
 '
 '------------------------------------------------------------------------------

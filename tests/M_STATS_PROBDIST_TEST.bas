@@ -133,7 +133,7 @@ Option Explicit
 '     classification through reachable numerical cases.
 '
 ' UPDATED
-'   2026-07-11 - House-style normalization and consolidated regression coverage.
+'   2026-07-21 - House-style normalization and consolidated regression coverage.
 '==============================================================================
 
 '==============================================================================
@@ -191,7 +191,7 @@ Public Sub Test_STATS_PROBDIST_RunAll()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     'Initialize the consolidated test run
@@ -238,7 +238,7 @@ Public Sub Test_STATS_PROBDIST_RunCore()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     'Initialize the selected test run
@@ -279,7 +279,7 @@ Public Sub Test_STATS_PROBDIST_RunNormalFamily()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     'Initialize the selected test run
@@ -320,7 +320,7 @@ Public Sub Test_STATS_PROBDIST_RunTFamily()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     'Initialize the selected test run
@@ -361,7 +361,7 @@ Public Sub Test_STATS_PROBDIST_RunContinuous()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     'Initialize the selected test run
@@ -436,7 +436,7 @@ Private Sub RunCoreSuite()
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
@@ -470,7 +470,7 @@ Private Sub RunNormalFamilySuite()
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_NORMALFAMILY"
@@ -516,7 +516,7 @@ Private Sub RunTFamilySuite()
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_TFAMILY"
@@ -561,7 +561,7 @@ Private Sub RunContinuousSuite()
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_CONTINUOUS"
@@ -666,7 +666,7 @@ Private Sub BeginRun( _
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -711,7 +711,7 @@ Private Sub EndRun()
 '   - Public test entry points
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -768,7 +768,7 @@ Private Sub Test_Core_Constants()
 '   - RunCoreSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -824,7 +824,7 @@ Private Sub Test_Core_Log1p()
 '   - RunCoreSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Core PROB_Log1p"
@@ -861,7 +861,7 @@ Private Sub Test_Core_TryExp()
 '   - RunCoreSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim ExpResult As Double
@@ -995,7 +995,7 @@ Private Sub Test_Core_LogGamma()
 '   - RunCoreSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Core log-gamma"
@@ -1109,7 +1109,7 @@ Private Sub Test_Core_SpecialFunctionKernels()
 '   - RunCoreSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1311,7 +1311,7 @@ Private Sub Test_Core_NormalInvRaw()
 '   - RunCoreSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Core PROB_NormalInvCDFRaw (shared seed kernel)"
@@ -1357,7 +1357,7 @@ Private Sub Test_NF_StandardNormalDensity()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Standard normal density"
@@ -1404,7 +1404,7 @@ Private Sub Test_NF_StandardNormalCumulative()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Standard normal cumulative"
@@ -1456,7 +1456,7 @@ Private Sub Test_NF_StandardNormalInverse()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Standard normal inverse"
@@ -1496,7 +1496,7 @@ Private Sub Test_NF_InverseTails()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Standard normal inverse, deep tails"
@@ -1544,7 +1544,7 @@ Private Sub Test_NF_InverseRoundTrips()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim ZValues As Variant
@@ -1589,7 +1589,7 @@ Private Sub Test_NF_Symmetry()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim ZValues As Variant
@@ -1639,7 +1639,7 @@ Private Sub Test_NF_GeneralNormal()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- General normal (mean=10, sd=2)"
@@ -1679,7 +1679,7 @@ Private Sub Test_NF_ZScore()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Z-score"
@@ -1710,7 +1710,7 @@ Private Sub Test_NF_IntervalProbability()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Interval probability"
@@ -1770,7 +1770,7 @@ Private Sub Test_NF_FastInverse()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim R As Double
@@ -1817,7 +1817,7 @@ Private Sub Test_NF_LognormalCore()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Lognormal core (MeanLog=0, StdDevLog=1)"
@@ -1862,7 +1862,7 @@ Private Sub Test_NF_LognormalMoments()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim VarV As Variant
@@ -1919,7 +1919,7 @@ Private Sub Test_NF_LognormalUnderflow()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Lognormal underflow (REGRESSION N3)"
@@ -2016,7 +2016,7 @@ Private Sub Test_NF_ParameterRoundTrip()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim P As Variant
@@ -2091,7 +2091,7 @@ Private Sub Test_NF_ErrorContract()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim Diag As String
@@ -2436,7 +2436,7 @@ Private Sub Test_NF_OverflowContract()
 '   - RunNormalFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Normal family overflow contract (CVErr(xlErrNum), not a sentinel)"
@@ -2478,7 +2478,7 @@ Private Sub Test_TF_StudentTDensity()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t density"
@@ -2528,7 +2528,7 @@ Private Sub Test_TF_StudentTCumulative()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t cumulative"
@@ -2574,7 +2574,7 @@ Private Sub Test_TF_StudentTCentralRegion()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t cumulative, central region (REGRESSION T2)"
@@ -2617,7 +2617,7 @@ Private Sub Test_TF_StudentTSurvival()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t survival (REGRESSION T3)"
@@ -2665,7 +2665,7 @@ Private Sub Test_TF_StudentTInverse()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t inverse"
@@ -2724,7 +2724,7 @@ Private Sub Test_TF_StudentTRoundTrips()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim Quantile As Variant
@@ -2765,7 +2765,7 @@ Private Sub Test_TF_StudentTSymmetry()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t symmetry"
@@ -2806,7 +2806,7 @@ Private Sub Test_TF_ChiSquareDensity()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square density"
@@ -2841,7 +2841,7 @@ Private Sub Test_TF_ChiSquareCumulative()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square cumulative"
@@ -2882,7 +2882,7 @@ Private Sub Test_TF_ChiSquareLargeDF()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square, large degrees of freedom (REGRESSION T1)"
@@ -2925,7 +2925,7 @@ Private Sub Test_TF_ChiSquareSurvival()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square survival"
@@ -2967,7 +2967,7 @@ Private Sub Test_TF_ChiSquareInverse()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square inverse"
@@ -3014,7 +3014,7 @@ Private Sub Test_TF_FDensity()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F density"
@@ -3050,7 +3050,7 @@ Private Sub Test_TF_FCumulative()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F cumulative"
@@ -3114,7 +3114,7 @@ Private Sub Test_TF_FSurvival()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F survival"
@@ -3155,7 +3155,7 @@ Private Sub Test_TF_FInverse()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F inverse"
@@ -3203,7 +3203,7 @@ Private Sub Test_TF_ErrorContract()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim Diag As String
@@ -3272,7 +3272,7 @@ Private Sub Test_TF_SupportEdges()
 '   - RunTFamilySuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- T family support edges and non-integer degrees of freedom"
@@ -3426,7 +3426,7 @@ Private Sub AssertExactlyEqual( _
 '   - Constant and exact-kernel tests
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3491,7 +3491,7 @@ Private Sub AssertClose( _
 '   - Test procedures throughout this module
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3605,7 +3605,7 @@ Private Sub AssertRelClose( _
 '   - Tail, quantile and extreme-parameter tests
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3729,7 +3729,7 @@ Private Sub AssertInUnitInterval( _
 '   - Probability support and range tests
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3840,7 +3840,7 @@ Private Sub AssertErrorCode( _
 '   - Numerical-contract tests
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3929,7 +3929,7 @@ Private Sub Test_CN_GammaDensity()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma density"
@@ -3964,7 +3964,7 @@ Private Sub Test_CN_GammaCumulative()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma cumulative"
@@ -4000,7 +4000,7 @@ Private Sub Test_CN_GammaSurvival()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma survival"
@@ -4039,7 +4039,7 @@ Private Sub Test_CN_GammaInverse()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma inverse"
@@ -4071,7 +4071,7 @@ Private Sub Test_CN_GammaMoments()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma moments"
@@ -4103,7 +4103,7 @@ Private Sub Test_CN_BetaDensity()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Beta density"
@@ -4137,7 +4137,7 @@ Private Sub Test_CN_BetaCumulative()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Beta cumulative"
@@ -4171,7 +4171,7 @@ Private Sub Test_CN_BetaSurvival()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Beta survival"
@@ -4208,7 +4208,7 @@ Private Sub Test_CN_BetaInverse()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Beta inverse"
@@ -4238,7 +4238,7 @@ Private Sub Test_CN_BetaMoments()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Beta moments"
@@ -4291,7 +4291,7 @@ Private Sub Test_CN_ExponentialDensity()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Exponential density"
@@ -4325,7 +4325,7 @@ Private Sub Test_CN_ExponentialCumulative()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Exponential cumulative"
@@ -4362,7 +4362,7 @@ Private Sub Test_CN_ExponentialSurvival()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Exponential survival"
@@ -4401,7 +4401,7 @@ Private Sub Test_CN_ExponentialInverse()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Exponential inverse"
@@ -4434,7 +4434,7 @@ Private Sub Test_CN_WeibullDensity()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull density"
@@ -4465,7 +4465,7 @@ Private Sub Test_CN_WeibullCumulative()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull cumulative"
@@ -4500,7 +4500,7 @@ Private Sub Test_CN_WeibullSurvival()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull survival"
@@ -4536,7 +4536,7 @@ Private Sub Test_CN_WeibullInverse()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull inverse"
@@ -4566,7 +4566,7 @@ Private Sub Test_CN_WeibullMoments()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull moments"
@@ -4616,7 +4616,7 @@ Private Sub Test_CN_UniformDensity()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Uniform density"
@@ -4657,7 +4657,7 @@ Private Sub Test_CN_UniformCumulative()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Uniform cumulative"
@@ -4696,7 +4696,7 @@ Private Sub Test_CN_UniformSurvival()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Uniform survival"
@@ -4740,7 +4740,7 @@ Private Sub Test_CN_UniformInverse()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Uniform inverse"
@@ -4789,7 +4789,7 @@ Private Sub Test_CN_CrossFamilyIdentities()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim BetaArg As Double
@@ -4853,7 +4853,7 @@ Private Sub Test_CN_RoundTrips()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Continuous inverse round-trips (CDF of quantile returns the probability)"
@@ -4897,7 +4897,7 @@ Private Sub Test_CN_ErrorContract()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Dim Diag As String
@@ -5021,7 +5021,7 @@ Private Sub Test_CN_SupportEdges()
 '   - RunContinuousSuite
 '
 ' UPDATED
-'   2026-07-11
+'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Continuous support edges (finite boundary densities)"
