@@ -47,6 +47,26 @@ Option Explicit
 '     K_STATS_Geometric_Variance
 '     K_STATS_Geometric_StdDev
 '
+'   NegativeBinomial
+'     K_STATS_NegativeBinomial_PMF
+'     K_STATS_NegativeBinomial_LogPMF
+'     K_STATS_NegativeBinomial_Cumulative
+'     K_STATS_NegativeBinomial_Survival
+'     K_STATS_NegativeBinomial_InverseCumulative
+'     K_STATS_NegativeBinomial_Mean
+'     K_STATS_NegativeBinomial_Variance
+'     K_STATS_NegativeBinomial_StdDev
+'
+'   Hypergeometric
+'     K_STATS_Hypergeometric_PMF
+'     K_STATS_Hypergeometric_LogPMF
+'     K_STATS_Hypergeometric_Cumulative
+'     K_STATS_Hypergeometric_Survival
+'     K_STATS_Hypergeometric_InverseCumulative
+'     K_STATS_Hypergeometric_Mean
+'     K_STATS_Hypergeometric_Variance
+'     K_STATS_Hypergeometric_StdDev
+'
 ' PARAMETERIZATION
 '   Binomial(NumberSuccesses, Trials, ProbSuccess)
 '     - PMF/CDF/SF and moments accept ProbSuccess in [0, 1].
@@ -110,6 +130,16 @@ Option Explicit
 '   and accurate where the ordinary _PMF underflows a Double to zero (for
 '   example ln P well below -700), and return #NUM! only when the outcome has
 '   probability exactly zero.
+'
+' NEGATIVE BINOMIAL AND HYPERGEOMETRIC
+'   Negative binomial counts failures before the r-th success (r = 1 is the
+'   Geometric); its mass reuses the Loader Binomial kernel and its CDF/SF use
+'   the two-argument regularized incomplete beta. Hypergeometric mass is three
+'   shared Binomial log-masses (p = n/N); its CDF/SF sum the near tail by an
+'   exact successive-ratio recurrence, so only a few standard deviations of
+'   terms are evaluated. Cumulative and inverse counts are capped for the
+'   summation and bracketing paths; the single-point masses accept the full
+'   exact-integer domain.
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
 '       PROB_HALF_LOG_TWO_PI
@@ -165,6 +195,9 @@ Private Const PROB_DS_MAX_INVERSE_ITER As Long = 128
 Private Const PROB_DS_MAX_BRACKET_ITER As Long = 64
 Private Const PROB_DS_MAX_GEOMETRIC_CORRECTIONS As Long = 8
 Private Const PROB_DS_BD0_MAX_ITER As Long = 1000
+Private Const PROB_DS_MAX_NEGBINOM_KERNEL_COUNT As Double = 20000000#
+Private Const PROB_DS_MAX_HYPERGEOMETRIC_POP As Double = 100000000#
+Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
 
 
 '==============================================================================
@@ -224,7 +257,7 @@ Public Function K_STATS_Binomial_PMF( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim K                   As Double          'Successes as a truncated integer
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Value               As Double          'Computed probability mass
     Dim FailMsg             As String          'Detailed failure message
 
@@ -243,14 +276,14 @@ Public Function K_STATS_Binomial_PMF( _
 '------------------------------------------------------------------------------
     'Validate counts and probability for the Loader mass kernel
         If Not PROB_DS_ValidateBinomialMassInputs( _
-            NumberSuccesses, Trials, ProbSuccess, K, N, FailMsg) Then GoTo Fail_Num
+            NumberSuccesses, Trials, ProbSuccess, K, n, FailMsg) Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Compute the mass through Loader's stable deviance arrangement
         If Not PROB_DS_TryBinomialPMF( _
-            K, N, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
+            K, n, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
 
         K_STATS_Binomial_PMF = Value
 
@@ -297,7 +330,7 @@ Public Function K_STATS_Binomial_LogPMF( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim K                   As Double          'Successes as a truncated integer
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
     Dim FailMsg             As String          'Detailed failure message
@@ -317,14 +350,14 @@ Public Function K_STATS_Binomial_LogPMF( _
 '------------------------------------------------------------------------------
     'Validate counts and probability for the Loader mass kernel
         If Not PROB_DS_ValidateBinomialMassInputs( _
-            NumberSuccesses, Trials, ProbSuccess, K, N, FailMsg) Then GoTo Fail_Num
+            NumberSuccesses, Trials, ProbSuccess, K, n, FailMsg) Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Assemble the log mass through Loader's stable deviance arrangement
         If Not PROB_DS_TryBinomialLogMass( _
-            K, N, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+            K, n, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
     'A zero-probability outcome has no defined log-mass
         If IsCertainZero Then
             FailMsg = "Log-mass is undefined: the outcome has probability zero"
@@ -421,7 +454,7 @@ Public Function K_STATS_Binomial_Cumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim K                   As Double          'Successes as a truncated integer
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Value               As Double          'Computed cumulative probability
     Dim FailMsg             As String          'Detailed failure message
 
@@ -440,14 +473,14 @@ Public Function K_STATS_Binomial_Cumulative( _
 '------------------------------------------------------------------------------
     'Validate against the supported incomplete-beta domain
         If Not PROB_DS_ValidateBinomialKernelInputs( _
-            NumberSuccesses, Trials, ProbSuccess, K, N, FailMsg) Then GoTo Fail_Num
+            NumberSuccesses, Trials, ProbSuccess, K, n, FailMsg) Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Evaluate the left tail directly
         If Not PROB_DS_TryBinomialCDF( _
-            K, N, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
+            K, n, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
 
         K_STATS_Binomial_Cumulative = Value
 
@@ -540,7 +573,7 @@ Public Function K_STATS_Binomial_Survival( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim K                   As Double          'Successes as a truncated integer
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Value               As Double          'Computed survival probability
     Dim FailMsg             As String          'Detailed failure message
 
@@ -559,14 +592,14 @@ Public Function K_STATS_Binomial_Survival( _
 '------------------------------------------------------------------------------
     'Validate against the supported incomplete-beta domain
         If Not PROB_DS_ValidateBinomialKernelInputs( _
-            NumberSuccesses, Trials, ProbSuccess, K, N, FailMsg) Then GoTo Fail_Num
+            NumberSuccesses, Trials, ProbSuccess, K, n, FailMsg) Then GoTo Fail_Num
 
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Evaluate the right tail directly
         If Not PROB_DS_TryBinomialSF( _
-            K, N, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
+            K, n, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
 
         K_STATS_Binomial_Survival = Value
 
@@ -659,7 +692,7 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Quantile            As Double          'Computed integer quantile
     Dim FailMsg             As String          'Detailed failure message
 
@@ -683,7 +716,7 @@ Public Function K_STATS_Binomial_InverseCumulative( _
         End If
 
     'Validate Trials against the incomplete-beta domain
-        If Not PROB_DS_ValidateTrialsKernel(Trials, N, FailMsg) Then GoTo Fail_Num
+        If Not PROB_DS_ValidateTrialsKernel(Trials, n, FailMsg) Then GoTo Fail_Num
 
     'Match the open success-probability contract of BINOM.INV
         If Not PROB_DS_ValidateProbOpen(ProbSuccess, FailMsg) Then GoTo Fail_Num
@@ -693,7 +726,7 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 '------------------------------------------------------------------------------
     'Find the least qualifying integer using the smaller tail
         If Not PROB_DS_TryBinomialInverse( _
-            Probability, N, ProbSuccess, Quantile, FailMsg) Then GoTo Fail_Num
+            Probability, n, ProbSuccess, Quantile, FailMsg) Then GoTo Fail_Num
 
         K_STATS_Binomial_InverseCumulative = Quantile
 
@@ -779,7 +812,7 @@ Public Function K_STATS_Binomial_Mean( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Value               As Double          'Computed mean
     Dim FailMsg             As String          'Detailed failure message
 
@@ -797,7 +830,7 @@ Public Function K_STATS_Binomial_Mean( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate Trials in the exact-integer count domain
-        If Not PROB_DS_ValidateTrialsExact(Trials, N, FailMsg) Then GoTo Fail_Num
+        If Not PROB_DS_ValidateTrialsExact(Trials, n, FailMsg) Then GoTo Fail_Num
 
     'Validate the closed success-probability domain
         If Not PROB_DS_ValidateProbClosed(ProbSuccess, FailMsg) Then GoTo Fail_Num
@@ -806,7 +839,7 @@ Public Function K_STATS_Binomial_Mean( _
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Form n * p through the shared overflow contract
-        If Not PROB_TryMultiply(N, ProbSuccess, Value) Then
+        If Not PROB_TryMultiply(n, ProbSuccess, Value) Then
             FailMsg = "Binomial mean overflows Double range"
             GoTo Fail_Num
         End If
@@ -895,7 +928,7 @@ Public Function K_STATS_Binomial_Variance( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Np                  As Double          'Intermediate n * p
     Dim Value               As Double          'Computed variance
     Dim FailMsg             As String          'Detailed failure message
@@ -914,7 +947,7 @@ Public Function K_STATS_Binomial_Variance( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate Trials in the exact-integer count domain
-        If Not PROB_DS_ValidateTrialsExact(Trials, N, FailMsg) Then GoTo Fail_Num
+        If Not PROB_DS_ValidateTrialsExact(Trials, n, FailMsg) Then GoTo Fail_Num
 
     'Validate the closed success-probability domain
         If Not PROB_DS_ValidateProbClosed(ProbSuccess, FailMsg) Then GoTo Fail_Num
@@ -923,7 +956,7 @@ Public Function K_STATS_Binomial_Variance( _
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Form n * p, then apply the complementary probability
-        If Not PROB_TryMultiply(N, ProbSuccess, Np) Then
+        If Not PROB_TryMultiply(n, ProbSuccess, Np) Then
             FailMsg = "Binomial variance overflows Double range"
             GoTo Fail_Num
         End If
@@ -1017,7 +1050,7 @@ Public Function K_STATS_Binomial_StdDev( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim N                   As Double          'Trials as a truncated integer
+    Dim n                   As Double          'Trials as a truncated integer
     Dim Np                  As Double          'Intermediate n * p
     Dim Variance            As Double          'Computed variance
     Dim FailMsg             As String          'Detailed failure message
@@ -1036,7 +1069,7 @@ Public Function K_STATS_Binomial_StdDev( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate Trials in the exact-integer count domain
-        If Not PROB_DS_ValidateTrialsExact(Trials, N, FailMsg) Then GoTo Fail_Num
+        If Not PROB_DS_ValidateTrialsExact(Trials, n, FailMsg) Then GoTo Fail_Num
 
     'Validate the closed success-probability domain
         If Not PROB_DS_ValidateProbClosed(ProbSuccess, FailMsg) Then GoTo Fail_Num
@@ -1045,7 +1078,7 @@ Public Function K_STATS_Binomial_StdDev( _
 ' COMPUTE
 '------------------------------------------------------------------------------
     'Form the variance through guarded multiplication
-        If Not PROB_TryMultiply(N, ProbSuccess, Np) Then
+        If Not PROB_TryMultiply(n, ProbSuccess, Np) Then
             FailMsg = "Binomial standard deviation overflows Double range"
             GoTo Fail_Num
         End If
@@ -2814,6 +2847,1237 @@ Err_Handler:
 End Function
 
 
+Public Function K_STATS_NegativeBinomial_PMF( _
+    ByVal NumberFailures As Double, _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim X                   As Double          'Failures as a truncated integer
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Value               As Double          'Computed probability mass
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate counts and probability for the negative binomial mass
+        If Not PROB_DS_ValidateNegBinomInputs( _
+            NumberFailures, NumberSuccesses, ProbSuccess, _
+            PROB_DS_MAX_EXACT_INTEGER, PROB_DS_MAX_EXACT_INTEGER, X, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Compute the mass by exponentiating the shared log-mass kernel
+        If Not PROB_DS_TryNegativeBinomialPMF( _
+            X, R, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_NegativeBinomial_PMF = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_PMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_PMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_PMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_LogPMF( _
+    ByVal NumberFailures As Double, _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim X                   As Double          'Failures as a truncated integer
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate counts and probability for the negative binomial mass
+        If Not PROB_DS_ValidateNegBinomInputs( _
+            NumberFailures, NumberSuccesses, ProbSuccess, _
+            PROB_DS_MAX_EXACT_INTEGER, PROB_DS_MAX_EXACT_INTEGER, X, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Assemble the log mass through the shared Loader arrangement
+        If Not PROB_DS_TryNegativeBinomialLogMass( _
+            X, R, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+    'A zero-probability outcome has no defined log-mass
+        If IsCertainZero Then
+            FailMsg = "Log-mass is undefined: the outcome has probability zero"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_NegativeBinomial_LogPMF = LogMass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_LogPMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_LogPMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_LogPMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_Cumulative( _
+    ByVal NumberFailures As Double, _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim X                   As Double          'Failures as a truncated integer
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Value               As Double          'Computed cumulative probability
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate counts and probability for the negative binomial mass
+        If Not PROB_DS_ValidateNegBinomInputs( _
+            NumberFailures, NumberSuccesses, ProbSuccess, _
+            PROB_DS_MAX_NEGBINOM_KERNEL_COUNT, PROB_DS_MAX_BINOMIAL_KERNEL_N, X, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'P(X <= x) = I_p(r, x + 1) through the no-cancellation incomplete beta
+        If Not PROB_DS_TryNegativeBinomialCDF( _
+            X, R, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_NegativeBinomial_Cumulative = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_Cumulative = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_Cumulative: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_Cumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_Survival( _
+    ByVal NumberFailures As Double, _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim X                   As Double          'Failures as a truncated integer
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Value               As Double          'Computed survival probability
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate counts and probability for the negative binomial mass
+        If Not PROB_DS_ValidateNegBinomInputs( _
+            NumberFailures, NumberSuccesses, ProbSuccess, _
+            PROB_DS_MAX_NEGBINOM_KERNEL_COUNT, PROB_DS_MAX_BINOMIAL_KERNEL_N, X, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'P(X > x) = I_(1-p)(x + 1, r) computed directly as the small upper tail
+        If Not PROB_DS_TryNegativeBinomialSF( _
+            X, R, ProbSuccess, Value, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_NegativeBinomial_Survival = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_Survival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_Survival = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_InverseCumulative( _
+    ByVal Probability As Double, _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Quantile            As Double          'Least qualifying failure count
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Require a strictly interior cumulative probability
+        If Not PROB_DS_ValidateProbOpen(Probability, FailMsg) Then GoTo Fail_Num
+    'Validate the success count and success probability
+        If Not PROB_DS_ValidateNegBinomSuccessProb( _
+            NumberSuccesses, ProbSuccess, PROB_DS_MAX_BINOMIAL_KERNEL_N, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Seeded, bracketed integer search on the smaller direct tail
+        If Not PROB_DS_TryNegativeBinomialInverse( _
+            Probability, R, ProbSuccess, Quantile, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_NegativeBinomial_InverseCumulative = Quantile
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_InverseCumulative = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_InverseCumulative: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_InverseCumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_Mean( _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Q                   As Double          'Failure probability 1-p
+    Dim Value               As Double          'Computed mean
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the success count and success probability
+        If Not PROB_DS_ValidateNegBinomSuccessProb( _
+            NumberSuccesses, ProbSuccess, PROB_DS_MAX_EXACT_INTEGER, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        Q = 1# - ProbSuccess
+        Value = R * Q / ProbSuccess
+        If Not PROB_IsFinite(Value) Then
+            FailMsg = "Negative binomial mean overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_NegativeBinomial_Mean = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_Mean = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_Mean: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_Mean = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_Variance( _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Q                   As Double          'Failure probability 1-p
+    Dim Value               As Double          'Computed variance
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the success count and success probability
+        If Not PROB_DS_ValidateNegBinomSuccessProb( _
+            NumberSuccesses, ProbSuccess, PROB_DS_MAX_EXACT_INTEGER, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        Q = 1# - ProbSuccess
+        Value = R * Q / (ProbSuccess * ProbSuccess)
+        If Not PROB_IsFinite(Value) Then
+            FailMsg = "Negative binomial variance overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_NegativeBinomial_Variance = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_Variance = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_Variance: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_Variance = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_NegativeBinomial_StdDev( _
+    ByVal NumberSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim R                   As Double          'Successes as a truncated integer
+    Dim Q                   As Double          'Failure probability 1-p
+    Dim Value               As Double          'Computed standard deviation
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the success count and success probability
+        If Not PROB_DS_ValidateNegBinomSuccessProb( _
+            NumberSuccesses, ProbSuccess, PROB_DS_MAX_EXACT_INTEGER, R, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        Q = 1# - ProbSuccess
+        Value = Sqr(R * Q) / ProbSuccess
+        If Not PROB_IsFinite(Value) Then
+            FailMsg = "Negative binomial standard deviation overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_NegativeBinomial_StdDev = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_NegativeBinomial_StdDev = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_NegativeBinomial_StdDev: " & Err.Description
+    'Return worksheet value error
+        K_STATS_NegativeBinomial_StdDev = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_PMF( _
+    ByVal SampleSuccesses As Double, _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Sample successes as a truncated integer
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Value               As Double          'Computed probability mass
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate sample and population counts against the support
+        If Not PROB_DS_ValidateHypergeometricInputs( _
+            SampleSuccesses, SampleSize, PopulationSuccesses, PopulationSize, True, _
+            K, n, Kp, Np, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Compute the mass by exponentiating the shared log-mass kernel
+        If Not PROB_DS_TryHypergeometricPMF( _
+            K, n, Kp, Np, Value, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_Hypergeometric_PMF = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_PMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_PMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_PMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_LogPMF( _
+    ByVal SampleSuccesses As Double, _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Sample successes as a truncated integer
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate sample and population counts against the support
+        If Not PROB_DS_ValidateHypergeometricInputs( _
+            SampleSuccesses, SampleSize, PopulationSuccesses, PopulationSize, True, _
+            K, n, Kp, Np, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Assemble the log mass from three shared Binomial log-masses
+        If Not PROB_DS_TryHypergeometricLogMass( _
+            K, n, Kp, Np, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+    'A zero-probability outcome has no defined log-mass
+        If IsCertainZero Then
+            FailMsg = "Log-mass is undefined: the outcome has probability zero"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Hypergeometric_LogPMF = LogMass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_LogPMF = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_LogPMF: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_LogPMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_Cumulative( _
+    ByVal SampleSuccesses As Double, _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Sample successes as a truncated integer
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Value               As Double          'Computed cumulative probability
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate sample and population counts against the support
+        If Not PROB_DS_ValidateHypergeometricInputs( _
+            SampleSuccesses, SampleSize, PopulationSuccesses, PopulationSize, False, _
+            K, n, Kp, Np, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'P(X <= k) by directional ratio-series summation of the near tail
+        If Not PROB_DS_TryHypergeometricCDF( _
+            K, n, Kp, Np, Value, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_Hypergeometric_Cumulative = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_Cumulative = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_Cumulative: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_Cumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_Survival( _
+    ByVal SampleSuccesses As Double, _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim K                   As Double          'Sample successes as a truncated integer
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Value               As Double          'Computed survival probability
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate sample and population counts against the support
+        If Not PROB_DS_ValidateHypergeometricInputs( _
+            SampleSuccesses, SampleSize, PopulationSuccesses, PopulationSize, False, _
+            K, n, Kp, Np, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'P(X > k) as the small upper tail, summed directly with no cancellation
+        If Not PROB_DS_TryHypergeometricSF( _
+            K, n, Kp, Np, Value, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_Hypergeometric_Survival = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_Survival = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_Survival: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_Survival = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_InverseCumulative( _
+    ByVal Probability As Double, _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Quantile            As Double          'Least qualifying sample-success count
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Require a strictly interior cumulative probability
+        If Not PROB_DS_ValidateProbOpen(Probability, FailMsg) Then GoTo Fail_Num
+    'Validate the population and sample sizes
+        If Not PROB_DS_ValidateHypergeometricPopulation( _
+            PopulationSize, PopulationSuccesses, SampleSize, Np, Kp, n, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Seeded, bracketed integer search across the support
+        If Not PROB_DS_TryHypergeometricInverse( _
+            Probability, n, Kp, Np, Quantile, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_Hypergeometric_InverseCumulative = Quantile
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_InverseCumulative = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_InverseCumulative: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_InverseCumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_Mean( _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Value               As Double          'Computed mean
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the population and sample sizes
+        If Not PROB_DS_ValidateHypergeometricPopulation( _
+            PopulationSize, PopulationSuccesses, SampleSize, Np, Kp, n, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Mean = n * K / N
+        Value = n * Kp / Np
+        If Not PROB_IsFinite(Value) Then
+            FailMsg = "Hypergeometric mean overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Hypergeometric_Mean = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_Mean = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_Mean: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_Mean = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_Variance( _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Value               As Double          'Computed variance
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the population and sample sizes
+        If Not PROB_DS_ValidateHypergeometricPopulation( _
+            PopulationSize, PopulationSuccesses, SampleSize, Np, Kp, n, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Variance = n (K/N) ((N-K)/N) ((N-n)/(N-1))
+        If Np <= 1# Then
+            Value = 0#
+        Else
+            Value = n * (Kp / Np) * ((Np - Kp) / Np) * ((Np - n) / (Np - 1#))
+        End If
+        If Not PROB_IsFinite(Value) Then
+            FailMsg = "Hypergeometric variance overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Hypergeometric_Variance = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_Variance = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_Variance: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_Variance = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_Hypergeometric_StdDev( _
+    ByVal SampleSize As Double, _
+    ByVal PopulationSuccesses As Double, _
+    ByVal PopulationSize As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim n                   As Double          'Sample size as a truncated integer
+    Dim Kp                  As Double          'Population successes as a truncated integer
+    Dim Np                  As Double          'Population size as a truncated integer
+    Dim Value               As Double          'Computed standard deviation
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Route unexpected runtime errors to the error handler
+        On Error GoTo Err_Handler
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Initialize the failure message buffer
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Validate the population and sample sizes
+        If Not PROB_DS_ValidateHypergeometricPopulation( _
+            PopulationSize, PopulationSuccesses, SampleSize, Np, Kp, n, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Standard deviation is the square root of the variance
+        If Np <= 1# Then
+            Value = 0#
+        Else
+            Value = Sqr(n * (Kp / Np) * ((Np - Kp) / Np) * ((Np - n) / (Np - 1#)))
+        End If
+        If Not PROB_IsFinite(Value) Then
+            FailMsg = "Hypergeometric standard deviation overflows Double range"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_Hypergeometric_StdDev = Value
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+    'Clear diagnostic status
+        PROB_SetStatus Status, vbNullString
+    'Exit before failure and error-handler blocks
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+    'Write diagnostics
+        PROB_SetStatus Status, FailMsg
+    'Return worksheet numeric error
+        K_STATS_Hypergeometric_StdDev = CVErr(xlErrNum)
+    'Exit before the error handler
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    'Write unexpected runtime errors to diagnostics
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_Hypergeometric_StdDev: " & Err.Description
+    'Return worksheet value error
+        K_STATS_Hypergeometric_StdDev = CVErr(xlErrValue)
+End Function
+
+
 '==============================================================================
 ' PRIVATE VALIDATION KERNELS
 '==============================================================================
@@ -3302,6 +4566,167 @@ Private Function PROB_DS_ValidateGeometricInputs( _
 End Function
 
 
+Private Function PROB_DS_ValidateNegBinomSuccessProb( _
+    ByVal RawSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    ByVal MaxSuccesses As Double, _
+    ByRef SuccessesOut As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_ValidateNegBinomSuccessProb
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates NumberSuccesses (a count >= 1) and the half-open success
+'   probability domain (0, 1] shared by every negative binomial entry point.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+        If Not PROB_DS_ValidateCount(RawSuccesses, MaxSuccesses, _
+            "NumberSuccesses", "the negative binomial", SuccessesOut, FailMsg) Then Exit Function
+
+        If SuccessesOut < 1# Then
+            FailMsg = "NumberSuccesses must be at least 1"
+            Exit Function
+        End If
+
+        If Not PROB_DS_ValidateProbHalfOpen(ProbSuccess, FailMsg) Then Exit Function
+
+        PROB_DS_ValidateNegBinomSuccessProb = True
+End Function
+
+
+Private Function PROB_DS_ValidateNegBinomInputs( _
+    ByVal RawFailures As Double, _
+    ByVal RawSuccesses As Double, _
+    ByVal ProbSuccess As Double, _
+    ByVal MaxFailures As Double, _
+    ByVal MaxSuccesses As Double, _
+    ByRef FailuresOut As Double, _
+    ByRef SuccessesOut As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_ValidateNegBinomInputs
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates the full (failures, successes, probability) triple and confirms
+'   the implied Binomial trial count Failures + Successes stays exact.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+        If Not PROB_DS_ValidateNegBinomSuccessProb(RawSuccesses, ProbSuccess, _
+            MaxSuccesses, SuccessesOut, FailMsg) Then Exit Function
+
+        If Not PROB_DS_ValidateCount(RawFailures, MaxFailures, _
+            "NumberFailures", "the negative binomial", FailuresOut, FailMsg) Then Exit Function
+
+    'The Loader mass is a Binomial over Failures + Successes trials
+        If FailuresOut + SuccessesOut > PROB_DS_MAX_EXACT_INTEGER Then
+            FailMsg = "NumberFailures + NumberSuccesses exceeds the exact-integer domain"
+            Exit Function
+        End If
+
+        PROB_DS_ValidateNegBinomInputs = True
+End Function
+
+
+Private Function PROB_DS_ValidateHypergeometricPopulation( _
+    ByVal RawPopulationSize As Double, _
+    ByVal RawPopulationSuccesses As Double, _
+    ByVal RawSampleSize As Double, _
+    ByRef PopulationOut As Double, _
+    ByRef SuccessesOut As Double, _
+    ByRef SampleOut As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_ValidateHypergeometricPopulation
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates the population triple: PopulationSize >= 1, PopulationSuccesses
+'   and SampleSize each in [0, PopulationSize], within the supported ceiling.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+        If Not PROB_DS_ValidateCount(RawPopulationSize, PROB_DS_MAX_HYPERGEOMETRIC_POP, _
+            "PopulationSize", "the hypergeometric", PopulationOut, FailMsg) Then Exit Function
+
+        If PopulationOut < 1# Then
+            FailMsg = "PopulationSize must be at least 1"
+            Exit Function
+        End If
+
+        If Not PROB_DS_ValidateCount(RawPopulationSuccesses, PopulationOut, _
+            "PopulationSuccesses", "the hypergeometric", SuccessesOut, FailMsg) Then Exit Function
+
+        If Not PROB_DS_ValidateCount(RawSampleSize, PopulationOut, _
+            "SampleSize", "the hypergeometric", SampleOut, FailMsg) Then Exit Function
+
+        PROB_DS_ValidateHypergeometricPopulation = True
+End Function
+
+
+Private Function PROB_DS_ValidateHypergeometricInputs( _
+    ByVal RawSampleSuccesses As Double, _
+    ByVal RawSampleSize As Double, _
+    ByVal RawPopulationSuccesses As Double, _
+    ByVal RawPopulationSize As Double, _
+    ByVal RequireInSupport As Boolean, _
+    ByRef SampleSuccessesOut As Double, _
+    ByRef SampleOut As Double, _
+    ByRef SuccessesOut As Double, _
+    ByRef PopulationOut As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_ValidateHypergeometricInputs
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates the full hypergeometric argument set. When RequireInSupport is
+'   TRUE the sample-success count must lie in [max(0,n+K-N), min(n,K)], matching
+'   the mass domain; the cumulative entry points pass FALSE and clamp instead.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim KMin                As Double          'Lowest attainable sample success
+    Dim KMax                As Double          'Highest attainable sample success
+
+        If Not PROB_DS_ValidateHypergeometricPopulation( _
+            RawPopulationSize, RawPopulationSuccesses, RawSampleSize, _
+            PopulationOut, SuccessesOut, SampleOut, FailMsg) Then Exit Function
+
+        If Not PROB_DS_ValidateCount(RawSampleSuccesses, SampleOut, _
+            "SampleSuccesses", "the hypergeometric", SampleSuccessesOut, FailMsg) Then Exit Function
+
+        If RequireInSupport Then
+            KMin = SampleOut + SuccessesOut - PopulationOut
+            If KMin < 0# Then KMin = 0#
+            KMax = SampleOut
+            If SuccessesOut < KMax Then KMax = SuccessesOut
+
+            If SampleSuccessesOut < KMin Or SampleSuccessesOut > KMax Then
+                FailMsg = "SampleSuccesses is outside the hypergeometric support"
+                Exit Function
+            End If
+        End If
+
+        PROB_DS_ValidateHypergeometricInputs = True
+End Function
+
+
 '==============================================================================
 ' PRIVATE MASS KERNELS
 '==============================================================================
@@ -3428,7 +4853,7 @@ End Function
 
 Private Function PROB_DS_TryBinomialLogMass( _
     ByVal K As Double, _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal ProbSuccess As Double, _
     ByRef LogMass As Double, _
     ByRef IsCertainZero As Boolean, _
@@ -3476,7 +4901,7 @@ Private Function PROB_DS_TryBinomialLogMass( _
         End If
 
         If ProbSuccess >= 1# Then
-            If K = N Then LogMass = 0# Else IsCertainZero = True
+            If K = n Then LogMass = 0# Else IsCertainZero = True
             PROB_DS_TryBinomialLogMass = True
             Exit Function
         End If
@@ -3488,7 +4913,7 @@ Private Function PROB_DS_TryBinomialLogMass( _
 '------------------------------------------------------------------------------
     'At K = 0, Log(PMF) = N * Log(1-p); Log1p keeps small p accurate
         If K <= 0# Then
-            If Not PROB_TryMultiply(N, PROB_Log1p(-ProbSuccess), LogMass) Then
+            If Not PROB_TryMultiply(n, PROB_Log1p(-ProbSuccess), LogMass) Then
                 IsCertainZero = True
             End If
             PROB_DS_TryBinomialLogMass = True
@@ -3496,14 +4921,14 @@ Private Function PROB_DS_TryBinomialLogMass( _
         End If
 
     'At K = N, use Log1p when p is near one
-        If K >= N Then
+        If K >= n Then
             If ProbSuccess >= 0.5 Then
                 LogP = PROB_Log1p(-Q)
             Else
                 LogP = Log(ProbSuccess)
             End If
 
-            If Not PROB_TryMultiply(N, LogP, LogMass) Then
+            If Not PROB_TryMultiply(n, LogP, LogMass) Then
                 IsCertainZero = True
             End If
             PROB_DS_TryBinomialLogMass = True
@@ -3513,15 +4938,15 @@ Private Function PROB_DS_TryBinomialLogMass( _
 '------------------------------------------------------------------------------
 ' LOADER INTERIOR ARRANGEMENT
 '------------------------------------------------------------------------------
-        j = N - K
+        j = n - K
 
     'Form the two expected counts
-        If Not PROB_TryMultiply(N, ProbSuccess, Np) Then
+        If Not PROB_TryMultiply(n, ProbSuccess, Np) Then
             FailMsg = "Binomial expected-success count overflowed"
             Exit Function
         End If
 
-        If Not PROB_TryMultiply(N, Q, Nq) Then
+        If Not PROB_TryMultiply(n, Q, Nq) Then
             FailMsg = "Binomial expected-failure count overflowed"
             Exit Function
         End If
@@ -3532,13 +4957,13 @@ Private Function PROB_DS_TryBinomialLogMass( _
 
     'Assemble Loader's log mass without subtracting large log-gammas
         LogMass = _
-            PROB_StirlingError(N) - _
+            PROB_StirlingError(n) - _
             PROB_StirlingError(K) - _
             PROB_StirlingError(j) - _
             DevianceK - _
             DevianceJ - _
             PROB_HALF_LOG_TWO_PI - _
-            0.5 * (Log(K) + Log(j) - Log(N))
+            0.5 * (Log(K) + Log(j) - Log(n))
 
         PROB_DS_TryBinomialLogMass = True
 End Function
@@ -3546,7 +4971,7 @@ End Function
 
 Private Function PROB_DS_TryBinomialPMF( _
     ByVal K As Double, _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal ProbSuccess As Double, _
     ByRef Result As Double, _
     ByRef FailMsg As String) _
@@ -3567,7 +4992,7 @@ Private Function PROB_DS_TryBinomialPMF( _
     Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
 
         If Not PROB_DS_TryBinomialLogMass( _
-            K, N, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+            K, n, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
 
         If IsCertainZero Then
             Result = 0#
@@ -3697,6 +5122,186 @@ Private Function PROB_DS_TryPoissonPMF( _
 End Function
 
 
+Private Function PROB_DS_TryNegativeBinomialLogMass( _
+    ByVal X As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef LogMass As Double, _
+    ByRef IsCertainZero As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryNegativeBinomialLogMass
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Natural log of the negative binomial mass P(X = x | r, p).
+'   Uses the identity P(x) = [r/(r+x)] * Binom(r; r+x, p), so the log mass is
+'   the shared Binomial log-mass plus Log(r) - Log(r+x). Reusing the frozen
+'   Loader kernel keeps deep-tail accuracy where the ordinary mass underflows.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim BinLogMass          As Double          'Binomial log-mass at (r; r+x)
+    Dim BinZero             As Boolean         'Binomial certain-zero flag
+
+        IsCertainZero = False
+
+        If Not PROB_DS_TryBinomialLogMass( _
+            R, R + X, ProbSuccess, BinLogMass, BinZero, FailMsg) Then Exit Function
+
+        If BinZero Then
+            IsCertainZero = True
+            PROB_DS_TryNegativeBinomialLogMass = True
+            Exit Function
+        End If
+
+        LogMass = BinLogMass + Log(R) - Log(R + X)
+
+        PROB_DS_TryNegativeBinomialLogMass = True
+End Function
+
+
+Private Function PROB_DS_TryNegativeBinomialPMF( _
+    ByVal X As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryNegativeBinomialPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Negative binomial mass by exponentiating the shared log-mass kernel.
+'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Impossible or below Double range
+
+        If Not PROB_DS_TryNegativeBinomialLogMass( _
+            X, R, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+
+        If IsCertainZero Then
+            Result = 0#
+            PROB_DS_TryNegativeBinomialPMF = True
+            Exit Function
+        End If
+
+        If Not PROB_TryExp(LogMass, Result) Then
+            FailMsg = "Negative binomial mass exponentiation failed"
+            Exit Function
+        End If
+
+        If Result < 0# Then Result = 0#
+        If Result > 1# Then Result = 1#
+
+        PROB_DS_TryNegativeBinomialPMF = True
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricLogMass( _
+    ByVal K As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef LogMass As Double, _
+    ByRef IsCertainZero As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricLogMass
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Natural log of the hypergeometric mass via Loader's factorisation
+'     dhyper = dbinom(k;K,p) * dbinom(n-k;N-K,p) / dbinom(n;N,p),  p = n/N.
+'   The (n/N) and complement powers cancel exactly, leaving the true log mass;
+'   an impossible numerator term marks the outcome certain-zero.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim P                   As Double          'Sampling fraction n/N
+    Dim B1                  As Double          'Log dbinom(k; K, p)
+    Dim B2                  As Double          'Log dbinom(n-k; N-K, p)
+    Dim B3                  As Double          'Log dbinom(n; N, p)
+    Dim Z1                  As Boolean         'Numerator term one certain-zero
+    Dim Z2                  As Boolean         'Numerator term two certain-zero
+    Dim Z3                  As Boolean         'Denominator certain-zero
+
+        IsCertainZero = False
+        P = n / Np
+
+        If Not PROB_DS_TryBinomialLogMass(K, Kp, P, B1, Z1, FailMsg) Then Exit Function
+        If Not PROB_DS_TryBinomialLogMass(n - K, Np - Kp, P, B2, Z2, FailMsg) Then Exit Function
+        If Not PROB_DS_TryBinomialLogMass(n, Np, P, B3, Z3, FailMsg) Then Exit Function
+
+    'An impossible numerator term means k is outside the support
+        If Z1 Or Z2 Then
+            IsCertainZero = True
+            PROB_DS_TryHypergeometricLogMass = True
+            Exit Function
+        End If
+
+        LogMass = B1 + B2 - B3
+
+        PROB_DS_TryHypergeometricLogMass = True
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricPMF( _
+    ByVal K As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Hypergeometric mass by exponentiating the shared log-mass kernel.
+'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Impossible or below Double range
+
+        If Not PROB_DS_TryHypergeometricLogMass( _
+            K, n, Kp, Np, LogMass, IsCertainZero, FailMsg) Then Exit Function
+
+        If IsCertainZero Then
+            Result = 0#
+            PROB_DS_TryHypergeometricPMF = True
+            Exit Function
+        End If
+
+        If Not PROB_TryExp(LogMass, Result) Then
+            FailMsg = "Hypergeometric mass exponentiation failed"
+            Exit Function
+        End If
+
+        If Result < 0# Then Result = 0#
+        If Result > 1# Then Result = 1#
+
+        PROB_DS_TryHypergeometricPMF = True
+End Function
+
+
 '==============================================================================
 ' PRIVATE CDF AND SURVIVAL KERNELS
 '==============================================================================
@@ -3704,7 +5309,7 @@ End Function
 
 Private Function PROB_DS_TryBinomialCDF( _
     ByVal K As Double, _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal ProbSuccess As Double, _
     ByRef Result As Double, _
     ByRef FailMsg As String) _
@@ -3730,12 +5335,12 @@ Private Function PROB_DS_TryBinomialCDF( _
         End If
 
         If ProbSuccess >= 1# Then
-            If K >= N Then Result = 1# Else Result = 0#
+            If K >= n Then Result = 1# Else Result = 0#
             PROB_DS_TryBinomialCDF = True
             Exit Function
         End If
 
-        If K >= N Then
+        If K >= n Then
             Result = 1#
             PROB_DS_TryBinomialCDF = True
             Exit Function
@@ -3744,7 +5349,7 @@ Private Function PROB_DS_TryBinomialCDF( _
         PROB_DS_TryBinomialCDF = PROB_TryBetaRegularized( _
             1# - ProbSuccess, _
             ProbSuccess, _
-            N - K, _
+            n - K, _
             K + 1#, _
             Result, _
             FailMsg)
@@ -3753,7 +5358,7 @@ End Function
 
 Private Function PROB_DS_TryBinomialSF( _
     ByVal K As Double, _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal ProbSuccess As Double, _
     ByRef Result As Double, _
     ByRef FailMsg As String) _
@@ -3779,12 +5384,12 @@ Private Function PROB_DS_TryBinomialSF( _
         End If
 
         If ProbSuccess >= 1# Then
-            If K < N Then Result = 1# Else Result = 0#
+            If K < n Then Result = 1# Else Result = 0#
             PROB_DS_TryBinomialSF = True
             Exit Function
         End If
 
-        If K >= N Then
+        If K >= n Then
             Result = 0#
             PROB_DS_TryBinomialSF = True
             Exit Function
@@ -3794,7 +5399,7 @@ Private Function PROB_DS_TryBinomialSF( _
             ProbSuccess, _
             1# - ProbSuccess, _
             K + 1#, _
-            N - K, _
+            n - K, _
             Result, _
             FailMsg)
 End Function
@@ -4042,6 +5647,309 @@ Private Function PROB_DS_TryGeometricSF( _
 End Function
 
 
+Private Function PROB_DS_TryNegativeBinomialCDF( _
+    ByVal X As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryNegativeBinomialCDF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(X <= x) = I_p(r, x + 1) via the two-argument regularized incomplete beta.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    'Certain success places all mass at zero failures
+        If ProbSuccess >= 1# Then
+            Result = 1#
+            PROB_DS_TryNegativeBinomialCDF = True
+            Exit Function
+        End If
+
+        PROB_DS_TryNegativeBinomialCDF = PROB_TryBetaRegularized( _
+            ProbSuccess, _
+            1# - ProbSuccess, _
+            R, _
+            X + 1#, _
+            Result, _
+            FailMsg)
+End Function
+
+
+Private Function PROB_DS_TryNegativeBinomialSF( _
+    ByVal X As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryNegativeBinomialSF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(X > x) = I_(1-p)(x + 1, r), the small upper tail computed with no cancellation.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    'Certain success leaves no mass above zero failures
+        If ProbSuccess >= 1# Then
+            Result = 0#
+            PROB_DS_TryNegativeBinomialSF = True
+            Exit Function
+        End If
+
+        PROB_DS_TryNegativeBinomialSF = PROB_TryBetaRegularized( _
+            1# - ProbSuccess, _
+            ProbSuccess, _
+            X + 1#, _
+            R, _
+            Result, _
+            FailMsg)
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricLowerTail( _
+    ByVal Anchor As Double, _
+    ByVal KMin As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricLowerTail
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(X <= Anchor) summed downward from the anchor using the exact successive
+'   mass ratio d(j-1)/d(j). Efficient and cancellation-free when Anchor is at
+'   or below the mean: terms shrink monotonically into the lower tail.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim Mass                As Double          'Mass at the anchor point
+    Dim Term                As Double          'Current running term
+    Dim Sum                 As Double          'Accumulated tail probability
+    Dim Previous            As Double          'Sum before adding a term
+    Dim Ratio               As Double          'd(j-1)/d(j)
+    Dim j                   As Double          'Descending support index
+    Dim IterIdx             As Long            'Iteration guard
+
+        If Anchor < KMin Then
+            Result = 0#
+            PROB_DS_TryHypergeometricLowerTail = True
+            Exit Function
+        End If
+
+        If Not PROB_DS_TryHypergeometricPMF(Anchor, n, Kp, Np, Mass, FailMsg) Then Exit Function
+
+        Sum = Mass
+        Term = Mass
+        j = Anchor
+
+        For IterIdx = 1 To PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER
+            If j <= KMin Then Exit For
+
+        'Ratio d(j-1)/d(j) = [ j (N-K-n+j) ] / [ (K-j+1)(n-j+1) ]
+            Ratio = (j * (Np - Kp - n + j)) / ((Kp - j + 1#) * (n - j + 1#))
+            Term = Term * Ratio
+            j = j - 1#
+
+            Previous = Sum
+            Sum = Sum + Term
+            If Sum = Previous Then Exit For
+        Next IterIdx
+
+        If Sum > 1# Then Sum = 1#
+        Result = Sum
+        PROB_DS_TryHypergeometricLowerTail = True
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricUpperTail( _
+    ByVal Anchor As Double, _
+    ByVal KMax As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricUpperTail
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(X >= Anchor) summed upward from the anchor using the exact successive
+'   mass ratio d(j+1)/d(j). Efficient and cancellation-free when Anchor is at
+'   or above the mean: terms shrink monotonically into the upper tail.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim Mass                As Double          'Mass at the anchor point
+    Dim Term                As Double          'Current running term
+    Dim Sum                 As Double          'Accumulated tail probability
+    Dim Previous            As Double          'Sum before adding a term
+    Dim Ratio               As Double          'd(j+1)/d(j)
+    Dim j                   As Double          'Ascending support index
+    Dim IterIdx             As Long            'Iteration guard
+
+        If Anchor > KMax Then
+            Result = 0#
+            PROB_DS_TryHypergeometricUpperTail = True
+            Exit Function
+        End If
+
+        If Not PROB_DS_TryHypergeometricPMF(Anchor, n, Kp, Np, Mass, FailMsg) Then Exit Function
+
+        Sum = Mass
+        Term = Mass
+        j = Anchor
+
+        For IterIdx = 1 To PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER
+            If j >= KMax Then Exit For
+
+        'Ratio d(j+1)/d(j) = [ (K-j)(n-j) ] / [ (j+1)(N-K-n+j+1) ]
+            Ratio = ((Kp - j) * (n - j)) / ((j + 1#) * (Np - Kp - n + j + 1#))
+            Term = Term * Ratio
+            j = j + 1#
+
+            Previous = Sum
+            Sum = Sum + Term
+            If Sum = Previous Then Exit For
+        Next IterIdx
+
+        If Sum > 1# Then Sum = 1#
+        Result = Sum
+        PROB_DS_TryHypergeometricUpperTail = True
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricCDF( _
+    ByVal K As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricCDF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(X <= k). Sums the lower tail directly when k is at or below the mean,
+'   otherwise returns 1 minus the small upper tail, so the near tail always
+'   drives accuracy and only a few standard deviations of terms are needed.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim KMin                As Double          'Lowest attainable count
+    Dim KMax                As Double          'Highest attainable count
+    Dim Mu                  As Double          'Mean n*K/N
+    Dim UpperTail           As Double          'P(X >= k+1)
+
+        KMin = n + Kp - Np
+        If KMin < 0# Then KMin = 0#
+        KMax = n
+        If Kp < KMax Then KMax = Kp
+        Mu = n * Kp / Np
+
+        If K >= KMax Then
+            Result = 1#
+            PROB_DS_TryHypergeometricCDF = True
+            Exit Function
+        End If
+
+        If K < KMin Then
+            Result = 0#
+            PROB_DS_TryHypergeometricCDF = True
+            Exit Function
+        End If
+
+        If K <= Mu Then
+            PROB_DS_TryHypergeometricCDF = PROB_DS_TryHypergeometricLowerTail( _
+                K, KMin, n, Kp, Np, Result, FailMsg)
+        Else
+            If Not PROB_DS_TryHypergeometricUpperTail( _
+                K + 1#, KMax, n, Kp, Np, UpperTail, FailMsg) Then Exit Function
+            Result = 1# - UpperTail
+            PROB_DS_TryHypergeometricCDF = True
+        End If
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricSF( _
+    ByVal K As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricSF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(X > k). Sums the upper tail directly when k is at or above the mean,
+'   otherwise returns 1 minus the small lower tail.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim KMin                As Double          'Lowest attainable count
+    Dim KMax                As Double          'Highest attainable count
+    Dim Mu                  As Double          'Mean n*K/N
+    Dim LowerTail           As Double          'P(X <= k)
+
+        KMin = n + Kp - Np
+        If KMin < 0# Then KMin = 0#
+        KMax = n
+        If Kp < KMax Then KMax = Kp
+        Mu = n * Kp / Np
+
+        If K >= KMax Then
+            Result = 0#
+            PROB_DS_TryHypergeometricSF = True
+            Exit Function
+        End If
+
+        If K < KMin Then
+            Result = 1#
+            PROB_DS_TryHypergeometricSF = True
+            Exit Function
+        End If
+
+        If K >= Mu Then
+            PROB_DS_TryHypergeometricSF = PROB_DS_TryHypergeometricUpperTail( _
+                K + 1#, KMax, n, Kp, Np, Result, FailMsg)
+        Else
+            If Not PROB_DS_TryHypergeometricLowerTail( _
+                K, KMin, n, Kp, Np, LowerTail, FailMsg) Then Exit Function
+            Result = 1# - LowerTail
+            PROB_DS_TryHypergeometricSF = True
+        End If
+End Function
+
+
 '==============================================================================
 ' PRIVATE INVERSE KERNELS
 '==============================================================================
@@ -4051,7 +5959,7 @@ Private Function PROB_DS_TryBinomialQualifies( _
     ByVal K As Double, _
     ByVal Probability As Double, _
     ByVal ComplementProbability As Double, _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal ProbSuccess As Double, _
     ByRef Qualifies As Boolean, _
     ByRef FailMsg As String) _
@@ -4071,12 +5979,12 @@ Private Function PROB_DS_TryBinomialQualifies( _
 
         If Probability <= 0.5 Then
             If Not PROB_DS_TryBinomialCDF( _
-                K, N, ProbSuccess, TailValue, FailMsg) Then Exit Function
+                K, n, ProbSuccess, TailValue, FailMsg) Then Exit Function
 
             Qualifies = (TailValue >= Probability)
         Else
             If Not PROB_DS_TryBinomialSF( _
-                K, N, ProbSuccess, TailValue, FailMsg) Then Exit Function
+                K, n, ProbSuccess, TailValue, FailMsg) Then Exit Function
 
             Qualifies = (TailValue <= ComplementProbability)
         End If
@@ -4161,7 +6069,7 @@ End Function
 
 Private Function PROB_DS_TryBinomialInverse( _
     ByVal Probability As Double, _
-    ByVal N As Double, _
+    ByVal n As Double, _
     ByVal ProbSuccess As Double, _
     ByRef Result As Double, _
     ByRef FailMsg As String) _
@@ -4203,7 +6111,7 @@ Private Function PROB_DS_TryBinomialInverse( _
 ' HANDLE DEGENERATE SUPPORT
 '------------------------------------------------------------------------------
     'N = 0 is the point mass at zero
-        If N <= 0# Then
+        If n <= 0# Then
             Result = 0#
             PROB_DS_TryBinomialInverse = True
             Exit Function
@@ -4213,7 +6121,7 @@ Private Function PROB_DS_TryBinomialInverse( _
 ' BUILD SEED
 '------------------------------------------------------------------------------
         ComplementProbability = 1# - Probability
-        Np = N * ProbSuccess
+        Np = n * ProbSuccess
         Npq = Np * (1# - ProbSuccess)
 
         If Probability <= 0.5 Then
@@ -4227,8 +6135,8 @@ Private Function PROB_DS_TryBinomialInverse( _
 
         If SeedReal <= 0# Then
             Seed = 0#
-        ElseIf SeedReal >= N Then
-            Seed = N
+        ElseIf SeedReal >= n Then
+            Seed = n
         Else
             Seed = Int(SeedReal)
         End If
@@ -4237,7 +6145,7 @@ Private Function PROB_DS_TryBinomialInverse( _
 ' EVALUATE SEED
 '------------------------------------------------------------------------------
         If Not PROB_DS_TryBinomialQualifies( _
-            Seed, Probability, ComplementProbability, N, ProbSuccess, _
+            Seed, Probability, ComplementProbability, n, ProbSuccess, _
             Qualifies, FailMsg) Then Exit Function
 
         StepSize = Int(Sqr(Npq)) + 1#
@@ -4260,7 +6168,7 @@ Private Function PROB_DS_TryBinomialInverse( _
                     If Candidate < 0# Then Candidate = 0#
 
                     If Not PROB_DS_TryBinomialQualifies( _
-                        Candidate, Probability, ComplementProbability, N, ProbSuccess, _
+                        Candidate, Probability, ComplementProbability, n, ProbSuccess, _
                         Qualifies, FailMsg) Then Exit Function
 
                     If Qualifies Then
@@ -4291,10 +6199,10 @@ Private Function PROB_DS_TryBinomialInverse( _
 
             For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
                 Candidate = Lo + StepSize
-                If Candidate >= N Then Candidate = N
+                If Candidate >= n Then Candidate = n
 
                 If Not PROB_DS_TryBinomialQualifies( _
-                    Candidate, Probability, ComplementProbability, N, ProbSuccess, _
+                    Candidate, Probability, ComplementProbability, n, ProbSuccess, _
                     Qualifies, FailMsg) Then Exit Function
 
                 If Qualifies Then
@@ -4304,7 +6212,7 @@ Private Function PROB_DS_TryBinomialInverse( _
                 End If
 
     'The full count N always qualifies for Probability < 1
-                If Candidate >= N Then
+                If Candidate >= n Then
                     FailMsg = "Binomial inverse failed to bracket at the full count"
                     Exit Function
                 End If
@@ -4333,7 +6241,7 @@ Private Function PROB_DS_TryBinomialInverse( _
             MidPoint = Lo + Int((Hi - Lo) / 2#)
 
             If Not PROB_DS_TryBinomialQualifies( _
-                MidPoint, Probability, ComplementProbability, N, ProbSuccess, _
+                MidPoint, Probability, ComplementProbability, n, ProbSuccess, _
                 Qualifies, FailMsg) Then Exit Function
 
             If Qualifies Then
@@ -4663,5 +6571,427 @@ Private Function PROB_DS_TryGeometricInverse( _
 End Function
 
 
+Private Function PROB_DS_TryNegativeBinomialQualifies( _
+    ByVal K As Double, _
+    ByVal Probability As Double, _
+    ByVal ComplementProbability As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Qualifies As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryNegativeBinomialQualifies
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Tests F(K) >= Probability using the smaller direct probability tail.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim TailValue           As Double          'CDF or SF at K
+
+        If Probability <= 0.5 Then
+            If Not PROB_DS_TryNegativeBinomialCDF( _
+                K, R, ProbSuccess, TailValue, FailMsg) Then Exit Function
+            Qualifies = (TailValue >= Probability)
+        Else
+            If Not PROB_DS_TryNegativeBinomialSF( _
+                K, R, ProbSuccess, TailValue, FailMsg) Then Exit Function
+            Qualifies = (TailValue <= ComplementProbability)
+        End If
+
+        PROB_DS_TryNegativeBinomialQualifies = True
+End Function
+
+
+Private Function PROB_DS_TryNegativeBinomialInverse( _
+    ByVal Probability As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryNegativeBinomialInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Least integer failure count K with F(K) >= Probability.
+'   Seeds from the normal/Cornish-Fisher approximation using the negative
+'   binomial mean, spread and skewness, expands to a bracket capped at the
+'   kernel ceiling, then refines by smaller-tail integer bisection.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim ComplementProbability As Double        '1 - target probability
+    Dim Q                   As Double          'Failure probability 1-p
+    Dim Mean                As Double          'r(1-p)/p
+    Dim SdDev               As Double          'Sqr(r(1-p))/p
+    Dim Z                   As Double          'Normal quantile seed
+    Dim SeedReal            As Double          'Cornish-Fisher real seed
+    Dim Seed                As Double          'Truncated integer seed
+    Dim StepSize            As Double          'Bracket expansion step
+    Dim Candidate           As Double          'Candidate bracket point
+    Dim Lo                  As Double          'Known failing integer or -1 sentinel
+    Dim Hi                  As Double          'Known qualifying integer
+    Dim MidPoint            As Double          'Integer bisection midpoint
+    Dim Qualifies           As Boolean         'Objective result
+    Dim BracketFound        As Boolean         'TRUE once Lo and Hi are established
+    Dim IterIdx             As Long            'Iteration index
+
+        ComplementProbability = 1# - Probability
+        Q = 1# - ProbSuccess
+
+    'Certain success collapses the distribution onto zero failures
+        If Q <= 0# Then
+            Result = 0#
+            PROB_DS_TryNegativeBinomialInverse = True
+            Exit Function
+        End If
+
+        Mean = R * Q / ProbSuccess
+        SdDev = Sqr(R * Q) / ProbSuccess
+
+        If Probability <= 0.5 Then
+            Z = PROB_NormalInvCDFRaw(Probability)
+        Else
+            Z = -PROB_NormalInvCDFRaw(ComplementProbability)
+        End If
+
+    'Normal seed with the first Cornish-Fisher skewness correction
+        SeedReal = Mean + SdDev * Z + (2# - ProbSuccess) / (6# * ProbSuccess) * (Z * Z - 1#)
+
+        If SeedReal <= 0# Then
+            Seed = 0#
+        ElseIf SeedReal >= PROB_DS_MAX_NEGBINOM_KERNEL_COUNT Then
+            Seed = PROB_DS_MAX_NEGBINOM_KERNEL_COUNT
+        Else
+            Seed = Int(SeedReal)
+        End If
+
+        If Not PROB_DS_TryNegativeBinomialQualifies( _
+            Seed, Probability, ComplementProbability, R, ProbSuccess, _
+            Qualifies, FailMsg) Then Exit Function
+
+        StepSize = Int(SdDev) + 1#
+        If StepSize < 1# Then StepSize = 1#
+
+        BracketFound = False
+
+        If Qualifies Then
+            Hi = Seed
+
+            If Hi <= 0# Then
+                Lo = -1#
+                BracketFound = True
+            Else
+                For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
+                    Candidate = Hi - StepSize
+                    If Candidate < 0# Then Candidate = 0#
+
+                    If Not PROB_DS_TryNegativeBinomialQualifies( _
+                        Candidate, Probability, ComplementProbability, R, ProbSuccess, _
+                        Qualifies, FailMsg) Then Exit Function
+
+                    If Qualifies Then
+                        Hi = Candidate
+                        If Hi <= 0# Then
+                            Lo = -1#
+                            BracketFound = True
+                            Exit For
+                        End If
+                        StepSize = StepSize * 2#
+                    Else
+                        Lo = Candidate
+                        BracketFound = True
+                        Exit For
+                    End If
+                Next IterIdx
+
+                If Not BracketFound Then
+                    FailMsg = "Negative binomial inverse downward bracketing failed"
+                    Exit Function
+                End If
+            End If
+        Else
+            Lo = Seed
+
+            For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
+                Candidate = Lo + StepSize
+
+                If Candidate >= PROB_DS_MAX_NEGBINOM_KERNEL_COUNT Then
+                    Candidate = PROB_DS_MAX_NEGBINOM_KERNEL_COUNT
+                End If
+
+                If Not PROB_DS_TryNegativeBinomialQualifies( _
+                    Candidate, Probability, ComplementProbability, R, ProbSuccess, _
+                    Qualifies, FailMsg) Then Exit Function
+
+                If Qualifies Then
+                    Hi = Candidate
+                    BracketFound = True
+                    Exit For
+                End If
+
+                If Candidate >= PROB_DS_MAX_NEGBINOM_KERNEL_COUNT Then
+                    FailMsg = "Negative binomial quantile exceeds the supported ceiling of " & _
+                              CStr(PROB_DS_MAX_NEGBINOM_KERNEL_COUNT)
+                    Exit Function
+                End If
+
+                Lo = Candidate
+                StepSize = StepSize * 2#
+            Next IterIdx
+
+            If Not BracketFound Then
+                FailMsg = "Negative binomial inverse upward bracketing failed"
+                Exit Function
+            End If
+        End If
+
+        For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
+            If Hi - Lo <= 1# Then
+                Result = Hi
+                PROB_DS_TryNegativeBinomialInverse = True
+                Exit Function
+            End If
+
+            MidPoint = Lo + Int((Hi - Lo) / 2#)
+
+            If Not PROB_DS_TryNegativeBinomialQualifies( _
+                MidPoint, Probability, ComplementProbability, R, ProbSuccess, _
+                Qualifies, FailMsg) Then Exit Function
+
+            If Qualifies Then
+                Hi = MidPoint
+            Else
+                Lo = MidPoint
+            End If
+        Next IterIdx
+
+        FailMsg = "Negative binomial inverse failed to converge in " & _
+                  PROB_DS_MAX_INVERSE_ITER & " integer iterations"
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricQualifies( _
+    ByVal K As Double, _
+    ByVal Probability As Double, _
+    ByVal ComplementProbability As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Qualifies As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricQualifies
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Tests F(K) >= Probability using the smaller direct probability tail.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim TailValue           As Double          'CDF or SF at K
+
+        If Probability <= 0.5 Then
+            If Not PROB_DS_TryHypergeometricCDF( _
+                K, n, Kp, Np, TailValue, FailMsg) Then Exit Function
+            Qualifies = (TailValue >= Probability)
+        Else
+            If Not PROB_DS_TryHypergeometricSF( _
+                K, n, Kp, Np, TailValue, FailMsg) Then Exit Function
+            Qualifies = (TailValue <= ComplementProbability)
+        End If
+
+        PROB_DS_TryHypergeometricQualifies = True
+End Function
+
+
+Private Function PROB_DS_TryHypergeometricInverse( _
+    ByVal Probability As Double, _
+    ByVal n As Double, _
+    ByVal Kp As Double, _
+    ByVal Np As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryHypergeometricInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Least integer sample-success count K in [KMin, KMax] with F(K) >= Probability.
+'   Seeds from the normal approximation using the hypergeometric mean and
+'   spread, brackets within the finite support, then refines by smaller-tail
+'   integer bisection.  KMax always qualifies for Probability < 1.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim ComplementProbability As Double        '1 - target probability
+    Dim KMin                As Double          'Lowest attainable count
+    Dim KMax                As Double          'Highest attainable count
+    Dim Mu                  As Double          'Mean n*K/N
+    Dim Variance            As Double          'Hypergeometric variance
+    Dim SdDev               As Double          'Square root of the variance
+    Dim Z                   As Double          'Normal quantile seed
+    Dim SeedReal            As Double          'Real-valued seed
+    Dim Seed                As Double          'Truncated integer seed
+    Dim StepSize            As Double          'Bracket expansion step
+    Dim Candidate           As Double          'Candidate bracket point
+    Dim Lo                  As Double          'Known failing integer or KMin-1 sentinel
+    Dim Hi                  As Double          'Known qualifying integer
+    Dim MidPoint            As Double          'Integer bisection midpoint
+    Dim Qualifies           As Boolean         'Objective result
+    Dim BracketFound        As Boolean         'TRUE once Lo and Hi are established
+    Dim IterIdx             As Long            'Iteration index
+
+        ComplementProbability = 1# - Probability
+
+        KMin = n + Kp - Np
+        If KMin < 0# Then KMin = 0#
+        KMax = n
+        If Kp < KMax Then KMax = Kp
+
+    'A single-point support is its own quantile
+        If KMax <= KMin Then
+            Result = KMin
+            PROB_DS_TryHypergeometricInverse = True
+            Exit Function
+        End If
+
+        Mu = n * Kp / Np
+        If Np <= 1# Then
+            Variance = 0#
+        Else
+            Variance = n * (Kp / Np) * ((Np - Kp) / Np) * ((Np - n) / (Np - 1#))
+        End If
+        SdDev = Sqr(Variance)
+
+        If Probability <= 0.5 Then
+            Z = PROB_NormalInvCDFRaw(Probability)
+        Else
+            Z = -PROB_NormalInvCDFRaw(ComplementProbability)
+        End If
+
+        SeedReal = Mu + SdDev * Z
+
+        If SeedReal <= KMin Then
+            Seed = KMin
+        ElseIf SeedReal >= KMax Then
+            Seed = KMax
+        Else
+            Seed = Int(SeedReal)
+        End If
+
+        If Not PROB_DS_TryHypergeometricQualifies( _
+            Seed, Probability, ComplementProbability, n, Kp, Np, _
+            Qualifies, FailMsg) Then Exit Function
+
+        StepSize = Int(SdDev) + 1#
+        If StepSize < 1# Then StepSize = 1#
+
+        BracketFound = False
+
+        If Qualifies Then
+            Hi = Seed
+
+            If Hi <= KMin Then
+                Lo = KMin - 1#
+                BracketFound = True
+            Else
+                For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
+                    Candidate = Hi - StepSize
+                    If Candidate < KMin Then Candidate = KMin
+
+                    If Not PROB_DS_TryHypergeometricQualifies( _
+                        Candidate, Probability, ComplementProbability, n, Kp, Np, _
+                        Qualifies, FailMsg) Then Exit Function
+
+                    If Qualifies Then
+                        Hi = Candidate
+                        If Hi <= KMin Then
+                            Lo = KMin - 1#
+                            BracketFound = True
+                            Exit For
+                        End If
+                        StepSize = StepSize * 2#
+                    Else
+                        Lo = Candidate
+                        BracketFound = True
+                        Exit For
+                    End If
+                Next IterIdx
+
+                If Not BracketFound Then
+                    FailMsg = "Hypergeometric inverse downward bracketing failed"
+                    Exit Function
+                End If
+            End If
+        Else
+            Lo = Seed
+
+            For IterIdx = 1 To PROB_DS_MAX_BRACKET_ITER
+                Candidate = Lo + StepSize
+                If Candidate >= KMax Then Candidate = KMax
+
+                If Not PROB_DS_TryHypergeometricQualifies( _
+                    Candidate, Probability, ComplementProbability, n, Kp, Np, _
+                    Qualifies, FailMsg) Then Exit Function
+
+                If Qualifies Then
+                    Hi = Candidate
+                    BracketFound = True
+                    Exit For
+                End If
+
+                If Candidate >= KMax Then
+                    FailMsg = "Hypergeometric inverse failed to bracket at the support ceiling"
+                    Exit Function
+                End If
+
+                Lo = Candidate
+                StepSize = StepSize * 2#
+            Next IterIdx
+
+            If Not BracketFound Then
+                FailMsg = "Hypergeometric inverse upward bracketing failed"
+                Exit Function
+            End If
+        End If
+
+        For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
+            If Hi - Lo <= 1# Then
+                Result = Hi
+                PROB_DS_TryHypergeometricInverse = True
+                Exit Function
+            End If
+
+            MidPoint = Lo + Int((Hi - Lo) / 2#)
+
+            If Not PROB_DS_TryHypergeometricQualifies( _
+                MidPoint, Probability, ComplementProbability, n, Kp, Np, _
+                Qualifies, FailMsg) Then Exit Function
+
+            If Qualifies Then
+                Hi = MidPoint
+            Else
+                Lo = MidPoint
+            End If
+        Next IterIdx
+
+        FailMsg = "Hypergeometric inverse failed to converge in " & _
+                  PROB_DS_MAX_INVERSE_ITER & " integer iterations"
+End Function
 
 
