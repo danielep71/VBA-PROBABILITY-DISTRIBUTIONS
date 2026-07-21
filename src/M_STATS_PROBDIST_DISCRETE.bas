@@ -5,8 +5,9 @@ Option Explicit
 ' M_STATS_PROBDIST_DISCRETE
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Provides worksheet-facing probability functions for the Binomial, Poisson
-'   and Geometric discrete distributions.
+'   Provides worksheet-facing probability functions for the Binomial, Poisson,
+'   Geometric, Negative Binomial, Hypergeometric and Discrete Uniform
+'   distributions.
 '
 ' WHY
 '   This module supplies the first production-hardened discrete layer of the
@@ -67,6 +68,16 @@ Option Explicit
 '     K_STATS_Hypergeometric_Variance
 '     K_STATS_Hypergeometric_StdDev
 '
+'   Discrete Uniform
+'     K_STATS_DiscreteUniform_PMF
+'     K_STATS_DiscreteUniform_LogPMF
+'     K_STATS_DiscreteUniform_Cumulative
+'     K_STATS_DiscreteUniform_Survival
+'     K_STATS_DiscreteUniform_InverseCumulative
+'     K_STATS_DiscreteUniform_Mean
+'     K_STATS_DiscreteUniform_Variance
+'     K_STATS_DiscreteUniform_StdDev
+'
 ' PARAMETERIZATION
 '   Binomial(NumberSuccesses, Trials, ProbSuccess)
 '     - PMF/CDF/SF and moments accept ProbSuccess in [0, 1].
@@ -80,10 +91,28 @@ Option Explicit
 '     - Support is k = 0, 1, 2, ...
 '     - PMF = p * (1-p)^k and ProbSuccess is in (0, 1].
 '
+'   NegativeBinomial(NumberFailures, NumberSuccesses, ProbSuccess)
+'     - NumberFailures counts failures before the NumberSuccesses-th success.
+'     - NumberSuccesses is an integer count of required successes and is at least 1.
+'     - ProbSuccess is in (0, 1].
+'
+'   Hypergeometric(SampleSuccesses, SampleSize, PopulationSuccesses, PopulationSize)
+'     - Sampling is without replacement.
+'     - Every argument is an integer count after truncation toward zero.
+'
+'   DiscreteUniform(X, LowerBound, UpperBound)
+'     - The support is every integer from LowerBound through UpperBound, inclusive.
+'     - Bounds are truncated toward zero before validation and may be negative.
+'     - PMF/LogPMF require X to be an exact integer; CDF/SF accept any finite real
+'       threshold and use the mathematically correct floor(X) step behavior.
+'
 ' COUNT POLICY
 '   - Worksheet count inputs are truncated toward zero before validation.
 '   - Every stored count is limited to the largest consecutively representable
 '     integer in IEEE-754 Double: 2^53 - 1.
+'   - Discrete Uniform bounds follow the same truncation policy but may be signed.
+'     Its PMF uses exact-integer X; its CDF/SF accept a real threshold because a
+'     discrete CDF is naturally a step function over the real line.
 '   - Kernel-backed CDF/SF/inverse functions apply tighter limits aligned to the
 '     iteration budgets in M_STATS_PROBDIST_SPECIALFUNCS.
 '
@@ -101,6 +130,17 @@ Option Explicit
 '       20,000,000.
 '   - Geometric counts and returned quantiles:
 '       <= 2^53 - 1.
+'   - Negative Binomial PMF and LogPMF:
+'       NumberFailures + NumberSuccesses <= 2^53 - 1.
+'   - Negative Binomial CDF, SF and inverse:
+'       NumberFailures / returned quantiles <= 20,000,000 and
+'       NumberSuccesses <= 10,000,000.
+'   - Hypergeometric:
+'       PopulationSize <= 100,000,000; cumulative summation is capped at
+'       200,000 successive-ratio terms.
+'   - Discrete Uniform:
+'       signed bounds lie in [-(2^53 - 1), 2^53 - 1], and the inclusive support
+'       contains at most 2^53 - 1 integers.
 '
 ' NUMERICAL METHODS
 '   - Binomial PMF:
@@ -115,6 +155,13 @@ Option Explicit
 '       Integer lower-bound searches driven by the smaller tail.
 '   - Geometric CDF/SF:
 '       Log1p/Expm1 closed forms with guarded exponent products.
+'   - Negative Binomial:
+'       Loader log-mass plus direct regularized incomplete-beta tails.
+'   - Hypergeometric:
+'       Loader log-mass plus near-tail successive-ratio summation.
+'   - Discrete Uniform:
+'       Closed forms over the exact support count, direct right tails, a
+'       corrected lower-bound quantile, and cancellation-safe moment formulas.
 '
 ' ERROR POLICY
 '   - Invalid domains, unsupported magnitudes, arithmetic overflow and kernel
@@ -131,7 +178,7 @@ Option Explicit
 '   example ln P well below -700), and return #NUM! only when the outcome has
 '   probability exactly zero.
 '
-' NEGATIVE BINOMIAL AND HYPERGEOMETRIC
+' ADDITIONAL DISCRETE FAMILIES
 '   Negative binomial counts failures before the r-th success (r = 1 is the
 '   Geometric); its mass reuses the Loader Binomial kernel and its CDF/SF use
 '   the two-argument regularized incomplete beta. Hypergeometric mass is three
@@ -140,6 +187,11 @@ Option Explicit
 '   terms are evaluated. Cumulative and inverse counts are capped for the
 '   summation and bracketing paths; the single-point masses accept the full
 '   exact-integer domain.
+'
+'   Discrete Uniform is closed-form. The support cardinality is validated once
+'   and reused by PMF, CDF, SF, inverse and moments. The CDF and survival are
+'   formed from their own integer counts, never as complements; the inverse
+'   corrects the initial product estimate against adjacent exact CDF steps.
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
 '       PROB_HALF_LOG_TWO_PI
@@ -162,14 +214,13 @@ Option Explicit
 '       PROB_TryGammaRegularizedQ
 '
 ' NOTES
-'   - This module is complete for the stated Binomial, Poisson and Geometric
-'     surface. Negative Binomial, Hypergeometric and Discrete Uniform remain a
-'     separate future batch.
+'   - This module is complete for the stated Binomial, Poisson, Geometric,
+'     Negative Binomial, Hypergeometric and Discrete Uniform surfaces.
 '   - Direct survival functions should be used for small right-tail
 '     probabilities; subtracting the CDF from one loses those tails.
 '
 ' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
+'   2026-07-21 - Added production-hardened Discrete Uniform distribution.
 '==============================================================================
 
 
@@ -179,7 +230,8 @@ Option Explicit
 
 'Largest integer for which every consecutive integer is exactly representable
 'in IEEE-754 Double.
-Private Const PROB_DS_MAX_EXACT_INTEGER As Double = 9.00719925474099E+15
+Private Const PROB_DS_MAX_EXACT_INTEGER As Double = _
+    9.00719925474099E+15 + 1#                     '2^53 - 1 exactly
 
 'Maximum Binomial trial count passed to the current incomplete-beta kernel.
 Private Const PROB_DS_MAX_BINOMIAL_KERNEL_N As Double = 10000000#
@@ -194,6 +246,7 @@ Private Const PROB_DS_MAX_POISSON_KERNEL_COUNT As Double = 20000000#
 Private Const PROB_DS_MAX_INVERSE_ITER As Long = 128
 Private Const PROB_DS_MAX_BRACKET_ITER As Long = 64
 Private Const PROB_DS_MAX_GEOMETRIC_CORRECTIONS As Long = 8
+Private Const PROB_DS_MAX_DISCRETE_UNIFORM_CORRECTIONS As Long = 8
 Private Const PROB_DS_BD0_MAX_ITER As Long = 1000
 Private Const PROB_DS_MAX_NEGBINOM_KERNEL_COUNT As Double = 20000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_POP As Double = 100000000#
@@ -4078,6 +4131,723 @@ Err_Handler:
 End Function
 
 
+
+'==============================================================================
+' DISCRETE UNIFORM DISTRIBUTION
+'==============================================================================
+
+
+Public Function K_STATS_DiscreteUniform_PMF( _
+    ByVal X As Double, _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_PMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the probability mass P(Y = X) for an integer-valued uniform random
+'   variable Y supported on every integer from LowerBound through UpperBound.
+'
+' INPUTS
+'   X           Evaluation point. Must be an exact integer to carry positive
+'               mass; a finite non-integer returns zero.
+'   LowerBound  Inclusive lower support bound, truncated toward zero.
+'   UpperBound  Inclusive upper support bound, truncated toward zero.
+'   Status      Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero for a non-integer X or an integer outside the support.
+'   - Returns 1 / SupportCount on the support.
+'   - Supports signed bounds and an inclusive support count through 2^53 - 1.
+'
+' ERROR POLICY
+'   - Invalid bounds or unsupported support size return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateDiscreteUniformBounds
+'   - PROB_DS_TryDiscreteUniformPMF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim Mass                As Double          'Returned probability mass
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+        If Not PROB_IsFinite(X) Then
+            FailMsg = "X must be a finite number"
+            GoTo Fail_Num
+        End If
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformPMF( _
+            X, Lower, Upper, SupportCount, Mass, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_PMF = Mass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_PMF = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_PMF: " & Err.Description
+        K_STATS_DiscreteUniform_PMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_LogPMF( _
+    ByVal X As Double, _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_LogPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the natural logarithm of the Discrete Uniform probability mass.
+'
+' RETURNS
+'   Variant
+'     Success => -Log(SupportCount) for an integer X on the support.
+'     Failure => CVErr(xlErrNum) for zero mass, invalid bounds or unsupported
+'                support size; CVErr(xlErrValue) for an unexpected runtime error.
+'
+' BEHAVIOR
+'   - A non-integer X or an integer outside the support has exactly zero mass,
+'     so its logarithm is undefined and returns #NUM!.
+'   - A one-point support returns zero.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateDiscreteUniformBounds
+'   - PROB_DS_TryDiscreteUniformLogPMF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'TRUE when X has exactly zero mass
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+        If Not PROB_IsFinite(X) Then
+            FailMsg = "X must be a finite number"
+            GoTo Fail_Num
+        End If
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformLogPMF( _
+            X, Lower, Upper, SupportCount, LogMass, IsCertainZero, FailMsg) Then GoTo Fail_Num
+
+        If IsCertainZero Then
+            FailMsg = "Log-mass is undefined: X has zero Discrete Uniform probability"
+            GoTo Fail_Num
+        End If
+
+        K_STATS_DiscreteUniform_LogPMF = LogMass
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_LogPMF = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_LogPMF: " & Err.Description
+        K_STATS_DiscreteUniform_LogPMF = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_Cumulative( _
+    ByVal X As Double, _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_Cumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns P(Y <= X) for the Discrete Uniform distribution.
+'
+' BEHAVIOR
+'   - Accepts any finite real X.
+'   - Returns zero below the support and one at or above UpperBound.
+'   - Inside the support uses Floor(X), which gives the mathematically correct
+'     right-continuous step CDF even when the support contains negative integers.
+'   - Evaluates the left-tail count directly.
+'
+' ERROR POLICY
+'   - Invalid bounds, non-finite X or unsupported support size return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateDiscreteUniformBounds
+'   - PROB_DS_TryDiscreteUniformCDF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim Probability         As Double          'Returned cumulative probability
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+        If Not PROB_IsFinite(X) Then
+            FailMsg = "X must be a finite number"
+            GoTo Fail_Num
+        End If
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformCDF( _
+            X, Lower, Upper, SupportCount, Probability, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_Cumulative = Probability
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_Cumulative = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_Cumulative: " & Err.Description
+        K_STATS_DiscreteUniform_Cumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_Survival( _
+    ByVal X As Double, _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns P(Y > X) for the Discrete Uniform distribution.
+'
+' BEHAVIOR
+'   - Accepts any finite real X.
+'   - Returns one below LowerBound and zero at or above UpperBound.
+'   - Inside the support uses Floor(X) and counts the upper-tail support points
+'     directly; it never subtracts the CDF from one.
+'
+' ERROR POLICY
+'   - Invalid bounds, non-finite X or unsupported support size return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateDiscreteUniformBounds
+'   - PROB_DS_TryDiscreteUniformSF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim Probability         As Double          'Returned survival probability
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+        If Not PROB_IsFinite(X) Then
+            FailMsg = "X must be a finite number"
+            GoTo Fail_Num
+        End If
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformSF( _
+            X, Lower, Upper, SupportCount, Probability, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_Survival = Probability
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_Survival = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_Survival: " & Err.Description
+        K_STATS_DiscreteUniform_Survival = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_InverseCumulative( _
+    ByVal Probability As Double, _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_InverseCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the least integer K such that P(Y <= K) >= Probability.
+'
+' INPUTS
+'   Probability  Probability level strictly inside (0, 1).
+'   LowerBound   Inclusive lower support bound, truncated toward zero.
+'   UpperBound   Inclusive upper support bound, truncated toward zero.
+'
+' NUMERICAL METHOD
+'   Seeds the support index from Probability * SupportCount and then checks the
+'   adjacent exact CDF steps. The correction removes the one-index ambiguity
+'   that a rounded product can create when Probability lies on or beside a jump.
+'
+' ERROR POLICY
+'   - Invalid probability, bounds or unsupported support size return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_DS_ValidateDiscreteUniformBounds
+'   - PROB_DS_TryDiscreteUniformInverse
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim Quantile            As Double          'Returned integer quantile
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_IsValidProbabilityOpen(Probability) Then
+            FailMsg = "Probability must be strictly between 0 and 1"
+            GoTo Fail_Num
+        End If
+
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformInverse( _
+            Probability, Lower, Upper, SupportCount, Quantile, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_InverseCumulative = Quantile
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_InverseCumulative = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_InverseCumulative: " & Err.Description
+        K_STATS_DiscreteUniform_InverseCumulative = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_Mean( _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_Mean
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the arithmetic mean (LowerBound + UpperBound) / 2.
+'
+' NUMERICAL METHOD
+'   Uses Lower + (Upper - Lower) / 2 after the validated support-width check, so
+'   opposite-signed bounds never require a potentially problematic direct sum.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim MeanValue           As Double          'Returned mean
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformMean( _
+            Lower, Upper, MeanValue, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_Mean = MeanValue
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_Mean = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_Mean: " & Err.Description
+        K_STATS_DiscreteUniform_Mean = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_Variance( _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_Variance
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns (SupportCount^2 - 1) / 12.
+'
+' NUMERICAL METHOD
+'   Forms (SupportCount - 1) * (SupportCount + 1) / 12. The factored expression
+'   returns the one-point variance exactly and avoids a subtractive loss at small
+'   support sizes.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim VarianceValue       As Double          'Returned variance
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformVariance( _
+            SupportCount, VarianceValue, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_Variance = VarianceValue
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_Variance = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_Variance: " & Err.Description
+        K_STATS_DiscreteUniform_Variance = CVErr(xlErrValue)
+End Function
+
+
+Public Function K_STATS_DiscreteUniform_StdDev( _
+    ByVal LowerBound As Double, _
+    ByVal UpperBound As Double, _
+    Optional ByRef Status As String = "") _
+    As Variant
+'
+'==============================================================================
+' K_STATS_DiscreteUniform_StdDev
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the square root of the Discrete Uniform variance.
+'
+' BEHAVIOR
+'   - Returns zero for a one-point support.
+'   - Computes the variance through the shared factored private kernel.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Lower               As Double          'Validated truncated lower bound
+    Dim Upper               As Double          'Validated truncated upper bound
+    Dim SupportCount        As Double          'Inclusive number of support points
+    Dim StdDevValue         As Double          'Returned standard deviation
+    Dim FailMsg             As String          'Detailed failure message
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+        On Error GoTo Err_Handler
+        PROB_SetStatus Status, vbNullString
+        FailMsg = vbNullString
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+        If Not PROB_DS_ValidateDiscreteUniformBounds( _
+            LowerBound, UpperBound, Lower, Upper, SupportCount, FailMsg) Then GoTo Fail_Num
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+        If Not PROB_DS_TryDiscreteUniformStdDev( _
+            SupportCount, StdDevValue, FailMsg) Then GoTo Fail_Num
+
+        K_STATS_DiscreteUniform_StdDev = StdDevValue
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+Return_Success:
+        PROB_SetStatus Status, vbNullString
+        Exit Function
+
+'------------------------------------------------------------------------------
+' FAIL - NUMERIC
+'------------------------------------------------------------------------------
+Fail_Num:
+        PROB_SetStatus Status, FailMsg
+        K_STATS_DiscreteUniform_StdDev = CVErr(xlErrNum)
+        Exit Function
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+        PROB_SetStatus Status, _
+            "Unexpected error in K_STATS_DiscreteUniform_StdDev: " & Err.Description
+        K_STATS_DiscreteUniform_StdDev = CVErr(xlErrValue)
+End Function
+
+
 '==============================================================================
 ' PRIVATE VALIDATION KERNELS
 '==============================================================================
@@ -4724,6 +5494,394 @@ Private Function PROB_DS_ValidateHypergeometricInputs( _
         End If
 
         PROB_DS_ValidateHypergeometricInputs = True
+End Function
+
+
+
+'==============================================================================
+' PRIVATE DISCRETE UNIFORM VALIDATION AND NUMERICAL KERNELS
+'==============================================================================
+
+
+Private Function PROB_DS_ValidateDiscreteUniformBound( _
+    ByVal RawBound As Double, _
+    ByVal ArgName As String, _
+    ByRef BoundOut As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_ValidateDiscreteUniformBound
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates one signed support bound and truncates it toward zero.
+'
+' CONTRACT
+'   - RawBound must be finite.
+'   - The truncated integer must lie inside [-(2^53 - 1), 2^53 - 1].
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+        If Not PROB_IsFinite(RawBound) Then
+            FailMsg = ArgName & " must be a finite number"
+            Exit Function
+        End If
+
+        If RawBound < -PROB_DS_MAX_EXACT_INTEGER Or _
+           RawBound > PROB_DS_MAX_EXACT_INTEGER Then
+
+            FailMsg = ArgName & _
+                " must lie within the exact-integer Double domain (absolute value <= 2^53 - 1)"
+            Exit Function
+        End If
+
+        BoundOut = Fix(RawBound)
+
+        PROB_DS_ValidateDiscreteUniformBound = True
+End Function
+
+
+Private Function PROB_DS_ValidateDiscreteUniformBounds( _
+    ByVal RawLower As Double, _
+    ByVal RawUpper As Double, _
+    ByRef LowerOut As Double, _
+    ByRef UpperOut As Double, _
+    ByRef SupportCountOut As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_ValidateDiscreteUniformBounds
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Validates, truncates and orders the two signed support bounds, then returns
+'   the inclusive support cardinality.
+'
+' CONTRACT
+'   - LowerOut and UpperOut are exact integers in the supported Double domain.
+'   - LowerOut <= UpperOut.
+'   - SupportCountOut = UpperOut - LowerOut + 1 and is at most 2^53 - 1.
+'
+' UPDATED
+'   2026-07-21
+'==============================================================================
+'
+    Dim Width               As Double          'Number of integer steps from lower to upper
+
+        If Not PROB_DS_ValidateDiscreteUniformBound( _
+            RawLower, "LowerBound", LowerOut, FailMsg) Then Exit Function
+
+        If Not PROB_DS_ValidateDiscreteUniformBound( _
+            RawUpper, "UpperBound", UpperOut, FailMsg) Then Exit Function
+
+        If LowerOut > UpperOut Then
+            FailMsg = "LowerBound must not exceed UpperBound after truncation toward zero"
+            Exit Function
+        End If
+
+        Width = UpperOut - LowerOut
+
+        If Width > PROB_DS_MAX_EXACT_INTEGER - 1# Then
+            FailMsg = _
+                "The inclusive Discrete Uniform support must contain at most 2^53 - 1 integers"
+            Exit Function
+        End If
+
+        SupportCountOut = Width + 1#
+
+        If SupportCountOut < 1# Or _
+           SupportCountOut > PROB_DS_MAX_EXACT_INTEGER Then
+
+            FailMsg = "Discrete Uniform support size is outside the supported exact-integer domain"
+            Exit Function
+        End If
+
+        PROB_DS_ValidateDiscreteUniformBounds = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformPMF( _
+    ByVal X As Double, _
+    ByVal Lower As Double, _
+    ByVal Upper As Double, _
+    ByVal SupportCount As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+        If X <> Fix(X) Then
+            Result = 0#
+            PROB_DS_TryDiscreteUniformPMF = True
+            Exit Function
+        End If
+
+        If X < Lower Or X > Upper Then
+            Result = 0#
+            PROB_DS_TryDiscreteUniformPMF = True
+            Exit Function
+        End If
+
+        If Not PROB_TryDivide(1#, SupportCount, Result) Then
+            FailMsg = "Discrete Uniform support mass could not be represented"
+            Exit Function
+        End If
+
+        PROB_DS_TryDiscreteUniformPMF = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformLogPMF( _
+    ByVal X As Double, _
+    ByVal Lower As Double, _
+    ByVal Upper As Double, _
+    ByVal SupportCount As Double, _
+    ByRef LogMass As Double, _
+    ByRef IsCertainZero As Boolean, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+        IsCertainZero = False
+
+        If X <> Fix(X) Or X < Lower Or X > Upper Then
+            IsCertainZero = True
+            PROB_DS_TryDiscreteUniformLogPMF = True
+            Exit Function
+        End If
+
+        LogMass = -Log(SupportCount)
+
+        PROB_DS_TryDiscreteUniformLogPMF = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformCDF( _
+    ByVal X As Double, _
+    ByVal Lower As Double, _
+    ByVal Upper As Double, _
+    ByVal SupportCount As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+    Dim FloorX              As Double          'Greatest integer not exceeding X
+    Dim IncludedCount       As Double          'Support points at or below X
+
+        If X < Lower Then
+            Result = 0#
+            PROB_DS_TryDiscreteUniformCDF = True
+            Exit Function
+        End If
+
+        If X >= Upper Then
+            Result = 1#
+            PROB_DS_TryDiscreteUniformCDF = True
+            Exit Function
+        End If
+
+        FloorX = Int(X)
+        IncludedCount = FloorX - Lower + 1#
+
+        If IncludedCount < 1# Or IncludedCount > SupportCount Then
+            FailMsg = "Discrete Uniform cumulative support count is inconsistent"
+            Exit Function
+        End If
+
+        If Not PROB_TryDivide(IncludedCount, SupportCount, Result) Then
+            FailMsg = "Discrete Uniform cumulative probability could not be represented"
+            Exit Function
+        End If
+
+        If Result < 0# Then Result = 0#
+        If Result > 1# Then Result = 1#
+
+        PROB_DS_TryDiscreteUniformCDF = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformSF( _
+    ByVal X As Double, _
+    ByVal Lower As Double, _
+    ByVal Upper As Double, _
+    ByVal SupportCount As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+    Dim FloorX              As Double          'Greatest integer not exceeding X
+    Dim ExceedanceCount     As Double          'Support points strictly above X
+
+        If X < Lower Then
+            Result = 1#
+            PROB_DS_TryDiscreteUniformSF = True
+            Exit Function
+        End If
+
+        If X >= Upper Then
+            Result = 0#
+            PROB_DS_TryDiscreteUniformSF = True
+            Exit Function
+        End If
+
+        FloorX = Int(X)
+        ExceedanceCount = Upper - FloorX
+
+        If ExceedanceCount < 1# Or ExceedanceCount > SupportCount Then
+            FailMsg = "Discrete Uniform survival support count is inconsistent"
+            Exit Function
+        End If
+
+        If Not PROB_TryDivide(ExceedanceCount, SupportCount, Result) Then
+            FailMsg = "Discrete Uniform survival probability could not be represented"
+            Exit Function
+        End If
+
+        If Result < 0# Then Result = 0#
+        If Result > 1# Then Result = 1#
+
+        PROB_DS_TryDiscreteUniformSF = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformInverse( _
+    ByVal Probability As Double, _
+    ByVal Lower As Double, _
+    ByVal Upper As Double, _
+    ByVal SupportCount As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+    Dim IndexValue          As Double          'Zero-based support index
+    Dim ScaledProbability   As Double          'Probability multiplied by support size
+    Dim PreviousCDF         As Double          'CDF at the preceding support point
+    Dim CurrentCDF          As Double          'CDF at the candidate support point
+    Dim CorrectionIdx       As Long            'Bounded adjacent-step correction index
+
+        ScaledProbability = Probability * SupportCount
+        IndexValue = Int(ScaledProbability)
+
+        If IndexValue < 0# Then IndexValue = 0#
+        If IndexValue >= SupportCount Then IndexValue = SupportCount - 1#
+
+        For CorrectionIdx = 1 To PROB_DS_MAX_DISCRETE_UNIFORM_CORRECTIONS
+            If IndexValue > 0# Then
+                If Not PROB_TryDivide(IndexValue, SupportCount, PreviousCDF) Then
+                    FailMsg = "Discrete Uniform inverse preceding CDF could not be represented"
+                    Exit Function
+                End If
+
+                If Probability <= PreviousCDF Then
+                    IndexValue = IndexValue - 1#
+                    GoTo ContinueCorrection
+                End If
+            End If
+
+            If Not PROB_TryDivide(IndexValue + 1#, SupportCount, CurrentCDF) Then
+                FailMsg = "Discrete Uniform inverse candidate CDF could not be represented"
+                Exit Function
+            End If
+
+            If Probability > CurrentCDF Then
+                If IndexValue >= SupportCount - 1# Then
+                    FailMsg = "Discrete Uniform inverse could not bracket the requested probability"
+                    Exit Function
+                End If
+
+                IndexValue = IndexValue + 1#
+                GoTo ContinueCorrection
+            End If
+
+            If Not PROB_TryAdd(Lower, IndexValue, Result) Then
+                FailMsg = "Discrete Uniform inverse quantile overflowed Double range"
+                Exit Function
+            End If
+
+            If Result < Lower Or Result > Upper Then
+                FailMsg = "Discrete Uniform inverse produced a value outside the support"
+                Exit Function
+            End If
+
+            PROB_DS_TryDiscreteUniformInverse = True
+            Exit Function
+
+ContinueCorrection:
+        Next CorrectionIdx
+
+        FailMsg = "Discrete Uniform inverse failed to stabilize within the correction budget"
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformMean( _
+    ByVal Lower As Double, _
+    ByVal Upper As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+    Dim HalfWidth           As Double          'Half the validated support width
+
+        HalfWidth = 0.5 * (Upper - Lower)
+
+        If Not PROB_TryAdd(Lower, HalfWidth, Result) Then
+            FailMsg = "Discrete Uniform mean overflowed Double range"
+            Exit Function
+        End If
+
+        PROB_DS_TryDiscreteUniformMean = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformVariance( _
+    ByVal SupportCount As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+    Dim Numerator           As Double          'Factored variance numerator
+
+        If SupportCount <= 1# Then
+            Result = 0#
+            PROB_DS_TryDiscreteUniformVariance = True
+            Exit Function
+        End If
+
+        If Not PROB_TryMultiply( _
+            SupportCount - 1#, SupportCount + 1#, Numerator) Then
+
+            FailMsg = "Discrete Uniform variance numerator overflowed Double range"
+            Exit Function
+        End If
+
+        If Not PROB_TryDivide(Numerator, 12#, Result) Then
+            FailMsg = "Discrete Uniform variance could not be represented"
+            Exit Function
+        End If
+
+        PROB_DS_TryDiscreteUniformVariance = True
+End Function
+
+
+Private Function PROB_DS_TryDiscreteUniformStdDev( _
+    ByVal SupportCount As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+    Dim VarianceValue       As Double          'Variance returned by the shared kernel
+
+        If Not PROB_DS_TryDiscreteUniformVariance( _
+            SupportCount, VarianceValue, FailMsg) Then Exit Function
+
+        Result = Sqr(VarianceValue)
+
+        If Not PROB_IsFinite(Result) Then
+            FailMsg = "Discrete Uniform standard deviation is not finite"
+            Exit Function
+        End If
+
+        PROB_DS_TryDiscreteUniformStdDev = True
 End Function
 
 
@@ -6993,5 +8151,7 @@ Private Function PROB_DS_TryHypergeometricInverse( _
         FailMsg = "Hypergeometric inverse failed to converge in " & _
                   PROB_DS_MAX_INVERSE_ITER & " integer iterations"
 End Function
+
+
 
 
