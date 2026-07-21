@@ -692,3 +692,34 @@ Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,300.0,0.20000000000
 Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,300.0,0.20000000000000001,,4.003297610945206234918319e+129,,all,lognormal extreme-magnitude
 Lognormal_Variance,K_STATS_Lognormal_Variance,rel<=5E-15,rel,-350.0,8.0,,3.833154737956259736181401e-249,,all,lognormal extreme-magnitude
 Lognormal_StdDev,K_STATS_Lognormal_StdDev,rel<=5E-15,rel,-350.0,8.0,,6.191247643210744430140831e-125,,all,lognormal extreme-magnitude
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,2,5,,0.138369165806864901113422749814,1.38369165806863E-001;8.32667268468867E-017,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,5,5,,0.122041521349387392610002463652,1.22041521349386E-001;-1.94289029309402E-016,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,1,1,,0.241970724519143349797830192936,2.41970724519143E-001;-5.55111512312578E-017,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,0.5,2,,0.389400391535702434122585133489,3.89400391535701E-001;0E+000,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,10,10,,0.0877336848839253528207818805097,8.77336848839234E-002;-1.38777878078145E-017,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,20,10,,0.00945831870051767740324823240845,9.45831870051745E-003;3.46944695195361E-018,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,100,50,,0.00000926446496012619851338364401486,9.26446496012605E-006;0E+000,all,f04_coverage
+ChiSquare_Density,K_STATS_ChiSquare_Density,measured,rel,3,4,,0.167347620111322371699960353073,1.67347620111321E-001;-2.49800180540660E-016,all,f04_coverage
+F_Density,K_STATS_F_Density,measured,rel,1,5,10,0.495479783486638709082354191772,4.95479783486636E-001;-1.11022302462516E-016,all,f04_coverage
+F_Density,K_STATS_F_Density,measured,rel,2,10,20,0.152740478515625,1.52740478515622E-001;-3.33066907387547E-016,all,f04_coverage
+F_Density,K_STATS_F_Density,measured,rel,0.5,3,3,0.533520779944951744921599520597,5.33520779944952E-001;3.33066907387547E-016,all,f04_coverage
+F_Density,K_STATS_F_Density,measured,rel,1,100,100,1.98973093467946903745317625605,1.98973093467943E+000;4.44089209850063E-015,all,f04_coverage
+F_Density,K_STATS_F_Density,measured,rel,3,5,2,0.0716977740149392607805383309751,7.16977740149394E-002;-2.77555756156289E-017,all,f04_coverage
+F_Density,K_STATS_F_Density,measured,rel,0.8,20,50,1.11177807436107796661882179821,1.11177807436102E+000;4.44089209850063E-015,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,-1,1,1,0.682689492137085897170465091264,6.82689492137086E-001;-1.11022302462516E-016,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,0,2,1,0.477249868051820792799717362833,4.77249868051821E-001;-2.22044604925031E-016,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,-3,-1,1,0.1573053558998269568881156396,1.57305355899827E-001;-5.55111512312578E-017,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,1,2,1,0.135905121983277844214484817201,1.35905121983278E-001;-1.94289029309402E-016,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,-5,5,1,0.999999426696856241612176652495,9.99999426696856E-001;2.22044604925031E-016,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,0,1,2,0.191462461274013103637704610608,1.91462461274013E-001;5.55111512312578E-017,all,f04_coverage
+Normal_IntervalProbability,K_STATS_Normal_IntervalProbability,measured,rel,2,4,1,0.0227184607063460872790288664098,2.27184607063461E-002;1.38777878078145E-017,all,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,2,0.5,,0.662834869651727888126929055438,6.62834869651728E-001;-1.11022302462516E-016,param_meanlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,2,0.5,,0.246220677069239744588574886036,2.46220677069240E-001;-2.49800180540660E-016,param_stddevlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,10,3,,2.25949624487351951784732468326,2.25949624487352E+000;-4.44089209850063E-016,param_meanlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,10,3,,0.293560379208523867755756200697,2.93560379208524E-001;-1.66533453693773E-016,param_stddevlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,1,0.1,,-0.00497516542658404197372303749746,-4.97516542658404E-003;-2.60208521396521E-018,param_meanlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,1,0.1,,0.0997513451195926678138709247483,9.97513451195927E-002;-2.77555756156289E-017,param_stddevlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,100,50,,4.49359841033098649015283536421,4.49359841033099E+000;-3.55271367880050E-015,param_meanlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,100,50,,0.472380727077438835433582705287,4.72380727077439E-001;-1.66533453693773E-016,param_stddevlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,5,5,,1.2628643221541277198921432725,1.26286432215413E+000;-2.44249065417534E-015,param_meanlog,f04_coverage
+Lognormal_ParametersFromMeanStdDev,K_STATS_Lognormal_ParametersFromMeanStdDev,measured,rel,5,5,,0.832554611157697756353164644895,8.32554611157698E-001;-3.33066907387547E-016,param_stddevlog,f04_coverage
