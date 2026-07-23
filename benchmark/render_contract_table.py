@@ -17,7 +17,31 @@ def render(contracts_path=None, limitations_path=None):
     with open(contracts_path, newline="") as f:
         contracts = list(csv.DictReader(f))
 
-    lines = ["| Contract | Function | Regime | Measure | Metric | Threshold | Provenance |",
+    # Families are derived from the contract rows themselves, so the prose can
+    # never drift from the table when a new distribution is brought under
+    # contract (kernel-level contracts such as PROB_LogBeta are listed
+    # separately from distribution families).
+    families, kernels = [], []
+    for r in contracts:
+        fn = r["function"]
+        if fn.startswith("PROB_"):
+            if fn not in kernels:
+                kernels.append(fn)
+            continue
+        fam = fn.split("_", 1)[0]
+        if fam not in families:
+            families.append(fam)
+
+    # "function families" rather than "distribution families": the contract set
+    # also covers special-function kernels (LogGamma, StirlingError, ...) that
+    # are not distributions.
+    summary = (f"**{len(contracts)} contracts** across **{len(families)} function "
+               f"families**: " + ", ".join(sorted(families)) + ".")
+    if kernels:
+        summary += " Kernel-level contracts: " + ", ".join(sorted(kernels)) + "."
+
+    lines = [summary, "",
+             "| Contract | Function | Regime | Measure | Metric | Threshold | Provenance |",
              "|---|---|---|---|---|---|---|"]
     for r in sorted(contracts, key=lambda r: r["contract_id"]):
         lines.append(f"| {r['contract_id']} | {r['function']} | {r['regime']} | "
@@ -51,8 +75,10 @@ def write_into_readme(readme_path=None):
         raise SystemExit("README markers not found; add the BEGIN/END generated markers first.")
     new_block = begin + "\n\n" + render() + "\n\n" + end
     text = text[:i] + new_block + text[j + len(end):]
+    # .gitattributes stores *.md as LF; writing CRLF here would turn every
+    # regeneration into a whole-file diff.
     with open(readme_path, "w", newline="") as f:
-        f.write(text.replace("\n", "\r\n"))
+        f.write(text)
     print(f"updated {readme_path} between generated markers")
 
 
