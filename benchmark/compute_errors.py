@@ -29,7 +29,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 _IBETA_IMPORT_ERROR = None
 try:
-    sys.path.insert(0, os.path.join(HERE, "beta_f_unbalanced"))
+    sys.path.insert(0, HERE)  # single-sourced benchmark/_ibeta.py
     from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf
     import mpmath as _mp
     _mp.mp.dps = 50

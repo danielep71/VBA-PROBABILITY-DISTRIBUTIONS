@@ -46,7 +46,18 @@ required, and they answer different questions.
 | `M_STATS_PROBDIST_ACCURACYEXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
 | `compute_errors.py` | Joins observed vs reference, finds max-error locations, checks each claim, writes the summary. Phase 3. |
 | `accuracy_summary.md` | The generated verdict table. |
+| `_ibeta.py` | Continued-fraction incomplete beta / F reference helper. Single-sourced: this is the only copy, and the study scripts import it from here. |
 | `environment.txt` | Python and dependency versions, reference precision, date. |
+
+### Study-folder conventions
+
+Each study subfolder holds one standalone Excel export macro, named to match the
+`Attribute VB_Name` it declares (for example `M_STATS_PROBDIST_DELTA_SEAM.bas`
+declares `M_STATS_PROBDIST_DELTA_SEAM`). Keep one file per module: a second copy
+under a different filename declares the same `VB_Name`, so importing both into one
+workbook is a name collision, and two copies of the same source can drift apart.
+The same rule is why `_ibeta.py` lives here rather than being copied into each
+study folder.
 
 ## Running it
 

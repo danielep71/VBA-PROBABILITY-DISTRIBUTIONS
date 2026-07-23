@@ -9,6 +9,9 @@ generalise and may be frozen (measured provisional -> validated and frozen).
 import argparse, csv, os
 from decimal import Decimal, getcontext
 import mpmath as mp
+import os as _os, sys as _sys
+# Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta, f_cdf
 getcontext().prec = 50
 mp.mp.dps = 50

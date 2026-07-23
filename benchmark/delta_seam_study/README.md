@@ -40,12 +40,12 @@ loggamma(Large)` stays accurate when the two large values nearly cancel).
 |---|---|
 | `generate_delta_seam.py` | Writes `delta_seam_grid.csv` (396 rows, 120-digit refs). |
 | `delta_seam_grid.csv` | The grid; `arg1 = Large`, `arg2 = Small`. |
-| `delta_seam.bas` | Standalone export macro `Export_Delta_Seam` (deps: `PROB_LogGamma`, `PROB_LogGammaDelta`). |
+| `M_STATS_PROBDIST_DELTA_SEAM.bas` | Standalone export macro `Export_Delta_Seam` (deps: `PROB_LogGamma`, `PROB_LogGammaDelta`). |
 | `analyze_delta_seam.py` | Delta validation (production regime vs full grid) + crossover envelope. |
 
 ## How to run
 
-1. Import `delta_seam.bas` into the workbook and `Debug > Compile`.
+1. Import `M_STATS_PROBDIST_DELTA_SEAM.bas` into the workbook and `Debug > Compile`.
 2. Run `Export_Delta_Seam`; select `delta_seam_grid.csv` when prompted.
 3. Commit the filled CSV.
 4. Analysis: `python3 analyze_delta_seam.py`.

@@ -11,6 +11,9 @@ The strict F envelope must be the MINIMUM boundary over all orientations.
 import argparse, csv
 import mpmath as mp
 from scipy.special import betaincinv
+import os as _os, sys as _sys
+# Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta
 mp.mp.dps = 40
 
