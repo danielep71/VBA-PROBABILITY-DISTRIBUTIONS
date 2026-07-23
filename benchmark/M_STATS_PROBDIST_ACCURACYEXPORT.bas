@@ -2,7 +2,7 @@ Attribute VB_Name = "M_STATS_PROBDIST_ACCURACYEXPORT"
 Option Explicit
 
 '==============================================================================
-' M_STATS_PROBDIST_ACCURACY_EXPORT
+' M_STATS_PROBDIST_ACCURACYEXPORT
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Phase 2 of the reproducible accuracy harness. Reads the grid produced by
@@ -22,10 +22,17 @@ Option Explicit
 '   3. python compute_errors.py                    -> accuracy_summary.md
 '
 ' GRID FORMAT (header row, then one row per evaluation)
-'   function, vba_kernel, claim, metric, arg1, arg2, arg3, reference, observed_vba
+'   function, vba_kernel, claim, metric, arg1, arg2, arg3, arg4, reference,
+'   observed_vba, regime, evidence_set
 '
-'   This macro reads columns function/arg1..arg3, writes observed_vba. It does
-'   not read or trust the reference column, so the observed side is independent.
+'   This macro reads function and arg1..arg4 and writes observed_vba (column
+'   index 9). It never reads the reference column, so the observed side stays
+'   independent of the value it will be compared against.
+'
+' SCOPE
+'   Only rows whose evidence_set is "main grid" are evaluated. Study-sourced
+'   rows are filled by their own harnesses and must be left byte-for-byte
+'   untouched, so re-running this macro cannot disturb them.
 '
 ' ERROR POLICY
 '   A function that returns a worksheet error (CVErr) or raises writes the token
@@ -34,10 +41,13 @@ Option Explicit
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_SPECIALFUNCS (PROB_* kernels)
-'   - M_STATS_PROBDIST_TFAMILY      (K_STATS_* UDFs)
+'   - M_STATS_PROBDIST_TFAMILY      (Student t, chi-square, F)
+'   - M_STATS_PROBDIST_NORMALFAMILY (normal, standard normal, lognormal)
+'   - M_STATS_PROBDIST_CONTINUOUS   (gamma, beta, exponential, Weibull, uniform)
+'   - M_STATS_PROBDIST_DISCRETE     (six discrete families)
 '
 ' UPDATED
-'   2026-07-18
+'   2026-07-23
 '==============================================================================
 
 Private Const ACCURACY_GRID_PATH As String = ""        'Empty => same folder as the workbook
@@ -50,6 +60,15 @@ Public Sub Export_Accuracy_Observations()
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Fills the observed_vba column of the accuracy grid in place.
+'
+' BEHAVIOR
+'   Reads the whole file and normalizes line endings before splitting, so
+'   LF-only, CR-only and CRLF grids all parse. VBA Line Input is CR-delimited
+'   and would swallow an entire LF-only file (.gitattributes stores *.csv as
+'   eol=lf) as a single line, silently writing nothing.
+'
+' ERROR POLICY
+'   Any failure closes the handle and reports once; the grid is left as found.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -62,10 +81,16 @@ Public Sub Export_Accuracy_Observations()
     Dim I                   As Long            'Row index
     Dim Cols                As Variant         'Split fields of one row
     Dim FuncName            As String          'Function under test
-    Dim A1 As Double, A2 As Double, A3 As Double, A4 As Double  'Parsed arguments
-    Dim HasA1 As Boolean, HasA2 As Boolean, HasA3 As Boolean, HasA4 As Boolean
-    Dim Observed            As String          'Observed value token
     Dim Sep                 As String          'Field separator
+    Dim Observed            As String          'Observed value token
+    Dim A1                  As Double          'Parsed argument 1
+    Dim A2                  As Double          'Parsed argument 2
+    Dim A3                  As Double          'Parsed argument 3
+    Dim A4                  As Double          'Parsed argument 4
+    Dim HasA1               As Boolean         'arg1 present in the row
+    Dim HasA2               As Boolean         'arg2 present in the row
+    Dim HasA3               As Boolean         'arg3 present in the row
+    Dim HasA4               As Boolean         'arg4 present in the row
 '------------------------------------------------------------------------------
 ' INITIALIZE
 '------------------------------------------------------------------------------
@@ -130,6 +155,10 @@ ContinueRow:
     MsgBox "Accuracy observations written to:" & vbCrLf & Path & vbCrLf & vbCrLf & _
            "Now run:  python compute_errors.py", vbInformation, "Accuracy export complete"
     Exit Sub
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
     On Error Resume Next
     Close #FileNo
@@ -153,10 +182,15 @@ Private Function ResolveGridPath() As String
 '   real local path containing the file, and finally falls back to a file picker.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim Candidate           As String          'Path being tested
     Dim BookPath            As String          'Workbook folder
-    Dim Picked              As Variant          'File-dialog result
-
+    Dim Picked              As Variant         'File-dialog result
+'------------------------------------------------------------------------------
+' RESOLVE
+'------------------------------------------------------------------------------
     '1. Explicit constant wins when it points at a real file
         If Len(ACCURACY_GRID_PATH) > 0 Then
             If Len(Dir$(ACCURACY_GRID_PATH)) > 0 Then
@@ -182,6 +216,7 @@ Private Function ResolveGridPath() As String
         Picked = Application.GetOpenFilename( _
             FileFilter:="Accuracy grid (*.csv),*.csv", _
             Title:="Select probability_accuracy_grid.csv")
+
         If VarType(Picked) = vbBoolean Then
             ResolveGridPath = vbNullString
         Else
@@ -207,158 +242,197 @@ Private Function EvaluateOne( _
 ' PURPOSE
 '   Dispatches one grid row to its library function and returns a string token:
 '   a full-precision number on success, or ERROR on any worksheet error.
+'
+' INPUTS
+'   FuncName        contract function name from the grid
+'   A1 - A4         parsed arguments; unused positions arrive as 0
+'   HasA2 - HasA4   whether that argument was present in the row
+'
+' RETURNS
+'   Full-precision hi;lo token, or the literal ERROR.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim V                   As Variant         'Raw function result
-
-    On Error GoTo Fail
+'------------------------------------------------------------------------------
+' DISPATCH
+'------------------------------------------------------------------------------
+    On Error GoTo Err_Handler
 
     Select Case FuncName
-        Case "LogGamma":                     V = PROB_LogGamma(A1)
-        Case "LogGammaHalfDiff":             V = PROB_LogGammaHalfDiff(A1)
-        Case "StirlingError":                V = PROB_StirlingError(A1)
-        Case "LogChoose":                    V = PROB_LogChoose(A1, A2)
+        'Special-function kernels
+        Case "LogGamma":                             V = PROB_LogGamma(A1)
+        Case "LogGammaHalfDiff":                     V = PROB_LogGammaHalfDiff(A1)
+        Case "StirlingError":                        V = PROB_StirlingError(A1)
+        Case "LogChoose":                            V = PROB_LogChoose(A1, A2)
 
-        Case "StudentT_Density":             V = K_STATS_StudentT_Density(A1, A2)
-        Case "StudentT_Cumulative":          V = K_STATS_StudentT_Cumulative(A1, A2)
-        Case "StudentT_Survival":            V = K_STATS_StudentT_Survival(A1, A2)
-        Case "StudentT_InverseCumulative":   V = K_STATS_StudentT_InverseCumulative(A1, A2)
+        'Student t
+        Case "StudentT_Density":                     V = K_STATS_StudentT_Density(A1, A2)
+        Case "StudentT_Cumulative":                  V = K_STATS_StudentT_Cumulative(A1, A2)
+        Case "StudentT_Survival":                    V = K_STATS_StudentT_Survival(A1, A2)
+        Case "StudentT_InverseCumulative":           V = K_STATS_StudentT_InverseCumulative(A1, A2)
 
-        Case "ChiSquare_Cumulative":         V = K_STATS_ChiSquare_Cumulative(A1, A2)
-        Case "ChiSquare_Survival":           V = K_STATS_ChiSquare_Survival(A1, A2)
-        Case "ChiSquare_InverseCumulative":  V = K_STATS_ChiSquare_InverseCumulative(A1, A2)
+        'Chi-square
+        Case "ChiSquare_Cumulative":                 V = K_STATS_ChiSquare_Cumulative(A1, A2)
+        Case "ChiSquare_Survival":                   V = K_STATS_ChiSquare_Survival(A1, A2)
+        Case "ChiSquare_InverseCumulative":          V = K_STATS_ChiSquare_InverseCumulative(A1, A2)
 
-        Case "F_Cumulative":                 V = K_STATS_F_Cumulative(A1, A2, A3)
-        Case "F_Survival":                   V = K_STATS_F_Survival(A1, A2, A3)
-        Case "F_InverseCumulative":          V = K_STATS_F_InverseCumulative(A1, A2, A3)
+        'F
+        Case "F_Cumulative":                         V = K_STATS_F_Cumulative(A1, A2, A3)
+        Case "F_Survival":                           V = K_STATS_F_Survival(A1, A2, A3)
+        Case "F_InverseCumulative":                  V = K_STATS_F_InverseCumulative(A1, A2, A3)
 
-        Case "NormalStandard_Density":       V = K_STATS_NormalStandard_Density(A1)
-        Case "NormalStandard_Cumulative":    V = K_STATS_NormalStandard_Cumulative(A1)
-        Case "NormalStandard_Survival":      V = K_STATS_NormalStandard_Survival(A1)
+        'Standard normal
+        Case "NormalStandard_Density":               V = K_STATS_NormalStandard_Density(A1)
+        Case "NormalStandard_Cumulative":            V = K_STATS_NormalStandard_Cumulative(A1)
+        Case "NormalStandard_Survival":              V = K_STATS_NormalStandard_Survival(A1)
         Case "NormalStandard_InverseCumulative":     V = K_STATS_NormalStandard_InverseCumulative(A1)
         Case "NormalStandard_InverseSurvival":       V = K_STATS_NormalStandard_InverseSurvival(A1)
         Case "NormalStandard_InverseCumulativeFast": V = K_STATS_NormalStandard_InverseCumulativeFast(A1)
         Case "NormalStandard_IntervalProbability":   V = K_STATS_NormalStandard_IntervalProbability(A1, A2)
 
-        Case "Normal_Density":               V = K_STATS_Normal_Density(A1, A2, A3)
-        Case "Normal_Cumulative":            V = K_STATS_Normal_Cumulative(A1, A2, A3)
-        Case "Normal_Survival":              V = K_STATS_Normal_Survival(A1, A2, A3)
-        Case "Normal_InverseCumulative":     V = K_STATS_Normal_InverseCumulative(A1, A2, A3)
-        Case "Normal_InverseSurvival":       V = K_STATS_Normal_InverseSurvival(A1, A2, A3)
-        Case "Normal_ZScore":                V = K_STATS_Normal_ZScore(A1, A2, A3)
+        'Normal
+        Case "Normal_Density":                       V = K_STATS_Normal_Density(A1, A2, A3)
+        Case "Normal_Cumulative":                    V = K_STATS_Normal_Cumulative(A1, A2, A3)
+        Case "Normal_Survival":                      V = K_STATS_Normal_Survival(A1, A2, A3)
+        Case "Normal_InverseCumulative":             V = K_STATS_Normal_InverseCumulative(A1, A2, A3)
+        Case "Normal_InverseSurvival":               V = K_STATS_Normal_InverseSurvival(A1, A2, A3)
+        Case "Normal_ZScore":                        V = K_STATS_Normal_ZScore(A1, A2, A3)
 
-        Case "Lognormal_Density":            V = K_STATS_Lognormal_Density(A1, A2, A3)
-        Case "Lognormal_Cumulative":         V = K_STATS_Lognormal_Cumulative(A1, A2, A3)
-        Case "Lognormal_Survival":           V = K_STATS_Lognormal_Survival(A1, A2, A3)
-        Case "Lognormal_InverseCumulative":  V = K_STATS_Lognormal_InverseCumulative(A1, A2, A3)
-        Case "Lognormal_InverseSurvival":    V = K_STATS_Lognormal_InverseSurvival(A1, A2, A3)
-        Case "Lognormal_Mean":               V = K_STATS_Lognormal_Mean(A1, A2)
-        Case "Lognormal_Variance":           V = K_STATS_Lognormal_Variance(A1, A2)
-        Case "Lognormal_StdDev":             V = K_STATS_Lognormal_StdDev(A1, A2)
-        Case "Lognormal_ParamMeanLog":       V = ExtractParam(A1, A2, 1)
-        Case "Lognormal_ParamStdDevLog":     V = ExtractParam(A1, A2, 2)
+        'Lognormal
+        Case "Lognormal_Density":                    V = K_STATS_Lognormal_Density(A1, A2, A3)
+        Case "Lognormal_Cumulative":                 V = K_STATS_Lognormal_Cumulative(A1, A2, A3)
+        Case "Lognormal_Survival":                   V = K_STATS_Lognormal_Survival(A1, A2, A3)
+        Case "Lognormal_InverseCumulative":          V = K_STATS_Lognormal_InverseCumulative(A1, A2, A3)
+        Case "Lognormal_InverseSurvival":            V = K_STATS_Lognormal_InverseSurvival(A1, A2, A3)
+        Case "Lognormal_Mean":                       V = K_STATS_Lognormal_Mean(A1, A2)
+        Case "Lognormal_Variance":                   V = K_STATS_Lognormal_Variance(A1, A2)
+        Case "Lognormal_StdDev":                     V = K_STATS_Lognormal_StdDev(A1, A2)
+        Case "Lognormal_ParamMeanLog":               V = ExtractParam(A1, A2, 1)
+        Case "Lognormal_ParamStdDevLog":             V = ExtractParam(A1, A2, 2)
 
-        Case "Gamma_Density":                V = K_STATS_Gamma_Density(A1, A2, A3)
-        Case "Gamma_Cumulative":             V = K_STATS_Gamma_Cumulative(A1, A2, A3)
-        Case "Gamma_Survival":               V = K_STATS_Gamma_Survival(A1, A2, A3)
-        Case "Gamma_InverseCumulative":      V = K_STATS_Gamma_InverseCumulative(A1, A2, A3)
-        Case "Gamma_Mean":                   V = K_STATS_Gamma_Mean(A1, A2)
-        Case "Gamma_Variance":               V = K_STATS_Gamma_Variance(A1, A2)
-        Case "Gamma_StdDev":                 V = K_STATS_Gamma_StdDev(A1, A2)
+        'Gamma
+        Case "Gamma_Density":                        V = K_STATS_Gamma_Density(A1, A2, A3)
+        Case "Gamma_Cumulative":                     V = K_STATS_Gamma_Cumulative(A1, A2, A3)
+        Case "Gamma_Survival":                       V = K_STATS_Gamma_Survival(A1, A2, A3)
+        Case "Gamma_InverseCumulative":              V = K_STATS_Gamma_InverseCumulative(A1, A2, A3)
+        Case "Gamma_Mean":                           V = K_STATS_Gamma_Mean(A1, A2)
+        Case "Gamma_Variance":                       V = K_STATS_Gamma_Variance(A1, A2)
+        Case "Gamma_StdDev":                         V = K_STATS_Gamma_StdDev(A1, A2)
 
-        Case "Beta_Density":                 V = K_STATS_Beta_Density(A1, A2, A3)
-        Case "Beta_Cumulative":              V = K_STATS_Beta_Cumulative(A1, A2, A3)
-        Case "Beta_Survival":                V = K_STATS_Beta_Survival(A1, A2, A3)
-        Case "Beta_InverseCumulative":       V = K_STATS_Beta_InverseCumulative(A1, A2, A3)
-        Case "Beta_Mean":                    V = K_STATS_Beta_Mean(A1, A2)
-        Case "Beta_Variance":                V = K_STATS_Beta_Variance(A1, A2)
-        Case "Beta_StdDev":                  V = K_STATS_Beta_StdDev(A1, A2)
+        'Beta
+        Case "Beta_Density":                         V = K_STATS_Beta_Density(A1, A2, A3)
+        Case "Beta_Cumulative":                      V = K_STATS_Beta_Cumulative(A1, A2, A3)
+        Case "Beta_Survival":                        V = K_STATS_Beta_Survival(A1, A2, A3)
+        Case "Beta_InverseCumulative":               V = K_STATS_Beta_InverseCumulative(A1, A2, A3)
+        Case "Beta_Mean":                            V = K_STATS_Beta_Mean(A1, A2)
+        Case "Beta_Variance":                        V = K_STATS_Beta_Variance(A1, A2)
+        Case "Beta_StdDev":                          V = K_STATS_Beta_StdDev(A1, A2)
 
-        Case "Exponential_Density":          V = K_STATS_Exponential_Density(A1, A2)
-        Case "Exponential_Cumulative":       V = K_STATS_Exponential_Cumulative(A1, A2)
-        Case "Exponential_Survival":         V = K_STATS_Exponential_Survival(A1, A2)
-        Case "Exponential_InverseCumulative": V = K_STATS_Exponential_InverseCumulative(A1, A2)
+        'Exponential
+        Case "Exponential_Density":                  V = K_STATS_Exponential_Density(A1, A2)
+        Case "Exponential_Cumulative":               V = K_STATS_Exponential_Cumulative(A1, A2)
+        Case "Exponential_Survival":                 V = K_STATS_Exponential_Survival(A1, A2)
+        Case "Exponential_InverseCumulative":        V = K_STATS_Exponential_InverseCumulative(A1, A2)
 
-        Case "Weibull_Density":              V = K_STATS_Weibull_Density(A1, A2, A3)
-        Case "Weibull_Cumulative":           V = K_STATS_Weibull_Cumulative(A1, A2, A3)
-        Case "Weibull_Survival":             V = K_STATS_Weibull_Survival(A1, A2, A3)
-        Case "Weibull_InverseCumulative":    V = K_STATS_Weibull_InverseCumulative(A1, A2, A3)
-        Case "Weibull_Mean":                 V = K_STATS_Weibull_Mean(A1, A2)
-        Case "Weibull_Variance":             V = K_STATS_Weibull_Variance(A1, A2)
-        Case "Weibull_StdDev":               V = K_STATS_Weibull_StdDev(A1, A2)
+        'Weibull
+        Case "Weibull_Density":                      V = K_STATS_Weibull_Density(A1, A2, A3)
+        Case "Weibull_Cumulative":                   V = K_STATS_Weibull_Cumulative(A1, A2, A3)
+        Case "Weibull_Survival":                     V = K_STATS_Weibull_Survival(A1, A2, A3)
+        Case "Weibull_InverseCumulative":            V = K_STATS_Weibull_InverseCumulative(A1, A2, A3)
+        Case "Weibull_Mean":                         V = K_STATS_Weibull_Mean(A1, A2)
+        Case "Weibull_Variance":                     V = K_STATS_Weibull_Variance(A1, A2)
+        Case "Weibull_StdDev":                       V = K_STATS_Weibull_StdDev(A1, A2)
 
-        Case "Uniform_Density":              V = K_STATS_Uniform_Density(A1, A2, A3)
-        Case "Uniform_Cumulative":           V = K_STATS_Uniform_Cumulative(A1, A2, A3)
-        Case "Uniform_Survival":             V = K_STATS_Uniform_Survival(A1, A2, A3)
-        Case "Uniform_InverseCumulative":    V = K_STATS_Uniform_InverseCumulative(A1, A2, A3)
+        'Uniform (continuous)
+        Case "Uniform_Density":                      V = K_STATS_Uniform_Density(A1, A2, A3)
+        Case "Uniform_Cumulative":                   V = K_STATS_Uniform_Cumulative(A1, A2, A3)
+        Case "Uniform_Survival":                     V = K_STATS_Uniform_Survival(A1, A2, A3)
+        Case "Uniform_InverseCumulative":            V = K_STATS_Uniform_InverseCumulative(A1, A2, A3)
 
+        'Binomial
+        Case "Binomial_PMF":                         V = K_STATS_Binomial_PMF(A1, A2, A3)
+        Case "Binomial_LogPMF":                      V = K_STATS_Binomial_LogPMF(A1, A2, A3)
+        Case "Binomial_Cumulative":                  V = K_STATS_Binomial_Cumulative(A1, A2, A3)
+        Case "Binomial_Survival":                    V = K_STATS_Binomial_Survival(A1, A2, A3)
+        Case "Binomial_InverseCumulative":           V = K_STATS_Binomial_InverseCumulative(A1, A2, A3)
+        Case "Binomial_Mean":                        V = K_STATS_Binomial_Mean(A1, A2)
+        Case "Binomial_Variance":                    V = K_STATS_Binomial_Variance(A1, A2)
+        Case "Binomial_StdDev":                      V = K_STATS_Binomial_StdDev(A1, A2)
 
-        Case "Binomial_PMF":                V = K_STATS_Binomial_PMF(A1, A2, A3)
-        Case "Binomial_LogPMF":             V = K_STATS_Binomial_LogPMF(A1, A2, A3)
-        Case "Binomial_Cumulative":         V = K_STATS_Binomial_Cumulative(A1, A2, A3)
-        Case "Binomial_Survival":           V = K_STATS_Binomial_Survival(A1, A2, A3)
-        Case "Binomial_InverseCumulative":  V = K_STATS_Binomial_InverseCumulative(A1, A2, A3)
-        Case "Binomial_Mean":               V = K_STATS_Binomial_Mean(A1, A2)
-        Case "Binomial_Variance":           V = K_STATS_Binomial_Variance(A1, A2)
-        Case "Binomial_StdDev":             V = K_STATS_Binomial_StdDev(A1, A2)
+        'Poisson
+        Case "Poisson_PMF":                          V = K_STATS_Poisson_PMF(A1, A2)
+        Case "Poisson_LogPMF":                       V = K_STATS_Poisson_LogPMF(A1, A2)
+        Case "Poisson_Cumulative":                   V = K_STATS_Poisson_Cumulative(A1, A2)
+        Case "Poisson_Survival":                     V = K_STATS_Poisson_Survival(A1, A2)
+        Case "Poisson_InverseCumulative":            V = K_STATS_Poisson_InverseCumulative(A1, A2)
+        Case "Poisson_Mean":                         V = K_STATS_Poisson_Mean(A1)
+        Case "Poisson_Variance":                     V = K_STATS_Poisson_Variance(A1)
+        Case "Poisson_StdDev":                       V = K_STATS_Poisson_StdDev(A1)
 
-        Case "Poisson_PMF":                 V = K_STATS_Poisson_PMF(A1, A2)
-        Case "Poisson_LogPMF":              V = K_STATS_Poisson_LogPMF(A1, A2)
-        Case "Poisson_Cumulative":          V = K_STATS_Poisson_Cumulative(A1, A2)
-        Case "Poisson_Survival":            V = K_STATS_Poisson_Survival(A1, A2)
-        Case "Poisson_InverseCumulative":   V = K_STATS_Poisson_InverseCumulative(A1, A2)
-        Case "Poisson_Mean":                V = K_STATS_Poisson_Mean(A1)
-        Case "Poisson_Variance":            V = K_STATS_Poisson_Variance(A1)
-        Case "Poisson_StdDev":              V = K_STATS_Poisson_StdDev(A1)
+        'Geometric
+        Case "Geometric_PMF":                        V = K_STATS_Geometric_PMF(A1, A2)
+        Case "Geometric_LogPMF":                     V = K_STATS_Geometric_LogPMF(A1, A2)
+        Case "Geometric_Cumulative":                 V = K_STATS_Geometric_Cumulative(A1, A2)
+        Case "Geometric_Survival":                   V = K_STATS_Geometric_Survival(A1, A2)
+        Case "Geometric_InverseCumulative":          V = K_STATS_Geometric_InverseCumulative(A1, A2)
+        Case "Geometric_Mean":                       V = K_STATS_Geometric_Mean(A1)
+        Case "Geometric_Variance":                   V = K_STATS_Geometric_Variance(A1)
+        Case "Geometric_StdDev":                     V = K_STATS_Geometric_StdDev(A1)
 
-        Case "Geometric_PMF":               V = K_STATS_Geometric_PMF(A1, A2)
-        Case "Geometric_LogPMF":            V = K_STATS_Geometric_LogPMF(A1, A2)
-        Case "Geometric_Cumulative":        V = K_STATS_Geometric_Cumulative(A1, A2)
-        Case "Geometric_Survival":          V = K_STATS_Geometric_Survival(A1, A2)
-        Case "Geometric_InverseCumulative": V = K_STATS_Geometric_InverseCumulative(A1, A2)
-        Case "Geometric_Mean":              V = K_STATS_Geometric_Mean(A1)
-        Case "Geometric_Variance":          V = K_STATS_Geometric_Variance(A1)
-        Case "Geometric_StdDev":            V = K_STATS_Geometric_StdDev(A1)
+        'Negative binomial
+        Case "NegativeBinomial_PMF":                 V = K_STATS_NegativeBinomial_PMF(A1, A2, A3)
+        Case "NegativeBinomial_LogPMF":              V = K_STATS_NegativeBinomial_LogPMF(A1, A2, A3)
+        Case "NegativeBinomial_Cumulative":          V = K_STATS_NegativeBinomial_Cumulative(A1, A2, A3)
+        Case "NegativeBinomial_Survival":            V = K_STATS_NegativeBinomial_Survival(A1, A2, A3)
+        Case "NegativeBinomial_InverseCumulative":   V = K_STATS_NegativeBinomial_InverseCumulative(A1, A2, A3)
+        Case "NegativeBinomial_Mean":                V = K_STATS_NegativeBinomial_Mean(A1, A2)
+        Case "NegativeBinomial_Variance":            V = K_STATS_NegativeBinomial_Variance(A1, A2)
+        Case "NegativeBinomial_StdDev":              V = K_STATS_NegativeBinomial_StdDev(A1, A2)
 
+        'Hypergeometric
+        Case "Hypergeometric_PMF":                   V = K_STATS_Hypergeometric_PMF(A1, A2, A3, A4)
+        Case "Hypergeometric_LogPMF":                V = K_STATS_Hypergeometric_LogPMF(A1, A2, A3, A4)
+        Case "Hypergeometric_Cumulative":            V = K_STATS_Hypergeometric_Cumulative(A1, A2, A3, A4)
+        Case "Hypergeometric_Survival":              V = K_STATS_Hypergeometric_Survival(A1, A2, A3, A4)
+        Case "Hypergeometric_InverseCumulative":     V = K_STATS_Hypergeometric_InverseCumulative(A1, A2, A3, A4)
+        Case "Hypergeometric_Mean":                  V = K_STATS_Hypergeometric_Mean(A1, A2, A3)
+        Case "Hypergeometric_Variance":              V = K_STATS_Hypergeometric_Variance(A1, A2, A3)
+        Case "Hypergeometric_StdDev":                V = K_STATS_Hypergeometric_StdDev(A1, A2, A3)
 
-        Case "NegativeBinomial_PMF":         V = K_STATS_NegativeBinomial_PMF(A1, A2, A3)
-        Case "NegativeBinomial_LogPMF":      V = K_STATS_NegativeBinomial_LogPMF(A1, A2, A3)
-        Case "NegativeBinomial_Cumulative":  V = K_STATS_NegativeBinomial_Cumulative(A1, A2, A3)
-        Case "NegativeBinomial_Survival":    V = K_STATS_NegativeBinomial_Survival(A1, A2, A3)
-        Case "NegativeBinomial_InverseCumulative": V = K_STATS_NegativeBinomial_InverseCumulative(A1, A2, A3)
-        Case "NegativeBinomial_Mean":        V = K_STATS_NegativeBinomial_Mean(A1, A2)
-        Case "NegativeBinomial_Variance":    V = K_STATS_NegativeBinomial_Variance(A1, A2)
-        Case "NegativeBinomial_StdDev":      V = K_STATS_NegativeBinomial_StdDev(A1, A2)
+        'Discrete uniform
+        Case "DiscreteUniform_PMF":                  V = K_STATS_DiscreteUniform_PMF(A1, A2, A3)
+        Case "DiscreteUniform_LogPMF":               V = K_STATS_DiscreteUniform_LogPMF(A1, A2, A3)
+        Case "DiscreteUniform_Cumulative":           V = K_STATS_DiscreteUniform_Cumulative(A1, A2, A3)
+        Case "DiscreteUniform_Survival":             V = K_STATS_DiscreteUniform_Survival(A1, A2, A3)
+        Case "DiscreteUniform_InverseCumulative":    V = K_STATS_DiscreteUniform_InverseCumulative(A1, A2, A3)
+        Case "DiscreteUniform_Mean":                 V = K_STATS_DiscreteUniform_Mean(A1, A2)
+        Case "DiscreteUniform_Variance":             V = K_STATS_DiscreteUniform_Variance(A1, A2)
+        Case "DiscreteUniform_StdDev":               V = K_STATS_DiscreteUniform_StdDev(A1, A2)
 
-        Case "Hypergeometric_PMF":           V = K_STATS_Hypergeometric_PMF(A1, A2, A3, A4)
-        Case "Hypergeometric_LogPMF":        V = K_STATS_Hypergeometric_LogPMF(A1, A2, A3, A4)
-        Case "Hypergeometric_Cumulative":    V = K_STATS_Hypergeometric_Cumulative(A1, A2, A3, A4)
-        Case "Hypergeometric_Survival":      V = K_STATS_Hypergeometric_Survival(A1, A2, A3, A4)
-        Case "Hypergeometric_InverseCumulative": V = K_STATS_Hypergeometric_InverseCumulative(A1, A2, A3, A4)
-        Case "Hypergeometric_Mean":          V = K_STATS_Hypergeometric_Mean(A1, A2, A3)
-        Case "Hypergeometric_Variance":      V = K_STATS_Hypergeometric_Variance(A1, A2, A3)
-        Case "Hypergeometric_StdDev":        V = K_STATS_Hypergeometric_StdDev(A1, A2, A3)
-
-
-        Case "DiscreteUniform_PMF":          V = K_STATS_DiscreteUniform_PMF(A1, A2, A3)
-        Case "DiscreteUniform_LogPMF":       V = K_STATS_DiscreteUniform_LogPMF(A1, A2, A3)
-        Case "DiscreteUniform_Cumulative":   V = K_STATS_DiscreteUniform_Cumulative(A1, A2, A3)
-        Case "DiscreteUniform_Survival":     V = K_STATS_DiscreteUniform_Survival(A1, A2, A3)
-        Case "DiscreteUniform_InverseCumulative": V = K_STATS_DiscreteUniform_InverseCumulative(A1, A2, A3)
-        Case "DiscreteUniform_Mean":         V = K_STATS_DiscreteUniform_Mean(A1, A2)
-        Case "DiscreteUniform_Variance":     V = K_STATS_DiscreteUniform_Variance(A1, A2)
-        Case "DiscreteUniform_StdDev":       V = K_STATS_DiscreteUniform_StdDev(A1, A2)
-
-        Case Else:                           EvaluateOne = "ERROR": Exit Function
+        Case Else
+            EvaluateOne = "ERROR"
+            Exit Function
     End Select
-
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
     'A worksheet-error Variant is a failed point
-        If IsError(V) Then EvaluateOne = "ERROR": Exit Function
+        If IsError(V) Then
+            EvaluateOne = "ERROR"
+            Exit Function
+        End If
 
     'Full-precision, locale-independent decimal
         EvaluateOne = FormatFullPrecision(CDbl(V))
     Exit Function
-Fail:
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
     EvaluateOne = "ERROR"
 End Function
 
@@ -376,13 +450,28 @@ Private Function ExtractParam( _
 '   Calls K_STATS_Lognormal_ParametersFromMeanStdDev (which returns a 1x2 array)
 '   and returns element Which (1 = MeanLog, 2 = StdDevLog), so each output can be
 '   measured as its own grid row.
+'
+' NOTE
+'   Retained for the Lognormal_ParamMeanLog / Lognormal_ParamStdDevLog cases.
+'   Those grid rows were removed as obsolete names, so this path is currently
+'   unreachable; the live rows use Lognormal_ParametersFromMeanStdDev with a
+'   regime and are owned by the density_helpers harness.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim R                   As Variant         'Parameter array
-
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
     R = K_STATS_Lognormal_ParametersFromMeanStdDev(Mean, StdDev)
-    If IsError(R) Then ExtractParam = CVErr(xlErrNum): Exit Function
-    ExtractParam = R(1, Which)
+    If IsError(R) Then
+        ExtractParam = CVErr(xlErrNum)
+        Exit Function
+    End If
+
+    ExtractParam = R(LBound(R, 1), LBound(R, 2) + Which - 1)
 End Function
 
 
@@ -396,7 +485,13 @@ Private Function ParseDouble(ByVal Text As String) As Double
 '   local list/decimal separators.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim S                   As String          'Cleaned token
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
     S = Trim$(Text)
     S = Replace(S, ",", ".")                   'Guard against a stray locale comma
     ParseDouble = Val(S)                       'Val always reads "." as decimal
@@ -423,11 +518,19 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
 '   compute_errors.py sums the parts.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim HiStr               As String          'Value to 15 significant digits
     Dim Hi                  As Double          'The Double that HiStr denotes
     Dim Lo                  As Double          'Exact residual X - Hi
-
-    If X = 0# Then FormatFullPrecision = "0E+000;0E+000": Exit Function
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If X = 0# Then
+        FormatFullPrecision = "0E+000;0E+000"
+        Exit Function
+    End If
 
     HiStr = Fmt15(X)
     Hi = Val(HiStr)                            'Val is locale-independent; CDbl is not
@@ -448,14 +551,20 @@ Private Function Fmt15(ByVal X As Double) As String
 '   silently re-rounded.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim S                   As String          'Formatted value
-
-    If X = 0# Then Fmt15 = "0E+000": Exit Function
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If X = 0# Then
+        Fmt15 = "0E+000"
+        Exit Function
+    End If
 
     S = Format$(X, "0.00000000000000E+000")    '1 + 14 = 15 significant digits
     Fmt15 = Replace(S, ",", ".")               'Force US decimal regardless of locale
 End Function
-
-
 
 
