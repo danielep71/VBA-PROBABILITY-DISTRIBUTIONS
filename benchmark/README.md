@@ -161,7 +161,7 @@ by rate (Lambda), not scale.
 | Binomial_Survival.all.output_rel | Binomial_Survival | all | output_error | relative | 5E-8 | validated and frozen |
 | Binomial_Variance.all.output_rel | Binomial_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | ChiSquare_Cumulative.all.output | ChiSquare_Cumulative | all | output_error | relative | 2.6E-10 | validated and frozen |
-| ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | measured provisional |
+| ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | validated and frozen |
 | ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | validated and frozen |
 | ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | validated and frozen |
 | DiscreteUniform_Cumulative.all.output_rel | DiscreteUniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
@@ -177,7 +177,7 @@ by rate (Lambda), not scale.
 | Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_Survival.all.output | Exponential_Survival | all | output_error | relative | 5E-15 | validated and frozen |
 | F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | validated and frozen |
-| F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | measured provisional |
+| F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | validated and frozen |
 | F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | validated and frozen |
 | F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | validated and frozen |
 | F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | validated and frozen |
@@ -212,10 +212,10 @@ by rate (Lambda), not scale.
 | Lognormal_InverseCumulative.all.output | Lognormal_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Lognormal_InverseSurvival.all.output | Lognormal_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
 | Lognormal_InverseSurvival.deep_tail.output_rel | Lognormal_InverseSurvival | deep_tail | output_error | relative | 1E-14 | validated and frozen |
-| Lognormal_InverseSurvival.split_boundary.output_rel | Lognormal_InverseSurvival | split_boundary | output_error | relative | 5E-10 | measured provisional |
+| Lognormal_InverseSurvival.split_boundary.output_rel | Lognormal_InverseSurvival | split_boundary | output_error | relative | 1E-9 | validated and frozen |
 | Lognormal_Mean.all.output | Lognormal_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_ParametersFromMeanStdDev.param_meanlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_meanlog | output_error | relative | 5E-15 | measured provisional |
-| Lognormal_ParametersFromMeanStdDev.param_stddevlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_stddevlog | output_error | relative | 5E-15 | measured provisional |
+| Lognormal_ParametersFromMeanStdDev.param_meanlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_meanlog | output_error | relative | 5E-15 | validated and frozen |
+| Lognormal_ParametersFromMeanStdDev.param_stddevlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_stddevlog | output_error | relative | 5E-15 | validated and frozen |
 | Lognormal_StdDev.all.output | Lognormal_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
 | Lognormal_Survival.all.output | Lognormal_Survival | all | output_error | relative | 5E-15 | validated and frozen |
 | Lognormal_Variance.all.output | Lognormal_Variance | all | output_error | relative | 5E-15 | validated and frozen |
@@ -232,19 +232,19 @@ by rate (Lambda), not scale.
 | NormalStandard_IntervalProbability.all.output | NormalStandard_IntervalProbability | all | output_error | relative | 5E-15 | validated and frozen |
 | NormalStandard_InverseCumulative.all.output | NormalStandard_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | NormalStandard_InverseCumulative.deep_tail.output_rel | NormalStandard_InverseCumulative | deep_tail | output_error | relative | 5E-16 | validated and frozen |
-| NormalStandard_InverseCumulative.split_boundary.output_rel | NormalStandard_InverseCumulative | split_boundary | output_error | relative | 1E-10 | measured provisional |
+| NormalStandard_InverseCumulative.split_boundary.output_rel | NormalStandard_InverseCumulative | split_boundary | output_error | relative | 1E-10 | validated and frozen |
 | NormalStandard_InverseCumulativeFast.all.output | NormalStandard_InverseCumulativeFast | all | output_error | relative | 5E-9 | validated and frozen |
 | NormalStandard_InverseSurvival.all.output | NormalStandard_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
 | NormalStandard_InverseSurvival.deep_tail.output_rel | NormalStandard_InverseSurvival | deep_tail | output_error | relative | 5E-16 | validated and frozen |
-| NormalStandard_InverseSurvival.split_boundary.output_rel | NormalStandard_InverseSurvival | split_boundary | output_error | relative | 1E-10 | measured provisional |
+| NormalStandard_InverseSurvival.split_boundary.output_rel | NormalStandard_InverseSurvival | split_boundary | output_error | relative | 1E-10 | validated and frozen |
 | NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 2E-14 | validated and frozen |
 | Normal_Cumulative.all.output | Normal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_Density.all.output | Normal_Density | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_IntervalProbability.all.output_rel | Normal_IntervalProbability | all | output_error | relative | 1E-14 | measured provisional |
+| Normal_IntervalProbability.all.output_rel | Normal_IntervalProbability | all | output_error | relative | 1E-14 | validated and frozen |
 | Normal_InverseCumulative.all.output | Normal_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_InverseSurvival.all.output | Normal_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_InverseSurvival.deep_tail.output_rel | Normal_InverseSurvival | deep_tail | output_error | relative | 5E-16 | validated and frozen |
-| Normal_InverseSurvival.split_boundary.output_rel | Normal_InverseSurvival | split_boundary | output_error | relative | 2E-10 | measured provisional |
+| Normal_InverseSurvival.split_boundary.output_rel | Normal_InverseSurvival | split_boundary | output_error | relative | 2E-10 | validated and frozen |
 | Normal_Survival.all.output | Normal_Survival | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_ZScore.all.output | Normal_ZScore | all | output_error | relative | 5E-15 | validated and frozen |
 | PROB_LogBeta.all.log_abs | PROB_LogBeta | all | log_absolute_error | absolute | 2E-13 | validated and frozen |
