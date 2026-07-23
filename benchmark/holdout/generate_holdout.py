@@ -160,6 +160,7 @@ def build():
     rows += _discrete_holdout_rows()
     rows += _discrete2_holdout_rows()
     rows += _discrete_uniform_holdout_rows()
+    rows += _deep_tail_holdout_rows()
     return rows
 
 
@@ -265,6 +266,37 @@ def _discrete_uniform_holdout_rows():
         R("DiscreteUniform_Mean",lo,hi,"",_duh_mean(lo_m,hi_m))
         R("DiscreteUniform_Variance",lo,hi,"",_duh_var(lo_m,hi_m))
         R("DiscreteUniform_StdDev",lo,hi,"",mp.sqrt(_duh_var(lo_m,hi_m)))
+    return out
+
+
+def _dtq(z): return mp.mpf("0.5")*mp.erfc(mp.mpf(z)/mp.sqrt(2))
+def _dt_inv_surv(q):
+    q=mp.mpf(q)
+    with mp.workdps(mp.mp.dps+30):
+        t=mp.sqrt(-2*mp.log(q))
+        z=t-(mp.log(t)+mp.log(2*mp.pi)/2)/t
+        if z<=0: z=mp.mpf("0.5")
+        for _ in range(200):
+            step=(mp.log(_dtq(z))-mp.log(q))/(-mp.npdf(z)/_dtq(z))
+            z=z-step
+            if abs(step)<mp.mpf(10)**(-(mp.mp.dps-5)): break
+        rel=abs(_dtq(z)-q)/q
+    if rel>mp.mpf("1e-40"):
+        raise SystemExit(f"holdout deep-tail reference failed round-trip at q={q}: rel={rel}")
+    return +z
+
+def _deep_tail_holdout_rows():
+    """Fresh deep-tail inverse points; none of these probabilities set a threshold."""
+    out=[]
+    def R(fn,a1,a2,a3,ref): out.append(row(fn,"K_STATS_"+fn,a1,a2,a3,ref,"deep_tail"))
+    for qs in ["1e-13","1e-20","1e-40","1e-75","1e-150","1e-250"]:
+        q=mp.mpf(qs); z=_dt_inv_surv(q)
+        R("NormalStandard_InverseSurvival",qs,"","",z)
+        R("NormalStandard_InverseCumulative",qs,"","",-z)
+        for mean,sd in [(mp.mpf(50),mp.mpf(4)),(mp.mpf("0.3"),mp.mpf("2.2"))]:
+            R("Normal_InverseSurvival",qs,mean,sd,mean+sd*z)
+        for ml,sl in [(mp.mpf(2),mp.mpf("0.4")),(mp.mpf(-1),mp.mpf("1.5"))]:
+            R("Lognormal_InverseSurvival",qs,ml,sl,mp.e**(ml+sl*z))
     return out
 
 def main():

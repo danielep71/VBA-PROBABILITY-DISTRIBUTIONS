@@ -155,6 +155,10 @@ Private Function EvaluateHoldout( _
         Case "DiscreteUniform_Mean":         V = K_STATS_DiscreteUniform_Mean(A1, A2)
         Case "DiscreteUniform_Variance":     V = K_STATS_DiscreteUniform_Variance(A1, A2)
         Case "DiscreteUniform_StdDev":       V = K_STATS_DiscreteUniform_StdDev(A1, A2)
+        Case "NormalStandard_InverseSurvival":  V = K_STATS_NormalStandard_InverseSurvival(A1)
+        Case "NormalStandard_InverseCumulative": V = K_STATS_NormalStandard_InverseCumulative(A1)
+        Case "Normal_InverseSurvival":       V = K_STATS_Normal_InverseSurvival(A1, A2, A3)
+        Case "Lognormal_InverseSurvival":    V = K_STATS_Lognormal_InverseSurvival(A1, A2, A3)
         Case Else
             EvaluateHoldout = "ERROR"
             Exit Function

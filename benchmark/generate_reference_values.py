@@ -638,6 +638,76 @@ def build_discrete_rows():
     return rows
 
 
+
+# ===========================================================================
+# DEEP-TAIL INVERSE NORMAL (regime "deep_tail")
+#   The central inverse contracts are tight but domain-restricted: beyond the
+#   z = PROB_CDF_SPLIT (7.07) branch the achievable RELATIVE accuracy is bounded
+#   by the relative accuracy of the normal CDF in its tail. These rows measure
+#   what the kernels actually deliver where the README advertises them
+#   (K_STATS_NormalStandard_InverseSurvival(1E-18) and beyond), so the claim is
+#   evidence rather than a disclaimer.
+# ===========================================================================
+def _dt_Q(z):
+    return mp.mpf("0.5") * mp.erfc(mp.mpf(z) / mp.sqrt(2))
+
+
+def _dt_inv_surv(q):
+    """z such that Q(z) = q.
+
+    Newton in log space at extra working precision, seeded with the standard
+    tail asymptote. A plain root-find loses conditioning once q is tiny, so the
+    result is round-trip verified before it is allowed into the grid.
+    """
+    q = mp.mpf(q)
+    with mp.workdps(mp.mp.dps + 30):
+        t = mp.sqrt(-2 * mp.log(q))
+        z = t - (mp.log(t) + mp.log(2 * mp.pi) / 2) / t
+        if z <= 0:
+            z = mp.mpf("0.5")
+        for _ in range(200):
+            step = (mp.log(_dt_Q(z)) - mp.log(q)) / (-mp.npdf(z) / _dt_Q(z))
+            z = z - step
+            if abs(step) < mp.mpf(10) ** (-(mp.mp.dps - 5)):
+                break
+        rel = abs(_dt_Q(z) - q) / q
+    # Self-check: a reference that does not round-trip must never reach the grid.
+    if rel > mp.mpf("1e-40"):
+        raise SystemExit(f"deep-tail reference failed round-trip at q={q}: rel={rel}")
+    return +z
+
+
+def build_deep_tail_rows():
+    rows = []
+    REL = "measured"
+
+    def row(func, args, ref):
+        rows.append({
+            "function": func, "vba_kernel": "K_STATS_" + func,
+            "claim": REL, "metric": "rel",
+            "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
+            "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
+            "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
+            "arg4": "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": "deep_tail", "evidence_set": "main grid",
+        })
+
+    probs = ["1e-12", "1e-15", "1e-18", "1e-30", "1e-50", "1e-100", "1e-200", "1e-300"]
+    for qs in probs:
+        q = mp.mpf(qs)
+        z = _dt_inv_surv(q)
+        row("NormalStandard_InverseSurvival", (q,), z)
+        # left tail: Phi(z) = p  =>  z = -InverseSurvival(p)
+        row("NormalStandard_InverseCumulative", (q,), -z)
+        for mean, sd in [(mp.mpf(100), mp.mpf(15)), (mp.mpf("-2.5"), mp.mpf("0.75"))]:
+            row("Normal_InverseSurvival", (q, mean, sd), mean + sd * z)
+        for ml, sl in [(mp.mpf(0), mp.mpf(1)), (mp.mpf(1), mp.mpf("0.5"))]:
+            row("Lognormal_InverseSurvival", (q, ml, sl), mp.e ** (ml + sl * z))
+
+    return rows
+
+
 def build_rows():
     rows = []
 
@@ -830,6 +900,7 @@ def build_rows():
         add("Uniform_InverseCumulative", "K_STATS_Uniform_InverseCumulative", (pq, a, b), mp.mpf(a) + mp.mpf(pq) * (mp.mpf(b) - mp.mpf(a)))
 
     rows += build_discrete_rows()
+    rows += build_deep_tail_rows()
     return rows
 
 
