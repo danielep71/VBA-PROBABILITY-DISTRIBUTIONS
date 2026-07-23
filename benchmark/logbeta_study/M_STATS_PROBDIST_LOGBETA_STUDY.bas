@@ -1,4 +1,6 @@
 Attribute VB_Name = "M_STATS_PROBDIST_LOGBETA_STUDY"
+Option Explicit
+
 '==============================================================================
 ' M_STATS_PROBDIST_LOGBETA_STUDY
 '------------------------------------------------------------------------------
@@ -11,27 +13,40 @@ Attribute VB_Name = "M_STATS_PROBDIST_LOGBETA_STUDY"
 ' WHY THIS EXISTS AS A SEPARATE MODULE
 '   It deliberately does not touch the main M_STATS_PROBDIST_ACCURACYEXPORT
 '   macro. The study is isolated so it can be added and removed without
-'   affecting the 66-function regression export. The small hi;lo formatter and
-'   path resolver are duplicated here on purpose, so this module depends only on
+'   affecting the main regression export. The small hi;lo formatter and path
+'   resolver are duplicated here on purpose, so this module depends only on
 '   PROB_LogBeta (a Public kernel), nothing else in the harness.
+'
+' GRID FORMAT (study grid; 9 columns, no regime or evidence_set)
+'   function, vba_kernel, claim, metric, arg1, arg2, arg3, reference,
+'   observed_vba
+'
+'   arg1 is A and arg2 is B. This macro writes observed_vba (column index 8)
+'   and never reads the reference column, so the observed side stays
+'   independent. Rows whose function column is not "LogBeta" are passed through
+'   untouched.
 '
 ' OUTPUT
 '   Each observation is written as a two-part "hi;lo" sum (two 15-digit numbers
 '   VBA emits reliably); analyze_logbeta_switch.py sums them to recover the full
-'   Double. Rows whose function column is not "LogBeta" are left untouched.
+'   Double.
 '
 ' USAGE
 '   Run Export_LogBeta_Study and pick logbeta_switch_grid.csv in the dialog.
+'
+' ERROR POLICY
+'   A runtime fault inside the kernel call is written as the token ERROR so the
+'   analysis can flag that row. A failure elsewhere closes the handles and
+'   reports once, leaving the grid as found.
 '
 ' DEPENDENCIES
 '   - PROB_LogBeta  (M_STATS_PROBDIST_SPECIALFUNCS)
 '
 ' UPDATED
-'   2026-07-18
+'   2026-07-23
 '==============================================================================
-Option Explicit
 
-Private Const LOGBETA_GRID_PATH As String = ""    'Empty => resolve via workbook folder or picker
+Private Const LOGBETA_GRID_PATH As String = ""    'Empty => workbook folder or picker
 
 
 Public Sub Export_LogBeta_Study()
@@ -41,96 +56,97 @@ Public Sub Export_LogBeta_Study()
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Fills the observed_vba column of the LogBeta switch-study grid in place.
+'
+' BEHAVIOR
+'   Reads the whole file and normalizes line endings before splitting, so
+'   LF-only, CR-only and CRLF grids all parse. VBA Line Input is CR-delimited
+'   and would swallow an entire LF-only file (.gitattributes stores *.csv as
+'   eol=lf) as a single line, silently writing nothing.
+'
+' ERROR POLICY
+'   Any failure closes the handles and reports once; the grid is left as found.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Path                As String          'Resolved grid path
+    Dim Lines()             As String          'All rewritten lines
+    Dim Raw                 As String          'File contents
     Dim FileNum             As Integer         'Input channel
     Dim OutNum              As Integer         'Output channel
-    Dim Line                As String          'Current CSV line
     Dim Cols                As Variant         'Split fields
-    Dim Lines()             As String          'All rewritten lines
-    Dim LineCount           As Long            'Number of buffered lines
-    Dim IsHeader            As Boolean         'First-row flag
+    Dim Sep                 As String          'Field separator
     Dim A                   As Double          'First argument
     Dim B                   As Double          'Second argument
     Dim Observed            As String          'Formatted observation
     Dim FilledCount         As Long            'Rows populated
-
+    Dim I                   As Long            'Row index
 '------------------------------------------------------------------------------
 ' INITIALIZE
 '------------------------------------------------------------------------------
+    On Error GoTo Err_Handler
     'Resolve the grid path (robust to OneDrive / SharePoint)
         Path = ResolveGridPath()
         If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
-
-    'Prepare the line buffer
-        ReDim Lines(0 To 100000)
-        LineCount = 0
-        IsHeader = True
         FilledCount = 0
-
+        Sep = ","
+    'Read the whole file
+        FileNum = FreeFile
+        Open Path For Input As #FileNum
+        Raw = Input$(LOF(FileNum), FileNum)
+        Close #FileNum
+    'Normalize line endings and split
+        Raw = Replace(Raw, vbCrLf, vbLf)
+        Raw = Replace(Raw, vbCr, vbLf)
+        Lines = Split(Raw, vbLf)
 '------------------------------------------------------------------------------
 ' READ AND FILL
 '------------------------------------------------------------------------------
-    'Read every line, filling observed_vba on LogBeta rows
-        FileNum = FreeFile
-        Open Path For Input As #FileNum
-        Do While Not EOF(FileNum)
-            Line Input #FileNum, Line
+    'Row 0 is the header; data starts at row 1
+        For I = 1 To UBound(Lines)
+            If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
-            'Pass the header through unchanged
-                If IsHeader Then
-                    Lines(LineCount) = Line
-                    LineCount = LineCount + 1
-                    IsHeader = False
-                    GoTo ContinueLoop
-                End If
+            Cols = Split(Lines(I), Sep)
+            If UBound(Cols) < 8 Then GoTo ContinueRow
 
-            'Skip empty trailing lines
-                If Len(Trim$(Line)) = 0 Then GoTo ContinueLoop
+            'Only LogBeta rows are owned here; anything else passes through
+            If Trim$(Cols(0)) <> "LogBeta" Then GoTo ContinueRow
 
-            'Split the row: function, vba_kernel, claim, metric, arg1, arg2,
-            'arg3, reference, observed_vba
-                Cols = Split(Line, ",")
+            A = ParseDouble(Cols(4))
+            B = ParseDouble(Cols(5))
+            Observed = EvaluateLogBeta(A, B)
 
-            'Only process LogBeta rows; pass anything else through unchanged
-                If UBound(Cols) >= 8 Then
-                    If Cols(0) = "LogBeta" Then
-                        A = Val(Cols(4))         'Val is locale-independent
-                        B = Val(Cols(5))
-                        Observed = EvaluateLogBeta(A, B)
-                        Cols(8) = Observed
-                        Line = Join(Cols, ",")
-                        FilledCount = FilledCount + 1
-                    End If
-                End If
-
-            Lines(LineCount) = Line
-            LineCount = LineCount + 1
-
-ContinueLoop:
-        Loop
-        Close #FileNum
-
+            Cols(8) = Observed
+            Lines(I) = Join(Cols, Sep)
+            FilledCount = FilledCount + 1
+ContinueRow:
+        Next I
 '------------------------------------------------------------------------------
 ' WRITE BACK
 '------------------------------------------------------------------------------
     'Rewrite the file with the filled observations
         OutNum = FreeFile
         Open Path For Output As #OutNum
-        Dim I As Long
-        For I = 0 To LineCount - 1
-            Print #OutNum, Lines(I)
+        For I = 0 To UBound(Lines)
+            If I < UBound(Lines) Or Len(Lines(I)) > 0 Then Print #OutNum, Lines(I)
         Next I
         Close #OutNum
 
-    'Report
-        MsgBox "LogBeta study complete: " & FilledCount & _
-               " observation(s) written to " & vbCrLf & Path, _
-               vbInformation, "LogBeta switch study"
+    MsgBox "LogBeta study complete: " & FilledCount & _
+           " observation(s) written to" & vbCrLf & Path, _
+           vbInformation, "LogBeta switch study"
+    Exit Sub
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    On Error Resume Next
+    Close #FileNum
+    Close #OutNum
+    MsgBox "LogBeta study failed: " & Err.Description, vbExclamation, _
+           "LogBeta switch study"
 End Sub
 
 
@@ -143,18 +159,31 @@ Private Function EvaluateLogBeta( _
 ' EvaluateLogBeta
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Calls PROB_LogBeta(A, B) and returns the result as a hi;lo pair. Any runtime
-'   fault is reported as "ERROR" so the analysis can flag the row.
+'   Calls PROB_LogBeta(A, B) and returns the result as a hi;lo pair.
+'
+' INPUTS
+'   A, B    the two Beta arguments from the grid
+'
+' RETURNS
+'   Full-precision hi;lo token, or the literal ERROR on a runtime fault.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim Value               As Double          'PROB_LogBeta result
-
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
     On Error GoTo Err_Handler
 
-    Value = PROB_LogBeta(A, B)
-    EvaluateLogBeta = FormatFullPrecision(Value)
+        Value = PROB_LogBeta(A, B)
+        EvaluateLogBeta = FormatFullPrecision(Value)
     Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
     EvaluateLogBeta = "ERROR"
 End Function
@@ -176,10 +205,15 @@ Private Function ResolveGridPath() As String
 '   real local path containing the file, and finally falls back to a file picker.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim Candidate           As String          'Path being tested
     Dim BookPath            As String          'Workbook folder
-    Dim Picked              As Variant          'File-dialog result
-
+    Dim Picked              As Variant         'File-dialog result
+'------------------------------------------------------------------------------
+' RESOLVE
+'------------------------------------------------------------------------------
     '1. Explicit constant wins when it points at a real file
         If Len(LOGBETA_GRID_PATH) > 0 Then
             If Len(Dir$(LOGBETA_GRID_PATH)) > 0 Then
@@ -205,11 +239,35 @@ Private Function ResolveGridPath() As String
         Picked = Application.GetOpenFilename( _
             FileFilter:="LogBeta grid (*.csv),*.csv", _
             Title:="Select logbeta_switch_grid.csv")
+
         If VarType(Picked) = vbBoolean Then
             ResolveGridPath = vbNullString
         Else
             ResolveGridPath = CStr(Picked)
         End If
+End Function
+
+
+Private Function ParseDouble(ByVal Text As String) As Double
+'
+'==============================================================================
+' ParseDouble
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Parses a grid number written with a US decimal point, independent of the
+'   local list/decimal separators.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim S                   As String          'Cleaned token
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    S = Trim$(Text)
+    S = Replace(S, ",", ".")                   'Guard against a stray locale comma
+    ParseDouble = Val(S)                       'Val always reads "." as decimal
 End Function
 
 
@@ -224,11 +282,19 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
 '   Python side, reproduces the original Double exactly.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim HiStr               As String          'Value to 15 significant digits
     Dim Hi                  As Double          'The Double that HiStr denotes
     Dim Lo                  As Double          'Exact residual X - Hi
-
-    If X = 0# Then FormatFullPrecision = "0E+000;0E+000": Exit Function
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If X = 0# Then
+        FormatFullPrecision = "0E+000;0E+000"
+        Exit Function
+    End If
 
     HiStr = Fmt15(X)
     Hi = Val(HiStr)                            'Val is locale-independent; CDbl is not
@@ -248,10 +314,20 @@ Private Function Fmt15(ByVal X As Double) As String
 '   decimal point.
 '==============================================================================
 '
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim S                   As String          'Formatted value
-
-    If X = 0# Then Fmt15 = "0E+000": Exit Function
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If X = 0# Then
+        Fmt15 = "0E+000"
+        Exit Function
+    End If
 
     S = Format$(X, "0.00000000000000E+000")    '1 + 14 = 15 significant digits
     Fmt15 = Replace(S, ",", ".")               'Force US decimal regardless of locale
 End Function
+
+
