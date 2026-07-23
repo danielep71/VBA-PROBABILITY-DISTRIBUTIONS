@@ -66,7 +66,7 @@ Public Sub Export_Holdout()
             A2 = Val(Cols(5))
             A3 = Val(Cols(6))
             A4 = Val(Cols(7))
-            Cols(9) = EvaluateHoldout(Cols(0), A1, A2, A3, A4)
+            Cols(9) = EvaluateHoldout(Cols(0), A1, A2, A3, A4, CStr(Cols(10)))
             Lines(I) = Join(Cols, ",")
             Filled = Filled + 1
         End If
@@ -91,10 +91,14 @@ Private Function EvaluateHoldout( _
     ByVal A1 As Double, _
     ByVal A2 As Double, _
     ByVal A3 As Double, _
-    ByVal A4 As Double) _
+    ByVal A4 As Double, _
+    ByVal Regime As String) _
     As String
 '
     Dim V                   As Variant
+    Dim Arr                 As Variant
+    Dim Lb1                 As Long
+    Dim Lb2                 As Long
 
     On Error GoTo Err_Handler
 
@@ -159,6 +163,31 @@ Private Function EvaluateHoldout( _
         Case "NormalStandard_InverseCumulative": V = K_STATS_NormalStandard_InverseCumulative(A1)
         Case "Normal_InverseSurvival":       V = K_STATS_Normal_InverseSurvival(A1, A2, A3)
         Case "Lognormal_InverseSurvival":    V = K_STATS_Lognormal_InverseSurvival(A1, A2, A3)
+        Case "ChiSquare_Density"
+            V = K_STATS_ChiSquare_Density(A1, A2)
+
+        Case "F_Density"
+            V = K_STATS_F_Density(A1, A2, A3)
+
+        Case "Normal_IntervalProbability"
+            'Study convention: Mean fixed at 0, arg3 carries StdDev.
+            V = K_STATS_Normal_IntervalProbability(A1, A2, 0#, A3)
+
+        Case "Lognormal_ParametersFromMeanStdDev"
+            'Returns both parameters; the regime selects which one this row claims.
+            Arr = K_STATS_Lognormal_ParametersFromMeanStdDev(A1, A2)
+            If IsError(Arr) Then
+                EvaluateHoldout = "ERROR"
+                Exit Function
+            End If
+            Lb1 = LBound(Arr, 1)
+            Lb2 = LBound(Arr, 2)
+            If Regime = "param_stddevlog" Then
+                V = Arr(Lb1, Lb2 + 1)
+            Else
+                V = Arr(Lb1, Lb2)
+            End If
+
         Case Else
             EvaluateHoldout = "ERROR"
             Exit Function

@@ -164,6 +164,7 @@ def build():
     rows += _discrete2_holdout_rows()
     rows += _discrete_uniform_holdout_rows()
     rows += _deep_tail_holdout_rows()
+    rows += _provisional_freeze_holdout_rows()
     return rows
 
 
@@ -300,6 +301,48 @@ def _deep_tail_holdout_rows():
             R("Normal_InverseSurvival",qs,mean,sd,mean+sd*z)
         for ml,sl in [(mp.mpf(2),mp.mpf("0.4")),(mp.mpf(-1),mp.mpf("1.5"))]:
             R("Lognormal_InverseSurvival",qs,ml,sl,mp.e**(ml+sl*z))
+    return out
+
+
+# --- Freeze evidence for the remaining measured-provisional contracts ---
+def _chi2_pdf(x,df):
+    x,df=mp.mpf(x),mp.mpf(df); return x**(df/2-1)*mp.e**(-x/2)/(2**(df/2)*mp.gamma(df/2))
+def _f_pdf(x,d1,d2):
+    x,d1,d2=mp.mpf(x),mp.mpf(d1),mp.mpf(d2)
+    return mp.sqrt(((d1*x)**d1*d2**d2)/((d1*x+d2)**(d1+d2)))/(x*mp.beta(d1/2,d2/2))
+def _phi(z): return mp.mpf("0.5")*mp.erfc(-mp.mpf(z)/mp.sqrt(2))
+def _interval(lo,hi,sd): return _phi(mp.mpf(hi)/mp.mpf(sd))-_phi(mp.mpf(lo)/mp.mpf(sd))
+def _ln_params(mean,sd):
+    mean,sd=mp.mpf(mean),mp.mpf(sd)
+    return mp.log(mean**2/mp.sqrt(sd**2+mean**2)), mp.sqrt(mp.log(1+sd**2/mean**2))
+
+def _provisional_freeze_holdout_rows():
+    """Fresh points for the contracts still marked measured provisional."""
+    out=[]
+    def R(fn,a1,a2,a3,ref,regime): out.append(row(fn,"K_STATS_"+fn,a1,a2,a3,ref,regime))
+
+    for x,df in [(1.7,3),(12.5,7),(0.35,1),(55,40)]:
+        R("ChiSquare_Density",x,df,"",_chi2_pdf(x,df),"all")
+    for x,d1,d2 in [(1.3,4,9),(0.45,7,3),(2.8,15,25),(1.05,60,80)]:
+        R("F_Density",x,d1,d2,_f_pdf(x,d1,d2),"all")
+    # Mean is fixed at 0 by the study convention; arg3 carries StdDev.
+    for lo,hi,sd in [(-1.5,2.25,1),(0.4,3.1,2.5),(-4,-0.75,1.5),(-0.2,0.2,0.3)]:
+        R("Normal_IntervalProbability",lo,hi,sd,_interval(lo,hi,sd),"all")
+    for mean,sd in [(7.5,2.25),(0.8,0.35),(250,120),(3,4)]:
+        ml,sl=_ln_params(mean,sd)
+        R("Lognormal_ParametersFromMeanStdDev",mean,sd,"",ml,"param_meanlog")
+        R("Lognormal_ParametersFromMeanStdDev",mean,sd,"",sl,"param_stddevlog")
+
+    # Split-transition band around PROB_CDF_SPLIT (z = 7.07): two points below,
+    # two above, none equal to the main grid's single q = 1E-12.
+    for qs in ["4e-12","2e-12","5e-13","2e-13"]:
+        q=mp.mpf(qs); z=_dt_inv_surv(q)
+        R("NormalStandard_InverseSurvival",qs,"","",z,"split_boundary")
+        R("NormalStandard_InverseCumulative",qs,"","",-z,"split_boundary")
+        for mean,sd in [(mp.mpf(50),mp.mpf(4)),(mp.mpf("0.3"),mp.mpf("2.2"))]:
+            R("Normal_InverseSurvival",qs,mean,sd,mean+sd*z,"split_boundary")
+        for ml,sl in [(mp.mpf(2),mp.mpf("0.4")),(mp.mpf(-1),mp.mpf("1.5"))]:
+            R("Lognormal_InverseSurvival",qs,ml,sl,mp.e**(ml+sl*z),"split_boundary")
     return out
 
 def main():
