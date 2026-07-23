@@ -1,110 +1,58 @@
-# Unbalanced-Beta switch study (PROB_LogBeta)
+# Step-6 study: public Beta/F accuracy at unbalanced arguments
 
-This is the study report for the `PROB_LogBeta` accuracy investigation. It records
-the measured behavior of the current implementation across the balanced-to-
-extremely-unbalanced argument range, the conclusion that a threshold change alone
-cannot fix it, and the remediation that would.
+Measures the PUBLIC Beta and F worksheet functions directly at strongly
+disparate shapes / degrees of freedom, now that `PROB_LogBeta` uses the stable
+Lanczos log-gamma difference. This produces the function-level numbers that
+freeze the regime-scoped accuracy contracts.
 
-## Purpose
+## Why measure the functions, not the LogBeta proxy
 
-`PROB_LogBeta(A, B)` = `Log(Beta(A, B))` selects among three routes:
+Downstream code uses `exp(-LogBeta)`, so to first order the relative error of an
+exponentiated quantity is the ABSOLUTE error of `LogBeta`. That means:
 
-- half-integer shortcuts (`A = 1/2` or `B = 1/2`) via `PROB_LogGammaHalfDiff`;
-- a one-term asymptotic `LogGamma(Small) - Small*Log(Large)` when
-  `Small/Large <= PROB_EPS` (1E-15);
-- otherwise the defining identity `LogGamma(A) + LogGamma(B) - LogGamma(A + B)`.
+- `PROB_LogBeta` should be judged by ABSOLUTE error (done in the delta seam study);
+- the public Beta/F functions must be judged by their OWN relative error, because
+  the incomplete-beta continued fraction, tail selection and inverse solver damp
+  or amplify the normalization error differently for each function.
 
-The defining identity cancels catastrophically as the arguments become unbalanced
-(`LogGamma(Large)` and `LogGamma(Large + Small)` are large and nearly equal). The
-study measures where this matters and whether the switch is well placed.
+So this study measures each of `Beta_Density`, `Beta_Cumulative`, `Beta_Survival`,
+`F_Cumulative`, `F_Survival` separately. Do NOT infer one common threshold.
 
-## Tested values
+## Grid
 
-- **Small values** (the smaller argument), chosen to include non-integer cases:
-  `0.8, 1, 1.5, 3, 10`. (Half-integer `0.5` is excluded — it takes the
-  `PROB_LogGammaHalfDiff` shortcut.)
-- **Ratios** `Small / Large`, swept in decades from `1E-1` down to `1E-18`
-  (18 points), so `Large` ranges from `10 x Small` up to `1E18 x Small`.
-- Full grid: 5 x 18 = 90 points, each with a 50+ digit mpmath reference.
+- **Beta**: strongly disparate `(Alpha, Beta)` — e.g. (0.7, 1000), (2.5, 1E6),
+  (10.25, 68), (0.8, 1E4), (1000, 0.8), (1E5, 2.5) — evaluated at X near the
+  distribution's mass (the mean and a mode-ish point).
+- **F**: strongly asymmetric `(df1, df2)` — (1, 1E4), (2.5, 1E8), (10, 1E10),
+  (1E6, 3) — at X = 1 and near the mean.
+- 64 points; references are mpmath at 60 digits.
 
 ## Files
 
-- `generate_logbeta_switch.py` — writes `logbeta_switch_grid.csv` (90 rows: 5
-  `Small` values x 18 ratios) with 50+ digit mpmath references.
-- `logbeta_switch_grid.csv` — the grid; `arg1 = Large`, `arg2 = Small`.
-- `M_STATS_PROBDIST_LOGBETA_STUDY.bas` — standalone export macro (`Export_LogBeta_Study`) that
-  fills `observed_vba` by calling `PROB_LogBeta` directly.
-- `analyze_logbeta_switch.py` — prints measured relative error vs ratio per
-  `Small`, flags rows over the 5E-15 Beta claim, marks where the branch fires.
+| File | Role |
+|---|---|
+| `generate_beta_f_unbalanced.py` | Writes `beta_f_unbalanced_grid.csv` (64 rows, 60-digit refs). |
+| `beta_f_unbalanced_grid.csv` | The grid; `arg1 = X`, `arg2 = Alpha/df1`, `arg3 = Beta/df2`. |
+| `M_STATS_PROBDIST_BETAF_UNBAL.bas` | Standalone macro `Export_BetaF_Unbalanced` (calls the 5 public functions; handles CVErr). |
+| `analyze_beta_f_unbalanced.py` | Per-function worst-case relative error + suggested frozen thresholds. |
 
-## Measured results (actual VBA `PROB_LogBeta`)
+## How to run
 
-Best achievable from the current two methods (choosing the better of general
-identity and one-term asymptotic at each ratio), worst case over `Small`:
-
-| Small / Large | best achievable | meets 5E-15 |
-|---:|---:|:--:|
-| 1E-1 | 8.9E-16 | yes |
-| 1E-2 | 1.4E-14 | no |
-| 1E-3 | 2.9E-13 | no |
-| 1E-4 | 3.6E-12 | no |
-| 1E-6 | 1.8E-10 | no |
-| 1E-10 | 1.9E-12 | no |
-| 1E-13 | 1.3E-15 | yes |
-| 1E-14 | 2.9E-16 | yes |
-| <= 1E-15 | ~1E-16 (branch) | yes |
-
-**No single switch position meets 5E-15 across ratios ~1E-2 to 1E-13.** Moving the
-threshold only chooses which method's mediocre error applies in the middle band.
-
-## Integer vs non-integer `Small`
-
-The one-term asymptotic is *exact* for integer `Small` (the Gamma recurrence makes
-`LogGamma(Large+n) - LogGamma(Large)` telescope to `Log(Large)` terms), but has
-material truncation error for non-integer `Small` at moderate ratios (about 1.3%
-at ratio 1E-1). An early hypothesis that the branch is "accurate everywhere, just
-widen the switch" was an artifact of testing mostly integer `Small`; the benchmark
-disproved it. Widening the one-term switch would have produced large errors for
-non-integer `Small` — the study prevented an incorrect change.
-
-## Public exposure
-
-Directly affected: Beta density; Beta CDF/survival via incomplete-beta
-normalization; Beta inverse; F with disparate degrees of freedom. Student t is
-largely protected — its `Beta(df/2, 1/2)` normalization trips the half-integer
-shortcut for `df >= 2`, and `df = 1` is `Beta(0.5, 0.5)` (balanced).
-
-## How to reproduce
-
-1. Import `M_STATS_PROBDIST_LOGBETA_STUDY.bas` into the workbook and `Debug > Compile`.
-2. Run `Export_LogBeta_Study`; when prompted, select `logbeta_switch_grid.csv`.
-   This fills the `observed_vba` column by calling `PROB_LogBeta` directly.
+1. Import `M_STATS_PROBDIST_BETAF_UNBAL.bas` into the workbook and `Debug > Compile`.
+2. Run `Export_BetaF_Unbalanced`; select `beta_f_unbalanced_grid.csv` when prompted.
 3. Commit the filled CSV.
-4. Analyze: `python3 analyze_logbeta_switch.py` prints the measured relative
-   error versus ratio per `Small`, flagging rows over the 5E-15 Beta claim and
-   marking where the asymptotic branch engages.
+4. Analysis (done for you): `python3 analyze_beta_f_unbalanced.py`.
 
-To regenerate the references from scratch: `python3 generate_logbeta_switch.py`
-(requires mpmath). This overwrites `logbeta_switch_grid.csv` with empty
-observations, so re-run the export afterwards.
+## Freezing the contracts (completion criteria 5-7)
 
-## Current production status
+The analyzer prints, per function, the measured worst-case relative error and a
+suggested frozen threshold (worst measured, rounded up with headroom). Then:
 
-The limitation is documented (this study, the `PROB_LogBeta` ACCURACY LIMITATION
-note, the benchmark README caveat) and guarded by an expected-limitation test in
-`M_STATS_PROBDIST_TEST` that trips if the gap is ever closed. The switch itself is
-left unchanged, because widening it with the current one-term asymptotic is worse.
+1. Set SEPARATE balanced and unbalanced contracts in `accuracy_contracts.csv`
+   (the balanced claim stays tight; the unbalanced claim uses the measured value).
+2. Replace the broad `known_limitation` with the precise scoped contracts.
+3. Retain a `known_limitation` ONLY where a measured public function still exceeds
+   its revised contract.
 
-## Proposed remediation (deferred, validated feature)
-
-A stable log-gamma increment kernel `PROB_LogGammaDelta(Large, Increment)` =
-`LogGamma(Large + Increment) - LogGamma(Large)` computed without subtracting two
-large independently rounded values, dispatched in three regimes:
-
-- balanced -> direct identity;
-- moderately unbalanced -> cancellation-free Lanczos log-gamma difference;
-- strongly unbalanced -> validated multi-term digamma/Bernoulli expansion.
-
-Acceptance: the ratio x non-integer-`Small` x absolute-`Large` grid, switch-seam
-continuity, public Beta/F paths, and `LogBeta(A,B) = LogBeta(B,A)` symmetry.
-Accuracy claims are tightened only after independent validation.
+The measured VBA numbers are the authority; freeze only after running against the
+final module.
