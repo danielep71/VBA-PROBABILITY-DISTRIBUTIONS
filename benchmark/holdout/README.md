@@ -17,10 +17,13 @@ can be frozen (`measured provisional` -> `validated and frozen`).
   {10, 200, 100000}, Geometric p in {0.2, 0.01, 1e-4}.
 - **Negative Binomial**: fresh (r, p) in {(2,0.3), (20,0.6), (200,0.4), (2000,0.75)}.
 - **Hypergeometric**: fresh (n, K, N) in {(20,30,80), (60,300,500), (200,2000,50000)}.
+- **Discrete Uniform**: fresh supports [2,13], [-20,-3] (fully negative), [100,4099],
+  [-77777,22223]; inverse probabilities built as (j + 0.37) / n so no point lands
+  exactly on a CDF step.
 - **Probabilities**: 0.0001, 0.005, 0.25, 0.75, 0.995, 0.9999 for the continuous
   families; non-tie probabilities for the discrete inverses.
 
-320 points; references are mpmath / continued-fraction incomplete beta /
+388 points; references are mpmath / continued-fraction incomplete beta /
 incomplete gamma at 50 digits.
 
 ## Files

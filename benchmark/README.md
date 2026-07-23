@@ -150,6 +150,14 @@ by rate (Lambda), not scale.
 | ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | measured provisional |
 | ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | validated and frozen |
 | ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | validated and frozen |
+| DiscreteUniform_Cumulative.all.output_rel | DiscreteUniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
+| DiscreteUniform_InverseCumulative.all.output_abs | DiscreteUniform_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
+| DiscreteUniform_LogPMF.all.output_rel | DiscreteUniform_LogPMF | all | output_error | relative | 5E-15 | validated and frozen |
+| DiscreteUniform_Mean.all.output_rel | DiscreteUniform_Mean | all | output_error | relative | 5E-15 | validated and frozen |
+| DiscreteUniform_PMF.all.output_rel | DiscreteUniform_PMF | all | output_error | relative | 5E-15 | validated and frozen |
+| DiscreteUniform_StdDev.all.output_rel | DiscreteUniform_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
+| DiscreteUniform_Survival.all.output_rel | DiscreteUniform_Survival | all | output_error | relative | 5E-15 | validated and frozen |
+| DiscreteUniform_Variance.all.output_rel | DiscreteUniform_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_Cumulative.all.output | Exponential_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_Density.all.output | Exponential_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |

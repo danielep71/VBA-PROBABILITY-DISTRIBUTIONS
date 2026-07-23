@@ -1,9 +1,0 @@
-contract_id,function,regime,measure,metric,threshold,domain,provenance,status,evidence,notes
-DiscreteUniform_PMF.all.output_rel,DiscreteUniform_PMF,all,output_error,relative,5E-15,full range; exact rational mass 1/n,measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_LogPMF.all.output_rel,DiscreteUniform_LogPMF,all,output_error,relative,5E-15,full range; -log(n),measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_Cumulative.all.output_rel,DiscreteUniform_Cumulative,all,output_error,relative,5E-15,full range; exact rational (floor(x)-Lower+1)/n,measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_Survival.all.output_rel,DiscreteUniform_Survival,all,output_error,relative,5E-15,full range; exact rational (Upper-floor(x))/n,measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_InverseCumulative.all.output_abs,DiscreteUniform_InverseCumulative,all,output_error,absolute,1E-9,"full range; exact integer quantile, non-tie probabilities",measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_Mean.all.output_rel,DiscreteUniform_Mean,all,output_error,relative,5E-15,full range; closed-form moment,measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_Variance.all.output_rel,DiscreteUniform_Variance,all,output_error,relative,5E-15,full range; closed-form (n^2-1)/12,measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
-DiscreteUniform_StdDev.all.output_rel,DiscreteUniform_StdDev,all,output_error,relative,5E-15,full range; closed-form moment,measured provisional,pending,main grid,provisional; awaits Excel measurement + holdout freeze
