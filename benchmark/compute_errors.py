@@ -229,6 +229,30 @@ def main():
         lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
                      f"{float(worst):.2e} | {n}/{len(matched)} | {verdict} |")
 
+    # The verdict tally counts CONTRACT states. A reader can otherwise take
+    # "KNOWN LIMITATION: 0" to mean the library has no numerical boundaries,
+    # which the separate register contradicts. Derive the cross-reference from
+    # numerical_limitations.csv so the two can never drift apart.
+    reg_path = os.path.join(HERE, "numerical_limitations.csv")
+    reg = []
+    if os.path.exists(reg_path):
+        with open(reg_path, newline="", encoding="utf-8") as f:
+            reg = [(r.get("limitation_id", ""), r.get("status", "")) for r in csv.DictReader(f)]
+
+    if reg:
+        listed = "; ".join(f"`{lid}` ({st})" for lid, st in reg)
+        register_note = (
+            f"> **Register cross-reference** — the tally above counts *contract states*. "
+            f"`KNOWN LIMITATION: {n_known}` means no contract is currently held open as a "
+            f"documented defect; it is **not** a claim that the library has no numerical "
+            f"boundaries. Those live in `numerical_limitations.csv`, which currently holds "
+            f"{len(reg)} entr{'y' if len(reg) == 1 else 'ies'}: {listed}. Characterized "
+            f"boundaries are carried by their own regime contracts and study directories, "
+            f"so they appear above as PASS against the honest threshold rather than as a defect.")
+    else:
+        register_note = ("> **Register cross-reference** — `numerical_limitations.csv` is absent "
+                         "or empty; the tally above counts contract states only.")
+
     lines += ["",
               f"> **Verdict tally** — FAIL: {n_fail}, KNOWN LIMITATION: {n_known}, "
               f"CHARACTERIZATION ONLY: {n_char}, PENDING: {n_pending}.",
@@ -236,7 +260,9 @@ def main():
               "> States: **PASS** meets the contract; **FAIL** exceeds it; **KNOWN LIMITATION** "
               "is a documented defect; **CHARACTERIZATION ONLY** is measured but not held to a "
               "pass/fail claim (or verified in a study directory); **PENDING** is not yet "
-              "measured in the main grid. Errors are Decimal from the two-part hi;lo export."]
+              "measured in the main grid. Errors are Decimal from the two-part hi;lo export.",
+              "",
+              register_note]
 
     with open(args.out, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
