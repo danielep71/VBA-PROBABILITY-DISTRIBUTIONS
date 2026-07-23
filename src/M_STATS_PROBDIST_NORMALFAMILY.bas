@@ -184,7 +184,7 @@ Option Explicit
 '     K_STATS_Lognormal_StdDev.
 '
 ' UPDATED
-'   2026-07-21
+'   2026-07-23
 '==============================================================================
 
 '==============================================================================
@@ -477,7 +477,8 @@ Public Function K_STATS_NormalStandard_Survival( _
 '   exceedance probabilities and probability-of-default style calculations.
 '   Evaluating it as 1 - Cumulative loses all precision once the cumulative
 '   probability rounds to one; this routine evaluates the positive tail directly
-'   and stays accurate deep into the tail.
+'   and stays accurate deep into the tail in ABSOLUTE terms (see ACCURACY for
+'   the relative-error domain restriction).
 '
 ' WORKSHEET EQUIVALENT
 '   1 - NORM.S.DIST(Z, TRUE). The subtraction form collapses in the far upper
@@ -485,7 +486,17 @@ Public Function K_STATS_NormalStandard_Survival( _
 '
 ' PROVENANCE
 '   Same Hart/West standard normal tail kernel as PROB_NormalCDF, evaluated on
-'   the upper tail without subtracting from one. Public; accurate to ~1E-15.
+'   the upper tail without subtracting from one. Public; ~1E-15 ABSOLUTE (see
+'   ACCURACY for the relative-error domain restriction).
+'
+' ACCURACY
+'   Direct upper-tail evaluation avoids the catastrophic cancellation of
+'   1 - Cumulative, and ABSOLUTE error stays near 1E-17 across the tail. The
+'   tight RELATIVE bound is domain-restricted: beyond the central region
+'   (standardized z above roughly 2.75 - 3.25) relative error grows
+'   monotonically - about 1E-14 at z = 3, 1E-13 at z = 4, 5E-11 at z = 5 and
+'   5E-10 at z = 6. Characterized as SurvivalTailRel in
+'   benchmark/numerical_limitations.csv (evidence: benchmark/survival_boundary).
 '
 ' INPUTS
 '   Z
@@ -518,7 +529,7 @@ Public Function K_STATS_NormalStandard_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-12
+'   2026-07-23
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1337,6 +1348,15 @@ Public Function K_STATS_Normal_Survival( _
 '   Standard normalisation identity P(X > x) = Q((x - Mean) / StdDev), with Q the
 '   directly-evaluated standard normal upper tail. Not proprietary.
 '
+' ACCURACY
+'   Direct upper-tail evaluation avoids the catastrophic cancellation of
+'   1 - Cumulative, and ABSOLUTE error stays near 1E-17 across the tail. The
+'   tight RELATIVE bound is domain-restricted: beyond the central region
+'   (standardized z above roughly 2.75 - 3.25) relative error grows
+'   monotonically - about 1E-14 at z = 3, 1E-13 at z = 4, 5E-11 at z = 5 and
+'   5E-10 at z = 6. Characterized as SurvivalTailRel in
+'   benchmark/numerical_limitations.csv (evidence: benchmark/survival_boundary).
+'
 ' INPUTS
 '   X
 '     Evaluation point.
@@ -1375,7 +1395,7 @@ Public Function K_STATS_Normal_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-12
+'   2026-07-23
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2316,6 +2336,15 @@ Public Function K_STATS_Lognormal_Survival( _
 ' PROVENANCE
 '   Standard normal upper tail of the standardized log variate. Not proprietary.
 '
+' ACCURACY
+'   Direct upper-tail evaluation avoids the catastrophic cancellation of
+'   1 - Cumulative, and ABSOLUTE error stays near 1E-17 across the tail. The
+'   tight RELATIVE bound is domain-restricted: beyond the central region
+'   (standardized z above roughly 2.75 - 3.25) relative error grows
+'   monotonically - about 1E-14 at z = 3, 1E-13 at z = 4, 5E-11 at z = 5 and
+'   5E-10 at z = 6. Characterized as SurvivalTailRel in
+'   benchmark/numerical_limitations.csv (evidence: benchmark/survival_boundary).
+'
 ' INPUTS
 '   X
 '     Evaluation point.
@@ -2351,7 +2380,7 @@ Public Function K_STATS_Lognormal_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-12
+'   2026-07-23
 '==============================================================================
 '
 '------------------------------------------------------------------------------
