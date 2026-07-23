@@ -339,6 +339,16 @@ Private Function EvaluateOne( _
         Case "Hypergeometric_Variance":      V = K_STATS_Hypergeometric_Variance(A1, A2, A3)
         Case "Hypergeometric_StdDev":        V = K_STATS_Hypergeometric_StdDev(A1, A2, A3)
 
+
+        Case "DiscreteUniform_PMF":          V = K_STATS_DiscreteUniform_PMF(A1, A2, A3)
+        Case "DiscreteUniform_LogPMF":       V = K_STATS_DiscreteUniform_LogPMF(A1, A2, A3)
+        Case "DiscreteUniform_Cumulative":   V = K_STATS_DiscreteUniform_Cumulative(A1, A2, A3)
+        Case "DiscreteUniform_Survival":     V = K_STATS_DiscreteUniform_Survival(A1, A2, A3)
+        Case "DiscreteUniform_InverseCumulative": V = K_STATS_DiscreteUniform_InverseCumulative(A1, A2, A3)
+        Case "DiscreteUniform_Mean":         V = K_STATS_DiscreteUniform_Mean(A1, A2)
+        Case "DiscreteUniform_Variance":     V = K_STATS_DiscreteUniform_Variance(A1, A2)
+        Case "DiscreteUniform_StdDev":       V = K_STATS_DiscreteUniform_StdDev(A1, A2)
+
         Case Else:                           EvaluateOne = "ERROR": Exit Function
     End Select
 

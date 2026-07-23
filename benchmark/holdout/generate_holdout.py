@@ -159,6 +159,7 @@ def build():
                             logbeta(large,small),"all"))
     rows += _discrete_holdout_rows()
     rows += _discrete2_holdout_rows()
+    rows += _discrete_uniform_holdout_rows()
     return rows
 
 
@@ -220,6 +221,50 @@ def _discrete2_holdout_rows():
         R("Hypergeometric_Mean","K_STATS_Hypergeometric_Mean",n,K,N,mp.mpf(n)*mp.mpf(K)/mp.mpf(N))
         R("Hypergeometric_Variance","K_STATS_Hypergeometric_Variance",n,K,N,mp.mpf(n)*(mp.mpf(K)/N)*((mp.mpf(N)-K)/N)*((mp.mpf(N)-n)/(mp.mpf(N)-1)))
         R("Hypergeometric_StdDev","K_STATS_Hypergeometric_StdDev",n,K,N,mp.sqrt(mp.mpf(n)*(mp.mpf(K)/N)*((mp.mpf(N)-K)/N)*((mp.mpf(N)-n)/(mp.mpf(N)-1))))
+    return out
+
+
+def _duh_n(lo,hi): return mp.mpf(hi)-mp.mpf(lo)+1
+def _duh_pmf(x,lo,hi):
+    if x!=int(x) or x<lo or x>hi: return mp.mpf(0)
+    return mp.mpf(1)/_duh_n(lo,hi)
+def _duh_log(lo,hi): return -mp.log(_duh_n(lo,hi))
+def _duh_cdf(x,lo,hi):
+    if x<lo: return mp.mpf(0)
+    if x>=hi: return mp.mpf(1)
+    return (mp.floor(mp.mpf(x))-lo+1)/_duh_n(lo,hi)
+def _duh_sf(x,lo,hi):
+    if x<lo: return mp.mpf(1)
+    if x>=hi: return mp.mpf(0)
+    return (mp.mpf(hi)-mp.floor(mp.mpf(x)))/_duh_n(lo,hi)
+def _duh_inv(prob,lo,hi): return mp.mpf(lo)+mp.ceil(mp.mpf(prob)*_duh_n(lo,hi))-1
+def _duh_mean(lo,hi): return (mp.mpf(lo)+mp.mpf(hi))/2
+def _duh_var(lo,hi):
+    n=_duh_n(lo,hi); return (n-1)*(n+1)/12
+
+def _discrete_uniform_holdout_rows():
+    out=[]
+    def R(fn,a1,a2,a3,ref,metric="rel"):
+        if metric=="rel" and ref==0: return
+        out.append(row(fn,"K_STATS_"+fn,a1,a2,a3,ref,"all"))
+    # Fresh supports, disjoint from the main grid; includes a fully negative
+    # support and non-round cardinalities. Probabilities use the (j + 0.37) / n
+    # construction so prob * n is never an exact CDF step.
+    for lo,hi in [(2,13),(-20,-3),(100,4099),(-77777,22223)]:
+        lo_m,hi_m=mp.mpf(lo),mp.mpf(hi); n=_duh_n(lo_m,hi_m)
+        for x in sorted(set([lo,(lo+hi)//2,hi])):
+            xm=mp.mpf(x)
+            R("DiscreteUniform_PMF",x,lo,hi,_duh_pmf(xm,lo_m,hi_m))
+            R("DiscreteUniform_LogPMF",x,lo,hi,_duh_log(lo_m,hi_m))
+            R("DiscreteUniform_Cumulative",x,lo,hi,_duh_cdf(xm,lo_m,hi_m))
+            if xm<hi_m:
+                R("DiscreteUniform_Survival",x,lo,hi,_duh_sf(xm,lo_m,hi_m))
+        for j in sorted(set([0,int(n)//4,int(n)-1])):
+            prob=(mp.mpf(j)+mp.mpf("0.37"))/n
+            R("DiscreteUniform_InverseCumulative",prob,lo,hi,_duh_inv(prob,lo_m,hi_m),metric="abs")
+        R("DiscreteUniform_Mean",lo,hi,"",_duh_mean(lo_m,hi_m))
+        R("DiscreteUniform_Variance",lo,hi,"",_duh_var(lo_m,hi_m))
+        R("DiscreteUniform_StdDev",lo,hi,"",mp.sqrt(_duh_var(lo_m,hi_m)))
     return out
 
 def main():

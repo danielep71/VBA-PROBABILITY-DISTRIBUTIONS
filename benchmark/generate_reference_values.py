@@ -456,6 +456,51 @@ def _hy_inv(prob, n, K, N):
     return mp.mpf(hi)
 
 
+
+def _du_n(lo, hi):
+    return mp.mpf(hi) - mp.mpf(lo) + 1
+
+
+def _du_pmf(x, lo, hi):
+    if x != int(x) or x < lo or x > hi:
+        return mp.mpf(0)
+    return mp.mpf(1) / _du_n(lo, hi)
+
+
+def _du_logpmf(lo, hi):
+    return -mp.log(_du_n(lo, hi))
+
+
+def _du_cdf(x, lo, hi):
+    if x < lo:
+        return mp.mpf(0)
+    if x >= hi:
+        return mp.mpf(1)
+    return (mp.floor(mp.mpf(x)) - lo + 1) / _du_n(lo, hi)
+
+
+def _du_sf(x, lo, hi):
+    if x < lo:
+        return mp.mpf(1)
+    if x >= hi:
+        return mp.mpf(0)
+    return (mp.mpf(hi) - mp.floor(mp.mpf(x))) / _du_n(lo, hi)
+
+
+def _du_inv(prob, lo, hi):
+    # least k in the support with CDF(k) >= prob
+    return mp.mpf(lo) + mp.ceil(mp.mpf(prob) * _du_n(lo, hi)) - 1
+
+
+def _du_mean(lo, hi):
+    return (mp.mpf(lo) + mp.mpf(hi)) / 2
+
+
+def _du_var(lo, hi):
+    n = _du_n(lo, hi)
+    return (n - 1) * (n + 1) / 12
+
+
 def build_discrete_rows():
     rows = []
     REL12, REL9, REL14, ABS9 = "rel<=1E-12", "rel<=1E-9", "rel<=1E-14", "abs<=1E-9"
@@ -552,6 +597,43 @@ def build_discrete_rows():
         row("Hypergeometric_Mean", "K_STATS_Hypergeometric_Mean", (n, K, N), n * K / N, REL14, "rel")
         row("Hypergeometric_Variance", "K_STATS_Hypergeometric_Variance", (n, K, N), n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)), REL14, "rel")
         row("Hypergeometric_StdDev", "K_STATS_Hypergeometric_StdDev", (n, K, N), mp.sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1))), REL14, "rel")
+
+    # --- Discrete Uniform (inclusive integer support [Lower, Upper]) ---
+    # Supports deliberately include a negative range (exercises floor vs
+    # truncate-toward-zero), the degenerate single-point support, and large
+    # supports with non-round cardinality.
+    #
+    # Two grid-design rules keep every row a meaningful accuracy claim:
+    #   * inverse probabilities are built as (j + 0.37) / n, so prob * n never
+    #     lands on an integer - a discrete quantile evaluated exactly on a CDF
+    #     step is ill-conditioned and would not be a real claim;
+    #   * rows whose reference is exactly zero are skipped for the relative
+    #     metric (a relative error against zero is vacuous). The degenerate
+    #     n = 1 support is still covered through its non-zero rows, and the
+    #     zero-valued cases are asserted exactly in the VBA test suite.
+    for lo, hi in [(1, 6), (0, 9), (-5, 6), (1, 1), (-999983, 1000000), (0, 999983)]:
+        lo_m, hi_m = mp.mpf(lo), mp.mpf(hi)
+        n = _du_n(lo_m, hi_m)
+
+        def du_row(fn, args, ref, claim, metric):
+            if metric == "rel" and ref == 0:
+                return
+            row(fn, "K_STATS_" + fn, args, ref, claim, metric)
+
+        for x in [mp.mpf(v) for v in sorted(set([lo, (lo + hi) // 2, hi]))]:
+            du_row("DiscreteUniform_PMF", (x, lo_m, hi_m), _du_pmf(x, lo_m, hi_m), REL14, "rel")
+            du_row("DiscreteUniform_LogPMF", (x, lo_m, hi_m), _du_logpmf(lo_m, hi_m), REL14, "rel")
+            du_row("DiscreteUniform_Cumulative", (x, lo_m, hi_m), _du_cdf(x, lo_m, hi_m), REL14, "rel")
+            if x < hi_m:
+                du_row("DiscreteUniform_Survival", (x, lo_m, hi_m), _du_sf(x, lo_m, hi_m), REL14, "rel")
+
+        for j in sorted(set([0, int(n) // 3, int(n) - 1])):
+            prob = (mp.mpf(j) + mp.mpf("0.37")) / n
+            du_row("DiscreteUniform_InverseCumulative", (prob, lo_m, hi_m), _du_inv(prob, lo_m, hi_m), ABS9, "abs")
+
+        du_row("DiscreteUniform_Mean", (lo_m, hi_m), _du_mean(lo_m, hi_m), REL14, "rel")
+        du_row("DiscreteUniform_Variance", (lo_m, hi_m), _du_var(lo_m, hi_m), REL14, "rel")
+        du_row("DiscreteUniform_StdDev", (lo_m, hi_m), mp.sqrt(_du_var(lo_m, hi_m)), REL14, "rel")
 
     return rows
 
