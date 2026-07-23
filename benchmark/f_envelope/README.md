@@ -28,20 +28,34 @@ where that actually begins.
 
 ## Files
 
+The study has three sweeps. The strict envelope is the **minimum** boundary over
+all of them, so all three matter.
+
 | File | Role |
 |---|---|
-| `generate_f_envelope.py` | Writes `f_envelope_grid.csv` (references). |
-| `_ibeta.py` | 50-digit continued-fraction incomplete beta (shared). |
-| `f_envelope_grid.csv` | The sweep grid; `arg1=x`, `arg2=d1`, `arg3=d2`. |
-| `f_envelope.bas` | Export macro `Export_FEnvelope` (F CDF + survival). |
+| `generate_f_envelope.py` | Writes `f_envelope_grid.csv`; base sweep, beta shape ~1E6 to 5E9. |
+| `generate_f_envelope_gap.py` | Writes `f_envelope_gap_grid.csv`; fills the region below the base sweep, shape ~50 to 1E6. |
+| `generate_f_envelope_bothlarge.py` | Writes `f_envelope_bothlarge_grid.csv`; both df large (`d1=d2` and `d2=3*d1`), which degrades earlier than one-large. |
+| `f_envelope_grid.csv`, `f_envelope_gap_grid.csv`, `f_envelope_bothlarge_grid.csv` | The sweep grids; `arg1=x`, `arg2=d1`, `arg3=d2`. 11-column study schema, `observed_vba` at index 8. |
+| `M_STATS_PROBDIST_FENV.bas` | Export macro `Export_FEnvelope` (base sweep). |
+| `M_STATS_PROBDIST_FENVGAP.bas` | Export macro `Export_FEnvelopeGap` (gap sweep). |
+| `M_STATS_PROBDIST_FENVBL.bas` | Export macro `Export_FEnvelopeBothLarge` (both-large sweep). |
 | `analyze_f_envelope.py` | Degradation curve + measured envelope boundary. |
+
+The reference helper is single-sourced at `benchmark/_ibeta.py`; the generators
+import it from there rather than keeping a copy in this folder.
 
 ## How to run
 
-1. Import `f_envelope.bas`, `Debug > Compile`.
+1. Import `M_STATS_PROBDIST_FENV.bas`, `Debug > Compile`.
 2. Run `Export_FEnvelope`; select `f_envelope_grid.csv`.
 3. Commit the filled grid.
 4. `python3 analyze_f_envelope.py`.
+
+Repeat with `M_STATS_PROBDIST_FENVGAP.bas` / `Export_FEnvelopeGap` /
+`f_envelope_gap_grid.csv`, and `M_STATS_PROBDIST_FENVBL.bas` /
+`Export_FEnvelopeBothLarge` / `f_envelope_bothlarge_grid.csv`. Each macro
+declares its own `VB_Name`, so the three can coexist in one workbook.
 
 ## Reading the result
 
