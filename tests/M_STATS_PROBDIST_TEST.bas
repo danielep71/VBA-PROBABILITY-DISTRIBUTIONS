@@ -149,7 +149,7 @@ Option Explicit
 '     classification through reachable numerical cases.
 '
 ' UPDATED
-'   2026-07-21
+'   2026-07-23
 '==============================================================================
 
 '==============================================================================
@@ -186,7 +186,7 @@ Public Sub Test_STATS_PROBDIST_RunAll()
 ' Test_STATS_PROBDIST_RunAll
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs all four suites in dependency order and prints one consolidated result.
+'   Runs all five suites in dependency order and prints one consolidated result.
 '
 ' BEHAVIOR
 '   - Resets the shared counters.
@@ -207,7 +207,7 @@ Public Sub Test_STATS_PROBDIST_RunAll()
 '   - Other VBA procedures
 '
 ' UPDATED
-'   2026-07-21
+'   2026-07-23
 '==============================================================================
 '
     'Initialize the consolidated test run
