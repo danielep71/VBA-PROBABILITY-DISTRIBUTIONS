@@ -301,10 +301,6 @@ Returns the 99th percentile of a Normal distribution with mean `100` and standar
 ```
 
 Returns the threshold associated with an upper-tail exceedance probability of `1E-18` without forming `1 - 1E-18`.
-This region is measured, not assumed: the external grid carries `deep_tail` contracts down to `q = 1E-300`, and the
-observed relative error there is about `2E-16` for the standard-normal inverses (`5E-15` for the lognormal form),
-validated on an independent holdout. Relative accuracy dips to roughly `1E-10` only in the narrow transition at
-`PROB_CDF_SPLIT` (`q` near `1E-12`, `z` near `7.03`), which is carried as its own `split_boundary` contract.
 
 ### Student t survival probability
 
