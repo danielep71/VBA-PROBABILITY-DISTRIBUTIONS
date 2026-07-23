@@ -32,7 +32,7 @@ study measures where this matters and whether the switch is well placed.
 - `generate_logbeta_switch.py` — writes `logbeta_switch_grid.csv` (90 rows: 5
   `Small` values x 18 ratios) with 50+ digit mpmath references.
 - `logbeta_switch_grid.csv` — the grid; `arg1 = Large`, `arg2 = Small`.
-- `logbeta_study.bas` — standalone export macro (`Export_LogBeta_Study`) that
+- `M_STATS_PROBDIST_LOGBETA_STUDY.bas` — standalone export macro (`Export_LogBeta_Study`) that
   fills `observed_vba` by calling `PROB_LogBeta` directly.
 - `analyze_logbeta_switch.py` — prints measured relative error vs ratio per
   `Small`, flags rows over the 5E-15 Beta claim, marks where the branch fires.
@@ -76,7 +76,7 @@ shortcut for `df >= 2`, and `df = 1` is `Beta(0.5, 0.5)` (balanced).
 
 ## How to reproduce
 
-1. Import `logbeta_study.bas` into the workbook and `Debug > Compile`.
+1. Import `M_STATS_PROBDIST_LOGBETA_STUDY.bas` into the workbook and `Debug > Compile`.
 2. Run `Export_LogBeta_Study`; when prompted, select `logbeta_switch_grid.csv`.
    This fills the `observed_vba` column by calling `PROB_LogBeta` directly.
 3. Commit the filled CSV.
