@@ -33,7 +33,7 @@ incomplete gamma at 50 digits.
 | `generate_holdout.py` | Writes `holdout_grid.csv` (references). |
 | `_ibeta.py` | Continued-fraction incomplete beta (shared with the inverse study). |
 | `holdout_grid.csv` | Fresh grid; 12-column `arg4` schema (Hypergeometric needs four parameters). |
-| `M_STATS_PROBDIST_HOLDOUT.bas` | Export macro `Export_Holdout` for all contracted public functions (Beta/F, `PROB_LogBeta`, and the five discrete families). |
+| `M_STATS_PROBDIST_HOLDOUT.bas` | Export macro `Export_Holdout` for all contracted public functions (Beta/F, `PROB_LogBeta`, and the six discrete families). |
 | `analyze_holdout.py` | Per-contract holdout worst vs frozen threshold + margin. |
 
 ## How to run
