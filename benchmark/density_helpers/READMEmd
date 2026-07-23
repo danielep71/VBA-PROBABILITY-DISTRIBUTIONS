@@ -26,7 +26,7 @@ References were cross-checked against SciPy (chi-square and F densities agree to
 The observations are already committed in the main grid. To re-measure after
 changing any of these functions:
 
-1. Import `density_helpers.bas`, `Debug > Compile`.
+1. Import `M_STATS_PROBDIST_DENSHELP.bas`, `Debug > Compile`.
 2. Run `Export_DensityHelpers`; select `../probability_accuracy_grid.csv`.
    It fills only rows tagged `evidence_set = density_helpers` and leaves every
    other observation untouched.

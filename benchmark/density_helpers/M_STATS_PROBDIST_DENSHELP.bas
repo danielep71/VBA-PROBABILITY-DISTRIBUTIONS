@@ -1,49 +1,68 @@
-Attribute VB_Name = "M_STATS_PROBDIST_BETAF_INV"
-
+Attribute VB_Name = "M_STATS_PROBDIST_DENSHELP"
 Option Explicit
 
 '==============================================================================
-' M_STATS_PROBDIST_BETAF_INV
+' M_STATS_PROBDIST_DENSHELP
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Self-contained export macro for the unbalanced Beta/F INVERSE study. Fills
-'   the observed_vba column of beta_f_inverse_grid.csv with the quantile returned
-'   by the public inverse functions. The analysis computes both the quantile
-'   error and the forward-probability residual (quantile pushed back through the
-'   true CDF), since inverse solvers amplify normalization error differently.
+'   Fills observed_vba for four public UDFs that the main export does not cover
+'   (ChiSquare_Density, F_Density, Normal_IntervalProbability and
+'   Lognormal_ParametersFromMeanStdDev) in probability_accuracy_grid.csv.
+'
+' SCOPE
+'   Touches ONLY rows whose evidence_set is "density_helpers" and leaves every
+'   other observation byte-for-byte untouched, so it is safe to run against the
+'   full main grid.
 '
 ' USAGE
-'   Run Export_BetaF_Inverse and pick beta_f_inverse_grid.csv in the dialog.
+'   Run Export_DensityHelpers and select probability_accuracy_grid.csv.
 '
-' GRID FORMAT (header row, then one row per evaluation)
-'   function, vba_kernel, arg1, arg2, arg3, reference, observed_vba
+' GRID FORMAT (12-column arg4 schema; index in brackets)
+'   [0] function     [1] vba_kernel  [2] claim      [3] metric
+'   [4] arg1         [5] arg2        [6] arg3       [7] arg4
+'   [8] reference    [9] observed_vba               [10] regime
+'   [11] evidence_set
 '
-'   arg1 is the target probability p; arg2 and arg3 are the shape / df
-'   parameters. This macro writes observed_vba (column index 6) and never reads
-'   the reference column, so the observed side stays independent.
+'   This macro reads function, arg1..arg3, regime and evidence_set, and writes
+'   observed_vba only. Because it writes into the SHARED main grid, the header
+'   is validated before anything is written: a schema change that moved these
+'   columns would otherwise write into the reference column silently.
+'
+' NOTES
+'   - Normal_IntervalProbability is exercised with Mean = 0 and StdDev = arg3.
+'   - Lognormal_ParametersFromMeanStdDev returns a 1x2 array; the element is
+'     chosen by regime ("param_meanlog" or "param_stddevlog").
 '
 ' ERROR POLICY
-'   The K_STATS_ inverse functions return Variant and may return CVErr. A CVErr,
-'   a non-numeric result or a runtime fault is written as the token ERROR, which
-'   the analysis treats as an unusable point rather than a pass.
+'   A CVErr, a non-numeric result or a runtime fault is written as the token
+'   ERROR; compute_errors.py treats a non-numeric observed value as unusable.
 '
 ' DEPENDENCIES
-'   - K_STATS_Beta_InverseCumulative
-'   - K_STATS_F_InverseCumulative
+'   - K_STATS_ChiSquare_Density, K_STATS_F_Density
+'   - K_STATS_Normal_IntervalProbability
+'   - K_STATS_Lognormal_ParametersFromMeanStdDev
 '
 ' UPDATED
 '   2026-07-23
 '==============================================================================
 
+'Column indices in the 12-column main-grid schema
+Private Const COL_FUNCTION      As Long = 0
+Private Const COL_ARG1          As Long = 4
+Private Const COL_ARG2          As Long = 5
+Private Const COL_ARG3          As Long = 6
+Private Const COL_OBSERVED      As Long = 9
+Private Const COL_REGIME        As Long = 10
+Private Const COL_EVIDENCE      As Long = 11
 
-Public Sub Export_BetaF_Inverse()
+
+Public Sub Export_DensityHelpers()
 '
 '==============================================================================
-' Export_BetaF_Inverse
+' Export_DensityHelpers
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Fills the observed_vba column of the inverse grid in place with the returned
-'   quantile x.
+'   Fills observed_vba for the density_helpers rows of the main grid in place.
 '
 ' BEHAVIOR
 '   Reads the whole file and normalizes line endings before splitting, so
@@ -52,7 +71,8 @@ Public Sub Export_BetaF_Inverse()
 '   eol=lf) as a single line, silently writing nothing.
 '
 ' ERROR POLICY
-'   Any failure closes the handles and reports once; the grid is left as found.
+'   The header is validated first; on mismatch nothing is written. Any failure
+'   closes the handles and reports once, leaving the grid as found.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -65,9 +85,6 @@ Public Sub Export_BetaF_Inverse()
     Dim OutNum              As Integer         'Output file handle
     Dim Cols                As Variant         'Split fields of one row
     Dim Sep                 As String          'Field separator
-    Dim P                   As Double          'Target probability (arg1)
-    Dim A2                  As Double          'Shape / df parameter 1
-    Dim A3                  As Double          'Shape / df parameter 2
     Dim Filled              As Long            'Rows written
     Dim I                   As Long            'Row index
 '------------------------------------------------------------------------------
@@ -90,20 +107,32 @@ Public Sub Export_BetaF_Inverse()
         Raw = Replace(Raw, vbCr, vbLf)
         Lines = Split(Raw, vbLf)
 '------------------------------------------------------------------------------
-' EVALUATE EACH ROW
+' VALIDATE HEADER
+'------------------------------------------------------------------------------
+    'This macro writes into the shared main grid. If the schema ever moves,
+    'refuse rather than write an observation into the wrong column.
+        If Not HeaderIsExpected(Lines(0), Sep) Then
+            MsgBox "Grid header does not match the expected 12-column schema." & _
+                   vbCrLf & "Nothing was written.", vbExclamation, "Density helpers export"
+            Exit Sub
+        End If
+'------------------------------------------------------------------------------
+' EVALUATE MATCHING ROWS
 '------------------------------------------------------------------------------
     'Row 0 is the header; data starts at row 1
         For I = 1 To UBound(Lines)
             If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
             Cols = Split(Lines(I), Sep)
-            If UBound(Cols) < 6 Then GoTo ContinueRow
+            If UBound(Cols) < COL_EVIDENCE Then GoTo ContinueRow
 
-            P = ParseDouble(Cols(2))
-            A2 = ParseDouble(Cols(3))
-            A3 = ParseDouble(Cols(4))
+            'Own only the density_helpers rows
+            If Trim$(Cols(COL_EVIDENCE)) <> "density_helpers" Then GoTo ContinueRow
 
-            Cols(6) = EvaluateInverse(Trim$(Cols(0)), P, A2, A3)
+            Cols(COL_OBSERVED) = EvaluateDensityHelper( _
+                Trim$(Cols(COL_FUNCTION)), Trim$(CStr(Cols(COL_REGIME))), _
+                ParseDouble(Cols(COL_ARG1)), ParseDouble(Cols(COL_ARG2)), _
+                CStr(Cols(COL_ARG3)))
             Lines(I) = Join(Cols, Sep)
             Filled = Filled + 1
 ContinueRow:
@@ -118,9 +147,9 @@ ContinueRow:
         Next I
         Close #OutNum
 
-    MsgBox "Beta/F inverse study complete: " & Filled & _
+    MsgBox "Density-helpers coverage export complete: " & Filled & _
            " observation(s) written to" & vbCrLf & Path, _
-           vbInformation, "Beta/F inverse study"
+           vbInformation, "Density helpers export"
     Exit Sub
 
 '------------------------------------------------------------------------------
@@ -130,29 +159,72 @@ Err_Handler:
     On Error Resume Next
     Close #FileNum
     Close #OutNum
-    MsgBox "Beta/F inverse study failed: " & Err.Description, vbExclamation, _
-           "Beta/F inverse study"
+    MsgBox "Density-helpers export failed: " & Err.Description, vbExclamation, _
+           "Density helpers export"
 End Sub
 
 
-Private Function EvaluateInverse( _
+Private Function HeaderIsExpected( _
+    ByVal HeaderLine As String, _
+    ByVal Sep As String) _
+    As Boolean
+'
+'==============================================================================
+' HeaderIsExpected
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Confirms the grid header carries the expected column names at the exact
+'   indices this macro writes to.
+'
+' WHY THIS EXISTS
+'   An earlier schema change moved observed_vba, regime and evidence_set by one
+'   position. The macro kept its old indices, so it silently matched nothing -
+'   and had it matched, it would have written an observation into the reference
+'   column. Validating the header turns that class of defect into a refusal.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim H                   As Variant         'Split header fields
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    H = Split(HeaderLine, Sep)
+    If UBound(H) < COL_EVIDENCE Then Exit Function
+
+    If Trim$(H(COL_FUNCTION)) <> "function" Then Exit Function
+    If Trim$(H(COL_ARG1)) <> "arg1" Then Exit Function
+    If Trim$(H(COL_ARG2)) <> "arg2" Then Exit Function
+    If Trim$(H(COL_ARG3)) <> "arg3" Then Exit Function
+    If Trim$(H(COL_OBSERVED)) <> "observed_vba" Then Exit Function
+    If Trim$(H(COL_REGIME)) <> "regime" Then Exit Function
+    If Trim$(H(COL_EVIDENCE)) <> "evidence_set" Then Exit Function
+
+    HeaderIsExpected = True
+End Function
+
+
+Private Function EvaluateDensityHelper( _
     ByVal FuncName As String, _
-    ByVal P As Double, _
+    ByVal Regime As String, _
+    ByVal A1 As Double, _
     ByVal A2 As Double, _
-    ByVal A3 As Double) _
+    ByVal A3Text As String) _
     As String
 '
 '==============================================================================
-' EvaluateInverse
+' EvaluateDensityHelper
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Dispatches the public inverse functions and returns a string token: a
-'   full-precision quantile on success, or ERROR on any worksheet error.
+'   Dispatches the four density-helper functions and returns a string token: a
+'   full-precision number on success, or ERROR on any worksheet error.
 '
 ' INPUTS
 '   FuncName    contract function name from the grid
-'   P           target probability
-'   A2, A3      shape / df parameters
+'   Regime      contract regime; selects the output for the parameter conversion
+'   A1, A2      parsed arguments 1 and 2
+'   A3Text      argument 3 as text, since two of the four leave it empty
 '
 ' RETURNS
 '   Full-precision hi;lo token, or the literal ERROR.
@@ -162,28 +234,55 @@ Private Function EvaluateInverse( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim V                   As Variant         'Raw function result
+    Dim Arr                 As Variant         'Both lognormal parameters
+    Dim Lb1                 As Long            'First dimension base
+    Dim Lb2                 As Long            'Second dimension base
+    Dim A3                  As Double          'Parsed argument 3
 '------------------------------------------------------------------------------
 ' DISPATCH
 '------------------------------------------------------------------------------
     On Error GoTo Err_Handler
 
     Select Case FuncName
-        Case "Beta_InverseCumulative":  V = K_STATS_Beta_InverseCumulative(P, A2, A3)
-        Case "F_InverseCumulative":     V = K_STATS_F_InverseCumulative(P, A2, A3)
+        Case "ChiSquare_Density"
+            V = K_STATS_ChiSquare_Density(A1, A2)
+
+        Case "F_Density"
+            A3 = ParseDouble(A3Text)
+            V = K_STATS_F_Density(A1, A2, A3)
+
+        Case "Normal_IntervalProbability"
+            A3 = ParseDouble(A3Text)           'StdDev; Mean fixed at 0
+            V = K_STATS_Normal_IntervalProbability(A1, A2, 0#, A3)
+
+        Case "Lognormal_ParametersFromMeanStdDev"
+            'Returns both parameters; the regime selects which one this row claims
+            Arr = K_STATS_Lognormal_ParametersFromMeanStdDev(A1, A2)
+            If IsError(Arr) Then
+                EvaluateDensityHelper = "ERROR"
+                Exit Function
+            End If
+            Lb1 = LBound(Arr, 1)
+            Lb2 = LBound(Arr, 2)
+            If Regime = "param_stddevlog" Then
+                V = Arr(Lb1, Lb2 + 1)
+            Else
+                V = Arr(Lb1, Lb2)
+            End If
 
         Case Else
-            EvaluateInverse = "ERROR"
+            EvaluateDensityHelper = "ERROR"
             Exit Function
     End Select
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
     If IsError(V) Then
-        EvaluateInverse = "ERROR"
+        EvaluateDensityHelper = "ERROR"
     ElseIf Not IsNumeric(V) Then
-        EvaluateInverse = "ERROR"
+        EvaluateDensityHelper = "ERROR"
     Else
-        EvaluateInverse = FormatFullPrecision(CDbl(V))
+        EvaluateDensityHelper = FormatFullPrecision(CDbl(V))
     End If
     Exit Function
 
@@ -191,7 +290,7 @@ Private Function EvaluateInverse( _
 ' ERROR HANDLER
 '------------------------------------------------------------------------------
 Err_Handler:
-    EvaluateInverse = "ERROR"
+    EvaluateDensityHelper = "ERROR"
 End Function
 
 
@@ -201,13 +300,13 @@ Private Function ResolveGridPath() As String
 ' ResolveGridPath
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns a usable LOCAL path to beta_f_inverse_grid.csv, or an empty string
-'   if the user cancels.
+'   Returns a usable LOCAL path to probability_accuracy_grid.csv, or an empty
+'   string if the user cancels.
 '
 ' WHY THIS EXISTS
 '   ThisWorkbook.Path returns an http(s) URL when the workbook lives on OneDrive
-'   or SharePoint, and Open cannot use it. Falling back to the file picker keeps
-'   the macro usable there.
+'   or SharePoint, and Open cannot read a URL. This prefers a local workbook
+'   folder and otherwise asks the user.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -221,19 +320,19 @@ Private Function ResolveGridPath() As String
 '------------------------------------------------------------------------------
     BookPath = ThisWorkbook.Path
     If Len(BookPath) > 0 And LCase$(Left$(BookPath, 4)) <> "http" Then
-        Candidate = BookPath & Application.PathSeparator & "beta_f_inverse_grid.csv"
+        Candidate = BookPath & Application.PathSeparator & "probability_accuracy_grid.csv"
         If Len(Dir$(Candidate)) > 0 Then
             ResolveGridPath = Candidate
             Exit Function
         End If
     End If
 
-    MsgBox "Could not locate beta_f_inverse_grid.csv automatically " & _
+    MsgBox "Could not locate probability_accuracy_grid.csv automatically " & _
            "(the workbook may be on OneDrive/SharePoint). Please select it.", _
-           vbInformation, "Locate inverse grid"
+           vbInformation, "Locate main grid"
     Picked = Application.GetOpenFilename( _
-        FileFilter:="Inverse grid (*.csv),*.csv", _
-        Title:="Select beta_f_inverse_grid.csv")
+        FileFilter:="Main accuracy grid (*.csv),*.csv", _
+        Title:="Select probability_accuracy_grid.csv")
 
     If VarType(Picked) = vbBoolean Then
         ResolveGridPath = vbNullString
@@ -277,8 +376,8 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
 '
 ' WHY TWO PARTS
 '   Format$, Str$ and CDec all cap a Double at about 15 significant digits,
-'   which is coarser than the accuracy this study measures. Writing the residual
-'   X - hi as a second field carries the low-order bits hi dropped.
+'   which is coarser than the accuracy the harness measures. Writing the
+'   residual X - hi as a second field carries the bits hi dropped.
 '==============================================================================
 '
 '------------------------------------------------------------------------------

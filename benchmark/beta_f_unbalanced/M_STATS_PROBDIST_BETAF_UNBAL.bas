@@ -1,4 +1,6 @@
 Attribute VB_Name = "M_STATS_PROBDIST_BETAF_UNBAL"
+Option Explicit
+
 '==============================================================================
 ' M_STATS_PROBDIST_BETAF_UNBAL
 '------------------------------------------------------------------------------
@@ -12,18 +14,25 @@ Attribute VB_Name = "M_STATS_PROBDIST_BETAF_UNBAL"
 ' USAGE
 '   Run Export_BetaF_Unbalanced and pick beta_f_unbalanced_grid.csv in the dialog.
 '
-' NOTE
+' GRID FORMAT (header row, then one row per evaluation)
+'   function, vba_kernel, arg1, arg2, arg3, reference, observed_vba
+'
+'   arg1 is the evaluation point; arg2 and arg3 are the shape / df parameters.
+'   This macro writes observed_vba (column index 6) and never reads the
+'   reference column, so the observed side stays independent.
+'
+' ERROR POLICY
 '   The K_STATS_ functions return Variant and may return CVErr on invalid input.
-'   A CVErr or non-numeric result is written as "ERROR" so the analysis flags it.
+'   A CVErr, a non-numeric result or a runtime fault is written as the token
+'   ERROR so the analysis flags it rather than counting it as a pass.
 '
 ' DEPENDENCIES
 '   - K_STATS_Beta_Density, K_STATS_Beta_Cumulative, K_STATS_Beta_Survival
 '   - K_STATS_F_Cumulative, K_STATS_F_Survival
 '
 ' UPDATED
-'   2026-07-18
+'   2026-07-23
 '==============================================================================
-Option Explicit
 
 
 Public Sub Export_BetaF_Unbalanced()
@@ -33,72 +42,94 @@ Public Sub Export_BetaF_Unbalanced()
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Fills the observed_vba column of the unbalanced Beta/F grid in place.
+'
+' BEHAVIOR
+'   Reads the whole file and normalizes line endings before splitting, so
+'   LF-only, CR-only and CRLF grids all parse. VBA Line Input is CR-delimited
+'   and would swallow an entire LF-only file (.gitattributes stores *.csv as
+'   eol=lf) as a single line, silently writing nothing.
+'
+' ERROR POLICY
+'   Any failure closes the handles and reports once; the grid is left as found.
 '==============================================================================
 '
-    Dim Path                As String
-    Dim FileNum             As Integer
-    Dim OutNum              As Integer
-    Dim Line                As String
-    Dim Cols                As Variant
-    Dim Lines()             As String
-    Dim LineCount           As Long
-    Dim IsHeader            As Boolean
-    Dim A1                  As Double
-    Dim A2                  As Double
-    Dim A3                  As Double
-    Dim Filled              As Long
-    Dim I                   As Long
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Path                As String          'Resolved grid path
+    Dim Lines()             As String          'File lines
+    Dim Raw                 As String          'File contents
+    Dim FileNum             As Integer         'Input file handle
+    Dim OutNum              As Integer         'Output file handle
+    Dim Cols                As Variant         'Split fields of one row
+    Dim Sep                 As String          'Field separator
+    Dim A1                  As Double          'Evaluation point (arg1)
+    Dim A2                  As Double          'Shape / df parameter 1
+    Dim A3                  As Double          'Shape / df parameter 2
+    Dim Filled              As Long            'Rows written
+    Dim I                   As Long            'Row index
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    On Error GoTo Err_Handler
+    'Resolve the grid path (robust to OneDrive / SharePoint, where
+    'ThisWorkbook.Path returns an http URL that Open cannot use)
+        Path = ResolveGridPath()
+        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
+        Filled = 0
+        Sep = ","
+    'Read the whole file
+        FileNum = FreeFile
+        Open Path For Input As #FileNum
+        Raw = Input$(LOF(FileNum), FileNum)
+        Close #FileNum
+    'Normalize line endings and split
+        Raw = Replace(Raw, vbCrLf, vbLf)
+        Raw = Replace(Raw, vbCr, vbLf)
+        Lines = Split(Raw, vbLf)
+'------------------------------------------------------------------------------
+' EVALUATE EACH ROW
+'------------------------------------------------------------------------------
+    'Row 0 is the header; data starts at row 1
+        For I = 1 To UBound(Lines)
+            If Len(Trim$(Lines(I))) = 0 Then GoTo ContinueRow
 
-    Path = ResolveGridPath()
-    If Len(Path) = 0 Then Exit Sub
+            Cols = Split(Lines(I), Sep)
+            If UBound(Cols) < 6 Then GoTo ContinueRow
 
-    ReDim Lines(0 To 100000)
-    LineCount = 0
-    IsHeader = True
-    Filled = 0
+            A1 = ParseDouble(Cols(2))
+            A2 = ParseDouble(Cols(3))
+            A3 = ParseDouble(Cols(4))
 
-    FileNum = FreeFile
-    Open Path For Input As #FileNum
-    Do While Not EOF(FileNum)
-        Line Input #FileNum, Line
-
-        If IsHeader Then
-            Lines(LineCount) = Line
-            LineCount = LineCount + 1
-            IsHeader = False
-            GoTo ContinueLoop
-        End If
-
-        If Len(Trim$(Line)) = 0 Then GoTo ContinueLoop
-
-        'Columns: function, vba_kernel, arg1, arg2, arg3, reference, observed_vba
-        Cols = Split(Line, ",")
-        If UBound(Cols) >= 6 Then
-            A1 = Val(Cols(2))                  'Val is locale-independent
-            A2 = Val(Cols(3))
-            A3 = Val(Cols(4))
-            Cols(6) = EvaluateFunction(Cols(0), A1, A2, A3)
-            Line = Join(Cols, ",")
+            Cols(6) = EvaluateFunction(Trim$(Cols(0)), A1, A2, A3)
+            Lines(I) = Join(Cols, Sep)
             Filled = Filled + 1
-        End If
-
-        Lines(LineCount) = Line
-        LineCount = LineCount + 1
-
-ContinueLoop:
-    Loop
-    Close #FileNum
-
-    OutNum = FreeFile
-    Open Path For Output As #OutNum
-    For I = 0 To LineCount - 1
-        Print #OutNum, Lines(I)
-    Next I
-    Close #OutNum
+ContinueRow:
+        Next I
+'------------------------------------------------------------------------------
+' WRITE BACK
+'------------------------------------------------------------------------------
+        OutNum = FreeFile
+        Open Path For Output As #OutNum
+        For I = 0 To UBound(Lines)
+            If I < UBound(Lines) Or Len(Lines(I)) > 0 Then Print #OutNum, Lines(I)
+        Next I
+        Close #OutNum
 
     MsgBox "Unbalanced Beta/F study complete: " & Filled & _
-           " observation(s) written to " & vbCrLf & Path, _
+           " observation(s) written to" & vbCrLf & Path, _
            vbInformation, "Beta/F unbalanced study"
+    Exit Sub
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    On Error Resume Next
+    Close #FileNum
+    Close #OutNum
+    MsgBox "Beta/F unbalanced study failed: " & Err.Description, vbExclamation, _
+           "Beta/F unbalanced study"
 End Sub
 
 
@@ -113,25 +144,41 @@ Private Function EvaluateFunction( _
 ' EvaluateFunction
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Dispatches the public Beta/F functions. A CVErr, non-numeric or runtime
-'   fault is reported as "ERROR".
+'   Dispatches the public Beta/F functions and returns a string token: a
+'   full-precision number on success, or ERROR on any worksheet error.
+'
+' INPUTS
+'   FuncName    contract function name from the grid
+'   A1          evaluation point
+'   A2, A3      shape / df parameters
+'
+' RETURNS
+'   Full-precision hi;lo token, or the literal ERROR.
 '==============================================================================
 '
-    Dim V                   As Variant
-
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim V                   As Variant         'Raw function result
+'------------------------------------------------------------------------------
+' DISPATCH
+'------------------------------------------------------------------------------
     On Error GoTo Err_Handler
 
     Select Case FuncName
-        Case "Beta_Density":    V = K_STATS_Beta_Density(A1, A2, A3)
-        Case "Beta_Cumulative": V = K_STATS_Beta_Cumulative(A1, A2, A3)
-        Case "Beta_Survival":   V = K_STATS_Beta_Survival(A1, A2, A3)
-        Case "F_Cumulative":    V = K_STATS_F_Cumulative(A1, A2, A3)
-        Case "F_Survival":      V = K_STATS_F_Survival(A1, A2, A3)
+        Case "Beta_Density":     V = K_STATS_Beta_Density(A1, A2, A3)
+        Case "Beta_Cumulative":  V = K_STATS_Beta_Cumulative(A1, A2, A3)
+        Case "Beta_Survival":    V = K_STATS_Beta_Survival(A1, A2, A3)
+        Case "F_Cumulative":     V = K_STATS_F_Cumulative(A1, A2, A3)
+        Case "F_Survival":       V = K_STATS_F_Survival(A1, A2, A3)
+
         Case Else
             EvaluateFunction = "ERROR"
             Exit Function
     End Select
-
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
     If IsError(V) Then
         EvaluateFunction = "ERROR"
     ElseIf Not IsNumeric(V) Then
@@ -141,6 +188,9 @@ Private Function EvaluateFunction( _
     End If
     Exit Function
 
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
 Err_Handler:
     EvaluateFunction = "ERROR"
 End Function
@@ -152,15 +202,24 @@ Private Function ResolveGridPath() As String
 ' ResolveGridPath
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns a usable LOCAL path to beta_f_unbalanced_grid.csv, or "" if
-'   cancelled. ThisWorkbook.Path is a URL on OneDrive/SharePoint, which Open
-'   cannot read, so this prefers a local workbook folder and otherwise asks.
+'   Returns a usable LOCAL path to beta_f_unbalanced_grid.csv, or an empty
+'   string if the user cancels.
+'
+' WHY THIS EXISTS
+'   ThisWorkbook.Path returns an http(s) URL when the workbook lives on OneDrive
+'   or SharePoint, and Open cannot read a URL. This prefers a local workbook
+'   folder and otherwise asks.
 '==============================================================================
 '
-    Dim BookPath            As String
-    Dim Candidate           As String
-    Dim Picked              As Variant
-
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim BookPath            As String          'Workbook folder
+    Dim Candidate           As String          'Path next to the workbook
+    Dim Picked              As Variant         'File-dialog result
+'------------------------------------------------------------------------------
+' RESOLVE
+'------------------------------------------------------------------------------
     BookPath = ThisWorkbook.Path
     If Len(BookPath) > 0 And LCase$(Left$(BookPath, 4)) <> "http" Then
         Candidate = BookPath & Application.PathSeparator & "beta_f_unbalanced_grid.csv"
@@ -176,11 +235,35 @@ Private Function ResolveGridPath() As String
     Picked = Application.GetOpenFilename( _
         FileFilter:="Beta/F grid (*.csv),*.csv", _
         Title:="Select beta_f_unbalanced_grid.csv")
+
     If VarType(Picked) = vbBoolean Then
         ResolveGridPath = vbNullString
     Else
         ResolveGridPath = CStr(Picked)
     End If
+End Function
+
+
+Private Function ParseDouble(ByVal Text As String) As Double
+'
+'==============================================================================
+' ParseDouble
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Parses a grid number written with a US decimal point, independent of the
+'   local list/decimal separators.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim S                   As String          'Cleaned token
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    S = Trim$(Text)
+    S = Replace(S, ",", ".")                   'Guard against a stray locale comma
+    ParseDouble = Val(S)                       'Val always reads "." as decimal
 End Function
 
 
@@ -190,19 +273,33 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
 ' FormatFullPrecision
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Renders a Double as "hi;lo" so hi + lo reproduces the original Double when
-'   summed in Double precision on the Python side.
+'   Renders a Double as a two-part sum "hi;lo", so hi + lo summed in Double
+'   precision on the Python side reproduces the original Double exactly.
+'
+' WHY TWO PARTS
+'   Format$, Str$ and CDec all cap a Double at about 15 significant digits,
+'   which is coarser than the accuracy this study measures. Writing the residual
+'   X - hi as a second field carries the low-order bits hi dropped.
 '==============================================================================
 '
-    Dim HiStr               As String
-    Dim Hi                  As Double
-    Dim Lo                  As Double
-
-    If X = 0# Then FormatFullPrecision = "0E+000;0E+000": Exit Function
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim HiStr               As String          'Value to 15 significant digits
+    Dim Hi                  As Double          'The Double that HiStr denotes
+    Dim Lo                  As Double          'Exact residual X - Hi
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If X = 0# Then
+        FormatFullPrecision = "0E+000;0E+000"
+        Exit Function
+    End If
 
     HiStr = Fmt15(X)
-    Hi = Val(HiStr)
+    Hi = Val(HiStr)                            'Val is locale-independent; CDbl is not
     Lo = X - Hi
+
     FormatFullPrecision = HiStr & ";" & Fmt15(Lo)
 End Function
 
@@ -213,13 +310,24 @@ Private Function Fmt15(ByVal X As Double) As String
 ' Fmt15
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Formats X to 15 significant digits, US decimal point regardless of locale.
+'   Formats X to 15 significant digits in scientific notation with a US decimal
+'   point, whatever the local settings are.
 '==============================================================================
 '
-    Dim S                   As String
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim S                   As String          'Formatted value
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If X = 0# Then
+        Fmt15 = "0E+000"
+        Exit Function
+    End If
 
-    If X = 0# Then Fmt15 = "0E+000": Exit Function
-
-    S = Format$(X, "0.00000000000000E+000")
-    Fmt15 = Replace(S, ",", ".")
+    S = Format$(X, "0.00000000000000E+000")    '1 + 14 = 15 significant digits
+    Fmt15 = Replace(S, ",", ".")               'Force US decimal regardless of locale
 End Function
+
+
