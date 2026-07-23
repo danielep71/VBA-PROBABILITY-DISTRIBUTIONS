@@ -76,9 +76,10 @@ Taken verbatim from the `ACCURACY` comments in the source:
 The harness covers five modules: the special-function kernels
 (`SPECIALFUNCS`), the test-statistic families (`TFAMILY`), the normal and
 lognormal family (`NORMALFAMILY`), the continuous distributions
-(`CONTINUOUS`), and the discrete distributions (`DISCRETE` — Binomial,
-Poisson, Geometric, Negative Binomial, and Hypergeometric). The
-machine-readable contract table below is the authoritative list.
+(`CONTINUOUS`), and the discrete distributions (`DISCRETE`). The generated
+block below is the authoritative list: it names every family currently under
+contract and is derived from `accuracy_contracts.csv`, so it cannot drift from
+the evidence.
 
 **Special functions**
 
@@ -123,6 +124,8 @@ from source comments (the module publishes none). Exponential is parameterized
 by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
+
+**124 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
