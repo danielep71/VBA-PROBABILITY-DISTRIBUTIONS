@@ -118,6 +118,7 @@ Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterat
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
 Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (validated by the committed seam study and independent holdout)
+Private Const PROB_BETAINV_ROUNDTRIP_TOL As Double = 0.000001    'Forward-probability residual above which no representable interior quantile exists (worst legitimate measured residual is 3.9E-10)
 
 'Lanczos g = 7, n = 9 series coefficients. SINGLE SOURCE OF TRUTH shared by
 'PROB_LogGamma and PROB_LogGammaDelta, which must evaluate the identical series.
@@ -955,6 +956,8 @@ Public Function PROB_TryBetaInvRegularized( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim SolveDirect         As Boolean         'TRUE when solving for X, FALSE for Y
+    Dim RoundTrip           As Double          'Forward probability at the root
+    Dim TailMass            As Double          'Min(Probability, Complement)
     Dim Sa                  As Double          'Shape parameter of the solved tail
     Dim Sb                  As Double          'Other shape parameter
     Dim Target              As Double          'Probability mass being matched
@@ -1106,6 +1109,40 @@ Public Function PROB_TryBetaInvRegularized( _
         Else
             ResultX = 1# - U
             ResultY = U
+        End If
+
+'------------------------------------------------------------------------------
+' VALIDATE REPRESENTABILITY
+'------------------------------------------------------------------------------
+    'For sufficiently small shapes the distribution is numerically
+    'indistinguishable in binary64 from a two-point limit whose interior CDF
+    'plateau is about B / (A + B). Away from that plateau the mathematical
+    'quantile lies below the smallest positive Double, or closer to one than the
+    'nearest representable interior Double, so no interior root exists to
+    'return. Verify the solved root reproduces the requested probability and
+    'report the boundary explicitly instead of returning an arbitrary interior
+    'value. Checked only when both shapes are below one - the only regime where
+    'the collapse occurs - so the common path is unaffected.
+    'See BetaInverse.InteriorQuantileRepresentability.
+        If A < 1# And B < 1# Then
+
+            If Not PROB_TryBetaRegularized( _
+                ResultX, ResultY, A, B, RoundTrip, FailMsg) Then Exit Function
+
+            TailMass = Probability
+            If ComplementProbability < TailMass Then TailMass = ComplementProbability
+
+            If Abs(RoundTrip - Probability) > _
+               PROB_BETAINV_ROUNDTRIP_TOL * TailMass Then
+
+                FailMsg = "No representable interior quantile: with A = " & A & _
+                          " and B = " & B & " the distribution collapses to its" & _
+                          " two-point limit in binary64, so the quantile for" & _
+                          " probability " & Probability & " is not representable"
+                Exit Function
+
+            End If
+
         End If
 
     'Return success
@@ -1587,7 +1624,5 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
-
-
 
 
