@@ -279,6 +279,8 @@ by rate (Lambda), not scale.
 |---|---|---|---|---|
 | IncompleteBeta.ExtremeShape | F_Cumulative;F_Survival;F_InverseCumulative | F degrees of freedom above 1E5 (measured accuracy envelope; the both-large orientation binds, crossing near df 1.5E5-3E5) | without the guard, errors grow to ~4E-7 by df~1E9; the public F surface now REJECTS df > 1E5 with CVErr(xlErrNum) | mitigated |
 | SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | characterized |
+| BetaInverse.InteriorQuantileRepresentability | Beta_InverseCumulative | both shapes sufficiently small (roughly a, b below 1E-3), interior probabilities | No representable interior quantile or meaningful forward round-trip exists; e.g. at a=1E-12, b=9.9E-14 the interior CDF is flat at ~0.0901 across the whole representable interval and the p=0.5 quantile needs 1-x ~ 1E-1E13. | characterized |
+| FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
 
 
 <!-- END generated -->
