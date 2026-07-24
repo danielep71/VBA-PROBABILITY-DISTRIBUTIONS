@@ -26,10 +26,12 @@ from decimal import Decimal, getcontext, InvalidOperation
 getcontext().prec = 50
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)  # single-sourced benchmark/ helpers
+from _contract_eval import (parse_observed, parse_reference, calculate_error,
+                            normalize_tail_residual)
 
 _IBETA_IMPORT_ERROR = None
 try:
-    sys.path.insert(0, HERE)  # single-sourced benchmark/_ibeta.py
     from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf
     import mpmath as _mp
     _mp.mp.dps = 50
@@ -49,16 +51,6 @@ def load_contracts(path=None):
         return list(csv.DictReader(f))
 
 
-def parse_observed(s):
-    s = s.strip()
-    if s == "" or s.upper() == "ERROR":
-        return None
-    total = Decimal(0)
-    for part in s.split(";"):
-        total += Decimal(part.strip())
-    return total
-
-
 def measure_error(rows, metric):
     """Worst error (Decimal) over rows for output_error/quantile_error/log_absolute_error."""
     worst = Decimal(-1); worst_at = ""; n = 0
@@ -66,15 +58,10 @@ def measure_error(rows, metric):
         o = parse_observed(r["observed_vba"])
         if o is None:
             continue
-        try:
-            ref = Decimal(str(r["reference"]).strip())
-        except InvalidOperation:
+        ref = parse_reference(r["reference"])
+        if ref is None:
             continue
-        abs_e = abs(o - ref)
-        if metric == "absolute":
-            e = abs_e
-        else:
-            e = abs_e / abs(ref) if ref != 0 else (Decimal(0) if o == 0 else Decimal("Infinity"))
+        e = calculate_error(o, ref, metric)
         n += 1
         if e > worst:
             worst = e; worst_at = ", ".join(x for x in (r["arg1"], r["arg2"], r["arg3"]) if x)
@@ -92,7 +79,7 @@ def tail_residual(rows, fn):
         p = _mp.mpf(r["arg1"]); a2v = _mp.mpf(r["arg2"]); a3v = _mp.mpf(r["arg3"])
         xv = _mp.mpf(str(xo))
         recovered = _ibeta_cdf(xv, a2v, a3v) if fn == "Beta_InverseCumulative" else _f_cdf(xv, a2v, a3v)
-        e = Decimal(str(abs(recovered - p) / min(p, 1 - p)))
+        e = normalize_tail_residual(recovered, p)
         cnt += 1
         if e > worst:
             worst = e; worst_at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)

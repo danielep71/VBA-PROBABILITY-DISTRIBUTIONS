@@ -13,14 +13,15 @@ import os as _os, sys as _sys
 # Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta, f_cdf
+# Single-sourced evaluation primitives shared with the release gate
+# (compute_errors.py) so the two analyzers cannot diverge on metric arithmetic,
+# parsing, or tail-residual normalisation.
+from _contract_eval import (parse_observed, parse_reference, calculate_error,
+                            normalize_tail_residual)
 getcontext().prec = 50
 mp.mp.dps = 50
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-
-def parse(s):
-    s = s.strip()
-    return None if (not s or s.upper() == "ERROR") else sum(Decimal(p) for p in s.split(";"))
 
 def load_contracts(p):
     return list(csv.DictReader(open(p)))
@@ -33,24 +34,18 @@ def worst_for(measure, metric, rows, fn):
     # metric=absolute is always evaluated absolute regardless of its measure label.
     w = Decimal(-1); at = ""; n = 0
     for r in rows:
-        o = parse(r["observed_vba"])
+        o = parse_observed(r["observed_vba"])
         if o is None:
             continue
         if measure == "tail_probability_residual":
-            p = mp.mpf(r["arg1"]); a2 = mp.mpf(r["arg2"]); a3 = mp.mpf(r["arg3"]); x = mp.mpf(str(o))
+            target = mp.mpf(r["arg1"]); a2 = mp.mpf(r["arg2"]); a3 = mp.mpf(r["arg3"]); x = mp.mpf(str(o))
             rec = ibeta(x, a2, a3) if fn == "Beta_InverseCumulative" else f_cdf(x, a2, a3)
-            e = Decimal(str(abs(rec - p) / min(p, 1 - p)))
+            e = normalize_tail_residual(rec, target)
         else:
-            ref = Decimal(r["reference"])
-            ae = abs(o - ref)
-            m = (metric or "").strip().lower()
-            if m == "absolute":
-                e = ae
-            elif m == "relative":
-                e = ae / abs(ref) if ref != 0 else Decimal(0)
-            else:
-                raise ValueError(
-                    f"contract for {fn} has metric {metric!r}; expected 'absolute' or 'relative'")
+            ref = parse_reference(r["reference"])
+            if ref is None:
+                continue
+            e = calculate_error(o, ref, metric)
         n += 1
         if e > w:
             w = e; at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)
