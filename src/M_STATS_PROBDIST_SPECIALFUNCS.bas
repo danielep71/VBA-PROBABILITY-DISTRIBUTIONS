@@ -446,12 +446,22 @@ Public Function PROB_LogBeta( _
     'catastrophically. Compute Log(Beta) from the stable log-gamma difference,
     'which never forms and subtracts the two large log-gamma values:
     '    Log(Beta) = LogGamma(Small) - [LogGamma(Large + Small) - LogGamma(Large)]
-    'This holds across the whole unbalanced range, including extreme ratios.
-        If SmallArg / LargeArg < PROB_LOGBETA_STABLE_RATIO Then
-            PROB_LogBeta = _
-                PROB_LogGamma(SmallArg) - _
-                PROB_LogGammaDelta(LargeArg, SmallArg)
-            Exit Function
+    '
+    'The delta kernel is only defined and measured for LargeArg >= 1, so that
+    'precondition is enforced here rather than assumed. Both shapes far below
+    'one is NOT the cancelling case: none of the three log-gamma values is
+    'large, so the literal identity is well conditioned, while the delta
+    'arrangement leaves its validated Lanczos regime and loses accuracy
+    '(measured: ~2E-6 absolute at LargeArg = 1E-12, ~9E-3 at 1E-16).
+    'Nested rather than a single And: VBA does not short-circuit, so the ratio
+    'must not be formed until LargeArg is known to be at least one.
+        If LargeArg >= 1# Then
+            If SmallArg / LargeArg < PROB_LOGBETA_STABLE_RATIO Then
+                PROB_LogBeta = _
+                    PROB_LogGamma(SmallArg) - _
+                    PROB_LogGammaDelta(LargeArg, SmallArg)
+                Exit Function
+            End If
         End If
 
 '------------------------------------------------------------------------------
@@ -1577,5 +1587,7 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
 
 

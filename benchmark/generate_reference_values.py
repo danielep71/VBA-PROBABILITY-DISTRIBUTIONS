@@ -708,6 +708,107 @@ def build_deep_tail_rows():
     return rows
 
 
+_TU_BETA_INV = [(0.020391305237761687, 0.5, 0.05, '0.04601031892528297249793596'), (0.011614828246796624, 0.2, 0.01, '0.0008504300838312333727749314'), (0.023229656493593247, 0.2, 0.01, '0.02663371583762863112542433'), (0.09081818114602173, 0.0001, 1e-05, '0.0000451672198517511166661721'), (0.09090818114535563, 0.0001, 1e-05, '0.4750188540160881796474294')]
+_TU_F_INV = [(0.04183587875236068, 1.0, 0.1, '0.02146355524527151411231635'), (0.08367175750472136, 1.0, 0.1, '0.1067565108965985104078747'), (0.15060916350849846, 1.0, 0.1, '0.6549861983264712392580451'), (0.16717617149443328, 1.0, 0.1, '0.9957837553502971382239687'), (0.018292907737209336, 0.4, 0.02, '0.0004129422049921151028783592'), (0.03658581547441867, 0.4, 0.02, '0.01379719153186172772697386'), (0.06585446785395362, 0.4, 0.02, '0.4500007034584452265679211'), (0.07309845931788851, 0.4, 0.02, '0.9920563872998486874964019'), (0.09083909184035142, 0.0002, 2e-05, '0.00004515249603705946469723038')]
+
+
+# ===========================================================================
+# TINY / TINY UNBALANCED SHAPES  (regimes "tiny_unbalanced" and
+# "tiny_unbalanced_representable")
+#
+#   PROB_LogBeta dispatched to PROB_LogGammaDelta on the ratio alone, without
+#   the kernel's documented LargeArg >= 1 precondition. With both shapes far
+#   below one that route left its validated Lanczos regime (measured ~2E-6
+#   absolute at 1E-12, ~9E-3 at 1E-16) while the literal three-log-gamma
+#   identity stays well conditioned there. These rows are the evidence for the
+#   corrected dispatch, and they cover the downstream Beta and F surfaces that
+#   consume Log(Beta) - including F, whose density calls
+#   PROB_LogBeta(DF1 / 2, DF2 / 2) and so reaches the same path.
+#
+#   The inverse is deliberately NOT covered at genuinely tiny shapes: the
+#   distribution collapses to a two-point limit whose interior CDF plateau is
+#   ~b/(a+b), so the mathematical quantile leaves the representable Double
+#   range. See BetaInverse.InteriorQuantileRepresentability.
+# ===========================================================================
+def _tu_logbeta(a, b):
+    return mp.loggamma(mp.mpf(a)) + mp.loggamma(mp.mpf(b)) - mp.loggamma(mp.mpf(a) + mp.mpf(b))
+
+
+def _tu_beta_density(x, a, b):
+    x, a, b = mp.mpf(x), mp.mpf(a), mp.mpf(b)
+    return mp.e ** ((a - 1) * mp.log(x) + (b - 1) * mp.log(1 - x) - _tu_logbeta(a, b))
+
+
+def _tu_beta_cdf(x, a, b):
+    return mp.betainc(mp.mpf(a), mp.mpf(b), 0, mp.mpf(x), regularized=True)
+
+
+def _tu_f_density(x, d1, d2):
+    x, d1, d2 = mp.mpf(x), mp.mpf(d1), mp.mpf(d2)
+    return mp.e ** ((d1 / 2) * mp.log(d1 / d2) + (d1 / 2 - 1) * mp.log(x)
+                    - ((d1 + d2) / 2) * mp.log(1 + d1 * x / d2) - _tu_logbeta(d1 / 2, d2 / 2))
+
+
+def _tu_f_cdf(x, d1, d2):
+    x, d1, d2 = mp.mpf(x), mp.mpf(d1), mp.mpf(d2)
+    return mp.betainc(d1 / 2, d2 / 2, 0, d1 * x / (d1 * x + d2), regularized=True)
+
+
+def build_tiny_unbalanced_rows():
+    rows = []
+    LOGABS, REL = "abs<=2E-13", "rel<=1E-12"
+
+    def row(func, args, ref, claim, metric, regime):
+        # Self-check: a reference that is not representable must never enter the
+        # grid as a value claim.
+        v = float(ref)
+        if metric == "rel" and (v == 0.0 or not (abs(v) > 1e-300)):
+            return
+        rows.append({
+            "function": func, "vba_kernel": func if func.startswith("PROB_") else "K_STATS_" + func,
+            "claim": claim, "metric": metric,
+            "arg1": mp.nstr(args[0], 17), "arg2": mp.nstr(args[1], 17),
+            "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "", "arg4": "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": regime, "evidence_set": "main grid",
+        })
+
+    # --- PROB_LogBeta: tiny/tiny, symmetric order, both sides of the 0.1 ratio ---
+    pairs = [(1e-12, 9.9e-14), (9.9e-14, 1e-12), (1e-16, 9.9e-18), (9.9e-18, 1e-16),
+             (1e-8, 1e-9), (1e-4, 1e-5), (1e-6, 1.1e-7), (1e-6, 1.5e-7),
+             (1e-3, 9.9e-5), (1e-3, 1.1e-4)]
+    for a, b in pairs:
+        row("PROB_LogBeta", (mp.mpf(a), mp.mpf(b)), _tu_logbeta(a, b), LOGABS, "abs", "tiny_unbalanced")
+
+    # --- Beta forward surface at those shapes ---
+    for a, b in [(1e-12, 9.9e-14), (1e-16, 9.9e-18), (1e-8, 1e-9), (1e-4, 1e-5), (1e-3, 9.9e-5)]:
+        for x in [mp.mpf("0.25"), mp.mpf("0.5"), mp.mpf("0.75")]:
+            row("Beta_Density", (x, mp.mpf(a), mp.mpf(b)), _tu_beta_density(x, a, b), REL, "rel", "tiny_unbalanced")
+            c = _tu_beta_cdf(x, a, b)
+            row("Beta_Cumulative", (x, mp.mpf(a), mp.mpf(b)), c, REL, "rel", "tiny_unbalanced")
+            row("Beta_Survival", (x, mp.mpf(a), mp.mpf(b)), 1 - c, REL, "rel", "tiny_unbalanced")
+
+    # --- F forward surface; x straddles the log-ratio branch at x = DF2 / DF1 ---
+    for d1, d2 in [(2e-12, 1.98e-13), (1.98e-13, 2e-12), (2e-16, 1.98e-17),
+                   (2e-8, 2e-9), (2e-4, 2e-5)]:
+        branch = mp.mpf(d2) / mp.mpf(d1)
+        for x in [branch / 10, branch, branch * 10]:
+            row("F_Density", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_density(x, d1, d2), REL, "rel", "tiny_unbalanced")
+            c = _tu_f_cdf(x, d1, d2)
+            row("F_Cumulative", (x, mp.mpf(d1), mp.mpf(d2)), c, REL, "rel", "tiny_unbalanced")
+            row("F_Survival", (x, mp.mpf(d1), mp.mpf(d2)), 1 - c, REL, "rel", "tiny_unbalanced")
+
+    # --- Inverses: ONLY where the quantile stays representable ---
+    for pr, a, b, q in _TU_BETA_INV:
+        row("Beta_InverseCumulative", (mp.mpf(pr), mp.mpf(a), mp.mpf(b)), mp.mpf(q),
+            "tail_rel<=1E-9", "rel", "tiny_unbalanced_representable")
+    for pr, d1, d2, q in _TU_F_INV:
+        row("F_InverseCumulative", (mp.mpf(pr), mp.mpf(d1), mp.mpf(d2)), mp.mpf(q),
+            "tail_rel<=1E-9", "rel", "tiny_unbalanced_representable")
+
+    return rows
+
+
 def build_rows():
     rows = []
 
@@ -901,6 +1002,7 @@ def build_rows():
 
     rows += build_discrete_rows()
     rows += build_deep_tail_rows()
+    rows += build_tiny_unbalanced_rows()
     return rows
 
 
