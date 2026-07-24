@@ -462,6 +462,7 @@ Private Sub RunCoreSuite()
     Test_Core_TryExp
     Test_Core_AffineAndStandardize
     Test_Core_LogGamma
+    Test_Core_LogBetaTinyUnbalanced
     Test_Core_SpecialFunctionKernels
     Test_Core_NormalInvRaw
 End Sub
@@ -1077,10 +1078,10 @@ Private Sub Test_Core_LogGamma()
         PROB_LogGammaDelta(10000#, 0.7) + PROB_LogGammaDelta(10000.7, 5.05), _
         TOL_REL_TIGHT
 
-    'PROB_LogGammaDelta with 0 < LargeArg < 1 (the both-subunit Beta path, where
-    'PROB_LogBeta calls the delta with max(Alpha,Beta) below one). The committed
-    'accuracy grids primarily cover LargeArg >= 1, so pin the structural identities
-    'here; they must hold regardless of regime.
+    'PROB_LogGammaDelta with 0 < LargeArg < 1. PROB_LogBeta no longer dispatches
+    'here below one (the kernel's documented precondition is LargeArg >= 1 and is
+    'now enforced), but the kernel itself is still exercised directly: the
+    'structural identities must hold regardless of regime.
     AssertClose "LogGammaDelta(z,0)=0 (z=0.2)", _
         PROB_LogGammaDelta(0.2, 0#), 0#, TOL_ABS_TIGHT
     AssertRelClose "LogGammaDelta(z,1)=Log(z) (z=0.2)", _
@@ -1101,6 +1102,77 @@ Private Sub Test_Core_LogGamma()
         PROB_LogBeta(10000000000#, 0.7), -15.8572284044162, TOL_REL_TIGHT
     AssertRelClose "LogBeta unbalanced (1E6, 2.5)", _
         PROB_LogBeta(1000000#, 2.5), -34.2540953994365, TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_Core_LogBetaTinyUnbalanced()
+'
+'==============================================================================
+' Test_Core_LogBetaTinyUnbalanced
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Regression cover for the tiny/tiny unbalanced regime, where PROB_LogBeta
+'   used to dispatch to PROB_LogGammaDelta outside the kernel's documented
+'   LargeArg >= 1 precondition.
+'
+' WHY THIS EXISTS
+'   With both shapes far below one the delta arrangement leaves its validated
+'   Lanczos regime: the old route was 1.99E-6 absolute at (1E-12, 9.9E-14) and
+'   8.98E-3 at (1E-16, 9.9E-18), against a 1E-10 tolerance. None of these
+'   points were in the committed grids, so 108/108 PASS coexisted with the
+'   defect. Downstream Beta and F are covered too: F density evaluates
+'   PROB_LogBeta(DF1 / 2, DF2 / 2) and so reaches the same dispatch.
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-07-23
+'==============================================================================
+'
+    Debug.Print "-- PROB_LogBeta, both shapes far below one"
+    AssertClose "LogBeta tiny (1E-12, 9.9E-14)", _
+        PROB_LogBeta(0.000000000001, 0.000000000000099), _
+        30.0380572201976, TOL_ABS_TIGHT
+    AssertClose "LogBeta tiny symmetric (9.9E-14, 1E-12)", _
+        PROB_LogBeta(0.000000000000099, 0.000000000001), _
+        30.0380572201976, TOL_ABS_TIGHT
+    AssertClose "LogBeta tiny (1E-16, 9.9E-18)", _
+        PROB_LogBeta(1E-16, 9.9E-18), 39.2483975921738, TOL_ABS_TIGHT
+    AssertClose "LogBeta tiny (1E-8, 1E-9)", _
+        PROB_LogBeta(0.00000001, 0.000000001), 20.8185760167507, TOL_ABS_TIGHT
+    AssertClose "LogBeta tiny (1E-4, 1E-5)", _
+        PROB_LogBeta(0.0001, 0.00001), 11.6082356431298, TOL_ABS_TIGHT
+
+    Debug.Print "-- Argument order must not matter"
+    AssertClose "LogBeta symmetry (1E-16)", _
+        PROB_LogBeta(1E-16, 9.9E-18) - PROB_LogBeta(9.9E-18, 1E-16), _
+        0#, TOL_ABS_TIGHT
+
+    Debug.Print "-- Beta surface at both-small shapes"
+    AssertRelClose "Beta density (0.5; 1E-12, 9.9E-14)", _
+        K_STATS_Beta_Density(0.5, 0.000000000001, 0.000000000000099), _
+        3.60327570518379E-13, TOL_REL_TIGHT
+    AssertRelClose "Beta CDF (0.5; 1E-12, 9.9E-14)", _
+        K_STATS_Beta_Cumulative(0.5, 0.000000000001, 0.000000000000099), _
+        9.00818926296633E-02, TOL_REL_TIGHT
+    AssertRelClose "Beta survival (0.5; 1E-12, 9.9E-14)", _
+        K_STATS_Beta_Survival(0.5, 0.000000000001, 0.000000000000099), _
+        0.909918107370337, TOL_REL_TIGHT
+
+    Debug.Print "-- F surface at both-small df (reaches LogBeta(DF1/2, DF2/2))"
+    AssertRelClose "F density below branch (0.0099; 2E-12, 1.98E-13)", _
+        K_STATS_F_Density(0.0099, 0.000000000002, 0.000000000000198), _
+        9.09918107368146E-12, TOL_REL_TIGHT
+    AssertRelClose "F density above branch (0.99; 2E-12, 1.98E-13)", _
+        K_STATS_F_Density(0.99, 0.000000000002, 0.000000000000198), _
+        9.09918107370034E-14, TOL_REL_TIGHT
+    AssertRelClose "F CDF (0.099; 2E-12, 1.98E-13)", _
+        K_STATS_F_Cumulative(0.099, 0.000000000002, 0.000000000000198), _
+        9.00818926296633E-02, TOL_REL_TIGHT
+    AssertRelClose "F survival (0.099; 2E-12, 1.98E-13)", _
+        K_STATS_F_Survival(0.099, 0.000000000002, 0.000000000000198), _
+        0.909918107370337, TOL_REL_TIGHT
 End Sub
 
 
@@ -6144,7 +6216,5 @@ Private Sub Test_DS_SupportEdges()
         K_STATS_DiscreteUniform_StdDev(7#, 7#), _
         0#, 0#
 End Sub
-
-
 
 
