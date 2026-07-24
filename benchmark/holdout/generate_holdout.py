@@ -165,6 +165,7 @@ def build():
     rows += _discrete_uniform_holdout_rows()
     rows += _deep_tail_holdout_rows()
     rows += _provisional_freeze_holdout_rows()
+    rows += _tiny_unbalanced_holdout_rows()
     return rows
 
 
@@ -343,6 +344,57 @@ def _provisional_freeze_holdout_rows():
             R("Normal_InverseSurvival",qs,mean,sd,mean+sd*z,"split_boundary")
         for ml,sl in [(mp.mpf(2),mp.mpf("0.4")),(mp.mpf(-1),mp.mpf("1.5"))]:
             R("Lognormal_InverseSurvival",qs,ml,sl,mp.e**(ml+sl*z),"split_boundary")
+    return out
+
+
+def _tuh_lb(a, b):
+    return mp.loggamma(mp.mpf(a)) + mp.loggamma(mp.mpf(b)) - mp.loggamma(mp.mpf(a) + mp.mpf(b))
+def _tuh_bdens(x, a, b):
+    x, a, b = mp.mpf(x), mp.mpf(a), mp.mpf(b)
+    return mp.e ** ((a - 1) * mp.log(x) + (b - 1) * mp.log(1 - x) - _tuh_lb(a, b))
+def _tuh_bcdf(x, a, b):
+    return mp.betainc(mp.mpf(a), mp.mpf(b), 0, mp.mpf(x), regularized=True)
+def _tuh_fdens(x, d1, d2):
+    x, d1, d2 = mp.mpf(x), mp.mpf(d1), mp.mpf(d2)
+    return mp.e ** ((d1 / 2) * mp.log(d1 / d2) + (d1 / 2 - 1) * mp.log(x)
+                    - ((d1 + d2) / 2) * mp.log(1 + d1 * x / d2) - _tuh_lb(d1 / 2, d2 / 2))
+def _tuh_fcdf(x, d1, d2):
+    x, d1, d2 = mp.mpf(x), mp.mpf(d1), mp.mpf(d2)
+    return mp.betainc(d1 / 2, d2 / 2, 0, d1 * x / (d1 * x + d2), regularized=True)
+
+_TUH_BETA_INV = [['0.0238030898383022', 0.3, 0.02, '0.03786447618247984069625187'], ['0.01996001125517588', 0.15, 0.008, '0.001990540674044102410668475'], ['0.039920022510351761', 0.15, 0.008, '0.1722624438284290159540389'], ['0.1297826050674942', 0.0002, 3e-05, '1.304132132777868212059972e-11'], ['0.13042825722335761', 0.0002, 3e-05, '0.43781299994800356077303']]
+_TUH_F_INV = [['0.042042034896185571', 0.6, 0.04, '0.01842429975014502434803894'], ['0.084084069792371142', 0.6, 0.04, '0.299492538910174881830828'], ['0.10457956180426161', 0.6, 0.04, '0.970481505598249070288357'], ['0.028420445917715022', 0.3, 0.016, '0.001124866128755002654485882'], ['0.056840891835430044', 0.3, 0.016, '0.1433636822198634019318566'], ['0.070695859220316118', 0.3, 0.016, '0.9529484521240192784094589'], ['0.12983184225699029', 0.0004, 6e-05, '1.303389615423738106825852e-11']]
+
+def _tiny_unbalanced_holdout_rows():
+    """Fresh tiny/tiny points; none of these set a threshold."""
+    out = []
+    def R(fn, a1, a2, a3, ref, regime):
+        out.append(row(fn, fn if fn.startswith("PROB_") else "K_STATS_" + fn,
+                       a1, a2, a3, ref, regime))
+    # PROB_LogBeta: fresh shapes, symmetric order, straddling the 0.1 ratio
+    for a, b in [(3e-11, 2.7e-12), (2.7e-12, 3e-11), (5e-15, 4e-16),
+                 (2e-7, 1.5e-8), (7e-5, 6e-6), (4e-3, 3.6e-4), (4e-3, 5e-4)]:
+        R("PROB_LogBeta", a, b, "", _tuh_lb(a, b), "tiny_unbalanced")
+    # Beta forward surface at fresh shapes and fresh x
+    for a, b in [(3e-11, 2.7e-12), (5e-15, 4e-16), (2e-7, 1.5e-8), (7e-5, 6e-6)]:
+        for x in [0.125, 0.4, 0.875]:
+            R("Beta_Density", x, a, b, _tuh_bdens(x, a, b), "tiny_unbalanced")
+            c = _tuh_bcdf(x, a, b)
+            R("Beta_Cumulative", x, a, b, c, "tiny_unbalanced")
+            R("Beta_Survival", x, a, b, 1 - c, "tiny_unbalanced")
+    # F forward surface; x straddles the DF2/DF1 branch
+    for d1, d2 in [(6e-11, 5.4e-12), (1e-14, 8e-16), (4e-7, 3e-8), (1.4e-4, 1.2e-5)]:
+        br = mp.mpf(d2) / mp.mpf(d1)
+        for x in [br / 5, br * 2, br * 20]:
+            R("F_Density", x, d1, d2, _tuh_fdens(x, d1, d2), "tiny_unbalanced")
+            c = _tuh_fcdf(x, d1, d2)
+            R("F_Cumulative", x, d1, d2, c, "tiny_unbalanced")
+            R("F_Survival", x, d1, d2, 1 - c, "tiny_unbalanced")
+    # Inverses: only where the quantile stays representable
+    for pr, a, b, q in _TUH_BETA_INV:
+        R("Beta_InverseCumulative", pr, a, b, mp.mpf(q), "tiny_unbalanced_representable")
+    for pr, d1, d2, q in _TUH_F_INV:
+        R("F_InverseCumulative", pr, d1, d2, mp.mpf(q), "tiny_unbalanced_representable")
     return out
 
 def main():

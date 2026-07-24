@@ -136,20 +136,24 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**132 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**141 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
 | Beta_Cumulative.balanced.output_rel | Beta_Cumulative | balanced | output_error | relative | 2E-14 | validated and frozen |
+| Beta_Cumulative.tiny_unbalanced.output | Beta_Cumulative | tiny_unbalanced | output_error | relative | 5E-14 | measured provisional |
 | Beta_Cumulative.unbalanced.output_rel | Beta_Cumulative | unbalanced | output_error | relative | 1E-10 | validated and frozen |
 | Beta_Density.balanced.output_rel | Beta_Density | balanced | output_error | relative | 1E-14 | validated and frozen |
+| Beta_Density.tiny_unbalanced.output | Beta_Density | tiny_unbalanced | output_error | relative | 1E-14 | measured provisional |
 | Beta_Density.unbalanced.output_rel | Beta_Density | unbalanced | output_error | relative | 4E-12 | validated and frozen |
 | Beta_InverseCumulative.balanced.quantile_rel | Beta_InverseCumulative | balanced | quantile_error | relative | 5E-15 | validated and frozen |
+| Beta_InverseCumulative.tiny_unbalanced_representable.tail_rel | Beta_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-14 | measured provisional |
 | Beta_InverseCumulative.unbalanced.quantile_rel | Beta_InverseCumulative | unbalanced | quantile_error | relative | 1E-10 | validated and frozen |
 | Beta_InverseCumulative.unbalanced.tail_rel | Beta_InverseCumulative | unbalanced | tail_probability_residual | relative | 1E-9 | validated and frozen |
 | Beta_Mean.all.output | Beta_Mean | all | output_error | relative | 5E-15 | validated and frozen |
 | Beta_StdDev.all.output | Beta_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
 | Beta_Survival.balanced.output_rel | Beta_Survival | balanced | output_error | relative | 5E-15 | validated and frozen |
+| Beta_Survival.tiny_unbalanced.output | Beta_Survival | tiny_unbalanced | output_error | relative | 1E-14 | measured provisional |
 | Beta_Survival.unbalanced.output_rel | Beta_Survival | unbalanced | output_error | relative | 2E-10 | validated and frozen |
 | Beta_Variance.all.output | Beta_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | Binomial_Cumulative.all.output_rel | Binomial_Cumulative | all | output_error | relative | 5E-8 | validated and frozen |
@@ -176,10 +180,14 @@ by rate (Lambda), not scale.
 | Exponential_Density.all.output | Exponential_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_Survival.all.output | Exponential_Survival | all | output_error | relative | 5E-15 | validated and frozen |
+| F_Cumulative.tiny_unbalanced.output | F_Cumulative | tiny_unbalanced | output_error | relative | 5E-14 | measured provisional |
 | F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | validated and frozen |
 | F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | validated and frozen |
+| F_Density.tiny_unbalanced.output | F_Density | tiny_unbalanced | output_error | relative | 1E-14 | measured provisional |
+| F_InverseCumulative.tiny_unbalanced_representable.tail_rel | F_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-13 | measured provisional |
 | F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | validated and frozen |
 | F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | validated and frozen |
+| F_Survival.tiny_unbalanced.output | F_Survival | tiny_unbalanced | output_error | relative | 5E-14 | measured provisional |
 | F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | validated and frozen |
 | Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 2E-14 | validated and frozen |
 | Gamma_Density.all.output | Gamma_Density | all | output_error | relative | 2E-14 | validated and frozen |
@@ -248,6 +256,7 @@ by rate (Lambda), not scale.
 | Normal_Survival.all.output | Normal_Survival | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_ZScore.all.output | Normal_ZScore | all | output_error | relative | 5E-15 | validated and frozen |
 | PROB_LogBeta.all.log_abs | PROB_LogBeta | all | log_absolute_error | absolute | 2E-13 | validated and frozen |
+| PROB_LogBeta.tiny_unbalanced.output | PROB_LogBeta | tiny_unbalanced | output_error | absolute | 1E-14 | measured provisional |
 | Poisson_Cumulative.all.output_rel | Poisson_Cumulative | all | output_error | relative | 2E-10 | validated and frozen |
 | Poisson_InverseCumulative.all.output_abs | Poisson_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
 | Poisson_LogPMF.all.output_rel | Poisson_LogPMF | all | output_error | relative | 2E-15 | validated and frozen |
