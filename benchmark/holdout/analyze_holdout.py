@@ -17,7 +17,7 @@ from _ibeta import ibeta, f_cdf
 # (compute_errors.py) so the two analyzers cannot diverge on metric arithmetic,
 # parsing, or tail-residual normalisation.
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
-                            normalize_tail_residual)
+                            normalize_tail_residual, dispositions)
 getcontext().prec = 50
 mp.mp.dps = 50
 
@@ -27,15 +27,16 @@ def load_contracts(p):
     return list(csv.DictReader(open(p)))
 
 def worst_for(measure, metric, rows, fn):
-    # `measure` selects only the special-case evaluation (tail_probability_residual).
-    # For every ordinary contract, `metric` (absolute|relative) chooses the error
-    # kind: absolute -> Abs(observed - reference); relative -> that over Abs(reference).
-    # The `measure` string never controls abs-vs-rel; a contract declared
-    # metric=absolute is always evaluated absolute regardless of its measure label.
+    # `metric` (absolute|relative) chooses the arithmetic; `measure` only selects
+    # the tail_probability_residual path. Rows in the F envelope-reject region
+    # (expected_error) carry no accuracy claim and are excluded; a blank/ERROR row
+    # inside the envelope is unexpected and is reported so main() can BLOCK it
+    # rather than silently drop it.
+    to_measure, n_expected, n_missing, n_error = dispositions(rows)
     w = Decimal(-1); at = ""; n = 0
-    for r in rows:
+    for r in to_measure:
         o = parse_observed(r["observed_vba"])
-        if o is None:
+        if o is None:                      # defensive: dispositions already excluded these
             continue
         if measure == "tail_probability_residual":
             target = mp.mpf(r["arg1"]); a2 = mp.mpf(r["arg2"]); a3 = mp.mpf(r["arg3"]); x = mp.mpf(str(o))
@@ -49,7 +50,8 @@ def worst_for(measure, metric, rows, fn):
         n += 1
         if e > w:
             w = e; at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)
-    return (w, at, n) if n else (None, "", 0)
+    worst = w if n else None
+    return worst, at, n, n_missing, n_error
 
 def main():
     ap = argparse.ArgumentParser()
@@ -70,14 +72,27 @@ def main():
     header = f"{'Contract':<48}{'metric':<10}{'threshold':>10}{'holdout worst':>15}{'pts':>5}{'margin':>9}  verdict"
     print(header)
     results = []
-    all_hold = True; tested = 0
+    all_hold = True; tested = 0; incomplete = 0
     for c in sorted(contracts, key=lambda c: c["contract_id"]):
         matched = grid_by.get((c["function"], c["regime"]), [])
         if not matched:
             continue                       # this contract's regime is not in the holdout
         if not c["threshold"].strip():
             continue                       # no numeric threshold to test (e.g. characterized)
-        w, at, n = worst_for(c["measure"], c["metric"], matched, c["function"])
+        w, at, n, n_missing, n_error = worst_for(c["measure"], c["metric"], matched, c["function"])
+        if n_missing or n_error:
+            # Unexpected blank/ERROR evidence INSIDE the envelope blocks, exactly as
+            # in the gate - it is not silently excluded.
+            incomplete += 1
+            bits = []
+            if n_missing:
+                bits.append(f"{n_missing} unobserved")
+            if n_error:
+                bits.append(f"{n_error} unexpected ERROR")
+            print(f"{c['contract_id']:<48}{c['metric']:<10}{c['threshold']:>10}"
+                  f"{'INCOMPLETE':>15}{n:>5}{'':>9}  {'; '.join(bits)}")
+            results.append((c, None, None, n, "INCOMPLETE"))
+            continue
         if w is None or w < 0:
             print(f"{c['contract_id']:<48}{c['metric']:<10}{c['threshold']:>10}{'(no obs)':>15}")
             results.append((c, None, None, 0, "NO OBS"))
@@ -89,11 +104,14 @@ def main():
         print(f"{c['contract_id']:<48}{c['metric']:<10}{c['threshold']:>10}{float(w):>15.2e}{n:>5}{margin:>8.1f}x  {verdict}")
         results.append((c, w, margin, n, verdict))
     print()
-    if tested and all_hold:
+    if incomplete:
+        print(f"{incomplete} contract(s) have unexpected missing/ERROR evidence in-envelope - "
+              "these BLOCK rather than being silently excluded.")
+    if tested and all_hold and not incomplete:
         print(f"ALL {tested} contract(s) present in the holdout hold on fresh data.")
-    elif tested:
+    elif tested and not all_hold:
         print("At least one contract exceeded its threshold on the holdout - investigate before (re)freezing.")
-    else:
+    elif not tested and not incomplete:
         print("No contracts matched the holdout grid - check that the grid's function/regime "
               "tags line up with the contract file.")
 
@@ -112,12 +130,14 @@ def main():
                   f"{n} | {mtxt} | {c['provenance']} | {verdict} |")
     npass = sum(1 for _, _, _, _, v in results if v == "PASS")
     nfail = sum(1 for _, _, _, _, v in results if v == "FAIL")
-    md += ["", f"> {npass} pass, {nfail} fail across {len(results)} contract(s) present in the holdout. "
-           "Margin = threshold / holdout worst; higher is more headroom."]
+    ninc = sum(1 for _, _, _, _, v in results if v == "INCOMPLETE")
+    tail = f", {ninc} incomplete" if ninc else ""
+    md += ["", f"> {npass} pass, {nfail} fail{tail} across {len(results)} contract(s) present "
+           "in the holdout. Margin = threshold / holdout worst; higher is more headroom."]
     with open(out, "w", encoding="utf-8") as f:
         f.write("\n".join(md) + "\n")
     print(f"\nwrote {out}")
-    if tested and not all_hold:
+    if (tested and not all_hold) or incomplete:
         raise SystemExit(1)
 
 if __name__ == "__main__":

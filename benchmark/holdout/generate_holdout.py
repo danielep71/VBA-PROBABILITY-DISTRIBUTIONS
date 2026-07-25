@@ -400,7 +400,14 @@ def _tiny_unbalanced_holdout_rows():
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--out",default="holdout_grid.csv"); a=ap.parse_args()
     rows=build()
-    fields=["function","vba_kernel","claim","metric","arg1","arg2","arg3","arg4","reference","observed_vba","regime","evidence_set"]
+    # Stamp the envelope marker from each row's own args (single-sourced predicate).
+    import os as _os, sys as _sys
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    from _contract_eval import predicted_expected_error
+    for r in rows:
+        r["expected_error"]="1" if predicted_expected_error(
+            r.get("function",""), r.get("arg2",""), r.get("arg3","")) else ""
+    fields=["function","vba_kernel","claim","metric","arg1","arg2","arg3","arg4","reference","observed_vba","regime","evidence_set","expected_error"]
     with open(a.out,"w",newline="") as f:
         w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(rows)
     print(f"wrote {a.out}: {len(rows)} rows")

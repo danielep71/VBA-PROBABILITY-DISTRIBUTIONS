@@ -28,7 +28,7 @@ getcontext().prec = 50
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)  # single-sourced benchmark/ helpers
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
-                            normalize_tail_residual)
+                            normalize_tail_residual, dispositions, expected_error_drift)
 
 _IBETA_IMPORT_ERROR = None
 try:
@@ -106,6 +106,16 @@ def main():
     contracts = load_contracts()
     rows = list(csv.DictReader(open(args.grid)))
 
+    # The stored expected_error column must match the envelope predicate exactly,
+    # so a hand-edited or stale marker cannot silently reclassify a row. A
+    # mismatch is a hard gate failure, not a warning.
+    drift = expected_error_drift(rows)
+    if drift:
+        print(f"  gate FAILED (exit 1): {len(drift)} grid row(s) have an expected_error "
+              f"marker inconsistent with the envelope predicate, e.g. "
+              f"{drift[0].get('function','?')} df=({drift[0].get('arg2','')},{drift[0].get('arg3','')}).")
+        sys.exit(1)
+
     # index grid rows by (function, regime)
     grid_by = defaultdict(list)
     for r in rows:
@@ -151,8 +161,22 @@ def main():
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
                              f"0 | \u23f3 PENDING - no observations |")
                 continue
+            to_measure, n_expected, n_missing, n_error = dispositions(mt)
+            in_env = len(mt) - n_expected
+            if status == "active" and (n_missing or n_error):
+                n_pending += 1
+                bits = []
+                if n_missing:
+                    bits.append(f"{n_missing} unobserved")
+                if n_error:
+                    bits.append(f"{n_error} unexpected ERROR in-envelope")
+                unevaluated.append((cid, "; ".join(bits) + "; strict mode requires full "
+                                    "in-envelope observation"))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"{len(to_measure)}/{in_env} | \u23f3 PENDING - incomplete evidence |")
+                continue
             try:
-                worst, at, nn = tail_residual(mt, fn)
+                worst, at, nn = tail_residual(to_measure, fn)
             except Exception as _te:
                 n_pending += 1
                 unevaluated.append((cid, f"evaluator error: {type(_te).__name__}: {_te}"))
@@ -161,9 +185,9 @@ def main():
                 continue
             if worst is None:
                 n_pending += 1
-                unevaluated.append((cid, "no usable observations"))
+                unevaluated.append((cid, "no usable in-envelope observations"))
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
-                             f"0/{len(mt)} | \u23f3 PENDING |")
+                             f"0/{in_env} | \u23f3 PENDING |")
                 continue
             ok = threshold is not None and worst <= threshold
             if ok:
@@ -171,7 +195,7 @@ def main():
             else:
                 n_fail += 1; verdict = "\u274c FAIL"
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
-                         f"{float(worst):.2e} | {nn}/{len(mt)} | {verdict} |")
+                         f"{float(worst):.2e} | {nn}/{in_env} | {verdict} |")
             continue
 
         if not matched:
@@ -180,27 +204,33 @@ def main():
                          f"0 | \u23f3 PENDING |")
             continue
 
-        # Strict mode: an ACTIVE contract must have every matched grid row
-        # observed. Passing on the observed subset while some rows are blank is a
-        # hygiene defect (a contract could report PASS on 2 of 6 points). Any
-        # unobserved matched row therefore BLOCKS as PENDING rather than being
-        # silently ignored.
-        if status == "active":
-            n_missing = sum(1 for r in matched if not r["observed_vba"].strip())
-            if n_missing:
-                n_pending += 1
-                unevaluated.append((cid, f"{n_missing}/{len(matched)} grid rows unobserved; "
-                                    "strict mode requires full observation"))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
-                             f"{len(matched) - n_missing}/{len(matched)} | "
-                             f"\u23f3 PENDING - partial observation |")
-                continue
+        # An ACTIVE contract must have every IN-ENVELOPE matched row observed with
+        # a real value. A blank row (unobserved) or an unexpected ERROR (a kernel
+        # failure inside the accuracy envelope) BLOCKS as PENDING rather than being
+        # silently dropped. Rows in the F envelope-reject region (expected_error)
+        # carry no accuracy claim and are excluded from scoring entirely.
+        to_measure, n_expected, n_missing, n_error = dispositions(matched)
+        in_env = len(matched) - n_expected
 
-        worst, at, n = measure_error(matched, metric)
+        if status == "active" and (n_missing or n_error):
+            n_pending += 1
+            bits = []
+            if n_missing:
+                bits.append(f"{n_missing} unobserved")
+            if n_error:
+                bits.append(f"{n_error} unexpected ERROR in-envelope")
+            unevaluated.append((cid, "; ".join(bits) + "; strict mode requires full "
+                                "in-envelope observation"))
+            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                         f"{len(to_measure)}/{in_env} | "
+                         f"\u23f3 PENDING - incomplete evidence |")
+            continue
+
+        worst, at, n = measure_error(to_measure, metric)
         if worst is None:
             n_pending += 1
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
-                         f"0/{len(matched)} | \u23f3 PENDING |")
+                         f"0/{in_env} | \u23f3 PENDING |")
             continue
 
         ok = threshold is not None and worst <= threshold
@@ -214,7 +244,7 @@ def main():
             n_fail += 1; verdict = "\u274c FAIL"
 
         lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
-                     f"{float(worst):.2e} | {n}/{len(matched)} | {verdict} |")
+                     f"{float(worst):.2e} | {n}/{in_env} | {verdict} |")
 
     # The verdict tally counts CONTRACT states. A reader can otherwise take
     # "KNOWN LIMITATION: 0" to mean the library has no numerical boundaries,

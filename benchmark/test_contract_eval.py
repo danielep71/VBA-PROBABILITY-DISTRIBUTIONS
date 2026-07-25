@@ -13,6 +13,9 @@ from _contract_eval import (
     parse_observed, parse_reference, parse_threshold, validate_metric,
     calculate_error, normalize_tail_residual, observation_state,
     evidence_gaps, OK, MISSING, ERROR,
+    predicted_expected_error, classify_row, dispositions, expected_error_drift,
+    row_expected_error, MEASURE, EXCLUDE_EXPECTED, BLOCK_MISSING, BLOCK_ERROR,
+    F_MAX_DF,
 )
 
 fails = []
@@ -71,6 +74,38 @@ check(evidence_gaps(rows) == (1, 2), "evidence_gaps counts (missing, error)")
 # recovered 0.2000000000000001, p 0.2 -> ~1e-16 / 0.2 = ~5e-16
 r = normalize_tail_residual(Decimal("0.2000000000000001"), Decimal("0.2"))
 check(Decimal("4E-16") < r < Decimal("6E-16"), "tail residual normalisation")
+
+# --- predicted_expected_error: F envelope-reject region ---------------------
+check(predicted_expected_error("F_Cumulative", "1.5", "200000") is True, "F_Cumulative df2>max -> expected")
+check(predicted_expected_error("F_InverseCumulative", "500000", "4") is True, "F_Inverse df1>max -> expected")
+check(predicted_expected_error("F_Survival", "50", "50") is False, "F in-envelope -> not expected")
+check(predicted_expected_error("F_Density", "1000000", "3") is False, "F_Density is NOT enveloped")
+check(predicted_expected_error("Beta_Cumulative", "1e9", "1e9") is False, "non-F -> not expected")
+check(predicted_expected_error("F_Cumulative", str(F_MAX_DF), "3") is False, "exactly at F_MAX_DF -> not expected")
+
+# --- classify_row -----------------------------------------------------------
+check(classify_row("1;2", True) == EXCLUDE_EXPECTED, "expected -> EXCLUDE_EXPECTED")
+check(classify_row("", False) == BLOCK_MISSING, "blank in-envelope -> BLOCK_MISSING")
+check(classify_row("ERROR", False) == BLOCK_ERROR, "ERROR in-envelope -> BLOCK_ERROR")
+check(classify_row("1;2", False) == MEASURE, "value in-envelope -> MEASURE")
+check(classify_row("ERROR", True) == EXCLUDE_EXPECTED, "expected wins over ERROR")
+
+# --- dispositions -----------------------------------------------------------
+mixed = [
+    {"function": "F_Cumulative", "observed_vba": "0.5", "arg2": "3", "arg3": "4"},      # measure
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "200000"},  # expected (df>max)
+    {"function": "F_Cumulative", "observed_vba": "", "arg2": "3", "arg3": "4"},         # missing
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "4"},    # unexpected error
+]
+to_measure, n_exp, n_miss, n_err = dispositions(mixed)
+check((len(to_measure), n_exp, n_miss, n_err) == (1, 1, 1, 1), "dispositions partition")
+
+# --- expected_error_drift ---------------------------------------------------
+clean = [{"function": "F_Cumulative", "arg2": "3", "arg3": "200000", "expected_error": "1"},
+         {"function": "F_Cumulative", "arg2": "3", "arg3": "4", "expected_error": ""}]
+check(expected_error_drift(clean) == [], "no drift when stored matches predicate")
+drifted = [{"function": "F_Cumulative", "arg2": "3", "arg3": "4", "expected_error": "1"}]  # in-envelope mismarked
+check(len(expected_error_drift(drifted)) == 1, "drift detected when stored disagrees")
 
 if fails:
     print("FAIL: _contract_eval primitives")

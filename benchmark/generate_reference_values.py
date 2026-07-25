@@ -1015,9 +1015,18 @@ def main():
     mp.mp.dps = args.digits
     rows = build_rows()
 
+    # Stamp the envelope marker from each row's own args (single-sourced predicate),
+    # so the gate/holdout can distinguish an expected #NUM! from an unexpected error.
+    import os as _os, sys as _sys
+    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    from _contract_eval import predicted_expected_error
+    for r in rows:
+        r["expected_error"] = "1" if predicted_expected_error(
+            r.get("function", ""), r.get("arg2", ""), r.get("arg3", "")) else ""
+
     fields = ["function", "vba_kernel", "claim", "metric",
               "arg1", "arg2", "arg3", "arg4", "reference", "observed_vba",
-              "regime", "evidence_set"]
+              "regime", "evidence_set", "expected_error"]
     with open(args.out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
