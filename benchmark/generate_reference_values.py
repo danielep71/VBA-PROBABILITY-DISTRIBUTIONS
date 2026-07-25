@@ -10,7 +10,7 @@ that publishes a measured-accuracy claim in the VBA source:
   SPECIALFUNCS kernels
     PROB_LogGamma           rel err < 6.1E-14  for Z in [1E-8, 1E+50]
     PROB_LogGammaHalfDiff   rel err <= 2E-14 for Z > 0 (tested range)
-    PROB_StirlingError      abs err <= 3E-17   for N >= 0.5
+    PROB_StirlingError      abs err: see accuracy_contracts.csv (1E-13 abs; 3E-17 was overfit)
     PROB_LogChoose          rel err <= 3.2E-16 for N in [2, 2^53], all K
 
   TFAMILY public UDFs
@@ -250,13 +250,14 @@ _CONTRACTS = _load_contracts()
 
 
 # ===========================================================================
-# DISCRETE FAMILY (Binomial / Poisson / Geometric)
-#   Self-contained so it can be generated independently of the contract-backed
+# DISCRETE FAMILIES (Binomial, Poisson, Geometric, Negative Binomial,
+# Hypergeometric, Discrete Uniform)
+#   Self-contained so they can be generated independently of the continuous
 #   families. CDF/survival go through the same regularized incomplete beta /
-#   gamma the VBA kernels use, so large n and large mean are exercised. Rows
-#   carry a provisional claim and empty observed_vba until the Excel export and
-#   holdout freeze (Phase 2); no discrete contract is active yet, so the strict
-#   accuracy gate does not evaluate them.
+#   gamma the VBA kernels use, so large n and large mean are exercised. All six
+#   families are validated-and-frozen under active contracts in
+#   accuracy_contracts.csv; the strict accuracy gate evaluates them, so their
+#   observed_vba values must be present and current in the grid.
 # ===========================================================================
 def _betacf(a, b, x):
     tiny = mp.mpf("1e-300"); qab = a + b; qap = a + 1; qam = a - 1
@@ -845,7 +846,7 @@ def build_rows():
     for z in logspace("1e-6", "1e12", 30):
         add("LogGammaHalfDiff", "PROB_LogGammaHalfDiff", (z,), _loggamma_halfdiff(z))
 
-    # --- PROB_StirlingError : N >= 0.5, abs <= 3E-17 (include N=501 hot spot) ---
+    # --- PROB_StirlingError : N >= 0.5, abs contract per accuracy_contracts.csv (include N=501 hot spot) ---
     ns = [mp.mpf("0.5"), mp.mpf(1), mp.mpf(2), mp.mpf(3), mp.mpf(5), mp.mpf(10),
           mp.mpf(50), mp.mpf(100), mp.mpf(500), mp.mpf(501), mp.mpf(1000), mp.mpf(1e6)]
     for n in ns:

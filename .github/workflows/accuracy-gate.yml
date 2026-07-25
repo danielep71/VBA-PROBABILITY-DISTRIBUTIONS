@@ -59,3 +59,18 @@ jobs:
         # characterization" defect: this must exit 0 (meaning the gate correctly
         # exits non-zero and marks the contracts PENDING when the helper is gone).
         run: python test_gate_degradation.py
+
+      - name: Verify the generated README table matches the contract registry
+        working-directory: benchmark
+        # render_contract_table.py splices accuracy_contracts.csv into README.md
+        # between the generated markers; a non-empty diff means the committed
+        # README drifted from the authoritative registry (P2-01).
+        run: |
+          python render_contract_table.py --write
+          git diff --exit-code README.md
+
+      - name: Verify source headers do not restate measured thresholds
+        working-directory: benchmark
+        # P2-01 failsafe: measured thresholds live in accuracy_contracts.csv, not
+        # duplicated in VBA headers where they drift out of date.
+        run: python check_source_thresholds.py

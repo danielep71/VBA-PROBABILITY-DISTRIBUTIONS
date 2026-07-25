@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-25T08:52:52Z",
-  "commit_sha": "d5a6ef2",
+  "generated_utc": "2026-07-25T11:01:25Z",
+  "commit_sha": "7f90b24",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -20,7 +20,7 @@
   ],
   "observation_grid_sha256": "sha256:e2a6bb0f06e3cc866a6fbcee8bce78d6469b7bd1cef8eb40d9430e67d522bb29",
   "source_binding": {
-    "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:395ab68407f167a0eb0fc0de9b9786b5ee888f3011e2cd9d48744ffb798f0a83",
+    "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:8c6ae8038b6775867148f1a883a86832338ea1cef1c36f8a650ce41fa6a8bfc2",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_UNBAL.bas": "sha256:750c34d9450bbe965106a4cfef72ed965f0ffb7186cbc5ab897e65deadcee241",
     "benchmark/delta_seam_study/M_STATS_PROBDIST_DELTA_SEAM.bas": "sha256:b259d3ab8452a63ef31fb1d4e06231eff28e23d972be39ff471c92817f4ad0c5",
@@ -36,8 +36,8 @@
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:db14ad05a77914c37df07a9dc3dd6fd873752f12421dd1463d096e72dad0e99d",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:286a8d6316d6110a1221ae934e6b4e5a180dfd37ba4e72a531a61d984f79f454",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:2dcf523a8b48aecb278aaeac100ff908e7f85442a89531e7b18fa0c4a4f574d9",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:071e8eb27c1851cab8c071a5efcb0bc03cdc4e3ee1feefee6b154639874ffe53",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:0ac3ae6ae0aa5b93f3c10ba48f63f841e9aea2282f22802504e513478cfdb8a7",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:3d5c2b503c2e58e0584cb9684fcfe804da50a63c2297a2d23846959ce28c6df3",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:5b8b04aaed291531fd3c64f8dcab40d37f1689fc70e08464c780f8a6b2c42ee3",
     "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b34dcdaa1fade364a2ececc04b7dd0f265a9759145526fe5003e2b617a838a22"
   },
   "contract_registry_sha256": "sha256:71e0e9efdd07056bbbcb88a3f3f3ef6e08a241910df157bf00b473a424642cd8",

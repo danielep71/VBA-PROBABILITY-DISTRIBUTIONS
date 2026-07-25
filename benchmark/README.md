@@ -74,9 +74,13 @@ python generate_reference_values.py            # -> probability_accuracy_grid.cs
 python compute_errors.py                       # -> accuracy_summary.md
 ```
 
-`compute_errors.py` degrades honestly: any row whose `observed_vba` is still
-empty is reported as *not measured* and excluded from the pass/fail check, so a
-partial export produces a partial — not a misleading — summary.
+`compute_errors.py` is strict: every in-envelope row of an active contract must
+be produced, parsed, and evaluated. A blank, `ERROR`, or unparseable observation
+— for ordinary *and* tail-residual contracts alike — blocks that contract as
+`PENDING` and fails the gate (non-zero exit), naming the offending rows. Only
+envelope-reject rows that correctly return `#NUM!` are excluded from scoring. A
+partial or corrupt export therefore fails loudly rather than producing a
+misleading green summary.
 
 > **Observed-value format.** VBA writes each observation as a two-part sum `hi;lo` (two 15-digit numbers), because VBA cannot emit more than ~15 significant digits in one literal. `compute_errors.py` sums the parts to recover the full-precision Double, so the harness measures accuracy below the 15-digit floor. A single number is also accepted for backward compatibility.
 

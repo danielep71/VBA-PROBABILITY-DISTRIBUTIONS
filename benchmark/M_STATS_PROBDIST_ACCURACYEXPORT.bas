@@ -412,6 +412,12 @@ Private Function EvaluateOne( _
         Case "DiscreteUniform_Variance":             V = K_STATS_DiscreteUniform_Variance(A1, A2)
         Case "DiscreteUniform_StdDev":               V = K_STATS_DiscreteUniform_StdDev(A1, A2)
 
+        'Kernels and densities that are also measured by study harnesses. The
+        'evidence_set filter in the read loop keeps those study-owned rows
+        'untouched, so these cases only serve main-grid rows.
+        Case "PROB_LogBeta":                 V = PROB_LogBeta(A1, A2)
+        Case "F_Density":                    V = K_STATS_F_Density(A1, A2, A3)
+
         Case Else
             EvaluateOne = "ERROR"
             Exit Function
@@ -566,5 +572,7 @@ Private Function Fmt15(ByVal X As Double) As String
     S = Format$(X, "0.00000000000000E+000")    '1 + 14 = 15 significant digits
     Fmt15 = Replace(S, ",", ".")               'Force US decimal regardless of locale
 End Function
+
+
 
 

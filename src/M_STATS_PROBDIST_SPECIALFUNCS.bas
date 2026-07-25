@@ -512,15 +512,18 @@ Public Function PROB_StirlingError( _
 '   - N above 15: the asymptotic series in 1 / N, truncated by magnitude.
 '
 ' ACCURACY
-'   Absolute error at or below 3E-17 for every N >= 0.5. RELATIVE error is the
-'   wrong metric here: it reaches 1.5E-13 near N = 501, where delta is 1.67E-04.
-'   What propagates into a log-probability is the absolute error.
+'   The authoritative measured accuracy contract lives in
+'   benchmark/accuracy_contracts.csv (StirlingError.all.output: 1E-13 absolute;
+'   independent holdout worst 3.57E-14 - the earlier 3E-17 was overfit to its
+'   grid). RELATIVE error is the wrong metric here: it reaches 1.5E-13 near
+'   N = 501, where delta is 1.67E-04, so what propagates into a log-probability
+'   is the absolute error.
 '
 '   The small-N table constants are written as a two-part sum, hi + lo, where hi
 '   is the value to 15 significant digits and lo is the residual. VBA source
 '   literals hold only about 15 significant digits, so a single literal of a
-'   value near 0.15 could not reach 3E-17; the residual term restores the missing
-'   low-order bits at load time. Each part is itself a <= 15-digit literal that
+'   value near 0.15 holds only about 15 significant digits, so the residual term
+'   restores the missing low-order bits at load time. Each part is itself a <= 15-digit literal that
 '   the editor preserves.
 '
 ' DEPENDENCIES

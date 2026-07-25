@@ -106,15 +106,12 @@ Option Explicit
 '   - Application.StatusBar is not written by this module.
 '
 ' ACCURACY REFERENCE
-'   The current regression grid targets approximately:
-'
-'     Student t density                 <= 2E-14 relative error (tested range)
-'     Student t cumulative / survival   <= 1.3E-12 relative error
-'     Student t quantile                <= 3.0E-12 relative error
-'     Chi-square cumulative / survival  <= 2.6E-10 relative error
-'     Chi-square quantile               <= 4.7E-12 relative error
-'     F cumulative / survival           <= 1.1E-10 relative error
-'     F quantile                        <= 5.9E-13 relative error
+'   The authoritative, regime-specific measured accuracy contracts for every
+'   function in this module (Student t, Chi-square, and F density / cumulative /
+'   survival / quantile) live in benchmark/accuracy_contracts.csv and are
+'   rendered into benchmark/README.md by render_contract_table.py. Those
+'   thresholds are validated and frozen against an independent holdout; consult
+'   the registry rather than duplicating numbers here, which drift out of date.
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
@@ -3358,7 +3355,5 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
-
-
 
 
