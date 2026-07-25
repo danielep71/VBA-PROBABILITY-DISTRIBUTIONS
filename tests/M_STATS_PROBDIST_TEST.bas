@@ -2648,6 +2648,22 @@ Private Sub Test_TF_StudentTCumulative()
     AssertClose "t cdf tiny x small df", _
         K_STATS_StudentT_Cumulative(0.0000000001, 0.1), _
         0.500000000014809, 0.000000000000002
+    'Student t accuracy envelope (strict validated-domain policy): below / at /
+    'above 1E6. The incomplete-beta tail silently diverges past ~1E6 (see
+    'benchmark/tchi_large_df); the surface now returns CVErr instead. Density
+    'is closed-form and unrestricted.
+    AssertTrue "t cdf below envelope (1e5) accepted", _
+        (Not IsError(K_STATS_StudentT_Cumulative(1#, 100000#)))
+    AssertTrue "t cdf at envelope boundary (1e6) accepted", _
+        (Not IsError(K_STATS_StudentT_Cumulative(1#, 1000000#)))
+    AssertIsError "t cdf above envelope (1.1e6)", _
+        K_STATS_StudentT_Cumulative(1#, 1100000#)
+    AssertIsError "t survival above envelope (1e9)", _
+        K_STATS_StudentT_Survival(1#, 1000000000#)
+    AssertIsError "t inverse above envelope (1e9)", _
+        K_STATS_StudentT_InverseCumulative(0.9, 1000000000#)
+    AssertTrue "t density not enveloped (large df)", _
+        (Not IsError(K_STATS_StudentT_Density(0#, 1E+18)))
 End Sub
 
 
@@ -2999,6 +3015,18 @@ Private Sub Test_TF_ChiSquareLargeDF()
     'A converged answer, or an honest error - never a silent partial sum
     AssertTrue "chi2 cdf(1e6) is not a partial sum", _
         (Abs(CDbl(K_STATS_ChiSquare_Cumulative(1000000#, 1000000#)) - 0.5) < 0.001)
+    'Chi-square accuracy envelope (strict validated-domain policy): validated to
+    'df 1E6 above, rejected beyond. The incomplete-gamma path is unmeasured on
+    '1E6..1E16 and diverges by df 1E16 (see benchmark/tchi_large_df). Density is
+    'closed-form and unrestricted.
+    AssertIsError "chi2 cdf above envelope (1.1e6)", _
+        K_STATS_ChiSquare_Cumulative(1000000#, 1100000#)
+    AssertIsError "chi2 survival above envelope (1e16)", _
+        K_STATS_ChiSquare_Survival(1E+16, 1E+16)
+    AssertIsError "chi2 inverse above envelope (1e9)", _
+        K_STATS_ChiSquare_InverseCumulative(0.5, 1000000000#)
+    AssertTrue "chi2 density not enveloped (large df)", _
+        (Not IsError(K_STATS_ChiSquare_Density(1E+16, 1E+16)))
 End Sub
 
 
@@ -6216,5 +6244,3 @@ Private Sub Test_DS_SupportEdges()
         K_STATS_DiscreteUniform_StdDev(7#, 7#), _
         0#, 0#
 End Sub
-
-
