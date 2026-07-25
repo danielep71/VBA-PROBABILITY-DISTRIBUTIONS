@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-25T11:01:25Z",
-  "commit_sha": "7f90b24",
+  "generated_utc": "2026-07-25T15:33:31Z",
+  "commit_sha": "unrecorded",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -25,6 +25,7 @@
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_UNBAL.bas": "sha256:750c34d9450bbe965106a4cfef72ed965f0ffb7186cbc5ab897e65deadcee241",
     "benchmark/delta_seam_study/M_STATS_PROBDIST_DELTA_SEAM.bas": "sha256:b259d3ab8452a63ef31fb1d4e06231eff28e23d972be39ff471c92817f4ad0c5",
     "benchmark/density_helpers/M_STATS_PROBDIST_DENSHELP.bas": "sha256:fee5f39d26dddf39ec751e192fae8d296331688d3a8442f1c1feb2e1a5fd4190",
+    "benchmark/density_large_shape/M_STATS_PROBDIST_DENS.bas": "sha256:b7489c2ba7c7e5a71aa58e16d9845395c36c13a7a642a468b7078d00dbf82d98",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:ef5c9c010376a337469f6597670cad733118666e8361833ab9304561dc3c861f",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:ddd22d5d33ae9d8ae3ce9b4141337219ca422422ebecb80568c8f1afe8aee95a",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:03f0354961664a7685f70a4ae5bb034678a6403f6ab84a64b86f5ee2d0b6a91c",
@@ -32,21 +33,20 @@
     "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas": "sha256:dc7708db87f0d1aafd6c7b0a81cffc72584232a0146f2eb2fb4fa1b998d67540",
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:696b8d3ca96e866bd142f048d1af0f0388605a36f81064f64793dfaa91a4f9b5",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:b215c2b055fd50cfd118646b7d1ba50dc876edf15a209f9f31fecaa69bb80a38",
+    "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:b83fa8b6b4c0fcf688ea3ebfa7a76cbd59350de8b721584aed95a71e76ff8ee3",
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:db14ad05a77914c37df07a9dc3dd6fd873752f12421dd1463d096e72dad0e99d",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:3c4f54f9f865f92959c6398793e3eb6d53abe41a2a83ce14f98b44c40a3b882e",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:2dcf523a8b48aecb278aaeac100ff908e7f85442a89531e7b18fa0c4a4f574d9",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:73b395dfcb1495c984cd3cb371fc86c6120686092107c83eeb4e1ca44bb7f22a",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:5b8b04aaed291531fd3c64f8dcab40d37f1689fc70e08464c780f8a6b2c42ee3",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b34dcdaa1fade364a2ececc04b7dd0f265a9759145526fe5003e2b617a838a22",
-    "benchmark/density_large_shape/M_STATS_PROBDIST_DENS.bas": "sha256:b7489c2ba7c7e5a71aa58e16d9845395c36c13a7a642a468b7078d00dbf82d98",
-    "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053"
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:35bccf856f29a4c2b35c4f2adc27c84baf281f73227c4185bb12dca7627902c7",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:79f23d1721d53628d7c73acf64f576f05e20c7dd06441be5eefa25070b39aabb",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b34dcdaa1fade364a2ececc04b7dd0f265a9759145526fe5003e2b617a838a22"
   },
   "contract_registry_sha256": "sha256:71e0e9efdd07056bbbcb88a3f3f3ef6e08a241910df157bf00b473a424642cd8",
   "environment": {
-    "excel_version": "2606",
-    "excel_build": "16.0.20131.20152",
-    "office_bitness": "64"
+    "excel_version": "unrecorded",
+    "excel_build": "unrecorded",
+    "office_bitness": "unrecorded"
   },
   "notes": ""
 }

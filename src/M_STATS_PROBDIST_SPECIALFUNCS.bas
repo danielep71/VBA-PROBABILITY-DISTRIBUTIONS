@@ -511,6 +511,8 @@ Public Function PROB_StirlingError( _
 '     is small, so a stored constant is both faster and better.
 '   - N off the grid and at or below 15: the defining identity via PROB_LogGamma.
 '   - N above 15: the asymptotic series in 1 / N, truncated by magnitude.
+'   - N below 0.5: one upward recurrence to N + 1 (which uses the paths above),
+'     delta(N) = delta(N + 1) + (N + 0.5) * Log((N + 1) / N) - 1.
 '
 ' ACCURACY
 '   The authoritative measured accuracy contract lives in
@@ -553,7 +555,16 @@ Public Function PROB_StirlingError( _
 '------------------------------------------------------------------------------
     'Below the smallest tabulated positive point the correction is not used
         If n < 0.5 Then
-            PROB_StirlingError = 0#
+            'Below the tabulated domain recurse up one unit, from
+            'Log Gamma(n) = Log Gamma(n + 1) - Log(n):
+            '  delta(n) = delta(n + 1) + (n + 0.5) * Log((n + 1) / n) - 1
+            'delta(0) is 0 by convention; n + 1 >= 1 lands on the valid paths below.
+            If n <= 0# Then
+                PROB_StirlingError = 0#
+            Else
+                PROB_StirlingError = _
+                    PROB_StirlingError(n + 1#) + (n + 0.5) * Log((n + 1#) / n) - 1#
+            End If
             Exit Function
         End If
 
@@ -874,34 +885,34 @@ Public Function PROB_TryBetaLogPdf( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim N                   As Double          'Alpha + BetaShape
+    Dim n                   As Double          'Alpha + BetaShape
     Dim OneMinusX           As Double          '1 - X
     Dim DevAlpha            As Double          'bd0(Alpha, N*X)
     Dim DevBeta             As Double          'bd0(BetaShape, N*(1-X))
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
-    N = Alpha + BetaShape
+    n = Alpha + BetaShape
     OneMinusX = 1# - X
 
-    If Not PROB_TryDeviancePart(Alpha, N * X, DevAlpha, FailMsg) Then
+    If Not PROB_TryDeviancePart(Alpha, n * X, DevAlpha, FailMsg) Then
         PROB_TryBetaLogPdf = False
         Exit Function
     End If
 
-    If Not PROB_TryDeviancePart(BetaShape, N * OneMinusX, DevBeta, FailMsg) Then
+    If Not PROB_TryDeviancePart(BetaShape, n * OneMinusX, DevBeta, FailMsg) Then
         PROB_TryBetaLogPdf = False
         Exit Function
     End If
 
     LogPdf = -(DevAlpha + DevBeta) _
-             + 0.5 * (Log(Alpha) + Log(BetaShape) - Log(N)) _
+             + 0.5 * (Log(Alpha) + Log(BetaShape) - Log(n)) _
              - LogX _
              - LogOneMinusX _
              - PROB_HALF_LOG_TWO_PI _
              - PROB_StirlingError(Alpha) _
              - PROB_StirlingError(BetaShape) _
-             + PROB_StirlingError(N)
+             + PROB_StirlingError(n)
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
@@ -1907,3 +1918,5 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+
