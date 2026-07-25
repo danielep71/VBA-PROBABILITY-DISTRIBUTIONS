@@ -169,6 +169,8 @@ Option Explicit
 'Maximum safeguarded Newton iterations for the Student t quantile
 Private Const PROB_T_INV_MAX_ITER As Long = 500
 Private Const PROB_F_MAX_DF       As Double = 100000# 'Validated F accuracy envelope; both df must be <= this (measured, benchmark/f_envelope)
+Private Const PROB_T_MAX_DF       As Double = 1000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/tchi_large_df)
+Private Const PROB_CHI_MAX_DF     As Double = 1000000# 'Chi-square envelope; validated to 1E6 (regression T1), 1E6..1E16 band reference-limited, top diverges (benchmark/tchi_large_df)
 
 '==============================================================================
 ' PUBLIC - STUDENT T
@@ -346,6 +348,7 @@ Public Function K_STATS_StudentT_Cumulative( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
+'   - PROB_T_ValidateEnvelope
 '   - PROB_TryStudentTTail
 '   - PROB_SetStatus
 '
@@ -390,6 +393,12 @@ Public Function K_STATS_StudentT_Cumulative( _
             K_STATS_StudentT_Cumulative = Tail
         Else
             K_STATS_StudentT_Cumulative = 1# - Tail
+        End If
+
+    'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
+    'density is closed-form and unrestricted). A clean CVErr beats a silent error.
+        If Not PROB_T_ValidateEnvelope(DegreesFreedom, FailMsg) Then
+            GoTo Fail_Num
         End If
 
 '------------------------------------------------------------------------------
@@ -468,6 +477,7 @@ Public Function K_STATS_StudentT_Survival( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
+'   - PROB_T_ValidateEnvelope
 '   - PROB_TryStudentTTail
 '   - PROB_SetStatus
 '
@@ -512,6 +522,12 @@ Public Function K_STATS_StudentT_Survival( _
             K_STATS_StudentT_Survival = Tail
         Else
             K_STATS_StudentT_Survival = 1# - Tail
+        End If
+
+    'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
+    'density is closed-form and unrestricted). A clean CVErr beats a silent error.
+        If Not PROB_T_ValidateEnvelope(DegreesFreedom, FailMsg) Then
+            GoTo Fail_Num
         End If
 
 '------------------------------------------------------------------------------
@@ -601,6 +617,7 @@ Public Function K_STATS_StudentT_InverseCumulative( _
 ' DEPENDENCIES
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_TF_ValidateDF
+'   - PROB_T_ValidateEnvelope
 '   - PROB_TryStudentTInvTail
 '   - PROB_SetStatus
 '
@@ -636,6 +653,12 @@ Public Function K_STATS_StudentT_InverseCumulative( _
     'Validate the degree parameter and its half-degree kernel argument
         If Not PROB_TF_ValidateDF( _
             DegreesFreedom, "DegreesFreedom", FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
+    'density is closed-form and unrestricted). A clean CVErr beats a silent error.
+        If Not PROB_T_ValidateEnvelope(DegreesFreedom, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -905,6 +928,7 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
+'   - PROB_CHI_ValidateEnvelope
 '   - PROB_TryGammaRegularizedP
 '   - PROB_SetStatus
 '
@@ -945,6 +969,12 @@ Public Function K_STATS_ChiSquare_Cumulative( _
         If X <= 0# Then
             K_STATS_ChiSquare_Cumulative = 0#
             GoTo Return_Success
+        End If
+
+    'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
+    'is closed-form and unrestricted). A clean CVErr beats a silent error.
+        If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, FailMsg) Then
+            GoTo Fail_Num
         End If
 
     'Evaluate the regularized lower incomplete gamma function
@@ -1033,6 +1063,7 @@ Public Function K_STATS_ChiSquare_Survival( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
+'   - PROB_CHI_ValidateEnvelope
 '   - PROB_TryGammaRegularizedQ
 '   - PROB_SetStatus
 '
@@ -1073,6 +1104,12 @@ Public Function K_STATS_ChiSquare_Survival( _
         If X <= 0# Then
             K_STATS_ChiSquare_Survival = 1#
             GoTo Return_Success
+        End If
+
+    'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
+    'is closed-form and unrestricted). A clean CVErr beats a silent error.
+        If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, FailMsg) Then
+            GoTo Fail_Num
         End If
 
     'Evaluate the regularized upper incomplete gamma function
@@ -1166,6 +1203,7 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 ' DEPENDENCIES
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_TF_ValidateDF
+'   - PROB_CHI_ValidateEnvelope
 '   - PROB_TryGammaInvP
 '   - PROB_TryMultiply
 '   - PROB_SetStatus
@@ -1203,6 +1241,12 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
     'Validate the degree parameter and its half-degree kernel argument
         If Not PROB_TF_ValidateDF( _
             DegreesFreedom, "DegreesFreedom", FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
+    'is closed-form and unrestricted). A clean CVErr beats a silent error.
+        If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -3190,6 +3234,85 @@ Private Function PROB_F_ValidateEnvelope( _
 End Function
 
 
+Private Function PROB_T_ValidateEnvelope( _
+    ByVal DegreesFreedom As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_T_ValidateEnvelope
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Enforces the measured Student t accuracy envelope. The incomplete-beta tail
+'   behind StudentT_Cumulative, StudentT_Survival and StudentT_InverseCumulative
+'   is contract-grade only while df stays within PROB_T_MAX_DF. Beyond that the
+'   kernel silently diverges from the true (normal-limit) value - by ~1E-4 near
+'   df 1E13 and O(1E-1) past df 1E15 (see benchmark/tchi_large_df). This limits
+'   the public t surface to its validated domain and returns a clean CVErr
+'   rather than a silent inaccurate result. StudentT_Density is not restricted.
+'
+' RETURNS
+'   Boolean
+'     True when df is within PROB_T_MAX_DF.
+'
+' UPDATED
+'   2026-07-25 - Strict validated-domain policy for the incomplete-beta t path.
+'==============================================================================
+'
+    FailMsg = vbNullString
+
+    If DegreesFreedom > PROB_T_MAX_DF Then
+        FailMsg = _
+            "Student t degrees of freedom exceed the validated accuracy " & _
+            "envelope (df must be <= 1E6); the incomplete-beta tail is not " & _
+            "accuracy-validated beyond this range"
+        Exit Function
+    End If
+
+    PROB_T_ValidateEnvelope = True
+End Function
+
+
+Private Function PROB_CHI_ValidateEnvelope( _
+    ByVal DegreesFreedom As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_CHI_ValidateEnvelope
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Enforces the chi-square accuracy envelope. The incomplete-gamma path behind
+'   ChiSquare_Cumulative, ChiSquare_Survival and ChiSquare_InverseCumulative is
+'   validated only to PROB_CHI_MAX_DF. The df 1E5..1E16 band is reference-limited
+'   reference-limited and unmeasured, and the kernel diverges by df 1E16 (survival off
+'   by ~7E2; see benchmark/tchi_large_df). The cap sits at the last validated df
+'   pending a dedicated 1E6..1E16 study. This returns a
+'   clean CVErr rather than a silent inaccurate result. ChiSquare_Density is not
+'   restricted (it is closed-form and contract-frozen to shape 1E20).
+'
+' RETURNS
+'   Boolean
+'     True when df is within PROB_CHI_MAX_DF.
+'
+' UPDATED
+'   2026-07-25 - Strict validated-domain policy for the incomplete-gamma path.
+'==============================================================================
+'
+    FailMsg = vbNullString
+
+    If DegreesFreedom > PROB_CHI_MAX_DF Then
+        FailMsg = _
+            "Chi-square degrees of freedom exceed the validated accuracy " & _
+            "envelope (df must be <= 1E6); the incomplete-gamma path is not " & _
+            "accuracy-validated beyond this range"
+        Exit Function
+    End If
+
+    PROB_CHI_ValidateEnvelope = True
+End Function
+
+
 Private Function PROB_TF_ValidateTwoDF( _
     ByVal DegreesFreedom1 As Double, _
     ByVal DegreesFreedom2 As Double, _
@@ -3378,5 +3501,3 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
-
-
