@@ -1,4 +1,5 @@
 Attribute VB_Name = "M_STATS_PROBDIST_TFAMILY"
+
 Option Explicit
 
 '==============================================================================
@@ -1417,6 +1418,13 @@ Public Function K_STATS_F_Density( _
             U = Ratio / (1# + Ratio)                            'U = r / (1 + r)
             LogU = LogRatio - LogOnePlusRatio
             LogV = -LogOnePlusRatio
+        End If
+
+    'At an extreme ratio the beta variate collapses onto a boundary; the F
+    'density underflows to zero there, as the pre-reroute log form did.
+        If U <= 0# Or U >= 1# Then
+            K_STATS_F_Density = 0#
+            GoTo Return_Success
         End If
 
     'Stable Beta log-density (shared kernel) plus the change-of-variable Jacobian.
