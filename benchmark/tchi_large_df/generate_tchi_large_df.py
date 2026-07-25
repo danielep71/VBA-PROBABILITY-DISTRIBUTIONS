@@ -49,6 +49,11 @@ def phi(x):
         return +mp.ncdf(mp.mpf(x))
 
 
+def _dbl(x):
+    """Round an mpmath value to the nearest IEEE-754 double (what the VBA receives)."""
+    return mp.mpf(float(x))
+
+
 def t_cdf(x, df):
     def f():
         x_ = mp.mpf(x); d = mp.mpf(df)
@@ -98,7 +103,10 @@ def _validate_wh():
 
 
 T_DECADES = [1e5, 1e6, 1e7, 1e8, 1e9, 1e11, 1e13, 1e15, 1e18, 1e30, 1e60, 1e100]
-CHI_DECADES = [1e16, 1e18, 1e30, 1e60, 1e100]     # WH exact-to-Double band
+CHI_DECADES = [1e16, 1e18, 1e30]     # WH exact-to-Double AND transition band still
+                                     # Double-representable (beyond ~1E31 the whole
+                                     # non-trivial band is sub-ULP, so no Double x
+                                     # yields a determinate Chi-square CDF)
 T_X = ["0.5", "1.0", "2.0", "3.0", "4.0"]
 T_P = ["0.9", "0.99", "0.999"]
 CHI_Z = [-3, -1, 0, 1, 3]
@@ -135,7 +143,7 @@ def build():
     for df in CHI_DECADES:
         sd = mp.sqrt(2 * mp.mpf(df))
         for z in CHI_Z:
-            x = mp.mpf(df) + z * sd
+            x = _dbl(mp.mpf(df) + z * sd)   # the exact Double the VBA evaluates at
             if x <= 0:
                 continue
             c = chi_cdf_wh(x, df)

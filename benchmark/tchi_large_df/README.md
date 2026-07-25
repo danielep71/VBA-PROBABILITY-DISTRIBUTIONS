@@ -35,11 +35,18 @@ normal, with `|t_cdf(x, df) - Phi(x)| ~ C(x)/df`. Consequences:
   across `1E5 .. 1E100`.
 - **Chi-square** — referenced only where a Wilson-Hilferty limit is *provably
   exact to Double precision*: `df >= 1E16` (WH error `~9E-3/df`, validated at
-  build time against the exact incomplete gamma at low df). The Chi-square
-  **central band `1E5 .. 1E16` is reference-limited and intentionally omitted**
-  — it needs a Temme uniform-asymptotic reference (a scoped follow-up), and
-  shipping an under-precision reference would violate the project's
-  self-check-before-ship rule.
+  build time against the exact incomplete gamma at low df). Chi-square is also
+  bounded ABOVE at `df ~ 1E30`: beyond `~1E31` the entire non-trivial transition
+  band (width `~sqrt(2 df)` around `df`) is narrower than one Double ULP of `df`,
+  so no Double-representable abscissa yields a determinate Chi-square CDF - the
+  accepted region there is degenerate rather than measurable, which is itself a
+  finding. Within the measured band the CDF is very steep, so each abscissa is
+  rounded to the exact Double the VBA will receive and the reference is taken at
+  that same Double (otherwise a half-ULP mismatch would masquerade as a ~3%
+  kernel error). The Chi-square **central band `1E5 .. 1E16` is reference-limited
+  and intentionally omitted** - it needs a Temme uniform-asymptotic reference (a
+  scoped follow-up), and shipping an under-precision reference would violate the
+  project's self-check-before-ship rule.
 
 `generate_tchi_large_df.py` asserts the WH validation and drops any
 non-self-consistent row before writing the grid.
