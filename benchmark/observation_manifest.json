@@ -38,7 +38,9 @@
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:2dcf523a8b48aecb278aaeac100ff908e7f85442a89531e7b18fa0c4a4f574d9",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:3d5c2b503c2e58e0584cb9684fcfe804da50a63c2297a2d23846959ce28c6df3",
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:5b8b04aaed291531fd3c64f8dcab40d37f1689fc70e08464c780f8a6b2c42ee3",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b34dcdaa1fade364a2ececc04b7dd0f265a9759145526fe5003e2b617a838a22"
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b34dcdaa1fade364a2ececc04b7dd0f265a9759145526fe5003e2b617a838a22",
+    "benchmark/density_large_shape/M_STATS_PROBDIST_DENS.bas": "sha256:b7489c2ba7c7e5a71aa58e16d9845395c36c13a7a642a468b7078d00dbf82d98",
+    "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053"
   },
   "contract_registry_sha256": "sha256:71e0e9efdd07056bbbcb88a3f3f3ef6e08a241910df157bf00b473a424642cd8",
   "environment": {
