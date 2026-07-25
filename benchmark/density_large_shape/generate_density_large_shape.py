@@ -148,14 +148,21 @@ def build():
             x = _dbl(1 + z / sd)              # F(d,d) concentrates near 1 with width ~1/sqrt(d)
             if x > 0:
                 add("F_Density", x, a, a, f_logpdf_direct, f_logpdf_loader, (x, a, a), f"bal_z{z:+d}")
-        # F unbalanced df1=shape, df2=shape/100, x near df2/df1 (both log-ratio branches)
+        # F unbalanced df1=shape, df2=shape/100, x near the density MODE (r>1 branch).
+        # An interior mode needs the second Beta shape df2/2 > 1; the balanced case
+        # above already exercises the r=1 boundary, and F_Survival/F CDF the r<1 side.
         d2 = mp.mpf(a) / 100
-        if d2 >= 1:
-            centre = d2 / mp.mpf(a)
+        if d2 / 2 > 1:
+            a1 = mp.mpf(a) / 2; b1 = d2 / 2; nb = a1 + b1
+            umode = (a1 - 1) / (nb - 2)
+            ustd = mp.sqrt(a1 * b1 / (nb * nb * (nb + 1)))
             for z in Z:
-                x = _dbl(centre * (1 + mp.mpf(z) / 20))   # straddles r=1 (both branches)
-                if x > 0:
-                    add("F_Density", x, a, d2, f_logpdf_direct, f_logpdf_loader, (x, a, d2), f"unb_z{z:+d}")
+                u = umode + z * ustd
+                if 0 < u < 1:
+                    r = u / (1 - u)
+                    x = _dbl(r * d2 / mp.mpf(a))
+                    if x > 0:
+                        add("F_Density", x, a, d2, f_logpdf_direct, f_logpdf_loader, (x, a, d2), f"unb_z{z:+d}")
 
     return rows, dropped, worst_selfcheck
 

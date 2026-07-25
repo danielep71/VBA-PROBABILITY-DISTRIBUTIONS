@@ -1307,7 +1307,7 @@ Public Function K_STATS_F_Density( _
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndTwoDF
 '   - PROB_TF_LogOnePlusExp
-'   - PROB_LogBeta
+'   - PROB_TryBetaLogPdf
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
@@ -1327,6 +1327,11 @@ Public Function K_STATS_F_Density( _
     Dim LogRatio            As Double          'Log(X * DF1 / DF2)
     Dim LogOnePlusRatio     As Double          'Stable residual Log(1 + ratio)
     Dim ExpNegLogRatio      As Double          'Exp(-LogRatio)
+    Dim Ratio               As Double          'The F ratio r when below one
+    Dim U                   As Double          'Beta variate U = r / (1 + r)
+    Dim LogU                As Double          'Log(U)
+    Dim LogV                As Double          'Log(1 - U)
+    Dim BetaLogPdf          As Double          'Stable Beta log-density at U
     Dim LogDensity          As Double          'Logarithm of the density
     Dim Density             As Double          'Returned density
     Dim FailMsg             As String          'Detailed failure message
@@ -1388,30 +1393,41 @@ Public Function K_STATS_F_Density( _
             Log(DegreesFreedom1) - _
             Log(DegreesFreedom2)
 
-    'Use the reciprocal ratio when LogRatio is non-negative
+    'Map to the Beta variate U = r / (1 + r) and its complement, with their logs,
+    'choosing the branch that never forms a large or tiny 1 + r directly.
         If LogRatio >= 0# Then
+            'Large ratio: work through 1 / r
             If Not PROB_TryExp(-LogRatio, ExpNegLogRatio) Then
                 ExpNegLogRatio = 0#
             End If
 
-            LogOnePlusRatio = PROB_Log1p(ExpNegLogRatio)
-
-            LogDensity = _
-                -HalfDF2 * LogRatio - _
-                (HalfDF1 + HalfDF2) * LogOnePlusRatio - _
-                Log(X) - _
-                PROB_LogBeta(HalfDF1, HalfDF2)
+            LogOnePlusRatio = PROB_Log1p(ExpNegLogRatio)        'Log(1 + 1 / r)
+            U = 1# / (1# + ExpNegLogRatio)                      'U = r / (1 + r)
+            LogU = -LogOnePlusRatio
+            LogV = -LogRatio - LogOnePlusRatio
 
     'Use the direct softplus form when LogRatio is negative
         Else
-            LogOnePlusRatio = PROB_TF_LogOnePlusExp(LogRatio)
+            'Small ratio: form r directly
+            If Not PROB_TryExp(LogRatio, Ratio) Then
+                Ratio = 0#
+            End If
 
-            LogDensity = _
-                HalfDF1 * LogRatio - _
-                (HalfDF1 + HalfDF2) * LogOnePlusRatio - _
-                Log(X) - _
-                PROB_LogBeta(HalfDF1, HalfDF2)
+            LogOnePlusRatio = PROB_TF_LogOnePlusExp(LogRatio)   'Log(1 + r)
+            U = Ratio / (1# + Ratio)                            'U = r / (1 + r)
+            LogU = LogRatio - LogOnePlusRatio
+            LogV = -LogOnePlusRatio
         End If
+
+    'Stable Beta log-density (shared kernel) plus the change-of-variable Jacobian.
+    'Log(dU/dX) = LogU + LogV - Log(X); the -Log(U) - Log(V) inside the kernel
+    'cancels the added LogU + LogV, leaving the exact F log-density.
+        If Not PROB_TryBetaLogPdf( _
+            U, HalfDF1, HalfDF2, LogU, LogV, BetaLogPdf, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+        LogDensity = BetaLogPdf + LogU + LogV - Log(X)
 
 '------------------------------------------------------------------------------
 ' EXPONENTIATE
@@ -3354,3 +3370,5 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
+
+
