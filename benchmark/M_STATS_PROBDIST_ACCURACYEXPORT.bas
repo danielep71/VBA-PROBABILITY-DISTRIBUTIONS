@@ -278,6 +278,7 @@ Private Function EvaluateOne( _
         Case "ChiSquare_Cumulative":                 V = K_STATS_ChiSquare_Cumulative(A1, A2)
         Case "ChiSquare_Survival":                   V = K_STATS_ChiSquare_Survival(A1, A2)
         Case "ChiSquare_InverseCumulative":          V = K_STATS_ChiSquare_InverseCumulative(A1, A2)
+        Case "ChiSquare_Density":                    V = K_STATS_ChiSquare_Density(A1, A2)
 
         'F
         Case "F_Cumulative":                         V = K_STATS_F_Cumulative(A1, A2, A3)
@@ -572,7 +573,3 @@ Private Function Fmt15(ByVal X As Double) As String
     S = Format$(X, "0.00000000000000E+000")    '1 + 14 = 15 significant digits
     Fmt15 = Replace(S, ",", ".")               'Force US decimal regardless of locale
 End Function
-
-
-
-
