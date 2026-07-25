@@ -749,6 +749,166 @@ Public Function PROB_TryDeviancePart( _
 End Function
 
 
+Public Function PROB_TryGammaLogPdf( _
+    ByVal StandardX As Double, _
+    ByVal Shape As Double, _
+    ByVal LogRatio As Double, _
+    ByVal LogScale As Double, _
+    ByRef LogPdf As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaLogPdf
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Stable Gamma log-density via Loader''s deviance and StirlingError, free of
+'   the (Shape-1)*Log(y) - y - LogGamma(Shape) cancellation that loses accuracy
+'   at large Shape near the mode.
+'
+'       log f = -bd0(Shape, StandardX) + 0.5*Log(Shape) - LogRatio
+'               - 0.5*Log(2*Pi) - StirlingError(Shape) - LogScale
+'
+' PRECONDITION
+'   StandardX > 0, Shape > 0. Caller handles X = 0, validation and the X/Scale
+'   overflow (density zero); this routine computes the interior log-density.
+'
+' INPUTS
+'   StandardX   X / ScaleParam (the standardized variate y)
+'   Shape       Gamma shape parameter
+'   LogRatio    Log(X) - Log(ScaleParam), i.e. Log(StandardX), formed by the
+'               caller without dividing extreme operands
+'   LogScale    Log(ScaleParam)
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LogPdf holds the natural-log density.
+'     FALSE => The deviance series did not converge (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryDeviancePart
+'   - PROB_StirlingError
+'   - PROB_HALF_LOG_TWO_PI
+'
+' UPDATED
+'   2026-07-25
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Deviance            As Double          'Loader deviance bd0(Shape, y)
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If Not PROB_TryDeviancePart(Shape, StandardX, Deviance, FailMsg) Then
+        PROB_TryGammaLogPdf = False
+        Exit Function
+    End If
+
+    LogPdf = -Deviance _
+             + 0.5 * Log(Shape) _
+             - LogRatio _
+             - PROB_HALF_LOG_TWO_PI _
+             - PROB_StirlingError(Shape) _
+             - LogScale
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    PROB_TryGammaLogPdf = True
+End Function
+
+
+Public Function PROB_TryBetaLogPdf( _
+    ByVal X As Double, _
+    ByVal Alpha As Double, _
+    ByVal BetaShape As Double, _
+    ByVal LogX As Double, _
+    ByVal LogOneMinusX As Double, _
+    ByRef LogPdf As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaLogPdf
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Stable Beta log-density via Loader''s deviance and StirlingError, free of the
+'   (a-1)*Log(x) + (b-1)*Log(1-x) - LogBeta(a,b) cancellation at large shapes.
+'   Both shapes are large, so the deviance is the Loader DECOMPOSITION
+'
+'       D = bd0(Alpha, N*X) + bd0(BetaShape, N*(1-X)),   N = Alpha + BetaShape
+'
+'   evaluated by PROB_TryDeviancePart; forming the raw a*Log(a/(N*x)) +
+'   b*Log(b/(N*y)) instead would reintroduce the cancellation.
+'
+'       log f = -D + 0.5*(Log(Alpha) + Log(BetaShape) - Log(N))
+'               - LogX - LogOneMinusX - 0.5*Log(2*Pi)
+'               - StirlingError(Alpha) - StirlingError(BetaShape)
+'               + StirlingError(N)
+'
+' PRECONDITION
+'   0 < X < 1, Alpha > 0, BetaShape > 0. Caller validates and handles endpoints.
+'
+' INPUTS
+'   X               Evaluation point in (0, 1)
+'   Alpha           First Beta shape
+'   BetaShape       Second Beta shape (named to avoid the Beta_Density argument)
+'   LogX            Log(X)
+'   LogOneMinusX    Log(1 - X), taken through PROB_Log1p(-X) by the caller
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LogPdf holds the natural-log density.
+'     FALSE => A deviance series did not converge (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryDeviancePart
+'   - PROB_StirlingError
+'   - PROB_HALF_LOG_TWO_PI
+'
+' UPDATED
+'   2026-07-25
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim N                   As Double          'Alpha + BetaShape
+    Dim OneMinusX           As Double          '1 - X
+    Dim DevAlpha            As Double          'bd0(Alpha, N*X)
+    Dim DevBeta             As Double          'bd0(BetaShape, N*(1-X))
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    N = Alpha + BetaShape
+    OneMinusX = 1# - X
+
+    If Not PROB_TryDeviancePart(Alpha, N * X, DevAlpha, FailMsg) Then
+        PROB_TryBetaLogPdf = False
+        Exit Function
+    End If
+
+    If Not PROB_TryDeviancePart(BetaShape, N * OneMinusX, DevBeta, FailMsg) Then
+        PROB_TryBetaLogPdf = False
+        Exit Function
+    End If
+
+    LogPdf = -(DevAlpha + DevBeta) _
+             + 0.5 * (Log(Alpha) + Log(BetaShape) - Log(N)) _
+             - LogX _
+             - LogOneMinusX _
+             - PROB_HALF_LOG_TWO_PI _
+             - PROB_StirlingError(Alpha) _
+             - PROB_StirlingError(BetaShape) _
+             + PROB_StirlingError(N)
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    PROB_TryBetaLogPdf = True
+End Function
+
+
 
 Public Function PROB_LogChoose( _
     ByVal n As Double, _
