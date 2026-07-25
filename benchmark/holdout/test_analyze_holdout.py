@@ -31,23 +31,23 @@ def main():
     fails = []
 
     # 1. output_error + absolute -> absolute
-    w, _, n, _, _ = worst_for("output_error", "absolute", rows, "Fn")
+    w, _, n, _, _, _ = worst_for("output_error", "absolute", rows, "Fn")
     if not (n == 1 and w == abs_expected):
         fails.append(f"(output_error, absolute): got {w} across {n}, expected {abs_expected}")
 
     # 2. log_absolute_error + absolute -> absolute (same result as case 1)
-    w, _, n, _, _ = worst_for("log_absolute_error", "absolute", rows, "Fn")
+    w, _, n, _, _, _ = worst_for("log_absolute_error", "absolute", rows, "Fn")
     if not (n == 1 and w == abs_expected):
         fails.append(f"(log_absolute_error, absolute): got {w} across {n}, expected {abs_expected}")
 
     # 3. output_error + relative -> relative
-    w, _, n, _, _ = worst_for("output_error", "relative", rows, "Fn")
+    w, _, n, _, _, _ = worst_for("output_error", "relative", rows, "Fn")
     if not (n == 1 and w == rel_expected):
         fails.append(f"(output_error, relative): got {w} across {n}, expected {rel_expected}")
 
     # 4. cases 1 and 2 must agree: metric, not measure, decides the kind
-    w1, _, _, _, _ = worst_for("output_error", "absolute", rows, "Fn")
-    w2, _, _, _, _ = worst_for("log_absolute_error", "absolute", rows, "Fn")
+    w1, _, _, _, _, _ = worst_for("output_error", "absolute", rows, "Fn")
+    w2, _, _, _, _, _ = worst_for("log_absolute_error", "absolute", rows, "Fn")
     if w1 != w2:
         fails.append(f"metric=absolute disagreed across measures: {w1} vs {w2}")
 
@@ -58,20 +58,28 @@ def main():
     except ValueError:
         pass
 
-    # 6. an envelope-reject row (F CDF/Survival/Inverse, df > 1E5) is EXCLUDED, not
-    #    scored, and reported as expected rather than as an unexpected error.
+    # 6. an envelope-reject row (F CDF/Survival/Inverse, df > 1E5) that returns
+    #    ERROR is EXCLUDED, not scored, and not flagged as unexpected.
     env_error = [{"function": "F_InverseCumulative", "observed_vba": "ERROR", "reference": "1",
                   "arg1": "0.5", "arg2": "500000", "arg3": "4"}]
-    w, _, n, n_missing, n_error = worst_for("output_error", "relative", env_error, "F_InverseCumulative")
-    if not (n == 0 and n_missing == 0 and n_error == 0):
-        fails.append(f"envelope ERROR row not excluded cleanly: n={n} missing={n_missing} error={n_error}")
+    w, _, n, n_missing, n_error, n_violation = worst_for("output_error", "relative", env_error, "F_InverseCumulative")
+    if not (n == 0 and n_missing == 0 and n_error == 0 and n_violation == 0):
+        fails.append(f"envelope ERROR row not excluded cleanly: n={n} missing={n_missing} error={n_error} viol={n_violation}")
 
     # 7. an in-envelope ERROR row is UNEXPECTED and reported so the caller can block.
     in_env_error = [{"function": "F_InverseCumulative", "observed_vba": "ERROR", "reference": "1",
                      "arg1": "0.5", "arg2": "50", "arg3": "4"}]
-    w, _, n, n_missing, n_error = worst_for("output_error", "relative", in_env_error, "F_InverseCumulative")
+    w, _, n, n_missing, n_error, n_violation = worst_for("output_error", "relative", in_env_error, "F_InverseCumulative")
     if not (n == 0 and n_error == 1):
         fails.append(f"in-envelope ERROR not flagged: n={n} error={n_error}")
+
+    # 8. Direction 2: an envelope-reject row that returns a VALUE (should have been
+    #    #NUM!) is a violation, reported so the caller can block.
+    env_value = [{"function": "F_InverseCumulative", "observed_vba": "1.23", "reference": "1",
+                  "arg1": "0.5", "arg2": "500000", "arg3": "4"}]
+    w, _, n, n_missing, n_error, n_violation = worst_for("output_error", "relative", env_value, "F_InverseCumulative")
+    if not (n == 0 and n_violation == 1):
+        fails.append(f"envelope-reject VALUE not flagged as violation: n={n} viol={n_violation}")
 
     if fails:
         print("FAIL: analyze_holdout metric semantics")

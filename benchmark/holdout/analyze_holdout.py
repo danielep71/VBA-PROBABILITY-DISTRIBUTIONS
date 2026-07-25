@@ -32,7 +32,7 @@ def worst_for(measure, metric, rows, fn):
     # (expected_error) carry no accuracy claim and are excluded; a blank/ERROR row
     # inside the envelope is unexpected and is reported so main() can BLOCK it
     # rather than silently drop it.
-    to_measure, n_expected, n_missing, n_error = dispositions(rows)
+    to_measure, n_expected, n_missing, n_error, n_violation = dispositions(rows)
     w = Decimal(-1); at = ""; n = 0
     for r in to_measure:
         o = parse_observed(r["observed_vba"])
@@ -51,7 +51,7 @@ def worst_for(measure, metric, rows, fn):
         if e > w:
             w = e; at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)
     worst = w if n else None
-    return worst, at, n, n_missing, n_error
+    return worst, at, n, n_missing, n_error, n_violation
 
 def main():
     ap = argparse.ArgumentParser()
@@ -79,16 +79,18 @@ def main():
             continue                       # this contract's regime is not in the holdout
         if not c["threshold"].strip():
             continue                       # no numeric threshold to test (e.g. characterized)
-        w, at, n, n_missing, n_error = worst_for(c["measure"], c["metric"], matched, c["function"])
-        if n_missing or n_error:
-            # Unexpected blank/ERROR evidence INSIDE the envelope blocks, exactly as
-            # in the gate - it is not silently excluded.
+        w, at, n, n_missing, n_error, n_violation = worst_for(c["measure"], c["metric"], matched, c["function"])
+        if n_missing or n_error or n_violation:
+            # Unexpected blank/ERROR evidence INSIDE the envelope, or an envelope-reject
+            # row that failed to return #NUM!, blocks - it is not silently excluded.
             incomplete += 1
             bits = []
             if n_missing:
                 bits.append(f"{n_missing} unobserved")
             if n_error:
                 bits.append(f"{n_error} unexpected ERROR")
+            if n_violation:
+                bits.append(f"{n_violation} envelope-reject not #NUM!")
             print(f"{c['contract_id']:<48}{c['metric']:<10}{c['threshold']:>10}"
                   f"{'INCOMPLETE':>15}{n:>5}{'':>9}  {'; '.join(bits)}")
             results.append((c, None, None, n, "INCOMPLETE"))

@@ -15,7 +15,7 @@ from _contract_eval import (
     evidence_gaps, OK, MISSING, ERROR,
     predicted_expected_error, classify_row, dispositions, expected_error_drift,
     row_expected_error, MEASURE, EXCLUDE_EXPECTED, BLOCK_MISSING, BLOCK_ERROR,
-    F_MAX_DF,
+    BLOCK_EXPECTED, F_MAX_DF,
 )
 
 fails = []
@@ -83,22 +83,24 @@ check(predicted_expected_error("F_Density", "1000000", "3") is False, "F_Density
 check(predicted_expected_error("Beta_Cumulative", "1e9", "1e9") is False, "non-F -> not expected")
 check(predicted_expected_error("F_Cumulative", str(F_MAX_DF), "3") is False, "exactly at F_MAX_DF -> not expected")
 
-# --- classify_row -----------------------------------------------------------
-check(classify_row("1;2", True) == EXCLUDE_EXPECTED, "expected -> EXCLUDE_EXPECTED")
+# --- classify_row (Direction 2: expected must be ERROR) ---------------------
+check(classify_row("ERROR", True) == EXCLUDE_EXPECTED, "expected + ERROR -> EXCLUDE_EXPECTED")
+check(classify_row("1;2", True) == BLOCK_EXPECTED, "expected + value -> BLOCK_EXPECTED")
+check(classify_row("", True) == BLOCK_EXPECTED, "expected + blank -> BLOCK_EXPECTED")
 check(classify_row("", False) == BLOCK_MISSING, "blank in-envelope -> BLOCK_MISSING")
 check(classify_row("ERROR", False) == BLOCK_ERROR, "ERROR in-envelope -> BLOCK_ERROR")
 check(classify_row("1;2", False) == MEASURE, "value in-envelope -> MEASURE")
-check(classify_row("ERROR", True) == EXCLUDE_EXPECTED, "expected wins over ERROR")
 
 # --- dispositions -----------------------------------------------------------
 mixed = [
-    {"function": "F_Cumulative", "observed_vba": "0.5", "arg2": "3", "arg3": "4"},      # measure
-    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "200000"},  # expected (df>max)
-    {"function": "F_Cumulative", "observed_vba": "", "arg2": "3", "arg3": "4"},         # missing
-    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "4"},    # unexpected error
+    {"function": "F_Cumulative", "observed_vba": "0.5", "arg2": "3", "arg3": "4"},         # measure
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "200000"},  # expected (df>max), correct
+    {"function": "F_Cumulative", "observed_vba": "", "arg2": "3", "arg3": "4"},            # missing
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "4"},       # unexpected error
+    {"function": "F_Cumulative", "observed_vba": "0.9", "arg2": "3", "arg3": "200000"},    # expected but VALUE -> violation
 ]
-to_measure, n_exp, n_miss, n_err = dispositions(mixed)
-check((len(to_measure), n_exp, n_miss, n_err) == (1, 1, 1, 1), "dispositions partition")
+to_measure, n_exp, n_miss, n_err, n_viol = dispositions(mixed)
+check((len(to_measure), n_exp, n_miss, n_err, n_viol) == (1, 1, 1, 1, 1), "dispositions partition")
 
 # --- expected_error_drift ---------------------------------------------------
 clean = [{"function": "F_Cumulative", "arg2": "3", "arg3": "200000", "expected_error": "1"},

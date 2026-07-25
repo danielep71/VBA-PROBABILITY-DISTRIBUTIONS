@@ -152,9 +152,10 @@ def row_expected_error(row):
 
 # Row dispositions for an active contract's matched grid rows.
 MEASURE = "measure"                    # a usable in-envelope observation -> score it
-EXCLUDE_EXPECTED = "exclude_expected"  # envelope-reject region -> no accuracy claim
+EXCLUDE_EXPECTED = "exclude_expected"  # envelope-reject region, correctly #NUM! -> not scored
 BLOCK_MISSING = "block_missing"        # active row not yet observed
 BLOCK_ERROR = "block_error"            # unexpected kernel error inside the envelope
+BLOCK_EXPECTED = "block_expected"      # envelope-reject row that did NOT return #NUM!
 
 
 def classify_row(observed_raw, expected_error):
@@ -162,14 +163,18 @@ def classify_row(observed_raw, expected_error):
     Disposition of one matched grid row. `expected_error` is truthy when the row
     is outside the validated envelope (a #NUM! is the correct response).
 
-      expected_error            -> EXCLUDE_EXPECTED  (no accuracy claim; not scored)
-      blank observation         -> BLOCK_MISSING     (active contract, unobserved)
-      ERROR observation         -> BLOCK_ERROR       (unexpected error in-envelope)
-      otherwise                 -> MEASURE
+      expected_error & observed ERROR -> EXCLUDE_EXPECTED (correct refusal; not scored)
+      expected_error & not ERROR      -> BLOCK_EXPECTED    (envelope failed to fire)
+      blank observation               -> BLOCK_MISSING     (active contract, unobserved)
+      ERROR observation               -> BLOCK_ERROR       (unexpected error in-envelope)
+      otherwise                       -> MEASURE
     """
-    if expected_error:
-        return EXCLUDE_EXPECTED
     st = observation_state(observed_raw)
+    if expected_error:
+        # Direction 2: an envelope-reject row MUST observe ERROR - the #NUM! the
+        # predicate says is correct. A value or a blank there means the envelope
+        # did not fire, so stale or envelope-inconsistent data cannot pass silently.
+        return EXCLUDE_EXPECTED if st == ERROR else BLOCK_EXPECTED
     if st == MISSING:
         return BLOCK_MISSING
     if st == ERROR:
@@ -182,11 +187,12 @@ def dispositions(rows):
     Partition a contract's matched grid rows for scoring. The envelope predicate
     (derived from each row's own args) identifies expected #NUM! rows, which are
     excluded from scoring, and distinguishes them from unexpected in-envelope
-    errors, which must block.
-    Returns (to_measure, n_expected, n_missing, n_error).
+    errors and from envelope-reject rows that failed to return #NUM! - both of
+    which must block.
+    Returns (to_measure, n_expected, n_missing, n_error, n_expected_violation).
     """
     to_measure = []
-    n_expected = n_missing = n_error = 0
+    n_expected = n_missing = n_error = n_violation = 0
     for r in rows:
         exp = predicted_expected_error(r.get("function", ""), r.get("arg2", ""), r.get("arg3", ""))
         d = classify_row(r.get("observed_vba", ""), exp)
@@ -196,9 +202,11 @@ def dispositions(rows):
             n_expected += 1
         elif d == BLOCK_MISSING:
             n_missing += 1
-        else:
+        elif d == BLOCK_ERROR:
             n_error += 1
-    return to_measure, n_expected, n_missing, n_error
+        else:                       # BLOCK_EXPECTED
+            n_violation += 1
+    return to_measure, n_expected, n_missing, n_error, n_violation
 
 
 def expected_error_drift(rows):

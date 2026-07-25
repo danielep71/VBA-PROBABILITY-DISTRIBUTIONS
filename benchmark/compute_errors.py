@@ -161,15 +161,17 @@ def main():
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
                              f"0 | \u23f3 PENDING - no observations |")
                 continue
-            to_measure, n_expected, n_missing, n_error = dispositions(mt)
+            to_measure, n_expected, n_missing, n_error, n_violation = dispositions(mt)
             in_env = len(mt) - n_expected
-            if status == "active" and (n_missing or n_error):
+            if status == "active" and (n_missing or n_error or n_violation):
                 n_pending += 1
                 bits = []
                 if n_missing:
                     bits.append(f"{n_missing} unobserved")
                 if n_error:
                     bits.append(f"{n_error} unexpected ERROR in-envelope")
+                if n_violation:
+                    bits.append(f"{n_violation} envelope-reject row(s) that did not return #NUM!")
                 unevaluated.append((cid, "; ".join(bits) + "; strict mode requires full "
                                     "in-envelope observation"))
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
@@ -209,16 +211,18 @@ def main():
         # failure inside the accuracy envelope) BLOCKS as PENDING rather than being
         # silently dropped. Rows in the F envelope-reject region (expected_error)
         # carry no accuracy claim and are excluded from scoring entirely.
-        to_measure, n_expected, n_missing, n_error = dispositions(matched)
+        to_measure, n_expected, n_missing, n_error, n_violation = dispositions(matched)
         in_env = len(matched) - n_expected
 
-        if status == "active" and (n_missing or n_error):
+        if status == "active" and (n_missing or n_error or n_violation):
             n_pending += 1
             bits = []
             if n_missing:
                 bits.append(f"{n_missing} unobserved")
             if n_error:
                 bits.append(f"{n_error} unexpected ERROR in-envelope")
+            if n_violation:
+                bits.append(f"{n_violation} envelope-reject row(s) that did not return #NUM!")
             unevaluated.append((cid, "; ".join(bits) + "; strict mode requires full "
                                 "in-envelope observation"))
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
