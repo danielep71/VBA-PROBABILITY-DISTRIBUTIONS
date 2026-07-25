@@ -16,12 +16,18 @@ put, and the hosted accuracy workflow did not even re-run.
 
 - **Source binding.** `observation_manifest.json` records a content hash
   (SHA-256 over LF-normalized bytes, so CRLF and LF hash identically) of every
-  `.bas` file — kernels, exporters, study macros, and tests — plus the grid
-  schema version and columns. `compute_errors.py` recomputes those hashes
-  against the checked-out tree **before** evaluating any contract and **fails
-  the gate** (`STALE EVIDENCE`, nonzero exit) if any module changed, was added,
-  or was removed, or if the grid schema drifted. It also fails if the manifest
-  is absent (unless `--allow-missing-manifest`, for local development only).
+  `.bas` file — kernels, exporters, study macros, and tests — the full
+  `probability_accuracy_grid.csv` **observation bytes**, the
+  `accuracy_contracts.csv` **registry**, and the grid schema version and
+  columns. `compute_errors.py` recomputes those against the checked-out tree
+  **before** evaluating any contract and **fails the gate** (`STALE EVIDENCE`,
+  nonzero exit) if any module changed / was added / removed, if a single
+  `observed_vba` value was edited (even with unchanged columns), if a threshold
+  in the registry changed, or if the schema drifted. It also fails if the
+  manifest is absent or predates content binding (unless
+  `--allow-missing-manifest`, for local development only). The binding is thus
+  *these exact observation bytes, this exact source, this exact contract
+  registry* — not merely a matching structure.
 - **The gate now runs on source changes.** `accuracy-gate.yml` triggers on
   `src/**` and `tests/**` (as well as `benchmark/**`). A source edit therefore
   re-runs the gate, which then fails on the manifest mismatch until the
@@ -34,8 +40,9 @@ put, and the hosted accuracy workflow did not even re-run.
 
 ## Operating procedure (run at every export)
 
-Whenever `src/**`, the exporters, or the tests change, the observations must be
-regenerated and re-bound — the gate will not certify them otherwise:
+Whenever `src/**`, the exporters, the tests, the observation grid, or the
+contract registry change, the manifest must be re-written — the gate will not
+certify the summary otherwise:
 
 1. Import the current source into the workbook and re-export the observations
    (`Export_Accuracy_Observations`, plus any affected study macro).

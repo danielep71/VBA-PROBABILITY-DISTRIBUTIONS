@@ -139,7 +139,8 @@ def main():
             print("  gate FAILED (exit 1): " + _msg)
             sys.exit(1)
     else:
-        _problems = verify_source_binding(_root, _manifest, args.grid)
+        _problems = verify_source_binding(_root, _manifest, args.grid,
+                                          os.path.join(HERE, "accuracy_contracts.csv"))
         if _problems:
             print(f"  gate FAILED (exit 1): STALE EVIDENCE - the committed observations are not bound "
                   f"to the checked-out source ({len(_problems)} mismatch(es)); re-export and "
@@ -172,7 +173,8 @@ def main():
         prov += [
             "**Provenance.** These observations are bound to source by "
             "`observation_manifest.json` "
-            f"({len(_manifest.get('source_binding', {}))} `.bas` modules, schema "
+            f"({len(_manifest.get('source_binding', {}))} `.bas` modules, the grid content "
+            f"hash, the contract registry, and schema "
             f"`{_manifest.get('grid_schema_version','?')}`), verified against the "
             "checked-out tree before evaluation.",
             "",

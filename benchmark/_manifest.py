@@ -73,6 +73,7 @@ def build_manifest(root, grid_path, contracts_path, generated_utc,
         "commit_sha": commit_sha,
         "grid_schema_version": GRID_SCHEMA_VERSION,
         "grid_schema_columns": grid_columns(grid_path),
+        "observation_grid_sha256": normalized_hash(grid_path),
         "source_binding": source_hashes(root),
         "contract_registry_sha256": normalized_hash(contracts_path),
         "environment": environment or {
@@ -92,12 +93,15 @@ def load_manifest(root):
         return json.load(f)
 
 
-def verify_source_binding(root, manifest, grid_path):
+def verify_source_binding(root, manifest, grid_path, contracts_path):
     """
     Return a list of human-readable mismatches between the manifest and the
-    checked-out source/grid. Empty list means the evidence is bound to this
-    exact source. Enforces module hashes and grid schema; environment,
-    commit_sha and contract sha are provenance metadata, not enforced here.
+    checked-out source, grid, and contract registry. Empty list means these
+    exact observation bytes are bound to this exact source. Enforces:
+      * every .bas module hash (source structure and behaviour),
+      * the grid schema version and columns,
+      * the full observation-grid content hash (the observation bytes),
+      * the contract-registry content hash (the thresholds that produced the verdicts).
     """
     problems = []
     recorded = manifest.get("source_binding", {})
@@ -120,5 +124,24 @@ def verify_source_binding(root, manifest, grid_path):
         cols = grid_columns(grid_path)
         if manifest.get("grid_schema_columns") != cols:
             problems.append("grid schema columns changed since the manifest was written")
+
+    # Observation bytes: an edited observed_vba (or any grid content) must invalidate
+    # the binding even when the columns are unchanged.
+    grid_recorded = manifest.get("observation_grid_sha256")
+    if grid_recorded is None:
+        problems.append("manifest predates observation-content binding "
+                        "(no observation_grid_sha256); regenerate with write_manifest.py")
+    elif normalized_hash(grid_path) != grid_recorded:
+        problems.append("observation grid contents changed since the manifest was written "
+                        "(an observation was edited or re-exported without re-binding)")
+
+    # Contract registry: the verdicts are only valid for the thresholds they were
+    # produced against, so the registry is bound too.
+    reg_recorded = manifest.get("contract_registry_sha256")
+    if reg_recorded is None:
+        problems.append("manifest has no contract_registry_sha256; regenerate with write_manifest.py")
+    elif normalized_hash(contracts_path) != reg_recorded:
+        problems.append("contract registry changed since the manifest was written "
+                        "(thresholds/contracts edited without re-binding)")
 
     return problems
