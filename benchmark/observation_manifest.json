@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-25T08:33:04Z",
-  "commit_sha": "06c208ded2c7aef26f54ea266470235701d51bc3",
+  "generated_utc": "2026-07-25T08:52:52Z",
+  "commit_sha": "d5a6ef2",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -42,9 +42,9 @@
   },
   "contract_registry_sha256": "sha256:71e0e9efdd07056bbbcb88a3f3f3ef6e08a241910df157bf00b473a424642cd8",
   "environment": {
-    "excel_version": "unrecorded",
-    "excel_build": "unrecorded",
-    "office_bitness": "unrecorded"
+    "excel_version": "2606",
+    "excel_build": "16.0.20131.20152",
+    "office_bitness": "64"
   },
-  "notes": "Baseline manifest: binds the current committed observation bytes, source, contract registry, and schema. Assumes the committed observations are current (re-exported through P1-01, F-envelope, beta_f_inverse). Regenerate at the next full Excel export with real environment fields for a contemporaneous binding."
+  "notes": ""
 }
