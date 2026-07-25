@@ -211,7 +211,7 @@ Public Function K_STATS_Gamma_Density( _
 '   - PROB_CN_ValidateXShapeScale
 '   - PROB_TryDivide
 '   - PROB_TryExp
-'   - PROB_LogGamma
+'   - PROB_TryGammaLogPdf
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -293,12 +293,11 @@ Public Function K_STATS_Gamma_Density( _
     'Form Log(X / ScaleParam) without dividing potentially extreme operands
         LogRatio = Log(X) - Log(ScaleParam)
 
-    'Use the scale-separated log-density to reduce cancellation
-        LogDensity = _
-            (Shape - 1#) * LogRatio - _
-            StandardX - _
-            Log(ScaleParam) - _
-            PROB_LogGamma(Shape)
+    'Stable Loader log-density via the shared kernel (no large-Shape cancellation)
+        If Not PROB_TryGammaLogPdf(StandardX, Shape, LogRatio, Log(ScaleParam), _
+                                   LogDensity, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
     'Exponentiate under the shared overflow and underflow contract
         If Not PROB_TryExp(LogDensity, Density) Then
@@ -1149,7 +1148,7 @@ Public Function K_STATS_Beta_Density( _
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXTwoShapes
 '   - PROB_Log1p
-'   - PROB_LogBeta
+'   - PROB_TryBetaLogPdf
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
@@ -1223,11 +1222,11 @@ Public Function K_STATS_Beta_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
-    'Compute the log-density, taking Log(1 - X) through PROB_Log1p(-X)
-        LogDensity = _
-            (Alpha - 1#) * Log(X) + _
-            (Beta - 1#) * PROB_Log1p(-X) - _
-            PROB_LogBeta(Alpha, Beta)
+    'Stable Loader log-density via the shared kernel (no large-shape cancellation)
+        If Not PROB_TryBetaLogPdf(X, Alpha, Beta, Log(X), PROB_Log1p(-X), _
+                                  LogDensity, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
     'Exponentiate; underflow to zero is a valid result
         If Not PROB_TryExp(LogDensity, Density) Then
@@ -4949,5 +4948,3 @@ Private Function PROB_CN_ValidateXBounds( _
     'Report successful validation
         PROB_CN_ValidateXBounds = True
 End Function
-
-
