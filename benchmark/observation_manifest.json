@@ -1,0 +1,49 @@
+{
+  "manifest_version": 1,
+  "generated_utc": "2026-07-25T07:22:47Z",
+  "commit_sha": "aed48368459dc935c4455c50503308976ad81f7d",
+  "grid_schema_version": "arg4+expected_error/v1",
+  "grid_schema_columns": [
+    "function",
+    "vba_kernel",
+    "claim",
+    "metric",
+    "arg1",
+    "arg2",
+    "arg3",
+    "arg4",
+    "reference",
+    "observed_vba",
+    "regime",
+    "evidence_set",
+    "expected_error"
+  ],
+  "source_binding": {
+    "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:395ab68407f167a0eb0fc0de9b9786b5ee888f3011e2cd9d48744ffb798f0a83",
+    "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
+    "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_UNBAL.bas": "sha256:750c34d9450bbe965106a4cfef72ed965f0ffb7186cbc5ab897e65deadcee241",
+    "benchmark/delta_seam_study/M_STATS_PROBDIST_DELTA_SEAM.bas": "sha256:b259d3ab8452a63ef31fb1d4e06231eff28e23d972be39ff471c92817f4ad0c5",
+    "benchmark/density_helpers/M_STATS_PROBDIST_DENSHELP.bas": "sha256:fee5f39d26dddf39ec751e192fae8d296331688d3a8442f1c1feb2e1a5fd4190",
+    "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:ef5c9c010376a337469f6597670cad733118666e8361833ab9304561dc3c861f",
+    "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:ddd22d5d33ae9d8ae3ce9b4141337219ca422422ebecb80568c8f1afe8aee95a",
+    "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:03f0354961664a7685f70a4ae5bb034678a6403f6ab84a64b86f5ee2d0b6a91c",
+    "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:ac42166bb978eb48d45490cd7fb715a448b83561ea6ebeeed50c10d9636f9693",
+    "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas": "sha256:dc7708db87f0d1aafd6c7b0a81cffc72584232a0146f2eb2fb4fa1b998d67540",
+    "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
+    "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:696b8d3ca96e866bd142f048d1af0f0388605a36f81064f64793dfaa91a4f9b5",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:b215c2b055fd50cfd118646b7d1ba50dc876edf15a209f9f31fecaa69bb80a38",
+    "src/M_STATS_PROBDIST_CORE.bas": "sha256:db14ad05a77914c37df07a9dc3dd6fd873752f12421dd1463d096e72dad0e99d",
+    "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:286a8d6316d6110a1221ae934e6b4e5a180dfd37ba4e72a531a61d984f79f454",
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:2dcf523a8b48aecb278aaeac100ff908e7f85442a89531e7b18fa0c4a4f574d9",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:071e8eb27c1851cab8c071a5efcb0bc03cdc4e3ee1feefee6b154639874ffe53",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:0ac3ae6ae0aa5b93f3c10ba48f63f841e9aea2282f22802504e513478cfdb8a7",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b34dcdaa1fade364a2ececc04b7dd0f265a9759145526fe5003e2b617a838a22"
+  },
+  "contract_registry_sha256": "sha256:71e0e9efdd07056bbbcb88a3f3f3ef6e08a241910df157bf00b473a424642cd8",
+  "environment": {
+    "excel_version": "unrecorded",
+    "excel_build": "unrecorded",
+    "office_bitness": "unrecorded"
+  },
+  "notes": "Baseline manifest: binds the current committed observations to the source at this commit. Assumes the committed observations are current (they were re-exported through the P1-01/envelope/beta_f_inverse work); regenerate at the next full export for a from-scratch binding."
+}
