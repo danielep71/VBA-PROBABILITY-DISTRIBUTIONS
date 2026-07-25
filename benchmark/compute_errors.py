@@ -86,6 +86,23 @@ def tail_residual(rows, fn):
     return (worst, worst_at, cnt) if cnt else (None, "", 0)
 
 
+def _incomplete_detail(disp):
+    """Human-readable reason an active contract is blocked, naming every bad row."""
+    bits = []
+    if disp.n_missing:
+        bits.append(f"{disp.n_missing} unobserved")
+    if disp.n_error:
+        bits.append(f"{disp.n_error} unexpected ERROR in-envelope")
+    if disp.n_violation:
+        bits.append(f"{disp.n_violation} envelope-reject row(s) not #NUM!")
+    if disp.n_invalid:
+        bits.append(f"{disp.n_invalid} unparseable observation/reference/args")
+    detail = "; ".join(bits) + "; strict mode requires every in-envelope row evaluable"
+    for rid, why in disp.reasons:
+        detail += f"\n      - {rid}: {why}"
+    return detail
+
+
 def _force_utf8_stdout():
     # Windows consoles default to cp1252 and cannot print the verdict icons.
     try:
@@ -161,24 +178,16 @@ def main():
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
                              f"0 | \u23f3 PENDING - no observations |")
                 continue
-            to_measure, n_expected, n_missing, n_error, n_violation = dispositions(mt)
-            in_env = len(mt) - n_expected
-            if status == "active" and (n_missing or n_error or n_violation):
+            disp = dispositions(mt, measure)
+            in_env = len(mt) - disp.n_expected
+            if status == "active" and (disp.n_missing or disp.n_error or disp.n_violation or disp.n_invalid):
                 n_pending += 1
-                bits = []
-                if n_missing:
-                    bits.append(f"{n_missing} unobserved")
-                if n_error:
-                    bits.append(f"{n_error} unexpected ERROR in-envelope")
-                if n_violation:
-                    bits.append(f"{n_violation} envelope-reject row(s) that did not return #NUM!")
-                unevaluated.append((cid, "; ".join(bits) + "; strict mode requires full "
-                                    "in-envelope observation"))
+                unevaluated.append((cid, _incomplete_detail(disp)))
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
-                             f"{len(to_measure)}/{in_env} | \u23f3 PENDING - incomplete evidence |")
+                             f"{len(disp.to_measure)}/{in_env} | \u23f3 PENDING - incomplete evidence |")
                 continue
             try:
-                worst, at, nn = tail_residual(to_measure, fn)
+                worst, at, nn = tail_residual(disp.to_measure, fn)
             except Exception as _te:
                 n_pending += 1
                 unevaluated.append((cid, f"evaluator error: {type(_te).__name__}: {_te}"))
@@ -190,6 +199,12 @@ def main():
                 unevaluated.append((cid, "no usable in-envelope observations"))
                 lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
                              f"0/{in_env} | \u23f3 PENDING |")
+                continue
+            if nn != len(disp.to_measure):
+                n_pending += 1
+                unevaluated.append((cid, f"internal skip: scored {nn} of {len(disp.to_measure)} valid rows"))
+                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                             f"{nn}/{in_env} | \u23f3 PENDING - internal skip |")
                 continue
             ok = threshold is not None and worst <= threshold
             if ok:
@@ -211,30 +226,28 @@ def main():
         # failure inside the accuracy envelope) BLOCKS as PENDING rather than being
         # silently dropped. Rows in the F envelope-reject region (expected_error)
         # carry no accuracy claim and are excluded from scoring entirely.
-        to_measure, n_expected, n_missing, n_error, n_violation = dispositions(matched)
-        in_env = len(matched) - n_expected
+        disp = dispositions(matched, measure)
+        in_env = len(matched) - disp.n_expected
 
-        if status == "active" and (n_missing or n_error or n_violation):
+        if status == "active" and (disp.n_missing or disp.n_error or disp.n_violation or disp.n_invalid):
             n_pending += 1
-            bits = []
-            if n_missing:
-                bits.append(f"{n_missing} unobserved")
-            if n_error:
-                bits.append(f"{n_error} unexpected ERROR in-envelope")
-            if n_violation:
-                bits.append(f"{n_violation} envelope-reject row(s) that did not return #NUM!")
-            unevaluated.append((cid, "; ".join(bits) + "; strict mode requires full "
-                                "in-envelope observation"))
+            unevaluated.append((cid, _incomplete_detail(disp)))
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
-                         f"{len(to_measure)}/{in_env} | "
+                         f"{len(disp.to_measure)}/{in_env} | "
                          f"\u23f3 PENDING - incomplete evidence |")
             continue
 
-        worst, at, n = measure_error(to_measure, metric)
+        worst, at, n = measure_error(disp.to_measure, metric)
         if worst is None:
             n_pending += 1
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
                          f"0/{in_env} | \u23f3 PENDING |")
+            continue
+        if n != len(disp.to_measure):
+            n_pending += 1
+            unevaluated.append((cid, f"internal skip: measured {n} of {len(disp.to_measure)} valid rows"))
+            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                         f"{n}/{in_env} | \u23f3 PENDING - internal skip |")
             continue
 
         ok = threshold is not None and worst <= threshold

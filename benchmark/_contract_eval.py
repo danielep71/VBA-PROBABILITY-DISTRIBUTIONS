@@ -17,6 +17,7 @@ mpmath, so it stays importable even when those are unavailable; the tail path
 passes already-evaluated `recovered`/`target` values in.
 """
 from decimal import Decimal, InvalidOperation
+from collections import namedtuple
 
 # Observation-cell states.
 OK = "ok"            # a usable numeric observation (possibly two-part hi;lo)
@@ -151,23 +152,25 @@ def row_expected_error(row):
 
 
 # Row dispositions for an active contract's matched grid rows.
-MEASURE = "measure"                    # a usable in-envelope observation -> score it
+MEASURE = "measure"                    # a usable, fully-valid in-envelope observation
 EXCLUDE_EXPECTED = "exclude_expected"  # envelope-reject region, correctly #NUM! -> not scored
 BLOCK_MISSING = "block_missing"        # active row not yet observed
 BLOCK_ERROR = "block_error"            # unexpected kernel error inside the envelope
 BLOCK_EXPECTED = "block_expected"      # envelope-reject row that did NOT return #NUM!
+BLOCK_INVALID = "block_invalid"        # observation/reference/args present but unparseable
 
 
 def classify_row(observed_raw, expected_error):
     """
-    Disposition of one matched grid row. `expected_error` is truthy when the row
-    is outside the validated envelope (a #NUM! is the correct response).
+    Disposition of one matched grid row by OBSERVATION STATE and envelope marker.
+    A MEASURE result here is provisional: the row still has to pass row_validity
+    (parseable observation, reference, and required args) before it is scored.
 
       expected_error & observed ERROR -> EXCLUDE_EXPECTED (correct refusal; not scored)
       expected_error & not ERROR      -> BLOCK_EXPECTED    (envelope failed to fire)
       blank observation               -> BLOCK_MISSING     (active contract, unobserved)
       ERROR observation               -> BLOCK_ERROR       (unexpected error in-envelope)
-      otherwise                       -> MEASURE
+      otherwise                       -> MEASURE (pending validity)
     """
     st = observation_state(observed_raw)
     if expected_error:
@@ -182,31 +185,96 @@ def classify_row(observed_raw, expected_error):
     return MEASURE
 
 
-def dispositions(rows):
+def _parses_float(v):
+    try:
+        float(v)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def row_validity(row, measure):
     """
-    Partition a contract's matched grid rows for scoring. The envelope predicate
-    (derived from each row's own args) identifies expected #NUM! rows, which are
-    excluded from scoring, and distinguishes them from unexpected in-envelope
-    errors and from envelope-reject rows that failed to return #NUM! - both of
-    which must block.
-    Returns (to_measure, n_expected, n_missing, n_error, n_expected_violation).
+    Preflight for a row already classified MEASURE. Returns None if the row is
+    fully evaluable, else a human-readable reason. This closes the gap where a
+    non-blank, non-ERROR row could still be silently skipped by the measurer
+    because its reference, observation, or a required argument would not parse.
+      * the observation must parse in full (every hi;lo part), not merely be non-blank;
+      * ordinary contracts need a parseable reference;
+      * tail_probability_residual contracts need parseable arg1/arg2/arg3.
+    """
+    obs = (row.get("observed_vba", "") or "").strip()
+    try:
+        total = Decimal(0)
+        for part in obs.split(";"):
+            total += Decimal(part.strip())
+    except (InvalidOperation, ValueError):
+        return f"unparseable observation {obs!r}"
+    if measure == "tail_probability_residual":
+        for k in ("arg1", "arg2", "arg3"):
+            v = (row.get(k, "") or "").strip()
+            if v == "":
+                return f"missing required {k}"
+            if not _parses_float(v):
+                return f"unparseable {k} {v!r}"
+    else:
+        if parse_reference(row.get("reference", "")) is None:
+            return f"unparseable reference {(row.get('reference','') or '').strip()!r}"
+    return None
+
+
+def _row_id(row):
+    args = ", ".join(f"{k}={row.get(k,'')}" for k in ("arg1", "arg2", "arg3", "arg4")
+                     if (row.get(k, "") or "").strip())
+    return args or "(no args)"
+
+
+# Self-describing partition of a contract's matched rows. Attribute access keeps
+# callers stable as fields are added; `reasons` lists every blocking/invalid row
+# so the gate can name exactly what failed rather than silently omitting it.
+Dispositions = namedtuple(
+    "Dispositions",
+    "to_measure n_expected n_missing n_error n_violation n_invalid reasons")
+
+
+def dispositions(rows, measure=None):
+    """
+    Partition a contract's matched grid rows for scoring, measure-aware.
+      to_measure   fully-valid, in-envelope rows to score
+      n_expected   envelope-reject rows correctly returning #NUM! (excluded)
+      n_missing    blank observations (block)
+      n_error      unexpected in-envelope ERROR (block)
+      n_violation  envelope-reject rows that did NOT return #NUM! (block)
+      n_invalid    rows whose observation/reference/args will not parse (block)
+      reasons      (row-id, reason) for every blocking/invalid row
+    len(to_measure) == matched - n_expected only when there are no blocks; any
+    nonzero block count means the evidence is incomplete and must not PASS.
     """
     to_measure = []
-    n_expected = n_missing = n_error = n_violation = 0
+    n_expected = n_missing = n_error = n_violation = n_invalid = 0
+    reasons = []
     for r in rows:
         exp = predicted_expected_error(r.get("function", ""), r.get("arg2", ""), r.get("arg3", ""))
         d = classify_row(r.get("observed_vba", ""), exp)
         if d == MEASURE:
-            to_measure.append(r)
+            reason = row_validity(r, measure)
+            if reason is None:
+                to_measure.append(r)
+            else:
+                n_invalid += 1
+                reasons.append((_row_id(r), reason))
         elif d == EXCLUDE_EXPECTED:
             n_expected += 1
         elif d == BLOCK_MISSING:
             n_missing += 1
+            reasons.append((_row_id(r), "unobserved (blank)"))
         elif d == BLOCK_ERROR:
             n_error += 1
+            reasons.append((_row_id(r), "unexpected ERROR in-envelope"))
         else:                       # BLOCK_EXPECTED
             n_violation += 1
-    return to_measure, n_expected, n_missing, n_error, n_violation
+            reasons.append((_row_id(r), "envelope-reject row did not return #NUM!"))
+    return Dispositions(to_measure, n_expected, n_missing, n_error, n_violation, n_invalid, reasons)
 
 
 def expected_error_drift(rows):

@@ -15,7 +15,7 @@ from _contract_eval import (
     evidence_gaps, OK, MISSING, ERROR,
     predicted_expected_error, classify_row, dispositions, expected_error_drift,
     row_expected_error, MEASURE, EXCLUDE_EXPECTED, BLOCK_MISSING, BLOCK_ERROR,
-    BLOCK_EXPECTED, F_MAX_DF,
+    BLOCK_EXPECTED, BLOCK_INVALID, row_validity, F_MAX_DF,
 )
 
 fails = []
@@ -91,16 +91,52 @@ check(classify_row("", False) == BLOCK_MISSING, "blank in-envelope -> BLOCK_MISS
 check(classify_row("ERROR", False) == BLOCK_ERROR, "ERROR in-envelope -> BLOCK_ERROR")
 check(classify_row("1;2", False) == MEASURE, "value in-envelope -> MEASURE")
 
-# --- dispositions -----------------------------------------------------------
+# --- dispositions (namedtuple result, measure-aware validity) ---------------
 mixed = [
-    {"function": "F_Cumulative", "observed_vba": "0.5", "arg2": "3", "arg3": "4"},         # measure
-    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "200000"},  # expected (df>max), correct
-    {"function": "F_Cumulative", "observed_vba": "", "arg2": "3", "arg3": "4"},            # missing
-    {"function": "F_Cumulative", "observed_vba": "ERROR", "arg2": "3", "arg3": "4"},       # unexpected error
-    {"function": "F_Cumulative", "observed_vba": "0.9", "arg2": "3", "arg3": "200000"},    # expected but VALUE -> violation
+    {"function": "F_Cumulative", "observed_vba": "0.5", "reference": "0.5", "arg2": "3", "arg3": "4"},  # measure
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "reference": "0.5", "arg2": "3", "arg3": "200000"},  # expected
+    {"function": "F_Cumulative", "observed_vba": "", "reference": "0.5", "arg2": "3", "arg3": "4"},     # missing
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "reference": "0.5", "arg2": "3", "arg3": "4"},  # unexpected error
+    {"function": "F_Cumulative", "observed_vba": "0.9", "reference": "0.5", "arg2": "3", "arg3": "200000"},  # violation
 ]
-to_measure, n_exp, n_miss, n_err, n_viol = dispositions(mixed)
-check((len(to_measure), n_exp, n_miss, n_err, n_viol) == (1, 1, 1, 1, 1), "dispositions partition")
+d = dispositions(mixed, "output_error")
+check((len(d.to_measure), d.n_expected, d.n_missing, d.n_error, d.n_violation, d.n_invalid)
+      == (1, 1, 1, 1, 1, 0), "dispositions partition")
+check(len(d.reasons) == 3, "dispositions reasons name each blocking row")
+
+# --- row_validity + the 8 required release-gate completeness cases -----------
+NT = "output_error"; TL = "tail_probability_residual"
+def one(measure, **row):
+    row.setdefault("function", "F_Cumulative")
+    return dispositions([row], measure)
+
+# 1. blank ordinary observation -> missing
+check(one(NT, observed_vba="", reference="1", arg2="3", arg3="4").n_missing == 1, "1 blank ordinary")
+# 2. ERROR ordinary observation (in-envelope) -> error
+check(one(NT, observed_vba="ERROR", reference="1", arg2="3", arg3="4").n_error == 1, "2 ERROR ordinary")
+# 3. malformed hi;lo observation -> invalid
+check(one(NT, observed_vba="1.0;abc", reference="1", arg2="3", arg3="4").n_invalid == 1, "3 malformed hi;lo")
+# 4. malformed reference -> invalid
+check(one(NT, observed_vba="1.0", reference="not_a_number", arg2="3", arg3="4").n_invalid == 1, "4 malformed reference")
+# 5. blank tail-residual observation -> missing
+check(one(TL, function="Beta_InverseCumulative", observed_vba="", arg1="0.5", arg2="2", arg3="3").n_missing == 1, "5 blank tail")
+# 6. ERROR tail-residual observation -> error
+check(one(TL, function="Beta_InverseCumulative", observed_vba="ERROR", arg1="0.5", arg2="2", arg3="3").n_error == 1, "6 ERROR tail")
+# 7. missing tail argument -> invalid
+check(one(TL, function="Beta_InverseCumulative", observed_vba="0.6", arg1="0.5", arg2="", arg3="3").n_invalid == 1, "7 missing tail arg")
+# 8. mixed valid/invalid contract must NOT be fully measurable (a block remains)
+mix8 = [
+    {"function": "F_Cumulative", "observed_vba": "0.5", "reference": "0.5", "arg2": "3", "arg3": "4"},
+    {"function": "F_Cumulative", "observed_vba": "0.6", "reference": "bad", "arg2": "3", "arg3": "4"},
+]
+d8 = dispositions(mix8, NT)
+check(len(d8.to_measure) == 1 and (d8.n_missing + d8.n_error + d8.n_violation + d8.n_invalid) == 1,
+      "8 mixed valid/invalid must block")
+
+# row_validity direct: a clean row passes, malformed ones return a reason
+check(row_validity({"observed_vba": "1.0", "reference": "2.0"}, NT) is None, "row_validity clean ordinary")
+check(row_validity({"observed_vba": "1.0", "reference": "x"}, NT) is not None, "row_validity bad reference")
+check(row_validity({"observed_vba": "1;2;x", "reference": "2"}, NT) is not None, "row_validity bad hi;lo")
 
 # --- expected_error_drift ---------------------------------------------------
 clean = [{"function": "F_Cumulative", "arg2": "3", "arg3": "200000", "expected_error": "1"},
