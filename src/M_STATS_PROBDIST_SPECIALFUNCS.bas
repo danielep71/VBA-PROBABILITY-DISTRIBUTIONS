@@ -116,6 +116,7 @@ Option Private Module
 Private Const PROB_BETA_MAX_ITER       As Long = 100000   'Lentz iterations, incomplete beta
 Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterations, incomplete gamma
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
+Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
 Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (validated by the committed seam study and independent holdout)
 Private Const PROB_BETAINV_ROUNDTRIP_TOL As Double = 0.000001    'Forward-probability residual above which no representable interior quantile exists (worst legitimate measured residual is 3.9E-10)
@@ -628,6 +629,125 @@ Public Function PROB_StirlingError( _
             PROB_StirlingError = (S0 - (S1 - (S2 - (S3 - S4 / NSquared) / NSquared) / NSquared) / NSquared) / n
         End If
 End Function
+
+Public Function PROB_TryDeviancePart( _
+    ByVal X As Double, _
+    ByVal MeanPart As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryDeviancePart
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Computes Loader's deviance component
+'
+'       bd0(X, MeanPart) = X * Log(X / MeanPart) + MeanPart - X
+'
+'   without cancellation when X is close to MeanPart.
+'
+' PRECONDITION
+'   X >= 0 and MeanPart > 0.
+'
+' METHOD
+'   Uses Loader's convergent odd-power series when
+'   Abs(X-MeanPart) < 0.1 * (X+MeanPart); otherwise uses the direct expression
+'   with Log(X)-Log(MeanPart), avoiding overflow in X/MeanPart.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result contains the non-negative deviance component.
+'     FALSE => The bounded series did not converge.
+'
+' UPDATED
+'   2026-07-19 - Loader bd0 implementation with an explicit iteration guard.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Difference          As Double          'X - MeanPart
+    Dim SumArguments        As Double          'X + MeanPart
+    Dim V                   As Double          'Scaled difference
+    Dim V2                  As Double          'V squared
+    Dim Ej                  As Double          'Series numerator
+    Dim Term                As Double          'Current series term
+    Dim SumValue            As Double          'Current series sum
+    Dim NewSum              As Double          'Updated series sum
+    Dim ScaleValue          As Double          'Convergence scale
+    Dim IterIdx             As Long            'Iteration index
+
+'------------------------------------------------------------------------------
+' HANDLE X = 0
+'------------------------------------------------------------------------------
+    'The limiting deviance component is MeanPart
+        If X <= 0# Then
+            Result = MeanPart
+            PROB_TryDeviancePart = True
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' CHOOSE NUMERICAL BRANCH
+'------------------------------------------------------------------------------
+        Difference = X - MeanPart
+        SumArguments = X + MeanPart
+
+    'Use the convergent series near equality
+        If Abs(Difference) < 0.1 * SumArguments Then
+            V = Difference / SumArguments
+            V2 = V * V
+            SumValue = Difference * V
+            Ej = 2# * X * V
+
+            For IterIdx = 1 To PROB_BD0_MAX_ITER
+                Ej = Ej * V2
+                Term = Ej / (2# * CDbl(IterIdx) + 1#)
+                NewSum = SumValue + Term
+
+                If NewSum = SumValue Then
+                    Result = NewSum
+                    PROB_TryDeviancePart = True
+                    Exit Function
+                End If
+
+                ScaleValue = Abs(NewSum)
+                If ScaleValue < 1# Then ScaleValue = 1#
+
+                If Abs(Term) <= PROB_MACH_EPS * ScaleValue Then
+                    Result = NewSum
+                    PROB_TryDeviancePart = True
+                    Exit Function
+                End If
+
+                SumValue = NewSum
+            Next IterIdx
+
+            FailMsg = "Loader deviance series failed to converge in " & _
+                      PROB_BD0_MAX_ITER & " iterations"
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' DIRECT BRANCH
+'------------------------------------------------------------------------------
+    'Away from equality the direct expression is well conditioned
+        Result = X * (Log(X) - Log(MeanPart)) + MeanPart - X
+
+    'Clamp a tiny negative round-off to the mathematical lower bound zero
+        If Result < 0# Then
+            If Abs(Result) <= PROB_MACH_EPS * (X + MeanPart) Then
+                Result = 0#
+            Else
+                FailMsg = "Loader deviance calculation produced a negative value"
+                Exit Function
+            End If
+        End If
+
+        PROB_TryDeviancePart = True
+End Function
+
 
 
 Public Function PROB_LogChoose( _
@@ -1627,5 +1747,3 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
-
-

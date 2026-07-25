@@ -247,7 +247,6 @@ Private Const PROB_DS_MAX_INVERSE_ITER As Long = 128
 Private Const PROB_DS_MAX_BRACKET_ITER As Long = 64
 Private Const PROB_DS_MAX_GEOMETRIC_CORRECTIONS As Long = 8
 Private Const PROB_DS_MAX_DISCRETE_UNIFORM_CORRECTIONS As Long = 8
-Private Const PROB_DS_BD0_MAX_ITER As Long = 1000
 Private Const PROB_DS_MAX_NEGBINOM_KERNEL_COUNT As Double = 20000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_POP As Double = 100000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
@@ -4131,7 +4130,6 @@ Err_Handler:
 End Function
 
 
-
 '==============================================================================
 ' DISCRETE UNIFORM DISTRIBUTION
 '==============================================================================
@@ -5497,7 +5495,6 @@ Private Function PROB_DS_ValidateHypergeometricInputs( _
 End Function
 
 
-
 '==============================================================================
 ' PRIVATE DISCRETE UNIFORM VALIDATION AND NUMERICAL KERNELS
 '==============================================================================
@@ -5890,125 +5887,6 @@ End Function
 '==============================================================================
 
 
-Private Function PROB_DS_TryDeviancePart( _
-    ByVal X As Double, _
-    ByVal MeanPart As Double, _
-    ByRef Result As Double, _
-    ByRef FailMsg As String) _
-    As Boolean
-'
-'==============================================================================
-' PROB_DS_TryDeviancePart
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Computes Loader's deviance component
-'
-'       bd0(X, MeanPart) = X * Log(X / MeanPart) + MeanPart - X
-'
-'   without cancellation when X is close to MeanPart.
-'
-' PRECONDITION
-'   X >= 0 and MeanPart > 0.
-'
-' METHOD
-'   Uses Loader's convergent odd-power series when
-'   Abs(X-MeanPart) < 0.1 * (X+MeanPart); otherwise uses the direct expression
-'   with Log(X)-Log(MeanPart), avoiding overflow in X/MeanPart.
-'
-' RETURNS
-'   Boolean
-'     TRUE  => Result contains the non-negative deviance component.
-'     FALSE => The bounded series did not converge.
-'
-' UPDATED
-'   2026-07-19 - Loader bd0 implementation with an explicit iteration guard.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Difference          As Double          'X - MeanPart
-    Dim SumArguments        As Double          'X + MeanPart
-    Dim V                   As Double          'Scaled difference
-    Dim V2                  As Double          'V squared
-    Dim Ej                  As Double          'Series numerator
-    Dim Term                As Double          'Current series term
-    Dim SumValue            As Double          'Current series sum
-    Dim NewSum              As Double          'Updated series sum
-    Dim ScaleValue          As Double          'Convergence scale
-    Dim IterIdx             As Long            'Iteration index
-
-'------------------------------------------------------------------------------
-' HANDLE X = 0
-'------------------------------------------------------------------------------
-    'The limiting deviance component is MeanPart
-        If X <= 0# Then
-            Result = MeanPart
-            PROB_DS_TryDeviancePart = True
-            Exit Function
-        End If
-
-'------------------------------------------------------------------------------
-' CHOOSE NUMERICAL BRANCH
-'------------------------------------------------------------------------------
-        Difference = X - MeanPart
-        SumArguments = X + MeanPart
-
-    'Use the convergent series near equality
-        If Abs(Difference) < 0.1 * SumArguments Then
-            V = Difference / SumArguments
-            V2 = V * V
-            SumValue = Difference * V
-            Ej = 2# * X * V
-
-            For IterIdx = 1 To PROB_DS_BD0_MAX_ITER
-                Ej = Ej * V2
-                Term = Ej / (2# * CDbl(IterIdx) + 1#)
-                NewSum = SumValue + Term
-
-                If NewSum = SumValue Then
-                    Result = NewSum
-                    PROB_DS_TryDeviancePart = True
-                    Exit Function
-                End If
-
-                ScaleValue = Abs(NewSum)
-                If ScaleValue < 1# Then ScaleValue = 1#
-
-                If Abs(Term) <= PROB_MACH_EPS * ScaleValue Then
-                    Result = NewSum
-                    PROB_DS_TryDeviancePart = True
-                    Exit Function
-                End If
-
-                SumValue = NewSum
-            Next IterIdx
-
-            FailMsg = "Loader deviance series failed to converge in " & _
-                      PROB_DS_BD0_MAX_ITER & " iterations"
-            Exit Function
-        End If
-
-'------------------------------------------------------------------------------
-' DIRECT BRANCH
-'------------------------------------------------------------------------------
-    'Away from equality the direct expression is well conditioned
-        Result = X * (Log(X) - Log(MeanPart)) + MeanPart - X
-
-    'Clamp a tiny negative round-off to the mathematical lower bound zero
-        If Result < 0# Then
-            If Abs(Result) <= PROB_MACH_EPS * (X + MeanPart) Then
-                Result = 0#
-            Else
-                FailMsg = "Loader deviance calculation produced a negative value"
-                Exit Function
-            End If
-        End If
-
-        PROB_DS_TryDeviancePart = True
-End Function
-
-
 Private Function PROB_DS_TryBinomialLogMass( _
     ByVal K As Double, _
     ByVal n As Double, _
@@ -6110,8 +5988,8 @@ Private Function PROB_DS_TryBinomialLogMass( _
         End If
 
     'Compute the two deviance components
-        If Not PROB_DS_TryDeviancePart(K, Np, DevianceK, FailMsg) Then Exit Function
-        If Not PROB_DS_TryDeviancePart(j, Nq, DevianceJ, FailMsg) Then Exit Function
+        If Not PROB_TryDeviancePart(K, Np, DevianceK, FailMsg) Then Exit Function
+        If Not PROB_TryDeviancePart(j, Nq, DevianceJ, FailMsg) Then Exit Function
 
     'Assemble Loader's log mass without subtracting large log-gammas
         LogMass = _
@@ -6226,7 +6104,7 @@ Private Function PROB_DS_TryPoissonLogMass( _
 '------------------------------------------------------------------------------
 ' LOADER ARRANGEMENT
 '------------------------------------------------------------------------------
-        If Not PROB_DS_TryDeviancePart(K, Mean, Deviance, FailMsg) Then Exit Function
+        If Not PROB_TryDeviancePart(K, Mean, Deviance, FailMsg) Then Exit Function
 
         LogMass = _
             -PROB_StirlingError(K) - _
@@ -8151,7 +8029,3 @@ Private Function PROB_DS_TryHypergeometricInverse( _
         FailMsg = "Hypergeometric inverse failed to converge in " & _
                   PROB_DS_MAX_INVERSE_ITER & " integer iterations"
 End Function
-
-
-
-
