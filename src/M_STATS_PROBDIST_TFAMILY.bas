@@ -744,7 +744,7 @@ Public Function K_STATS_ChiSquare_Density( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
-'   - PROB_LogGamma, PROB_TryExp
+'   - PROB_TryGammaLogPdf, PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -807,12 +807,11 @@ Public Function K_STATS_ChiSquare_Density( _
     'Compute half degrees of freedom
         HalfDF = 0.5 * DegreesFreedom
 
-    'Compute the log-density
-        LogDensity = _
-            (HalfDF - 1#) * Log(X) - _
-            0.5 * X - _
-            HalfDF * Log(2#) - _
-            PROB_LogGamma(HalfDF)
+    'Stable Loader log-density via the shared Gamma kernel (Shape=df/2, Scale=2)
+        If Not PROB_TryGammaLogPdf(0.5 * X, HalfDF, Log(X) - Log(2#), Log(2#), _
+                                   LogDensity, FailMsg) Then
+            GoTo Fail_Num
+        End If
 
     'Exponentiate; underflow to zero is a valid result
         If Not PROB_TryExp(LogDensity, Density) Then
@@ -3355,5 +3354,3 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
-
-
