@@ -140,7 +140,7 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**154 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**160 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
@@ -174,10 +174,12 @@ by rate (Lambda), not scale.
 | Binomial_Survival.all.output_rel | Binomial_Survival | all | output_error | relative | 5E-8 | validated and frozen |
 | Binomial_Variance.all.output_rel | Binomial_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | ChiSquare_Cumulative.all.output | ChiSquare_Cumulative | all | output_error | relative | 2.6E-10 | validated and frozen |
+| ChiSquare_Cumulative.envelope_domain.output_rel | ChiSquare_Cumulative | envelope_domain | output_error | relative | 2E-10 | validated and frozen |
 | ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | validated and frozen |
 | ChiSquare_Density.large_shape.output_rel | ChiSquare_Density | large_shape | output_error | relative | 1E-13 | validated and frozen |
 | ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | validated and frozen |
 | ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | validated and frozen |
+| ChiSquare_Survival.envelope_domain.output_rel | ChiSquare_Survival | envelope_domain | output_error | relative | 2E-10 | validated and frozen |
 | DiscreteUniform_Cumulative.all.output_rel | DiscreteUniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | DiscreteUniform_InverseCumulative.all.output_abs | DiscreteUniform_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
 | DiscreteUniform_LogPMF.all.output_rel | DiscreteUniform_LogPMF | all | output_error | relative | 5E-15 | validated and frozen |
@@ -190,6 +192,7 @@ by rate (Lambda), not scale.
 | Exponential_Density.all.output | Exponential_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Exponential_Survival.all.output | Exponential_Survival | all | output_error | relative | 5E-15 | validated and frozen |
+| F_Cumulative.envelope_domain.output_rel | F_Cumulative | envelope_domain | output_error | relative | 2E-11 | validated and frozen |
 | F_Cumulative.tiny_unbalanced.output | F_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | validated and frozen |
 | F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | validated and frozen |
 | F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | validated and frozen |
@@ -199,6 +202,7 @@ by rate (Lambda), not scale.
 | F_InverseCumulative.tiny_unbalanced_representable.tail_rel | F_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-13 | validated and frozen |
 | F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | validated and frozen |
 | F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | validated and frozen |
+| F_Survival.envelope_domain.output_rel | F_Survival | envelope_domain | output_error | relative | 2E-11 | validated and frozen |
 | F_Survival.tiny_unbalanced.output | F_Survival | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
 | F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | validated and frozen |
 | Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 2E-14 | validated and frozen |
@@ -284,9 +288,11 @@ by rate (Lambda), not scale.
 | Poisson_Variance.all.output_rel | Poisson_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | StirlingError.all.output | StirlingError | all | output_error | absolute | 1E-13 | validated and frozen |
 | StudentT_Cumulative.all.output | StudentT_Cumulative | all | output_error | relative | 1.3E-12 | validated and frozen |
+| StudentT_Cumulative.envelope_domain.output_rel | StudentT_Cumulative | envelope_domain | output_error | relative | 2E-10 | validated and frozen |
 | StudentT_Density.all.output | StudentT_Density | all | output_error | relative | 2E-14 | validated and frozen |
 | StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | validated and frozen |
 | StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | validated and frozen |
+| StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 5E-09 | validated and frozen |
 | Uniform_Cumulative.all.output | Uniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Uniform_Density.all.output | Uniform_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Uniform_InverseCumulative.all.output | Uniform_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
@@ -307,8 +313,9 @@ by rate (Lambda), not scale.
 | SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | characterized |
 | BetaInverse.InteriorQuantileRepresentability | Beta_InverseCumulative | both shapes sufficiently small (roughly a, b below 1E-3), interior probabilities | No representable interior quantile or meaningful forward round-trip exists; e.g. at a=1E-12, b=9.9E-14 the interior CDF is flat at ~0.0901 across the whole representable interval and the p=0.5 quantile needs 1-x ~ 1E-1E13. | characterized |
 | FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
-| IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E6 (measured contract-grade envelope; the incomplete-beta tail leaves contract grade near df 1E6-1E7) | without the guard errors reach ~1E-4 by df 1E13 and O(1E-1) past df 1E15; the public t surface now REJECTS df > 1E6 with CVErr(xlErrNum) | mitigated |
-| IncompleteGamma.ChiSquareLargeDF | ChiSquare_Cumulative;ChiSquare_Survival;ChiSquare_InverseCumulative | Chi-square degrees of freedom above 1E6 (validated to df 1E6 by regression T1; the 1E6-1E16 band is reference-limited and unmeasured, the kernel diverges by df 1E16) | survival off by ~7E2 at df 1E16; the public chi-square surface now REJECTS df > 1E6 with CVErr(xlErrNum) | mitigated |
+| IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 1.2E-09 relative at df 1E8 and degrading roughly tenfold per decade beyond; the public t surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
+| IncompleteGamma.ChiSquareLargeDF | ChiSquare_Cumulative;ChiSquare_Survival;ChiSquare_InverseCumulative | Chi-square degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 3.1E-11 relative at df 1E8; the P2-02 divergence at df 1E16 was the CR-P1-02 prefactor cancellation, not an intrinsic limit; the public chi-square surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
+| IncompleteBeta.InverseEnvelopeNarrower | F_InverseCumulative;StudentT_InverseCumulative;ChiSquare_InverseCumulative | Inverse degrees of freedom above 1E5 (F) and 1E6 (StudentT, ChiSquare), i.e. below the forward CDF/survival caps of 1E10/1E8/1E8 | F_InverseCumulative is measured to refuse (clean #NUM!) at df (1E6, 3) - well inside the raised forward cap - so the forward measurement in benchmark/envelope_probe does not transfer to the inverse | mitigated |
 
 
 <!-- END generated -->

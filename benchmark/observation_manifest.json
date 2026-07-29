@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-29T18:27:39Z",
-  "commit_sha": "187ca3a",
+  "generated_utc": "2026-07-29T18:30:36Z",
+  "commit_sha": "0d19ff4",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:f026db8d528a881a632520d48287dd45ed8b6925e4200b2e9a08c1c657111f50",
+  "observation_grid_sha256": "sha256:123715fb1c3c6ace505af19de936a740c270b016b543168f56fa80b13cfec088",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:d0e052e5fe5cd99cf52e8fc0ea5851116186c4544da9b01d6e33a37f9cf847eb",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -44,7 +44,7 @@
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:aaf942f811844cb0abaad53703b3f70c2ae5abd937a3522f39600078c933a89c",
     "tests/M_STATS_PROBDIST_TEST.bas": "sha256:cb31b2f3096a56517ed3825e576886ebdef726b7897dd97800514ffbb562ef9c"
   },
-  "contract_registry_sha256": "sha256:ba19f245530a6b91259d43948854637c774a6365055a926b088d6f4feb8f2fd7",
+  "contract_registry_sha256": "sha256:c89bc97627eea5749102e2307eea7c3f61e913c3d031dfb6b0c0682373c5c306",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20131",
