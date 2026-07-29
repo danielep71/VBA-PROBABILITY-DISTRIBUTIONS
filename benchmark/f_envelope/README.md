@@ -1,3 +1,10 @@
+> **SUPERSEDED (2026-07-29).** The degradation boundary reported below was
+> measured *before* CR-P1-02 repaired the incomplete-beta prefactor. It was
+> therefore measuring that cancellation, not an intrinsic limit of the F
+> kernel. Re-measured in `benchmark/envelope_probe`, the kernel is accurate to
+> 5.1E-10 relative at df 1E10, and `PROB_F_MAX_DF` has been raised from 1E5 to
+> 1E10. This study is retained as the record of the pre-repair behaviour.
+
 # F accuracy-envelope study
 
 Measures the exact df boundary where the public F functions (`F_Cumulative`,

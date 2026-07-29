@@ -2690,12 +2690,12 @@ Private Sub Test_TF_StudentTCumulative()
     'above 1E6. The incomplete-beta tail silently diverges past ~1E6 (see
     'benchmark/tchi_large_df); the surface now returns CVErr instead. Density
     'is closed-form and unrestricted.
-    AssertTrue "t cdf below envelope (1e5) accepted", _
-        (Not IsError(K_STATS_StudentT_Cumulative(1#, 100000#)))
-    AssertTrue "t cdf at envelope boundary (1e6) accepted", _
-        (Not IsError(K_STATS_StudentT_Cumulative(1#, 1000000#)))
-    AssertIsError "t cdf above envelope (1.1e6)", _
-        K_STATS_StudentT_Cumulative(1#, 1100000#)
+    AssertTrue "t cdf below envelope (1e7) accepted", _
+        (Not IsError(K_STATS_StudentT_Cumulative(1#, 10000000#)))
+    AssertTrue "t cdf at envelope boundary (1e8) accepted", _
+        (Not IsError(K_STATS_StudentT_Cumulative(1#, 100000000#)))
+    AssertIsError "t cdf above envelope (1.1e8)", _
+        K_STATS_StudentT_Cumulative(1#, 110000000#)
     AssertIsError "t survival above envelope (1e9)", _
         K_STATS_StudentT_Survival(1#, 1000000000#)
     AssertIsError "t inverse above envelope (1e9)", _
@@ -3067,8 +3067,10 @@ Private Sub Test_TF_ChiSquareLargeDF()
     'df 1E6 above, rejected beyond. The incomplete-gamma path is unmeasured on
     '1E6..1E16 and diverges by df 1E16 (see benchmark/tchi_large_df). Density is
     'closed-form and carries its own 1E20 envelope (CR-P1-01B).
-    AssertIsError "chi2 cdf above envelope (1.1e6)", _
-        K_STATS_ChiSquare_Cumulative(1000000#, 1100000#)
+    AssertTrue "chi2 cdf at envelope boundary (1e8) accepted", _
+        (Not IsError(K_STATS_ChiSquare_Cumulative(100000000#, 100000000#)))
+    AssertIsError "chi2 cdf above envelope (1.1e8)", _
+        K_STATS_ChiSquare_Cumulative(100000000#, 110000000#)
     AssertIsError "chi2 survival above envelope (1e16)", _
         K_STATS_ChiSquare_Survival(1E+16, 1E+16)
     AssertIsError "chi2 inverse above envelope (1e9)", _
@@ -3273,19 +3275,24 @@ Private Sub Test_TF_FCumulative()
     AssertRelClose "F cdf(1,1e5,1e5)", K_STATS_F_Cumulative(1#, 100000#, 100000#), _
         0.5, TOL_REL_LOOSE
     'F accuracy envelope (strict validated-domain policy): below / near / above.
-    'BELOW: both df well within 1E5 are accepted (return a value, not an error).
+    'The cap moved from 1E5 to 1E10 once CR-P1-02 removed the prefactor
+    'cancellation that the original 1E5 boundary had actually been measuring;
+    'the kernel is measured at 5.1E-10 relative at df 1E10
+    '(benchmark/envelope_probe).
+    'BELOW: both df well within 1E10 are accepted (return a value, not an error).
     AssertTrue "F cdf below envelope (5e4,5e4) accepted", _
         (Not IsError(K_STATS_F_Cumulative(1#, 50000#, 50000#)))
-    'NEAR: df at the 1E5 boundary is accepted.
-    AssertTrue "F cdf at envelope boundary (1e5,1e5) accepted", _
-        (Not IsError(K_STATS_F_Cumulative(1#, 100000#, 100000#)))
+    AssertTrue "F cdf below envelope (1e8,1e8) accepted", _
+        (Not IsError(K_STATS_F_Cumulative(1#, 100000000#, 100000000#)))
+    'NEAR: df at the 1E10 boundary is accepted.
+    AssertTrue "F cdf at envelope boundary (1e10,1e10) accepted", _
+        (Not IsError(K_STATS_F_Cumulative(1#, 10000000000#, 10000000000#)))
     'ABOVE: df beyond the envelope are REJECTED with a clean error, not a silent
-    'inaccurate value. (This extreme input previously returned the limiting value
-    '1; strict policy now rejects df > 1E5.)
-    AssertIsError "F cdf just above envelope (1.1e5)", _
-        K_STATS_F_Cumulative(1#, 110000#, 10#)
-    AssertIsError "F cdf above envelope both df (3e5)", _
-        K_STATS_F_Cumulative(1#, 300000#, 300000#)
+    'inaccurate value.
+    AssertIsError "F cdf just above envelope (1.1e10)", _
+        K_STATS_F_Cumulative(1#, 11000000000#, 10#)
+    AssertIsError "F cdf above envelope both df (3e10)", _
+        K_STATS_F_Cumulative(1#, 30000000000#, 30000000000#)
     AssertIsError "F cdf df1 far beyond envelope", _
         K_STATS_F_Cumulative(1E+308, 1E+99, 1E-99)
     'Density now carries its own validated 1E20 envelope (CR-P1-01B): the same
@@ -3329,8 +3336,8 @@ Private Sub Test_TF_FSurvival()
         CDbl(K_STATS_F_Survival(2#, 7#, 12#)) + _
         CDbl(K_STATS_F_Cumulative(2#, 7#, 12#)), 1#, TOL_ABS_TIGHT
     'F envelope: survival above the range is rejected; density stays unrestricted.
-    AssertIsError "F sf above envelope (2e5)", _
-        K_STATS_F_Survival(1#, 10#, 200000#)
+    AssertIsError "F sf above envelope (2e10)", _
+        K_STATS_F_Survival(1#, 10#, 20000000000#)
     AssertIsError "F sf df far beyond envelope", _
         K_STATS_F_Survival(1E+308, 1E+99, 1E-99)
 End Sub

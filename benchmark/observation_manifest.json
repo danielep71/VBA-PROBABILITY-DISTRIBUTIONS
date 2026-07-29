@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-29T10:53:44Z",
-  "commit_sha": "0c79e9c",
+  "generated_utc": "2026-07-29T12:37:08Z",
+  "commit_sha": "85b52fe",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -27,6 +27,7 @@
     "benchmark/delta_seam_study/M_STATS_PROBDIST_DELTA_SEAM.bas": "sha256:b259d3ab8452a63ef31fb1d4e06231eff28e23d972be39ff471c92817f4ad0c5",
     "benchmark/density_helpers/M_STATS_PROBDIST_DENSHELP.bas": "sha256:fee5f39d26dddf39ec751e192fae8d296331688d3a8442f1c1feb2e1a5fd4190",
     "benchmark/density_large_shape/M_STATS_PROBDIST_DENS.bas": "sha256:b7489c2ba7c7e5a71aa58e16d9845395c36c13a7a642a468b7078d00dbf82d98",
+    "benchmark/envelope_probe/M_STATS_PROBDIST_ENVPROBE.bas": "sha256:7001714e110d1b92572ff314e9bfdbcf8c79be657673fe1b2e5f423f8a27d710",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:ef5c9c010376a337469f6597670cad733118666e8361833ab9304561dc3c861f",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:ddd22d5d33ae9d8ae3ce9b4141337219ca422422ebecb80568c8f1afe8aee95a",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:03f0354961664a7685f70a4ae5bb034678a6403f6ab84a64b86f5ee2d0b6a91c",
@@ -40,8 +41,8 @@
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:cee86320c6f63b3781c574e113e3abd1643d192c542ee29b0695d1626aae665d",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:58f02816fec8587e32f0c7d8f57dbc2637e11bcabffc4507707d86a9e25bed1d",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:fe1b6f51d06bdbe96e5119b2b5c81147dcee8e2701d19cf1c70d28be11da15c5",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:136f622937d873eaca8170e9f7a66d2f8f6221818a8333d3e5f228eed6e6e5d9",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:c7f53856a98150f24cd54c9d3d08b25f965dcc606b53da8d5ef0c313066900fc"
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:8b583b4828aea11c41b7bf20b7388c5646640681b7d9d0dcd51cc38251795beb",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:43a576f51cb0dbdb654fea9eaa664ccab904184cc68ed5208f5edd762c606735"
   },
   "contract_registry_sha256": "sha256:ba19f245530a6b91259d43948854637c774a6365055a926b088d6f4feb8f2fd7",
   "environment": {

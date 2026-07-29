@@ -250,11 +250,15 @@ Private Function ParseDouble(ByVal Text As String) As Double
 ' ParseDouble
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Parses an invariant decimal string, independent of the Excel locale.
+'   Parses an invariant decimal string independently of the Excel locale.
+'
+' WHY Val AND NOT CDbl
+'   CDbl honours the locale: under an Italian locale it reads "." as a THOUSANDS
+'   separator, so "1.5865E-01" becomes 1.5865E+13. Val always reads "." as the
+'   decimal point. Any stray comma is normalised first.
 '==============================================================================
 '
-    Dim Clean               As String          'Trimmed input
-    Dim Sep                 As String          'Locale decimal separator
+    Dim Clean               As String          'Normalised input
 
     Clean = Trim$(Text)
     If Len(Clean) = 0 Then
@@ -262,10 +266,8 @@ Private Function ParseDouble(ByVal Text As String) As Double
         Exit Function
     End If
 
-    Sep = Mid$(CStr(1.5), 2, 1)
-    If Sep <> "." Then Clean = Replace$(Clean, ".", Sep)
-
-    ParseDouble = CDbl(Clean)
+    Clean = Replace$(Clean, ",", ".")
+    ParseDouble = Val(Clean)
 End Function
 
 
@@ -286,7 +288,7 @@ Private Function FormatFullPrecision(ByVal X As Double) As String
         Exit Function
     End If
 
-    Hi = CDbl(Fmt15(X))
+    Hi = Val(Fmt15(X))                     'Val is locale-independent; CDbl is not
     Lo = X - Hi
 
     If Lo = 0# Then
@@ -315,3 +317,5 @@ Private Function Fmt15(ByVal X As Double) As String
 
     Fmt15 = Text
 End Function
+
+

@@ -167,9 +167,9 @@ Option Explicit
 
 'Maximum safeguarded Newton iterations for the Student t quantile
 Private Const PROB_T_INV_MAX_ITER As Long = 500
-Private Const PROB_F_MAX_DF       As Double = 100000# 'Validated F accuracy envelope; both df must be <= this (measured, benchmark/f_envelope)
-Private Const PROB_T_MAX_DF       As Double = 1000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/tchi_large_df)
-Private Const PROB_CHI_MAX_DF     As Double = 1000000# 'Chi-square envelope; validated to 1E6 (regression T1), 1E6..1E16 band reference-limited, top diverges (benchmark/tchi_large_df)
+Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy envelope; both df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
+Private Const PROB_T_MAX_DF       As Double = 100000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
+Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29); above that the lower-tail series reaches PROB_GAMMA_MAX_ITER
 
 '==============================================================================
 ' PUBLIC - STUDENT T
@@ -3242,7 +3242,7 @@ Private Function PROB_F_ValidateEnvelope( _
     If DegreesFreedom1 > PROB_F_MAX_DF Or DegreesFreedom2 > PROB_F_MAX_DF Then
         FailMsg = _
             "F degrees of freedom exceed the validated accuracy envelope " & _
-            "(both must be <= 1E5); the incomplete-beta kernel is not " & _
+            "(both must be <= 1E10); the incomplete-beta kernel is not " & _
             "accuracy-validated beyond this range"
         Exit Function
     End If
@@ -3262,9 +3262,11 @@ Private Function PROB_T_ValidateEnvelope( _
 ' PURPOSE
 '   Enforces the measured Student t accuracy envelope. The incomplete-beta tail
 '   behind StudentT_Cumulative, StudentT_Survival and StudentT_InverseCumulative
-'   is contract-grade only while df stays within PROB_T_MAX_DF. Beyond that the
-'   kernel silently diverges from the true (normal-limit) value - by ~1E-4 near
-'   df 1E13 and O(1E-1) past df 1E15 (see benchmark/tchi_large_df). This limits
+'   is contract-grade only while df stays within PROB_T_MAX_DF. The cap was
+'   raised from 1E6 to 1E8 once CR-P1-02 removed the prefactor cancellation that
+'   the original boundary had actually been measuring; the kernel is now
+'   measured at 1.2E-09 relative at df 1E8 and degrades roughly tenfold per
+'   decade beyond (benchmark/envelope_probe). This limits
 '   the public t surface to its validated domain and returns a clean CVErr
 '   rather than a silent inaccurate result. StudentT_Density is not restricted.
 '
@@ -3281,7 +3283,7 @@ Private Function PROB_T_ValidateEnvelope( _
     If DegreesFreedom > PROB_T_MAX_DF Then
         FailMsg = _
             "Student t degrees of freedom exceed the validated accuracy " & _
-            "envelope (df must be <= 1E6); the incomplete-beta tail is not " & _
+            "envelope (df must be <= 1E8); the incomplete-beta tail is not " & _
             "accuracy-validated beyond this range"
         Exit Function
     End If
@@ -3321,7 +3323,7 @@ Private Function PROB_CHI_ValidateEnvelope( _
     If DegreesFreedom > PROB_CHI_MAX_DF Then
         FailMsg = _
             "Chi-square degrees of freedom exceed the validated accuracy " & _
-            "envelope (df must be <= 1E6); the incomplete-gamma path is not " & _
+            "envelope (df must be <= 1E8); the incomplete-gamma path is not " & _
             "accuracy-validated beyond this range"
         Exit Function
     End If
