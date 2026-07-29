@@ -118,27 +118,62 @@ def evidence_gaps(rows, observed_key="observed_vba"):
 
 
 # --- Envelope / expected-error marker ---------------------------------------
-# Mirror of the VBA constant PROB_F_MAX_DF (M_STATS_PROBDIST_TFAMILY.bas): the
-# F CDF/Survival/Inverse public UDFs return #NUM! when either degree of freedom
-# exceeds this. F_Density is closed-form and deliberately NOT enveloped. Rows in
-# this region carry no accuracy claim, so a #NUM! there is the CORRECT response,
-# not a defect. Keep this in sync with the VBA constant.
-F_MAX_DF = 100000.0
-_F_ENVELOPED = ("F_Cumulative", "F_Survival", "F_InverseCumulative")
+# Mirrors of the VBA envelope constants in M_STATS_PROBDIST_TFAMILY.bas. The
+# enveloped CDF/Survival/Inverse public UDFs return #NUM! when a degree of
+# freedom exceeds the cap; the densities are closed-form and deliberately NOT
+# enveloped here (they carry their own PROB_DENSITY_SHAPE_MAX). Rows in a
+# reject region carry no accuracy claim, so a #NUM! there is the CORRECT
+# response, not a defect.
+#
+# KEEP THESE IN SYNC WITH THE VBA CONSTANTS. They were raised on 2026-07-29
+# from 1E5/1E6/1E6 after benchmark/envelope_probe showed the previous
+# boundaries were measuring the CR-P1-02 prefactor cancellation rather than an
+# intrinsic limit; check_source_thresholds.py verifies the pairing.
+# The INVERSES are capped separately and lower: envelope_probe measured the
+# forward CDF kernels only, and the inverses add safeguarded Newton plus
+# bisection with their own iteration budget. F_InverseCumulative is measured to
+# refuse at df ratios well inside the forward cap, so each inverse keeps its
+# previously validated bound until studied in its own right.
+F_MAX_DF = 10000000000.0        # PROB_F_MAX_DF
+T_MAX_DF = 100000000.0          # PROB_T_MAX_DF
+CHI_MAX_DF = 100000000.0        # PROB_CHI_MAX_DF
+F_INV_MAX_DF = 100000.0         # PROB_F_INV_MAX_DF
+T_INV_MAX_DF = 1000000.0        # PROB_T_INV_MAX_DF
+CHI_INV_MAX_DF = 1000000.0      # PROB_CHI_INV_MAX_DF
+
+_F_ENVELOPED = ("F_Cumulative", "F_Survival")
+_T_ENVELOPED = ("StudentT_Cumulative", "StudentT_Survival")
+_CHI_ENVELOPED = ("ChiSquare_Cumulative", "ChiSquare_Survival")
 
 
 def predicted_expected_error(function, arg2, arg3):
     """
-    Design-intent predicate: True when a row lies in the F envelope-reject region
-    (an enveloped F function with either df > F_MAX_DF), where #NUM! is correct.
-    Derived from the row's own args, independent of what was observed, so it can
-    never launder an unexpected error into an expected one.
+    Design-intent predicate: True when a row lies in an envelope-reject region,
+    where #NUM! is the correct response. Derived from the row's own args,
+    independent of what was observed, so it can never launder an unexpected
+    error into an expected one.
+
+    F is enveloped on BOTH degrees of freedom; StudentT and ChiSquare take
+    their single df in arg2.
     """
-    if function not in _F_ENVELOPED:
+    if function in _F_ENVELOPED:
+        cap, args = F_MAX_DF, (arg2, arg3)
+    elif function == "F_InverseCumulative":
+        cap, args = F_INV_MAX_DF, (arg2, arg3)
+    elif function in _T_ENVELOPED:
+        cap, args = T_MAX_DF, (arg2,)
+    elif function == "StudentT_InverseCumulative":
+        cap, args = T_INV_MAX_DF, (arg2,)
+    elif function in _CHI_ENVELOPED:
+        cap, args = CHI_MAX_DF, (arg2,)
+    elif function == "ChiSquare_InverseCumulative":
+        cap, args = CHI_INV_MAX_DF, (arg2,)
+    else:
         return False
-    for a in (arg2, arg3):
+
+    for a in args:
         try:
-            if float(a) > F_MAX_DF:
+            if float(a) > cap:
                 return True
         except (TypeError, ValueError):
             continue

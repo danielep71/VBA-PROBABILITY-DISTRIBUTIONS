@@ -76,10 +76,21 @@ r = normalize_tail_residual(Decimal("0.2000000000000001"), Decimal("0.2"))
 check(Decimal("4E-16") < r < Decimal("6E-16"), "tail residual normalisation")
 
 # --- predicted_expected_error: F envelope-reject region ---------------------
-check(predicted_expected_error("F_Cumulative", "1.5", "200000") is True, "F_Cumulative df2>max -> expected")
-check(predicted_expected_error("F_InverseCumulative", "500000", "4") is True, "F_Inverse df1>max -> expected")
+check(predicted_expected_error("F_Cumulative", "1.5", "2E10") is True, "F_Cumulative df2>max -> expected")
+check(predicted_expected_error("F_InverseCumulative", "500000", "4") is True, "F_Inverse df1>inv max -> expected")
 check(predicted_expected_error("F_Survival", "50", "50") is False, "F in-envelope -> not expected")
 check(predicted_expected_error("F_Density", "1000000", "3") is False, "F_Density is NOT enveloped")
+
+# The inverses are capped LOWER than the forward surface: envelope_probe
+# measured the forward kernels only, and F_InverseCumulative is measured to
+# refuse well inside the forward cap. A df between the two caps must therefore
+# be in-envelope forward and reject-region for the inverse.
+check(predicted_expected_error("F_Cumulative", "1E6", "1E6") is False, "F_Cumulative 1E6 is inside the raised forward cap")
+check(predicted_expected_error("F_InverseCumulative", "1E6", "3") is True, "F_Inverse 1E6 is beyond the inverse cap")
+check(predicted_expected_error("StudentT_Cumulative", "1E7", "") is False, "t cdf 1E7 inside forward cap")
+check(predicted_expected_error("StudentT_InverseCumulative", "1E7", "") is True, "t inverse 1E7 beyond inverse cap")
+check(predicted_expected_error("ChiSquare_Survival", "1E7", "") is False, "chi survival 1E7 inside forward cap")
+check(predicted_expected_error("ChiSquare_InverseCumulative", "1E7", "") is True, "chi inverse 1E7 beyond inverse cap")
 check(predicted_expected_error("Beta_Cumulative", "1e9", "1e9") is False, "non-F -> not expected")
 check(predicted_expected_error("F_Cumulative", str(F_MAX_DF), "3") is False, "exactly at F_MAX_DF -> not expected")
 
@@ -94,10 +105,10 @@ check(classify_row("1;2", False) == MEASURE, "value in-envelope -> MEASURE")
 # --- dispositions (namedtuple result, measure-aware validity) ---------------
 mixed = [
     {"function": "F_Cumulative", "observed_vba": "0.5", "reference": "0.5", "arg2": "3", "arg3": "4"},  # measure
-    {"function": "F_Cumulative", "observed_vba": "ERROR", "reference": "0.5", "arg2": "3", "arg3": "200000"},  # expected
+    {"function": "F_Cumulative", "observed_vba": "ERROR", "reference": "0.5", "arg2": "3", "arg3": "2E10"},  # expected
     {"function": "F_Cumulative", "observed_vba": "", "reference": "0.5", "arg2": "3", "arg3": "4"},     # missing
     {"function": "F_Cumulative", "observed_vba": "ERROR", "reference": "0.5", "arg2": "3", "arg3": "4"},  # unexpected error
-    {"function": "F_Cumulative", "observed_vba": "0.9", "reference": "0.5", "arg2": "3", "arg3": "200000"},  # violation
+    {"function": "F_Cumulative", "observed_vba": "0.9", "reference": "0.5", "arg2": "3", "arg3": "2E10"},  # violation
 ]
 d = dispositions(mixed, "output_error")
 check((len(d.to_measure), d.n_expected, d.n_missing, d.n_error, d.n_violation, d.n_invalid)
@@ -139,7 +150,7 @@ check(row_validity({"observed_vba": "1.0", "reference": "x"}, NT) is not None, "
 check(row_validity({"observed_vba": "1;2;x", "reference": "2"}, NT) is not None, "row_validity bad hi;lo")
 
 # --- expected_error_drift ---------------------------------------------------
-clean = [{"function": "F_Cumulative", "arg2": "3", "arg3": "200000", "expected_error": "1"},
+clean = [{"function": "F_Cumulative", "arg2": "3", "arg3": "2E10", "expected_error": "1"},
          {"function": "F_Cumulative", "arg2": "3", "arg3": "4", "expected_error": ""}]
 check(expected_error_drift(clean) == [], "no drift when stored matches predicate")
 drifted = [{"function": "F_Cumulative", "arg2": "3", "arg3": "4", "expected_error": "1"}]  # in-envelope mismarked

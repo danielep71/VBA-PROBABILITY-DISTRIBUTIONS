@@ -2698,6 +2698,13 @@ Private Sub Test_TF_StudentTCumulative()
         K_STATS_StudentT_Cumulative(1#, 110000000#)
     AssertIsError "t survival above envelope (1e9)", _
         K_STATS_StudentT_Survival(1#, 1000000000#)
+    'The INVERSES are capped lower than the forward surface (1E6 vs 1E8):
+    'envelope_probe measured the forward kernels only, and the inverses add
+    'safeguarded Newton plus bisection with their own iteration budget.
+    AssertTrue "t inverse at its own envelope (1e6) accepted", _
+        (Not IsError(K_STATS_StudentT_InverseCumulative(0.9, 1000000#)))
+    AssertIsError "t inverse above its own envelope (1e7)", _
+        K_STATS_StudentT_InverseCumulative(0.9, 10000000#)
     AssertIsError "t inverse above envelope (1e9)", _
         K_STATS_StudentT_InverseCumulative(0.9, 1000000000#)
     AssertTrue "t density not enveloped (large df)", _
@@ -3073,6 +3080,10 @@ Private Sub Test_TF_ChiSquareLargeDF()
         K_STATS_ChiSquare_Cumulative(100000000#, 110000000#)
     AssertIsError "chi2 survival above envelope (1e16)", _
         K_STATS_ChiSquare_Survival(1E+16, 1E+16)
+    AssertTrue "chi2 inverse at its own envelope (1e6) accepted", _
+        (Not IsError(K_STATS_ChiSquare_InverseCumulative(0.5, 1000000#)))
+    AssertIsError "chi2 inverse above its own envelope (1e7)", _
+        K_STATS_ChiSquare_InverseCumulative(0.5, 10000000#)
     AssertIsError "chi2 inverse above envelope (1e9)", _
         K_STATS_ChiSquare_InverseCumulative(0.5, 1000000000#)
     AssertTrue "chi2 density inside its own envelope (1e16)", _
