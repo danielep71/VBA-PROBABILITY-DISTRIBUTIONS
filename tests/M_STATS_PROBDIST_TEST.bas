@@ -2931,6 +2931,16 @@ Private Sub Test_TF_ChiSquareDensity()
     AssertClose "chi2 pdf(0,2)", K_STATS_ChiSquare_Density(0#, 2#), 0.5, 0#
     AssertClose "chi2 pdf(0,3)", K_STATS_ChiSquare_Density(0#, 3#), 0#, 0#
     AssertIsError "chi2 pdf(0,1) unbounded", K_STATS_ChiSquare_Density(0#, 1#)
+    'CR-P1-01B regressions: large-shape density on the Loader path (Gamma
+    'kernel, Shape=df/2), plus the validated 1E20 envelope.
+    AssertRelClose "chi2 pdf(2e16,2e16) large shape", _
+        K_STATS_ChiSquare_Density(2E+16, 2E+16), _
+        1.99471140200716E-09, 0.000000000001
+    AssertRelClose "chi2 pdf(1e20,1e20) envelope boundary", _
+        K_STATS_ChiSquare_Density(1E+20, 1E+20), _
+        2.82094791773878E-11, 0.000000000001
+    AssertIsError "chi2 pdf above density envelope (2e20)", _
+        K_STATS_ChiSquare_Density(2E+20, 2E+20)
 End Sub
 
 
@@ -3018,14 +3028,14 @@ Private Sub Test_TF_ChiSquareLargeDF()
     'Chi-square accuracy envelope (strict validated-domain policy): validated to
     'df 1E6 above, rejected beyond. The incomplete-gamma path is unmeasured on
     '1E6..1E16 and diverges by df 1E16 (see benchmark/tchi_large_df). Density is
-    'closed-form and unrestricted.
+    'closed-form and carries its own 1E20 envelope (CR-P1-01B).
     AssertIsError "chi2 cdf above envelope (1.1e6)", _
         K_STATS_ChiSquare_Cumulative(1000000#, 1100000#)
     AssertIsError "chi2 survival above envelope (1e16)", _
         K_STATS_ChiSquare_Survival(1E+16, 1E+16)
     AssertIsError "chi2 inverse above envelope (1e9)", _
         K_STATS_ChiSquare_InverseCumulative(0.5, 1000000000#)
-    AssertTrue "chi2 density not enveloped (large df)", _
+    AssertTrue "chi2 density inside its own envelope (1e16)", _
         (Not IsError(K_STATS_ChiSquare_Density(1E+16, 1E+16)))
 End Sub
 
@@ -3150,8 +3160,35 @@ Private Sub Test_TF_FDensity()
     AssertClose "F pdf(0,2,5)", K_STATS_F_Density(0#, 2#, 5#), 1#, 0#
     AssertClose "F pdf(0,3,5)", K_STATS_F_Density(0#, 3#, 5#), 0#, 0#
     AssertIsError "F pdf(0,1,5) unbounded", K_STATS_F_Density(0#, 1#, 5#)
-    AssertClose "F pdf extreme positive log-ratio", _
-        K_STATS_F_Density(1E+308, 1E+99, 1E-99), 0#, 0#
+    'CR-P1-01B: df beyond the 1E20 density envelope are rejected outright, so
+    'the old silent-zero extreme-ratio input now returns a clean error.
+    AssertIsError "F pdf above density envelope (1e99)", _
+        K_STATS_F_Density(1E+308, 1E+99, 1E-99)
+    'CR-P1-01B regressions: extreme degree ratios INSIDE the envelope must hit
+    'the true density in both orientations (the complement is preserved), and
+    'balanced large shapes stay at the Loader target.
+    AssertRelClose "F pdf(1,1e16,1) extreme ratio", _
+        K_STATS_F_Density(1#, 1E+16, 1#), _
+        0.241970724519143, 0.000000000001
+    AssertRelClose "F pdf(1,1,1e16) mirrored ratio", _
+        K_STATS_F_Density(1#, 1#, 1E+16), _
+        0.241970724519143, 0.000000000001
+    AssertRelClose "F pdf(1,1e20,100) extreme ratio", _
+        K_STATS_F_Density(1#, 1E+20, 100#), _
+        2.81625031625954, 0.000000000001
+    AssertRelClose "F pdf(1,100,1e20) mirrored ratio", _
+        K_STATS_F_Density(1#, 100#, 1E+20), _
+        2.81625031625954, 0.000000000001
+    AssertRelClose "F pdf(1,1e16,1e16) large shape", _
+        K_STATS_F_Density(1#, 1E+16, 1E+16), _
+        19947114.0200716, 0.000000000001
+    AssertRelClose "F pdf(1,1e20,1e20) envelope boundary", _
+        K_STATS_F_Density(1#, 1E+20, 1E+20), _
+        1994711402.00716, 0.000000000001
+    AssertIsError "F pdf above density envelope (1e24)", _
+        K_STATS_F_Density(1#, 1E+24, 1000000000000#)
+    AssertIsError "F pdf above density envelope (1e24 mirrored)", _
+        K_STATS_F_Density(1#, 1000000000000#, 1E+24)
 End Sub
 
 
@@ -3213,9 +3250,10 @@ Private Sub Test_TF_FCumulative()
         K_STATS_F_Cumulative(1#, 300000#, 300000#)
     AssertIsError "F cdf df1 far beyond envelope", _
         K_STATS_F_Cumulative(1E+308, 1E+99, 1E-99)
-    'Density is closed-form and NOT enveloped: still returns a value far above.
-    AssertClose "F density not enveloped (large df)", _
-        K_STATS_F_Density(1E+308, 1E+99, 1E-99), 0#, 0#
+    'Density now carries its own validated 1E20 envelope (CR-P1-01B): the same
+    'extreme input is rejected cleanly rather than silently returning zero.
+    AssertIsError "F density above density envelope (large df)", _
+        K_STATS_F_Density(1E+308, 1E+99, 1E-99)
 End Sub
 
 
@@ -4066,6 +4104,16 @@ Private Sub Test_CN_GammaDensity()
     AssertClose "gamma pdf(-1,2.5,1.5)=0", K_STATS_Gamma_Density(-1#, 2.5, 1.5), 0#, 0#
     AssertClose "gamma pdf ratio overflow tends zero", _
         K_STATS_Gamma_Density(1E+308, 2#, 9.99988867182683E-321), 0#, 0#
+    'CR-P1-01B regressions: large-shape density on the Loader path, plus the
+    'validated 1E20 envelope (accept at the boundary, reject beyond).
+    AssertRelClose "gamma pdf(1e16,1e16,1) large shape", _
+        K_STATS_Gamma_Density(1E+16, 1E+16, 1#), _
+        3.98942280401433E-09, 0.000000000001
+    AssertRelClose "gamma pdf(1e20,1e20,1) envelope boundary", _
+        K_STATS_Gamma_Density(1E+20, 1E+20, 1#), _
+        3.98942280401433E-11, 0.000000000001
+    AssertIsError "gamma pdf above density envelope (2e20)", _
+        K_STATS_Gamma_Density(2E+20, 2E+20, 1#)
 End Sub
 
 
@@ -4239,6 +4287,16 @@ Private Sub Test_CN_BetaDensity()
         1.1999988E-11, TOL_REL_TAIL
     AssertClose "beta pdf(-0.1,2,5)=0", K_STATS_Beta_Density(-0.1, 2#, 5#), 0#, 0#
     AssertClose "beta pdf(1.1,2,5)=0", K_STATS_Beta_Density(1.1, 2#, 5#), 0#, 0#
+    'CR-P1-01B regressions: large-shape density on the Loader path, plus the
+    'validated 1E20 envelope (accept at the boundary, reject beyond).
+    AssertRelClose "beta pdf(0.5,1e16,1e16) large shape", _
+        K_STATS_Beta_Density(0.5, 1E+16, 1E+16), _
+        112837916.709551, 0.000000000001
+    AssertRelClose "beta pdf(0.5,1e20,1e20) envelope boundary", _
+        K_STATS_Beta_Density(0.5, 1E+20, 1E+20), _
+        11283791670.9551, 0.000000000001
+    AssertIsError "beta pdf above density envelope (2e20)", _
+        K_STATS_Beta_Density(0.5, 2E+20, 2#)
 End Sub
 
 
@@ -6244,3 +6302,5 @@ Private Sub Test_DS_SupportEdges()
         K_STATS_DiscreteUniform_StdDev(7#, 7#), _
         0#, 0#
 End Sub
+
+

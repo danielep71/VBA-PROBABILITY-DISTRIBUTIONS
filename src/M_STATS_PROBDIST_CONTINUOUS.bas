@@ -250,6 +250,15 @@ Public Function K_STATS_Gamma_Density( _
             GoTo Fail_Num
         End If
 
+    'Enforce the validated large-shape density envelope (measured to 1E20 in
+    'benchmark/density_large_shape). A clean CVErr beats a silent inaccuracy.
+        If Shape > PROB_DENSITY_SHAPE_MAX Then
+            FailMsg = _
+                "Gamma shape exceeds the validated density accuracy " & _
+                "envelope (Shape must be <= 1E20)"
+            GoTo Fail_Num
+        End If
+
 '------------------------------------------------------------------------------
 ' HANDLE SUPPORT EDGES
 '------------------------------------------------------------------------------
@@ -1163,6 +1172,7 @@ Public Function K_STATS_Beta_Density( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim OneMinusX           As Double          'Complement 1 - X
     Dim LogDensity          As Double          'Log of the density
     Dim Density             As Double          'Density value
     Dim FailMsg             As String          'Detailed failure message
@@ -1191,6 +1201,15 @@ Public Function K_STATS_Beta_Density( _
         If X < 0# Or X > 1# Then
             K_STATS_Beta_Density = 0#
             GoTo Return_Success
+        End If
+
+    'Enforce the validated large-shape density envelope (measured to 1E20 in
+    'benchmark/density_large_shape; ~3E-2 relative by shape 1E30 beyond it).
+        If Alpha > PROB_DENSITY_SHAPE_MAX Or Beta > PROB_DENSITY_SHAPE_MAX Then
+            FailMsg = _
+                "Beta shapes exceed the validated density accuracy " & _
+                "envelope (both must be <= 1E20)"
+            GoTo Fail_Num
         End If
 
     'Handle the left endpoint, where the density is 0, Beta or unbounded
@@ -1222,9 +1241,12 @@ Public Function K_STATS_Beta_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
-    'Stable Loader log-density via the shared kernel (no large-shape cancellation)
-        If Not PROB_TryBetaLogPdf(X, Alpha, Beta, Log(X), PROB_Log1p(-X), _
-                                  LogDensity, FailMsg) Then
+    'Stable Loader log-density via the shared kernel (no large-shape cancellation).
+    'The complement is passed explicitly; the kernel never reforms 1 - X.
+        OneMinusX = 1# - X
+
+        If Not PROB_TryBetaLogPdf(X, OneMinusX, Alpha, Beta, Log(X), _
+                                  PROB_Log1p(-X), LogDensity, FailMsg) Then
             GoTo Fail_Num
         End If
 

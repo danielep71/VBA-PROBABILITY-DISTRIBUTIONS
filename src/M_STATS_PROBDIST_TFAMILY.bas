@@ -1,5 +1,4 @@
 Attribute VB_Name = "M_STATS_PROBDIST_TFAMILY"
-
 Option Explicit
 
 '==============================================================================
@@ -812,6 +811,15 @@ Public Function K_STATS_ChiSquare_Density( _
             GoTo Return_Success
         End If
 
+    'Enforce the validated large-shape density envelope (measured to df 1E20 in
+    'benchmark/density_large_shape). A clean CVErr beats a silent inaccuracy.
+        If DegreesFreedom > PROB_DENSITY_SHAPE_MAX Then
+            FailMsg = _
+                "Chi-square degrees of freedom exceed the validated density " & _
+                "accuracy envelope (df must be <= 1E20)"
+            GoTo Fail_Num
+        End If
+
     'Handle the origin, where the density is 0, 0.5 or unbounded
         If X = 0# Then
             If DegreesFreedom < 2# Then
@@ -1374,6 +1382,7 @@ Public Function K_STATS_F_Density( _
     Dim ExpNegLogRatio      As Double          'Exp(-LogRatio)
     Dim Ratio               As Double          'The F ratio r when below one
     Dim U                   As Double          'Beta variate U = r / (1 + r)
+    Dim V                   As Double          'Complement V = 1 / (1 + r)
     Dim LogU                As Double          'Log(U)
     Dim LogV                As Double          'Log(1 - U)
     Dim BetaLogPdf          As Double          'Stable Beta log-density at U
@@ -1397,6 +1406,16 @@ Public Function K_STATS_F_Density( _
     'Validate X and both degree parameters
         If Not PROB_TF_ValidateXAndTwoDF( _
             X, DegreesFreedom1, DegreesFreedom2, FailMsg) Then
+            GoTo Fail_Num
+        End If
+
+    'Enforce the validated large-shape density envelope (measured to 1E20 in
+    'benchmark/density_large_shape). A clean CVErr beats a silent inaccuracy.
+        If DegreesFreedom1 > PROB_DENSITY_SHAPE_MAX Or _
+           DegreesFreedom2 > PROB_DENSITY_SHAPE_MAX Then
+            FailMsg = _
+                "F degrees of freedom exceed the validated density accuracy " & _
+                "envelope (both must be <= 1E20)"
             GoTo Fail_Num
         End If
 
@@ -1448,6 +1467,7 @@ Public Function K_STATS_F_Density( _
 
             LogOnePlusRatio = PROB_Log1p(ExpNegLogRatio)        'Log(1 + 1 / r)
             U = 1# / (1# + ExpNegLogRatio)                      'U = r / (1 + r)
+            V = ExpNegLogRatio / (1# + ExpNegLogRatio)          'V = 1 / (1 + r)
             LogU = -LogOnePlusRatio
             LogV = -LogRatio - LogOnePlusRatio
 
@@ -1460,22 +1480,19 @@ Public Function K_STATS_F_Density( _
 
             LogOnePlusRatio = PROB_TF_LogOnePlusExp(LogRatio)   'Log(1 + r)
             U = Ratio / (1# + Ratio)                            'U = r / (1 + r)
+            V = 1# / (1# + Ratio)                               'V = 1 / (1 + r)
             LogU = LogRatio - LogOnePlusRatio
             LogV = -LogOnePlusRatio
         End If
 
-    'At an extreme ratio the beta variate collapses onto a boundary; the F
-    'density underflows to zero there, as the pre-reroute log form did.
-        If U <= 0# Or U >= 1# Then
-            K_STATS_F_Density = 0#
-            GoTo Return_Success
-        End If
 
     'Stable Beta log-density (shared kernel) plus the change-of-variable Jacobian.
     'Log(dU/dX) = LogU + LogV - Log(X); the -Log(U) - Log(V) inside the kernel
-    'cancels the added LogU + LogV, leaving the exact F log-density.
+    'cancels the added LogU + LogV, leaving the exact F log-density. U and V are
+    'both passed: even when U rounds to 1 the kernel keeps the true complement,
+    'and underflow is decided only after the full log-density is assembled.
         If Not PROB_TryBetaLogPdf( _
-            U, HalfDF1, HalfDF2, LogU, LogV, BetaLogPdf, FailMsg) Then
+            U, V, HalfDF1, HalfDF2, LogU, LogV, BetaLogPdf, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -3501,3 +3518,5 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
+
+

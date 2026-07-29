@@ -117,6 +117,8 @@ Private Const PROB_BETA_MAX_ITER       As Long = 100000   'Lentz iterations, inc
 Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterations, incomplete gamma
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
+Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y deviance argument is formed in log space to preserve the caller''s stable logs
+Public Const PROB_DENSITY_SHAPE_MAX As Double = 1E+20 'Validated large-shape density envelope (Gamma/Chi-square/Beta/F); measured, benchmark/density_large_shape
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
 Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (validated by the committed seam study and independent holdout)
 Private Const PROB_BETAINV_ROUNDTRIP_TOL As Double = 0.000001    'Forward-probability residual above which no representable interior quantile exists (worst legitimate measured residual is 3.9E-10)
@@ -832,10 +834,11 @@ End Function
 
 Public Function PROB_TryBetaLogPdf( _
     ByVal X As Double, _
+    ByVal Y As Double, _
     ByVal Alpha As Double, _
     ByVal BetaShape As Double, _
     ByVal LogX As Double, _
-    ByVal LogOneMinusX As Double, _
+    ByVal LogY As Double, _
     ByRef LogPdf As Double, _
     ByRef FailMsg As String) _
     As Boolean
@@ -846,27 +849,39 @@ Public Function PROB_TryBetaLogPdf( _
 ' PURPOSE
 '   Stable Beta log-density via Loader''s deviance and StirlingError, free of the
 '   (a-1)*Log(x) + (b-1)*Log(1-x) - LogBeta(a,b) cancellation at large shapes.
-'   Both shapes are large, so the deviance is the Loader DECOMPOSITION
+'   The deviance is the Loader DECOMPOSITION
 '
-'       D = bd0(Alpha, N*X) + bd0(BetaShape, N*(1-X)),   N = Alpha + BetaShape
+'       D = bd0(Alpha, N*X) + bd0(BetaShape, N*Y),   N = Alpha + BetaShape
 '
 '   evaluated by PROB_TryDeviancePart; forming the raw a*Log(a/(N*x)) +
 '   b*Log(b/(N*y)) instead would reintroduce the cancellation.
 '
 '       log f = -D + 0.5*(Log(Alpha) + Log(BetaShape) - Log(N))
-'               - LogX - LogOneMinusX - 0.5*Log(2*Pi)
+'               - LogX - LogY - 0.5*Log(2*Pi)
 '               - StirlingError(Alpha) - StirlingError(BetaShape)
 '               + StirlingError(N)
 '
+' WHY THE COMPLEMENT IS AN ARGUMENT
+'   Y is supplied by the caller and NEVER reconstructed as 1 - X here. When X
+'   rounds to 1 its true complement can be far below half an ulp of 1, yet the
+'   caller may hold it exactly (the F wrapper''s logistic pair). Recomputing
+'   1 - X at that point destroys the complement and, through the deviance,
+'   the entire density (CR-P1-01B). When a product N*X or N*Y falls below
+'   PROB_BLP_TINY_PRODUCT the matching deviance is formed directly in log
+'   space from the caller''s stable LogX / LogY, so an underflowed product
+'   cannot corrupt the result either.
+'
 ' PRECONDITION
-'   0 < X < 1, Alpha > 0, BetaShape > 0. Caller validates and handles endpoints.
+'   X >= 0, Y >= 0, X + Y = 1 up to rounding, Alpha > 0, BetaShape > 0. The
+'   caller validates and handles exact endpoint densities.
 '
 ' INPUTS
-'   X               Evaluation point in (0, 1)
-'   Alpha           First Beta shape
-'   BetaShape       Second Beta shape (named to avoid the Beta_Density argument)
-'   LogX            Log(X)
-'   LogOneMinusX    Log(1 - X), taken through PROB_Log1p(-X) by the caller
+'   X           Evaluation point (or the F wrapper''s Beta variate U)
+'   Y           Its complement, formed stably by the caller
+'   Alpha       First Beta shape
+'   BetaShape   Second Beta shape (named to avoid the Beta_Density argument)
+'   LogX        Log(X), formed stably by the caller
+'   LogY        Log(Y), formed stably by the caller (e.g. PROB_Log1p(-X))
 '
 ' RETURNS
 '   Boolean
@@ -879,28 +894,37 @@ Public Function PROB_TryBetaLogPdf( _
 '   - PROB_HALF_LOG_TWO_PI
 '
 ' UPDATED
-'   2026-07-25
+'   2026-07-25 - CR-P1-01B: complement passed explicitly, log-form fallback
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim n                   As Double          'Alpha + BetaShape
-    Dim OneMinusX           As Double          '1 - X
+    Dim MX                  As Double          'N * X, first deviance argument
+    Dim MY                  As Double          'N * Y, second deviance argument
     Dim DevAlpha            As Double          'bd0(Alpha, N*X)
-    Dim DevBeta             As Double          'bd0(BetaShape, N*(1-X))
+    Dim DevBeta             As Double          'bd0(BetaShape, N*Y)
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
     n = Alpha + BetaShape
-    OneMinusX = 1# - X
+    MX = n * X
+    MY = n * Y
 
-    If Not PROB_TryDeviancePart(Alpha, n * X, DevAlpha, FailMsg) Then
+    'First deviance: log-form when the product underflows, series otherwise.
+    'bd0(a, m) = a * (Log(a) - Log(m)) + m - a with Log(m) = Log(N) + LogX.
+    If MX < PROB_BLP_TINY_PRODUCT Then
+        DevAlpha = Alpha * (Log(Alpha) - (Log(n) + LogX)) + MX - Alpha
+    ElseIf Not PROB_TryDeviancePart(Alpha, MX, DevAlpha, FailMsg) Then
         PROB_TryBetaLogPdf = False
         Exit Function
     End If
 
-    If Not PROB_TryDeviancePart(BetaShape, n * OneMinusX, DevBeta, FailMsg) Then
+    'Second deviance, symmetrically.
+    If MY < PROB_BLP_TINY_PRODUCT Then
+        DevBeta = BetaShape * (Log(BetaShape) - (Log(n) + LogY)) + MY - BetaShape
+    ElseIf Not PROB_TryDeviancePart(BetaShape, MY, DevBeta, FailMsg) Then
         PROB_TryBetaLogPdf = False
         Exit Function
     End If
@@ -908,7 +932,7 @@ Public Function PROB_TryBetaLogPdf( _
     LogPdf = -(DevAlpha + DevBeta) _
              + 0.5 * (Log(Alpha) + Log(BetaShape) - Log(n)) _
              - LogX _
-             - LogOneMinusX _
+             - LogY _
              - PROB_HALF_LOG_TWO_PI _
              - PROB_StirlingError(Alpha) _
              - PROB_StirlingError(BetaShape) _
