@@ -465,6 +465,45 @@ coherence of the library.
 
 ---
 
+## Commits
+
+Subject: `<FINDING-ID>: <what changed>` — or a plain imperative if there is no
+finding. Reference the issue with `(refs #N)` so the commit appears in the issue
+timeline.
+
+Every commit that touches `.bas` source, the grid, or the contracts must end its
+body with an evidence block:
+
+    Evidence: <what was re-exported / regenerated, or "none">
+    Gate: FAIL=<n> PENDING=<n>
+    Tests: <pass>/<total>
+
+This is the one fact that neither the diff nor the code comments record, and it
+is the first question asked when a result is questioned later.
+
+## Evidence order (mandatory)
+
+When source changes, evidence must be regenerated in exactly this order:
+
+1. Re-export observations from Excel (`Export_Accuracy_Observations`, plus any
+   affected study macro)
+2. `python write_manifest.py`
+3. `python compute_errors.py --out accuracy_summary.md`
+4. Commit source, grid, manifest and summary together
+
+The summary embeds the manifest's commit SHA and timestamp, so generating it
+before the manifest leaves it stale. Rebinding the manifest *without*
+re-exporting is worse: it certifies old measurements as belonging to new code,
+which is precisely what the manifest exists to prevent.
+
+## One file per module
+
+`.bas` filenames must match `Attribute VB_Name`. A file exported under the VBE's
+default name (`Module1.bas`) is a duplicate module and will be caught by the
+accuracy gate as "present in the tree but absent from the manifest".
+
+---
+
 ## 📄 License
 
 By contributing, you agree that your contribution is licensed under the
