@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-25T15:54:47Z",
+  "generated_utc": "2026-07-29T07:30:39Z",
   "commit_sha": "unrecorded",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
@@ -34,13 +34,13 @@
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:696b8d3ca96e866bd142f048d1af0f0388605a36f81064f64793dfaa91a4f9b5",
     "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:bbb6e6aa1b91eb254f5a8b88a7c296f08d81c77add28ed344ad71946b9f9faea",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:72e4e852019f6f8bdc78366015c94887c3400f31812965a03e80c1826951da0e",
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:db14ad05a77914c37df07a9dc3dd6fd873752f12421dd1463d096e72dad0e99d",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:3c4f54f9f865f92959c6398793e3eb6d53abe41a2a83ce14f98b44c40a3b882e",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:2dcf523a8b48aecb278aaeac100ff908e7f85442a89531e7b18fa0c4a4f574d9",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:35bccf856f29a4c2b35c4f2adc27c84baf281f73227c4185bb12dca7627902c7",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:06d885505f0fedbe2cebbf5918048860b42472fed98bc543654e3b60b7c33056",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:b96721d09f28fce9b55ab8292c99e4166a78cc4e61eece76a9f002527dc0a057"
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:661c9f819741f721043f01fbe00b081fef9ca8c466ad8dea302127cd303065c1",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:136f622937d873eaca8170e9f7a66d2f8f6221818a8333d3e5f228eed6e6e5d9",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:10e21eb401b04beb6b8df506e14be8dee794156e70fbcdb318fe9d66cda838cd"
   },
   "contract_registry_sha256": "sha256:9c993fda73f26f28b0f2ad7d8bc5b83542c8bd426a01c59be39d7d92e9a6d9d6",
   "environment": {
