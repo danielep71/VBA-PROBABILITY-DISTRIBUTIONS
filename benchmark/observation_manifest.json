@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-29T07:30:39Z",
-  "commit_sha": "unrecorded",
+  "generated_utc": "2026-07-29T08:08:29Z",
+  "commit_sha": "e23ff83",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,9 +18,9 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:085a70ad9a7b8979e28178e8fe22554603610627cc85afa8b0b3e17bc1c4c1f6",
+  "observation_grid_sha256": "sha256:8ad786ddd8ec115d8a3b0c4730eda3126ea66873071f184e8dfe8eb848e57b56",
   "source_binding": {
-    "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:9db4afa4ca430a37ab6aa778cba5c364f9a2e702833f7e4a1f25fbd02959c0a9",
+    "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:d0e052e5fe5cd99cf52e8fc0ea5851116186c4544da9b01d6e33a37f9cf847eb",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_UNBAL.bas": "sha256:750c34d9450bbe965106a4cfef72ed965f0ffb7186cbc5ab897e65deadcee241",
     "benchmark/delta_seam_study/M_STATS_PROBDIST_DELTA_SEAM.bas": "sha256:b259d3ab8452a63ef31fb1d4e06231eff28e23d972be39ff471c92817f4ad0c5",
@@ -44,9 +44,9 @@
   },
   "contract_registry_sha256": "sha256:9c993fda73f26f28b0f2ad7d8bc5b83542c8bd426a01c59be39d7d92e9a6d9d6",
   "environment": {
-    "excel_version": "unrecorded",
-    "excel_build": "unrecorded",
-    "office_bitness": "unrecorded"
+    "excel_version": "16.0",
+    "excel_build": "20131",
+    "office_bitness": "64"
   },
   "notes": ""
 }

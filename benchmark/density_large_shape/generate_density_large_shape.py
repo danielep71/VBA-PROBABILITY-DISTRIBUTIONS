@@ -82,6 +82,16 @@ def _dbl(x):
 SHAPES = [1e2, 1e4, 1e6, 1e8, 1e10, 1e12, 1e16, 1e20]
 Z = [-3, -1, 0, 1, 3]
 
+# Extreme degree-ratio F pairs (CR-P1-01B). Near the mode the transformed Beta
+# variate U = r / (1 + r) is comfortably interior, so the grid above never
+# reaches the regime where U rounds to 1 (or 0) while the density stays finite
+# and material - exactly where the pre-fix kernel returned a silent zero. Both
+# orientations of every pair are generated: the original defect was asymmetric
+# (df1 >> df2 failed while df2 >> df1 was correct), so a one-sided grid would
+# have hidden it. All pairs stay inside the validated 1E20 density envelope.
+EXTREME_F = [(1e16, 1.0), (1e18, 1.0), (1e20, 1.0), (1e20, 1e2), (1e16, 1e2)]
+X_EXTREME = [0.25, 1.0, 4.0]
+
 
 def _density(direct, loader, *args):
     """Return (density_ref, ok): ok requires direct==loader to 1E-40 and representable."""
@@ -163,6 +173,13 @@ def build():
                     x = _dbl(r * d2 / mp.mpf(a))
                     if x > 0:
                         add("F_Density", x, a, d2, f_logpdf_direct, f_logpdf_loader, (x, a, d2), f"unb_z{z:+d}")
+
+    # Extreme degree ratios, both orientations (CR-P1-01B regression regime).
+    for d1, d2 in EXTREME_F:
+        for da, db in ((d1, d2), (d2, d1)):
+            for x in X_EXTREME:
+                add("F_Density", x, da, db, f_logpdf_direct, f_logpdf_loader,
+                    (x, da, db), "extreme_ratio")
 
     return rows, dropped, worst_selfcheck
 

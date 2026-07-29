@@ -166,6 +166,101 @@ Err_Handler:
 End Sub
 
 
+Public Sub Export_ExcelEnvironment()
+'
+'==============================================================================
+' Export_ExcelEnvironment
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Writes benchmark/excel_environment.json with the Excel version, build and
+'   Office bitness of the machine performing the export.
+'
+' WHY THIS EXISTS
+'   The observation manifest is meant to record the full provenance of every
+'   measurement, but the environment fields were being written as "unrecorded"
+'   because nothing supplied them. write_manifest.py reads this file, so the
+'   environment is captured from Excel itself instead of typed by hand.
+'
+' BEHAVIOR
+'   Writes next to probability_accuracy_grid.csv, reusing ResolveGridPath so the
+'   OneDrive/SharePoint fallbacks apply. Run once per machine, and again after
+'   an Office update, before running write_manifest.py.
+'
+' NOTE
+'   Application.Version is the file-format version ("16.0") and Application.Build
+'   the build number; the channel version shown in File > Account (for example
+'   2606) is not exposed to VBA. Pass --excel-version to write_manifest.py when
+'   that specific label is wanted.
+'
+' ERROR POLICY
+'   Reports failures through a message box; the file handle is always closed.
+'
+' DEPENDENCIES
+'   - ResolveGridPath
+'
+' UPDATED
+'   2026-07-29
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim GridPath            As String          'Resolved grid location
+    Dim Path                As String          'Environment file to write
+    Dim Bitness             As String          'Office bitness, 32 or 64
+    Dim FileNo              As Integer         'Output file handle
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    On Error GoTo Err_Handler
+
+    FileNo = 0
+'------------------------------------------------------------------------------
+' RESOLVE THE TARGET PATH
+'------------------------------------------------------------------------------
+    GridPath = ResolveGridPath()
+
+    If Len(GridPath) = 0 Then
+        Exit Sub
+    End If
+
+    Path = Left$(GridPath, InStrRev(GridPath, Application.PathSeparator)) & _
+           "excel_environment.json"
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    #If Win64 Then
+        Bitness = "64"
+    #Else
+        Bitness = "32"
+    #End If
+'------------------------------------------------------------------------------
+' WRITE
+'------------------------------------------------------------------------------
+    FileNo = FreeFile
+    Open Path For Output As #FileNo
+    Print #FileNo, "{"
+    Print #FileNo, "  ""excel_version"": """ & Application.Version & ""","
+    Print #FileNo, "  ""excel_build"": """ & CStr(Application.Build) & ""","
+    Print #FileNo, "  ""office_bitness"": """ & Bitness & """"
+    Print #FileNo, "}"
+    Close #FileNo
+
+    MsgBox "Excel environment written to:" & vbCrLf & Path & vbCrLf & vbCrLf & _
+           "Now run:  python write_manifest.py", vbInformation, _
+           "Environment export complete"
+    Exit Sub
+
+'------------------------------------------------------------------------------
+' ERROR HANDLER
+'------------------------------------------------------------------------------
+Err_Handler:
+    On Error Resume Next
+    If FileNo <> 0 Then Close #FileNo
+    MsgBox "Environment export failed: " & Err.Description, vbExclamation
+End Sub
+
+
 Private Function ResolveGridPath() As String
 '
 '==============================================================================
