@@ -140,11 +140,13 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**146 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**154 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
 | Beta_Cumulative.balanced.output_rel | Beta_Cumulative | balanced | output_error | relative | 2E-14 | validated and frozen |
+| Beta_Cumulative.extreme_shape.output_rel | Beta_Cumulative | extreme_shape | output_error | relative | 5E-10 | validated and frozen |
+| Beta_Cumulative.large_shape.output_rel | Beta_Cumulative | large_shape | output_error | relative | 1E-12 | validated and frozen |
 | Beta_Cumulative.tiny_unbalanced.output | Beta_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | validated and frozen |
 | Beta_Cumulative.unbalanced.output_rel | Beta_Cumulative | unbalanced | output_error | relative | 1E-10 | validated and frozen |
 | Beta_Density.balanced.output_rel | Beta_Density | balanced | output_error | relative | 1E-14 | validated and frozen |
@@ -158,6 +160,8 @@ by rate (Lambda), not scale.
 | Beta_Mean.all.output | Beta_Mean | all | output_error | relative | 5E-15 | validated and frozen |
 | Beta_StdDev.all.output | Beta_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
 | Beta_Survival.balanced.output_rel | Beta_Survival | balanced | output_error | relative | 5E-15 | validated and frozen |
+| Beta_Survival.extreme_shape.output_rel | Beta_Survival | extreme_shape | output_error | relative | 5E-10 | validated and frozen |
+| Beta_Survival.large_shape.output_rel | Beta_Survival | large_shape | output_error | relative | 1E-12 | validated and frozen |
 | Beta_Survival.tiny_unbalanced.output | Beta_Survival | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
 | Beta_Survival.unbalanced.output_rel | Beta_Survival | unbalanced | output_error | relative | 2E-10 | validated and frozen |
 | Beta_Variance.all.output | Beta_Variance | all | output_error | relative | 5E-15 | validated and frozen |
@@ -198,12 +202,16 @@ by rate (Lambda), not scale.
 | F_Survival.tiny_unbalanced.output | F_Survival | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
 | F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | validated and frozen |
 | Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 2E-14 | validated and frozen |
+| Gamma_Cumulative.extreme_shape.output_rel | Gamma_Cumulative | extreme_shape | output_error | relative | 2E-10 | validated and frozen |
+| Gamma_Cumulative.large_shape.output_rel | Gamma_Cumulative | large_shape | output_error | relative | 2E-11 | validated and frozen |
 | Gamma_Density.all.output | Gamma_Density | all | output_error | relative | 2E-14 | validated and frozen |
 | Gamma_Density.large_shape.output_rel | Gamma_Density | large_shape | output_error | relative | 2E-13 | validated and frozen |
 | Gamma_InverseCumulative.all.output | Gamma_InverseCumulative | all | output_error | relative | 2E-14 | validated and frozen |
 | Gamma_Mean.all.output | Gamma_Mean | all | output_error | relative | 5E-15 | validated and frozen |
 | Gamma_StdDev.all.output | Gamma_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
 | Gamma_Survival.all.output | Gamma_Survival | all | output_error | relative | 5E-14 | validated and frozen |
+| Gamma_Survival.extreme_shape.output_rel | Gamma_Survival | extreme_shape | output_error | relative | 2E-10 | validated and frozen |
+| Gamma_Survival.large_shape.output_rel | Gamma_Survival | large_shape | output_error | relative | 2E-11 | validated and frozen |
 | Gamma_Variance.all.output | Gamma_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | Geometric_Cumulative.all.output_rel | Geometric_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Geometric_InverseCumulative.all.output_abs | Geometric_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
