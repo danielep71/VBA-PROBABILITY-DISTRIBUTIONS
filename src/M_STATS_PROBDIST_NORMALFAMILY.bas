@@ -208,6 +208,11 @@ Private Const PROB_PDF_UNDERFLOW_Z As Double = 38.6
 
 'At approximately 38.49 the one-sided normal tail rounds to zero in Double.
 Private Const PROB_TAIL_UNDERFLOW_Z As Double = 38.5
+
+'Standardized magnitude used to recover an exact limit when standardization
+'overflows. It sits above both underflow thresholds above, so the density, the
+'cumulative and the survival are all already saturated there.
+Private Const PROB_NF_Z_SATURATION As Double = 40#
 Private Const PROB_NORMAL_TAIL_CF_TERMS As Long = 16 'Laplace continued-fraction depth
 
 Private Const PROB_CDF_SPLIT As Double = 7.07106781186547
@@ -1113,6 +1118,7 @@ Public Function K_STATS_Normal_Density( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standardized variate
+    Dim ZOverflow           As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '
 '------------------------------------------------------------------------------
@@ -1135,9 +1141,19 @@ Public Function K_STATS_Normal_Density( _
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
     'Compute the standardized variate, guarding the division by StdDev
-        If Not PROB_TryStandardize(X, Mean, StdDev, Z) Then
-            FailMsg = "Standardized variate overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(X, Mean, StdDev, Z, ZOverflow) Then
+            'The density limit under an overflowed standardization is exactly zero
+            'in either direction. It cannot be recovered by saturating the variate:
+            'the log-domain reconstruction divides by the scale, so a tiny scale
+            'would re-inflate a saturated exponent into a spurious nonzero density.
+            If ZOverflow = 0 Then
+                FailMsg = "Standardized variate overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            K_STATS_Normal_Density = 0#
+            PROB_SetStatus Status, vbNullString
+            Exit Function
         End If
     'Reconstruct the density in the logarithmic domain so a numerator that
     'underflows (large |Z|) and a tiny StdDev still yield a finite ratio rather
@@ -1269,6 +1285,7 @@ Public Function K_STATS_Normal_Cumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standardized variate
+    Dim ZOverflow           As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1288,9 +1305,16 @@ Public Function K_STATS_Normal_Cumulative( _
 ' COMPUTE CUMULATIVE PROBABILITY
 '------------------------------------------------------------------------------
     'Compute the standardized variate, guarding the division by StdDev
-        If Not PROB_TryStandardize(X, Mean, StdDev, Z) Then
-            FailMsg = "Standardized variate overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(X, Mean, StdDev, Z, ZOverflow) Then
+            'An overflowed standardization is not indeterminate: the variate is
+            'unrepresentably large with a known sign, so saturating at a magnitude
+            'the kernels already treat as the limit returns the exact answer.
+            If ZOverflow = 0 Then
+                FailMsg = "Standardized variate overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            Z = ZOverflow * PROB_NF_Z_SATURATION
         End If
     'Return the normal cumulative probability
         K_STATS_Normal_Cumulative = PROB_NormalCDF(Z)
@@ -1402,6 +1426,7 @@ Public Function K_STATS_Normal_Survival( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standardized variate
+    Dim ZOverflow           As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1421,9 +1446,16 @@ Public Function K_STATS_Normal_Survival( _
 ' COMPUTE SURVIVAL PROBABILITY
 '------------------------------------------------------------------------------
     'Compute the standardized variate, guarding the division by StdDev
-        If Not PROB_TryStandardize(X, Mean, StdDev, Z) Then
-            FailMsg = "Standardized variate overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(X, Mean, StdDev, Z, ZOverflow) Then
+            'An overflowed standardization is not indeterminate: the variate is
+            'unrepresentably large with a known sign, so saturating at a magnitude
+            'the kernels already treat as the limit returns the exact answer.
+            If ZOverflow = 0 Then
+                FailMsg = "Standardized variate overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            Z = ZOverflow * PROB_NF_Z_SATURATION
         End If
     'Return the normal upper-tail probability
         K_STATS_Normal_Survival = PROB_NormalSurvival(Z)
@@ -1791,6 +1823,7 @@ Public Function K_STATS_Normal_ZScore( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Score               As Double          'Standardized score
+    Dim ScoreOverflow       As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -1810,7 +1843,7 @@ Public Function K_STATS_Normal_ZScore( _
 ' COMPUTE Z-SCORE
 '------------------------------------------------------------------------------
     'Return z-score, guarding the division by StdDev
-        If Not PROB_TryStandardize(X, Mean, StdDev, Score) Then
+        If Not PROB_TryStandardize(X, Mean, StdDev, Score, ScoreOverflow) Then
             FailMsg = "Standardized score overflows the supported Double range"
             GoTo Fail_Num
         End If
@@ -1918,7 +1951,9 @@ Public Function K_STATS_Normal_IntervalProbability( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim ZLower              As Double          'Standardized lower bound
+    Dim ZLowerOverflow      As Long           'Overflow direction from standardization
     Dim ZUpper              As Double          'Standardized upper bound
+    Dim ZUpperOverflow      As Long           'Overflow direction from standardization
     Dim Probability         As Double          'Interval probability
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
@@ -1962,14 +1997,28 @@ Public Function K_STATS_Normal_IntervalProbability( _
 ' COMPUTE INTERVAL PROBABILITY
 '------------------------------------------------------------------------------
     'Standardize both bounds
-        If Not PROB_TryStandardize(LowerBound, Mean, StdDev, ZLower) Then
-            FailMsg = "Standardized lower bound overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(LowerBound, Mean, StdDev, ZLower, ZLowerOverflow) Then
+            'An overflowed standardization is not indeterminate: the variate is
+            'unrepresentably large with a known sign, so saturating at a magnitude
+            'the kernels already treat as the limit returns the exact answer.
+            If ZLowerOverflow = 0 Then
+                FailMsg = "Standardized lower bound overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            ZLower = ZLowerOverflow * PROB_NF_Z_SATURATION
         End If
 
-        If Not PROB_TryStandardize(UpperBound, Mean, StdDev, ZUpper) Then
-            FailMsg = "Standardized upper bound overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(UpperBound, Mean, StdDev, ZUpper, ZUpperOverflow) Then
+            'An overflowed standardization is not indeterminate: the variate is
+            'unrepresentably large with a known sign, so saturating at a magnitude
+            'the kernels already treat as the limit returns the exact answer.
+            If ZUpperOverflow = 0 Then
+                FailMsg = "Standardized upper bound overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            ZUpper = ZUpperOverflow * PROB_NF_Z_SATURATION
         End If
     'Use the stable standardized interval kernel.
         Probability = PROB_NormalIntervalProbability(ZLower, ZUpper)
@@ -2080,6 +2129,7 @@ Public Function K_STATS_Lognormal_Density( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standardized log variate
+    Dim ZOverflow           As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -2118,9 +2168,19 @@ Public Function K_STATS_Lognormal_Density( _
             Exit Function
         End If
     'Compute standardized log variate
-        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z) Then
-            FailMsg = "Standardized log-variate overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z, ZOverflow) Then
+            'The density limit under an overflowed standardization is exactly zero
+            'in either direction. It cannot be recovered by saturating the variate:
+            'the log-domain reconstruction divides by the scale, so a tiny scale
+            'would re-inflate a saturated exponent into a spurious nonzero density.
+            If ZOverflow = 0 Then
+                FailMsg = "Standardized log-variate overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            K_STATS_Lognormal_Density = 0#
+            PROB_SetStatus Status, vbNullString
+            Exit Function
         End If
     'Reconstruct the density in the logarithmic domain. A numerator that
     'underflows (large |Z|) and a denominator that underflows (tiny X or
@@ -2238,6 +2298,7 @@ Public Function K_STATS_Lognormal_Cumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standardized log variate
+    Dim ZOverflow           As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -2276,9 +2337,16 @@ Public Function K_STATS_Lognormal_Cumulative( _
             Exit Function
         End If
     'Compute standardized log variate
-        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z) Then
-            FailMsg = "Standardized log-variate overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z, ZOverflow) Then
+        'An overflowed standardization is not indeterminate: the variate is
+        'unrepresentably large with a known sign, so saturating at a magnitude
+        'the kernels already treat as the limit returns the exact answer.
+            If ZOverflow = 0 Then
+                FailMsg = "Standardized log-variate overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            Z = ZOverflow * PROB_NF_Z_SATURATION
         End If
     'Return lognormal cumulative probability
         K_STATS_Lognormal_Cumulative = PROB_NormalCDF(Z)
@@ -2387,6 +2455,7 @@ Public Function K_STATS_Lognormal_Survival( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Z                   As Double          'Standardized log variate
+    Dim ZOverflow           As Long           'Overflow direction from standardization
     Dim FailMsg             As String          'Detailed failure message
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -2425,9 +2494,16 @@ Public Function K_STATS_Lognormal_Survival( _
             Exit Function
         End If
     'Compute standardized log variate
-        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z) Then
-            FailMsg = "Standardized log-variate overflows the supported Double range"
-            GoTo Fail_Num
+        If Not PROB_TryStandardize(Log(X), MeanLog, StdDevLog, Z, ZOverflow) Then
+        'An overflowed standardization is not indeterminate: the variate is
+        'unrepresentably large with a known sign, so saturating at a magnitude
+        'the kernels already treat as the limit returns the exact answer.
+            If ZOverflow = 0 Then
+                FailMsg = "Standardized log-variate overflows the supported Double range"
+                GoTo Fail_Num
+            End If
+
+            Z = ZOverflow * PROB_NF_Z_SATURATION
         End If
     'Return lognormal upper-tail probability
         K_STATS_Lognormal_Survival = PROB_NormalSurvival(Z)

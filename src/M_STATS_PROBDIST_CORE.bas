@@ -590,49 +590,78 @@ Public Function PROB_TryStandardize( _
     ByVal Value As Double, _
     ByVal Location As Double, _
     ByVal ScaleParam As Double, _
-    ByRef Result As Double) _
+    ByRef Result As Double, _
+    ByRef OverflowSign As Long) _
     As Boolean
 '
 '==============================================================================
 ' PROB_TryStandardize
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Attempts the standardizing transform (Value - Location) / ScaleParam and converts
-'   a zero ScaleParam or any Double overflow into a FALSE return. This is the inverse
-'   shape of PROB_TryAffineTransform and is used to map a distribution variate to
-'   a standard score, for example (X - Mean) / StdDev.
+'   Computes (Value - Location) / ScaleParam under guarded arithmetic, and on
+'   overflow reports the DIRECTION of the overflow so the caller can return an
+'   exact limit instead of an error.
 '
-' CONTRACT
-'   - Finite result (including underflow to zero): returns TRUE and writes Result.
-'   - Zero ScaleParam, overflow or non-finite input: returns FALSE; Result is not
-'     contractual.
+' WHY THE SIGN IS REPORTED
+'   A standardized variate can overflow while every input is inside the public
+'   magnitude guard - a very small ScaleParam is enough. The overflow is not an
+'   indeterminate failure: the standardized value is unrepresentably large with
+'   a known sign, so a cumulative probability is exactly 1 or 0, a survival
+'   probability exactly 0 or 1, and a density exactly 0. Returning only
+'   success/failure discarded that information and forced #NUM! on inputs whose
+'   answer is exact. Callers for which the standardized value IS the result
+'   (a z-score) still treat the overflow as a failure.
 '
-' METHOD
-'   The centred difference Value - Location is formed as PROB_TryAdd(Value,
-'   -Location): negating a finite Double never overflows, and PROB_TryAdd then
-'   guards the subtraction itself. PROB_TryDivide guards the division and rejects
-'   a zero ScaleParam. This is what makes a small ScaleParam fail as a clean FALSE rather
-'   than raising an overflow that would surface as an unexpected error.
+' INPUTS
+'   Value           Value to standardize
+'   Location        Location parameter subtracted from Value
+'   ScaleParam      Scale parameter dividing the centred difference
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds the standardized value, OverflowSign is 0.
+'     FALSE => Result is not usable. OverflowSign is +1 or -1 when the
+'              standardized value overflowed with a determinable direction,
+'              and 0 when the direction is indeterminate (for example a zero
+'              ScaleParam), in which case no limit may be inferred.
+'
+' DEPENDENCIES
+'   - PROB_TryAdd
+'   - PROB_TryDivide
+'
+' UPDATED
+'   2026-07-29 - Overflow direction reported for exact-limit recovery
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Centered            As Double          'Guarded difference Value - Location
-
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    OverflowSign = 0
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
-    'Guard the centred difference (subtraction via negated addition)
-        If Not PROB_TryAdd(Value, -Location, Centered) Then Exit Function
-    'Guard the division by ScaleParam
-        If Not PROB_TryDivide(Centered, ScaleParam, Result) Then Exit Function
+    'Guard the centred difference (subtraction via negated addition). An
+    'addition overflows only when both operands share a sign, so the direction
+    'of the difference is the sign of Value.
+        If Not PROB_TryAdd(Value, -Location, Centered) Then
+            OverflowSign = Sgn(Value) * Sgn(ScaleParam)
+            Exit Function
+        End If
 
+    'Guard the division by ScaleParam. A zero ScaleParam leaves the product
+    'zero, which correctly reports the direction as indeterminate.
+        If Not PROB_TryDivide(Centered, ScaleParam, Result) Then
+            OverflowSign = Sgn(Centered) * Sgn(ScaleParam)
+            Exit Function
+        End If
 '------------------------------------------------------------------------------
 ' RETURN SUCCESS
 '------------------------------------------------------------------------------
-    'Report success
-        PROB_TryStandardize = True
+    PROB_TryStandardize = True
 End Function
 
 
@@ -908,5 +937,3 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
-
-

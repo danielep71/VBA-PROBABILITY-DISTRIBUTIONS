@@ -960,6 +960,7 @@ Private Sub Test_Core_AffineAndStandardize()
 '==============================================================================
 '
     Dim R                   As Double          'Guarded result
+    Dim RSign               As Long           'Standardization overflow direction
 
     Debug.Print "-- Core affine reconstruction and standardization Try contracts"
 
@@ -980,24 +981,34 @@ Private Sub Test_Core_AffineAndStandardize()
 
     'Standardize: (Value - Location) / ScaleParam
     AssertTrue "standardize ordinary accepted", _
-        PROB_TryStandardize(10#, 4#, 2#, R)
+        PROB_TryStandardize(10#, 4#, 2#, R, RSign)
     AssertClose "standardize (10-4)/2", R, 3#, TOL_ABS_TIGHT
     AssertTrue "standardize negative result", _
-        PROB_TryStandardize(1#, 1.96, 1#, R)
+        PROB_TryStandardize(1#, 1.96, 1#, R, RSign)
     AssertClose "standardize (1-1.96)/1", R, -0.96, TOL_ABS_TIGHT
 
     'Zero scale is rejected (division guard)
     AssertTrue "standardize zero scale rejected", _
-        (Not PROB_TryStandardize(1#, 0#, 0#, R))
+        (Not PROB_TryStandardize(1#, 0#, 0#, R, RSign))
 
     'The closed gap: a tiny scale that would overflow returns FALSE, not a fault
     AssertTrue "standardize tiny scale overflow rejected", _
-        (Not PROB_TryStandardize(9E+99, 0#, 1E-300, R))
+        (Not PROB_TryStandardize(9E+99, 0#, 1E-300, R, RSign))
 
     'Underflow of the quotient to zero is a valid success
     AssertTrue "standardize underflow accepted", _
-        PROB_TryStandardize(1#, 0#, 1E+300, R)
+        PROB_TryStandardize(1#, 0#, 1E+300, R, RSign)
     AssertClose "standardize underflow value", R, 0#, TOL_ABS_TIGHT
+    'Overflowing standardization reports a DIRECTION so callers can recover an
+    'exact limit instead of #NUM! (a tiny StdDev overflows inside the guard).
+    AssertTrue "standardize overflow reports positive direction", _
+        (Not PROB_TryStandardize(9E+99, 0#, 1E-300, R, RSign)) And RSign > 0
+    AssertTrue "standardize overflow reports negative direction", _
+        (Not PROB_TryStandardize(-9E+99, 0#, 1E-300, R, RSign)) And RSign < 0
+    AssertTrue "standardize zero scale is indeterminate, not a limit", _
+        (Not PROB_TryStandardize(1#, 0#, 0#, R, RSign)) And RSign = 0
+    AssertTrue "successful standardization reports no overflow", _
+        PROB_TryStandardize(10#, 4#, 2#, R, RSign) And RSign = 0
 End Sub
 
 
@@ -2364,8 +2375,35 @@ Private Sub Test_NF_MagnitudePolicy()
 
     'Standardization overflow (formerly the KNOWN GAP) is now a clean numeric
     'error via PROB_TryStandardize, not an unexpected xlErrValue.
-    AssertIsError "normal density tiny StdDev overflow -> xlErrNum", _
-        K_STATS_Normal_Density(9E+99, 0#, 1E-300)
+    'POLICY CHANGE: a standardization overflow no longer forces #NUM! when the
+    'limit is exact. This density is exactly zero (Exp(-Z*Z/2) annihilates the
+    '1/StdDev factor), so it is now returned instead of an error.
+    AssertClose "normal density tiny StdDev overflow -> exact zero", _
+        K_STATS_Normal_Density(9E+99, 0#, 1E-300), 0#, 0#
+    'A standardized variate can overflow with every input inside the magnitude
+    'guard (a very small StdDev is enough). The limit is exact, so the general
+    'normal surface returns it instead of #NUM!; the z-score, whose RESULT is
+    'the unrepresentable value, still fails.
+    AssertClose "normal cdf recovers +1 on standardization overflow", _
+        K_STATS_Normal_Cumulative(9E+99, 0#, 1E-250), 1#, 0#
+    AssertClose "normal cdf recovers 0 on standardization overflow", _
+        K_STATS_Normal_Cumulative(-9E+99, 0#, 1E-250), 0#, 0#
+    AssertClose "normal survival recovers 0 on standardization overflow", _
+        K_STATS_Normal_Survival(9E+99, 0#, 1E-250), 0#, 0#
+    AssertClose "normal survival recovers 1 on standardization overflow", _
+        K_STATS_Normal_Survival(-9E+99, 0#, 1E-250), 1#, 0#
+    AssertClose "normal density recovers 0 on standardization overflow", _
+        K_STATS_Normal_Density(9E+99, 0#, 1E-250), 0#, 0#
+    AssertClose "normal interval recovers 1 on standardization overflow", _
+        K_STATS_Normal_IntervalProbability(-9E+99, 9E+99, 0#, 1E-250), 1#, 0#
+    AssertIsError "z-score still fails on standardization overflow", _
+        K_STATS_Normal_ZScore(9E+99, 0#, 1E-250)
+    AssertClose "lognormal cdf recovers +1 on standardization overflow", _
+        K_STATS_Lognormal_Cumulative(1E+99, 0#, 1E-306), 1#, 0#
+    AssertClose "lognormal cdf recovers 0 on standardization overflow", _
+        K_STATS_Lognormal_Cumulative(1E-99, 0#, 1E-306), 0#, 0#
+    AssertClose "lognormal survival recovers 0 on standardization overflow", _
+        K_STATS_Lognormal_Survival(1E+99, 0#, 1E-306), 0#, 0#
 End Sub
 
 
