@@ -1085,7 +1085,13 @@ Public Function PROB_TryBetaRegularized( _
 '------------------------------------------------------------------------------
     'Compute the log of X^A * Y^B / Beta(A, B); this factor is symmetric under
     'the simultaneous swap (X,A) <-> (Y,B), so one value serves both branches
-        LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
+    'Cancellation-free via the stable Loader log-density (CR-P1-02): the density
+    'carries A-1 and B-1 powers, the factor carries A and B, hence the two logs.
+        If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+            Exit Function
+        End If
+
+        LogBt = LogBt + Log(X) + Log(Y)
 
     'Exponentiate; underflow to zero is a valid result at the far edges
         If Not PROB_TryExp(LogBt, Bt) Then
@@ -1596,6 +1602,70 @@ Public Function PROB_TryGammaRegularizedQ( _
 End Function
 
 
+Private Function PROB_TryGammaPrefactor( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Factor As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaPrefactor
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the incomplete-gamma prefactor X^A * Exp(-X) / Gamma(A) without the
+'   cancellation of the literal form -X + A*Log(X) - LogGamma(A).
+'
+' WHY THIS EXISTS
+'   The literal form subtracts two quantities of size A*Log(A) to leave a modest
+'   logarithm. LogGamma carries a RELATIVE error contract, so at A = 1E12 the
+'   absolute error already reaches ~2E-3, and by A = 1E16 the prefactor is wrong
+'   by e^46 - a silent, catastrophic error in every probability built on it.
+'   Routing through the stable Loader log-density removes the subtraction:
+'
+'       Log(X^A * Exp(-X) / Gamma(A)) = GammaLogPdf(X; A, scale 1) + Log(X)
+'
+'   because the density carries A - 1 powers of X and the prefactor carries A.
+'
+' INPUTS
+'   A               Shape parameter, strictly positive
+'   X               Evaluation point, strictly positive
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Factor holds the prefactor; underflow to zero is a valid result.
+'     FALSE => The log-density failed or the prefactor overflowed (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryGammaLogPdf
+'   - PROB_TryExp
+'
+' UPDATED
+'   2026-07-29 - CR-P1-02: cancellation-free incomplete-gamma prefactor
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogPdf              As Double          'Stable Gamma log-density at X
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    If Not PROB_TryGammaLogPdf(X, A, Log(X), 0#, LogPdf, FailMsg) Then
+        Exit Function
+    End If
+
+    If Not PROB_TryExp(LogPdf + Log(X), Factor) Then
+        FailMsg = "Incomplete gamma prefactor overflowed for A = " & A
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    PROB_TryGammaPrefactor = True
+End Function
+
+
 Public Function PROB_TryGammaSeriesP( _
     ByVal A As Double, _
     ByVal X As Double, _
@@ -1653,8 +1723,8 @@ Public Function PROB_TryGammaSeriesP( _
 
             'Return on convergence
                 If Abs(Del) <= Abs(SumValue) * PROB_NUM_EPS Then
-                    If Not PROB_TryExp(-X + A * Log(X) - PROB_LogGamma(A), Factor) Then
-                        FailMsg = "Incomplete gamma series prefactor overflowed for A = " & A
+                    'Cancellation-free prefactor (CR-P1-02)
+                    If Not PROB_TryGammaPrefactor(A, X, Factor, FailMsg) Then
                         Exit Function
                     End If
 
@@ -1740,8 +1810,8 @@ Public Function PROB_TryGammaContinuedFractionQ( _
 
             'Return on convergence
                 If Abs(Del - 1#) <= PROB_NUM_EPS Then
-                    If Not PROB_TryExp(-X + A * Log(X) - PROB_LogGamma(A), Factor) Then
-                        FailMsg = "Incomplete gamma prefactor overflowed for A = " & A
+                    'Cancellation-free prefactor (CR-P1-02)
+                    If Not PROB_TryGammaPrefactor(A, X, Factor, FailMsg) Then
                         Exit Function
                     End If
 
@@ -1807,6 +1877,7 @@ Public Function PROB_TryGammaInvP( _
     Dim Value               As Double          'P or Q at the iterate
     Dim Residual            As Double          'Signed distance to the target
     Dim Density             As Double          'Gamma density at the iterate
+    Dim LogDensity          As Double          'Stable log-density for the Newton step
     Dim Z                   As Double          'Normal seed
     Dim T                   As Double          'Wilson-Hilferty working value
     Dim Converged           As Boolean         'TRUE once the iterate has settled
@@ -1893,7 +1964,13 @@ Public Function PROB_TryGammaInvP( _
                 End If
 
             'Evaluate the gamma density, the derivative of the objective
-                If Not PROB_TryExp(-X + (A - 1#) * Log(X) - PROB_LogGamma(A), Density) Then Density = 0#
+                'Cancellation-free density (CR-P1-02); a failure leaves Density
+                'at zero, which routes the step to the bisection fallback below.
+                If Not PROB_TryGammaLogPdf(X, A, Log(X), 0#, LogDensity, FailMsg) Then
+                    Density = 0#
+                ElseIf Not PROB_TryExp(LogDensity, Density) Then
+                    Density = 0#
+                End If
 
             'Take a Newton step, falling back to bisection or expansion
                 If Density <= 0# Then

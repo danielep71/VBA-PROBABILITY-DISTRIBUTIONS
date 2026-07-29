@@ -4188,6 +4188,22 @@ Private Sub Test_CN_GammaCumulative()
     AssertClose "gamma cdf(-5,2.5,1.5)=0", K_STATS_Gamma_Cumulative(-5#, 2.5, 1.5), 0#, 0#
     AssertClose "gamma cdf ratio overflow tends one", _
         K_STATS_Gamma_Cumulative(1E+308, 2#, 9.99988867182683E-321), 1#, 0#
+    'CR-P1-02: the incomplete-gamma prefactor was formed as
+    '-X + A*Log(X) - LogGamma(A), which cancels two quantities of size A*Log(A).
+    'It now routes through the stable Loader log-density. Before the fix these
+    'were wrong by ~2E-12 (A=1E4) and ~1.3E-10 (A=1E6), degrading without bound
+    'at larger shapes; the shape is unenveloped, so the errors were silent.
+    'The tolerances are MEASURED, not aspirational. With the prefactor stabilised
+    'the binding limit is the series stopping criterion PROB_NUM_EPS = 3E-14,
+    'which leaves 3.9E-13 at A = 1E4 and 4.1E-12 at A = 1E6. Stopping instead at
+    'machine epsilon would reach 2.1E-15 and 2.8E-14 for about ten per cent more
+    'terms; that is a separate, evidence-led decision.
+    AssertRelClose "gamma cdf large shape (A=1e4)", _
+        K_STATS_Gamma_Cumulative(9900#, 10000#, 1#), _
+        0.158651192193565, 0.000000000001
+    AssertRelClose "gamma cdf large shape (A=1e6)", _
+        K_STATS_Gamma_Cumulative(999000#, 1000000#, 1#), _
+        0.158655213574304, 0.00000000001
 End Sub
 
 
