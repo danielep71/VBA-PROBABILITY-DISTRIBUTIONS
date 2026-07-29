@@ -140,7 +140,7 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**145 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**146 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
@@ -189,6 +189,7 @@ by rate (Lambda), not scale.
 | F_Cumulative.tiny_unbalanced.output | F_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | validated and frozen |
 | F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | validated and frozen |
 | F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | validated and frozen |
+| F_Density.extreme_ratio.output_rel | F_Density | extreme_ratio | output_error | relative | 5E-12 | validated and frozen |
 | F_Density.large_shape.output_rel | F_Density | large_shape | output_error | relative | 5E-5 | validated and frozen |
 | F_Density.tiny_unbalanced.output | F_Density | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
 | F_InverseCumulative.tiny_unbalanced_representable.tail_rel | F_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-13 | validated and frozen |
@@ -298,6 +299,8 @@ by rate (Lambda), not scale.
 | SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | characterized |
 | BetaInverse.InteriorQuantileRepresentability | Beta_InverseCumulative | both shapes sufficiently small (roughly a, b below 1E-3), interior probabilities | No representable interior quantile or meaningful forward round-trip exists; e.g. at a=1E-12, b=9.9E-14 the interior CDF is flat at ~0.0901 across the whole representable interval and the p=0.5 quantile needs 1-x ~ 1E-1E13. | characterized |
 | FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
+| IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E6 (measured contract-grade envelope; the incomplete-beta tail leaves contract grade near df 1E6-1E7) | without the guard errors reach ~1E-4 by df 1E13 and O(1E-1) past df 1E15; the public t surface now REJECTS df > 1E6 with CVErr(xlErrNum) | mitigated |
+| IncompleteGamma.ChiSquareLargeDF | ChiSquare_Cumulative;ChiSquare_Survival;ChiSquare_InverseCumulative | Chi-square degrees of freedom above 1E6 (validated to df 1E6 by regression T1; the 1E6-1E16 band is reference-limited and unmeasured, the kernel diverges by df 1E16) | survival off by ~7E2 at df 1E16; the public chi-square surface now REJECTS df > 1E6 with CVErr(xlErrNum) | mitigated |
 
 
 <!-- END generated -->
