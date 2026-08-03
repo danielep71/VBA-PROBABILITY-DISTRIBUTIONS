@@ -2708,8 +2708,22 @@ Private Sub Test_TF_StudentTCumulative()
         (Not IsError(K_STATS_StudentT_InverseCumulative(0.9, 100000000#)))
     AssertIsError "t inverse above envelope (1e9)", _
         K_STATS_StudentT_InverseCumulative(0.9, 1000000000#)
-    AssertTrue "t density not enveloped (large df)", _
-        (Not IsError(K_STATS_StudentT_Density(0#, 1E+18)))
+    'Was a liveness check only (it asserted a value was returned, not a correct
+    'one). Now measured: benchmark/t_density_large_df shows the density is
+    'machine-precise to df 1E20 because PROB_LogGammaHalfDiff evaluates
+    'LogGamma((df+1)/2) - LogGamma(df/2) by an asymptotic series rather than
+    'subtracting two large log-gammas, so the CR-P1-01 cancellation never forms.
+    AssertRelClose "t density large df (0, 1e18) equals phi(0)", _
+        K_STATS_StudentT_Density(0#, 1E+18), _
+        0.398942280401433, 0.00000000001
+    AssertRelClose "t density large df (3, 1e20) equals phi(3)", _
+        K_STATS_StudentT_Density(3#, 1E+20), _
+        4.43184841193801E-03, 0.00000000001
+    'Note this is the true t density, not the normal limit: at df 1E12 and x=10
+    'the two differ by ~2.5E-09 relative, far above the 1E-11 tolerance here.
+    AssertRelClose "t density large df (10, 1e12) tail", _
+        K_STATS_StudentT_Density(10#, 1E+12), _
+        7.69459864555626E-23, 0.00000000001
 End Sub
 
 

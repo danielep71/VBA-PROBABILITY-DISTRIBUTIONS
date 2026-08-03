@@ -140,7 +140,7 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**160 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**161 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
@@ -290,6 +290,7 @@ by rate (Lambda), not scale.
 | StudentT_Cumulative.all.output | StudentT_Cumulative | all | output_error | relative | 1.3E-12 | validated and frozen |
 | StudentT_Cumulative.envelope_domain.output_rel | StudentT_Cumulative | envelope_domain | output_error | relative | 2E-10 | validated and frozen |
 | StudentT_Density.all.output | StudentT_Density | all | output_error | relative | 2E-14 | validated and frozen |
+| StudentT_Density.large_df.output_rel | StudentT_Density | large_df | output_error | relative | 5E-12 | validated and frozen |
 | StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | validated and frozen |
 | StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | validated and frozen |
 | StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 5E-09 | validated and frozen |
@@ -315,7 +316,6 @@ by rate (Lambda), not scale.
 | FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
 | IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 1.2E-09 relative at df 1E8 and degrading roughly tenfold per decade beyond; the public t surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
 | IncompleteGamma.ChiSquareLargeDF | ChiSquare_Cumulative;ChiSquare_Survival;ChiSquare_InverseCumulative | Chi-square degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 3.1E-11 relative at df 1E8; the P2-02 divergence at df 1E16 was the CR-P1-02 prefactor cancellation, not an intrinsic limit; the public chi-square surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
-| IncompleteBeta.InverseEnvelopeNarrower | F_InverseCumulative;StudentT_InverseCumulative;ChiSquare_InverseCumulative | Inverse degrees of freedom above 1E5 (F) and 1E6 (StudentT, ChiSquare), i.e. below the forward CDF/survival caps of 1E10/1E8/1E8 | F_InverseCumulative is measured to refuse (clean #NUM!) at df (1E6, 3) - well inside the raised forward cap - so the forward measurement in benchmark/envelope_probe does not transfer to the inverse | mitigated |
 
 
 <!-- END generated -->

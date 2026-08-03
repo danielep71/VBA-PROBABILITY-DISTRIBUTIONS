@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-03T17:49:33Z",
-  "commit_sha": "a76904b",
+  "generated_utc": "2026-08-03T18:06:16Z",
+  "commit_sha": "a035c7c",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:26345a19267c5c5bdb2674f221400844c19b4826ed33385ee767ad4dc7c02524",
+  "observation_grid_sha256": "sha256:4727743f6223ed103d87942c55342bfb0d3c5928d6b6db940fc2a5b4755bc02b",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:d0e052e5fe5cd99cf52e8fc0ea5851116186c4544da9b01d6e33a37f9cf847eb",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -36,6 +36,7 @@
     "benchmark/inverse_probe/M_STATS_PROBDIST_INVPROBE.bas": "sha256:57fe985b028b5ad4d5744a63b62bc887536e775013811a3a753f61269c118d20",
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:696b8d3ca96e866bd142f048d1af0f0388605a36f81064f64793dfaa91a4f9b5",
+    "benchmark/t_density_large_df/M_STATS_PROBDIST_TDENS.bas": "sha256:bb3bd083f7a0db52875393d1ef74ffa89ff5f974c2bcb8f762f3f70c38c7868a",
     "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053",
     "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:72e4e852019f6f8bdc78366015c94887c3400f31812965a03e80c1826951da0e",
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:5cd72b21b2fe3f3d29a140808220f11363a6e769a53b34a57ce02b27d94c63e2",
@@ -45,7 +46,7 @@
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:b2c373b887448e5b5e006d22a3a46a4edfae18602adeff59cb7268bb94d224b1",
     "tests/M_STATS_PROBDIST_TEST.bas": "sha256:fce3c86b66b6ee935a2f20b2757d1e5459972935a11c6bc0f70cd16ccadabeae"
   },
-  "contract_registry_sha256": "sha256:c89bc97627eea5749102e2307eea7c3f61e913c3d031dfb6b0c0682373c5c306",
+  "contract_registry_sha256": "sha256:77038a268c687bc800462c7de6f1a2c92d10d76e4aeb9e7eb72bc6b86c961071",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20131",
