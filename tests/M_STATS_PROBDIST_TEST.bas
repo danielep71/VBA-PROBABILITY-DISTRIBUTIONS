@@ -2698,13 +2698,14 @@ Private Sub Test_TF_StudentTCumulative()
         K_STATS_StudentT_Cumulative(1#, 110000000#)
     AssertIsError "t survival above envelope (1e9)", _
         K_STATS_StudentT_Survival(1#, 1000000000#)
-    'The INVERSES are capped lower than the forward surface (1E6 vs 1E8):
-    'envelope_probe measured the forward kernels only, and the inverses add
-    'safeguarded Newton plus bisection with their own iteration budget.
-    AssertTrue "t inverse at its own envelope (1e6) accepted", _
-        (Not IsError(K_STATS_StudentT_InverseCumulative(0.9, 1000000#)))
-    AssertIsError "t inverse above its own envelope (1e7)", _
-        K_STATS_StudentT_InverseCumulative(0.9, 10000000#)
+    'The inverses share the forward envelope. They were briefly capped lower, on
+    'the assumption that a measured F inverse refusal was the iteration giving
+    'up; benchmark/inverse_probe showed the refusal was that very cap, and that
+    'the inverse kernels converge cleanly across the whole forward domain.
+    AssertTrue "t inverse inside the shared envelope (1e7) accepted", _
+        (Not IsError(K_STATS_StudentT_InverseCumulative(0.9, 10000000#)))
+    AssertTrue "t inverse at the shared envelope (1e8) accepted", _
+        (Not IsError(K_STATS_StudentT_InverseCumulative(0.9, 100000000#)))
     AssertIsError "t inverse above envelope (1e9)", _
         K_STATS_StudentT_InverseCumulative(0.9, 1000000000#)
     AssertTrue "t density not enveloped (large df)", _
@@ -3080,10 +3081,10 @@ Private Sub Test_TF_ChiSquareLargeDF()
         K_STATS_ChiSquare_Cumulative(100000000#, 110000000#)
     AssertIsError "chi2 survival above envelope (1e16)", _
         K_STATS_ChiSquare_Survival(1E+16, 1E+16)
-    AssertTrue "chi2 inverse at its own envelope (1e6) accepted", _
-        (Not IsError(K_STATS_ChiSquare_InverseCumulative(0.5, 1000000#)))
-    AssertIsError "chi2 inverse above its own envelope (1e7)", _
-        K_STATS_ChiSquare_InverseCumulative(0.5, 10000000#)
+    AssertTrue "chi2 inverse inside the shared envelope (1e7) accepted", _
+        (Not IsError(K_STATS_ChiSquare_InverseCumulative(0.5, 10000000#)))
+    AssertTrue "chi2 inverse at the shared envelope (1e8) accepted", _
+        (Not IsError(K_STATS_ChiSquare_InverseCumulative(0.5, 100000000#)))
     AssertIsError "chi2 inverse above envelope (1e9)", _
         K_STATS_ChiSquare_InverseCumulative(0.5, 1000000000#)
     AssertTrue "chi2 density inside its own envelope (1e16)", _
@@ -3349,6 +3350,13 @@ Private Sub Test_TF_FSurvival()
     'F envelope: survival above the range is rejected; density stays unrestricted.
     AssertIsError "F sf above envelope (2e10)", _
         K_STATS_F_Survival(1#, 10#, 20000000000#)
+    'REGRESSION: this exact call returned #NUM! while the inverse carried its own
+    'lower cap. The inverse kernel converges here (measured 2.2E-16 in
+    'benchmark/inverse_probe); the refusal was the cap, not the numerics.
+    AssertTrue "F inverse unbalanced ratio (1e6,3) accepted", _
+        (Not IsError(K_STATS_F_InverseCumulative(0.5, 1000000#, 3#)))
+    AssertIsError "F inverse above envelope (2e10)", _
+        K_STATS_F_InverseCumulative(0.5, 20000000000#, 3#)
     AssertIsError "F sf df far beyond envelope", _
         K_STATS_F_Survival(1E+308, 1E+99, 1E-99)
 End Sub
@@ -6374,5 +6382,3 @@ Private Sub Test_DS_SupportEdges()
         K_STATS_DiscreteUniform_StdDev(7#, 7#), _
         0#, 0#
 End Sub
-
-

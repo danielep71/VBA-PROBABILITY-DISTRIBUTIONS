@@ -77,20 +77,21 @@ check(Decimal("4E-16") < r < Decimal("6E-16"), "tail residual normalisation")
 
 # --- predicted_expected_error: F envelope-reject region ---------------------
 check(predicted_expected_error("F_Cumulative", "1.5", "2E10") is True, "F_Cumulative df2>max -> expected")
-check(predicted_expected_error("F_InverseCumulative", "500000", "4") is True, "F_Inverse df1>inv max -> expected")
+check(predicted_expected_error("F_InverseCumulative", "2E10", "4") is True, "F_Inverse df1>max -> expected")
 check(predicted_expected_error("F_Survival", "50", "50") is False, "F in-envelope -> not expected")
 check(predicted_expected_error("F_Density", "1000000", "3") is False, "F_Density is NOT enveloped")
 
-# The inverses are capped LOWER than the forward surface: envelope_probe
-# measured the forward kernels only, and F_InverseCumulative is measured to
-# refuse well inside the forward cap. A df between the two caps must therefore
-# be in-envelope forward and reject-region for the inverse.
-check(predicted_expected_error("F_Cumulative", "1E6", "1E6") is False, "F_Cumulative 1E6 is inside the raised forward cap")
-check(predicted_expected_error("F_InverseCumulative", "1E6", "3") is True, "F_Inverse 1E6 is beyond the inverse cap")
-check(predicted_expected_error("StudentT_Cumulative", "1E7", "") is False, "t cdf 1E7 inside forward cap")
-check(predicted_expected_error("StudentT_InverseCumulative", "1E7", "") is True, "t inverse 1E7 beyond inverse cap")
-check(predicted_expected_error("ChiSquare_Survival", "1E7", "") is False, "chi survival 1E7 inside forward cap")
-check(predicted_expected_error("ChiSquare_InverseCumulative", "1E7", "") is True, "chi inverse 1E7 beyond inverse cap")
+# The inverses share the forward caps: benchmark/inverse_probe measured the
+# inverse kernels clean to df 2E10 with no refusals, including the unbalanced
+# ratios that had been assumed to fail. A df inside the forward cap must
+# therefore be in-envelope for the inverse too.
+check(predicted_expected_error("F_Cumulative", "1E6", "1E6") is False, "F_Cumulative 1E6 inside cap")
+check(predicted_expected_error("F_InverseCumulative", "1E6", "3") is False, "F_Inverse 1E6 inside cap (shares the forward envelope)")
+check(predicted_expected_error("StudentT_Cumulative", "1E7", "") is False, "t cdf 1E7 inside cap")
+check(predicted_expected_error("StudentT_InverseCumulative", "1E7", "") is False, "t inverse 1E7 inside cap")
+check(predicted_expected_error("ChiSquare_Survival", "1E7", "") is False, "chi survival 1E7 inside cap")
+check(predicted_expected_error("ChiSquare_InverseCumulative", "1E7", "") is False, "chi inverse 1E7 inside cap")
+check(predicted_expected_error("ChiSquare_InverseCumulative", "2E8", "") is True, "chi inverse beyond the shared cap -> expected")
 check(predicted_expected_error("Beta_Cumulative", "1e9", "1e9") is False, "non-F -> not expected")
 check(predicted_expected_error("F_Cumulative", str(F_MAX_DF), "3") is False, "exactly at F_MAX_DF -> not expected")
 

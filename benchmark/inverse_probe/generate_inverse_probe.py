@@ -42,11 +42,20 @@ EPS = mp.mpf(10) ** -26
 TOL = mp.mpf(10) ** -20
 
 CHI_DF = [1e6, 1e7, 1e8]
-BETA_BALANCED = [(1e5, 1e5), (1e6, 1e6), (1e8, 1e8), (1e10, 1e10)]
-BETA_UNBALANCED = [(1e6, 3.0), (3.0, 1e6), (1e8, 10.0), (10.0, 1e8),
+# F degree-of-freedom PAIRS. These are df, converted to beta shapes as
+# A = d1/2, B = d2/2 exactly as K_STATS_F_InverseCumulative does. An earlier
+# version of this generator passed the pairs straight through as beta shapes,
+# which silently probed shapes twice the intended size and therefore missed the
+# very configuration that motivated the study.
+F_DF_BALANCED = [(2e5, 2e5), (2e6, 2e6), (2e8, 2e8), (2e10, 2e10)]
+F_DF_UNBALANCED = [(1e6, 3.0), (2.0, 1e6),          # the measured refusals
+                   (1e6, 4.0), (1e8, 10.0), (10.0, 1e8),
                    (1e10, 100.0), (100.0, 1e10)]
 T_DF = [1e6, 1e7, 1e8]
-PROBS = [mp.mpf("0.1"), mp.mpf("0.5"), mp.mpf("0.9")]
+# 0.95 and 0.99 are included because the measured refusals occur there too, and
+# an inverse can converge at the median while failing further into the tail.
+PROBS = [mp.mpf("0.1"), mp.mpf("0.5"), mp.mpf("0.9"),
+         mp.mpf("0.95"), mp.mpf("0.99")]
 
 
 def gser(A, X):
@@ -198,8 +207,8 @@ def build():
                 add("PROB_TryGammaInvP", [p, 1 - p, A], root, f"chi_df{df:.0e}_p{float(p)}")
 
     # Beta inverse: balanced, unbalanced, and the t shape (B = 1/2)
-    groups = ([(a, b, "bal") for a, b in BETA_BALANCED]
-              + [(a, b, "unb") for a, b in BETA_UNBALANCED]
+    groups = ([(mp.mpf(d1) / 2, mp.mpf(d2) / 2, "bal") for d1, d2 in F_DF_BALANCED]
+              + [(mp.mpf(d1) / 2, mp.mpf(d2) / 2, "unb") for d1, d2 in F_DF_UNBALANCED]
               + [(mp.mpf(df) / 2, mp.mpf("0.5"), "t") for df in T_DF])
     for A, B, tag in groups:
         A = mp.mpf(A); B = mp.mpf(B)

@@ -41,12 +41,25 @@ StudentT_InverseCumulative(p, df)  -> the same beta inverse with B = 1/2
 Both kernels take the probability **and its complement** as a pair, so no tail
 is reconstructed by subtraction.
 
+## Mapping: beta shapes are df/2
+
+`F_InverseCumulative(p, d1, d2)` passes `A = d1/2` and `B = d2/2` to the beta
+inverse, so this grid stores df pairs and halves them. An earlier version of the
+generator passed the pairs straight through as beta shapes. That silently probed
+shapes twice the intended size and reported every configuration clean **without
+ever touching the one that motivated the study** — the measured refusals are at
+`A = 5E5, B = 1.5` (df 1E6, 3), and the flawed grid tested `A = 1E6, B = 3`.
+A probe that cannot reproduce the known defect cannot certify the domain, so the
+exact refusing configurations are now pinned in the grid explicitly.
+
 ## Design note: ratio, not just magnitude
 
 The known failure is at df ratio 1E6:3 — not at large balanced df. A grid that
 varied only magnitude would have missed the case that motivated the study, so
 the beta shapes cover balanced pairs, strongly unbalanced pairs in **both**
-orientations, and the `B = 1/2` shape the t distribution produces.
+orientations, and the `B = 1/2` shape the t distribution produces. Probabilities
+run to 0.99 as well as the median, since an inverse can converge at the centre
+and fail further into the tail.
 
 ## References
 

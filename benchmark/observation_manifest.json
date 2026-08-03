@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-07-29T18:30:36Z",
-  "commit_sha": "0d19ff4",
+  "generated_utc": "2026-08-03T17:38:01Z",
+  "commit_sha": "4f0b2af",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:123715fb1c3c6ace505af19de936a740c270b016b543168f56fa80b13cfec088",
+  "observation_grid_sha256": "sha256:8398de9f3c940f95bffaed27b40823f432392991af3d501fd70d17897e9b2d56",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:d0e052e5fe5cd99cf52e8fc0ea5851116186c4544da9b01d6e33a37f9cf847eb",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -33,6 +33,7 @@
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:03f0354961664a7685f70a4ae5bb034678a6403f6ab84a64b86f5ee2d0b6a91c",
     "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:ac42166bb978eb48d45490cd7fb715a448b83561ea6ebeeed50c10d9636f9693",
     "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas": "sha256:dc7708db87f0d1aafd6c7b0a81cffc72584232a0146f2eb2fb4fa1b998d67540",
+    "benchmark/inverse_probe/M_STATS_PROBDIST_INVPROBE.bas": "sha256:57fe985b028b5ad4d5744a63b62bc887536e775013811a3a753f61269c118d20",
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:696b8d3ca96e866bd142f048d1af0f0388605a36f81064f64793dfaa91a4f9b5",
     "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053",
@@ -41,8 +42,8 @@
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:cee86320c6f63b3781c574e113e3abd1643d192c542ee29b0695d1626aae665d",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:58f02816fec8587e32f0c7d8f57dbc2637e11bcabffc4507707d86a9e25bed1d",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:fe1b6f51d06bdbe96e5119b2b5c81147dcee8e2701d19cf1c70d28be11da15c5",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:aaf942f811844cb0abaad53703b3f70c2ae5abd937a3522f39600078c933a89c",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:cb31b2f3096a56517ed3825e576886ebdef726b7897dd97800514ffbb562ef9c"
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:b2c373b887448e5b5e006d22a3a46a4edfae18602adeff59cb7268bb94d224b1",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:fce3c86b66b6ee935a2f20b2757d1e5459972935a11c6bc0f70cd16ccadabeae"
   },
   "contract_registry_sha256": "sha256:c89bc97627eea5749102e2307eea7c3f61e913c3d031dfb6b0c0682373c5c306",
   "environment": {

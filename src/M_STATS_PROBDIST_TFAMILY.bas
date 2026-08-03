@@ -167,12 +167,9 @@ Option Explicit
 
 'Maximum safeguarded Newton iterations for the Student t quantile
 Private Const PROB_T_INV_MAX_ITER As Long = 500
-Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy envelope; both df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
+Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy envelope; both df must be <= this. Applies to the cumulative, survival AND inverse: benchmark/inverse_probe measured the inverse kernel clean to df 2E10 with no refusals, including the unbalanced ratios that had been assumed to fail (measured, benchmark/envelope_probe + benchmark/inverse_probe)
 Private Const PROB_T_MAX_DF       As Double = 100000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
 Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29); above that the lower-tail series reaches PROB_GAMMA_MAX_ITER
-Private Const PROB_F_INV_MAX_DF   As Double = 100000# 'Inverse F envelope. The forward cap rests on benchmark/envelope_probe, which measured the CDF kernel only; the inverse adds safeguarded Newton plus bisection with its own iteration budget and is measured to refuse at df ratios well inside the forward cap, so it keeps its previously validated bound until studied.
-Private Const PROB_T_INV_MAX_DF   As Double = 1000000# 'Inverse Student t envelope; see PROB_F_INV_MAX_DF for why the inverses are capped separately from the forward surface.
-Private Const PROB_CHI_INV_MAX_DF As Double = 1000000# 'Inverse chi-square envelope; see PROB_F_INV_MAX_DF.
 
 '==============================================================================
 ' PUBLIC - STUDENT T
@@ -660,7 +657,7 @@ Public Function K_STATS_StudentT_InverseCumulative( _
 
     'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
     'density is closed-form and unrestricted). A clean CVErr beats a silent error.
-        If Not PROB_T_ValidateEnvelope(DegreesFreedom, PROB_T_INV_MAX_DF, FailMsg) Then
+        If Not PROB_T_ValidateEnvelope(DegreesFreedom, PROB_T_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -1257,7 +1254,7 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 
     'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
     'is closed-form and unrestricted). A clean CVErr beats a silent error.
-        If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, PROB_CHI_INV_MAX_DF, FailMsg) Then
+        If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, PROB_CHI_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -1966,7 +1963,7 @@ Public Function K_STATS_F_InverseCumulative( _
     'Enforce the measured F accuracy envelope (incomplete-beta path only).
         If Not PROB_F_ValidateEnvelope( _
             DegreesFreedom1, DegreesFreedom2, _
-            PROB_F_INV_MAX_DF, FailMsg) Then
+            PROB_F_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
 
@@ -3529,5 +3526,3 @@ Private Function PROB_TF_ValidateXAndTwoDF( _
     'Report valid inputs
         PROB_TF_ValidateXAndTwoDF = True
 End Function
-
-

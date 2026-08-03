@@ -42,12 +42,18 @@ def main():
         if ref != 0:
             worst[key] = max(worst[key], abs(obs - ref) / abs(ref))
 
-    print(f"{'group':<26}{'A':>10}{'B':>10}{'worst rel':>13}{'n':>4}{'refused':>9}")
+    # Beta shapes are df/2, so both are shown: the shapes the kernel sees and
+    # the degrees of freedom a caller would pass.
+    print(f"{'group':<26}{'A':>10}{'B':>10}{'df1':>10}{'df2':>10}"
+          f"{'worst rel':>13}{'n':>4}{'refused':>9}")
     for key in sorted(counts, key=lambda k: (k[0], k[1], k[2])):
         tag, a, b = key
         ok, bad = counts[key]
         w = f"{worst[key]:.2e}" if ok else "n/a"
-        print(f"{LABEL[tag]:<26}{a:>10.0e}{b:>10.0e}{w:>13}{ok:>4}{bad:>9}")
+        d1 = 2 * a
+        d2 = ("-" if tag == "chi" else f"{2 * b:.0e}")
+        print(f"{LABEL[tag]:<26}{a:>10.0e}{b:>10.0e}{d1:>10.0e}{d2:>10}"
+              f"{w:>13}{ok:>4}{bad:>9}")
 
     print("\nPer group: highest shape with NO refusals and every point measured")
     for tag in sorted(shapes):
@@ -57,7 +63,7 @@ def main():
             best = max(clean, key=lambda ab: max(ab))
             w = max(worst[(tag, a, b)] for a, b in clean)
             print(f"  {LABEL[tag]:<26} clean to A={best[0]:.0e} B={best[1]:.0e}"
-                  f"  (worst {w:.2e})")
+                  f"  (df up to {2 * max(best):.0e}, worst {w:.2e})")
         else:
             print(f"  {LABEL[tag]:<26} no fully clean shape")
 

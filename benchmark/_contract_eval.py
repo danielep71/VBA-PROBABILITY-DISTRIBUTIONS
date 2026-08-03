@@ -129,21 +129,20 @@ def evidence_gaps(rows, observed_key="observed_vba"):
 # from 1E5/1E6/1E6 after benchmark/envelope_probe showed the previous
 # boundaries were measuring the CR-P1-02 prefactor cancellation rather than an
 # intrinsic limit; check_source_thresholds.py verifies the pairing.
-# The INVERSES are capped separately and lower: envelope_probe measured the
-# forward CDF kernels only, and the inverses add safeguarded Newton plus
-# bisection with their own iteration budget. F_InverseCumulative is measured to
-# refuse at df ratios well inside the forward cap, so each inverse keeps its
-# previously validated bound until studied in its own right.
+# The inverses share the forward caps. They were briefly capped lower, on the
+# assumption that a measured F_InverseCumulative refusal reflected the inverse
+# iteration giving up; benchmark/inverse_probe showed the refusal was the newly
+# installed inverse cap itself, and that the inverse kernel converges cleanly to
+# df 2E10 with no refusals at any probed shape, including the unbalanced ratios.
 F_MAX_DF = 10000000000.0        # PROB_F_MAX_DF
 T_MAX_DF = 100000000.0          # PROB_T_MAX_DF
 CHI_MAX_DF = 100000000.0        # PROB_CHI_MAX_DF
-F_INV_MAX_DF = 100000.0         # PROB_F_INV_MAX_DF
-T_INV_MAX_DF = 1000000.0        # PROB_T_INV_MAX_DF
-CHI_INV_MAX_DF = 1000000.0      # PROB_CHI_INV_MAX_DF
 
-_F_ENVELOPED = ("F_Cumulative", "F_Survival")
-_T_ENVELOPED = ("StudentT_Cumulative", "StudentT_Survival")
-_CHI_ENVELOPED = ("ChiSquare_Cumulative", "ChiSquare_Survival")
+_F_ENVELOPED = ("F_Cumulative", "F_Survival", "F_InverseCumulative")
+_T_ENVELOPED = ("StudentT_Cumulative", "StudentT_Survival",
+                "StudentT_InverseCumulative")
+_CHI_ENVELOPED = ("ChiSquare_Cumulative", "ChiSquare_Survival",
+                  "ChiSquare_InverseCumulative")
 
 
 def predicted_expected_error(function, arg2, arg3):
@@ -158,16 +157,10 @@ def predicted_expected_error(function, arg2, arg3):
     """
     if function in _F_ENVELOPED:
         cap, args = F_MAX_DF, (arg2, arg3)
-    elif function == "F_InverseCumulative":
-        cap, args = F_INV_MAX_DF, (arg2, arg3)
     elif function in _T_ENVELOPED:
         cap, args = T_MAX_DF, (arg2,)
-    elif function == "StudentT_InverseCumulative":
-        cap, args = T_INV_MAX_DF, (arg2,)
     elif function in _CHI_ENVELOPED:
         cap, args = CHI_MAX_DF, (arg2,)
-    elif function == "ChiSquare_InverseCumulative":
-        cap, args = CHI_INV_MAX_DF, (arg2,)
     else:
         return False
 
