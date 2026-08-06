@@ -115,6 +115,14 @@ Option Private Module
 
 Private Const PROB_BETA_MAX_ITER       As Long = 100000   'Lentz iterations, incomplete beta
 Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterations, incomplete gamma
+'The ascending gamma series stops at machine epsilon rather than the shared
+'PROB_NUM_EPS (3E-14). Measured: the tighter criterion buys about 145x accuracy
+'(A = 1E6: 4.1E-12 -> 2.9E-14) for about 11% more terms, and it does NOT move
+'the reachability edge - at the chi-square cap df 1E8 the series needs 41095
+'terms at 3E-14 and 45946 here, both far inside PROB_GAMMA_MAX_ITER. The two
+'continued fractions gain nothing from the same change (the beta CF is limited
+'elsewhere and is unchanged above A = 1E6), so they keep PROB_NUM_EPS.
+Private Const PROB_GAMMA_SERIES_EPS    As Double = PROB_MACH_EPS 'Stop for the ascending gamma series only; see the note above
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
 Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y deviance argument is formed in log space to preserve the caller''s stable logs
@@ -1733,7 +1741,7 @@ Public Function PROB_TryGammaSeriesP( _
             SumValue = SumValue + Del
 
             'Return on convergence
-                If Abs(Del) <= Abs(SumValue) * PROB_NUM_EPS Then
+                If Abs(Del) <= Abs(SumValue) * PROB_GAMMA_SERIES_EPS Then
                     'Cancellation-free prefactor (CR-P1-02)
                     If Not PROB_TryGammaPrefactor(A, X, Factor, FailMsg) Then
                         Exit Function
@@ -2030,5 +2038,3 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
-
-

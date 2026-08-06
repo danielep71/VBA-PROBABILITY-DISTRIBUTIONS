@@ -4233,11 +4233,12 @@ Private Sub Test_CN_GammaCumulative()
     'It now routes through the stable Loader log-density. Before the fix these
     'were wrong by ~2E-12 (A=1E4) and ~1.3E-10 (A=1E6), degrading without bound
     'at larger shapes; the shape is unenveloped, so the errors were silent.
-    'The tolerances are MEASURED, not aspirational. With the prefactor stabilised
-    'the binding limit is the series stopping criterion PROB_NUM_EPS = 3E-14,
-    'which leaves 3.9E-13 at A = 1E4 and 4.1E-12 at A = 1E6. Stopping instead at
-    'machine epsilon would reach 2.1E-15 and 2.8E-14 for about ten per cent more
-    'terms; that is a separate, evidence-led decision.
+    'The tolerances are MEASURED, not aspirational. The series now stops at
+    'PROB_GAMMA_SERIES_EPS (machine epsilon) rather than the shared 3E-14, which
+    'took A = 1E4 from 3.9E-13 to 2.1E-15 and A = 1E6 from 4.1E-12 to 2.8E-14
+    'for about 11% more terms. The tolerances below are kept at the pre-change
+    'values so this test still passes if the criterion is ever loosened again;
+    'the frozen accuracy contracts carry the tightened bound.
     AssertRelClose "gamma cdf large shape (A=1e4)", _
         K_STATS_Gamma_Cumulative(9900#, 10000#, 1#), _
         0.158651192193565, 0.000000000001
