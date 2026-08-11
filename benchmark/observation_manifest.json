@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-11T14:11:45Z",
-  "commit_sha": "3000f59",
+  "generated_utc": "2026-08-11T15:05:36Z",
+  "commit_sha": "383d1c8",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -28,7 +28,7 @@
     "benchmark/density_helpers/M_STATS_PROBDIST_DENSHELP.bas": "sha256:fee5f39d26dddf39ec751e192fae8d296331688d3a8442f1c1feb2e1a5fd4190",
     "benchmark/density_large_shape/M_STATS_PROBDIST_DENS.bas": "sha256:b7489c2ba7c7e5a71aa58e16d9845395c36c13a7a642a468b7078d00dbf82d98",
     "benchmark/envelope_probe/M_STATS_PROBDIST_ENVPROBE.bas": "sha256:7001714e110d1b92572ff314e9bfdbcf8c79be657673fe1b2e5f423f8a27d710",
-    "benchmark/excel_comparison/M_STATS_PROBDIST_XLCMP.bas": "sha256:f7625ddc47484b6a4f948c102cc397bef2741e190b8ac50991199b67b929ddf1",
+    "benchmark/excel_comparison/M_STATS_PROBDIST_XLCMP.bas": "sha256:4362852f6a1858be54ff3f5a264c401abe337f633a8afcdc13f841c6a424c316",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:ef5c9c010376a337469f6597670cad733118666e8361833ab9304561dc3c861f",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:ddd22d5d33ae9d8ae3ce9b4141337219ca422422ebecb80568c8f1afe8aee95a",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:03f0354961664a7685f70a4ae5bb034678a6403f6ab84a64b86f5ee2d0b6a91c",
