@@ -15,6 +15,7 @@ Run: python3 test_analyze_holdout.py   (exit 0 = pass, nonzero = fail)
 """
 from decimal import Decimal
 from analyze_holdout import worst_for
+from _contract_eval import predicted_expected_error
 
 
 def _row(observed, reference):
@@ -29,6 +30,14 @@ def main():
     abs_expected = Decimal("1E-13")
     rel_expected = Decimal("1E-14")
     fails = []
+
+    # Guard: the envelope fixtures below are only meaningful if their df really
+    # is beyond the current cap. Pin that to the shared predicate rather than to
+    # a literal, so raising PROB_F_MAX_DF again fails here loudly instead of
+    # quietly turning these into in-envelope rows.
+    if not predicted_expected_error("F_InverseCumulative", "2E10", "4"):
+        fails.append("envelope fixture df 2E10 is no longer beyond the F cap; "
+                     "update the fixtures to a df that is")
 
     # 1. output_error + absolute -> absolute
     w, _, n, _, _, _, _ = worst_for("output_error", "absolute", rows, "Fn")
@@ -58,10 +67,13 @@ def main():
     except ValueError:
         pass
 
-    # 6. an envelope-reject row (F CDF/Survival/Inverse, df > 1E5) that returns
-    #    ERROR is EXCLUDED, not scored, and not flagged as unexpected.
+    # 6. an envelope-reject row (F CDF/Survival/Inverse, df beyond PROB_F_MAX_DF)
+    #    that returns ERROR is EXCLUDED, not scored, and not flagged as unexpected.
+    #    The df here must stay beyond the CURRENT cap: it was 5E5 while the cap was
+    #    1E5, and silently became an in-envelope row when the cap rose to 1E10,
+    #    which is what broke this test.
     env_error = [{"function": "F_InverseCumulative", "observed_vba": "ERROR", "reference": "1",
-                  "arg1": "0.5", "arg2": "500000", "arg3": "4"}]
+                  "arg1": "0.5", "arg2": "2E10", "arg3": "4"}]
     w, _, n, n_missing, n_error, n_violation, n_invalid = worst_for("output_error", "relative", env_error, "F_InverseCumulative")
     if not (n == 0 and n_missing == 0 and n_error == 0 and n_violation == 0):
         fails.append(f"envelope ERROR row not excluded cleanly: n={n} missing={n_missing} error={n_error} viol={n_violation}")
@@ -76,7 +88,7 @@ def main():
     # 8. Direction 2: an envelope-reject row that returns a VALUE (should have been
     #    #NUM!) is a violation, reported so the caller can block.
     env_value = [{"function": "F_InverseCumulative", "observed_vba": "1.23", "reference": "1",
-                  "arg1": "0.5", "arg2": "500000", "arg3": "4"}]
+                  "arg1": "0.5", "arg2": "2E10", "arg3": "4"}]
     w, _, n, n_missing, n_error, n_violation, n_invalid = worst_for("output_error", "relative", env_value, "F_InverseCumulative")
     if not (n == 0 and n_violation == 1):
         fails.append(f"envelope-reject VALUE not flagged as violation: n={n} viol={n_violation}")
