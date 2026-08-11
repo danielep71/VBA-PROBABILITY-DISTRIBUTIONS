@@ -183,8 +183,35 @@ Option Explicit
 '     number) must be nested, never And-ed. See K_STATS_Lognormal_Variance and
 '     K_STATS_Lognormal_StdDev.
 '
+' STANDARDIZATION OVERFLOW RETURNS AN EXACT LIMIT, NOT AN ERROR
+'   A standardized variate (X - Mean) / StdDev can overflow while every argument
+'   is inside the public magnitude guard - a very small StdDev is enough. That
+'   overflow is NOT indeterminate: the variate is unrepresentably large with a
+'   KNOWN SIGN, so the answer is exact.
+'
+'       Z -> +infinity     cumulative 1, survival 0, density 0
+'       Z -> -infinity     cumulative 0, survival 1, density 0
+'
+'   PROB_TryStandardize therefore reports the direction of the overflow, and the
+'   distribution surfaces here return the corresponding limit rather than
+'   CVErr(xlErrNum). K_STATS_Normal_ZScore is the deliberate exception: there the
+'   unrepresentable value IS the requested result, so it still fails.
+'
+'   Two recovery mechanisms are used, and the difference is NOT arbitrary:
+'
+'   - Cumulative, survival and interval probabilities SATURATE the variate at
+'     PROB_NF_Z_SATURATION. They are pure functions of Z, and the kernels are
+'     already at their limiting values well before that magnitude.
+'
+'   - The DENSITIES return exact zero directly and must NOT be changed to
+'     saturate. A density is reconstructed in the log domain and divides by the
+'     scale, so a saturated exponent is re-inflated by 1 / StdDev: at StdDev
+'     1E-300 that yields ~1.5E-48 instead of 0. No finite saturation point can
+'     work, because the 1 / StdDev factor is unbounded.
+'
 ' UPDATED
-'   2026-07-23
+'   2026-08-11 - Exact-limit recovery on standardization overflow documented;
+'                per-function BEHAVIOR notes and dates brought current.
 '==============================================================================
 
 '==============================================================================
@@ -210,8 +237,12 @@ Private Const PROB_PDF_UNDERFLOW_Z As Double = 38.6
 Private Const PROB_TAIL_UNDERFLOW_Z As Double = 38.5
 
 'Standardized magnitude used to recover an exact limit when standardization
-'overflows. It sits above both underflow thresholds above, so the density, the
-'cumulative and the survival are all already saturated there.
+'overflows. 40 rather than 39 is deliberate: it clears both measured underflow
+'thresholds above (38.58 and 38.49) with roughly 1.5 in hand, so the cumulative,
+'the survival and the density are all already at their limiting values there and
+'no kernel is asked to work near its own boundary. Any value comfortably above
+'PROB_PDF_UNDERFLOW_Z would serve; the margin is what makes it robust to a
+'future re-measurement of those thresholds.
 Private Const PROB_NF_Z_SATURATION As Double = 40#
 Private Const PROB_NORMAL_TAIL_CF_TERMS As Long = 16 'Laplace continued-fraction depth
 
@@ -1092,6 +1123,10 @@ Public Function K_STATS_Normal_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   When the standardized variate overflows, the density limit is exactly zero
+'   in either direction and is returned directly. It is NOT recovered by
+'   saturating Z: the log-domain reconstruction below divides by StdDev, so a
+'   saturated exponent would be re-inflated into a spurious nonzero density.
 '   - Validates X, Mean and StdDev against the supported magnitude.
 '   - Validates positive StdDev.
 '   - Standardizes X into Z = (X - Mean) / StdDev.
@@ -1111,7 +1146,7 @@ Public Function K_STATS_Normal_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1278,7 +1313,7 @@ Public Function K_STATS_Normal_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1401,6 +1436,8 @@ Public Function K_STATS_Normal_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   A standardization overflow returns the exact limit - survival 0 for a
+'   positive overflow, 1 for a negative one - rather than CVErr(xlErrNum).
 '   - Validates X, Mean and StdDev against the supported magnitude.
 '   - Validates positive StdDev.
 '   - Standardizes X into Z = (X - Mean) / StdDev.
@@ -1419,7 +1456,7 @@ Public Function K_STATS_Normal_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-23
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1816,7 +1853,7 @@ Public Function K_STATS_Normal_ZScore( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1925,6 +1962,12 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   A standardization overflow REMAINS an error here, unlike the probability
+'   surfaces in this module: the unrepresentable standardized value is itself
+'   the requested result, so there is no exact limit to return.
+'   A standardization overflow on either bound returns the exact limit for that
+'   bound rather than CVErr(xlErrNum). The kernel clamps the difference to
+'   [0, 1], so a saturated bound cannot invert the interval.
 '   - Validates bounds, Mean and StdDev against the supported magnitude,
 '     and requires a positive StdDev.
 '   - Validates UpperBound >= LowerBound.
@@ -1944,7 +1987,7 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2102,6 +2145,10 @@ Public Function K_STATS_Lognormal_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   When the standardized log-variate overflows, the density limit is exactly
+'   zero in either direction and is returned directly, for the same reason as
+'   K_STATS_Normal_Density: the reconstruction divides by the scale, so no
+'   finite saturation point is safe.
 '   - Validates MeanLog and StdDevLog.
 '   - Returns 0 when X <= 0: the density of a positive-support variable is zero
 '     outside its support, so this is a value, not a domain error.
@@ -2122,7 +2169,7 @@ Public Function K_STATS_Lognormal_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2274,6 +2321,8 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   A standardization overflow returns the exact limit - cumulative 1 for a
+'   positive overflow, 0 for a negative one - rather than CVErr(xlErrNum).
 '   - Validates MeanLog and StdDevLog.
 '   - Returns 0 when X <= 0.
 '   - Otherwise computes NormalCDF((Log(X) - MeanLog) / StdDevLog).
@@ -2291,7 +2340,7 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2431,6 +2480,8 @@ Public Function K_STATS_Lognormal_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   A standardization overflow returns the exact limit - survival 0 for a
+'   positive overflow, 1 for a negative one - rather than CVErr(xlErrNum).
 '   - Validates X, MeanLog and StdDevLog.
 '   - Returns 1 when X <= 0.
 '   - Otherwise returns PROB_NormalSurvival((Log(X) - MeanLog) / StdDevLog).
@@ -2448,7 +2499,7 @@ Public Function K_STATS_Lognormal_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-23
+'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3736,5 +3787,3 @@ Private Function PROB_ValidateLogParameters( _
     'Return success
         PROB_ValidateLogParameters = True
 End Function
-
-
