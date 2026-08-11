@@ -135,6 +135,14 @@ Private Function EvaluateExpression(ByVal Expr As String) As String
 
     On Error GoTo Err_Handler
 
+    'A "-" marks a case where Excel offers no equivalent function. That is a
+    'measurement in its own right - the most consequential difference of all -
+    'so it is recorded explicitly rather than left blank or treated as an error.
+    If Trim$(Expr) = "-" Then
+        EvaluateExpression = "NONE"
+        Exit Function
+    End If
+
     V = Application.Evaluate(Trim$(Expr))
 
     If IsError(V) Then

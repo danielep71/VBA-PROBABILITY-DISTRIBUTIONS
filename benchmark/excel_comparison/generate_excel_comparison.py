@@ -30,6 +30,7 @@ import csv
 import mpmath as mp
 
 mp.mp.dps = 50
+NONE = "-"          # Excel has no equivalent function
 EPS = mp.mpf(10) ** -40
 
 
@@ -124,44 +125,143 @@ def f_sf(f, d1, d2):
     return 1 - beta_I(d1 / 2, d2 / 2, x)
 
 
+
+def gam_cdf(x, k, theta):
+    return mp.gammainc(mp.mpf(k), 0, mp.mpf(x) / mp.mpf(theta), regularized=True)
+
+
+def gam_sf(x, k, theta):
+    return mp.gammainc(mp.mpf(k), mp.mpf(x) / mp.mpf(theta), mp.inf, regularized=True)
+
+
+def beta_cdf(x, a, b):
+    return mp.betainc(mp.mpf(a), mp.mpf(b), 0, mp.mpf(x), regularized=True)
+
+
+def binom_sf(k, n, p):
+    """P(X > k) via the beta identity, avoiding a long summation."""
+    return beta_cdf(p, mp.mpf(k) + 1, mp.mpf(n) - mp.mpf(k))
+
+
+def pois_sf(k, lam):
+    """P(X > k) = P(gamma(k+1) < lam)."""
+    return mp.gammainc(mp.mpf(k) + 1, 0, mp.mpf(lam), regularized=True)
+
+
+def negbinom_cdf(k, r, p):
+    return beta_cdf(mp.mpf(p), mp.mpf(r), mp.mpf(k) + 1)
+
+
+def hyper_pmf(k, n, K, N):
+    k = mp.mpf(k); n = mp.mpf(n); K = mp.mpf(K); N = mp.mpf(N)
+    return mp.binomial(K, k) * mp.binomial(N - K, n - k) / mp.binomial(N, n)
+
+
 CASES = [
-    # (label, excel_formula, k_stats_call, reference, why this point)
+    # ---- Normal: no .RT variant in Excel -------------------------------------
+    ("normal cdf, body", "NORM.S.DIST(1.5,TRUE)",
+     "K_STATS_NormalStandard_Cumulative(1.5)", norm_cdf(1.5),
+     "body: both should be exact"),
     ("normal survival, z = 8", "1-NORM.S.DIST(8,TRUE)",
      "K_STATS_NormalStandard_Survival(8)", norm_sf(8),
-     "Excel has no direct standard-normal survival; 1-CDF loses the tail"),
-    ("normal survival, z = 10", "1-NORM.S.DIST(10,TRUE)",
-     "K_STATS_NormalStandard_Survival(10)", norm_sf(10),
-     "same, one decade deeper"),
+     "no direct survival in Excel; 1-CDF loses the tail"),
     ("normal survival, z = 15", "1-NORM.S.DIST(15,TRUE)",
      "K_STATS_NormalStandard_Survival(15)", norm_sf(15),
      "1-CDF is exactly 0 in Double here"),
-    ("normal cdf, z = -8", "NORM.S.DIST(-8,TRUE)",
-     "K_STATS_NormalStandard_Cumulative(-8)", norm_cdf(-8),
-     "direct lower tail: both should be accurate"),
-    ("chi-square cdf, df 1E6", "CHISQ.DIST(1E6,1E6,TRUE)",
-     "K_STATS_ChiSquare_Cumulative(1E6,1E6)", chi_cdf(1e6, 1e6),
-     "large df, near the median"),
-    ("chi-square sf, df 1E6", "CHISQ.DIST.RT(1010000,1E6)",
-     "K_STATS_ChiSquare_Survival(1010000,1E6)", chi_sf(1.01e6, 1e6),
-     "large df, upper tail"),
-    ("chi-square cdf, df 1E8", "CHISQ.DIST(1E8,1E8,TRUE)",
-     "K_STATS_ChiSquare_Cumulative(1E8,1E8)", chi_cdf(1e8, 1e8),
-     "at this library's chi envelope"),
-    ("t survival, t=30 df=10", "T.DIST.RT(30,10)",
+    ("normal inverse survival", NONE,
+     "K_STATS_NormalStandard_InverseSurvival(1E-15)",
+     -mp.sqrt(2) * mp.erfinv(2 * mp.mpf("1e-15") - 1),
+     "Excel has no inverse survival; NORM.S.INV(1-1E-15) loses the argument"),
+    # ---- Lognormal: no .RT ---------------------------------------------------
+    ("lognormal cdf, body", "LOGNORM.DIST(2,0,1,TRUE)",
+     "K_STATS_Lognormal_Cumulative(2,0,1)", norm_cdf(mp.log(2)),
+     "body"),
+    ("lognormal survival, deep", "1-LOGNORM.DIST(2981,0,1,TRUE)",
+     "K_STATS_Lognormal_Survival(2981,0,1)", norm_sf(mp.log(2981)),
+     "no direct survival; log(2981) is about 8"),
+    # ---- Student t: Excel HAS .RT -------------------------------------------
+    ("t survival, body", "T.DIST.RT(1.5,10)",
+     "K_STATS_StudentT_Survival(1.5,10)", t_sf(1.5, 10),
+     "body; Excel has a direct upper tail here"),
+    ("t survival, deep tail", "T.DIST.RT(30,10)",
      "K_STATS_StudentT_Survival(30,10)", t_sf(30, 10),
-     "moderate df, deep tail"),
-    ("t survival, t=50 df=5", "T.DIST.RT(50,5)",
-     "K_STATS_StudentT_Survival(50,5)", t_sf(50, 5),
-     "small df, deep tail"),
-    ("t survival, t=2 df=1E7", "T.DIST.RT(2,1E7)",
+     "deep tail with a direct Excel function"),
+    ("t survival, large df", "T.DIST.RT(2,1E7)",
      "K_STATS_StudentT_Survival(2,1E7)", t_sf(2, 1e7),
-     "df beyond Excel's documented range"),
-    ("F survival, f=1 df 1E6", "F.DIST.RT(1,1E6,1E6)",
-     "K_STATS_F_Survival(1,1E6,1E6)", f_sf(1, 1e6, 1e6),
-     "large balanced df"),
-    ("F survival, f=1 df 1E6,3", "F.DIST.RT(1,1E6,3)",
+     "large df: known library weakness, incomplete-beta CF conditioning"),
+    # ---- Chi-square: Excel HAS .RT ------------------------------------------
+    ("chi-square sf, deep tail", "CHISQ.DIST.RT(200,3)",
+     "K_STATS_ChiSquare_Survival(200,3)", chi_sf(200, 3),
+     "deep tail with a direct Excel function"),
+    ("chi-square cdf, large df", "CHISQ.DIST(1E6,1E6,TRUE)",
+     "K_STATS_ChiSquare_Cumulative(1E6,1E6)", chi_cdf(1e6, 1e6),
+     "large df"),
+    # ---- F: Excel HAS .RT ----------------------------------------------------
+    ("F survival, deep tail", "F.DIST.RT(100,5,10)",
+     "K_STATS_F_Survival(100,5,10)", f_sf(100, 5, 10),
+     "deep tail with a direct Excel function"),
+    ("F survival, extreme ratio", "F.DIST.RT(1,1E6,3)",
      "K_STATS_F_Survival(1,1E6,3)", f_sf(1, 1e6, 3),
-     "extreme df ratio"),
+     "extreme degree ratio"),
+    # ---- Gamma: no .RT -------------------------------------------------------
+    ("gamma cdf, body", "GAMMA.DIST(3,2,1,TRUE)",
+     "K_STATS_Gamma_Cumulative(3,2,1)", gam_cdf(3, 2, 1),
+     "body"),
+    ("gamma survival, deep", "1-GAMMA.DIST(60,2,1,TRUE)",
+     "K_STATS_Gamma_Survival(60,2,1)", gam_sf(60, 2, 1),
+     "no direct survival; true value is about 5E-25"),
+    ("gamma cdf, large shape", "GAMMA.DIST(1E6,1E6,1,TRUE)",
+     "K_STATS_Gamma_Cumulative(1E6,1E6,1)", gam_cdf(1e6, 1e6, 1),
+     "large shape"),
+    # ---- Beta: no .RT --------------------------------------------------------
+    ("beta cdf, body", "BETA.DIST(0.3,2,3,TRUE)",
+     "K_STATS_Beta_Cumulative(0.3,2,3)", beta_cdf(0.3, 2, 3),
+     "body"),
+    ("beta survival, near 1", "1-BETA.DIST(0.999,2,3,TRUE)",
+     "K_STATS_Beta_Survival(0.999,2,3)", 1 - beta_cdf(mp.mpf("0.999"), 2, 3),
+     "no direct survival; true value is about 4E-9"),
+    # ---- Exponential: no .RT -------------------------------------------------
+    ("exponential survival, deep", "1-EXPON.DIST(50,1,TRUE)",
+     "K_STATS_Exponential_Survival(50,1)", mp.e ** mp.mpf(-50),
+     "no direct survival; true value e^-50, about 2E-22"),
+    # ---- Weibull: no .RT -----------------------------------------------------
+    ("weibull survival, deep", "1-WEIBULL.DIST(10,2,1,TRUE)",
+     "K_STATS_Weibull_Survival(10,2,1)", mp.e ** mp.mpf(-100),
+     "no direct survival; true value e^-100, about 4E-44"),
+    # ---- Uniform: Excel has nothing -----------------------------------------
+    ("uniform cdf", NONE, "K_STATS_Uniform_Cumulative(0.3,0,1)", mp.mpf("0.3"),
+     "Excel has no uniform distribution function"),
+    # ---- Binomial: partial ---------------------------------------------------
+    ("binomial cdf, body", "BINOM.DIST(5,10,0.5,TRUE)",
+     "K_STATS_Binomial_Cumulative(5,10,0.5)",
+     sum(mp.binomial(10, i) * mp.mpf("0.5") ** 10 for i in range(6)),
+     "body"),
+    ("binomial survival, deep", "1-BINOM.DIST(90,100,0.5,TRUE)",
+     "K_STATS_Binomial_Survival(90,100,0.5)", binom_sf(90, 100, mp.mpf("0.5")),
+     "no direct survival; true value about 2E-17"),
+    ("binomial log-pmf", NONE, "K_STATS_Binomial_LogPMF(900,1000,0.5)",
+     mp.log(mp.binomial(1000, 900)) + 1000 * mp.log(mp.mpf("0.5")),
+     "Excel has no log-mass; BINOM.DIST underflows to 0 here"),
+    # ---- Poisson: no .RT -----------------------------------------------------
+    ("poisson cdf, body", "POISSON.DIST(3,2,TRUE)",
+     "K_STATS_Poisson_Cumulative(3,2)",
+     sum(mp.e ** -2 * mp.mpf(2) ** i / mp.factorial(i) for i in range(4)),
+     "body"),
+    ("poisson survival, deep", "1-POISSON.DIST(60,2,TRUE)",
+     "K_STATS_Poisson_Survival(60,2)", pois_sf(60, 2),
+     "no direct survival; true value about 6E-67"),
+    # ---- Negative binomial: no .RT ------------------------------------------
+    ("negative binomial cdf", "NEGBINOM.DIST(5,3,0.5,TRUE)",
+     "K_STATS_NegativeBinomial_Cumulative(5,3,0.5)",
+     negbinom_cdf(5, 3, mp.mpf("0.5")), "body"),
+    # ---- Hypergeometric: no .RT ---------------------------------------------
+    ("hypergeometric pmf", "HYPGEOM.DIST(2,5,10,50,FALSE)",
+     "K_STATS_Hypergeometric_PMF(2,5,10,50)", hyper_pmf(2, 5, 10, 50),
+     "body"),
+    # ---- Discrete uniform: Excel has nothing ---------------------------------
+    ("discrete uniform cdf", NONE,
+     "K_STATS_DiscreteUniform_Cumulative(3,1,10)", mp.mpf(3) / 10,
+     "Excel has no discrete uniform distribution function"),
 ]
 
 

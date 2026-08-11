@@ -33,6 +33,49 @@ delimiter silently wrote observations over the reference column. A delimiter
 that cannot occur in the data is simpler and safer than teaching VBA to parse
 quoted CSV; the generator asserts no field contains a pipe.
 
+## Coverage
+
+29 cases across all 15 families. Each family contributes a body point where
+Excel is expected to match exactly, and where one exists a deep-tail or
+extreme-parameter point.
+
+## The structural difference: Excel has no upper tail for most families
+
+Only **three** of the fifteen families have a direct upper-tail function in
+Excel: `T.DIST.RT`, `CHISQ.DIST.RT`, `F.DIST.RT`. For Normal, Lognormal, Gamma,
+Beta, Exponential, Weibull, Binomial, Poisson, NegativeBinomial and
+Hypergeometric the tail must be written `1 - CDF`, and that subtraction is what
+destroys it: at z = 8 nothing correct survives, and by z = 15 the expression
+returns exactly zero against a true 3.7E-51.
+
+Uniform and DiscreteUniform have no Excel function at all, as does log-mass for
+any discrete family. Those cases carry `-` as the Excel formula and record
+`NONE`, because "no function exists" is the most consequential difference in
+the table and omitting it would understate the case rather than overstate it.
+
+## How the results are judged
+
+Two columns, because "which is more accurate" and "is this fit for use" are
+different questions and merging them misleads:
+
+| column | question |
+| --- | --- |
+| **Closer** | which implementation is nearer the reference - often true and meaningless |
+| **Fit for use** | whether each side clears an absolute bar - the column that should drive decisions |
+
+The bar has two levels, both stated so a reader can disagree with them
+explicitly rather than infer them:
+
+| grade | correct digits | meaning |
+| --- | --- | --- |
+| **reference** | >= 12 | safe as a *building block*: the value can be fed into iteration, root-finding or accumulation without its error becoming visible. This is the standard the library's own accuracy contracts are written to. |
+| **report** | >= 6 | safe as a *directly reported* statistic: no published p-value or critical value carries more than about six significant figures. |
+| **inadequate** | < 6 | could change what a user reports. |
+| **wrong** | 0 | not an approximation of the answer at all. |
+
+Being "closer" while both sides are reference grade is a fact about the two
+implementations, not a reason to prefer either.
+
 ## Method
 
 Both columns are evaluated through `Application.Evaluate`, so each is exercised
