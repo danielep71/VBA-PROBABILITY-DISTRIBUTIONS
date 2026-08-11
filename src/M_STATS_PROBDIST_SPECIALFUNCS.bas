@@ -47,6 +47,18 @@ Option Private Module
 '     - PROB_TryGammaContinuedFractionQ
 '     - PROB_TryGammaInvP
 '
+'   Stable log-density kernels (CR-P1-01 / CR-P1-02):
+'     - PROB_TryDeviancePart      Loader deviance bd0(x, m)
+'     - PROB_TryGammaLogPdf       cancellation-free Gamma log-density
+'     - PROB_TryBetaLogPdf        cancellation-free Beta log-density
+'
+'     These exist because the literal log-density and incomplete-function
+'     prefactor forms subtract two quantities of size shape*Log(shape), which
+'     loses the result entirely at large shape. Four public densities and both
+'     incomplete functions route through them, so a fix lands once rather than
+'     six times. Prefer the two log-pdf helpers over calling the deviance
+'     directly: they encapsulate the decomposition their callers need.
+'
 ' ALGORITHM PROVENANCE
 '   - PROB_StirlingError / PROB_LogChoose:
 '       Catherine Loader, "Fast and Accurate Computation of Binomial
@@ -125,7 +137,8 @@ Option Private Module
 '   - PROB_LogGamma is recursive through its reflection branch, exactly once.
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Surface list completed with the stable log-density kernels;
+'                LogGammaDelta accuracy figure re-measured and contracted.
 '==============================================================================
 
 '==============================================================================
@@ -339,8 +352,10 @@ Public Function PROB_LogGammaDelta( _
 '   so no cancellation occurs anywhere in the computation.
 '
 ' ACCURACY
-'   Relative error at or below ~5E-15 for Increment / LargeArg <= 0.1, across
-'   Increment in [0.25, ~10] and LargeArg up to 1E+50, validated against 50-digit
+'   Held to LogGammaDelta.all.output in benchmark/accuracy_contracts.csv.
+'   Measured worst relative error 6.9E-15 inside the documented regime
+'   (Small / LargeArg <= 0.1) across Small in [0.25, ~10] and LargeArg up to
+'   1E+50, validated against 50-digit
 '   arithmetic. (VBA measurement is the authority; see benchmark/logbeta_study.)
 '
 ' DEPENDENCIES
@@ -687,6 +702,13 @@ Public Function PROB_TryDeviancePart( _
 '       bd0(X, MeanPart) = X * Log(X / MeanPart) + MeanPart - X
 '
 '   without cancellation when X is close to MeanPart.
+'
+' PREFER THE LOG-PDF HELPERS
+'   This is a low-level primitive with a fragile contract. The Beta case needs
+'   the DECOMPOSITION bd0(A, N*X) + bd0(B, N*Y) rather than a raw deviance, and
+'   passing the wrong arrangement produces a plausible wrong number rather than
+'   an error. PROB_TryGammaLogPdf and PROB_TryBetaLogPdf encapsulate the correct
+'   arrangements and should be used in preference to calling this directly.
 '
 ' PRECONDITION
 '   X >= 0 and MeanPart > 0.

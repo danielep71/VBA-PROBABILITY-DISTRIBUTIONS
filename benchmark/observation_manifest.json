@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-11T15:54:22Z",
-  "commit_sha": "eba457f",
+  "generated_utc": "2026-08-11T16:09:56Z",
+  "commit_sha": "ae37be9",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:f7950c79f76979645bf9e428241e30d4739ca0d831f60a96c8bf53fd4f4236e6",
+  "observation_grid_sha256": "sha256:ede1b023c971ddde23780afd1f5140ee1a1f5877318f77ea6597b72378e1104d",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:d0e052e5fe5cd99cf52e8fc0ea5851116186c4544da9b01d6e33a37f9cf847eb",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -40,14 +40,14 @@
     "benchmark/t_density_large_df/M_STATS_PROBDIST_TDENS.bas": "sha256:bb3bd083f7a0db52875393d1ef74ffa89ff5f974c2bcb8f762f3f70c38c7868a",
     "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:59ef5770a3d41b59b448afc44263425960ac42bc0ae1e0f7d89192e0b995b053",
     "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:dc4f446962db403915410ae31000714f7b4180e663704d79f70f24cab7929ea4",
-    "src/M_STATS_PROBDIST_CORE.bas": "sha256:35876b4f488cc1161cc1247742cae061ac395cc5c6db509a61c1f744dee4cf79",
+    "src/M_STATS_PROBDIST_CORE.bas": "sha256:92dcb9e1e2b060dcc5fad4603a1be0ab5d4ab635868212e833d96d070d934463",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:cee86320c6f63b3781c574e113e3abd1643d192c542ee29b0695d1626aae665d",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:58f02816fec8587e32f0c7d8f57dbc2637e11bcabffc4507707d86a9e25bed1d",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:85a5787b87e163656c933726b1892a75892de675eed8a2ebeb96319acf0ae485",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:8eee4468e7abaea7bc9d555deecca2f6036745d75524d7c8aaadf732151c46c9",
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:760b33f8dae07e94f446cbef298185b26ed45206714039b3aa6a90a761128d8b",
     "tests/M_STATS_PROBDIST_TEST.bas": "sha256:3bf56be48d2daef2ffea72c8b010e1744078159f614a382cf6284aa1a82a2757"
   },
-  "contract_registry_sha256": "sha256:8aa5c8848eb9007bc4d087b2c16746124d969e3a2e1030d9e9109bd33b15bcc8",
+  "contract_registry_sha256": "sha256:e995d6175c459c8158f2aa88d3035fc40f9e7e2ccba76dfd2718cb32cc93e86f",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20131",

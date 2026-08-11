@@ -140,7 +140,7 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**161 contracts** across **21 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**162 contracts** across **22 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
@@ -235,6 +235,7 @@ by rate (Lambda), not scale.
 | Hypergeometric_Variance.all.output_rel | Hypergeometric_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | LogChoose.all.output | LogChoose | all | output_error | relative | 3.2E-16 | validated and frozen |
 | LogGamma.all.output | LogGamma | all | output_error | relative | 6.1E-14 | validated and frozen |
+| LogGammaDelta.all.output | LogGammaDelta | all | output_error | relative | 5E-14 | validated and frozen |
 | LogGammaHalfDiff.all.output | LogGammaHalfDiff | all | output_error | relative | 2E-14 | validated and frozen |
 | Lognormal_Cumulative.all.output | Lognormal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Lognormal_Density.all.output | Lognormal_Density | all | output_error | relative | 3E-14 | validated and frozen |
