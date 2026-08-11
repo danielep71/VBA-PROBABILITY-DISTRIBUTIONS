@@ -104,17 +104,13 @@ Option Private Module
 'The VBA editor canonicalizes long decimal literals to approximately
 '15 significant decimal digits. Split constant expressions are therefore
 'used where necessary to obtain the intended IEEE-754 Double value.
-Public Const PROB_PI As Double = _
-    3.14159265358979 + 3.10862446895044E-15
+Public Const PROB_PI As Double = 3.14159265358979 + 3.10862446895044E-15
 
-Public Const PROB_TWO_PI As Double = _
-    2# * PROB_PI
+Public Const PROB_TWO_PI As Double = 2# * PROB_PI
 
-Public Const PROB_HALF_LOG_TWO_PI As Double = _
-    0.918938533204672 + 6.66133814775094E-16
+Public Const PROB_HALF_LOG_TWO_PI As Double = 0.918938533204672 + 6.66133814775094E-16
 
-Public Const PROB_HALF_LOG_PI As Double = _
-    0.5723649429247 + 1.11022302462516E-16
+Public Const PROB_HALF_LOG_PI As Double = 0.5723649429247 + 1.11022302462516E-16
 
 Public Const PROB_EPS                  As Double = 0.000000000000001        '1E-15, relative convergence target
 Public Const PROB_NUM_EPS              As Double = 0.00000000000003         '3E-14, continued-fraction / series stop
@@ -958,3 +954,5 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
+
+
