@@ -305,6 +305,50 @@ Public Function K_STATS_Binomial_PMF( _
     Optional ByRef Status As String = "") _
     As Variant
 '
+'==============================================================================
+' K_STATS_Binomial_PMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the probability mass P(X = NumberSuccesses) for a Binomial random
+'   variable with Trials independent trials and success probability ProbSuccess.
+'
+' WHY THIS EXISTS
+'   The textbook form C(n,k) * p^k * (1-p)^(n-k) overflows the binomial
+'   coefficient and underflows the powers long before the mass itself becomes
+'   negligible. This routine uses Loader's saddle-point arrangement, assembling
+'   the mass from Stirling-error terms and a deviance, so the intermediate
+'   quantities stay near unity for every representable count.
+'
+' INPUTS
+'   NumberSuccesses  Evaluation point, truncated toward zero. Must be an exact
+'                    integer to carry positive mass.
+'   Trials           Number of trials, truncated toward zero.
+'   ProbSuccess      Success probability in [0, 1].
+'   Status           Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero for a count outside [0, Trials].
+'   - Returns exact endpoint masses at k = 0 and k = n without summation.
+'   - Supports exact integer counts through 2^53 - 1.
+'
+' ERROR POLICY
+'   - Invalid counts or an out-of-range probability return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateBinomialMassInputs
+'   - PROB_DS_TryBinomialPMF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
+'
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -377,6 +421,58 @@ Public Function K_STATS_Binomial_LogPMF( _
     ByVal ProbSuccess As Double, _
     Optional ByRef Status As String = "") _
     As Variant
+'
+'==============================================================================
+' K_STATS_Binomial_LogPMF
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the natural logarithm of the Binomial probability mass,
+'   Log P(X = NumberSuccesses), computed directly in log space.
+'
+' WHY THIS EXISTS
+'   This is NOT a convenience wrapper around Log(PMF). A binomial mass underflows
+'   to exactly zero in Double while its logarithm remains an ordinary number:
+'
+'       BINOM.DIST(900, 1000, 0.5, FALSE)   ->  0
+'       K_STATS_Binomial_LogPMF(900, 1000, 0.5)  ->  -371.23...
+'
+'   Taking Log of the first gives -infinity; computing the logarithm directly
+'   keeps full relative precision. Excel has no equivalent for any discrete
+'   family, which makes this one of the surfaces with no worksheet substitute.
+'   Log-masses are also the natural currency of likelihood work, where masses are
+'   summed across many observations and would underflow individually.
+'
+' INPUTS
+'   NumberSuccesses  Evaluation point, truncated toward zero.
+'   Trials           Number of trials, truncated toward zero.
+'   ProbSuccess      Success probability in [0, 1].
+'   Status           Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double natural logarithm of the mass; always <= 0.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - A count outside [0, Trials], or any outcome of probability exactly zero,
+'     has NO defined log-mass and returns #NUM! rather than a sentinel. Returning
+'     a large negative number would be indistinguishable from a genuine deep-tail
+'     result.
+'   - Supports exact integer counts through 2^53 - 1.
+'
+' ERROR POLICY
+'   - A zero-probability outcome, invalid counts, or an out-of-range probability
+'     return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateBinomialMassInputs
+'   - PROB_DS_TryBinomialLogMass
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
@@ -502,6 +598,51 @@ Public Function K_STATS_Binomial_Cumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
+'==============================================================================
+' K_STATS_Binomial_Cumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the cumulative probability P(X <= NumberSuccesses) for a Binomial
+'   random variable with Trials trials and success probability ProbSuccess.
+'
+' WHY THIS EXISTS
+'   Summing masses term by term costs O(n) and loses accuracy as the count grows.
+'   The regularized incomplete beta gives the same quantity in closed form, at
+'   fixed cost and full precision, through the standard identity
+'   P(X <= k) = I(1-p; n-k, k+1).
+'
+' INPUTS
+'   NumberSuccesses  Evaluation point. Truncated toward zero; a non-integer is
+'                    accepted and floors to the enclosing step.
+'   Trials           Number of trials, truncated toward zero.
+'   ProbSuccess      Success probability in [0, 1].
+'   Status           Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns zero below the support and one at or above Trials.
+'   - Use K_STATS_Binomial_Survival for the upper tail: subtracting this result
+'     from one destroys a small right tail once the CDF rounds to one.
+'   - Trials are limited to PROB_DS_MAX_BINOMIAL_KERNEL_N for the kernel path.
+'
+' ERROR POLICY
+'   - Invalid counts, Trials beyond the kernel limit, or an out-of-range
+'     probability return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateBinomialKernelInputs
+'   - PROB_DS_TryBinomialCDF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
+'
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -620,6 +761,52 @@ Public Function K_STATS_Binomial_Survival( _
     ByVal ProbSuccess As Double, _
     Optional ByRef Status As String = "") _
     As Variant
+'
+'==============================================================================
+' K_STATS_Binomial_Survival
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the upper-tail probability P(X > NumberSuccesses) for a Binomial
+'   random variable, computed directly rather than as 1 - CDF.
+'
+' WHY THIS EXISTS
+'   Excel has no binomial survival function, so the upper tail must be written
+'   1 - BINOM.DIST(...). That subtraction destroys the tail: once the cumulative
+'   rounds to exactly one, the difference is exactly zero even though the true
+'   probability is still representable. At k = 90 of n = 100 with p = 0.5 the
+'   true value is about 1.7E-18 and the subtraction yields zero.
+'
+' INPUTS
+'   NumberSuccesses  Evaluation point. Truncated toward zero; a non-integer is
+'                    accepted and floors to the enclosing step.
+'   Trials           Number of trials, truncated toward zero.
+'   ProbSuccess      Success probability in [0, 1].
+'   Status           Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double probability in [0, 1].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns one below the support and zero at or above Trials.
+'   - Evaluates the complementary incomplete beta directly, so a deep right tail
+'     retains full relative accuracy.
+'   - Trials are limited to PROB_DS_MAX_BINOMIAL_KERNEL_N for the kernel path.
+'
+' ERROR POLICY
+'   - Invalid counts, Trials beyond the kernel limit, or an out-of-range
+'     probability return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateBinomialKernelInputs
+'   - PROB_DS_TryBinomialSF
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
@@ -741,6 +928,54 @@ Public Function K_STATS_Binomial_InverseCumulative( _
     Optional ByRef Status As String = "") _
     As Variant
 '
+'==============================================================================
+' K_STATS_Binomial_InverseCumulative
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the least integer k such that P(X <= k) >= Probability, for a
+'   Binomial random variable with Trials trials and success probability
+'   ProbSuccess.
+'
+' WHY THIS EXISTS
+'   A discrete quantile is a step function, so the answer must be defined by an
+'   inequality rather than by inversion. Naive bracketing over the count is O(n)
+'   and mis-selects at a step boundary when the cumulative is evaluated to finite
+'   precision. This routine brackets on the SMALLER tail, so the comparison is
+'   made against a well-conditioned quantity, and then walks to the exact step.
+'
+' INPUTS
+'   Probability  Target cumulative probability in the OPEN interval (0, 1).
+'   Trials       Number of trials, truncated toward zero.
+'   ProbSuccess  Success probability in [0, 1].
+'   Status       Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double integer quantile in [0, Trials].
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - Returns the LEAST qualifying integer, matching Excel's BINOM.INV
+'     convention.
+'   - The open interval is deliberate: 0 and 1 have no least qualifying integer
+'     distinguishable from the support boundary.
+'
+' ERROR POLICY
+'   - A probability outside (0, 1), invalid Trials, or a failure to bracket
+'     return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_IsValidProbabilityOpen
+'   - PROB_DS_ValidateProbOpen
+'   - PROB_DS_ValidateTrialsKernel
+'   - PROB_DS_TryBinomialInverse
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
+'
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -861,6 +1096,49 @@ Public Function K_STATS_Binomial_Mean( _
     Optional ByRef Status As String = "") _
     As Variant
 '
+'==============================================================================
+' K_STATS_Binomial_Mean
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the expected number of successes for a Binomial random variable: Trials * ProbSuccess.
+'
+' WHY THIS EXISTS
+'   The closed form is elementary, but the product can overflow for large Trials
+'   even when the arguments are individually ordinary. The multiplication is
+'   therefore routed through PROB_TryMultiply, which reports overflow rather than
+'   returning an infinity that would propagate silently into a worksheet.
+'
+' INPUTS
+'   Trials       Number of trials, truncated toward zero. Must be an exact
+'                integer.
+'   ProbSuccess  Success probability in the CLOSED interval [0, 1].
+'   Status       Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double moment.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - The closed probability interval is correct here: unlike the inverse, the
+'     moments are well defined at p = 0 and p = 1.
+'   - Trials must be exactly representable as an integer (through 2^53 - 1).
+'
+' ERROR POLICY
+'   - Non-integer or out-of-range Trials, a probability outside [0, 1], or an
+'     overflowing product return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateTrialsExact
+'   - PROB_DS_ValidateProbClosed
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
+'
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -976,6 +1254,49 @@ Public Function K_STATS_Binomial_Variance( _
     ByVal ProbSuccess As Double, _
     Optional ByRef Status As String = "") _
     As Variant
+'
+'==============================================================================
+' K_STATS_Binomial_Variance
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the variance of the success count for a Binomial random variable: Trials * ProbSuccess * (1 - ProbSuccess).
+'
+' WHY THIS EXISTS
+'   The closed form is elementary, but the product can overflow for large Trials
+'   even when the arguments are individually ordinary. The multiplication is
+'   therefore routed through PROB_TryMultiply, which reports overflow rather than
+'   returning an infinity that would propagate silently into a worksheet.
+'
+' INPUTS
+'   Trials       Number of trials, truncated toward zero. Must be an exact
+'                integer.
+'   ProbSuccess  Success probability in the CLOSED interval [0, 1].
+'   Status       Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double moment.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - The closed probability interval is correct here: unlike the inverse, the
+'     moments are well defined at p = 0 and p = 1.
+'   - Trials must be exactly representable as an integer (through 2^53 - 1).
+'
+' ERROR POLICY
+'   - Non-integer or out-of-range Trials, a probability outside [0, 1], or an
+'     overflowing product return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateTrialsExact
+'   - PROB_DS_ValidateProbClosed
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
@@ -1098,6 +1419,49 @@ Public Function K_STATS_Binomial_StdDev( _
     ByVal ProbSuccess As Double, _
     Optional ByRef Status As String = "") _
     As Variant
+'
+'==============================================================================
+' K_STATS_Binomial_StdDev
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the standard deviation of the success count for a Binomial random variable: Sqr(Trials * ProbSuccess * (1 - ProbSuccess)).
+'
+' WHY THIS EXISTS
+'   The closed form is elementary, but the product can overflow for large Trials
+'   even when the arguments are individually ordinary. The multiplication is
+'   therefore routed through PROB_TryMultiply, which reports overflow rather than
+'   returning an infinity that would propagate silently into a worksheet.
+'
+' INPUTS
+'   Trials       Number of trials, truncated toward zero. Must be an exact
+'                integer.
+'   ProbSuccess  Success probability in the CLOSED interval [0, 1].
+'   Status       Optional ByRef diagnostic message.
+'
+' RETURNS
+'   Variant
+'     Success => Double moment.
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'
+' BEHAVIOR
+'   - The closed probability interval is correct here: unlike the inverse, the
+'     moments are well defined at p = 0 and p = 1.
+'   - Trials must be exactly representable as an integer (through 2^53 - 1).
+'
+' ERROR POLICY
+'   - Non-integer or out-of-range Trials, a probability outside [0, 1], or an
+'     overflowing product return #NUM!.
+'   - Unexpected runtime errors return #VALUE!.
+'
+' DEPENDENCIES
+'   - PROB_DS_ValidateTrialsExact
+'   - PROB_DS_ValidateProbClosed
+'   - PROB_TryMultiply
+'   - PROB_SetStatus
+'
+' UPDATED
+'   2026-08-11
+'==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
