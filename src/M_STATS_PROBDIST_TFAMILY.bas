@@ -144,17 +144,22 @@ Option Explicit
 '   - Those density poles return CVErr(xlErrNum).
 '   - The survival functions should be used for small right-tail probabilities;
 '     subtracting a CDF from one loses the tail once the CDF rounds to one.
-'   - Degrees of freedom validate against the 1E100 representational bound, which
-'     is NOT an accuracy guarantee. Accuracy is governed separately per kernel:
-'     * The F functions (incomplete beta) enforce a MEASURED accuracy envelope:
-'       df above 1E5 are REJECTED with CVErr(xlErrNum) rather than returning a
-'       silently inaccurate value, because beyond that the continued fraction can
-'       pass its local convergence test yet drift outside the contract (see
-'       PROB_F_ValidateEnvelope, benchmark/f_envelope and numerical_limitations.csv).
-'       F_Density is closed-form and is deliberately NOT enveloped.
-'     * The Student t and chi-square functions (incomplete gamma) are accuracy-
-'       validated to roughly 1E9; a larger df up to 1E100 is accepted and
-'       attempted, but a successful return there does NOT imply contract accuracy.
+'   - Degrees of freedom validate against a representational bound, which is NOT
+'     an accuracy guarantee. Accuracy is governed separately, and every public
+'     function here enforces a MEASURED envelope: degrees of freedom beyond it
+'     are REJECTED with CVErr(xlErrNum) rather than returning a silently
+'     inaccurate value.
+'
+'     THE EXACT CAPS ARE NOT REPEATED HERE. They live in the PROB_*_MAX_DF
+'     constants below and in benchmark/numerical_limitations.csv, and they have
+'     moved as measurement improved - the F cap alone went from 1E5 to 1E10 once
+'     CR-P1-02 removed the prefactor cancellation the original bound had actually
+'     been measuring. Restating them in prose is how this header came to
+'     contradict the code; see PROB_F_ValidateEnvelope, PROB_T_ValidateEnvelope
+'     and PROB_CHI_ValidateEnvelope for the authoritative values and rationale.
+'
+'     The densities carry their own separate envelope (PROB_DENSITY_SHAPE_MAX);
+'     they are closed-form and are NOT governed by the df caps above.
 '
 ' UPDATED
 '   2026-07-21
@@ -395,7 +400,8 @@ Public Function K_STATS_StudentT_Cumulative( _
         End If
 
     'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
-    'density is closed-form and unrestricted). A clean CVErr beats a silent error.
+    'density is closed-form and carries its own separate envelope). A clean CVErr
+    'beats a silent error.
         If Not PROB_T_ValidateEnvelope(DegreesFreedom, PROB_T_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -524,7 +530,8 @@ Public Function K_STATS_StudentT_Survival( _
         End If
 
     'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
-    'density is closed-form and unrestricted). A clean CVErr beats a silent error.
+    'density is closed-form and carries its own separate envelope). A clean CVErr
+    'beats a silent error.
         If Not PROB_T_ValidateEnvelope(DegreesFreedom, PROB_T_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -656,7 +663,8 @@ Public Function K_STATS_StudentT_InverseCumulative( _
         End If
 
     'Enforce the measured Student t accuracy envelope (incomplete-beta tail; the
-    'density is closed-form and unrestricted). A clean CVErr beats a silent error.
+    'density is closed-form and carries its own separate envelope). A clean CVErr
+    'beats a silent error.
         If Not PROB_T_ValidateEnvelope(DegreesFreedom, PROB_T_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -980,7 +988,8 @@ Public Function K_STATS_ChiSquare_Cumulative( _
         End If
 
     'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
-    'is closed-form and unrestricted). A clean CVErr beats a silent error.
+    'is closed-form and carries its own separate envelope). A clean CVErr beats a
+    'silent error.
         If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, PROB_CHI_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -1115,7 +1124,8 @@ Public Function K_STATS_ChiSquare_Survival( _
         End If
 
     'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
-    'is closed-form and unrestricted). A clean CVErr beats a silent error.
+    'is closed-form and carries its own separate envelope). A clean CVErr beats a
+    'silent error.
         If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, PROB_CHI_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -1253,7 +1263,8 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
         End If
 
     'Enforce the chi-square accuracy envelope (incomplete-gamma path; the density
-    'is closed-form and unrestricted). A clean CVErr beats a silent error.
+    'is closed-form and carries its own separate envelope). A clean CVErr beats a
+    'silent error.
         If Not PROB_CHI_ValidateEnvelope(DegreesFreedom, PROB_CHI_MAX_DF, FailMsg) Then
             GoTo Fail_Num
         End If
@@ -1627,7 +1638,8 @@ Public Function K_STATS_F_Cumulative( _
         End If
 
     'Enforce the measured F accuracy envelope (incomplete-beta path only; density
-    'is closed-form and unrestricted). A clean CVErr beats a silent 4E-7 error.
+    'is closed-form and carries its own separate envelope). A clean CVErr beats a
+    'silent 4E-7 error.
         If Not PROB_F_ValidateEnvelope( _
             DegreesFreedom1, DegreesFreedom2, _
             PROB_F_MAX_DF, FailMsg) Then
@@ -1787,7 +1799,8 @@ Public Function K_STATS_F_Survival( _
         End If
 
     'Enforce the measured F accuracy envelope (incomplete-beta path only; density
-    'is closed-form and unrestricted). A clean CVErr beats a silent 4E-7 error.
+    'is closed-form and carries its own separate envelope). A clean CVErr beats a
+    'silent 4E-7 error.
         If Not PROB_F_ValidateEnvelope( _
             DegreesFreedom1, DegreesFreedom2, _
             PROB_F_MAX_DF, FailMsg) Then

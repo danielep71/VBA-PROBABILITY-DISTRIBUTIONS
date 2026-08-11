@@ -90,12 +90,16 @@ Option Explicit
 '   Beta accuracy is regime-specific and is governed by the machine-readable
 '   contract in benchmark/accuracy_contracts.csv (rendered in benchmark/README).
 '   The regime is set by the shape ratio min(Alpha, Beta) / max(Alpha, Beta):
-'   - Balanced shapes (ratio >= 0.1) retain the tight contract: density and
-'     survival to 5E-15, CDF to 2E-14, inverse quantile to 5E-15 (relative).
+'   - Balanced shapes (ratio >= 0.1) retain the tight contract.
 '   - Strongly unbalanced shapes (ratio < 0.1) carry SEPARATE MEASURED thresholds,
-'     validated on an independent holdout and frozen: density 4E-12, CDF 1E-10,
-'     survival 2E-10, inverse quantile 1E-10, and inverse forward-tail residual
-'     1E-9 (relative).
+'     validated on an independent holdout and frozen.
+'
+'   THE THRESHOLDS THEMSELVES ARE NOT REPEATED HERE. They are in
+'   accuracy_contracts.csv, which is the single authority, and they move as
+'   measurement improves. This header previously claimed balanced density at
+'   5E-15 while the frozen contract was 1E-14 - a contradiction that survived
+'   because the number was duplicated in prose the threshold checker does not
+'   parse.
 '   - In the unbalanced regime PROB_LogBeta forms Log(Beta) from a stable
 '     log-gamma difference, so the catastrophic cancellation of the naive
 '     three-log-gamma identity is removed.
@@ -147,8 +151,10 @@ Option Explicit
 '   - Shape parameters passed to iterative or asymptotic kernels are constrained
 '     by PROB_IsPositiveWithinSupportedMagnitude. That 1E100 bound is
 '     representational, not a convergence guarantee: the incomplete-gamma and
-'     incomplete-beta kernels converge over a smaller range (roughly 1E9 and 1E7;
-'     see M_STATS_PROBDIST_SPECIALFUNCS). A shape between that range and 1E100 is
+'     incomplete-beta kernels converge over a smaller range, measured in
+'     benchmark/cdf_large_shape rather than restated here (the gamma series is
+'     bounded by PROB_GAMMA_MAX_ITER, and the beta range moved substantially
+'     after CR-P1-02). A shape between that range and the representational bound is
 '     accepted, attempted, and returns a clean non-convergence error, not a wrong
 '     answer.
 '   - Evaluation points, rates, scales and Uniform bounds may use the full finite
@@ -4970,5 +4976,3 @@ Private Function PROB_CN_ValidateXBounds( _
     'Report successful validation
         PROB_CN_ValidateXBounds = True
 End Function
-
-
