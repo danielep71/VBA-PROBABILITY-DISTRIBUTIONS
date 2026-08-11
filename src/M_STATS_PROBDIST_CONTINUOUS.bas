@@ -161,7 +161,7 @@ Option Explicit
 '     Double range where the implemented formula remains numerically meaningful.
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Density envelope documented on the two affected surfaces.
 '==============================================================================
 
 
@@ -202,6 +202,11 @@ Public Function K_STATS_Gamma_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Shape parameters beyond PROB_DENSITY_SHAPE_MAX are REJECTED with
+'   CVErr(xlErrNum) rather than answered inaccurately. That envelope is
+'   measured (benchmark/density_large_shape) and is shared with the Beta,
+'   Chi-square and F densities; it is separate from the incomplete-gamma
+'   convergence range that governs the cumulative and survival surfaces.
 '   - Returns zero below the support.
 '   - At X = 0, returns #NUM! for Shape < 1, 1 / ScaleParam for Shape = 1,
 '     and zero for Shape > 1.
@@ -225,7 +230,7 @@ Public Function K_STATS_Gamma_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Loader reroute (CR-P1-01) and density envelope documented
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1152,6 +1157,11 @@ Public Function K_STATS_Beta_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Either shape beyond PROB_DENSITY_SHAPE_MAX is REJECTED with
+'   CVErr(xlErrNum) rather than answered inaccurately. That envelope is
+'   measured (benchmark/density_large_shape) and is shared with the Gamma,
+'   Chi-square and F densities; beyond it the Loader deviance decomposition
+'   below reaches its own n*x accuracy floor.
 '   - Handles both endpoint poles explicitly.
 '   - Uses PROB_Log1p(-X) near the right endpoint.
 '   - Mathematically valid underflow returns zero.
@@ -1172,7 +1182,7 @@ Public Function K_STATS_Beta_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Loader reroute (CR-P1-01) and density envelope documented
 '==============================================================================
 '
 '------------------------------------------------------------------------------
