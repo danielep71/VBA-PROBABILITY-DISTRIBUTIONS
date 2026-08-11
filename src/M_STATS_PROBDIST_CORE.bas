@@ -28,7 +28,8 @@ Option Private Module
 '     - PROB_PI, PROB_TWO_PI, PROB_HALF_LOG_TWO_PI, PROB_HALF_LOG_PI
 '     - PROB_EPS, PROB_NUM_EPS, PROB_MACH_EPS
 '     - PROB_MAX_EXP, PROB_MIN_EXP
-'     - PROB_PARAMETER_MAGNITUDE_GUARD, PROB_DOUBLE_MAX, PROB_FPMIN
+'     - PROB_PARAMETER_MAGNITUDE_GUARD, PROB_DOUBLE_MAX, PROB_SQRT_DOUBLE_MAX
+'     - PROB_FPMIN
 '     - PROB_WRITE_STATUS_BAR
 '
 '   Predicates:
@@ -47,6 +48,7 @@ Option Private Module
 '     - PROB_TryStandardize
 '     - PROB_Log1p
 '     - PROB_Expm1
+'     - PROB_LogExpm1
 '     - PROB_NormalInvCDFRaw
 '
 '   Diagnostics:
@@ -91,7 +93,8 @@ Option Private Module
 '     private duplicate copies; M_STATS_PROBDIST_TEST owns regression coverage.
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Surface list completed; convergence-range and helper-accuracy
+'                figures replaced by pointers to the measured registries.
 '==============================================================================
 
 '==============================================================================
@@ -205,14 +208,23 @@ Public Function PROB_IsWithinSupportedMagnitude( _
 '   mathematical finiteness.
 '
 ' TWO-TIER DOMAIN
-'   PROB_PARAMETER_MAGNITUDE_GUARD (1E100) is a REPRESENTATIONAL bound: it keeps intermediate
-'   quantities finite. It is NOT a convergence guarantee. The iterative special
-'   functions converge over a smaller, kernel-specific range (see the iteration-
-'   budget note in M_STATS_PROBDIST_SPECIALFUNCS: incomplete gamma to roughly
-'   1E9, incomplete beta to roughly 1E7). A parameter that passes this predicate
-'   but exceeds a kernel's convergence range does not corrupt: the routine
-'   exhausts its iteration budget and returns a clean, parameter-named non-
-'   convergence error, never a partial sum.
+'   PROB_PARAMETER_MAGNITUDE_GUARD is a REPRESENTATIONAL bound: it keeps
+'   intermediate quantities finite. It is NOT a convergence guarantee, and it is
+'   NOT an accuracy guarantee. The iterative special functions converge over a
+'   smaller, kernel-specific range that is MEASURED rather than asserted; see
+'   benchmark/cdf_large_shape and the iteration-budget note in
+'   M_STATS_PROBDIST_SPECIALFUNCS. The specific ranges are deliberately not
+'   restated here: they have moved substantially as measurement improved (the
+'   incomplete-beta range in particular, after the CR-P1-02 prefactor repair),
+'   and a number restated in prose is how a header drifts out of step with the
+'   code beside it.
+'
+'   A parameter that passes this predicate but exceeds a kernel's convergence
+'   range does not corrupt: the routine exhausts its iteration budget and returns
+'   a clean, parameter-named non-convergence error, never a partial sum. That is
+'   a REACHABILITY limit and is distinct from an ACCURACY envelope, which the
+'   distribution modules enforce separately through their PROB_*_MAX_DF and
+'   PROB_DENSITY_SHAPE_MAX constants.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -652,8 +664,10 @@ Public Function PROB_TryStandardize( _
             Exit Function
         End If
 
-    'Guard the division by ScaleParam. A zero ScaleParam leaves the product
-    'zero, which correctly reports the direction as indeterminate.
+    'Guard the division by ScaleParam. Multiplying by Sgn(ScaleParam) is
+    'deliberate and must not be "simplified" away: a negative scale reverses the
+    'direction of the limit, and a zero scale leaves the product zero, which
+    'correctly reports the direction as indeterminate rather than inventing one.
         If Not PROB_TryDivide(Centered, ScaleParam, Result) Then
             OverflowSign = Sgn(Centered) * Sgn(ScaleParam)
             Exit Function
@@ -683,8 +697,13 @@ Public Function PROB_Log1p( _
 '   of X: the absolute error of the sum is about 1.1E-16 regardless of X, so the
 '   relative error of the logarithm is about 1.1E-16 / X. At X = 1E-8 that is a
 '   relative error of 1E-8. Kahan's compensated form recovers the lost bits by
-'   scaling Log(U) by the exactly-representable ratio X / (U - 1). Measured
-'   relative error is at or below 2.1E-16 for X in [1E-12, 1E-2].
+'   scaling Log(U) by the exactly-representable ratio X / (U - 1), restoring full
+'   relative precision across the small-X range.
+'
+'   No numeric accuracy figure is quoted here on purpose: a measured threshold
+'   belongs in accuracy_contracts.csv where the gate can check it, not in a
+'   comment where it can only decay. The regression suite covers this helper
+'   directly.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -730,8 +749,10 @@ Public Function PROB_Expm1( _
 '   1 + 1E-10 with an absolute error of about 1.1E-16, so Exp(X) - 1 carries a
 '   relative error of about 1E-6, and 1 - Exp(-(x/lambda)^k) collapses to exactly
 '   0 across the whole left tail. Kahan's compensated form recovers the lost bits
-'   by scaling U - 1 by the exactly-representable ratio X / Log(U). Measured
-'   relative error is at or below 1.2E-16 for X in [-40, 0].
+'   by scaling U - 1 by the exactly-representable ratio X / Log(U), restoring full
+'   relative precision across the small-X range. As with PROB_Log1p, no numeric
+'   accuracy figure is quoted here: measured thresholds live in
+'   accuracy_contracts.csv where the gate can check them.
 '
 '   This is the exact mirror of PROB_Log1p and exists for the same reason: the
 '   Exponential and Weibull cumulative distribution functions are 1 - Exp(-z),
@@ -937,4 +958,3 @@ Public Sub PROB_SetStatus( _
     'Restore normal error propagation
         On Error GoTo 0
 End Sub
-

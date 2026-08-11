@@ -92,17 +92,36 @@ Option Private Module
 '
 ' NOTES
 '   - Iteration budgets are generous because the cost is paid only in the rare
-'     large-parameter case. The incomplete gamma series needs about 2.4 * Sqr(df)
-'     terms at its worst point (x = a); the beta continued fraction needs about
-'     0.27 * Sqr(df). Typical degrees of freedom below 100 converge in under 70
-'     iterations. PROB_GAMMA_MAX_ITER = 100000 covers df up to roughly 1E+9;
-'     PROB_BETA_MAX_ITER = 100000 covers df up to roughly 1E+7. These convergence
-'     ranges are narrower than the 1E100 representational validation bound
-'     (PROB_PARAMETER_MAGNITUDE_GUARD): a parameter between a kernel's convergence range and
-'     1E100 is accepted by validation, attempted, and then returns a clean
-'     parameter-named non-convergence error rather than a wrong answer. The
-'     ranges are approximate because the true boundary depends on the companion
-'     arguments, so they are documented rather than enforced as hard cliffs.
+'     large-parameter case. The two kernels scale quite differently, which is why
+'     one shared budget is not the same constraint for both:
+'
+'       incomplete gamma series   about 7 * Sqr(df) terms at its worst point
+'                                 (x = a), drifting slowly downward with df
+'       incomplete beta CF        well under 1 * Sqr(df) iterations, and the
+'                                 ratio FALLS with df (about 0.9 at 1E4,
+'                                 0.2 at 1E8) - it is far cheaper than the series
+'
+'     Typical degrees of freedom below 100 converge in a few dozen iterations.
+'     The gamma series is therefore the binding kernel: it exhausts a 100000
+'     budget while the beta CF is still in the low thousands.
+'
+'     THE REACHABLE RANGES ARE NOT RESTATED HERE. They follow from the budgets
+'     above and the Sqr(df) growth rule, they differ between the two kernels, and
+'     they have moved as measurement improved - the beta range in particular after
+'     the CR-P1-02 prefactor repair. They are measured in benchmark/cdf_large_shape
+'     rather than asserted in prose, which is where the previous figures in this
+'     note drifted out of step with the code.
+'
+'     These convergence ranges are narrower than the representational validation
+'     bound (PROB_PARAMETER_MAGNITUDE_GUARD): a parameter between a kernel's
+'     convergence range and that bound is accepted by validation, attempted, and
+'     then returns a clean parameter-named non-convergence error rather than a
+'     wrong answer. The boundary is not a hard cliff because it depends on the
+'     companion arguments, so it is documented and measured rather than enforced.
+'
+'     Reachability is also distinct from ACCURACY: a kernel can converge and
+'     still be outside its measured accuracy envelope. The distribution modules
+'     enforce that separately through PROB_*_MAX_DF and PROB_DENSITY_SHAPE_MAX.
 '   - PROB_LogGamma is recursive through its reflection branch, exactly once.
 '
 ' UPDATED
