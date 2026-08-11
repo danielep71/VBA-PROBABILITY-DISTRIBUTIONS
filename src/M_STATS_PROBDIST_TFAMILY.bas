@@ -162,7 +162,8 @@ Option Explicit
 '     they are closed-form and are NOT governed by the df caps above.
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope references, dependency lists and dates brought
+'                current after three rounds of measured cap changes.
 '==============================================================================
 
 
@@ -218,6 +219,13 @@ Public Function K_STATS_StudentT_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   This density carries NO accuracy envelope, and that is measured rather than
+'   an oversight. Unlike the Gamma, Beta, ChiSquare and F densities, it needs
+'   LogGamma((df+1)/2) - LogGamma(df/2), which PROB_LogGammaHalfDiff evaluates
+'   by an asymptotic series in 1/Z instead of subtracting two large log-gammas,
+'   so the cancellation that limits the others never forms. Measured
+'   machine-precise to df 1E20 in benchmark/t_density_large_df; a cap here
+'   would reject correct results.
 '   - Validates X and DegreesFreedom.
 '   - Uses the log-density form for numerical stability.
 '   - Underflow of the far tail is a valid zero.
@@ -234,7 +242,7 @@ Public Function K_STATS_StudentT_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -337,6 +345,8 @@ Public Function K_STATS_StudentT_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_T_MAX_DF are REJECTED with CVErr(xlErrNum)
+'   rather than answered inaccurately; see PROB_T_ValidateEnvelope.
 '   - Computes the left tail directly for X < 0, and as 1 minus the right tail
 '     for X >= 0. Both arrangements keep full precision on the side that carries
 '     the information.
@@ -357,7 +367,7 @@ Public Function K_STATS_StudentT_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -474,6 +484,8 @@ Public Function K_STATS_StudentT_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' ERROR POLICY
+'   Degrees of freedom beyond PROB_T_MAX_DF are REJECTED with CVErr(xlErrNum)
+'   rather than answered inaccurately; see PROB_T_ValidateEnvelope.
 '   - Invalid numeric domains return CVErr(xlErrNum).
 '   - Non-convergence returns CVErr(xlErrNum).
 '   - Unexpected runtime errors return CVErr(xlErrValue).
@@ -487,7 +499,7 @@ Public Function K_STATS_StudentT_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -602,6 +614,10 @@ Public Function K_STATS_StudentT_InverseCumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_T_MAX_DF are REJECTED. The inverse shares the
+'   forward cap; see PROB_T_ValidateEnvelope.
+'   Degrees of freedom beyond PROB_T_MAX_DF are REJECTED with CVErr(xlErrNum);
+'   see PROB_T_ValidateEnvelope.
 '   - Reduces by symmetry to the right tail, taking the complement as 1 -
 '     Probability, which is exact for Probability >= 0.5.
 '   - Inverts the survival function rather than the CDF. Inverting the CDF in the
@@ -628,7 +644,7 @@ Public Function K_STATS_StudentT_InverseCumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -762,6 +778,9 @@ Public Function K_STATS_ChiSquare_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_DENSITY_SHAPE_MAX are REJECTED. The density
+'   carries its OWN envelope, separate from PROB_CHI_MAX_DF, which governs the
+'   chi-square probability surfaces.
 '   - Returns 0 for X < 0.
 '   - At X = 0 the density is 0 for df > 2, 0.5 for df = 2, and unbounded for
 '     df < 2. The unbounded case returns CVErr(xlErrNum), matching Excel.
@@ -779,7 +798,7 @@ Public Function K_STATS_ChiSquare_Density( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -929,6 +948,9 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_CHI_MAX_DF are REJECTED with CVErr(xlErrNum).
+'   That cap is a REACHABILITY limit, not an accuracy one: the lower-tail series
+'   exhausts PROB_GAMMA_MAX_ITER above it. See PROB_CHI_ValidateEnvelope.
 '   - Returns 0 for X <= 0.
 '   - Computes P(DegreesFreedom / 2, X / 2), the regularized lower incomplete
 '     gamma function.
@@ -949,7 +971,7 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1072,6 +1094,8 @@ Public Function K_STATS_ChiSquare_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' ERROR POLICY
+'   Degrees of freedom beyond PROB_CHI_MAX_DF are REJECTED with CVErr(xlErrNum);
+'   see PROB_CHI_ValidateEnvelope.
 '   - Invalid numeric domains return CVErr(xlErrNum).
 '   - Non-convergence returns CVErr(xlErrNum).
 '   - Unexpected runtime errors return CVErr(xlErrValue).
@@ -1085,7 +1109,7 @@ Public Function K_STATS_ChiSquare_Survival( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1207,6 +1231,10 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_CHI_MAX_DF are REJECTED. The inverse shares
+'   the forward cap; see PROB_CHI_ValidateEnvelope.
+'   Degrees of freedom beyond PROB_CHI_MAX_DF are REJECTED with CVErr(xlErrNum);
+'   see PROB_CHI_ValidateEnvelope.
 '   - Returns 2 * G, where G solves P(DegreesFreedom / 2, G) = Probability.
 '   - The solver drives whichever of P and Q is the smaller onto its target, so
 '     the upper tail does not dissolve into cancellation.
@@ -1227,7 +1255,7 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1355,6 +1383,9 @@ Public Function K_STATS_F_Density( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_DENSITY_SHAPE_MAX are REJECTED. The density
+'   carries its OWN envelope, separate from the F probability cap above, and
+'   is not governed by PROB_F_MAX_DF.
 '   - Returns zero below the support.
 '   - At X = 0, returns #NUM! for DegreesFreedom1 < 2, one for
 '     DegreesFreedom1 = 2, and zero for DegreesFreedom1 > 2.
@@ -1371,6 +1402,7 @@ Public Function K_STATS_F_Density( _
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndTwoDF
 '   - PROB_TF_LogOnePlusExp
+'   - PROB_Log1p
 '   - PROB_TryBetaLogPdf
 '   - PROB_TryExp
 '   - PROB_SetStatus
@@ -1380,7 +1412,7 @@ Public Function K_STATS_F_Density( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1585,6 +1617,10 @@ Public Function K_STATS_F_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_F_MAX_DF are REJECTED with CVErr(xlErrNum)
+'   rather than answered inaccurately. That cap is measured, not assumed, and
+'   it has moved as measurement improved; see PROB_F_ValidateEnvelope for the
+'   current value and its evidence.
 '   - Returns zero for X <= 0.
 '   - Forms the beta pair from Log(X * DegreesFreedom1 / DegreesFreedom2).
 '   - Evaluates I_BetaX(DF1 / 2, DF2 / 2).
@@ -1597,6 +1633,7 @@ Public Function K_STATS_F_Cumulative( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndTwoDF
+'   - PROB_F_ValidateEnvelope
 '   - PROB_TF_LogisticPair
 '   - PROB_TryBetaRegularized
 '   - PROB_SetStatus
@@ -1606,7 +1643,7 @@ Public Function K_STATS_F_Cumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1747,6 +1784,8 @@ Public Function K_STATS_F_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_F_MAX_DF are REJECTED with CVErr(xlErrNum);
+'   see PROB_F_ValidateEnvelope for the current value and its evidence.
 '   - Returns one for X <= 0.
 '   - Forms the beta pair from Log(X * DegreesFreedom1 / DegreesFreedom2).
 '   - Evaluates the reflected beta I_BetaY(DF2 / 2, DF1 / 2).
@@ -1758,6 +1797,7 @@ Public Function K_STATS_F_Survival( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndTwoDF
+'   - PROB_F_ValidateEnvelope
 '   - PROB_TF_LogisticPair
 '   - PROB_TryBetaRegularized
 '   - PROB_SetStatus
@@ -1767,7 +1807,7 @@ Public Function K_STATS_F_Survival( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1914,6 +1954,10 @@ Public Function K_STATS_F_InverseCumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
+'   Degrees of freedom beyond PROB_F_MAX_DF are REJECTED with CVErr(xlErrNum).
+'   The inverse shares the forward cap: benchmark/inverse_probe measured the
+'   inverse kernel clean across the whole forward domain, including the
+'   unbalanced ratios that had been assumed to fail.
 '   - Inverts the incomplete beta, then maps back with x = (df2/df1) * (Y / Z),
 '     where Y and Z are the beta root and its complement as returned by the
 '     solver. Because the solver returns both, the small one is never recovered
@@ -1931,12 +1975,13 @@ Public Function K_STATS_F_InverseCumulative( _
 ' DEPENDENCIES
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_TF_ValidateTwoDF
+'   - PROB_F_ValidateEnvelope
 '   - PROB_TryBetaInvRegularized
 '   - PROB_TryExp
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-07-21
+'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2192,7 +2237,6 @@ Private Function PROB_TryStudentTTail( _
 ' DEPENDENCIES
 '   - PROB_TF_TryStudentTCentralMass
 '   - PROB_TF_TrySquareRatioPair
-'   - PROB_TryStudentTPDF
 '   - PROB_TryBetaRegularized
 '   - PROB_TryDivide
 '   - PROB_PI
