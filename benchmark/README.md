@@ -140,7 +140,7 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**167 contracts** across **22 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta, PROB_LogGamma, PROB_TryLogGamma1p.
+**162 contracts** across **22 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
@@ -235,11 +235,6 @@ by rate (Lambda), not scale.
 | Hypergeometric_Variance.all.output_rel | Hypergeometric_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | LogChoose.all.output | LogChoose | all | output_error | relative | 3.2E-16 | validated and frozen |
 | LogGamma.all.output | LogGamma | all | output_error | relative | 6.1E-14 | validated and frozen |
-| LogGamma.general.output_rel | PROB_LogGamma | general | output_error | relative | 5E-13 | validated and frozen |
-| LogGamma.near_zero.log_abs | PROB_LogGamma | near_zero | output_error | absolute | 5E-14 | validated and frozen |
-| LogGamma.small_positive.log_abs | PROB_LogGamma | small_positive | output_error | absolute | 5E-13 | validated and frozen |
-| LogGamma1p.series_seam.scaled_abs | PROB_TryLogGamma1p | series_seam | scaled_output_error | absolute | 1E-13 | validated and frozen |
-| LogGamma1p.small.scaled_abs | PROB_TryLogGamma1p | small | scaled_output_error | absolute | 5E-16 | validated and frozen |
 | LogGammaDelta.all.output | LogGammaDelta | all | output_error | relative | 5E-14 | validated and frozen |
 | LogGammaHalfDiff.all.output | LogGammaHalfDiff | all | output_error | relative | 2E-14 | validated and frozen |
 | Lognormal_Cumulative.all.output | Lognormal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
@@ -322,7 +317,6 @@ by rate (Lambda), not scale.
 | FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
 | IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 1.2E-09 relative at df 1E8 and degrading roughly tenfold per decade beyond; the public t surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
 | IncompleteGamma.ChiSquareLargeDF | ChiSquare_Cumulative;ChiSquare_Survival;ChiSquare_InverseCumulative | Chi-square degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 3.1E-11 relative at df 1E8; the P2-02 divergence at df 1E16 was the CR-P1-02 prefactor cancellation, not an intrinsic limit; the public chi-square surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
-| LogGamma1p.SubnormalResultRepresentability | PROB_TryLogGamma1p | X below 3.854839696505424E-308, that is PROB_MIN_NORMAL / EulerGamma | scaled absolute error grows toward the half-ulp bound 0.5 * minimum_subnormal / X: measured 1.92E-16 at X = 1E-308, 1.29E-14 at 1E-310, 1.41E-04 at 1E-320 and 4.18E-01 at the smallest positive subnormal | characterized |
 
 
 <!-- END generated -->
