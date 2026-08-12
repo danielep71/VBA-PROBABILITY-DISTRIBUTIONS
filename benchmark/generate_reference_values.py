@@ -246,6 +246,77 @@ _BETA_BAL = {"Beta_Density", "Beta_Cumulative", "Beta_Survival", "Beta_InverseCu
 _F_VAL = {"F_Cumulative", "F_Survival", "F_InverseCumulative"}
 
 
+# ---------------------------------------------------------------------------
+# Binary64 argument canonicalisation
+# ---------------------------------------------------------------------------
+# Every accuracy reference must be evaluated at the exact binary64 value the VBA
+# function receives, not at the decimal it was written from. The exporter parses
+# each argument with Val(), so mp.mpf("0.85") is NOT what the library sees: it
+# sees the Double nearest 0.85, about half an ulp away. At contracts of 1E-15 to
+# 1E-13 that input rounding is the same order as the claimed output error, and in
+# sensitive tails it amplifies - the deep NegativeBinomial survival moves by
+# 1.09E-12 between the two.
+#
+# TWO LAYERS, and the distinction matters.
+#
+#   DESIGN LAYER      quantities that only SELECT test points - the mean and sd
+#                     used to choose which integer k enters the grid, the
+#                     binomial kmid/ktail, the hypergeometric mode. VBA never
+#                     receives these; it receives the k they selected. They keep
+#                     their historical semantics, because changing them would
+#                     move test points and silently redesign the benchmark
+#                     rather than repair the references.
+#
+#   EVALUATION LAYER  the final emitted arguments. These are canonicalised, so
+#                     the reference is evaluated at exactly the Double VBA gets
+#                     and the serialised argument denotes that same Double.
+#
+# Canonicalisation is therefore applied at the reference helpers and at row
+# emission, NOT at parameter binding. Binding-time canonicalisation pushes it
+# into the design layer and moves 28 NegativeBinomial test points.
+def _as_binary64_mpf(x):
+    """The exact binary64 value of x, promoted back into high precision."""
+    num, den = float(x).as_integer_ratio()
+    return mp.mpf(num) / mp.mpf(den)
+
+
+def D(x):
+    """Canonicalise an emitted argument to the Double the exporter will receive.
+
+    The committed argument field is an INPUT TOKEN, not an exact real number.
+    The exporter does ParseDouble = Val(S), so the authoritative test input is
+    the Double produced by Val() on the serialised token - not the Double
+    nearest the pre-serialisation design value. Those two paths coincide almost
+    everywhere, but they are a double rounding apart, and two grid rows sit on
+    the exception:
+
+        design 6235507341273914.5 -> nearest Double 6235507341273915
+        token  "6235507341273914.5" -> Val() -> 6235507341273914
+
+    Above 2^52 the Double grid has spacing 2, so the .5 cannot exist and the two
+    routes land on adjacent Doubles. Following the token reproduces the value the
+    historical observation was actually measured at, which keeps the numeric key
+    set invariant and needs no re-export.
+
+    Python ints pass through: they are count inputs, exact in binary64, and
+    downstream code treats them as ints."""
+    if isinstance(x, (list, tuple)):
+        return type(x)(D(v) for v in x)
+    if isinstance(x, int):
+        return x
+    return _as_binary64_mpf(mp.nstr(x, 17))
+
+
+def _canonical_args(f):
+    """Wrap a reference helper so it evaluates at the binary64 arguments."""
+    import functools
+
+    @functools.wraps(f)
+    def wrapped(*a, **k):
+        return f(*[D(v) for v in a], **k)
+    return wrapped
+
+
 def _regime_for(func):
     if func in _BETA_BAL:
         return "balanced"
@@ -532,10 +603,10 @@ def build_discrete_rows():
     def row(func, kernel, args, ref, claim, metric):
         rows.append({
             "function": func, "vba_kernel": kernel, "claim": claim, "metric": metric,
-            "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
-            "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
-            "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
-            "arg4": mp.nstr(args[3], 17) if len(args) > 3 else "",
+            "arg1": mp.nstr(D(args[0]), 17) if len(args) > 0 else "",
+            "arg2": mp.nstr(D(args[1]), 17) if len(args) > 1 else "",
+            "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "",
+            "arg4": mp.nstr(D(args[3]), 17) if len(args) > 3 else "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": "all", "evidence_set": "main grid",
         })
@@ -709,9 +780,9 @@ def build_deep_tail_rows():
         rows.append({
             "function": func, "vba_kernel": "K_STATS_" + func,
             "claim": REL, "metric": "rel",
-            "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
-            "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
-            "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
+            "arg1": mp.nstr(D(args[0]), 17) if len(args) > 0 else "",
+            "arg2": mp.nstr(D(args[1]), 17) if len(args) > 1 else "",
+            "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "",
             "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": "deep_tail", "evidence_set": "main grid",
@@ -792,7 +863,7 @@ def build_tiny_unbalanced_rows():
             "function": func, "vba_kernel": func if func.startswith("PROB_") else "K_STATS_" + func,
             "claim": claim, "metric": metric,
             "arg1": mp.nstr(args[0], 17), "arg2": mp.nstr(args[1], 17),
-            "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "", "arg4": "",
+            "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "", "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": regime, "evidence_set": "main grid",
         })
@@ -850,10 +921,10 @@ def build_rows():
                 "vba_kernel": vba_kernel,
                 "claim": claim,
                 "metric": metric,
-                "arg1": mp.nstr(args[0], 17) if len(args) > 0 else "",
-                "arg2": mp.nstr(args[1], 17) if len(args) > 1 else "",
-                "arg3": mp.nstr(args[2], 17) if len(args) > 2 else "",
-                "arg4": mp.nstr(args[3], 17) if len(args) > 3 else "",
+                "arg1": mp.nstr(D(args[0]), 17) if len(args) > 0 else "",
+                "arg2": mp.nstr(D(args[1]), 17) if len(args) > 1 else "",
+                "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "",
+                "arg4": mp.nstr(D(args[3]), 17) if len(args) > 3 else "",
                 "reference": mp.nstr(ref, 25),
                 "observed_vba": "",
                 "regime": regime,
@@ -1028,6 +1099,79 @@ def build_rows():
     rows += build_deep_tail_rows()
     rows += build_tiny_unbalanced_rows()
     return rows
+
+
+
+# Canonicalise the arguments of every reference helper. Placed after all
+# definitions and before any call. Idempotent, so a helper calling another
+# is unaffected. _bisect takes a callable and logspace takes design bounds,
+# so both are excluded.
+for _f in (
+        "_loggamma",
+        "_loggamma_halfdiff",
+        "_stirling_error",
+        "_logchoose",
+        "_student_t_pdf",
+        "_student_t_cdf",
+        "_student_t_sf",
+        "_student_t_ppf",
+        "_chi2_cdf",
+        "_chi2_sf",
+        "_chi2_ppf",
+        "_f_cdf",
+        "_f_sf",
+        "_f_ppf",
+        "_lognorm_params",
+        "_gamma_pdf",
+        "_gamma_cdf",
+        "_gamma_sf",
+        "_gamma_ppf",
+        "_beta_pdf",
+        "_beta_cdf",
+        "_beta_sf",
+        "_beta_ppf",
+        "_weibull_mean",
+        "_weibull_var",
+        "_binom_pmf",
+        "_binom_logpmf",
+        "_binom_cdf",
+        "_binom_sf",
+        "_binom_inv",
+        "_pois_pmf",
+        "_pois_logpmf",
+        "_pois_cdf",
+        "_pois_sf",
+        "_pois_inv",
+        "_geo_pmf",
+        "_geo_logpmf",
+        "_geo_cdf",
+        "_geo_sf",
+        "_geo_inv",
+        "_nb_pmf",
+        "_nb_logpmf",
+        "_nb_cdf",
+        "_nb_sf",
+        "_nb_inv",
+        "_hy_pmf",
+        "_hy_logpmf",
+        "_hy_cdf",
+        "_hy_sf",
+        "_hy_inv",
+        "_du_pmf",
+        "_du_logpmf",
+        "_du_cdf",
+        "_du_sf",
+        "_du_inv",
+        "_du_mean",
+        "_du_var",
+        "_dt_inv_surv",
+        "_tu_logbeta",
+        "_tu_beta_density",
+        "_tu_beta_cdf",
+        "_tu_f_density",
+        "_tu_f_cdf",
+):
+    globals()[_f] = _canonical_args(globals()[_f])
 
 
 def main():

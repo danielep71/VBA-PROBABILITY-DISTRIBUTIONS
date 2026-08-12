@@ -44,6 +44,7 @@ replacement_source names that action, so the migration script is mechanical:
 Report only; writes nothing but its own CSV.
 """
 import argparse, csv, importlib.util, struct, sys
+import time as _time
 from collections import Counter
 import mpmath as mp
 
@@ -91,16 +92,59 @@ def _Phi_inv(p):
         return +r
 
 
+_NB_CACHE = {}
+
+
 def _nb_cdf(k, r, p):
-    """I_p(r, k+1). betainc fails to converge at large parameters; the direct
-    sum of the mass is exact and its truncation is the whole support."""
+    """I_p(r, k+1).
+
+    betainc does not converge for the large parameters this grid uses
+    (r = 5000, k ~ 21000) at any maxterms, so the mass is summed directly. The
+    sum is exact - its truncation is the whole support - and the terms are built
+    by the recurrence pmf(i+1)/pmf(i) = ((i + r)/(i + 1)) * (1 - p), which costs
+    one multiply and one divide per term instead of three loggamma evaluations.
+    Memoised because Cumulative and Survival share every argument triple."""
     K = int(mp.floor(k))
     try:
         return _ibeta(p, r, mp.mpf(K) + 1)
     except Exception:
-        lgr = _lg(r); lp = mp.log(p); lq = mp.log(1 - p)
-        return mp.fsum([mp.e ** (_lg(mp.mpf(i) + r) - _lg(mp.mpf(i) + 1) - lgr
-                                 + r * lp + mp.mpf(i) * lq) for i in range(K + 1)])
+        key = (str(k), str(r), str(p), mp.mp.dps)
+        if key in _NB_CACHE:
+            return _NB_CACHE[key]
+        q = 1 - p
+        term = p ** r                       # i = 0
+        total = term
+        for i in range(K):
+            term = term * ((mp.mpf(i) + r) / (mp.mpf(i) + 1)) * q
+            total += term
+        _NB_CACHE[key] = total
+        return total
+
+
+
+def _selfcheck_nb_recurrence():
+    """The recurrence replaces mp.betainc only where betainc cannot converge.
+    Before relying on it there, prove it reproduces that independent route on
+    the domain where the route does converge. Runs once, at import."""
+    old = mp.mp.dps
+    try:
+        mp.mp.dps = 120
+        for k, r, p in [(4,1,"0.2"), (20,5,"0.5"), (60,50,"0.85"), (200,50,"0.5"),
+                        (500,100,"0.2"), (1500,500,"0.5"), (3000,500,"0.2")]:
+            K, R, P = mp.mpf(k), mp.mpf(r), mp.mpf(float(p))
+            b = _ibeta(P, R, K + 1)
+            q = 1 - P; term = P ** R; tot = term
+            for i in range(int(K)):
+                term = term * ((mp.mpf(i) + R) / (mp.mpf(i) + 1)) * q
+                tot += term
+            if abs(tot - b) > abs(b) * mp.mpf(10) ** -100:
+                raise AssertionError(
+                    f"NB recurrence disagrees with betainc at k={k}, r={r}, p={p}")
+    finally:
+        mp.mp.dps = old
+
+
+_selfcheck_nb_recurrence()
 
 
 def _hy_pmf(k, n, K, N): return mp.binomial(K, k) * mp.binomial(N - K, n - k) / mp.binomial(N, n)
@@ -108,6 +152,29 @@ def _hy_cdf(k, n, K, N):
     lo = int(max(mp.mpf(0), n + K - N))
     return mp.fsum([_hy_pmf(mp.mpf(i), n, K, N) for i in range(lo, int(k) + 1)])
 def _du_n(lo, hi): return mp.floor(hi) - mp.ceil(lo) + 1
+
+
+def _root_pos(f):
+    """Bracketed monotone solve on (0, inf) in log coordinate."""
+    lo, hi = mp.mpf(-700), mp.mpf(700)
+    g = lambda t: f(mp.e**t)
+    for _ in range(4000):
+        m = (lo+hi)/2
+        if g(m) > 0: hi = m
+        else: lo = m
+        if hi-lo < mp.mpf(10)**-(mp.mp.dps-12): break
+    return mp.e**((lo+hi)/2)
+
+
+def _root_real(f):
+    """Bracketed monotone solve on the whole real line."""
+    lo, hi = mp.mpf(-mp.mpf(10)**40), mp.mpf(10)**40
+    for _ in range(4000):
+        m = (lo+hi)/2
+        if f(m) > 0: hi = m
+        else: lo = m
+        if hi-lo < max(abs(hi),mp.mpf(1))*mp.mpf(10)**-(mp.mp.dps-12): break
+    return (lo+hi)/2
 
 
 def _solve_logit(target, fwd, resid_out):
@@ -126,6 +193,17 @@ def _solve_logit(target, fwd, resid_out):
     x = 1 / (1 + mp.e ** (-t))
     resid_out.append(abs(fwd(x) - target))
     return x
+
+
+def _binom_cdf(k, n, p): return _ibeta(1-p, n-mp.floor(k), mp.floor(k)+1)
+def _geo_cdf(k, p): return 1-(1-p)**(mp.floor(k)+1)
+def _t_cdf(x, df):
+    """Student t CDF via the regularized incomplete beta, both tails."""
+    u = df/(df+x*x)
+    h = _ibeta(u, df/2, mp.mpf(1)/2)/2
+    return h if x <= 0 else 1-h
+
+ORACLE_EXTRA = True
 
 
 def build(dps, resid):
@@ -185,6 +263,30 @@ def build(dps, resid):
  "NormalStandard_InverseSurvival": (1, "erfinv", lambda p: -_Phi_inv(p)),
  "Normal_InverseSurvival": (3, "erfinv", lambda p,mu,sd: mu - sd*_Phi_inv(p)),
  "Lognormal_InverseSurvival": (3, "erfinv", lambda p,ml,sl: mp.exp(ml - sl*_Phi_inv(p))),
+
+ "Binomial_PMF": (3, "loggamma", lambda k,n,p: mp.e**(
+    _lg(n+1)-_lg(k+1)-_lg(n-k+1)+k*mp.log(p)+(n-k)*mp.log(1-p))),
+ "Binomial_LogPMF": (3, "loggamma", lambda k,n,p:
+    _lg(n+1)-_lg(k+1)-_lg(n-k+1)+k*mp.log(p)+(n-k)*mp.log(1-p)),
+ "Binomial_Cumulative": (3, "betainc", _binom_cdf),
+ "Binomial_Survival": (3, "betainc", lambda k,n,p: 1-_binom_cdf(k,n,p)),
+
+ "Geometric_PMF": (2, "closed form", lambda k,p: p*(1-p)**k),
+ "Geometric_LogPMF": (2, "closed form", lambda k,p: mp.log(p)+k*mp.log(1-p)),
+ "Geometric_Cumulative": (2, "closed form", _geo_cdf),
+ "Geometric_Survival": (2, "closed form", lambda k,p: (1-p)**(mp.floor(k)+1)),
+
+ "StudentT_Density": (2, "loggamma", lambda x,df: mp.e**(
+    _lg((df+1)/2)-_lg(df/2)-mp.log(df*mp.pi)/2-((df+1)/2)*mp.log(1+x*x/df))),
+ "StudentT_Cumulative": (2, "betainc", _t_cdf),
+ "StudentT_Survival": (2, "betainc", lambda x,df: 1-_t_cdf(x,df)),
+ "StudentT_InverseCumulative": (2, "root/betainc", lambda p,df: _root_real(
+    lambda x: _t_cdf(x,df)-p)),
+
+ "ChiSquare_InverseCumulative": (2, "root/gammainc", lambda p,df: _root_pos(
+    lambda x: mp.gammainc(df/2,0,x/2,regularized=True)-p)),
+ "Gamma_InverseCumulative": (3, "root/gammainc", lambda p,k,th: _root_pos(
+    lambda x: mp.gammainc(k,0,x/th,regularized=True)-p)),
 }
 
 
@@ -224,7 +326,8 @@ def main():
     dis = [r for r in grid if K(r) in N and r["reference"] != N[K(r)]["reference"]]
 
     out, cnt = [], Counter()
-    for r in dis:
+    t0 = _time.time()
+    for _i, r in enumerate(dis, 1):
         fn = r["function"]
         row = {"function": fn, "regime": r["regime"],
                "committed_reference": r["reference"],
@@ -290,6 +393,8 @@ def main():
         finally:
             mp.mp.dps = 50
         cnt[cls] += 1; out.append(row)
+        if _i % 10 == 0 or _i == len(dis):
+            print(f"  {_i:4d}/{len(dis)}  {_time.time()-t0:6.0f}s  last: {fn}", flush=True)
 
     with open(a.out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=FIELDS, lineterminator="\n")
