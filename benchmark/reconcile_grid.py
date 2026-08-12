@@ -6,12 +6,17 @@ REPORT ONLY. This script never writes the grid. It exists because the grid holds
 generate_reference_values.py no longer reproduces it in either direction (issue
 #17). Nothing may write that file until the divergence is understood.
 
-Key. `function` + the four argument columns does NOT identify a row: 11 keys are
-duplicated. The correct key adds `regime` and `evidence_set`, which resolves 8 of
-them legitimately - the same argument promoted into a study evidence set
-alongside its main-grid appearance, or two outputs discriminated by regime as
-Lognormal_ParametersFromMeanStdDev already does with param_meanlog /
-param_stddevlog. The residual duplicates are reported separately.
+Key. Arguments are compared as IEEE-754 bit patterns, not as text. The exporter
+parses every argument with Val(), so "0.85" and "0.84999999999999998" reach the
+library as the same Double and must reconcile as the same row. Keying on the
+decimal spelling made 216 identical rows look like a coverage gap, inflating
+grid-only from 350 to 563 and generator-only from 22 to 238.
+
+The full key adds `regime` and `evidence_set`, which legitimately separates the
+same argument promoted into a study evidence set alongside its main-grid
+appearance, and two outputs discriminated by regime as
+Lognormal_ParametersFromMeanStdDev does with param_meanlog / param_stddevlog.
+Residual duplicates are reported separately.
 
 Classification:
   MATCH                       present both sides, all compared fields equal
@@ -25,7 +30,7 @@ Where a GRID_ONLY_UNEXPLAINED row's arguments appear in a study folder's own
 grid, that folder is reported as a probable origin. It is a lead, not a
 declaration: study grids use a different schema, so the match is numeric only.
 """
-import argparse, csv, glob, importlib.util, os, sys
+import argparse, csv, glob, importlib.util, os, struct, sys
 from collections import Counter, defaultdict
 
 import mpmath as mp
@@ -34,9 +39,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 COMPARE = ("claim", "metric", "expected_error")
 
 
+def f64(text):
+    """IEEE-754 bit pattern of an argument cell; '' for blank, '?...' if unparsable."""
+    t = (text or "").strip()
+    if t == "":
+        return ""
+    try:
+        return struct.pack(">d", float(t)).hex()
+    except (ValueError, OverflowError):
+        return "?" + t
+
+
 def key(r):
-    return (r["function"], r["arg1"], r["arg2"], r["arg3"], r["arg4"],
-            r["regime"], r.get("evidence_set", ""))
+    return (r["function"], f64(r["arg1"]), f64(r["arg2"]), f64(r["arg3"]),
+            f64(r["arg4"]), r["regime"], r.get("evidence_set", ""))
 
 
 def load_generator(path):
@@ -72,8 +88,8 @@ def study_arg_index(root):
                     for k in ("arg1", "arg2", "arg3", "x", "z"):
                         v = (row.get(k) or "").strip()
                         if v:
-                            try: vals.append(float(v))
-                            except ValueError: pass
+                            b = f64(v)
+                            if not b.startswith("?"): vals.append(b)
                     if vals:
                         idx[folder].add(tuple(vals))
         except Exception:
@@ -86,8 +102,8 @@ def probable_origin(r, idx):
     for k in ("arg1", "arg2", "arg3"):
         v = (r.get(k) or "").strip()
         if v:
-            try: vals.append(float(v))
-            except ValueError: pass
+            b = f64(v)
+            if not b.startswith("?"): vals.append(b)
     if not vals:
         return ""
     hits = [f for f, s in idx.items() if tuple(vals) in s]
@@ -126,11 +142,14 @@ def main():
     print(f"\nstudy folders indexed under {a.study_root}: {len(idx)}")
     print("  " + (", ".join(sorted(idx)) if idx else "NONE - check --study-root"))
 
-    out, counts = [], Counter()
+    out, counts, text_only = [], Counter(), 0
     for k in sorted(set(G) | set(N)):
         g, n = G.get(k), N.get(k)
         origin = ""
         if g is not None and n is not None:
+            if (g["arg1"], g["arg2"], g["arg3"], g["arg4"]) != \
+               (n["arg1"], n["arg2"], n["arg3"], n["arg4"]):
+                text_only += 1
             if g["reference"] != n["reference"]:
                 cls = "REFERENCE_DIFFERENCE"
             elif any(g.get(c, "") != n.get(c, "") for c in COMPARE):
@@ -154,7 +173,7 @@ def main():
             "generator_state": "present" if n is not None else "absent",
             "grid_state": "present" if g is not None else "absent",
             "observed": "filled" if (g and (g.get("observed_vba") or "").strip()) else "",
-            "classification": cls, "origin": origin,
+            "classification": cls, "probable_origin": origin,
         })
 
     with open(a.out, "w", newline="") as f:
@@ -162,20 +181,23 @@ def main():
         w.writeheader(); w.writerows(out)
 
     print(f"\nwrote {a.out}: {len(out)} keys\n")
+    print(f"  matched rows whose argument TEXT differs but whose Double is "
+          f"identical: {text_only}")
+    print("  (a string key would have counted these as coverage drift)\n")
     for c, n in counts.most_common():
         print(f"  {c:30s} {n:5d}")
     print("\nGRID_ONLY_UNEXPLAINED by function:")
     un = [r for r in out if r["classification"] == "GRID_ONLY_UNEXPLAINED"]
     for fn, n in Counter(r["function"] for r in un).most_common(12):
-        withorigin = sum(1 for r in un if r["function"] == fn and r["origin"])
+        withorigin = sum(1 for r in un if r["function"] == fn and r["probable_origin"])
         print(f"   {n:4d}  {fn:36s} probable origin found for {withorigin}")
     # Attribution strength, stated honestly: a numeric argument tuple matching a
     # study folder's own grid is a lead, not a declaration. With 18 folders in
     # play, common arguments collide. If nothing is uniquely attributed, origin
     # cannot be reconstructed after the fact and must instead be WRITTEN by
     # whatever promotes a row.
-    uniq = sum(1 for r in un if r["origin"] and ";" not in r["origin"])
-    multi = Counter(len(r["origin"].split(";")) for r in un if r["origin"])
+    uniq = sum(1 for r in un if r["probable_origin"] and ";" not in r["probable_origin"])
+    multi = Counter(len(r["probable_origin"].split(";")) for r in un if r["probable_origin"])
     obs = sum(1 for r in un if r["observed"])
     print(f"\n  {len(un)} unexplained rows, {obs} carrying an observation.")
     print(f"  uniquely attributed to one study folder: {uniq}")
