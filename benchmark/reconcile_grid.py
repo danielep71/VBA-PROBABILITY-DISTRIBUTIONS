@@ -53,11 +53,18 @@ def load_generator(path):
     return rows
 
 
+# Top-level benchmark CSVs are not studies; indexing them would attribute every
+# row to the very file being reconciled.
+_NOT_A_STUDY = {"benchmark", ""}
+
+
 def study_arg_index(root):
     """Numeric argument tuples appearing in each study folder's own grid."""
     idx = defaultdict(set)
     for path in glob.glob(os.path.join(root, "*", "*.csv")):
         folder = os.path.basename(os.path.dirname(path))
+        if folder in _NOT_A_STUDY or folder.startswith("__"):
+            continue
         try:
             with open(path, newline="") as f:
                 for row in csv.DictReader(f):
@@ -91,7 +98,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--grid", default=os.path.join(HERE, "probability_accuracy_grid.csv"))
     ap.add_argument("--generator", default=os.path.join(HERE, "generate_reference_values.py"))
-    ap.add_argument("--study-root", default=os.path.dirname(HERE))
+    # The study folders are benchmark/<study>/, i.e. directly under HERE.
+    # Defaulting to dirname(HERE) made the glob match benchmark/*.csv - the main
+    # grid itself - and every row then "matched" that pseudo-folder.
+    ap.add_argument("--study-root", default=HERE)
     ap.add_argument("--out", default=os.path.join(HERE, "grid_reconciliation.csv"))
     a = ap.parse_args()
 
@@ -109,6 +119,12 @@ def main():
     G = {key(r): r for r in grid}
     N = {key(r): r for r in gen}
     idx = study_arg_index(a.study_root)
+    # Print what was actually indexed. A wrong --study-root silently produces a
+    # plausible-looking attribution rather than an error: pointing it one level
+    # too high makes the glob match benchmark/*.csv, so the main grid indexes
+    # itself as a pseudo-folder and every row "matches" it.
+    print(f"\nstudy folders indexed under {a.study_root}: {len(idx)}")
+    print("  " + (", ".join(sorted(idx)) if idx else "NONE - check --study-root"))
 
     out, counts = [], Counter()
     for k in sorted(set(G) | set(N)):
@@ -153,8 +169,22 @@ def main():
     for fn, n in Counter(r["function"] for r in un).most_common(12):
         withorigin = sum(1 for r in un if r["function"] == fn and r["origin"])
         print(f"   {n:4d}  {fn:36s} probable origin found for {withorigin}")
-    print(f"\n  of {len(un)} unexplained rows, {sum(1 for r in un if r['origin'])} "
-          f"have a probable study origin, {sum(1 for r in un if r['observed'])} carry an observation")
+    # Attribution strength, stated honestly: a numeric argument tuple matching a
+    # study folder's own grid is a lead, not a declaration. With 18 folders in
+    # play, common arguments collide. If nothing is uniquely attributed, origin
+    # cannot be reconstructed after the fact and must instead be WRITTEN by
+    # whatever promotes a row.
+    uniq = sum(1 for r in un if r["origin"] and ";" not in r["origin"])
+    multi = Counter(len(r["origin"].split(";")) for r in un if r["origin"])
+    obs = sum(1 for r in un if r["observed"])
+    print(f"\n  {len(un)} unexplained rows, {obs} carrying an observation.")
+    print(f"  uniquely attributed to one study folder: {uniq}")
+    for k in sorted(multi):
+        if k > 1:
+            print(f"    {multi[k]:4d} row(s) matched {k} folders - coincidence, not evidence")
+    if uniq == 0 and un:
+        print("  => origin CANNOT be inferred retrospectively. It must be written")
+        print("     by whatever promotes a row. See issue #17 finding F.")
 
 
 if __name__ == "__main__":
