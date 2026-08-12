@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-12T09:49:29Z",
-  "commit_sha": "f74c13d",
+  "generated_utc": "2026-08-12T12:26:57Z",
+  "commit_sha": "4553afa",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -49,7 +49,7 @@
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:a106b1001090049bfd403e5b3a9f62265dd692292fb7ca75b32b7867c477cdd8",
     "tests/M_STATS_PROBDIST_TEST.bas": "sha256:3bf56be48d2daef2ffea72c8b010e1744078159f614a382cf6284aa1a82a2757"
   },
-  "contract_registry_sha256": "sha256:e995d6175c459c8158f2aa88d3035fc40f9e7e2ccba76dfd2718cb32cc93e86f",
+  "contract_registry_sha256": "sha256:8b5a160ae1820c5ca6758782f93cdc386622222db314d3c0124fd5afc7cf2320",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20131",

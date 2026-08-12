@@ -15,6 +15,7 @@ a relative error against zero is not a number.
 """
 import argparse
 import csv
+import os
 from collections import defaultdict
 from decimal import Decimal, getcontext
 
@@ -23,6 +24,23 @@ getcontext().prec = 60
 SERIES_MAX = Decimal("0.25")
 EPS = Decimal(2) ** -52
 ABS_REGIMES = ("small_positive", "reflection", "near_zero", "exact_zero")
+
+# Provisional thresholds under validation. The holdout section is the only thing
+# entitled to turn these from provisional into frozen.
+PROPOSED = {
+    "small_positive": (Decimal("5E-13"), "abs"),
+    "reflection":     (Decimal("5E-13"), "abs"),   # shares the small_positive row
+    "near_zero":      (Decimal("5E-14"), "abs"),
+    "exact_zero":     (Decimal("5E-14"), "abs"),   # shares the near_zero row
+    "general":        (Decimal("5E-13"), "rel"),
+}
+CONTRACT_OF = {
+    "small_positive": "LogGamma.small_positive.log_abs",
+    "reflection":     "LogGamma.small_positive.log_abs",
+    "near_zero":      "LogGamma.near_zero.log_abs",
+    "exact_zero":     "LogGamma.near_zero.log_abs",
+    "general":        "LogGamma.general.output_rel",
+}
 
 
 def parse(token):
@@ -62,14 +80,43 @@ def main():
     ap.add_argument("--grid", default="loggamma_regimes_grid.csv")
     ap.add_argument("--baseline", default=None,
                     help="pre-Phase-1 export of the same grid")
+    ap.add_argument("--holdout", default=None,
+                    help="independent holdout export; validates the frozen thresholds")
     a = ap.parse_args()
-    order, pts = load(a.grid)
 
-    filled = [z for z in order if pts[z].get("LogGamma", (None,))[0] is not None]
-    print(f"Loaded {len(order)} points; {len(order) - len(filled)} unfilled or ERROR")
-    if not filled:
-        print("  Grid is empty -- run Export_LogGammaRegimes in the workbook first.")
+    # Report the state of BOTH files before doing anything. The baseline is the
+    # half of this study that cannot be regenerated: no committed observation
+    # covers Z below 1E-8, so a missing or empty baseline means the subnormal
+    # improvement has nothing to be measured against, and re-running the
+    # generator would quietly overwrite it if it were ever written to the grid.
+    def status(path):
+        if not os.path.exists(path):
+            return "MISSING", 0, 0
+        o, p = load(path)
+        n = sum(1 for z in o if p[z].get("LogGamma", (None,))[0] is not None)
+        return ("empty" if n == 0 else "filled"), n, len(o)
+
+    gs, gn, gt = status(a.grid)
+    print(f"   grid     {a.grid:36s} {gs:8s} {gn}/{gt} points")
+    if a.baseline:
+        bs, bn, bt = status(a.baseline)
+        print(f"   baseline {a.baseline:36s} {bs:8s} {bn}/{bt} points")
+    else:
+        bs = None
+        print("   baseline (not supplied) -- section 2 will be skipped")
+
+    if gs != "filled" or (a.baseline and bs != "filled"):
+        print("\n  Nothing to analyze yet. Expected sequence:")
+        print("    1. python3 generate_loggamma_regimes.py")
+        print("    2. copy the empty grid to loggamma_regimes_baseline.csv")
+        print("    3. PHASE 0 module loaded -> Export_LogGammaRegimes -> pick the BASELINE")
+        print("    4. PHASE 1 module loaded -> Export_LogGammaRegimes -> pick the GRID")
+        print("    5. re-run this analyzer")
+        print("  Do NOT re-run the generator between 3 and 4: it writes the grid and")
+        print("  would discard the export you just made.")
         return
+
+    order, pts = load(a.grid)
 
     # ---- 0 --------------------------------------------------------------
     print("\n0) ARGUMENT INTEGRITY")
@@ -105,7 +152,7 @@ def main():
 
     # ---- 2 --------------------------------------------------------------
     if a.baseline:
-        border, bpts = load(a.baseline)
+        _, bpts = load(a.baseline)
         print("\n2) BASELINE DIFF, row by row")
         buckets = defaultdict(list)
         for z in order:
@@ -205,6 +252,68 @@ def main():
     print("   The reflection regime (0.25 < Z < 0.5) is unchanged by Phase 1 and is")
     print("   covered by LogGamma.small_positive.log_abs or its own row, as preferred.")
     print("   Freeze only after the independent holdout is populated.")
+
+    # ---- 6 --------------------------------------------------------------
+    if not a.holdout:
+        return
+    print("\n6) INDEPENDENT HOLDOUT -- freeze decision")
+    if not os.path.exists(a.holdout):
+        print(f"   {a.holdout} not found.")
+        return
+    horder, hpts = load(a.holdout)
+    hfilled = [z for z in horder if hpts[z].get("LogGamma", (None,))[0] is not None]
+    print(f"   {a.holdout}: {len(hfilled)}/{len(horder)} points filled")
+    if not hfilled:
+        print("   Not exported yet -- run Export_LogGammaRegimes and pick the holdout.")
+        return
+    overlap = set(horder) & set(order)
+    print(f"   points shared with the fitting set: {len(overlap)}"
+          f"{'' if not overlap else '  *** NOT INDEPENDENT: ' + str(sorted(overlap)[:4])}")
+    bad = [z for z in horder
+           if hpts[z].get("EchoZ", (None, None))[0] is not None
+           and float(hpts[z]["EchoZ"][0]) != float(hpts[z]["EchoZ"][1])]
+    print(f"   argument integrity: {'all exact' if not bad else str(len(bad)) + ' MISMATCH'}")
+
+    worstH = {}
+    for z in horder:
+        obs, ref = hpts[z].get("LogGamma", (None, None))
+        if obs is None:
+            continue
+        reg = hpts[z]["regime"]
+        kind = PROPOSED.get(reg, (None, "abs"))[1]
+        e = rel_err(obs, ref) if kind == "rel" else abs_err(obs, ref)
+        if e is None:
+            continue
+        w = worstH.setdefault(reg, [Decimal(0), None, 0])
+        w[2] += 1
+        if e > w[0]:
+            w[0], w[1] = e, z
+
+    # roll regimes up to the contract they belong to
+    byc = {}
+    for reg, (e, at, n) in worstH.items():
+        c = CONTRACT_OF[reg]
+        cur = byc.setdefault(c, [Decimal(0), None, 0, PROPOSED[reg][0]])
+        cur[2] += n
+        if e > cur[0]:
+            cur[0], cur[1] = e, at
+    print(f"\n   {'contract':34s} {'threshold':>10} {'holdout worst':>14} {'pts':>4} {'margin':>8}  verdict")
+    allpass = True
+    for c, (w, at, n, thr) in sorted(byc.items()):
+        margin = thr / w if w > 0 else None
+        ok = w <= thr
+        allpass = allpass and ok
+        ms = f"{float(margin):.1f}x" if margin is not None else "inf"
+        print(f"   {c:34s} {float(thr):10.0e} {float(w):14.2e} {n:4d} {ms:>8}  "
+              f"{'PASS' if ok else 'FAIL'}   worst at Z={at}")
+    print()
+    if allpass:
+        print("   All thresholds hold on data that set none of them. The contracts may")
+        print("   move from provisional to `validated and frozen`.")
+    else:
+        print("   A threshold was exceeded. Per the holdout policy, do NOT freeze:")
+        print("   adjust that single threshold to the honest holdout-inclusive worst")
+        print("   and record why. Do not adjust the others to match.")
 
 
 if __name__ == "__main__":

@@ -69,7 +69,13 @@ has nothing to be measured against unless a pre-change baseline exists.
 2. Copy the filled grid to `loggamma_regimes_baseline.csv`.
 3. `python3 generate_loggamma_regimes.py` to restore an empty grid.
 4. Import the **Phase 1** `SPECIALFUNCS`, `Debug > Compile`, run the export again.
-5. `python3 analyze_loggamma_regimes.py --baseline loggamma_regimes_baseline.csv`.
+5. `python3 generate_loggamma_regimes_holdout.py`
+6. Still on Phase 1, run `Export_LogGammaRegimes` again and pick the **holdout**.
+7. `python3 analyze_loggamma_regimes.py --baseline loggamma_regimes_baseline.csv --holdout loggamma_regimes_holdout.csv`
+
+Steps 5-7 are needed only once, to freeze the contracts. The baseline export
+(step 3) is the half that cannot be reproduced later; the holdout can always be
+regenerated and re-exported.
 
 ## Files
 
@@ -79,7 +85,9 @@ has nothing to be measured against unless a pre-change baseline exists.
 | `loggamma_regimes_grid.csv` | The grid; `arg1 = Z`. |
 | `loggamma_regimes_baseline.csv` | The same grid exported before the Phase 1 edit. |
 | `M_STATS_PROBDIST_LGREGIMES.bas` | Standalone export macro `Export_LogGammaRegimes` (dep: `PROB_LogGamma`). |
-| `analyze_loggamma_regimes.py` | Argument integrity, accuracy by regime, classified baseline diff, both subfindings, contract recommendation. |
+| `generate_loggamma_regimes_holdout.py` | Writes `loggamma_regimes_holdout.csv`; refuses to emit a point present in the fitting set. |
+| `loggamma_regimes_holdout.csv` | Independent holdout, 62 points, disjoint by construction. |
+| `analyze_loggamma_regimes.py` | Argument integrity, accuracy by regime, classified baseline diff, both subfindings, contract recommendation, holdout freeze decision. |
 
 ## Measured result (real VBA)
 
@@ -133,3 +141,38 @@ The absolute column for `general` is meaningless and is reported only for
 symmetry: at `Z = 1E+50`, `LogGamma(Z)` is about 1.1E+52, so 1.27E+36 of
 absolute error is 9.3E-14 relative. `general` is the one regime a relative
 contract fits.
+
+## Independent holdout
+
+The three contracts were set from this study's own grid, so that grid cannot
+also validate them. `loggamma_regimes_holdout.csv` carries 62 points that set
+none of the thresholds.
+
+Disjointness is asserted, not eyeballed: the generator reads the fitting set and
+refuses to emit any point it already contains. The points are also structurally
+unlike it rather than merely different. The fitting set uses decade landmarks,
+exact powers of two, and the arguments the committed Beta/F rows happen to
+reach. A holdout built from neighbouring decades would test the same shape of
+number, so this one uses irrational mantissas, odd binary exponents between the
+fitting set's even landmarks, asymmetric offsets around both zeros, and eight
+points inside the reflection interval that the fitting set samples only five
+times. The subnormal points land on retained-bit counts of 2, 8, 14, 24, 30, 36,
+42, 48 and 52 — none of which the fitting set measures.
+
+| contract | threshold | holdout worst | points | margin | verdict |
+|---|---|---|---|---|---|
+| `LogGamma.small_positive.log_abs` | 5E-13 | 6.27e-14 @ 7.0103E-320 | 36 | 8.0x | PASS |
+| `LogGamma.near_zero.log_abs` | 5E-14 | 1.13e-14 @ 2.0872 | 16 | 4.4x | PASS |
+| `LogGamma.general.output_rel` | 5E-13 | 3.24e-14 @ 2.7183 | 10 | 15.4x | PASS |
+
+This also settles the choice against the tighter 1-2-5 step. At 2E-14 the
+near-zero contract would have held on the holdout at only 1.77x, below even its
+2.05x on the fitting set — the looser threshold is validated by the holdout
+rather than merely preferred.
+
+The `small_positive` worst reproduces the Python mirror of the emitted code to
+the digit, since that branch is pure series arithmetic. `near_zero` and
+`general` drift by a few percent and the near-zero worst moves from Z = 1.9819
+to Z = 2.0872, because both delegate to the Lanczos route where VBA's `Log`
+differs from Python's at the ulp level. Same split seen in every earlier
+checkpoint of this chain.
