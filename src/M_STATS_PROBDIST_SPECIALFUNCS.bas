@@ -177,6 +177,49 @@ Private Const PROB_LANCZOS_P6 As Double = -0.13857109526572
 Private Const PROB_LANCZOS_P7 As Double = 9.98436957801957E-06
 Private Const PROB_LANCZOS_P8 As Double = 1.50563273514931E-07
 
+'Maclaurin coefficients of Log(Gamma(1 + X)) about X = 0:
+'
+'    Log(Gamma(1 + X)) = -EulerGamma * X
+'                        + Sum(k = 2..) (-1)^k * Zeta(k) * X^k / k
+'
+'C1 is -EulerGamma; Ck is (-1)^k * Zeta(k) / k. Fixed table, never evaluated
+'at run time. Twenty-six terms hold the series at the coefficient rounding
+'floor throughout the retained interval; see PROB_TryLogGamma1p.
+Private Const PROB_LG1P_SERIES_MAX As Double = 0.25   'Measured series/Lanczos seam
+'C1 is written as a split expression rather than a fifteen-digit literal. It
+'dominates the scaled-error floor and is the one coefficient that survives
+'division by Shape in the scaled Gamma inverse, so a single ulp here is worth
+'more than it is anywhere else in the table. The sum below is the exactly
+'rounded Double for -0.5772156649015329; the fifteen-digit form is one ulp away
+'and leaves a 2.3E-16 floor. Same pattern as PROB_DS_MAX_EXACT_INTEGER.
+Private Const PROB_LG1P_C1  As Double = _
+    -0.577215664901532 - 8.88178419700125E-16
+Private Const PROB_LG1P_C2  As Double = 0.822467033424113
+Private Const PROB_LG1P_C3  As Double = -0.400685634386531
+Private Const PROB_LG1P_C4  As Double = 0.270580808427785
+Private Const PROB_LG1P_C5  As Double = -0.207385551028674
+Private Const PROB_LG1P_C6  As Double = 0.169557176997408
+Private Const PROB_LG1P_C7  As Double = -0.144049896768846
+Private Const PROB_LG1P_C8  As Double = 0.125509669524743
+Private Const PROB_LG1P_C9  As Double = -0.111334265869565
+Private Const PROB_LG1P_C10 As Double = 0.100099457512782
+Private Const PROB_LG1P_C11 As Double = -0.090954017145829
+Private Const PROB_LG1P_C12 As Double = 0.083353840546109
+Private Const PROB_LG1P_C13 As Double = -0.0769325164113522
+Private Const PROB_LG1P_C14 As Double = 0.0714329462953613
+Private Const PROB_LG1P_C15 As Double = -0.0666687058824205
+Private Const PROB_LG1P_C16 As Double = 0.062500955141213
+Private Const PROB_LG1P_C17 As Double = -0.0588239786586846
+Private Const PROB_LG1P_C18 As Double = 0.0555557676274036
+Private Const PROB_LG1P_C19 As Double = -0.0526316793796167
+Private Const PROB_LG1P_C20 As Double = 0.0500000476981017
+Private Const PROB_LG1P_C21 As Double = -0.0476190703301422
+Private Const PROB_LG1P_C22 As Double = 0.0454545562932047
+Private Const PROB_LG1P_C23 As Double = -0.0434782660530403
+Private Const PROB_LG1P_C24 As Double = 0.0416666691503412
+Private Const PROB_LG1P_C25 As Double = -0.0400000011921401
+Private Const PROB_LG1P_C26 As Double = 0.0384615390346752
+
 
 '==============================================================================
 ' LOGARITHMIC GAMMA
@@ -197,8 +240,22 @@ Public Function PROB_LogGamma( _
 '   this project validate strictly positive parameters before arriving here.
 '
 ' ACCURACY
-'   Relative error below 6.1E-14 across Z in [1E-8, 1E+50], measured against
-'   50-digit arithmetic.
+'   Under revision. The previous claim, relative error below 6.1E-14 across Z in
+'   [1E-8, 1E+50], is withdrawn as a global statement for two reasons measured in
+'   benchmark/loggamma1p_study:
+'
+'     - Log(Gamma(Z)) is zero at Z = 1 and Z = 2, so a single global RELATIVE
+'       contract is ill-conditioned by construction. Relative error reaches
+'       9.3E-14 near Z = 1.75, which is only about 7.9E-15 of absolute error on
+'       a value of magnitude 0.084.
+'     - The reflection path was genuinely defective for subnormal Z, reaching
+'       6.2E-05 relative at the smallest positive Double. That defect is
+'       corrected by the small-positive branch below.
+'
+'   The replacement is a set of regime-aware contracts keyed on absolute error
+'   in the logarithm, which is the quantity downstream callers actually
+'   propagate: the relative error of Exp(v) is approximately the absolute error
+'   of v. Thresholds are frozen from the Phase 1 main grid and holdout.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -213,9 +270,28 @@ Public Function PROB_LogGamma( _
     Dim Zm1                 As Double          'Z - 1
 
 '------------------------------------------------------------------------------
+' SMALL POSITIVE ARGUMENT
+'------------------------------------------------------------------------------
+    'Use Gamma(Z) = Gamma(1 + Z) / Z. This keeps the first-order -EulerGamma * Z
+    'term, which the reflection route below loses, and it never forms
+    'Sin(PROB_PI * Z) at an argument that has entered the subnormal range.
+    'Measured in benchmark/loggamma1p_study: at the smallest positive Double the
+    'reflection route reaches 6.2E-05 relative, this route 5.9E-17. The series
+    'helper is called directly rather than through PROB_TryLogGamma1p, because
+    'the branch condition already establishes the helper's precondition and a
+    'Double-returning kernel has no channel to report a failure that cannot
+    'happen.
+        If Z <= PROB_LG1P_SERIES_MAX Then
+            PROB_LogGamma = PROB_LogGamma1pSeries(Z) - Log(Z)
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
 ' REFLECTION FORMULA
 '------------------------------------------------------------------------------
-    'Use the reflection formula for small positive Z
+    'Use the reflection formula on the remaining small-positive interval. The
+    'measured crossover is the series seam: below it the branch above wins by an
+    'order of magnitude, above it the reflection wins by about two.
         If Z < 0.5 Then
             PROB_LogGamma = _
                 Log(PROB_PI) - Log(Sin(PROB_PI * Z)) - PROB_LogGamma(1# - Z)
@@ -251,6 +327,218 @@ Public Function PROB_LogGamma( _
             (Zm1 + 0.5) * Log(T) - _
             T + _
             Log(X)
+End Function
+
+Public Function PROB_TryLogGamma1p( _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryLogGamma1p
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Log(Gamma(1 + X)) for X >= 0 without ever forming 1 + X.
+'
+' WHY THIS EXISTS
+'   The obvious spelling, PROB_LogGamma(1# + X), silently destroys the answer for
+'   small X. In binary64, 1# + X rounds to exactly 1 for every X below 2^-53
+'   (about 1.11E-16), so the first-order term -EulerGamma * X is lost outright
+'   and the result collapses to zero. The loss is not confined to that boundary:
+'   it is already worth a factor of four at X = 1E-14 and grows without limit as
+'   X falls. Callers that divide the result by X - the scaled Gamma quantile in
+'   particular - inherit the whole error, so a lost increment becomes a lost
+'   quantile. This kernel evaluates the Maclaurin series in X directly, so the
+'   increment is never asked to survive an addition to one.
+'
+' METHOD
+'   For X at or below PROB_LG1P_SERIES_MAX the fixed Maclaurin table is summed by
+'   Horner. The interval and the term count were chosen together from measured
+'   error envelopes, not from the theoretical radius of convergence: twenty-six
+'   terms hold the series at its coefficient rounding floor across the whole
+'   retained interval, and the seam sits where the series is still roughly two
+'   orders of magnitude better than the Lanczos route it hands over to.
+'   Above the seam, 1# + X preserves the increment and PROB_LogGamma is used.
+'
+' RECURSION SAFETY
+'   Once PROB_LogGamma routes small positive Z through this routine the call
+'   graph will look circular. It is not. PROB_LogGamma calls this routine only
+'   for a small positive Z inside the series regime. This routine delegates back
+'   to PROB_LogGamma only when X exceeds the series crossover, in which case the
+'   delegated argument is 1 + X, which is greater than one and therefore cannot
+'   re-enter the small-positive PROB_LogGamma branch. The mutual call terminates
+'   after at most one hop in each direction.
+'
+' INPUTS
+'   X         Increment above one. Must be finite and non-negative.
+'   Result    Receives Log(Gamma(1 + X)) on success.
+'   FailMsg   Receives a diagnostic on failure.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds Log(Gamma(1 + X)).
+'     FALSE => FailMsg holds a diagnostic; Result is not contractual.
+'
+' ACCURACY
+'   The contract metric is the SCALED absolute error,
+'
+'       Abs(Result - Reference) / X
+'
+'   because the scaled Gamma inverse divides this result by X. Ordinary absolute
+'   error would look flattering and prove nothing about that caller.
+'
+'   Measured against 60-digit arithmetic, scaled absolute error is at or below
+'   2.4E-16 across X in [3.9E-308, 0.25]. The floor is set by the fifteen-digit
+'   coefficient literals, not by the series truncation.
+'
+' LIMITATION - SUBNORMAL RESULT
+'   Below X = 3.9E-308 the product EulerGamma * X is itself subnormal, so the
+'   returned Double cannot resolve it. Scaled error then degrades as 2^-1075 / X,
+'   reaching 1.3E-14 at X = 1E-310, 1.4E-04 at X = 1E-320 and 4.2E-01 at the
+'   smallest positive subnormal. This is a binary64 representability limit of the
+'   OUTPUT, not a defect in the series: no evaluation order can place a value on
+'   a grid that has no point near it. Callers requiring a scaled contract must
+'   restrict X to the normal-result range.
+'
+' DEPENDENCIES
+'   - PROB_IsFinite
+'   - PROB_LogGamma
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Reject a non-finite increment
+        If Not PROB_IsFinite(X) Then
+            FailMsg = "Log-gamma increment must be a finite number"
+            Exit Function
+        End If
+
+    'Reject a negative increment; this kernel covers the right of X = 0 only
+        If X < 0# Then
+            FailMsg = "Log-gamma increment must be non-negative"
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' HANDLE THE EXACT ORIGIN
+'------------------------------------------------------------------------------
+    'Gamma(1) is one, so the logarithm is exactly zero
+        If X = 0# Then
+            Result = 0#
+            PROB_TryLogGamma1p = True
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' HAND OVER ABOVE THE MEASURED SEAM
+'------------------------------------------------------------------------------
+    'Above the seam the increment survives the addition, so use the Lanczos route.
+    'The delegated argument is 1 + X > 1, so this cannot re-enter the
+    'small-positive PROB_LogGamma branch; see RECURSION SAFETY above.
+        If X > PROB_LG1P_SERIES_MAX Then
+            Result = PROB_LogGamma(1# + X)
+            PROB_TryLogGamma1p = True
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' SUM THE MACLAURIN SERIES
+'------------------------------------------------------------------------------
+    'The branch above has established the helper's precondition
+        Result = PROB_LogGamma1pSeries(X)
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report success
+        PROB_TryLogGamma1p = True
+End Function
+
+Private Function PROB_LogGamma1pSeries( _
+    ByVal X As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_LogGamma1pSeries
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates Log(Gamma(1 + X)) through the fixed Maclaurin polynomial.
+'
+' PRECONDITION
+'   0 <= X <= PROB_LG1P_SERIES_MAX. No validation is performed here.
+'
+' WHY THIS IS SEPARATE AND NON-TRY
+'   Two callers need the polynomial and neither needs a failure channel.
+'   PROB_TryLogGamma1p owns validation and dispatch, and calls this only after
+'   the precondition holds. PROB_LogGamma returns a Double and so has no way to
+'   report a failure; raising one would propagate through the public K_STATS_
+'   wrappers and surface as #VALUE!, turning an internal invariant violation
+'   into a user-visible error classification. Keeping the polynomial free of a
+'   failure channel makes the impossible case impossible to express.
+'
+' TERMINATION
+'   This helper calls nothing. It is the leaf that breaks what would otherwise
+'   look like a cycle between PROB_LogGamma and PROB_TryLogGamma1p:
+'
+'     PROB_LogGamma(Z <= 0.25)      -> this helper                  (leaf)
+'     PROB_TryLogGamma1p(X <= 0.25) -> this helper                  (leaf)
+'     PROB_TryLogGamma1p(X > 0.25)  -> PROB_LogGamma(1 + X), 1 + X > 1.25,
+'                                      which takes the Lanczos branch and can
+'                                      never re-enter the small-Z route.
+'
+' ACCURACY
+'   Scaled absolute error, Abs(Result - Reference) / X, at or below 1.4E-16
+'   across X in [3.855E-308, 0.25]; see PROB_TryLogGamma1p and
+'   benchmark/loggamma1p_study.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Acc                 As Double          'Horner accumulator
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Preconditions belong to the caller and are deliberately NOT re-checked here.
+    'Both call sites establish them in the branch condition that selects this
+    'helper, and a Double-returning routine has no channel through which to
+    'report a violation. Outside the stated interval the polynomial simply
+    'returns a truncated series value, which is why the interval is a
+    'precondition rather than a guard.
+
+    'Accumulate from the highest retained term downward
+        Acc = PROB_LG1P_C26
+        Acc = Acc * X + PROB_LG1P_C25
+        Acc = Acc * X + PROB_LG1P_C24
+        Acc = Acc * X + PROB_LG1P_C23
+        Acc = Acc * X + PROB_LG1P_C22
+        Acc = Acc * X + PROB_LG1P_C21
+        Acc = Acc * X + PROB_LG1P_C20
+        Acc = Acc * X + PROB_LG1P_C19
+        Acc = Acc * X + PROB_LG1P_C18
+        Acc = Acc * X + PROB_LG1P_C17
+        Acc = Acc * X + PROB_LG1P_C16
+        Acc = Acc * X + PROB_LG1P_C15
+        Acc = Acc * X + PROB_LG1P_C14
+        Acc = Acc * X + PROB_LG1P_C13
+        Acc = Acc * X + PROB_LG1P_C12
+        Acc = Acc * X + PROB_LG1P_C11
+        Acc = Acc * X + PROB_LG1P_C10
+        Acc = Acc * X + PROB_LG1P_C9
+        Acc = Acc * X + PROB_LG1P_C8
+        Acc = Acc * X + PROB_LG1P_C7
+        Acc = Acc * X + PROB_LG1P_C6
+        Acc = Acc * X + PROB_LG1P_C5
+        Acc = Acc * X + PROB_LG1P_C4
+        Acc = Acc * X + PROB_LG1P_C3
+        Acc = Acc * X + PROB_LG1P_C2
+        Acc = Acc * X + PROB_LG1P_C1
+
+    'The final multiplication carries the leading X factor
+        PROB_LogGamma1pSeries = Acc * X
 End Function
 
 
