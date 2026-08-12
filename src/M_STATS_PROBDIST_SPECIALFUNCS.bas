@@ -205,20 +205,20 @@ Private Const PROB_LG1P_C9  As Double = -0.111334265869565
 Private Const PROB_LG1P_C10 As Double = 0.100099457512782
 Private Const PROB_LG1P_C11 As Double = -0.090954017145829
 Private Const PROB_LG1P_C12 As Double = 0.083353840546109
-Private Const PROB_LG1P_C13 As Double = -0.0769325164113522
-Private Const PROB_LG1P_C14 As Double = 0.0714329462953613
-Private Const PROB_LG1P_C15 As Double = -0.0666687058824205
+Private Const PROB_LG1P_C13 As Double = -7.69325164113522E-02
+Private Const PROB_LG1P_C14 As Double = 7.14329462953613E-02
+Private Const PROB_LG1P_C15 As Double = -6.66687058824205E-02
 Private Const PROB_LG1P_C16 As Double = 0.062500955141213
-Private Const PROB_LG1P_C17 As Double = -0.0588239786586846
-Private Const PROB_LG1P_C18 As Double = 0.0555557676274036
-Private Const PROB_LG1P_C19 As Double = -0.0526316793796167
-Private Const PROB_LG1P_C20 As Double = 0.0500000476981017
-Private Const PROB_LG1P_C21 As Double = -0.0476190703301422
-Private Const PROB_LG1P_C22 As Double = 0.0454545562932047
-Private Const PROB_LG1P_C23 As Double = -0.0434782660530403
-Private Const PROB_LG1P_C24 As Double = 0.0416666691503412
-Private Const PROB_LG1P_C25 As Double = -0.0400000011921401
-Private Const PROB_LG1P_C26 As Double = 0.0384615390346752
+Private Const PROB_LG1P_C17 As Double = -5.88239786586846E-02
+Private Const PROB_LG1P_C18 As Double = 5.55557676274036E-02
+Private Const PROB_LG1P_C19 As Double = -5.26316793796167E-02
+Private Const PROB_LG1P_C20 As Double = 5.00000476981017E-02
+Private Const PROB_LG1P_C21 As Double = -4.76190703301422E-02
+Private Const PROB_LG1P_C22 As Double = 4.54545562932047E-02
+Private Const PROB_LG1P_C23 As Double = -4.34782660530403E-02
+Private Const PROB_LG1P_C24 As Double = 4.16666691503412E-02
+Private Const PROB_LG1P_C25 As Double = -4.00000011921401E-02
+Private Const PROB_LG1P_C26 As Double = 3.84615390346752E-02
 
 
 '==============================================================================
@@ -2367,3 +2367,5 @@ Public Function PROB_TryGammaInvP( _
     'Return success
         PROB_TryGammaInvP = True
 End Function
+
+

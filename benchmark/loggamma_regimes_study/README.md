@@ -81,34 +81,55 @@ has nothing to be measured against unless a pre-change baseline exists.
 | `M_STATS_PROBDIST_LGREGIMES.bas` | Standalone export macro `Export_LogGammaRegimes` (dep: `PROB_LogGamma`). |
 | `analyze_loggamma_regimes.py` | Argument integrity, accuracy by regime, classified baseline diff, both subfindings, contract recommendation. |
 
-## Expected result (Python mirror of the emitted VBA; replace with real numbers)
+## Measured result (real VBA)
 
-Classified baseline diff: **29 expected improvement, 1 expected neutral
-rounding, 0 unexpected, 41 unchanged**, and **no point outside `Z <= 0.25`
-moves at all**. That last check is the structural one — Phase 1 edits only the
-small-positive branch, so a moved point anywhere else is a defect, not a
-consequence.
+Classified baseline diff, Phase 0 export against Phase 1 export of the same
+grid: **30 expected improvement, 1 expected neutral rounding, 0 unexpected,
+40 unchanged**, and **no point outside `Z <= 0.25` moved at all**. That last
+line is the structural check — Phase 1 edits only the small-positive branch, so
+a moved point anywhere else would be a defect rather than a consequence.
 
 Largest improvements, absolute log error:
 
-| Z | before | after | factor |
-|---|---|---|---|
-| 4.94E-324 | 4.61e-02 | 3.49e-14 | 1.3E+12 |
-| 1E-322 | 2.67e-03 | 6.97e-14 | 3.8E+10 |
-| 1E-320 | 6.55e-05 | 1.98e-14 | 3.3E+09 |
-| 1E-318 | 5.72e-07 | 6.18e-14 | 9.3E+06 |
-| 1E-315 | 1.49e-10 | 6.60e-14 | 2.3E+03 |
+| Z | bits | before | after | factor |
+|---|---|---|---|---|
+| 4.94E-324 | 1 | 4.61e-02 | 3.49e-14 | 1.32E+12 |
+| 8E-323 | 5 | 5.30e-03 | 2.63e-14 | 2.01E+11 |
+| 1E-322 | 5 | 2.67e-03 | 6.97e-14 | 3.83E+10 |
+| 1E-320 | 11 | 6.55e-05 | 1.98e-14 | 3.30E+09 |
+| 8.095E-320 | 15 | 2.84e-06 | 8.57e-14 | 3.31E+07 |
+| 1E-318 | 18 | 5.72e-07 | 6.18e-14 | 9.26E+06 |
+| 8.289046E-317 | 25 | 8.85e-09 | 2.96e-14 | 2.99E+05 |
+| 1E-315 | 28 | 1.49e-10 | 6.60e-14 | 2.26E+03 |
 
-Provisional contracts:
+Worst error by regime, after Phase 1:
 
-| contract | threshold | worst | headroom |
+| regime | n | worst absolute | worst relative |
 |---|---|---|---|
-| `LogGamma.small_positive.log_abs` | 2E-13 | 8.57e-14 | 2.3× |
-| `LogGamma.near_zero.log_abs` | 5E-14 | 1.05e-14 | 4.8× |
-| `LogGamma.general.output_rel` | 5E-13 | 1.02e-13 | 4.9× |
+| `small_positive` | 39 | 8.57e-14 @ 8.095E-320 | 1.2e-16 |
+| `reflection` | 5 | 3.67e-15 | n/a |
+| `near_zero` | 9 | 9.69e-15 @ 2.01 | n/a |
+| `exact_zero` | 2 | 9.77e-15 @ 2.0 | undefined |
+| `general` | 16 | n/a | 9.31e-14 @ 1E+50 |
+
+Provisional contracts. The strict 1-2-5 rule gives 2E-13 / 2E-14 / 2E-13, but
+all three land at only ~2x headroom, which is thin by this repository's
+standard and likely to be exceeded by an independent holdout. One step looser
+is the safer freeze:
+
+| contract | strict 1-2-5 | headroom | recommended | headroom |
+|---|---|---|---|---|
+| `LogGamma.small_positive.log_abs` | 2E-13 | 2.3x | 5E-13 | 5.8x |
+| `LogGamma.near_zero.log_abs` | 2E-14 | 2.0x | 5E-14 | 5.1x |
+| `LogGamma.general.output_rel` | 2E-13 | 2.1x | 5E-13 | 5.4x |
 
 The small-positive floor is `EPS * Abs(Log(Z))` and is irreducible: 1.65E-13 at
 the smallest positive subnormal, 5.1E-14 at 1E-100, 3.1E-16 at `Z = 0.25`. After
 Phase 1 the absolute error there is dominated by `Log(Z)`, not by the series —
-which is why the threshold is looser than the near-zero one despite the branch
-being far more accurate in relative terms (1.2E-16 worst).
+which is why its threshold is the loosest of the three despite the branch being
+by far the most accurate in relative terms.
+
+The absolute column for `general` is meaningless and is reported only for
+symmetry: at `Z = 1E+50`, `LogGamma(Z)` is about 1.1E+52, so 1.27E+36 of
+absolute error is 9.3E-14 relative. `general` is the one regime a relative
+contract fits.
