@@ -8,7 +8,8 @@ Emits a grid of inputs and high-precision REFERENCE values for every function
 that publishes a measured-accuracy claim in the VBA source:
 
   SPECIALFUNCS kernels
-    PROB_LogGamma           rel err < 6.1E-14  for Z in [1E-8, 1E+50]
+    PROB_LogGamma           see accuracy_contracts.csv (regime-aware; the global
+                            6.1E-14 relative claim was withdrawn)
     PROB_LogGammaHalfDiff   rel err <= 2E-14 for Z > 0 (tested range)
     PROB_StirlingError      abs err: see accuracy_contracts.csv (1E-13 abs; 3E-17 was overfit)
     PROB_LogChoose          rel err <= 3.2E-16 for N in [2, 2^53], all K
@@ -35,27 +36,49 @@ import datetime as _dt
 import mpmath as mp
 
 
+# Reference oracle: evaluate log-Gamma directly rather than constructing
+# Gamma(z) as an intermediate. mp.log(mp.gamma(z)) overflows mpmath's exponent
+# range for small z and loses precision to cancellation near the zeros of
+# Log(Gamma) at z = 1 and z = 2; mp.loggamma computes the contracted quantity
+# itself. The elevated local precision is a margin, not an adaptive scheme:
+# mpf separates exponent from mantissa, so loggamma(4.94E-324) needs no extra
+# digits merely because its exponent is -324. The unary + rounds the result
+# back to the generator's active precision on leaving the context.
+_ORACLE_DPS = 110
+
+
 def _loggamma(z):
-    return mp.log(mp.gamma(z))
+    z = mp.mpf(z)
+    with mp.workdps(max(mp.mp.dps, _ORACLE_DPS)):
+        return +mp.loggamma(z)
 
 
 def _loggamma_halfdiff(z):
     # Log(Gamma(Z + 1/2)) - Log(Gamma(Z)), no cancellation in the reference
-    return mp.log(mp.gamma(z + mp.mpf(1) / 2)) - mp.log(mp.gamma(z))
+    z = mp.mpf(z)
+    with mp.workdps(max(mp.mp.dps, _ORACLE_DPS)):
+        return +(mp.loggamma(z + mp.mpf("0.5")) - mp.loggamma(z))
 
 
 def _stirling_error(n):
     # delta(N) = logGamma(N+1) - [ N*log(N) - N + 0.5*log(2*pi*N) ]
     n = mp.mpf(n)
-    return mp.log(mp.gamma(n + 1)) - (
-        n * mp.log(n) - n + mp.mpf("0.5") * mp.log(2 * mp.pi * n)
-    )
+    with mp.workdps(max(mp.mp.dps, _ORACLE_DPS)):
+        return +(
+            mp.loggamma(n + 1)
+            - (n * mp.log(n) - n + mp.mpf("0.5") * mp.log(2 * mp.pi * n))
+        )
 
 
 def _logchoose(n, k):
     # Log(C(N,K)) = logGamma(N+1) - logGamma(K+1) - logGamma(N-K+1)
     n, k = mp.mpf(n), mp.mpf(k)
-    return mp.log(mp.gamma(n + 1)) - mp.log(mp.gamma(k + 1)) - mp.log(mp.gamma(n - k + 1))
+    with mp.workdps(max(mp.mp.dps, _ORACLE_DPS)):
+        return +(
+            mp.loggamma(n + 1)
+            - mp.loggamma(k + 1)
+            - mp.loggamma(n - k + 1)
+        )
 
 
 def _student_t_pdf(x, df):
