@@ -201,6 +201,24 @@ for _bad in ("scaled_abs", "typo_error", "", None):
         pass
 
 
+# --- scaled_output_error preflight: arg1 must be present, parseable, non-zero
+# Without this the measurer would skip such a row while dispositions() still
+# called it valid, and a contract could PASS having scored nine of ten rows.
+_base = {"function": "LogGamma1p", "arg2": "", "arg3": "", "arg4": "",
+         "reference": "-5.7721566490145e-14",
+         "observed_vba": "-5.7721566490145E-014;0E+000", "expected_error": ""}
+check(row_validity(dict(_base, arg1="1e-13"), "scaled_output_error") is None,
+      "valid scaled row passes preflight")
+check(row_validity(dict(_base, arg1=""), "scaled_output_error") is not None,
+      "scaled row with blank arg1 is invalid")
+check(row_validity(dict(_base, arg1="0"), "scaled_output_error") is not None,
+      "scaled row with arg1=0 is invalid")
+check(row_validity(dict(_base, arg1="abc"), "scaled_output_error") is not None,
+      "scaled row with unparseable arg1 is invalid")
+check(row_validity(dict(_base, arg1="0"), "output_error") is None,
+      "arg1=0 is fine for a non-scaled measure")
+
+
 if fails:
     for f in fails:
         print("FAIL:", f)

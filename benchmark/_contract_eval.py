@@ -297,7 +297,11 @@ def row_validity(row, measure):
     because its reference, observation, or a required argument would not parse.
       * the observation must parse in full (every hi;lo part), not merely be non-blank;
       * ordinary contracts need a parseable reference;
-      * tail_probability_residual contracts need parseable arg1/arg2/arg3.
+      * tail_probability_residual contracts need parseable arg1/arg2/arg3;
+      * scaled_output_error contracts need a parseable, NON-ZERO arg1, because
+        the measure divides by it. Without this the measurer would skip such a
+        row while dispositions() still reported it valid, and a contract could
+        print PASS having scored nine of its ten rows.
     """
     obs = (row.get("observed_vba", "") or "").strip()
     try:
@@ -316,6 +320,15 @@ def row_validity(row, measure):
     else:
         if parse_reference(row.get("reference", "")) is None:
             return f"unparseable reference {(row.get('reference','') or '').strip()!r}"
+        if measure == SCALED_MEASURE:
+            v = (row.get("arg1", "") or "").strip()
+            if v == "":
+                return "missing required arg1"
+            a1 = parse_reference(v)
+            if a1 is None:
+                return f"unparseable arg1 {v!r}"
+            if a1 == 0:
+                return "scaled_output_error requires a non-zero arg1"
     return None
 
 

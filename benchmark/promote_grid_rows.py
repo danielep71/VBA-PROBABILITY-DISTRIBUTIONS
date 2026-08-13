@@ -69,7 +69,9 @@ def main():
     ap.add_argument("--allow-add", action="store_true",
                     help="permit appending rows the grid does not contain")
     ap.add_argument("--patch-metadata", action="store_true",
-                    help="permit updating reference/claim/metric/regime on matched rows")
+                    help="permit updating reference/claim/metric/expected_error on "
+                         "matched rows (regime is part of the key: changing it "
+                         "identifies a different row, it does not mutate this one)")
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
 
@@ -107,6 +109,18 @@ def main():
             print(f"   {k[0]}  {k[1:5]}")
         return 1
     by = {key(r): r for r in grid}
+
+    # Duplicate keys among the rows selected for promotion are fatal too, not
+    # only duplicates already in the grid. If the generator emitted the same new
+    # key twice and it is absent from the grid, both copies would otherwise be
+    # appended - creating the very ambiguity this tool refuses to work with.
+    want_dup = {k for k, c in Counter(key(r) for r in want).items() if c > 1}
+    if want_dup:
+        print(f"REFUSING: {len(want_dup)} duplicate key(s) among the generator "
+              f"rows selected for promotion.")
+        for k in sorted(want_dup)[:5]:
+            print(f"   {k[0]}  {k[1:5]}  regime={k[5]}")
+        return 1
 
     add, patch, same = [], [], 0
     for r in want:

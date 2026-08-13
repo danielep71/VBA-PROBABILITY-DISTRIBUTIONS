@@ -18,7 +18,7 @@ from _ibeta import ibeta, f_cdf
 # parsing, or tail-residual normalisation.
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
-                            SCALED_MEASURE,
+                            SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions)
 getcontext().prec = 50
 mp.mp.dps = 50
@@ -52,6 +52,10 @@ def worst_for(measure, metric, rows, fn):
                 validate_scaled_metric(metric)
                 a1 = parse_reference(r["arg1"])
                 if a1 is None or a1 == 0:
+                    # Unreachable: row_validity rejects these before they reach
+                    # to_measure. Kept as a guard, and the scored-row count below
+                    # blocks if it ever fires, because no evaluator may silently
+                    # drop a row that preflight called valid.
                     continue
                 e = calculate_scaled_error(o, ref, a1)
             else:
@@ -60,7 +64,12 @@ def worst_for(measure, metric, rows, fn):
         if e > w:
             w = e; at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)
     worst = w if n else None
-    return worst, at, n, disp.n_missing, disp.n_error, disp.n_violation, disp.n_invalid
+    # No evaluator may score fewer rows than preflight declared measurable.
+    # The main gate blocks on this; without it here a holdout contract could
+    # PASS on nine of ten rows.
+    n_skipped = len(disp.to_measure) - n
+    return (worst, at, n, disp.n_missing, disp.n_error, disp.n_violation,
+            disp.n_invalid, n_skipped)
 
 def main():
     ap = argparse.ArgumentParser()
@@ -88,8 +97,13 @@ def main():
             continue                       # this contract's regime is not in the holdout
         if not c["threshold"].strip():
             continue                       # no numeric threshold to test (e.g. characterized)
-        w, at, n, n_missing, n_error, n_violation, n_invalid = worst_for(c["measure"], c["metric"], matched, c["function"])
-        if n_missing or n_error or n_violation or n_invalid:
+        # An unknown measure must fail loudly here too. The gate validates it;
+        # without the same call the holdout would score anything unrecognised as
+        # ordinary error, and the whitelist would protect only one of the two
+        # evaluation arms.
+        measure = validate_measure(c["measure"])
+        w, at, n, n_missing, n_error, n_violation, n_invalid, n_skipped = worst_for(measure, c["metric"], matched, c["function"])
+        if n_missing or n_error or n_violation or n_invalid or n_skipped:
             # Any blank/ERROR/unparseable in-envelope row, or an envelope-reject row
             # that failed to return #NUM!, blocks - it is not silently excluded.
             incomplete += 1
@@ -102,6 +116,8 @@ def main():
                 bits.append(f"{n_violation} envelope-reject not #NUM!")
             if n_invalid:
                 bits.append(f"{n_invalid} unparseable")
+            if n_skipped:
+                bits.append(f"{n_skipped} silently skipped by the measurer")
             print(f"{c['contract_id']:<48}{c['metric']:<10}{c['threshold']:>10}"
                   f"{'INCOMPLETE':>15}{n:>5}{'':>9}  {'; '.join(bits)}")
             results.append((c, None, None, n, "INCOMPLETE"))
