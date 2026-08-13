@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-12T12:40:31Z",
-  "commit_sha": "35ff9f0",
+  "generated_utc": "2026-08-13T12:06:54Z",
+  "commit_sha": "a5a86bc",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:c551d3f9fac5b0b935e9e2eee450985957f18d8097e6fd78eb81399da36f5717",
+  "observation_grid_sha256": "sha256:148b13befab50e21709e70f347ea87a39da2ead52cadf58ec27532d36ef11d0a",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:d0e052e5fe5cd99cf52e8fc0ea5851116186c4544da9b01d6e33a37f9cf847eb",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
