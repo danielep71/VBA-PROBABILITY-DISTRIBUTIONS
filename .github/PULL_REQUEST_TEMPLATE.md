@@ -100,6 +100,7 @@ Test_STATS_PROBDIST_RunCore             →
 Test_STATS_PROBDIST_RunNormalFamily     →
 Test_STATS_PROBDIST_RunTFamily          →
 Test_STATS_PROBDIST_RunContinuous       →
+Test_STATS_PROBDIST_RunDiscrete         →
 Test_STATS_PROBDIST_RunAll              →
 ```
 
