@@ -528,8 +528,13 @@ def _load_contracts(path=None):
     with open(path, newline="") as f:
         for row in csv.DictReader(f):
             m = "rel" if row["metric"].strip().lower().startswith("rel") else "abs"
+            thr = row["threshold"].strip()
+            # A characterization-only regime carries no threshold, so it gets no
+            # "<=" claim either. Emitting "abs<=" would read as a numerical
+            # promise with the number accidentally omitted.
+            claim = f"{m}<={thr}" if thr else "characterization"
             contracts[(row["function"], row["regime"])] = {
-                "metric": m, "claim": f'{m}<={row["threshold"].strip()}'}
+                "metric": m, "claim": claim}
     return contracts
 
 
@@ -1178,9 +1183,16 @@ def build_rows():
             }
         )
 
-    # --- PROB_LogGamma : Z in [1E-8, 1E+50], rel < 6.1E-14 ---
-    for z in logspace("1e-8", "1e50", 40):
-        add("LogGamma", "PROB_LogGamma", (z,), _loggamma(z))
+    # --- PROB_LogGamma ---
+    # The legacy block emitted 40 rows over logspace(1E-8, 1E+50) under the
+    # global claim LogGamma.all.output, rel < 6.1E-14. That contract is retired:
+    # Log(Gamma(Z)) is zero at Z = 1 and Z = 2, so a single global RELATIVE
+    # claim is ill-conditioned by construction, and the reflection path it was
+    # measured against was separately defective for subnormal Z. Its evidence is
+    # replaced by the three regime contracts emitted below, whose points come
+    # from loggamma_regimes_study. Removing the block here and the 40 rows from
+    # the grid are the same decision and belong in the same commit; leaving
+    # either behind would produce evidence no contract claims.
 
     # --- PROB_LogGammaHalfDiff : Z > 0, rel <= 2E-14 (tested range) ---
     for z in logspace("1e-6", "1e12", 30):
