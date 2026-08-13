@@ -1116,7 +1116,8 @@ def build_tiny_unbalanced_rows():
 def build_rows():
     rows = []
 
-    def add(func, vba_kernel, args, ref, claim=None, metric=None, regime=None):
+    def add(func, vba_kernel, args, ref, claim=None, metric=None, regime=None,
+            pending_contract=False):
         # Claim and metric come from the single source of truth,
         # benchmark/accuracy_contracts.csv, so grid, summary, and README cannot drift.
         #
@@ -1127,15 +1128,35 @@ def build_rows():
         # 1 and 2, and general elsewhere. Putting that logic inside the generic
         # classifier would mean teaching it to inspect arbitrary argument tuples;
         # making it explicit at the call site keeps the exception visible.
+        explicit_regime = regime is not None
         if regime is None:
             regime = _regime_for(func)
         if claim is None:
-            contract = _CONTRACTS.get((func, regime)) or _CONTRACTS.get((func, "all"))
+            # The (func, "all") fallback exists for functions whose contract is
+            # function-wide. It must NOT apply when a regime was named
+            # explicitly: an explicit regime means "this contract", and falling
+            # back would stamp the new LogGamma regime rows with the claim of
+            # LogGamma.all.output - the global relative claim that #15 exists to
+            # retire, because relative error is ill-conditioned near the zeros.
+            contract = _CONTRACTS.get((func, regime))
+            if contract is None and not explicit_regime:
+                contract = _CONTRACTS.get((func, "all"))
             if contract is None:
-                # No contract yet. Rows are promoted before their contract is
-                # frozen, so claim/metric stay blank and are filled by a
-                # --patch-metadata run once the contract exists. They are
-                # informational on the row; the evaluators read the contract.
+                # A missing contract is normally a bug: it means a row is being
+                # generated for a claim nobody has written down. Silently
+                # accepting one would let the next forgotten contract emit
+                # blank-metadata rows unnoticed, so it must be requested.
+                #
+                # pending_contract=True is the narrow exception for evidence
+                # promoted BEFORE its threshold is frozen - the threshold cannot
+                # be derived until the promoted rows have been observed. A
+                # --patch-metadata pass fills claim/metric once the contract
+                # exists, and no committed grid may retain a blank-metadata row.
+                if not pending_contract:
+                    raise KeyError(
+                        f"no contract for ({func!r}, {regime!r}); pass "
+                        f"pending_contract=True only for evidence promoted "
+                        f"ahead of its threshold")
                 claim, metric = "", ""
             else:
                 claim = contract["claim"]
@@ -1335,7 +1356,8 @@ def build_rows():
         _cls = _loggamma_regime(_zz)
         assert _reg == _cls or (_reg == "near_zero" and _cls in ("near_zero", "general")), \
             f"LogGamma regime mismatch at {_z}: table={_reg} classifier={_cls}"
-        add("LogGamma", "PROB_LogGamma", (_zz,), _loggamma(_zz), regime=_reg)
+        add("LogGamma", "PROB_LogGamma", (_zz,), _loggamma(_zz), regime=_reg,
+            pending_contract=True)
 
     # --- PROB_TryLogGamma1p evidence, promoted from loggamma1p_study ---
     for _x, _reg in _LOGGAMMA1P_POINTS:
@@ -1347,7 +1369,7 @@ def build_rows():
         # x = 1.0000000000000001E-5, against a contract floor of 1.4E-16.
         _xx = D(mp.mpf(_x))
         add("LogGamma1p", "PROB_TryLogGamma1p", (_xx,),
-            _loggamma1p_reference(_xx), regime=_reg)
+            _loggamma1p_reference(_xx), regime=_reg, pending_contract=True)
 
     return rows
 

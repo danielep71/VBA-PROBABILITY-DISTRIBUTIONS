@@ -6,7 +6,9 @@ emits observed_vba blank by design, so a full rebuild would discard them. This
 tool is the only sanctioned way to add rows, and it is deliberately incapable of
 the operations that would lose evidence.
 
-  never deletes a row
+  never deletes a row EXCEPT under --retire, which requires the function,
+      the regime, the exact expected row count, and a written reason, and
+      which acknowledges the observations it discards
   never reorders rows
   never alters an existing observed_vba
   never alters an existing row at all unless --patch-metadata is given
@@ -68,20 +70,70 @@ def main():
                     help="restrict to these grid function names; repeatable")
     ap.add_argument("--allow-add", action="store_true",
                     help="permit appending rows the grid does not contain")
+    ap.add_argument("--allow-unclaimed", action="store_true",
+                    help="permit rows whose contract does not exist yet, so "
+                         "claim/metric are blank. Required because a threshold "
+                         "cannot be derived until its evidence is observed; a "
+                         "--patch-metadata pass must fill them before the grid "
+                         "is committed")
     ap.add_argument("--patch-metadata", action="store_true",
                     help="permit updating reference/claim/metric/expected_error on "
                          "matched rows (regime is part of the key: changing it "
                          "identifies a different row, it does not mutate this one)")
+    ap.add_argument("--retire", nargs=3, metavar=("FUNCTION", "REGIME", "COUNT"),
+                    help="delete every row with this function and regime. COUNT "
+                         "must equal the number found, so a miscount fails "
+                         "rather than deleting the wrong set. Requires --reason.")
+    ap.add_argument("--reason", default="",
+                    help="why the retired rows are being deleted; recorded in "
+                         "the output and required by --retire")
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
 
-    if not a.function:
+    if not a.function and not a.retire:
         print("REFUSING: --function is required. Promotion is explicit by design;")
         print("  a whole-grid promotion is indistinguishable from a regeneration.")
         return 1
 
+
     grid = list(csv.DictReader(open(a.grid)))
     fields = list(grid[0].keys())
+
+    # ---- explicit retirement ------------------------------------------------
+    # The only path that deletes. Kept deliberately awkward: the caller must
+    # name the function, the regime and the exact count, and give a reason. A
+    # superseded contract's evidence should not linger as unclaimed rows, but
+    # nor should deletion ever be a side effect of some other operation.
+    if a.retire:
+        fn_r, reg_r, count_r = a.retire[0], a.retire[1], int(a.retire[2])
+        if not a.reason.strip():
+            print("REFUSING: --retire requires --reason.")
+            return 1
+        doomed = [r for r in grid if r["function"] == fn_r and r["regime"] == reg_r]
+        observed = sum(1 for r in doomed if (r["observed_vba"] or "").strip())
+        print(f"retire {fn_r} / {reg_r}")
+        print(f"  rows found          {len(doomed)}   expected {count_r}")
+        print(f"  observations lost   {observed}")
+        print(f"  reason              {a.reason}")
+        if len(doomed) != count_r:
+            print(f"\nREFUSING: expected {count_r} rows, found {len(doomed)}.")
+            return 1
+        if not doomed:
+            print("\nnothing to retire.")
+            return 0
+        left = [r for r in grid if not (r["function"] == fn_r and r["regime"] == reg_r)]
+        still = [r for r in left if r["function"] == fn_r and r["regime"] == reg_r]
+        assert not still, "retirement left rows behind"
+        if not a.write:
+            print("\nreport only. Re-run with --write to apply.")
+            return 0
+        with open(a.grid, "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=fields, lineterminator="\n")
+            w.writeheader(); w.writerows(left)
+        print(f"\nwrote {a.grid}: {len(doomed)} row(s) retired, "
+              f"{len(left)} remain")
+        return 0
+
     gen = load_generator(a.generator)
     want = [r for r in gen if r["function"] in set(a.function)]
     if not want:
@@ -122,6 +174,8 @@ def main():
             print(f"   {k[0]}  {k[1:5]}  regime={k[5]}")
         return 1
 
+    unclaimed = [r for r in want if not (r.get("claim") or "").strip()]
+
     add, patch, same = [], [], 0
     for r in want:
         k = key(r)
@@ -144,6 +198,8 @@ def main():
           f"{'' if a.allow_add else '   <- blocked without --allow-add'}")
     print(f"  would PATCH         {len(patch)}"
           f"{'' if a.patch_metadata else '   <- blocked without --patch-metadata'}")
+    print(f"  pending-contract    {len(unclaimed)}"
+          f"{'' if not unclaimed else ('' if a.allow_unclaimed else '   <- blocked without --allow-unclaimed')}")
     if add:
         print("\n  rows to append (observed_vba blank; fill with "
               "Export_Accuracy_MissingOnly):")
@@ -161,6 +217,13 @@ def main():
 
     if add and not a.allow_add:
         print("\nREFUSING: rows would be added. Pass --allow-add to permit it.")
+        return 1
+    if unclaimed and not a.allow_unclaimed:
+        print(f"\nREFUSING: {len(unclaimed)} row(s) have no contract, so claim "
+              f"and metric are blank. That is normally a bug - a row generated "
+              f"for a claim nobody wrote down. Pass --allow-unclaimed only when "
+              f"promoting evidence ahead of its threshold, and follow with a "
+              f"--patch-metadata pass before committing.")
         return 1
     if patch and not a.patch_metadata:
         print("\nREFUSING: existing rows would change. Pass --patch-metadata.")
@@ -195,6 +258,11 @@ def main():
         w.writeheader(); w.writerows(grid)
     print(f"\nwrote {a.grid}: {len(add)} appended, {len(patch)} patched, "
           f"{len(before_keys)} existing rows untouched in key, order and observation")
+    still = sum(1 for r in grid if not (r.get("claim") or "").strip())
+    if still:
+        print(f"\n  {still} row(s) in the grid still carry no claim/metric. The "
+              f"committed grid must not: run --patch-metadata once the contracts "
+              f"are frozen.")
     return 0
 
 
