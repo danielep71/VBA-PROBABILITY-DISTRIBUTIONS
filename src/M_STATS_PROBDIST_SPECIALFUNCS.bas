@@ -854,7 +854,8 @@ Public Function PROB_StirlingError( _
 '   - N off the grid and at or below 15: the defining identity via PROB_LogGamma.
 '   - N above 15: the asymptotic series in 1 / N, truncated by magnitude.
 '   - N below 0.5: one upward recurrence to N + 1 (which uses the paths above),
-'     delta(N) = delta(N + 1) + (N + 0.5) * Log((N + 1) / N) - 1.
+'     delta(N) = delta(N + 1) + (N + 0.5) * Log((N + 1) / N) - 1, evaluated
+'     as Log1p(N) - Log(N) so that the ratio is never formed.
 '
 ' ACCURACY
 '   The authoritative measured accuracy contract lives in
@@ -871,8 +872,15 @@ Public Function PROB_StirlingError( _
 '   restores the missing low-order bits at load time. Each part is itself a <= 15-digit literal that
 '   the editor preserves.
 '
+' DOMAIN
+'   Finite for every N from the smallest positive Double upward. The earlier
+'   arrangement formed (N + 1) / N and raised an overflow below N = 2 ^ -1024,
+'   which reached the public surface as a refused density for a shape whose
+'   true density was small and representable.
+'
 ' DEPENDENCIES
 '   - PROB_LogGamma
+'   - PROB_Log1p            (M_STATS_PROBDIST_CORE)
 '   - PROB_HALF_LOG_TWO_PI  (M_STATS_PROBDIST_CORE)
 '==============================================================================
 '
@@ -901,11 +909,19 @@ Public Function PROB_StirlingError( _
             'Log Gamma(n) = Log Gamma(n + 1) - Log(n):
             '  delta(n) = delta(n + 1) + (n + 0.5) * Log((n + 1) / n) - 1
             'delta(0) is 0 by convention; n + 1 >= 1 lands on the valid paths below.
+            'The log of the ratio is taken as Log1p(n) - Log(n) and the ratio
+            'itself is never formed. Forming it overflows once 1 / n leaves
+            'the Double range, at n = 2 ^ -1024, which is inside the accepted
+            'shape domain: the guard has no lower cutoff. Measured in
+            'benchmark/stirling_overflow_probe. PROB_Log1p returns n
+            'unchanged once 1 + n rounds to one, so nothing here needs the
+            'increment to survive either.
             If n <= 0# Then
                 PROB_StirlingError = 0#
             Else
                 PROB_StirlingError = _
-                    PROB_StirlingError(n + 1#) + (n + 0.5) * Log((n + 1#) / n) - 1#
+                    PROB_StirlingError(n + 1#) + _
+                    (n + 0.5) * (PROB_Log1p(n) - Log(n)) - 1#
             End If
             Exit Function
         End If
