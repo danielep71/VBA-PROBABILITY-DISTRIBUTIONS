@@ -344,6 +344,173 @@ def _solving(f):
     return wrapped
 
 
+
+# ---------------------------------------------------------------------------
+# Promoted study evidence: LogGamma regimes and LogGamma1p
+# ---------------------------------------------------------------------------
+# These points are NOT a fresh ad-hoc list. They are the design points of
+# benchmark/loggamma_regimes_study and benchmark/loggamma1p_study, whose 233
+# references were independently audited at the exact Val(token) Doubles and
+# came back REFERENCE_CORRECT (see study_reference_audit.csv). Reproducing the
+# same points here keeps the promotion traceable to the evidence that justifies
+# it; promote_grid_rows.py verifies the match at binary64 keys before appending.
+#
+# Deliberately excluded from main-grid contract evidence:
+#   LogGamma  reflection (5)   structural "must not move" evidence; the
+#                              0.25 < Z < 0.5 branch is unchanged by Phase 1
+#                              and is not one of the three active contracts
+#   LogGamma1p subnormal_result (8)  the RESULT is subnormal there, so scaled
+#                              error necessarily deteriorates; pooling it into
+#                              `small` would corrupt the contract. It is the
+#                              LogGamma1p.SubnormalResultRepresentability
+#                              limitation, not contract evidence.
+#   LogGamma1p lanczos_handover (7)  delegates to PROB_LogGamma and belongs to
+#                              that kernel's contracts.
+_LOGGAMMA_POINTS = [
+    ('5e-324', "small_positive"),
+    ('8e-323', "small_positive"),
+    ('1e-322', "small_positive"),
+    ('1e-320', "small_positive"),
+    ('8.095e-320', "small_positive"),
+    ('1e-318', "small_positive"),
+    ('8.289046e-317', "small_positive"),
+    ('1e-315', "small_positive"),
+    ('8.487983164e-314', "small_positive"),
+    ('1e-312', "small_positive"),
+    ('8.691694759794e-311', "small_positive"),
+    ('1e-310', "small_positive"),
+    ('1e-308', "small_positive"),
+    ('2.2250738585072014e-308', "small_positive"),
+    ('1e-300', "small_positive"),
+    ('1e-250', "small_positive"),
+    ('1e-200', "small_positive"),
+    ('1e-100', "small_positive"),
+    ('1e-50', "small_positive"),
+    ('1e-20', "small_positive"),
+    ('9.9e-14', "small_positive"),
+    ('1e-13', "small_positive"),
+    ('2.7e-12', "small_positive"),
+    ('3e-11', "small_positive"),
+    ('1e-10', "small_positive"),
+    ('1e-08', "small_positive"),
+    ('1e-06', "small_positive"),
+    ('0.0001', "small_positive"),
+    ('0.001', "small_positive"),
+    ('0.01', "small_positive"),
+    ('0.02', "small_positive"),
+    ('0.04', "small_positive"),
+    ('0.05', "small_positive"),
+    ('0.1', "small_positive"),
+    ('0.125', "small_positive"),
+    ('0.2', "small_positive"),
+    ('0.24', "small_positive"),
+    ('0.24999999999999997', "small_positive"),
+    ('0.25', "small_positive"),
+    ('0.5', "general"),
+    ('0.5000000000000001', "general"),
+    ('0.6', "general"),
+    ('0.75', "general"),
+    ('0.9', "near_zero"),
+    ('0.99', "near_zero"),
+    ('0.9999999999999999', "near_zero"),
+    ('1.0', "near_zero"),
+    ('1.0000000000000002', "near_zero"),
+    ('1.01', "near_zero"),
+    ('1.25', "general"),
+    ('1.5', "general"),
+    ('1.75', "general"),
+    ('1.99', "near_zero"),
+    ('1.9999999999999998', "near_zero"),
+    ('2.0', "near_zero"),
+    ('2.0000000000000004', "near_zero"),
+    ('2.01', "near_zero"),
+    ('2.5', "general"),
+    ('3.0', "general"),
+    ('5.0', "general"),
+    ('10.0', "general"),
+    ('100.0', "general"),
+    ('1000000.0', "general"),
+    ('1000000000000000.0', "general"),
+    ('1e+30', "general"),
+    ('1e+50', "general"),
+]
+
+_LOGGAMMA1P_POINTS = [
+    ('1e-300', "small"),
+    ('1e-200', "small"),
+    ('1e-100', "small"),
+    ('1e-50', "small"),
+    ('1e-20', "small"),
+    ('1e-17', "small"),
+    ('1e-16', "small"),
+    ('1.1102230246251565e-16', "small"),
+    ('1e-15', "small"),
+    ('1e-14', "small"),
+    ('1e-13', "small"),
+    ('1e-12', "small"),
+    ('1e-11', "small"),
+    ('1e-10', "small"),
+    ('1e-09', "small"),
+    ('1e-08', "small"),
+    ('1e-07', "small"),
+    ('1e-06', "small"),
+    ('1e-05', "small"),
+    ('0.0001', "small"),
+    ('0.001', "small"),
+    ('0.01', "small"),
+    ('0.02', "small"),
+    ('0.05', "small"),
+    ('0.08', "small"),
+    ('0.1', "small"),
+    ('0.125', "small"),
+    ('0.15', "small"),
+    ('0.18', "small"),
+    ('0.2', "small"),
+    ('0.22', "small"),
+    ('0.24', "small"),
+    ('0.24999999999999994', "series_seam"),
+    ('0.25', "series_seam"),
+    ('0.25000000000000006', "series_seam"),
+]
+
+
+
+def _loggamma1p_reference(x):
+    """Log(Gamma(1 + x)) for the LogGamma1p grid.
+
+    mp.loggamma(1 + x) collapses for small x exactly as the VBA kernel would if
+    it formed 1 + X: at the generator's working precision 1 + 1E-300 rounds to
+    1 and the answer becomes 0. The precision must rise with the magnitude of x
+    - the same adaptive rule the kernel exists to embody, applied to its own
+    reference.
+    """
+    x = mp.mpf(x)
+    if x == 0:
+        return mp.mpf(0)
+    need = mp.mp.dps + max(0, int(-mp.log10(abs(x))) + 20)
+    with mp.workdps(need):
+        return +mp.loggamma(1 + x)
+
+
+def _loggamma_regime(z):
+    """Argument-dependent regime for LogGamma.
+
+    Log(Gamma(Z)) is exactly zero at Z = 1 and Z = 2, so a relative contract is
+    ill-conditioned near them and undefined at them; those neighbourhoods are
+    scored on absolute error instead. Below the series seam the small-positive
+    branch applies. Everything else is `general`, where Abs(LogGamma(Z)) is
+    bounded away from zero and relative error is meaningful.
+    """
+    z = mp.mpf(z)
+    if z <= mp.mpf("0.25"):
+        return "small_positive"
+    if (mp.mpf("0.9") <= z <= mp.mpf("1.1")) or (mp.mpf("1.9") <= z <= mp.mpf("2.1")):
+        return "near_zero"
+    if z < mp.mpf("0.5"):
+        return "reflection"
+    return "general"
+
+
 def _regime_for(func):
     if func in _BETA_BAL:
         return "balanced"
@@ -949,14 +1116,30 @@ def build_tiny_unbalanced_rows():
 def build_rows():
     rows = []
 
-    def add(func, vba_kernel, args, ref, claim=None, metric=None):
+    def add(func, vba_kernel, args, ref, claim=None, metric=None, regime=None):
         # Claim and metric come from the single source of truth,
         # benchmark/accuracy_contracts.csv, so grid, summary, and README cannot drift.
-        regime = _regime_for(func)
+        #
+        # `regime` may be given explicitly. _regime_for() classifies by FUNCTION,
+        # which most functions genuinely are - Beta balanced, F validated - but
+        # LogGamma's regimes are argument-dependent: the same function is
+        # small_positive below 0.25, near_zero around the zeros of Log(Gamma) at
+        # 1 and 2, and general elsewhere. Putting that logic inside the generic
+        # classifier would mean teaching it to inspect arbitrary argument tuples;
+        # making it explicit at the call site keeps the exception visible.
+        if regime is None:
+            regime = _regime_for(func)
         if claim is None:
             contract = _CONTRACTS.get((func, regime)) or _CONTRACTS.get((func, "all"))
-            claim = contract["claim"]
-            metric = contract["metric"]
+            if contract is None:
+                # No contract yet. Rows are promoted before their contract is
+                # frozen, so claim/metric stay blank and are filled by a
+                # --patch-metadata run once the contract exists. They are
+                # informational on the row; the evaluators read the contract.
+                claim, metric = "", ""
+            else:
+                claim = contract["claim"]
+                metric = contract["metric"]
         rows.append(
             {
                 "function": func,
@@ -1140,6 +1323,32 @@ def build_rows():
     rows += build_discrete_rows()
     rows += build_deep_tail_rows()
     rows += build_tiny_unbalanced_rows()
+
+    # --- PROB_LogGamma regime evidence, promoted from loggamma_regimes_study ---
+    for _z, _reg in _LOGGAMMA_POINTS:
+        # _loggamma IS decorated, but canonicalise explicitly so both call sites
+        # read the same and neither depends on the decorator list.
+        _zz = D(mp.mpf(_z))
+        # The embedded regime must agree with the classifier, except that the
+        # two exact zeros are folded into near_zero: they carry the same
+        # absolute-error contract and cannot participate in a relative one.
+        _cls = _loggamma_regime(_zz)
+        assert _reg == _cls or (_reg == "near_zero" and _cls in ("near_zero", "general")), \
+            f"LogGamma regime mismatch at {_z}: table={_reg} classifier={_cls}"
+        add("LogGamma", "PROB_LogGamma", (_zz,), _loggamma(_zz), regime=_reg)
+
+    # --- PROB_TryLogGamma1p evidence, promoted from loggamma1p_study ---
+    for _x, _reg in _LOGGAMMA1P_POINTS:
+        # Canonicalise HERE. _loggamma1p_reference is not in the decorator list
+        # - that list was fixed when the decorators were introduced and does not
+        # know about functions added since - so without this the reference would
+        # be evaluated at the exact decimal rather than at the Double the
+        # exporter delivers. Measured cost of getting this wrong: 8.2E-17 at
+        # x = 1.0000000000000001E-5, against a contract floor of 1.4E-16.
+        _xx = D(mp.mpf(_x))
+        add("LogGamma1p", "PROB_TryLogGamma1p", (_xx,),
+            _loggamma1p_reference(_xx), regime=_reg)
+
     return rows
 
 
