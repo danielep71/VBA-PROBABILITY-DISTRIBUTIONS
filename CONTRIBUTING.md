@@ -317,6 +317,70 @@ If Numerator / Denominator > Limit Then
 End If
 ```
 
+### Force the rounding boundary
+
+Do not assume an intermediate expression is rounded to binary64 at every
+operator. When correctness, a branch condition, a one-ULP boundary, or a
+reference key depends on the rounded `Double`, force the rounding boundary by
+assigning the expression to a `Double` variable and using that stored value
+thereafter.
+
+This is unsafe:
+
+```vba
+If U - 1# = -1# Then                'the expression may not be rounded here
+```
+
+Store first, then test the stored value:
+
+```vba
+    V = U - 1#                      'rounding is forced by the assignment
+
+    If V = -1# Then
+```
+
+The same applies when building an extreme value: assign, then test what was
+stored. Testing the expression and assigning separately lets a loop run past
+the boundary it was meant to stop at.
+
+```vba
+    'Unsafe - the condition can pass on a value the assignment then rounds
+    Do While Smallest / 2# > 0#
+        Smallest = Smallest / 2#
+    Loop
+
+    'Safe - the stored value decides
+    Do
+        Halved = Smallest / 2#
+        If Halved = 0# Then Exit Do
+        Smallest = Halved
+    Loop
+```
+
+**Do not replace such an assignment with an inline expression when**
+**refactoring.** The extra variable is load-bearing, not verbosity. Where that
+is not obvious from the surrounding code, say so in a comment.
+
+### Reachability precedes remediation
+
+Before changing a numerical kernel, identify its direct callers, the branch
+preconditions on each call site, and the public inputs that can actually reach
+the branch being changed. Produce a predicted movement set **before** touching
+source, and compare the measured movement against it afterwards.
+
+A textual call graph is not a reachability analysis. A kernel reached from
+thirty-nine public functions may have a branch reachable from two, once
+argument domains and gate conditions are taken into account.
+
+A caller that is protected from an incorrect *result* by clamping, a fallback,
+or error handling is **not** necessarily unaffected by the *change*. Protection
+from a defect is not exemption from a rearrangement, and a clamped caller
+still belongs in the predicted movement set.
+
+Equally, a numerical equivalence that looks obvious should be measured rather
+than inferred, in both directions: it has revealed real defects, and it has
+also retired proposed remediations whose premise did not survive measurement.
+
 ---
 
 ## 🔬 Numerical verification
