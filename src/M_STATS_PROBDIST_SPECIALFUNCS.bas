@@ -68,8 +68,17 @@ Option Private Module
 '       of size N*Log(N). Public; the arrangement used by R's dbinom.
 '   - PROB_LogGamma:
 '       Lanczos approximation, g = 7, n = 9, with the reflection formula for
-'       z < 0.5. Measured relative error against 50-digit arithmetic is below
-'       6.1E-14 for z in [1E-8, 1E+50]. Public, published; not proprietary.
+'       z < 0.5 and the LogGamma1p series route for small positive z. The
+'       previous global claim (relative error below 6.1E-14 for z in
+'       [1E-8, 1E+50]) is withdrawn; accuracy is now stated per regime by
+'       the LogGamma.* contracts in benchmark/accuracy_contracts.csv, with
+'       evidence in benchmark/loggamma_regimes_study. Public, published;
+'       not proprietary.
+'   - PROB_TryLogGamma1p:
+'       Maclaurin series for Log(Gamma(1 + X)) on the small-X interior,
+'       avoiding the 1 + X collapse of the general route. Contracts
+'       LogGamma1p.small.scaled_abs and LogGamma1p.series_seam.scaled_abs;
+'       evidence in benchmark/loggamma1p_study. Public, published.
 '   - PROB_LogGammaHalfDiff:
 '       Asymptotic expansion of Log(Gamma(z + 1/2)) - Log(Gamma(z)) for z >= 20,
 '       direct difference below. The direct difference alone cancels: at z = 5E+5

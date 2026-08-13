@@ -1,5 +1,11 @@
 # Registry rows — LogGamma regimes (#15) and LogGamma1p kernel (#12)
 
+> **SUPERSEDED — do not action.** The authoritative registry is
+> `benchmark/accuracy_contracts.csv`. The final contract freeze landed in
+> `1fac483` and the domain correction in `189ac25`. The rows and
+> instructions below are retained only as pre-freeze design history and no
+> longer describe the shipped contracts.
+
 Holdout exported and passed on real VBA (62/62 points, 0 shared with the fitting set, all three contracts PASS). Ready to paste. The `provenance` and `status` values below
 match the 162 existing rows exactly; no new vocabulary is introduced, because the
 holdout makes `validated and frozen` an honest claim rather than an aspiration.

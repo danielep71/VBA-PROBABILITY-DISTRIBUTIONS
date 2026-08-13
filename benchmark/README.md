@@ -100,9 +100,10 @@ the evidence.
 
 | Function | Published claim |
 |---|---|
-| `PROB_LogGamma` | relative error < 6.1E-14 for Z in [1E-8, 1E+50] |
+| `PROB_LogGamma` | stated per regime; see the `LogGamma.*` contracts in the generated table below |
+| `PROB_TryLogGamma1p` | scaled absolute error <= 5E-16 on the series interior |
 | `PROB_LogGammaHalfDiff` | relative error <= 2E-14 for Z > 0 (tested range) |
-| `PROB_StirlingError` | absolute error <= 3E-17 for N >= 0.5 |
+| `PROB_StirlingError` | absolute error <= 1E-13 for N >= 0 (the earlier 3E-17 was overfit to its grid) |
 | `PROB_LogChoose` | relative error <= 3.2E-16 for N in [2, 2^53], all K |
 
 **Test-statistic families**

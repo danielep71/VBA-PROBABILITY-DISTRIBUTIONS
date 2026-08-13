@@ -1,5 +1,11 @@
 # Draft registry rows — PROB_TryLogGamma1p (issue #12)
 
+> **SUPERSEDED — do not action.** The authoritative registry is
+> `benchmark/accuracy_contracts.csv`. The final contract freeze landed in
+> `1fac483` and the domain correction in `189ac25`. The rows and
+> instructions below are retained only as pre-freeze design history and no
+> longer describe the shipped contracts.
+
 Schemas taken from the committed headers. **Do not paste until the full Phase 0
 sweep is clean** — thresholds are measured but not holdout-validated, so
 `provenance` says so.
