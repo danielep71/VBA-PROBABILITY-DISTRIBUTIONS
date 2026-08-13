@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-13T20:28:23Z",
-  "commit_sha": "a1de93f",
+  "generated_utc": "2026-08-13T20:46:43Z",
+  "commit_sha": "686fdfd",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
