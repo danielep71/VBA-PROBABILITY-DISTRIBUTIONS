@@ -1,6 +1,9 @@
 Attribute VB_Name = "M_STATS_PROBDIST_STIRLINGPROBE"
 Option Explicit
 
+'Column count of the output header, checked against every row written
+Private Const PROBE_FIELDS As Long = 16
+
 '==============================================================================
 ' M_STATS_PROBDIST_STIRLINGPROBE
 '------------------------------------------------------------------------------
@@ -116,6 +119,7 @@ Public Sub Probe_StirlingOverflow()
     Dim Hows()              As String          'How each point was built
     Dim Ns()                As Double          'The points themselves
     Dim Count               As Long            'Number of points
+    Dim Row                 As String          'Assembled CSV row
     Dim I                   As Long            'Point index
 '------------------------------------------------------------------------------
 ' INITIALIZE
@@ -140,7 +144,16 @@ Public Sub Probe_StirlingOverflow()
                        "density_status,density_err,density_value"
 
         For I = 0 To Count - 1
-            Print #OutNum, EvaluatePoint(Ids(I), Hows(I), Ns(I))
+            Row = EvaluatePoint(Ids(I), Hows(I), Ns(I))
+
+    'A row that does not match the header is silently unreadable: refuse to
+    'write it rather than emit a file whose columns cannot be trusted
+            If FieldCount(Row) <> PROBE_FIELDS Then
+                Err.Raise 5, , "Row " & Ids(I) & " has " & FieldCount(Row) & _
+                               " fields, expected " & PROBE_FIELDS
+            End If
+
+            Print #OutNum, Row
         Next I
 
         Close #OutNum
@@ -336,7 +349,10 @@ Private Function EvaluatePoint( _
         If ErrNum <> 0 Then
             Row = Row & ",ERROR," & ErrNum & "," & CleanDesc(ErrDesc) & ","
         Else
-            Row = Row & ",OK,0," & FormatFullPrecision(Current)
+            'The empty field is current_desc: only this block carries one, so
+            'the OK branch must still emit it or every successful row is
+            'written one column left of the header
+            Row = Row & ",OK,0,," & FormatFullPrecision(Current)
         End If
 '------------------------------------------------------------------------------
 ' CANDIDATE B
@@ -423,6 +439,24 @@ Private Function ErrorNumberOf(ByVal V As Variant) As String
 '------------------------------------------------------------------------------
 Err_Handler:
     ErrorNumberOf = "unreadable"
+End Function
+
+
+Private Function FieldCount(ByVal Text As String) As Long
+'
+'==============================================================================
+' FieldCount
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Counts the comma-separated fields in an assembled row. Safe because
+'   CleanDesc removes commas from descriptions and FormatFullPrecision
+'   separates its two parts with a semicolon, so no field can contain one.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    FieldCount = UBound(Split(Text, ",")) + 1
 End Function
 
 
