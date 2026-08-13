@@ -17,6 +17,8 @@ from _ibeta import ibeta, f_cdf
 # (compute_errors.py) so the two analyzers cannot diverge on metric arithmetic,
 # parsing, or tail-residual normalisation.
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
+                            calculate_scaled_error, validate_scaled_metric,
+                            SCALED_MEASURE,
                             normalize_tail_residual, dispositions)
 getcontext().prec = 50
 mp.mp.dps = 50
@@ -46,7 +48,14 @@ def worst_for(measure, metric, rows, fn):
             ref = parse_reference(r["reference"])
             if ref is None:
                 continue
-            e = calculate_error(o, ref, metric)
+            if measure == SCALED_MEASURE:
+                validate_scaled_metric(metric)
+                a1 = parse_reference(r["arg1"])
+                if a1 is None or a1 == 0:
+                    continue
+                e = calculate_scaled_error(o, ref, a1)
+            else:
+                e = calculate_error(o, ref, metric)
         n += 1
         if e > w:
             w = e; at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)

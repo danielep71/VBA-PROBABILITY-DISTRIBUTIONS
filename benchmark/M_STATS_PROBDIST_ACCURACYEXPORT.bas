@@ -54,6 +54,33 @@ Private Const ACCURACY_GRID_PATH As String = ""        'Empty => same folder as 
 
 
 Public Sub Export_Accuracy_Observations()
+    ExportAccuracy False
+End Sub
+
+
+Public Sub Export_Accuracy_MissingOnly()
+'
+'==============================================================================
+' Export_Accuracy_MissingOnly
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Fills ONLY the rows whose observed_vba is still blank, leaving every
+'   existing observation byte-for-byte untouched.
+'
+' WHY THIS EXISTS
+'   Promoting new evidence rows must not recompute the observations already in
+'   the grid. A full re-export would rewrite all 2030 cells, and any difference
+'   - an Excel build change, a locale difference, a kernel edit made since -
+'   would land silently in the same commit as the promotion, making the diff
+'   impossible to attribute. This mode makes the promotion diff contain exactly
+'   the promoted rows.
+'==============================================================================
+'
+    ExportAccuracy True
+End Sub
+
+
+Private Sub ExportAccuracy(ByVal MissingOnly As Boolean)
 '
 '==============================================================================
 ' Export_Accuracy_Observations
@@ -123,6 +150,12 @@ Public Sub Export_Accuracy_Observations()
             '(evidence_set <> "main grid") are populated by their own study
             'harnesses and must be left byte-for-byte untouched.
             If Trim$(Cols(11)) <> "main grid" Then GoTo ContinueRow
+
+            'Blank-only mode: never touch a cell that already holds an
+            'observation, so a promotion diff carries only the promoted rows.
+            If MissingOnly Then
+                If Len(Trim$(Cols(9))) > 0 Then GoTo ContinueRow
+            End If
 
             FuncName = Trim$(Cols(0))
             HasA1 = (Len(Trim$(Cols(4))) > 0)
@@ -512,6 +545,7 @@ Private Function EvaluateOne( _
         'evidence_set filter in the read loop keeps those study-owned rows
         'untouched, so these cases only serve main-grid rows.
         Case "PROB_LogBeta":                 V = PROB_LogBeta(A1, A2)
+        Case "LogGamma1p":                   V = EvaluateLogGamma1p(A1)
         Case "F_Density":                    V = K_STATS_F_Density(A1, A2, A3)
 
         Case Else
@@ -536,6 +570,42 @@ Private Function EvaluateOne( _
 '------------------------------------------------------------------------------
 Err_Handler:
     EvaluateOne = "ERROR"
+End Function
+
+
+Private Function EvaluateLogGamma1p( _
+    ByVal X As Double) _
+    As Variant
+'
+'==============================================================================
+' EvaluateLogGamma1p
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Adapts the Try-style PROB_TryLogGamma1p to the exporter's Variant contract.
+'
+' WHY THIS EXISTS
+'   PROB_TryLogGamma1p returns a Boolean and delivers its value through a ByRef
+'   argument. Writing that Boolean into observed_vba would record True or False
+'   where a number belongs, so the failure is mapped to CVErr(xlErrNum) and the
+'   success to the Double, exactly as a K_STATS_ surface would report them.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Result              As Double          'Kernel result
+    Dim FailMsg             As String          'Kernel diagnostic
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Map a FALSE return to the numeric-error code the grid expects
+        If Not PROB_TryLogGamma1p(X, Result, FailMsg) Then
+            EvaluateLogGamma1p = CVErr(xlErrNum)
+            Exit Function
+        End If
+
+        EvaluateLogGamma1p = Result
 End Function
 
 

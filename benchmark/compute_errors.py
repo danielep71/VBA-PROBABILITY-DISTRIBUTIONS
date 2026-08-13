@@ -28,6 +28,8 @@ getcontext().prec = 50
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)  # single-sourced benchmark/ helpers
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
+                            calculate_scaled_error, validate_scaled_metric,
+                            SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions, expected_error_drift)
 
 _IBETA_IMPORT_ERROR = None
@@ -51,7 +53,7 @@ def load_contracts(path=None):
         return list(csv.DictReader(f))
 
 
-def measure_error(rows, metric):
+def measure_error(rows, metric, measure=None):
     """Worst error (Decimal) over rows for output_error/quantile_error/log_absolute_error."""
     worst = Decimal(-1); worst_at = ""; n = 0
     for r in rows:
@@ -61,7 +63,16 @@ def measure_error(rows, metric):
         ref = parse_reference(r["reference"])
         if ref is None:
             continue
-        e = calculate_error(o, ref, metric)
+        if measure == SCALED_MEASURE:
+            # Scaled contracts divide by arg1; scoring them as ordinary
+            # absolute error would make them unfailable.
+            validate_scaled_metric(metric)
+            a1 = parse_reference(r["arg1"])
+            if a1 is None or a1 == 0:
+                continue
+            e = calculate_scaled_error(o, ref, a1)
+        else:
+            e = calculate_error(o, ref, metric)
         n += 1
         if e > worst:
             worst = e; worst_at = ", ".join(x for x in (r["arg1"], r["arg2"], r["arg3"]) if x)
@@ -197,7 +208,7 @@ def main():
 
     for c in sorted(contracts, key=lambda c: c["contract_id"]):
         cid = c["contract_id"]; fn = c["function"]; regime = c["regime"]
-        measure = c["measure"]; metric = c["metric"]; status = c["status"]
+        measure = validate_measure(c["measure"]); metric = c["metric"]; status = c["status"]
         try:
             threshold = Decimal(c["threshold"]) if c["threshold"].strip() else None
         except InvalidOperation:
@@ -286,7 +297,7 @@ def main():
                          f"\u23f3 PENDING - incomplete evidence |")
             continue
 
-        worst, at, n = measure_error(disp.to_measure, metric)
+        worst, at, n = measure_error(disp.to_measure, metric, measure)
         if worst is None:
             n_pending += 1
             lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "

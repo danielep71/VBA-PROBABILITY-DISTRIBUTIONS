@@ -72,6 +72,72 @@ def validate_metric(metric):
     return m
 
 
+SCALED_MEASURE = "scaled_output_error"
+
+# Every measure the evaluators know how to score. An unrecognised measure must
+# fail loudly: the gate branches on tail_probability_residual and otherwise
+# falls through to ordinary absolute/relative error, so a misspelled or
+# not-yet-implemented measure would be scored as something it is not. That is
+# how scaled_output_error would have behaved before it existed - passing by
+# thirteen orders of magnitude and unable ever to fail.
+KNOWN_MEASURES = frozenset({
+    "output_error",
+    "log_absolute_error",
+    "quantile_error",
+    "tail_probability_residual",
+    SCALED_MEASURE,
+})
+
+
+def validate_measure(measure):
+    """Reject any measure the evaluators cannot score."""
+    m = (measure or "").strip()
+    if m not in KNOWN_MEASURES:
+        raise ValueError(
+            f"Unsupported measure: {measure!r}; expected one of "
+            f"{sorted(KNOWN_MEASURES)}. An unknown measure would be scored as "
+            f"ordinary error, which silently changes what the contract claims.")
+    return m
+
+
+def calculate_scaled_error(observed, reference, arg1):
+    """
+    Scaled output error: Abs(observed - reference) / Abs(arg1).
+
+    Distinct from `absolute`, which is the unscaled difference. A contract
+    declaring measure=scaled_output_error MUST route here; scoring it as
+    ordinary absolute error would make it unfailable. PROB_TryLogGamma1p is
+    the motivating case: at X = 1E-13 its scaled error is 1.4E-16 while the
+    absolute error is 1.4E-29, so a 5E-16 absolute threshold would pass by
+    thirteen orders of magnitude no matter how badly the kernel regressed.
+
+    The metric is what the caller actually propagates. The scaled Gamma
+    inverse computes [LogProbability + LogGamma1p(Shape)] / Shape, so this
+    quantity IS the relative error of the quantile it produces.
+
+    arg1 = 0 is rejected rather than divided. Log(Gamma(1 + 0)) is exactly
+    zero by contract, which belongs in the VBA regression suite as an exact
+    equality, not in a scaled-error row.
+    """
+    if arg1 is None:
+        raise ValueError("scaled_output_error requires arg1")
+    if arg1 == 0:
+        raise ValueError(
+            "scaled_output_error is undefined at arg1 = 0; the exact-zero case "
+            "belongs in the VBA regression suite, not in a scaled contract row")
+    return abs(observed - reference) / abs(arg1)
+
+
+def validate_scaled_metric(metric):
+    """A scaled contract must declare metric=absolute: the scaling is the
+    measure, and calling it relative would imply a second division."""
+    m = (metric or "").strip().lower()
+    if m != "absolute":
+        raise ValueError(
+            f"measure={SCALED_MEASURE!r} requires metric='absolute', got {metric!r}")
+    return m
+
+
 def calculate_error(observed, reference, metric):
     """
     Ordinary (non-residual) error. `metric` selects the arithmetic:
@@ -79,6 +145,8 @@ def calculate_error(observed, reference, metric):
       relative -> Abs(observed - reference) / Abs(reference)
     A non-zero observed against a zero reference is infinite relative error;
     a zero observed against a zero reference is zero error.
+
+    Scaled contracts do NOT come here; see calculate_scaled_error.
     """
     m = validate_metric(metric)
     absolute_error = abs(observed - reference)

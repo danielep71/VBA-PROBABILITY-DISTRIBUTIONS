@@ -9,7 +9,9 @@ Locks the arithmetic that compute_errors.py (gate) and analyze_holdout.py
 Run: python3 test_contract_eval.py   (exit 0 = pass, nonzero = fail)
 """
 from decimal import Decimal
-from _contract_eval import (
+from _contract_eval import (calculate_scaled_error, validate_scaled_metric,
+                            validate_measure, KNOWN_MEASURES,
+                            
     parse_observed, parse_reference, parse_threshold, validate_metric,
     calculate_error, normalize_tail_residual, observation_state,
     evidence_gaps, OK, MISSING, ERROR,
@@ -157,10 +159,52 @@ check(expected_error_drift(clean) == [], "no drift when stored matches predicate
 drifted = [{"function": "F_Cumulative", "arg2": "3", "arg3": "4", "expected_error": "1"}]  # in-envelope mismarked
 check(len(expected_error_drift(drifted)) == 1, "drift detected when stored disagrees")
 
+# --- scaled_output_error: the scaling IS the measure ------------------------
+# PROB_TryLogGamma1p at X = 1E-13. The scaled error is thirteen orders larger
+# than the absolute one; scoring a scaled contract as ordinary absolute error
+# would make it pass by that margin no matter how badly the kernel regressed.
+so = Decimal("-5.7721566490145e-14")
+sr = Decimal("-5.7721566490153e-14")
+sx = Decimal("1e-13")
+check(calculate_scaled_error(so, sr, sx) == abs(so - sr) / sx, "scaled divides by arg1")
+check(calculate_scaled_error(so, sr, sx) > calculate_error(so, sr, "absolute") * Decimal(10) ** 12,
+      "scaled dwarfs absolute at small arg1")
+
+# Log(Gamma(1 + 0)) is exactly zero by contract: an equality for the VBA
+# regression suite, never a scaled-error row.
+for _bad in (Decimal(0), None):
+    try:
+        calculate_scaled_error(Decimal(1), Decimal(1), _bad)
+        check(False, f"scaled must reject arg1={_bad!r}")
+    except ValueError:
+        pass
+
+check(validate_scaled_metric("absolute") == "absolute", "scaled accepts metric=absolute")
+for _bad in ("relative", "rel", ""):
+    try:
+        validate_scaled_metric(_bad)
+        check(False, f"scaled must reject metric={_bad!r}")
+    except ValueError:
+        pass
+
+# --- an unknown measure must fail loudly ------------------------------------
+# The gate branches on tail_probability_residual and otherwise falls through to
+# ordinary error, so a misspelled or unimplemented measure would be scored as
+# something it is not.
+for _good in sorted(KNOWN_MEASURES):
+    check(validate_measure(_good) == _good, f"measure {_good} accepted")
+for _bad in ("scaled_abs", "typo_error", "", None):
+    try:
+        validate_measure(_bad)
+        check(False, f"measure must reject {_bad!r}")
+    except ValueError:
+        pass
+
+
 if fails:
-    print("FAIL: _contract_eval primitives")
     for f in fails:
-        print("  - " + f)
+        print("FAIL:", f)
     raise SystemExit(1)
-print("PASS: shared contract-evaluation primitives (metric arithmetic, zero-reference, "
-      "parsing, evidence classification, tail residual)")
+print("PASS: shared contract-evaluation primitives (metric arithmetic, "
+      "zero-reference, parsing, evidence classification, tail residual, "
+      "scaled_output_error, measure whitelist)")
