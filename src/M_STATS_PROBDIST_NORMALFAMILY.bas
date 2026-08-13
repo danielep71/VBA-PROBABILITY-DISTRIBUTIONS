@@ -124,8 +124,8 @@ Option Explicit
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
-'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_PARAMETER_MAGNITUDE_GUARD,
-'                    PROB_WRITE_STATUS_BAR
+'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_SQRT_DOUBLE_MAX,
+'                    PROB_PARAMETER_MAGNITUDE_GUARD
 '       Predicates : PROB_IsWithinSupportedMagnitude, PROB_IsValidProbabilityOpen
 '       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw
 '       Diagnostics: PROB_SetStatus
@@ -218,10 +218,15 @@ Option Explicit
 ' PRIVATE CONSTANTS
 '==============================================================================
 
-' Shared constants (PROB_EPS, PROB_MAX_EXP, PROB_MIN_EXP, PROB_PARAMETER_MAGNITUDE_GUARD,
-' PROB_DOUBLE_MAX, PROB_WRITE_STATUS_BAR) now live in M_STATS_PROBDIST_CORE. Only the
+' Shared constants (PROB_EPS, PROB_PARAMETER_MAGNITUDE_GUARD, PROB_DOUBLE_MAX,
+' PROB_SQRT_DOUBLE_MAX) now live in M_STATS_PROBDIST_CORE. Only the
 ' normal-family-specific constants remain here. PROB_PI and PROB_TWO_PI were
-' declared but never referenced and have been dropped.
+' declared but never referenced and have been dropped. PROB_MAX_EXP and
+' PROB_MIN_EXP have since been dropped from CORE for the same reason, and
+' PROB_WRITE_STATUS_BAR survives there as a module-private conditional-
+' compilation switch rather than a project-scoped Public Const, so it is no
+' longer a dependency of this module even though the status-bar behavior it
+' controls is unchanged.
 
 'Split expressions preserve the intended binary Double values in the VBE.
 Private Const PROB_SQRT_TWO_PI As Double = _

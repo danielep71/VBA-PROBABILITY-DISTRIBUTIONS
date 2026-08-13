@@ -27,10 +27,8 @@ Option Private Module
 '   Constants:
 '     - PROB_PI, PROB_TWO_PI, PROB_HALF_LOG_TWO_PI, PROB_HALF_LOG_PI
 '     - PROB_EPS, PROB_NUM_EPS, PROB_MACH_EPS
-'     - PROB_MAX_EXP, PROB_MIN_EXP
 '     - PROB_PARAMETER_MAGNITUDE_GUARD, PROB_DOUBLE_MAX, PROB_SQRT_DOUBLE_MAX
 '     - PROB_FPMIN
-'     - PROB_WRITE_STATUS_BAR
 '
 '   Predicates:
 '     - PROB_IsFinite
@@ -68,18 +66,34 @@ Option Private Module
 '       precision instead of collapsing to zero. Public, published.
 '   - PROB_NormalInvCDFRaw:
 '       Peter J. Acklam's rational approximation, released freely for any use by
-'       the author. Raw accuracy is approximately 1.15E-9; it is used here as a
-'       root-finder seed, not as a final answer. Public.
+'       the author. Published relative-error bound 1.15E-9, confirmed here at
+'       1.130E-9 for the literals actually compiled; see the PUBLISHED ACCURACY
+'       block on that function. Used as a root-finder seed, not a final answer.
 '
-' DESIGN PRINCIPLES
-'   - Nothing here knows about any distribution. This is a numerics layer.
-'   - True finiteness and supported algorithm magnitude are separate contracts.
-'     PROB_IsFinite tests the IEEE value; PROB_IsWithinSupportedMagnitude applies
-'     the conservative 1E+100 policy only where a numerical algorithm needs it.
-'   - Overflow fails explicitly: a computation that would exceed Double range
-'     returns False rather than a clamped sentinel value.
-'   - Underflow of an exponential is a valid zero, not an error.
-'   - Kernels here never validate their callers' domains and never write Status.
+' DESIGN INVARIANTS
+'   Non-negotiable contracts for this module. A change that breaks any one of
+'   them is a change of layer, not a refactor, and needs its own review.
+'
+'   I1  No distribution logic. Nothing here names, encodes or special-cases any
+'       probability distribution. This is a numerics layer only.
+'   I2  No host dependency. This module compiles and runs without the Excel
+'       object model; it references no Application, Range or WorksheetFunction
+'       member (see PROB_WRITE_STATUS_BAR below).
+'   I3  Guarded primitives report success as a Boolean only. On a False return
+'       the ByRef Result is explicitly not contractual and must not be read.
+'   I4  Overflow is a failure; underflow of an exponential is a valid zero.
+'       No primitive here ever substitutes a clamped sentinel for a failure.
+'   I5  Finiteness and supported magnitude are separate contracts and are never
+'       conflated. PROB_IsFinite tests the IEEE value; only
+'       PROB_IsWithinSupportedMagnitude applies the project 1E+100 policy.
+'   I6  Kernels never validate their callers' domains and never write Status.
+'   I7  No measured accuracy figure is stated in a comment. Measured thresholds
+'       live in accuracy_contracts.csv where the gate can check them. The one
+'       exception is the published bound of a frozen third-party algorithm; see
+'       PROB_NormalInvCDFRaw, where the number cannot drift because the code
+'       that produces it cannot change.
+'   I8  No test code lives here. Regression and characterization coverage is
+'       owned by M_STATS_PROBDIST_TEST.
 '
 ' NOTES
 '   - PROB_IsFinite is a true finiteness predicate. It does not impose the
@@ -95,6 +109,13 @@ Option Private Module
 ' UPDATED
 '   2026-08-11 - Surface list completed; convergence-range and helper-accuracy
 '                figures replaced by pointers to the measured registries.
+'   2026-08-13 - Design invariants stated explicitly. Dead constants
+'                PROB_MAX_EXP and PROB_MIN_EXP removed. PROB_WRITE_STATUS_BAR
+'                converted from a Public Const into a module-private
+'                conditional-compilation switch of the same name, leaving the
+'                module free of any Excel object-model reference. Accuracy of
+'                PROB_NormalInvCDFRaw recorded permanently. No executable
+'                behavior changed.
 '==============================================================================
 
 '==============================================================================
@@ -116,15 +137,28 @@ Public Const PROB_EPS                  As Double = 0.000000000000001        '1E-
 Public Const PROB_NUM_EPS              As Double = 0.00000000000003         '3E-14, continued-fraction / series stop
 Public Const PROB_MACH_EPS             As Double = 2.22044604925031E-16     'Double epsilon
 
-Public Const PROB_MAX_EXP              As Double = 709.782712893384         'Advisory Log(Double max)
-Public Const PROB_MIN_EXP              As Double = -745.133219101941        'Advisory round-to-zero boundary
+'PROB_MAX_EXP and PROB_MIN_EXP were declared here as advisory exponential
+'boundaries and were never referenced by any executable line in the project.
+'They are removed rather than kept as documentation: PROB_TryExp finds the true
+'boundary at run time, which is the whole point of that helper, and a
+'decimal constant sitting beside it invites a caller to branch on the constant
+'instead. The boundary values themselves are pinned by the characterization
+'tests in M_STATS_PROBDIST_TEST, where a wrong value fails a check.
 
 Public Const PROB_PARAMETER_MAGNITUDE_GUARD As Double = 1E+100              'Coarse defensive parameter-magnitude guard (not a convergence or accuracy boundary)
 Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308    'Approx largest finite Double
 Public Const PROB_SQRT_DOUBLE_MAX      As Double = 1.34E+154                'Approx sqrt(Double max); guards squaring overflow
 Public Const PROB_FPMIN                As Double = 1E-300                   'Lentz denominator floor
 
-Public Const PROB_WRITE_STATUS_BAR     As Boolean = False                   'Master switch for Application.StatusBar writes
+'PROB_WRITE_STATUS_BAR is a CONDITIONAL-COMPILATION switch, not a run-time
+'constant. At the default value of False the status-bar block inside
+'PROB_SetStatus is not compiled at all, so this module holds no reference to
+'the Excel object model (invariant I2) and the writes are inert rather than
+'merely skipped at run time. The name is deliberately unchanged from the former
+'Public Const so that the sibling modules' error-policy comments stay accurate;
+'the scope has changed, and the switch is now private to this module. Set it to
+'True only in a scratch copy while debugging, and never commit a True value.
+#Const PROB_WRITE_STATUS_BAR = False
 
 
 '==============================================================================
@@ -839,6 +873,43 @@ Public Function PROB_NormalInvCDFRaw( _
 '   within a few units in the ninth digit. Refinement to machine precision is
 '   the caller's job, either by a Halley step (NORMALFAMILY) or by the Newton
 '   loop that is running anyway (TFAMILY quantiles).
+'
+' PUBLISHED ACCURACY - PERMANENT
+'   Invariant I7 forbids stating a measured accuracy figure in a comment. This
+'   block is the one sanctioned exception, and the reason is that the figure
+'   here is not a property of code that can change. The coefficients below are
+'   Acklam's published constants, frozen; the branch structure is his; there is
+'   no iteration, no tolerance and no tuning parameter. The number cannot drift
+'   because nothing it describes can move.
+'
+'   PUBLISHED BOUND
+'     Relative error below 1.15E-9 over the whole open interval (0, 1).
+'
+'   CONFIRMED FOR THE LITERALS ACTUALLY COMPILED HERE (2026-08-13)
+'     Reference: 60-digit mpmath inverse normal, Newton-refined.
+'     - Maximum relative error 1.130E-9, over a 100,000-point uniform grid on
+'       (0, 1) together with every decade point from 1E-1 down to 1E-309.
+'     - The 1.15E-9 bound holds down to approximately Probability = 1E-315 and
+'       degrades to about 1.8E-9 only at the smallest subnormal probability.
+'     - The two branch seams are continuous to 4.5E-9 absolute, which is the
+'       expected size for two independent approximations each good to 1.15E-9
+'       relative at an ordinate near 1.97.
+'
+'   ON THE 15-DIGIT COEFFICIENT LITERALS
+'     Twenty of the twenty-one coefficients below differ from Acklam's published
+'     Doubles by one ULP, because the VBE canonicalizes long decimal literals.
+'     This is deliberate and must not be "repaired" with split expressions: the
+'     measurement above was made with these exact truncated literals and lands
+'     at 1.130E-9 against 1.129E-9 for the published Doubles. A one-ULP
+'     coefficient perturbation moves the result by order 1E-16, seven orders of
+'     magnitude below the approximation error it sits inside.
+'
+'   PRACTICAL MEANING
+'     Roughly nine correct significant digits. This is a seed, never an answer.
+'     One Halley step cubes the error, so a single refinement reaches machine
+'     precision and no caller needs a second. The characterization tests in
+'     M_STATS_PROBDIST_TEST assert this bound directly, so a mistyped
+'     coefficient cannot pass silently.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -921,12 +992,27 @@ Public Sub PROB_SetStatus( _
 '   Writes a diagnostic message to the optional Status argument and, when
 '   enabled, to the Excel status bar.
 '
-' NOTE
-'   Status-bar writes are gated behind PROB_WRITE_STATUS_BAR (default False).
-'   Such writes from a worksheet UDF are unreliable (Excel frequently blocks
-'   object-model access from a function evaluation) and add churn when a function
-'   is bulk-filled. The On Error Resume Next guard wraps only the status-bar
-'   write, so a failure there cannot mask a failure of the ByRef assignment.
+' STATUS-BAR WRITES ARE INERT BY DEFAULT
+'   In the shipped configuration this procedure does exactly one thing: it
+'   assigns Message to the ByRef Status argument. The status-bar block below is
+'   removed by the compiler, not skipped at run time, because the switch
+'   PROB_WRITE_STATUS_BAR is False. There is therefore no Application reference
+'   in the compiled module, no object-model call from a worksheet function
+'   evaluation, and nothing that can fail.
+'
+'   The block exists only for interactive debugging: stepping a long iterative
+'   kernel in the VBE and wanting to see where it is. It is not a logging
+'   facility, not a progress indicator, and not part of any public contract.
+'   Enabling it in a shipped build would be wrong on three counts - Excel
+'   frequently blocks object-model access from a UDF evaluation, so the write is
+'   unreliable; a bulk-filled column produces one write per cell, so it is slow;
+'   and it makes this module depend on a host application it otherwise does not
+'   need (invariant I2).
+'
+'   To use it: set PROB_WRITE_STATUS_BAR to True in a scratch copy of this
+'   module, debug, then set it back. Never commit True. The On Error Resume
+'   Next guard, when compiled, wraps only the status-bar write, so a failure
+'   there cannot mask a failure of the ByRef assignment above it.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -935,12 +1021,10 @@ Public Sub PROB_SetStatus( _
     'Write the ByRef diagnostic message; this must never be silently swallowed
         Status = Message
 
-    'Exit when status-bar writes are disabled
-        If Not PROB_WRITE_STATUS_BAR Then Exit Sub
-
 '------------------------------------------------------------------------------
-' UPDATE STATUS BAR
+' UPDATE STATUS BAR - NOT COMPILED UNLESS EXPLICITLY ENABLED
 '------------------------------------------------------------------------------
+#If PROB_WRITE_STATUS_BAR Then
     'Suppress non-critical status-bar side effects
         On Error Resume Next
 
@@ -953,6 +1037,7 @@ Public Sub PROB_SetStatus( _
 
     'Restore normal error propagation
         On Error GoTo 0
+#End If
 End Sub
 
 

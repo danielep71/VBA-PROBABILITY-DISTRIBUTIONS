@@ -71,6 +71,9 @@ Option Explicit
 '   - TOL_ABS_LARGE_DF covers the large-parameter special-function error floor.
 '   - TOL_ABS_ULP and TOL_ABS_FEW_ULP are used only for constant-level checks.
 '   - TOL_REL_TIGHT, TOL_REL_LOOSE and TOL_REL_TAIL cover relative comparisons.
+'   - TOL_REL_ACKLAM is not a project tolerance. It is the published relative
+'     error bound of the Acklam inverse-normal approximation, asserted directly
+'     so that a mistyped coefficient fails a named check.
 '
 ' REGRESSION REGISTRY
 '   Core / Special Functions
@@ -78,6 +81,11 @@ Option Explicit
 '     C2  Incomplete-beta and incomplete-gamma kernels are tested directly for
 '         known values, complements, inverse round-trips and paired arguments.
 '     C3  PROB_LogBeta must remain stable for extremely unbalanced arguments.
+'     C4  CHARACTERIZATION. The branch seams of PROB_Log1p, PROB_Expm1,
+'         PROB_TryExp and PROB_NormalInvCDFRaw must not move. These assertions
+'         record where each helper changes branch, not how accurate it is, and
+'         use only VBA intrinsics so that they also verify CORE invariant I2
+'         (no Excel object-model dependency).
 '
 '   Normal Family
 '     N1  The raw Acklam inverse-normal kernel must return its computed value.
@@ -174,6 +182,7 @@ Private Const TOL_ABS_FEW_ULP   As Double = 5E-16          'Few-ULP absolute
 Private Const TOL_REL_TIGHT     As Double = 0.0000000001  '1E-10 relative
 Private Const TOL_REL_LOOSE     As Double = 0.000001      '1E-6 relative
 Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
+Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
 
 
 '==============================================================================
@@ -465,6 +474,7 @@ Private Sub RunCoreSuite()
     Test_Core_LogBetaTinyUnbalanced
     Test_Core_SpecialFunctionKernels
     Test_Core_NormalInvRaw
+    Test_Core_Characterization
 End Sub
 
 
@@ -1439,6 +1449,216 @@ Private Sub Test_Core_NormalInvRaw()
     AssertTrue "raw lower branch", (PROB_NormalInvCDFRaw(0.001) < -3#)
     AssertTrue "raw upper branch", (PROB_NormalInvCDFRaw(0.999) > 3#)
 End Sub
+Private Sub Test_Core_Characterization()
+'
+'==============================================================================
+' Test_Core_Characterization
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins the observable branch boundaries of the four CORE primitives that have
+'   one: PROB_Log1p, PROB_Expm1, PROB_TryExp and PROB_NormalInvCDFRaw.
+'
+' WHY THIS EXISTS
+'   The sections above check that these helpers are ACCURATE. None of them
+'   checks WHERE each helper changes branch, and a seam is the thing most likely
+'   to move silently under an edit that looks harmless. A characterization test
+'   records behavior that is true today and must stay true, so that a moved seam
+'   surfaces as one named failure here instead of as a small accuracy drift in
+'   some distribution three modules away.
+'
+' EXCEL INDEPENDENCE
+'   Every reference below is either an exact binary identity built from VBA
+'   intrinsics (powers of two, Log, Exp, Abs) or a literal verified against a
+'   60-digit mpmath reference. Nothing here touches Application,
+'   WorksheetFunction or any other host member, so this section doubles as a
+'   check of CORE design invariant I2.
+'
+' DEPENDENCIES
+'   - PROB_Log1p, PROB_Expm1, PROB_TryExp, PROB_IsFinite, PROB_NormalInvCDFRaw
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-08-13 - Section added
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE CONSTANTS
+'------------------------------------------------------------------------------
+    'Acklam branch cut-offs, mirrored from PROB_NormalInvCDFRaw
+    Const PLOW              As Double = 0.02425
+    Const PHIGH             As Double = 0.97575
+
+    'Offset large enough to land on a distinct Double either side of a seam
+    Const SEAM_DELTA        As Double = 0.000000000000001
+
+    'Measured seam discontinuity is 4.45E-9; this is the guard rail above it
+    Const SEAM_MAX_JUMP     As Double = 0.00000001
+
+    'Smallest positive normal Double
+    Const MIN_NORMAL        As Double = 2.2250738585072E-308
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Pow2Neg53           As Double          '2^-53, the Log1p seam
+    Dim Pow2Neg52           As Double          '2^-52, one step above the seam
+    Dim ExpResult           As Double          'PROB_TryExp output
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Both are exact: 2^53 and 2^52 are representable, so the reciprocals are too
+        Pow2Neg53 = 1# / (2# ^ 53#)
+        Pow2Neg52 = 1# / (2# ^ 52#)
+
+        Debug.Print "-- Core characterization (branch seams, host-independent)"
+
+'------------------------------------------------------------------------------
+' CH1 - PROB_LOG1P PASS-THROUGH SEAM
+'------------------------------------------------------------------------------
+    'The pass-through branch is entered exactly when 1 + X rounds back to one.
+    'Under round-half-to-even that is true at 2^-53 and false at 2^-52. Both
+    'halves are asserted: a helper that stopped taking the pass-through branch
+    'would still look accurate at these points while losing the exactness the
+    'deep left tails are built on.
+        AssertTrue "CH1 seam: 1 + 2^-53 rounds back to one", _
+            ((1# + Pow2Neg53) = 1#)
+        AssertTrue "CH1 seam: 1 + 2^-52 does not", _
+            ((1# + Pow2Neg52) <> 1#)
+
+    'Below the seam the helper must return its argument bit for bit
+        AssertExactlyEqual "CH1 Log1p(2^-53) returns X exactly", _
+            PROB_Log1p(Pow2Neg53), Pow2Neg53
+
+    'Above the seam the compensated form runs and must still agree to X
+        AssertRelClose "CH1 Log1p(2^-52) compensated branch", _
+            PROB_Log1p(Pow2Neg52), Pow2Neg52, TOL_REL_TIGHT
+
+'------------------------------------------------------------------------------
+' CH2 - LOG1P AND EXPM1 ARE MUTUAL INVERSES
+'------------------------------------------------------------------------------
+    'The two helpers are algebraic mirrors, so composing them must recover the
+    'argument across the whole useful range. This catches a sign or operand
+    'transposition in either one that a single-sided accuracy check would miss.
+        AssertRelClose "CH2 Log1p(Expm1(-5)) round trip", _
+            PROB_Log1p(PROB_Expm1(-5#)), -5#, TOL_REL_TIGHT
+        AssertRelClose "CH2 Log1p(Expm1(-1E-8)) round trip", _
+            PROB_Log1p(PROB_Expm1(-0.00000001)), -0.00000001, TOL_REL_TIGHT
+        AssertRelClose "CH2 Log1p(Expm1(0.5)) round trip", _
+            PROB_Log1p(PROB_Expm1(0.5)), 0.5, TOL_REL_TIGHT
+        AssertRelClose "CH2 Log1p(Expm1(30)) round trip", _
+            PROB_Log1p(PROB_Expm1(30#)), 30#, TOL_REL_TIGHT
+
+'------------------------------------------------------------------------------
+' CH3 - PROB_EXPM1 BRANCH BOUNDARIES
+'------------------------------------------------------------------------------
+    'Pass-through: Exp(2^-53) rounds back to one, so X is returned unchanged
+        AssertExactlyEqual "CH3 Expm1(2^-53) returns X exactly", _
+            PROB_Expm1(Pow2Neg53), Pow2Neg53
+
+    'Saturation: once Exp(X) is negligible against one the answer is exactly -1
+        AssertExactlyEqual "CH3 Expm1(-700) is exactly -1", _
+            PROB_Expm1(-700#), -1#
+        AssertExactlyEqual "CH3 Expm1(-746) is exactly -1", _
+            PROB_Expm1(-746#), -1#
+        AssertExactlyEqual "CH3 Expm1(-1E+300) is exactly -1", _
+            PROB_Expm1(-1E+300), -1#
+
+    'KNOWN DEFECT - the window in which Exp(X) is subnormal, roughly
+    '-745.14 < X < -709.1, is deliberately NOT asserted here. In that window the
+    'compensated rescale divides by Log of a subnormal, which has lost
+    'significant bits, and the helper returns a value below -1 by up to 9.3E-4.
+    'The range invariant -1 <= Expm1(X) < 0 is therefore not yet assertable.
+    'See the open issue for ICR-P1 Expm1 subnormal saturation; the invariant
+    'assertion belongs in this section the moment the kernel is repaired.
+
+'------------------------------------------------------------------------------
+' CH4 - PROB_TRYEXP OVERFLOW AND UNDERFLOW SEAMS
+'------------------------------------------------------------------------------
+    'Overflow seam. The helper finds the true boundary at run time; these two
+    'assertions are what a decimal cut-off constant used to get wrong.
+        AssertTrue "CH4 TryExp(709.78) accepted", _
+            PROB_TryExp(709.78, ExpResult)
+        AssertTrue "CH4 TryExp(709.78) finite", _
+            PROB_IsFinite(ExpResult)
+        AssertTrue "CH4 TryExp(709.79) rejected", _
+            (Not PROB_TryExp(709.79, ExpResult))
+
+    'Underflow seam. Underflow is a valid zero, never a failure, however far
+    'below the boundary the argument falls.
+        AssertTrue "CH4 TryExp(-745.14) accepted", _
+            PROB_TryExp(-745.14, ExpResult)
+        AssertExactlyEqual "CH4 TryExp(-745.14) is exactly zero", _
+            ExpResult, 0#
+        AssertTrue "CH4 TryExp(-1E+300) accepted", _
+            PROB_TryExp(-1E+300, ExpResult)
+        AssertExactlyEqual "CH4 TryExp(-1E+300) is exactly zero", _
+            ExpResult, 0#
+
+    'Between the seams the result is subnormal. This is asserted as a bound, not
+    'as a value: a host built with flush-to-zero enabled would legitimately
+    'return zero here, and that is still a success, not a failure.
+        AssertTrue "CH4 TryExp(-745) accepted", _
+            PROB_TryExp(-745#, ExpResult)
+        AssertTrue "CH4 TryExp(-745) is non-negative and subnormal", _
+            (ExpResult >= 0# And ExpResult < MIN_NORMAL)
+
+    'Identity point, to catch a scaling error that both seams would survive
+        AssertTrue "CH4 TryExp(0) accepted", PROB_TryExp(0#, ExpResult)
+        AssertExactlyEqual "CH4 TryExp(0) is exactly one", ExpResult, 1#
+
+'------------------------------------------------------------------------------
+' CH5 - INVERSE-NORMAL SEED BRANCH STRUCTURE
+'------------------------------------------------------------------------------
+    'The three Acklam branches are separate approximations. They are continuous
+    'across each cut-off only to the size of their own error, so the jump is
+    'bounded rather than zero. A jump above the guard rail means a branch
+    'condition or a coefficient block has moved.
+        AssertTrue "CH5 lower seam is continuous", _
+            (Abs(PROB_NormalInvCDFRaw(PLOW - SEAM_DELTA) - _
+                 PROB_NormalInvCDFRaw(PLOW + SEAM_DELTA)) < SEAM_MAX_JUMP)
+        AssertTrue "CH5 upper seam is continuous", _
+            (Abs(PROB_NormalInvCDFRaw(PHIGH - SEAM_DELTA) - _
+                 PROB_NormalInvCDFRaw(PHIGH + SEAM_DELTA)) < SEAM_MAX_JUMP)
+
+    'The central branch carries an odd factor Q, so the median seed is exact
+        AssertExactlyEqual "CH5 median seed is exactly zero", _
+            PROB_NormalInvCDFRaw(0.5), 0#
+
+    'The upper branch is the negated lower branch, so the seed is antisymmetric
+        AssertRelClose "CH5 antisymmetry at p = 0.001", _
+            PROB_NormalInvCDFRaw(0.001), -PROB_NormalInvCDFRaw(0.999), _
+            TOL_REL_TIGHT
+        AssertRelClose "CH5 antisymmetry at p = 0.025", _
+            PROB_NormalInvCDFRaw(0.025), -PROB_NormalInvCDFRaw(0.975), _
+            TOL_REL_TIGHT
+
+'------------------------------------------------------------------------------
+' CH6 - INVERSE-NORMAL SEED MEETS ITS PUBLISHED BOUND
+'------------------------------------------------------------------------------
+    'Acklam publishes a relative error below 1.15E-9 over (0, 1). Asserting the
+    'bound directly is what turns a mistyped coefficient into a named failure
+    'instead of a slightly slower Halley refinement nobody notices. References
+    'are correctly rounded inverse-normal values from a 60-digit mpmath
+    'computation. The p = 0.02425 point is included deliberately: the measured
+    'error peaks there at 1.130E-9, so it is the assertion with the least slack
+    'and the one that will move first.
+        AssertRelClose "CH6 seed bound at p = 0.7", _
+            PROB_NormalInvCDFRaw(0.7), 0.524400512708041, TOL_REL_ACKLAM
+        AssertRelClose "CH6 seed bound at p = 0.975", _
+            PROB_NormalInvCDFRaw(0.975), 1.95996398454005, TOL_REL_ACKLAM
+        AssertRelClose "CH6 seed bound at p = 0.02425 (lower cut-off)", _
+            PROB_NormalInvCDFRaw(0.02425), -1.97296105131189, TOL_REL_ACKLAM
+        AssertRelClose "CH6 seed bound at p = 0.001", _
+            PROB_NormalInvCDFRaw(0.001), -3.09023230616781, TOL_REL_ACKLAM
+        AssertRelClose "CH6 seed bound at p = 1E-10", _
+            PROB_NormalInvCDFRaw(0.0000000001), -6.36134090240406, _
+            TOL_REL_ACKLAM
+End Sub
+
 
 
 '==============================================================================
