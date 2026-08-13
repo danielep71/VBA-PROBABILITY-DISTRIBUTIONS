@@ -37,16 +37,34 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
 MIN_MARGIN = Decimal("2.5")
 
 # contract -> (grid function, grid regime, measure, metric,
-#              holdout worst, holdout source)
+#              expected main-grid points,
+#              holdout file, holdout quantity, holdout regimes,
+#              expected holdout points)
+#
+# Holdout worsts are RECOMPUTED from the committed holdout CSVs, never
+# hard-coded. A transcribed constant makes the freeze record reproducible only
+# for as long as somebody remembers to retype it; reading the file makes the
+# record regenerate itself. Expected point counts are asserted so a partially
+# missing evidence set fails rather than silently freezing a threshold from
+# whatever happens to be present.
+REGIMES_HOLDOUT = "loggamma_regimes_study/loggamma_regimes_holdout.csv"
+LG1P_HOLDOUT = "loggamma1p_study/loggamma1p_holdout.csv"
+
 SPEC = [
     ("LogGamma.small_positive.log_abs", "LogGamma", "small_positive",
-     "output_error", "absolute", Decimal("6.27E-14"), "loggamma_regimes_study holdout"),
+     "output_error", "absolute", 39,
+     REGIMES_HOLDOUT, "LogGamma", ("small_positive",), 28),
     ("LogGamma.near_zero.log_abs", "LogGamma", "near_zero",
-     "output_error", "absolute", Decimal("1.13E-14"), "loggamma_regimes_study holdout"),
+     "output_error", "absolute", 11,
+     # exact_zero is folded into near_zero: same absolute contract, and a
+     # relative one is undefined at a zero.
+     REGIMES_HOLDOUT, "LogGamma", ("near_zero", "exact_zero"), 16),
     ("LogGamma.general.output_rel", "LogGamma", "general",
-     "output_error", "relative", Decimal("3.24E-14"), "loggamma_regimes_study holdout"),
+     "output_error", "relative", 16,
+     REGIMES_HOLDOUT, "LogGamma", ("general",), 10),
     ("LogGamma1p.small.scaled_abs", "LogGamma1p", "small",
-     "scaled_output_error", "absolute", Decimal("1.92E-16"), "loggamma1p_holdout.csv"),
+     "scaled_output_error", "absolute", 32,
+     LG1P_HOLDOUT, "LogGamma1p", ("small",), 32),
 ]
 
 # worst on the study's own fitting grid, for the cross-check
@@ -71,6 +89,36 @@ def one_two_five(x):
     return sorted(set(out))
 
 
+def worst_in(path, quantity, regimes, measure, metric):
+    """Worst error over a study holdout file, computed the same way the gate
+    computes it: same parsing, same metric arithmetic, same scaled rule."""
+    full = path if os.path.isabs(path) else os.path.join(HERE, path)
+    if not os.path.exists(full):
+        raise SystemExit(f"holdout file not found: {full}")
+    worst = Decimal(0); at = ""; n = 0
+    for r in csv.DictReader(open(full)):
+        if r.get("quantity") != quantity or r.get("regime") not in regimes:
+            continue
+        o = parse_observed(r["observed_vba"])
+        ref = parse_reference(r["reference"])
+        if o is None or ref is None:
+            raise SystemExit(
+                f"{os.path.basename(full)}: unusable row at arg1={r['arg1']!r}; "
+                f"a freeze must not be derived from incomplete evidence")
+        if measure == "scaled_output_error":
+            a1 = parse_reference(r["arg1"])
+            if a1 is None or a1 == 0:
+                raise SystemExit(
+                    f"{os.path.basename(full)}: scaled row with unusable arg1")
+            e = calculate_scaled_error(o, ref, a1)
+        else:
+            e = calculate_error(o, ref, metric)
+        n += 1
+        if e > worst:
+            worst, at = e, r["arg1"]
+    return worst, at, n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--grid", default=os.path.join(HERE, "probability_accuracy_grid.csv"))
@@ -79,14 +127,21 @@ def main():
     rows = list(csv.DictReader(open(a.grid)))
 
     rec = []
-    for cid, fn, regime, measure, metric, hold_worst, hold_src in SPEC:
+    for (cid, fn, regime, measure, metric, want_main,
+         hold_path, hold_qty, hold_regimes, want_hold) in SPEC:
         matched = [r for r in rows if r["function"] == fn and r["regime"] == regime]
+        if len(matched) != want_main:
+            raise SystemExit(
+                f"{cid}: expected {want_main} main-grid rows, found {len(matched)}. "
+                f"A freeze must not be derived from an incomplete evidence set.")
         worst = Decimal(0); at = ""; n = 0
         for r in matched:
             o = parse_observed(r["observed_vba"])
             ref = parse_reference(r["reference"])
             if o is None or ref is None:
-                continue
+                raise SystemExit(
+                    f"{cid}: unusable row at arg1={r['arg1']!r}; a freeze must "
+                    f"not be derived from incomplete evidence")
             if measure == "scaled_output_error":
                 a1 = parse_reference(r["arg1"])
                 if a1 is None or a1 == 0:
@@ -97,6 +152,15 @@ def main():
             n += 1
             if e > worst:
                 worst, at = e, r["arg1"]
+        if n != want_main:
+            raise SystemExit(f"{cid}: scored {n} of {want_main} main-grid rows")
+        hold_worst, hold_at, hold_n = worst_in(
+            hold_path, hold_qty, hold_regimes, measure, metric)
+        if hold_n != want_hold:
+            raise SystemExit(
+                f"{cid}: expected {want_hold} holdout points in "
+                f"{os.path.basename(hold_path)}, found {hold_n}")
+        hold_src = os.path.basename(hold_path)
         combined = max(worst, hold_worst)
         levels = one_two_five(combined)
         strict = levels[0]
@@ -105,7 +169,9 @@ def main():
         rec.append({
             "contract": cid, "measure": measure, "metric": metric,
             "main_worst": f"{float(worst):.3e}", "main_worst_arg": at, "main_points": n,
-            "holdout_worst": f"{float(hold_worst):.3e}", "holdout_source": hold_src,
+            "holdout_worst": f"{float(hold_worst):.3e}",
+            "holdout_worst_arg": hold_at, "holdout_points": hold_n,
+            "holdout_source": hold_src,
             "combined_worst": f"{float(combined):.3e}",
             "strict_125": f"{float(strict):.0e}",
             "strict_margin": f"{float(strict / combined):.2f}",

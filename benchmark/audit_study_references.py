@@ -159,6 +159,12 @@ def main():
         "loggamma_regimes_study/loggamma_regimes_grid.csv",
         "loggamma_regimes_study/loggamma_regimes_holdout.csv",
         "loggamma1p_study/loggamma1p_grid.csv",
+        # The LogGamma1p holdout is evidence for a frozen threshold, so its
+        # references need the same independent certification as the fitting
+        # grid's. It found the worst case of the whole contract, at X=1E-307,
+        # which makes certifying it more important than the fitting set, not
+        # less.
+        "loggamma1p_study/loggamma1p_holdout.csv",
     ])
     a = ap.parse_args()
     out = []

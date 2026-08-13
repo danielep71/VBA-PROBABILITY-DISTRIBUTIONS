@@ -26,7 +26,13 @@ from decimal import Decimal, getcontext
 
 getcontext().prec = 60
 
-CONTRACT = Decimal("2.4E-16")          # provisional; frozen from holdout, not here
+# No threshold is hard-coded here. This analyzer MEASURES; derive_freeze.py
+# decides. A constant left at a provisional value silently contradicts the
+# frozen contract - and because the verdict formatted it with zero decimal
+# places, 2.4E-16 printed as "2e-16" while the margin was computed against
+# 2.4E-16, so the output was internally inconsistent as well as stale.
+# Pass --threshold to have a verdict printed.
+CONTRACT = None
 LOGGAMMA_CONTRACT = Decimal("6.1E-14")  # PROB_LogGamma's own published relative bound
 SERIES_MAX = Decimal("0.25")
 TWO_POW_M1075 = Decimal(2) ** -1075
@@ -71,10 +77,17 @@ def fmt(v, width=10):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--grid", default="loggamma1p_grid.csv")
+    ap.add_argument("--threshold", default=None,
+                    help="threshold to judge against, e.g. 5E-16. Omit to report "
+                         "the measured worst without a verdict; the freeze is "
+                         "derived by derive_freeze.py, not here")
     ap.add_argument("--holdout", default=None,
                     help="independent holdout export; validates the threshold on "
                          "data that set none of it")
     a = ap.parse_args()
+    global CONTRACT
+    if a.threshold:
+        CONTRACT = Decimal(a.threshold)
     order, pts = load(a.grid)
 
     missing = [x for x in order if pts[x].get("LogGamma1p", (None,))[0] is None]
@@ -121,13 +134,15 @@ def main():
         if reg not in worst:
             continue
         w, at = worst[reg]
-        if reg in SCALED_CONTRACT_REGIMES:
+        if reg in SCALED_CONTRACT_REGIMES and CONTRACT is not None:
             flag = "  OK" if w <= CONTRACT else "  OVER CONTRACT"
+        elif reg in SCALED_CONTRACT_REGIMES:
+            flag = ""
         else:
             flag = "  (not scaled-contracted)"
         print(f"   {reg:>18} {fmt(w, 13)}  {at}{flag}")
     overall = max([worst[r][0] for r in SCALED_CONTRACT_REGIMES if r in worst] or [Decimal(0)])
-    print(f"\n   Small-series branch worst: {fmt(overall)}   (provisional contract {float(CONTRACT):.1e})")
+    print(f"\n   Small-series branch worst: {fmt(overall)}")
 
     # The hand-over branch is PROB_LogGamma. It is reported on the SAME scaled
     # metric, not on relative error: Log(Gamma(1+X)) has zeros at X = 0 and
@@ -168,8 +183,12 @@ def main():
         ke, ne = scaled(ko, kr, Decimal(x)), scaled(no, nr, Decimal(x))
         if ke is None or ne is None:
             continue
-        if ne <= CONTRACT and Decimal(x) > Decimal("1E-6"):
-            continue                       # unremarkable, keep the table readable
+        # Table-readability filter only: hide rows where the naive spelling is
+        # already fine and X is not small. Uses a fixed display cutoff rather
+        # than a contract threshold, so the table does not change shape
+        # depending on which threshold happens to be passed in.
+        if ne <= Decimal("5E-16") and Decimal(x) > Decimal("1E-6"):
+            continue
         ratio = (ne / ke) if ke > 0 else None
         print(f"   {x:>24} {fmt(ke, 11)} {fmt(ne, 11)} {fmt(ratio, 13)}")
 
@@ -259,22 +278,28 @@ def main():
         if Decimal(z) < Decimal("1e-300"):     # below the fitting set's floor
             n_below += 1
             below = max(below, e)
-    thr = CONTRACT
-    print(f"\n   {'contract':34s} {'threshold':>10} {'holdout worst':>14} {'pts':>4} "
-          f"{'margin':>8}  verdict")
-    margin = thr / worstH if worstH > 0 else None
-    ok = worstH <= thr
-    print(f"   {'LogGamma1p.small.scaled_abs':34s} {float(thr):10.0e} "
-          f"{float(worstH):14.2e} {n:4d} "
-          f"{(f'{float(margin):.1f}x' if margin else 'inf'):>8}  "
-          f"{'PASS' if ok else 'FAIL'}   worst at X={atH}")
+    ok = None
+    if CONTRACT is None:
+        print(f"\n   LogGamma1p.small.scaled_abs   holdout worst "
+              f"{float(worstH):.2e} over {n} points, worst at X={atH}")
+        print("   No threshold supplied, so no verdict. The freeze is derived by")
+        print("   derive_freeze.py from max(main-grid worst, holdout worst).")
+    else:
+        print(f"\n   {'contract':34s} {'threshold':>10} {'holdout worst':>14} "
+              f"{'pts':>4} {'margin':>8}  verdict")
+        margin = CONTRACT / worstH if worstH > 0 else None
+        ok = worstH <= CONTRACT
+        print(f"   {'LogGamma1p.small.scaled_abs':34s} {float(CONTRACT):10.1e} "
+              f"{float(worstH):14.2e} {n:4d} "
+              f"{(f'{float(margin):.2f}x' if margin else 'inf'):>8}  "
+              f"{'PASS' if ok else 'FAIL'}   worst at X={atH}")
     print(f"\n   {n_below} point(s) lie below the fitting set's floor of 1E-300, "
           f"where the threshold was frozen")
     print(f"   without evidence. Worst there: {float(below):.2e}")
-    if ok:
+    if ok is True:
         print("\n   The threshold holds on data that set none of it, including the")
         print("   normal-result boundary the fitting grid never reached.")
-    else:
+    elif ok is False:
         print("\n   The threshold is exceeded. Do NOT freeze: adjust it to the honest")
         print("   holdout-inclusive worst and record why.")
 
