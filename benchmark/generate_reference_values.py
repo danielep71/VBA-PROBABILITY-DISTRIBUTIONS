@@ -307,13 +307,40 @@ def D(x):
     return _as_binary64_mpf(mp.nstr(x, 17))
 
 
+# Set while a quantile solver is bisecting. Canonicalisation must apply to the
+# EMITTED arguments, never to a solver's trial point: snapping every trial x to
+# a Double turns the objective into a step function, and the search then cannot
+# resolve past one ulp. Measured before this guard existed: _chi2_ppf(0.5, 5)
+# was wrong by 9.9E-17 against a 1E-40 bisection tolerance, and the four inverse
+# families accounted for 18 of 25 GENERATOR_STALE rows.
+_IN_SOLVER = [False]
+
+
 def _canonical_args(f):
     """Wrap a reference helper so it evaluates at the binary64 arguments."""
     import functools
 
     @functools.wraps(f)
     def wrapped(*a, **k):
+        if _IN_SOLVER[0]:
+            return f(*a, **k)
         return f(*[D(v) for v in a], **k)
+    return wrapped
+
+
+def _solving(f):
+    """Wrap a quantile helper: canonicalise ITS arguments once, then suspend
+    canonicalisation for the duration of the solve."""
+    import functools
+
+    @functools.wraps(f)
+    def wrapped(*a, **k):
+        args = a if _IN_SOLVER[0] else [D(v) for v in a]
+        _IN_SOLVER[0] = True
+        try:
+            return f(*args, **k)
+        finally:
+            _IN_SOLVER[0] = False
     return wrapped
 
 
@@ -625,9 +652,12 @@ def build_discrete_rows():
                 row("Binomial_Survival", "K_STATS_Binomial_Survival", (k, n, pr), _binom_sf(k, n, pr), REL9, "rel")
             for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
                 row("Binomial_InverseCumulative", "K_STATS_Binomial_InverseCumulative", (prob, n, pr), _binom_inv(prob, n, pr), ABS9, "abs")
-            row("Binomial_Mean", "K_STATS_Binomial_Mean", (n, pr), n * pr, REL14, "rel")
-            row("Binomial_Variance", "K_STATS_Binomial_Variance", (n, pr), n * pr * (1 - pr), REL14, "rel")
-            row("Binomial_StdDev", "K_STATS_Binomial_StdDev", (n, pr), mp.sqrt(n * pr * (1 - pr)), REL14, "rel")
+            # Canonicalise here: these references are inline expressions, not
+            # helper calls, so the decorator never sees their parameters.
+            nC, pC = D(n), D(pr)
+            row("Binomial_Mean", "K_STATS_Binomial_Mean", (nC, pC), nC * pC, REL14, "rel")
+            row("Binomial_Variance", "K_STATS_Binomial_Variance", (nC, pC), nC * pC * (1 - pC), REL14, "rel")
+            row("Binomial_StdDev", "K_STATS_Binomial_StdDev", (nC, pC), mp.sqrt(nC * pC * (1 - pC)), REL14, "rel")
 
     for lam in [mp.mpf(3), mp.mpf(50), mp.mpf(1000), mp.mpf(1000000)]:
         sd = mp.sqrt(lam)
@@ -639,9 +669,12 @@ def build_discrete_rows():
         row("Poisson_LogPMF", "K_STATS_Poisson_LogPMF", (mp.mpf(0), lam), _pois_logpmf(0, lam), REL12, "rel")
         for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
             row("Poisson_InverseCumulative", "K_STATS_Poisson_InverseCumulative", (prob, lam), _pois_inv(prob, lam), ABS9, "abs")
-        row("Poisson_Mean", "K_STATS_Poisson_Mean", (lam,), lam, REL14, "rel")
-        row("Poisson_Variance", "K_STATS_Poisson_Variance", (lam,), lam, REL14, "rel")
-        row("Poisson_StdDev", "K_STATS_Poisson_StdDev", (lam,), mp.sqrt(lam), REL14, "rel")
+        # Canonicalise here: these references are inline expressions, not
+            # helper calls, so the decorator never sees their parameters.
+        lamC = D(lam)
+        row("Poisson_Mean", "K_STATS_Poisson_Mean", (lamC,), lamC, REL14, "rel")
+        row("Poisson_Variance", "K_STATS_Poisson_Variance", (lamC,), lamC, REL14, "rel")
+        row("Poisson_StdDev", "K_STATS_Poisson_StdDev", (lamC,), mp.sqrt(lamC), REL14, "rel")
 
     for pr in [mp.mpf("0.5"), mp.mpf("0.05"), mp.mpf("0.001"), mp.mpf("1e-6")]:
         mean = (1 - pr) / pr
@@ -652,9 +685,12 @@ def build_discrete_rows():
             row("Geometric_Survival", "K_STATS_Geometric_Survival", (k, pr), _geo_sf(k, pr), REL9, "rel")
         for prob in [mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.975")]:
             row("Geometric_InverseCumulative", "K_STATS_Geometric_InverseCumulative", (prob, pr), _geo_inv(prob, pr), ABS9, "abs")
-        row("Geometric_Mean", "K_STATS_Geometric_Mean", (pr,), (1 - pr) / pr, REL14, "rel")
-        row("Geometric_Variance", "K_STATS_Geometric_Variance", (pr,), (1 - pr) / pr ** 2, REL14, "rel")
-        row("Geometric_StdDev", "K_STATS_Geometric_StdDev", (pr,), mp.sqrt(1 - pr) / pr, REL14, "rel")
+        # Canonicalise here: these references are inline expressions, not
+            # helper calls, so the decorator never sees their parameters.
+        pC = D(pr)
+        row("Geometric_Mean", "K_STATS_Geometric_Mean", (pC,), (1 - pC) / pC, REL14, "rel")
+        row("Geometric_Variance", "K_STATS_Geometric_Variance", (pC,), (1 - pC) / pC ** 2, REL14, "rel")
+        row("Geometric_StdDev", "K_STATS_Geometric_StdDev", (pC,), mp.sqrt(1 - pC) / pC, REL14, "rel")
 
     # --- Negative Binomial (failures before r-th success; args k, r, p) ---
     for r in [mp.mpf(1), mp.mpf(5), mp.mpf(50), mp.mpf(500), mp.mpf(5000)]:
@@ -668,9 +704,12 @@ def build_discrete_rows():
                 row("NegativeBinomial_Survival", "K_STATS_NegativeBinomial_Survival", (k, r, pr), _nb_sf(k, r, pr), REL9, "rel")
             for prob in [mp.mpf("0.07"), mp.mpf("0.53"), mp.mpf("0.94")]:
                 row("NegativeBinomial_InverseCumulative", "K_STATS_NegativeBinomial_InverseCumulative", (prob, r, pr), _nb_inv(prob, r, pr), ABS9, "abs")
-            row("NegativeBinomial_Mean", "K_STATS_NegativeBinomial_Mean", (r, pr), r * (1 - pr) / pr, REL14, "rel")
-            row("NegativeBinomial_Variance", "K_STATS_NegativeBinomial_Variance", (r, pr), r * (1 - pr) / pr ** 2, REL14, "rel")
-            row("NegativeBinomial_StdDev", "K_STATS_NegativeBinomial_StdDev", (r, pr), mp.sqrt(r * (1 - pr)) / pr, REL14, "rel")
+            # Canonicalise here: these references are inline expressions, not
+            # helper calls, so the decorator never sees their parameters.
+            rC, pC = D(r), D(pr)
+            row("NegativeBinomial_Mean", "K_STATS_NegativeBinomial_Mean", (rC, pC), rC * (1 - pC) / pC, REL14, "rel")
+            row("NegativeBinomial_Variance", "K_STATS_NegativeBinomial_Variance", (rC, pC), rC * (1 - pC) / pC ** 2, REL14, "rel")
+            row("NegativeBinomial_StdDev", "K_STATS_NegativeBinomial_StdDev", (rC, pC), mp.sqrt(rC * (1 - pC)) / pC, REL14, "rel")
 
     # --- Hypergeometric (args k, n, K, N: sample succ, sample size, pop succ, pop size) ---
     for n, K, N in [(10, 20, 50), (30, 40, 100), (100, 500, 1000), (50, 200, 1000), (500, 5000, 100000)]:
@@ -689,9 +728,12 @@ def build_discrete_rows():
             row("Hypergeometric_Survival", "K_STATS_Hypergeometric_Survival", (k, n, K, N), _hy_sf(k, n, K, N), REL9, "rel")
         for prob in [mp.mpf("0.13"), mp.mpf("0.57"), mp.mpf("0.91")]:
             row("Hypergeometric_InverseCumulative", "K_STATS_Hypergeometric_InverseCumulative", (prob, n, K, N), _hy_inv(prob, n, K, N), ABS9, "abs")
-        row("Hypergeometric_Mean", "K_STATS_Hypergeometric_Mean", (n, K, N), n * K / N, REL14, "rel")
-        row("Hypergeometric_Variance", "K_STATS_Hypergeometric_Variance", (n, K, N), n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)), REL14, "rel")
-        row("Hypergeometric_StdDev", "K_STATS_Hypergeometric_StdDev", (n, K, N), mp.sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1))), REL14, "rel")
+        # Canonicalise here: these references are inline expressions, not
+            # helper calls, so the decorator never sees their parameters.
+        nC, KC, NC = D(n), D(K), D(N)
+        row("Hypergeometric_Mean", "K_STATS_Hypergeometric_Mean", (nC, KC, NC), nC * KC / NC, REL14, "rel")
+        row("Hypergeometric_Variance", "K_STATS_Hypergeometric_Variance", (nC, KC, NC), nC * (KC / NC) * ((NC - KC) / NC) * ((NC - nC) / (NC - 1)), REL14, "rel")
+        row("Hypergeometric_StdDev", "K_STATS_Hypergeometric_StdDev", (nC, KC, NC), mp.sqrt(nC * (KC / NC) * ((NC - KC) / NC) * ((NC - nC) / (NC - 1))), REL14, "rel")
 
     # --- Discrete Uniform (inclusive integer support [Lower, Upper]) ---
     # Supports deliberately include a negative range (exercises floor vs
@@ -728,7 +770,7 @@ def build_discrete_rows():
 
         du_row("DiscreteUniform_Mean", (lo_m, hi_m), _du_mean(lo_m, hi_m), REL14, "rel")
         du_row("DiscreteUniform_Variance", (lo_m, hi_m), _du_var(lo_m, hi_m), REL14, "rel")
-        du_row("DiscreteUniform_StdDev", (lo_m, hi_m), mp.sqrt(_du_var(lo_m, hi_m)), REL14, "rel")
+        du_row("DiscreteUniform_StdDev", (lo_m, hi_m), mp.sqrt(_du_var(D(lo_m), D(hi_m))), REL14, "rel")
 
     return rows
 
@@ -862,7 +904,7 @@ def build_tiny_unbalanced_rows():
         rows.append({
             "function": func, "vba_kernel": func if func.startswith("PROB_") else "K_STATS_" + func,
             "claim": claim, "metric": metric,
-            "arg1": mp.nstr(args[0], 17), "arg2": mp.nstr(args[1], 17),
+            "arg1": mp.nstr(D(args[0]), 17), "arg2": mp.nstr(D(args[1]), 17),
             "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "", "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": regime, "evidence_set": "main grid",
@@ -1114,54 +1156,43 @@ for _f in (
         "_student_t_pdf",
         "_student_t_cdf",
         "_student_t_sf",
-        "_student_t_ppf",
         "_chi2_cdf",
         "_chi2_sf",
-        "_chi2_ppf",
         "_f_cdf",
         "_f_sf",
-        "_f_ppf",
         "_lognorm_params",
         "_gamma_pdf",
         "_gamma_cdf",
         "_gamma_sf",
-        "_gamma_ppf",
         "_beta_pdf",
         "_beta_cdf",
         "_beta_sf",
-        "_beta_ppf",
         "_weibull_mean",
         "_weibull_var",
         "_binom_pmf",
         "_binom_logpmf",
         "_binom_cdf",
         "_binom_sf",
-        "_binom_inv",
         "_pois_pmf",
         "_pois_logpmf",
         "_pois_cdf",
         "_pois_sf",
-        "_pois_inv",
         "_geo_pmf",
         "_geo_logpmf",
         "_geo_cdf",
         "_geo_sf",
-        "_geo_inv",
         "_nb_pmf",
         "_nb_logpmf",
         "_nb_cdf",
         "_nb_sf",
-        "_nb_inv",
         "_hy_pmf",
         "_hy_logpmf",
         "_hy_cdf",
         "_hy_sf",
-        "_hy_inv",
         "_du_pmf",
         "_du_logpmf",
         "_du_cdf",
         "_du_sf",
-        "_du_inv",
         "_du_mean",
         "_du_var",
         "_dt_inv_surv",
@@ -1172,6 +1203,22 @@ for _f in (
         "_tu_f_cdf",
 ):
     globals()[_f] = _canonical_args(globals()[_f])
+
+# Quantile helpers suspend canonicalisation while they bisect.
+for _f in (
+        "_student_t_ppf",
+        "_chi2_ppf",
+        "_f_ppf",
+        "_gamma_ppf",
+        "_beta_ppf",
+        "_binom_inv",
+        "_pois_inv",
+        "_geo_inv",
+        "_nb_inv",
+        "_hy_inv",
+        "_du_inv",
+):
+    globals()[_f] = _solving(globals()[_f])
 
 
 def main():

@@ -43,7 +43,7 @@ replacement_source names that action, so the migration script is mechanical:
 
 Report only; writes nothing but its own CSV.
 """
-import argparse, csv, importlib.util, struct, sys
+import argparse, csv, importlib.util, os, struct, sys
 import time as _time
 from collections import Counter
 import mpmath as mp
@@ -122,6 +122,86 @@ def _nb_cdf(k, r, p):
 
 
 
+def _binom_cdf_window(k, n, p):
+    """Binomial CDF by windowed summation. No quadrature, no hypergeometric.
+
+    mp.betainc goes through hyp2f1 and cannot converge for this grid, which
+    runs to n = 1E7. Adaptive quadrature of the beta density works but depends
+    on mp.quad's subdivision heuristics, which differ between mpmath releases -
+    a row that costs 5 s on one version can fail to terminate on another. An
+    oracle must not be version-sensitive, so the mass is summed directly.
+
+    The binomial mass is concentrated within a few standard deviations of
+    n*p, so only a window needs summing. It is cut at W standard deviations,
+    with W chosen so the Gaussian-approximation tail is below 10^-(dps + 30)
+    of the peak - far under the working precision, so the omitted mass cannot
+    affect a retained digit. For n = 1E7, p = 0.5 that is about 113,000 terms;
+    each is one multiply and one divide via the recurrence
+
+        pmf(i+1)/pmf(i) = ((n - i)/(i + 1)) * (p/(1 - p))
+
+    which is deterministic and costs no more than a few seconds.
+
+    Whichever tail is shorter is the one summed, so a CDF far above the mode is
+    computed as one minus a short upper tail rather than a long lower one."""
+    N = mp.floor(n)
+    K = mp.floor(k)
+    if K < 0:
+        return mp.mpf(0)
+    if K >= N:
+        return mp.mpf(1)
+    mean = N * p
+    sd = mp.sqrt(N * p * (1 - p))
+    w = mp.sqrt(2 * (mp.mp.dps + 30) * mp.log(10))
+    lo = int(max(mp.mpf(0), mp.floor(mean - w * sd)))
+    hi = int(min(N, mp.ceil(mean + w * sd)))
+    if K < lo:
+        return mp.mpf(0)                      # below the window: mass is negligible
+    if K >= hi:
+        return mp.mpf(1)                      # above it: the complement is negligible
+
+    ratio = p / (1 - p)
+    lg = mp.loggamma
+
+    def logpmf(i):
+        I = mp.mpf(i)
+        return (lg(N + 1) - lg(I + 1) - lg(N - I + 1)
+                + I * mp.log(p) + (N - I) * mp.log(1 - p))
+
+    if int(K) - lo <= hi - int(K):            # sum the shorter side
+        start, stop, complement = lo, int(K), False
+    else:
+        start, stop, complement = int(K) + 1, hi, True
+
+    term = mp.e ** logpmf(start)
+    total = term
+    for i in range(start, stop):
+        term = term * ((N - mp.mpf(i)) / (mp.mpf(i) + 1)) * ratio
+        total += term
+    return 1 - total if complement else total
+
+
+def _selfcheck_binom_window():
+    """Prove the windowed summation reproduces betainc where betainc converges,
+    before relying on it beyond that domain. Runs once, at import."""
+    old = mp.mp.dps
+    try:
+        mp.mp.dps = 60
+        for k, n, p in [(5, 20, "0.5"), (12, 20, "0.9"), (500, 1000, "0.5"),
+                        (30, 1000, "0.02"), (900, 1000, "0.9")]:
+            K, N, P = mp.mpf(k), mp.mpf(n), mp.mpf(float(p))
+            ref = _ibeta(1 - P, N - mp.floor(K), mp.floor(K) + 1)
+            got = _binom_cdf_window(K, N, P)
+            if abs(got - ref) > abs(ref) * mp.mpf(10) ** -45:
+                raise AssertionError(
+                    f"windowed binomial disagrees with betainc at k={k}, n={n}, p={p}")
+    finally:
+        mp.mp.dps = old
+
+
+_selfcheck_binom_window()
+
+
 def _selfcheck_nb_recurrence():
     """The recurrence replaces mp.betainc only where betainc cannot converge.
     Before relying on it there, prove it reproduces that independent route on
@@ -195,7 +275,7 @@ def _solve_logit(target, fwd, resid_out):
     return x
 
 
-def _binom_cdf(k, n, p): return _ibeta(1-p, n-mp.floor(k), mp.floor(k)+1)
+def _binom_cdf(k, n, p): return _binom_cdf_window(k, n, p)
 def _geo_cdf(k, p): return 1-(1-p)**(mp.floor(k)+1)
 def _t_cdf(x, df):
     """Student t CDF via the regularized incomplete beta, both tails."""
@@ -268,13 +348,20 @@ def build(dps, resid):
     _lg(n+1)-_lg(k+1)-_lg(n-k+1)+k*mp.log(p)+(n-k)*mp.log(1-p))),
  "Binomial_LogPMF": (3, "loggamma", lambda k,n,p:
     _lg(n+1)-_lg(k+1)-_lg(n-k+1)+k*mp.log(p)+(n-k)*mp.log(1-p)),
- "Binomial_Cumulative": (3, "betainc", _binom_cdf),
- "Binomial_Survival": (3, "betainc", lambda k,n,p: 1-_binom_cdf(k,n,p)),
+ "Binomial_Cumulative": (3, "windowed summation", _binom_cdf),
+ "Binomial_Survival": (3, "windowed summation", lambda k,n,p: 1-_binom_cdf(k,n,p)),
 
  "Geometric_PMF": (2, "closed form", lambda k,p: p*(1-p)**k),
  "Geometric_LogPMF": (2, "closed form", lambda k,p: mp.log(p)+k*mp.log(1-p)),
  "Geometric_Cumulative": (2, "closed form", _geo_cdf),
  "Geometric_Survival": (2, "closed form", lambda k,p: (1-p)**(mp.floor(k)+1)),
+ "Geometric_Mean": (1, "exact rational", lambda p: (1-p)/p),
+ "Geometric_Variance": (1, "exact rational", lambda p: (1-p)/(p*p)),
+ "Geometric_StdDev": (1, "exact rational + sqrt", lambda p: mp.sqrt((1-p)/(p*p))),
+
+ "Binomial_Mean": (2, "exact rational", lambda n,p: n*p),
+ "Binomial_Variance": (2, "exact rational", lambda n,p: n*p*(1-p)),
+ "Binomial_StdDev": (2, "exact rational + sqrt", lambda n,p: mp.sqrt(n*p*(1-p))),
 
  "StudentT_Density": (2, "loggamma", lambda x,df: mp.e**(
     _lg((df+1)/2)-_lg(df/2)-mp.log(df*mp.pi)/2-((df+1)/2)*mp.log(1+x*x/df))),
@@ -306,6 +393,8 @@ def main():
     ap.add_argument("--grid", default="probability_accuracy_grid.csv")
     ap.add_argument("--generator", default="generate_reference_values.py")
     ap.add_argument("--out", default="reference_audit.csv")
+    ap.add_argument("--resume", action="store_true",
+                    help="skip rows already present in --out and append the rest")
     a = ap.parse_args()
 
     spec = importlib.util.spec_from_file_location("gen", a.generator)
@@ -325,9 +414,30 @@ def main():
     grid = list(csv.DictReader(open(a.grid)))
     dis = [r for r in grid if K(r) in N and r["reference"] != N[K(r)]["reference"]]
 
+    # Stream to disk. Buffering every row and writing once at the end means a
+    # crash near the end loses the whole run, and the deep NegativeBinomial and
+    # Binomial rows make this a long run. Each row is flushed as it is produced,
+    # so an interrupted run costs one row and --resume picks up the rest.
+    done = set()
+    if a.resume and os.path.exists(a.out):
+        with open(a.out, newline="") as fh:
+            for prev in csv.DictReader(fh):
+                done.add((prev["function"], prev["arg1_hex"], prev["arg2_hex"],
+                          prev["arg3_hex"], prev["arg4_hex"], prev["regime"]))
+        print(f"  resuming: {len(done)} rows already audited")
+
+    fresh = not (a.resume and done)
+    fh = open(a.out, "w" if fresh else "a", newline="")
+    writer = csv.DictWriter(fh, fieldnames=FIELDS, lineterminator="\n")
+    if fresh:
+        writer.writeheader(); fh.flush()
+
     out, cnt = [], Counter()
     t0 = _time.time()
     for _i, r in enumerate(dis, 1):
+        if (r["function"], bits(r["arg1"]), bits(r["arg2"]), bits(r["arg3"]),
+                bits(r["arg4"]), r["regime"]) in done:
+            continue
         fn = r["function"]
         row = {"function": fn, "regime": r["regime"],
                "committed_reference": r["reference"],
@@ -341,6 +451,7 @@ def main():
         for i in range(4):
             row[f"arg{i+1}"] = r[f"arg{i+1}"]; row[f"arg{i+1}_hex"] = bits(r[f"arg{i+1}"])
         vals, resid = [], []
+        _NB_CACHE.clear()
         method = ""
         try:
             for dps in (DPS_LOW, DPS_HIGH):
@@ -393,12 +504,11 @@ def main():
         finally:
             mp.mp.dps = 50
         cnt[cls] += 1; out.append(row)
+        writer.writerow(row); fh.flush()
         if _i % 10 == 0 or _i == len(dis):
             print(f"  {_i:4d}/{len(dis)}  {_time.time()-t0:6.0f}s  last: {fn}", flush=True)
 
-    with open(a.out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDS, lineterminator="\n")
-        w.writeheader(); w.writerows(out)
+    fh.close()
     print(f"audited {len(out)} disagreements against an independent oracle "
           f"at {DPS_LOW} and {DPS_HIGH} digits\n")
     for c, n in cnt.most_common():
