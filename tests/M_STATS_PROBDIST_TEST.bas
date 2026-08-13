@@ -1503,6 +1503,10 @@ Private Sub Test_Core_Characterization()
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
+    Dim LadderPoints        As Variant         'Negative-domain ladder
+    Dim LadderX             As Double          'Current ladder point
+    Dim LadderValue         As Double          'PROB_Expm1 at that point
+    Dim LadderIdx           As Long            'Ladder index
     Dim Pow2Neg53           As Double          '2^-53, the Log1p seam
     Dim Pow2Neg52           As Double          '2^-52, one step above the seam
     Dim ExpResult           As Double          'PROB_TryExp output
@@ -1567,13 +1571,48 @@ Private Sub Test_Core_Characterization()
         AssertExactlyEqual "CH3 Expm1(-1E+300) is exactly -1", _
             PROB_Expm1(-1E+300), -1#
 
-    'KNOWN DEFECT - the window in which Exp(X) is subnormal, roughly
-    '-745.14 < X < -709.1, is deliberately NOT asserted here. In that window the
-    'compensated rescale divides by Log of a subnormal, which has lost
-    'significant bits, and the helper returns a value below -1 by up to 9.3E-4.
-    'The range invariant -1 <= Expm1(X) < 0 is therefore not yet assertable.
-    'See the open issue for ICR-P1 Expm1 subnormal saturation; the invariant
-    'assertion belongs in this section the moment the kernel is repaired.
+    'Subnormal window regression. Roughly -745.14 < X < -709.1 the exponential
+    'is subnormal and carries fewer than 53 significant bits, so Log(U) no
+    'longer recovers X. The old compensated rescale divided by that Log and
+    'returned values BELOW -1 - outside the range of Exp(X) - 1 - by up to
+    '9.3E-4 at X = -745.13, which two public CDFs propagated as a probability
+    'above one. Branching on U - 1# = -1# before the rescale removed it.
+        AssertExactlyEqual "CH3 Expm1(-709.1) is exactly -1", _
+            PROB_Expm1(-709.1), -1#
+        AssertExactlyEqual "CH3 Expm1(-730) is exactly -1", _
+            PROB_Expm1(-730#), -1#
+        AssertExactlyEqual "CH3 Expm1(-740) is exactly -1", _
+            PROB_Expm1(-740#), -1#
+        AssertExactlyEqual "CH3 Expm1(-745.13) is exactly -1", _
+            PROB_Expm1(-745.13), -1#
+
+    'The range invariant the window used to break. Asserted across the window
+    'and its two edges, so a reintroduced rescale fails here rather than
+    'surfacing as a probability above one in Exponential or Weibull.
+        AssertTrue "CH3 Expm1 never falls below -1 across the window", _
+            (PROB_Expm1(-709.1) >= -1# And PROB_Expm1(-730#) >= -1# _
+             And PROB_Expm1(-740#) >= -1# And PROB_Expm1(-745.13) >= -1#)
+        AssertTrue "CH3 Expm1 stays strictly below zero across the window", _
+            (PROB_Expm1(-709.1) < 0# And PROB_Expm1(-745.13) < 0#)
+
+    'General range property of Exp(X) - 1, swept as a ladder rather than at
+    'isolated points. For finite X < 0 the value lies in [-1, 0); at X = 0 it
+    'is 0; for X > 0 it is positive. The defect fixed above violated the first
+    'of these, and a ladder like this one would have caught it immediately.
+        LadderPoints = Array(-0.00000001, -0.025, -1#, -10#, -40#, -100#, _
+                             -400#, -700#, -709.1, -730#, -745.13, -746#, _
+                             -1E+300)
+        For LadderIdx = LBound(LadderPoints) To UBound(LadderPoints)
+            LadderX = LadderPoints(LadderIdx)
+            LadderValue = PROB_Expm1(LadderX)
+            AssertTrue "CH3 Expm1 in [-1, 0) at X = " & CStr(LadderX), _
+                (LadderValue >= -1# And LadderValue < 0#)
+        Next LadderIdx
+
+        AssertExactlyEqual "CH3 Expm1(0) is exactly zero", PROB_Expm1(0#), 0#
+        AssertTrue "CH3 Expm1 positive for X > 0", _
+            (PROB_Expm1(0.00000001) > 0# And PROB_Expm1(1#) > 0# _
+             And PROB_Expm1(700#) > 0#)
 
 '------------------------------------------------------------------------------
 ' CH4 - PROB_TRYEXP OVERFLOW AND UNDERFLOW SEAMS
@@ -4394,6 +4433,11 @@ Private Sub Test_CN_GammaDensity()
 '   2026-07-21
 '==============================================================================
 '
+    Dim MinSubnormal        As Double          'Smallest positive Double, built by halving
+    Dim FirstFailingShape   As Double          '2 ^ -1024, the old overflow point
+    Dim Halved              As Double          'Candidate next power of two
+    Dim BoundaryIdx         As Long            'Halving / doubling counter
+
     Debug.Print "-- Gamma density"
     AssertClose "gamma pdf(3,2.5,1.5)", K_STATS_Gamma_Density(3#, 2.5, 1.5), _
         0.19196788093578, TOL_ABS_TIGHT
@@ -4412,6 +4456,51 @@ Private Sub Test_CN_GammaDensity()
         3.98942280401433E-11, 0.000000000001
     AssertIsError "gamma pdf above density envelope (2e20)", _
         K_STATS_Gamma_Density(2E+20, 2E+20, 1#)
+
+    'Stirling reciprocal-boundary regression (#18). The small-N recurrence
+    'once formed (N + 1#) / N, which overflows below N = 2 ^ -1024, and the
+    'shape guard has no lower cutoff, so a valid subnormal shape was refused
+    'with CVErr while its true density was small and representable. No main-
+    'grid row reaches this region, so these assertions are the only automated
+    'guard against the reciprocal returning. Arguments are BUILT, not written
+    'as literals: a VBA source literal cannot be relied on to denote a
+    'subnormal Double, and a mis-parsed literal would silently test a
+    'different number. Halving from one is exact.
+    'Assign, THEN test the stored value. VBA evaluates a Double expression in
+    'wider precision than Double and rounds only on assignment, so testing
+    'MinSubnormal / 2# in the loop condition would keep the loop running below
+    'the Double floor and leave MinSubnormal at zero.
+        MinSubnormal = 1#
+        For BoundaryIdx = 1 To 1074
+            Halved = MinSubnormal / 2#
+            If Halved = 0# Then Exit For
+            MinSubnormal = Halved
+        Next BoundaryIdx
+
+    'Fail here rather than in the assertions below if the construction broke:
+    'a zero shape would make every assertion below report a kernel defect
+    'that is really an arithmetic-construction defect in this test.
+    AssertTrue "min positive Double constructed, nonzero", MinSubnormal > 0#
+
+    'There is deliberately NO assertion of the form MinSubnormal / 2# = 0#.
+    'For the reason above, 2 ^ -1075 survives inside the comparison and the
+    'test would fail on a correct value. The value is pinned instead by the
+    'Stirling assertion below: no argument but 2 ^ -1074 yields that delta.
+
+        FirstFailingShape = MinSubnormal
+        For BoundaryIdx = 1 To 50
+            FirstFailingShape = FirstFailingShape * 2#   '2 ^ -1024
+        Next BoundaryIdx
+
+    AssertRelClose "gamma pdf at 2^-1024 (Stirling reciprocal boundary)", _
+        K_STATS_Gamma_Density(1#, FirstFailingShape, 1#), _
+        2.04639731908204E-309, TOL_REL_TIGHT
+    AssertRelClose "gamma pdf one ulp above the boundary", _
+        K_STATS_Gamma_Density(1#, FirstFailingShape + MinSubnormal, 1#), _
+        2.04639731908204E-309, TOL_REL_TIGHT
+    AssertClose "Stirling error at the minimum positive Double", _
+        PROB_StirlingError(MinSubnormal), _
+        371.301097427486, TOL_ABS_TIGHT
 End Sub
 
 
@@ -4837,6 +4926,23 @@ Private Sub Test_CN_ExponentialCumulative()
     AssertClose "exp cdf(-1,2)=0", K_STATS_Exponential_Cumulative(-1#, 2#), 0#, 0#
     AssertClose "exp cdf product overflow tends one", _
         K_STATS_Exponential_Cumulative(1E+308, 1E+308), 1#, 0#
+
+    'Far right tail must not exceed one. Before the PROB_Expm1 subnormal fix
+    'these returned up to 1.0007521466129217, a probability above one that
+    'nothing downstream could detect.
+    AssertExactlyEqual "exp cdf(715,1) is exactly one", _
+        K_STATS_Exponential_Cumulative(715#, 1#), 1#
+    AssertExactlyEqual "exp cdf(745,1) is exactly one", _
+        K_STATS_Exponential_Cumulative(745#, 1#), 1#
+    'The mathematical CDF is still infinitesimally below one here; the
+    'correctly rounded binary64 result is exactly one, so assert that rather
+    'than the weaker <= 1.
+    AssertExactlyEqual "exp cdf(730,1) is exactly one", _
+        K_STATS_Exponential_Cumulative(730#, 1#), 1#
+    AssertExactlyEqual "exp cdf(740,1) is exactly one", _
+        K_STATS_Exponential_Cumulative(740#, 1#), 1#
+    AssertExactlyEqual "exp cdf(745.13,1) is exactly one", _
+        K_STATS_Exponential_Cumulative(745.13, 1#), 1#
 End Sub
 
 
@@ -4975,6 +5081,18 @@ Private Sub Test_CN_WeibullCumulative()
         9.9999999995E-11, TOL_REL_TAIL
     AssertClose "weibull cdf(0,1.5,2)=0", K_STATS_Weibull_Cumulative(0#, 1.5, 2#), 0#, 0#
     AssertClose "weibull cdf(-3,1.5,2)=0", K_STATS_Weibull_Cumulative(-3#, 1.5, 2#), 0#, 0#
+
+    'Far right tail must not exceed one. Weibull reaches the same PROB_Expm1
+    'call as Exponential and was affected identically; neither call site
+    'clamps, so the kernel is the only guard.
+    AssertExactlyEqual "weibull cdf(745,1,1) is exactly one", _
+        K_STATS_Weibull_Cumulative(745#, 1#, 1#), 1#
+    AssertExactlyEqual "weibull cdf(715,1,1) is exactly one", _
+        K_STATS_Weibull_Cumulative(715#, 1#, 1#), 1#
+    AssertExactlyEqual "weibull cdf(740,1,1) is exactly one", _
+        K_STATS_Weibull_Cumulative(740#, 1#, 1#), 1#
+    AssertExactlyEqual "weibull cdf(745.13,1,1) is exactly one", _
+        K_STATS_Weibull_Cumulative(745.13, 1#, 1#), 1#
 End Sub
 
 

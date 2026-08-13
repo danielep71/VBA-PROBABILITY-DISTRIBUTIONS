@@ -728,7 +728,9 @@ Public Function PROB_Log1p( _
 '   relative error of the logarithm is about 1.1E-16 / X. At X = 1E-8 that is a
 '   relative error of 1E-8. Kahan's compensated form recovers the lost bits by
 '   scaling Log(U) by the exactly-representable ratio X / (U - 1), restoring full
-'   relative precision across the small-X range.
+'   relative precision across the small-X range. The compensation is applied
+'   only while U - 1 still carries information: once it rounds to exactly -1,
+'   -1 is the correctly rounded result and the rescale is skipped.
 '
 '   No numeric accuracy figure is quoted here on purpose: a measured threshold
 '   belongs in accuracy_contracts.csv where the gate can check it, not in a
@@ -794,6 +796,7 @@ Public Function PROB_Expm1( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim U                   As Double          'Exp(X), as actually rounded
+    Dim V                   As Double          'U - 1, as actually rounded
 
 '------------------------------------------------------------------------------
 ' COMPUTE
@@ -801,15 +804,28 @@ Public Function PROB_Expm1( _
     'Round the exponential once and reuse it
         U = Exp(X)
 
+    'Round the difference once and reuse it. The branch below must test this
+    'stored Double: VBA evaluates a Double expression in wider precision and
+    'rounds only on assignment, so testing U - 1# inline would not ask the
+    'question the branch depends on.
+        V = U - 1#
+
     'Return X exactly when the exponential rounds back to one
         If U = 1# Then
             PROB_Expm1 = X
-    'Return -1 exactly when the exponential underflows to zero
-        ElseIf U = 0# Then
+    'Return -1 exactly once the exponential is negligible against one. This
+    'subsumes hard underflow (U = 0) and, critically, the subnormal window
+    'above it: there U carries fewer than 53 significant bits, Log(U) no
+    'longer recovers X, and the rescale factor X / Log(U) drifts from 1. As
+    'U - 1# has already rounded to exactly -1 the drift landed undiluted and
+    'the previous form returned values BELOW -1, outside the range of
+    'Exp(X) - 1. Wherever V is -1, -1 is the correctly rounded answer, so
+    'the compensation is not merely inaccurate there but unnecessary.
+        ElseIf V = -1# Then
             PROB_Expm1 = -1#
     'Otherwise rescale by the exact ratio X / Log(U)
         Else
-            PROB_Expm1 = (U - 1#) * X / Log(U)
+            PROB_Expm1 = V * X / Log(U)
         End If
 End Function
 
