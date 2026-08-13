@@ -1,0 +1,5 @@
+contract,measure,metric,main_worst,main_worst_arg,main_points,holdout_worst,holdout_source,combined_worst,strict_125,strict_margin,selected_freeze,margin_main,margin_holdout,margin_combined,study_worst,main_over_study
+LogGamma.small_positive.log_abs,output_error,absolute,8.570e-14,8.0947715414629834e-320,39,6.270e-14,loggamma_regimes_study holdout,8.570e-14,1e-13,1.17,5e-13,5.83,7.97,5.83,8.570e-14,1.000
+LogGamma.near_zero.log_abs,output_error,absolute,9.770e-15,2.0,11,1.130e-14,loggamma_regimes_study holdout,1.130e-14,2e-14,1.77,5e-14,5.12,4.42,4.42,9.770e-15,1.000
+LogGamma.general.output_rel,output_error,relative,9.308e-14,1.75,16,3.240e-14,loggamma_regimes_study holdout,9.308e-14,1e-13,1.07,5e-13,5.37,15.43,5.37,9.310e-14,1.000
+LogGamma1p.small.scaled_abs,scaled_output_error,absolute,1.363e-16,1.0e-13,32,1.920e-16,loggamma1p_holdout.csv,1.920e-16,2e-16,1.04,5e-16,3.67,2.60,2.60,1.360e-16,1.002

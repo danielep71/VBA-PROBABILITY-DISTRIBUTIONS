@@ -20,6 +20,7 @@ look flattering at small X and prove nothing about that caller.
 """
 import argparse
 import csv
+import os
 from collections import defaultdict
 from decimal import Decimal, getcontext
 
@@ -70,6 +71,9 @@ def fmt(v, width=10):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--grid", default="loggamma1p_grid.csv")
+    ap.add_argument("--holdout", default=None,
+                    help="independent holdout export; validates the threshold on "
+                         "data that set none of it")
     a = ap.parse_args()
     order, pts = load(a.grid)
 
@@ -218,6 +222,61 @@ def main():
     print("   Scope to X >= 3.855E-308 (PROB_MIN_NORMAL / EulerGamma); below that the")
     print("   result is itself subnormal and LogGamma1p.subnormal_result applies.")
     print("   Freeze only after the independent holdout is populated.")
+
+
+    # ---- 6 --------------------------------------------------------------
+    if not a.holdout:
+        return
+    print("\n6) INDEPENDENT HOLDOUT -- freeze decision for "
+          "LogGamma1p.small.scaled_abs")
+    if not os.path.exists(a.holdout):
+        print(f"   {a.holdout} not found.")
+        return
+    horder, hpts = load(a.holdout)
+    filled = [z for z in horder if hpts[z].get("LogGamma1p", (None,))[0] is not None]
+    print(f"   {a.holdout}: {len(filled)}/{len(horder)} points filled")
+    if not filled:
+        print("   Not exported yet -- run Export_LogGamma1p and pick the holdout.")
+        return
+    overlap = set(horder) & set(order)
+    print(f"   points shared with the fitting set: {len(overlap)}"
+          f"{'' if not overlap else '  *** NOT INDEPENDENT'}")
+    bad = [z for z in horder
+           if hpts[z].get("EchoX", (None, None))[0] is not None
+           and float(hpts[z]["EchoX"][0]) != float(hpts[z]["EchoX"][1])]
+    print(f"   argument integrity: {'all exact' if not bad else str(len(bad)) + ' MISMATCH'}")
+
+    worstH = Decimal(0); atH = None; n = 0
+    below = Decimal(0); n_below = 0
+    for z in horder:
+        obs, ref = hpts[z].get("LogGamma1p", (None, None))
+        e = scaled(obs, ref, Decimal(z))
+        if e is None:
+            continue
+        n += 1
+        if e > worstH:
+            worstH, atH = e, z
+        if Decimal(z) < Decimal("1e-300"):     # below the fitting set's floor
+            n_below += 1
+            below = max(below, e)
+    thr = CONTRACT
+    print(f"\n   {'contract':34s} {'threshold':>10} {'holdout worst':>14} {'pts':>4} "
+          f"{'margin':>8}  verdict")
+    margin = thr / worstH if worstH > 0 else None
+    ok = worstH <= thr
+    print(f"   {'LogGamma1p.small.scaled_abs':34s} {float(thr):10.0e} "
+          f"{float(worstH):14.2e} {n:4d} "
+          f"{(f'{float(margin):.1f}x' if margin else 'inf'):>8}  "
+          f"{'PASS' if ok else 'FAIL'}   worst at X={atH}")
+    print(f"\n   {n_below} point(s) lie below the fitting set's floor of 1E-300, "
+          f"where the threshold was frozen")
+    print(f"   without evidence. Worst there: {float(below):.2e}")
+    if ok:
+        print("\n   The threshold holds on data that set none of it, including the")
+        print("   normal-result boundary the fitting grid never reached.")
+    else:
+        print("\n   The threshold is exceeded. Do NOT freeze: adjust it to the honest")
+        print("   holdout-inclusive worst and record why.")
 
 
 if __name__ == "__main__":
