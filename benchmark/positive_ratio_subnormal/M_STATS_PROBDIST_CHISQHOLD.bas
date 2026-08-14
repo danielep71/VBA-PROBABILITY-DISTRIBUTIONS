@@ -13,7 +13,7 @@ Private Const PROBE_FIELDS As Long = 14
 'therefore surface-specific; shape_id is provenance, echo_shape is
 'authoritative.
 '==============================================================================
-' M_STATS_PROBDIST_CHISQPROBE
+' M_STATS_PROBDIST_CHISQHOLD
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Independent HOLDOUT exporter for ICR-P1-01A (#13), Chi-square arm.
@@ -260,9 +260,11 @@ Private Sub BuildPoints( _
 ' BuildPoints
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Constructs the point set: fifteen buckets from 52 bits down to 1, each
-'   with a landmark and ONE transform stress, plus the single hard-underflow
-'   case and two decimal twins.
+'   Constructs the point set: the thirteen frozen holdout buckets, each with
+'   a landmark and ONE transform stress, plus the single hard-underflow case
+'   and two decimal twins. The buckets are disjoint from the fitting ladder
+'   and eleven of thirteen are odd, so they sit at binary exponents the
+'   fitting set never touched. Frozen in HOLDOUT_DESIGN.md.
 '
 ' THE CONSTRUCTION
 '   With m = 2 ^ -1074 the subnormal ULP and N = 2 ^ (k - 1):
@@ -275,7 +277,8 @@ Private Sub BuildPoints( _
 '   produced here: aiming at one requires an X that is not representable, and
 '   rounding it lands back on exactly 1/2. The analyzer asserts this.
 '
-'   Every X above is exactly representable, verified at all fifteen buckets.
+'   Every X above is exactly representable, verified at all thirteen holdout
+'   buckets before this module was written.
 '   The integer coefficients stay below 2 ^ 53, so forming them in Double is
 '   exact, and multiplying by m is a pure exponent shift.
 '==============================================================================

@@ -731,13 +731,36 @@ def test_claims(points: list[Point]) -> bool:
             all_pass = False
             continue
 
-        violations = []
+        violations, unavailable = [], []
         for bits in tested:
             wc, wa, sc, sa = alg[bits]
             if wc is None or wa is None:
-                continue                    # not comparable, not a violation
+                # Fail closed. An unavailable bucket is not evidence that the
+                # candidate dominates there, so it must not vanish from the
+                # denominator and let the rest of the range carry a PASS.
+                # Reported apart from a numerical violation: "the algorithm
+                # lost" and "the evidence is missing" are different verdicts.
+                unavailable.append((bits, wc, wa))
+                continue
             if wa >= wc:
                 violations.append((bits, wc, wa, sc, sa))
+
+        if unavailable and not violations:
+            all_pass = False
+            print(f"-- {surface}: **PENDING** — claim was 'candidate dominates "
+                  f"at <= {claim} bits'")
+            print(f"   No violation found, but {len(unavailable)} of "
+                  f"{len(tested)} claimed buckets have no comparable evidence,")
+            print(f"   so the claim is not established:")
+            for bits, wc, wa in unavailable:
+                which = ("candidate" if wa is None else "current")
+                print(f"   {bits:>5} bits: {which} unavailable")
+            continue
+
+        if unavailable:
+            print(f"   note: {len(unavailable)} claimed bucket(s) also have no "
+                  f"comparable evidence: "
+                  f"{', '.join(str(b) for b, _, _ in unavailable)}")
 
         if violations:
             all_pass = False
@@ -783,6 +806,7 @@ def main() -> None:
             print(f"   {o}")
         raise SystemExit(2)
 
+    claims_hold = True
     for path in args.csv:
         points = load(path)
         problems = verify_constructions(points) + twin_check(points)
@@ -796,12 +820,17 @@ def main() -> None:
         print(f"{path.name}: construction check passed, {len(points)} "
               f"observations")
         if args.claims:
-            test_claims(points)
+            # Propagate the verdict to the process. A rejected or pending claim
+            # must fail the shell, or a hosted gate running this step would go
+            # green on evidence that does not support the claim.
+            claims_hold = test_claims(points) and claims_hold
         else:
             report(points)
 
     print("\nPhase A is measurement only. No cutoff is proposed here and no "
           "source is changed.")
+    if args.claims and not claims_hold:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

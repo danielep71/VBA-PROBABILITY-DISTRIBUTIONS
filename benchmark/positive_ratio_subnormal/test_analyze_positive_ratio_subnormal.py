@@ -433,6 +433,46 @@ def test_claim_mode_proposes_no_crossover():
     assert "bits and below" not in out
 
 
+def test_unavailable_claimed_bucket_does_not_pass():
+    """Fail closed: a claimed bucket with no comparable evidence must not
+    silently vanish from the denominator.
+
+    Skipping it would let the remaining buckets carry a PASS on a claim that
+    was never established there — the opposite of what a holdout is for.
+    """
+    pts = [_claim_point("cumulative", b, 0.5, 1e-10, 1e-14)
+           for b in (40, 33, 25, 17, 9)]
+    # a claimed bucket where the candidate produced nothing at all
+    pts.append(_claim_point("cumulative", 3, 0.5, 1e-10, None))
+    assert run_claim_test(pts) is False
+
+    # and the mirror case: current unavailable
+    pts2 = [_claim_point("density", b, 0.5, 1e-10, 1e-14)
+            for b in (48, 41, 33, 25, 17, 9, 3)]
+    pts2.append(_claim_point("density", 46, 0.5, None, 1e-14))
+    assert run_claim_test(pts2) is False
+
+
+def test_cli_exits_nonzero_when_a_claim_is_rejected():
+    """The verdict must reach the process. A hosted gate running this step
+    would otherwise go green on evidence that rejects the claim."""
+    import csv as _csv
+    with tempfile.TemporaryDirectory() as tmp:
+        rows = valid_rows()
+        # force a violation inside the claimed range by making the candidate
+        # worse than current everywhere
+        for r in rows:
+            r["current_value"] = hilo(1e-16)
+            r["candidate_value"] = hilo(1.0)
+        path = write_csv(rows, Path(tmp) / "reject.csv")
+        result = subprocess.run(
+            [sys.executable, str(ANALYZER), str(path), "--claims"],
+            capture_output=True, text=True)
+        assert result.returncode != 0, \
+            "a rejected claim exited 0; the gate would go green"
+        assert "REJECTED" in result.stdout or "PENDING" in result.stdout
+
+
 def test_hard_underflow_is_not_bucket_zero():
     """A stored zero is not merely imprecise: it has become indistinguishable
     from the support boundary. It must be classified apart, never pooled into

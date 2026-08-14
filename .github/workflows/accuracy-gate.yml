@@ -56,11 +56,18 @@ jobs:
         # Jacobian, a missing candidate recorded as zero error, an absent
         # overflowed-output class, an ambiguous binding shape and an oracle
         # precision inconsistency - none of which CI would have caught.
+        #
+        # The --claims runs gate the preregistered holdout verdicts themselves.
+        # They exit non-zero on a rejected or pending claim, so a holdout that
+        # stops supporting a registered cutoff turns the gate red rather than
+        # requiring somebody to read the output.
         # Runs while #13 is active; remove when the study closes.
         run: |
           python test_analyze_positive_ratio_subnormal.py
           python analyze_positive_ratio_subnormal.py gamma_probe.csv > /dev/null
           python analyze_positive_ratio_subnormal.py chisquare_probe.csv > /dev/null
+          python analyze_positive_ratio_subnormal.py gamma_holdout.csv --claims
+          python analyze_positive_ratio_subnormal.py chisquare_holdout.csv --claims
 
       - name: Verify the evaluation tooling itself
         working-directory: benchmark
