@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-14T13:16:22Z",
-  "commit_sha": "4b83b5d",
+  "generated_utc": "2026-08-14T16:04:32Z",
+  "commit_sha": "464de4e",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -39,6 +39,7 @@
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
     "benchmark/loggamma1p_study/M_STATS_PROBDIST_LOGGAMMA1P.bas": "sha256:251e2709e794671f45aa782bcd27fe72fa2d26b181f941674305250c93a548cb",
     "benchmark/loggamma_regimes_study/M_STATS_PROBDIST_LGREGIMES.bas": "sha256:dbe2528d8c3e2758993ebd277710f1ffd2a631b4ed2acb888e9c77a6869b9d72",
+    "benchmark/positive_ratio_subnormal/M_STATS_PROBDIST_CHISQHOLD.bas": "sha256:00904fbbbe0f39eec5fae2bb8a185a3395c3c0e4c42efc077a19e62dda80fc2c",
     "benchmark/positive_ratio_subnormal/M_STATS_PROBDIST_CHISQPROBE.bas": "sha256:7908e74f858402f74a46db7b4e3fb61abc734f0e2c99b78eed2945e636572bb2",
     "benchmark/positive_ratio_subnormal/M_STATS_PROBDIST_GAMMAHOLD.bas": "sha256:28b500cc6d888c72ac7ead444fc42e960965cdfb56114c681f8cb9090f249c03",
     "benchmark/positive_ratio_subnormal/M_STATS_PROBDIST_GAMMAPROBE.bas": "sha256:26d2abf4e53cfe288580eb049a32ac6755f68affea139f534c738e03157e7606",
