@@ -451,7 +451,10 @@ def envelope(surf: list[Point], normal_only: bool) -> dict:
     information. Without it the PUBLIC envelope is returned, which is what a
     Double-returning UDF really delivers.
     """
-    w: dict[int, list] = defaultdict(lambda: [0.0, 0.0, None, None])
+    # Worsts start as None, not 0.0. A bucket where the candidate never
+    # produced a value must not appear to win with a worst error of zero --
+    # failing to answer is not the same as answering accurately.
+    w: dict[int, list] = defaultdict(lambda: [None, None, None, None])
     for p in surf:
         if p.construction != "transform_stress":
             continue
@@ -460,9 +463,9 @@ def envelope(surf: list[Point], normal_only: bool) -> dict:
             continue
         ec, ea = errors_for(p)
         x = w[p.bucket_bits]
-        if ec is not None and ec > x[0]:
+        if ec is not None and (x[0] is None or ec > x[0]):
             x[0], x[2] = ec, p.shape_id
-        if ea is not None and ea > x[1]:
+        if ea is not None and (x[1] is None or ea > x[1]):
             x[1], x[3] = ea, p.shape_id
     return w
 
@@ -472,6 +475,9 @@ def crossover_of(w: dict) -> tuple[int | None, str | None]:
     cross = binds = None
     for bits in sorted(w, reverse=True):
         wc, wa, _sc, sa = w[bits]
+        if wc is None or wa is None:
+            cross = binds = None          # cannot compare; not a crossover
+            continue
         if wa < wc:
             if cross is None:
                 cross, binds = bits, sa
@@ -486,9 +492,15 @@ def print_envelope(title: str, w: dict) -> None:
           f"{'worst candidate':>16} {'binds':>9}  better")
     for bits in sorted(w, reverse=True):
         wc, wa, sc, sa = w[bits]
-        print(f"   {bits:>5} {wc:>14.3g} {str(sc):>9} "
-              f"{wa:>16.3g} {str(sa):>9}  "
-              f"{'candidate' if wa < wc else 'current'}")
+        if wc is None or wa is None:
+            verdict = ("candidate unavailable" if wa is None
+                       else "current unavailable")
+        else:
+            verdict = "candidate" if wa < wc else "current"
+        fc = "n/a" if wc is None else f"{wc:.3g}"
+        fa = "n/a" if wa is None else f"{wa:.3g}"
+        print(f"   {bits:>5} {fc:>14} {str(sc):>9} "
+              f"{fa:>16} {str(sa):>9}  {verdict}")
 
 
 def decomposition(surf: list[Point]) -> None:

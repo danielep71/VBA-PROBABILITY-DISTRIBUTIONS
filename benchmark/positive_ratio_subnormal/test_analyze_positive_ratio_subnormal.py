@@ -309,6 +309,25 @@ def test_output_limited_rows_do_not_choose_the_dispatch_boundary():
         "an output-limited row bound the algorithmic envelope"
 
 
+def test_missing_candidate_cannot_win_a_bucket():
+    """Failing to answer is not the same as answering accurately.
+
+    If the candidate errored at every point in a bucket, its worst error must
+    be reported as unavailable rather than defaulting to zero and appearing to
+    beat a current path that did produce values.
+    """
+    from analyze_positive_ratio_subnormal import crossover_of
+    m = Fraction(2) ** -1074
+    N = 2 ** 31
+    x = float((3 * N + 1) * m)
+    p = Point("gamma", "density", "p", "transform_stress", "s0.001", 32,
+              x, 0.001, 3.0, x / 3.0, None, "OK", 1.0, "ERROR", None)
+    w = envelope([p], normal_only=False)
+    assert w[32][1] is None, "a missing candidate was recorded as zero error"
+    cross, _ = crossover_of(w)
+    assert cross is None, "a bucket with no candidate value reported a crossover"
+
+
 def test_hard_underflow_is_not_bucket_zero():
     """A stored zero is not merely imprecise: it has become indistinguishable
     from the support boundary. It must be classified apart, never pooled into

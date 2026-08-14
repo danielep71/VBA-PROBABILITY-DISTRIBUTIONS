@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-08-14T06:39:36Z",
-  "commit_sha": "8f11ea7",
+  "generated_utc": "2026-08-14T09:21:13Z",
+  "commit_sha": "5e9721e",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -39,6 +39,7 @@
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas": "sha256:aaccc6442d71363aed6b4a8aa4dee908e71b6412268490ac2c7a9b0329cad45c",
     "benchmark/loggamma1p_study/M_STATS_PROBDIST_LOGGAMMA1P.bas": "sha256:251e2709e794671f45aa782bcd27fe72fa2d26b181f941674305250c93a548cb",
     "benchmark/loggamma_regimes_study/M_STATS_PROBDIST_LGREGIMES.bas": "sha256:dbe2528d8c3e2758993ebd277710f1ffd2a631b4ed2acb888e9c77a6869b9d72",
+    "benchmark/positive_ratio_subnormal/M_STATS_PROBDIST_CHISQPROBE.bas": "sha256:a9f6a3b2c367adeb7c4413907b4153284c8f85eb6d1521506531b980b1a2e099",
     "benchmark/positive_ratio_subnormal/M_STATS_PROBDIST_GAMMAPROBE.bas": "sha256:3a3dd4b5e738523b7fdee466e8833e7c47dd94401ab2d705959b4635397eb94f",
     "benchmark/stirling_overflow_probe/M_STATS_PROBDIST_STIRLINGPROBE.bas": "sha256:09141ec3138289aa5ab7e57e14e003cd5dc1a13b9d96d6551b4eeb92b00c8ae7",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:696b8d3ca96e866bd142f048d1af0f0388605a36f81064f64793dfaa91a4f9b5",

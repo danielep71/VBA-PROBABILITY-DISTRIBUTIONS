@@ -1,4 +1,4 @@
-# Positive-ratio subnormal study — Phase A1, Gamma arm
+# Positive-ratio subnormal study — Phase A, Gamma and Chi-square arms
 
 Measurement only for ICR-P1-01A (#13). **No cutoff is frozen, no contract is
 proposed, no source is changed, and nothing here transfers to Chi-square.**
@@ -21,7 +21,7 @@ hand.
   catastrophic kernel defect at all fifteen buckets. It is now checked at
   startup on every run, and covered by a metamorphic test spanning two shapes
   and four scales.
-- **20/20 analyzer unit tests**, including four negative cases that must abort
+- **21/21 analyzer unit tests**, including five negative cases that must abort
   the run.
 
 ## Construction validation
@@ -199,13 +199,89 @@ cumulative result on its own.
   structure, and a far narrower reachable region
 - no holdout: every shape here is fitting evidence
 
+---
+
+# Phase A2 — Chi-square arm
+
+**627 observations**, 33 constructions across 19 surface × df slices.
+Construction check passed; both decimal twins matched their constructed
+partners.
+
+## Why this is a separate arm, not a re-run
+
+Chi-square never calls `PROB_TryDivide`. All three surfaces compute `0.5 * X`
+inline with no `Try` wrapper. Two consequences the evidence design had to
+respect:
+
+- **Rounding is binary, not graded.** Halving a binary64 is either exact or
+  lands on a midpoint, so only two evidence classes exist. The 1/3 and 2/3 ULP
+  stresses used in the Gamma arm are not omitted for convenience — they are
+  physically unconstructible, and the analyzer has a test asserting so.
+- **Reachability is far narrower.** One free parameter, so the only route to a
+  tiny standardized argument is a tiny `X`, and hard underflow needs
+  `X < 2^-1073`. Gamma reaches the same state from `1E-300 / 1E+300` — two
+  entirely ordinary operands.
+
+`PROB_TF_ValidateDF` also carries a lower guard Gamma lacks: it rejects a df
+whose half underflows. Gamma's shape guard has `X > 0` and an upper bound only.
+
+The df slices are chosen so the kernel shapes (`df / 2`) match the Gamma arm
+exactly. That is what makes the two families comparable at all.
+
+## Result — the two families do NOT share a cumulative boundary
+
+| surface | Gamma | Chi-square | same? |
+| --- | --- | --- | --- |
+| density | 48 bits, binds s0.1 | 48 bits, binds s0.002 | boundary yes, binding shape no |
+| cumulative, public | none | none | yes, both output-confounded |
+| **cumulative, algorithmic** | **40 bits**, s0.75 | **48 bits**, s1.0 | **no** |
+| survival | 52 bits, s0.0001 | 52 bits, s0.0002 | yes |
+
+Chi-square shape ids are degrees of freedom: `s0.002` is `df = 0.002`, kernel
+shape 0.001; `s1.0` is `df = 1`, kernel shape 0.5.
+
+**This is the finding Phase A existed to produce.** Sharing a downstream kernel
+does not imply sharing a dispatch policy — a single cumulative cutoff would
+route one family wrongly. Both figures remain provisional.
+
+## Structural confirmations
+
+Two effects discovered in the Gamma arm reproduce independently here, which is
+evidence the analyzer measures what it claims:
+
+- **The output-representability confound recurs.** Chi-square cumulative has
+  198 `normal_output`, 32 `subnormal_output` and 1 `underflowed_output` rows.
+  The public envelope again reports no crossover; the algorithmic envelope over
+  normally-representable-output rows gives 48 bits.
+- **Survival saturation recurs at the matching shape.** `df = 1`, kernel shape
+  0.5, is flagged `NON_DISCRIMINATING_SATURATION` — exactly the Gamma
+  Shape = 0.5 result, reached through a different transform.
+
+## A limit of the candidate itself
+
+48 of 627 candidate evaluations return ERROR, all on the density surface at
+tiny shapes. There `(a - 1) * Log(z)` reaches about +714 and `PROB_TryExp`
+overflows: the candidate has its own output-representability limit, and a log
+formulation does not make an unrepresentable density representable.
+
+No bucket lost every candidate, so the reported envelopes stand. But this
+exposed a defect in the analyzer, fixed in the same commit: `envelope()`
+initialised the worst candidate error to `0.0`, so a bucket where the candidate
+never answered would have appeared to win with a perfect score. **Failing to
+answer is not the same as answering accurately.** It is now `None`, reported as
+`n/a`, and `crossover_of` refuses to call such a bucket a crossover.
+
 ## Next
 
-1. Chi-square exporter against the same schema, with `echo_df`.
-2. Independent shape holdout for density and cumulative.
+1. Understand why the cumulative boundaries differ between families — 40 versus
+   48 bits — before either becomes a cutoff. The candidate formula is identical
+   in both arms, so the difference must come from the transform structure
+   (graded versus binary) or from the shape grid.
+2. Independent shape holdout for both families. Everything measured so far is
+   fitting evidence.
 3. Isolate the tiny-shape survival mechanism from the transform mechanism, and
-   decide whether it is a second finding.
-4. Only then, a combined provisional dispatch table.
+   decide whether it is a second finding rather than part of #13.
+4. Only then, a provisional dispatch table — per family, not shared.
 
 ## Files
 
@@ -214,5 +290,7 @@ cumulative result on its own.
 | `M_STATS_PROBDIST_GAMMAPROBE.bas` | exporter; run `Probe_GammaPositiveRatio` |
 | `gamma_probe.csv` | 1,235 observations |
 | `gamma_probe_shape05_pre_schema.csv` | pre-revision export, kept for the migration check |
+| `M_STATS_PROBDIST_CHISQPROBE.bas` | exporter; run `Probe_ChiSquarePositiveRatio` |
+| `chisquare_probe.csv` | 627 observations |
 | `analyze_positive_ratio_subnormal.py` | schema, oracle and envelopes |
-| `test_analyze_positive_ratio_subnormal.py` | 20 tests, including four negative |
+| `test_analyze_positive_ratio_subnormal.py` | 21 tests, including five negative |
