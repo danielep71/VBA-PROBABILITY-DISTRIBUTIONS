@@ -4,9 +4,10 @@ Measurement only for ICR-P1-01A (#13). **No cutoff is frozen, no contract is
 proposed and no source is changed.** The two family arms are reported
 separately and neither transfers to the other.
 
-Every number below is produced by
-`analyze_positive_ratio_subnormal.py gamma_probe.csv`. Nothing is computed by
-hand.
+All reported results are produced by `analyze_positive_ratio_subnormal.py`
+from the committed family-specific evidence, `gamma_probe.csv` and
+`chisquare_probe.csv`. Nothing is computed by hand, and the analyzer's own
+24-test suite runs in the hosted Accuracy Gate.
 
 ## Evidence integrity
 

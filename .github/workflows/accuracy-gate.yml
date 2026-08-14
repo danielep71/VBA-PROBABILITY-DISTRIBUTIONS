@@ -47,6 +47,21 @@ jobs:
       - name: Install reference dependencies
         run: python -m pip install --upgrade pip mpmath
 
+      - name: "Verify the study analyzer for #13"
+        working-directory: benchmark/positive_ratio_subnormal
+        # The positive-ratio analyzer defines the evidence contract for
+        # #13: what a row means, how the exact standardized argument is
+        # reconstructed, how output representability is classified. It has
+        # produced five defects during development - a missing density
+        # Jacobian, a missing candidate recorded as zero error, an absent
+        # overflowed-output class, an ambiguous binding shape and an oracle
+        # precision inconsistency - none of which CI would have caught.
+        # Runs while #13 is active; remove when the study closes.
+        run: |
+          python test_analyze_positive_ratio_subnormal.py
+          python analyze_positive_ratio_subnormal.py gamma_probe.csv > /dev/null
+          python analyze_positive_ratio_subnormal.py chisquare_probe.csv > /dev/null
+
       - name: Verify the evaluation tooling itself
         working-directory: benchmark
         # These run BEFORE the gate deliberately. compute_errors.py and
