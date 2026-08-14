@@ -99,6 +99,9 @@ ORACLE_STABILITY_TOLERANCE = 1e-40
 
 MIN_SUBNORMAL = Fraction(2) ** -1074       # spacing of every subnormal
 MIN_NORMAL = Fraction(2) ** -1022
+# Largest finite binary64. Written as an exact rational rather than a float
+# literal so the comparison below cannot itself depend on a rounding.
+DOUBLE_MAX = (Fraction(2) ** 1024 - Fraction(2) ** 971)
 SURFACES = ("density", "cumulative", "survival")
 FAMILIES = ("gamma", "chisquare")
 
@@ -279,6 +282,13 @@ def classify_output(ref: mpf | None) -> str:
         return "no_reference"
     if ref == 0:
         return "exact_zero"                 # not a positive value that underflowed
+    # Compare against the exact bounds before converting, because float(ref)
+    # collapses everything above DoubleMax to infinity -- and inf satisfies
+    # `>= MIN_NORMAL`, which silently classified 139 overflowing density rows
+    # as normal_output across the two committed arms.
+    magnitude = abs(mpf(ref))
+    if magnitude > mpf(DOUBLE_MAX.numerator) / mpf(DOUBLE_MAX.denominator):
+        return "overflowed_output"          # positive, but above the Double range
     rounded = float(ref)
     if rounded == 0.0:
         return "underflowed_output"         # positive, but no Double can hold it
@@ -501,20 +511,27 @@ def envelope(surf: list[Point], normal_only: bool) -> dict:
     return w
 
 
-def crossover_of(w: dict) -> tuple[int | None, str | None]:
-    """Lowest bucket from which the candidate wins every bucket below it."""
-    cross = binds = None
+def crossover_of(w: dict) -> tuple[int | None, str | None, str | None]:
+    """Lowest bucket from which the candidate wins every bucket below it.
+
+    Returns the crossover and BOTH binding shapes. At a given bucket the worst
+    current and worst candidate errors routinely bind at different shapes, so a
+    single "binding shape" is ambiguous: quoting the current-envelope binder in
+    one place and the candidate-envelope binder in another made the same Gamma
+    48-bit density crossover appear to bind at s0.75 and s0.1 in two reports.
+    """
+    cross = binds_current = binds_candidate = None
     for bits in sorted(w, reverse=True):
-        wc, wa, _sc, sa = w[bits]
+        wc, wa, sc, sa = w[bits]
         if wc is None or wa is None:
-            cross = binds = None          # cannot compare; not a crossover
+            cross = binds_current = binds_candidate = None   # cannot compare
             continue
         if wa < wc:
             if cross is None:
-                cross, binds = bits, sa
+                cross, binds_current, binds_candidate = bits, sc, sa
         else:
-            cross = binds = None
-    return cross, binds
+            cross = binds_current = binds_candidate = None
+    return cross, binds_current, binds_candidate
 
 
 def print_envelope(title: str, w: dict) -> None:
@@ -579,7 +596,7 @@ def report(points: list[Point]) -> None:
 
         counts = Counter(classify_output(reference(p)) for p in surf)
         print(f"\n   rows {len(surf)}")
-        for cls in ("normal_output", "subnormal_output",
+        for cls in ("normal_output", "subnormal_output", "overflowed_output",
                     "underflowed_output", "exact_zero", "no_reference"):
             if counts[cls]:
                 print(f"   {cls:<22} {counts[cls]}")
@@ -621,16 +638,17 @@ def report(points: list[Point]) -> None:
                   "being limited by the\n               final binary64 "
                   "representation.")
             print_envelope("PUBLIC ENVELOPE", pub)
-            pc, pb = crossover_of(pub)
-            print(f"\n   public crossover        "
-                  f"{f'{pc} bits and below' if pc else 'none'}")
-            print(f"   public binding shape    {pb or '-'}")
+            pc, pbc, pba = crossover_of(pub)
+            print(f"\n   public crossover                {f'{pc} bits and below' if pc else 'none'}")
+            print(f"   public binds, current envelope  {pbc or '-'}")
+            print(f"   public binds, candidate envelope {pba or '-'}")
             if alg:
                 print_envelope("ALGORITHMIC ENVELOPE", alg)
-                ac, ab = crossover_of(alg)
-                print(f"\n   algorithmic crossover      "
+                ac, abc, aba = crossover_of(alg)
+                print(f"\n   algorithmic crossover              "
                       f"{f'{ac} bits and below' if ac else 'none'}")
-                print(f"   algorithmic binding shape  {ab or '-'}")
+                print(f"   algorithmic binds, current env     {abc or '-'}")
+                print(f"   algorithmic binds, candidate env   {aba or '-'}")
                 if pc != ac:
                     print("\n   The two disagree. The public envelope is "
                           "confounded by rows whose\n   true output is not "

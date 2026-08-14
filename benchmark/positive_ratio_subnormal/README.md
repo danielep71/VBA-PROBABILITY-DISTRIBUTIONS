@@ -1,7 +1,8 @@
 # Positive-ratio subnormal study — Phase A, Gamma and Chi-square arms
 
 Measurement only for ICR-P1-01A (#13). **No cutoff is frozen, no contract is
-proposed, no source is changed, and nothing here transfers to Chi-square.**
+proposed and no source is changed.** The two family arms are reported
+separately and neither transfers to the other.
 
 Every number below is produced by
 `analyze_positive_ratio_subnormal.py gamma_probe.csv`. Nothing is computed by
@@ -21,8 +22,11 @@ hand.
   catastrophic kernel defect at all fifteen buckets. It is now checked at
   startup on every run, and covered by a metamorphic test spanning two shapes
   and four scales.
-- **21/21 analyzer unit tests**, including five negative cases that must abort
-  the run.
+- **24/24 analyzer unit tests**, including eight negative cases that must abort
+  the run. The analyzer has produced five defects during development — a missing
+  density Jacobian, a missing candidate recorded as zero error, an absent
+  overflowed-output class, an ambiguous binding shape, and an oracle precision
+  inconsistency — each caught by measurement rather than by review.
 
 ## Construction validation
 
@@ -66,17 +70,26 @@ information recovery whatever the dispatch boundary turns out to be.
 
 ## Finding 2 — density. Provisional crossover at 48 bits.
 
-455 rows, **all `normal_output`**, so the public and algorithmic envelopes
-coincide. Worst case across seven shapes, stress points only:
+455 rows: **364 `normal_output`, 91 `overflowed_output`**. The overflowing rows
+are tiny-shape densities whose true value exceeds DoubleMax; neither branch
+produces a number there, so they contribute nothing to either envelope and the
+public and algorithmic figures coincide. Worst case across seven shapes, stress
+points only:
 
 | bits | worst current | binds | worst candidate | binds | better |
 | --- | --- | --- | --- | --- | --- |
 | 52 | 1.14E-13 | s0.1 | 1.14E-13 | s0.1 | current |
 | 48 | 1.48E-13 | s0.75 | 8.27E-14 | s0.1 | candidate |
+| 44 | 1.14E-13 | s1.0 | 1.10E-13 | s0.001 | candidate |
 | 40 | 1.02E-12 | s1.0 | 1.34E-13 | s0.001 | candidate |
 | 32 | 2.33E-10 | s1.0 | 1.28E-13 | s0.1 | candidate |
 | 16 | 1.53E-05 | s1.0 | 5.27E-14 | s0.1 | candidate |
 | 1 | 0.333 | s1.0 | 5.32E-14 | s0.1 | candidate |
+
+The two envelopes bind at different shapes, and quoting only one produced a
+contradiction between the A1 and A2 sections of an earlier revision of this
+file. Both are reported everywhere now: at the 48-bit crossover the worst
+current binds at `s0.75` and the worst candidate at `s0.1`.
 
 This is the textbook signature the study was built to detect: landmarks tie
 because they carry no transform error, stress points separate the
@@ -95,10 +108,10 @@ seven-shape result with no holdout.
 455 rows: **389 `normal_output`, 62 `subnormal_output`, 4
 `underflowed_output`**.
 
-| envelope | crossover | binds |
-| --- | --- | --- |
-| **public** — all rows | **none** | — |
-| **algorithmic** — `normal_output` only | **40 bits and below** | s0.75 |
+| envelope | crossover | binds current | binds candidate |
+| --- | --- | --- | --- |
+| **public** — all rows | **none** | — | — |
+| **algorithmic** — `normal_output` only | **40 bits and below** | s0.75 | s0.75 |
 
 The two disagree, and the reason is structural rather than numerical. At
 `Shape = 1` the CDF is `P(1,z) = 1 - e^-z ≈ z`, so when `z` is subnormal the
@@ -162,9 +175,15 @@ arm did not confirm.
 ## Output classes and migration proof
 
 ```
-Density      455 normal
-Cumulative   389 normal / 62 subnormal / 4 underflowed
-Survival     325 normal
+Gamma
+  Density      364 normal / 91 overflowed
+  Cumulative   389 normal / 62 subnormal / 4 underflowed
+  Survival     325 normal
+
+Chi-square
+  Density      183 normal / 48 overflowed
+  Cumulative   198 normal / 32 subnormal / 1 underflowed
+  Survival     165 normal
 ```
 
 ```
@@ -230,15 +249,24 @@ exactly. That is what makes the two families comparable at all.
 
 ## Result — the two families do NOT share a cumulative boundary
 
-| surface | Gamma | Chi-square | same? |
-| --- | --- | --- | --- |
-| density | 48 bits, binds s0.1 | 48 bits, binds s0.002 | boundary yes, binding shape no |
-| cumulative, public | none | none | yes, both output-confounded |
-| **cumulative, algorithmic** | **40 bits**, s0.75 | **48 bits**, s1.0 | **no** |
-| survival | 52 bits, s0.0001 | 52 bits, s0.0002 | yes |
+| surface | Gamma | binds cur / cand | Chi-square | binds cur / cand | same? |
+| --- | --- | --- | --- | --- | --- |
+| density | 48 bits | s0.75 / s0.1 | 48 bits | s1.5 / s0.002 | boundary yes, binders no |
+| cumulative, public | none | — | none | — | yes, both output-confounded |
+| **cumulative, algorithmic** | **40 bits** | s0.75 / s0.75 | **48 bits** | s0.002 / s1.0 | **no** |
+| survival | 52 bits | s0.0001 / s0.0001 | 52 bits | s0.0002 / s0.0002 | yes |
 
 Chi-square shape ids are degrees of freedom: `s0.002` is `df = 0.002`, kernel
-shape 0.001; `s1.0` is `df = 1`, kernel shape 0.5.
+shape 0.001; `s1.0` is `df = 1`, kernel shape 0.5; `s1.5` is `df = 1.5`, kernel
+shape 0.75.
+
+## Oracle cross-validation
+
+Every reference here comes from mpmath, and a single-oracle study is only as
+good as that oracle. The references are cross-checked against MPFR 4.2.1 via
+Rmpfr 0.9.5 — an independent C implementation with no shared lineage: 218
+points, worst relative disagreement **4.774E-40**, about 39 agreeing
+significant digits. Record: `oracle_cross_validation.md`.
 
 **This is the finding Phase A existed to produce.** Sharing a downstream kernel
 does not imply sharing a dispatch policy — a single cumulative cutoff would
@@ -293,4 +321,6 @@ answer is not the same as answering accurately.** It is now `None`, reported as
 | `M_STATS_PROBDIST_CHISQPROBE.bas` | exporter; run `Probe_ChiSquarePositiveRatio` |
 | `chisquare_probe.csv` | 627 observations |
 | `analyze_positive_ratio_subnormal.py` | schema, oracle and envelopes |
-| `test_analyze_positive_ratio_subnormal.py` | 21 tests, including five negative |
+| `test_analyze_positive_ratio_subnormal.py` | 24 tests, including eight negative |
+| `cross_validate_oracle.py` / `.R` | mpmath against MPFR |
+| `oracle_cross_validation.md` | the cross-validation record |

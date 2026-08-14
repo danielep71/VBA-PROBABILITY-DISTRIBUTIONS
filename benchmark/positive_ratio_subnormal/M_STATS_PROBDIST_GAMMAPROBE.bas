@@ -12,8 +12,6 @@ Private Const PROBE_FIELDS As Long = 15
 'whole subnormal ladder and cannot constrain dispatch. The slices are
 'therefore surface-specific; shape_id is provenance, echo_shape is
 'authoritative.
-Private Const GAMMA_SURFACES As String = "density|cumulative|survival"
-
 '==============================================================================
 ' M_STATS_PROBDIST_GAMMAPROBE
 '------------------------------------------------------------------------------
@@ -60,8 +58,9 @@ Private Const GAMMA_SURFACES As String = "density|cumulative|survival"
 '   rounding into the reference, which is the failure #17 exists to prevent.
 '
 ' OUTPUT
-'   The committed 13-column schema, long form: one row per public surface, so
-'   each constructed point contributes three rows.
+'   The committed 15-column schema, long form: one row per public surface,
+'   so each constructed point contributes three rows. shape_id is provenance
+'   and grouping; echo_shape carries the binary64 value the analyzer uses.
 '
 ' USAGE
 '   Run Probe_GammaPositiveRatio and choose an output path. Validate with

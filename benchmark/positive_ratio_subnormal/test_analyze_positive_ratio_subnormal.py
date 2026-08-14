@@ -324,8 +324,51 @@ def test_missing_candidate_cannot_win_a_bucket():
               x, 0.001, 3.0, x / 3.0, None, "OK", 1.0, "ERROR", None)
     w = envelope([p], normal_only=False)
     assert w[32][1] is None, "a missing candidate was recorded as zero error"
-    cross, _ = crossover_of(w)
+    cross, _, _ = crossover_of(w)
     assert cross is None, "a bucket with no candidate value reported a crossover"
+
+
+def test_overflowed_output_is_its_own_class():
+    """A reference above DoubleMax must not be called normal_output.
+
+    float(ref) collapses everything above the Double range to infinity, and inf
+    satisfies `>= MIN_NORMAL`, so the naive test classified 139 overflowing
+    density rows across the two committed arms as normal. The bound is compared
+    exactly, before conversion.
+    """
+    from analyze_positive_ratio_subnormal import DOUBLE_MAX
+    from mpmath import mpf
+    dmax = mpf(DOUBLE_MAX.numerator) / mpf(DOUBLE_MAX.denominator)
+    assert classify_output(dmax) == "normal_output"            # exactly DoubleMax
+    assert classify_output(dmax * (1 + mpf(2) ** -52)) == "overflowed_output"
+    assert classify_output(mpf(10) ** 400) == "overflowed_output"
+
+
+def test_tiny_shape_density_overflows_in_both_families():
+    """The real case, one per family: a tiny-shape density whose true value is
+    above the Double range. Neither branch can represent it, so it must be
+    excluded from the algorithmic envelope rather than counted as normal."""
+    z = 2.0 ** -1051
+    g = Point("gamma", "density", "g", "transform_stress", "s0.001", 24,
+              z, 0.001, 1.0, z, None, "ERROR", None, "ERROR", None)
+    c = Point("chisquare", "density", "c", "transform_stress", "s0.002", 24,
+              z * 2, 0.002, 2.0, z, None, "ERROR", None, "ERROR", None)
+    for p in (g, c):
+        assert classify_output(reference(p)) == "overflowed_output", p.family
+        assert envelope([p], normal_only=True) == {}, \
+            f"{p.family}: an overflowing row entered the algorithmic envelope"
+
+
+def test_crossover_reports_both_binding_shapes():
+    """Worst current and worst candidate routinely bind at different shapes, so
+    one generic 'binding shape' is ambiguous and produced contradictory numbers
+    for the same crossover in two reports."""
+    w = {32: [1e-10, 1e-13, "s1.0", "s0.1"],
+         28: [1e-9, 1e-13, "s1.0", "s0.1"]}
+    cross, binds_current, binds_candidate = crossover_of(w)
+    assert cross == 32
+    assert binds_current == "s1.0"
+    assert binds_candidate == "s0.1"
 
 
 def test_hard_underflow_is_not_bucket_zero():

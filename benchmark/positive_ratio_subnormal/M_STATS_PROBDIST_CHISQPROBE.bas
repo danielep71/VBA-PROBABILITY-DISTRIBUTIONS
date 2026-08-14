@@ -12,8 +12,6 @@ Private Const PROBE_FIELDS As Long = 14
 'whole subnormal ladder and cannot constrain dispatch. The slices are
 'therefore surface-specific; shape_id is provenance, echo_shape is
 'authoritative.
-Private Const GAMMA_SURFACES As String = "density|cumulative|survival"
-
 '==============================================================================
 ' M_STATS_PROBDIST_CHISQPROBE
 '------------------------------------------------------------------------------
@@ -227,20 +225,22 @@ Private Sub BuildPoints( _
 ' BuildPoints
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Constructs the point set: fifteen buckets from 52 bits down to 1, each with
-'   a landmark and three transform stresses, plus hard-underflow cases and two
-'   decimal twins.
+'   Constructs the point set: fifteen buckets from 52 bits down to 1, each
+'   with a landmark and ONE transform stress, plus the single hard-underflow
+'   case and two decimal twins.
 '
 ' THE CONSTRUCTION
 '   With m = 2 ^ -1074 the subnormal ULP and N = 2 ^ (k - 1):
 '
-'       landmark   X = N * m,         Scale = 1   exact quotient N*m
-'       1/3 ULP    X = (3N + 1) * m,  Scale = 3   exact quotient N*m + m/3
-'       1/2 ULP    X = (2N + 1) * m,  Scale = 2   exact quotient N*m + m/2
-'       2/3 ULP    X = (3N + 2) * m,  Scale = 3   exact quotient N*m + 2m/3
+'       landmark   X = 2N * m        X / 2 is exactly the k-bit landmark
+'       1/2 ULP    X = (2N + 1) * m  X / 2 falls on the midpoint
 '
-'   Every X above is exactly representable, including at k = 52 where the
-'   scale-3 forms sit near 1.5 * MIN_NORMAL and the spacing is still one m.
+'   Two classes, not four. Halving a binary64 is either exact or lands on a
+'   midpoint, so the 1/3 and 2/3 ULP offsets used in the Gamma arm cannot be
+'   produced here: aiming at one requires an X that is not representable, and
+'   rounding it lands back on exactly 1/2. The analyzer asserts this.
+'
+'   Every X above is exactly representable, verified at all fifteen buckets.
 '   The integer coefficients stay below 2 ^ 53, so forming them in Double is
 '   exact, and multiplying by m is a pure exponent shift.
 '==============================================================================
