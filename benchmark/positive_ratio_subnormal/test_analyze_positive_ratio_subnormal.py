@@ -38,7 +38,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from analyze_positive_ratio_subnormal import (      # noqa: E402
     COLUMNS, MIN_SUBNORMAL, Point, bits_available, load, parse_hilo,
-    classify_output, crossover_of, envelope, reference, twin_check,
+    REGISTERED_CLAIMS, classify_output, crossover_of, envelope,
+    reference, twin_check,
     verify_constructions, verify_reference_invariants,
 )
 
@@ -369,6 +370,67 @@ def test_crossover_reports_both_binding_shapes():
     assert cross == 32
     assert binds_current == "s1.0"
     assert binds_candidate == "s0.1"
+
+
+# Imported under an alias: the runner collects globals starting with "test_",
+# and the analyzer's own test_claims() takes an argument, so importing it under
+# its real name makes the runner try to call it as a test case.
+from analyze_positive_ratio_subnormal import (      # noqa: E402
+    test_claims as run_claim_test,
+)
+
+
+def test_registered_claims_match_the_design_document():
+    """The claims are pre-registered in HOLDOUT_DESIGN.md. If this table and
+    that document disagree, the holdout is testing something nobody agreed
+    to."""
+    assert REGISTERED_CLAIMS[("gamma", "density")] == 48
+    assert REGISTERED_CLAIMS[("gamma", "cumulative")] == 40
+    assert REGISTERED_CLAIMS[("chisquare", "density")] == 48
+    assert REGISTERED_CLAIMS[("chisquare", "cumulative")] == 48
+    assert ("gamma", "survival") not in REGISTERED_CLAIMS
+    assert ("chisquare", "survival") not in REGISTERED_CLAIMS
+
+
+def _claim_point(surface, bits, shape, cur, cand):
+    m = Fraction(2) ** -1074
+    N = 2 ** (bits - 1)
+    x = float((3 * N + 1) * m)
+    return Point("gamma", surface, f"p{bits}", "transform_stress", "sX",
+                 bits, x, shape, 3.0, x / 3.0, None, "OK", cur, "OK", cand)
+
+
+def test_claim_passes_when_candidate_dominates_below_the_cutoff(capsys=None):
+    """A claim holds when the candidate wins at the claimed bucket and every
+    bucket below. Buckets above the claim are not tested — the claim says
+    nothing about them."""
+    pts = [_claim_point("cumulative", b, 0.5, 1e-10, 1e-14)
+           for b in (40, 33, 25, 17, 9, 3)]
+    pts += [_claim_point("cumulative", 50, 0.5, 1e-14, 1e-10)]   # above; ignored
+    assert run_claim_test(pts) is True
+
+
+def test_claim_fails_when_a_tested_bucket_violates_it():
+    """A single violating bucket at or below the cutoff rejects the claim. The
+    verdict must not be softened by the buckets that do pass."""
+    pts = [_claim_point("cumulative", b, 0.5, 1e-10, 1e-14)
+           for b in (40, 33, 25, 17, 9)]
+    pts += [_claim_point("cumulative", 3, 0.5, 1e-14, 1e-10)]    # violates
+    assert run_claim_test(pts) is False
+
+
+def test_claim_mode_proposes_no_crossover():
+    """The holdout must not offer a replacement cutoff. Adopting one would make
+    it a second fitting set and leave no independent evidence."""
+    import io as _io, contextlib
+    pts = [_claim_point("cumulative", b, 0.5, 1e-14, 1e-10)
+           for b in (40, 33, 25)]
+    buf = _io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        run_claim_test(pts)
+    out = buf.getvalue().lower()
+    assert "crossover" not in out or "no crossover is proposed" in out
+    assert "bits and below" not in out
 
 
 def test_hard_underflow_is_not_bucket_zero():

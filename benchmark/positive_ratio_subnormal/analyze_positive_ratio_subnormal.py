@@ -103,6 +103,23 @@ MIN_NORMAL = Fraction(2) ** -1022
 # literal so the comparison below cannot itself depend on a rounding.
 DOUBLE_MAX = (Fraction(2) ** 1024 - Fraction(2) ** 971)
 SURFACES = ("density", "cumulative", "survival")
+
+# The provisional cutoffs from the fitting arms (A1, A2), as registered in
+# HOLDOUT_DESIGN.md before any holdout output existed. In --claims mode the
+# holdout is tested AGAINST these; it does not propose replacements.
+#
+# A holdout indicating a different bucket is a rejection of the fitted cutoff,
+# not a new answer. Adopting the holdout's own crossover would make it a second
+# fitting set and destroy the only independent evidence available.
+REGISTERED_CLAIMS = {
+    ("gamma", "density"): 48,
+    ("gamma", "cumulative"): 40,
+    ("chisquare", "density"): 48,
+    ("chisquare", "cumulative"): 48,
+    # survival is characterised, not claimed: the A1 landmark/stress
+    # decomposition showed two superimposed mechanisms and that separation
+    # is unfinished.
+}
 FAMILIES = ("gamma", "chisquare")
 
 COMMON = ["family", "surface", "point_id", "construction", "shape_id",
@@ -677,9 +694,85 @@ def report(points: list[Point]) -> None:
                   f"{classify_output(reference(p)):>19}")
 
 
+def test_claims(points: list[Point]) -> bool:
+    """Test holdout evidence against the registered fitting claims.
+
+    Reports PASS or FAIL per surface, and does NOT search for a crossover. On
+    holdout data a crossover search is the wrong verdict: it would offer a
+    fresh number and invite exactly the retuning the pre-registered design
+    forbids.
+
+    A claim passes when the candidate's worst error is below the current
+    path's at the claimed bucket and every bucket below it, over the
+    algorithmic envelope. Buckets above the claim are not tested -- the claim
+    says nothing about them.
+    """
+    family = points[0].family
+    print(f"\n{'=' * 78}\nCLAIM TEST — {family.upper()} holdout"
+          f"\n{'=' * 78}")
+    print("Testing the registered fitting claims. No crossover is proposed: a\n"
+          "disagreement is a rejection of the fitted cutoff, not a new answer.\n")
+    all_pass = True
+
+    for surface in SURFACES:
+        surf = [p for p in points if p.surface == surface]
+        if not surf:
+            continue
+        claim = REGISTERED_CLAIMS.get((family, surface))
+        if claim is None:
+            print(f"-- {surface}: no registered claim; characterised only")
+            continue
+
+        alg = envelope(surf, normal_only=True)
+        tested = [b for b in sorted(alg, reverse=True) if b <= claim]
+        if not tested:
+            print(f"-- {surface}: FAIL — no testable bucket at or below "
+                  f"{claim} bits")
+            all_pass = False
+            continue
+
+        violations = []
+        for bits in tested:
+            wc, wa, sc, sa = alg[bits]
+            if wc is None or wa is None:
+                continue                    # not comparable, not a violation
+            if wa >= wc:
+                violations.append((bits, wc, wa, sc, sa))
+
+        if violations:
+            all_pass = False
+            print(f"-- {surface}: **FAIL** — claim was 'candidate dominates at "
+                  f"<= {claim} bits'")
+            print(f"   {len(violations)} of {len(tested)} tested buckets "
+                  f"violate it:")
+            print(f"   {'bits':>5} {'worst current':>14} {'binds':>9} "
+                  f"{'worst candidate':>16} {'binds':>9}")
+            for bits, wc, wa, sc, sa in violations:
+                print(f"   {bits:>5} {wc:>14.3g} {str(sc):>9} "
+                      f"{wa:>16.3g} {str(sa):>9}")
+        else:
+            print(f"-- {surface}: PASS — candidate dominates at all "
+                  f"{len(tested)} tested buckets <= {claim} bits")
+            worst = max((alg[b][1] for b in tested
+                         if alg[b][1] is not None), default=None)
+            if worst is not None:
+                print(f"   worst candidate error over the tested range: "
+                      f"{worst:.3g}")
+
+    print(f"\n{'CLAIMS HOLD' if all_pass else 'AT LEAST ONE CLAIM REJECTED'}")
+    if not all_pass:
+        print("Return to design and revise the hypothesis. Do not adopt this\n"
+              "holdout's own crossover: that would make it a second fitting\n"
+              "set and leave no independent evidence.")
+    return all_pass
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Phase A analyzer for #13")
     ap.add_argument("csv", nargs="+", type=Path)
+    ap.add_argument("--claims", action="store_true",
+                    help="test holdout evidence against the registered fitting "
+                         "claims instead of searching for a crossover")
     args = ap.parse_args()
 
     oracle = verify_reference_invariants()
@@ -702,7 +795,10 @@ def main() -> None:
             raise SystemExit(1)
         print(f"{path.name}: construction check passed, {len(points)} "
               f"observations")
-        report(points)
+        if args.claims:
+            test_claims(points)
+        else:
+            report(points)
 
     print("\nPhase A is measurement only. No cutoff is proposed here and no "
           "source is changed.")

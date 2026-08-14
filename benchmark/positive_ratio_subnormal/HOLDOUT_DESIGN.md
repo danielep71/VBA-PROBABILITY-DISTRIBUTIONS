@@ -158,8 +158,14 @@ k=33  2.12199579096527E-314
 
 | arm | slices | constructions | rows |
 | --- | --- | --- | --- |
-| Gamma | 8 + 8 + 5 = 21 | 29 | 609 |
-| Chi-square | 8 + 8 + 5 = 21 | 15 | 315 |
+| Gamma | 8 + 8 + 5 = 21 | 13×4 + 3 + 2 = 57 | 1,197 |
+| Chi-square | 8 + 8 + 5 = 21 | 13×2 + 1 + 2 = 29 | 609 |
+
+Gamma builds four constructions per bucket, Chi-square two — halving admits
+only an exact result or a midpoint tie. An earlier revision of this table gave
+29 and 15, having applied the Chi-square count to Gamma and halved it again.
+The point set was never affected; only this predicted volume was wrong, and the
+Gamma export reports 1,197.
 
 ## What is not frozen here
 
