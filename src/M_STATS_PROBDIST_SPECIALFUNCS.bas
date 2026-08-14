@@ -167,6 +167,21 @@ Private Const PROB_GAMMA_SERIES_EPS    As Double = PROB_MACH_EPS 'Stop for the a
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
 Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y deviance argument is formed in log space to preserve the caller''s stable logs
+
+'Positive-ratio dispatch cutoffs for ICR-P1-01A (#13). Both derive from
+'PROB_MIN_NORMAL by exact division by a power of two, so no subnormal literal
+'is ever parsed: a VBA source literal cannot be relied on to denote one, and
+'this study has already been bitten by a hand-written constant that was one
+'ULP wrong.
+'
+'The comparison is STRICT less-than, and that is load-bearing. / 16# is
+'2 ^ -1026, so the largest 48-significand-bit subnormal routes to the log path
+'and the smallest 49-bit value does not; / 4096# is 2 ^ -1034 and reproduces
+'the 40-bit Gamma cumulative boundary the same way. Both boundaries were
+'confirmed on an independent, preregistered holdout - see
+'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
+Private Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#      'Gamma/ChiSquare density, ChiSquare cumulative
+Private Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#    'Gamma cumulative
 Private Const PROB_IBETA_LOADER_MIN_SHAPE As Double = 1000# 'A + B at or above which the incomplete-beta factor uses the Loader decomposition instead of the literal form (measured crossover; see the header of PROB_TryBetaRegularized)
 Public Const PROB_DENSITY_SHAPE_MAX As Double = 1E+20 'Validated large-shape density envelope (Gamma/Chi-square/Beta/F); measured, benchmark/density_large_shape
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins

@@ -28,7 +28,7 @@ Option Private Module
 '     - PROB_PI, PROB_TWO_PI, PROB_HALF_LOG_TWO_PI, PROB_HALF_LOG_PI
 '     - PROB_EPS, PROB_NUM_EPS, PROB_MACH_EPS
 '     - PROB_PARAMETER_MAGNITUDE_GUARD, PROB_DOUBLE_MAX, PROB_SQRT_DOUBLE_MAX
-'     - PROB_FPMIN
+'     - PROB_FPMIN, PROB_MIN_NORMAL
 '
 '   Predicates:
 '     - PROB_IsFinite
@@ -149,6 +149,7 @@ Public Const PROB_PARAMETER_MAGNITUDE_GUARD As Double = 1E+100              'Coa
 Public Const PROB_DOUBLE_MAX           As Double = 1.79769313486231E+308    'Approx largest finite Double
 Public Const PROB_SQRT_DOUBLE_MAX      As Double = 1.34E+154                'Approx sqrt(Double max); guards squaring overflow
 Public Const PROB_FPMIN                As Double = 1E-300                   'Lentz denominator floor
+Public Const PROB_MIN_NORMAL           As Double = 2.2250738585072014E-308  'Smallest normal Double; subnormal dispatch cutoffs derive from it
 
 'PROB_WRITE_STATUS_BAR is a CONDITIONAL-COMPILATION switch, not a run-time
 'constant. At the default value of False the status-bar block inside
