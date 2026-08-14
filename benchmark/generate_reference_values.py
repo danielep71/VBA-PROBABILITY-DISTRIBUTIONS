@@ -1206,9 +1206,16 @@ def build_rows():
 
     # --- PROB_LogChoose : N in [2, 2^53], all K, rel <= 3.2E-16 ---
     for n in [mp.mpf(2), mp.mpf(10), mp.mpf(100), mp.mpf(1030), mp.mpf(1e6), mp.mpf(2) ** 53]:
-        for frac in [mp.mpf("0.0"), mp.mpf("0.01"), mp.mpf("0.5"), mp.mpf("0.99"), mp.mpf("1.0")]:
-            k = mp.floor(n * frac)
-            add("LogChoose", "PROB_LogChoose", (n, k), _logchoose(n, k))
+        # Deduplicate: at small n the fractions collide under floor. n=2 gives
+        # k = 0,0,1,1,2 and n=10 gives 0,0,5,9,10, so three rows were emitted
+        # twice and weighted twice by the gate. Sorting keeps the emission
+        # order stable so the fix does not reorder the grid.
+        for k in sorted({int(mp.floor(n * frac))
+                         for frac in [mp.mpf("0.0"), mp.mpf("0.01"),
+                                      mp.mpf("0.5"), mp.mpf("0.99"),
+                                      mp.mpf("1.0")]}):
+            add("LogChoose", "PROB_LogChoose", (n, mp.mpf(k)),
+                _logchoose(n, mp.mpf(k)))
 
     # --- Student t ---
     for df in [mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(30), mp.mpf(1000)]:
