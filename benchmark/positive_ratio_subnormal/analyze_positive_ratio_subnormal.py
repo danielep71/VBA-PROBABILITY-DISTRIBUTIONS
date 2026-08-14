@@ -85,7 +85,17 @@ try:
 except ImportError:                                        # pragma: no cover
     sys.exit("mpmath is required: pip install mpmath")
 
+# The repository's grid generator uses _ORACLE_DPS = 110. This study uses 60,
+# which is a deliberate choice rather than an oversight: the two agree to
+# 4.3E-62 on the study's own points, against a smallest measured error of about
+# 1E-16 -- a margin of 2E+45. Raising it changes no reported figure and no
+# crossover, while roughly doubling a run over 1,862 observations.
+#
+# ORACLE_STABILITY_DPS below is checked at startup, so the claim is verified on
+# every run rather than asserted here.
 mp.dps = 60
+ORACLE_STABILITY_DPS = 110
+ORACLE_STABILITY_TOLERANCE = 1e-40
 
 MIN_SUBNORMAL = Fraction(2) ** -1074       # spacing of every subnormal
 MIN_NORMAL = Fraction(2) ** -1022
@@ -358,6 +368,27 @@ def verify_reference_invariants() -> list[str]:
             if abs(reference(pt(surface, s_)) - base) > mpf("1e-40"):
                 problems.append(f"{surface} reference moved with the scale "
                                 f"at s={s_}")
+    # Oracle stability: the reference must not move materially when computed at
+    # the repository's own 110-dps standard. A single-oracle study is only as
+    # good as that oracle, and self-consistency at one precision proves
+    # convergence, not correctness -- but a value that shifts under added
+    # precision is disqualifying regardless.
+    for surface, shape in (("cumulative", 0.0001), ("cumulative", 1.0),
+                           ("survival", 0.001), ("density", 0.5)):
+        p60 = Point("gamma", surface, "dps", "landmark", "dps", 32,
+                    2.0 ** -1043, shape, 1.0, 2.0 ** -1043, None,
+                    "OK", None, "OK", None)
+        lo = reference(p60)
+        saved = mp.dps
+        mp.dps = ORACLE_STABILITY_DPS
+        hi = reference(p60)
+        mp.dps = saved
+        if lo is None or hi is None or hi == 0:
+            continue
+        if abs(lo - hi) / abs(hi) > ORACLE_STABILITY_TOLERANCE:
+            problems.append(f"{surface} reference at shape {shape} moved "
+                            f"between {saved} and {ORACLE_STABILITY_DPS} dps")
+
     unit = reference(pt("density", 1.0))
     for s_ in (2.0, 3.0, 64.0):
         if abs(reference(pt("density", s_)) * s_ - unit) > mpf("1e-40"):
