@@ -1,0 +1,107 @@
+name: Label Taxonomy Sync
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/labels.json"
+      - ".github/workflows/labels-sync.yml"
+
+concurrency:
+  group: label-taxonomy-sync
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-labels:
+    name: Synchronize repository labels
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create, update, and prune labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('.github/labels.json', 'utf8'));
+            const desired = config.labels;
+            const desiredByKey = new Map(desired.map(label => [label.name.toLowerCase(), label]));
+
+            const current = await github.paginate(github.rest.issues.listLabelsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+
+            const currentByKey = new Map(current.map(label => [label.name.toLowerCase(), label]));
+            const created = [];
+            const updated = [];
+            const removed = [];
+            const unchanged = [];
+
+            for (const wanted of desired) {
+              const key = wanted.name.toLowerCase();
+              const existing = currentByKey.get(key);
+
+              if (!existing) {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: wanted.name,
+                  color: wanted.color,
+                  description: wanted.description
+                });
+                created.push(wanted.name);
+                continue;
+              }
+
+              const sameName = existing.name === wanted.name;
+              const sameColor = existing.color.toLowerCase() === wanted.color.toLowerCase();
+              const sameDescription = (existing.description || '') === (wanted.description || '');
+
+              if (!sameName || !sameColor || !sameDescription) {
+                await github.rest.issues.updateLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: existing.name,
+                  new_name: wanted.name,
+                  color: wanted.color,
+                  description: wanted.description
+                });
+                updated.push(wanted.name);
+              } else {
+                unchanged.push(wanted.name);
+              }
+            }
+
+            if (config.prune) {
+              for (const existing of current) {
+                if (!desiredByKey.has(existing.name.toLowerCase())) {
+                  await github.rest.issues.deleteLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: existing.name
+                  });
+                  removed.push(existing.name);
+                }
+              }
+            }
+
+            await core.summary
+              .addHeading('Repository label taxonomy')
+              .addTable([
+                [{data: 'Action', header: true}, {data: 'Labels', header: true}],
+                ['Created', created.join(', ') || '—'],
+                ['Updated', updated.join(', ') || '—'],
+                ['Removed', removed.join(', ') || '—'],
+                ['Unchanged', unchanged.join(', ') || '—']
+              ])
+              .addRaw(`\nCanonical labels: ${desired.length}. Prune: ${config.prune ? 'enabled' : 'disabled'}.`)
+              .write();
