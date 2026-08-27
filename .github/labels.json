@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "prune": true,
+  "labels": [
+    {
+      "name": "bug",
+      "color": "d73a4a",
+      "description": "Confirmed defect in numerical behavior, correctness, error handling, or documented contract."
+    },
+    {
+      "name": "enhancement",
+      "color": "a2eeef",
+      "description": "New capability or meaningful improvement to existing behavior."
+    },
+    {
+      "name": "documentation",
+      "color": "0075ca",
+      "description": "README, Wiki, examples, source comments, or other user-facing documentation."
+    },
+    {
+      "name": "refactor",
+      "color": "6f42c1",
+      "description": "Internal restructuring or maintainability work with no intended behavior change."
+    },
+    {
+      "name": "testing",
+      "color": "006b75",
+      "description": "Regression tests, numerical edge coverage, fault injection, and test infrastructure."
+    },
+    {
+      "name": "CI",
+      "color": "24292f",
+      "description": "Continuous integration, automated checks, Excel regression gates, and evidence automation."
+    },
+    {
+      "name": "release",
+      "color": "b60276",
+      "description": "Release process, packaging, provenance, tagging, changelog, and artifact governance."
+    },
+    {
+      "name": "performance",
+      "color": "0e8a16",
+      "description": "Runtime performance, algorithmic efficiency, scalability, or performance benchmarking."
+    },
+    {
+      "name": "P1",
+      "color": "b60205",
+      "description": "Critical: release-blocking correctness, silent-wrong-result, or data-integrity defect; fix immediately."
+    },
+    {
+      "name": "P2",
+      "color": "d93f0b",
+      "description": "High: material numerical defect or engineering risk; fix in the next planned milestone."
+    },
+    {
+      "name": "P3",
+      "color": "fbca04",
+      "description": "Normal: non-blocking improvement, hardening, refactor, documentation, or cleanup."
+    },
+    {
+      "name": "core",
+      "color": "1d76db",
+      "description": "Core floating-point primitives, constants, guards, arithmetic helpers, and shared numerics."
+    },
+    {
+      "name": "special-functions",
+      "color": "5319e7",
+      "description": "Gamma, beta, log-gamma/log-beta, incomplete functions, combinatorial kernels, and inverse solvers."
+    },
+    {
+      "name": "normal-family",
+      "color": "c5def5",
+      "description": "Standard Normal, Normal, Lognormal, Gaussian tails, intervals, and inverse-normal behavior."
+    },
+    {
+      "name": "t-family",
+      "color": "0052cc",
+      "description": "Student t, Chi-square, F distributions, and their shared numerical paths."
+    },
+    {
+      "name": "continuous",
+      "color": "bfe5bf",
+      "description": "Gamma, Beta, Exponential, Weibull, Uniform, and other continuous-distribution surfaces."
+    },
+    {
+      "name": "discrete",
+      "color": "d4c5f9",
+      "description": "Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric, and Discrete Uniform surfaces."
+    },
+    {
+      "name": "accuracy",
+      "color": "e99695",
+      "description": "Accuracy contracts, numerical envelopes, reference values, holdouts, benchmarks, and limitations."
+    },
+    {
+      "name": "api",
+      "color": "0366d6",
+      "description": "Worksheet/VBA API surface, parameterization, compatibility, return values, and caller contracts."
+    },
+    {
+      "name": "good first issue",
+      "color": "7057ff",
+      "description": "Well-scoped task suitable for a first contribution to the repository."
+    },
+    {
+      "name": "help wanted",
+      "color": "008672",
+      "description": "Maintainer welcomes external investigation, implementation, validation, or review."
+    },
+    {
+      "name": "blocked",
+      "color": "bfd4f2",
+      "description": "Cannot progress until a dependency, decision, prerequisite fix, or evidence step is resolved."
+    }
+  ]
+}
