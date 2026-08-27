@@ -45,7 +45,7 @@
     {
       "name": "P1",
       "color": "b60205",
-      "description": "Critical: release-blocking correctness, silent-wrong-result, or data-integrity defect; fix immediately."
+      "description": "Critical: release-blocking correctness or silent-wrong-result defect; fix immediately."
     },
     {
       "name": "P2",
@@ -65,7 +65,7 @@
     {
       "name": "special-functions",
       "color": "5319e7",
-      "description": "Gamma, beta, log-gamma/log-beta, incomplete functions, combinatorial kernels, and inverse solvers."
+      "description": "Gamma, beta, log-gamma/log-beta, incomplete functions, combinatorial and inverse kernels."
     },
     {
       "name": "normal-family",
@@ -85,17 +85,17 @@
     {
       "name": "discrete",
       "color": "d4c5f9",
-      "description": "Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric, and Discrete Uniform surfaces."
+      "description": "Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric, and Discrete Uniform."
     },
     {
       "name": "accuracy",
       "color": "e99695",
-      "description": "Accuracy contracts, numerical envelopes, reference values, holdouts, benchmarks, and limitations."
+      "description": "Accuracy contracts, numerical envelopes, references, holdouts, benchmarks, and limitations."
     },
     {
       "name": "api",
       "color": "0366d6",
-      "description": "Worksheet/VBA API surface, parameterization, compatibility, return values, and caller contracts."
+      "description": "Worksheet/VBA API, parameterization, compatibility, return values, and caller contracts."
     },
     {
       "name": "good first issue",
