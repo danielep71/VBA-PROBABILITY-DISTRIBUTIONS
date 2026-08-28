@@ -3,6 +3,7 @@ name: 🐞 Bug report
 about: Report a wrong result, a spurious error, a wrong error code, a performance defect, or a crash
 title: "[Bug]: "
 labels: bug
+assignees: danielep71
 ---
 
 ## 🐞 Description
