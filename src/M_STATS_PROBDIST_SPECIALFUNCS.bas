@@ -31,6 +31,10 @@ Option Private Module
 '     - PROB_LogGammaHalfDiff
 '     - PROB_LogBeta
 '
+'   Positive-ratio dispatch (#13):
+'     - PROB_PositiveRatioClass, PROB_ClassifyPositiveRatio
+'     - PROB_PRS_CUTOFF_48BIT, PROB_PRS_CUTOFF_40BIT
+'
 '   Combinatorics:
 '     - PROB_StirlingError
 '     - PROB_LogChoose
@@ -180,8 +184,23 @@ Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y
 'the 40-bit Gamma cumulative boundary the same way. Both boundaries were
 'confirmed on an independent, preregistered holdout - see
 'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
-Private Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#      'Gamma/ChiSquare density, ChiSquare cumulative
-Private Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#    'Gamma cumulative
+Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density, ChiSquare cumulative
+Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Gamma cumulative
+
+'Classification of a standardized argument for positive-ratio dispatch.
+'
+'THREE STATES, NOT A CUTOFF COMPARISON. Hard underflow is tested
+'independently of the cutoff and is NOT the bottom of the precision scale:
+'a stored zero carries no information at all, whereas a positive subnormal
+'carries some. Phase A established that distinction, and collapsing it into
+'StandardX <= Cutoff would erase it - which is why this is an Enum and not
+'a Boolean. The first Enum in this project; the alternative was a Boolean
+'that a later refactor could not have been stopped from conflating.
+Public Enum PROB_PositiveRatioClass
+    PROB_PRC_DIRECT = 0                'Existing path; nothing was lost
+    PROB_PRC_PRECISION_RECOVERY = 1    'Positive subnormal below the cutoff
+    PROB_PRC_HARD_UNDERFLOW = 2        'Positive ratio stored as zero
+End Enum
 Private Const PROB_IBETA_LOADER_MIN_SHAPE As Double = 1000# 'A + B at or above which the incomplete-beta factor uses the Loader decomposition instead of the literal form (measured crossover; see the header of PROB_TryBetaRegularized)
 Public Const PROB_DENSITY_SHAPE_MAX As Double = 1E+20 'Validated large-shape density envelope (Gamma/Chi-square/Beta/F); measured, benchmark/density_large_shape
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
@@ -836,6 +855,87 @@ End Function
 '==============================================================================
 ' REGULARIZED INCOMPLETE BETA
 '==============================================================================
+
+Public Function PROB_ClassifyPositiveRatio( _
+    ByVal MathematicallyPositive As Boolean, _
+    ByVal StandardX As Double, _
+    ByVal Cutoff As Double) _
+    As PROB_PositiveRatioClass
+'
+'==============================================================================
+' PROB_ClassifyPositiveRatio
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Decides which evaluation path a standardized argument requires, for
+'   ICR-P1-01A (#13).
+'
+' WHY THE DECISION LIVES AT THE CALLER
+'   PROB_TryGammaRegularizedP and _Q receive only the rounded StandardX. A
+'   mathematically positive ratio that underflowed is indistinguishable there
+'   from a genuine support value of zero, so their boundary handling is
+'   CORRECT given what they are told and must not be made conditional. Only
+'   the caller still holds the fact that the input was positive.
+'
+'   This function does not compute anything. It classifies, so that the
+'   caller decides and the shared kernels still own the arithmetic.
+'
+' THE THREE STATES
+'     MathematicallyPositive and StandardX = 0   -> PROB_PRC_HARD_UNDERFLOW
+'     StandardX > 0 and StandardX < Cutoff       -> PROB_PRC_PRECISION_RECOVERY
+'     otherwise                                  -> PROB_PRC_DIRECT
+'
+'   Hard underflow is tested FIRST and independently of Cutoff. It is not the
+'   bottom of the precision scale: a stored zero retains no information about
+'   the ratio, while a positive subnormal retains some. Writing this as
+'   StandardX <= Cutoff would give the same answers today and silently erase
+'   the distinction the moment a cutoff moved.
+'
+' WHY THE COMPARISON IS STRICT
+'   Cutoff is a power of two derived from PROB_MIN_NORMAL, and the holdout
+'   confirmed the boundary in retained significand bits. PROB_MIN_NORMAL / 16#
+'   is 2 ^ -1026, so a strict < routes the largest 48-bit subnormal and leaves
+'   the smallest 49-bit value on the direct path. A <= would move both
+'   boundaries by one bucket, past the confirmed evidence.
+'
+' ARGUMENTS
+'   MathematicallyPositive  True when the caller has established that the
+'                           exact ratio is strictly positive. At every #13
+'                           call site this holds because X > 0 is guaranteed
+'                           before standardization and the scale is validated
+'                           positive and finite.
+'   StandardX               The stored standardized argument.
+'   Cutoff                  PROB_PRS_CUTOFF_48BIT or PROB_PRS_CUTOFF_40BIT,
+'                           per the surface being evaluated. The two families
+'                           do not share a cumulative boundary.
+'
+' RETURNS
+'   A PROB_PositiveRatioClass value. Never raises.
+'
+' UPDATED
+'   2026-08-15
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' CLASSIFY
+'------------------------------------------------------------------------------
+    'Hard underflow first, and never via the cutoff: a stored zero is a
+    'different kind of loss from a positive subnormal, not a smaller one
+        If MathematicallyPositive And StandardX = 0# Then
+            PROB_ClassifyPositiveRatio = PROB_PRC_HARD_UNDERFLOW
+            Exit Function
+        End If
+
+    'Strict less-than: see WHY THE COMPARISON IS STRICT above
+        If StandardX > 0# Then
+            If StandardX < Cutoff Then
+                PROB_ClassifyPositiveRatio = PROB_PRC_PRECISION_RECOVERY
+                Exit Function
+            End If
+        End If
+
+        PROB_ClassifyPositiveRatio = PROB_PRC_DIRECT
+End Function
+
 
 Public Function PROB_StirlingError( _
     ByVal n As Double) _
