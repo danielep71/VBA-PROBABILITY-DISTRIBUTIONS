@@ -40,3 +40,17 @@ No movement is expected in:
 - the continued-fraction-Q fitting ladder tracked by #26.
 
 Any movement outside these predictions must be explained before #23 closes.
+
+## Post-selection explanation
+
+Added with the production source change, after the predictions above were
+frozen. The preregistered scope probe showed that a small-shape-only dispatch
+would leave the same source defect reachable at ordinary off-grid shapes. The
+selected fix therefore changes the off-grid `PROB_StirlingError` construction
+for `N <= 15` rather than adding a Gamma-only shape boundary.
+
+Consequently, off-grid Stirling-error observations and Gamma/Chi-square
+surfaces that consume them may move even when `Shape >= 0.5`. Exact
+half-integers, integer-count discrete paths, and the `N > 15` asymptotic branch
+remain unchanged. This is an explained expansion from the original prediction,
+not a post-hoc change to the fitting or holdout inputs.

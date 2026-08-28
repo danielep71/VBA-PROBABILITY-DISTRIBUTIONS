@@ -866,11 +866,13 @@ Public Function PROB_StirlingError( _
 '   - N on the half-integer grid at or below 15: an exact stored value. The
 '     log-gamma route is accurate only to about 1E-12 RELATIVE there, and delta
 '     is small, so a stored constant is both faster and better.
-'   - N off the grid and at or below 15: the defining identity via PROB_LogGamma.
+'   - N off the grid and at or below 15: upward recurrence to the asymptotic
+'     region. This avoids importing the absolute error of PROB_LogGamma into
+'     Gamma-series prefactors whose public contract is tighter.
 '   - N above 15: the asymptotic series in 1 / N, truncated by magnitude.
-'   - N below 0.5: one upward recurrence to N + 1 (which uses the paths above),
-'     delta(N) = delta(N + 1) + (N + 0.5) * Log((N + 1) / N) - 1, evaluated
-'     as Log1p(N) - Log(N) so that the ratio is never formed.
+'   - N below 0.5: the same upward recurrence, with the first step evaluated as
+'     Log1p(N) - Log(N) so that the ratio is never formed. Subsequent steps use
+'     PROB_Log1p(1 / N), where the reciprocal is bounded by two.
 '
 ' ACCURACY
 '   The authoritative measured accuracy contract lives in
@@ -894,9 +896,12 @@ Public Function PROB_StirlingError( _
 '   true density was small and representable.
 '
 ' DEPENDENCIES
-'   - PROB_LogGamma
 '   - PROB_Log1p            (M_STATS_PROBDIST_CORE)
 '   - PROB_HALF_LOG_TWO_PI  (M_STATS_PROBDIST_CORE)
+'
+' UPDATED
+'   2026-08-28 - #23: off-grid values recur to the asymptotic anchor instead of
+'                importing the LogGamma error floor into Gamma-series P.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -923,7 +928,9 @@ Public Function PROB_StirlingError( _
             'Below the tabulated domain recurse up one unit, from
             'Log Gamma(n) = Log Gamma(n + 1) - Log(n):
             '  delta(n) = delta(n + 1) + (n + 0.5) * Log((n + 1) / n) - 1
-            'delta(0) is 0 by convention; n + 1 >= 1 lands on the valid paths below.
+            'delta(0) is 0 by convention. An off-grid n + 1 continues upward
+            'until it reaches the asymptotic anchor; a half-integer lands on the
+            'stored table. This is bounded by sixteen calls.
             'The log of the ratio is taken as Log1p(n) - Log(n) and the ratio
             'itself is never formed. Forming it overflows once 1 / n leaves
             'the Double range, at n = 2 ^ -1024, which is inside the accepted
@@ -944,7 +951,7 @@ Public Function PROB_StirlingError( _
 '------------------------------------------------------------------------------
 ' TABULATED REGION
 '------------------------------------------------------------------------------
-    'Exact stored values on the half-integer grid up to 15
+    'Use exact stored values on the half-integer grid up to 15
         If n <= 15# Then
             TwoN = 2# * n
 
@@ -982,18 +989,26 @@ Public Function PROB_StirlingError( _
             Case 29: PROB_StirlingError = 5.74621651301012E-03 - 4.31797389752291E-18  'delta(14.5)
             Case 30: PROB_StirlingError = 5.5547335519628E-03 + 1.37103868995979E-18   'delta(15)
     'Unreachable while 0.5 <= N <= 15 and TwoN is integral. Present so that a
-    'broken invariant produces a correct number rather than a silent zero.
+    'broken invariant continues through the accurate off-grid path rather than
+    'returning a silent zero.
                     Case Else
-                        PROB_StirlingError = PROB_LogGamma(n + 1#) - _
-                                             (n + 0.5) * Log(n) + n - PROB_HALF_LOG_TWO_PI
+                        PROB_StirlingError = _
+                            PROB_StirlingError(n + 1#) + _
+                            (n + 0.5) * PROB_Log1p(1# / n) - 1#
                 End Select
 
                 Exit Function
             End If
 
-    'Off the grid: the defining identity, well conditioned at small N
-            PROB_StirlingError = PROB_LogGamma(n + 1#) - _
-                                 (n + 0.5) * Log(n) + n - PROB_HALF_LOG_TWO_PI
+    'Off the grid: recur upward to the asymptotic anchor. The previous defining
+    'identity called PROB_LogGamma and contributed about 1E-14 absolute error
+    'to the Stirling correction. That is inside StirlingError's own 1E-13
+    'contract but becomes the same relative error in an incomplete-gamma
+    'prefactor, breaching the tighter Gamma/Chi-square CDF contract (#23).
+    'Here n >= 0.5, so 1 / n is bounded by two and cannot overflow.
+            PROB_StirlingError = _
+                PROB_StirlingError(n + 1#) + _
+                (n + 0.5) * PROB_Log1p(1# / n) - 1#
             Exit Function
         End If
 
