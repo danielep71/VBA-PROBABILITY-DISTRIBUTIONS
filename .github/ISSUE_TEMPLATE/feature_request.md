@@ -3,6 +3,7 @@ name: ✨ Feature request
 about: Suggest a new distribution, routine, or enhancement
 title: "[Feature]: "
 labels: enhancement
+assignees: danielep71
 ---
 
 ## ✨ Problem / use case
