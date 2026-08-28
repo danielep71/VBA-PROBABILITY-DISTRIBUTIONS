@@ -473,6 +473,7 @@ Private Sub RunCoreSuite()
     Test_Core_LogGamma
     Test_Core_LogBetaTinyUnbalanced
     Test_Core_SpecialFunctionKernels
+    Test_Core_GammaSeriesPrefactorAccuracy
     Test_Core_NormalInvRaw
     Test_Core_Characterization
 End Sub
@@ -1406,6 +1407,115 @@ Private Sub Test_Core_SpecialFunctionKernels()
             Recovered, _
             0.6, _
             TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_Core_GammaSeriesPrefactorAccuracy()
+'
+'==============================================================================
+' Test_Core_GammaSeriesPrefactorAccuracy
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins the incomplete-gamma series-P accuracy floor reported in #23 at the
+'   shared kernel and public Gamma/Chi-square surfaces.
+'
+' WHY
+'   The prior harness exercised the series only at half-integer or integer
+'   shapes, which use the accurate stored Stirling table. An off-grid shape can
+'   take the same converged series through a less accurate prefactor and return
+'   a plausible value outside the frozen public CDF contract.
+'
+' BEHAVIOR
+'   - Checks the minimal small-shape kernel counterexample.
+'   - Checks the equivalent public Gamma and Chi-square routes.
+'   - Probes ordinary off-grid shapes preregistered before the #23 source fix.
+'
+' ERROR POLICY
+'   - The frozen 3E-15 Gamma cumulative contract is used directly.
+'   - References are exact binary64 targets restored from split literals.
+'   - A returned worksheet error is a failed assertion.
+'
+' DEPENDENCIES
+'   - PROB_TryGammaSeriesP
+'   - K_STATS_Gamma_Cumulative
+'   - K_STATS_ChiSquare_Cumulative
+'   - AssertTrue
+'   - AssertRelClose
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-08-28 - Added for #23 before production source changed.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim GammaP              As Double          'Direct regularized lower gamma
+    Dim FailMsg             As String          'Kernel diagnostic message
+
+'------------------------------------------------------------------------------
+' EXECUTE MINIMAL SMALL-SHAPE REGRESSION
+'------------------------------------------------------------------------------
+    'Print the test-section heading
+        Debug.Print "-- Gamma series-P prefactor accuracy (#23)"
+
+    'Evaluate the exact kernel point used by both public families
+        FailMsg = vbNullString
+
+        AssertTrue _
+            "gamma series P small-shape kernel succeeds", _
+            PROB_TryGammaSeriesP( _
+                0.0001, _
+                0.5, _
+                GammaP, _
+                FailMsg)
+
+    'Pin the correctly rounded binary64 reference
+        AssertRelClose _
+            "gamma series P(0.0001,0.5) #23", _
+            GammaP, _
+            0.999944019707043 - 4.44089209850063E-16, _
+            3E-15
+
+    'Pin the Gamma wrapper with a no-op scale transformation
+        AssertRelClose _
+            "gamma cdf(0.5,0.0001,1) #23", _
+            K_STATS_Gamma_Cumulative(0.5, 0.0001, 1#), _
+            0.999944019707043 - 4.44089209850063E-16, _
+            3E-15
+
+    'Pin the equivalent Chi-square route to the same kernel point
+        AssertRelClose _
+            "chi2 cdf(1,0.0002) #23", _
+            K_STATS_ChiSquare_Cumulative(1#, 0.0002), _
+            0.999944019707043 - 4.44089209850063E-16, _
+            3E-15
+
+'------------------------------------------------------------------------------
+' EXECUTE PREREGISTERED OFF-GRID SCOPE PROBE
+'------------------------------------------------------------------------------
+    'These three points determine whether the prefactor floor extends above the
+    'minimal small-shape ladder. They were frozen before the source fix; see
+    'benchmark/gamma_series_small_shape/HOLDOUT_DESIGN.md.
+        AssertRelClose _
+            "gamma cdf(0.5,0.6,1) off-grid scope", _
+            K_STATS_Gamma_Cumulative(0.5, 0.6, 1#), _
+            0.618901017140794 - 3.33066907387547E-16, _
+            3E-15
+
+        AssertRelClose _
+            "gamma cdf(1,5.3,1) off-grid scope", _
+            K_STATS_Gamma_Cumulative(1#, 5.3, 1#), _
+            0.00215719470747226 + 1.73472347597681E-18, _
+            3E-15
+
+        AssertRelClose _
+            "gamma cdf(10.8,10.3,1) off-grid scope", _
+            K_STATS_Gamma_Cumulative(10.8, 10.3, 1#), _
+            0.601421097121861 + 2.22044604925031E-16, _
+            3E-15
 End Sub
 
 
