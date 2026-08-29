@@ -27,8 +27,11 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 | File | Role |
 |---|---|
 | `chisq_reference.py` | Primary route. Series/Lentz-CF, two-precision stabilization, Newton inversion. Writes `chisq_reference.json`. |
-| `chisq_crosscheck.py` | Independent quadrature route + coarse sanity. Writes `chisq_crosscheck.json`. |
-| `rmpfr_crosscheck.R` | **Required, not yet run.** Independent MPFR leg. Writes `chisq_rmpfr.json`. |
+| `chisq_crosscheck.py` | Algorithm-independent quadrature route + coarse sanity. Writes `chisq_crosscheck.json`. |
+| `chisq_gmpy2.py` | Implementation-independent MPFR-arithmetic route (gmpy2). Never calls a library incomplete gamma. Writes `chisq_gmpy2.json`. |
+| `rmpfr_crosscheck.R` | Rmpfr `igamma` leg. Takes an optional df filter; writes incrementally because MPFR can abort. Reaches df 1E6 and 1E7 only. |
+| `rmpfr_probe.R` | Bisects the shape at which MPFR's incomplete gamma aborts. |
+| `rmpfr_series.R` | Superseded. The mpfr-arithmetic route in R, ~1600x slower than gmpy2. Retained as the record of why gmpy2 was chosen. |
 | `chisq_reference.json` | The 69 frozen references. |
 | `chisq_crosscheck.json` | Primary-vs-independent comparison record. |
 
@@ -41,11 +44,19 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 `chisq_reference.py` can be run one df at a time if a runtime cap applies;
 `chisq_crosscheck.py` reads either the merged file or the chunks.
 
-## Results so far (mpmath legs only)
+## Results
 
 - 69/69 converged and stabilized; 0 rejected.
 - Two-precision stabilization: 55.89 – 59.26 significant digits (required 40).
-- Primary vs independent quadrature: minimum 49.32 significant digits.
+
+| Leg | Standing | Coverage | Agreement (sig. digits) |
+|---|---|---|---|
+| Quadrature (mpmath) | algorithm-independent | 69/69 | min 109.87 |
+| gmpy2 / MPFR arithmetic | implementation-independent | 69/69 | min 115.11 |
+| Rmpfr `igamma` | third-party incomplete gamma | 46/69 | min 115.96 |
+
+Conservative headline: **109.87 significant digits**, the minimum across all
+legs and all points.
 
 ## Recorded findings
 
@@ -58,6 +69,15 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 - SciPy's double-precision `chi2.ppf` deviates by up to 7.8E-06 relative at
   df = 1E8, p = 2^-20. Recorded as coarse sanity only; no figure is derived
   from it.
+- MPFR's `mpfr_gamma_inc` ABORTS the process at shape a >= ~4.5E7 (ok at 4.0E7,
+  `gamma_inc.c:289` assertion failure at 4.5E7). df = 1E8 needs a = 5E7, so no
+  Rmpfr-based oracle can reach it. An abort cannot be caught, so cross-check
+  scripts must write results incrementally.
+- Reference quantiles MUST be stored at more digits than the working precision.
+  An earlier revision stored 50 digits from a 120-dps computation, which capped
+  every agreement figure at ~49 digits — measuring the truncation, not the
+  oracle. Caught because two independent legs returned figures identical to
+  0.0 difference across all 69 points.
 
 ## Measures
 
