@@ -2,8 +2,8 @@
   "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
   "status": "PROVISIONAL - INCOMPLETE",
   "completion_blocked_on": "the independent Rmpfr leg (rmpfr_crosscheck.R) has not been run or verified by the maintainer. No final agreement figure is recorded and this checkpoint must NOT be marked complete.",
-  "generated_utc": "2026-08-29T20:33:14Z",
-  "runtime_s_total": 67.144,
+  "generated_utc": "2026-08-29T22:33:17Z",
+  "runtime_s_total": 44.156,
   "versions": {
     "python": "3.12.3",
     "mpmath": "1.3.0",
@@ -31,17 +31,17 @@
         "1e+06": {
           "status": "ok",
           "P": "0.50018806319660550048",
-          "runtime_s": 0.007
+          "runtime_s": 0.005
         },
         "1e+07": {
           "status": "FAILED",
           "error": "NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.",
-          "runtime_s": 0.014
+          "runtime_s": 0.009
         },
         "1e+08": {
           "status": "FAILED",
           "error": "NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.",
-          "runtime_s": 0.016
+          "runtime_s": 0.009
         }
       }
     },
@@ -59,8 +59,8 @@
   "summary": {
     "points_total": 69,
     "points_compared": 69,
-    "primary_vs_independent_min_agreement_digits": 49.319,
-    "primary_vs_independent_min_agreement_at": "df=1e+08 fitting/tails p=0.9999999990686774",
+    "primary_vs_independent_min_agreement_digits": 109.873,
+    "primary_vs_independent_min_agreement_at": "df=1e+08 fitting/bridge p=0.125",
     "final_agreement_figure": null,
     "final_agreement_figure_note": "deliberately null: the final figure is primary-vs-Rmpfr agreement, which cannot be computed until the Rmpfr leg runs"
   },
@@ -76,9 +76,9 @@
       "compared_side": "P",
       "primary_quantile": "999999.3333334123457367039101089013660817",
       "independent_quantile": "999999.3333334123457367039101089013660817",
-      "agreement_significant_digits": 50.3496,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 4,
-      "independent_runtime_s": 0.948,
+      "independent_runtime_s": 0.528,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -102,9 +102,9 @@
       "compared_side": "Q",
       "primary_quantile": "1001812.815315016348315286490339749162514",
       "independent_quantile": "1001812.815315016348315286490339749162514",
-      "agreement_significant_digits": 49.4839,
+      "agreement_significant_digits": 110.583,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.999,
+      "independent_runtime_s": 0.623,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -128,9 +128,9 @@
       "compared_side": "Q",
       "primary_quantile": "1003292.893686412615580058332836515558792",
       "independent_quantile": "1003292.893686412615580058332836515558792",
-      "agreement_significant_digits": 50.0459,
+      "agreement_significant_digits": 110.459,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.946,
+      "independent_runtime_s": 0.618,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -154,9 +154,9 @@
       "compared_side": "P",
       "primary_quantile": "998373.3763536697719079933480500286848002",
       "independent_quantile": "998373.3763536697719079933480500286848002",
-      "agreement_significant_digits": 50.4665,
+      "agreement_significant_digits": 110.214,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.948,
+      "independent_runtime_s": 0.606,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -180,9 +180,9 @@
       "compared_side": "P",
       "primary_quantile": "999045.7644187754186208610143196158612885",
       "independent_quantile": "999045.7644187754186208610143196158612885",
-      "agreement_significant_digits": 50.3898,
+      "agreement_significant_digits": 110.582,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.951,
+      "independent_runtime_s": 0.629,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -206,9 +206,9 @@
       "compared_side": "P",
       "primary_quantile": "999548.7770834481040186428679958471090193",
       "independent_quantile": "999548.7770834481040186428679958471090193",
-      "agreement_significant_digits": 50.6701,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 1.037,
+      "independent_runtime_s": 0.68,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -232,9 +232,9 @@
       "compared_side": "Q",
       "primary_quantile": "1000450.024958094952740457222924769366056",
       "independent_quantile": "1000450.024958094952740457222924769366056",
-      "agreement_significant_digits": 49.3512,
+      "agreement_significant_digits": 110.282,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.991,
+      "independent_runtime_s": 0.649,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -258,9 +258,9 @@
       "compared_side": "Q",
       "primary_quantile": "1000953.508829909180824790325932268679803",
       "independent_quantile": "1000953.508829909180824790325932268679803",
-      "agreement_significant_digits": 49.6592,
+      "agreement_significant_digits": 111.06,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.937,
+      "independent_runtime_s": 0.637,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -284,9 +284,9 @@
       "compared_side": "Q",
       "primary_quantile": "1001627.054717940788317528322514027278349",
       "independent_quantile": "1001627.054717940788317528322514027278349",
-      "agreement_significant_digits": 49.7986,
+      "agreement_significant_digits": 110.361,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.926,
+      "independent_runtime_s": 0.631,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -310,9 +310,9 @@
       "compared_side": "P",
       "primary_quantile": "991524.8851411293996721650487673866443944",
       "independent_quantile": "991524.8851411293996721650487673866443944",
-      "agreement_significant_digits": 50.948,
+      "agreement_significant_digits": 110.454,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.094,
+      "independent_runtime_s": 0.724,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -336,9 +336,9 @@
       "compared_side": "P",
       "primary_quantile": "993278.5509139427625326631062316555597854",
       "independent_quantile": "993278.5509139427625326631062316555597854",
-      "agreement_significant_digits": 50.883,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.098,
+      "independent_runtime_s": 0.761,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -362,9 +362,9 @@
       "compared_side": "Q",
       "primary_quantile": "1006750.363974534150810657091658562178555",
       "independent_quantile": "1006750.363974534150810657091658562178555",
-      "agreement_significant_digits": 50.423,
+      "agreement_significant_digits": 110.585,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.141,
+      "independent_runtime_s": 0.799,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -388,9 +388,9 @@
       "compared_side": "Q",
       "primary_quantile": "1008521.931258259384676385830562896479692",
       "independent_quantile": "1008521.931258259384676385830562896479692",
-      "agreement_significant_digits": 50.3997,
+      "agreement_significant_digits": 110.762,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.117,
+      "independent_runtime_s": 0.729,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -414,9 +414,9 @@
       "compared_side": "P",
       "primary_quantile": "997831.3288303883770882166463840837694574",
       "independent_quantile": "997831.3288303883770882166463840837694574",
-      "agreement_significant_digits": 50.5224,
+      "agreement_significant_digits": 110.36,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.957,
+      "independent_runtime_s": 0.607,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -440,9 +440,9 @@
       "compared_side": "P",
       "primary_quantile": "998745.2437568594770798969649278974233134",
       "independent_quantile": "998745.2437568594770798969649278974233134",
-      "agreement_significant_digits": 50.4575,
+      "agreement_significant_digits": 111.059,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.958,
+      "independent_runtime_s": 0.613,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -466,9 +466,9 @@
       "compared_side": "P",
       "primary_quantile": "999308.2586317292355874228539353093865853",
       "independent_quantile": "999308.2586317292355874228539353093865853",
-      "agreement_significant_digits": 50.4595,
+      "agreement_significant_digits": 110.457,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.978,
+      "independent_runtime_s": 0.644,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -492,9 +492,9 @@
       "compared_side": "P",
       "primary_quantile": "999776.8790137078591871703299431988742192",
       "independent_quantile": "999776.8790137078591871703299431988742192",
-      "agreement_significant_digits": 50.3111,
+      "agreement_significant_digits": 110.582,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.948,
+      "independent_runtime_s": 0.638,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -518,9 +518,9 @@
       "compared_side": "Q",
       "primary_quantile": "1000221.820648650426620530628746267771618",
       "independent_quantile": "1000221.820648650426620530628746267771618",
-      "agreement_significant_digits": 49.5421,
+      "agreement_significant_digits": 110.458,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.957,
+      "independent_runtime_s": 0.675,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -544,9 +544,9 @@
       "compared_side": "Q",
       "primary_quantile": "1000690.726571583997583317597788000537297",
       "independent_quantile": "1000690.726571583997583317597788000537297",
-      "agreement_significant_digits": 49.4036,
+      "agreement_significant_digits": 110.361,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.996,
+      "independent_runtime_s": 0.632,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -570,9 +570,9 @@
       "compared_side": "Q",
       "primary_quantile": "1001254.472281915354791370935833392209202",
       "independent_quantile": "1001254.472281915354791370935833392209202",
-      "agreement_significant_digits": 49.3548,
+      "agreement_significant_digits": 110.458,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.933,
+      "independent_runtime_s": 0.639,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -596,9 +596,9 @@
       "compared_side": "Q",
       "primary_quantile": "1002170.475870568952956644630543122137774",
       "independent_quantile": "1002170.475870568952956644630543122137774",
-      "agreement_significant_digits": 52.1371,
+      "agreement_significant_digits": 110.759,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.941,
+      "independent_runtime_s": 0.637,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -622,9 +622,9 @@
       "compared_side": "P",
       "primary_quantile": "992353.894222320319258607090932283911424",
       "independent_quantile": "992353.894222320319258607090932283911424",
-      "agreement_significant_digits": 50.4347,
+      "agreement_significant_digits": 110.278,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.103,
+      "independent_runtime_s": 0.743,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -648,9 +648,9 @@
       "compared_side": "Q",
       "primary_quantile": "1007683.940707059355801046299375335040586",
       "independent_quantile": "1007683.940707059355801046299375335040586",
-      "agreement_significant_digits": 50.7372,
+      "agreement_significant_digits": 110.461,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.179,
+      "independent_runtime_s": 0.708,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -674,9 +674,9 @@
       "compared_side": "P",
       "primary_quantile": "9999999.333333341234568478150118221811817",
       "independent_quantile": "9999999.333333341234568478150118221811817",
-      "agreement_significant_digits": 50.5245,
+      "agreement_significant_digits": 109.952,
       "independent_newton_steps": 4,
-      "independent_runtime_s": 0.753,
+      "independent_runtime_s": 0.45,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -700,9 +700,9 @@
       "compared_side": "Q",
       "primary_quantile": "10005731.70091347736963004855916652003676",
       "independent_quantile": "10005731.70091347736963004855916652003676",
-      "agreement_significant_digits": 49.7071,
+      "agreement_significant_digits": 110.555,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.918,
+      "independent_runtime_s": 0.598,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -726,9 +726,9 @@
       "compared_side": "Q",
       "primary_quantile": "10010406.68514244448583326690976198375365",
       "independent_quantile": "10010406.68514244448583326690976198375365",
-      "agreement_significant_digits": 49.346,
+      "agreement_significant_digits": 110.856,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.896,
+      "independent_runtime_s": 0.612,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -752,9 +752,9 @@
       "compared_side": "P",
       "primary_quantile": "9994855.696873251381301479849180512631535",
       "independent_quantile": "9994855.696873251381301479849180512631535",
-      "agreement_significant_digits": 50.4138,
+      "agreement_significant_digits": 110.378,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.879,
+      "independent_runtime_s": 0.612,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -778,9 +778,9 @@
       "compared_side": "P",
       "primary_quantile": "9996983.226870838600520922596723130243578",
       "independent_quantile": "9996983.226870838600520922596723130243578",
-      "agreement_significant_digits": 51.0235,
+      "agreement_significant_digits": 110.378,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.934,
+      "independent_runtime_s": 0.575,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -804,9 +804,9 @@
       "compared_side": "P",
       "primary_quantile": "9998574.402519053258420852409756893981805",
       "independent_quantile": "9998574.402519053258420852409756893981805",
-      "agreement_significant_digits": 50.6667,
+      "agreement_significant_digits": 110.01,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.896,
+      "independent_runtime_s": 0.56,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -830,9 +830,9 @@
       "compared_side": "Q",
       "primary_quantile": "10001424.39952235416839120606511947355202",
       "independent_quantile": "10001424.39952235416839120606511947355202",
-      "agreement_significant_digits": 49.8162,
+      "agreement_significant_digits": 110.554,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.898,
+      "independent_runtime_s": 0.58,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -856,9 +856,9 @@
       "compared_side": "Q",
       "primary_quantile": "10003016.04637773760290386952131358149511",
       "independent_quantile": "10003016.04637773760290386952131358149511",
-      "agreement_significant_digits": 49.5236,
+      "agreement_significant_digits": 110.157,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.884,
+      "independent_runtime_s": 0.593,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -882,9 +882,9 @@
       "compared_side": "Q",
       "primary_quantile": "10005144.73419834599248124989672780244293",
       "independent_quantile": "10005144.73419834599248124989672780244293",
-      "agreement_significant_digits": 50.1904,
+      "agreement_significant_digits": 110.856,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.889,
+      "independent_runtime_s": 0.613,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -908,9 +908,9 @@
       "compared_side": "P",
       "primary_quantile": "9973148.757724843828913545054344635652469",
       "independent_quantile": "9973148.757724843828913545054344635652469",
-      "agreement_significant_digits": 50.8496,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.028,
+      "independent_runtime_s": 0.742,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -934,9 +934,9 @@
       "compared_side": "P",
       "primary_quantile": "9978713.667416419296528954246659568769989",
       "independent_quantile": "9978713.667416419296528954246659568769989",
-      "agreement_significant_digits": 51.1205,
+      "agreement_significant_digits": 110.854,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.883,
+      "independent_runtime_s": 0.588,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -960,9 +960,9 @@
       "compared_side": "Q",
       "primary_quantile": "10021315.24748705131835512107572083326758",
       "independent_quantile": "10021315.24748705131835512107572083326758",
-      "agreement_significant_digits": 49.6011,
+      "agreement_significant_digits": 110.379,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.881,
+      "independent_runtime_s": 0.577,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -986,9 +986,9 @@
       "compared_side": "Q",
       "primary_quantile": "10026898.05871142571647239608005361514487",
       "independent_quantile": "10026898.05871142571647239608005361514487",
-      "agreement_significant_digits": 50.0438,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 1.035,
+      "independent_runtime_s": 0.702,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1012,9 +1012,9 @@
       "compared_side": "P",
       "primary_quantile": "9993140.10688195490980484770520907685931",
       "independent_quantile": "9993140.10688195490980484770520907685931",
-      "agreement_significant_digits": 50.4181,
+      "agreement_significant_digits": 110.253,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.989,
+      "independent_runtime_s": 0.6,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1038,9 +1038,9 @@
       "compared_side": "P",
       "primary_quantile": "9996032.418132348743185492681089729242191",
       "independent_quantile": "9996032.418132348743185492681089729242191",
-      "agreement_significant_digits": 52.3304,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 1.037,
+      "independent_runtime_s": 0.629,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1064,9 +1064,9 @@
       "compared_side": "P",
       "primary_quantile": "9997813.618121597193033854250132210629703",
       "independent_quantile": "9997813.618121597193033854250132210629703",
-      "agreement_significant_digits": 50.6783,
+      "agreement_significant_digits": 110.855,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.907,
+      "independent_runtime_s": 0.576,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1090,9 +1090,9 @@
       "compared_side": "P",
       "primary_quantile": "9999295.835089620254226604521088541493138",
       "independent_quantile": "9999295.835089620254226604521088541493138",
-      "agreement_significant_digits": 50.6349,
+      "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.891,
+      "independent_runtime_s": 0.575,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1116,9 +1116,9 @@
       "compared_side": "Q",
       "primary_quantile": "10000702.86457259736536865765189292662513",
       "independent_quantile": "10000702.86457259736536865765189292662513",
-      "agreement_significant_digits": 49.4381,
+      "agreement_significant_digits": 110.554,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.889,
+      "independent_runtime_s": 0.613,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1142,9 +1142,9 @@
       "compared_side": "Q",
       "primary_quantile": "10002185.3670815902048381835313436545418",
       "independent_quantile": "10002185.3670815902048381835313436545418",
-      "agreement_significant_digits": 49.8189,
+      "agreement_significant_digits": 110.01,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.885,
+      "independent_runtime_s": 0.599,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1168,9 +1168,9 @@
       "compared_side": "Q",
       "primary_quantile": "10003967.29790634935483596109450648381806",
       "independent_quantile": "10003967.29790634935483596109450648381806",
-      "agreement_significant_digits": 49.6248,
+      "agreement_significant_digits": 110.157,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.906,
+      "independent_runtime_s": 0.604,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1194,9 +1194,9 @@
       "compared_side": "Q",
       "primary_quantile": "10006861.69781915434867658897322455555152",
       "independent_quantile": "10006861.69781915434867658897322455555152",
-      "agreement_significant_digits": 49.7608,
+      "agreement_significant_digits": 110.254,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.949,
+      "independent_runtime_s": 0.592,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1220,9 +1220,9 @@
       "compared_side": "P",
       "primary_quantile": "9975780.012831805844134470517221825316564",
       "independent_quantile": "9975780.012831805844134470517221825316564",
-      "agreement_significant_digits": 50.6459,
+      "agreement_significant_digits": null,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.901,
+      "independent_runtime_s": 0.569,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1246,9 +1246,9 @@
       "compared_side": "Q",
       "primary_quantile": "10024257.82212227178120455913509841996795",
       "independent_quantile": "10024257.82212227178120455913509841996795",
-      "agreement_significant_digits": 49.4269,
+      "agreement_significant_digits": 110.254,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.929,
+      "independent_runtime_s": 0.563,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1272,9 +1272,9 @@
       "compared_side": "P",
       "primary_quantile": "99999999.33333333412345679589261219935056",
       "independent_quantile": "99999999.33333333412345679589261219935056",
-      "agreement_significant_digits": 50.6087,
+      "agreement_significant_digits": 110.049,
       "independent_newton_steps": 4,
-      "independent_runtime_s": 0.752,
+      "independent_runtime_s": 0.47,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1298,9 +1298,9 @@
       "compared_side": "Q",
       "primary_quantile": "100018124.3042444014210596037700955005877",
       "independent_quantile": "100018124.3042444014210596037700955005877",
-      "agreement_significant_digits": 49.5187,
+      "agreement_significant_digits": 110.475,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.894,
+      "independent_runtime_s": 0.583,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1324,9 +1324,9 @@
       "compared_side": "Q",
       "primary_quantile": "100032902.4683765857297378520115969698477",
       "independent_quantile": "100032902.4683765857297378520115969698477",
-      "agreement_significant_digits": 49.9932,
+      "agreement_significant_digits": 109.911,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.974,
+      "independent_runtime_s": 0.596,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1350,9 +1350,9 @@
       "compared_side": "P",
       "primary_quantile": "99983731.81863515162832248406678970989606",
       "independent_quantile": "99983731.81863515162832248406678970989606",
-      "agreement_significant_digits": 50.7616,
+      "agreement_significant_digits": 109.873,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.884,
+      "independent_runtime_s": 0.591,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1376,9 +1376,9 @@
       "compared_side": "P",
       "primary_quantile": "99990460.91113487748725453929626805410585",
       "independent_quantile": "99990460.91113487748725453929626805410585",
-      "agreement_significant_digits": 50.7013,
+      "agreement_significant_digits": 110.35,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.92,
+      "independent_runtime_s": 0.583,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1402,9 +1402,9 @@
       "compared_side": "P",
       "primary_quantile": "99995493.15993772346113622133064005750022",
       "independent_quantile": "99995493.15993772346113622133064005750022",
-      "agreement_significant_digits": 51.5647,
+      "agreement_significant_digits": 110.253,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.916,
+      "independent_runtime_s": 0.625,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1428,9 +1428,9 @@
       "compared_side": "Q",
       "primary_quantile": "100004505.6421036704026907417070650965447",
       "independent_quantile": "100004505.6421036704026907417070650965447",
-      "agreement_significant_digits": 49.91,
+      "agreement_significant_digits": 110.35,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.899,
+      "independent_runtime_s": 0.592,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1454,9 +1454,9 @@
       "compared_side": "Q",
       "primary_quantile": "100009538.3621136878765751714930786187563",
       "independent_quantile": "100009538.3621136878765751714930786187563",
-      "agreement_significant_digits": 49.8587,
+      "agreement_significant_digits": 110.475,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.905,
+      "independent_runtime_s": 0.607,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1480,9 +1480,9 @@
       "compared_side": "Q",
       "primary_quantile": "100016268.6124364444268149389254812215231",
       "independent_quantile": "100016268.6124364444268149389254812215231",
-      "agreement_significant_digits": 49.5774,
+      "agreement_significant_digits": 110.107,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.887,
+      "independent_runtime_s": 0.613,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1506,9 +1506,9 @@
       "compared_side": "P",
       "primary_quantile": "99915038.31371078402225704987253445794668",
       "independent_quantile": "99915038.31371078402225704987253445794668",
-      "agreement_significant_digits": 51.5261,
+      "agreement_significant_digits": 110.651,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.881,
+      "independent_runtime_s": 0.57,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1532,9 +1532,9 @@
       "compared_side": "P",
       "primary_quantile": "99932655.45026289575832710752686946418876",
       "independent_quantile": "99932655.45026289575832710752686946418876",
-      "agreement_significant_digits": 50.436,
+      "agreement_significant_digits": 109.911,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.939,
+      "independent_runtime_s": 0.577,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1558,9 +1558,9 @@
       "compared_side": "Q",
       "primary_quantile": "100067373.4646420742266801689500576458823",
       "independent_quantile": "100067373.4646420742266801689500576458823",
-      "agreement_significant_digits": 49.4549,
+      "agreement_significant_digits": 110.953,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.914,
+      "independent_runtime_s": 0.581,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1584,9 +1584,9 @@
       "compared_side": "Q",
       "primary_quantile": "100085008.5027291736007438459280280102168",
       "independent_quantile": "100085008.5027291736007438459280280102168",
-      "agreement_significant_digits": 49.319,
+      "agreement_significant_digits": 110.05,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.919,
+      "independent_runtime_s": 0.623,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1610,9 +1610,9 @@
       "compared_side": "P",
       "primary_quantile": "99978305.16160518139551184458277403097478",
       "independent_quantile": "99978305.16160518139551184458277403097478",
-      "agreement_significant_digits": 50.6623,
+      "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.892,
+      "independent_runtime_s": 0.607,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1636,9 +1636,9 @@
       "compared_side": "P",
       "primary_quantile": "99987453.71110687894811879519452738885699",
       "independent_quantile": "99987453.71110687894811879519452738885699",
-      "agreement_significant_digits": 50.3509,
+      "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.889,
+      "independent_runtime_s": 0.604,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1662,9 +1662,9 @@
       "compared_side": "P",
       "primary_quantile": "99993087.15033188717576683093927234998259",
       "independent_quantile": "99993087.15033188717576683093927234998259",
-      "agreement_significant_digits": 50.9101,
+      "agreement_significant_digits": 110.174,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.939,
+      "independent_runtime_s": 0.582,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1688,9 +1688,9 @@
       "compared_side": "P",
       "primary_quantile": "99997774.64080290383796251673650293839374",
       "independent_quantile": "99997774.64080290383796251673650293839374",
-      "agreement_significant_digits": 51.1488,
+      "agreement_significant_digits": 110.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.962,
+      "independent_runtime_s": 0.601,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1714,9 +1714,9 @@
       "compared_side": "Q",
       "primary_quantile": "100002224.058859299715021621631132411025",
       "independent_quantile": "100002224.058859299715021621631132411025",
-      "agreement_significant_digits": 49.8124,
+      "agreement_significant_digits": 110.049,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.995,
+      "independent_runtime_s": 0.676,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1740,9 +1740,9 @@
       "compared_side": "Q",
       "primary_quantile": "100006911.8348712876385839814419676197704",
       "independent_quantile": "100006911.8348712876385839814419676197704",
-      "agreement_significant_digits": 49.7563,
+      "agreement_significant_digits": 110.049,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.945,
+      "independent_runtime_s": 0.612,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1766,9 +1766,9 @@
       "compared_side": "Q",
       "primary_quantile": "100012546.0049318114765218739584389117475",
       "independent_quantile": "100012546.0049318114765218739584389117475",
-      "agreement_significant_digits": 49.4433,
+      "agreement_significant_digits": 110.475,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.897,
+      "independent_runtime_s": 0.576,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1792,9 +1792,9 @@
       "compared_side": "Q",
       "primary_quantile": "100021696.6430959430558000505659306509559",
       "independent_quantile": "100021696.6430959430558000505659306509559",
-      "agreement_significant_digits": 49.5711,
+      "agreement_significant_digits": 109.873,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.89,
+      "independent_runtime_s": 0.618,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1818,9 +1818,9 @@
       "compared_side": "P",
       "primary_quantile": "99923368.77938740384222916905705765076364",
       "independent_quantile": "99923368.77938740384222916905705765076364",
-      "agreement_significant_digits": 50.6943,
+      "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.893,
+      "independent_runtime_s": 0.6,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1844,9 +1844,9 @@
       "compared_side": "Q",
       "primary_quantile": "100076669.0555691435786187757658754658273",
       "independent_quantile": "100076669.0555691435786187757658754658273",
-      "agreement_significant_digits": 50.4255,
+      "agreement_significant_digits": 110.254,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.889,
+      "independent_runtime_s": 0.615,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {

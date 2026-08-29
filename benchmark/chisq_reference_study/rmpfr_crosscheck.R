@@ -44,6 +44,17 @@ suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 in_path  <- if (length(args) >= 1) args[1] else "chisq_reference.json"
 out_path <- if (length(args) >= 2) args[2] else "chisq_rmpfr.json"
+# Optional third argument restricts the run to one df.
+#
+# THIS EXISTS BECAUSE MPFR CAN ABORT. mpfr_gamma_inc fails at large shape by
+# tripping an internal C assertion, which calls abort() and terminates the R
+# process. That cannot be caught by tryCatch. Two consequences are designed
+# for here:
+#   * results are written incrementally after every point, so an abort loses
+#     at most the point that caused it, never the completed ones;
+#   * a df filter lets each block run in its own process, so a shape that
+#     kills MPFR cannot destroy another block's evidence.
+df_filter <- if (length(args) >= 3) as.numeric(args[3]) else NA_real_
 
 # Precision pair, in BITS. Materially separated, mirroring the Python
 # 60/120 decimal-digit pair (~200 / ~400 bits).
@@ -152,6 +163,12 @@ agree_digits <- function(x, y, prec) {
 # ---------------------------------------------------------------------
 ref <- fromJSON(in_path, simplifyDataFrame = FALSE)
 records <- ref$references
+if (!is.na(df_filter)) {
+  keep <- vapply(records, function(r) isTRUE(all.equal(r$df, df_filter)), logical(1))
+  records <- records[keep]
+  cat(sprintf("df filter %.0e: %d of %d points selected\n",
+              df_filter, length(records), length(ref$references)))
+}
 cat(sprintf("read %d reference points from %s\n", length(records), in_path))
 
 t_start <- Sys.time()
@@ -217,6 +234,18 @@ for (i in seq_along(records)) {
   cat(sprintf("  [%2d/%d] df=%.0e %-8s %-8s %s agree=%s\n", i, length(records),
               df_dbl, r$arm, r$band, status,
               if (is.finite(agree)) sprintf("%.3f", agree) else "NA"))
+  flush.console()
+
+  # Write after EVERY point. If MPFR aborts on the next one, everything
+  # completed so far survives on disk.
+  write(toJSON(list(
+    checkpoint = "v1.0.0 plan Track A2 item 6 - Chi-square Rmpfr cross-check",
+    status = "PARTIAL - run in progress or terminated early",
+    points_written = i,
+    points_selected = length(records),
+    df_filter = if (is.na(df_filter)) NULL else df_filter,
+    points = out[seq_len(i)]
+  ), auto_unbox = TRUE, pretty = TRUE, digits = NA), out_path)
 }
 
 runtime <- as.numeric(difftime(Sys.time(), t_start, units = "secs"))

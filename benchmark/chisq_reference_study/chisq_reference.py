@@ -369,8 +369,13 @@ def generate_point(df, p, arm, band):
         "status": "ACCEPTED" if stabilized else "REJECTED",
         "stabilization_digits": (None if digits == mp.inf
                                  else float(mp.nstr(digits, 6))),
-        "quantile": mp.nstr(high["q"], 50),
-        "quantile_low_precision": mp.nstr(mpf(low["q"]), 50),
+        # Store at MORE than the working precision. Storing fewer digits than
+        # were computed silently caps every downstream agreement figure at the
+        # stored width: an earlier revision wrote 50 digits from a 120-dps
+        # computation, and every cross-check then reported ~49 digits of
+        # agreement, which measured the truncation rather than the routes.
+        "quantile": mp.nstr(high["q"], DPS_HIGH + 10),
+        "quantile_low_precision": mp.nstr(mpf(low["q"]), DPS_LOW + 10),
         "route": high["route"],
         "route_iterations_low": low["route_iterations"],
         "route_iterations_high": high["route_iterations"],
