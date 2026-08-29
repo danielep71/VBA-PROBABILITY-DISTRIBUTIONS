@@ -169,11 +169,42 @@ loaded = M.load_holdout_manifest(hd)
 probs = M.verify_holdout_binding(hd, loaded, hgrid, hcontracts)
 check(any("malformed" in x for x in probs), "malformed holdout manifest rejected")
 
+# 17. a module ADDED under benchmark/holdout/ is bound, not silently ignored.
+# The binding scope is deliberately narrow (production source plus the holdout
+# exporter), so it is bound by an explicit pattern rather than the main glob.
+# That pattern must stay recursive: a literal exporter path would still verify
+# clean while a second module beside it produced part of the observations.
+# Nesting is covered too, so a subdirectory cannot reintroduce the gap.
+check(sorted(M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS)) ==
+      ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/a.bas"],
+      "holdout binding scope is exactly production source plus the exporter")
+
+hextra = os.path.join(hd, "benchmark", "holdout", "M_STATS_PROBDIST_HOLDOUT2.bas")
+open(hextra, "wb").write(b"Attribute VB_Name = \"h2\"\r\nSub Export2()\r\nEnd Sub\r\n")
+probs = M.verify_holdout_binding(hd, hman, hgrid, hcontracts)
+check(any("M_STATS_PROBDIST_HOLDOUT2.bas" in x and "absent from the holdout manifest" in x
+          for x in probs), "added holdout module detected")
+os.remove(hextra)
+
+hnested_dir = os.path.join(hd, "benchmark", "holdout", "wave2")
+os.makedirs(hnested_dir)
+hnested = os.path.join(hnested_dir, "M_STATS_PROBDIST_HOLDOUTW2.bas")
+open(hnested, "wb").write(b"Attribute VB_Name = \"hw2\"\r\nSub ExportW2()\r\nEnd Sub\r\n")
+probs = M.verify_holdout_binding(hd, hman, hgrid, hcontracts)
+check(any("M_STATS_PROBDIST_HOLDOUTW2.bas" in x and "absent from the holdout manifest" in x
+          for x in probs), "added nested holdout module detected")
+os.remove(hnested)
+os.rmdir(hnested_dir)
+
+check(M.verify_holdout_binding(hd, hman, hgrid, hcontracts) == [],
+      "holdout binding is clean again once the added modules are removed")
+
 if fails:
     print("FAIL: manifest verification")
     for f in fails:
         print("  - " + f)
     raise SystemExit(1)
 print("PASS: manifests bind main and holdout evidence to source (clean, LF/CRLF, "
-      "module/exporter change/add/remove, schema, observation content/row count, "
+      "module/exporter change/add/remove, added holdout module incl. nested, "
+      "binding scope, schema, observation content/row count, "
       "contract registry, missing/malformed/pre-binding rejection)")

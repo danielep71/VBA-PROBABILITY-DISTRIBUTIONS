@@ -36,7 +36,12 @@ _BAS_GLOBS = ("src/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
 # change that cannot affect it.
 _HOLDOUT_BAS_GLOBS = (
     "src/**/*.bas",
-    "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas",
+    # Recursive, not a literal exporter path. A literal path binds only the file
+    # named here, so a SECOND module added beside it would produce holdout
+    # observations from source no manifest records - the exact fail-open class
+    # this binding exists to prevent. src/**/*.bas already detects additions;
+    # this makes the holdout directory symmetric with it.
+    "benchmark/holdout/**/*.bas",
 )
 
 # Grid columns the analyzer relies on. If these change, old observations may be
