@@ -1,0 +1,1863 @@
+{
+  "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
+  "status": "PROVISIONAL - INCOMPLETE",
+  "completion_blocked_on": "the independent Rmpfr leg (rmpfr_crosscheck.R) has not been run or verified by the maintainer. No final agreement figure is recorded and this checkpoint must NOT be marked complete.",
+  "generated_utc": "2026-08-29T20:33:14Z",
+  "runtime_s_total": 67.144,
+  "versions": {
+    "python": "3.12.3",
+    "mpmath": "1.3.0",
+    "platform": "Linux-6.18.44-fc-v22-x86_64-with-glibc2.39"
+  },
+  "legs": {
+    "primary": {
+      "method": "converging lower series / upper Lentz continued fraction",
+      "precision_pair": [
+        60,
+        120
+      ],
+      "required_agreement_digits": 40,
+      "standing": "evidential"
+    },
+    "independent": {
+      "method": "tanh-sinh quadrature of the density under t = a + s*sqrt(a), independent Wilson-Hilferty seed, Newton on log q, small side integrated directly",
+      "precision_dps": 110,
+      "standing": "evidential - algorithmically independent"
+    },
+    "mpmath_builtin_probe": {
+      "method": "mp.gammainc regularized",
+      "standing": "REJECTED as independent leg - does not converge at these shapes",
+      "results": {
+        "1e+06": {
+          "status": "ok",
+          "P": "0.50018806319660550048",
+          "runtime_s": 0.007
+        },
+        "1e+07": {
+          "status": "FAILED",
+          "error": "NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.",
+          "runtime_s": 0.014
+        },
+        "1e+08": {
+          "status": "FAILED",
+          "error": "NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.",
+          "runtime_s": 0.016
+        }
+      }
+    },
+    "coarse_sanity": {
+      "method": "scipy.stats.chi2.ppf (double) for the quantile; sympy for the exact binary64 rational of each probability",
+      "standing": "NOT evidential - gross-error detection only",
+      "worst_scipy_relative_difference": 7.765188753020039e-06
+    },
+    "rmpfr": {
+      "method": "Rmpfr igamma - see rmpfr_crosscheck.R",
+      "standing": "REQUIRED - NOT YET RUN",
+      "result": null
+    }
+  },
+  "summary": {
+    "points_total": 69,
+    "points_compared": 69,
+    "primary_vs_independent_min_agreement_digits": 49.319,
+    "primary_vs_independent_min_agreement_at": "df=1e+08 fitting/tails p=0.9999999990686774",
+    "final_agreement_figure": null,
+    "final_agreement_figure_note": "deliberately null: the final figure is primary-vs-Rmpfr agreement, which cannot be computed until the Rmpfr leg runs"
+  },
+  "comparisons": [
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.0000000000000p-1",
+      "probability_repr": "0.5",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "999999.3333334123457367039101089013660817",
+      "independent_quantile": "999999.3333334123457367039101089013660817",
+      "agreement_significant_digits": 50.3496,
+      "independent_newton_steps": 4,
+      "independent_runtime_s": 0.948,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 999999.3333334123,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/2",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.ccccccccccccdp-1",
+      "probability_repr": "0.9",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1001812.815315016348315286490339749162514",
+      "independent_quantile": "1001812.815315016348315286490339749162514",
+      "agreement_significant_digits": 49.4839,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.999,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1001812.8153150163,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "8106479329266893/9007199254740992",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.fae147ae147aep-1",
+      "probability_repr": "0.99",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1003292.893686412615580058332836515558792",
+      "independent_quantile": "1003292.893686412615580058332836515558792",
+      "agreement_significant_digits": 50.0459,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.946,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1003292.8936864126,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "4458563631096791/4503599627370496",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-3",
+      "probability_repr": "0.125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "998373.3763536697719079933480500286848002",
+      "independent_quantile": "998373.3763536697719079933480500286848002",
+      "agreement_significant_digits": 50.4665,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.948,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 998373.3763536698,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-2",
+      "probability_repr": "0.25",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "999045.7644187754186208610143196158612885",
+      "independent_quantile": "999045.7644187754186208610143196158612885",
+      "agreement_significant_digits": 50.3898,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.951,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 999045.7644187754,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/4",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-2",
+      "probability_repr": "0.375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "999548.7770834481040186428679958471090193",
+      "independent_quantile": "999548.7770834481040186428679958471090193",
+      "agreement_significant_digits": 50.6701,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 1.037,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 999548.7770834481,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.4000000000000p-1",
+      "probability_repr": "0.625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1000450.024958094952740457222924769366056",
+      "independent_quantile": "1000450.024958094952740457222924769366056",
+      "agreement_significant_digits": 49.3512,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.991,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1000450.0249580949,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "5/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-1",
+      "probability_repr": "0.75",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1000953.508829909180824790325932268679803",
+      "independent_quantile": "1000953.508829909180824790325932268679803",
+      "agreement_significant_digits": 49.6592,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.937,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1000953.5088299091,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/4",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.c000000000000p-1",
+      "probability_repr": "0.875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1001627.054717940788317528322514027278349",
+      "independent_quantile": "1001627.054717940788317528322514027278349",
+      "agreement_significant_digits": 49.7986,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.926,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1001627.0547179407,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "7/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-30",
+      "probability_repr": "9.313225746154785e-10",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "991524.8851411293996721650487673866443944",
+      "independent_quantile": "991524.8851411293996721650487673866443944",
+      "agreement_significant_digits": 50.948,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.094,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 991524.8851412452,
+          "rel_diff": 1.1682333641208908e-13
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/1073741824",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-20",
+      "probability_repr": "9.5367431640625e-07",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "993278.5509139427625326631062316555597854",
+      "independent_quantile": "993278.5509139427625326631062316555597854",
+      "agreement_significant_digits": 50.883,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.098,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 993278.5509185562,
+          "rel_diff": 4.644641510112811e-12
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/1048576",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.ffffe00000000p-1",
+      "probability_repr": "0.9999990463256836",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1006750.363974534150810657091658562178555",
+      "independent_quantile": "1006750.363974534150810657091658562178555",
+      "agreement_significant_digits": 50.423,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.141,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1006750.3639745342,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1048575/1048576",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.fffffff800000p-1",
+      "probability_repr": "0.9999999990686774",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1008521.931258259384676385830562896479692",
+      "independent_quantile": "1008521.931258259384676385830562896479692",
+      "agreement_significant_digits": 50.3997,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.117,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1008521.9312582593,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1073741823/1073741824",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-4",
+      "probability_repr": "0.0625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "997831.3288303883770882166463840837694574",
+      "independent_quantile": "997831.3288303883770882166463840837694574",
+      "agreement_significant_digits": 50.5224,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.957,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 997831.3288303884,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-3",
+      "probability_repr": "0.1875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "998745.2437568594770798969649278974233134",
+      "independent_quantile": "998745.2437568594770798969649278974233134",
+      "agreement_significant_digits": 50.4575,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.958,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 998745.2437568594,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.4000000000000p-2",
+      "probability_repr": "0.3125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "999308.2586317292355874228539353093865853",
+      "independent_quantile": "999308.2586317292355874228539353093865853",
+      "agreement_significant_digits": 50.4595,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.978,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 999308.2586317293,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "5/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.c000000000000p-2",
+      "probability_repr": "0.4375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "999776.8790137078591871703299431988742192",
+      "independent_quantile": "999776.8790137078591871703299431988742192",
+      "agreement_significant_digits": 50.3111,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.948,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 999776.8790137079,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "7/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.2000000000000p-1",
+      "probability_repr": "0.5625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1000221.820648650426620530628746267771618",
+      "independent_quantile": "1000221.820648650426620530628746267771618",
+      "agreement_significant_digits": 49.5421,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.957,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1000221.8206486504,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "9/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.6000000000000p-1",
+      "probability_repr": "0.6875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1000690.726571583997583317597788000537297",
+      "independent_quantile": "1000690.726571583997583317597788000537297",
+      "agreement_significant_digits": 49.4036,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.996,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1000690.726571584,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "11/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.a000000000000p-1",
+      "probability_repr": "0.8125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1001254.472281915354791370935833392209202",
+      "independent_quantile": "1001254.472281915354791370935833392209202",
+      "agreement_significant_digits": 49.3548,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.933,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1001254.4722819154,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "13/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.e000000000000p-1",
+      "probability_repr": "0.9375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1002170.475870568952956644630543122137774",
+      "independent_quantile": "1002170.475870568952956644630543122137774",
+      "agreement_significant_digits": 52.1371,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.941,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1002170.475870569,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "15/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-25",
+      "probability_repr": "2.9802322387695312e-08",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "992353.894222320319258607090932283911424",
+      "independent_quantile": "992353.894222320319258607090932283911424",
+      "agreement_significant_digits": 50.4347,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.103,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 992353.8942229801,
+          "rel_diff": 6.649261397136614e-13
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/33554432",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability_hex": "0x1.ffffff0000000p-1",
+      "probability_repr": "0.9999999701976776",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "1007683.940707059355801046299375335040586",
+      "independent_quantile": "1007683.940707059355801046299375335040586",
+      "agreement_significant_digits": 50.7372,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.179,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 1007683.9407070593,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "33554431/33554432",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.0000000000000p-1",
+      "probability_repr": "0.5",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9999999.333333341234568478150118221811817",
+      "independent_quantile": "9999999.333333341234568478150118221811817",
+      "agreement_significant_digits": 50.5245,
+      "independent_newton_steps": 4,
+      "independent_runtime_s": 0.753,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9999999.333333341,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/2",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.ccccccccccccdp-1",
+      "probability_repr": "0.9",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10005731.70091347736963004855916652003676",
+      "independent_quantile": "10005731.70091347736963004855916652003676",
+      "agreement_significant_digits": 49.7071,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.918,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10005731.700913478,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "8106479329266893/9007199254740992",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.fae147ae147aep-1",
+      "probability_repr": "0.99",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10010406.68514244448583326690976198375365",
+      "independent_quantile": "10010406.68514244448583326690976198375365",
+      "agreement_significant_digits": 49.346,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.896,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10010406.685142444,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "4458563631096791/4503599627370496",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-3",
+      "probability_repr": "0.125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9994855.696873251381301479849180512631535",
+      "independent_quantile": "9994855.696873251381301479849180512631535",
+      "agreement_significant_digits": 50.4138,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.879,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9994855.696873251,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-2",
+      "probability_repr": "0.25",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9996983.226870838600520922596723130243578",
+      "independent_quantile": "9996983.226870838600520922596723130243578",
+      "agreement_significant_digits": 51.0235,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.934,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9996983.226870839,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/4",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-2",
+      "probability_repr": "0.375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9998574.402519053258420852409756893981805",
+      "independent_quantile": "9998574.402519053258420852409756893981805",
+      "agreement_significant_digits": 50.6667,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.896,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9998574.402519053,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.4000000000000p-1",
+      "probability_repr": "0.625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10001424.39952235416839120606511947355202",
+      "independent_quantile": "10001424.39952235416839120606511947355202",
+      "agreement_significant_digits": 49.8162,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.898,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10001424.399522355,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "5/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-1",
+      "probability_repr": "0.75",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10003016.04637773760290386952131358149511",
+      "independent_quantile": "10003016.04637773760290386952131358149511",
+      "agreement_significant_digits": 49.5236,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.884,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10003016.046377737,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/4",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.c000000000000p-1",
+      "probability_repr": "0.875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10005144.73419834599248124989672780244293",
+      "independent_quantile": "10005144.73419834599248124989672780244293",
+      "agreement_significant_digits": 50.1904,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.889,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10005144.734198347,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "7/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-30",
+      "probability_repr": "9.313225746154785e-10",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9973148.757724843828913545054344635652469",
+      "independent_quantile": "9973148.757724843828913545054344635652469",
+      "agreement_significant_digits": 50.8496,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.028,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9973150.717970552,
+          "rel_diff": 1.9655233824576257e-07
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/1073741824",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-20",
+      "probability_repr": "9.5367431640625e-07",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9978713.667416419296528954246659568769989",
+      "independent_quantile": "9978713.667416419296528954246659568769989",
+      "agreement_significant_digits": 51.1205,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.883,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9978720.93521029,
+          "rel_diff": 7.283297338545037e-07
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/1048576",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.ffffe00000000p-1",
+      "probability_repr": "0.9999990463256836",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10021315.24748705131835512107572083326758",
+      "independent_quantile": "10021315.24748705131835512107572083326758",
+      "agreement_significant_digits": 49.6011,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.881,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10021315.247487051,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1048575/1048576",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.fffffff800000p-1",
+      "probability_repr": "0.9999999990686774",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10026898.05871142571647239608005361514487",
+      "independent_quantile": "10026898.05871142571647239608005361514487",
+      "agreement_significant_digits": 50.0438,
+      "independent_newton_steps": 6,
+      "independent_runtime_s": 1.035,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10026898.058711426,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1073741823/1073741824",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-4",
+      "probability_repr": "0.0625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9993140.10688195490980484770520907685931",
+      "independent_quantile": "9993140.10688195490980484770520907685931",
+      "agreement_significant_digits": 50.4181,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.989,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9993140.106881956,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-3",
+      "probability_repr": "0.1875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9996032.418132348743185492681089729242191",
+      "independent_quantile": "9996032.418132348743185492681089729242191",
+      "agreement_significant_digits": 52.3304,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 1.037,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9996032.418132348,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.4000000000000p-2",
+      "probability_repr": "0.3125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9997813.618121597193033854250132210629703",
+      "independent_quantile": "9997813.618121597193033854250132210629703",
+      "agreement_significant_digits": 50.6783,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.907,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9997813.618121598,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "5/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.c000000000000p-2",
+      "probability_repr": "0.4375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9999295.835089620254226604521088541493138",
+      "independent_quantile": "9999295.835089620254226604521088541493138",
+      "agreement_significant_digits": 50.6349,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.891,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9999295.83508962,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "7/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.2000000000000p-1",
+      "probability_repr": "0.5625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10000702.86457259736536865765189292662513",
+      "independent_quantile": "10000702.86457259736536865765189292662513",
+      "agreement_significant_digits": 49.4381,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.889,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10000702.864572598,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "9/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.6000000000000p-1",
+      "probability_repr": "0.6875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10002185.3670815902048381835313436545418",
+      "independent_quantile": "10002185.3670815902048381835313436545418",
+      "agreement_significant_digits": 49.8189,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.885,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10002185.36708159,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "11/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.a000000000000p-1",
+      "probability_repr": "0.8125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10003967.29790634935483596109450648381806",
+      "independent_quantile": "10003967.29790634935483596109450648381806",
+      "agreement_significant_digits": 49.6248,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.906,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10003967.297906348,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "13/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.e000000000000p-1",
+      "probability_repr": "0.9375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10006861.69781915434867658897322455555152",
+      "independent_quantile": "10006861.69781915434867658897322455555152",
+      "agreement_significant_digits": 49.7608,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.949,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10006861.697819155,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "15/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-25",
+      "probability_repr": "2.9802322387695312e-08",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "9975780.012831805844134470517221825316564",
+      "independent_quantile": "9975780.012831805844134470517221825316564",
+      "agreement_significant_digits": 50.6459,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.901,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 9975783.638073863,
+          "rel_diff": 3.6340437073838727e-07
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/33554432",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability_hex": "0x1.ffffff0000000p-1",
+      "probability_repr": "0.9999999701976776",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "10024257.82212227178120455913509841996795",
+      "independent_quantile": "10024257.82212227178120455913509841996795",
+      "agreement_significant_digits": 49.4269,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.929,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 10024257.822122272,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "33554431/33554432",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.0000000000000p-1",
+      "probability_repr": "0.5",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99999999.33333333412345679589261219935056",
+      "independent_quantile": "99999999.33333333412345679589261219935056",
+      "agreement_significant_digits": 50.6087,
+      "independent_newton_steps": 4,
+      "independent_runtime_s": 0.752,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99999999.33333333,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/2",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.ccccccccccccdp-1",
+      "probability_repr": "0.9",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100018124.3042444014210596037700955005877",
+      "independent_quantile": "100018124.3042444014210596037700955005877",
+      "agreement_significant_digits": 49.5187,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.894,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100018124.3042444,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "8106479329266893/9007199254740992",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability_hex": "0x1.fae147ae147aep-1",
+      "probability_repr": "0.99",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100032902.4683765857297378520115969698477",
+      "independent_quantile": "100032902.4683765857297378520115969698477",
+      "agreement_significant_digits": 49.9932,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.974,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100032902.46837659,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "4458563631096791/4503599627370496",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-3",
+      "probability_repr": "0.125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99983731.81863515162832248406678970989606",
+      "independent_quantile": "99983731.81863515162832248406678970989606",
+      "agreement_significant_digits": 50.7616,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.884,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99983731.81863515,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-2",
+      "probability_repr": "0.25",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99990460.91113487748725453929626805410585",
+      "independent_quantile": "99990460.91113487748725453929626805410585",
+      "agreement_significant_digits": 50.7013,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.92,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99990460.91113488,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/4",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-2",
+      "probability_repr": "0.375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99995493.15993772346113622133064005750022",
+      "independent_quantile": "99995493.15993772346113622133064005750022",
+      "agreement_significant_digits": 51.5647,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.916,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99995493.15993772,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.4000000000000p-1",
+      "probability_repr": "0.625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100004505.6421036704026907417070650965447",
+      "independent_quantile": "100004505.6421036704026907417070650965447",
+      "agreement_significant_digits": 49.91,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.899,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100004505.64210367,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "5/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-1",
+      "probability_repr": "0.75",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100009538.3621136878765751714930786187563",
+      "independent_quantile": "100009538.3621136878765751714930786187563",
+      "agreement_significant_digits": 49.8587,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.905,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100009538.36211368,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/4",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability_hex": "0x1.c000000000000p-1",
+      "probability_repr": "0.875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100016268.6124364444268149389254812215231",
+      "independent_quantile": "100016268.6124364444268149389254812215231",
+      "agreement_significant_digits": 49.5774,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.887,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100016268.61243644,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "7/8",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-30",
+      "probability_repr": "9.313225746154785e-10",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99915038.31371078402225704987253445794668",
+      "independent_quantile": "99915038.31371078402225704987253445794668",
+      "agreement_significant_digits": 51.5261,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.881,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99915462.10895324,
+          "rel_diff": 4.241556122192138e-06
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/1073741824",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-20",
+      "probability_repr": "9.5367431640625e-07",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99932655.45026289575832710752686946418876",
+      "independent_quantile": "99932655.45026289575832710752686946418876",
+      "agreement_significant_digits": 50.436,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.939,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99933431.44619505,
+          "rel_diff": 7.765188753020039e-06
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/1048576",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.ffffe00000000p-1",
+      "probability_repr": "0.9999990463256836",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100067373.4646420742266801689500576458823",
+      "independent_quantile": "100067373.4646420742266801689500576458823",
+      "agreement_significant_digits": 49.4549,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.914,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100067373.46464208,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1048575/1048576",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability_hex": "0x1.fffffff800000p-1",
+      "probability_repr": "0.9999999990686774",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100085008.5027291736007438459280280102168",
+      "independent_quantile": "100085008.5027291736007438459280280102168",
+      "agreement_significant_digits": 49.319,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.919,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100085008.50272918,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1073741823/1073741824",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.0000000000000p-4",
+      "probability_repr": "0.0625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99978305.16160518139551184458277403097478",
+      "independent_quantile": "99978305.16160518139551184458277403097478",
+      "agreement_significant_digits": 50.6623,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.892,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99978305.16160518,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.8000000000000p-3",
+      "probability_repr": "0.1875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99987453.71110687894811879519452738885699",
+      "independent_quantile": "99987453.71110687894811879519452738885699",
+      "agreement_significant_digits": 50.3509,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.889,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99987453.71110688,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "3/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.4000000000000p-2",
+      "probability_repr": "0.3125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99993087.15033188717576683093927234998259",
+      "independent_quantile": "99993087.15033188717576683093927234998259",
+      "agreement_significant_digits": 50.9101,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.939,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99993087.15033188,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "5/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.c000000000000p-2",
+      "probability_repr": "0.4375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99997774.64080290383796251673650293839374",
+      "independent_quantile": "99997774.64080290383796251673650293839374",
+      "agreement_significant_digits": 51.1488,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.962,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99997774.6408029,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "7/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.2000000000000p-1",
+      "probability_repr": "0.5625",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100002224.058859299715021621631132411025",
+      "independent_quantile": "100002224.058859299715021621631132411025",
+      "agreement_significant_digits": 49.8124,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.995,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100002224.0588593,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "9/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.6000000000000p-1",
+      "probability_repr": "0.6875",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100006911.8348712876385839814419676197704",
+      "independent_quantile": "100006911.8348712876385839814419676197704",
+      "agreement_significant_digits": 49.7563,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.945,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100006911.83487129,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "11/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.a000000000000p-1",
+      "probability_repr": "0.8125",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100012546.0049318114765218739584389117475",
+      "independent_quantile": "100012546.0049318114765218739584389117475",
+      "agreement_significant_digits": 49.4433,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.897,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100012546.00493181,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "13/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability_hex": "0x1.e000000000000p-1",
+      "probability_repr": "0.9375",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100021696.6430959430558000505659306509559",
+      "independent_quantile": "100021696.6430959430558000505659306509559",
+      "agreement_significant_digits": 49.5711,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.89,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100021696.64309594,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "15/16",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability_hex": "0x1.0000000000000p-25",
+      "probability_repr": "2.9802322387695312e-08",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "P",
+      "primary_quantile": "99923368.77938740384222916905705765076364",
+      "independent_quantile": "99923368.77938740384222916905705765076364",
+      "agreement_significant_digits": 50.6943,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.893,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 99923928.89853601,
+          "rel_diff": 5.60548703925969e-06
+        },
+        "sympy": {
+          "exact_binary64_rational": "1/33554432",
+          "is_dyadic": true
+        }
+      }
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability_hex": "0x1.ffffff0000000p-1",
+      "probability_repr": "0.9999999701976776",
+      "status": "COMPARED",
+      "compared_measure": "quantile",
+      "compared_side": "Q",
+      "primary_quantile": "100076669.0555691435786187757658754658273",
+      "independent_quantile": "100076669.0555691435786187757658754658273",
+      "agreement_significant_digits": 50.4255,
+      "independent_newton_steps": 5,
+      "independent_runtime_s": 0.889,
+      "coarse_sanity": {
+        "standing": "coarse only - not evidential",
+        "scipy": {
+          "quantile": 100076669.05556914,
+          "rel_diff": 0.0
+        },
+        "sympy": {
+          "exact_binary64_rational": "33554431/33554432",
+          "is_dyadic": true
+        }
+      }
+    }
+  ]
+}

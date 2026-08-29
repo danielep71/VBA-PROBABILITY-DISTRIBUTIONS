@@ -1,0 +1,1970 @@
+{
+  "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
+  "status": "PROVISIONAL - INCOMPLETE",
+  "completion_blocked_on": "independent Rmpfr leg has not been run or verified; no final agreement figure is recorded and this checkpoint must NOT be marked complete",
+  "generated_utc": "2026-08-29T20:24:29Z",
+  "versions": {
+    "python": "3.12.3",
+    "mpmath": "1.3.0",
+    "platform": "Linux-6.18.44-fc-v22-x86_64-with-glibc2.39"
+  },
+  "design": {
+    "df_values": [
+      1000000.0,
+      10000000.0,
+      100000000.0
+    ],
+    "points_total": 69,
+    "precision_pair_dps": [
+      60,
+      120
+    ],
+    "required_agreement_digits": 40,
+    "measures": [
+      "quantile",
+      "tail_residual = |area_direct - target| / min(p, 1-p)"
+    ]
+  },
+  "convergence": {
+    "points_total": 69,
+    "accepted": 69,
+    "rejected": 0,
+    "all_converged_and_stabilized": true,
+    "min_stabilization_digits": 55.8896,
+    "max_stabilization_digits": 59.2626
+  },
+  "references": [
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.5",
+        "hex": "0x1.0000000000000p-1",
+        "exact_numerator": "1",
+        "exact_denominator": "2"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.3269,
+      "quantile": "999999.3333334123457367039101089013660816768502022",
+      "quantile_low_precision": "999999.3333334123457367039101089013660816768502022",
+      "route": "lower_series",
+      "route_iterations_low": 12477,
+      "route_iterations_high": 17201,
+      "newton_steps_low": 3,
+      "newton_steps_high": 5,
+      "tail_residual": "8.11974e-115",
+      "residual_abs": "4.05987e-115",
+      "residual_side": "P",
+      "runtime_s": 1.36
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.9",
+        "hex": "0x1.ccccccccccccdp-1",
+        "exact_numerator": "8106479329266893",
+        "exact_denominator": "9007199254740992"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.4503,
+      "quantile": "1001812.8153150163483152864903397491625138486154088",
+      "quantile_low_precision": "1001812.8153150163483152864903397491625138486154088",
+      "route": "upper_cf",
+      "route_iterations_low": 1018,
+      "route_iterations_high": 1982,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "8.26072e-118",
+      "residual_abs": "8.26072e-119",
+      "residual_side": "Q",
+      "runtime_s": 0.374
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.99",
+        "hex": "0x1.fae147ae147aep-1",
+        "exact_numerator": "4458563631096791",
+        "exact_denominator": "4503599627370496"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.4904,
+      "quantile": "1003292.8936864126155800583328365155587922635897148",
+      "quantile_low_precision": "1003292.8936864126155800583328365155587922635897148",
+      "route": "upper_cf",
+      "route_iterations_low": 623,
+      "route_iterations_high": 1458,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "2.57614e-115",
+      "residual_abs": "2.57614e-117",
+      "residual_side": "Q",
+      "runtime_s": 0.256
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.125",
+        "hex": "0x1.0000000000000p-3",
+        "exact_numerator": "1",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.8378,
+      "quantile": "998373.37635366977190799334805002868480023702542829",
+      "quantile_low_precision": "998373.37635366977190799334805002868480023702542829",
+      "route": "lower_series",
+      "route_iterations_low": 11710,
+      "route_iterations_high": 16415,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.33751e-115",
+      "residual_abs": "1.67189e-116",
+      "residual_side": "P",
+      "runtime_s": 1.279
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.25",
+        "hex": "0x1.0000000000000p-2",
+        "exact_numerator": "1",
+        "exact_denominator": "4"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.8311,
+      "quantile": "999045.76441877541862086101431961586128847209393475",
+      "quantile_low_precision": "999045.76441877541862086101431961586128847209393475",
+      "route": "lower_series",
+      "route_iterations_low": 12022,
+      "route_iterations_high": 16737,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "4.47639e-115",
+      "residual_abs": "1.1191e-115",
+      "residual_side": "P",
+      "runtime_s": 1.252
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.375",
+        "hex": "0x1.8000000000000p-2",
+        "exact_numerator": "3",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.9559,
+      "quantile": "999548.77708344810401864286799584710901929090381158",
+      "quantile_low_precision": "999548.77708344810401864286799584710901929090381158",
+      "route": "lower_series",
+      "route_iterations_low": 12260,
+      "route_iterations_high": 16980,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.77645e-116",
+      "residual_abs": "2.91617e-116",
+      "residual_side": "P",
+      "runtime_s": 1.312
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.625",
+        "hex": "0x1.4000000000000p-1",
+        "exact_numerator": "5",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.8392,
+      "quantile": "1000450.0249580949527404572229247693660555561814213",
+      "quantile_low_precision": "1000450.0249580949527404572229247693660555561814213",
+      "route": "upper_cf",
+      "route_iterations_low": 1567,
+      "route_iterations_high": 2579,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "6.01668e-116",
+      "residual_abs": "2.25625e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.453
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.75",
+        "hex": "0x1.8000000000000p-1",
+        "exact_numerator": "3",
+        "exact_denominator": "4"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.5328,
+      "quantile": "1000953.5088299091808247903259322686798028417199979",
+      "quantile_low_precision": "1000953.5088299091808247903259322686798028417199979",
+      "route": "upper_cf",
+      "route_iterations_low": 1354,
+      "route_iterations_high": 2343,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.95194e-116",
+      "residual_abs": "4.87985e-117",
+      "residual_side": "Q",
+      "runtime_s": 0.429
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.875",
+        "hex": "0x1.c000000000000p-1",
+        "exact_numerator": "7",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.1221,
+      "quantile": "1001627.0547179407883175283225140272783488201553551",
+      "quantile_low_precision": "1001627.0547179407883175283225140272783488201553551",
+      "route": "upper_cf",
+      "route_iterations_low": 1084,
+      "route_iterations_high": 2062,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "4.59264e-115",
+      "residual_abs": "5.7408e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.341
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "9.313225746154785e-10",
+        "hex": "0x1.0000000000000p-30",
+        "exact_numerator": "1",
+        "exact_denominator": "1073741824"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.7013,
+      "quantile": "991524.88514112939967216504876738664439444980791095",
+      "quantile_low_precision": "991524.88514112939967216504876738664439444980791095",
+      "route": "lower_series",
+      "route_iterations_low": 8974,
+      "route_iterations_high": 13473,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "1.70079e-115",
+      "residual_abs": "1.58398e-124",
+      "residual_side": "P",
+      "runtime_s": 1.204
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "9.5367431640625e-07",
+        "hex": "0x1.0000000000000p-20",
+        "exact_numerator": "1",
+        "exact_denominator": "1048576"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 59.1999,
+      "quantile": "993278.55091394276253266310623165555978544837797799",
+      "quantile_low_precision": "993278.55091394276253266310623165555978544837797799",
+      "route": "lower_series",
+      "route_iterations_low": 9596,
+      "route_iterations_high": 14167,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "1.08649e-114",
+      "residual_abs": "1.03616e-120",
+      "residual_side": "P",
+      "runtime_s": 1.281
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999990463256836",
+        "hex": "0x1.ffffe00000000p-1",
+        "exact_numerator": "1048575",
+        "exact_denominator": "1048576"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.2002,
+      "quantile": "1006750.363974534150810657091658562178554992223138",
+      "quantile_low_precision": "1006750.363974534150810657091658562178554992223138",
+      "route": "upper_cf",
+      "route_iterations_low": 236,
+      "route_iterations_high": 718,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "3.63365e-117",
+      "residual_abs": "3.46532e-123",
+      "residual_side": "Q",
+      "runtime_s": 0.142
+    },
+    {
+      "df": 1000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999999990686774",
+        "hex": "0x1.fffffff800000p-1",
+        "exact_numerator": "1073741823",
+        "exact_denominator": "1073741824"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.0369,
+      "quantile": "1008521.9312582593846763858305628964796917428449555",
+      "quantile_low_precision": "1008521.9312582593846763858305628964796917428449555",
+      "route": "upper_cf",
+      "route_iterations_low": 172,
+      "route_iterations_high": 525,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "4.84904e-113",
+      "residual_abs": "4.51602e-122",
+      "residual_side": "Q",
+      "runtime_s": 0.101
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.0625",
+        "hex": "0x1.0000000000000p-4",
+        "exact_numerator": "1",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.7373,
+      "quantile": "997831.32883038837708821664638408376945737599731149",
+      "quantile_low_precision": "997831.32883038837708821664638408376945737599731149",
+      "route": "lower_series",
+      "route_iterations_low": 11463,
+      "route_iterations_high": 16160,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "6.82111e-115",
+      "residual_abs": "4.26319e-116",
+      "residual_side": "P",
+      "runtime_s": 1.29
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.1875",
+        "hex": "0x1.8000000000000p-3",
+        "exact_numerator": "3",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.2486,
+      "quantile": "998745.24375685947707989696492789742331341127390776",
+      "quantile_low_precision": "998745.24375685947707989696492789742331341127390776",
+      "route": "lower_series",
+      "route_iterations_low": 11881,
+      "route_iterations_high": 16592,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "2.6656e-115",
+      "residual_abs": "4.998e-116",
+      "residual_side": "P",
+      "runtime_s": 1.264
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.3125",
+        "hex": "0x1.4000000000000p-2",
+        "exact_numerator": "5",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.1057,
+      "quantile": "999308.25863172923558742285393530938658532920237907",
+      "quantile_low_precision": "999308.25863172923558742285393530938658532920237907",
+      "route": "lower_series",
+      "route_iterations_low": 12146,
+      "route_iterations_high": 16863,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "6.89932e-115",
+      "residual_abs": "2.15604e-115",
+      "residual_side": "P",
+      "runtime_s": 1.318
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.4375",
+        "hex": "0x1.c000000000000p-2",
+        "exact_numerator": "7",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.3308,
+      "quantile": "999776.87901370785918717032994319887421921592279109",
+      "quantile_low_precision": "999776.87901370785918717032994319887421921592279109",
+      "route": "lower_series",
+      "route_iterations_low": 12369,
+      "route_iterations_high": 17092,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.13962e-115",
+      "residual_abs": "3.12358e-115",
+      "residual_side": "P",
+      "runtime_s": 1.274
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.5625",
+        "hex": "0x1.2000000000000p-1",
+        "exact_numerator": "9",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.1983,
+      "quantile": "1000221.8206486504266205306287462677716184199957786",
+      "quantile_low_precision": "1000221.8206486504266205306287462677716184199957786",
+      "route": "upper_cf",
+      "route_iterations_low": 1676,
+      "route_iterations_high": 2695,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.85112e-116",
+      "residual_abs": "3.43486e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.481
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.6875",
+        "hex": "0x1.6000000000000p-1",
+        "exact_numerator": "11",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 59.2626,
+      "quantile": "1000690.7265715839975833175977880005372971819979744",
+      "quantile_low_precision": "1000690.7265715839975833175977880005372971819979744",
+      "route": "upper_cf",
+      "route_iterations_low": 1450,
+      "route_iterations_high": 2472,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.24931e-116",
+      "residual_abs": "1.01541e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.43
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.8125",
+        "hex": "0x1.a000000000000p-1",
+        "exact_numerator": "13",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.1431,
+      "quantile": "1001254.4722819153547913709358333922092021793076451",
+      "quantile_low_precision": "1001254.4722819153547913709358333922092021793076451",
+      "route": "upper_cf",
+      "route_iterations_low": 1220,
+      "route_iterations_high": 2224,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.1431e-115",
+      "residual_abs": "5.89332e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.378
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.9375",
+        "hex": "0x1.e000000000000p-1",
+        "exact_numerator": "15",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.0148,
+      "quantile": "1002170.4758705689529566446305431221377736682082613",
+      "quantile_low_precision": "1002170.4758705689529566446305431221377736682082613",
+      "route": "upper_cf",
+      "route_iterations_low": 911,
+      "route_iterations_high": 1846,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.80753e-116",
+      "residual_abs": "2.37971e-117",
+      "residual_side": "Q",
+      "runtime_s": 0.308
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability": {
+        "float_repr": "2.9802322387695312e-08",
+        "hex": "0x1.0000000000000p-25",
+        "exact_numerator": "1",
+        "exact_denominator": "33554432"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.7181,
+      "quantile": "992353.89422232031925860709093228391142395570878209",
+      "quantile_low_precision": "992353.89422232031925860709093228391142395570878209",
+      "route": "lower_series",
+      "route_iterations_low": 9262,
+      "route_iterations_high": 13796,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "4.39859e-115",
+      "residual_abs": "1.31088e-122",
+      "residual_side": "P",
+      "runtime_s": 1.212
+    },
+    {
+      "df": 1000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999999701976776",
+        "hex": "0x1.ffffff0000000p-1",
+        "exact_numerator": "33554431",
+        "exact_denominator": "33554432"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.7437,
+      "quantile": "1007683.9407070593558010462993753350405860869698234",
+      "quantile_low_precision": "1007683.9407070593558010462993753350405860869698234",
+      "route": "upper_cf",
+      "route_iterations_low": 197,
+      "route_iterations_high": 610,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "4.3708e-115",
+      "residual_abs": "1.3026e-122",
+      "residual_side": "Q",
+      "runtime_s": 0.112
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.5",
+        "hex": "0x1.0000000000000p-1",
+        "exact_numerator": "1",
+        "exact_denominator": "2"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.6367,
+      "quantile": "9999999.3333333412345684781501182218118166682478989",
+      "quantile_low_precision": "9999999.3333333412345684781501182218118166682478989",
+      "route": "lower_series",
+      "route_iterations_low": 39197,
+      "route_iterations_high": 54078,
+      "newton_steps_low": 3,
+      "newton_steps_high": 4,
+      "tail_residual": "1.29903e-113",
+      "residual_abs": "6.49517e-114",
+      "residual_side": "P",
+      "runtime_s": 3.355
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.9",
+        "hex": "0x1.ccccccccccccdp-1",
+        "exact_numerator": "8106479329266893",
+        "exact_denominator": "9007199254740992"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.842,
+      "quantile": "10005731.700913477369630048559166520036758282417617",
+      "quantile_low_precision": "10005731.700913477369630048559166520036758282417617",
+      "route": "upper_cf",
+      "route_iterations_low": 1633,
+      "route_iterations_high": 3593,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.16182e-114",
+      "residual_abs": "3.16182e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.581
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.99",
+        "hex": "0x1.fae147ae147aep-1",
+        "exact_numerator": "4458563631096791",
+        "exact_denominator": "4503599627370496"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.683,
+      "quantile": "10010406.68514244448583326690976198375365059418639",
+      "quantile_low_precision": "10010406.68514244448583326690976198375365059418639",
+      "route": "upper_cf",
+      "route_iterations_low": 814,
+      "route_iterations_high": 2238,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.92405e-114",
+      "residual_abs": "7.92405e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.348
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.125",
+        "hex": "0x1.0000000000000p-3",
+        "exact_numerator": "1",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.2209,
+      "quantile": "9994855.6968732513813014798491805126315346458595396",
+      "quantile_low_precision": "9994855.6968732513813014798491805126315346458595396",
+      "route": "lower_series",
+      "route_iterations_low": 36792,
+      "route_iterations_high": 51621,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "6.46467e-114",
+      "residual_abs": "8.08084e-115",
+      "residual_side": "P",
+      "runtime_s": 3.831
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.25",
+        "hex": "0x1.0000000000000p-2",
+        "exact_numerator": "1",
+        "exact_denominator": "4"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.9085,
+      "quantile": "9996983.2268708386005209225967231302435779816706922",
+      "quantile_low_precision": "9996983.2268708386005209225967231302435779816706922",
+      "route": "lower_series",
+      "route_iterations_low": 37772,
+      "route_iterations_high": 52626,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.41172e-114",
+      "residual_abs": "3.5293e-115",
+      "residual_side": "P",
+      "runtime_s": 3.932
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.375",
+        "hex": "0x1.8000000000000p-2",
+        "exact_numerator": "3",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.4553,
+      "quantile": "9998574.4025190532584208524097568939818053985876571",
+      "quantile_low_precision": "9998574.4025190532584208524097568939818053985876571",
+      "route": "lower_series",
+      "route_iterations_low": 38519,
+      "route_iterations_high": 53388,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.3952e-114",
+      "residual_abs": "2.7732e-114",
+      "residual_side": "P",
+      "runtime_s": 4.181
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.625",
+        "hex": "0x1.4000000000000p-1",
+        "exact_numerator": "5",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.4409,
+      "quantile": "10001424.399522354168391206065119473552024185952221",
+      "quantile_low_precision": "10001424.399522354168391206065119473552024185952221",
+      "route": "upper_cf",
+      "route_iterations_low": 3141,
+      "route_iterations_high": 5349,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.51268e-114",
+      "residual_abs": "5.67255e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.946
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.75",
+        "hex": "0x1.8000000000000p-1",
+        "exact_numerator": "3",
+        "exact_denominator": "4"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.9341,
+      "quantile": "10003016.046377737602903869521313581495108334654199",
+      "quantile_low_precision": "10003016.046377737602903869521313581495108334654199",
+      "route": "upper_cf",
+      "route_iterations_low": 2515,
+      "route_iterations_high": 4627,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "2.51056e-114",
+      "residual_abs": "6.2764e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.818
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.875",
+        "hex": "0x1.c000000000000p-1",
+        "exact_numerator": "7",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.2035,
+      "quantile": "10005144.734198345992481249896727802442931687304596",
+      "quantile_low_precision": "10005144.734198345992481249896727802442931687304596",
+      "route": "upper_cf",
+      "route_iterations_low": 1810,
+      "route_iterations_high": 3795,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.27229e-113",
+      "residual_abs": "1.59036e-114",
+      "residual_side": "Q",
+      "runtime_s": 0.672
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "9.313225746154785e-10",
+        "hex": "0x1.0000000000000p-30",
+        "exact_numerator": "1",
+        "exact_denominator": "1073741824"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.3548,
+      "quantile": "9973148.7577248438289135450543446356524687234318615",
+      "quantile_low_precision": "9973148.7577248438289135450543446356524687234318615",
+      "route": "lower_series",
+      "route_iterations_low": 28211,
+      "route_iterations_high": 42415,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "1.39841e-113",
+      "residual_abs": "1.30237e-122",
+      "residual_side": "P",
+      "runtime_s": 3.689
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "9.5367431640625e-07",
+        "hex": "0x1.0000000000000p-20",
+        "exact_numerator": "1",
+        "exact_denominator": "1048576"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.1089,
+      "quantile": "9978713.6674164192965289542466595687699894659710676",
+      "quantile_low_precision": "9978713.6674164192965289542466595687699894659710676",
+      "route": "lower_series",
+      "route_iterations_low": 30163,
+      "route_iterations_high": 44587,
+      "newton_steps_low": 4,
+      "newton_steps_high": 6,
+      "tail_residual": "7.18823e-114",
+      "residual_abs": "6.85523e-120",
+      "residual_side": "P",
+      "runtime_s": 3.833
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999990463256836",
+        "hex": "0x1.ffffe00000000p-1",
+        "exact_numerator": "1048575",
+        "exact_denominator": "1048576"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.4161,
+      "quantile": "10021315.247487051318355121075720833267583688813483",
+      "quantile_low_precision": "10021315.247487051318355121075720833267583688813483",
+      "route": "upper_cf",
+      "route_iterations_low": 262,
+      "route_iterations_high": 851,
+      "newton_steps_low": 4,
+      "newton_steps_high": 6,
+      "tail_residual": "1.26194e-113",
+      "residual_abs": "1.20348e-119",
+      "residual_side": "Q",
+      "runtime_s": 0.161
+    },
+    {
+      "df": 10000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999999990686774",
+        "hex": "0x1.fffffff800000p-1",
+        "exact_numerator": "1073741823",
+        "exact_denominator": "1073741824"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.5999,
+      "quantile": "10026898.058711425716472396080053615144874528557824",
+      "quantile_low_precision": "10026898.058711425716472396080053615144874528557824",
+      "route": "upper_cf",
+      "route_iterations_low": 177,
+      "route_iterations_high": 582,
+      "newton_steps_low": 5,
+      "newton_steps_high": 6,
+      "tail_residual": "1.9765e-113",
+      "residual_abs": "1.84076e-122",
+      "residual_side": "Q",
+      "runtime_s": 0.109
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.0625",
+        "hex": "0x1.0000000000000p-4",
+        "exact_numerator": "1",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.6876,
+      "quantile": "9993140.1068819549098048477052090768593099137307819",
+      "quantile_low_precision": "9993140.1068819549098048477052090768593099137307819",
+      "route": "lower_series",
+      "route_iterations_low": 36019,
+      "route_iterations_high": 50823,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.93673e-115",
+      "residual_abs": "2.46045e-116",
+      "residual_side": "P",
+      "runtime_s": 3.828
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.1875",
+        "hex": "0x1.8000000000000p-3",
+        "exact_numerator": "3",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.9761,
+      "quantile": "9996032.4181323487431854926810897292421908920483864",
+      "quantile_low_precision": "9996032.4181323487431854926810897292421908920483864",
+      "route": "lower_series",
+      "route_iterations_low": 37331,
+      "route_iterations_high": 52175,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.36858e-113",
+      "residual_abs": "2.56608e-114",
+      "residual_side": "P",
+      "runtime_s": 3.965
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.3125",
+        "hex": "0x1.4000000000000p-2",
+        "exact_numerator": "5",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.5292,
+      "quantile": "9997813.61812159719303385425013221062970301819249",
+      "quantile_low_precision": "9997813.61812159719303385425013221062970301819249",
+      "route": "lower_series",
+      "route_iterations_low": 38160,
+      "route_iterations_high": 53023,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "2.17443e-114",
+      "residual_abs": "6.79508e-115",
+      "residual_side": "P",
+      "runtime_s": 4.038
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.4375",
+        "hex": "0x1.c000000000000p-2",
+        "exact_numerator": "7",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.7656,
+      "quantile": "9999295.8350896202542266045210885414931377882069059",
+      "quantile_low_precision": "9999295.8350896202542266045210885414931377882069059",
+      "route": "lower_series",
+      "route_iterations_low": 38861,
+      "route_iterations_high": 53737,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.25228e-113",
+      "residual_abs": "5.47874e-114",
+      "residual_side": "P",
+      "runtime_s": 4.083
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.5625",
+        "hex": "0x1.2000000000000p-1",
+        "exact_numerator": "9",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.3321,
+      "quantile": "10000702.864572597365368657651892926625134283294442",
+      "quantile_low_precision": "10000702.864572597365368657651892926625134283294442",
+      "route": "upper_cf",
+      "route_iterations_low": 3484,
+      "route_iterations_high": 5686,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.38807e-113",
+      "residual_abs": "6.07279e-114",
+      "residual_side": "Q",
+      "runtime_s": 1.008
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.6875",
+        "hex": "0x1.6000000000000p-1",
+        "exact_numerator": "11",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.1302,
+      "quantile": "10002185.367081590204838183531343654541804842182149",
+      "quantile_low_precision": "10002185.367081590204838183531343654541804842182149",
+      "route": "upper_cf",
+      "route_iterations_low": 2836,
+      "route_iterations_high": 4997,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.4348e-113",
+      "residual_abs": "4.48375e-114",
+      "residual_side": "Q",
+      "runtime_s": 0.884
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.8125",
+        "hex": "0x1.a000000000000p-1",
+        "exact_numerator": "13",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.7057,
+      "quantile": "10003967.29790634935483596109450648381806143566913",
+      "quantile_low_precision": "10003967.29790634935483596109450648381806143566913",
+      "route": "upper_cf",
+      "route_iterations_low": 2161,
+      "route_iterations_high": 4244,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.84795e-114",
+      "residual_abs": "3.46492e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.764
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.9375",
+        "hex": "0x1.e000000000000p-1",
+        "exact_numerator": "15",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.6997,
+      "quantile": "10006861.697819154348676588973224555551523283728193",
+      "quantile_low_precision": "10006861.697819154348676588973224555551523283728193",
+      "route": "upper_cf",
+      "route_iterations_low": 1376,
+      "route_iterations_high": 3221,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "4.53319e-114",
+      "residual_abs": "2.83324e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.522
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability": {
+        "float_repr": "2.9802322387695312e-08",
+        "hex": "0x1.0000000000000p-25",
+        "exact_numerator": "1",
+        "exact_denominator": "33554432"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.2771,
+      "quantile": "9975780.0128318058441344705172218253165639174380506",
+      "quantile_low_precision": "9975780.0128318058441344705172218253165639174380506",
+      "route": "lower_series",
+      "route_iterations_low": 29113,
+      "route_iterations_high": 43426,
+      "newton_steps_low": 4,
+      "newton_steps_high": 6,
+      "tail_residual": "4.34477e-114",
+      "residual_abs": "1.29484e-121",
+      "residual_side": "P",
+      "runtime_s": 3.542
+    },
+    {
+      "df": 10000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999999701976776",
+        "hex": "0x1.ffffff0000000p-1",
+        "exact_numerator": "33554431",
+        "exact_denominator": "33554432"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 58.344,
+      "quantile": "10024257.822122271781204559135098419967952697295731",
+      "quantile_low_precision": "10024257.822122271781204559135098419967952697295731",
+      "route": "upper_cf",
+      "route_iterations_low": 212,
+      "route_iterations_high": 687,
+      "newton_steps_low": 4,
+      "newton_steps_high": 6,
+      "tail_residual": "1.1273e-114",
+      "residual_abs": "3.3596e-122",
+      "residual_side": "Q",
+      "runtime_s": 0.13
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.5",
+        "hex": "0x1.0000000000000p-1",
+        "exact_numerator": "1",
+        "exact_denominator": "2"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 55.8896,
+      "quantile": "99999999.333333334123456795892612199350563179184651",
+      "quantile_low_precision": "99999999.333333334123456795892612199350563179184651",
+      "route": "lower_series",
+      "route_iterations_low": 123376,
+      "route_iterations_high": 170463,
+      "newton_steps_low": 3,
+      "newton_steps_high": 4,
+      "tail_residual": "3.26595e-117",
+      "residual_abs": "1.63298e-117",
+      "residual_side": "P",
+      "runtime_s": 10.448
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.9",
+        "hex": "0x1.ccccccccccccdp-1",
+        "exact_numerator": "8106479329266893",
+        "exact_denominator": "9007199254740992"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.7611,
+      "quantile": "100018124.3042444014210596037700955005877265499888",
+      "quantile_low_precision": "100018124.3042444014210596037700955005877265499888",
+      "route": "upper_cf",
+      "route_iterations_low": 2279,
+      "route_iterations_high": 5864,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.17785e-114",
+      "residual_abs": "7.17785e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.958
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "baseline",
+      "probability": {
+        "float_repr": "0.99",
+        "hex": "0x1.fae147ae147aep-1",
+        "exact_numerator": "4458563631096791",
+        "exact_denominator": "4503599627370496"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.566,
+      "quantile": "100032902.46837658572973785201159696984769573046265",
+      "quantile_low_precision": "100032902.46837658572973785201159696984769573046265",
+      "route": "upper_cf",
+      "route_iterations_low": 936,
+      "route_iterations_high": 2990,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "8.44333e-113",
+      "residual_abs": "8.44333e-115",
+      "residual_side": "Q",
+      "runtime_s": 0.466
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.125",
+        "hex": "0x1.0000000000000p-3",
+        "exact_numerator": "1",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.3861,
+      "quantile": "99983731.818635151628322484066789709896055624066617",
+      "quantile_low_precision": "99983731.818635151628322484066789709896055624066617",
+      "route": "lower_series",
+      "route_iterations_low": 115793,
+      "route_iterations_high": 162722,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "2.43808e-113",
+      "residual_abs": "3.04759e-114",
+      "residual_side": "P",
+      "runtime_s": 12.21
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.25",
+        "hex": "0x1.0000000000000p-2",
+        "exact_numerator": "1",
+        "exact_denominator": "4"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.157,
+      "quantile": "99990460.911134877487254539296268054105849054515069",
+      "quantile_low_precision": "99990460.911134877487254539296268054105849054515069",
+      "route": "lower_series",
+      "route_iterations_low": 118882,
+      "route_iterations_high": 165889,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.37694e-113",
+      "residual_abs": "3.44235e-114",
+      "residual_side": "P",
+      "runtime_s": 12.489
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.375",
+        "hex": "0x1.8000000000000p-2",
+        "exact_numerator": "3",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.6121,
+      "quantile": "99995493.15993772346113622133064005750021638922645",
+      "quantile_low_precision": "99995493.15993772346113622133064005750021638922645",
+      "route": "lower_series",
+      "route_iterations_low": 121237,
+      "route_iterations_high": 168290,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.63695e-113",
+      "residual_abs": "6.13856e-114",
+      "residual_side": "P",
+      "runtime_s": 12.857
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.625",
+        "hex": "0x1.4000000000000p-1",
+        "exact_numerator": "5",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.4863,
+      "quantile": "100004505.64210367040269074170706509654471019395243",
+      "quantile_low_precision": "100004505.64210367040269074170706509654471019395243",
+      "route": "upper_cf",
+      "route_iterations_low": 6186,
+      "route_iterations_high": 10843,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.10017e-113",
+      "residual_abs": "2.66256e-113",
+      "residual_side": "Q",
+      "runtime_s": 1.934
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.75",
+        "hex": "0x1.8000000000000p-1",
+        "exact_numerator": "3",
+        "exact_denominator": "4"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.7178,
+      "quantile": "100009538.36211368787657517149307861875632374784996",
+      "quantile_low_precision": "100009538.36211368787657517149307861875632374784996",
+      "route": "upper_cf",
+      "route_iterations_low": 4285,
+      "route_iterations_high": 8724,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "5.36643e-113",
+      "residual_abs": "1.34161e-113",
+      "residual_side": "Q",
+      "runtime_s": 1.572
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.875",
+        "hex": "0x1.c000000000000p-1",
+        "exact_numerator": "7",
+        "exact_denominator": "8"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.82,
+      "quantile": "100016268.61243644442681493892548122152308195115853",
+      "quantile_low_precision": "100016268.61243644442681493892548122152308195115853",
+      "route": "upper_cf",
+      "route_iterations_low": 2614,
+      "route_iterations_high": 6400,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.3947e-113",
+      "residual_abs": "1.74338e-114",
+      "residual_side": "Q",
+      "runtime_s": 1.075
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "9.313225746154785e-10",
+        "hex": "0x1.0000000000000p-30",
+        "exact_numerator": "1",
+        "exact_denominator": "1073741824"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.0623,
+      "quantile": "99915038.313710784022257049872534457946683773993888",
+      "quantile_low_precision": "99915038.313710784022257049872534457946683773993888",
+      "route": "lower_series",
+      "route_iterations_low": 88743,
+      "route_iterations_high": 133715,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.328e-113",
+      "residual_abs": "3.09944e-122",
+      "residual_side": "P",
+      "runtime_s": 9.866
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "9.5367431640625e-07",
+        "hex": "0x1.0000000000000p-20",
+        "exact_numerator": "1",
+        "exact_denominator": "1048576"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.1053,
+      "quantile": "99932655.450262895758327107526869464188763434280984",
+      "quantile_low_precision": "99932655.450262895758327107526869464188763434280984",
+      "route": "lower_series",
+      "route_iterations_low": 94894,
+      "route_iterations_high": 140559,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.05578e-113",
+      "residual_abs": "2.91422e-119",
+      "residual_side": "P",
+      "runtime_s": 10.405
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999990463256836",
+        "hex": "0x1.ffffe00000000p-1",
+        "exact_numerator": "1048575",
+        "exact_denominator": "1048576"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.2385,
+      "quantile": "100067373.46464207422668016895005764588228331819395",
+      "quantile_low_precision": "100067373.46464207422668016895005764588228331819395",
+      "route": "upper_cf",
+      "route_iterations_low": 259,
+      "route_iterations_high": 908,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "5.65241e-113",
+      "residual_abs": "5.39056e-119",
+      "residual_side": "Q",
+      "runtime_s": 0.14
+    },
+    {
+      "df": 100000000.0,
+      "arm": "fitting",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999999990686774",
+        "hex": "0x1.fffffff800000p-1",
+        "exact_numerator": "1073741823",
+        "exact_denominator": "1073741824"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.7485,
+      "quantile": "100085008.50272917360074384592802801021678961313207",
+      "quantile_low_precision": "100085008.50272917360074384592802801021678961313207",
+      "route": "upper_cf",
+      "route_iterations_low": 177,
+      "route_iterations_high": 604,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "5.05338e-113",
+      "residual_abs": "4.70633e-122",
+      "residual_side": "Q",
+      "runtime_s": 0.097
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.0625",
+        "hex": "0x1.0000000000000p-4",
+        "exact_numerator": "1",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.3268,
+      "quantile": "99978305.161605181395511844582774030974778533138659",
+      "quantile_low_precision": "99978305.161605181395511844582774030974778533138659",
+      "route": "lower_series",
+      "route_iterations_low": 113356,
+      "route_iterations_high": 160207,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "5.86363e-113",
+      "residual_abs": "3.66477e-114",
+      "residual_side": "P",
+      "runtime_s": 11.895
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.1875",
+        "hex": "0x1.8000000000000p-3",
+        "exact_numerator": "3",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.123,
+      "quantile": "99987453.711106878948118795194527388856992062395356",
+      "quantile_low_precision": "99987453.711106878948118795194527388856992062395356",
+      "route": "lower_series",
+      "route_iterations_low": 117492,
+      "route_iterations_high": 164467,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "9.89419e-113",
+      "residual_abs": "1.85516e-113",
+      "residual_side": "P",
+      "runtime_s": 12.326
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.3125",
+        "hex": "0x1.4000000000000p-2",
+        "exact_numerator": "5",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.6887,
+      "quantile": "99993087.150331887175766830939272349982591441649621",
+      "quantile_low_precision": "99993087.150331887175766830939272349982591441649621",
+      "route": "lower_series",
+      "route_iterations_low": 120106,
+      "route_iterations_high": 167139,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "7.9057e-113",
+      "residual_abs": "2.47053e-113",
+      "residual_side": "P",
+      "runtime_s": 12.602
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.4375",
+        "hex": "0x1.c000000000000p-2",
+        "exact_numerator": "7",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.3317,
+      "quantile": "99997774.64080290383796251673650293839373854574434",
+      "quantile_low_precision": "99997774.64080290383796251673650293839373854574434",
+      "route": "lower_series",
+      "route_iterations_low": 122316,
+      "route_iterations_high": 169388,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "8.50403e-114",
+      "residual_abs": "3.72051e-114",
+      "residual_side": "P",
+      "runtime_s": 12.603
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.5625",
+        "hex": "0x1.2000000000000p-1",
+        "exact_numerator": "9",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.5967,
+      "quantile": "100002224.05885929971502162163113241102504690918786",
+      "quantile_low_precision": "100002224.05885929971502162163113241102504690918786",
+      "route": "upper_cf",
+      "route_iterations_low": 7155,
+      "route_iterations_high": 11908,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "4.61407e-114",
+      "residual_abs": "2.01866e-114",
+      "residual_side": "Q",
+      "runtime_s": 2.094
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.6875",
+        "hex": "0x1.6000000000000p-1",
+        "exact_numerator": "11",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 55.9693,
+      "quantile": "100006911.83487128763858398144196761977043924074324",
+      "quantile_low_precision": "100006911.83487128763858398144196761977043924074324",
+      "route": "upper_cf",
+      "route_iterations_low": 5214,
+      "route_iterations_high": 9808,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "1.82632e-113",
+      "residual_abs": "5.70724e-114",
+      "residual_side": "Q",
+      "runtime_s": 1.618
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.8125",
+        "hex": "0x1.a000000000000p-1",
+        "exact_numerator": "13",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.1953,
+      "quantile": "100012546.00493181147652187395843891174748121348146",
+      "quantile_low_precision": "100012546.00493181147652187395843891174748121348146",
+      "route": "upper_cf",
+      "route_iterations_low": 3443,
+      "route_iterations_high": 7592,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "8.94638e-113",
+      "residual_abs": "1.67745e-113",
+      "residual_side": "Q",
+      "runtime_s": 1.232
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "bridge",
+      "probability": {
+        "float_repr": "0.9375",
+        "hex": "0x1.e000000000000p-1",
+        "exact_numerator": "15",
+        "exact_denominator": "16"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.8533,
+      "quantile": "100021696.64309594305580005056593065095593470133384",
+      "quantile_low_precision": "100021696.64309594305580005056593065095593470133384",
+      "route": "upper_cf",
+      "route_iterations_low": 1786,
+      "route_iterations_high": 4936,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "8.14005e-115",
+      "residual_abs": "5.08753e-116",
+      "residual_side": "Q",
+      "runtime_s": 0.784
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability": {
+        "float_repr": "2.9802322387695312e-08",
+        "hex": "0x1.0000000000000p-25",
+        "exact_numerator": "1",
+        "exact_denominator": "33554432"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 57.136,
+      "quantile": "99923368.779387403842229169057057650763644637099899",
+      "quantile_low_precision": "99923368.779387403842229169057057650763644637099899",
+      "route": "lower_series",
+      "route_iterations_low": 91586,
+      "route_iterations_high": 136900,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "6.95314e-113",
+      "residual_abs": "2.0722e-120",
+      "residual_side": "P",
+      "runtime_s": 9.888
+    },
+    {
+      "df": 100000000.0,
+      "arm": "holdout",
+      "band": "tails",
+      "probability": {
+        "float_repr": "0.9999999701976776",
+        "hex": "0x1.ffffff0000000p-1",
+        "exact_numerator": "33554431",
+        "exact_denominator": "33554432"
+      },
+      "precision_pair": [
+        60,
+        120
+      ],
+      "status": "ACCEPTED",
+      "stabilization_digits": 56.6916,
+      "quantile": "100076669.05556914357861877576587546582726102133722",
+      "quantile_low_precision": "100076669.05556914357861877576587546582726102133722",
+      "route": "upper_cf",
+      "route_iterations_low": 208,
+      "route_iterations_high": 730,
+      "newton_steps_low": 4,
+      "newton_steps_high": 5,
+      "tail_residual": "3.18081e-113",
+      "residual_abs": "9.47955e-121",
+      "residual_side": "Q",
+      "runtime_s": 0.112
+    }
+  ]
+}
