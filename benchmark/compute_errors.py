@@ -180,6 +180,43 @@ def main():
             print("      - " + _p)
         sys.exit(1)
 
+    # ROW-DISPOSITION GATE: while the reviewed v1.0.0 debt fingerprint exists,
+    # permit only its still-present unresolved subset and name it as KNOWN
+    # COVERAGE DEBT.  Once #22 deletes the fingerprint, strict zero-missing mode
+    # becomes authoritative automatically.
+    from check_grid_coverage import (evaluate_paths as _evaluate_coverage,
+                                     validate_transition as _validate_transition,
+                                     validate_strict as _validate_coverage_strict,
+                                     summary_markdown as _coverage_markdown)
+    import json as _json
+    _coverage_fingerprint_path = os.path.join(HERE, "coverage_debt_v1_0_0.json")
+    _coverage_result = _evaluate_coverage(
+        args.grid, os.path.join(HERE, "accuracy_contracts.csv"),
+        os.path.join(HERE, "accuracy_row_exemptions.json"))
+    if os.path.exists(_coverage_fingerprint_path):
+        _coverage_mode = "transition"
+        try:
+            with open(_coverage_fingerprint_path, encoding="utf-8") as _f:
+                _coverage_fingerprint = _json.load(_f)
+        except (OSError, ValueError) as _ce:
+            _coverage_problems = [f"malformed coverage-debt fingerprint: "
+                                  f"{type(_ce).__name__}: {_ce}"]
+        else:
+            _coverage_problems = _validate_transition(
+                _coverage_fingerprint, _coverage_result)
+    else:
+        _coverage_mode = "strict"
+        _coverage_problems = _validate_coverage_strict(_coverage_result)
+    if _coverage_problems:
+        print(f"  gate FAILED (exit 1): MAIN-GRID COVERAGE - "
+              f"{len(_coverage_problems)} blocking diagnostic(s):")
+        for _p in _coverage_problems:
+            print("      - " + _p)
+        sys.exit(1)
+    if _coverage_mode == "transition":
+        print(f"  KNOWN COVERAGE DEBT: {_coverage_result['missing_rows']} unresolved "
+              "main-grid row(s); transition guard satisfied, completeness unresolved.")
+
     contracts = load_contracts()
     rows = list(csv.DictReader(open(args.grid)))
 
@@ -219,7 +256,10 @@ def main():
         prov += ["**Provenance.** No `observation_manifest.json` present - this summary is "
                  "NOT bound to a source revision (development run).", ""]
 
-    lines = ["# Accuracy summary", ""] + prov + [
+    _coverage_section = _coverage_markdown(
+        _coverage_result, _coverage_mode, _coverage_problems).splitlines()
+    _coverage_section[0] = "## Main-grid disposition"
+    lines = ["# Accuracy summary", ""] + prov + _coverage_section + [
              "| Contract | Measure | Metric | Threshold | Worst error | Points | Verdict |",
              "|---|---|---|---|---:|---:|---|"]
 

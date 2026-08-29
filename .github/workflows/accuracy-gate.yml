@@ -77,6 +77,8 @@ jobs:
         # than merely wrong. Fail on the tooling first.
         run: |
           python test_contract_eval.py
+          python test_grid_coverage.py
+          python check_grid_coverage.py --mode auto --check-summary
           python test_manifest.py
 
       - name: Run strict accuracy gate on the committed grid

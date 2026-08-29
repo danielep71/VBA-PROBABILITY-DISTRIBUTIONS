@@ -43,6 +43,7 @@ HOLDOUT = os.path.join(HERE, "holdout")
 REGENERATE = [
     ("bind observations to source", HERE, ["write_manifest.py"]),
     ("accuracy summary", HERE, ["compute_errors.py", "--out", "accuracy_summary.md"]),
+    ("main-grid coverage summary", HERE, ["check_grid_coverage.py"]),
     ("benchmark README contract table", HERE, ["render_contract_table.py", "--write"]),
     ("independent holdout summary", HOLDOUT, ["analyze_holdout.py"]),
 ]
@@ -57,7 +58,7 @@ HOLDOUT_BINDING = (
 # tests run first on purpose: a broken evaluator makes every verdict below
 # meaningless rather than merely wrong.
 VERIFY = [
-    ("evaluator unit tests", HERE, ["test_contract_eval.py"]),
+    ("evaluator unit tests", HERE, ["test_evidence_tools.py"]),
     ("manifest unit tests", HERE, ["test_manifest.py"]),
     ("strict accuracy gate", HERE, ["compute_errors.py"]),
     ("gate blocks without references", HERE, ["test_gate_degradation.py"]),
@@ -73,6 +74,7 @@ HOLDOUT_SUMMARY = "benchmark/holdout/holdout_summary.md"
 
 ARTIFACTS = [
     "benchmark/accuracy_summary.md",
+    "benchmark/coverage_summary.md",
     "benchmark/README.md",
     "benchmark/observation_manifest.json",
     "benchmark/holdout/holdout_summary.md",
