@@ -82,7 +82,10 @@ jobs:
       - name: Run strict accuracy gate on the committed grid
         working-directory: benchmark
         # No --allow-known-limitations: strict mode. Non-zero exit (blocking
-        # FAIL, or an unevaluated active contract) fails the job.
+        # FAIL, an unevaluated active contract, or stale main/holdout provenance)
+        # fails the job. Main provenance is checked first so a known stale-main
+        # state keeps its exact diagnostic; a clean main binding cannot advance
+        # to numerical certification while the holdout is unbound or stale.
         run: python compute_errors.py --out "${RUNNER_TEMP}/accuracy_summary.md"
 
       - name: Verify the committed accuracy summary matches the committed grid
@@ -132,10 +135,10 @@ jobs:
         # a rerun would have failed two Poisson contracts by 12.9x and 550x.
         #
         # NOTE the diff alone would NOT have caught that: the stale summary was
-        # internally consistent. Running the analyzer against the CURRENT
-        # registry is what does the work; the diff then stops a summary that
-        # disagrees with it from being committed. Neither step binds the holdout
-        # OBSERVATIONS to source - see the holdout provenance issue.
+        # internally consistent. The earlier strict-gate step now verifies the
+        # dedicated holdout source binding before this analyzer can contribute a
+        # release verdict; this step then checks the current registry and stops a
+        # committed summary that disagrees with it.
         run: |
           python analyze_holdout.py
           git diff --exit-code holdout_summary.md

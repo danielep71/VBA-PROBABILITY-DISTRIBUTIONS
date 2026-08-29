@@ -1,6 +1,5 @@
 """
-Write benchmark/observation_manifest.json, binding the current committed
-observations to the source that produced them.
+Write a source-provenance manifest for freshly exported observations.
 
 Run this AT EXPORT TIME - immediately after re-exporting observations from the
 current source in Excel - and commit the manifest together with the grid. The
@@ -20,13 +19,19 @@ recorded as "unrecorded" rather than guessed:
 
     python write_manifest.py --excel-version 2408 --excel-build 16.0.17928.20216 \
                              --office-bitness 64 --commit-sha <sha>
+
+The independent holdout has a dedicated binding because its exporter and grid
+are separate.  Use this only after a real-Excel holdout export:
+
+    python write_manifest.py --holdout
 """
 import argparse
 import datetime
 import json
 import os
 
-from _manifest import (build_manifest, repo_root, MANIFEST_NAME)
+from _manifest import (build_manifest, build_holdout_manifest, repo_root,
+                       MANIFEST_NAME, HOLDOUT_MANIFEST_NAME)
 
 ENV_FILE = "excel_environment.json"
 
@@ -80,10 +85,15 @@ def main():
     ap.add_argument("--office-bitness", default="unrecorded")
     ap.add_argument("--commit-sha", default="unrecorded")
     ap.add_argument("--notes", default="")
+    ap.add_argument("--holdout", action="store_true",
+                    help="bind benchmark/holdout/holdout_grid.csv instead of the main grid")
     a = ap.parse_args()
 
     root = repo_root()
-    grid = os.path.join(root, "benchmark", "probability_accuracy_grid.csv")
+    if a.holdout:
+        grid = os.path.join(root, "benchmark", "holdout", "holdout_grid.csv")
+    else:
+        grid = os.path.join(root, "benchmark", "probability_accuracy_grid.csv")
     contracts = os.path.join(root, "benchmark", "accuracy_contracts.csv")
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -103,17 +113,30 @@ def main():
     if missing:
         print("  warning: unrecorded provenance: " + ", ".join(missing)
               + " (run Export_ExcelEnvironment, or pass the flags)")
+    if a.holdout and (missing or commit_sha == "unrecorded"):
+        missing_fields = list(missing)
+        if commit_sha == "unrecorded":
+            missing_fields.append("commit_sha")
+        raise SystemExit("refusing to bind holdout with unrecorded provenance: "
+                         + ", ".join(missing_fields))
 
-    manifest = build_manifest(
-        root, grid, contracts, generated_utc=now, commit_sha=commit_sha,
-        environment=environment, notes=a.notes)
+    builder = build_holdout_manifest if a.holdout else build_manifest
+    manifest = builder(root, grid, contracts, generated_utc=now,
+                       commit_sha=commit_sha, environment=environment,
+                       notes=a.notes)
 
-    out = os.path.join(root, "benchmark", MANIFEST_NAME)
+    if a.holdout:
+        out = os.path.join(root, "benchmark", "holdout", HOLDOUT_MANIFEST_NAME)
+    else:
+        out = os.path.join(root, "benchmark", MANIFEST_NAME)
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
         f.write("\n")
     n = len(manifest["source_binding"])
-    print(f"wrote {out}: {n} .bas modules bound, schema {manifest['grid_schema_version']}")
+    rows = manifest.get("observation_row_count")
+    row_note = f", {rows} observation rows" if rows is not None else ""
+    print(f"wrote {out}: {n} .bas modules bound{row_note}, "
+          f"schema {manifest['grid_schema_version']}")
 
 
 if __name__ == "__main__":

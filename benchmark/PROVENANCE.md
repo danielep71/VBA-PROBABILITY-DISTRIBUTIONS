@@ -12,6 +12,28 @@ in the grid recorded *which* source produced them, so an algorithm could change
 in `src/**` while the committed observations — and the green summary — stayed
 put, and the hosted accuracy workflow did not even re-run.
 
+## Two evidence bindings
+
+The main grid and independent holdout are separate Excel exports and therefore
+have separate provenance records:
+
+- `observation_manifest.json` binds the main accuracy grid to every production,
+  test, exporter, and study `.bas` module that can affect or populate it;
+- `holdout/holdout_manifest.json` binds the independent holdout to the six
+  production modules and `holdout/M_STATS_PROBDIST_HOLDOUT.bas`, plus the exact
+  holdout bytes, row count, schema, registry, source commit, export timestamp,
+  and Excel environment.
+
+Both use SHA-256 over LF-normalized content. A CRLF checkout and an LF checkout
+therefore verify identically, while any substantive byte change fails closed.
+
+The holdout record is intentionally absent during Phase 0 of v1.0.0. The 559
+committed observations were exported at older source commit `4553afa`; creating
+a current-source manifest for them would be false provenance. The first
+`holdout_manifest.json` will be written immediately after the #23 real-Excel
+export. Until then, the strict gate reaches `STALE HOLDOUT EVIDENCE` as soon as
+the earlier stale main-grid binding has been refreshed.
+
 ## What is enforced now (in-repo, hosted, reproducible)
 
 - **Source binding.** `observation_manifest.json` records a content hash
@@ -28,6 +50,13 @@ put, and the hosted accuracy workflow did not even re-run.
   `--allow-missing-manifest`, for local development only). The binding is thus
   *these exact observation bytes, this exact source, this exact contract
   registry* — not merely a matching structure.
+- **Independent-holdout binding.** After the main binding verifies,
+  `compute_errors.py` requires `holdout/holdout_manifest.json` and checks the
+  production modules, dedicated exporter, exact holdout bytes and row count,
+  schema, and contract registry. Missing, malformed, stale, added, removed, or
+  changed inputs block before the holdout analyzer can contribute a release
+  verdict. Main provenance is checked first so a known stale-main state retains
+  its exact diagnostic rather than being masked by a downstream failure.
 - **The gate now runs on source changes.** `accuracy-gate.yml` triggers on
   `src/**` and `tests/**` (as well as `benchmark/**`). A source edit therefore
   re-runs the gate, which then fails on the manifest mismatch until the
@@ -40,9 +69,9 @@ put, and the hosted accuracy workflow did not even re-run.
 
 ## Operating procedure (run at every export)
 
-Whenever `src/**`, the exporters, the tests, the observation grid, or the
-contract registry change, the manifest must be re-written — the gate will not
-certify the summary otherwise:
+Whenever `src/**`, the exporters, the tests, either observation grid, or the
+contract registry changes, the affected manifest must be re-written — the gate
+will not certify the summary otherwise:
 
 1. Import the current source into the workbook and re-export the observations
    (`Export_Accuracy_Observations`, plus any affected study macro).
@@ -56,6 +85,26 @@ certify the summary otherwise:
 
 3. Commit the grid **and** `observation_manifest.json` together.
 
+For a fresh independent-holdout export, write its binding in the same evidence
+operation:
+
+```
+python write_manifest.py --holdout --commit-sha <sha> \
+    --excel-version <ver> --excel-build <build> --office-bitness <32|64>
+```
+
+Or, after both grids have just been exported and
+`benchmark/excel_environment.json` is current, run:
+
+```
+python refresh_evidence.py --bind-exported-holdout
+```
+
+That explicit flag writes both the normal main binding and the holdout binding
+before regenerating summaries. Plain `refresh_evidence.py` never creates a
+holdout binding, so regenerating documentation cannot accidentally claim that
+historical observations came from current source.
+
 The baseline manifest was written against the current committed observations
 under the assumption that they are current (they were re-exported through the
 P1-01, F-envelope, and beta_f_inverse work). Regenerate it at the next full
@@ -68,9 +117,9 @@ are currently `unrecorded`.
   regression checks on `main`. The Excel regression exercises current source at
   broad behavioral tolerances; the accuracy gate certifies the tight external
   contracts against source-bound evidence. Neither substitutes for the other.
-- **Environment capture.** Have the export path record Excel version/build and
-  Office bitness (either from the exporter macro or passed to `write_manifest.py`)
-  so the `unrecorded` fields become real.
+- **Environment capture.** Have each export path record Excel version/build and
+  Office bitness (either from the exporter macro or passed to
+  `write_manifest.py`) so the `unrecorded` fields become real.
 
 ## Strongest target design (two-stage, when automation is practical)
 

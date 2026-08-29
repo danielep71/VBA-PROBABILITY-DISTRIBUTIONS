@@ -160,6 +160,26 @@ def main():
                 print("      - " + _p)
             sys.exit(1)
 
+    # HOLDOUT PROVENANCE GATE: verify only after the main binding is clean.  The
+    # staged order is deliberate: while #23 evidence is stale, its exact two-path
+    # diagnostic remains the first and only failure class.  Once the main grid is
+    # freshly bound, an absent or stale holdout binding blocks before any release
+    # verdict can be published.
+    from _manifest import (load_holdout_manifest, verify_holdout_binding,
+                           HOLDOUT_MANIFEST_NAME)
+    _holdout_grid = os.path.join(HERE, "holdout", "holdout_grid.csv")
+    _holdout_manifest = load_holdout_manifest(_root)
+    _holdout_problems = verify_holdout_binding(
+        _root, _holdout_manifest, _holdout_grid,
+        os.path.join(HERE, "accuracy_contracts.csv"))
+    if _holdout_problems:
+        print(f"  gate FAILED (exit 1): STALE HOLDOUT EVIDENCE - the independent holdout "
+              f"is not bound to the checked-out source ({len(_holdout_problems)} "
+              f"mismatch(es)); re-export and re-run write_manifest.py --holdout:")
+        for _p in _holdout_problems:
+            print("      - " + _p)
+        sys.exit(1)
+
     contracts = load_contracts()
     rows = list(csv.DictReader(open(args.grid)))
 
