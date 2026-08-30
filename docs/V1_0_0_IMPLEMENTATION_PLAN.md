@@ -1,8 +1,8 @@
 # v1.0.0 implementation and release-readiness plan
 
-Status date: 2026-08-29  
+Status date: 2026-08-30
 Repository: danielep71/VBA-PROBABILITY-DISTRIBUTIONS  
-Repository HEAD: b00fa0ee161e003f0c569cbb0262a3d847162ff7  
+Repository HEAD: 0dd748884599d4d0da815cb53eeceb13efd51f05
 Numerical source baseline: bde92dd7037e4fde05e620745a1c54b0cbc3a261  
 Milestone: v1.0.0
 
@@ -12,7 +12,7 @@ v1.0.0 is not release-ready.
 
 The project architecture and evidence framework are strong, but the release currently has six open P1 numerical issues plus the P1 release-certification tracker, stale source-bound accuracy observations, an unavailable self-hosted Excel result for the current source, an audit-baseline set of 36 unclaimed main-grid rows whose live count must thereafter be generated, unbound independent holdout observations, stale public assurance metrics, no changelog/tag/release, and a security policy that describes an unreleased tag as already stable.
 
-The corrected milestone contains 25 issues: 11 open and 14 closed. The implementation order below is dependency-driven and preserves the frozen numerical contracts.
+The corrected v1.0.0 milestone contains 26 issues: 12 open and 14 closed. The implementation order below is dependency-driven and preserves the frozen numerical contracts. Two additional open hardening issues belong to v1.01: #7 and #32.
 
 ### Scope decision: do not defer #13/#14
 
@@ -39,7 +39,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 
 ### Source and repository
 
-- repository HEAD: b00fa0ee161e003f0c569cbb0262a3d847162ff7
+- repository HEAD: 0dd748884599d4d0da815cb53eeceb13efd51f05
 - latest numerical source baseline: bde92dd7037e4fde05e620745a1c54b0cbc3a261
 - remote branches: main only
 - Git tags: none
@@ -67,10 +67,33 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 
 ### Live CI state
 
-- Accuracy Gate run 166: failed as designed because SPECIALFUNCS and the test module changed after the last Excel export
+- Accuracy Gate runs 166 through 171: failed only with the frozen two-file stale-evidence signature; every Phase 0 commit preserved it
 - the #13 analyzer and its fitting/holdout claims passed before the provenance failure
-- Excel VBA Regression run 95: queued because the self-hosted Excel runner is unavailable
+- Excel VBA Regression run 95: cancelled because the self-hosted Excel runner was unavailable; it produced no evidence
 - workflow logs warn that older action majors target deprecated Node 20 and are being forced onto Node 24
+
+### Phase 0 known-red invariant
+
+`main` is intentionally red from the #23 source merge until Phase 1 performs a fresh Excel export and rewrites the source binding. A red top line is therefore not an adequate Phase 0 regression signal. Under the workflow-equivalent Python 3.12 plus mpmath environment, every Phase 0 commit must retain this exact ordered signature:
+
+| Order | Check | Required Phase 0 result | Required cause |
+| ---: | --- | --- | --- |
+| 1 | evaluator unit tests | PASS | — |
+| 2 | manifest unit tests | PASS | — |
+| 3 | strict accuracy gate | FAIL | `STALE EVIDENCE`, exactly 2 mismatches |
+| 4 | gate blocks without references | FAIL | same stale-evidence cause and same 2 mismatches |
+| 5 | source claims vs registries | PASS | — |
+| 6 | holdout analyzer tests | PASS | — |
+| 7 | independent holdout | PASS | numerical verdict only; provenance remains blocked by the strict gate |
+
+The mismatch set is exactly:
+
+- `src/M_STATS_PROBDIST_SPECIALFUNCS.bas`;
+- `tests/M_STATS_PROBDIST_TEST.bas`.
+
+Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any difference is a regression despite the already-red top line. Runs 166 through 171 preserve the invariant.
+
+#29 keeps the existing stale main-manifest check first during this window while exercising the holdout verifier through blocking fixtures. Phase 1 exports both observation sets and writes both truthful bindings atomically. The waiver expires immediately afterward and all seven checks must PASS.
 
 ## Backlog reconciliation performed
 
@@ -81,7 +104,8 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 | #11 | Replaced placeholder dependencies with #12, #13, and #14; added the incomplete-gamma prerequisites and exact parent closure rule. |
 | #13 | Replaced superseded hypotheses with the measured per-family candidate policy, then added mandatory post-#23 crossover revalidation before any cutoff is wired. |
 | #14 | Replaced placeholder links; made the log-quantile architecture, final-scale reconstruction, and prerequisites explicit. |
-| #22 | Recounted the audit-baseline grid; selected real contracts for its 36 unclaimed rows; confirmed that production F accepts df through 1E10, making the <=1E5 `PROB_F_ValidateEnvelope` enforcement text false on four registry rows; found eight mis-scoped F main rows, eight mis-scoped holdout rows at df 2E5/5E5, five additional exact-zero Student-t medians, and three actual duplicate F inputs; preregistered gap-free regimes, bridge evidence, exact-zero tooling, and converging/Rmpfr references; then split the cheap coverage-delta guard from the heavy release-candidate evidence wave so #22 no longer blocks #23. |
+| #17 | Reopened after the closure audit, then narrowed to the v1.0.0 non-destructive/fail-closed generator safeguards. Full reconstruction moved to #32 under v1.01. |
+| #22 | Recounted the audit-baseline grid; selected real contracts for its 36 unclaimed rows; confirmed that production F accepts df through 1E10, making the <=1E5 `PROB_F_ValidateEnvelope` enforcement text false on four registry rows; found eight mis-scoped F main rows, eight mis-scoped holdout rows at df 2E5/5E5, five additional exact-zero Student-t medians, and three actual duplicate F inputs; preregistered gap-free regimes, bridge evidence, and exact-zero tooling; split the cheap coverage guard from the release-candidate evidence wave; and accepted the df = 1E8 gmpy2/MPFR substitution after 69/69 quadrature and gmpy2 convergence with Rmpfr agreement on all 46 feasible points. |
 | #23 | Retitled to the actual off-grid Stirling-prefactor root cause; recorded the merged implementation and evidence still required. |
 | #24 | Specified direct lower-region Q from a pre-exponentiation LogP and made #23 a hard prerequisite. |
 | #26 | Reframed from a presumed separate Lentz defect to a mandatory post-#23 revalidation gate. |
@@ -100,6 +124,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 | #29 | Split the Excel-free provenance mechanism from the first truthful binding, which is written and verified during the #23 holdout export. |
 | #30 | Move workflows from deprecated Node 20 action majors to supported Node 24 majors. |
 | #31 | Own repository preparation, final certification, tagging, and publication of v1.0.0. |
+| #32 | Own complete post-v1.0.0 grid reconstruction, declared origins, reference/observation separation, and byte-stable regeneration under v1.01. |
 
 ### Deleted
 
@@ -120,12 +145,15 @@ The parent #11 remains useful, and #26 must remain separate until the shared-pre
 | Main-grid claim completeness | Blocked | 36 rows produced no verdict at the audit baseline; the current count must be generated; Student-t `all` overclaims the measured large-df rows; F regime metadata is stale and three numerical inputs are duplicated across regimes | #22 |
 | Main-grid provenance | Correctly stale | Manifest rejects the changed current source | #23 then final export |
 | Holdout provenance | Blocked | 559 rows producing 80 contract verdicts are not bound to current source | #29 |
+| Grid-regeneration safety | Blocked | The documented generator can still overwrite the combined grid and blank observations by default | #17 |
 | README assurance | Blocked | 835 / 161 / 1 905 / zero-known-defect claims are stale | #28 |
 | CI action runtime | Cleanup required | Node 20 deprecation warnings | #30 |
 | Release documentation | Blocked | No changelog; SECURITY.md prematurely says v1.0.0 is stable | #31 |
 | Tag and GitHub Release | Not started | Neither exists | #31 |
 | Core architecture | Preserve | No broad redesign required | all numerical issues |
 | Governance baseline | Strong | License, conduct, contributing, security, templates present | #31 final audit |
+
+Full grid reconstruction is deliberately not a v1.0.0 blocker. #32 owns that v1.01 programme after #17 makes the current tooling safe.
 
 ## Dependency graph
 
@@ -181,6 +209,16 @@ Objective: finish all work that does not require a fresh Excel observation, whil
 
 This track gates Phase 1 and can finish even if the runner remains unavailable.
 
+**Status: complete at 0dd7488.**
+
+| Commit | Completed work |
+| --- | --- |
+| `2dcfe04` | #29 fail-closed holdout-provenance writer, verifier, fixtures, documentation, and staged gate wiring |
+| `136b66d` | #22 canonical row-disposition checker and frozen 36-row transition guard |
+| `4be8cd0` | recursive holdout-exporter binding and added-module fixtures |
+
+All three commits preserved the exact Phase 0 seven-line/two-file expected-red signature. No current-source holdout manifest was falsely created.
+
 1. Keep bde92dd as the numerical source baseline for #23 validation; the later issue-template commits do not change numerical behavior.
 2. Implement the Excel-free half of #29:
    - manifest writer and verifier;
@@ -221,13 +259,16 @@ This work begins in Phase 0 but is not a Phase 1 entry gate. It may continue alo
 5. Build the reference authority:
    - factor the converging lower-series / upper-Lentz-CF incomplete-gamma route for Chi-square and revalidate at materially higher precision;
    - use the robust incomplete-beta route and exact public transforms for Student-t and F;
-   - cross-check all fitting and holdout references independently with Rmpfr;
+   - cross-check fitting and holdout references independently with Rmpfr wherever its incomplete-gamma routine can execute;
+   - at df = 1E8, use the accepted converging gmpy2/MPFR route plus algorithm-independent quadrature;
    - fail closed on non-convergence or failure to stabilize.
 6. Satisfy a hard early feasibility checkpoint before Phase 2 begins, without making it a #23 closure prerequisite:
    - generate the frozen Chi-square reference set at df = 1E6, 1E7, and 1E8 with the converging series/continued-fraction route;
    - reproduce it at two materially separated working precisions and reject any unstabilized value;
-   - cross-check it independently with Rmpfr;
-   - record in #22 the maximum mpmath-route-versus-Rmpfr agreement, the compared measures, precision pair, convergence status, and runtime.
+   - cross-check all 69 points with algorithm-independent quadrature and gmpy2/MPFR arithmetic, plus Rmpfr on every feasible point;
+   - record the agreement, compared measures, precision pair, convergence status, runtime, and the Rmpfr ceiling.
+
+**Checkpoint complete and maintainer decision recorded.** Commits `4deeef4` and `e68cc82` freeze the 69-point set and correct the stored-reference truncation. Quadrature and gmpy2/MPFR converge 69/69 with minimum agreement of 109.87 and 115.11 significant digits respectively. Rmpfr agrees to at least 115.96 digits on all 46 points it can execute, but its `mpfr_gamma_inc` aborts above shape approximately 4.5E7; df = 1E8 requires shape 5E7. The df = 1E8 substitution is accepted: gmpy2/MPFR supplies the converging arithmetic route and quadrature supplies the algorithm-independent cross-check. Rmpfr remains authoritative where feasible. This decision freezes only the oracle feasibility, not a production accuracy threshold, and no #22 holdout has been inspected.
 7. Add the machine-readable inverse-regime classifier and seam fixtures. Its disjoint priorities are: existing F tiny-unbalanced predicate; F core when both df <=1E5 and envelope otherwise through 1E10; Student-t exact median first, core below df 1E6 and selected large-df regime through 1E8; Chi-square core below df 1E6 and envelope through 1E8.
 8. Preregister the F cleanup:
    - keep the higher-precision `inverse_probe` rows at p = 0.5, 0.9, 0.99 with df = (1E6, 3);
@@ -251,13 +292,13 @@ This track gates entry into Phase 1 but does not block Track A.
 4. The interim route does not waive the final requirement for a retained self-hosted workflow artifact on the exact release commit.
 5. If neither controlled Excel route is available, stop after Track A preregistration and do not accumulate further value-changing numerical commits.
 
-Exit gate: #29's writer/verifier and #22's strict checker plus the transition guard seeded from the 36-row audit-baseline fingerprint are committed and green in their intended modes; the current debt count is generated rather than hard-coded; the holdout remains honestly stale; #22's oracle/study work may continue in parallel; and a controlled Excel route is available before Phase 1 begins.
+Exit gate: #29's writer/verifier and #22's strict checker plus the transition guard are committed and green in their intended modes; the current debt count is generated rather than hard-coded; the repository-level Accuracy Gate remains intentionally red with exactly the frozen seven-line/two-file signature and no additional failure; the holdout remains honestly stale; the #22 Chi-square oracle checkpoint is accepted; and a controlled Excel route is available before Phase 1 begins.
 
 ### Phase 1 — Validate and close #23
 
 Objective: prove the merged off-grid `PROB_StirlingError` recurrence removes the public Gamma/Chi-square CDF floor without waiting for #22's new inverse reference infrastructure.
 
-1. Verify #29's Excel-free mechanism and #22's transitional coverage-delta guard. The guard must report exactly the frozen baseline debt and fail on any synthetic new unclaimed row.
+1. Before exporting anything, reproduce the frozen Phase 0 signature exactly: five PASS lines, two stale-evidence FAIL lines, exactly two mismatches, and only the two frozen paths. In the same run, verify #29's Excel-free mechanism and #22's transition guard.
 2. Run the expected 909 assertions on the exact tracked modules.
 3. Export the preregistered #23 fitting grid and untouched #23 holdout only; do not execute or inspect #22's inverse fitting/holdout arms.
 4. Export the current global holdout, write and verify the first truthful #29 binding immediately, and close #29 only after deliberate source/grid mismatches fail.
@@ -268,13 +309,13 @@ Objective: prove the merged off-grid `PROB_StirlingError` recurrence removes the
    - amend preregistration before any #13 production call site if a crossover moves.
 7. Remeasure the X = 2 continued-fraction ladder for #26.
 8. Promote representative #23 small-shape and ordinary off-grid rows under existing public contracts.
-9. Re-export the complete current main grid, write provenance, and generate main/holdout summaries.
-10. Run every numerical strict gate and unrelated holdout. Run #22 in transition mode: it must show the remaining known debt explicitly and prove that #23 introduced no new or changed unclaimed row.
+9. Re-export the complete current main grid and global holdout, write both truthful provenance bindings atomically, and generate main/holdout summaries.
+10. Run every numerical strict gate and unrelated holdout. The expected-red waiver must retire with all seven checks PASS. Run #22 in transition mode and prove #23 introduced no new or changed unclaimed row.
 11. Close #23 only if its unchanged frozen contracts pass and coverage debt did not grow.
 
-Parallel feasibility gate before Phase 2: #22's Chi-square generator has produced the frozen df = 1E6/1E7/1E8 references, stabilized them at two working precisions, passed the independent Rmpfr cross-check, and recorded the maximum agreement and runtime in #22. This checkpoint may run alongside #23 and does not delay #23's own closure decision, but the numerical plan does not enter Phase 2 without it.
+Parallel feasibility gate before Phase 2: complete. The frozen df = 1E6/1E7/1E8 references stabilize at two precisions; quadrature and gmpy2/MPFR cover 69/69, while Rmpfr agrees on its 46 feasible points. The accepted df = 1E8 substitution and Rmpfr ceiling are recorded in #22.
 
-Exit gate: #29 and #23 are closed; the 3E-15 Gamma cumulative contract is preserved; current evidence is source-bound; #13 cutoffs and #26 have post-#23 decision inputs; the early #22 generator-feasibility checkpoint is satisfied; #22 remains open on its parallel release-candidate track with no new coverage debt.
+Exit gate: #29 and #23 are closed; the frozen known-red signature has been replaced by seven PASS results; the 3E-15 Gamma cumulative contract is preserved; main-grid and holdout evidence are bound to the same current source; #13 cutoffs and #26 have post-#23 decision inputs; and #22 remains open on its release-candidate track with no new coverage debt.
 
 ### Phase 2A — Wire #13 density and cumulative arms
 
@@ -373,6 +414,17 @@ Exit gate: #22 closes with zero missing dispositions, no domain gap/overlap, no 
 
 #29 is already source-bound and #22 is now strict. Refresh their generated evidence after the final numerical source change and before publishing public assurance metrics.
 
+#### #17 non-destructive grid-regeneration safeguards
+
+- make `generate_reference_values.py` report-only or non-authoritative by default;
+- require an explicit reviewed flag before any authoritative combined-grid write;
+- preserve `observed_vba` outside the Excel exporter;
+- fail hard on duplicate canonical keys and unexpected reference movement;
+- require the existing explicit reasoned action for row retirement;
+- add focused CI fixtures for each safeguard.
+
+Complete origin reconstruction, reference/observation redesign, and byte-stable clean regeneration are deferred to #32 under v1.01 and are not v1.0.0 release criteria.
+
 #### #28 README assurance generation
 
 - Add a machine-readable real-Excel result record.
@@ -387,7 +439,7 @@ Exit gate: #22 closes with zero missing dispositions, no domain gap/overlap, no 
 - Preserve permissions, runner labels, filters, artifact behavior, and strict failure semantics.
 - Verify all workflows and remove Node 20 warnings.
 
-Exit gate: assurance is complete, current, reproducible, and fail-closed.
+Exit gate: the current generator is non-destructive and fail-closed; assurance is complete, current, reproducible, and fail-closed. #32 remains correctly outside v1.0.0.
 
 ### Phase 8 — Certify and publish under #31
 
@@ -425,13 +477,14 @@ Suggested atomic commit sequence:
 15. #14 source/test commit;
 16. #14 export/provenance/contract closure commit and #11 parent closure;
 17. #26 evidence-only closure or preregistration/fix/closure sequence;
-18. parallel #22 oracle/study/classifier/zero-threshold preparation commits as they become ready, without observing the holdout; the Chi-square df = 1E6/1E7/1E8 two-precision/Rmpfr feasibility checkpoint must be recorded before Phase 2;
+18. parallel #22 classifier/zero-threshold preparation commits as they become ready, without observing the holdout; the accepted Chi-square df = 1E6/1E7/1E8 oracle checkpoint is already recorded at e68cc82;
 19. #22 release-candidate fitting export, frozen Student-t route selection, then untouched holdout;
 20. atomic #22 selected-contract/domain-string/row-cleanup/regime/classifier/strict-checker/summary closure commit; this commit owns the F row transition and deletes, rather than expands, the temporary debt fingerprint;
-21. #28 generated README metrics;
-22. #30 workflow major upgrades;
-23. #31 documentation and final release-evidence commit;
-24. annotated v1.0.0 tag and GitHub Release.
+21. #17 non-destructive/fail-closed generator safeguards and focused CI fixtures;
+22. #28 generated README metrics;
+23. #30 workflow major upgrades;
+24. #31 documentation and final release-evidence commit;
+25. annotated v1.0.0 tag and GitHub Release.
 
 Each .bas/grid/contract commit must include:
 
@@ -460,8 +513,9 @@ Mandatory generation order after a real Excel export:
 | #13 | six parent forward calls | post-#23 retained-bit crossover rerun | source-bound frozen Gamma/Chi holdouts | six surfaces + seams | separate family regimes | required | body Loader/deviance and cutoff movement |
 | #14 | scaled representable quantile | crossover + scale matrix | untouched log-inverse holdout | round-trip + true limits | quantile + tail residual | required | ordinary inverse regimes |
 | #26 | Gamma/Chi Q at A=.0001, X=2 | CF ladder + seam | untouched CF holdout | two public routes | CF representative rows | required | series, Poisson, non-convergence |
-| #22 | 36-row audit-baseline inverse debt set; four false F runtime-enforcement domain strings; eight mis-scoped F main rows; eight mis-scoped F holdout rows at df 2E5/5E5; three duplicate F inputs; eight exact-zero Student-t medians | release-candidate inverse fitting; Student-t `delta = 2^-53, 2^-43, 2^-33, 2^-23`; dyadic bridge p = .625/.75/.875 plus complements; early Chi-square df = 1E6/1E7/1E8 generator-feasibility gate | disjoint offsets `2^-48, 2^-38, 2^-28, 2^-24`; bridge p = .5625/.6875/.8125/.9375 plus complements; converging gamma/robust-beta references checked with Rmpfr | inverse round-trip, exact-zero assertions, F/t/chi seams, p=.6 routing, zero-threshold and zero-return mutants | transition guard before numerical commits; final audit-baseline dispositions/domain cleanup and duplicate consolidation after #14 | release-candidate wave required | new-debt fingerprint, lost-contract/stale-disposition, duplicate/conflicting regime, zero-reference, cutoff, formatting, and unsupported-oracle fixtures |
+| #22 | 36-row audit-baseline inverse debt set; four false F runtime-enforcement domain strings; eight mis-scoped F main rows; eight mis-scoped F holdout rows at df 2E5/5E5; three duplicate F inputs; eight exact-zero Student-t medians | release-candidate inverse fitting; Student-t `delta = 2^-53, 2^-43, 2^-33, 2^-23`; dyadic bridge p = .625/.75/.875 plus complements; accepted 69-point Chi-square df = 1E6/1E7/1E8 oracle set | disjoint offsets `2^-48, 2^-38, 2^-28, 2^-24`; bridge p = .5625/.6875/.8125/.9375 plus complements; Chi-square quadrature and gmpy2/MPFR 69/69, Rmpfr 46/69 where feasible; robust-beta references checked independently | inverse round-trip, exact-zero assertions, F/t/chi seams, p=.6 routing, zero-threshold and zero-return mutants | transition guard before numerical commits; final audit-baseline dispositions/domain cleanup and duplicate consolidation after #14 | release-candidate wave required | new-debt fingerprint, lost-contract/stale-disposition, duplicate/conflicting regime, zero-reference, cutoff, formatting, and unsupported-oracle fixtures |
 | #29 | changed-source fixture | n/a | first truthful binding written on the Phase 1 global holdout export | n/a | n/a | export required for closure | manifest unit tests |
+| #17 | destructive-default and duplicate/reference-change fixtures | n/a | n/a | observation-preservation checks | canonical-key safeguards | no Excel export required | safe-default, explicit-write, retirement, and failure-path fixtures |
 | #28 | manual/stale metric fixture | n/a | reads #29 state | reads Excel record | reads #22 state | result record | README diff |
 | #30 | workflow run | n/a | analyzer still runs | artifact upload | strict gate still runs | runner required | label sync |
 | #31 | clean import | all resolved | all resolved | all pass | all current | release commit | public release verification |
@@ -470,17 +524,18 @@ Mandatory generation order after a real Excel export:
 
 | Order | Issue | Priority | Dependency | Immediate next action | Closure artifact |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | #29 | P2 | independent mechanism; Excel-bound closure | land writer/verifier/tests in Phase 0; bind during #23 export | source-bound current holdout |
-| 2 | #22 | P2 | cheap delta guard now; early Chi-square generator-feasibility gate; heavy fitting/holdout, eight-row zero-reference split, neighbour/bridge decision arm, deterministic regimes, F cleanup, references, Rmpfr after the numerical chain | land the frozen-debt detector in Phase 0; prove df = 1E6/1E7/1E8 oracle feasibility before Phase 2; run fitting/holdout and atomically close on the release-candidate source after #14 | generated current-debt count and no unauthorized new debt during numerical commits; final zero missing rows, no domain gap/overlap, no temporary fingerprint |
-| 3 | #23 | P1 | #29 mechanism, #22 delta guard, controlled Excel route | run its own evidence wave without waiting for #22's reference generator; close #29 then #23 | fresh source-bound numerical grid/holdout; coverage debt unchanged |
+| 1 | #29 | P2 | Excel-free mechanism complete; Excel-bound closure | write the first truthful main/holdout binding pair atomically during #23 export | source-bound current holdout and seven PASS checks |
+| 2 | #22 | P2 | coverage guard and Chi-square oracle checkpoint complete; heavy fitting/holdout, eight-row zero-reference split, neighbour/bridge decision arm, deterministic regimes, and F cleanup remain | continue hidden-holdout classifier/contract preparation; run fitting/holdout and atomically close on the release-candidate source after #14 | final zero missing rows, no domain gap/overlap, no temporary fingerprint |
+| 3 | #23 | P1 | #29 mechanism, #22 delta guard, controlled Excel route | first reproduce the exact Phase 0 expected-red signature, then run its evidence wave; close #29 then #23 | fresh source-bound numerical grid/holdout; seven PASS checks; coverage debt unchanged |
 | 4 | #24 | P1 | #23 | preregister LogP/direct-Q study; #13 density/CDF may proceed in parallel | direct-Q contracts and tests |
 | 5 | #13 | P1 | #23 cutoff gate; #24 only for survival | retain/rederive cutoffs, then wire per-family dispatch | six surface regimes |
 | 6 | #14 | P1 | #13 | preregister log-inverse crossover | quantile + tail residual |
 | 7 | #26 | P1 | #23 | act on the re-exported X=2 ladder | evidence-only close or isolated fix |
 | 8 | #11 | P1 | #13, #14 | close parent after round-trip evidence | parent counterexamples |
-| 9 | #28 | P2 | #22, #29 | implement one assurance renderer | generated root README |
-| 10 | #30 | P3 | independent | review and upgrade action majors | warning-free workflows |
-| 11 | #31 | P1 | all | maintain release checklist | tag and GitHub Release |
+| 9 | #17 | P2 | independent of numerical source | make default regeneration non-destructive and add fail-hard fixtures | safe generator path; #32 deferred |
+| 10 | #28 | P2 | #22, #29 | implement one assurance renderer | generated root README |
+| 11 | #30 | P3 | independent | review and upgrade action majors | warning-free workflows |
+| 12 | #31 | P1 | all v1.0.0 blockers | maintain release checklist | tag and GitHub Release |
 
 ## Go / no-go checklist
 
@@ -1194,7 +1249,7 @@ Phase A measurement, independent holdouts, oracle cross-validation, and preregis
 - [ ] the classifier and log-domain arithmetic are not yet wired into production family behavior.
 - [ ] permanent public-surface regressions and machine-readable contracts are not yet complete.
 
-The current scaffolding landed in db92bfc8e7b2447bff8c1cd5ba99244fe9e6a734. It does not change returned values by itself.
+The current scaffolding landed in two no-behavior-change commits: 9cac10ee7851faa654481089c42b1a0923134fdd adds `PROB_MIN_NORMAL` and the derived power-of-two cutoffs; db92bfc8e7b2447bff8c1cd5ba99244fe9e6a734 adds the three-state classifier. Neither commit changes returned values by itself.
 
 ## Registered pre-#23 candidate policy
 
@@ -1252,7 +1307,7 @@ The log-domain kernels must support:
 
 ## Permanent evidence
 
-Add/freeze, without relaxing ordinary contracts:
+Add/freeze the following six contract rows, without relaxing ordinary contracts:
 
 - Gamma_Density.positive_ratio_subnormal
 - Gamma_Cumulative.positive_ratio_subnormal
@@ -1429,13 +1484,15 @@ approximately the absolute error of `v`.
 
 Evidence: `benchmark/loggamma1p_study`.
 
-### #17 — [Bug]: Make probability_accuracy_grid.csv reproducible: canonical Double identity, reference-at-actual-input, non-destructive regeneration
+### #17 — [CI]: Make accuracy-grid regeneration non-destructive and fail closed
 
 - State: closed (completed)
 - Labels: bug, CI, P2, accuracy
 - URL: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/17
 
 #### Body
+
+> **Operative scope correction — 2026-08-30.** #17 is now the narrow P2 v1.0.0 safety gate: non-destructive default behavior, explicit authoritative writes and retirements, observation preservation, fail-hard duplicate canonical keys, fail-hard unexpected reference movement, documentation, and focused CI fixtures. Full origin reconstruction, generator/grid reconciliation, reference/observation redesign, and byte-stable clean rebuild moved to #32 under v1.01. Any broader historical checklist retained below explains the audit finding but is not a v1.0.0 closure criterion.
 
 ## Description
 
@@ -2075,7 +2132,7 @@ and both public CDFs gain exact far-tail assertions. A ladder like that one
 would have caught this on day one and costs nothing to run.
 
 
-### #22 — [Bug]: A main-grid row with no contract is scored by nothing and reported by nothing
+### #22 — [Bug]: Accuracy gate silently ignores main-grid rows without a matching contract
 
 - State: open
 - Labels: bug, testing, CI, P2, accuracy
@@ -2285,6 +2342,12 @@ For Chi-square:
 
 This generator has a hard early feasibility checkpoint before the numerical plan enters Phase 2, although it is not a #23 closure prerequisite. It must produce the frozen Chi-square reference set at df = 1E6, 1E7, and 1E8; reproduce it at two materially separated working precisions; pass an independent Rmpfr cross-check; and record in #22 the maximum mpmath-route-versus-Rmpfr agreement, compared measures, precision pair, convergence status, and runtime. Failure to satisfy that checkpoint blocks Phase 2 while there is still schedule room to change the reference strategy.
 
+## Maintainer decision — df = 1E8 reference substitution accepted
+
+Accepted on 2026-08-30 from commit e68cc82545ead9777b155751e51976e63f3f4243. Quadrature and the converging gmpy2/MPFR route cover 69/69 points with minimum agreement of 109.87 and 115.11 significant digits respectively. Rmpfr agrees to at least 115.96 digits on all 46 feasible points but aborts above shape approximately 4.5E7; df = 1E8 requires shape 5E7.
+
+For df = 1E8, the accepted substitute is the converging series/CF route in gmpy2 MPFR arithmetic, cross-checked against algorithm-independent quadrature. Rmpfr remains the independent third-party check where it can execute. This closes oracle feasibility only; it does not freeze a production threshold or authorize holdout inspection.
+
 For Student-t and F, use the repository's robust incomplete-beta route with exact public transformations, higher-precision stability checks, and independent Rmpfr cross-checks.
 
 Extend both the main-grid evaluator and `benchmark/holdout/analyze_holdout.py` so `tail_probability_residual` is scoreable for Chi-square and Student-t inverses, not only Beta/F. Add clean and deliberately degraded fixtures, compensated-observation fixtures, zero-reference/zero-threshold cases, wrong-regime cases, bridge and seam routing, and unavailable/unconverged oracle failures.
@@ -2299,7 +2362,7 @@ This issue guarantees that evidence already called main grid cannot be ignored a
 
 1. Phase 0 lands the cheap checker, strict mode, fixtures, and the temporary fingerprint of the 36-row audit-baseline debt set. Development CI derives the current debt count, fails on any unauthorized coverage regression, and still reports the known debt visibly.
 2. #23 proceeds once #29’s Excel-free binding mechanism and a controlled Excel route are ready. #23 does not wait for the #22 gamma reference generator, Student-t fitting decision, or new inverse contracts.
-3. In parallel with #23, preregister the neighbour and bridge arms; build and self-test the converging reference routes; obtain independent Rmpfr cross-checks; add the deterministic regime classifier; and extend both evaluators. Holdout observations remain hidden. Before Phase 2 starts, the Chi-square df = 1E6/1E7/1E8 two-precision/Rmpfr feasibility checkpoint must pass and be recorded.
+3. In parallel with #23, preregister the neighbour and bridge arms; retain the accepted Chi-square quadrature/gmpy2/Rmpfr evidence; add the deterministic regime classifier; and extend both evaluators. Holdout observations remain hidden. The df = 1E6/1E7/1E8 feasibility checkpoint is already satisfied at e68cc82.
 4. After the last inverse-affecting numerical source change—no earlier than #14—run the #22 fitting arm on the release-candidate source, select the seven- or eight-contract route exactly as preregistered, freeze thresholds, and only then inspect the untouched holdout.
 5. Atomically land the selected contracts; corrected F domain strings; all eight Student-t median relabels; five F main-row reclassifications; removal of three older duplicate F rows; the eight F holdout reclassifications at df 2E5/5E5; promotions; classifier; strict checker; generated summary counts; negative fixtures; and CI wiring. This final #22 closure commit owns the F row transition and deletes the temporary debt fingerprint rather than refreshing it to a larger unclaimed set.
 6. Close #22 before #28 generates public assurance metrics and before #31’s final certification. Its evidence wave should be combined with the final release-candidate Excel export where practical, rather than inserted into #23’s critical path.
@@ -2318,8 +2381,8 @@ If no controlled Excel route is available, Excel-free work may continue but no e
 - [ ] the median-neighbour and dyadic bridge fitting/holdout arms remain disjoint and uninspected until their preregistered stage;
 - [ ] the machine-readable classifier has no gap or overlap and routes p = 0.6 plus every seam fixture correctly;
 - [ ] observations use `hi + lo`, and tail residuals normalize by `Min(p, 1 - p)`;
-- [ ] Chi-square gamma and Student-t/F beta references stabilize at higher precision and pass independent Rmpfr cross-checks;
-- [ ] before Phase 2, the Chi-square generator produces df = 1E6/1E7/1E8 references stable across two working precisions, with maximum mpmath-route-versus-Rmpfr agreement, convergence status, and runtime recorded;
+- [x] the frozen Chi-square gamma references stabilize at two precisions; quadrature and gmpy2/MPFR converge 69/69, and Rmpfr agrees on all 46 feasible points; Student-t/F beta reference work remains subject to its preregistered fitting stage;
+- [x] before Phase 2, the Chi-square generator produces df = 1E6/1E7/1E8 references stable across two working precisions; the agreement, convergence status, precision, runtime, and Rmpfr ceiling are recorded;
 - [ ] main-grid and holdout evaluators score the new measures and fail closed on unsupported or unconverged references;
 - [ ] threshold-zero pass/fail, derivation, formatting, and reconciliation tests pass;
 - [ ] before closure, the transitional guard derives and reports the exact current known debt and fails on any unauthorized new or changed unclaimed row;
@@ -2413,11 +2476,11 @@ Current state:
 - [ ] strict hosted Accuracy Gate is therefore red;
 - [ ] #26 has not been remeasured even though it shares the repaired prefactor.
 
-Accuracy Gate run 166 confirms the intended failure mode: only SPECIALFUNCS and the consolidated test module mismatch the last source binding. Excel VBA Regression run 95 is queued awaiting the self-hosted runner.
+Current main is 0dd748884599d4d0da815cb53eeceb13efd51f05; bde92dd7037e4fde05e620745a1c54b0cbc3a261 remains the numerical source baseline. Accuracy Gate runs 166 through 171 preserve the intended Phase 0 failure mode: only SPECIALFUNCS and the consolidated test module mismatch the last source binding. Excel VBA Regression run 95 was cancelled because the self-hosted runner was unavailable; no Excel result was produced.
 
 ## Closure sequence
 
-1. verify #29's Excel-free manifest mechanism and #22's transitional coverage-delta guard; the guard must derive the current unresolved subset from the frozen audit-baseline fingerprint and fail on any unauthorized new unclaimed row;
+1. before exporting, reproduce the exact frozen seven-line/two-file Phase 0 signature; verify #29's Excel-free manifest mechanism and #22's transition guard;
 2. run the full real-Excel regression on the exact current modules;
 3. execute only the preregistered #23 fitting grid and untouched #23 holdout, then export the current global holdout;
 4. write and verify the first truthful #29 source binding immediately; close #29 only after deliberate source/grid mismatches fail;
@@ -2425,8 +2488,8 @@ Accuracy Gate run 166 confirms the intended failure mode: only SPECIALFUNCS and 
 6. remeasure the X = 2 continued-fraction ladder for #26;
 7. rerun the frozen `positive_ratio_subnormal` fitting arm and untouched holdout, compare direct versus log-recovery errors, and retain or rederive #13's cutoffs before any production wiring;
 8. re-export the complete current accuracy grid;
-9. write fresh main-grid and holdout provenance, then regenerate summaries;
-10. run every numerical strict gate and unrelated holdout, plus #22's development coverage-delta mode; the summary must generate and report the current remaining coverage debt rather than copying the 36-row audit-baseline count or calling completeness PASS;
+9. write fresh main-grid and holdout provenance atomically, then regenerate summaries;
+10. require all seven former expected-red checks to PASS, plus #22's transition mode with no new or changed debt;
 11. close #23 only if all frozen numerical contracts pass without relaxation and no new unclaimed row was introduced.
 
 The #22 reference generator, median study, bridge points, and contract creation run on their own parallel track. They are not #23 prerequisites and close later on the release-candidate source.
@@ -2441,6 +2504,8 @@ The #22 reference generator, median study, bridge points, and contract creation 
 - [ ] main-grid evidence permanently reaches the former gap;
 - [ ] no series, continued-fraction, inverse, Poisson, large-shape, or unrelated contract regresses;
 - [ ] #29 has demonstrated a truthful current-source holdout binding and is closed;
+- [x] every completed Phase 0 commit through 0dd7488 preserved the exact known-red signature;
+- [ ] the Phase 1 evidence commit retires the expected-red waiver with seven PASS results;
 - [ ] #22's transitional guard confirms that #23 introduced no new or changed unclaimed row; #22's final inverse contracts and strict zero-missing closure are explicitly deferred to its release-candidate evidence wave;
 - [ ] source-bound evidence and hosted CI are green;
 - [ ] Gamma_Cumulative.all.output remains 3E-15 relative.
@@ -2759,7 +2824,7 @@ This is a provenance gap, not a claim that the 80 current contract verdicts acro
 
 At the v1.0.0 planning baseline:
 
-- current repository main: b00fa0ee161e003f0c569cbb0262a3d847162ff7
+- current repository main: 0dd748884599d4d0da815cb53eeceb13efd51f05
 - latest numerical source baseline: bde92dd7037e4fde05e620745a1c54b0cbc3a261
 - holdout_grid.csv last changed at 4553afa6310e07858a97e412722554822a92b674
 - holdout_summary.md last changed at the same older source state
@@ -2808,10 +2873,12 @@ After the last numerical source change:
 
 ## Acceptance
 
-- [ ] the Excel-free writer, verifier, documentation, CI wiring, and negative tests land before the next holdout export;
+- [x] the Excel-free writer, verifier, documentation, CI wiring, and negative tests landed in 2dcfe04 and 4be8cd0 before the next holdout export;
+- [x] every Phase 0 provenance commit through 0dd7488 preserves the frozen seven-line/two-file expected-red signature while its verifier fixtures pass;
 - [ ] a fresh current-source holdout export has a valid source binding and passes the analyzer;
-- [ ] the historical 80 PASS / 0 FAIL over 80 contract verdicts and 559 rows is not displayed as current when source binding is stale;
+- [x] stale or missing holdout provenance cannot publish a current release verdict; public README display of the historical 80-verdict result is owned by #28;
 - [ ] a source change without a new holdout export fails CI;
+- [ ] Phase 1 writes the main-grid and holdout bindings atomically; no commit presents fresh main evidence with an absent or stale holdout binding;
 - [ ] #31 requires the final v1.0.0 holdout to be rebound to the exact release source and records Excel 16.0 build 20131, 64-bit, or the replacement environment;
 - [ ] no contract threshold is relaxed to close this issue.
 
@@ -2879,7 +2946,7 @@ This issue closes only after every v1.0.0 release blocker is complete and the ex
 
 ## Current readiness baseline
 
-Repository-readiness state measured at main b00fa0ee161e003f0c569cbb0262a3d847162ff7; latest numerical source baseline remains bde92dd7037e4fde05e620745a1c54b0cbc3a261:
+Repository-readiness state measured at main 0dd748884599d4d0da815cb53eeceb13efd51f05; latest numerical source baseline remains bde92dd7037e4fde05e620745a1c54b0cbc3a261:
 
 - no Git tag exists;
 - no GitHub Release exists;
@@ -2887,8 +2954,8 @@ Repository-readiness state measured at main b00fa0ee161e003f0c569cbb0262a3d84716
 - CHANGELOG.md does not exist;
 - SECURITY.md incorrectly calls v1.0.0 the latest tagged stable version before the tag exists;
 - README assurance metrics are stale and hand-maintained (#28);
-- Accuracy Gate run 166 fails correctly because SPECIALFUNCS and the test module changed after the last Excel export;
-- Excel VBA Regression run 95 is queued because the self-hosted Excel runner is unavailable;
+- Accuracy Gate runs 166 through 171 fail only with the frozen two-file stale-evidence signature; Phase 0 introduced no additional top-level failure;
+- Excel VBA Regression run 95 was cancelled because the self-hosted runner was unavailable; it produced no evidence;
 - main is intentionally the only remote branch and is currently unprotected;
 - the project has 112 worksheet-facing functions, 166 registry rows, 2,088 total grid observations, 1,732 main-grid rows, a 36-row unclaimed audit baseline at bde92dd whose current count must thereafter be generated, and 559 independent-holdout rows producing 80 contract verdicts; the latest verified Excel result is 902/902, while the #23 tests make 909 the next expected count, not yet a verified result.
 
@@ -2907,11 +2974,14 @@ Numerical correctness and representability:
 
 Assurance and repository readiness:
 
-- [ ] #29 — land the Excel-free provenance mechanism in Phase 0; create the first truthful binding and close it during the #23 holdout export
-- [ ] #22 — land the cheap transitional coverage-delta guard before further numerical commits; prove the Chi-square df = 1E6/1E7/1E8 two-precision/Rmpfr reference route feasible before Phase 2; develop the remaining inverse reference/median/bridge work in parallel; after the last inverse-affecting numerical change, land the selected seven- or eight-contract set, corrected domain strings, all eight Student-t median relabels, F duplicate/core-envelope cleanup, promotions, strict checker, and every recorded audit-baseline disposition atomically on the release-candidate source, deleting the temporary fingerprint in that same commit
+- [ ] #29 — the Excel-free mechanism is complete; create the first truthful main-grid/holdout binding pair atomically and close it during the #23 holdout export
+- [ ] #17 — make the current grid generator non-destructive by default and fail hard on duplicates, unexpected reference movement, observation overwrite, or implicit deletion
+- [ ] #22 — Phase 0 coverage guard is complete and the df = 1E6/1E7/1E8 generator is accepted: quadrature and gmpy2/MPFR converge 69/69, while Rmpfr agrees on its 46 feasible points and cannot execute df = 1E8 because of its shape ceiling. Complete the remaining classifier/median/bridge evidence after the last inverse-affecting change, then atomically land the selected contracts, domain corrections, F cleanup, strict checker, and delete the temporary fingerprint.
 - [x] #20 — permanent exact-binary64 Stirling boundary regression
 - [ ] #28 — generated, current, fail-closed root README assurance metrics
 - [ ] #30 — supported Node 24 GitHub Action majors
+
+#32 is explicitly post-v1.0.0 under milestone v1.01. It owns full origin reconstruction, reference/observation separation, and byte-stable regeneration and is not a release blocker.
 
 ## Scope decision: do not defer #13/#14 from v1.0.0
 
