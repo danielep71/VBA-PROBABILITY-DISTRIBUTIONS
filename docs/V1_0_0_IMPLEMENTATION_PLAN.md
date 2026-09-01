@@ -174,6 +174,9 @@ flowchart TD
     I13 --> I14["#14 Log inverse reconstruction"]
     I14 --> I11["#11 Parent closure"]
     I11 --> C22
+    E23 --> I34["#34 Student-t large-df tail"]
+    I34 --> C22
+    I34 --> I31
     C22 --> I28["#28 Generated README"]
     C29 --> I28
     I30["#30 Action upgrades"] --> I31["#31 Release certification"]
@@ -258,7 +261,8 @@ This work begins in Phase 0 but is not a Phase 1 entry gate. It may continue alo
 4. Retain the source-path prediction: exact input subtraction near 0.5 should make nonzero neighbours suitable for relative scoring, with any observed floor attributable to the seed/forward-rounding implementation rather than intrinsic conditioning.
 5. Build the reference authority:
    - factor the converging lower-series / upper-Lentz-CF incomplete-gamma route for Chi-square and revalidate at materially higher precision;
-   - use the robust incomplete-beta route and exact public transforms for Student-t and F;
+   - use the robust incomplete-beta route and exact public transforms for F;
+   - for Student-t, the existing incomplete-beta route is disproved above df ≈ 1E6 outside the complement region (#34: the binary64 Lentz fraction is ill-conditioned at a = df/2, achievable accuracy ~1E-9 regardless of stopping rule); use it as a reference only within its measured-accurate region, and the #34 large-df tail expansion once derived and validated;
    - cross-check fitting and holdout references independently with Rmpfr wherever its incomplete-gamma routine can execute;
    - at df = 1E8, use the accepted converging gmpy2/MPFR route plus algorithm-independent quadrature;
    - fail closed on non-convergence or failure to stabilize.
@@ -300,18 +304,19 @@ Objective: prove the merged off-grid `PROB_StirlingError` recurrence removes the
 
 1. Before exporting anything, reproduce the frozen Phase 0 signature exactly: five PASS lines, two stale-evidence FAIL lines, exactly two mismatches, and only the two frozen paths. In the same run, verify #29's Excel-free mechanism and #22's transition guard.
 2. Run the expected 909 assertions on the exact tracked modules.
-3. Export the preregistered #23 fitting grid and untouched #23 holdout only; do not execute or inspect #22's inverse fitting/holdout arms.
-4. Export the current global holdout, write and verify the first truthful #29 binding immediately, and close #29 only after deliberate source/grid mismatches fail.
-5. Compare #23 movement with `benchmark/gamma_series_small_shape/MOVEMENT_MANIFEST.md`.
-6. Rerun the frozen `positive_ratio_subnormal` fitting arm and untouched holdout:
+3. Apply the prepared #34 Student-t large-df tail patch and its regression tests in the working tree, on the source that just reproduced the signature. #34 is a live numerical release blocker (P1, silent-wrong `StudentT_Survival` at t = 2, df = 1E8); its `.bas` change lands only inside this real-Excel wave, atomically with source, regressions, exports and truthful provenance, so that no second export session is needed.
+4. Export the preregistered #23 fitting grid and untouched #23 holdout only; do not execute or inspect #22's inverse fitting/holdout arms.
+5. Export the current global holdout, write and verify the first truthful #29 binding immediately, and close #29 only after deliberate source/grid mismatches fail.
+6. Compare #23 movement with `benchmark/gamma_series_small_shape/MOVEMENT_MANIFEST.md`.
+7. Rerun the frozen `positive_ratio_subnormal` fitting arm and untouched holdout:
    - compare direct-path and log-recovery errors around the 48-bit and 40-bit candidate boundaries;
    - retain or rederive each exact power-of-two cutoff;
    - amend preregistration before any #13 production call site if a crossover moves.
-7. Remeasure the X = 2 continued-fraction ladder for #26.
-8. Promote representative #23 small-shape and ordinary off-grid rows under existing public contracts.
-9. Re-export the complete current main grid and global holdout, write both truthful provenance bindings atomically, and generate main/holdout summaries.
-10. Run every numerical strict gate and unrelated holdout. The expected-red waiver must retire with all seven checks PASS. Run #22 in transition mode and prove #23 introduced no new or changed unclaimed row.
-11. Close #23 only if its unchanged frozen contracts pass and coverage debt did not grow.
+8. Remeasure the X = 2 continued-fraction ladder for #26.
+9. Promote representative #23 small-shape and ordinary off-grid rows under existing public contracts.
+10. Re-export the complete current main grid and global holdout, write both truthful provenance bindings atomically, and generate main/holdout summaries.
+11. Run every numerical strict gate and unrelated holdout. The expected-red waiver must retire with all seven checks PASS. Run #22 in transition mode and prove #23 introduced no new or changed unclaimed row.
+12. Close #23 only if its unchanged frozen contracts pass and coverage debt did not grow.
 
 Parallel feasibility gate before Phase 2: complete. The frozen df = 1E6/1E7/1E8 references stabilize at two precisions; quadrature and gmpy2/MPFR cover 69/69, while Rmpfr agrees on its 46 feasible points. The accepted df = 1E8 substitution and Rmpfr ceiling are recorded in #22.
 
@@ -2372,7 +2377,7 @@ Accepted on 2026-08-30 from commit e68cc82545ead9777b155751e51976e63f3f4243. Qua
 
 For df = 1E8, the accepted substitute is the converging series/CF route in gmpy2 MPFR arithmetic, cross-checked against algorithm-independent quadrature. Rmpfr remains the independent third-party check where it can execute. This closes oracle feasibility only; it does not freeze a production threshold or authorize holdout inspection.
 
-For Student-t and F, use the repository's robust incomplete-beta route with exact public transformations, higher-precision stability checks, and independent Rmpfr cross-checks.
+For F, use the repository's robust incomplete-beta route with exact public transformations, higher-precision stability checks, and independent Rmpfr cross-checks. For Student-t, that route is disproved at large df (#34): the binary64 continued fraction is ill-conditioned at a = df/2 and reaches only ~1E-9 above df ≈ 1E6 outside the complement region. #34 must close before any Student-t `envelope_domain` threshold is fitted or frozen; Chi-square and F work remain independent of it.
 
 Extend both the main-grid evaluator and `benchmark/holdout/analyze_holdout.py` so `tail_probability_residual` is scoreable for Chi-square and Student-t inverses, not only Beta/F. Add clean and deliberately degraded fixtures, compensated-observation fixtures, zero-reference/zero-threshold cases, wrong-regime cases, bridge and seam routing, and unavailable/unconverged oracle failures.
 
