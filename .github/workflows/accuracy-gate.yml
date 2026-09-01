@@ -75,16 +75,15 @@ jobs:
         # analyze_holdout.py both read their semantics from _contract_eval.py,
         # so a broken evaluator makes every verdict below meaningless rather
         # than merely wrong. Fail on the tooling first.
+        # ONE list, not two. This step previously enumerated the tooling
+        # scripts by hand while refresh_evidence.py ran test_evidence_tools.py,
+        # and the two lists diverged: test_igamma_parity.py was added to the
+        # shim and never to this step, so the parity drift detector ran
+        # locally and never in CI. Calling the shim here makes the local
+        # signature and the hosted gate execute the identical set by
+        # construction. Add new tooling checks to test_evidence_tools.py only.
         run: |
-          python test_contract_eval.py
-          python test_grid_coverage.py
-          python check_grid_coverage.py --mode auto --check-summary
-          # The root README had no guard: it was silently replaced by an
-          # unrelated study README and every check here still passed. The
-          # step below guards structure and identity, not content, so #28
-          # regenerating the assurance figures cannot trip it.
-          python test_root_readme.py
-          python check_root_readme.py
+          python test_evidence_tools.py
           python test_manifest.py
 
       - name: Run strict accuracy gate on the committed grid
