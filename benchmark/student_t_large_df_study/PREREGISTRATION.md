@@ -186,3 +186,39 @@ or manifest. It does not inspect the 559-row holdout. It produces a
 validated series and a measured dispatch predicate that the Phase 1 export
 session can implement and verify against real Excel; it is not itself
 evidence that the kernel is fixed.
+
+---
+
+## Amendment 1 — recorded after the first validation run
+
+**Disclosure.** The first run of `validate_expansion.py` against this design
+returned `FAIL` with 13 problems. None concerned the expansion. Two design
+defects were found, and this amendment records them **after** seeing
+results, as §0 requires. The crossover rule (§8), the bound, the design
+points (§5, §6), the seams (§7) and the holdout discipline are unchanged.
+
+**Defect A — validator bug, not a design change.** The oracle was
+implemented as `1 − t_cdf(t)`, subtracting two numbers near 1 to obtain a
+tail of order 1E-15, which cost ~6 digits of stability at `t = 8` (46.4
+digits measured against the 50 required). The preregistered oracle in §3 is
+the incomplete beta; computing the upper tail *directly* from it,
+`S(t) = I_z(df/2, 1/2) / 2`, is the correct realisation of the stated oracle.
+Measured stability after the fix: 52.7 digits at `t = 8, df = 1E8`. This is
+the same complement cancellation the Chi-square study caught, and it is
+recorded here so the pattern is visible.
+
+**Defect B — design flaw in §4.** The precision-pair rule required the
+60-dps and 100-dps evaluations to agree on the truncation error to two
+significant digits at every point. Where the truncation error has fallen
+below the oracle's own resolution (observed at ≈1E-53), both precisions
+report noise and the rule rejects a correct expansion. §4 is amended: **the
+agreement requirement applies only where the measured truncation error
+exceeds the oracle floor at that point**, the floor being derived from the
+measured 60-vs-100 dps oracle stability. Below the floor, the point is
+recorded as "beyond oracle resolution", which is a pass, not a rejection.
+
+**Consequence for holdout discipline.** The failed first run evaluated the
+holdout and inverse round-trip sets once, as §8 permits, before the failure
+was recognised. The re-run under this amendment evaluates them a second
+time. That is disclosed here rather than hidden; the design points
+themselves are unchanged and no parameter was tuned against them.
