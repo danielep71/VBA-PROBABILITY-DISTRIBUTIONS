@@ -2337,10 +2337,34 @@ For Chi-square:
 - reuse or factor the converging-route incomplete-gamma generator from `benchmark/cdf_large_shape`;
 - use the lower series below `A + 1` and Lentz continued fraction above;
 - recompute at materially higher precision and reject unstabilized references;
-- cross-check fitting and holdout references independently with Rmpfr;
-- do not use stock `mpmath.gammainc` as authority at df = 1E8.
+- cross-check fitting and holdout references independently with Rmpfr wherever its incomplete-gamma routine can execute;
+- at df = 1E8, use the accepted converging gmpy2/MPFR route plus algorithm-independent quadrature;
+- do not use stock `mpmath.gammainc` as authority at df = 1E8 — it raises `NoConvergence` at shape 5E7.
 
-This generator has a hard early feasibility checkpoint before the numerical plan enters Phase 2, although it is not a #23 closure prerequisite. It must produce the frozen Chi-square reference set at df = 1E6, 1E7, and 1E8; reproduce it at two materially separated working precisions; pass an independent Rmpfr cross-check; and record in #22 the maximum mpmath-route-versus-Rmpfr agreement, compared measures, precision pair, convergence status, and runtime. Failure to satisfy that checkpoint blocks Phase 2 while there is still schedule room to change the reference strategy.
+**Feasibility checkpoint: satisfied.** This generator had a hard early checkpoint before the numerical plan enters Phase 2, although it was never a #23 closure prerequisite. The frozen 69-point reference set is recorded at `4deeef4` and `e68cc82`, and the composite authority is derived from the committed leg records at `cd83609`.
+
+Frozen design — 23 probabilities at each of df = 1E6, 1E7, 1E8, frozen before any value was generated:
+
+| Arm | Probabilities per df | Count |
+| --- | --- | ---: |
+| Fitting baseline | 0.5, 0.9, 0.99 | 3 |
+| Fitting bridge | 0.125, 0.25, 0.375, 0.625, 0.75, 0.875 | 6 |
+| Fitting tails | 2^-30, 2^-20, 1-2^-20, 1-2^-30 | 4 |
+| Holdout bridge | 0.0625, 0.1875, 0.3125, 0.4375, 0.5625, 0.6875, 0.8125, 0.9375 | 8 |
+| Holdout tails | 2^-25, 1-2^-25 | 2 |
+
+Every probability is carried as its exact IEEE-754 binary64 value; the hex float representation is authoritative and travels with each record, so 0.9 and 0.99 never make a decimal round-trip. Compared measures are the quantile and the tail residual `|area_direct - target| / min(p, 1-p)`, with the small side always computed directly so no complement subtraction enters either measure.
+
+Result — 69/69 accepted, 0 rejected, stabilized 55.89 – 59.26 significant digits at 60/120 dps against a required 40:
+
+| Leg | Standing | Coverage | Precision pair | Min agreement | Runtime |
+| --- | --- | --- | --- | ---: | ---: |
+| Primary series/CF | route under test | 69/69 | 60/120 dps | — | 119 s |
+| Quadrature | algorithm-independent | 69/69 | 110 dps | 109.873 | 44.156 s |
+| gmpy2 / MPFR arithmetic | implementation-independent | 69/69 | 200/400 bits | 115.1094 | 16.222 s |
+| Rmpfr `igamma` | third-party incomplete gamma | 46/69 | 200/400 bits | 115.9555 | 1470.868 s |
+
+Conservative final agreement: **109.873 significant digits**, the minimum across every leg and every point. Rmpfr by block: df = 1E6, 23/23, 76.782 s; df = 1E7, 23/23, 1394.086 s. Full detail is in the checkpoint comment on this issue.
 
 ## Maintainer decision — df = 1E8 reference substitution accepted
 
