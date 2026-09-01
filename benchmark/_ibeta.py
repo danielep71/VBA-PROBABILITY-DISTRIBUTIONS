@@ -45,6 +45,32 @@ def f_cdf(x, d1, d2):
     d1, d2, x = mp.mpf(d1), mp.mpf(d2), mp.mpf(x)
     return ibeta(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2)
 
+def t_cdf(t, df):
+    """Student-t CDF, sign-aware.
+
+    With z = df / (df + t^2) and h = I_z(df/2, 1/2) / 2:
+        t <  0  ->  h
+        t == 0  ->  1/2 exactly
+        t >  0  ->  1 - h
+
+    The three branches are NOT interchangeable. Using the positive-t
+    expression alone returns 1 - h for negative t, which is the reflection of
+    the correct value about 1/2 - a plausible probability, and therefore a
+    silently wrong tail residual rather than an error. Every Student-t row at
+    p <= 0.5 has a negative or zero observed quantile, so the whole lower half
+    of the surface depends on this branch.
+
+    t == 0 returns exactly 1/2 rather than evaluating the beta integral: the
+    median of a symmetric distribution is exact, and routing it through the
+    branch arithmetic would introduce rounding into a value that has none.
+    """
+    t, df = mp.mpf(t), mp.mpf(df)
+    if t == 0:
+        return mp.mpf(1) / 2
+    z = df / (df + t * t)
+    h = ibeta(z, df / 2, mp.mpf(1) / 2) / 2
+    return h if t < 0 else 1 - h
+
 def f_invcdf(p, d1, d2):
     # Upper bracket derived from the target probability rather than a fixed cap:
     # expand until the CDF exceeds p, so extreme upper-tail quantiles are not

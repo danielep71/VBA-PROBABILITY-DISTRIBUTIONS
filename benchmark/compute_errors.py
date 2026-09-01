@@ -31,18 +31,19 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
                             SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions, expected_error_drift,
-                            tail_cdf_name, UnsupportedTailFunction)
+                            tail_cdf_name, tail_shape_args,
+                            tail_required_args, UnsupportedTailFunction)
 
 _IBETA_IMPORT_ERROR = None
 try:
-    from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf
+    from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf, t_cdf as _t_cdf
     import mpmath as _mp
     _mp.mp.dps = 50
     # Name -> callable, keyed by the names registered in
     # _contract_eval.TAIL_SUPPORTED. Adding a distribution means registering it
     # there and adding its callable here; there is no default entry, so an
     # unregistered function cannot reach any CDF.
-    _TAIL_CDFS = {"ibeta": _ibeta_cdf, "f_cdf": _f_cdf}
+    _TAIL_CDFS = {"ibeta": _ibeta_cdf, "f_cdf": _f_cdf, "t_cdf": _t_cdf}
     _HAVE_IBETA = True
 except (ImportError, ModuleNotFoundError, SyntaxError) as _e:
     # Missing, corrupt, or incompatible reference helper. Retain the exact reason;
@@ -94,17 +95,22 @@ def tail_residual(rows, fn):
         xo = parse_observed(r["observed_vba"])
         if xo is None:
             continue
-        p = _mp.mpf(r["arg1"]); a2v = _mp.mpf(r["arg2"]); a3v = _mp.mpf(r["arg3"])
+        p = _mp.mpf(r["arg1"])
         xv = _mp.mpf(str(xo))
-        # Explicit dispatch, no fall-through. Previously any function that was
-        # not Beta was scored with the F CDF, silently and plausibly.
+        # Explicit dispatch, no fall-through, and arity from the registry.
+        # Previously any function that was not Beta was scored with the F CDF,
+        # silently and plausibly; and the shape arguments were a fixed
+        # (arg2, arg3), which no two-argument surface can satisfy.
         # tail_cdf_name raises for an unregistered function; the caller turns
         # that into PENDING rather than a verdict.
-        recovered = _TAIL_CDFS[tail_cdf_name(fn)](xv, a2v, a3v)
+        shape = [_mp.mpf(r[k]) for k in tail_shape_args(fn)]
+        recovered = _TAIL_CDFS[tail_cdf_name(fn)](xv, *shape)
         e = normalize_tail_residual(recovered, p)
         cnt += 1
         if e > worst:
-            worst = e; worst_at = ", ".join(z for z in (r["arg1"], r["arg2"], r["arg3"]) if z)
+            worst = e
+            worst_at = ", ".join(z for z in
+                                 (r[k] for k in tail_required_args(fn)) if z)
     return (worst, worst_at, cnt) if cnt else (None, "", 0)
 
 

@@ -227,7 +227,7 @@ check(row_validity(dict(_base, arg1="0"), "output_error") is None,
 # inverses take only (p, df) - but that was accidental, and a populated arg3
 # would have defeated it. These fixtures pin the guard, not the accident.
 from _contract_eval import (TAIL_SUPPORTED, tail_cdf_name, tail_required_args,
-                            UnsupportedTailFunction)
+                            tail_shape_args, UnsupportedTailFunction)
 
 TR = "tail_probability_residual"
 
@@ -235,12 +235,22 @@ check(tail_cdf_name("Beta_InverseCumulative") == "ibeta",
       "Beta routes to the incomplete-beta CDF")
 check(tail_cdf_name("F_InverseCumulative") == "f_cdf",
       "F routes to the F CDF")
-check(set(TAIL_SUPPORTED) == {"Beta_InverseCumulative", "F_InverseCumulative"},
-      "only Beta and F are registered at this commit")
+check(tail_cdf_name("StudentT_InverseCumulative") == "t_cdf",
+      "Student-t routes to the Student-t CDF")
+check(set(TAIL_SUPPORTED) == {"Beta_InverseCumulative", "F_InverseCumulative",
+                              "StudentT_InverseCumulative"},
+      "Beta, F and Student-t are registered; Chi-square is not (commit B)")
+# Arity comes from the registry, not a fixed three-column assumption.
+check(tail_shape_args("Beta_InverseCumulative") == ("arg2", "arg3"),
+      "Beta takes two shape arguments")
+check(tail_shape_args("F_InverseCumulative") == ("arg2", "arg3"),
+      "F takes two shape arguments")
+check(tail_shape_args("StudentT_InverseCumulative") == ("arg2",),
+      "Student-t takes one shape argument")
 
 # Every unsupported inverse must RAISE, not default to F.
-for _fn in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
-            "Gamma_InverseCumulative", "Normal_InverseCumulative", "", "beta_inversecumulative"):
+for _fn in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative",
+            "Normal_InverseCumulative", "", "beta_inversecumulative"):
     try:
         tail_cdf_name(_fn)
         check(False, f"unsupported tail function must raise: {_fn!r}")
@@ -263,7 +273,7 @@ check(row_validity(_tail_ok, TR) is None, "valid F tail row passes preflight")
 check(row_validity(dict(_tail_ok, function="Beta_InverseCumulative"), TR) is None,
       "valid Beta tail row passes preflight")
 
-for _fn in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative"):
+for _fn in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
     _bad = dict(_tail_ok, function=_fn)
     _why = row_validity(_bad, TR)
     check(_why is not None,
@@ -327,13 +337,116 @@ check(_got_f != _wrong_f, "main evaluator did NOT dispatch F to ibeta")
 # An unsupported function must RAISE out of the evaluator itself, so it can
 # never be scored through F. compute_errors turns this into PENDING, never a
 # verdict.
-for _fn in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
-            "Gamma_InverseCumulative"):
+for _fn in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
     try:
         _CE.tail_residual([_tail_row(_fn, "0.9", "1000000", "1", "1039569.3")], _fn)
         check(False, f"main evaluator must refuse to score {_fn!r}")
     except UnsupportedTailFunction:
         pass
+
+# --- Student-t: sign-aware CDF, registry-driven arity ----------------------
+from _ibeta import t_cdf as _tc
+
+# Branch correctness. The positive-t expression alone returns 1 - h for
+# negative t, which is the reflection about 1/2 - a plausible probability and
+# therefore a silently wrong residual. Every Student-t row at p <= 0.5 has a
+# negative or zero quantile, so the lower half of the surface depends on this.
+check(_tc(0, 30) == _mpx.mpf(1) / 2, "t_cdf(0, df) is exactly 1/2")
+check(_tc("-1.5", 30) + _tc("1.5", 30) == 1, "t_cdf is symmetric about zero")
+check(_tc("-1.28155241212994", 1e6) < _mpx.mpf("0.11"),
+      "negative t maps to the lower tail, not its reflection")
+check(_tc("1.28155241212994", 1e6) > _mpx.mpf("0.89"),
+      "positive t maps to the upper tail")
+
+# The evaluator itself, on committed-shaped rows, at all three envelope df.
+# Values are the observed quantiles from the grid; the residual must be tiny.
+# Quantiles are the committed observations for these rows, taken from the
+# grid rather than invented, so a fixture failure means the evaluator moved
+# and not that the fixture was wrong.
+# Per-row residual bounds, NOT a blanket tolerance. The p=0.99 rows carry a
+# genuinely larger residual that grows with df, and the committed `reference`
+# column independently implies the same magnitude (1.85E-10 relative at
+# df=1E8), so the tail residual is reproducing evidence already in the grid
+# rather than reporting an oracle artifact. A single loose tolerance would
+# hide that; a single tight one would fail on real data.
+_T_ROWS = (
+    ("0.9",  "1000000.0",   "1.28155241212994E+000;-3.77475828372553E-015", "1e-14"),
+    ("0.9",  "10000000.0",  "1.28155165020308E+000;1.11022302462516E-015",  "1e-14"),
+    ("0.9",  "100000000.0", "1.28155157401045E+000;-1.11022302462516E-015", "1e-14"),
+    ("0.99", "100000000.0", "2.32634791090167E+000;0E+000",                 "1e-8"),
+    ("0.5",  "1000000.0",   "0E+000;0E+000",                                "0"),
+    ("0.05", "1.0",         "-6.31375151467504E+000;-3.55271367880050E-015", "1e-14"),
+)
+for _p, _df, _x, _bound in _T_ROWS:
+    _row = _tail_row("StudentT_InverseCumulative", _p, _df, "", _x)
+    _got, _, _n = _CE.tail_residual([_row], "StudentT_InverseCumulative")
+    _want = normalize_tail_residual(
+        _tc(_mpx.mpf(str(parse_observed(_x))), _mpx.mpf(_df)), _mpx.mpf(_p))
+    check(_n == 1, f"Student-t row scored: p={_p} df={_df}")
+    check(_got == _want, f"Student-t dispatched to t_cdf: p={_p} df={_df}")
+    check(_got <= Decimal(_bound),
+          f"Student-t residual within its recorded bound: p={_p} df={_df}")
+
+# The median row read BOTH ways. As tail-residual evidence the residual is
+# exactly zero; as output_error evidence the same row is the zero-reference
+# case. One row, two readings, and neither may be assumed.
+_med = _tail_row("StudentT_InverseCumulative", "0.5", "1000000", "", "0E+000")
+_got_med, _, _ = _CE.tail_residual([_med], "StudentT_InverseCumulative")
+check(_got_med == Decimal(0), "Student-t median residual is exactly zero")
+check(calculate_error(Decimal(0), Decimal(0), "relative") == Decimal(0),
+      "the same median row is the zero-reference case for output_error")
+check(calculate_error(Decimal("1e-30"), Decimal(0), "relative") == Decimal("Infinity"),
+      "a non-zero quantile against the zero median reference is infinite error")
+
+# A deliberately degraded observation must produce a large residual, so the
+# measure has discrimination rather than merely not erroring.
+_bad = _tail_row("StudentT_InverseCumulative", "0.9", "1000000", "",
+                 "1.29155241212994E+000")
+_got_bad, _, _ = _CE.tail_residual([_bad], "StudentT_InverseCumulative")
+check(_got_bad > Decimal("1e-4"),
+      "a perturbed Student-t quantile gives a large residual")
+
+# Compensated hi;lo observations must be summed before scoring, not truncated
+# to hi. The lo limb here is chosen to matter at the residual scale.
+_hi = "1.28155241212994E+000"
+_comp = _tail_row("StudentT_InverseCumulative", "0.9", "1000000", "",
+                  _hi + ";-3.7E-017")
+_got_c, _, _ = _CE.tail_residual([_comp], "StudentT_InverseCumulative")
+_got_h, _, _ = _CE.tail_residual(
+    [_tail_row("StudentT_InverseCumulative", "0.9", "1000000", "", _hi)],
+    "StudentT_InverseCumulative")
+check(_got_c != _got_h,
+      "the lo limb of a compensated observation changes the Student-t residual")
+
+# Registry-driven arity: a Student-t row has no arg3, and must still validate
+# and score. Under the previous fixed (arg2, arg3) dispatch this was impossible.
+check(row_validity(_tail_row("StudentT_InverseCumulative", "0.9", "1000000", "",
+                             "1.28155241212994E+000"), TR) is None,
+      "a two-argument Student-t row validates without arg3")
+check(row_validity(_tail_row("StudentT_InverseCumulative", "0.9", "", "",
+                             "1.28"), TR) is not None,
+      "a Student-t row missing df is still invalid")
+
+# Beta and F must be untouched by the arity change.
+check(_CE.tail_residual([_row_b], "Beta_InverseCumulative")[0] == _want_b,
+      "Beta residual unchanged after registry-driven arity")
+check(_CE.tail_residual([_row_f], "F_InverseCumulative")[0] == _want_f,
+      "F residual unchanged after registry-driven arity")
+
+# If the helper table loses a registered callable, the evaluator must fail
+# rather than score - the caller turns that into PENDING.
+_saved = dict(_CE._TAIL_CDFS)
+try:
+    del _CE._TAIL_CDFS["t_cdf"]
+    try:
+        _CE.tail_residual([_med], "StudentT_InverseCumulative")
+        check(False, "a missing callable must not be scored")
+    except KeyError:
+        pass
+finally:
+    _CE._TAIL_CDFS.clear(); _CE._TAIL_CDFS.update(_saved)
+check(_CE.tail_residual([_med], "StudentT_InverseCumulative")[2] == 1,
+      "the callable table is restored after the missing-helper case")
 
 
 if fails:

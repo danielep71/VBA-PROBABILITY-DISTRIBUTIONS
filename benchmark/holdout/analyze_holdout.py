@@ -12,7 +12,7 @@ import mpmath as mp
 import os as _os, sys as _sys
 # Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
-from _ibeta import ibeta, f_cdf
+from _ibeta import ibeta, f_cdf, t_cdf
 # Single-sourced evaluation primitives shared with the release gate
 # (compute_errors.py) so the two analyzers cannot diverge on metric arithmetic,
 # parsing, or tail-residual normalisation.
@@ -20,15 +20,16 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
                             SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions,
-                            tail_cdf_name, UnsupportedTailFunction)
+                            tail_cdf_name, tail_shape_args,
+                            UnsupportedTailFunction)
 
 # Name -> callable, keyed by _contract_eval.TAIL_SUPPORTED. The gate holds the
 # identical table; the shared registry is what stops the two evaluators from
 # supporting different sets of distributions.
-_TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf}
+_TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf, "t_cdf": t_cdf}
 
 
-def forward_cdf(fn, x, a2, a3):
+def forward_cdf(fn, x, *shape):
     """Forward CDF for a tail_probability_residual row, dispatched by function.
 
     Extracted as a named seam so the dispatch can be tested DIRECTLY. Inside
@@ -37,7 +38,7 @@ def forward_cdf(fn, x, a2, a3):
     reintroduced here would be caught by no fixture at all. Testing this
     function closes that hole and keeps the guard independent of row_validity.
     """
-    return _TAIL_CDFS[tail_cdf_name(fn)](x, a2, a3)
+    return _TAIL_CDFS[tail_cdf_name(fn)](x, *shape)
 getcontext().prec = 50
 mp.mp.dps = 50
 
@@ -59,10 +60,11 @@ def worst_for(measure, metric, rows, fn):
         if o is None:                      # defensive: dispositions already excluded these
             continue
         if measure == "tail_probability_residual":
-            target = mp.mpf(r["arg1"]); a2 = mp.mpf(r["arg2"]); a3 = mp.mpf(r["arg3"]); x = mp.mpf(str(o))
+            target = mp.mpf(r["arg1"]); x = mp.mpf(str(o))
+            shape = [mp.mpf(r[k]) for k in tail_shape_args(fn)]
             # Explicit dispatch, no fall-through. Previously any function that
             # was not Beta was scored with the F CDF, silently.
-            rec = forward_cdf(fn, x, a2, a3)
+            rec = forward_cdf(fn, x, *shape)
             e = normalize_tail_residual(rec, target)
         else:
             ref = parse_reference(r["reference"])

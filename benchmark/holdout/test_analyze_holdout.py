@@ -140,6 +140,8 @@ def main():
     import analyze_holdout as AH
     from analyze_holdout import mp
 
+    if AH._TAIL_CDFS.get("t_cdf") is not AH.t_cdf:
+        fails.append("holdout: t_cdf name is not bound to the t_cdf callable")
     if set(AH._TAIL_CDFS) != {spec["cdf"] for spec in TAIL_SUPPORTED.values()}:
         fails.append("holdout CDF table does not match the shared registry")
     if tail_cdf_name("Beta_InverseCumulative") != "ibeta":
@@ -151,8 +153,7 @@ def main():
     if AH._TAIL_CDFS.get("f_cdf") is not AH.f_cdf:
         fails.append("holdout: f_cdf name is not bound to the f_cdf callable")
 
-    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
-                   "Gamma_InverseCumulative", ""):
+    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative", ""):
         try:
             tail_cdf_name(fn_bad)
             fails.append(f"holdout: unsupported tail function must raise: {fn_bad!r}")
@@ -167,7 +168,7 @@ def main():
     d_ok = dispositions([tail_row], "tail_probability_residual")
     if len(d_ok.to_measure) != 1:
         fails.append("holdout: a supported tail row must reach the measurer")
-    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative"):
+    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
         d_bad = dispositions([dict(tail_row, function=fn_bad)],
                              "tail_probability_residual")
         if d_bad.to_measure or d_bad.n_invalid != 1:
@@ -223,7 +224,7 @@ def main():
     # already-filtered rows, so there the dispatch itself must raise. Both are
     # fail-closed; only the layer that stops them differs. Assert the property
     # that matters - the row is not scored - rather than the mechanism.
-    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative"):
+    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
         res = AH.worst_for("tail_probability_residual", "relative",
                            [tail_row(fn_bad, "0.9", "1000000", "1", "1039569.3")],
                            fn_bad)
@@ -241,13 +242,92 @@ def main():
     if AH.forward_cdf("F_InverseCumulative", mp.mpf(fx), mp.mpf(f1),
                       mp.mpf(f2)) != AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)):
         fails.append("forward_cdf did not dispatch F to f_cdf")
-    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
-                   "Gamma_InverseCumulative", ""):
+    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative", ""):
         try:
             AH.forward_cdf(fn_bad, mp.mpf("0.5"), mp.mpf(5), mp.mpf(7))
             fails.append(f"forward_cdf must refuse {fn_bad!r}")
         except UnsupportedTailFunction:
             pass
+
+    # --- Student-t on the holdout arm, SYNTHETIC rows only ------------------
+    # holdout_grid.csv is deliberately NOT read here. These quantiles are
+    # computed from t_cdf itself by construction, so the fixture exercises the
+    # evaluator without inspecting uninspected holdout evidence.
+    def t_row(p_, df_, x_):
+        return {"function": "StudentT_InverseCumulative", "arg1": p_,
+                "arg2": df_, "arg3": "", "arg4": "", "reference": "",
+                "observed_vba": x_, "expected_error": ""}
+
+    # Registry-driven arity: one shape argument, no arg3, must validate.
+    if row_validity(t_row("0.9", "1000000.0", "1.28155241212994"),
+                    "tail_probability_residual") is not None:
+        fails.append("holdout: a two-argument Student-t row must validate")
+    if row_validity(t_row("0.9", "", "1.28"),
+                    "tail_probability_residual") is None:
+        fails.append("holdout: a Student-t row missing df must be invalid")
+
+    # forward_cdf must accept ONE shape argument for Student-t and reproduce
+    # t_cdf exactly; under the old fixed (a2, a3) signature this was impossible.
+    if AH.forward_cdf("StudentT_InverseCumulative", mp.mpf("1.5"),
+                      mp.mpf(30)) != AH.t_cdf(mp.mpf("1.5"), mp.mpf(30)):
+        fails.append("holdout: forward_cdf did not dispatch Student-t to t_cdf")
+
+    # Sign-aware branches, through the evaluator. A positive-t-only formula
+    # would reflect the negative case about 1/2 and stay plausible.
+    for sgn, tq in (("negative", "-1.5"), ("zero", "0"), ("positive", "1.5")):
+        want = normalize_tail_residual(AH.t_cdf(mp.mpf(tq), mp.mpf(30)),
+                                       mp.mpf("0.5"))
+        got = AH.worst_for("tail_probability_residual", "relative",
+                           [t_row("0.5", "30.0", tq)],
+                           "StudentT_InverseCumulative")[0]
+        if got != want:
+            fails.append(f"holdout: Student-t {sgn} quantile mis-scored")
+    # Independent of t_cdf itself: computing the expected values from ibeta
+    # here means a positive-t-only formula cannot pass by moving both sides of
+    # the comparison together, which self-consistency assertions permit.
+    z30 = mp.mpf(30) / (mp.mpf(30) + mp.mpf("1.5") ** 2)
+    h30 = AH.ibeta(z30, mp.mpf(15), mp.mpf(1) / 2) / 2
+    if AH.t_cdf(mp.mpf("-1.5"), mp.mpf(30)) != h30:
+        fails.append("holdout: t_cdf must return h for negative t")
+    if AH.t_cdf(mp.mpf("1.5"), mp.mpf(30)) != 1 - h30:
+        fails.append("holdout: t_cdf must return 1-h for positive t")
+    if AH.t_cdf(mp.mpf(0), mp.mpf(30)) != mp.mpf(1) / 2:
+        fails.append("holdout: t_cdf(0) must be exactly one half")
+    if not (AH.t_cdf(mp.mpf("-1.5"), mp.mpf(30)) < mp.mpf(1) / 2 <
+            AH.t_cdf(mp.mpf("1.5"), mp.mpf(30))):
+        fails.append("holdout: t_cdf must be increasing across zero")
+
+    # Threshold-zero: an exact median observation must score exactly zero, and
+    # a degraded one must not.
+    exact = AH.worst_for("tail_probability_residual", "relative",
+                         [t_row("0.5", "1000000.0", "0E+000;0E+000")],
+                         "StudentT_InverseCumulative")[0]
+    if exact != Decimal(0):
+        fails.append("holdout: exact median must give a zero residual")
+    degraded = AH.worst_for("tail_probability_residual", "relative",
+                            [t_row("0.5", "1000000.0", "1E-003")],
+                            "StudentT_InverseCumulative")[0]
+    if not degraded > Decimal(0):
+        fails.append("holdout: a degraded median must not score zero")
+
+    # Compensated hi;lo must be summed, not truncated to hi.
+    hi_only = AH.worst_for("tail_probability_residual", "relative",
+                           [t_row("0.9", "1000000.0", "1.28155241212994E+000")],
+                           "StudentT_InverseCumulative")[0]
+    compens = AH.worst_for("tail_probability_residual", "relative",
+                           [t_row("0.9", "1000000.0",
+                                  "1.28155241212994E+000;-3.77475828372553E-015")],
+                           "StudentT_InverseCumulative")[0]
+    if hi_only == compens:
+        fails.append("holdout: the lo limb must change the Student-t residual")
+
+    # Beta and F must be unchanged by the arity work.
+    if AH.forward_cdf("Beta_InverseCumulative", mp.mpf(bx), mp.mpf(ba),
+                      mp.mpf(bb)) != AH.ibeta(mp.mpf(bx), mp.mpf(ba), mp.mpf(bb)):
+        fails.append("holdout: Beta regressed under registry-driven arity")
+    if AH.forward_cdf("F_InverseCumulative", mp.mpf(fx), mp.mpf(f1),
+                      mp.mpf(f2)) != AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)):
+        fails.append("holdout: F regressed under registry-driven arity")
 
     if fails:
         print("FAIL: analyze_holdout metric semantics")
@@ -258,7 +338,8 @@ def main():
           "      scaled paths; invalid scaled arg1 is caught by preflight; an\n"
           "      unknown measure is rejected; tail dispatch is fail-closed,\n"
           "      shares the gate's registry, and is asserted through the\n"
-          "      evaluator itself")
+          "      evaluator itself; Student-t is sign-aware with\n"
+          "      registry-driven arity")
 
 
 if __name__ == "__main__":

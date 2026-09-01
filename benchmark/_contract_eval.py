@@ -200,6 +200,13 @@ TAIL_SUPPORTED = {
         "cdf": "f_cdf",
         "args": ("arg1", "arg2", "arg3"),
     },
+    # Student-t inverse rows carry only (p, df); arg3 and arg4 are empty on all
+    # 34 of them. Arity therefore comes from this table, not from a fixed
+    # three-column assumption - see tail_shape_args.
+    "StudentT_InverseCumulative": {
+        "cdf": "t_cdf",
+        "args": ("arg1", "arg2"),
+    },
 }
 
 
@@ -223,6 +230,18 @@ def tail_cdf_name(fn):
             f"{', '.join(sorted(TAIL_SUPPORTED))}. Refusing to score it "
             "through another distribution's CDF.")
     return spec["cdf"]
+
+
+def tail_shape_args(fn):
+    """Grid columns holding the SHAPE parameters for `fn`, in CDF argument
+    order - that is, everything after arg1, which is always the target
+    probability.
+
+    Derived from the same registry entry as the routing, so arity and dispatch
+    cannot disagree. Both evaluators call the CDF as `cdf(x, *shape_args)`, so
+    adding a two-argument surface needs no evaluator change at all.
+    """
+    return tail_required_args(fn)[1:]
 
 
 def tail_required_args(fn):
