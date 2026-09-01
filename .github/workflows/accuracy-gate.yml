@@ -45,6 +45,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install reference dependencies
+        id: deps
         run: python -m pip install --upgrade pip mpmath
 
       - name: "Verify the study analyzer for #13"
@@ -127,6 +128,19 @@ jobs:
         run: python check_source_thresholds.py
 
       - name: Test the holdout analyzer
+        # Runs after the strict gate's intentional stale-evidence failure. These
+        # are unit fixtures, not evidence: nothing here reads the holdout grid
+        # or produces a verdict, so there is no reason for them to wait behind
+        # the gate. Under the default fail-fast they were skipped on every red
+        # run through Phase 0, leaving the holdout arm's fixture coverage
+        # established by local runs only. The condition is guarded rather than
+        # bare always(): not after a cancellation, and not on a runner whose
+        # Python setup failed, where a pass would mean nothing.
+        #
+        # "Verify the independent holdout" below is deliberately NOT given this
+        # condition. It reads the holdout grid and emits verdicts, and it stays
+        # skipped while the binding is stale by design.
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         working-directory: benchmark/holdout
         # The holdout analyzer has its own metric semantics and its own fixtures.
         # Both drifted unnoticed once already: fixtures pinned df 5E5 as "beyond
