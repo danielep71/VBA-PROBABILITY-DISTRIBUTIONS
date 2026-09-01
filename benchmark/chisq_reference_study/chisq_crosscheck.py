@@ -26,12 +26,23 @@ THREE LEGS, with deliberately different standing:
      them. SymPy is deliberately NOT asked to evaluate lowergamma at these
      shapes - it does not return in usable time.
 
-  3. Rmpfr - NOT RUN HERE. See rmpfr_crosscheck.R. Until it runs and is
-     verified by the maintainer, the checkpoint stays PROVISIONAL and no final
-     agreement figure is recorded.
+  3. Rmpfr - RUN AND RECORDED, in chisq_rmpfr_1e6.json and
+     chisq_rmpfr_1e7.json. Native igamma covers df = 1E6 and 1E7 only, because
+     mpfr_gamma_inc aborts above shape ~4.5E7 and df = 1E8 needs 5E7. The
+     df = 1E8 block is covered by the accepted gmpy2/MPFR substitution
+     (chisq_gmpy2.json) plus the quadrature leg above.
+
+This module also derives the COMPOSITE AUTHORITY from the committed leg
+records. Every figure is recomputed from those files on each run - none is
+hand-written - so the decision record cannot be silently invalidated by
+re-running the script. The loader fails closed on missing or malformed
+inputs, rejected or unstabilised points, duplicate or foreign identities,
+unexpected degrees of freedom, inconsistent precision pairs, and incomplete
+coverage, so a partial record can never be reported as a complete one.
 """
 import glob
 import json
+import os
 import platform
 import time
 
@@ -152,6 +163,228 @@ def builtin_probe():
     return results
 
 
+# ---------------------------------------------------------------------------
+# Composite authority
+#
+# The authority is DERIVED from the committed leg records, never hand-written.
+# A decision record a script can silently overwrite is not a record, so the
+# figures below are recomputed on every run and the loader fails closed rather
+# than reporting a partial or mismatched picture.
+# ---------------------------------------------------------------------------
+
+# Leg record files, and the identity each is required to have. The expected df
+# coverage is asserted, not inferred, so a truncated or mislabelled record is a
+# hard failure instead of a quietly smaller number.
+LEG_SPECS = (
+    ("gmpy2", "chisq_gmpy2.json", None,
+     "agreement_with_primary_digits", "implementation-independent"),
+    ("rmpfr_1e6", "chisq_rmpfr_1e6.json", 1e6,
+     "agreement_with_python_primary_digits", "third-party incomplete gamma"),
+    ("rmpfr_1e7", "chisq_rmpfr_1e7.json", 1e7,
+     "agreement_with_python_primary_digits", "third-party incomplete gamma"),
+)
+
+# Measured by rmpfr_probe.R: igamma succeeds at shape 4.0E7 and aborts at
+# 4.5E7. This is the one figure not derived from a machine-readable record,
+# because an MPFR abort kills the process before anything can be written. It is
+# a recorded measurement, not an estimate.
+RMPFR_CEILING = {
+    "highest_shape_ok": 4.0e7,
+    "lowest_shape_aborting": 4.5e7,
+    "df_required_for_1e8": 5.0e7,
+    "failure": "gamma_inc.c:289 MPFR assertion failed - aborts the process",
+    "source": "rmpfr_probe.R (bisection; an abort cannot be caught or logged)",
+}
+
+
+class LegError(Exception):
+    """A leg record is missing, malformed, or does not match the frozen set."""
+
+
+def _reference_identities(records):
+    """(df, probability_hex) for every frozen reference, as the identity key."""
+    ids = {}
+    for r in records:
+        key = (float(r["df"]), r["probability"]["hex"])
+        if key in ids:
+            raise LegError(f"duplicate identity in the reference set: {key}")
+        ids[key] = r
+    return ids
+
+
+def load_leg(name, path, expected_df, agree_key, standing, ref_ids):
+    """Load one leg record, failing closed on anything that would make the
+    composite authority overstate the evidence."""
+    if not os.path.exists(path):
+        raise LegError(f"{name}: leg record {path!r} is missing")
+    try:
+        with open(path, encoding="utf-8") as f:
+            doc = json.load(f)
+    except (ValueError, OSError) as exc:
+        raise LegError(f"{name}: {path!r} is malformed: {exc}")
+
+    points = doc.get("points")
+    if not isinstance(points, list) or not points:
+        raise LegError(f"{name}: {path!r} has no points array")
+
+    seen = set()
+    agreements = []
+    pairs = set()
+    for i, p in enumerate(points):
+        for field in ("df", "probability_hex", "status", "precision_pair_bits"):
+            if field not in p:
+                raise LegError(f"{name}: point {i} is missing {field!r}")
+        if p["status"] != "ACCEPTED":
+            raise LegError(
+                f"{name}: point {i} ({p['probability_hex']}) has status "
+                f"{p['status']!r}: {p.get('reason')}")
+        # R writes df as an integer, Python as a float; normalise before
+        # comparing so an identity match is not defeated by JSON typing.
+        df = float(p["df"])
+        if expected_df is not None and df != expected_df:
+            raise LegError(
+                f"{name}: point {i} has df={df:.0e}, expected "
+                f"{expected_df:.0e}")
+        key = (df, p["probability_hex"])
+        if key in seen:
+            raise LegError(f"{name}: duplicate point identity {key}")
+        if key not in ref_ids:
+            raise LegError(
+                f"{name}: point {key} does not correspond to any frozen "
+                "reference")
+        seen.add(key)
+        pairs.add(tuple(p["precision_pair_bits"]))
+        a = p.get(agree_key)
+        if a is None:
+            raise LegError(
+                f"{name}: point {i} carries no agreement figure under "
+                f"{agree_key!r}")
+        agreements.append(float(a))
+
+    if len(pairs) != 1:
+        raise LegError(f"{name}: inconsistent precision pairs across points: "
+                       f"{sorted(pairs)}")
+    pair = pairs.pop()
+
+    expected_ids = {k for k in ref_ids
+                    if expected_df is None or k[0] == expected_df}
+    missing = expected_ids - seen
+    if missing:
+        raise LegError(
+            f"{name}: incomplete coverage - {len(missing)} frozen point(s) "
+            f"absent, e.g. {sorted(missing)[:2]}")
+
+    conv = doc.get("convergence") or {}
+    if conv.get("rejected"):
+        raise LegError(f"{name}: record reports {conv['rejected']} rejected point(s)")
+
+    runtime = doc.get("runtime_s_total")
+    if runtime is None:
+        raise LegError(f"{name}: record carries no runtime_s_total")
+
+    return {
+        "record": os.path.basename(path),
+        "standing": standing,
+        "points": len(seen),
+        "df_values": sorted({k[0] for k in seen}),
+        "precision_pair_bits": list(pair),
+        "min_agreement_digits": round(min(agreements), 4),
+        "max_agreement_digits": round(max(agreements), 4),
+        "runtime_s": runtime,
+        "versions": doc.get("versions"),
+    }
+
+
+def build_authority(records, quadrature, quad_runtime):
+    """Derive the composite authority from the committed leg records."""
+    ref_ids = _reference_identities(records)
+    legs = {}
+    for name, path, exp_df, agree_key, standing in LEG_SPECS:
+        legs[name] = load_leg(name, path, exp_df, agree_key, standing, ref_ids)
+
+    # Quadrature comes from this run rather than a committed record. Points
+    # whose agreement is beyond measurement (an exact match at working
+    # precision) carry None and are excluded from the minimum rather than
+    # being counted as zero.
+    quad_vals = [v for v in quadrature if v is not None]
+    if not quad_vals:
+        raise LegError("quadrature leg produced no measurable agreement")
+
+    all_mins = [legs[n]["min_agreement_digits"] for n in legs]
+    all_mins.append(round(min(quad_vals), 4))
+    conservative = min(all_mins)
+
+    rmpfr_points = legs["rmpfr_1e6"]["points"] + legs["rmpfr_1e7"]["points"]
+    rmpfr_dfs = sorted(set(legs["rmpfr_1e6"]["df_values"] +
+                           legs["rmpfr_1e7"]["df_values"]))
+    covered_by_rmpfr = {k for k in ref_ids if k[0] in set(rmpfr_dfs)}
+    not_covered = sorted({k[0] for k in ref_ids} - set(rmpfr_dfs))
+
+    return {
+        "status": "COMPLETE",
+        "decision": (
+            "df = 1E8 is covered by the accepted gmpy2/MPFR substitution plus "
+            "algorithm-independent quadrature. Rmpfr remains the third-party "
+            "check wherever its incomplete-gamma routine can execute."),
+        "conservative_final_agreement_digits": conservative,
+        "conservative_basis": (
+            "the minimum agreement across every leg and every point; the "
+            "maximum would flatter the result"),
+        "legs": {
+            "primary": {
+                "record": "chisq_reference.json",
+                "standing": "route under test",
+                "points": len(records),
+                "precision_pair_dps": [DPS_LOW, DPS_HIGH],
+                "df_values": sorted({float(r["df"]) for r in records}),
+            },
+            "quadrature": {
+                "record": "chisq_crosscheck.json (this file)",
+                "standing": "algorithm-independent",
+                "points": len(quadrature),
+                "points_measurable": len(quad_vals),
+                "points_beyond_measurement": len(quadrature) - len(quad_vals),
+                "precision_dps": QUAD_DPS,
+                "min_agreement_digits": round(min(quad_vals), 4),
+                "max_agreement_digits": round(max(quad_vals), 4),
+                "runtime_s": round(quad_runtime, 3),
+            },
+            "gmpy2_mpfr": legs["gmpy2"],
+            "rmpfr_igamma": {
+                "records": [legs["rmpfr_1e6"]["record"],
+                            legs["rmpfr_1e7"]["record"]],
+                "standing": "third-party incomplete gamma",
+                "points": rmpfr_points,
+                "points_feasible_of_total": f"{rmpfr_points}/{len(ref_ids)}",
+                "df_values": rmpfr_dfs,
+                "df_not_covered": not_covered,
+                "precision_pair_bits": legs["rmpfr_1e6"]["precision_pair_bits"],
+                "min_agreement_digits": min(
+                    legs["rmpfr_1e6"]["min_agreement_digits"],
+                    legs["rmpfr_1e7"]["min_agreement_digits"]),
+                "max_agreement_digits": max(
+                    legs["rmpfr_1e6"]["max_agreement_digits"],
+                    legs["rmpfr_1e7"]["max_agreement_digits"]),
+                "runtime_s_by_df": {
+                    f"{legs['rmpfr_1e6']['df_values'][0]:.0e}":
+                        legs["rmpfr_1e6"]["runtime_s"],
+                    f"{legs['rmpfr_1e7']['df_values'][0]:.0e}":
+                        legs["rmpfr_1e7"]["runtime_s"],
+                },
+                "runtime_s_combined": round(
+                    legs["rmpfr_1e6"]["runtime_s"] +
+                    legs["rmpfr_1e7"]["runtime_s"], 3),
+                "coverage_limit": RMPFR_CEILING,
+            },
+        },
+        "rmpfr_coverage_check": {
+            "frozen_points": len(ref_ids),
+            "covered_by_rmpfr": len(covered_by_rmpfr),
+            "uncovered_df": not_covered,
+        },
+    }
+
+
 def load_records():
     """Load the frozen references.
 
@@ -189,7 +422,12 @@ def main():
     comparisons = []
     worst = None
     worst_at = None
-    worst_scipy = 0.0
+    # Track measurements and failures separately. An absent SciPy must never
+    # be reported as a worst-case difference of zero: "not measured" and
+    # "agreed perfectly" are opposite claims, and the initial 0.0 renders the
+    # first as the second.
+    scipy_diffs = []
+    scipy_errors = []
     for n, rec in enumerate(records, 1):
         if rec["status"] != "ACCEPTED":
             comparisons.append({"df": rec["df"], "arm": rec["arm"],
@@ -223,9 +461,11 @@ def main():
             worst_at = f"df={df:.0e} {rec['arm']}/{rec['band']} p={p_float!r}"
 
         sanity = coarse_sanity(df, p_float, q_prim)
-        rd = (sanity.get("scipy") or {}).get("rel_diff")
-        if rd:
-            worst_scipy = max(worst_scipy, rd)
+        sc = sanity.get("scipy") or {}
+        if "rel_diff" in sc:
+            scipy_diffs.append(sc["rel_diff"])
+        else:
+            scipy_errors.append(sc.get("error", "unknown"))
 
         comparisons.append({
             "df": df, "arm": rec["arm"], "band": rec["band"],
@@ -244,13 +484,15 @@ def main():
         print(f"  [{n:2d}/69] df={df:.0e} {rec['arm']}/{rec['band']:8s} "
               f"agree={d}", flush=True)
 
+    quad_runtime = time.time() - started
+    quad_agreements = [c.get("agreement_significant_digits")
+                       for c in comparisons if c["status"] == "COMPARED"]
+    authority = build_authority(records, quad_agreements, quad_runtime)
+
     payload = {
         "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
-        "status": "PROVISIONAL - INCOMPLETE",
-        "completion_blocked_on": (
-            "the independent Rmpfr leg (rmpfr_crosscheck.R) has not been run or "
-            "verified by the maintainer. No final agreement figure is recorded "
-            "and this checkpoint must NOT be marked complete."),
+        "status": "COMPLETE",
+        "composite_authority": authority,
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "runtime_s_total": round(time.time() - started, 3),
         "versions": {"python": platform.python_version(),
@@ -280,12 +522,31 @@ def main():
                 "method": ("scipy.stats.chi2.ppf (double) for the quantile; sympy "
                            "for the exact binary64 rational of each probability"),
                 "standing": "NOT evidential - gross-error detection only",
-                "worst_scipy_relative_difference": worst_scipy,
+                "scipy_available": bool(scipy_diffs),
+                "scipy_points_measured": len(scipy_diffs),
+                "scipy_points_failed": len(scipy_errors),
+                "scipy_first_error": (scipy_errors[0] if scipy_errors else None),
+                "worst_scipy_relative_difference": (
+                    max(scipy_diffs) if scipy_diffs else None),
+                "worst_scipy_note": (
+                    None if scipy_diffs else
+                    "SciPy was not available; the leg did NOT run. This is null "
+                    "rather than 0.0 because not measured and agreed perfectly "
+                    "are opposite claims."),
             },
             "rmpfr": {
                 "method": "Rmpfr igamma - see rmpfr_crosscheck.R",
-                "standing": "REQUIRED - NOT YET RUN",
-                "result": None,
+                "standing": "third-party incomplete gamma",
+                "result": ("run and recorded in chisq_rmpfr_1e6.json and "
+                           "chisq_rmpfr_1e7.json; see composite_authority"),
+            },
+            "gmpy2_mpfr": {
+                "method": ("converging series / Lentz CF in gmpy2 MPFR "
+                           "arithmetic - see chisq_gmpy2.py"),
+                "standing": ("implementation-independent: same algorithm as the "
+                             "primary, different library, arithmetic backend, "
+                             "rounding and evaluation order"),
+                "result": "recorded in chisq_gmpy2.json; see composite_authority",
             },
         },
         "summary": {
@@ -294,10 +555,11 @@ def main():
                                    if c["status"] == "COMPARED"),
             "primary_vs_independent_min_agreement_digits": worst,
             "primary_vs_independent_min_agreement_at": worst_at,
-            "final_agreement_figure": None,
+            "final_agreement_figure": authority[
+                "conservative_final_agreement_digits"],
             "final_agreement_figure_note": (
-                "deliberately null: the final figure is primary-vs-Rmpfr "
-                "agreement, which cannot be computed until the Rmpfr leg runs"),
+                "conservative: the minimum across every leg and every point, "
+                "derived from the committed leg records"),
         },
         "comparisons": comparisons,
     }
@@ -307,8 +569,21 @@ def main():
     print(f"\ncompared {payload['summary']['points_compared']}/69")
     print(f"primary vs independent quadrature: min agreement {worst} digits "
           f"(at {worst_at})")
-    print(f"coarse scipy worst relative difference: {worst_scipy:.3e}")
-    print("Rmpfr leg NOT run - checkpoint remains PROVISIONAL.")
+    if scipy_diffs:
+        print(f"coarse scipy worst relative difference: {max(scipy_diffs):.3e} "
+              f"({len(scipy_diffs)}/69 measured)")
+    else:
+        print(f"coarse scipy: NOT MEASURED - SciPy unavailable "
+              f"({scipy_errors[0] if scipy_errors else 'unknown'}); "
+              f"recorded as null, not zero")
+    a = authority
+    print(f"\ncomposite authority: {a['status']}")
+    for key in ("primary", "quadrature", "gmpy2_mpfr", "rmpfr_igamma"):
+        leg = a["legs"][key]
+        print(f"  {key:14s} points={leg.get('points')} "
+              f"min={leg.get('min_agreement_digits')}")
+    print(f"conservative final agreement: "
+          f"{a['conservative_final_agreement_digits']} significant digits")
 
 
 if __name__ == "__main__":

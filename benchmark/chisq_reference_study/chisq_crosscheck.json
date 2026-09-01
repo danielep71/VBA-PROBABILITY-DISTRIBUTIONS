@@ -1,9 +1,106 @@
 {
   "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
-  "status": "PROVISIONAL - INCOMPLETE",
-  "completion_blocked_on": "the independent Rmpfr leg (rmpfr_crosscheck.R) has not been run or verified by the maintainer. No final agreement figure is recorded and this checkpoint must NOT be marked complete.",
-  "generated_utc": "2026-08-29T22:33:17Z",
-  "runtime_s_total": 44.156,
+  "status": "COMPLETE",
+  "composite_authority": {
+    "status": "COMPLETE",
+    "decision": "df = 1E8 is covered by the accepted gmpy2/MPFR substitution plus algorithm-independent quadrature. Rmpfr remains the third-party check wherever its incomplete-gamma routine can execute.",
+    "conservative_final_agreement_digits": 109.873,
+    "conservative_basis": "the minimum agreement across every leg and every point; the maximum would flatter the result",
+    "legs": {
+      "primary": {
+        "record": "chisq_reference.json",
+        "standing": "route under test",
+        "points": 69,
+        "precision_pair_dps": [
+          60,
+          120
+        ],
+        "df_values": [
+          1000000.0,
+          10000000.0,
+          100000000.0
+        ]
+      },
+      "quadrature": {
+        "record": "chisq_crosscheck.json (this file)",
+        "standing": "algorithm-independent",
+        "points": 69,
+        "points_measurable": 62,
+        "points_beyond_measurement": 7,
+        "precision_dps": 110,
+        "min_agreement_digits": 109.873,
+        "max_agreement_digits": 111.06,
+        "runtime_s": 55.229
+      },
+      "gmpy2_mpfr": {
+        "record": "chisq_gmpy2.json",
+        "standing": "implementation-independent",
+        "points": 69,
+        "df_values": [
+          1000000.0,
+          10000000.0,
+          100000000.0
+        ],
+        "precision_pair_bits": [
+          200,
+          400
+        ],
+        "min_agreement_digits": 115.1094,
+        "max_agreement_digits": 118.8301,
+        "runtime_s": 16.222,
+        "versions": {
+          "python": "3.12.3",
+          "gmpy2": "2.3.1",
+          "mpfr": "MPFR 4.2.2",
+          "gmp": "GMP 6.3.0",
+          "platform": "Linux-6.18.44-fc-v22-x86_64-with-glibc2.39"
+        }
+      },
+      "rmpfr_igamma": {
+        "records": [
+          "chisq_rmpfr_1e6.json",
+          "chisq_rmpfr_1e7.json"
+        ],
+        "standing": "third-party incomplete gamma",
+        "points": 46,
+        "points_feasible_of_total": "46/69",
+        "df_values": [
+          1000000.0,
+          10000000.0
+        ],
+        "df_not_covered": [
+          100000000.0
+        ],
+        "precision_pair_bits": [
+          200,
+          400
+        ],
+        "min_agreement_digits": 115.9555,
+        "max_agreement_digits": 118.3261,
+        "runtime_s_by_df": {
+          "1e+06": 76.782,
+          "1e+07": 1394.086
+        },
+        "runtime_s_combined": 1470.868,
+        "coverage_limit": {
+          "highest_shape_ok": 40000000.0,
+          "lowest_shape_aborting": 45000000.0,
+          "df_required_for_1e8": 50000000.0,
+          "failure": "gamma_inc.c:289 MPFR assertion failed - aborts the process",
+          "source": "rmpfr_probe.R (bisection; an abort cannot be caught or logged)"
+        }
+      }
+    },
+    "rmpfr_coverage_check": {
+      "frozen_points": 69,
+      "covered_by_rmpfr": 46,
+      "uncovered_df": [
+        100000000.0
+      ]
+    }
+  },
+  "generated_utc": "2026-09-01T11:02:59Z",
+  "runtime_s_total": 55.23,
   "versions": {
     "python": "3.12.3",
     "mpmath": "1.3.0",
@@ -31,29 +128,39 @@
         "1e+06": {
           "status": "ok",
           "P": "0.50018806319660550048",
-          "runtime_s": 0.005
+          "runtime_s": 0.006
         },
         "1e+07": {
           "status": "FAILED",
           "error": "NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.",
-          "runtime_s": 0.009
+          "runtime_s": 0.01
         },
         "1e+08": {
           "status": "FAILED",
           "error": "NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.",
-          "runtime_s": 0.009
+          "runtime_s": 0.01
         }
       }
     },
     "coarse_sanity": {
       "method": "scipy.stats.chi2.ppf (double) for the quantile; sympy for the exact binary64 rational of each probability",
       "standing": "NOT evidential - gross-error detection only",
-      "worst_scipy_relative_difference": 7.765188753020039e-06
+      "scipy_available": true,
+      "scipy_points_measured": 69,
+      "scipy_points_failed": 0,
+      "scipy_first_error": null,
+      "worst_scipy_relative_difference": 7.765188753020039e-06,
+      "worst_scipy_note": null
     },
     "rmpfr": {
       "method": "Rmpfr igamma - see rmpfr_crosscheck.R",
-      "standing": "REQUIRED - NOT YET RUN",
-      "result": null
+      "standing": "third-party incomplete gamma",
+      "result": "run and recorded in chisq_rmpfr_1e6.json and chisq_rmpfr_1e7.json; see composite_authority"
+    },
+    "gmpy2_mpfr": {
+      "method": "converging series / Lentz CF in gmpy2 MPFR arithmetic - see chisq_gmpy2.py",
+      "standing": "implementation-independent: same algorithm as the primary, different library, arithmetic backend, rounding and evaluation order",
+      "result": "recorded in chisq_gmpy2.json; see composite_authority"
     }
   },
   "summary": {
@@ -61,8 +168,8 @@
     "points_compared": 69,
     "primary_vs_independent_min_agreement_digits": 109.873,
     "primary_vs_independent_min_agreement_at": "df=1e+08 fitting/bridge p=0.125",
-    "final_agreement_figure": null,
-    "final_agreement_figure_note": "deliberately null: the final figure is primary-vs-Rmpfr agreement, which cannot be computed until the Rmpfr leg runs"
+    "final_agreement_figure": 109.873,
+    "final_agreement_figure_note": "conservative: the minimum across every leg and every point, derived from the committed leg records"
   },
   "comparisons": [
     {
@@ -78,7 +185,7 @@
       "independent_quantile": "999999.3333334123457367039101089013660817",
       "agreement_significant_digits": null,
       "independent_newton_steps": 4,
-      "independent_runtime_s": 0.528,
+      "independent_runtime_s": 0.747,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -104,7 +211,7 @@
       "independent_quantile": "1001812.815315016348315286490339749162514",
       "agreement_significant_digits": 110.583,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.623,
+      "independent_runtime_s": 0.754,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -130,7 +237,7 @@
       "independent_quantile": "1003292.893686412615580058332836515558792",
       "agreement_significant_digits": 110.459,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.618,
+      "independent_runtime_s": 0.813,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -156,7 +263,7 @@
       "independent_quantile": "998373.3763536697719079933480500286848002",
       "agreement_significant_digits": 110.214,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.606,
+      "independent_runtime_s": 0.777,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -182,7 +289,7 @@
       "independent_quantile": "999045.7644187754186208610143196158612885",
       "agreement_significant_digits": 110.582,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.629,
+      "independent_runtime_s": 0.757,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -208,7 +315,7 @@
       "independent_quantile": "999548.7770834481040186428679958471090193",
       "agreement_significant_digits": null,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.68,
+      "independent_runtime_s": 0.845,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -234,7 +341,7 @@
       "independent_quantile": "1000450.024958094952740457222924769366056",
       "agreement_significant_digits": 110.282,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.649,
+      "independent_runtime_s": 0.769,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -260,7 +367,7 @@
       "independent_quantile": "1000953.508829909180824790325932268679803",
       "agreement_significant_digits": 111.06,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.637,
+      "independent_runtime_s": 0.732,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -286,7 +393,7 @@
       "independent_quantile": "1001627.054717940788317528322514027278349",
       "agreement_significant_digits": 110.361,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.631,
+      "independent_runtime_s": 0.751,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -312,7 +419,7 @@
       "independent_quantile": "991524.8851411293996721650487673866443944",
       "agreement_significant_digits": 110.454,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.724,
+      "independent_runtime_s": 0.893,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -338,7 +445,7 @@
       "independent_quantile": "993278.5509139427625326631062316555597854",
       "agreement_significant_digits": null,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.761,
+      "independent_runtime_s": 0.899,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -364,7 +471,7 @@
       "independent_quantile": "1006750.363974534150810657091658562178555",
       "agreement_significant_digits": 110.585,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.799,
+      "independent_runtime_s": 1.106,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -390,7 +497,7 @@
       "independent_quantile": "1008521.931258259384676385830562896479692",
       "agreement_significant_digits": 110.762,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.729,
+      "independent_runtime_s": 0.95,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -416,7 +523,7 @@
       "independent_quantile": "997831.3288303883770882166463840837694574",
       "agreement_significant_digits": 110.36,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.607,
+      "independent_runtime_s": 0.757,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -442,7 +549,7 @@
       "independent_quantile": "998745.2437568594770798969649278974233134",
       "agreement_significant_digits": 111.059,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.613,
+      "independent_runtime_s": 0.788,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -468,7 +575,7 @@
       "independent_quantile": "999308.2586317292355874228539353093865853",
       "agreement_significant_digits": 110.457,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.644,
+      "independent_runtime_s": 0.801,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -494,7 +601,7 @@
       "independent_quantile": "999776.8790137078591871703299431988742192",
       "agreement_significant_digits": 110.582,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.638,
+      "independent_runtime_s": 0.819,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -520,7 +627,7 @@
       "independent_quantile": "1000221.820648650426620530628746267771618",
       "agreement_significant_digits": 110.458,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.675,
+      "independent_runtime_s": 0.87,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -546,7 +653,7 @@
       "independent_quantile": "1000690.726571583997583317597788000537297",
       "agreement_significant_digits": 110.361,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.632,
+      "independent_runtime_s": 0.912,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -572,7 +679,7 @@
       "independent_quantile": "1001254.472281915354791370935833392209202",
       "agreement_significant_digits": 110.458,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.639,
+      "independent_runtime_s": 0.756,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -598,7 +705,7 @@
       "independent_quantile": "1002170.475870568952956644630543122137774",
       "agreement_significant_digits": 110.759,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.637,
+      "independent_runtime_s": 0.748,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -624,7 +731,7 @@
       "independent_quantile": "992353.894222320319258607090932283911424",
       "agreement_significant_digits": 110.278,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.743,
+      "independent_runtime_s": 0.854,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -650,7 +757,7 @@
       "independent_quantile": "1007683.940707059355801046299375335040586",
       "agreement_significant_digits": 110.461,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.708,
+      "independent_runtime_s": 0.856,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -676,7 +783,7 @@
       "independent_quantile": "9999999.333333341234568478150118221811817",
       "agreement_significant_digits": 109.952,
       "independent_newton_steps": 4,
-      "independent_runtime_s": 0.45,
+      "independent_runtime_s": 0.684,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -702,7 +809,7 @@
       "independent_quantile": "10005731.70091347736963004855916652003676",
       "agreement_significant_digits": 110.555,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.598,
+      "independent_runtime_s": 0.751,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -728,7 +835,7 @@
       "independent_quantile": "10010406.68514244448583326690976198375365",
       "agreement_significant_digits": 110.856,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.612,
+      "independent_runtime_s": 0.695,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -754,7 +861,7 @@
       "independent_quantile": "9994855.696873251381301479849180512631535",
       "agreement_significant_digits": 110.378,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.612,
+      "independent_runtime_s": 0.738,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -780,7 +887,7 @@
       "independent_quantile": "9996983.226870838600520922596723130243578",
       "agreement_significant_digits": 110.378,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.575,
+      "independent_runtime_s": 0.754,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -806,7 +913,7 @@
       "independent_quantile": "9998574.402519053258420852409756893981805",
       "agreement_significant_digits": 110.01,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.56,
+      "independent_runtime_s": 0.732,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -832,7 +939,7 @@
       "independent_quantile": "10001424.39952235416839120606511947355202",
       "agreement_significant_digits": 110.554,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.58,
+      "independent_runtime_s": 0.749,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -858,7 +965,7 @@
       "independent_quantile": "10003016.04637773760290386952131358149511",
       "agreement_significant_digits": 110.157,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.593,
+      "independent_runtime_s": 0.746,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -884,7 +991,7 @@
       "independent_quantile": "10005144.73419834599248124989672780244293",
       "agreement_significant_digits": 110.856,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.613,
+      "independent_runtime_s": 0.762,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -910,7 +1017,7 @@
       "independent_quantile": "9973148.757724843828913545054344635652469",
       "agreement_significant_digits": null,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.742,
+      "independent_runtime_s": 0.854,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -936,7 +1043,7 @@
       "independent_quantile": "9978713.667416419296528954246659568769989",
       "agreement_significant_digits": 110.854,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.588,
+      "independent_runtime_s": 0.753,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -962,7 +1069,7 @@
       "independent_quantile": "10021315.24748705131835512107572083326758",
       "agreement_significant_digits": 110.379,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.577,
+      "independent_runtime_s": 0.78,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -988,7 +1095,7 @@
       "independent_quantile": "10026898.05871142571647239608005361514487",
       "agreement_significant_digits": null,
       "independent_newton_steps": 6,
-      "independent_runtime_s": 0.702,
+      "independent_runtime_s": 0.987,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1014,7 +1121,7 @@
       "independent_quantile": "9993140.10688195490980484770520907685931",
       "agreement_significant_digits": 110.253,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.6,
+      "independent_runtime_s": 0.8,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1040,7 +1147,7 @@
       "independent_quantile": "9996032.418132348743185492681089729242191",
       "agreement_significant_digits": null,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.629,
+      "independent_runtime_s": 0.768,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1066,7 +1173,7 @@
       "independent_quantile": "9997813.618121597193033854250132210629703",
       "agreement_significant_digits": 110.855,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.576,
+      "independent_runtime_s": 0.745,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1092,7 +1199,7 @@
       "independent_quantile": "9999295.835089620254226604521088541493138",
       "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.575,
+      "independent_runtime_s": 0.785,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1118,7 +1225,7 @@
       "independent_quantile": "10000702.86457259736536865765189292662513",
       "agreement_significant_digits": 110.554,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.613,
+      "independent_runtime_s": 0.761,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1144,7 +1251,7 @@
       "independent_quantile": "10002185.3670815902048381835313436545418",
       "agreement_significant_digits": 110.01,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.599,
+      "independent_runtime_s": 0.733,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1170,7 +1277,7 @@
       "independent_quantile": "10003967.29790634935483596109450648381806",
       "agreement_significant_digits": 110.157,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.604,
+      "independent_runtime_s": 0.883,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1196,7 +1303,7 @@
       "independent_quantile": "10006861.69781915434867658897322455555152",
       "agreement_significant_digits": 110.254,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.592,
+      "independent_runtime_s": 0.939,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1222,7 +1329,7 @@
       "independent_quantile": "9975780.012831805844134470517221825316564",
       "agreement_significant_digits": null,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.569,
+      "independent_runtime_s": 0.833,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1248,7 +1355,7 @@
       "independent_quantile": "10024257.82212227178120455913509841996795",
       "agreement_significant_digits": 110.254,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.563,
+      "independent_runtime_s": 0.811,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1274,7 +1381,7 @@
       "independent_quantile": "99999999.33333333412345679589261219935056",
       "agreement_significant_digits": 110.049,
       "independent_newton_steps": 4,
-      "independent_runtime_s": 0.47,
+      "independent_runtime_s": 0.725,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1300,7 +1407,7 @@
       "independent_quantile": "100018124.3042444014210596037700955005877",
       "agreement_significant_digits": 110.475,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.583,
+      "independent_runtime_s": 0.759,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1326,7 +1433,7 @@
       "independent_quantile": "100032902.4683765857297378520115969698477",
       "agreement_significant_digits": 109.911,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.596,
+      "independent_runtime_s": 0.722,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1352,7 +1459,7 @@
       "independent_quantile": "99983731.81863515162832248406678970989606",
       "agreement_significant_digits": 109.873,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.591,
+      "independent_runtime_s": 0.883,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1378,7 +1485,7 @@
       "independent_quantile": "99990460.91113487748725453929626805410585",
       "agreement_significant_digits": 110.35,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.583,
+      "independent_runtime_s": 0.739,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1404,7 +1511,7 @@
       "independent_quantile": "99995493.15993772346113622133064005750022",
       "agreement_significant_digits": 110.253,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.625,
+      "independent_runtime_s": 0.72,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1430,7 +1537,7 @@
       "independent_quantile": "100004505.6421036704026907417070650965447",
       "agreement_significant_digits": 110.35,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.592,
+      "independent_runtime_s": 0.73,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1456,7 +1563,7 @@
       "independent_quantile": "100009538.3621136878765751714930786187563",
       "agreement_significant_digits": 110.475,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.607,
+      "independent_runtime_s": 0.724,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1482,7 +1589,7 @@
       "independent_quantile": "100016268.6124364444268149389254812215231",
       "agreement_significant_digits": 110.107,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.613,
+      "independent_runtime_s": 0.691,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1508,7 +1615,7 @@
       "independent_quantile": "99915038.31371078402225704987253445794668",
       "agreement_significant_digits": 110.651,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.57,
+      "independent_runtime_s": 0.739,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1534,7 +1641,7 @@
       "independent_quantile": "99932655.45026289575832710752686946418876",
       "agreement_significant_digits": 109.911,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.577,
+      "independent_runtime_s": 0.705,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1560,7 +1667,7 @@
       "independent_quantile": "100067373.4646420742266801689500576458823",
       "agreement_significant_digits": 110.953,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.581,
+      "independent_runtime_s": 0.725,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1586,7 +1693,7 @@
       "independent_quantile": "100085008.5027291736007438459280280102168",
       "agreement_significant_digits": 110.05,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.623,
+      "independent_runtime_s": 0.719,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1612,7 +1719,7 @@
       "independent_quantile": "99978305.16160518139551184458277403097478",
       "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.607,
+      "independent_runtime_s": 0.737,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1638,7 +1745,7 @@
       "independent_quantile": "99987453.71110687894811879519452738885699",
       "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.604,
+      "independent_runtime_s": 0.73,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1664,7 +1771,7 @@
       "independent_quantile": "99993087.15033188717576683093927234998259",
       "agreement_significant_digits": 110.174,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.582,
+      "independent_runtime_s": 0.786,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1690,7 +1797,7 @@
       "independent_quantile": "99997774.64080290383796251673650293839374",
       "agreement_significant_digits": 110.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.601,
+      "independent_runtime_s": 0.916,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1716,7 +1823,7 @@
       "independent_quantile": "100002224.058859299715021621631132411025",
       "agreement_significant_digits": 110.049,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.676,
+      "independent_runtime_s": 0.803,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1742,7 +1849,7 @@
       "independent_quantile": "100006911.8348712876385839814419676197704",
       "agreement_significant_digits": 110.049,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.612,
+      "independent_runtime_s": 0.717,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1768,7 +1875,7 @@
       "independent_quantile": "100012546.0049318114765218739584389117475",
       "agreement_significant_digits": 110.475,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.576,
+      "independent_runtime_s": 0.711,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1794,7 +1901,7 @@
       "independent_quantile": "100021696.6430959430558000505659306509559",
       "agreement_significant_digits": 109.873,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.618,
+      "independent_runtime_s": 0.797,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1820,7 +1927,7 @@
       "independent_quantile": "99923368.77938740384222916905705765076364",
       "agreement_significant_digits": 109.952,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.6,
+      "independent_runtime_s": 0.773,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {
@@ -1846,7 +1953,7 @@
       "independent_quantile": "100076669.0555691435786187757658754658273",
       "agreement_significant_digits": 110.254,
       "independent_newton_steps": 5,
-      "independent_runtime_s": 0.615,
+      "independent_runtime_s": 0.729,
       "coarse_sanity": {
         "standing": "coarse only - not evidential",
         "scipy": {

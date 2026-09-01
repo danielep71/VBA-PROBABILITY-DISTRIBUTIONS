@@ -1,8 +1,15 @@
 # Chi-square inverse reference study (#22, v1.0.0 plan Track A2 item 6)
 
-**Status: PROVISIONAL — INCOMPLETE.** The Rmpfr leg has not run. No final
-agreement figure is recorded and the feasibility checkpoint must not be
-marked complete until `rmpfr_crosscheck.R` has been run and verified.
+**Status: COMPLETE.** All legs have run and the composite authority is
+recorded in `chisq_crosscheck.json`, derived from the committed leg records
+rather than written by hand. Conservative final agreement: **109.873
+significant digits**.
+
+**Factual limitation.** Native Rmpfr `igamma` covers df = 1E6 and 1E7 only
+(46 of 69 points). Its `mpfr_gamma_inc` aborts above shape ~4.5E7 and
+df = 1E8 requires shape 5E7, so that block is covered by the accepted
+gmpy2/MPFR substitution plus algorithm-independent quadrature. The
+substitution is recorded in `docs/V1_0_0_IMPLEMENTATION_PLAN.md`.
 
 ## Frozen design
 
@@ -49,14 +56,18 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 - 69/69 converged and stabilized; 0 rejected.
 - Two-precision stabilization: 55.89 – 59.26 significant digits (required 40).
 
-| Leg | Standing | Coverage | Agreement (sig. digits) |
-|---|---|---|---|
-| Quadrature (mpmath) | algorithm-independent | 69/69 | min 109.87 |
-| gmpy2 / MPFR arithmetic | implementation-independent | 69/69 | min 115.11 |
-| Rmpfr `igamma` | third-party incomplete gamma | 46/69 | min 115.96 |
+| Leg | Standing | Coverage | Precision pair | Min agreement | Runtime |
+|---|---|---|---|---|---|
+| Primary series/CF | route under test | 69/69 | 60/120 dps | — | 119 s |
+| Quadrature (mpmath) | algorithm-independent | 69/69 | 110 dps | 109.873 | 44.156 s |
+| gmpy2 / MPFR arithmetic | implementation-independent | 69/69 | 200/400 bits | 115.1094 | 16.222 s |
+| Rmpfr `igamma` | third-party incomplete gamma | 46/69 (df 1E6, 1E7) | 200/400 bits | 115.9555 | 76.782 s + 1394.086 s |
 
-Conservative headline: **109.87 significant digits**, the minimum across all
-legs and all points.
+Conservative headline: **109.873 significant digits**, the minimum across all
+legs and all points. The maximum would flatter the result.
+
+Runtimes are measured at generation time, so the quadrature figure moves
+between runs; the value above is from the committed record.
 
 ## Recorded findings
 
