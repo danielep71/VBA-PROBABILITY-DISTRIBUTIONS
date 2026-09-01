@@ -26,6 +26,18 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
 # identical table; the shared registry is what stops the two evaluators from
 # supporting different sets of distributions.
 _TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf}
+
+
+def forward_cdf(fn, x, a2, a3):
+    """Forward CDF for a tail_probability_residual row, dispatched by function.
+
+    Extracted as a named seam so the dispatch can be tested DIRECTLY. Inside
+    worst_for() it is unreachable for an unsupported function, because
+    dispositions() blocks such rows at preflight - which means a fall-through
+    reintroduced here would be caught by no fixture at all. Testing this
+    function closes that hole and keeps the guard independent of row_validity.
+    """
+    return _TAIL_CDFS[tail_cdf_name(fn)](x, a2, a3)
 getcontext().prec = 50
 mp.mp.dps = 50
 
@@ -49,9 +61,8 @@ def worst_for(measure, metric, rows, fn):
         if measure == "tail_probability_residual":
             target = mp.mpf(r["arg1"]); a2 = mp.mpf(r["arg2"]); a3 = mp.mpf(r["arg3"]); x = mp.mpf(str(o))
             # Explicit dispatch, no fall-through. Previously any function that
-            # was not Beta was scored with the F CDF, silently. tail_cdf_name
-            # raises for an unregistered function so it can never be scored.
-            rec = _TAIL_CDFS[tail_cdf_name(fn)](x, a2, a3)
+            # was not Beta was scored with the F CDF, silently.
+            rec = forward_cdf(fn, x, a2, a3)
             e = normalize_tail_residual(rec, target)
         else:
             ref = parse_reference(r["reference"])

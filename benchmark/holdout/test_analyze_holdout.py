@@ -136,8 +136,9 @@ def main():
     # fixtures exist so the two cannot drift to different supported sets.
     from _contract_eval import (TAIL_SUPPORTED, tail_cdf_name,
                                 UnsupportedTailFunction, dispositions,
-                                row_validity)
+                                row_validity, normalize_tail_residual)
     import analyze_holdout as AH
+    from analyze_holdout import mp
 
     if set(AH._TAIL_CDFS) != {spec["cdf"] for spec in TAIL_SUPPORTED.values()}:
         fails.append("holdout CDF table does not match the shared registry")
@@ -179,6 +180,75 @@ def main():
         if row_validity(dict(tail_row, **{k: "abc"}), "tail_probability_residual") is None:
             fails.append(f"holdout: unparseable {k} must be invalid")
 
+    # --- the HOLDOUT EVALUATOR must actually use the registry too -----------
+    # Same gap as the main arm: the registry assertions above do not prove that
+    # worst_for() consults it. Reintroducing the binary branch in
+    # analyze_holdout.py alone left every committed fixture green. Assert the
+    # value worst_for RETURNS, which is only reproducible if it dispatched to
+    # the correct CDF; ibeta and f_cdf differ widely at these arguments.
+    def tail_row(fn, p_, a2, a3, x):
+        return {"function": fn, "arg1": p_, "arg2": a2, "arg3": a3, "arg4": "",
+                "reference": "", "observed_vba": x, "expected_error": ""}
+
+    bx, ba, bb, bp = "0.3", "2", "5", "0.4"
+    got_b = AH.worst_for("tail_probability_residual", "relative",
+                         [tail_row("Beta_InverseCumulative", bp, ba, bb, bx)],
+                         "Beta_InverseCumulative")[0]
+    want_b = normalize_tail_residual(AH.ibeta(mp.mpf(bx), mp.mpf(ba), mp.mpf(bb)),
+                                     mp.mpf(bp))
+    wrong_b = normalize_tail_residual(AH.f_cdf(mp.mpf(bx), mp.mpf(ba), mp.mpf(bb)),
+                                      mp.mpf(bp))
+    if got_b != want_b:
+        fails.append("holdout evaluator did not dispatch Beta to ibeta")
+    if got_b == wrong_b:
+        fails.append("holdout evaluator dispatched Beta to f_cdf")
+
+    fx, f1, f2, fp = "0.5", "5", "7", "0.4"
+    got_f = AH.worst_for("tail_probability_residual", "relative",
+                         [tail_row("F_InverseCumulative", fp, f1, f2, fx)],
+                         "F_InverseCumulative")[0]
+    want_f = normalize_tail_residual(AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)),
+                                     mp.mpf(fp))
+    wrong_f = normalize_tail_residual(AH.ibeta(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)),
+                                      mp.mpf(fp))
+    if got_f != want_f:
+        fails.append("holdout evaluator did not dispatch F to f_cdf")
+    if got_f == wrong_f:
+        fails.append("holdout evaluator dispatched F to ibeta")
+
+    # An unsupported function must never be scored here either. Note the
+    # architectures differ: worst_for() calls dispositions() itself, so a
+    # function-aware row_validity blocks the row BEFORE the dispatch and it
+    # returns None rather than raising. compute_errors.tail_residual receives
+    # already-filtered rows, so there the dispatch itself must raise. Both are
+    # fail-closed; only the layer that stops them differs. Assert the property
+    # that matters - the row is not scored - rather than the mechanism.
+    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative"):
+        res = AH.worst_for("tail_probability_residual", "relative",
+                           [tail_row(fn_bad, "0.9", "1000000", "1", "1039569.3")],
+                           fn_bad)
+        worst_bad, _, n_bad = res[0], res[1], res[2]
+        if worst_bad is not None or n_bad != 0:
+            fails.append(f"holdout evaluator scored an unsupported function: {fn_bad}")
+    # And the dispatch SEAM itself must refuse, independently of preflight.
+    # Without this, a fall-through reintroduced in analyze_holdout.py alone is
+    # caught by no fixture: worst_for() blocks unsupported rows before the
+    # dispatch, and for Beta and F the binary branch returns identical values.
+    # Testing forward_cdf directly makes that regression visible.
+    if AH.forward_cdf("Beta_InverseCumulative", mp.mpf(bx), mp.mpf(ba),
+                      mp.mpf(bb)) != AH.ibeta(mp.mpf(bx), mp.mpf(ba), mp.mpf(bb)):
+        fails.append("forward_cdf did not dispatch Beta to ibeta")
+    if AH.forward_cdf("F_InverseCumulative", mp.mpf(fx), mp.mpf(f1),
+                      mp.mpf(f2)) != AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)):
+        fails.append("forward_cdf did not dispatch F to f_cdf")
+    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
+                   "Gamma_InverseCumulative", ""):
+        try:
+            AH.forward_cdf(fn_bad, mp.mpf("0.5"), mp.mpf(5), mp.mpf(7))
+            fails.append(f"forward_cdf must refuse {fn_bad!r}")
+        except UnsupportedTailFunction:
+            pass
+
     if fails:
         print("FAIL: analyze_holdout metric semantics")
         for f in fails:
@@ -186,8 +256,9 @@ def main():
         raise SystemExit(1)
     print("PASS: metric controls abs-vs-rel; measure selects the residual and\n"
           "      scaled paths; invalid scaled arg1 is caught by preflight; an\n"
-          "      unknown measure is rejected; tail dispatch is fail-closed and\n"
-          "      shares the gate's supported-function registry")
+          "      unknown measure is rejected; tail dispatch is fail-closed,\n"
+          "      shares the gate's registry, and is asserted through the\n"
+          "      evaluator itself")
 
 
 if __name__ == "__main__":

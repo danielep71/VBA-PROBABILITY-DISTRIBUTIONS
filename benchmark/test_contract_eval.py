@@ -287,6 +287,54 @@ _disp_ok = dispositions([_tail_ok], TR)
 check(len(_disp_ok.to_measure) == 1,
       "a supported tail row still reaches the measurer")
 
+# --- the MAIN EVALUATOR must actually use the registry ----------------------
+# The fixtures above pin _contract_eval's registry. They do NOT prove that
+# compute_errors.tail_residual consults it: reintroducing the binary branch in
+# compute_errors.py alone left every committed fixture green, because those
+# fixtures never call the evaluator. This block closes that gap by asserting
+# the value the evaluator RETURNS, which is only reproducible if it dispatched
+# to the correct CDF. ibeta and f_cdf differ by a wide margin at these
+# arguments (0.5798 vs 0.2467), so a mis-dispatch cannot coincide.
+import compute_errors as _CE
+from _ibeta import ibeta as _ib, f_cdf as _fc
+import mpmath as _mpx
+_mpx.mp.dps = 50
+
+def _tail_row(fn, p_, a2, a3, x):
+    return {"function": fn, "arg1": p_, "arg2": a2, "arg3": a3, "arg4": "",
+            "reference": "", "observed_vba": x, "expected_error": ""}
+
+# Beta must route to ibeta, NOT f_cdf.
+_bx, _ba, _bb, _bp = "0.3", "2", "5", "0.4"
+_row_b = _tail_row("Beta_InverseCumulative", _bp, _ba, _bb, _bx)
+_got_b, _, _n_b = _CE.tail_residual([_row_b], "Beta_InverseCumulative")
+_want_b = normalize_tail_residual(_ib(_mpx.mpf(_bx), _mpx.mpf(_ba), _mpx.mpf(_bb)), _mpx.mpf(_bp))
+_wrong_b = normalize_tail_residual(_fc(_mpx.mpf(_bx), _mpx.mpf(_ba), _mpx.mpf(_bb)), _mpx.mpf(_bp))
+check(_n_b == 1, "Beta tail row is scored")
+check(_got_b == _want_b, "main evaluator dispatched Beta to ibeta")
+check(_got_b != _wrong_b, "main evaluator did NOT dispatch Beta to f_cdf")
+
+# F must route to f_cdf, NOT ibeta.
+_fx, _f1, _f2, _fp = "0.5", "5", "7", "0.4"
+_row_f = _tail_row("F_InverseCumulative", _fp, _f1, _f2, _fx)
+_got_f, _, _n_f = _CE.tail_residual([_row_f], "F_InverseCumulative")
+_want_f = normalize_tail_residual(_fc(_mpx.mpf(_fx), _mpx.mpf(_f1), _mpx.mpf(_f2)), _mpx.mpf(_fp))
+_wrong_f = normalize_tail_residual(_ib(_mpx.mpf(_fx), _mpx.mpf(_f1), _mpx.mpf(_f2)), _mpx.mpf(_fp))
+check(_n_f == 1, "F tail row is scored")
+check(_got_f == _want_f, "main evaluator dispatched F to f_cdf")
+check(_got_f != _wrong_f, "main evaluator did NOT dispatch F to ibeta")
+
+# An unsupported function must RAISE out of the evaluator itself, so it can
+# never be scored through F. compute_errors turns this into PENDING, never a
+# verdict.
+for _fn in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
+            "Gamma_InverseCumulative"):
+    try:
+        _CE.tail_residual([_tail_row(_fn, "0.9", "1000000", "1", "1039569.3")], _fn)
+        check(False, f"main evaluator must refuse to score {_fn!r}")
+    except UnsupportedTailFunction:
+        pass
+
 
 if fails:
     for f in fails:
