@@ -9,6 +9,8 @@ commands = (
     ("test_contract_eval.py",),
     ("test_grid_coverage.py",),
     ("check_grid_coverage.py", "--mode", "auto", "--check-summary"),
+    ("test_root_readme.py",),
+    ("check_root_readme.py",),
 )
 for command in commands:
     proc = subprocess.run([sys.executable] + list(command), cwd=HERE)

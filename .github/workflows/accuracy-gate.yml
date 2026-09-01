@@ -79,6 +79,12 @@ jobs:
           python test_contract_eval.py
           python test_grid_coverage.py
           python check_grid_coverage.py --mode auto --check-summary
+          # The root README had no guard: it was silently replaced by an
+          # unrelated study README and every check here still passed. The
+          # step below guards structure and identity, not content, so #28
+          # regenerating the assurance figures cannot trip it.
+          python test_root_readme.py
+          python check_root_readme.py
           python test_manifest.py
 
       - name: Run strict accuracy gate on the committed grid
