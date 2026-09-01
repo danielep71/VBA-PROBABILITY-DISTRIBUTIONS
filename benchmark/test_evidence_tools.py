@@ -11,6 +11,7 @@ commands = (
     ("check_grid_coverage.py", "--mode", "auto", "--check-summary"),
     ("test_root_readme.py",),
     ("check_root_readme.py",),
+    ("test_igamma_parity.py",),
 )
 for command in commands:
     proc = subprocess.run([sys.executable] + list(command), cwd=HERE)

@@ -207,6 +207,13 @@ TAIL_SUPPORTED = {
         "cdf": "t_cdf",
         "args": ("arg1", "arg2"),
     },
+    # Chi-square inverse rows also carry only (p, df). Its forward CDF comes
+    # from benchmark/_igamma.py, not mpmath.gammainc, which raises
+    # NoConvergence at the df = 1E7 and 1E8 shapes this surface needs.
+    "ChiSquare_InverseCumulative": {
+        "cdf": "chi2_cdf",
+        "args": ("arg1", "arg2"),
+    },
 }
 
 

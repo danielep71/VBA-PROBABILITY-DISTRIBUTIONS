@@ -13,6 +13,7 @@ import os as _os, sys as _sys
 # Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta, f_cdf, t_cdf
+from _igamma import chi2_cdf
 # Single-sourced evaluation primitives shared with the release gate
 # (compute_errors.py) so the two analyzers cannot diverge on metric arithmetic,
 # parsing, or tail-residual normalisation.
@@ -26,7 +27,8 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
 # Name -> callable, keyed by _contract_eval.TAIL_SUPPORTED. The gate holds the
 # identical table; the shared registry is what stops the two evaluators from
 # supporting different sets of distributions.
-_TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf, "t_cdf": t_cdf}
+_TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf, "t_cdf": t_cdf,
+              "chi2_cdf": chi2_cdf}
 
 
 def forward_cdf(fn, x, *shape):
@@ -124,7 +126,20 @@ def main():
         # ordinary error, and the whitelist would protect only one of the two
         # evaluation arms.
         measure = validate_measure(c["measure"])
-        w, at, n, n_missing, n_error, n_violation, n_invalid, n_skipped = worst_for(measure, c["metric"], matched, c["function"])
+        try:
+            w, at, n, n_missing, n_error, n_violation, n_invalid, n_skipped = worst_for(measure, c["metric"], matched, c["function"])
+        except Exception as exc:
+            # An evaluator failure - an incomplete-gamma route exhausting its
+            # iteration cap, or a registered CDF whose callable is missing -
+            # must BLOCK this contract, not crash the run and not produce a
+            # verdict. It is reported as INCOMPLETE and main() exits nonzero,
+            # mirroring the gate turning the same failure into PENDING.
+            incomplete += 1
+            print(f"{c['contract_id']:<48}{c['metric']:<10}{c['threshold']:>10}"
+                  f"{'INCOMPLETE':>15}{0:>5}{'':>9}  "
+                  f"evaluator error: {type(exc).__name__}: {exc}")
+            results.append((c, None, None, 0, "INCOMPLETE"))
+            continue
         if n_missing or n_error or n_violation or n_invalid or n_skipped:
             # Any blank/ERROR/unparseable in-envelope row, or an envelope-reject row
             # that failed to return #NUM!, blocks - it is not silently excluded.

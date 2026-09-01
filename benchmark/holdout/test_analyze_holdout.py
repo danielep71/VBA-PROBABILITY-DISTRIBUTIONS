@@ -140,6 +140,8 @@ def main():
     import analyze_holdout as AH
     from analyze_holdout import mp
 
+    if AH._TAIL_CDFS.get("chi2_cdf") is not AH.chi2_cdf:
+        fails.append("holdout: chi2_cdf name is not bound to the chi2_cdf callable")
     if AH._TAIL_CDFS.get("t_cdf") is not AH.t_cdf:
         fails.append("holdout: t_cdf name is not bound to the t_cdf callable")
     if set(AH._TAIL_CDFS) != {spec["cdf"] for spec in TAIL_SUPPORTED.values()}:
@@ -153,7 +155,7 @@ def main():
     if AH._TAIL_CDFS.get("f_cdf") is not AH.f_cdf:
         fails.append("holdout: f_cdf name is not bound to the f_cdf callable")
 
-    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative", ""):
+    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative", ""):
         try:
             tail_cdf_name(fn_bad)
             fails.append(f"holdout: unsupported tail function must raise: {fn_bad!r}")
@@ -168,7 +170,7 @@ def main():
     d_ok = dispositions([tail_row], "tail_probability_residual")
     if len(d_ok.to_measure) != 1:
         fails.append("holdout: a supported tail row must reach the measurer")
-    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
+    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
         d_bad = dispositions([dict(tail_row, function=fn_bad)],
                              "tail_probability_residual")
         if d_bad.to_measure or d_bad.n_invalid != 1:
@@ -224,7 +226,7 @@ def main():
     # already-filtered rows, so there the dispatch itself must raise. Both are
     # fail-closed; only the layer that stops them differs. Assert the property
     # that matters - the row is not scored - rather than the mechanism.
-    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
+    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
         res = AH.worst_for("tail_probability_residual", "relative",
                            [tail_row(fn_bad, "0.9", "1000000", "1", "1039569.3")],
                            fn_bad)
@@ -242,7 +244,7 @@ def main():
     if AH.forward_cdf("F_InverseCumulative", mp.mpf(fx), mp.mpf(f1),
                       mp.mpf(f2)) != AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)):
         fails.append("forward_cdf did not dispatch F to f_cdf")
-    for fn_bad in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative", ""):
+    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative", ""):
         try:
             AH.forward_cdf(fn_bad, mp.mpf("0.5"), mp.mpf(5), mp.mpf(7))
             fails.append(f"forward_cdf must refuse {fn_bad!r}")
@@ -329,6 +331,61 @@ def main():
                       mp.mpf(f2)) != AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)):
         fails.append("holdout: F regressed under registry-driven arity")
 
+    # --- Chi-square on the holdout arm: non-convergence -> INCOMPLETE -------
+    # The gate turns an evaluator failure into PENDING. This arm must turn the
+    # same failure into INCOMPLETE and exit nonzero - never into a verdict, and
+    # never into an uncaught traceback that loses the other contracts.
+    import _igamma as IG
+
+    if AH.forward_cdf("ChiSquare_InverseCumulative", mp.mpf("999999.3"),
+                      mp.mpf("1000000.0")) != AH.chi2_cdf(mp.mpf("999999.3"),
+                                                          mp.mpf("1000000.0")):
+        fails.append("holdout: forward_cdf did not dispatch Chi-square to chi2_cdf")
+
+    chi_row = {"function": "ChiSquare_InverseCumulative", "arg1": "0.5",
+               "arg2": "1000000.0", "arg3": "", "arg4": "", "reference": "",
+               "observed_vba": "9.99999333333411E+005", "expected_error": ""}
+    if row_validity(chi_row, "tail_probability_residual") is not None:
+        fails.append("holdout: a two-argument Chi-square row must validate")
+    got_chi = AH.worst_for("tail_probability_residual", "relative",
+                           [chi_row], "ChiSquare_InverseCumulative")[0]
+    if got_chi is None or got_chi >= Decimal("1e-10"):
+        fails.append("holdout: Chi-square row must score a small residual")
+
+    # Exhausted caps must raise out of the evaluator, so main() records
+    # INCOMPLETE rather than printing a number.
+    saved_series, saved_cf = IG.MAX_SERIES_TERMS, IG.MAX_CF_ITERATIONS
+    try:
+        IG.MAX_SERIES_TERMS = 3
+        try:
+            AH.worst_for("tail_probability_residual", "relative",
+                         [chi_row], "ChiSquare_InverseCumulative")
+            fails.append("holdout: exhausted series cap must not yield a residual")
+        except IG.IGammaNonConvergence:
+            pass
+        IG.MAX_SERIES_TERMS = saved_series
+        IG.MAX_CF_ITERATIONS = 3
+        try:
+            IG.upper_cf(mp.mpf(500000), mp.mpf(500002))
+            fails.append("holdout: exhausted CF cap must raise")
+        except IG.IGammaNonConvergence:
+            pass
+    finally:
+        IG.MAX_SERIES_TERMS, IG.MAX_CF_ITERATIONS = saved_series, saved_cf
+
+    # A registered function with a missing callable must fail, not score.
+    saved_tbl = dict(AH._TAIL_CDFS)
+    try:
+        del AH._TAIL_CDFS["chi2_cdf"]
+        try:
+            AH.worst_for("tail_probability_residual", "relative",
+                         [chi_row], "ChiSquare_InverseCumulative")
+            fails.append("holdout: a missing chi2_cdf callable must not be scored")
+        except KeyError:
+            pass
+    finally:
+        AH._TAIL_CDFS.clear(); AH._TAIL_CDFS.update(saved_tbl)
+
     if fails:
         print("FAIL: analyze_holdout metric semantics")
         for f in fails:
@@ -339,7 +396,8 @@ def main():
           "      unknown measure is rejected; tail dispatch is fail-closed,\n"
           "      shares the gate's registry, and is asserted through the\n"
           "      evaluator itself; Student-t is sign-aware with\n"
-          "      registry-driven arity")
+          "      registry-driven arity; Chi-square uses the production\n"
+          "      incomplete-gamma kernel and blocks on non-convergence")
 
 
 if __name__ == "__main__":

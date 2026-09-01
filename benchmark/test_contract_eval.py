@@ -8,6 +8,7 @@ Locks the arithmetic that compute_errors.py (gate) and analyze_holdout.py
   * observation/reference/threshold parsing and evidence classification.
 Run: python3 test_contract_eval.py   (exit 0 = pass, nonzero = fail)
 """
+import os
 from decimal import Decimal
 from _contract_eval import (calculate_scaled_error, validate_scaled_metric,
                             validate_measure, KNOWN_MEASURES,
@@ -237,9 +238,14 @@ check(tail_cdf_name("F_InverseCumulative") == "f_cdf",
       "F routes to the F CDF")
 check(tail_cdf_name("StudentT_InverseCumulative") == "t_cdf",
       "Student-t routes to the Student-t CDF")
+check(tail_cdf_name("ChiSquare_InverseCumulative") == "chi2_cdf",
+      "Chi-square routes to the incomplete-gamma CDF")
 check(set(TAIL_SUPPORTED) == {"Beta_InverseCumulative", "F_InverseCumulative",
-                              "StudentT_InverseCumulative"},
-      "Beta, F and Student-t are registered; Chi-square is not (commit B)")
+                              "StudentT_InverseCumulative",
+                              "ChiSquare_InverseCumulative"},
+      "Beta, F, Student-t and Chi-square are registered")
+check(tail_shape_args("ChiSquare_InverseCumulative") == ("arg2",),
+      "Chi-square takes one shape argument")
 # Arity comes from the registry, not a fixed three-column assumption.
 check(tail_shape_args("Beta_InverseCumulative") == ("arg2", "arg3"),
       "Beta takes two shape arguments")
@@ -249,8 +255,8 @@ check(tail_shape_args("StudentT_InverseCumulative") == ("arg2",),
       "Student-t takes one shape argument")
 
 # Every unsupported inverse must RAISE, not default to F.
-for _fn in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative",
-            "Normal_InverseCumulative", "", "beta_inversecumulative"):
+for _fn in ("Gamma_InverseCumulative", "Normal_InverseCumulative", "",
+            "beta_inversecumulative"):
     try:
         tail_cdf_name(_fn)
         check(False, f"unsupported tail function must raise: {_fn!r}")
@@ -273,7 +279,7 @@ check(row_validity(_tail_ok, TR) is None, "valid F tail row passes preflight")
 check(row_validity(dict(_tail_ok, function="Beta_InverseCumulative"), TR) is None,
       "valid Beta tail row passes preflight")
 
-for _fn in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
+for _fn in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
     _bad = dict(_tail_ok, function=_fn)
     _why = row_validity(_bad, TR)
     check(_why is not None,
@@ -290,7 +296,7 @@ for _k in ("arg1", "arg2", "arg3"):
 
 # No unsupported function can reach the F evaluator: dispositions must not
 # place such a row in to_measure.
-_disp = dispositions([dict(_tail_ok, function="ChiSquare_InverseCumulative")], TR)
+_disp = dispositions([dict(_tail_ok, function="Gamma_InverseCumulative")], TR)
 check(len(_disp.to_measure) == 0 and _disp.n_invalid == 1,
       "an unsupported tail row is blocked, not measured")
 _disp_ok = dispositions([_tail_ok], TR)
@@ -337,7 +343,7 @@ check(_got_f != _wrong_f, "main evaluator did NOT dispatch F to ibeta")
 # An unsupported function must RAISE out of the evaluator itself, so it can
 # never be scored through F. compute_errors turns this into PENDING, never a
 # verdict.
-for _fn in ("ChiSquare_InverseCumulative", "Gamma_InverseCumulative"):
+for _fn in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
     try:
         _CE.tail_residual([_tail_row(_fn, "0.9", "1000000", "1", "1039569.3")], _fn)
         check(False, f"main evaluator must refuse to score {_fn!r}")
@@ -447,6 +453,79 @@ finally:
     _CE._TAIL_CDFS.clear(); _CE._TAIL_CDFS.update(_saved)
 check(_CE.tail_residual([_med], "StudentT_InverseCumulative")[2] == 1,
       "the callable table is restored after the missing-helper case")
+
+# --- Chi-square: non-convergence must never become a verdict ---------------
+import _igamma as _IG
+
+_chi_row = _tail_row("ChiSquare_InverseCumulative", "0.5", "1000000.0", "",
+                     "9.99999333333411E+005")
+_got_chi, _, _n_chi = _CE.tail_residual([_chi_row], "ChiSquare_InverseCumulative")
+check(_n_chi == 1, "Chi-square tail row is scored")
+check(_got_chi < Decimal("1e-10"),
+      "a committed Chi-square envelope observation gives a small residual")
+check(row_validity(_chi_row, TR) is None,
+      "a two-argument Chi-square row validates without arg3")
+
+# The kernel must RAISE when a route exhausts its cap, not return a truncated
+# sum. Both caps are exercised: the series below the seam, the CF above it.
+_saved_series, _saved_cf = _IG.MAX_SERIES_TERMS, _IG.MAX_CF_ITERATIONS
+try:
+    _IG.MAX_SERIES_TERMS = 3
+    try:
+        _IG.lower_series(_mpx.mpf(500000), _mpx.mpf(499999))
+        check(False, "an exhausted series cap must raise")
+    except _IG.IGammaNonConvergence:
+        pass
+    _IG.MAX_SERIES_TERMS = _saved_series
+    _IG.MAX_CF_ITERATIONS = 3
+    try:
+        _IG.upper_cf(_mpx.mpf(500000), _mpx.mpf(500002))
+        check(False, "an exhausted CF cap must raise")
+    except _IG.IGammaNonConvergence:
+        pass
+finally:
+    _IG.MAX_SERIES_TERMS, _IG.MAX_CF_ITERATIONS = _saved_series, _saved_cf
+
+# There must be no mpmath.gammainc fallback anywhere in the kernel: a fallback
+# would silently reintroduce the failure the module exists to avoid, and it
+# fails only at some shapes, so its absence cannot be inferred from a passing
+# evaluation at df = 1E6.
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       "_igamma.py"), encoding="utf-8") as _f:
+    _igamma_src = _f.read()
+check("gammainc" not in _igamma_src.split('"""', 2)[2],
+      "the kernel never calls mpmath.gammainc outside its docstring")
+
+# Non-convergence must propagate out of the evaluator so the caller can record
+# PENDING. It must NOT be swallowed into a number.
+_saved_series = _IG.MAX_SERIES_TERMS
+try:
+    _IG.MAX_SERIES_TERMS = 3
+    try:
+        _CE.tail_residual([_chi_row], "ChiSquare_InverseCumulative")
+        check(False, "non-convergence must not yield a Chi-square residual")
+    except _IG.IGammaNonConvergence:
+        pass
+finally:
+    _IG.MAX_SERIES_TERMS = _saved_series
+
+# A registered function whose callable is missing must fail, not score.
+_saved = dict(_CE._TAIL_CDFS)
+try:
+    del _CE._TAIL_CDFS["chi2_cdf"]
+    try:
+        _CE.tail_residual([_chi_row], "ChiSquare_InverseCumulative")
+        check(False, "a missing chi2_cdf callable must not be scored")
+    except KeyError:
+        pass
+finally:
+    _CE._TAIL_CDFS.clear(); _CE._TAIL_CDFS.update(_saved)
+
+# Wrong dispatch: Chi-square scored through any other CDF must differ, so a
+# mis-registration cannot pass unnoticed.
+_chi_x = _mpx.mpf("9.99999333333411E+005")
+check(_IG.chi2_cdf(_chi_x, _mpx.mpf("1000000.0")) != _tc(_chi_x, _mpx.mpf("1000000.0")),
+      "Chi-square and Student-t CDFs are distinguishable at the same arguments")
 
 
 if fails:
