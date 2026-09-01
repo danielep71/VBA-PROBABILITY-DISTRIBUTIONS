@@ -30,19 +30,26 @@ sys.path.insert(0, HERE)  # single-sourced benchmark/ helpers
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
                             SCALED_MEASURE, validate_measure,
-                            normalize_tail_residual, dispositions, expected_error_drift)
+                            normalize_tail_residual, dispositions, expected_error_drift,
+                            tail_cdf_name, UnsupportedTailFunction)
 
 _IBETA_IMPORT_ERROR = None
 try:
     from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf
     import mpmath as _mp
     _mp.mp.dps = 50
+    # Name -> callable, keyed by the names registered in
+    # _contract_eval.TAIL_SUPPORTED. Adding a distribution means registering it
+    # there and adding its callable here; there is no default entry, so an
+    # unregistered function cannot reach any CDF.
+    _TAIL_CDFS = {"ibeta": _ibeta_cdf, "f_cdf": _f_cdf}
     _HAVE_IBETA = True
 except (ImportError, ModuleNotFoundError, SyntaxError) as _e:
     # Missing, corrupt, or incompatible reference helper. Retain the exact reason;
     # an ACTIVE contract that needs this evaluator must then BLOCK, never silently
     # downgrade to a non-blocking CHARACTERIZATION ONLY verdict.
     _HAVE_IBETA = False
+    _TAIL_CDFS = {}
     _IBETA_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
 
 
@@ -89,7 +96,11 @@ def tail_residual(rows, fn):
             continue
         p = _mp.mpf(r["arg1"]); a2v = _mp.mpf(r["arg2"]); a3v = _mp.mpf(r["arg3"])
         xv = _mp.mpf(str(xo))
-        recovered = _ibeta_cdf(xv, a2v, a3v) if fn == "Beta_InverseCumulative" else _f_cdf(xv, a2v, a3v)
+        # Explicit dispatch, no fall-through. Previously any function that was
+        # not Beta was scored with the F CDF, silently and plausibly.
+        # tail_cdf_name raises for an unregistered function; the caller turns
+        # that into PENDING rather than a verdict.
+        recovered = _TAIL_CDFS[tail_cdf_name(fn)](xv, a2v, a3v)
         e = normalize_tail_residual(recovered, p)
         cnt += 1
         if e > worst:

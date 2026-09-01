@@ -19,7 +19,13 @@ from _ibeta import ibeta, f_cdf
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
                             SCALED_MEASURE, validate_measure,
-                            normalize_tail_residual, dispositions)
+                            normalize_tail_residual, dispositions,
+                            tail_cdf_name, UnsupportedTailFunction)
+
+# Name -> callable, keyed by _contract_eval.TAIL_SUPPORTED. The gate holds the
+# identical table; the shared registry is what stops the two evaluators from
+# supporting different sets of distributions.
+_TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf}
 getcontext().prec = 50
 mp.mp.dps = 50
 
@@ -42,7 +48,10 @@ def worst_for(measure, metric, rows, fn):
             continue
         if measure == "tail_probability_residual":
             target = mp.mpf(r["arg1"]); a2 = mp.mpf(r["arg2"]); a3 = mp.mpf(r["arg3"]); x = mp.mpf(str(o))
-            rec = ibeta(x, a2, a3) if fn == "Beta_InverseCumulative" else f_cdf(x, a2, a3)
+            # Explicit dispatch, no fall-through. Previously any function that
+            # was not Beta was scored with the F CDF, silently. tail_cdf_name
+            # raises for an unregistered function so it can never be scored.
+            rec = _TAIL_CDFS[tail_cdf_name(fn)](x, a2, a3)
             e = normalize_tail_residual(rec, target)
         else:
             ref = parse_reference(r["reference"])

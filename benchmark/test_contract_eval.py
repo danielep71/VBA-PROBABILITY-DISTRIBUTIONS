@@ -218,6 +218,75 @@ check(row_validity(dict(_base, arg1="abc"), "scaled_output_error") is not None,
 check(row_validity(dict(_base, arg1="0"), "output_error") is None,
       "arg1=0 is fine for a non-scaled measure")
 
+# --- tail-residual dispatch must be fail-closed, never a fall-through -------
+# Both evaluators previously chose the forward CDF with
+#   ibeta(...) if fn == "Beta_InverseCumulative" else f_cdf(...)
+# so ANY other function was scored with the F CDF: silently, and returning a
+# plausible number rather than raising. No registry verdict was affected,
+# because the old preflight demanded arg1/arg2/arg3 and the unsupported
+# inverses take only (p, df) - but that was accidental, and a populated arg3
+# would have defeated it. These fixtures pin the guard, not the accident.
+from _contract_eval import (TAIL_SUPPORTED, tail_cdf_name, tail_required_args,
+                            UnsupportedTailFunction)
+
+TR = "tail_probability_residual"
+
+check(tail_cdf_name("Beta_InverseCumulative") == "ibeta",
+      "Beta routes to the incomplete-beta CDF")
+check(tail_cdf_name("F_InverseCumulative") == "f_cdf",
+      "F routes to the F CDF")
+check(set(TAIL_SUPPORTED) == {"Beta_InverseCumulative", "F_InverseCumulative"},
+      "only Beta and F are registered at this commit")
+
+# Every unsupported inverse must RAISE, not default to F.
+for _fn in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
+            "Gamma_InverseCumulative", "Normal_InverseCumulative", "", "beta_inversecumulative"):
+    try:
+        tail_cdf_name(_fn)
+        check(False, f"unsupported tail function must raise: {_fn!r}")
+    except UnsupportedTailFunction:
+        pass
+    try:
+        tail_required_args(_fn)
+        check(False, f"unsupported tail function must raise for args: {_fn!r}")
+    except UnsupportedTailFunction:
+        pass
+
+# THE CASE THAT MATTERED: plausible three-argument data for an unsupported
+# function. Under the old code this passed preflight and was scored with the F
+# CDF; it must now be rejected before scoring.
+_tail_ok = {"function": "F_InverseCumulative", "arg1": "0.9", "arg2": "5",
+            "arg3": "7", "arg4": "", "reference": "",
+            "observed_vba": "3.9715343910;0E+000",
+            "expected_error": ""}
+check(row_validity(_tail_ok, TR) is None, "valid F tail row passes preflight")
+check(row_validity(dict(_tail_ok, function="Beta_InverseCumulative"), TR) is None,
+      "valid Beta tail row passes preflight")
+
+for _fn in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative"):
+    _bad = dict(_tail_ok, function=_fn)
+    _why = row_validity(_bad, TR)
+    check(_why is not None,
+          f"unsupported function with plausible 3-arg data is rejected: {_fn}")
+    check("no registered" in (_why or ""),
+          f"rejection names the missing registration, not a parse error: {_fn}")
+
+# Missing or malformed required arguments still fail, per function.
+for _k in ("arg1", "arg2", "arg3"):
+    check(row_validity(dict(_tail_ok, **{_k: ""}), TR) is not None,
+          f"F tail row with blank {_k} is invalid")
+    check(row_validity(dict(_tail_ok, **{_k: "abc"}), TR) is not None,
+          f"F tail row with unparseable {_k} is invalid")
+
+# No unsupported function can reach the F evaluator: dispositions must not
+# place such a row in to_measure.
+_disp = dispositions([dict(_tail_ok, function="ChiSquare_InverseCumulative")], TR)
+check(len(_disp.to_measure) == 0 and _disp.n_invalid == 1,
+      "an unsupported tail row is blocked, not measured")
+_disp_ok = dispositions([_tail_ok], TR)
+check(len(_disp_ok.to_measure) == 1,
+      "a supported tail row still reaches the measurer")
+
 
 if fails:
     for f in fails:
@@ -225,4 +294,4 @@ if fails:
     raise SystemExit(1)
 print("PASS: shared contract-evaluation primitives (metric arithmetic, "
       "zero-reference, parsing, evidence classification, tail residual, "
-      "scaled_output_error, measure whitelist)")
+      "scaled_output_error, measure whitelist, fail-closed tail dispatch)")

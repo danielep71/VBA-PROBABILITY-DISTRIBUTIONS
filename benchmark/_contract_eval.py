@@ -167,6 +167,75 @@ def normalize_tail_residual(recovered, target):
     return Decimal(str(abs(recovered - target) / min(target, 1 - target)))
 
 
+# ---------------------------------------------------------------------------
+# Tail-residual forward-CDF dispatch
+#
+# Both evaluators previously chose the forward CDF with a binary branch:
+#
+#     ibeta(...) if fn == "Beta_InverseCumulative" else f_cdf(...)
+#
+# Any function that was not Beta therefore fell through to the F CDF and was
+# scored with the WRONG distribution - silently, returning a plausible number
+# rather than raising. No registry verdict was ever affected, because the
+# argument preflight below required arg1/arg2/arg3 and the unsupported inverses
+# take only (p, df), so their rows were rejected before reaching the dispatch.
+# That was accidental protection, not a designed guard: populating arg3 would
+# have been enough to defeat it.
+#
+# The table below replaces the fall-through. A function absent from it is
+# REJECTED, never scored. Adding a distribution means adding an entry here and
+# nowhere else, so the gate and the holdout analyzer cannot diverge.
+#
+# `args` names the grid columns that must parse for a row of that function,
+# in the order the CDF expects them after the quantile. arg1 is always the
+# target probability.
+# ---------------------------------------------------------------------------
+
+TAIL_SUPPORTED = {
+    "Beta_InverseCumulative": {
+        "cdf": "ibeta",
+        "args": ("arg1", "arg2", "arg3"),
+    },
+    "F_InverseCumulative": {
+        "cdf": "f_cdf",
+        "args": ("arg1", "arg2", "arg3"),
+    },
+}
+
+
+class UnsupportedTailFunction(Exception):
+    """A tail_probability_residual contract names a function with no registered
+    forward CDF. Raised rather than defaulted, so an unsupported function can
+    never be scored through another distribution's CDF."""
+
+
+def tail_cdf_name(fn):
+    """Return the registered forward-CDF name for `fn`, or raise.
+
+    There is deliberately no default. A new inverse surface must be registered
+    in TAIL_SUPPORTED before it can be scored.
+    """
+    spec = TAIL_SUPPORTED.get(fn)
+    if spec is None:
+        raise UnsupportedTailFunction(
+            f"{fn!r} has no registered forward CDF for "
+            f"tail_probability_residual; supported: "
+            f"{', '.join(sorted(TAIL_SUPPORTED))}. Refusing to score it "
+            "through another distribution's CDF.")
+    return spec["cdf"]
+
+
+def tail_required_args(fn):
+    """Grid columns that must parse for a tail row of `fn`. Raises for an
+    unsupported function, so validation and dispatch cannot disagree."""
+    spec = TAIL_SUPPORTED.get(fn)
+    if spec is None:
+        raise UnsupportedTailFunction(
+            f"{fn!r} has no registered tail argument list; supported: "
+            f"{', '.join(sorted(TAIL_SUPPORTED))}.")
+    return spec["args"]
+
+
 def evidence_gaps(rows, observed_key="observed_vba"):
     """
     Count evidence gaps among a contract's matched grid rows.
@@ -311,7 +380,18 @@ def row_validity(row, measure):
     except (InvalidOperation, ValueError):
         return f"unparseable observation {obs!r}"
     if measure == "tail_probability_residual":
-        for k in ("arg1", "arg2", "arg3"):
+        # Function-aware, and fail-closed on an unregistered function. The
+        # previous version required arg1/arg2/arg3 for every function
+        # regardless, which happened to reject the unsupported inverses
+        # because they take only (p, df) - accidental protection that a
+        # populated arg3 would have defeated, letting the row through to a
+        # dispatch that would have scored it with the F CDF.
+        fn = (row.get("function", "") or "").strip()
+        try:
+            required = tail_required_args(fn)
+        except UnsupportedTailFunction as exc:
+            return str(exc)
+        for k in required:
             v = (row.get(k, "") or "").strip()
             if v == "":
                 return f"missing required {k}"

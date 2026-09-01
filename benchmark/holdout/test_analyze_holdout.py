@@ -128,12 +128,66 @@ def main():
     except ValueError:
         pass
 
+    # --- the tail dispatch must be fail-closed on this arm too --------------
+    # The analyzer previously used the same binary branch as the gate:
+    #   ibeta(...) if fn == "Beta_InverseCumulative" else f_cdf(...)
+    # so an unsupported inverse would have been scored with the F CDF here as
+    # well. Both arms now share _contract_eval.TAIL_SUPPORTED, and these
+    # fixtures exist so the two cannot drift to different supported sets.
+    from _contract_eval import (TAIL_SUPPORTED, tail_cdf_name,
+                                UnsupportedTailFunction, dispositions,
+                                row_validity)
+    import analyze_holdout as AH
+
+    if set(AH._TAIL_CDFS) != {spec["cdf"] for spec in TAIL_SUPPORTED.values()}:
+        fails.append("holdout CDF table does not match the shared registry")
+    if tail_cdf_name("Beta_InverseCumulative") != "ibeta":
+        fails.append("holdout: Beta must route to ibeta")
+    if tail_cdf_name("F_InverseCumulative") != "f_cdf":
+        fails.append("holdout: F must route to f_cdf")
+    if AH._TAIL_CDFS.get("ibeta") is not AH.ibeta:
+        fails.append("holdout: ibeta name is not bound to the ibeta callable")
+    if AH._TAIL_CDFS.get("f_cdf") is not AH.f_cdf:
+        fails.append("holdout: f_cdf name is not bound to the f_cdf callable")
+
+    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative",
+                   "Gamma_InverseCumulative", ""):
+        try:
+            tail_cdf_name(fn_bad)
+            fails.append(f"holdout: unsupported tail function must raise: {fn_bad!r}")
+        except UnsupportedTailFunction:
+            pass
+
+    # Plausible three-argument data for an unsupported function must be blocked
+    # before scoring, so it can never reach the F evaluator.
+    tail_row = {"function": "F_InverseCumulative", "arg1": "0.9", "arg2": "5",
+                "arg3": "7", "arg4": "", "reference": "",
+                "observed_vba": "3.9715343910;0E+000", "expected_error": ""}
+    d_ok = dispositions([tail_row], "tail_probability_residual")
+    if len(d_ok.to_measure) != 1:
+        fails.append("holdout: a supported tail row must reach the measurer")
+    for fn_bad in ("ChiSquare_InverseCumulative", "StudentT_InverseCumulative"):
+        d_bad = dispositions([dict(tail_row, function=fn_bad)],
+                             "tail_probability_residual")
+        if d_bad.to_measure or d_bad.n_invalid != 1:
+            fails.append(f"holdout: unsupported tail row must be blocked: {fn_bad}")
+
+    # Missing or malformed required arguments still fail on this arm.
+    for k in ("arg1", "arg2", "arg3"):
+        if row_validity(dict(tail_row, **{k: ""}), "tail_probability_residual") is None:
+            fails.append(f"holdout: blank {k} must be invalid")
+        if row_validity(dict(tail_row, **{k: "abc"}), "tail_probability_residual") is None:
+            fails.append(f"holdout: unparseable {k} must be invalid")
+
     if fails:
         print("FAIL: analyze_holdout metric semantics")
         for f in fails:
             print("  - " + f)
         raise SystemExit(1)
-    print("PASS: metric controls abs-vs-rel; measure selects the residual and\n      scaled paths; invalid scaled arg1 is caught by preflight; an\n      unknown measure is rejected")
+    print("PASS: metric controls abs-vs-rel; measure selects the residual and\n"
+          "      scaled paths; invalid scaled arg1 is caught by preflight; an\n"
+          "      unknown measure is rejected; tail dispatch is fail-closed and\n"
+          "      shares the gate's supported-function registry")
 
 
 if __name__ == "__main__":
