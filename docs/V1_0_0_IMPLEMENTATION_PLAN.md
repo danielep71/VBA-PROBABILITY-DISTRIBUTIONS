@@ -177,6 +177,9 @@ flowchart TD
     E23 --> I34["#34 Student-t large-df tail"]
     I34 --> C22
     I34 --> I31
+    E23 --> I35["#35 Unbalanced-F inverse pair"]
+    I35 --> C22
+    I35 --> I31
     C22 --> I28["#28 Generated README"]
     C29 --> I28
     I30["#30 Action upgrades"] --> I31["#31 Release certification"]
@@ -261,7 +264,7 @@ This work begins in Phase 0 but is not a Phase 1 entry gate. It may continue alo
 4. Retain the source-path prediction: exact input subtraction near 0.5 should make nonzero neighbours suitable for relative scoring, with any observed floor attributable to the seed/forward-rounding implementation rather than intrinsic conditioning.
 5. Build the reference authority:
    - factor the converging lower-series / upper-Lentz-CF incomplete-gamma route for Chi-square and revalidate at materially higher precision;
-   - use the robust incomplete-beta route and exact public transforms for F;
+   - for F, generate references with the high-precision incomplete-beta route and exact public transforms; the production F inverse is NOT assumed robust — #35 isolates an unbalanced-df accuracy defect (7.8E-11 to 9.3E-9, including three rows under the active `validated` contract) that is distinct from #34's CF conditioning, and F references, the classifier freeze and final F thresholds wait for its result;
    - for Student-t, the existing incomplete-beta route is disproved above df ≈ 1E6 outside the complement region (#34: the binary64 Lentz fraction is ill-conditioned at a = df/2, achievable accuracy ~1E-9 regardless of stopping rule); use it as a reference only within its measured-accurate region, and the #34 large-df tail expansion once derived and validated;
    - cross-check fitting and holdout references independently with Rmpfr wherever its incomplete-gamma routine can execute;
    - at df = 1E8, use the accepted converging gmpy2/MPFR route plus algorithm-independent quadrature;
@@ -518,7 +521,7 @@ Mandatory generation order after a real Excel export:
 | #13 | six parent forward calls | post-#23 retained-bit crossover rerun | source-bound frozen Gamma/Chi holdouts | six surfaces + seams | separate family regimes | required | body Loader/deviance and cutoff movement |
 | #14 | scaled representable quantile | crossover + scale matrix | untouched log-inverse holdout | round-trip + true limits | quantile + tail residual | required | ordinary inverse regimes |
 | #26 | Gamma/Chi Q at A=.0001, X=2 | CF ladder + seam | untouched CF holdout | two public routes | CF representative rows | required | series, Poisson, non-convergence |
-| #22 | 36-row audit-baseline inverse debt set; four false F runtime-enforcement domain strings; eight mis-scoped F main rows; eight mis-scoped F holdout rows at df 2E5/5E5; three duplicate F inputs; eight exact-zero Student-t medians | release-candidate inverse fitting; Student-t `delta = 2^-53, 2^-43, 2^-33, 2^-23`; dyadic bridge p = .625/.75/.875 plus complements; accepted 69-point Chi-square df = 1E6/1E7/1E8 oracle set | disjoint offsets `2^-48, 2^-38, 2^-28, 2^-24`; bridge p = .5625/.6875/.8125/.9375 plus complements; Chi-square quadrature and gmpy2/MPFR 69/69, Rmpfr 46/69 where feasible; robust-beta references checked independently | inverse round-trip, exact-zero assertions, F/t/chi seams, p=.6 routing, zero-threshold and zero-return mutants | transition guard before numerical commits; final audit-baseline dispositions/domain cleanup and duplicate consolidation after #14 | release-candidate wave required | new-debt fingerprint, lost-contract/stale-disposition, duplicate/conflicting regime, zero-reference, cutoff, formatting, and unsupported-oracle fixtures |
+| #22 | 36-row audit-baseline inverse debt set; four false F runtime-enforcement domain strings; eight mis-scoped F main rows; eight mis-scoped F holdout rows at df 2E5/5E5; three duplicate F inputs; eight exact-zero Student-t medians | release-candidate inverse fitting; Student-t `delta = 2^-53, 2^-43, 2^-33, 2^-23`; dyadic bridge p = .625/.75/.875 plus complements; accepted 69-point Chi-square df = 1E6/1E7/1E8 oracle set | disjoint offsets `2^-48, 2^-38, 2^-28, 2^-24`; bridge p = .5625/.6875/.8125/.9375 plus complements; Chi-square quadrature and gmpy2/MPFR 69/69, Rmpfr 46/69 where feasible; high-precision beta references checked independently; production F inverse under #35 | inverse round-trip, exact-zero assertions, F/t/chi seams, p=.6 routing, zero-threshold and zero-return mutants | transition guard before numerical commits; final audit-baseline dispositions/domain cleanup and duplicate consolidation after #14 | release-candidate wave required | new-debt fingerprint, lost-contract/stale-disposition, duplicate/conflicting regime, zero-reference, cutoff, formatting, and unsupported-oracle fixtures |
 | #29 | changed-source fixture | n/a | first truthful binding written on the Phase 1 global holdout export | n/a | n/a | export required for closure | manifest unit tests |
 | #17 | destructive-default and duplicate/reference-change fixtures | n/a | n/a | observation-preservation checks | canonical-key safeguards | no Excel export required | safe-default, explicit-write, retirement, and failure-path fixtures |
 | #28 | manual/stale metric fixture | n/a | reads #29 state | reads Excel record | reads #22 state | result record | README diff |
@@ -2377,7 +2380,9 @@ Accepted on 2026-08-30 from commit e68cc82545ead9777b155751e51976e63f3f4243. Qua
 
 For df = 1E8, the accepted substitute is the converging series/CF route in gmpy2 MPFR arithmetic, cross-checked against algorithm-independent quadrature. Rmpfr remains the independent third-party check where it can execute. This closes oracle feasibility only; it does not freeze a production threshold or authorize holdout inspection.
 
-For F, use the repository's robust incomplete-beta route with exact public transformations, higher-precision stability checks, and independent Rmpfr cross-checks. For Student-t, that route is disproved at large df (#34): the binary64 continued fraction is ill-conditioned at a = df/2 and reaches only ~1E-9 above df ≈ 1E6 outside the complement region. #34 must close before any Student-t `envelope_domain` threshold is fitted or frozen; Chi-square and F work remain independent of it.
+For F, references are generated with the high-precision incomplete-beta route and exact public transformations, with stability checks and independent cross-checks. The production F inverse is not assumed robust: #35 records an unbalanced-df defect in `PROB_TryBetaInvRegularized` — the solving variable is selected by comparing `p` with `1−p`, and the unsolved member of the `(x, y)` pair is formed as `1 − U`, which loses `eps/tiny` when the shapes make that member small — affecting rows from 7.8E-11 to 9.3E-9, three of them under the active `validated` contract at threshold 2E-10. F references, the classifier freeze and final F thresholds wait for #35. Balanced `d1 = d2 = 1E8` F is #34's shared-CF comparator, not #35's.
+
+For Student-t, the incomplete-beta route is disproved at large df (#34): the binary64 continued fraction is ill-conditioned at a = df/2 and reaches only ~1E-9 above df ≈ 1E5 outside the complement region. #34 must close before any Student-t `envelope_domain` threshold is fitted or frozen; Chi-square work remains independent of both.
 
 Extend both the main-grid evaluator and `benchmark/holdout/analyze_holdout.py` so `tail_probability_residual` is scoreable for Chi-square and Student-t inverses, not only Beta/F. Add clean and deliberately degraded fixtures, compensated-observation fixtures, zero-reference/zero-threshold cases, wrong-regime cases, bridge and seam routing, and unavailable/unconverged oracle failures.
 
