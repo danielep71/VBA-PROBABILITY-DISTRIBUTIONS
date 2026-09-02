@@ -46,7 +46,14 @@ jobs:
 
       - name: Install reference dependencies
         id: deps
-        run: python -m pip install --upgrade pip mpmath
+        # SymPy is required by student_t_large_df_study/test_coefficients.py,
+        # which re-derives the #34 tail coefficients under the evidence-tool
+        # step. It was added to the shim in b8d633d without being added here;
+        # runs 181 and 184 failed on ImportError before reaching the strict
+        # gate, while the local mirror passed on machines that had SymPy. The
+        # local signature cannot detect a missing hosted dependency. Pinned so
+        # the derivation is reproducible.
+        run: python -m pip install --upgrade pip mpmath "sympy==1.14.0"
 
       - name: "Verify the study analyzer for #13"
         working-directory: benchmark/positive_ratio_subnormal
