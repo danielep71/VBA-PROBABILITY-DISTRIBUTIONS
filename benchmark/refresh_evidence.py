@@ -25,6 +25,11 @@ WHAT IT DOES NOT DO
 USAGE
     python refresh_evidence.py            regenerate, then verify
     python refresh_evidence.py --check    verify only, change nothing
+    python refresh_evidence.py            regenerate SUMMARIES only; writes
+                                          neither manifest
+    python refresh_evidence.py --bind-exported-main --bind-exported-holdout
+                                          only immediately after a real Excel
+                                          export of the corresponding grid
     python refresh_evidence.py --bind-exported-holdout
                                           bind a holdout just exported by Excel,
                                           then regenerate and verify
@@ -40,18 +45,30 @@ HOLDOUT = os.path.join(HERE, "holdout")
 # (label, working directory, argv). Order matters: the manifest must be written
 # before the summary, because the summary embeds the manifest's commit SHA and
 # timestamp.
+# Neither manifest is written here. Ordinary regeneration refreshes SUMMARIES;
+# binding is an assertion about how the observations were produced, and only a
+# fresh Excel export can make it. 9fba175 rebound the main manifest through
+# this list on a bare `refresh_evidence.py`, converting a truthful stale
+# boundary into a false clean binding. Binding now requires
+# --bind-exported-main or --bind-exported-holdout, and each passes
+# --from-fresh-export to the writer explicitly.
 REGENERATE = [
-    ("bind observations to source", HERE, ["write_manifest.py"]),
     ("accuracy summary", HERE, ["compute_errors.py", "--out", "accuracy_summary.md"]),
     ("main-grid coverage summary", HERE, ["check_grid_coverage.py"]),
     ("benchmark README contract table", HERE, ["render_contract_table.py", "--write"]),
     ("independent holdout summary", HOLDOUT, ["analyze_holdout.py"]),
 ]
 
+MAIN_BINDING = (
+    "bind main observations to source",
+    HERE,
+    ["write_manifest.py", "--from-fresh-export"],
+)
+
 HOLDOUT_BINDING = (
     "bind independent holdout to source",
     HERE,
-    ["write_manifest.py", "--holdout"],
+    ["write_manifest.py", "--holdout", "--from-fresh-export"],
 )
 
 # Mirrors .github/workflows/accuracy-gate.yml, in the same order. The evaluator
@@ -132,10 +149,13 @@ def warn_if_export_looks_missing():
 
 def main():
     check_only = "--check" in sys.argv
+    bind_main = "--bind-exported-main" in sys.argv
     bind_exported_holdout = "--bind-exported-holdout" in sys.argv
-    unknown = set(sys.argv[1:]) - {"--check", "--bind-exported-holdout"}
-    if unknown or (check_only and bind_exported_holdout):
-        raise SystemExit("usage: refresh_evidence.py [--check | --bind-exported-holdout]")
+    unknown = set(sys.argv[1:]) - {"--check", "--bind-exported-main",
+                                   "--bind-exported-holdout"}
+    if unknown or (check_only and (bind_main or bind_exported_holdout)):
+        raise SystemExit("usage: refresh_evidence.py [--check | "
+                         "--bind-exported-main] [--bind-exported-holdout]")
     saved = None
     if check_only:
         path = os.path.join(ROOT, HOLDOUT_SUMMARY)
@@ -147,11 +167,15 @@ def main():
         warn_if_export_looks_missing()
         print("Regenerating committed artifacts")
         regenerate = list(REGENERATE)
+        if bind_main:
+            # Explicit, and only valid immediately after a real export: the
+            # summary embeds the manifest's SHA, so binding precedes it.
+            regenerate.insert(0, MAIN_BINDING)
         if bind_exported_holdout:
             # The flag is intentionally explicit.  The committed 559-row holdout
             # predates current source and must not be rebound merely because a
             # developer regenerated summaries.
-            regenerate.insert(1, HOLDOUT_BINDING)
+            regenerate.insert(1 if bind_main else 0, HOLDOUT_BINDING)
         for label, cwd, argv in regenerate:
             code, out = run(cwd, argv)
             # compute_errors exits non-zero on a failing gate; that is reported

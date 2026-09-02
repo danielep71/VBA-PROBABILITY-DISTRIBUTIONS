@@ -317,7 +317,7 @@ Objective: prove the merged off-grid `PROB_StirlingError` recurrence removes the
    - amend preregistration before any #13 production call site if a crossover moves.
 8. Remeasure the X = 2 continued-fraction ladder for #26.
 9. Promote representative #23 small-shape and ordinary off-grid rows under existing public contracts.
-10. Re-export the complete current main grid and global holdout, write both truthful provenance bindings atomically, and generate main/holdout summaries.
+10. Re-export the complete current main grid and global holdout, then write both truthful provenance bindings atomically and generate main/holdout summaries. Binding is now explicit: write `benchmark/excel_regression_record.json` for the session — export session UTC, source commit, Excel version/build/bitness, regression totals, and per-grid `exported`/`sha256`/`row_count` — then run `refresh_evidence.py --bind-exported-main --bind-exported-holdout`. A bare `write_manifest.py` refuses and exits non-zero; ordinary `refresh_evidence.py` regenerates summaries only and writes no manifest. `check_manifest_provenance.py` fails, per commit, any manifest change made without its grid, without a validating export record, or otherwise than as an exact restoration.
 11. Run every numerical strict gate and unrelated holdout. The expected-red waiver must retire with all seven checks PASS. Run #22 in transition mode and prove #23 introduced no new or changed unclaimed row.
 12. Close #23 only if its unchanged frozen contracts pass and coverage debt did not grow.
 
@@ -649,8 +649,9 @@ binding limit becomes the series stopping criterion, not cancellation.
 3. The validated-domain edge documented (the lower-tail series reaches
    `PROB_GAMMA_MAX_ITER` above ~1E8 and returns `#NUM!`, which is correct
    Try-contract behaviour, not a defect)
-4. Evidence regenerated in order: export -> `write_manifest.py` ->
-   `compute_errors.py --out accuracy_summary.md`
+4. Evidence regenerated in order: export -> `refresh_evidence.py
+   --bind-exported-main` (which passes `--from-fresh-export` to
+   `write_manifest.py`) -> `compute_errors.py --out accuracy_summary.md`
 
 ### #3 — PROB_NUM_EPS: series/CF stopping criterion limits large-shape accuracy
 

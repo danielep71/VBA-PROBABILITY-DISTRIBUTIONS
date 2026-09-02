@@ -23,7 +23,12 @@ recorded as "unrecorded" rather than guessed:
 The independent holdout has a dedicated binding because its exporter and grid
 are separate.  Use this only after a real-Excel holdout export:
 
-    python write_manifest.py --holdout
+    python write_manifest.py --holdout --from-fresh-export
+
+WRITING REQUIRES --from-fresh-export.  A bare invocation refuses and exits
+non-zero: a manifest asserts that the committed observations were produced by
+the checked-out source, and only a real export makes that true.  Use --dry-run
+to see what would be written without touching anything.
 """
 import argparse
 import datetime
@@ -85,6 +90,18 @@ def main():
     ap.add_argument("--office-bitness", default="unrecorded")
     ap.add_argument("--commit-sha", default="unrecorded")
     ap.add_argument("--notes", default="")
+    # INTERLOCK. Writing a manifest asserts "these observations were produced
+    # by this source". Only a fresh export makes that true. 9fba175 carried a
+    # bare invocation that rebound the main manifest to source three commits
+    # newer than the observations, turning a truthful STALE EVIDENCE boundary
+    # into a false clean binding - one holdout write away from a green gate on
+    # stale evidence. A bare call now refuses.
+    ap.add_argument("--from-fresh-export", action="store_true",
+                    help="assert that observations were just re-exported from "
+                         "the checked-out source in Excel; required to write")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="print what would be written and exit 0 without "
+                         "touching any manifest")
     ap.add_argument("--holdout", action="store_true",
                     help="bind benchmark/holdout/holdout_grid.csv instead of the main grid")
     a = ap.parse_args()
@@ -120,6 +137,18 @@ def main():
         raise SystemExit("refusing to bind holdout with unrecorded provenance: "
                          + ", ".join(missing_fields))
 
+    # INTERLOCK, evaluated before anything is written.
+    if not a.from_fresh_export and not a.dry_run:
+        which = "holdout" if a.holdout else "main"
+        raise SystemExit(
+            f"refusing to rewrite the {which} manifest.\n"
+            "  Writing a manifest asserts that the committed observations were\n"
+            "  produced by the checked-out source. Only a fresh Excel export\n"
+            "  makes that true; rebinding without one silently converts stale\n"
+            "  evidence into a false clean binding (see 9fba175).\n"
+            "  If you have just re-exported, pass --from-fresh-export.\n"
+            "  To preview without writing, pass --dry-run.")
+
     builder = build_holdout_manifest if a.holdout else build_manifest
     manifest = builder(root, grid, contracts, generated_utc=now,
                        commit_sha=commit_sha, environment=environment,
@@ -129,6 +158,15 @@ def main():
         out = os.path.join(root, "benchmark", "holdout", HOLDOUT_MANIFEST_NAME)
     else:
         out = os.path.join(root, "benchmark", MANIFEST_NAME)
+    if a.dry_run:
+        n = len(manifest["source_binding"])
+        rows = manifest.get("observation_row_count")
+        print(f"dry run: would write {out}")
+        print(f"  commit_sha {manifest['commit_sha']}, {n} .bas modules bound, "
+              f"{rows} observation rows, schema {manifest['grid_schema_version']}")
+        print("  nothing was written")
+        return
+
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
         f.write("\n")

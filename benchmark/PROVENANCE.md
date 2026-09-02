@@ -131,3 +131,42 @@ are currently `unrecorded`.
 
 This removes the manual re-export step and makes the binding automatic: the only
 observations the gate ever sees are ones Stage 1 just produced from that revision.
+
+
+## Writing a manifest requires a fresh export
+
+A manifest asserts that the committed observations were produced by the
+checked-out source. Only a real Excel export makes that true.
+
+`write_manifest.py` refuses a bare invocation and exits non-zero. Writing
+requires `--from-fresh-export`; `--dry-run` previews without touching
+anything. `refresh_evidence.py` no longer binds during ordinary
+regeneration - it refreshes summaries only. Binding requires
+`--bind-exported-main` or `--bind-exported-holdout`, each of which passes
+`--from-fresh-export` to the writer explicitly.
+
+This exists because of `9fba175`. A bare `write_manifest.py` rebound the
+main manifest to source three commits newer than the observations. The
+seven-line signature was unchanged, but the strict gate's failure had moved
+from `STALE EVIDENCE` (two mismatches, truthful) to `STALE HOLDOUT EVIDENCE`,
+and the main binding read clean - one `write_manifest.py --holdout` away
+from a green gate on stale evidence. Restored in `c496f1b`.
+
+### The CI guard
+
+`check_manifest_provenance.py` examines each commit **separately**, never a
+push's aggregate diff: otherwise one commit touching the grid conceals
+another commit's rebind. A commit modifying a manifest is legal only if, in
+that same commit, one of these holds:
+
+| | Condition |
+| --- | --- |
+| A | the manifest's own grid is also modified - what a real export looks like |
+| B | `benchmark/excel_regression_record.json` is also modified **and validates**: it must identify that grid as an exported target and bind the export session, source identity, Excel version/build/bitness, regression totals, and each grid's SHA-256 and row count, matching the committed grid |
+| C | the commit modifies the manifest and nothing else, and the result is byte-identical to an earlier committed version - the repair path, which cannot launder a rebind because a rebind produces content that has never existed |
+
+B exists so that a re-export producing a byte-identical grid - a `.bas`
+change altering no observation value - remains legal. The record does not
+exist yet; it is produced by Phase 1's first export session, so until then
+only A and C can apply, which is correct for a phase in which no export can
+happen.

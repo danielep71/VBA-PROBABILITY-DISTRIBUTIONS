@@ -13,6 +13,8 @@ commands = (
     ("check_root_readme.py",),
     ("test_igamma_parity.py",),
     ("student_t_large_df_study/test_coefficients.py",),
+    ("test_manifest_provenance.py",),
+    ("check_manifest_provenance.py",),
 )
 for command in commands:
     proc = subprocess.run([sys.executable] + list(command), cwd=HERE)
