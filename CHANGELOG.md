@@ -99,6 +99,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
+
 - Added this changelog and the portfolio-standard release-history policy for
   VBA Probability Distributions.
 - Added a root `VERSION` marker at `0.0.0`. This is a neutral pre-release
