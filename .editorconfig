@@ -27,9 +27,9 @@ indent_style = space
 indent_size = 4
 tab_width = 4
 
-# Exported standard modules.
+# Exported standard, class, and UserForm text modules.
 # Do not set charset here: preserve the VBE export contract.
-[*.bas]
+[*.{bas,cls,frm}]
 end_of_line = crlf
 indent_style = space
 indent_size = 4
