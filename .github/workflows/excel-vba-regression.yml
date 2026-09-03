@@ -10,14 +10,12 @@ on:
       - "tests/**"
       - "ci/**"
       - ".github/workflows/excel-vba-regression.yml"
+  # This job is a required main-branch check. Keep the pull-request trigger
+  # unfiltered so every PR reports the required context instead of remaining
+  # permanently pending when only documentation or repository metadata changes.
   pull_request:
     branches:
       - main
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "ci/**"
-      - ".github/workflows/excel-vba-regression.yml"
 
 concurrency:
   group: excel-vba-${{ github.workflow }}-${{ github.ref }}
