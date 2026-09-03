@@ -16,13 +16,11 @@ on:
       - "src/**"
       - "tests/**"
       - ".github/workflows/accuracy-gate.yml"
+  # This job is a required main-branch check. Keep the pull-request trigger
+  # unfiltered so every PR reports the required context instead of remaining
+  # permanently pending when only documentation or repository metadata changes.
   pull_request:
     branches: [main]
-    paths:
-      - "benchmark/**"
-      - "src/**"
-      - "tests/**"
-      - ".github/workflows/accuracy-gate.yml"
 
 concurrency:
   group: accuracy-gate-${{ github.workflow }}-${{ github.ref }}
