@@ -1,87 +1,252 @@
 #==============================================================================
-# VBA-Probability-Distributions .gitignore
+# VBA-PROBABILITY-DISTRIBUTIONS .gitignore
 #------------------------------------------------------------------------------
 # PURPOSE
-#   Ignore local, temporary and generated files while keeping exported VBA source
-#   modules and intentional demo workbooks trackable.
+#   Keep the repository source-first, reviewable, reproducible, and safe to
+#   clone. Ignore workstation state, generated output, secrets, caches, and
+#   unintended Office packages while preserving authoritative source and
+#   repository evidence.
+#
+# REPOSITORY POLICY
+#   - Exported VBA, Python and R tooling, PowerShell CI, and benchmark evidence are source.
+#   - The demonstration workbook is an intentional, exact-path repository artifact.
+#   - All other Office packages remain generated or local.
+#   - Benchmark CSV/JSON data and published evidence must never be hidden.
+#
+# SAFETY RULE
+#   Never add broad rules for exported VBA source, documentation, repository
+#   automation, or evidence directories. Exceptions for intentional Office
+#   packages must use exact rooted paths.
 #==============================================================================
 
+
 #------------------------------------------------------------------------------
-# OFFICE TEMPORARY / LOCK FILES
+# MICROSOFT OFFICE TEMPORARY / LOCK / RECOVERY FILES
 #------------------------------------------------------------------------------
 ~$*
-~$*.xls*
-~$*.doc*
-~$*.ppt*
+.~lock.*#
+*.laccdb
+*.ldb
+
 *.tmp
 *.temp
 *.bak
 *.backup
 *.xlk
+*.asd
+*.wbk
+
 
 #------------------------------------------------------------------------------
-# OPERATING SYSTEM METADATA
+# GENERATED OFFICE PACKAGES
+#------------------------------------------------------------------------------
+# Office packages are generated or release artifacts by default. These global
+# rules prevent an accidental workbook saved anywhere in the tree from becoming
+# source. Re-include an intentional package only by its exact rooted path.
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.xlt
+*.xltx
+*.xltm
+*.xla
+*.xlam
+*.xll
+*.xlw
+
+*.docm
+*.dotm
+*.pptm
+*.potm
+*.ppsm
+*.accdb
+*.accde
+*.accdr
+*.mdb
+*.mde
+*.ade
+
+# Intentional repository packages:
+!/examples/STATS-Distributions demo.xlsm
+
+
+#------------------------------------------------------------------------------
+# RELEASE / BUILD STAGING
+#------------------------------------------------------------------------------
+# Root anchoring prevents a generated-directory name from hiding an
+# authoritative nested source or evidence directory.
+/release-assets/
+/build/
+/out/
+/output/
+/outputs/
+/dist/
+
+
+#------------------------------------------------------------------------------
+# LOCAL TEST / CERTIFICATION OUTPUT
+#------------------------------------------------------------------------------
+/test-output/
+/test-results/
+/coverage/
+/htmlcov/
+
+.coverage
+.coverage.*
+coverage.xml
+
+.pytest_cache/
+.hypothesis/
+.tox/
+.nox/
+
+
+#------------------------------------------------------------------------------
+# LOCAL TEMPORARY DIRECTORIES
+#------------------------------------------------------------------------------
+/temp/
+/tmp/
+/.cache/
+
+
+#------------------------------------------------------------------------------
+# WINDOWS FILE-SYSTEM / SHELL METADATA
+#------------------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+System Volume Information/
+*.stackdump
+
+# Reserved-name artifact occasionally created by shell redirection mistakes.
+nul
+
+
+#------------------------------------------------------------------------------
+# MACOS / NETWORK / UNIX METADATA
 #------------------------------------------------------------------------------
 .DS_Store
 .AppleDouble
 .LSOverride
-Thumbs.db
-ehthumbs.db
-desktop.ini
+Icon?
+._*
+.Trashes
+.Spotlight-V100
+.fseventsd
+
+.directory
+.fuse_hidden*
+.nfs*
+
 
 #------------------------------------------------------------------------------
-# EDITOR / IDE LOCAL SETTINGS
+# EDITOR / IDE / LOCAL ASSISTANT STATE
 #------------------------------------------------------------------------------
+# Project-wide configuration belongs in the repository; personal workspaces do
+# not. Re-include a specific shared editor file explicitly if one is introduced.
 .vscode/
 .idea/
+.vs/
+.history/
+.fleet/
+
+*.code-workspace
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 *.swp
 *.swo
+*~
+
+*.nppBackup
+session.xml
+
+.claude/
+.cursor/
+.aider*
+.continue/
+
 
 #------------------------------------------------------------------------------
-# LOGS
+# MERGE / PATCH / CONFLICT ARTIFACTS
+#------------------------------------------------------------------------------
+*.orig
+*.rej
+*.patch.tmp
+
+
+#------------------------------------------------------------------------------
+# LOGS / CRASH DUMPS
 #------------------------------------------------------------------------------
 *.log
+*.dmp
+*.dump
+
 
 #------------------------------------------------------------------------------
-# GENERATED OUTPUTS
+# LOCAL ENVIRONMENT / SECRET / SIGNING MATERIAL
 #------------------------------------------------------------------------------
-output/
-outputs/
-dist/
-build/
-temp/
-tmp/
+# Sanitized examples remain trackable.
+.env
+.env.*
+!.env.example
+
+*.pfx
+*.p12
+*.pvk
+*.key
+*.pem
+
 
 #------------------------------------------------------------------------------
-# TEST ARTIFACTS
+# PYTHON CACHE / LOCAL ENVIRONMENTS
 #------------------------------------------------------------------------------
-test-output/
-test-results/
-coverage/
-
-#------------------------------------------------------------------------------
-# KEEP THESE FILE TYPES TRACKABLE
-#------------------------------------------------------------------------------
-# Exported VBA source:
-#   *.bas
-#   *.cls
-#   *.frm
-#   *.frx
-#
-# Intentional Excel demo files:
-#   *.xlsm
-#   *.xlam
-#
-# Documentation:
-#   *.md
-#   *.txt
-
-# -----------------------------------------------------------------------------
-# Python (benchmark reference + gate tooling)
-# -----------------------------------------------------------------------------
+# Source, manifests, lock files, and requirements remain trackable.
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
-.pytest_cache/
+.eggs/
+pip-wheel-metadata/
+
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.ipynb_checkpoints/
+
 .venv/
 venv/
+
+
+#------------------------------------------------------------------------------
+# R SESSION / LOCAL LIBRARY STATE
+#------------------------------------------------------------------------------
+# R source, project files, renv.lock, and benchmark evidence remain trackable.
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+renv/library/
+renv/staging/
+renv/local/
+
+
+#------------------------------------------------------------------------------
+# AUTHORITATIVE CONTENT THAT MUST REMAIN TRACKABLE
+#------------------------------------------------------------------------------
+# These are documentation guardrails, not negation rules:
+#   src/*.bas, tests/**, ci/*.ps1
+#   benchmark/**, docs/**
+#   *.py, *.R, *.r, *.csv, *.json
+#   /examples/STATS-Distributions demo.xlsm
+#   assets/**, .github/**
+#   .editorconfig, .gitattributes, .gitignore
+#
+# Do not ignore exported VBA extensions or authoritative source, documentation,
+# benchmark, evidence, asset, or .github directories.
+#==============================================================================
