@@ -1,580 +1,397 @@
-# 🤝 Contributing to VBA-PROBABILITY-DISTRIBUTIONS
+<div align="center">
 
-<p align="left">
-  <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-217346">
-  <img alt="Language" src="https://img.shields.io/badge/Language-Excel_VBA-blue">
-  <img alt="Style" src="https://img.shields.io/badge/Style-House_Conventions-6f42c1">
-  <img alt="Tests" src="https://img.shields.io/badge/Tests-Test__STATS__PROBDIST__RunAll-orange">
-  <img alt="Verification" src="https://img.shields.io/badge/Verification-Independent_Reference-00A3E0">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
-</p>
+# 🤝 Contributing to VBA Probability Distributions
 
-Thank you for your interest in improving the library.
+### Tail-aware numerical probability functions for pure Excel VBA
 
-This is a numerical project. It therefore prioritizes:
+[![Contributions](https://img.shields.io/badge/Contributions-Welcome-2ea44f?style=flat-square)](#ways-to-contribute)
+[![Conduct](https://img.shields.io/badge/Conduct-Required-6f42c1?style=flat-square)](CODE_OF_CONDUCT.md)
+[![Security](https://img.shields.io/badge/Security-Private_reporting-d73a49?style=flat-square)](SECURITY.md)
+[![Workflow](https://img.shields.io/badge/Workflow-Source--first-0969da?style=flat-square)](#source-first-vba)
+[![License](https://img.shields.io/badge/License-MIT-217346?style=flat-square)](LICENSE)
 
-- small and reviewable changes;
-- explicit statistical parameterization;
-- documented numerical methods;
-- predictable failure contracts;
-- independently calculated reference values;
-- regression tests that protect the corrected behavior.
+<br>
 
-A contribution is not complete merely because it compiles. It must also explain and
-verify the numerical behavior it changes.
+**Focused scope · Reviewable source · Reproducible evidence · Honest limitations**
 
----
+<br>
 
-## 💬 Before you start
+[Start here](#start-here)
+&nbsp;·&nbsp;
+[Workflow](#development-workflow)
+&nbsp;·&nbsp;
+[VBA rules](#source-first-vba)
+&nbsp;·&nbsp;
+[Validation](#validation-and-evidence)
+&nbsp;·&nbsp;
+[Pull requests](#pull-requests)
 
-<p align="left">
-  <img alt="Step" src="https://img.shields.io/badge/Step-Open_an_Issue_First-217346">
-</p>
-
-Open an issue before beginning non-trivial work so the intended API, numerical
-method, and scope can be agreed in advance.
-
-Good issues include:
-
-- a reproducible wrong result or wrong worksheet-error code;
-- a numerical-accuracy problem supported by an independent reference;
-- a focused new distribution, moment, tail, or interval function;
-- a convergence, overflow, underflow, or performance concern;
-- a documentation gap or inaccurate parameter description.
-
-Tiny corrections such as typographical fixes, comment corrections, or obvious
-one-line defects may go directly to a pull request.
-
-Suspected security vulnerabilities must be reported privately under
-[SECURITY.md](SECURITY.md), not through a public issue.
+</div>
 
 ---
 
-## 🧰 Project layout
+Thank you for helping improve **VBA Probability Distributions**.
 
-<p align="left">
-  <img alt="Source" src="https://img.shields.io/badge/Source-Exported_VBA-217346">
-  <img alt="Tooling" src="https://img.shields.io/badge/Workflow-Import_Edit_Export-blue">
-  <img alt="External runtime" src="https://img.shields.io/badge/External_Runtime-None-lightgrey">
-</p>
+Contributions are welcome when they strengthen correctness, clarity,
+maintainability, compatibility, documentation, tests, or reproducibility. The
+standard is not simply that a change works once: another person must be able to
+review it, reproduce the evidence, and understand its operational boundaries.
 
-The repository stores exported VBA source rather than a binary production
-workbook.
+Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
+Report suspected vulnerabilities privately under [SECURITY.md](SECURITY.md);
+never disclose sensitive details in a public issue or pull request.
+
+---
+
+<a id="start-here"></a>
+
+## 🧭 Start here
+
+Before opening work:
+
+1. Read the README, this guide, the Code of Conduct, and the Security Policy.
+2. Search open and closed issues and pull requests for related work.
+3. Open an issue before a non-trivial feature, public-API change, dependency,
+   architectural change, compatibility break, or broad refactor.
+4. Agree the observable contract and validation approach before implementation.
+5. Keep credentials, personal/client data, proprietary workbooks, and restricted
+   reference material out of the repository.
+
+Small documentation corrections and narrowly obvious fixes may go directly to a
+focused pull request.
+
+> [!IMPORTANT]
+> Numerical equivalence that looks obvious must still be measured. VBA does not
+> short-circuit And or Or, and an assignment used to force a Double rounding
+> boundary may be correctness-critical.
+
+---
+
+<a id="ways-to-contribute"></a>
+
+## 🌱 Ways to contribute
+
+| Contribution | Good first action |
+|---|---|
+| 🐛 Reproducible defect | Open an issue with minimal inputs, expected behavior, observed behavior, and environment. |
+| ✨ Feature or API change | Open an issue describing users, contract, alternatives, compatibility, and validation. |
+| 🧪 Tests or reference evidence | Explain provenance, independence, precision, coverage, and expected failure detection. |
+| 📖 Documentation | Identify the affected behavior and keep examples executable and current. |
+| ⚙️ Repository/tooling | Explain developer impact, failure behavior, portability, and maintenance cost. |
+| 🔐 Security concern | Follow [SECURITY.md](SECURITY.md); do not open a public report. |
+| 💬 Usage question | Use the repository's supported discussion or issue channel without sensitive data. |
+
+A proposal may be adapted, deferred, or declined when it is out of scope,
+duplicates an existing capability, weakens a contract, or creates maintenance
+cost disproportionate to its benefit.
+
+---
+
+## 📁 Repository model
+
+This is a **source-first numerical library**. The Git diff, not an opaque workbook, is
+the review artifact.
+
+| Location | Purpose |
+|---|---|
+| `src/` | Authoritative exported distribution and numerical-kernel modules |
+| `tests/` | Fast deterministic VBA regression and contract tests |
+| `benchmark/` | High-precision external accuracy gate and evidence |
+| `docs/` and wiki | API, architecture, accuracy, and diagnostics |
+| `tools/` | Manifest, error computation, and source validation |
+
+The README and current tree are authoritative if a listed optional directory is
+not present.
+
+---
+
+## 🌿 Development workflow
+
+1. Fork or clone the repository and start from the current `main`.
+2. Create a short, focused branch such as `fix/clear-description`,
+   `feat/clear-description`, `docs/clear-description`, or
+   `test/clear-description`.
+3. Reproduce the existing behavior before changing it.
+4. Define the intended contract, affected callers, compatibility impact, and
+   evidence plan.
+5. Make the smallest coherent source change; do not mix unrelated formatting,
+   refactoring, generated files, or cleanup.
+6. Compile and run the relevant static, regression, host, and manual checks.
+7. Re-export changed VBA components and review the complete text/binary diff.
+8. Update documentation and release notes required by the change.
+9. Push the branch and open a pull request with evidence and limitations.
+
+Repository maintainers may use the repository's configured direct-push workflow
+where permitted. External contributions and reviewable portfolio changes should
+use branches and pull requests.
+
+### Commit discipline
+
+Write imperative, specific subjects, normally in this form:
 
 ```text
-src/M_STATS_PROBDIST_CORE.bas
-    Shared constants, predicates, guarded arithmetic, Log1p, Expm1,
-    the raw inverse-normal seed, and diagnostic status support.
-
-src/M_STATS_PROBDIST_SPECIALFUNCS.bas
-    Log-gamma, log-beta, stable log-combination, regularized incomplete
-    beta and gamma functions, continued fractions, series expansions,
-    and safeguarded inverse special functions.
-
-src/M_STATS_PROBDIST_NORMALFAMILY.bas
-    Standard Normal, Normal, and Lognormal worksheet functions.
-
-src/M_STATS_PROBDIST_TFAMILY.bas
-    Student t, Chi-square, and F worksheet functions.
-
-src/M_STATS_PROBDIST_CONTINUOUS.bas
-    Gamma, Beta, Exponential, Weibull, and continuous Uniform functions.
-
-tests/M_STATS_PROBDIST_TEST.bas
-    Consolidated assertions, family suites, reference values, and
-    regression tests.
+fix: preserve formulas during write-back
+feat: add explicit tail calculation
+test: cover cleanup after initialization failure
+docs: clarify supported Office environments
+chore: harden repository validation
 ```
 
-`M_STATS_PROBDIST_CORE` and `M_STATS_PROBDIST_SPECIALFUNCS` are the shared
-numerical foundation. Distribution-family modules consume those routines rather
-than maintaining private duplicate implementations.
-
-### Two test tiers
-
-Accuracy is protected at two levels, with different tolerances by design:
-
-- The **VBA suite** (`tests/M_STATS_PROBDIST_TEST.bas`) is a fast deterministic
-  regression and public-contract smoke test, run in Excel with broad tolerances
-  (about 1E-10 absolute/relative, 1E-9 tail, 1E-6 loose).
-- The **external benchmark** (`benchmark/`) is the measured high-precision
-  accuracy gate: 50-digit mpmath references enforcing `accuracy_contracts.csv`
-  (down to 5E-15 where claimed).
-
-Keep this separation when adding tests. Tight per-regime accuracy belongs in the
-benchmark contracts; the VBA suite should stay fast and deterministic and assert
-the public contract, not re-derive the benchmark's precision.
+Keep commits reviewable. Reference the issue when one exists. Do not include
+secrets, private links, generated attribution boilerplate, or unverifiable test
+claims in commit messages.
 
 ---
 
-## 🔁 Edit and export workflow
+<a id="source-first-vba"></a>
 
-1. Import the required `.bas` files into a macro-enabled Excel workbook.
+## 📦 Source-first VBA
 
-   Recommended dependency order:
+Exported source is authoritative.
 
-   ```text
-   CORE → SPECIALFUNCS → distribution-family modules → TEST
-   ```
+- Use `Option Explicit`.
+- Preserve the repository's VBE export metadata, module names, encoding, and
+  line-ending policy.
+- Match `.bas`, `.cls`, and `.frm` filenames to their component identity.
+- Keep every required `.frm` / `.frx` pair together; treat `.frx` as binary.
+- Do not edit a binary form resource as text.
+- Do not use a workbook or add-in as the only record of a code change.
+- Do not commit Office lock files, recovery copies, local exports, test output,
+  or generated binaries unless the repository explicitly designates them as
+  source.
+- Qualify workbook, worksheet, range, and application references.
+- Avoid implicit active-workbook, active-sheet, selection, and default-member
+  dependencies.
+- Keep `On Error Resume Next` scopes narrow and intentional.
+- Preserve useful diagnostic context and clean up on success and failure.
+- Avoid new references, APIs, dependencies, or platform assumptions until their
+  support and deployment impact is agreed.
 
-2. Make the change in the VBA Editor.
+### Public contracts and compatibility
 
-3. Compile with:
+Treat documented procedures, functions, classes, enums, parameters, defaults,
+return values, errors, side effects, workbook formats, and supported platforms
+as contracts.
 
-   ```text
-   Debug → Compile VBAProject
-   ```
+A contract-changing contribution must:
 
-4. Run the relevant family suite and then the complete regression harness.
+1. identify affected callers and migration needs;
+2. explain what changes and what remains unchanged;
+3. add or update regression coverage;
+4. update user-facing documentation and examples; and
+5. state whether the release impact is patch, minor, or major.
 
-5. For any numerical change, compare the result with an independent reference.
+Do not make an internal helper public merely to simplify a test. Use an explicit
+test seam where the project supports one.
 
-6. Re-export each changed module over the matching file under `src/` or `tests/`.
+### Excel state ownership
 
-7. Review the textual diff before committing.
-
-Do not commit the workbook used to edit or test the source.
-
----
-
-## 🧱 Coding standards
-
-<p align="left">
-  <img alt="Option Explicit" src="https://img.shields.io/badge/Option_Explicit-Required-217346">
-  <img alt="Procedure headers" src="https://img.shields.io/badge/Procedure_Headers-Required-blue">
-  <img alt="Naming" src="https://img.shields.io/badge/Naming-Namespaced-6f42c1">
-</p>
-
-### Module visibility
-
-- Every module must use `Option Explicit`.
-- `M_STATS_PROBDIST_CORE` and `M_STATS_PROBDIST_SPECIALFUNCS` use
-  `Option Private Module`.
-- Distribution-family modules must remain worksheet-visible and therefore must
-  not use `Option Private Module`.
-- The consolidated test module exposes only its intended public runner procedures.
-
-### Procedure headers
-
-Every module and procedure uses a structured banner.
-
-Include the fields relevant to the routine:
+Assume these surfaces belong to the caller or host unless the project explicitly
+owns them:
 
 ```text
-PURPOSE
-WHY
-INPUTS
-RETURNS
-BEHAVIOR
-ERROR POLICY
-DEPENDENCIES
-NOTES
-CALLED FROM
-UPDATED
+Application.Calculation
+Application.EnableEvents
+Application.ScreenUpdating
+Application.DisplayAlerts
+Application.StatusBar
+active workbook / worksheet / selection
+window styles, shortcuts, timers, names, links, connections, and shapes
 ```
 
-Where relevant, preserve specific sections such as:
+Capture state before changing it. Restore only state the component successfully
+changed and still owns. Cleanup must not conceal the original failure.
+
+---
+
+## 🧩 Project engineering contract
+
+| Area | Required behavior |
+|---|---|
+| **Parameterization** | State distribution parameterization, support, units, cumulative/tail convention, and worksheet error behavior. |
+| **Numerical kernels** | Preserve guarded arithmetic, cancellation-safe forms, convergence limits, and forced binary64 rounding boundaries where load-bearing. |
+| **Independent evidence** | Expected values must come from an independent implementation or authoritative source, never the VBA path under test. |
+| **Reachability** | Predict affected public callers and movement before changing a shared kernel; compare prediction with measured movement. |
+| **Public errors** | Preserve the documented `#NUM!` / `#VALUE!`, underflow, non-convergence, and optional status contracts. |
+| **Module identity** | Keep one file per module and match each `.bas` filename to `Attribute VB_Name`. |
+
+---
+
+<a id="validation-and-evidence"></a>
+
+## 🧪 Validation and evidence
+
+Validation must be proportional to risk and reproducible from the exact source
+under review.
+
+- Compile the complete VBA project.
+- Run the affected family suite and `Test_STATS_PROBDIST_RunAll`.
+- Run the external benchmark and its accuracy contracts for numerical changes.
+- Test central, boundary, tail, invalid-domain, underflow/overflow, inverse, and round-trip behavior as applicable.
+- Record exact commit, Excel/Office bitness, reference system/version/precision, tested points, tolerance, worst observed error, and failures.
+
+When source changes, regenerate evidence in this order: export Excel observations; write the manifest; compute the accuracy summary; then commit source, grid, manifest, and summary together. Never rebind old measurements to new code.
+
+### Evidence principles
+
+- Test the behavior, not only the implementation path.
+- Add a permanent regression for every corrected defect.
+- Include ordinary, boundary, invalid-input, error, and cleanup paths.
+- Use an independent source for expected numerical results.
+- State skips and unavailable environments explicitly; a skipped check is not a
+  pass.
+- Do not claim compatibility, accuracy, performance, or certification beyond
+  what was actually observed.
+- Treat cleanup failures and incomplete runs as failures.
+- Never generate expected values with the implementation under test.
+
+### Suggested evidence block
 
 ```text
-ALGORITHM PROVENANCE
-DESIGN PRINCIPLES
-ACCURACY
+Source
+------
+Commit / tag:
+Files or components changed:
+
+Environment
+-----------
+Excel:
+Office bitness:
+Operating system:
+Locale / date system:
+Deployment or host:
+
+Checks
+------
+Compile:
+Static checks:
+Focused tests:
+Full regression:
+Manual / UI / platform checks:
+Cleanup:
+
+Evidence
+--------
+Independent reference and version:
+Inputs / workload:
+Tolerance or acceptance rule:
+Expected:
+Observed:
+Worst discrepancy / dispersion:
+
+Limitations
+-----------
+Skipped or unverified:
+Follow-up:
 ```
 
-Provenance and accuracy statements must be specific and supportable. Do not use
-an unqualified phrase such as “high accuracy.”
+Remove non-applicable fields, but do not omit a material limitation.
 
-### Body structure
+---
 
-Use only the sections a routine needs, generally in this order:
+## 📖 Documentation and release notes
+
+Update the README and affected wiki pages for public functions, architecture, numerical accuracy, kernels, diagnostics, and testing. Keep examples and parameter descriptions synchronized.
+
+Documentation must say:
+
+- what users can rely on;
+- inputs, outputs, defaults, side effects, and failure behavior;
+- supported and untested environments;
+- installation or migration steps;
+- numerical or platform assumptions; and
+- any known limitation introduced or exposed by the change.
+
+Do not edit a released version or tag merely to describe unreleased work. Release
+numbers, artifacts, hashes, and dates belong to the repository's release
+workflow.
+
+---
+
+## 🔐 Security, privacy, and provenance
+
+- Follow [SECURITY.md](SECURITY.md) for vulnerability reports.
+- Use synthetic, anonymized, or explicitly redistributable examples and data.
+- Remove names, email addresses, account identifiers, workbook properties,
+  document metadata, credentials, tokens, private URLs, and machine-specific
+  paths.
+- Verify the license and redistribution rights of copied code, formulas,
+  reference tables, images, and generated material.
+- Cite material algorithms and external reference data precisely enough for a
+  reviewer to verify them.
+- You remain responsible for the correctness, licensing, security, and
+  reviewability of tool-assisted contributions.
+
+---
+
+<a id="pull-requests"></a>
+
+## 🚀 Pull requests
+
+A pull request should answer:
 
 ```text
-DECLARE
-INITIALIZE
-VALIDATE INPUTS
-COMPUTE
-RETURN SUCCESS
-FAIL - NUMERIC
-ERROR HANDLER
+What problem does this solve?
+What observable contract changes?
+What remains compatible?
+How was it validated from this exact source?
+What evidence is independent?
+What remains unverified?
 ```
 
-Place explanatory comments above the code they describe. Use inline comments
-primarily for declarations.
-
-Use the established literal and string forms where applicable:
-
-```vba
-0#
-1#
-vbNullString
-```
-
----
-
-## 🧩 Naming and callable contracts
-
-The prefix identifies the intended scope, but **does not by itself imply one
-universal VBA return type**.
-
-| Naming pattern | Scope | Typical callable contract |
-|---|---|---|
-| `K_STATS_*` | Worksheet-facing statistical API | Normally `Variant`, returning either a numerical value or `CVErr` |
-| `K_STATS_NormalStandard_InverseCumulativeFast` | Specialized fast public helper | `Double`; intentionally lighter validation and error contract |
-| `PROB_Is*` | Project-scoped predicates | `Boolean` |
-| `PROB_Try*` | Guarded arithmetic or iterative numerical operations | `Boolean`, with results returned through `ByRef` arguments |
-| Other `PROB_*` functions | Project-scoped numerical helpers and kernels | Usually `Double`, but may be another explicitly documented type |
-| `PROB_SetStatus` | Project-scoped diagnostic writer | `Sub` |
-| `Test_STATS_PROBDIST_*` | Public test-harness entry points | Argument-less `Sub` |
-
-Do not document all `PROB_*` routines as returning `Double`. The current
-project-scoped API deliberately includes Boolean predicates, Boolean Try
-contracts, Double-valued kernels, and a status-writing Sub.
-
----
-
-## 🧯 Public error-handling contract
-
-For ordinary worksheet-facing UDFs:
-
-- use `On Error GoTo Err_Handler`;
-- invalid domains, predictable overflow, density poles, and non-convergence route
-  to `Fail_Num:`;
-- `Fail_Num:` returns `CVErr(xlErrNum)` (`#NUM!`);
-- unexpected runtime errors route to `Err_Handler:`;
-- `Err_Handler:` returns `CVErr(xlErrValue)` (`#VALUE!`);
-- mathematically valid exponential underflow returns zero;
-- no numerical UDF displays a `MsgBox`;
-- the optional `Status` argument is the detailed diagnostic channel.
-
-The fast inverse-normal helper is a documented exception with a deliberately
-lighter `Double`-returning contract.
-
----
-
-## 🧠 Numerical-kernel discipline
-
-### Domain responsibility
-
-Do not apply one blanket rule to every `PROB_*` routine.
-
-- Predicates such as `PROB_IsFinite` and
-  `PROB_IsValidProbabilityOpen` exist specifically to test domains.
-- Public distribution wrappers own end-user parameter validation and worksheet
-  error mapping.
-- Low-level numerical kernels generally assume that their documented
-  preconditions have already been checked.
-- `PROB_SetStatus` is the deliberate project-scoped status writer; ordinary
-  numerical kernels should not write user-facing diagnostics directly.
-
-### Guarded arithmetic
-
-Use:
+### Checklist
 
 ```text
-PROB_TryExp
-PROB_TryAdd
-PROB_TryMultiply
-PROB_TryDivide
+[ ] Scope is focused and the related issue is linked
+[ ] Public API, compatibility, and release impact are assessed
+[ ] Exported VBA source and required binary companions are synchronized
+[ ] Relevant compile, static, regression, and manual checks are recorded
+[ ] Numerical/performance evidence is independent and reproducible where relevant
+[ ] Error, boundary, recovery, and cleanup paths are covered
+[ ] Caller-owned Excel state and platform/bitness concerns are addressed
+[ ] README, contracts, examples, and release notes are updated
+[ ] No confidential, restricted, generated, or accidental binary content is added
+[ ] Unverified environments and skipped checks are stated plainly
+[ ] Final diff contains no unrelated formatting or local artifacts
 ```
 
-when an intermediate result may overflow or when failure classification matters.
-
-Use:
-
-```text
-PROB_Log1p
-PROB_Expm1
-```
-
-for cancellation-sensitive expressions such as:
-
-```text
-Log(1 + x)
-Exp(x) - 1
-```
-
-Do not reconstruct a small upper tail as `1 - CDF` when a direct survival kernel
-is available.
-
-### VBA Boolean operators
-
-VBA does not short-circuit `And` and `Or`.
-
-This is unsafe:
-
-```vba
-If Denominator <> 0# And Numerator / Denominator > Limit Then
-```
-
-Use separate guards:
-
-```vba
-If Denominator = 0# Then
-    GoTo Fail_Num
-End If
-
-If Numerator / Denominator > Limit Then
-    GoTo Fail_Num
-End If
-```
-
-### Force the rounding boundary
-
-Do not assume an intermediate expression is rounded to binary64 at every
-operator. When correctness, a branch condition, a one-ULP boundary, or a
-reference key depends on the rounded `Double`, force the rounding boundary by
-assigning the expression to a `Double` variable and using that stored value
-thereafter.
-
-This is unsafe:
-
-```vba
-If U - 1# = -1# Then                'the expression may not be rounded here
-```
-
-Store first, then test the stored value:
-
-```vba
-    V = U - 1#                      'rounding is forced by the assignment
-
-    If V = -1# Then
-```
-
-The same applies when building an extreme value: assign, then test what was
-stored. Testing the expression and assigning separately lets a loop run past
-the boundary it was meant to stop at.
-
-```vba
-    'Unsafe - the condition can pass on a value the assignment then rounds
-    Do While Smallest / 2# > 0#
-        Smallest = Smallest / 2#
-    Loop
-
-    'Safe - the stored value decides
-    Do
-        Halved = Smallest / 2#
-        If Halved = 0# Then Exit Do
-        Smallest = Halved
-    Loop
-```
-
-**Do not replace such an assignment with an inline expression when**
-**refactoring.** The extra variable is load-bearing, not verbosity. Where that
-is not obvious from the surrounding code, say so in a comment.
-
-### Reachability precedes remediation
-
-Before changing a numerical kernel, identify its direct callers, the branch
-preconditions on each call site, and the public inputs that can actually reach
-the branch being changed. Produce a predicted movement set **before** touching
-source, and compare the measured movement against it afterwards.
-
-A textual call graph is not a reachability analysis. A kernel reached from
-thirty-nine public functions may have a branch reachable from two, once
-argument domains and gate conditions are taken into account.
-
-A caller that is protected from an incorrect *result* by clamping, a fallback,
-or error handling is **not** necessarily unaffected by the *change*. Protection
-from a defect is not exemption from a rearrangement, and a clamped caller
-still belongs in the predicted movement set.
-
-Equally, a numerical equivalence that looks obvious should be measured rather
-than inferred, in both directions: it has revealed real defects, and it has
-also retired proposed remediations whose premise did not survive measurement.
+Reviews may request changes to scope, tests, contracts, compatibility,
+documentation, or evidence. Discussion must remain technical and respectful
+under the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 
-## 🔬 Numerical verification
+## 🤝 Review and maintainer decisions
 
-<p align="left">
-  <img alt="Reference" src="https://img.shields.io/badge/Reference-SciPy_%2F_mpmath-217346">
-  <img alt="Precision" src="https://img.shields.io/badge/Precision-40--60_Digits-blue">
-  <img alt="Test values" src="https://img.shields.io/badge/Expected_Values-Independently_Calculated-red">
-</p>
+Reviewers evaluate correctness, safety, maintainability, compatibility,
+evidence, documentation, and fit with the project's direction. Approval of an
+idea does not guarantee acceptance of every implementation detail.
 
-Every new or changed expected value must be calculated independently.
-
-Do not:
-
-- estimate a value from a chart;
-- round a remembered value;
-- copy a value produced by the same VBA code path being tested;
-- insert a placeholder literal and weaken the tolerance around it.
-
-For a numerical change, verify as applicable:
-
-- density;
-- CDF;
-- survival;
-- inverse CDF;
-- moments;
-- support boundaries;
-- central-region behavior;
-- lower and upper tails;
-- round-trip identities;
-- overflow and valid underflow;
-- exact worksheet-error classification.
-
-Suitable independent references include SciPy, mpmath, R, Julia, MATLAB, or
-authoritative published tables and formulas.
-
-State in the pull request:
-
-- the reference system and version;
-- the precision used;
-- the points tested;
-- the maximum observed absolute or relative error;
-- the tolerance justified by that evidence.
-
-Cross-family identities are valuable, but they should exercise independent
-calculation paths rather than compare two wrappers around the same kernel.
+The maintainer may edit, squash, defer, or decline a contribution to protect the
+coherence and supportability of the project. Contributors will be credited
+through Git history and release notes where appropriate.
 
 ---
 
-## 🧪 Testing
-
-Import `tests/M_STATS_PROBDIST_TEST.bas` and run:
-
-```vba
-Test_STATS_PROBDIST_RunAll
-```
-
-Family runners:
-
-```vba
-Test_STATS_PROBDIST_RunCore
-Test_STATS_PROBDIST_RunNormalFamily
-Test_STATS_PROBDIST_RunTFamily
-Test_STATS_PROBDIST_RunContinuous
-```
-
-Passing assertions are silent. Failures print detailed output to the Immediate
-Window, followed by a consolidated verdict.
-
-Requirements:
-
-- all existing suites must pass;
-- changed behavior must be covered by the relevant family suite;
-- a corrected numerical defect must receive a regression test;
-- use exact error-code assertions where `#NUM!` versus `#VALUE!` is contractual;
-- do not weaken a valid test merely to make a changed implementation pass.
-
----
-
-## 📚 Documentation expectations
-
-Documentation is part of the pull request.
-
-Update the relevant pages when changing:
-
-- **public UDFs**  
-  [API Reference](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/API-Reference)
-
-- **architecture or module boundaries**  
-  [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture)  
-  [Module Reference](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Module-Reference)
-
-- **special-function kernels or algorithms**  
-  [Special Functions and Numerical Kernels](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Special-Functions-and-Numerical-Kernels)  
-  [Numerical Accuracy and Design](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design)
-
-- **error behavior**  
-  [Error Handling and Diagnostics](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Error-Handling-and-Diagnostics)
-
-- **test behavior or regression cases**  
-  [Testing and Regression Harness](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Testing-and-Regression-Harness)
-
-Also update the README when a change affects:
-
-- distribution coverage;
-- function counts;
-- installation;
-- parameterization;
-- public examples;
-- the repository structure.
-
----
-
-## 📦 What not to commit
-
-Do not commit:
-
-- the workbook used to edit or test the source;
-- Excel lock or owner files such as `~$*`;
-- local scratch files;
-- generated output;
-- machine-specific paths or settings;
-- client, personal, or confidential data;
-- manually edited `.bas` files that were not re-exported and checked against the
-  VBE version.
-
-See `.gitignore` for the current exclusion policy.
-
----
-
-## 🚀 Submitting a pull request
-
-1. Fork the repository and create a focused branch.
-2. Keep one logical change per pull request.
-3. Complete every applicable section of the pull-request template.
-4. State the numerical method and independent reference.
-5. Confirm the project compiles.
-6. Run the relevant family suite.
-7. Run `Test_STATS_PROBDIST_RunAll`.
-8. Re-export changed modules.
-9. Update the documentation.
-10. Review the final text diff.
-
-The maintainer may adopt, adapt, defer, or decline a contribution to preserve the
-coherence of the library.
-
----
-
-## Commits
-
-Subject: `<FINDING-ID>: <what changed>` — or a plain imperative if there is no
-finding. Reference the issue with `(refs #N)` so the commit appears in the issue
-timeline.
-
-Every commit that touches `.bas` source, the grid, or the contracts must end its
-body with an evidence block:
-
-    Evidence: <what was re-exported / regenerated, or "none">
-    Gate: FAIL=<n> PENDING=<n>
-    Tests: <pass>/<total>
-
-This is the one fact that neither the diff nor the code comments record, and it
-is the first question asked when a result is questioned later.
-
-## Evidence order (mandatory)
-
-When source changes, evidence must be regenerated in exactly this order:
-
-1. Re-export observations from Excel (`Export_Accuracy_Observations`, plus any
-   affected study macro)
-2. `python write_manifest.py`
-3. `python compute_errors.py --out accuracy_summary.md`
-4. Commit source, grid, manifest and summary together
-
-The summary embeds the manifest's commit SHA and timestamp, so generating it
-before the manifest leaves it stale. Rebinding the manifest *without*
-re-exporting is worse: it certifies old measurements as belonging to new code,
-which is precisely what the manifest exists to prevent.
-
-## One file per module
-
-`.bas` filenames must match `Attribute VB_Name`. A file exported under the VBE's
-default name (`Module1.bas`) is a duplicate module and will be caught by the
-accuracy gate as "present in the tree but absent from the manifest".
-
----
-
-## 📄 License
+## 📄 Licensing
 
 By contributing, you agree that your contribution is licensed under the
-project’s [MIT License](LICENSE).
+repository's [MIT License](LICENSE). You must have the right to submit every
+part of the contribution, including code, tests, data, images, and generated
+material.
 
 ---
 
 ## 👤 Maintainer
 
 Maintained by **Daniele Penza**.
+
+For ordinary contributions, use GitHub issues and pull requests. For sensitive
+security matters, use the private channel in [SECURITY.md](SECURITY.md).
+
+---
+
+### Contribution principle
+
+> Make the contract explicit, keep the diff focused, and leave evidence another
+> person can reproduce.
