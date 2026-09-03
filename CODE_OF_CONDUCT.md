@@ -1,118 +1,340 @@
-# 🧭 Code of Conduct
+<div align="center">
 
-<p align="left">
-  <img alt="Scope" src="https://img.shields.io/badge/Applies_to-Everyone-217346">
-  <img alt="Spaces" src="https://img.shields.io/badge/Spaces-Issues_PRs_discussions-blue">
-  <img alt="Enforcement" src="https://img.shields.io/badge/Enforcement-Maintainer-6f42c1">
-</p>
+# 🧭 VBA-PROBABILITY-DISTRIBUTIONS Code of Conduct
 
-This project is a focused open-source effort. The goal of this Code of
-Conduct is simple: keep every interaction around the library respectful,
-technical, and welcoming, so that people feel comfortable reporting bugs,
-proposing changes, and asking questions.
+### Respectful, evidence-led collaboration for numerical distribution functions
+
+[![Applies to](https://img.shields.io/badge/Applies_to-Everyone-217346?style=for-the-badge)](#scope)
+[![Spaces](https://img.shields.io/badge/Spaces-Code_%7C_Issues_%7C_PRs-0969da?style=for-the-badge)](#scope)
+[![Standard](https://img.shields.io/badge/Standard-Respectful_%2B_Evidence--Led-6f42c1?style=for-the-badge)](#technical-collaboration)
+[![Enforcement](https://img.shields.io/badge/Enforcement-Fair_%2B_Proportionate-d97706?style=for-the-badge)](#enforcement)
+
+<br>
+
+**Respect people · Challenge ideas with evidence · State uncertainty · Protect data**
+
+</div>
 
 ---
+
+**VBA-PROBABILITY-DISTRIBUTIONS** is an open-source Excel/VBA numerical library. Accuracy claims depend on explicit domains, tails, reference values, precision, tolerances, and reproducible evidence.
+
+Technical rigor and respectful interaction are complementary requirements.
+Neither excuses the absence of the other.
+
+People should feel comfortable asking questions, reporting defects, challenging
+assumptions, proposing safer or more accurate alternatives, and correcting an
+earlier conclusion when new evidence emerges.
+
+---
+
+<a id="our-pledge"></a>
 
 ## 🤝 Our pledge
 
-<p align="left">
-  <img alt="Pledge" src="https://img.shields.io/badge/Pledge-Respect_and_inclusion-217346">
-</p>
+Everyone who participates through code, issues, pull requests, reviews,
+documentation, examples, releases, the Wiki, or project discussion is expected
+to help create a harassment-free experience for all.
 
-Everyone who participates (by opening an issue, submitting a pull request,
-commenting, or contributing in any other way) is expected to help make this a
-harassment-free experience for all, regardless of experience level, background,
-identity, or personal characteristics.
+That expectation applies regardless of age, body size, disability, ethnicity,
+gender identity or expression, level or type of experience, nationality,
+personal appearance, race, religion, socioeconomic status, sexual identity or
+orientation, or any other personal characteristic unrelated to the
+contribution.
+
+We commit to acting and interacting in ways that support an open, welcoming,
+diverse, inclusive, and healthy community.
 
 ---
+
+<a id="expected-behavior"></a>
 
 ## ✅ Expected behavior
 
-<p align="left">
-  <img alt="Standards" src="https://img.shields.io/badge/Standards-Be_constructive-blue">
-</p>
+| Principle | Expected practice |
+|---|---|
+| 🤝 **Respect** | Assume good faith and address the work rather than the person. |
+| 🎯 **Precision** | Distinguish observation, requirement, assumption, inference, hypothesis, and opinion. |
+| 🧪 **Evidence** | Provide reproducible examples and relevant environment details where practical. |
+| 🧭 **Transparency** | State uncertainty, limitations, conflicts of interest, and material dependencies. |
+| 🔄 **Correction** | Acknowledge mistakes openly when better evidence changes the conclusion. |
+| 🌱 **Inclusion** | Welcome contributors with different backgrounds and levels of expertise. |
+| 🔐 **Stewardship** | Respect privacy, confidentiality, security, licensing, and intellectual-property boundaries. |
+| 🧱 **Coherence** | Accept that maintainers may adopt, revise, defer, split, or decline a contribution. |
 
-- Be respectful and assume good faith.
-- Keep discussion focused on the code, the numerics, the docs, and the problem
-  at hand.
-- Back numerical claims with evidence rather than assertion, and give and accept
-  constructive feedback gracefully.
-- Respect that the maintainer may adopt, adapt, or decline a contribution to
-  keep the library coherent.
-- Help newcomers; everyone was new to VBA — and to numerical methods — once.
+### Useful disagreement
+
+A useful technical disagreement is specific and testable:
+
+> "The observed result differs from the documented contract outside the stated
+> tolerance. The exact version, environment, minimal reproduction, expected
+> result, observed result, and independent reference are provided below."
+
+A personal judgment is not testable:
+
+> "This is wrong because the author does not understand the subject."
+
+Only the first statement helps improve the project.
 
 ---
+
+<a id="unacceptable-behavior"></a>
 
 ## 🚫 Unacceptable behavior
 
-<p align="left">
-  <img alt="Prohibited" src="https://img.shields.io/badge/Prohibited-Harassment-red">
-</p>
+Unacceptable behavior includes:
 
-- Personal attacks, insults, or derogatory comments.
-- Harassment of any kind, public or private.
-- Discriminatory, demeaning, or sexualized language or imagery.
-- Publishing others' private information without consent.
-- Sustained disruption of discussions or deliberate bad-faith argument.
+- harassment, intimidation, discrimination, threats, or personal attacks;
+- trolling, insulting or derogatory comments, and deliberately inflammatory
+  language;
+- unwelcome sexual attention or sexualized language or imagery;
+- publishing private or confidential information without permission;
+- deliberately misrepresenting results, sources, authorship, test evidence, or
+  another participant's statements;
+- fabricating, altering, or selectively presenting evidence to conceal a
+  material limitation or contrary result;
+- pressuring others to disclose employer, client, counterparty, student, or
+  proprietary information;
+- using credentials, reputation, job title, or academic status to silence a
+  technical challenge rather than addressing its substance;
+- spam, unrelated promotion, commercial solicitation, or sustained disruption;
+- public disclosure of a suspected vulnerability before reasonable coordinated
+  remediation;
+- repeated disruption after a maintainer has asked participants to stop; and
+- retaliation against a reporter, witness, or participant in an investigation.
+
+Disagreement is allowed. Abuse is not.
+
+---
+
+<a id="technical-collaboration"></a>
+
+## 🧪 Technical collaboration
+
+Numerical agreement at ordinary inputs does not establish correctness in extreme tails or parameter regimes. Reports should state the complete function contract and independent reference.
+
+Where relevant, technical reports and review comments should identify:
+
+| Evidence | Expected information |
+|---|---|
+| 🧾 **Identity** | Repository release, tag, branch or commit; affected file, procedure, API or artifact |
+| 🖥️ **Environment** | Excel and Office version/build, 32-bit or 64-bit, Windows version, and relevant locale or host settings |
+| 🔬 **Reproduction** | Smallest deterministic input and exact steps needed to reproduce the behavior |
+| 🎯 **Comparison** | Expected and observed behavior, error or diagnostic output, and the acceptance criterion |
+| ✅ **Validation** | Relevant automated, static, manual or Excel regression evidence and whether the run completed |
+| ⚠️ **Boundary** | Assumptions, limitations, untested configurations, uncertainty, and what cannot yet be concluded |
+| 📐 **Function contract** | Distribution, function, parameters, domain, cumulative/complementary tail, units, and expected error behavior |
+| 🔢 **Numerical comparison** | Expected and observed values, absolute/relative or ULP error, tolerance, working precision, and independent oracle |
+| 🌡️ **Regime** | Central or tail probability, small or extreme parameters, convergence behavior, and underflow/overflow boundary |
+| 🧬 **Provenance** | Exact source commit and provenance of generated grids, holdouts, references, and Excel regression evidence |
+
+Prefer explicit evidence classifications:
+
+| Classification | Meaning |
+|---|---|
+| **Observed** | Reproduced directly |
+| **Derived** | Follows from stated inputs and rules |
+| **Inferred** | Best explanation, but not independently proven |
+| **Expected** | Required by the documented contract |
+| **Environment-specific** | Verified only in the stated host configuration |
+| **Unverified** | Plausible, but evidence is incomplete |
+
+Do not present a plausible inference as a verified fact. A screenshot may
+illustrate a result, but it does not replace the inputs, environment, contract,
+reference, and steps needed to reproduce the claim.
+
+Project-specific expectations:
+
+- Do not treat agreement with another spreadsheet or library as independent proof unless its algorithm and precision are suitable for the regime.
+- State whether a value is analytically derived, high-precision reference data, cross-library comparison, or empirical regression evidence.
+- Do not weaken a tolerance or remove a difficult case merely to make a gate pass without documenting and justifying the change.
 
 ---
 
-## 🛠️ Scope
+<a id="data-and-confidentiality"></a>
 
-<p align="left">
-  <img alt="Where" src="https://img.shields.io/badge/Where-Project_spaces-217346">
-</p>
+## 🔐 Data, privacy, and confidentiality
 
-This Code of Conduct applies to all project spaces (the repository, issues,
-pull requests, discussions, the wiki, and release threads) and to any situation
-where someone is representing the project in public.
+Do not upload confidential or restricted material to demonstrate a defect or
+support a contribution. This includes:
+
+- client, employer, counterparty, student, or personal data;
+- credentials, tokens, signing material, connection strings, or internal URLs;
+- proprietary code, models, workbooks, market data, business assumptions, or
+  production extracts;
+- licensed vendor content that cannot be redistributed; and
+- files or examples that the contributor is not authorized to share.
+
+Use the smallest synthetic example that preserves the relevant behavior.
+
+Excel workbooks can contain hidden names, external links, connections, cached
+values, queries, metadata, comments, hidden sheets, and VBA that are not visible
+on the active sheet. Sanitize and inspect every reproduction before uploading
+it.
+
+---
+
+<a id="security"></a>
+
+## 🔑 Security reports
+
+Suspected vulnerabilities must follow [SECURITY.md](SECURITY.md). Do not
+publish exploit details, credentials, private keys, or a working proof of
+concept in a public issue before coordinated remediation.
+
+The Code of Conduct reporting channel is for participant behavior. A security
+report concerns software risk. If an incident involves both, use the private
+channel and make that clear.
 
 ---
 
-## 📣 Reporting
+<a id="scope"></a>
 
-<p align="left">
-  <img alt="Report" src="https://img.shields.io/badge/Report-Privately-orange">
-</p>
+## 🌐 Scope
 
-If you experience or witness unacceptable behavior, please report it **privately**
-to the maintainer rather than in a public thread. Contact:
+This Code of Conduct applies to:
 
-```text
-danielep71@gmail.com
-```
+- source code, committed artifacts, documentation, examples, and releases;
+- issues, pull requests, reviews, comments, discussions, and the Wiki;
+- project-related email and private communication between participants; and
+- public spaces where someone represents the project or its community.
 
-Reports will be handled discreetly. Please include what happened, where, and any
-links or context that help.
+It applies to maintainers, contributors, reviewers, users, and visitors alike.
+
+Project representation includes using an official account, speaking on behalf
+of the project, presenting oneself as a maintainer or contributor in a
+project-related forum, or moderating a project discussion.
 
 ---
+
+<a id="reporting"></a>
+
+## 📣 Reporting unacceptable behavior
+
+Report unacceptable behavior **privately** to the maintainer:
+
+**danielep71@gmail.com**
+
+Do not publish sensitive personal information in a public issue.
+
+Where available, include what happened, where and approximately when it
+happened, relevant links or screenshots, whether the behavior is ongoing,
+whether another participant witnessed it, and any immediate safety, privacy, or
+confidentiality concern.
+
+Reports will be reviewed as promptly, fairly, and discreetly as reasonably
+possible. Information will be shared only as needed to understand the report,
+protect participants, enforce this policy, or comply with applicable platform
+or legal requirements.
+
+A good-faith report is not misconduct merely because the maintainer ultimately
+concludes that no violation occurred.
+
+---
+
+<a id="enforcement"></a>
 
 ## ⚖️ Enforcement
 
-<p align="left">
-  <img alt="Action" src="https://img.shields.io/badge/Action-Proportionate-6f42c1">
-</p>
-
 The maintainer is responsible for clarifying and enforcing this Code of Conduct
-and may take any action deemed appropriate, including:
+and may remove, edit, or reject comments, commits, code, issues, or other
+contributions that are inconsistent with it.
 
-- a private warning,
-- editing or removing offending comments, commits, or other contributions,
-- temporary or permanent blocking from project participation.
+Responses depend on seriousness, frequency, context, prior behavior, and risk.
+They may include:
 
-Decisions are made in good faith and aim to be proportionate to the behavior.
+1. clarification or a private reminder;
+2. a formal warning and conditions for continued participation;
+3. editing or removing project content;
+4. closing or locking a discussion;
+5. rejecting or reverting a contribution;
+6. temporary restriction from project participation;
+7. permanent exclusion from project spaces; or
+8. escalation to GitHub or another relevant platform.
+
+Enforcement aims to be fair, proportionate, consistent, protective of
+participants, and protective of the technical record. Retaliation against
+anyone who reports a concern or participates in its review is itself a
+violation.
 
 ---
 
-## 🙏 A note
+## 🧩 Conflicts of interest
 
-This Code of Conduct is intentionally lightweight for a solo-maintained project.
-If you prefer a widely recognized standard instead, the
-[Contributor Covenant](https://www.contributor-covenant.org/) can be adopted
-directly through GitHub's community-standards tooling.
+Disclose a material interest when it could reasonably affect technical review.
+
+Examples include ownership of a competing implementation, commercial interest
+in a dependency or benchmark, employer or client restrictions, uncertainty
+about the origin or license of submitted material, or reviewing one's own work
+under another identity.
+
+A conflict is not automatically disqualifying. Undisclosed material influence
+is the concern.
 
 ---
 
-## 👤 Maintainer
+## 📜 Source and licensing integrity
 
-Maintained by **Daniele Penza**.
+Contributors must have the right to submit every code fragment, document,
+screenshot, workbook, dataset, benchmark, image, and numerical reference they
+provide.
+
+Identify the source and license of adapted material. Do not submit proprietary
+code, incompatible licensed content, confidential screenshots, selectively
+edited evidence, or generated material whose provenance and right of use cannot
+be established.
+
+A file digest proves file identity. It does not by itself prove authorship,
+source provenance, reproducibility, or execution correctness.
+
+---
+
+## 🧱 Maintainer decisions
+
+A maintainer may decline a contribution even when it is technically valid.
+Reasons may include scope, compatibility, maintenance burden, testability,
+platform risk, API stability, duplication, architecture, or release timing.
+
+A declined contribution is not a judgment about the contributor. When
+practical, the technical reason should be recorded. Participants may challenge
+a decision respectfully with new evidence; repeatedly reopening the same
+argument without new evidence is not constructive.
+
+---
+
+## 🙏 Project scale and response expectations
+
+This project is maintained by one person. That affects response capacity,
+not the seriousness of this policy.
+
+Response times are best-effort. Complex reports may take longer when they
+require a particular Office configuration, Windows behavior, clean Excel
+process, long-running test, or manual workbook validation.
+
+Reasonable delay is not dismissal. Repeatedly demanding immediate action is not
+a substitute for technical evidence.
+
+GitHub's platform policies and community standards also apply where relevant.
+
+---
+
+## 📜 Attribution
+
+This Code of Conduct is informed by and adapted from the
+[Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
+Its project-specific technical and data-handling provisions are maintained for
+this repository.
+
+---
+
+<div align="center">
+
+### Practical principle
+
+**Be precise about the work · Be generous toward the person · Show the evidence · State the boundary · Protect the data**
+
+<br>
+
+Maintained by **Daniele Penza**
+
+</div>
