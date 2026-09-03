@@ -101,6 +101,8 @@ Use only the categories needed by a release.
 
 - Added this changelog and the portfolio-standard release-history policy for
   VBA Probability Distributions.
+- Added a root `VERSION` marker at `0.0.0`. This is a neutral pre-release
+  baseline and does not claim that a functional release has been published.
 
 ### Changed
 
