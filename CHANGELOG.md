@@ -108,6 +108,8 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
+
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.
 
