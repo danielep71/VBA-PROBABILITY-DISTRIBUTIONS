@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run complete VBA regression suite through Excel COM
         shell: cmd
@@ -50,7 +50,7 @@ jobs:
         
       - name: Upload VBA test result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: excel-vba-regression-${{ github.run_id }}
           path: artifacts/excel-vba-ci/test-result.txt
