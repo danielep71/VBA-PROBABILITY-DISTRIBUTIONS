@@ -41,10 +41,21 @@ def _script_from_command(command: str) -> str:
     return parts[0]
 
 
-def _shim_commands(text: str) -> set[str]:
-    """Extract first string element from tuple entries in `commands = (...)`."""
+def _command_tuple(command: str) -> tuple[str, ...]:
+    parts = tuple(shlex.split(command))
+    if not parts:
+        raise ValueError("empty command")
+    if parts[0] in {"python", "python3"}:
+        if len(parts) < 2:
+            raise ValueError(f"python command has no script: {command!r}")
+        parts = parts[1:]
+    return parts
+
+
+def _shim_commands(text: str) -> set[tuple[str, ...]]:
+    """Extract complete constant command tuples from `commands = (...)`."""
     tree = ast.parse(text)
-    found: set[str] = set()
+    found: set[tuple[str, ...]] = set()
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
@@ -53,10 +64,16 @@ def _shim_commands(text: str) -> set[str]:
         if not isinstance(node.value, (ast.Tuple, ast.List)):
             continue
         for item in node.value.elts:
-            if isinstance(item, (ast.Tuple, ast.List)) and item.elts:
-                first = item.elts[0]
-                if isinstance(first, ast.Constant) and isinstance(first.value, str):
-                    found.add(first.value)
+            if not isinstance(item, (ast.Tuple, ast.List)) or not item.elts:
+                continue
+            values = []
+            for element in item.elts:
+                if not isinstance(element, ast.Constant) or not isinstance(element.value, str):
+                    values = []
+                    break
+                values.append(element.value)
+            if values:
+                found.add(tuple(values))
     return found
 
 
@@ -117,12 +134,14 @@ def main() -> int:
         proof = control.get("proof_command")
         if isinstance(proof, str) and proof.strip():
             try:
-                proof_script = _script_from_command(proof)
-            except ValueError:
-                proof_script = ""
-            if proof_script and proof_script not in shim_commands:
+                proof_tuple = _command_tuple(proof)
+            except ValueError as exc:
+                failures.append(f"{cid}: {exc}")
+                proof_tuple = ()
+            if proof_tuple and proof_tuple not in shim_commands:
                 failures.append(
-                    f"{cid}: proof {proof_script} is not wired into test_evidence_tools.py"
+                    f"{cid}: complete proof command {shlex.join(proof_tuple)} "
+                    "is not wired into test_evidence_tools.py"
                 )
 
     # These are the minimum v1.0.0 controls. Removing one from the JSON must be
@@ -133,6 +152,7 @@ def main() -> int:
         "public-api-drift", "manifest-content-binding", "manifest-provenance",
         "reference-helper-degradation", "generated-contract-table",
         "source-threshold-single-source", "holdout-analyzer-semantics",
+        "excel-exact-sha-certification",
     }
     for cid in sorted(required - seen):
         failures.append(f"required release-blocking control missing from inventory: {cid}")

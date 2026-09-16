@@ -327,6 +327,16 @@ def case_helper_record_wrong_grid(tmp):
     return helper(tmp)
 
 
+def case_helper_record_bad_hash(tmp):
+    write(tmp, G.EXPORT_RECORD, export_record(tmp, [MAIN_G], break_hash=True))
+    return helper(tmp)
+
+
+def case_helper_record_missing_field(tmp):
+    write(tmp, G.EXPORT_RECORD, export_record(tmp, [MAIN_G], drop_field="environment"))
+    return helper(tmp)
+
+
 _stale, _why = with_repo(case_helper_no_export)
 check(_stale, "unchanged grid must be reported as no-export")
 check("byte-identical to HEAD" in _why, "the reason must name the cause")
@@ -338,6 +348,10 @@ check(with_repo(case_helper_record_not_exported)[0] is True,
       "an export record marking the grid not exported must not clear the check")
 check(with_repo(case_helper_record_wrong_grid)[0] is True,
       "an export record naming a different grid must not clear the check")
+check(with_repo(case_helper_record_bad_hash)[0] is True,
+      "an export record with a mismatched grid digest must not clear the check")
+check(with_repo(case_helper_record_missing_field)[0] is True,
+      "a malformed export record must not clear the check")
 
 # The real writer, on this repository: the grid is committed and unchanged, so
 # --from-fresh-export must refuse and leave the manifest untouched.

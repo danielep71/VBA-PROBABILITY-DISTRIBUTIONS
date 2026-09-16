@@ -38,6 +38,7 @@ import subprocess
 
 from _manifest import (build_manifest, build_holdout_manifest, repo_root,
                        MANIFEST_NAME, HOLDOUT_MANIFEST_NAME)
+from excel_certification import CertificationError, validate_record
 
 ENV_FILE = "excel_environment.json"
 
@@ -110,10 +111,12 @@ def _grid_unchanged_since_head(root, grid_path):
         try:
             with open(record, encoding="utf-8") as f:
                 rec = json.load(f)
-            entry = (rec.get("grids") or {}).get(rel)
-            if entry and entry.get("exported") is True:
-                return False, ""
-        except (OSError, ValueError):
+            validate_record(
+                rec, root, policy_ref="HEAD", evidence_ref="HEAD",
+                require_pass=True, require_grid=rel,
+            )
+            return False, ""
+        except (OSError, ValueError, CertificationError):
             pass
     return True, f"{rel} is byte-identical to HEAD"
 
