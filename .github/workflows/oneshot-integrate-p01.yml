@@ -31,29 +31,16 @@ jobs:
 
           root = Path('.')
 
-          # check_manifest_provenance.py has no later semantic owner on main;
-          # P0.1's canonical validator version is the intended replacement.
+          # P0.1 replaces the ad-hoc export-record parser with the canonical
+          # exact-SHA validator. No later main commit changed this checker.
           data = subprocess.check_output([
               'git','show','origin/p0-excel-certification:benchmark/check_manifest_provenance.py'
           ])
           (root/'benchmark/check_manifest_provenance.py').write_bytes(data)
 
-          # Start test_manifest_provenance.py from the P0.1 canonical-record fixture,
-          # then re-apply the later main hardening that verifies --from-fresh-export
-          # instead of trusting it.
-          data = subprocess.check_output([
-              'git','show','origin/p0-excel-certification:benchmark/test_manifest_provenance.py'
-          ])
-          (root/'benchmark/test_manifest_provenance.py').write_bytes(data)
-          patch = subprocess.check_output([
-              'git','diff','fbdfe39fb1f44f4a107e453cc33de6167942d014',
-              'c68124b1cf36c222f7e3d6281b78fb7b472a0f95','--',
-              'benchmark/test_manifest_provenance.py'
-          ])
-          if patch:
-              p = subprocess.run(['git','apply','--verbose','-'], input=patch)
-              if p.returncode:
-                  raise SystemExit('failed to re-apply current-main provenance hardening')
+          # test_manifest_provenance.py was auto-merged above. Keep that result:
+          # it combines P0.1 canonical-record fixtures with current-main's later
+          # --from-fresh-export interlock tests. Do not replace it wholesale.
 
           # Full history is required by per-commit provenance tests.
           wf = root/'.github/workflows/accuracy-gate.yml'
@@ -95,7 +82,6 @@ jobs:
               })
           matrix_path.write_text(json.dumps(matrix, indent=2) + '\n', encoding='utf-8')
 
-          # Document the integration rule introduced by P0.3.
           vd = root/'docs/VERIFICATION_DEPTH.md'
           text = vd.read_text(encoding='utf-8')
           note = ('\n## Excel exact-SHA certification\n\n'
@@ -108,8 +94,8 @@ jobs:
           if '## Excel exact-SHA certification' not in text:
               vd.write_text(text.rstrip() + '\n' + note, encoding='utf-8')
 
-          # Keep current-main provenance instructions, but state how the canonical
-          # Excel record fits beside the manifests.
+          # Preserve current-main provenance procedure and add only the canonical
+          # certification relationship.
           prov = root/'benchmark/PROVENANCE.md'
           text = prov.read_text(encoding='utf-8')
           note = ('\n\n## Canonical Excel certification record\n\n'
@@ -123,7 +109,6 @@ jobs:
           if '## Canonical Excel certification record' not in text:
               prov.write_text(text.rstrip() + note, encoding='utf-8')
 
-          # Stage concise release-history entries without disturbing existing ones.
           ch = root/'CHANGELOG.md'
           text = ch.read_text(encoding='utf-8')
           added = ('- Added exact-SHA Excel certification records binding the candidate commit, '
@@ -142,7 +127,7 @@ jobs:
               text = text.replace(marker, marker + validation, 1)
           ch.write_text(text, encoding='utf-8')
 
-          # The integration workflow is temporary; remove it from the final tree.
+          # Temporary integration workflow must not survive the integration commit.
           (root/'.github/workflows/oneshot-integrate-p01.yml').unlink()
 
       - name: Commit integrated P0.1 branch
@@ -150,6 +135,7 @@ jobs:
           git add -A
           git diff --cached --check
           python benchmark/test_excel_certification.py
+          python benchmark/test_manifest_provenance.py
           python benchmark/check_verification_depth.py
           git commit -m "merge(p0.1): integrate exact-SHA Excel certification with current main"
           git push origin HEAD:p0-excel-certification-v2
