@@ -99,6 +99,7 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Added a generated 112-function `K_STATS_*` public-API manifest and a declaration-aware drift gate that blocks accidental additions, removals, renames, module moves, or compatibility-significant signature changes.
 - Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
 
 - Added this changelog and the portfolio-standard release-history policy for
@@ -108,6 +109,7 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
 - Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
 
 - Future material changes must be staged here before release and describe
@@ -115,6 +117,7 @@ Use only the categories needed by a release.
 
 ### Validation
 
+- Added negative controls proving that parameter type/order, `ByVal`/`ByRef`, `Optional` defaults, return types, additive API, renames, and module moves are detected while implementation-only edits do not create API drift.
 - Verified the changelog structure, policy links, section ordering, and
   repository-specific versioning scope.
 
