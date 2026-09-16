@@ -34,6 +34,7 @@ import argparse
 import datetime
 import json
 import os
+import subprocess
 
 from _manifest import (build_manifest, build_holdout_manifest, repo_root,
                        MANIFEST_NAME, HOLDOUT_MANIFEST_NAME)
@@ -69,6 +70,52 @@ def _read_commit_sha(root):
     except (OSError, IndexError, UnicodeDecodeError):
         pass
     return None
+
+
+RECORD_FILE = "benchmark/excel_regression_record.json"
+
+
+def _git_show(root, spec):
+    """Return the bytes of `spec` (e.g. HEAD:path) or None if unavailable."""
+    try:
+        r = subprocess.run(["git", "show", spec], cwd=root, capture_output=True,
+                           check=False)
+        return r.stdout if r.returncode == 0 else None
+    except (OSError, ValueError):
+        return None
+
+
+def _grid_unchanged_since_head(root, grid_path):
+    """(unchanged, reason). Unchanged means: no export can have produced this.
+
+    A validated export record naming this grid as exported clears the check -
+    the documented case of a real export yielding a byte-identical grid.
+    Anything git cannot answer is treated as changed: this interlock must never
+    block a legitimate export because git was unavailable. The provenance guard
+    in CI is the backstop for that.
+    """
+    rel = os.path.relpath(grid_path, root).replace(os.sep, "/")
+    committed = _git_show(root, f"HEAD:{rel}")
+    if committed is None:
+        return False, ""
+    try:
+        with open(grid_path, "rb") as f:
+            current = f.read()
+    except OSError:
+        return False, ""
+    if current != committed:
+        return False, ""
+    record = os.path.join(root, RECORD_FILE)
+    if os.path.exists(record):
+        try:
+            with open(record, encoding="utf-8") as f:
+                rec = json.load(f)
+            entry = (rec.get("grids") or {}).get(rel)
+            if entry and entry.get("exported") is True:
+                return False, ""
+        except (OSError, ValueError):
+            pass
+    return True, f"{rel} is byte-identical to HEAD"
 
 
 def _read_excel_environment(root):
@@ -148,6 +195,34 @@ def main():
             "  evidence into a false clean binding (see 9fba175).\n"
             "  If you have just re-exported, pass --from-fresh-export.\n"
             "  To preview without writing, pass --dry-run.")
+
+    # SECOND INTERLOCK: verify the assertion instead of trusting it.
+    #
+    # --from-fresh-export is a promise, and a promise is cheaper to make than an
+    # export. It was passed once without an export behind it, rebinding the main
+    # manifest to a newer commit while the observations were unchanged - the same
+    # false binding as 9fba175, reached through the flag meant to prevent it.
+    #
+    # A real export rewrites the grid. If the grid is byte-identical to HEAD,
+    # nothing was exported and the assertion is provably false, so refuse. The
+    # genuine exception - a .bas change that alters no observation value, giving
+    # a byte-identical grid after a real export - is the same one
+    # check_manifest_provenance.py already recognises: a validated
+    # excel_regression_record.json naming this grid as exported.
+    if a.from_fresh_export and not a.dry_run:
+        stale, why = _grid_unchanged_since_head(root, grid)
+        if stale:
+            which = "holdout" if a.holdout else "main"
+            raise SystemExit(
+                f"refusing to rewrite the {which} manifest: {why}\n"
+                "  --from-fresh-export asserts that the observations were just\n"
+                "  re-exported from the checked-out source, but the grid is\n"
+                "  unchanged from HEAD, so no export produced it.\n"
+                "  Export from Excel first (Export_Accuracy_Observations), then\n"
+                "  re-run this command.\n"
+                "  If a real export legitimately reproduced a byte-identical\n"
+                f"  grid, commit a validated {RECORD_FILE} naming this grid as\n"
+                "  exported, as check_manifest_provenance.py requires.")
 
     builder = build_holdout_manifest if a.holdout else build_manifest
     manifest = builder(root, grid, contracts, generated_utc=now,

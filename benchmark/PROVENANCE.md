@@ -75,15 +75,23 @@ will not certify the summary otherwise:
 
 1. Import the current source into the workbook and re-export the observations
    (`Export_Accuracy_Observations`, plus any affected study macro).
-2. Re-run the manifest writer against the freshly exported grid, recording the
-   environment that produced it:
+2. Confirm the export actually happened: `git status` must show
+   `probability_accuracy_grid.csv` as **modified**. If it is unchanged, no
+   export occurred and binding it would assert something false.
+3. Bind the freshly exported grid. `write_manifest.py` is no longer called
+   directly - a bare invocation refuses, and `--from-fresh-export` is verified
+   against the grid rather than trusted:
 
    ```
-   python write_manifest.py --commit-sha <sha> \
-       --excel-version <ver> --excel-build <build> --office-bitness <32|64>
+   python refresh_evidence.py --bind-exported-main
    ```
 
-3. Commit the grid **and** `observation_manifest.json` together.
+   Add `--bind-exported-holdout` when the holdout was exported in the same
+   session. The environment is read from `excel_environment.json`, written by
+   `Export_ExcelEnvironment`, so run that macro in the same Excel session.
+
+4. Commit the grid **and** `observation_manifest.json` together - the
+   per-commit provenance guard requires it.
 
 For a fresh independent-holdout export, write its binding in the same evidence
 operation:
@@ -170,3 +178,20 @@ change altering no observation value - remains legal. The record does not
 exist yet; it is produced by Phase 1's first export session, so until then
 only A and C can apply, which is correct for a phase in which no export can
 happen.
+
+
+## Why binding is verified, not declared
+
+`write_manifest.py` refuses a bare invocation, and `--from-fresh-export` is
+checked rather than believed: if the grid is byte-identical to `HEAD`, no
+export produced it and the writer refuses. The documented exception is the one
+`check_manifest_provenance.py` already recognises - a real export that
+reproduces a byte-identical grid, evidenced by a validated
+`excel_regression_record.json` naming that grid as exported.
+
+Both interlocks exist because the flag alone proved insufficient. It was passed
+once with no export behind it, rebinding the main manifest to a newer commit
+while the observations were unchanged: the strict gate's failure moved from
+`STALE EVIDENCE` to `STALE HOLDOUT EVIDENCE` and the main binding read clean.
+Reverted before it was committed. A promise is cheaper to make than an export,
+so the promise is now checked.

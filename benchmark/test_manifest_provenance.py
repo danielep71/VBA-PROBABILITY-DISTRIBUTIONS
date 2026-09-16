@@ -277,13 +277,80 @@ check("--from-fresh-export" in R.MAIN_BINDING[2],
       "main binding must pass --from-fresh-export")
 check("--from-fresh-export" in R.HOLDOUT_BINDING[2],
       "holdout binding must pass --from-fresh-export")
+# --- the writer must VERIFY --from-fresh-export, not trust it ---------------
+# The flag was passed once with no export behind it, rebinding the main
+# manifest to a newer commit while the observations were unchanged: the same
+# false binding as 9fba175, reached through the guard meant to prevent it. A
+# real export rewrites the grid, so a grid byte-identical to HEAD proves the
+# assertion false.
+#
+# The helper is exercised against synthetic repositories; write_manifest.py
+# resolves its own repository root, so a subprocess cannot be pointed at one.
+# The subprocess is checked once, below, against this repository.
+import write_manifest as W                                            # noqa: E402
+
+
+def helper(tmp):
+    return W._grid_unchanged_since_head(tmp, os.path.join(tmp, MAIN_G))
+
+
+def case_helper_no_export(tmp):
+    return helper(tmp)
+
+
+def case_helper_real_export(tmp):
+    with open(os.path.join(tmp, MAIN_G), "a", newline="\n") as f:
+        f.write("E,5\n")
+    return helper(tmp)
+
+
+def case_helper_identical_with_record(tmp):
+    write(tmp, G.EXPORT_RECORD, export_record(tmp, [MAIN_G]))
+    return helper(tmp)
+
+
+def case_helper_record_not_exported(tmp):
+    write(tmp, G.EXPORT_RECORD,
+          export_record(tmp, [MAIN_G], mark_not_exported=True))
+    return helper(tmp)
+
+
+def case_helper_record_wrong_grid(tmp):
+    write(tmp, G.EXPORT_RECORD, export_record(tmp, [HOLD_G]))
+    return helper(tmp)
+
+
+_stale, _why = with_repo(case_helper_no_export)
+check(_stale, "unchanged grid must be reported as no-export")
+check("byte-identical to HEAD" in _why, "the reason must name the cause")
+check(with_repo(case_helper_real_export)[0] is False,
+      "a modified grid must be accepted as a real export")
+check(with_repo(case_helper_identical_with_record)[0] is False,
+      "a byte-identical grid with a validated export record must be accepted")
+check(with_repo(case_helper_record_not_exported)[0] is True,
+      "an export record marking the grid not exported must not clear the check")
+check(with_repo(case_helper_record_wrong_grid)[0] is True,
+      "an export record naming a different grid must not clear the check")
+
+# The real writer, on this repository: the grid is committed and unchanged, so
+# --from-fresh-export must refuse and leave the manifest untouched.
+_before = open(os.path.join(HERE, "observation_manifest.json"), "rb").read()
+_run = subprocess.run([sys.executable, os.path.join(HERE, "write_manifest.py"),
+                       "--from-fresh-export"], cwd=HERE,
+                      capture_output=True, text=True)
+_after = open(os.path.join(HERE, "observation_manifest.json"), "rb").read()
+check(_run.returncode != 0,
+      "write_manifest.py --from-fresh-export must refuse with an unchanged grid")
+check("byte-identical to HEAD" in (_run.stderr + _run.stdout),
+      "the refusal must name the unchanged grid")
+check(_before == _after, "a refused write must not modify the manifest")
 
 if fails:
     print("FAIL: manifest provenance guard")
     for f_ in fails:
         print("  - " + f_)
     raise SystemExit(1)
-print("PASS: manifest provenance guard (9fba175 fails, 228337e passes by grid "
+print("PASS: manifest provenance guard (writer verifies --from-fresh-export; 9fba175 fails, 228337e passes by grid "
       "co-change, c496f1b passes only as restoration; export-record exception "
       "validated for hash, rows, fields, target and exported flag; holdout "
       "equivalents; two-commit push caught; writer and refresh write nothing)")
