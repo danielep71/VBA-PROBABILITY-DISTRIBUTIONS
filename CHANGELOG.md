@@ -99,6 +99,11 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Added exact-SHA Excel certification evidence: the self-hosted regression now
+  emits a machine-readable record binding the full candidate SHA, canonical VBA
+  source hashes, host environment, 909-assertion completeness, stage outcomes,
+  cleanup, and retained-log digest. Fresh numerical-grid export claims remain a
+  separate explicit operation (#38).
 - Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
 
 - Added this changelog and the portfolio-standard release-history policy for
@@ -108,6 +113,10 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Tightened the manifest-only rebind exception so a regression-only Excel PASS
+  cannot authorize provenance rebinding: the canonical record must explicitly
+  identify the freshly exported target and match its committed SHA-256 and row
+  count.
 - Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
 
 - Future material changes must be staged here before release and describe
@@ -115,11 +124,17 @@ Use only the categories needed by a release.
 
 ### Validation
 
+- Added negative fixtures for candidate/source drift, regression assertion-count
+  drift, cleanup failure, missing/mismatched export target, grid digest/row-count
+  drift, and later source changes after certification.
 - Verified the changelog structure, policy links, section ordering, and
   repository-specific versioning scope.
 
 ### Known limitations
 
+- A green regression record is not a fresh main/holdout numerical export. The
+  corresponding grid fields remain explicitly unexported until an actual Excel
+  export session runs the guarded finalizer.
 - Earlier project history has not been reconstructed. Existing commits, tags,
   releases, and repository documentation remain the authoritative record for
   changes made before this changelog was introduced.
