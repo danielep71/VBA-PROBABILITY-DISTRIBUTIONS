@@ -99,6 +99,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Added a machine-readable verification-depth inventory for 12 v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
+- Added mutation controls proving that incomplete-gamma dispatch drift, Student-t coefficient corruption, stale generated contract tables, and duplicated source-threshold claims are rejected.
 - Added a generated 112-function `K_STATS_*` public-API manifest and a declaration-aware drift gate that blocks accidental additions, removals, renames, module moves, or compatibility-significant signature changes.
 - Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
 
@@ -109,6 +111,7 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
 - Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
 - Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
 
@@ -117,12 +120,14 @@ Use only the categories needed by a release.
 
 ### Validation
 
+- Added fail-closed meta-validation that rejects missing controls, missing proof scripts, unsupported states, or negative proofs not wired into the hosted pre-gate shim.
 - Added negative controls proving that parameter type/order, `ByVal`/`ByRef`, `Optional` defaults, return types, additive API, renames, and module moves are detected while implementation-only edits do not create API drift.
 - Verified the changelog structure, policy links, section ordering, and
   repository-specific versioning scope.
 
 ### Known limitations
 
+- Exact-SHA Excel certification from P0.1 / issue #38 is still being integrated separately; once merged into `main`, that release-blocking control must be added to `verification_depth.json` in the same integration change.
 - Earlier project history has not been reconstructed. Existing commits, tags,
   releases, and repository documentation remain the authoritative record for
   changes made before this changelog was introduced.

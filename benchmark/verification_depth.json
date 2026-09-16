@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "scope": "v1.0.0 release-blocking assurance controls",
+  "controls": [
+    {
+      "id": "contract-evaluator",
+      "live_command": "compute_errors.py",
+      "proof_command": "test_contract_eval.py",
+      "negative_claim": "invalid measures, unsupported tail dispatch, non-convergence and malformed evidence fail closed",
+      "current_state": "expected_red_until_excel_export"
+    },
+    {
+      "id": "main-grid-coverage",
+      "live_command": "check_grid_coverage.py --mode auto --check-summary",
+      "proof_command": "test_grid_coverage.py",
+      "negative_claim": "missing/new/changed/deleted rows and corrupted fingerprints are rejected",
+      "current_state": "green_with_registered_transition_debt"
+    },
+    {
+      "id": "root-readme-integrity",
+      "live_command": "check_root_readme.py",
+      "proof_command": "test_root_readme.py",
+      "negative_claim": "truncation, study-README overwrite, dropped sections and reordering are rejected",
+      "current_state": "green"
+    },
+    {
+      "id": "incomplete-gamma-parity",
+      "live_command": "test_igamma_parity.py",
+      "proof_command": "test_drift_guard_mutations.py",
+      "negative_claim": "an intentional production/study seam drift makes the parity detector fail",
+      "current_state": "green"
+    },
+    {
+      "id": "student-t-coefficient-integrity",
+      "live_command": "student_t_large_df_study/test_coefficients.py",
+      "proof_command": "test_drift_guard_mutations.py",
+      "negative_claim": "an intentional stored coefficient mutation makes the re-derivation fixture fail",
+      "current_state": "green"
+    },
+    {
+      "id": "public-api-drift",
+      "live_command": "check_public_api.py",
+      "proof_command": "test_public_api.py",
+      "negative_claim": "rename, type/order, ByVal/ByRef, Optional/default, return type, additive API and module movement fail",
+      "current_state": "green"
+    },
+    {
+      "id": "manifest-content-binding",
+      "live_command": "test_manifest.py",
+      "proof_command": "test_manifest.py",
+      "negative_claim": "changed source/grid/registry/schema bindings and malformed manifests are rejected",
+      "current_state": "green_fixture_proof_live_main_stale"
+    },
+    {
+      "id": "manifest-provenance",
+      "live_command": "check_manifest_provenance.py",
+      "proof_command": "test_manifest_provenance.py",
+      "negative_claim": "manifest-only rebinds fail unless they are a valid export or exact restoration",
+      "current_state": "green_checker"
+    },
+    {
+      "id": "reference-helper-degradation",
+      "live_command": "test_gate_degradation.py",
+      "proof_command": "test_gate_degradation.py",
+      "negative_claim": "removing the reference helper forces the strict gate to block rather than silently downgrade",
+      "current_state": "green_fixture_proof"
+    },
+    {
+      "id": "generated-contract-table",
+      "live_command": "render_contract_table.py --write",
+      "proof_command": "test_render_contract_table.py",
+      "negative_claim": "stale generated content is deterministically replaced and missing markers fail",
+      "current_state": "green"
+    },
+    {
+      "id": "source-threshold-single-source",
+      "live_command": "check_source_thresholds.py",
+      "proof_command": "test_source_thresholds.py",
+      "negative_claim": "restated threshold, accuracy, cap and envelope claims are detected while authoritative constants are allowed",
+      "current_state": "green"
+    },
+    {
+      "id": "holdout-analyzer-semantics",
+      "live_command": "holdout/analyze_holdout.py",
+      "proof_command": "holdout/test_analyze_holdout.py",
+      "negative_claim": "metric/measure drift, unsupported dispatch and non-convergence cannot produce a verdict",
+      "current_state": "fixture_green_live_holdout_unbound_until_excel_export"
+    }
+  ]
+}
