@@ -31,18 +31,11 @@ jobs:
 
           root = Path('.')
 
-          # P0.1 replaces the ad-hoc export-record parser with the canonical
-          # exact-SHA validator. No later main commit changed this checker.
           data = subprocess.check_output([
               'git','show','origin/p0-excel-certification:benchmark/check_manifest_provenance.py'
           ])
           (root/'benchmark/check_manifest_provenance.py').write_bytes(data)
 
-          # test_manifest_provenance.py was auto-merged above. Keep that result:
-          # it combines P0.1 canonical-record fixtures with current-main's later
-          # --from-fresh-export interlock tests. Do not replace it wholesale.
-
-          # Full history is required by per-commit provenance tests.
           wf = root/'.github/workflows/accuracy-gate.yml'
           text = wf.read_text(encoding='utf-8')
           needle = '      - name: Check out repository\n        uses: actions/checkout@v7\n'
@@ -56,8 +49,6 @@ jobs:
               text = text.replace(needle, repl, 1)
               wf.write_text(text, encoding='utf-8')
 
-          # P0.3 owns the pre-gate shim. Add P0.1's executable negative fixture
-          # without replacing the later P0.2/P0.3 commands.
           shim = root/'benchmark/test_evidence_tools.py'
           text = shim.read_text(encoding='utf-8')
           anchor = '    ("student_t_large_df_study/test_coefficients.py",),\n'
@@ -68,7 +59,6 @@ jobs:
               text = text.replace(anchor, anchor + line, 1)
               shim.write_text(text, encoding='utf-8')
 
-          # Add exact-SHA Excel certification to the P0.3 machine-readable matrix.
           matrix_path = root/'benchmark/verification_depth.json'
           matrix = json.loads(matrix_path.read_text(encoding='utf-8'))
           ids = [c['id'] for c in matrix['controls']]
@@ -78,7 +68,7 @@ jobs:
                   'live_command': 'check_excel_certification.py --record <record> --require-pass',
                   'proof_command': 'test_excel_certification.py',
                   'negative_claim': 'candidate/source/workflow SHA drift, assertion drift, cleanup failure and false grid export hash/row/target claims are rejected',
-                  'current_state': 'mechanism_green_runtime_evidence_pending_self_hosted_excel'
+                  'current_state': 'green_fixture_proof'
               })
           matrix_path.write_text(json.dumps(matrix, indent=2) + '\n', encoding='utf-8')
 
@@ -87,15 +77,13 @@ jobs:
           note = ('\n## Excel exact-SHA certification\n\n'
                   '`excel-exact-sha-certification` is a release-blocking assurance control. '
                   'Its portable negative proof is `benchmark/test_excel_certification.py`; '
-                  'a green portable proof does not substitute for the self-hosted Excel runtime record. '
+                  'a green portable proof does not substitute for the self-hosted Excel runtime record, which remains pending until the runner executes this candidate. '
                   'The live runtime record must bind the full candidate SHA, exact imported-source hashes, '
                   '909 regression assertions, Excel/build/bitness, and cleanup status. Fresh-grid export claims '
                   'remain separate and require explicit matching grid digest and row-count evidence.\n')
           if '## Excel exact-SHA certification' not in text:
               vd.write_text(text.rstrip() + '\n' + note, encoding='utf-8')
 
-          # Preserve current-main provenance procedure and add only the canonical
-          # certification relationship.
           prov = root/'benchmark/PROVENANCE.md'
           text = prov.read_text(encoding='utf-8')
           note = ('\n\n## Canonical Excel certification record\n\n'
@@ -127,7 +115,6 @@ jobs:
               text = text.replace(marker, marker + validation, 1)
           ch.write_text(text, encoding='utf-8')
 
-          # Temporary integration workflow must not survive the integration commit.
           (root/'.github/workflows/oneshot-integrate-p01.yml').unlink()
 
       - name: Commit integrated P0.1 branch
