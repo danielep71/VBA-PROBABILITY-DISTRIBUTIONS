@@ -50,11 +50,15 @@ with tempfile.TemporaryDirectory() as td:
             failures.append("incomplete-gamma parity failed for an unexpected reason:\n" + out[-1200:])
 
 # 2. Student-t coefficients: alter one exact rational in the stored authority.
-# Fresh symbolic derivation must reject it.
+# Fresh symbolic derivation must reject it. validate_expansion.py imports the
+# production _ibeta helper from the study's parent directory, so copy that exact
+# dependency into the isolated fixture; an import error must never count as a
+# successful negative control.
 with tempfile.TemporaryDirectory() as td:
     root = Path(td)
     study = root / "student_t_large_df_study"
     shutil.copytree(HERE / "student_t_large_df_study", study)
+    shutil.copy2(HERE / "_ibeta.py", root / "_ibeta.py")
     coeff_path = study / "coefficients.json"
     data = json.loads(coeff_path.read_text(encoding="utf-8"))
     terms = data["g"]["1"]["terms"]
