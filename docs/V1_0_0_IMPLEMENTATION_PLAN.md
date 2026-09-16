@@ -67,7 +67,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 
 ### Live CI state
 
-- Accuracy Gate runs 166 through 171: failed only with the frozen two-file stale-evidence signature; every Phase 0 commit preserved it
+- Accuracy Gate runs 166 through 171: failed only with the frozen two-file stale-evidence signature; every Phase 0 commit preserved it, and every run from `8a3bbb8` onward preserves its re-pinned six-PASS/one-FAIL form
 - the #13 analyzer and its fitting/holdout claims passed before the provenance failure
 - Excel VBA Regression run 95: cancelled because the self-hosted Excel runner was unavailable; it produced no evidence
 - workflow logs warn that older action majors target deprecated Node 20 and are being forced onto Node 24
@@ -95,7 +95,7 @@ Every Phase 0 commit compares the ordered tuple `(label, result, failure class, 
 
 **Frozen-signature revision — 2026-09-16.** Commit `8a3bbb8` intentionally changed only the expected result of `gate blocks without references`: that fixture now supplies a synthetic clean-provenance seam so live stale provenance cannot mask the helper-degradation path it exists to test. It must PASS only when the simulated missing helper leaves active tail contracts `PENDING` and the gate exits non-zero in both strict and development modes. Manifest/provenance correctness remains independently mutation-tested. Runs 166 through 171 preserve the earlier pre-isolation signature; from `8a3bbb8` onward, the table above is the frozen Phase 0 signature. Reverting step 4 to a stale-provenance FAIL is itself a regression because it means the degradation path is masked again.
 
-#29 keeps the existing stale main-manifest check first during this window while exercising the holdout verifier through blocking fixtures. Phase 1 exports both observation sets and writes both truthful bindings atomically. The waiver expires immediately afterward and all seven checks must PASS.
+#29 keeps the existing stale main-manifest check first during this window while exercising the holdout verifier through blocking fixtures. Phase 1 exports both observation sets and writes both truthful bindings atomically. The waiver expires immediately afterward and all seven checks must PASS, the strict accuracy gate included.
 
 ## Backlog reconciliation performed
 
@@ -2991,7 +2991,7 @@ Repository-readiness state measured at main 0dd748884599d4d0da815cb53eeceb13efd5
 - CHANGELOG.md does not exist;
 - SECURITY.md incorrectly calls v1.0.0 the latest tagged stable version before the tag exists;
 - README assurance metrics are stale and hand-maintained (#28);
-- Accuracy Gate runs 166 through 171 fail only with the frozen two-file stale-evidence signature; Phase 0 introduced no additional top-level failure;
+- Accuracy Gate runs 166 through 171 fail only with the frozen two-file stale-evidence signature, and runs from `8a3bbb8` onward only with its re-pinned six-PASS/one-FAIL form; Phase 0 introduced no additional top-level failure;
 - Excel VBA Regression run 95 was cancelled because the self-hosted runner was unavailable; it produced no evidence;
 - main is intentionally the only remote branch and is currently unprotected;
 - the project has 112 worksheet-facing functions, 166 registry rows, 2,088 total grid observations, 1,732 main-grid rows, a 36-row unclaimed audit baseline at bde92dd whose current count must thereafter be generated, and 559 independent-holdout rows producing 80 contract verdicts; the latest verified Excel result is 902/902, while the #23 tests make 909 the next expected count, not yet a verified result.

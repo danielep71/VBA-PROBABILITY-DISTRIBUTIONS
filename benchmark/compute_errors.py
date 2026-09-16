@@ -173,8 +173,8 @@ def main():
                                           os.path.join(HERE, "accuracy_contracts.csv"))
         if _problems:
             print(f"  gate FAILED (exit 1): STALE EVIDENCE - the committed observations are not bound "
-                  f"to the checked-out source ({len(_problems)} mismatch(es)); re-export and "
-                  f"re-run write_manifest.py:")
+                  f"to the checked-out source ({len(_problems)} mismatch(es)); re-export from "
+                  f"Excel, then run refresh_evidence.py --bind-exported-main:")
             for _p in _problems:
                 print("      - " + _p)
             sys.exit(1)
@@ -194,7 +194,8 @@ def main():
     if _holdout_problems:
         print(f"  gate FAILED (exit 1): STALE HOLDOUT EVIDENCE - the independent holdout "
               f"is not bound to the checked-out source ({len(_holdout_problems)} "
-              f"mismatch(es)); re-export and re-run write_manifest.py --holdout:")
+              f"mismatch(es)); re-export from Excel, then run "
+              f"refresh_evidence.py --bind-exported-holdout:")
         for _p in _holdout_problems:
             print("      - " + _p)
         sys.exit(1)
