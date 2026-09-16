@@ -30,6 +30,7 @@ commands = (
     ("test_source_thresholds.py",),
     ("check_source_thresholds.py",),
     ("holdout/test_analyze_holdout.py",),
+    ("test_verification_depth.py",),
     ("check_verification_depth.py",),
 )
 for command in commands:

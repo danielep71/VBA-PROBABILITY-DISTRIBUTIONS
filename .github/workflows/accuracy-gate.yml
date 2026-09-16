@@ -15,6 +15,7 @@ on:
       - "benchmark/**"
       - "src/**"
       - "tests/**"
+      - "docs/PUBLIC_API.txt"
       - ".github/workflows/accuracy-gate.yml"
   # This job is a required main-branch check. Keep the pull-request trigger
   # unfiltered so every PR reports the required context instead of remaining
