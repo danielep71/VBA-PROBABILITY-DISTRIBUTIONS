@@ -3,6 +3,11 @@
 This tool does not run Excel. It is deliberately interlocked: use it only
 immediately after the selected grids were re-exported from the exact candidate
 and Export_ExcelEnvironment refreshed benchmark/excel_environment.json.
+
+The selected grid bytes may legitimately differ from HEAD at this point: they
+are the fresh, not-yet-committed Excel output. The finalizer hashes those
+working-tree bytes. The per-commit manifest-provenance guard later verifies that
+the retained record matches the bytes actually committed with the manifest.
 """
 import argparse
 import datetime
@@ -47,10 +52,16 @@ def main():
     try:
         with open(a.record, encoding="utf-8-sig") as f:
             record = json.load(f)
+
+        # The regression artifact must still bind the exact checked-out
+        # candidate and its committed regression sources. At this point the
+        # selected CSV may already contain fresh uncommitted Excel output, but
+        # the record has no export claims yet, so evidence_ref=HEAD is correct.
         validate_record(record, root, policy_ref=head, evidence_ref=head,
                         expected_candidate_sha=head, require_pass=True,
                         log_directory=os.path.dirname(os.path.abspath(a.record)))
         policy = load_policy(root, head)
+
         with open(os.path.join(root, ENV_PATH), encoding="utf-8-sig") as f:
             env = json.load(f)
         expected_env = record["environment"]
@@ -60,7 +71,8 @@ def main():
             "office_bitness": normalize_bitness(env.get("office_bitness", "")),
         }
         for key, observed in comparisons.items():
-            expected = normalize_bitness(expected_env[key]) if key == "office_bitness" else str(expected_env[key]).strip()
+            expected = (normalize_bitness(expected_env[key]) if key == "office_bitness"
+                        else str(expected_env[key]).strip())
             if not observed or observed != expected:
                 raise CertificationError(
                     f"{ENV_PATH} {key}={observed!r} differs from regression record {expected!r}")
@@ -77,6 +89,8 @@ def main():
             exporter = policy["grid_exporters"][grid]
             source_map[exporter] = sha256_bytes(git_bytes(root, head, exporter))
             grid_abs = os.path.join(root, grid)
+            if not os.path.isfile(grid_abs):
+                raise CertificationError(f"fresh-export target is missing: {grid}")
             record["grids"][grid] = {
                 "exported": True,
                 "sha256": sha256_file(grid_abs),
@@ -87,8 +101,13 @@ def main():
             {"path": path, "sha256": source_map[path]} for path in sorted(source_map)
         ]
 
+        # Do not compare a freshly exported working-tree CSV with pre-export
+        # HEAD. validate_record still verifies the candidate, policy and exact
+        # exporter/source blobs. The commit-time manifest guard supplies
+        # evidence_ref=<commit> and therefore verifies these recorded grid
+        # hashes/row counts against the bytes that were actually committed.
         for grid in selected:
-            validate_record(record, root, policy_ref=head, evidence_ref=head,
+            validate_record(record, root, policy_ref=head, evidence_ref=None,
                             expected_candidate_sha=head, require_pass=True,
                             require_grid=grid)
 
