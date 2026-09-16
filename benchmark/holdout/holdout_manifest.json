@@ -1,0 +1,40 @@
+{
+  "manifest_version": 1,
+  "evidence_kind": "independent_holdout",
+  "generated_utc": "2026-09-16T21:06:44Z",
+  "commit_sha": "a887f7f",
+  "grid_schema_version": "holdout/arg4+expected_error/v1",
+  "grid_schema_columns": [
+    "function",
+    "vba_kernel",
+    "claim",
+    "metric",
+    "arg1",
+    "arg2",
+    "arg3",
+    "arg4",
+    "reference",
+    "observed_vba",
+    "regime",
+    "evidence_set",
+    "expected_error"
+  ],
+  "observation_row_count": 559,
+  "observation_grid_sha256": "sha256:0de209295f98007fa0f997d41c42620451295c7a06fddd09166c641c67e35218",
+  "source_binding": {
+    "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:ac42166bb978eb48d45490cd7fb715a448b83561ea6ebeeed50c10d9636f9693",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:2d6a2d5da1f8184b181782436439f42298dbfd37a08c2b68479827383d7a90b2",
+    "src/M_STATS_PROBDIST_CORE.bas": "sha256:ff75221742ca432da3d1c6e6301b091901f9be53c35cd7e27d46eb7e41f3491e",
+    "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:2b1d2ff93db88f0c05d794f5b447fdb6703ba5e5bdca813fe51af2903f0a9e1a",
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:594d623b9ea447bebde0f0c96aa9f04e0e5f9a4a45e22a9d3c03e998fe60a97c",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:f4f99c4b72535b8be4bb87ad2559bc5b5013ce3692d30dbb715f77519c49cce9",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:a106b1001090049bfd403e5b3a9f62265dd692292fb7ca75b32b7867c477cdd8"
+  },
+  "contract_registry_sha256": "sha256:b42a6413b2df245f89c214a9679194cb66742ba96f330bf4f8e37dc0ab13c9b6",
+  "environment": {
+    "excel_version": "16.0",
+    "excel_build": "20228",
+    "office_bitness": "64"
+  },
+  "notes": ""
+}
