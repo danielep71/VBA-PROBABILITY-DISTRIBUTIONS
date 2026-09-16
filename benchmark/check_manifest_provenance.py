@@ -24,30 +24,27 @@ A commit that modifies a manifest is legal only if, in that SAME commit, one
 of the following holds:
 
   A. grid co-change - the manifest's own grid is also modified. This is what
-     a real export looks like: 228337e changed the grid, the summary and the
-     manifest together.
+     a real export normally looks like.
 
-  B. validated export record - benchmark/excel_regression_record.json is also
-     modified AND validates under _export_record.validate(). Present so that
-     a re-export producing a byte-identical grid (a .bas change that alters no
-     observation value) is still legal. The record must IDENTIFY the exported
-     target and bind the fields in EXPORT_RECORD_REQUIRED below, including the
-     SHA-256 and row count of each grid it claims to have exported, matching
-     the committed grid. "The file changed" is not enough.
+  B. canonical Excel certification record - benchmark/excel_regression_record.json
+     is also modified and validates under excel_certification.py. The record
+     must bind a full candidate SHA, the exact policy-selected VBA source bytes,
+     a green import/compile/regression/cleanup run, and explicitly claim THIS
+     grid as freshly exported with matching SHA-256 and row count. A green
+     regression-only record is not sufficient.
 
   C. exact restoration - the commit modifies the manifest and nothing else,
      and the resulting manifest is byte-identical to some earlier commit's
-     version of it. This is the repair path: c496f1b restored the manifest
-     that 9fba175 corrupted while the grid was untouched. It cannot launder an
-     ordinary rebind, because a rebind produces a manifest that has never
-     existed before.
+     version of it. This is the repair path used by c496f1b.
 
 Run: python3 check_manifest_provenance.py [--since <rev>]
 """
-import json
 import os
 import subprocess
 import sys
+
+from excel_certification import (CertificationError, row_count_file,
+                                 sha256_file, validate_record_text)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -58,21 +55,6 @@ MANIFESTS = {
 }
 EXPORT_RECORD = "benchmark/excel_regression_record.json"
 
-# Fields the export record must bind. Refinement 2: the exception is validated,
-# not merely "a file changed".
-EXPORT_RECORD_REQUIRED = (
-    "export_session_utc",       # when the export ran
-    "source_commit_sha",        # source identity
-    "excel_version",
-    "excel_build",
-    "office_bitness",
-    "regression_total",         # regression totals
-    "regression_passed",
-    "regression_failed",
-    "grids",                    # per-grid: exported, sha256, row_count
-)
-GRID_RECORD_REQUIRED = ("exported", "sha256", "row_count")
-
 
 def git(*args):
     return subprocess.run(["git"] + list(args), cwd=ROOT, capture_output=True,
@@ -80,64 +62,32 @@ def git(*args):
 
 
 def sha256_of(path):
-    import hashlib
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(65536), b""):
-            h.update(block)
-    return "sha256:" + h.hexdigest()
+    return sha256_file(path)
 
 
 def row_count_of(path):
-    with open(path, encoding="utf-8", newline="") as f:
-        return max(sum(1 for _ in f) - 1, 0)
+    return row_count_file(path)
 
 
-def validate_export_record(text, manifest_path):
-    """Return (ok, reason). The record must claim THIS manifest's grid as
-    exported, and its hash and row count must match the committed grid."""
-    try:
-        rec = json.loads(text)
-    except ValueError as exc:
-        return False, f"export record is not valid JSON: {exc}"
-    missing = [k for k in EXPORT_RECORD_REQUIRED if k not in rec]
-    if missing:
-        return False, f"export record missing field(s): {', '.join(missing)}"
-    grids = rec.get("grids")
-    if not isinstance(grids, dict) or not grids:
-        return False, "export record 'grids' must be a non-empty object"
-
+def validate_export_record(text, manifest_path, commit):
+    """Return (ok, reason) for the canonical record at one evidence commit."""
     grid_rel = MANIFESTS[manifest_path]
-    entry = grids.get(grid_rel)
-    if entry is None:
-        return False, (f"export record does not identify {grid_rel} as an "
-                       "exported target")
-    missing = [k for k in GRID_RECORD_REQUIRED if k not in entry]
-    if missing:
-        return False, (f"export record entry for {grid_rel} missing: "
-                       f"{', '.join(missing)}")
-    if entry["exported"] is not True:
-        return False, (f"export record marks {grid_rel} as not exported; a "
-                       "manifest may not be bound to a grid that was not "
-                       "re-exported")
-    grid_abs = os.path.join(ROOT, grid_rel)
-    if not os.path.exists(grid_abs):
-        return False, f"{grid_rel} is missing from the working tree"
-    actual_sha = sha256_of(grid_abs)
-    if entry["sha256"] != actual_sha:
-        return False, (f"export record hash for {grid_rel} does not match the "
-                       f"committed grid: recorded {entry['sha256'][:23]}..., "
-                       f"actual {actual_sha[:23]}...")
-    actual_rows = row_count_of(grid_abs)
-    if int(entry["row_count"]) != actual_rows:
-        return False, (f"export record row count for {grid_rel} is "
-                       f"{entry['row_count']}, committed grid has {actual_rows}")
+    try:
+        validate_record_text(
+            text,
+            ROOT,
+            policy_ref=commit,
+            evidence_ref=commit,
+            require_pass=True,
+            require_grid=grid_rel,
+        )
+    except CertificationError as exc:
+        return False, str(exc)
     return True, ""
 
 
 def is_exact_restoration(commit, manifest_path, changed):
-    """Refinement 3: manifest-only commit whose result equals an earlier
-    committed version of that manifest byte for byte."""
+    """Manifest-only commit whose result equals an earlier committed version."""
     if changed != {manifest_path}:
         return False, "not a manifest-only commit"
     blob = git("rev-parse", f"{commit}:{manifest_path}").stdout.strip()
@@ -162,13 +112,13 @@ def check_commit(commit):
             continue
         if grid_path in changed:
             continue                                   # A: grid co-change
-        if EXPORT_RECORD in changed:                   # B: validated record
+        if EXPORT_RECORD in changed:                   # B: canonical record
             text = git("show", f"{commit}:{EXPORT_RECORD}").stdout
-            ok, why = validate_export_record(text, manifest_path)
+            ok, why = validate_export_record(text, manifest_path, commit)
             if ok:
                 continue
             problems.append(f"{commit[:7]}: {manifest_path} changed with an "
-                            f"export record that does not validate - {why}")
+                            f"Excel certification record that does not validate - {why}")
             continue
         ok, why = is_exact_restoration(commit, manifest_path, changed)  # C
         if ok:
@@ -189,9 +139,6 @@ def main():
     if since:
         rev = f"{since}..HEAD"
     else:
-        # Default: the commits this push adds. On a hosted runner
-        # GITHUB_EVENT_BEFORE marks the previous tip; fall back to HEAD alone,
-        # which still checks each commit separately rather than a diff range.
         before = os.environ.get("GITHUB_EVENT_BEFORE", "")
         rev = (f"{before}..HEAD" if before and not set(before) == {"0"}
                else "HEAD~1..HEAD")
@@ -213,8 +160,8 @@ def main():
             print("  - " + p)
         return 1
     print(f"PASS: manifest provenance ({len(commits)} commit(s) checked "
-          "separately; a manifest changes only with its grid, a validated "
-          "export record, or as an exact restoration)")
+          "separately; a manifest changes only with its grid, a canonical "
+          "fresh-export Excel certification record, or as an exact restoration)")
     return 0
 
 
