@@ -193,22 +193,28 @@ def _validate_runner(record, policy):
             raise CertificationError("runner workflow identity differs from policy")
         if not isinstance(workflow["sha"], str) or not SHA40.fullmatch(workflow["sha"]):
             raise CertificationError("runner workflow sha must be a full commit SHA")
+        if workflow["sha"] != record["candidate_sha"]:
+            raise CertificationError("runner workflow sha differs from candidate_sha")
         if type(workflow["run_id"]) is not int or workflow["run_id"] <= 0 or type(workflow["run_attempt"]) is not int or workflow["run_attempt"] <= 0:
             raise CertificationError("runner workflow run_id/run_attempt must be positive integers")
     elif workflow is not None:
         raise CertificationError("manual-interactive evidence must not claim a hosted workflow")
 
 
-def _validate_environment(environment, require_runtime):
+def _validate_environment(environment, require_green):
     expected = {"excel_version", "excel_build", "office_bitness", "windows",
                 "os_architecture", "automation_security", "vba_project_access"}
     _require_keys(environment, expected, "environment")
-    if require_runtime:
-        for key in expected:
-            if not isinstance(environment[key], str) or not environment[key].strip():
-                raise CertificationError(f"environment.{key} must be non-empty for executed evidence")
+    for key in expected:
+        if not isinstance(environment[key], str) or not environment[key].strip():
+            raise CertificationError(f"environment.{key} must be a non-empty string")
+    if environment["office_bitness"] not in ("32-bit", "64-bit", "unavailable"):
+        raise CertificationError("environment.office_bitness must be 32-bit, 64-bit, or unavailable")
+    if require_green:
         if environment["office_bitness"] not in ("32-bit", "64-bit"):
-            raise CertificationError("environment.office_bitness must be 32-bit or 64-bit")
+            raise CertificationError("green evidence requires observed Office bitness")
+        if environment["excel_version"] == "unavailable" or environment["excel_build"] == "unavailable":
+            raise CertificationError("green evidence requires observed Excel version and build")
 
 
 def _validate_stages(record, require_pass):
@@ -323,7 +329,7 @@ def validate_record(record, root, *, policy_ref="HEAD", evidence_ref=None,
     if finished < started:
         raise CertificationError("finished_at precedes started_at")
     _validate_runner(record, policy)
-    _validate_environment(record["environment"], require_runtime=True)
+    _validate_environment(record["environment"], require_green=require_pass)
     _validate_stages(record, require_pass)
     _validate_harness(record, policy)
     _validate_log(record, log_directory)
