@@ -99,6 +99,7 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
 - Added a machine-readable verification-depth inventory for 12 v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
 - Added mutation controls proving that incomplete-gamma dispatch drift, Student-t coefficient corruption, stale generated contract tables, and duplicated source-threshold claims are rejected.
 - Added a generated 112-function `K_STATS_*` public-API manifest and a declaration-aware drift gate that blocks accidental additions, removals, renames, module moves, or compatibility-significant signature changes.
@@ -120,6 +121,7 @@ Use only the categories needed by a release.
 
 ### Validation
 
+- Added negative controls for Excel candidate/source/workflow SHA drift, assertion-count drift, cleanup failure, and false grid export target/hash/row-count claims.
 - Added fail-closed meta-validation that rejects missing controls, missing proof scripts, unsupported states, or negative proofs not wired into the hosted pre-gate shim.
 - Added negative controls proving that parameter type/order, `ByVal`/`ByRef`, `Optional` defaults, return types, additive API, renames, and module moves are detected while implementation-only edits do not create API drift.
 - Verified the changelog structure, policy links, section ordering, and

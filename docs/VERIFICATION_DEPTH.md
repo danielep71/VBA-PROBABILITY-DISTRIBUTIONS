@@ -42,3 +42,7 @@ Utilities, exploratory studies and report generators that cannot affect a releas
 ## Excel certification
 
 P0.1 / issue #38 is being implemented separately. Its exact-SHA Excel certification validator already carries dedicated negative fixtures. When that control is merged into `main`, it becomes release-blocking and must be added to this inventory in the same integration change. The matrix must never list an unmerged checker as though it were active.
+
+## Excel exact-SHA certification
+
+`excel-exact-sha-certification` is a release-blocking assurance control. Its portable negative proof is `benchmark/test_excel_certification.py`; a green portable proof does not substitute for the self-hosted Excel runtime record, which remains pending until the runner executes this candidate. The live runtime record must bind the full candidate SHA, exact imported-source hashes, 909 regression assertions, Excel/build/bitness, and cleanup status. Fresh-grid export claims remain separate and require explicit matching grid digest and row-count evidence.

@@ -36,6 +36,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          # Manifest provenance is checked per commit and its negative controls
+          # include historical rebind/export/restoration commits. A depth-1 PR
+          # checkout makes those controls silently untestable and also weakens
+          # exact-restoration detection. Keep the commit graph available.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v7

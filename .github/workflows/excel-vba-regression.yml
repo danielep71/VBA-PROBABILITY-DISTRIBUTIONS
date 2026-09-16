@@ -9,6 +9,7 @@ on:
       - "src/**"
       - "tests/**"
       - "ci/**"
+      - ".github/excel-evidence-policy.json"
       - ".github/workflows/excel-vba-regression.yml"
   # This job is a required main-branch check. Keep the pull-request trigger
   # unfiltered so every PR reports the required context instead of remaining
@@ -47,12 +48,14 @@ jobs:
       - name: Run complete VBA regression suite through Excel COM
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%"
-        
-      - name: Upload VBA test result
+
+      - name: Upload exact-SHA VBA certification evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: excel-vba-regression-${{ github.run_id }}
-          path: artifacts/excel-vba-ci/test-result.txt
+          path: |
+            artifacts/excel-vba-ci/test-result.txt
+            artifacts/excel-vba-ci/excel-certification.json
           if-no-files-found: warn
           retention-days: 30
