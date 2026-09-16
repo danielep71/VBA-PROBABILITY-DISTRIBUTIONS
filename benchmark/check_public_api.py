@@ -96,7 +96,7 @@ def normalize_signature(decl: str) -> str:
     """Canonicalize declaration whitespace without changing VBA semantics."""
     value = re.sub(r"\s+", " ", decl.strip())
     value = re.sub(r"\s*\(\s*", "(", value)
-    value = re.sub(r"\s*\)\s*", ")", value)
+    value = re.sub(r"\s*\)", ")", value)
     value = re.sub(r"\s*,\s*", ", ", value)
     value = re.sub(r"\s*=\s*", " = ", value)
     return value.strip()
