@@ -96,16 +96,22 @@ def _grid_unchanged_since_head(root, grid_path):
     in CI is the backstop for that.
     """
     rel = os.path.relpath(grid_path, root).replace(os.sep, "/")
-    committed = _git_show(root, f"HEAD:{rel}")
-    if committed is None:
-        return False, ""
+    # Ask git whether the path differs from HEAD rather than comparing bytes.
+    # A byte comparison against `git show HEAD:<path>` is wrong wherever the
+    # working tree and the blob differ only in line endings: this repository
+    # declares *.csv as eol=lf, Excel writes CRLF, so on Windows the grid
+    # always looked modified and this interlock never fired. `git diff` honours
+    # .gitattributes and core.autocrlf, so it answers the question actually
+    # being asked - did anything change - on every platform.
     try:
-        with open(grid_path, "rb") as f:
-            current = f.read()
-    except OSError:
+        r = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", rel],
+                           cwd=root, capture_output=True, check=False)
+    except (OSError, ValueError):
         return False, ""
-    if current != committed:
-        return False, ""
+    if r.returncode == 1:
+        return False, ""                     # differs from HEAD: a real export
+    if r.returncode != 0:
+        return False, ""                     # git unavailable or path unknown
     record = os.path.join(root, RECORD_FILE)
     if os.path.exists(record):
         try:
@@ -118,7 +124,7 @@ def _grid_unchanged_since_head(root, grid_path):
             return False, ""
         except (OSError, ValueError, CertificationError):
             pass
-    return True, f"{rel} is byte-identical to HEAD"
+    return True, f"{rel} is unchanged from HEAD"
 
 
 def _read_excel_environment(root):

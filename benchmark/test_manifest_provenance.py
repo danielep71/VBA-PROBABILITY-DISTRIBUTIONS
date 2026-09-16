@@ -74,6 +74,11 @@ POLICY = {
 
 def build_repo(tmp):
     run(tmp, "git", "init", "-q")
+    # Mirror the real repository's normalisation: without it the synthetic repo
+    # would treat a CRLF-only rewrite as a genuine change and the CRLF case
+    # below would not exercise what it claims to.
+    write(tmp, ".gitattributes", "*.csv text eol=lf\n")
+    run(tmp, "git", "config", "core.autocrlf", "false")
     run(tmp, "git", "config", "user.email", "t@t")
     run(tmp, "git", "config", "user.name", "t")
     write(tmp, E.POLICY_PATH, json.dumps(POLICY, indent=2) + "\n")
@@ -337,9 +342,30 @@ def case_helper_record_missing_field(tmp):
     return helper(tmp)
 
 
+def case_helper_crlf_only(tmp):
+    """Line endings changed, content identical.
+
+    This repository declares *.csv as eol=lf and Excel writes CRLF, so on
+    Windows the working-tree grid routinely differs from the blob byte for
+    byte while being unchanged. An earlier version compared raw bytes against
+    `git show HEAD:<path>` and therefore always saw the grid as modified,
+    which silently disabled this interlock on exactly the machine that runs
+    the exports. The check now asks git, which honours .gitattributes.
+    """
+    path = os.path.join(tmp, MAIN_G)
+    with open(path, "rb") as f:
+        data = f.read()
+    with open(path, "wb") as f:
+        f.write(data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+    return helper(tmp)
+
+
+check(with_repo(case_helper_crlf_only)[0] is True,
+      "a CRLF-only difference must still count as unchanged, not as an export")
+
 _stale, _why = with_repo(case_helper_no_export)
 check(_stale, "unchanged grid must be reported as no-export")
-check("byte-identical to HEAD" in _why, "the reason must name the cause")
+check("unchanged from HEAD" in _why, "the reason must name the cause")
 check(with_repo(case_helper_real_export)[0] is False,
       "a modified grid must be accepted as a real export")
 check(with_repo(case_helper_identical_with_record)[0] is False,
@@ -353,18 +379,50 @@ check(with_repo(case_helper_record_bad_hash)[0] is True,
 check(with_repo(case_helper_record_missing_field)[0] is True,
       "a malformed export record must not clear the check")
 
-# The real writer, on this repository: the grid is committed and unchanged, so
-# --from-fresh-export must refuse and leave the manifest untouched.
-_before = open(os.path.join(HERE, "observation_manifest.json"), "rb").read()
-_run = subprocess.run([sys.executable, os.path.join(HERE, "write_manifest.py"),
-                       "--from-fresh-export"], cwd=HERE,
-                      capture_output=True, text=True)
-_after = open(os.path.join(HERE, "observation_manifest.json"), "rb").read()
-check(_run.returncode != 0,
-      "write_manifest.py --from-fresh-export must refuse with an unchanged grid")
-check("byte-identical to HEAD" in (_run.stderr + _run.stdout),
-      "the refusal must name the unchanged grid")
-check(_before == _after, "a refused write must not modify the manifest")
+# The real writer end to end, in a THROWAWAY CLONE.
+#
+# An earlier version ran the writer against the working tree and asserted that
+# it refuses. Wrong twice over: the assertion held only while no export was in
+# progress, so a successful export broke it; and because write_manifest.py
+# resolves its own repository root, the subprocess rewrote the live
+# observation_manifest.json as a side effect. A fixture must not assert on live
+# state, and must never mutate what it measures.
+#
+# The clone checks out HEAD, so the WORKING-TREE writer is copied in: otherwise
+# the fixture silently exercises the previous revision.
+def case_writer_subprocess():
+    tmp = tempfile.mkdtemp()
+    try:
+        clone = os.path.join(tmp, "clone")
+        r = subprocess.run(["git", "clone", "--no-hardlinks", "--quiet",
+                            os.path.dirname(HERE), clone],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            return None                      # git unavailable: skip, not fail
+        bench = os.path.join(clone, "benchmark")
+        for mod in ("write_manifest.py", "_manifest.py"):
+            shutil.copy2(os.path.join(HERE, mod), os.path.join(bench, mod))
+        manifest = os.path.join(bench, "observation_manifest.json")
+        before = open(manifest, "rb").read()
+        run = subprocess.run([sys.executable,
+                              os.path.join(bench, "write_manifest.py"),
+                              "--from-fresh-export"],
+                             cwd=bench, capture_output=True, text=True)
+        after = open(manifest, "rb").read()
+        return run.returncode, run.stderr + run.stdout, before == after
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+_res = case_writer_subprocess()
+if _res is None:
+    print("  (skipped: git unavailable for the writer subprocess case)")
+else:
+    _rc, _out, _untouched = _res
+    check(_rc != 0,
+          "write_manifest.py --from-fresh-export must refuse with an unchanged grid")
+    check("unchanged from HEAD" in _out, "the refusal must name the unchanged grid")
+    check(_untouched, "a refused write must not modify the manifest")
 
 if fails:
     print("FAIL: manifest provenance guard")
