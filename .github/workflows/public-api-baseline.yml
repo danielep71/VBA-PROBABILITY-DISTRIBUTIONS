@@ -1,0 +1,32 @@
+name: Public API Baseline
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "benchmark/check_public_api.py"
+      - ".github/workflows/public-api-baseline.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Generate canonical API manifest
+        run: python benchmark/check_public_api.py --write
+      - name: Upload canonical API manifest
+        uses: actions/upload-artifact@v7
+        with:
+          name: public-api-baseline
+          path: docs/PUBLIC_API.txt
+          retention-days: 1
