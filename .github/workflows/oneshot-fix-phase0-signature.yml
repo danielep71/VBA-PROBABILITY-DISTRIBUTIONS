@@ -17,28 +17,28 @@ jobs:
         with:
           fetch-depth: 0
       - name: Correct frozen Phase 0 signature
-        shell: python
         run: |
+          python - <<'PY'
           from pathlib import Path
           p = Path("docs/V1_0_0_IMPLEMENTATION_PLAN.md")
           text = p.read_text(encoding="utf-8")
 
           old = '''| 3 | strict accuracy gate | FAIL | `STALE EVIDENCE`, exactly 2 mismatches |
-| 4 | gate blocks without references | FAIL | same stale-evidence cause and same 2 mismatches |
-| 5 | source claims vs registries | PASS | — |'''
+          | 4 | gate blocks without references | FAIL | same stale-evidence cause and same 2 mismatches |
+          | 5 | source claims vs registries | PASS | — |'''
           new = '''| 3 | strict accuracy gate | FAIL | `STALE EVIDENCE`, exactly 2 mismatches |
-| 4 | gate blocks without references | PASS | fixture isolates provenance, forces the reference helper unavailable, requires active tail contracts to become `PENDING`, and requires a non-zero gate exit in both strict and development modes |
-| 5 | source claims vs registries | PASS | — |'''
+          | 4 | gate blocks without references | PASS | fixture isolates provenance, forces the reference helper unavailable, requires active tail contracts to become `PENDING`, and requires a non-zero gate exit in both strict and development modes |
+          | 5 | source claims vs registries | PASS | — |'''
           if text.count(old) != 1:
               raise SystemExit(f"expected exactly one signature-table anchor, found {text.count(old)}")
           text = text.replace(old, new, 1)
 
           old = '''Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any difference is a regression despite the already-red top line. Runs 166 through 171 preserve the invariant.
-'''
+          '''
           new = '''Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any unexplained difference is a regression despite the already-red top line.
 
-**Frozen-signature revision — 2026-09-16.** Commit `8a3bbb8` intentionally changed only the expected result of `gate blocks without references`: that fixture now supplies a synthetic clean-provenance seam so live stale provenance cannot mask the helper-degradation path it exists to test. It must PASS only when the simulated missing helper leaves active tail contracts `PENDING` and the gate exits non-zero in both strict and development modes. Manifest/provenance correctness remains independently mutation-tested. Runs 166 through 171 preserve the earlier pre-isolation signature; from `8a3bbb8` onward, the table above is the frozen Phase 0 signature. Reverting step 4 to a stale-provenance FAIL is itself a regression because it means the degradation path is masked again.
-'''
+          **Frozen-signature revision — 2026-09-16.** Commit `8a3bbb8` intentionally changed only the expected result of `gate blocks without references`: that fixture now supplies a synthetic clean-provenance seam so live stale provenance cannot mask the helper-degradation path it exists to test. It must PASS only when the simulated missing helper leaves active tail contracts `PENDING` and the gate exits non-zero in both strict and development modes. Manifest/provenance correctness remains independently mutation-tested. Runs 166 through 171 preserve the earlier pre-isolation signature; from `8a3bbb8` onward, the table above is the frozen Phase 0 signature. Reverting step 4 to a stale-provenance FAIL is itself a regression because it means the degradation path is masked again.
+          '''
           if text.count(old) != 1:
               raise SystemExit(f"expected exactly one invariant-prose anchor, found {text.count(old)}")
           text = text.replace(old, new, 1)
@@ -50,6 +50,7 @@ jobs:
           text = text.replace(old, new, 1)
 
           p.write_text(text, encoding="utf-8")
+          PY
       - name: Commit correction and remove one-shot workflow
         run: |
           git config user.name "github-actions[bot]"
