@@ -2,7 +2,6 @@
 """Negative controls for check_public_api.py."""
 from __future__ import annotations
 
-import os
 import shutil
 import sys
 import tempfile
@@ -69,6 +68,7 @@ try:
     expect_pass(root, manifest, "baseline")
 
     core = root / A.MODULES[0]
+    second = root / A.MODULES[1]
     baseline = core.read_text(encoding="utf-8")
 
     # Function-body and formatting changes are not API changes.
@@ -106,15 +106,20 @@ try:
     )
     expect_fail(root, manifest, "added K_STATS function")
 
-    # Internal PROB namespace may not leak into the production public surface.
+    # Moving an unchanged function between production modules is API drift too.
+    core.write_text('Attribute VB_Name = "M"\nOption Explicit\n', encoding="utf-8")
+    second.write_text(baseline, encoding="utf-8")
+    expect_fail(root, manifest, "module movement")
+
+    # PROB_* linkage is project-internal and deliberately excluded from the product manifest.
     core.write_text(
-        baseline + "\nPublic Function PROB_Leaked(ByVal X As Double) As Double\n"
-        "    PROB_Leaked = X\nEnd Function\n",
+        baseline + "\nPublic Function PROB_ProjectHelper(ByVal X As Double) As Double\n"
+        "    PROB_ProjectHelper = X\nEnd Function\n",
         encoding="utf-8",
     )
-    expect_fail(root, manifest, "Public PROB helper exposure")
+    second.write_text('Attribute VB_Name = "Empty"\nOption Explicit\n', encoding="utf-8")
+    expect_pass(root, manifest, "project-scoped Public PROB helper")
 
-    # Private PROB helpers remain allowed and irrelevant to the API manifest.
     core.write_text(
         baseline + "\nPrivate Function PROB_Internal(ByVal X As Double) As Double\n"
         "    PROB_Internal = X\nEnd Function\n",
@@ -138,5 +143,5 @@ if FAILS:
         print("  - " + failure)
     raise SystemExit(1)
 print("PASS: public API checker fixtures (name, type, ByVal/ByRef, Optional/default, "
-      "parameter order, return type, additive API and Public PROB exposure fail; "
-      "body/format/private-helper/benchmark-exporter edits pass)")
+      "parameter order, return type, additive API and module movement fail; "
+      "body/format/PROB-helper/benchmark-exporter edits pass)")
