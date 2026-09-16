@@ -124,6 +124,11 @@ try:
     short["candidate_sha"] = sha[:7]
     expect_fail(root, short, "short candidate SHA must fail", policy_ref=sha)
 
+    wrong_workflow_sha = copy.deepcopy(record)
+    wrong_workflow_sha["runner"]["workflow"]["sha"] = "f" * 40
+    expect_fail(root, wrong_workflow_sha, "workflow SHA must equal candidate SHA",
+                policy_ref=sha)
+
     wrong_count = copy.deepcopy(record)
     wrong_count["harness"]["assertions"] = 2
     wrong_count["harness"]["passed"] = 2
@@ -134,6 +139,20 @@ try:
     expect_fail(root, bad_cleanup, "green certification must reject cleanup failure",
                 policy_ref=sha, require_pass=True)
     E.validate_record(bad_cleanup, root, policy_ref=sha, require_pass=False)
+
+    failed_host = copy.deepcopy(record)
+    failed_host["environment"]["excel_version"] = "unavailable"
+    failed_host["environment"]["excel_build"] = "unavailable"
+    failed_host["environment"]["office_bitness"] = "unavailable"
+    failed_host["stages"]["import"] = {"status": "FAIL", "detail": "Excel unavailable"}
+    failed_host["stages"]["compile"] = {"status": "NOT_RUN", "detail": "Import did not pass"}
+    failed_host["stages"]["regression"] = {"status": "NOT_RUN", "detail": "Compile did not pass"}
+    failed_host["stages"]["cleanup"] = {"status": "PASS", "detail": "No Excel process was created"}
+    failed_host["harness"] = {"entry_point": policy["entry_point"], "assertions": 0,
+                              "passed": 0, "failed": 0}
+    E.validate_record(failed_host, root, policy_ref=sha, require_pass=False)
+    expect_fail(root, failed_host, "failed-host record must not validate as green",
+                policy_ref=sha, require_pass=True)
 
     bad_source = copy.deepcopy(record)
     bad_source["sources"][0]["sha256"] = "sha256:" + "f" * 64
@@ -173,5 +192,6 @@ if FAILS:
     for item in FAILS:
         print("  - " + item)
     raise SystemExit(1)
-print("PASS: Excel certification fixtures (exact SHA, source inventory, assertion count, "
-      "cleanup, grid digest/rows/target, and later-source drift)")
+print("PASS: Excel certification fixtures (exact candidate/workflow SHA, source inventory, "
+      "assertion count, non-green host evidence, cleanup, grid digest/rows/target, and "
+      "later-source drift)")
