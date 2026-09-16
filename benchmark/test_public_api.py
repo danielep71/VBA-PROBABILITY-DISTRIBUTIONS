@@ -129,6 +129,7 @@ try:
 
     # Public exporters outside src/ are intentionally not part of the product API.
     exporter = root / "benchmark" / "SomeExporter.bas"
+    exporter.parent.mkdir(parents=True, exist_ok=True)
     exporter.write_text(
         'Attribute VB_Name = "SomeExporter"\nPublic Sub Export_Something()\nEnd Sub\n',
         encoding="utf-8",
