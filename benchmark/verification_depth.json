@@ -85,6 +85,13 @@
       "proof_command": "holdout/test_analyze_holdout.py",
       "negative_claim": "metric/measure drift, unsupported dispatch and non-convergence cannot produce a verdict",
       "current_state": "fixture_green_live_holdout_unbound_until_excel_export"
+    },
+    {
+      "id": "excel-exact-sha-certification",
+      "live_command": "check_excel_certification.py --record <record> --require-pass",
+      "proof_command": "test_excel_certification.py",
+      "negative_claim": "candidate/source/workflow SHA drift, assertion drift, cleanup failure and false grid export hash/row/target claims are rejected",
+      "current_state": "green_fixture_proof"
     }
   ]
 }

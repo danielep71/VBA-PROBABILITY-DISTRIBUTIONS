@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+  "workflow": ".github/workflows/excel-vba-regression.yml",
+  "entry_point": "Test_STATS_PROBDIST_RunAll_CI",
+  "expected_assertions": 909,
+  "regression_sources": [
+    "src/M_STATS_PROBDIST_CORE.bas",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
+    "src/M_STATS_PROBDIST_TFAMILY.bas",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas",
+    "src/M_STATS_PROBDIST_DISCRETE.bas",
+    "tests/M_STATS_PROBDIST_TEST.bas"
+  ],
+  "grid_exporters": {
+    "benchmark/probability_accuracy_grid.csv": "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas",
+    "benchmark/holdout/holdout_grid.csv": "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas"
+  }
+}

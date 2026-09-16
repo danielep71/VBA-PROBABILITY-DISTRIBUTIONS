@@ -1,21 +1,48 @@
-# Accuracy evidence provenance (P1-03)
+# Accuracy evidence provenance
 
 A green accuracy summary must prove more than "the committed observations still
 pass every contract." It must prove:
 
-> these exact observations were produced by this exact source, and every active
-> row was evaluated.
+> these exact observations were produced by this exact source, under a recorded
+> Excel environment, and every active row was evaluated.
 
-The observations in `probability_accuracy_grid.csv` are produced by VBA (the
-kernels in `src/`, plus the export and study macros) running in Excel. Nothing
-in the grid recorded *which* source produced them, so an algorithm could change
-in `src/**` while the committed observations — and the green summary — stayed
-put, and the hosted accuracy workflow did not even re-run.
+The numerical observations are produced by VBA running in Excel. The repository
+therefore keeps **two complementary evidence layers**:
 
-## Two evidence bindings
+1. a canonical Excel-host certification record for the exact source candidate
+   that Excel executed; and
+2. source/grid manifests for the main accuracy grid and the independent holdout.
+
+Neither layer substitutes for the other.
+
+## Exact-SHA Excel certification
+
+`.github/excel-evidence-policy.json` defines the regression entry point, exact
+assertion count, imported source inventory, and supported grid exporters. The
+self-hosted Excel workflow emits `excel-certification.json`; the contract is
+validated by `excel_certification.py` / `check_excel_certification.py`.
+
+A green regression record binds:
+
+- a full 40-character candidate Git SHA;
+- SHA-256 of the canonical Git bytes of every imported VBA source;
+- Excel version/build and actual Office bitness;
+- runner/workflow identity and timestamps;
+- import, execution-backed compile, regression, and cleanup stages;
+- the exact policy assertion count and pass/fail totals; and
+- SHA-256 of the retained regression log.
+
+The normal regression workflow does **not** export numerical grids. Its main and
+holdout entries therefore remain `exported: false`. A green regression run by
+itself cannot authorize a provenance rebind.
+
+See [`../docs/EXCEL_CERTIFICATION.md`](../docs/EXCEL_CERTIFICATION.md) for the
+record schema, validation command, and fresh-export finalization procedure.
+
+## Two numerical evidence bindings
 
 The main grid and independent holdout are separate Excel exports and therefore
-have separate provenance records:
+have separate provenance manifests:
 
 - `observation_manifest.json` binds the main accuracy grid to every production,
   test, exporter, and study `.bas` module that can affect or populate it;
@@ -24,54 +51,39 @@ have separate provenance records:
   holdout bytes, row count, schema, registry, source commit, export timestamp,
   and Excel environment.
 
-Both use SHA-256 over LF-normalized content. A CRLF checkout and an LF checkout
-therefore verify identically, while any substantive byte change fails closed.
+The main manifest hashes the LF-normalized source content used by its existing
+manifest contract. The canonical Excel certification record is stricter about
+source identity: it hashes the exact canonical Git blob bytes. Both approaches
+are stable across ordinary CRLF/LF working-tree checkout differences.
 
-The holdout record is intentionally absent during Phase 0 of v1.0.0. The 559
-committed observations were exported at older source commit `4553afa`; creating
-a current-source manifest for them would be false provenance. The first
-`holdout_manifest.json` will be written immediately after the #23 real-Excel
-export. Until then, the strict gate reaches `STALE HOLDOUT EVIDENCE` as soon as
-the earlier stale main-grid binding has been refreshed.
+The holdout record is intentionally absent during the current pre-export phase
+of v1.0.0. The committed holdout observations came from older source. Creating a
+current-source holdout manifest before a real re-export would be false
+provenance.
 
-## What is enforced now (in-repo, hosted, reproducible)
+## What the hosted gate enforces
 
-- **Source binding.** `observation_manifest.json` records a content hash
-  (SHA-256 over LF-normalized bytes, so CRLF and LF hash identically) of every
-  `.bas` file — kernels, exporters, study macros, and tests — the full
-  `probability_accuracy_grid.csv` **observation bytes**, the
-  `accuracy_contracts.csv` **registry**, and the grid schema version and
-  columns. `compute_errors.py` recomputes those against the checked-out tree
-  **before** evaluating any contract and **fails the gate** (`STALE EVIDENCE`,
-  nonzero exit) if any module changed / was added / removed, if a single
-  `observed_vba` value was edited (even with unchanged columns), if a threshold
-  in the registry changed, or if the schema drifted. It also fails if the
-  manifest is absent or predates content binding (unless
-  `--allow-missing-manifest`, for local development only). The binding is thus
-  *these exact observation bytes, this exact source, this exact contract
-  registry* — not merely a matching structure.
+- **Main source binding.** `compute_errors.py` verifies the main manifest before
+  evaluating contracts. Changed, added, removed, malformed, or unbound source,
+  grid, registry, or schema evidence fails closed as `STALE EVIDENCE`.
 - **Independent-holdout binding.** After the main binding verifies,
-  `compute_errors.py` requires `holdout/holdout_manifest.json` and checks the
-  production modules, dedicated exporter, exact holdout bytes and row count,
-  schema, and contract registry. Missing, malformed, stale, added, removed, or
-  changed inputs block before the holdout analyzer can contribute a release
-  verdict. Main provenance is checked first so a known stale-main state retains
-  its exact diagnostic rather than being masked by a downstream failure.
-- **The gate now runs on source changes.** `accuracy-gate.yml` triggers on
-  `src/**` and `tests/**` (as well as `benchmark/**`). A source edit therefore
-  re-runs the gate, which then fails on the manifest mismatch until the
-  observations are re-exported and the manifest re-written.
-- **Provenance in the summary.** `accuracy_summary.md` opens with the bound
-  source commit, export timestamp, Excel version/build/bitness, module count,
-  and schema version.
-- **Every active row evaluated.** Enforced separately by the P1-02 preflight
-  (`_contract_eval.dispositions` + the `measured == to_measure` invariant).
+  `compute_errors.py` requires a valid holdout manifest. Missing or stale
+  holdout evidence blocks before the holdout analyzer can contribute a release
+  verdict.
+- **Source changes trigger the gate.** `accuracy-gate.yml` runs on production,
+  test, and benchmark changes.
+- **Every active row is evaluated.** This remains separately enforced by the
+  evaluation preflight and measured-row invariant.
+- **Manifest changes are checked per commit.** The guard never relies on an
+  aggregate push diff; a grid change in one commit cannot launder a manifest
+  rebind in another.
 
-## Operating procedure (run at every export)
+The Accuracy Gate fetches the full commit graph because exact-restoration
+validation and its historical regression controls are inherently
+history-dependent. A depth-1 checkout is not sufficient evidence for those
+rules.
 
-Whenever `src/**`, the exporters, the tests, either observation grid, or the
-contract registry changes, the affected manifest must be re-written — the gate
-will not certify the summary otherwise:
+## Fresh-export operating procedure
 
 1. Import the current source into the workbook and re-export the observations
    (`Export_Accuracy_Observations`, plus any affected study macro).
@@ -93,85 +105,84 @@ will not certify the summary otherwise:
 4. Commit the grid **and** `observation_manifest.json` together - the
    per-commit provenance guard requires it.
 
-For a fresh independent-holdout export, write its binding in the same evidence
-operation:
+This establishes the runtime/source identity. It does **not** yet establish a
+fresh numerical export.
 
+### 2. Export the selected numerical evidence in Excel
+
+From the same exact source candidate, run the appropriate exporter:
+
+- main: `Export_Accuracy_Observations`;
+- holdout: the dedicated holdout exporter.
+
+Also run `Export_ExcelEnvironment` so `benchmark/excel_environment.json` records
+the Excel version/build/bitness used for the export.
+
+Do not claim a grid that was not actually exported in this session.
+
+### 3. Finalize the certification record
+
+Immediately after the real export, from the unchanged exact candidate checkout,
+run only the flags corresponding to grids actually exported:
+
+```bash
+python benchmark/finalize_excel_certification.py \
+  --record <artifact-dir>/excel-certification.json \
+  --main \
+  --holdout \
+  --from-fresh-export
 ```
-python write_manifest.py --holdout --commit-sha <sha> \
-    --excel-version <ver> --excel-build <build> --office-bitness <32|64>
+
+`--main` and `--holdout` are independent. The finalizer fails unless:
+
+- the record candidate equals full current `HEAD`;
+- the policy-selected regression source bytes still match that candidate;
+- `excel_environment.json` agrees with the regression record on Excel
+  version/build/bitness;
+- the relevant exporter module is included in the certified source inventory;
+- the selected grid exists and its SHA-256 and row count can be bound; and
+- the completed canonical record revalidates.
+
+It writes `benchmark/excel_regression_record.json`. The tool cannot observe an
+Excel export itself: `--from-fresh-export` is an explicit operator assertion,
+which is why this step must immediately follow the real Excel export.
+
+### 4. Bind only the grids actually exported
+
+For example, after both grids were exported:
+
+```bash
+python benchmark/refresh_evidence.py \
+  --bind-exported-main \
+  --bind-exported-holdout
 ```
 
-Or, after both grids have just been exported and
-`benchmark/excel_environment.json` is current, run:
+Use only `--bind-exported-main` or only `--bind-exported-holdout` when only that
+grid was refreshed. Plain `refresh_evidence.py` regenerates derived material but
+never asserts a fresh export.
 
-```
-python refresh_evidence.py --bind-exported-holdout
-```
+### 5. Commit the evidence atomically
 
-That explicit flag writes both the normal main binding and the holdout binding
-before regenerating summaries. Plain `refresh_evidence.py` never creates a
-holdout binding, so regenerating documentation cannot accidentally claim that
-historical observations came from current source.
+Commit the changed grid(s), corresponding manifest(s), finalized canonical Excel
+record, environment record, and regenerated summaries together when those files
+belong to the same evidence event.
 
-The baseline manifest was written against the current committed observations
-under the assumption that they are current (they were re-exported through the
-P1-01, F-envelope, and beta_f_inverse work). Regenerate it at the next full
-export for a from-scratch binding, and populate the environment fields, which
-are currently `unrecorded`.
+A byte-identical re-export is also valid. In that case the grid file may not
+appear changed in Git, so the manifest guard uses the finalized canonical Excel
+record to prove the fresh export rather than relying on a grid diff that cannot
+exist.
 
-## Still owned by the maintainer (outside the repo)
+## Manifest provenance guard
 
-- **Branch protection.** Require *both* the `Accuracy Gate` and the Excel/VBA
-  regression checks on `main`. The Excel regression exercises current source at
-  broad behavioral tolerances; the accuracy gate certifies the tight external
-  contracts against source-bound evidence. Neither substitutes for the other.
-- **Environment capture.** Have each export path record Excel version/build and
-  Office bitness (either from the exporter macro or passed to
-  `write_manifest.py`) so the `unrecorded` fields become real.
-
-## Strongest target design (two-stage, when automation is practical)
-
-- **Stage 1 — self-hosted Windows/Excel:** import exact current source, export
-  observations, write the manifest (including the source commit and environment),
-  upload both as a build artifact.
-- **Stage 2 — hosted Python:** download the artifact, verify the manifest
-  against the checked-out source, evaluate every contract, publish the summary.
-
-This removes the manual re-export step and makes the binding automatic: the only
-observations the gate ever sees are ones Stage 1 just produced from that revision.
-
-
-## Writing a manifest requires a fresh export
-
-A manifest asserts that the committed observations were produced by the
-checked-out source. Only a real Excel export makes that true.
-
-`write_manifest.py` refuses a bare invocation and exits non-zero. Writing
-requires `--from-fresh-export`; `--dry-run` previews without touching
-anything. `refresh_evidence.py` no longer binds during ordinary
-regeneration - it refreshes summaries only. Binding requires
-`--bind-exported-main` or `--bind-exported-holdout`, each of which passes
-`--from-fresh-export` to the writer explicitly.
-
-This exists because of `9fba175`. A bare `write_manifest.py` rebound the
-main manifest to source three commits newer than the observations. The
-seven-line signature was unchanged, but the strict gate's failure had moved
-from `STALE EVIDENCE` (two mismatches, truthful) to `STALE HOLDOUT EVIDENCE`,
-and the main binding read clean - one `write_manifest.py --holdout` away
-from a green gate on stale evidence. Restored in `c496f1b`.
-
-### The CI guard
-
-`check_manifest_provenance.py` examines each commit **separately**, never a
-push's aggregate diff: otherwise one commit touching the grid conceals
-another commit's rebind. A commit modifying a manifest is legal only if, in
-that same commit, one of these holds:
+`check_manifest_provenance.py` examines every commit in scope separately. A
+commit modifying a manifest is legal only if, in that same commit, one of these
+conditions holds:
 
 | | Condition |
 | --- | --- |
-| A | the manifest's own grid is also modified - what a real export looks like |
-| B | `benchmark/excel_regression_record.json` is also modified **and validates**: it must identify that grid as an exported target and bind the export session, source identity, Excel version/build/bitness, regression totals, and each grid's SHA-256 and row count, matching the committed grid |
-| C | the commit modifies the manifest and nothing else, and the result is byte-identical to an earlier committed version - the repair path, which cannot launder a rebind because a rebind produces content that has never existed |
+| **A** | The manifest's own grid is also modified. This is the ordinary fresh-export shape. |
+| **B** | `benchmark/excel_regression_record.json` is also modified and the canonical validator proves a green exact-SHA run **plus an explicit fresh-export claim for that exact grid**, whose committed SHA-256 and row count match. |
+| **C** | The commit modifies only the manifest and restores bytes identical to an earlier committed version. This is the exact-restoration repair path. |
 
 B exists so that a re-export producing a byte-identical grid - a `.bas`
 change altering no observation value - remains legal. The record does not
@@ -195,3 +206,7 @@ while the observations were unchanged: the strict gate's failure moved from
 `STALE EVIDENCE` to `STALE HOLDOUT EVIDENCE` and the main binding read clean.
 Reverted before it was committed. A promise is cheaper to make than an export,
 so the promise is now checked.
+
+## Canonical Excel certification record
+
+The manifests bind committed observation bytes to source. Separately, `excel-certification.json` / retained `benchmark/excel_regression_record.json` bind an Excel runtime session to one full candidate SHA and exact imported VBA bytes. A regression-only record has every grid entry `exported: false` and cannot authorize a manifest rebind. Only a record finalized from a real fresh export, with the relevant grid marked exported and matching SHA-256/row count, may satisfy the byte-identical-grid exception in `check_manifest_provenance.py`. See `docs/EXCEL_CERTIFICATION.md`.
