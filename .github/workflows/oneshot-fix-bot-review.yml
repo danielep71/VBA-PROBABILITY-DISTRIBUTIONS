@@ -17,19 +17,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply review fixes
+      - name: Apply non-workflow review fixes
         shell: python
         run: |
           from pathlib import Path
 
           root = Path('.')
 
-          # 1. write_manifest.py: byte-identical-grid exception must consume the
-          # full canonical exact-SHA validator, not merely trust exported=true.
           p = root / 'benchmark/write_manifest.py'
           text = p.read_text(encoding='utf-8')
-          old = '''from _manifest import (build_manifest, build_holdout_manifest, repo_root,\n                       MANIFEST_NAME, HOLDOUT_MANIFEST_NAME)\n'''
-          new = old + '''from excel_certification import CertificationError, validate_record\n'''
+          old = 'from _manifest import (build_manifest, build_holdout_manifest, repo_root,\n                       MANIFEST_NAME, HOLDOUT_MANIFEST_NAME)\n'
+          new = old + 'from excel_certification import CertificationError, validate_record\n'
           if text.count(old) != 1:
               raise SystemExit('write_manifest import anchor mismatch')
           text = text.replace(old, new, 1)
@@ -39,17 +37,6 @@ jobs:
               raise SystemExit('write_manifest export-record anchor mismatch')
           p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          # 2. Public API baseline edits must themselves trigger the Accuracy Gate.
-          p = root / '.github/workflows/accuracy-gate.yml'
-          text = p.read_text(encoding='utf-8')
-          old = '''      - "tests/**"\n      - ".github/workflows/accuracy-gate.yml"\n'''
-          new = '''      - "tests/**"\n      - "docs/PUBLIC_API.txt"\n      - ".github/workflows/accuracy-gate.yml"\n'''
-          if text.count(old) != 1:
-              raise SystemExit('accuracy-gate path-filter anchor mismatch')
-          p.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          # 3. Verification-depth wiring must compare complete command tuples,
-          # including selectors/modes, and Excel certification is now mandatory.
           p = root / 'benchmark/check_verification_depth.py'
           text = p.read_text(encoding='utf-8')
           old = '''def _shim_commands(text: str) -> set[str]:\n    """Extract first string element from tuple entries in `commands = (...)`."""\n    tree = ast.parse(text)\n    found: set[str] = set()\n    for node in ast.walk(tree):\n        if not isinstance(node, ast.Assign):\n            continue\n        if not any(isinstance(t, ast.Name) and t.id == "commands" for t in node.targets):\n            continue\n        if not isinstance(node.value, (ast.Tuple, ast.List)):\n            continue\n        for item in node.value.elts:\n            if isinstance(item, (ast.Tuple, ast.List)) and item.elts:\n                first = item.elts[0]\n                if isinstance(first, ast.Constant) and isinstance(first.value, str):\n                    found.add(first.value)\n    return found\n'''
@@ -62,14 +49,12 @@ jobs:
           if text.count(old) != 1:
               raise SystemExit('verification-depth proof-comparison anchor mismatch')
           text = text.replace(old, new, 1)
-          old = '''        "source-threshold-single-source", "holdout-analyzer-semantics",\n    }\n'''
-          new = '''        "source-threshold-single-source", "holdout-analyzer-semantics",\n        "excel-exact-sha-certification",\n    }\n'''
+          old = '        "source-threshold-single-source", "holdout-analyzer-semantics",\n    }\n'
+          new = '        "source-threshold-single-source", "holdout-analyzer-semantics",\n        "excel-exact-sha-certification",\n    }\n'
           if text.count(old) != 1:
               raise SystemExit('verification-depth required-set anchor mismatch')
           p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          # 4. Strengthen the manifest fixture so malformed/incorrect canonical
-          # records cannot bypass the byte-identical-grid writer interlock.
           p = root / 'benchmark/test_manifest_provenance.py'
           text = p.read_text(encoding='utf-8')
           old = '''def case_helper_record_wrong_grid(tmp):\n    write(tmp, G.EXPORT_RECORD, export_record(tmp, [HOLD_G]))\n    return helper(tmp)\n\n\n_stale, _why = with_repo(case_helper_no_export)\n'''
@@ -83,23 +68,17 @@ jobs:
               raise SystemExit('manifest helper-check anchor mismatch')
           p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          # 5. Add a focused unit fixture for complete-command matching.
-          p = root / 'benchmark/test_verification_depth.py'
-          p.write_text('''"""Focused fixtures for verification-depth command wiring."""\nimport check_verification_depth as V\n\nshim = """\ncommands = (\n    (\"proof.py\",),\n    (\"proof_mode.py\", \"--negative\", \"strict\"),\n)\n"""\nfound = V._shim_commands(shim)\nassert (\"proof.py\",) in found\nassert (\"proof_mode.py\", \"--negative\", \"strict\") in found\nassert (\"proof_mode.py\",) not in found\nassert V._command_tuple(\"python3 proof_mode.py --negative strict\") == (\n    \"proof_mode.py\", \"--negative\", \"strict\"\n)\nassert V._command_tuple(\"proof.py\") == (\"proof.py\",)\nprint(\"PASS: verification-depth command wiring fixtures (complete tuples, arguments preserved)\")\n''', encoding='utf-8')
+          (root / 'benchmark/test_verification_depth.py').write_text('''"""Focused fixtures for verification-depth command wiring."""\nimport check_verification_depth as V\n\nshim = """\ncommands = (\n    (\"proof.py\",),\n    (\"proof_mode.py\", \"--negative\", \"strict\"),\n)\n"""\nfound = V._shim_commands(shim)\nassert (\"proof.py\",) in found\nassert (\"proof_mode.py\", \"--negative\", \"strict\") in found\nassert (\"proof_mode.py\",) not in found\nassert V._command_tuple(\"python3 proof_mode.py --negative strict\") == (\n    \"proof_mode.py\", \"--negative\", \"strict\"\n)\nassert V._command_tuple(\"proof.py\") == (\"proof.py\",)\nprint(\"PASS: verification-depth command wiring fixtures (complete tuples, arguments preserved)\")\n''', encoding='utf-8')
 
-          # Run the new focused fixture before the meta-check in the pre-gate shim.
           p = root / 'benchmark/test_evidence_tools.py'
           text = p.read_text(encoding='utf-8')
-          old = '''    ("holdout/test_analyze_holdout.py",),\n    ("check_verification_depth.py",),\n'''
-          new = '''    ("holdout/test_analyze_holdout.py",),\n    ("test_verification_depth.py",),\n    ("check_verification_depth.py",),\n'''
+          old = '    ("holdout/test_analyze_holdout.py",),\n    ("check_verification_depth.py",),\n'
+          new = '    ("holdout/test_analyze_holdout.py",),\n    ("test_verification_depth.py",),\n    ("check_verification_depth.py",),\n'
           if text.count(old) != 1:
               raise SystemExit('test_evidence_tools anchor mismatch')
           p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          # Remove this temporary workflow from the final diff.
-          (root / '.github/workflows/oneshot-fix-bot-review.yml').unlink()
-
-      - name: Validate and commit
+      - name: Validate and push non-workflow fixes
         run: |
           python benchmark/test_manifest_provenance.py
           python benchmark/test_verification_depth.py
@@ -109,6 +88,6 @@ jobs:
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add benchmark/write_manifest.py benchmark/check_verification_depth.py benchmark/test_manifest_provenance.py benchmark/test_verification_depth.py benchmark/test_evidence_tools.py
           git commit -m "fix: close post-P0 assurance review gaps"
           git push origin HEAD:fix/bot-review-p0-controls
