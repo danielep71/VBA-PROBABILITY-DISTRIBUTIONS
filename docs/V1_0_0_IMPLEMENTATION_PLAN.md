@@ -81,7 +81,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 | 1 | evaluator unit tests | PASS | — |
 | 2 | manifest unit tests | PASS | — |
 | 3 | strict accuracy gate | FAIL | `STALE EVIDENCE`, exactly 2 mismatches |
-| 4 | gate blocks without references | FAIL | same stale-evidence cause and same 2 mismatches |
+| 4 | gate blocks without references | PASS | fixture isolates provenance, forces the reference helper unavailable, requires active tail contracts to become `PENDING`, and requires a non-zero gate exit in both strict and development modes |
 | 5 | source claims vs registries | PASS | — |
 | 6 | holdout analyzer tests | PASS | — |
 | 7 | independent holdout | PASS | numerical verdict only; provenance remains blocked by the strict gate |
@@ -91,7 +91,9 @@ The mismatch set is exactly:
 - `src/M_STATS_PROBDIST_SPECIALFUNCS.bas`;
 - `tests/M_STATS_PROBDIST_TEST.bas`.
 
-Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any difference is a regression despite the already-red top line. Runs 166 through 171 preserve the invariant.
+Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any unexplained difference is a regression despite the already-red top line.
+
+**Frozen-signature revision — 2026-09-16.** Commit `8a3bbb8` intentionally changed only the expected result of `gate blocks without references`: that fixture now supplies a synthetic clean-provenance seam so live stale provenance cannot mask the helper-degradation path it exists to test. It must PASS only when the simulated missing helper leaves active tail contracts `PENDING` and the gate exits non-zero in both strict and development modes. Manifest/provenance correctness remains independently mutation-tested. Runs 166 through 171 preserve the earlier pre-isolation signature; from `8a3bbb8` onward, the table above is the frozen Phase 0 signature. Reverting step 4 to a stale-provenance FAIL is itself a regression because it means the degradation path is masked again.
 
 #29 keeps the existing stale main-manifest check first during this window while exercising the holdout verifier through blocking fixtures. Phase 1 exports both observation sets and writes both truthful bindings atomically. The waiver expires immediately afterward and all seven checks must PASS.
 
@@ -305,7 +307,7 @@ Exit gate: #29's writer/verifier and #22's strict checker plus the transition gu
 
 Objective: prove the merged off-grid `PROB_StirlingError` recurrence removes the public Gamma/Chi-square CDF floor without waiting for #22's new inverse reference infrastructure.
 
-1. Before exporting anything, reproduce the frozen Phase 0 signature exactly: five PASS lines, two stale-evidence FAIL lines, exactly two mismatches, and only the two frozen paths. In the same run, verify #29's Excel-free mechanism and #22's transition guard.
+1. Before exporting anything, reproduce the frozen Phase 0 signature exactly: six PASS lines, one stale-evidence FAIL line, exactly two mismatches on the strict accuracy gate, and only the two frozen paths. The helper-degradation fixture must PASS by exercising its synthetic clean-provenance seam and proving active tail contracts become `PENDING` with a non-zero gate exit in both modes. In the same run, verify #29's Excel-free mechanism and #22's transition guard.
 2. Run the expected 909 assertions on the exact tracked modules.
 3. Apply the prepared #34 Student-t large-df tail patch and its regression tests in the working tree, on the source that just reproduced the signature. #34 is a live numerical release blocker (P1, silent-wrong `StudentT_Survival` at t = 2, df = 1E8); its `.bas` change lands only inside this real-Excel wave, atomically with source, regressions, exports and truthful provenance, so that no second export session is needed.
 4. Export the preregistered #23 fitting grid and untouched #23 holdout only; do not execute or inspect #22's inverse fitting/holdout arms.
