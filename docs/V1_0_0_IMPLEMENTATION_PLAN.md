@@ -74,21 +74,21 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 
 ### Phase 0 known-red invariant
 
-`main` is intentionally red from the #23 source merge until Phase 1 performs a fresh Excel export and rewrites the source binding. A red top line is therefore not an adequate Phase 0 regression signal. Under the workflow-equivalent Python 3.12 plus mpmath environment, every Phase 0 commit must retain this exact ordered signature:
+`main` was intentionally red from the #23 source merge until Phase 1 exported both observation sets and rewrote both bindings; the waiver retired at the holdout binding below, and every check is now green.
+
+The table below is the **current** required signature, and the revisions beneath it record how it got there. It is not the signature Phase 0 commits carried: those were red at check 3 by design, first with two source mismatches and then with one unbound-holdout mismatch, and each revision note states which commits held which form. Under the workflow-equivalent Python 3.12 plus mpmath environment, every commit must retain this exact ordered signature:
 
 | Order | Check | Required Phase 0 result | Required cause |
 | ---: | --- | --- | --- |
 | 1 | evaluator unit tests | PASS | — |
 | 2 | manifest unit tests | PASS | — |
-| 3 | strict accuracy gate | FAIL | `STALE HOLDOUT EVIDENCE`, exactly 1 mismatch; see the 2026-09-16 export revision below |
+| 3 | strict accuracy gate | PASS | both observation sets bound to the checked-out source; see the holdout-binding revision below |
 | 4 | gate blocks without references | PASS | fixture isolates provenance, forces the reference helper unavailable, requires active tail contracts to become `PENDING`, and requires a non-zero gate exit in both strict and development modes |
 | 5 | source claims vs registries | PASS | — |
 | 6 | holdout analyzer tests | PASS | — |
-| 7 | independent holdout | PASS | numerical verdict only; provenance remains blocked by the strict gate |
+| 7 | independent holdout | PASS | numerical verdict; provenance now bound rather than blocked |
 
-The mismatch is exactly:
-
-- `no holdout_manifest.json: independent holdout observations are unbound`.
+The mismatch set is now empty. Any mismatch at all is a regression.
 
 Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any unexplained difference is a regression despite the already-red top line.
 
@@ -96,7 +96,11 @@ Every Phase 0 commit compares the ordered tuple `(label, result, failure class, 
 
 **Frozen-signature revision — main-grid export, `7ffc465`.** Until `7ffc465` the strict gate failed with `STALE EVIDENCE` and exactly two mismatches, `src/M_STATS_PROBDIST_SPECIALFUNCS.bas` and `tests/M_STATS_PROBDIST_TEST.bas`: the committed observations were exported at `c06ba5b` and the #23 gamma fix changed both modules afterwards. `7ffc465` re-exported the main grid from Excel 16.0 build 20228 on candidate `74041b31c3119b277408609e4a0de1bd780f9a4d`, certified 909/909 with import, compile, regression and cleanup all PASS, changing 25 gamma-family rows. The main binding is now truthful with zero mismatches.
 
-The strict gate therefore fails on a narrower and different cause: the independent holdout has never been bound at all. A return of check 3 to `STALE EVIDENCE` with source mismatches is a regression — it would mean the main binding has gone stale again. The remaining failure clears only when the holdout is exported and bound, which is a separate evidence event and a separate decision.
+The strict gate therefore failed on a narrower and different cause: the independent holdout had never been bound at all. A return of check 3 to `STALE EVIDENCE` with source mismatches is a regression — it would mean the main binding has gone stale again.
+
+**Frozen-signature revision — holdout binding, expected-red waiver retired.** The 559-row holdout grid was re-exported from Excel 16.0 build 20228 64-bit and bound, clearing the last unbound observation set. Check 3 becomes PASS and the signature above is now seven PASS. The waiver that governed Phase 0 is retired: from this commit onward a red Accuracy Gate is an ordinary failure to be fixed, not an expected state to be preserved, and any mismatch in either manifest is a regression.
+
+Two limits of the holdout evidence are recorded so the binding is not read as stronger than it is. First, the export was made in an ordinary Excel session rather than a certified regression run: unlike the main grid, no exact-SHA record pins a green 909/909 execution to these observations, and `finalize_excel_certification.py` correctly refused the `74041b3` record against this HEAD. Certification of the holdout is owed in the Phase 1 step 10 wave. Second, `excel_environment.json` records no commit SHA, so the manifest's `commit_sha` was resolved from `.git/HEAD` when the writer ran rather than recorded by Excel at export time; it is an inference. The `source_binding` hashes are measured, and they are what the gate actually checks. Making `Export_ExcelEnvironment` record the SHA at export time would close that gap for every future binding.
 
 #29 keeps the existing stale main-manifest check first during this window while exercising the holdout verifier through blocking fixtures. Phase 1 exports both observation sets and writes both truthful bindings atomically. The waiver expires immediately afterward and all seven checks must PASS, the strict accuracy gate included.
 
