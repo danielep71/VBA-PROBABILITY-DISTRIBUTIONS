@@ -47,6 +47,16 @@ tab_width = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+# JavaScript workflow scripts (.github/scripts).
+[*.{js,mjs,cjs}]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+tab_width = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
 # R/MPFR cross-check and reference-study tooling.
 [*.{r,R}]
 charset = utf-8
@@ -99,6 +109,13 @@ end_of_line = crlf
 indent_style = space
 indent_size = 4
 tab_width = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Other Windows-native scripts. Matches the CRLF rules in .gitattributes, so
+# the editor and Git agree if such a file is ever added.
+[*.{bat,cmd,vbs,reg,ini}]
+end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
 

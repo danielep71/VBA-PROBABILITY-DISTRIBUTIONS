@@ -122,18 +122,23 @@ Use only the categories needed by a release.
 - Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
 - Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
 - Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
-- Made `generate_reference_values.py` report-only by default. It no longer writes `probability_accuracy_grid.csv`: run as previously documented, it replaced the 2,088-row grid with 1,404 generator rows, deleting 706 rows and blanking every Excel observation. `--out` writes reference rows only to a non-authoritative file and refuses the committed main or holdout grid and any file that already carries observations (#17).
 - `promote_grid_rows.py` now requires `--accept-reference-changes COUNT --reason` for any change to an existing reference, with COUNT matching the reviewed list exactly, and refuses to run on a grid containing any duplicate canonical key (#17).
-- `migrate_references.py` now asserts that every observation value, row key and row order is unchanged, rather than only the number of filled observations (#17).
 - Pinned every GitHub Action to a full commit SHA with its release as a trailing comment, resolved from each action's own repository; each pin is the commit its floating major tag already referenced, so no executed code changed.
 - Release guide steps 3 and 5 now name the concrete release-semantics command and require a green **Static checks** run on the exact candidate.
 - Fixed 41 lint findings across the benchmark tooling: unused or redundant imports, unused variables (including two vestigial claim constants in the reference generator) and placeholder-free f-string prefixes. The generator's 1,404 rows are unchanged.
+- `.editorconfig` now covers JavaScript workflow scripts (2-space indentation) and the Windows script types that `.gitattributes` already checks out with CRLF.
 
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.
 
+### Fixed
+
+- Fixed `generate_reference_values.py` overwriting the committed grid by default. Run as previously documented, it replaced the 2,088-row `probability_accuracy_grid.csv` with 1,404 generator rows, deleting 706 rows and blanking every Excel observation. It is now report-only by default; `--out` writes reference rows only to a non-authoritative file and refuses the committed main or holdout grid and any file that already carries observations (#17).
+- Fixed the `migrate_references.py` write check, which compared only the number of filled observations and so could not detect one observation replaced by another. It now asserts every observation value, row key and row order (#17).
+
 ### Documentation
 
+- `INSTALLATION.md` now explains that a GitHub source archive omits `.github/`, `.gitattributes`, `.gitignore`, `.editorconfig` and Git history, so maintainer validation needs a `git clone`.
 - Reconciled release-readiness, provenance and certification instructions with the current evidence; corrected comparison totals, qualified numerical claims, and repaired the disabled Discussions navigation.
 
 ### Validation

@@ -88,6 +88,28 @@ Optional material is not part of the normal runtime unless stated otherwise:
 > the same directory during import, never import the `.frx` separately, and
 > never process it as text.
 
+### Complete repository checkout
+
+Use a **Git clone** when you intend to validate, contribute to, or release the
+project:
+
+```text
+git clone https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS.git
+cd VBA-PROBABILITY-DISTRIBUTIONS
+```
+
+A GitHub source archive (**Code → Download ZIP**, or the tar/ZIP attached to a
+tag) is not a complete maintainer checkout. `.gitattributes` marks repository
+plumbing as `export-ignore`, so an archive omits `.github/` (workflows,
+`repository-profile.json`, `excel-evidence-policy.json`, `labels.json`),
+`.gitattributes`, `.gitignore` and `.editorconfig`, and it carries no Git
+history. On such a copy the release-semantics check, the Excel certification
+tooling and every history-based gate (committed whitespace, manifest provenance)
+fail by design. Do not report that as a repository defect.
+
+A source archive is sufficient when you only need the production modules listed
+above for a fresh installation.
+
 ---
 
 ## 🚀 Fresh installation
