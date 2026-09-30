@@ -211,7 +211,7 @@ flowchart TD
 
 ## Governing implementation rules
 
-1. Work directly on main with focused, atomic commits until v1.0.0, matching the maintainer's single-branch policy.
+1. ~~Work directly on main with focused, atomic commits until v1.0.0, matching the maintainer's single-branch policy.~~ Revised 2026-09-30: every change reaches main through a pull request, squash-merged by default, under the [merge convention](../RELEASING.md#merge-convention). Commits stay focused and atomic; evidence changes land as one commit.
 2. Never relax a frozen accuracy contract to make a defect pass.
 3. Establish a minimal counterexample and exact source path before changing numerical source.
 4. Commit predicted movement and untouched holdout design before the source edit.
