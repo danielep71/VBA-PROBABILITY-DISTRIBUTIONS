@@ -7,7 +7,7 @@
       "live_command": "compute_errors.py",
       "proof_command": "test_contract_eval.py",
       "negative_claim": "invalid measures, unsupported tail dispatch, non-convergence and malformed evidence fail closed",
-      "current_state": "expected_red_until_excel_export"
+      "current_state": "green"
     },
     {
       "id": "main-grid-coverage",
@@ -49,7 +49,7 @@
       "live_command": "test_manifest.py",
       "proof_command": "test_manifest.py",
       "negative_claim": "changed source/grid/registry/schema bindings and malformed manifests are rejected",
-      "current_state": "green_fixture_proof_live_main_stale"
+      "current_state": "green"
     },
     {
       "id": "manifest-provenance",
@@ -84,7 +84,7 @@
       "live_command": "holdout/analyze_holdout.py",
       "proof_command": "holdout/test_analyze_holdout.py",
       "negative_claim": "metric/measure drift, unsupported dispatch and non-convergence cannot produce a verdict",
-      "current_state": "fixture_green_live_holdout_unbound_until_excel_export"
+      "current_state": "green"
     },
     {
       "id": "excel-exact-sha-certification",

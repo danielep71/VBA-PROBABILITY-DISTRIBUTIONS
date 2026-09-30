@@ -11,9 +11,8 @@ on:
       - "ci/**"
       - ".github/excel-evidence-policy.json"
       - ".github/workflows/excel-vba-regression.yml"
-  # This job is a required main-branch check. Keep the pull-request trigger
-  # unfiltered so every PR reports the required context instead of remaining
-  # permanently pending when only documentation or repository metadata changes.
+  # Unfiltered PR reporting; enforcement and trusted-candidate policy are
+  # tracked in #31. Fork PRs deliberately cannot execute on this Windows host.
   pull_request:
     branches:
       - main
@@ -44,6 +43,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Run complete VBA regression suite through Excel COM
         shell: cmd
