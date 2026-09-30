@@ -8,6 +8,8 @@ The contract is defined by `.github/excel-evidence-policy.json` and validated by
 `benchmark/excel_certification.py` / `benchmark/check_excel_certification.py`.
 The self-hosted workflow emits `artifacts/excel-vba-ci/excel-certification.json`.
 
+**Evidence snapshot — 2026-09-30, source baseline `d2e1592`.** The latest retained Excel runtime result is 909/909 PASS on candidate `74041b3` (Excel 16.0 build 20228, 64-bit); the certified VBA bytes remain unchanged. This is not a new Excel run on the documentation commit. Main and holdout manifests are source-bound, but release export certification is incomplete: [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47) tracks the retained main-grid digest mismatch and [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29) tracks holdout export certification. The numerical gate is green with 36 unclaimed main-grid rows tracked by [#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22). No stable release has been published; [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks readiness.
+
 ## What a regression record proves
 
 A green record binds:
@@ -94,8 +96,10 @@ The finalizer:
    regression record;
 4. adds the relevant exporter module to the certified source inventory;
 5. records each freshly exported grid's SHA-256, row count, and UTC timestamp;
-6. writes `benchmark/excel_regression_record.json`;
-7. revalidates the completed record before returning success.
+6. revalidates the completed record structure, candidate and source inventory;
+7. writes `benchmark/excel_regression_record.json`.
+
+The finalizer hashes working-tree grid bytes. It does **not** compare the new export claims with committed grid bytes at this stage. Git line-ending normalization can change those bytes on commit; #47 tracks this gap. Finalizer success alone is insufficient for release certification.
 
 It refuses to write without `--from-fresh-export`. The flag is an explicit
 operator assertion; the Python tool cannot itself observe an Excel export.
@@ -114,6 +118,20 @@ The manifest guard evaluates commits separately. A manifest-only update can use
 green, still matches the evidence commit's VBA source bytes, and explicitly
 claims that manifest's grid as freshly exported with matching committed SHA-256
 and row count. A regression-only record is rejected.
+
+After committing the evidence, validate each exported grid against that evidence commit (use the original runtime candidate SHA, not the evidence commit SHA):
+
+```bash
+python benchmark/check_excel_certification.py \
+  --record benchmark/excel_regression_record.json \
+  --candidate-sha <runtime-candidate-full-sha> \
+  --evidence-ref <evidence-commit-full-sha> \
+  --require-pass \
+  --require-grid benchmark/probability_accuracy_grid.csv \
+  --log-directory <retained-log-dir>
+```
+
+Repeat with `--require-grid benchmark/holdout/holdout_grid.csv` for the holdout. Retain the regression log beside the downloaded record or supply its directory as above. Any digest mismatch blocks certification. Do not hand-edit a digest to manufacture a passing record; resolve #47 and produce evidence through the corrected export path.
 
 ## Evidence-only follow-up commits
 

@@ -1,22 +1,21 @@
 # v1.0.0 implementation and release-readiness plan
 
-Status date: 2026-08-30
+Status date: 2026-09-30
 Repository: danielep71/VBA-PROBABILITY-DISTRIBUTIONS  
-Repository HEAD: 0dd748884599d4d0da815cb53eeceb13efd51f05
-Numerical source baseline: bde92dd7037e4fde05e620745a1c54b0cbc3a261  
+Audited repository HEAD: d2e159274088353125cc0bc0ba1f47a9b6dfe294
 Milestone: v1.0.0
 
-> **Readiness revised 2026-09-30 at `fac921e`.** The executive-decision revision note, the amended audit-basis bullets, the release-readiness assessment, and the open backlog reflect this state. The backlog-reconciliation log and the issue register remain the 2026-08-30 record.
+The live readiness sections below reflect this audit. The backlog-reconciliation log and issue register preserve the dated 2026-08-30 snapshot; GitHub issues are authoritative for later changes.
 
 ## Executive decision
 
 v1.0.0 is not release-ready.
 
-The project architecture and evidence framework are strong, but the release currently has six open P1 numerical issues plus the P1 release-certification tracker, stale source-bound accuracy observations, an unavailable self-hosted Excel result for the current source, an audit-baseline set of 36 unclaimed main-grid rows whose live count must thereafter be generated, unbound independent holdout observations, stale public assurance metrics, no changelog/tag/release, and a security policy that describes an unreleased tag as already stable.
+**Evidence snapshot — 2026-09-30, source baseline `d2e1592`.** The latest retained Excel runtime result is 909/909 PASS on candidate `74041b3` (Excel 16.0 build 20228, 64-bit); the certified VBA bytes remain unchanged. This is not a new Excel run on the documentation commit. Main and holdout manifests are source-bound, but release export certification is incomplete: [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47) tracks the retained main-grid digest mismatch and [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29) tracks holdout export certification. The numerical gate is green with 36 unclaimed main-grid rows tracked by [#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22). No stable release has been published; [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks readiness.
 
-**Revision 2026-09-30.** Several of those conditions have since cleared: the main grid was re-exported from the certified candidate `74041b3` (909 / 909, Excel 16.0 build 20228, 64-bit) and bound at `7ffc465`; the 559-row holdout was bound at `17acc1b`; the strict Accuracy Gate reports seven PASS; `CHANGELOG.md` exists; SECURITY.md no longer describes an unpublished tag as stable; and the stale README literals were replaced with hand-verified figures. The verdict is unchanged: v1.0.0 is not release-ready. The P1 numerical chain (#23 evidence closure, #24, #13, #14, #26, #11, and #34), #22's final disposition, holdout certification, #17, #28, and the tag and release remain open.
+Eight P1 numerical issues remain open: #11, #13, #14, #23, #24, #26, #34 and #35, alongside the P1 release tracker #31. The milestone contains 32 issues (15 open, 17 closed). The two deferred hardening issues #7 and #32 belong to v1.0.1. #17's safeguards are implemented at `d2e1592` but await acceptance review; #28's assurance renderer and #4's source-header correction also remain open.
 
-The corrected v1.0.0 milestone contains 26 issues: 12 open and 14 closed. The implementation order below is dependency-driven and preserves the frozen numerical contracts. Two additional open hardening issues belong to v1.01: #7 and #32.
+The implementation order is dependency-driven and preserves frozen contracts.
 
 ### Scope decision: do not defer #13/#14
 
@@ -43,12 +42,12 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 
 ### Source and repository
 
-- repository HEAD: 0dd748884599d4d0da815cb53eeceb13efd51f05
-- latest numerical source baseline: bde92dd7037e4fde05e620745a1c54b0cbc3a261
-- remote branches: main only
+- audited repository HEAD: d2e159274088353125cc0bc0ba1f47a9b6dfe294
+- retained runtime candidate: 74041b31c3119b277408609e4a0de1bd780f9a4d; certified VBA bytes unchanged at the audited HEAD
+- remote branches at the audit baseline: main only
 - Git tags: none
 - GitHub Releases: none
-- branch protection: main is unprotected
+- branch protection: active `Protect main` ruleset prevents deletion and force pushes; required PRs, status checks and conversation resolution are not configured; classic protection is absent (#31)
 - required production modules: six tracked .bas files under src
 - consolidated regression module: tests/M_STATS_PROBDIST_TEST.bas
 - example workbook: examples/STATS-Distributions demo.xlsm
@@ -71,15 +70,15 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 
 ### Live CI state
 
-- Accuracy Gate runs 166 through 171: failed only with the frozen two-file stale-evidence signature; every Phase 0 commit preserved it, runs from `8a3bbb8` onward preserve its re-pinned six-PASS/one-FAIL form, and runs from `7ffc465` onward preserve the post-export form in which the single failure is the unbound holdout
-- the #13 analyzer and its fitting/holdout claims passed before the provenance failure
-- Accuracy Gate run 231 at `17acc1b`: seven PASS, the first fully green run after the expected-red waiver retired; run 232 at `fac921e` also passed (revised 2026-09-30)
-- ~~Excel VBA Regression run 95: cancelled because the self-hosted Excel runner was unavailable; it produced no evidence~~ — revised 2026-09-30: the self-hosted runner is restored; run 133 certified `74041b3` at 909 / 909
-- ~~workflow logs warn that older action majors target deprecated Node 20 and are being forced onto Node 24~~ — revised 2026-09-30: resolved by PR #36 (checkout v7, setup-python v7, upload-artifact v7, github-script v9); #30 closed
+- Accuracy Gate #233 at `d2e1592` passed, following green runs #231 and #232. The expected-red pre-export waiver is retired.
+- The mandatory verification-depth inventory contains 14 controls. Green portable fixtures do not establish validity of the retained export certificate (#47).
+- Excel VBA Regression #133 certified `74041b3` with 909/909 PASS. It is a retained source-bound runtime result, not an Excel run on the audited HEAD.
+- Workflow major upgrades landed in PR #36; #30 is closed.
+- No release can rely on branch rules enforcing required checks until the #31 settings gap is resolved.
 
 ### Phase 0 known-red invariant
 
-`main` was intentionally red from the #23 source merge until Phase 1 exported both observation sets and rewrote both bindings; the waiver retired at the holdout binding below, and every check is now green.
+`main` was intentionally red from the #23 source merge until Phase 1 exported both observation sets and rewrote both bindings; the waiver retired at the holdout binding below, and the numerical gate is now green. This does not validate the retained export certificate: #47 remains a separate blocker.
 
 The table below is the **current** required signature, and the revisions beneath it record how it got there. It is not the signature Phase 0 commits carried: those were red at check 3 by design, first with two source mismatches and then with one unbound-holdout mismatch, and each revision note states which commits held which form. Under the workflow-equivalent Python 3.12 plus mpmath environment, every commit must retain this exact ordered signature:
 
@@ -95,7 +94,7 @@ The table below is the **current** required signature, and the revisions beneath
 
 The mismatch set is now empty. Any mismatch at all is a regression.
 
-Every Phase 0 commit compares the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` with this signature. Any unexplained difference is a regression despite the already-red top line.
+Historically, Phase 0 commits compared the ordered tuple `(label, result, failure class, mismatch count, mismatch paths)` against the then-current expected-red signature. This historical waiver does not authorize failures in current commits.
 
 **Frozen-signature revision — 2026-09-16.** Commit `8a3bbb8` intentionally changed only the expected result of `gate blocks without references`: that fixture now supplies a synthetic clean-provenance seam so live stale provenance cannot mask the helper-degradation path it exists to test. It must PASS only when the simulated missing helper leaves active tail contracts `PENDING` and the gate exits non-zero in both strict and development modes. Manifest/provenance correctness remains independently mutation-tested. Runs 166 through 171 preserve the earlier pre-isolation signature; from `8a3bbb8` onward, the table above is the frozen Phase 0 signature. Reverting step 4 to a stale-provenance FAIL is itself a regression because it means the degradation path is masked again.
 
@@ -105,11 +104,13 @@ The strict gate therefore failed on a narrower and different cause: the independ
 
 **Frozen-signature revision — holdout binding, expected-red waiver retired.** The 559-row holdout grid was re-exported from Excel 16.0 build 20228 64-bit and bound, clearing the last unbound observation set. Check 3 becomes PASS and the signature above is now seven PASS. The waiver that governed Phase 0 is retired: from this commit onward a red Accuracy Gate is an ordinary failure to be fixed, not an expected state to be preserved, and any mismatch in either manifest is a regression.
 
-Two limits of the holdout evidence are recorded so the binding is not read as stronger than it is. First, the export was made in an ordinary Excel session rather than a certified regression run: unlike the main grid, no exact-SHA record pins a green 909/909 execution to these observations, and `finalize_excel_certification.py` correctly refused the `74041b3` record against this HEAD. Certification of the holdout is owed in the Phase 1 step 10 wave. Second, `excel_environment.json` records no commit SHA, so the manifest's `commit_sha` was resolved from `.git/HEAD` when the writer ran rather than recorded by Excel at export time; it is an inference. The `source_binding` hashes are measured, and they are what the gate actually checks. Making `Export_ExcelEnvironment` record the SHA at export time would close that gap for every future binding.
+Two limits of the holdout evidence are recorded so the binding is not read as stronger than it is. First, the export was made in an ordinary Excel session rather than a certified regression run: no exact-SHA export record pins a green 909/909 execution to these observations; the retained main-grid export claim also fails its committed-byte digest check (#47), and `finalize_excel_certification.py` correctly refused the `74041b3` record against this HEAD. Certification of the holdout is owed in the Phase 1 step 10 wave. Second, `excel_environment.json` records no commit SHA, so the manifest's `commit_sha` was resolved from `.git/HEAD` when the writer ran rather than recorded by Excel at export time; it is an inference. The `source_binding` hashes are measured, and they are what the gate actually checks. Making `Export_ExcelEnvironment` record the SHA at export time would close that gap for every future binding.
 
-#29 keeps the existing stale main-manifest check first during this window while exercising the holdout verifier through blocking fixtures. Phase 1 exports both observation sets and writes both truthful bindings atomically. The waiver expires immediately afterward and all seven checks must PASS, the strict accuracy gate included.
+The historical #29 transition kept the main-manifest check first while the holdout verifier was exercised through fixtures. Both manifests are now bound; the waiver is retired. Canonical export certification remains owed under #29 and #47.
 
 ## Backlog reconciliation performed
+
+This reconciliation log records the 2026-08-30 decisions; consult the live backlog below for current state.
 
 ### Corrected or materially updated
 
@@ -118,7 +119,7 @@ Two limits of the holdout evidence are recorded so the binding is not read as st
 | #11 | Replaced placeholder dependencies with #12, #13, and #14; added the incomplete-gamma prerequisites and exact parent closure rule. |
 | #13 | Replaced superseded hypotheses with the measured per-family candidate policy, then added mandatory post-#23 crossover revalidation before any cutoff is wired. |
 | #14 | Replaced placeholder links; made the log-quantile architecture, final-scale reconstruction, and prerequisites explicit. |
-| #17 | Reopened after the closure audit, then narrowed to the v1.0.0 non-destructive/fail-closed generator safeguards. Full reconstruction moved to #32 under v1.01. |
+| #17 | Reopened after the closure audit, then narrowed to the v1.0.0 non-destructive/fail-closed generator safeguards. Full reconstruction moved to #32 under v1.0.1. |
 | #22 | Recounted the audit-baseline grid; selected real contracts for its 36 unclaimed rows; confirmed that production F accepts df through 1E10, making the <=1E5 `PROB_F_ValidateEnvelope` enforcement text false on four registry rows; found eight mis-scoped F main rows, eight mis-scoped holdout rows at df 2E5/5E5, five additional exact-zero Student-t medians, and three actual duplicate F inputs; preregistered gap-free regimes, bridge evidence, and exact-zero tooling; split the cheap coverage guard from the release-candidate evidence wave; and accepted the df = 1E8 gmpy2/MPFR substitution after 69/69 quadrature and gmpy2 convergence with Rmpfr agreement on all 46 feasible points. |
 | #23 | Retitled to the actual off-grid Stirling-prefactor root cause; recorded the merged implementation and evidence still required. |
 | #24 | Specified direct lower-region Q from a pre-exponentiation LogP and made #23 a hard prerequisite. |
@@ -138,7 +139,7 @@ Two limits of the holdout evidence are recorded so the binding is not read as st
 | #29 | Split the Excel-free provenance mechanism from the first truthful binding, which is written and verified during the #23 holdout export. |
 | #30 | Move workflows from deprecated Node 20 action majors to supported Node 24 majors. |
 | #31 | Own repository preparation, final certification, tagging, and publication of v1.0.0. |
-| #32 | Own complete post-v1.0.0 grid reconstruction, declared origins, reference/observation separation, and byte-stable regeneration under v1.01. |
+| #32 | Own complete post-v1.0.0 grid reconstruction, declared origins, reference/observation separation, and byte-stable regeneration under v1.0.1. |
 
 ### Deleted
 
@@ -148,7 +149,7 @@ The parent #11 remains useful, and #26 must remain separate until the shared-pre
 
 ## Release-readiness assessment
 
-State revised 2026-09-30 at `fac921e`.
+State revised 2026-09-30 at `d2e1592`.
 
 | Area | State | Evidence / blocker | Owning issue |
 | --- | --- | --- | --- |
@@ -161,17 +162,17 @@ State revised 2026-09-30 at `fac921e`.
 | Unbalanced F inverse | Open | Relative accuracy lost when the beta inverse reconstructs the tiny pair member; F references, the classifier and release thresholds wait on it | #35 |
 | Exact Stirling boundary regression | Complete | Permanent arithmetic-built Excel tests; included in the certified 909 / 909 run | #20 |
 | Main-grid claim completeness | Blocked | The transition guard reports 36 unclaimed main-grid rows on the re-exported grid, unchanged from the audit baseline; Student-t `all` overclaims the measured large-df rows; F regime metadata is stale and three numerical inputs are duplicated across regimes | #22 |
-| Main-grid provenance | Bound | Re-exported from certified `74041b3` and bound at `7ffc465`; the strict gate passes. A final release-candidate export is still required | #31 final export |
+| Main-grid provenance | Bound | Re-exported from certified `74041b3` and bound at `7ffc465`; the strict gate passes. The canonical export record has a committed-byte digest mismatch (#47); a final release-candidate export is still required | #47, #31 final export |
 | Holdout provenance | Bound; certification owed | 559 rows bound at `17acc1b`, 80 / 80 PASS. Exported in an ordinary Excel session, so no exact-SHA record covers them; certification is owed in Phase 1 step 10, and #29 closes after deliberate source/grid mismatches are shown to fail | #29 |
 | Grid-regeneration safety | Safeguards landed; closure pending review | The generator is report-only and cannot write the committed main or holdout grid; reference changes need a counted, reasoned acknowledgement; duplicate keys fail on every write path and in `check_grid_keys.py`. All proved by `test_grid_regeneration.py` under the `grid-regeneration-safety` control. Full reconstruction stays with #32 | #17 |
-| README assurance | Interim | Stale literals replaced with hand-verified figures re-derived from their authorities (909 / 165 of 166 / 80 / 2,088; #34 and #35 named as blockers). Not generated and not fail-closed | #28 |
+| README assurance | Interim | Stale literals replaced with hand-verified figures re-derived from their authorities (909 / 165 of 166 / 80 / 2,088; #31 links all blockers). Not generated and not fail-closed | #28 |
 | CI action runtime | Complete | All workflows on Node 24 majors via PR #36; #30 closed | #30 |
 | Release documentation | Partial | CHANGELOG.md exists with `[Unreleased]`; SECURITY.md no longer describes an unpublished tag as stable. The v1.0.0 changelog entry and release notes remain | #31 |
 | Tag and GitHub Release | Not started | Neither exists | #31 |
 | Core architecture | Preserve | No broad redesign required | all numerical issues |
 | Governance baseline | Strong | License, conduct, contributing, security, templates present | #31 final audit |
 
-Full grid reconstruction is deliberately not a v1.0.0 blocker. #32 owns that v1.01 programme after #17 makes the current tooling safe.
+Full grid reconstruction is deliberately not a v1.0.0 blocker. #32 owns that v1.0.1 programme after #17 makes the current tooling safe.
 
 ## Dependency graph
 
@@ -420,7 +421,7 @@ Exit gate: the continued-fraction route satisfies the unchanged 5E-15 contract a
 
 Objective: finish the heavy inverse-contract work after the numerical chain, so its longest-pole reference generator does not block #23/#13/#14 and its measurements do not need to be repeated after #14 changes inverse architecture.
 
-1. Require #23, #24, #13, #14, #26, and parent #11 to have their final numerical source disposition. #22's reference/oracle preparation and Rmpfr cross-check must already be complete.
+1. Require #23, #24, #13, #14, #26, #34, #35, and parent #11 to have their final numerical source disposition. #22's reference/oracle preparation and Rmpfr cross-check must already be complete.
 2. Verify the transitional guard still reports only an authorized subset of the recorded audit-baseline debt set and derives its current count; any unauthorized new or changed missing row blocks the wave.
 3. Export the preregistered #22 fitting arms from the release-candidate source.
 4. Apply the frozen Student-t relative-versus-absolute decision and derive thresholds without inspecting holdout observations.
@@ -438,7 +439,7 @@ Exit gate: #22 closes with zero missing dispositions, no domain gap/overlap, no 
 
 ### Phase 7 — Complete assurance infrastructure
 
-#29 is already source-bound and #22 is now strict. Refresh their generated evidence after the final numerical source change and before publishing public assurance metrics.
+Entry requirement for this future phase: #29 is certified and source-bound, #47 is resolved, and #22 is strict. Refresh their generated evidence after the final numerical source change and before publishing public assurance metrics.
 
 #### #17 non-destructive grid-regeneration safeguards
 
@@ -449,7 +450,7 @@ Exit gate: #22 closes with zero missing dispositions, no domain gap/overlap, no 
 - require the existing explicit reasoned action for row retirement;
 - add focused CI fixtures for each safeguard.
 
-Complete origin reconstruction, reference/observation redesign, and byte-stable clean regeneration are deferred to #32 under v1.01 and are not v1.0.0 release criteria.
+Complete origin reconstruction, reference/observation redesign, and byte-stable clean regeneration are deferred to #32 under v1.0.1 and are not v1.0.0 release criteria.
 
 #### #28 README assurance generation
 
@@ -522,13 +523,13 @@ Tests: <pass>/<total>
 
 Mandatory generation order after a real Excel export:
 
-1. export observations from exact tracked source;
-2. write main-grid and holdout provenance;
+1. certify the exact candidate in Excel and export the selected observations and environment;
+2. finalize the canonical export record and bind the corresponding main-grid and holdout manifests, following `docs/EXCEL_CERTIFICATION.md`;
 3. generate main and holdout summaries;
 4. run row disposition in the phase-appropriate mode: transition mode may recognize only the frozen baseline debt and must fail on any new row; strict mode is mandatory from #22 closure onward;
 5. generate root README assurance metrics;
 6. run strict verification and diff checks;
-7. commit source, observations, provenance, summaries, and generated documentation together.
+7. commit source, observations, provenance, summaries, and generated documentation together, then validate the retained record against the committed grid bytes; any mismatch blocks certification (#47).
 
 ## Evidence matrix
 
@@ -548,7 +549,7 @@ Mandatory generation order after a real Excel export:
 
 ## Open backlog
 
-Revised 2026-09-30 at `fac921e`.
+Revised 2026-09-30 at `d2e1592`.
 
 | Order | Issue | Priority | Dependency | Immediate next action | Closure artifact |
 | ---: | --- | --- | --- | --- | --- |
@@ -562,8 +563,11 @@ Revised 2026-09-30 at `fac921e`.
 | 8 | #11 | P1 | #13, #14 | close parent after round-trip evidence | parent counterexamples |
 | 9 | #17 | P2 | independent of numerical source | safeguards and fixtures landed; review against the acceptance list and close | safe generator path; #32 deferred |
 | 10 | #28 | P2 | #22, #29 | implement one assurance renderer; the README currently carries interim hand-verified figures | generated root README |
-| 11 | ~~#30~~ | P3 | — | closed by PR #36 | warning-free workflows |
-| 12 | #31 | P1 | all v1.0.0 blockers | maintain release checklist | tag and GitHub Release |
+| 11 | #34 | P1 | preregistered Student-t study; production implementation pending | implement and validate the selected large-df route before final #22 evidence | independent fitting/holdout and source-bound contracts |
+| 12 | #35 | P1 | F inverse study and prospective comparison pending | complete the preregistered route comparison before final #22 evidence | independent validation and accepted inverse contract |
+| 13 | #47 | P2 | retained main-grid export digest does not match committed bytes | fix canonical-byte finalization and prove the retained live record is checked | valid committed main/holdout export evidence and negative controls |
+| 14 | #4 | P3 | source-header documentation correction | correct the validator documentation in a source/evidence change | accurate header and refreshed provenance |
+| 15 | #31 | P1 | all v1.0.0 blockers and required-check enforcement | maintain release checklist | tag and GitHub Release |
 
 ## Go / no-go checklist
 
@@ -574,6 +578,8 @@ GO requires every item:
 - [ ] full real-Excel regression passes on the release commit;
 - [ ] a retained self-hosted Excel workflow artifact exists for the exact release commit;
 - [ ] main grid and independent holdouts were exported from the same release source;
+- [ ] both export claims validate against committed grid bytes (#47), with retained logs and holdout certification (#29);
+- [ ] required PR, status-check and conversation-resolution policy is configured and verified (#31);
 - [ ] zero FAIL and zero PENDING;
 - [ ] zero missing main-grid dispositions;
 - [ ] the temporary #22 coverage-debt fingerprint has been deleted and strict mode is authoritative;
@@ -589,7 +595,7 @@ Any unchecked item means NO-GO.
 
 ## Complete v1.0.0 milestone issue register
 
-This register contains every issue assigned to milestone v1.0.0 after reconciliation, including closed history. Titles, states, labels, and bodies are reproduced from the live GitHub issues. Comments are not included.
+This is the historical 2026-08-30 reconciliation snapshot, including closed history. Titles, states, labels and bodies below were copied at that time; they do not describe current GitHub issue state. Comments are not included. Use the live backlog above and GitHub for subsequent changes.
 
 ### #2 — CR-P1-02: incomplete gamma/beta prefactor cancellation at large shape
 

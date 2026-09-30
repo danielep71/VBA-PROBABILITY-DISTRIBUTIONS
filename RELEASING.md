@@ -77,7 +77,9 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 - The working tree and exported VBA sources are reproducible.
 - Maintainers and required reviewers are available.
 
-Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient.
+Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient; #47 and #29 must be resolved.
+
+**Current enforcement gap (2026-09-30):** the active `Protect main` ruleset blocks deletion and force pushes, but does not require pull requests, status checks or resolved review conversations. Classic branch protection is absent. Those settings do not enforce this release policy; resolve and verify the required controls under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) before publication.
 
 ## 1. Freeze and identify the candidate
 
@@ -94,6 +96,8 @@ git rev-parse HEAD
 git status --short
 git diff --stat <previous-tag>...HEAD
 ```
+
+For the first release there is no previous tag: omit the tag-diff command, review the entire tracked tree and its evidence, and do not fabricate a previous-release comparison link.
 
 A dirty tree, unknown generated file, or unreviewed binary delta is blocking.
 

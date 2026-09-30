@@ -122,6 +122,10 @@ Use only the categories needed by a release.
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.
 
+### Documentation
+
+- Reconciled release-readiness, provenance and certification instructions with the current evidence; corrected comparison totals, qualified numerical claims, and repaired the disabled Discussions navigation.
+
 ### Validation
 
 - Added negative controls for Excel candidate/source/workflow SHA drift, assertion-count drift, cleanup failure, and false grid export target/hash/row-count claims.
@@ -133,7 +137,7 @@ Use only the categories needed by a release.
 
 ### Known limitations
 
-- Exact-SHA Excel certification from P0.1 / issue #38 is still being integrated separately; once merged into `main`, that release-blocking control must be added to `verification_depth.json` in the same integration change.
+- Exact-SHA Excel certification (#38) is merged and inventoried. Release evidence still requires resolution of the main-grid digest mismatch [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47), holdout export certification [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29), coverage debt #22, and the numerical blockers tracked by #31. A green Accuracy Gate alone does not certify a release.
 - Earlier project history has not been reconstructed. Existing commits, tags,
   releases, and repository documentation remain the authoritative record for
   changes made before this changelog was introduced.

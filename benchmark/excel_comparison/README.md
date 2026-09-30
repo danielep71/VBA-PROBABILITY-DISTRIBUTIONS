@@ -6,23 +6,9 @@ than asserted.
 
 ## What is and is not being claimed
 
-Excel's statistical functions are good across the range most users work in.
-This is **not** a list of Excel bugs, and the grid is not a highlight reel: it
-deliberately includes points where Excel is expected to do just as well
-(`NORM.S.DIST(-8, TRUE)` reads the lower tail directly; `F.DIST.RT(1, 1E6, 1E6)`
-sits at the median). A comparison that reported only the wins would not be
-evidence, and the analyzer prints a warning if any point favours Excel so it
-cannot be quietly dropped.
+This is a comparison of 29 specific formulas and recorded observations, not an exhaustive assessment of Excel or a current-source certification. Body, tail and extreme-parameter cases are included; results favouring Excel remain visible.
 
-The points where a difference is expected are structural, not accidental:
-
-- **No direct survival function.** Excel has no standard-normal survival, so the
-  upper tail must be written `1 - NORM.S.DIST(z, TRUE)`. That subtraction
-  destroys the tail: by z = 8 most of the significant digits are gone, and by
-  z = 15 the result is exactly zero. This library computes the tail directly.
-- **Large shape or df**, where the underlying series and continued fractions
-  lose accuracy.
-- **Inputs where one side errors and the other returns a value.**
+The `1 - CDF` tail expressions can lose significance or return zero. They are not always the best Excel formulations: normal symmetry gives `NORM.S.DIST(-z,TRUE)`, and Exponential and Weibull survival probabilities have elementary formulas. The library offers a consistent direct-tail API; this study does not benchmark every possible Excel alternative.
 
 ## Grid format
 
@@ -39,19 +25,11 @@ quoted CSV; the generator asserts no field contains a pipe.
 Excel is expected to match exactly, and where one exists a deep-tail or
 extreme-parameter point.
 
-## The structural difference: Excel has no upper tail for most families
+## Scope of the formula comparison
 
-Only **three** of the fifteen families have a direct upper-tail function in
-Excel: `T.DIST.RT`, `CHISQ.DIST.RT`, `F.DIST.RT`. For Normal, Lognormal, Gamma,
-Beta, Exponential, Weibull, Binomial, Poisson, NegativeBinomial and
-Hypergeometric the tail must be written `1 - CDF`, and that subtraction is what
-destroys it: at z = 8 nothing correct survives, and by z = 15 the expression
-returns exactly zero against a true 3.7E-51.
+The grid uses direct right-tail Excel functions where listed and `1 - CDF` for several other cases. Rows marked `NONE` mean no dedicated counterpart was included for that surface; they do not rule out an equivalent formula built from other Excel functions.
 
-Uniform and DiscreteUniform have no Excel function at all, as does log-mass for
-any discrete family. Those cases carry `-` as the Excel formula and record
-`NONE`, because "no function exists" is the most consequential difference in
-the table and omitting it would understate the case rather than overstate it.
+At the 2026-09-30 audit, rerunning the analyzer on the committed observations gives 15 cases with both sides at reference grade, 12 with an absent/unusable listed Excel formula and a usable library result, and 2 with both usable but at different grades (Beta survival and large-df Student t survival). This reproduces existing measurements; it is not a new Excel run.
 
 ## How the results are judged
 
@@ -61,15 +39,15 @@ different questions and merging them misleads:
 | column | question |
 | --- | --- |
 | **Closer** | which implementation is nearer the reference - often true and meaningless |
-| **Fit for use** | whether each side clears an absolute bar - the column that should drive decisions |
+| **Fit for use** | whether each side clears the study's stated digit threshold |
 
 The bar has two levels, both stated so a reader can disagree with them
 explicitly rather than infer them:
 
 | grade | correct digits | meaning |
 | --- | --- | --- |
-| **reference** | >= 12 | safe as a *building block*: the value can be fed into iteration, root-finding or accumulation without its error becoming visible. This is the standard the library's own accuracy contracts are written to. |
-| **report** | >= 6 | safe as a *directly reported* statistic: no published p-value or critical value carries more than about six significant figures. |
+| **reference** | >= 12 | study threshold of at least 12 correct significant digits; downstream error still depends on conditioning and use. |
+| **report** | >= 6 | study threshold of at least 6 correct significant digits; suitability depends on the application. |
 | **inadequate** | < 6 | could change what a user reports. |
 | **wrong** | 0 | not an approximation of the answer at all. |
 
@@ -97,4 +75,6 @@ a hi;lo pair to preserve full Double precision through the CSV.
 1. `python generate_excel_comparison.py`
 2. Import `M_STATS_PROBDIST_XLCMP.bas`, run `Export_ExcelComparison`
 3. `python analyze_excel_comparison.py`
-4. Paste the emitted table into the root README
+4. Reconcile documentation against the emitted table and preserve all outcomes.
+
+The generator rewrites the comparison grid. Use a disposable checkout when reproducing references; preserve the committed observations until a real replacement export is available.

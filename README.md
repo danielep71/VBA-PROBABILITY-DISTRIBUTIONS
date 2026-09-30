@@ -8,7 +8,7 @@
 
 <br>
 
-[![Excel VBA](https://img.shields.io/badge/Excel_VBA-32%20%2F%2064--bit-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
+[![Excel VBA](https://img.shields.io/badge/Excel_VBA-Pure_VBA-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
 [![Pure VBA](https://img.shields.io/badge/Implementation-Pure_VBA-00599C?style=for-the-badge)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
 [![No WorksheetFunction](https://img.shields.io/badge/WorksheetFunction-Not_Required-8A2BE2?style=for-the-badge)](#why-not-worksheetfunction)
 [![No External DLL](https://img.shields.io/badge/External_DLL-None-555555?style=for-the-badge)](#installation)
@@ -63,15 +63,17 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **909** | deterministic VBA assertions, all passing in the last exact-source Excel certification |
+| **909** | deterministic VBA assertions, all passing in the retained exact-source Excel runtime result |
 | **165** | active accuracy contracts measured against 50-digit references (166 registry rows; one characterization-only) |
 | **80** | of those additionally validated on an **independent holdout** |
 | **2,088** | observation rows in the accuracy grid (`probability_accuracy_grid.csv`) |
-| **#34 · #35** | open P1 numerical-accuracy defects tracked as v1.0.0 release blockers |
+| **[#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31)** | release tracker for all open numerical and assurance blockers |
 
 *Interim hand-verified figures; automated regeneration of this block from committed evidence is tracked in [#28](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/28).*
 
 </div>
+
+**Evidence snapshot — 2026-09-30, source baseline `d2e1592`.** The latest retained Excel runtime result is 909/909 PASS on candidate `74041b3` (Excel 16.0 build 20228, 64-bit); the certified VBA bytes remain unchanged. This is not a new Excel run on the documentation commit. Main and holdout manifests are source-bound, but release export certification is incomplete: [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47) tracks the retained main-grid digest mismatch and [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29) tracks holdout export certification. The numerical gate is green with 36 unclaimed main-grid rows tracked by [#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22). No stable release has been published; [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks readiness.
 
 ## ✨ What this project is
 
@@ -434,11 +436,7 @@ Survival(x) = 1 - CDF(x)
 
 Numerically, that subtraction may destroy the requested result when `CDF(x)` has already rounded to exactly `1`.
 
-This is not a theoretical concern, and it is not a criticism of Excel's accuracy.
-**It is an API gap.** Of the fifteen distribution families implemented here, only
-three have a direct upper-tail function in Excel — `T.DIST.RT`, `CHISQ.DIST.RT`
-and `F.DIST.RT`. For the other twelve the tail *must* be written `1 - CDF`, and
-that subtraction is what fails:
+The comparison below measures the listed `1 - CDF` expressions, which can lose the tail. It does not establish that Excel cannot compute these probabilities by another route. For example, normal symmetry gives `NORM.S.DIST(-z,TRUE)`; Exponential and Weibull tails also have direct elementary formulas. This library provides a consistent direct-survival API so callers need not construct those alternatives.
 
 | Upper tail | In Excel | Correct digits | This library | True value |
 |---|---|---:|---:|---|
@@ -464,14 +462,7 @@ uniform and discrete-uniform distribution functions, and log-mass for any
 discrete family.
 
 > [!NOTE]
-> Where Excel *does* have a function and it works, this library matches it to full
-> Double precision — the measurement is not one-sided. Across 29 cases spanning
-> all 15 families, **17 are ties at reference grade**, **12 are cases where Excel
-> cannot serve and the library can**, and one — the Student t survival at
-> `df = 1E7` — is a case where the library is measurably behind at 10 correct
-> digits. That case is recorded rather than omitted; see
-> [`benchmark/excel_comparison/`](benchmark/excel_comparison/) for the full grid,
-> the 50-digit references, and the grading criteria.
+> Across the 29 committed comparison cases, **15 have both implementations at reference grade**, **12 compare an unusable or absent listed Excel formula with a usable library result**, and **2 have both usable but at different grades**. The latter are Beta survival (library reference grade, Excel report grade) and Student t survival at `df = 1E7` (Excel reference grade, library about 10 correct digits). These study grades are not universal accuracy guarantees. See [`benchmark/excel_comparison/`](benchmark/excel_comparison/) for the measured formulas, references and grading criteria.
 
 For example:
 
@@ -1031,7 +1022,8 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ ISSUE_TEMPLATE/
 │  ├─ workflows/
 │  │  ├─ accuracy-gate.yml
-│  │  └─ excel-vba-regression.yml
+│  │  ├─ excel-vba-regression.yml
+│  │  └─ labels-sync.yml
 │  └─ PULL_REQUEST_TEMPLATE.md
 ├─ .gitignore
 ├─ assets/
@@ -1068,7 +1060,11 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 ├─ ci/
 │  └─ Run-ExcelVbaTests.ps1
 ├─ docs/
-│  └─ EXCEL_VBA_CI.md
+│  ├─ EXCEL_VBA_CI.md
+│  ├─ EXCEL_CERTIFICATION.md
+│  ├─ PUBLIC_API.md
+│  ├─ VERIFICATION_DEPTH.md
+│  └─ V1_0_0_IMPLEMENTATION_PLAN.md
 ├─ examples/
 │  ├─ .gitkeep
 │  └─ STATS-Distributions demo.xlsm
@@ -1081,6 +1077,10 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  └─ M_STATS_PROBDIST_TFAMILY.bas
 ├─ tests/
 │  └─ M_STATS_PROBDIST_TEST.bas
+├─ CHANGELOG.md
+├─ INSTALLATION.md
+├─ RELEASING.md
+├─ VERSION
 ├─ CODE_OF_CONDUCT.md
 ├─ CONTRIBUTING.md
 ├─ LICENSE
@@ -1096,6 +1096,12 @@ The Wiki is maintained separately through the repository's Wiki interface.
 
 | Documentation | Purpose |
 |---|---|
+| [Installation](INSTALLATION.md) | Import and environment requirements |
+| [Release guide](RELEASING.md) | Candidate, certification and packaging requirements |
+| [Excel certification](docs/EXCEL_CERTIFICATION.md) | Exact-source runtime and grid-export evidence |
+| [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
+| [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
+| [Public API](docs/PUBLIC_API.md) | Compatibility manifest and drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
 | [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture) | Layers, boundaries, and dependencies |
@@ -1574,6 +1580,6 @@ You may use, modify, and distribute the software subject to the terms of the lic
 
 <br>
 
-If this project is useful, consider starring the repository, opening a discussion, reporting a reproducible numerical case, or contributing an independently validated improvement.
+If this project is useful, consider starring the repository, opening a usage issue, reporting a reproducible numerical case, or contributing an independently validated improvement.
 
 </div>
