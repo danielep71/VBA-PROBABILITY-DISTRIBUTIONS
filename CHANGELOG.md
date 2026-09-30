@@ -99,6 +99,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Extended weekly Dependabot updates to the benchmark and lint Python requirements, with maintainer assignment and an initial priority label.
+
 - Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
 - Added a machine-readable verification-depth inventory of the v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
 - Added mutation controls proving that incomplete-gamma dispatch drift, Student-t coefficient corruption, stale generated contract tables, and duplicated source-threshold claims are rejected.
@@ -120,6 +122,8 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Hash-locked the existing mpmath/SymPy benchmark wheels and require binary, hash-verified installs in the Accuracy Gate.
+
 - Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
 - Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
 - Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
@@ -128,6 +132,7 @@ Use only the categories needed by a release.
 - Release guide steps 3 and 5 now name the concrete release-semantics command and require a green **Static checks** run on the exact candidate.
 - Fixed 41 lint findings across the benchmark tooling: unused or redundant imports, unused variables (including two vestigial claim constants in the reference generator) and placeholder-free f-string prefixes. The generator's 1,404 rows are unchanged.
 - `.editorconfig` now covers JavaScript workflow scripts (2-space indentation) and the Windows script types that `.gitattributes` already checks out with CRLF.
+- Adopted a pull-request-only merge convention: every change, including the maintainer's own, reaches `main` through a squash-merged pull request. Evidence changes stay in one commit, certification binds the final merged commit, and a history-preserving merge needs a recorded reason. This is policy until the `Protect main` ruleset requires pull requests and status checks (#31).
 
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.

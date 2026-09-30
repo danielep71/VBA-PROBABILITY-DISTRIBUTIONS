@@ -35,6 +35,29 @@ python3 tools/check_release_semantics.py --root .
 python3 -m ruff check .
 ```
 
+## Dependency updates
+
+Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
+(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff) weekly. Updates
+are assigned to the maintainer with priority P3 for initial triage; raise the
+priority when a security advisory or other material risk requires it. Review
+and merge remain manual. Set the applicable milestone during PR triage.
+
+Both CI Python environments install wheels with `--require-hashes`. Review
+version and SHA-256 changes together, compare hashes with PyPI's release
+metadata and the downloaded wheel, and retain a complete pinned dependency
+closure. Reference-library changes require the full assurance and numerical
+gates; do not rewrite committed observations to accommodate a dependency bump.
+Ruff's lock selects the Ubuntu x86-64 CI wheel; it is not a portable developer
+lock. actionlint is separately version- and checksum-pinned in the static
+workflow and needs a reviewed manual update.
+
+The optional gmpy2/MPFR and R/Rmpfr research tools are outside these CI locks;
+retain their recorded versions with study evidence when rerunning them. The VBA
+library itself has no downloaded package dependencies. CodeQL analyzes Python,
+JavaScript and Actions, not VBA; a successful analysis run is not proof that
+there are no open findings.
+
 ## Provenance
 
 These four files are imported **verbatim** from the portfolio template
