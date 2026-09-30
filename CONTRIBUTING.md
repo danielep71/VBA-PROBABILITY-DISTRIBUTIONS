@@ -99,7 +99,9 @@ the review artifact.
 | `tests/` | Fast deterministic VBA regression and contract tests |
 | `benchmark/` | High-precision external accuracy gate and evidence |
 | `docs/` and wiki | API, architecture, accuracy, and diagnostics |
-| `tools/` | Manifest, error computation, and source validation |
+| `ci/` | Windows/Excel runner adapter |
+| `tools/` | Static repository checks: committed whitespace, VBA jumps and release semantics |
+| `benchmark/` Python tools | Manifests, error computation, source validation and negative controls |
 
 The README and current tree are authoritative if a listed optional directory is
 not present.
@@ -233,7 +235,7 @@ under review.
 - Test central, boundary, tail, invalid-domain, underflow/overflow, inverse, and round-trip behavior as applicable.
 - Record exact commit, Excel/Office bitness, reference system/version/precision, tested points, tolerance, worst observed error, and failures.
 
-When source changes, regenerate evidence in this order: export Excel observations; write the manifest; compute the accuracy summary; then commit source, grid, manifest, and summary together. Never rebind old measurements to new code.
+When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. The #47 digest mismatch and #29 holdout certification remain unresolved. Never rebind old measurements to new code.
 
 ### Evidence principles
 

@@ -56,10 +56,7 @@ manifest contract. The canonical Excel certification record is stricter about
 source identity: it hashes the exact canonical Git blob bytes. Both approaches
 are stable across ordinary CRLF/LF working-tree checkout differences.
 
-The holdout record is intentionally absent during the current pre-export phase
-of v1.0.0. The committed holdout observations came from older source. Creating a
-current-source holdout manifest before a real re-export would be false
-provenance.
+**Evidence snapshot — 2026-09-30, source baseline `d2e1592`.** The latest retained Excel runtime result is 909/909 PASS on candidate `74041b3` (Excel 16.0 build 20228, 64-bit); the certified VBA bytes remain unchanged. This is not a new Excel run on the documentation commit. Main and holdout manifests are source-bound, but release export certification is incomplete: [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47) tracks the retained main-grid digest mismatch and [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29) tracks holdout export certification. The numerical gate is green with 36 unclaimed main-grid rows tracked by [#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22). No stable release has been published; [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks readiness.
 
 ## What the hosted gate enforces
 
@@ -85,28 +82,13 @@ rules.
 
 ## Fresh-export operating procedure
 
-1. Import the current source into the workbook and re-export the observations
-   (`Export_Accuracy_Observations`, plus any affected study macro).
-2. Confirm the export actually happened: `git status` must show
-   `probability_accuracy_grid.csv` as **modified**. If it is unchanged, no
-   export occurred and binding it would assert something false.
-3. Bind the freshly exported grid. `write_manifest.py` is no longer called
-   directly - a bare invocation refuses, and `--from-fresh-export` is verified
-   against the grid rather than trusted:
+Commands below run from the repository root. The current #47 blocker must be resolved before final release certification; these steps describe the required evidence chain, not a claim that the retained export certificate currently passes.
 
-   ```
-   python refresh_evidence.py --bind-exported-main
-   ```
+### 1. Certify the exact source candidate in Excel
 
-   Add `--bind-exported-holdout` when the holdout was exported in the same
-   session. The environment is read from `excel_environment.json`, written by
-   `Export_ExcelEnvironment`, so run that macro in the same Excel session.
+Check out and record the full candidate SHA. Import its exact production and test modules into a clean workbook, run the self-hosted regression workflow, and retain its green `excel-certification.json` and regression log. Validate the artifact as described in [EXCEL_CERTIFICATION.md](../docs/EXCEL_CERTIFICATION.md).
 
-4. Commit the grid **and** `observation_manifest.json` together - the
-   per-commit provenance guard requires it.
-
-This establishes the runtime/source identity. It does **not** yet establish a
-fresh numerical export.
+This establishes runtime/source identity. It does not establish a fresh numerical export.
 
 ### 2. Export the selected numerical evidence in Excel
 
@@ -141,7 +123,9 @@ python benchmark/finalize_excel_certification.py \
   version/build/bitness;
 - the relevant exporter module is included in the certified source inventory;
 - the selected grid exists and its SHA-256 and row count can be bound; and
-- the completed canonical record revalidates.
+- the completed record structure and source inventory revalidate.
+
+The finalizer hashes working-tree grids; it does not yet check the committed grid bytes. The evidence commit must pass the canonical validator afterward, including grid digest and row-count checks. See #47 and the commands in [EXCEL_CERTIFICATION.md](../docs/EXCEL_CERTIFICATION.md).
 
 It writes `benchmark/excel_regression_record.json`. The tool cannot observe an
 Excel export itself: `--from-fresh-export` is an explicit operator assertion,
@@ -184,18 +168,14 @@ conditions holds:
 | **B** | `benchmark/excel_regression_record.json` is also modified and the canonical validator proves a green exact-SHA run **plus an explicit fresh-export claim for that exact grid**, whose committed SHA-256 and row count match. |
 | **C** | The commit modifies only the manifest and restores bytes identical to an earlier committed version. This is the exact-restoration repair path. |
 
-B exists so that a re-export producing a byte-identical grid - a `.bas`
-change altering no observation value - remains legal. The record does not
-exist yet; it is produced by Phase 1's first export session, so until then
-only A and C can apply, which is correct for a phase in which no export can
-happen.
+B permits a genuinely fresh export that produces a byte-identical grid. It requires a valid canonical export record. The retained record currently fails the main-grid digest check (#47) and does not claim a holdout export (#29), so it cannot currently authorize this exception.
 
 
 ## Why binding is verified, not declared
 
 `write_manifest.py` refuses a bare invocation, and `--from-fresh-export` is
-checked rather than believed: if the grid is byte-identical to `HEAD`, no
-export produced it and the writer refuses. The documented exception is the one
+checked rather than believed: a byte-identical grid alone does not establish
+that an export occurred, so the writer requires independent certification. The documented exception is the one
 `check_manifest_provenance.py` already recognises - a real export that
 reproduces a byte-identical grid, evidenced by a validated
 `excel_regression_record.json` naming that grid as exported.
@@ -209,4 +189,4 @@ so the promise is now checked.
 
 ## Canonical Excel certification record
 
-The manifests bind committed observation bytes to source. Separately, `excel-certification.json` / retained `benchmark/excel_regression_record.json` bind an Excel runtime session to one full candidate SHA and exact imported VBA bytes. A regression-only record has every grid entry `exported: false` and cannot authorize a manifest rebind. Only a record finalized from a real fresh export, with the relevant grid marked exported and matching SHA-256/row count, may satisfy the byte-identical-grid exception in `check_manifest_provenance.py`. See `docs/EXCEL_CERTIFICATION.md`.
+The manifests bind committed observation bytes to source. Separately, `excel-certification.json` / retained `benchmark/excel_regression_record.json` bind an Excel runtime session to one full candidate SHA and exact imported VBA bytes. A regression-only record has every grid entry `exported: false` and cannot authorize a manifest rebind. Only a record finalized from a real fresh export, with the relevant grid marked exported and matching SHA-256/row count, may satisfy the byte-identical-grid exception in `check_manifest_provenance.py`. See [EXCEL_CERTIFICATION.md](../docs/EXCEL_CERTIFICATION.md).

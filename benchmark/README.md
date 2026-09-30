@@ -64,7 +64,12 @@ study folder.
 
 ## Running it
 
-```
+Follow the complete [fresh-export procedure](PROVENANCE.md#fresh-export-operating-procedure): certify the exact candidate, export grids and environment, finalize the canonical record, bind the selected manifests, regenerate summaries, and validate committed evidence. The retained main-grid export digest mismatch (#47) and holdout certification (#29) remain release blockers.
+
+The abbreviated commands below run from `benchmark/`; they do not replace certification and binding.
+
+```bash
+cd benchmark
 # Phase 1 — reference (Python). Report only: compares with the committed
 # grid and writes nothing. --out writes the reference rows to a separate,
 # non-authoritative file and refuses any file that carries observations.
@@ -80,6 +85,9 @@ python generate_reference_values.py --out reference_rows.csv
 #   Import M_STATS_PROBDIST_ACCURACYEXPORT.bas into the workbook,
 #   put probability_accuracy_grid.csv beside the workbook,
 #   run Export_Accuracy_Observations. It fills the observed_vba column.
+
+# Before analysis: finalize certification and bind only the grids really
+# exported, following PROVENANCE.md (its commands use the repository root).
 
 # Phase 3 — analysis (Python)
 python compute_errors.py                       # -> accuracy_summary.md
