@@ -6,11 +6,15 @@ Repository HEAD: 0dd748884599d4d0da815cb53eeceb13efd51f05
 Numerical source baseline: bde92dd7037e4fde05e620745a1c54b0cbc3a261  
 Milestone: v1.0.0
 
+> **Readiness revised 2026-09-30 at `fac921e`.** The executive-decision revision note, the amended audit-basis bullets, the release-readiness assessment, and the open backlog reflect this state. The backlog-reconciliation log and the issue register remain the 2026-08-30 record.
+
 ## Executive decision
 
 v1.0.0 is not release-ready.
 
 The project architecture and evidence framework are strong, but the release currently has six open P1 numerical issues plus the P1 release-certification tracker, stale source-bound accuracy observations, an unavailable self-hosted Excel result for the current source, an audit-baseline set of 36 unclaimed main-grid rows whose live count must thereafter be generated, unbound independent holdout observations, stale public assurance metrics, no changelog/tag/release, and a security policy that describes an unreleased tag as already stable.
+
+**Revision 2026-09-30.** Several of those conditions have since cleared: the main grid was re-exported from the certified candidate `74041b3` (909 / 909, Excel 16.0 build 20228, 64-bit) and bound at `7ffc465`; the 559-row holdout was bound at `17acc1b`; the strict Accuracy Gate reports seven PASS; `CHANGELOG.md` exists; SECURITY.md no longer describes an unpublished tag as stable; and the stale README literals were replaced with hand-verified figures. The verdict is unchanged: v1.0.0 is not release-ready. The P1 numerical chain (#23 evidence closure, #24, #13, #14, #26, #11, and #34), #22's final disposition, holdout certification, #17, #28, and the tag and release remain open.
 
 The corrected v1.0.0 milestone contains 26 issues: 12 open and 14 closed. The implementation order below is dependency-driven and preserves the frozen numerical contracts. Two additional open hardening issues belong to v1.01: #7 and #32.
 
@@ -49,13 +53,13 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 - consolidated regression module: tests/M_STATS_PROBDIST_TEST.bas
 - example workbook: examples/STATS-Distributions demo.xlsm
 - present governance files: LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, issue templates, PR template
-- missing first-release file: CHANGELOG.md
+- ~~missing first-release file: CHANGELOG.md~~ — revised 2026-09-30: CHANGELOG.md exists with an `[Unreleased]` section; the v1.0.0 entry remains owed under #31
 
 ### Verified numerical evidence
 
-- latest verified real-Excel regression: 902 / 902 PASS
-- environment: Excel 16.0 build 20131, 64-bit
-- #23 adds seven assertions, so 909 is the next expected count; it is not yet verified
+- latest verified real-Excel regression: 909 / 909 PASS (revised 2026-09-30; previously 902 / 902)
+- environment: Excel 16.0 build 20228, 64-bit, exact-SHA certification of `74041b3`, self-hosted run 35143062120, recorded in `benchmark/excel_regression_record.json` (previously build 20131)
+- #23's seven added assertions are included in that count; no file under `src/` or `tests/` has changed since `74041b3`
 - registry rows: 166
 - registry status: 165 active, 1 characterization-only
 - probability grid: 2,088 rows
@@ -63,14 +67,15 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 - rows matching at least one contract key: 2,052
 - unclaimed main-grid rows at the bde92dd audit baseline: 36; every later current-debt count is generated from the grid and disposition data
 - independent holdout grid: 559 observation rows
-- independent holdout summary: 80 contract verdicts, 80 PASS / 0 FAIL; the badge is numerically correct but ambiguous, and the observations are not source-bound
+- independent holdout summary: 80 contract verdicts, 80 PASS / 0 FAIL; the observations are source-bound since `17acc1b` (revised 2026-09-30), but were exported in an ordinary Excel session, so no exact-SHA certification record covers them yet
 
 ### Live CI state
 
 - Accuracy Gate runs 166 through 171: failed only with the frozen two-file stale-evidence signature; every Phase 0 commit preserved it, runs from `8a3bbb8` onward preserve its re-pinned six-PASS/one-FAIL form, and runs from `7ffc465` onward preserve the post-export form in which the single failure is the unbound holdout
 - the #13 analyzer and its fitting/holdout claims passed before the provenance failure
-- Excel VBA Regression run 95: cancelled because the self-hosted Excel runner was unavailable; it produced no evidence
-- workflow logs warn that older action majors target deprecated Node 20 and are being forced onto Node 24
+- Accuracy Gate run 231 at `17acc1b`: seven PASS, the first fully green run after the expected-red waiver retired; run 232 at `fac921e` also passed (revised 2026-09-30)
+- ~~Excel VBA Regression run 95: cancelled because the self-hosted Excel runner was unavailable; it produced no evidence~~ — revised 2026-09-30: the self-hosted runner is restored; run 133 certified `74041b3` at 909 / 909
+- ~~workflow logs warn that older action majors target deprecated Node 20 and are being forced onto Node 24~~ — revised 2026-09-30: resolved by PR #36 (checkout v7, setup-python v7, upload-artifact v7, github-script v9); #30 closed
 
 ### Phase 0 known-red invariant
 
@@ -143,21 +148,25 @@ The parent #11 remains useful, and #26 must remain separate until the shared-pre
 
 ## Release-readiness assessment
 
+State revised 2026-09-30 at `fac921e`.
+
 | Area | State | Evidence / blocker | Owning issue |
 | --- | --- | --- | --- |
-| Off-grid Gamma prefactor | Implementation landed; evidence incomplete | Current source has no real-Excel/export/holdout closure evidence | #23 |
+| Off-grid Gamma prefactor | Implementation landed; evidence partial | The main grid was re-exported from certified `74041b3` (25 gamma-family rows moved) and the strict gate passes. The preregistered #23 fitting grid and holdout under `benchmark/gamma_series_small_shape` have not been exported, and the movement comparison and row promotions (Phase 1 steps 4, 6, 9, 12) remain | #23 |
 | Lower incomplete-gamma survival | Blocked | Lower branch still forms Q = 1 - P | #24 |
-| Positive subnormal forward paths | Blocked | Constants/classifier exist but have no production callers; pre-#23 cutoffs require revalidation | #13, #11 |
+| Positive subnormal forward paths | Blocked | Constants/classifier exist but have no production callers; the `positive_ratio_subnormal` arms have not been rerun since #23, so the cutoffs still require revalidation (Phase 1 step 7) | #13, #11 |
 | Inverse representability | Blocked | Unit-scale quantile can underflow before final rescaling | #14, #11 |
-| Continued-fraction Q | Unknown after shared fix | Old breach may move or disappear after #23 | #26 |
-| Exact Stirling boundary regression | Complete | Permanent arithmetic-built Excel tests; 902 / 902 verified | #20 |
-| Main-grid claim completeness | Blocked | 36 rows produced no verdict at the audit baseline; the current count must be generated; Student-t `all` overclaims the measured large-df rows; F regime metadata is stale and three numerical inputs are duplicated across regimes | #22 |
-| Main-grid provenance | Correctly stale | Manifest rejects the changed current source | #23 then final export |
-| Holdout provenance | Blocked | 559 rows producing 80 contract verdicts are not bound to current source | #29 |
+| Continued-fraction Q | Unknown after shared fix | The X = 2 ladder has not been remeasured on the post-#23 source (Phase 1 step 8) | #26 |
+| Student-t large-df upper tail | Prepared, not applied | Tail expansion preregistered and derived in `benchmark/student_t_large_df_study` (`fa7633a`, `b8d633d`); no `src/` change since `74041b3`; the patch lands in Phase 1 step 3 | #34 |
+| Unbalanced F inverse | Open | Relative accuracy lost when the beta inverse reconstructs the tiny pair member; F references, the classifier and release thresholds wait on it | #35 |
+| Exact Stirling boundary regression | Complete | Permanent arithmetic-built Excel tests; included in the certified 909 / 909 run | #20 |
+| Main-grid claim completeness | Blocked | The transition guard reports 36 unclaimed main-grid rows on the re-exported grid, unchanged from the audit baseline; Student-t `all` overclaims the measured large-df rows; F regime metadata is stale and three numerical inputs are duplicated across regimes | #22 |
+| Main-grid provenance | Bound | Re-exported from certified `74041b3` and bound at `7ffc465`; the strict gate passes. A final release-candidate export is still required | #31 final export |
+| Holdout provenance | Bound; certification owed | 559 rows bound at `17acc1b`, 80 / 80 PASS. Exported in an ordinary Excel session, so no exact-SHA record covers them; certification is owed in Phase 1 step 10, and #29 closes after deliberate source/grid mismatches are shown to fail | #29 |
 | Grid-regeneration safety | Blocked | The documented generator can still overwrite the combined grid and blank observations by default | #17 |
-| README assurance | Blocked | 835 / 161 / 1 905 / zero-known-defect claims are stale | #28 |
-| CI action runtime | Cleanup required | Node 20 deprecation warnings | #30 |
-| Release documentation | Blocked | No changelog; SECURITY.md prematurely says v1.0.0 is stable | #31 |
+| README assurance | Interim | Stale literals replaced with hand-verified figures re-derived from their authorities (909 / 165 of 166 / 80 / 2,088; #34 and #35 named as blockers). Not generated and not fail-closed | #28 |
+| CI action runtime | Complete | All workflows on Node 24 majors via PR #36; #30 closed | #30 |
+| Release documentation | Partial | CHANGELOG.md exists with `[Unreleased]`; SECURITY.md no longer describes an unpublished tag as stable. The v1.0.0 changelog entry and release notes remain | #31 |
 | Tag and GitHub Release | Not started | Neither exists | #31 |
 | Core architecture | Preserve | No broad redesign required | all numerical issues |
 | Governance baseline | Strong | License, conduct, contributing, security, templates present | #31 final audit |
@@ -539,19 +548,21 @@ Mandatory generation order after a real Excel export:
 
 ## Open backlog
 
+Revised 2026-09-30 at `fac921e`.
+
 | Order | Issue | Priority | Dependency | Immediate next action | Closure artifact |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | #29 | P2 | Excel-free mechanism complete; Excel-bound closure | write the first truthful main/holdout binding pair atomically during #23 export | source-bound current holdout and seven PASS checks |
+| 1 | #29 | P2 | Excel-free mechanism complete; both bindings written (`7ffc465`, `17acc1b`) | certify the holdout export in the Phase 1 step 10 wave, then prove deliberate source/grid mismatches fail | certified source-bound holdout and seven PASS checks |
 | 2 | #22 | P2 | coverage guard and Chi-square oracle checkpoint complete; heavy fitting/holdout, eight-row zero-reference split, neighbour/bridge decision arm, deterministic regimes, and F cleanup remain | continue hidden-holdout classifier/contract preparation; run fitting/holdout and atomically close on the release-candidate source after #14 | final zero missing rows, no domain gap/overlap, no temporary fingerprint |
-| 3 | #23 | P1 | #29 mechanism, #22 delta guard, controlled Excel route | first reproduce the exact Phase 0 expected-red signature, then run its evidence wave; close #29 then #23 | fresh source-bound numerical grid/holdout; seven PASS checks; coverage debt unchanged |
+| 3 | #23 | P1 | #29 mechanism, #22 delta guard, controlled Excel route (restored) | export the preregistered `gamma_series_small_shape` fitting grid and holdout, compare with `MOVEMENT_MANIFEST.md`, promote rows; the expected-red signature step is obsolete now that the gate is green | fresh source-bound numerical grid/holdout; seven PASS checks; coverage debt unchanged |
 | 4 | #24 | P1 | #23 | preregister LogP/direct-Q study; #13 density/CDF may proceed in parallel | direct-Q contracts and tests |
 | 5 | #13 | P1 | #23 cutoff gate; #24 only for survival | retain/rederive cutoffs, then wire per-family dispatch | six surface regimes |
 | 6 | #14 | P1 | #13 | preregister log-inverse crossover | quantile + tail residual |
 | 7 | #26 | P1 | #23 | act on the re-exported X=2 ladder | evidence-only close or isolated fix |
 | 8 | #11 | P1 | #13, #14 | close parent after round-trip evidence | parent counterexamples |
 | 9 | #17 | P2 | independent of numerical source | make default regeneration non-destructive and add fail-hard fixtures | safe generator path; #32 deferred |
-| 10 | #28 | P2 | #22, #29 | implement one assurance renderer | generated root README |
-| 11 | #30 | P3 | independent | review and upgrade action majors | warning-free workflows |
+| 10 | #28 | P2 | #22, #29 | implement one assurance renderer; the README currently carries interim hand-verified figures | generated root README |
+| 11 | ~~#30~~ | P3 | — | closed by PR #36 | warning-free workflows |
 | 12 | #31 | P1 | all v1.0.0 blockers | maintain release checklist | tag and GitHub Release |
 
 ## Go / no-go checklist
