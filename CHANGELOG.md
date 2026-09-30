@@ -122,6 +122,8 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Clarified PR-head versus synthetic-merge validation, required post-merge release artifact rebuild/retest/hash generation, and recorded the active branch/tag protections after PR #51 review.
+
 - Hash-locked the existing mpmath/SymPy benchmark wheels and require binary, hash-verified installs in the Accuracy Gate.
 
 - Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
