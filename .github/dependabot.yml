@@ -1,0 +1,25 @@
+# Keep the GitHub Actions used by the workflows current.
+#
+# Every `uses:` is pinned to a full commit SHA with its release as a trailing
+# comment. Dependabot proposes each update as a reviewed pull request that moves
+# the SHA and the comment together, so a pin can neither drift silently (a moved
+# tag) nor go stale unnoticed (a deprecated runtime, as the Node 20 majors did
+# before #30). Approval and merge stay manual.
+#
+# The labels must exist in .github/labels.json. Label sync prunes anything not
+# listed there, so Dependabot's own default labels would be deleted again.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(actions)"
+    labels:
+      - "CI"
+      - "testing"

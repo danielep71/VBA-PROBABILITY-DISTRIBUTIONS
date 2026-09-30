@@ -1031,7 +1031,12 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ ISSUE_TEMPLATE/
 │  ├─ workflows/
 │  │  ├─ accuracy-gate.yml
-│  │  └─ excel-vba-regression.yml
+│  │  ├─ excel-vba-regression.yml
+│  │  ├─ labels-sync.yml
+│  │  └─ static-checks.yml
+│  ├─ actionlint.yaml
+│  ├─ dependabot.yml
+│  ├─ repository-profile.json
 │  └─ PULL_REQUEST_TEMPLATE.md
 ├─ .gitignore
 ├─ assets/
@@ -1081,6 +1086,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  └─ M_STATS_PROBDIST_TFAMILY.bas
 ├─ tests/
 │  └─ M_STATS_PROBDIST_TEST.bas
+├─ tools/                       # static repository gates, from the portfolio template
 ├─ CODE_OF_CONDUCT.md
 ├─ CONTRIBUTING.md
 ├─ LICENSE

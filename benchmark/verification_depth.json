@@ -99,6 +99,27 @@
       "proof_command": "test_grid_regeneration.py",
       "negative_claim": "a destructive default generator run, reference output aimed at the committed grid, holdout or any observation-bearing copy, duplicate canonical keys, unacknowledged, miscounted or stale reference changes, unsanctioned appends or retirements, and a replaced observation during reference migration are all refused",
       "current_state": "green"
+    },
+    {
+      "id": "committed-whitespace",
+      "live_command": "../tools/check_committed_whitespace.py --root .. --mode committed --head HEAD",
+      "proof_command": "../tools/check_committed_whitespace.py --root .. --self-test",
+      "negative_claim": "whitespace errors in a committed candidate range, including the root commit and an explicit base, are rejected while staged and unstaged edits are kept separate",
+      "current_state": "green"
+    },
+    {
+      "id": "vba-procedure-jumps",
+      "live_command": "../tools/check_vba_jumps.py --root ..",
+      "proof_command": "../tools/check_vba_jumps.py --root .. --self-test",
+      "negative_claim": "GoTo, GoSub and Resume targets outside the owning procedure, and duplicate labels, are rejected across every tracked VBA module",
+      "current_state": "green"
+    },
+    {
+      "id": "release-semantics",
+      "live_command": "../tools/check_release_semantics.py --root ..",
+      "proof_command": "../tools/check_release_semantics.py --root .. --self-test",
+      "negative_claim": "invalid SemVer, out-of-order or duplicated releases, impossible or regressing cut dates, a wrong or missing comparison link, and a latest release heading that disagrees with VERSION are rejected",
+      "current_state": "green"
     }
   ]
 }

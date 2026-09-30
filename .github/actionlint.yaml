@@ -1,0 +1,8 @@
+# actionlint configuration.
+#
+# excel-vba-regression.yml runs on the maintainer's self-hosted Windows runner,
+# selected by the custom label below. Declaring it lets actionlint validate that
+# job instead of reporting an unknown label; every other label stays checked.
+self-hosted-runner:
+  labels:
+    - excel
