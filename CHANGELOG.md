@@ -121,6 +121,7 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- Aligned the issue labels with the portfolio template. The template's 20 core labels are adopted with its exact names, colors and descriptions, adding `behavior-change`, `security`, `repository`, `question`, `duplicate`, `invalid` and `wontfix`. `CI` becomes `ci`, and `testing` is renamed `tests` in place, so it stays on existing issues and pull requests. The nine distribution-domain labels are kept; `core` is recolored so that it no longer shares the template's `repository` color. The label manifest now meets the template's format rules (uppercase colors, sorted names, single-line descriptions of at most 100 characters), which the drift check enforces. Label sync supports declared renames and stops before any write if both the old and the new name exist.
 - Hash-locked the existing mpmath/SymPy benchmark wheels and require binary, hash-verified installs in the Accuracy Gate.
 
 - Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.

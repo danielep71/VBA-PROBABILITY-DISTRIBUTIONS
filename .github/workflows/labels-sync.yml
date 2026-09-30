@@ -44,6 +44,22 @@ jobs:
             });
 
             const currentByKey = new Map(current.map(label => [label.name.toLowerCase(), label]));
+
+            // "renames" maps an old live name to its manifest name. The live
+            // label is renamed in place by the update below, so it stays on
+            // every issue and pull request; pruning it and creating the new
+            // name would strip it from all of them. If both names already
+            // exist, stop before any write: that needs a manual decision.
+            // labels-drift.mjs mirrors this mapping.
+            for (const [from, to] of Object.entries(config.renames ?? {})) {
+              const source = currentByKey.get(from.toLowerCase());
+              if (!source) continue;
+              if (currentByKey.has(to.toLowerCase())) {
+                throw new Error(`Both "${source.name}" and "${to}" exist; move issues to "${to}" and delete "${source.name}" by hand, then re-run.`);
+              }
+              currentByKey.delete(from.toLowerCase());
+              currentByKey.set(to.toLowerCase(), source);
+            }
             const created = [];
             const updated = [];
             const removed = [];
@@ -85,8 +101,8 @@ jobs:
             }
 
             if (config.prune) {
-              for (const existing of current) {
-                if (!desiredByKey.has(existing.name.toLowerCase())) {
+              for (const [key, existing] of currentByKey) {
+                if (!desiredByKey.has(key)) {
                   await github.rest.issues.deleteLabel({
                     owner: context.repo.owner,
                     repo: context.repo.repo,

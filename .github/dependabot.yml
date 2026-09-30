@@ -22,8 +22,8 @@ updates:
       prefix: "deps(actions)"
     assignees: ["danielep71"]
     labels:
-      - "CI"
-      - "testing"
+      - "ci"
+      - "tests"
       - "P3"
     groups:
       # github/codeql-action publishes init, analyze and upload-sarif as
@@ -45,7 +45,7 @@ updates:
       timezone: "Europe/Rome"
     open-pull-requests-limit: 5
     assignees: ["danielep71"]
-    labels: ["CI", "testing", "P3"]
+    labels: ["ci", "tests", "P3"]
     commit-message:
       prefix: "deps(python)"
 
@@ -58,6 +58,6 @@ updates:
       timezone: "Europe/Rome"
     open-pull-requests-limit: 5
     assignees: ["danielep71"]
-    labels: ["CI", "testing", "P3"]
+    labels: ["ci", "tests", "P3"]
     commit-message:
       prefix: "deps(python)"
