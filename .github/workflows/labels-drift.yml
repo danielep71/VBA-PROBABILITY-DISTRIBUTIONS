@@ -1,0 +1,64 @@
+name: Label drift
+run-name: Label drift — ${{ github.ref_name }} @ ${{ github.sha }}
+
+# Read-only detection of differences between .github/labels.json and the live
+# repository labels, for example a label edited by hand in the GitHub UI.
+# This workflow has no mutation path: reconciliation stays in labels-sync.yml,
+# which runs only on trusted events. Pull requests run the offline fixtures
+# only; the daily and manual runs read the live labels.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/labels.json
+      - .github/scripts/labels-drift.mjs
+      - .github/workflows/labels-drift.yml
+      - .github/workflows/labels-sync.yml
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: labels-drift-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fixtures:
+    name: Label drift fixtures
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Exercise the drift fixtures
+        run: node .github/scripts/labels-drift.mjs --self-test
+
+  live:
+    name: Compare live labels with the manifest
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Exercise the drift fixtures
+        run: node .github/scripts/labels-drift.mjs --self-test
+
+      - name: Detect drift (read only)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/labels-drift.mjs --check

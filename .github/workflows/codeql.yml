@@ -1,9 +1,10 @@
 name: CodeQL
 run-name: CodeQL — ${{ github.ref_name }} @ ${{ github.sha }}
 
-# Security analysis of the repository's Python tooling and its GitHub Actions
-# workflows. CodeQL cannot analyze VBA; this neither executes Excel nor
-# certifies a release. Adapted from the portfolio template's codeql.yml.
+# Security analysis of the repository's Python tooling, its JavaScript
+# workflow scripts (.github/scripts) and its GitHub Actions workflows.
+# CodeQL cannot analyze VBA; this neither executes Excel nor certifies a
+# release. Adapted from the portfolio template's codeql.yml.
 #
 # Pushes and the weekly schedule publish results to code scanning. Pull
 # requests are analyzed read-only: results are kept as an artifact and the job
@@ -38,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [python, actions]
+        language: [python, actions, javascript-typescript]
 
     steps:
       - name: Check out the exact SHA under analysis
@@ -67,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [python, actions]
+        language: [python, actions, javascript-typescript]
 
     steps:
       - name: Check out the pull-request merge commit
