@@ -1,4 +1,4 @@
-# Keep the GitHub Actions used by the workflows current.
+# Keep GitHub Actions and the two CI Python environments current.
 #
 # Every `uses:` is pinned to a full commit SHA with its release as a trailing
 # comment. Dependabot proposes each update as a reviewed pull request that moves
@@ -20,9 +20,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps(actions)"
+    assignees: ["danielep71"]
     labels:
       - "CI"
       - "testing"
+      - "P3"
     groups:
       # github/codeql-action publishes init, analyze and upload-sarif as
       # separate action paths within one release, and Dependabot would propose
@@ -33,3 +35,29 @@ updates:
       codeql-action:
         patterns:
           - "github/codeql-action*"
+
+  - package-ecosystem: "pip"
+    directory: "/benchmark"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:15"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 5
+    assignees: ["danielep71"]
+    labels: ["CI", "testing", "P3"]
+    commit-message:
+      prefix: "deps(python)"
+
+  - package-ecosystem: "pip"
+    directory: "/tools"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 5
+    assignees: ["danielep71"]
+    labels: ["CI", "testing", "P3"]
+    commit-message:
+      prefix: "deps(python)"
