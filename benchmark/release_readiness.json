@@ -1,0 +1,86 @@
+{
+  "schema_version": "release-readiness/v1",
+  "release": "v1.0.0",
+  "tracker_issue": 31,
+  "reviewed": "2026-09-30",
+  "certified": false,
+  "blockers": [
+    {
+      "issue": 11,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Positive intermediate underflow and subnormal precision loss in Gamma-family scale transformations"
+    },
+    {
+      "issue": 13,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Gamma/Chi-square density, CDF and survival lose a positive standardized argument"
+    },
+    {
+      "issue": 14,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Gamma/Chi-square inverse discards a representable quantile at the unit scale"
+    },
+    {
+      "issue": 22,
+      "class": "assurance",
+      "gate": "main_grid_coverage",
+      "status": "open",
+      "summary": "Main-grid rows without a contract or exemption disposition"
+    },
+    {
+      "issue": 23,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Post-fix evidence for the off-grid Stirling prefactor repair is incomplete"
+    },
+    {
+      "issue": 24,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Incomplete-gamma Q amplifies lower-series error by forming 1 - P"
+    },
+    {
+      "issue": 26,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Continued-fraction Q survival breach not yet revalidated after the prefactor fix"
+    },
+    {
+      "issue": 29,
+      "class": "assurance",
+      "gate": "holdout_export",
+      "status": "open",
+      "summary": "Independent holdout grid has no certified Excel export"
+    },
+    {
+      "issue": 34,
+      "class": "silent_wrong",
+      "gate": null,
+      "status": "open",
+      "summary": "Student-t CDF, survival and inverse lose upper-tail accuracy at large df"
+    },
+    {
+      "issue": 35,
+      "class": "numerical_uncertainty",
+      "gate": null,
+      "status": "open",
+      "summary": "Unexplained large-df F inverse degradation; necessity of the 2E-10 threshold unresolved"
+    },
+    {
+      "issue": 47,
+      "class": "assurance",
+      "gate": "main_grid_export",
+      "status": "open",
+      "summary": "Retained Excel record's main-grid digest differs from the committed grid"
+    }
+  ]
+}
