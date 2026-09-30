@@ -99,6 +99,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Extended weekly Dependabot updates to the benchmark and lint Python requirements, with maintainer assignment and an initial priority label.
+
 - Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
 - Added a machine-readable verification-depth inventory of the v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
 - Added mutation controls proving that incomplete-gamma dispatch drift, Student-t coefficient corruption, stale generated contract tables, and duplicated source-threshold claims are rejected.
@@ -118,6 +120,8 @@ Use only the categories needed by a release.
   baseline and does not claim that a functional release has been published.
 
 ### Changed
+
+- Hash-locked the existing mpmath/SymPy benchmark wheels and require binary, hash-verified installs in the Accuracy Gate.
 
 - Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
 - Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
