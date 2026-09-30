@@ -49,7 +49,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 - remote branches at the audit baseline: main only
 - Git tags: none
 - GitHub Releases: none
-- branch protection: active `Protect main` ruleset prevents deletion and force pushes; required PRs, status checks and conversation resolution are not configured; classic protection is absent (#31)
+- branch/tag protection (verified 2026-09-30): active `Protect main` ruleset requires PRs and up-to-date `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` checks from GitHub Actions, prevents deletion and force pushes, and has no bypass actors. Required approvals remain zero and conversation resolution is not mandatory. `Protect releases` prevents updates, deletion and force pushes of `v*` tags while allowing initial creation. See [RELEASING.md](../RELEASING.md#readiness-review); final release certification remains under #31.
 - required production modules: six tracked .bas files under src
 - consolidated regression module: tests/M_STATS_PROBDIST_TEST.bas
 - example workbook: examples/STATS-Distributions demo.xlsm
@@ -76,7 +76,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 - The mandatory verification-depth inventory contained 14 controls at `d2e1592`; concurrent commit `bec5708` adds three static repository controls (17 total). Green portable fixtures do not establish validity of the retained export certificate (#47).
 - Excel VBA Regression #133 certified `74041b3` with 909/909 PASS. It is a retained source-bound runtime result, not an Excel run on the audited HEAD.
 - Workflow major upgrades landed in PR #36; #30 is closed.
-- No release can rely on branch rules enforcing required checks until the #31 settings gap is resolved.
+- Required PR and hosted-check enforcement is configured and verified; that settings gap is resolved. Green branch checks do not establish exact-release Excel certification or remove the remaining #31 release blockers. The numerical/runtime results above retain their stated baseline SHAs.
 
 ### Phase 0 known-red invariant
 
@@ -3008,6 +3008,8 @@ Own the final repository-readiness, certification, tagging, and publication work
 This issue closes only after every v1.0.0 release blocker is complete and the exact tagged source has reproducible Excel and hosted-gate evidence.
 
 ## Current readiness baseline
+
+> Historical issue-register snapshot: the protection and repository-preparation statements in this copied #31 body are superseded by the live audit above and [RELEASING.md](../RELEASING.md#readiness-review). In particular, PRs and required hosted checks are now enforced; the old unprotected-main checklist below is retained only as historical text. GitHub #31 is authoritative for current completion state.
 
 Repository-readiness state measured at main 0dd748884599d4d0da815cb53eeceb13efd51f05; latest numerical source baseline remains bde92dd7037e4fde05e620745a1c54b0cbc3a261:
 
