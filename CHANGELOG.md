@@ -127,6 +127,7 @@ Use only the categories needed by a release.
 - Release guide steps 3 and 5 now name the concrete release-semantics command and require a green **Static checks** run on the exact candidate.
 - Fixed 41 lint findings across the benchmark tooling: unused or redundant imports, unused variables (including two vestigial claim constants in the reference generator) and placeholder-free f-string prefixes. The generator's 1,404 rows are unchanged.
 - `.editorconfig` now covers JavaScript workflow scripts (2-space indentation) and the Windows script types that `.gitattributes` already checks out with CRLF.
+- Adopted a pull-request-only merge convention: every change, including the maintainer's own, reaches `main` through a squash-merged pull request. Evidence changes stay in one commit, certification binds the final merged commit, and a history-preserving merge needs a recorded reason. This is policy until the `Protect main` ruleset requires pull requests and status checks (#31).
 
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.

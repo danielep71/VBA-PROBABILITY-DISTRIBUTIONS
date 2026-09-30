@@ -67,6 +67,8 @@ Use `MAJOR.MINOR.PATCH` without a leading `v` inside `VERSION`.
 
 The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v1.2.3`. Do not use upper-case `V`, moving tags, or a tag that differs from `VERSION`.
 
+<a id="readiness-review"></a>
+
 ## ✅ Readiness review
 
 - CORE and SPECIALFUNCS precede all distribution-family modules.
@@ -196,7 +198,9 @@ Publish only artifacts promised by the installation guide.
 
 ## 8. Review and merge
 
-Where policy requires a pull request, make these items easy to verify:
+Every change reaches `main` through a pull request (see the
+[merge convention](#merge-convention) below). For a release candidate, make
+these items easy to verify:
 
 - intended version, previous tag, and candidate SHA;
 - changelog and version synchronization;
@@ -206,6 +210,47 @@ Where policy requires a pull request, make these items easy to verify:
 - remaining limitations.
 
 Require configured checks and record the resulting `main` SHA. If the merge changes source identity, certify that commit before tagging.
+
+<a id="merge-convention"></a>
+
+### Merge convention
+
+**Decision (2026-09-30): pull requests only.** Every change reaches `main`
+through a pull request, including the maintainer's own changes and Dependabot
+updates. There is no direct-push path.
+
+- **Squash and merge by default.** Each pull request leaves one commit on
+  `main`. Its title and body describe the delivered change, link the relevant
+  issues and evidence, and state what was validated. Do not paste the
+  intermediate commit log.
+- **Merge the reviewed head only, with checks green.** Merge exactly the head
+  SHA that was reviewed and checked. A check that has not run is not green. If a
+  check cannot run, for example because the self-hosted Excel runner is offline,
+  merge only when the change cannot affect what that check tests (such as a
+  Markdown-only change) and record that reasoning in the pull request before
+  merging.
+- **Keep evidence changes atomic.** A committed grid, its manifest and its
+  export record land in one commit. `benchmark/check_manifest_provenance.py`
+  examines each commit separately, and a squash merge guarantees they change
+  together. Never merge an evidence branch in a way that brings in intermediate
+  commits where a manifest changed without its grid.
+- **A merge creates a new source identity.** A squash (and GitHub's rebase
+  merge) produces a new SHA, so exact-SHA Excel certification of the pull
+  request head does not certify the merged commit. Certify the final `main`
+  commit before tagging, and never silently rebind or reuse pull-request-head
+  evidence.
+- **History-preserving merges are the exception.** Use one only when the commit
+  order is itself evidence, for example a preregistration committed before the
+  source fix it governs (as in PR #27). Record the reason in the pull request
+  before merging.
+- **Never rewrite history.** Do not force-push `main`, rewrite published
+  history or move tags. Earlier direct pushes and merge commits stay as they
+  are; this convention applies to future merges.
+
+Until the `Protect main` ruleset requires pull requests and status checks (see
+the enforcement gap under [Readiness review](#readiness-review), tracked in
+[#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31)),
+this convention is maintainer policy that GitHub does not enforce.
 
 ## 9. Create the annotated tag
 
