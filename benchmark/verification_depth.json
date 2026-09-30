@@ -92,6 +92,13 @@
       "proof_command": "test_excel_certification.py",
       "negative_claim": "candidate/source/workflow SHA drift, assertion drift, cleanup failure and false grid export hash/row/target claims are rejected",
       "current_state": "green_fixture_proof"
+    },
+    {
+      "id": "grid-regeneration-safety",
+      "live_command": "check_grid_keys.py",
+      "proof_command": "test_grid_regeneration.py",
+      "negative_claim": "a destructive default generator run, reference output aimed at the committed grid, holdout or any observation-bearing copy, duplicate canonical keys, unacknowledged, miscounted or stale reference changes, unsanctioned appends or retirements, and a replaced observation during reference migration are all refused",
+      "current_state": "green"
     }
   ]
 }

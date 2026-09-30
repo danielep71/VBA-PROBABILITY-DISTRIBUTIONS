@@ -12,8 +12,14 @@ the operations that would lose evidence.
   never reorders rows
   never alters an existing observed_vba
   never alters an existing row at all unless --patch-metadata is given
+  never changes an existing REFERENCE unless --accept-reference-changes COUNT
+      and --reason are also given, COUNT matching exactly the number of rows
+      whose reference would change (#17). A reference change silently moves
+      every verdict already computed against that row's observation, so it
+      needs a reviewed, counted acknowledgement, not a blanket metadata flag
   appends a row ONLY when --allow-add is given; without it a key the grid does
       not already contain is a hard failure, not a silent insertion
+  refuses to run on a grid containing any duplicate canonical key (#17)
 
 That last rule is the point. "Patch existing" alone is not enough for the
 LogGamma and LogGamma1p contracts, because some of their rows must become new
@@ -77,16 +83,25 @@ def main():
                          "--patch-metadata pass must fill them before the grid "
                          "is committed")
     ap.add_argument("--patch-metadata", action="store_true",
-                    help="permit updating reference/claim/metric/expected_error on "
-                         "matched rows (regime is part of the key: changing it "
-                         "identifies a different row, it does not mutate this one)")
+                    help="permit updating claim/metric/expected_error on matched "
+                         "rows (regime is part of the key: changing it identifies "
+                         "a different row, it does not mutate this one). A "
+                         "reference change additionally needs "
+                         "--accept-reference-changes")
+    ap.add_argument("--accept-reference-changes", type=int, default=None,
+                    metavar="COUNT",
+                    help="permit changing the reference of exactly COUNT matched "
+                         "rows. COUNT must equal the number the report lists, so "
+                         "an unreviewed or stale acknowledgement fails. Requires "
+                         "--patch-metadata and --reason")
     ap.add_argument("--retire", nargs=3, metavar=("FUNCTION", "REGIME", "COUNT"),
                     help="delete every row with this function and regime. COUNT "
                          "must equal the number found, so a miscount fails "
                          "rather than deleting the wrong set. Requires --reason.")
     ap.add_argument("--reason", default="",
-                    help="why the retired rows are being deleted; recorded in "
-                         "the output and required by --retire")
+                    help="why rows are being retired or references changed; "
+                         "recorded in the output and required by --retire and "
+                         "--accept-reference-changes")
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
 
@@ -140,25 +155,18 @@ def main():
         print(f"REFUSING: the generator emits no rows for {a.function}.")
         return 1
 
-    # Duplicate keys are scoped to the functions under promotion. A duplicate
-    # elsewhere - the three LogChoose rows from #17 finding D - does not stop
-    # this tool from uniquely naming a LogGamma row, and blocking on it would
-    # couple every promotion to an unrelated repair. Duplicates that DO affect
-    # the promotion are still fatal: a patcher must never guess which of two
-    # identical keys it is updating.
+    # Any duplicate key in the grid is fatal. This was once scoped to the
+    # promoted functions, so that the three LogChoose duplicates of #17 finding D
+    # did not block unrelated promotions. 228337e removed them and the grid has
+    # been duplicate-free since, so a duplicate anywhere is now a regression to
+    # stop on, not known debt to step around (#17).
     gk = Counter(key(r) for r in grid)
-    dup_all = {k for k, v in gk.items() if v > 1}
-    targets = set(a.function)
-    dup = {k for k in dup_all if k[0] in targets}
-    if dup_all - dup:
-        print(f"note: {len(dup_all - dup)} duplicate key(s) elsewhere in the grid "
-              f"({sorted({k[0] for k in dup_all - dup})}); out of scope here, "
-              f"tracked as #17 finding D.")
+    dup = {k for k, v in gk.items() if v > 1}
     if dup:
-        print(f"REFUSING: {len(dup)} duplicate key(s) among the promoted "
-              f"functions; a patcher cannot uniquely name the row it updates.")
+        print(f"REFUSING: {len(dup)} duplicate canonical key(s) in the grid; a "
+              f"patcher cannot uniquely name the row it updates.")
         for k in sorted(dup)[:5]:
-            print(f"   {k[0]}  {k[1:5]}")
+            print(f"   {k[0]}  {k[1:5]}  regime={k[5]}  set={k[6]}")
         return 1
     by = {key(r): r for r in grid}
 
@@ -190,7 +198,8 @@ def main():
         else:
             same += 1
 
-    obs_on_add = 0
+    refchange = [(k, cur, new) for k, cur, new, diffs in patch if "reference" in diffs]
+
     print(f"functions: {', '.join(sorted(set(a.function)))}")
     print(f"  generator rows      {len(want)}")
     print(f"  already identical   {same}")
@@ -198,6 +207,8 @@ def main():
           f"{'' if a.allow_add else '   <- blocked without --allow-add'}")
     print(f"  would PATCH         {len(patch)}"
           f"{'' if a.patch_metadata else '   <- blocked without --patch-metadata'}")
+    print(f"    of which REFERENCE {len(refchange)}"
+          f"{'' if not refchange or a.accept_reference_changes == len(refchange) else f'   <- blocked without --accept-reference-changes {len(refchange)} --reason'}")
     print(f"  pending-contract    {len(unclaimed)}"
           f"{'' if not unclaimed else ('' if a.allow_unclaimed else '   <- blocked without --allow-unclaimed')}")
     if add:
@@ -225,8 +236,32 @@ def main():
               f"promoting evidence ahead of its threshold, and follow with a "
               f"--patch-metadata pass before committing.")
         return 1
+    if refchange:
+        print("\n  reference changes (old -> new):")
+        for k, cur, new in refchange[:10]:
+            args = ",".join(x for x in (cur["arg1"], cur["arg2"], cur["arg3"], cur["arg4"]) if x)
+            print(f"     {k[0]:34s} ({args[:40]})  {cur['reference']} -> {new['reference']}")
+        if len(refchange) > 10:
+            print(f"     ... {len(refchange) - 10} more")
     if patch and not a.patch_metadata:
         print("\nREFUSING: existing rows would change. Pass --patch-metadata.")
+        return 1
+    # A reference change needs its own reviewed, counted acknowledgement. The
+    # exact count is the review: it fails when the caller has not looked at the
+    # list above, and it fails when an acknowledgement outlives the change it
+    # was written for.
+    n_ack = a.accept_reference_changes
+    if refchange and n_ack is None:
+        print(f"\nREFUSING: {len(refchange)} existing reference(s) would change. "
+              f"Review the list above, then pass --accept-reference-changes "
+              f"{len(refchange)} --reason \"...\".")
+        return 1
+    if n_ack is not None and n_ack != len(refchange):
+        print(f"\nREFUSING: --accept-reference-changes {n_ack}, but "
+              f"{len(refchange)} reference(s) would change.")
+        return 1
+    if n_ack is not None and not a.reason.strip():
+        print("\nREFUSING: --accept-reference-changes requires --reason.")
         return 1
     if not a.write:
         print("\nreport only. Re-run with --write to apply.")
@@ -256,8 +291,11 @@ def main():
     with open(a.grid, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=fields, lineterminator="\n")
         w.writeheader(); w.writerows(grid)
-    print(f"\nwrote {a.grid}: {len(add)} appended, {len(patch)} patched, "
+    print(f"\nwrote {a.grid}: {len(add)} appended, {len(patch)} patched "
+          f"({len(refchange)} reference change(s)), "
           f"{len(before_keys)} existing rows untouched in key, order and observation")
+    if refchange:
+        print(f"  reference-change reason: {a.reason}")
     still = sum(1 for r in grid if not (r.get("claim") or "").strip())
     if still:
         print(f"\n  {still} row(s) in the grid still carry no claim/metric. The "

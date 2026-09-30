@@ -100,7 +100,7 @@ Use only the categories needed by a release.
 ### Added
 
 - Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
-- Added a machine-readable verification-depth inventory for 12 v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
+- Added a machine-readable verification-depth inventory of the v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
 - Added mutation controls proving that incomplete-gamma dispatch drift, Student-t coefficient corruption, stale generated contract tables, and duplicated source-threshold claims are rejected.
 - Added a generated 112-function `K_STATS_*` public-API manifest and a declaration-aware drift gate that blocks accidental additions, removals, renames, module moves, or compatibility-significant signature changes.
 - Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
@@ -115,6 +115,9 @@ Use only the categories needed by a release.
 - Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
 - Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
 - Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
+- Made `generate_reference_values.py` report-only by default. It no longer writes `probability_accuracy_grid.csv`: run as previously documented, it replaced the 2,088-row grid with 1,404 generator rows, deleting 706 rows and blanking every Excel observation. `--out` writes reference rows only to a non-authoritative file and refuses the committed main or holdout grid and any file that already carries observations (#17).
+- `promote_grid_rows.py` now requires `--accept-reference-changes COUNT --reason` for any change to an existing reference, with COUNT matching the reviewed list exactly, and refuses to run on a grid containing any duplicate canonical key (#17).
+- `migrate_references.py` now asserts that every observation value, row key and row order is unchanged, rather than only the number of filled observations (#17).
 
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.
@@ -123,6 +126,7 @@ Use only the categories needed by a release.
 
 - Added negative controls for Excel candidate/source/workflow SHA drift, assertion-count drift, cleanup failure, and false grid export target/hash/row-count claims.
 - Added fail-closed meta-validation that rejects missing controls, missing proof scripts, unsupported states, or negative proofs not wired into the hosted pre-gate shim.
+- Added the `grid-regeneration-safety` release-blocking control. `check_grid_keys.py` rejects duplicate canonical keys and non-canonical schemas in the committed main and holdout grids; `test_grid_regeneration.py` proves the generator, promotion and migration safeguards against temporary grids, plus one real default generator run verified to leave the committed grid byte-identical (#17).
 - Added negative controls proving that parameter type/order, `ByVal`/`ByRef`, `Optional` defaults, return types, additive API, renames, and module moves are detected while implementation-only edits do not create API drift.
 - Verified the changelog structure, policy links, section ordering, and
   repository-specific versioning scope.

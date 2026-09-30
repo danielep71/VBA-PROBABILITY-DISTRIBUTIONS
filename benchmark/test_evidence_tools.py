@@ -14,6 +14,8 @@ commands = (
     ("test_contract_eval.py",),
     ("test_grid_coverage.py",),
     ("check_grid_coverage.py", "--mode", "auto", "--check-summary"),
+    ("test_grid_regeneration.py",),
+    ("check_grid_keys.py",),
     ("test_root_readme.py",),
     ("check_root_readme.py",),
     ("test_igamma_parity.py",),

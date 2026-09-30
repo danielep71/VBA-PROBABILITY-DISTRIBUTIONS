@@ -163,7 +163,7 @@ State revised 2026-09-30 at `fac921e`.
 | Main-grid claim completeness | Blocked | The transition guard reports 36 unclaimed main-grid rows on the re-exported grid, unchanged from the audit baseline; Student-t `all` overclaims the measured large-df rows; F regime metadata is stale and three numerical inputs are duplicated across regimes | #22 |
 | Main-grid provenance | Bound | Re-exported from certified `74041b3` and bound at `7ffc465`; the strict gate passes. A final release-candidate export is still required | #31 final export |
 | Holdout provenance | Bound; certification owed | 559 rows bound at `17acc1b`, 80 / 80 PASS. Exported in an ordinary Excel session, so no exact-SHA record covers them; certification is owed in Phase 1 step 10, and #29 closes after deliberate source/grid mismatches are shown to fail | #29 |
-| Grid-regeneration safety | Blocked | The documented generator can still overwrite the combined grid and blank observations by default | #17 |
+| Grid-regeneration safety | Safeguards landed; closure pending review | The generator is report-only and cannot write the committed main or holdout grid; reference changes need a counted, reasoned acknowledgement; duplicate keys fail on every write path and in `check_grid_keys.py`. All proved by `test_grid_regeneration.py` under the `grid-regeneration-safety` control. Full reconstruction stays with #32 | #17 |
 | README assurance | Interim | Stale literals replaced with hand-verified figures re-derived from their authorities (909 / 165 of 166 / 80 / 2,088; #34 and #35 named as blockers). Not generated and not fail-closed | #28 |
 | CI action runtime | Complete | All workflows on Node 24 majors via PR #36; #30 closed | #30 |
 | Release documentation | Partial | CHANGELOG.md exists with `[Unreleased]`; SECURITY.md no longer describes an unpublished tag as stable. The v1.0.0 changelog entry and release notes remain | #31 |
@@ -560,7 +560,7 @@ Revised 2026-09-30 at `fac921e`.
 | 6 | #14 | P1 | #13 | preregister log-inverse crossover | quantile + tail residual |
 | 7 | #26 | P1 | #23 | act on the re-exported X=2 ladder | evidence-only close or isolated fix |
 | 8 | #11 | P1 | #13, #14 | close parent after round-trip evidence | parent counterexamples |
-| 9 | #17 | P2 | independent of numerical source | make default regeneration non-destructive and add fail-hard fixtures | safe generator path; #32 deferred |
+| 9 | #17 | P2 | independent of numerical source | safeguards and fixtures landed; review against the acceptance list and close | safe generator path; #32 deferred |
 | 10 | #28 | P2 | #22, #29 | implement one assurance renderer; the README currently carries interim hand-verified figures | generated root README |
 | 11 | ~~#30~~ | P3 | — | closed by PR #36 | warning-free workflows |
 | 12 | #31 | P1 | all v1.0.0 blockers | maintain release checklist | tag and GitHub Release |

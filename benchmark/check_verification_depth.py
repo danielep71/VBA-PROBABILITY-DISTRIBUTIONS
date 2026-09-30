@@ -152,7 +152,7 @@ def main() -> int:
         "public-api-drift", "manifest-content-binding", "manifest-provenance",
         "reference-helper-degradation", "generated-contract-table",
         "source-threshold-single-source", "holdout-analyzer-semantics",
-        "excel-exact-sha-certification",
+        "excel-exact-sha-certification", "grid-regeneration-safety",
     }
     for cid in sorted(required - seen):
         failures.append(f"required release-blocking control missing from inventory: {cid}")

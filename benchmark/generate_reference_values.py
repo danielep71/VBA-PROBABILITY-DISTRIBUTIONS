@@ -21,17 +21,44 @@ that publishes a measured-accuracy claim in the VBA source:
 
 The reference column is computed with mpmath at 50 decimal digits. The
 `observed_vba` column is left EMPTY: it is filled by the companion VBA export
-macro (M_STATS_PROBDIST_ACCURACY_EXPORT.bas) running inside Excel, because the
+macro (M_STATS_PROBDIST_ACCURACYEXPORT.bas) running inside Excel, because the
 library under test is VBA and cannot be executed from Python. compute_errors.py
 then joins the two and produces accuracy_summary.md.
 
+NON-DESTRUCTIVE BY DEFAULT (#17). This script never writes the committed grid.
+The committed probability_accuracy_grid.csv holds Excel observations that
+cannot be regenerated, and rows promoted from study folders that this generator
+does not emit; writing the generator output over it, as this script once did
+by default, would blank every observation and delete those rows.
+
 Usage:
-    python generate_reference_values.py            # writes probability_accuracy_grid.csv
+    python generate_reference_values.py
+        Report only. Builds the reference rows, fails on duplicate canonical
+        keys, compares them with the committed grid, writes nothing.
+
+    python generate_reference_values.py --out reference_rows.csv
+        Also writes the reference rows (observed_vba blank) to a
+        NON-authoritative file. Refused for the committed main or holdout grid
+        and for any existing file that already carries observations.
+
     python generate_reference_values.py --digits 60
+
+Authoritative changes to the committed grid go through the sanctioned tools,
+each report-only unless --write and each preserving every observed_vba:
+
+    promote_grid_rows.py     add rows (--allow-add), patch claim/metric/
+                             expected_error (--patch-metadata), change a
+                             reference (--accept-reference-changes COUNT
+                             --reason), or retire rows (--retire ... --reason)
+    migrate_references.py    audited reference replacement
+
+Full reconstruction and byte-stable regeneration of the grid belong to #32.
 """
 import argparse
 import csv
 import datetime as _dt
+import os
+import sys
 
 import mpmath as mp
 
@@ -1471,35 +1498,114 @@ for _f in (
     globals()[_f] = _solving(globals()[_f])
 
 
-def main():
-    ap = argparse.ArgumentParser()
+def compare_with_grid(gen_rows, grid_rows):
+    """
+    Classify every canonical identity against the committed grid.
+
+    Report only: nothing here decides what the grid should become. Grid rows the
+    generator does not emit are RETAINED - absence from the generator is never a
+    reason to delete, because many committed rows were promoted from study
+    folders the generator knows nothing about.
+    """
+    from _grid_safety import canonical_key
+    grid = {canonical_key(r): r for r in grid_rows}
+    gen = {canonical_key(r): r for r in gen_rows}
+    counts = {"unchanged": 0, "reference_differs": 0, "metadata_differs": 0,
+              "generator_only": 0, "grid_only_retained": 0}
+    for k, n in gen.items():
+        g = grid.get(k)
+        if g is None:
+            counts["generator_only"] += 1
+        elif g.get("reference", "") != n.get("reference", ""):
+            counts["reference_differs"] += 1
+        elif any(g.get(c, "") != n.get(c, "")
+                 for c in ("claim", "metric", "expected_error")):
+            counts["metadata_differs"] += 1
+        else:
+            counts["unchanged"] += 1
+    counts["grid_only_retained"] = sum(1 for k in grid if k not in gen)
+    return counts
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(
+        description="Build 50-digit reference rows. Report only unless --out "
+                    "names a NON-authoritative file; never writes the committed grid.")
     ap.add_argument("--digits", type=int, default=50)
-    ap.add_argument("--out", default="probability_accuracy_grid.csv")
-    args = ap.parse_args()
+    ap.add_argument("--grid", default=None,
+                    help="grid to compare against, read only "
+                         "(default: the committed probability_accuracy_grid.csv)")
+    ap.add_argument("--out", default=None,
+                    help="also write the reference rows here; refused for the "
+                         "committed main/holdout grid and for any existing file "
+                         "that already carries observations")
+    args = ap.parse_args(argv)
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import _grid_safety as gs
+    grid_path = args.grid or gs.COMMITTED_GRID
+
+    # Refuse a bad target BEFORE spending time on the build, and before anything
+    # could be opened for writing.
+    if args.out:
+        why = gs.refuse_reference_output(args.out, grid_path)
+        if why:
+            print(f"REFUSING: {why}.")
+            print("  Reference output goes to a non-authoritative file. Change the")
+            print("  committed grid with promote_grid_rows.py or migrate_references.py.")
+            return 2
 
     mp.mp.dps = args.digits
     rows = build_rows()
 
     # Stamp the envelope marker from each row's own args (single-sourced predicate),
     # so the gate/holdout can distinguish an expected #NUM! from an unexpected error.
-    import os as _os, sys as _sys
-    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
     from _contract_eval import predicted_expected_error
     for r in rows:
         r["expected_error"] = "1" if predicted_expected_error(
             r.get("function", ""), r.get("arg2", ""), r.get("arg3", "")) else ""
 
-    fields = ["function", "vba_kernel", "claim", "metric",
-              "arg1", "arg2", "arg3", "arg4", "reference", "observed_vba",
-              "regime", "evidence_set", "expected_error"]
-    with open(args.out, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        w.writerows(rows)
+    dup = gs.duplicate_keys(rows)
+    if dup:
+        print(f"REFUSING: the generator emits {len(dup)} duplicate canonical key(s);")
+        print("  a duplicate row is ambiguous evidence, not a tie to break.")
+        for k, n in sorted(dup.items())[:10]:
+            print(f"   x{n}  {gs.describe_key(k)}")
+        return 1
 
-    print(f"wrote {args.out}: {len(rows)} reference rows at {args.digits} digits")
-    print(f"generated {_dt.date.today().isoformat()}")
+    print(f"generated {len(rows)} reference rows at {args.digits} digits "
+          f"({_dt.date.today().isoformat()})")
+
+    if os.path.exists(grid_path):
+        grid = gs.read_grid(grid_path)
+        gdup = gs.duplicate_keys(grid)
+        if gdup:
+            print(f"REFUSING: {grid_path} has {len(gdup)} duplicate canonical key(s).")
+            for k, n in sorted(gdup.items())[:10]:
+                print(f"   x{n}  {gs.describe_key(k)}")
+            return 1
+        c = compare_with_grid(rows, grid)
+        print(f"\ncompared with {grid_path} ({len(grid)} rows, read only):")
+        print(f"  unchanged                {c['unchanged']:5d}")
+        print(f"  reference differs        {c['reference_differs']:5d}")
+        print(f"  metadata differs         {c['metadata_differs']:5d}")
+        print(f"  generator only           {c['generator_only']:5d}")
+        print(f"  grid only, retained      {c['grid_only_retained']:5d}   "
+              f"(never deleted by this tool)")
+        print("  reconcile_grid.py gives the row-level breakdown.")
+    else:
+        print(f"\nno grid at {grid_path}; comparison skipped")
+
+    if args.out:
+        for r in rows:
+            r["observed_vba"] = ""
+        gs.write_grid(args.out, rows)
+        print(f"\nwrote {args.out}: {len(rows)} reference rows "
+              f"(non-authoritative; observed_vba blank)")
+    else:
+        print("\nreport only: nothing written.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

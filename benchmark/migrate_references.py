@@ -158,16 +158,21 @@ def main():
     patch = {k: nr for k, _, _, nr in stale}
     patch.update({k: mp.nstr(mp.mpf(ar["independent_oracle"]), 25)
                   for k, _, ar in oracle_rows})
-    changed = obs_before = obs_after = 0
-    for r in grid:
-        obs_before += 1 if (r["observed_vba"] or "").strip() else 0
+    # Snapshot every observation and every row identity, not merely a count of
+    # filled cells: a count cannot see one observation replaced by another (#17).
+    obs_snapshot = [r["observed_vba"] for r in grid]
+    key_snapshot = [key(r) for r in grid]
+    obs_before = sum(1 for o in obs_snapshot if (o or "").strip())
+    changed = 0
     for r in grid:
         k = key(r)
         if k in patch and r["reference"] != patch[k]:
             r["reference"] = patch[k]; changed += 1
-    for r in grid:
-        obs_after += 1 if (r["observed_vba"] or "").strip() else 0
-    assert obs_before == obs_after, "observations must not change"
+    assert [r["observed_vba"] for r in grid] == obs_snapshot, \
+        "an observation changed; a reference migration must never touch observed_vba"
+    assert [key(r) for r in grid] == key_snapshot, \
+        "a row key or the row order changed; a reference migration must not"
+    obs_after = sum(1 for r in grid if (r["observed_vba"] or "").strip())
     with open(a.grid, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(grid[0].keys()), lineterminator="\n")
         w.writeheader(); w.writerows(grid)

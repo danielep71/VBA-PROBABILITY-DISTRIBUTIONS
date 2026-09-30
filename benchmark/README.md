@@ -41,8 +41,11 @@ required, and they answer different questions.
 
 | File | Role |
 |---|---|
-| `generate_reference_values.py` | Builds the input grid and 50-digit mpmath reference values. Phase 1. |
-| `probability_accuracy_grid.csv` | The grid: inputs, reference, and an empty `observed_vba` column. |
+| `generate_reference_values.py` | Builds 50-digit mpmath reference rows. Report-only by default; never writes the committed grid (#17). |
+| `probability_accuracy_grid.csv` | The committed grid: inputs, references, and the Excel observations in `observed_vba`, which cannot be regenerated from Python. |
+| `promote_grid_rows.py` | The sanctioned way to add, patch, re-reference or retire grid rows. Report-only unless `--write`; preserves every observation. |
+| `migrate_references.py` | Audited, reference-only replacement driven by the reference audit. Report-only unless `--write`. |
+| `_grid_safety.py`, `check_grid_keys.py` | Shared canonical-key and write-target safeguards, and the duplicate-key guard run on the committed grids. |
 | `M_STATS_PROBDIST_ACCURACYEXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
 | `compute_errors.py` | Joins observed vs reference, finds max-error locations, checks each claim, writes the summary. Phase 3. |
 | `accuracy_summary.md` | The generated verdict table. |
@@ -62,8 +65,16 @@ study folder.
 ## Running it
 
 ```
-# Phase 1 — reference (Python)
-python generate_reference_values.py            # -> probability_accuracy_grid.csv
+# Phase 1 — reference (Python). Report only: compares with the committed
+# grid and writes nothing. --out writes the reference rows to a separate,
+# non-authoritative file and refuses any file that carries observations.
+python generate_reference_values.py
+python generate_reference_values.py --out reference_rows.csv
+
+# Changing the committed grid goes through promote_grid_rows.py (add rows,
+# patch metadata, accept a counted and reasoned set of reference changes,
+# retire rows) or migrate_references.py (audited references). Both are
+# report-only unless --write. Full clean regeneration is #32, not a v1.0.0 path.
 
 # Phase 2 — observed (Excel)
 #   Import M_STATS_PROBDIST_ACCURACYEXPORT.bas into the workbook,
