@@ -99,7 +99,7 @@ Use only the categories needed by a release.
 
 ### Added
 
-- Extended weekly Dependabot updates to the benchmark and lint Python requirements, with maintainer assignment and an initial priority label.
+- Extended weekly Dependabot updates to the benchmark and lint Python requirements, with maintainer assignment and an initial priority label. mpmath 1.4 is held back: no SymPy release accepts it yet, and a change of the reference library is a deliberate evidence change, not a routine update.
 
 - Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
 - Added a machine-readable verification-depth inventory of the v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.

@@ -48,6 +48,15 @@ updates:
     labels: ["ci", "tests", "P3"]
     commit-message:
       prefix: "deps(python)"
+    ignore:
+      # Every released SymPy, 1.14.0 included, requires mpmath<1.4, so an
+      # mpmath 1.4 bump alone cannot install (#55). mpmath is also the
+      # high-precision reference: the reference studies record the version
+      # they ran with, so moving it is a deliberate evidence change, not a
+      # routine update. Lift this hold when a SymPy release accepts mpmath
+      # 1.4, then bump both together and rerun the full assurance suite.
+      - dependency-name: "mpmath"
+        versions: [">=1.4"]
 
   - package-ecosystem: "pip"
     directory: "/tools"
