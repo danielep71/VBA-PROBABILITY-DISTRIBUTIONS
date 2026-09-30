@@ -18,6 +18,11 @@ and are registered in [`benchmark/verification_depth.json`](../benchmark/verific
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
 
+The same workflow also lints every tracked Python file for correctness with
+Ruff, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes
+rules. CI installs it from the hash-locked
+[`requirements-lint-ci.txt`](requirements-lint-ci.txt).
+
 Run locally from the repository root:
 
 ```bash
@@ -27,6 +32,7 @@ python3 tools/check_vba_jumps.py --root . --self-test
 python3 tools/check_vba_jumps.py --root .
 python3 tools/check_release_semantics.py --root . --self-test
 python3 tools/check_release_semantics.py --root .
+python3 -m ruff check .
 ```
 
 ## Provenance

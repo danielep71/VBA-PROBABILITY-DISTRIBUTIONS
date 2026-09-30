@@ -548,7 +548,7 @@ def _regime_for(func):
 
 def _load_contracts(path=None):
     """Load the regime-aware contract, keyed by (function, regime)."""
-    import csv, os
+    import os
     if path is None:
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "accuracy_contracts.csv")
     contracts = {}
@@ -767,9 +767,8 @@ def _hy_sf(k, n, K, N):
 
 def _hy_inv(prob, n, K, N):
     prob = mp.mpf(prob)
-    lo = max(0, int(n) + int(K) - int(N)) - 1
     hi = min(int(n), int(K))
-    cum = mp.mpf(0); k = lo
+    cum = mp.mpf(0)
     for j in range(max(0, int(n) + int(K) - int(N)), hi + 1):
         cum += _hy_pmf(j, n, K, N)
         if cum >= prob:
@@ -1271,7 +1270,6 @@ def build_rows():
 
 
     # ===================== NORMAL FAMILY =====================
-    FIVE_E15 = "rel<=5E-15"
 
     # --- Standard Normal ---
     for z in [mp.mpf("-2"), mp.mpf("-0.5"), mp.mpf("0.5"), mp.mpf(1), mp.mpf("1.96"), mp.mpf(3)]:
@@ -1327,7 +1325,6 @@ def build_rows():
     # Bounds set from measured worst-case error over the tested grid (5E-15 for
     # near-machine-epsilon functions, 2E-14 where a digit is lost). Exponential is
     # parameterized by RATE (Lambda), not scale.
-    PROV = "rel<=1E-8"
 
     # --- Gamma(X, Shape k, ScaleParam theta) ---
     for (x, k, th) in [(mp.mpf(2), mp.mpf(2), mp.mpf(1)), (mp.mpf(5), mp.mpf(3), mp.mpf(2)),

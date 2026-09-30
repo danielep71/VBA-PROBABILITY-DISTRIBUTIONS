@@ -28,7 +28,6 @@ observation covers Z below 1E-8.
 import argparse
 import csv
 import math
-import struct
 
 import mpmath as mp
 

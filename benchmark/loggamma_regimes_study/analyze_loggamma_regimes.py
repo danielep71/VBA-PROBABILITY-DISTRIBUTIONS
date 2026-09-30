@@ -188,7 +188,7 @@ def main():
                 print(f"   {z:>24} {fmt(oe, 11)} {fmt(ne, 11)}")
         top = sorted(buckets.get("expected improvement", []), key=lambda t: -(t[2] / t[3]) if t[3] else 0)[:8]
         if top:
-            print(f"\n   Largest improvements")
+            print("\n   Largest improvements")
             print(f"   {'Z':>24} {'old |abs|':>11} {'new |abs|':>11} {'factor':>10}")
             for z, _, oe, ne in top:
                 fac = (oe / ne) if ne else None

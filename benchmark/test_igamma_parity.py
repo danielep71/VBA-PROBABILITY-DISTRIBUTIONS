@@ -165,6 +165,6 @@ else:
           f"(required {REQUIRED_DIGITS}), at {worst_at}")
 print(f"      route selection identical; {routes.get('lower_series', 0)} lower-series, "
       f"{routes.get('upper_cf', 0)} upper-CF")
-print(f"      seam probed below, at and above x = a + 1")
+print("      seam probed below, at and above x = a + 1")
 print("      drift detector only - the independent authority is the "
       "quadrature and MPFR legs")

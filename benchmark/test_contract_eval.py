@@ -17,8 +17,8 @@ from _contract_eval import (calculate_scaled_error, validate_scaled_metric,
     calculate_error, normalize_tail_residual, observation_state,
     evidence_gaps, OK, MISSING, ERROR,
     predicted_expected_error, classify_row, dispositions, expected_error_drift,
-    row_expected_error, MEASURE, EXCLUDE_EXPECTED, BLOCK_MISSING, BLOCK_ERROR,
-    BLOCK_EXPECTED, BLOCK_INVALID, row_validity, F_MAX_DF,
+    MEASURE, EXCLUDE_EXPECTED, BLOCK_MISSING, BLOCK_ERROR,
+    BLOCK_EXPECTED, row_validity, F_MAX_DF,
 )
 
 fails = []

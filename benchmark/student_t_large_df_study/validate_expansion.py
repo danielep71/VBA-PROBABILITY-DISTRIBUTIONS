@@ -29,7 +29,7 @@ from mpmath import mp, mpf
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from _ibeta import t_cdf, ibeta                                   # noqa: E402
+from _ibeta import ibeta                                   # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Frozen design (PREREGISTRATION.md). Values are exact binary64.

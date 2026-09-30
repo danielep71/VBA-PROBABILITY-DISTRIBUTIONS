@@ -176,7 +176,7 @@ def _nbh_log(k,r,pr):
 def _nbh_cdf(k,r,pr): return ibeta(mp.mpf(pr),mp.mpf(r),mp.mpf(k)+1)
 def _nbh_sf(k,r,pr):  return ibeta(1-mp.mpf(pr),mp.mpf(k)+1,mp.mpf(r))
 def _nbh_inv(prob,r,pr):
-    prob=mp.mpf(prob); mean=float(r)*(1-float(pr))/float(pr); import math as _m
+    prob=mp.mpf(prob); mean=float(r)*(1-float(pr))/float(pr)
     lo,hi=-1,int(mean+40*(mean**0.5 if mean>0 else 1)/float(pr)+60)
     while hi-lo>1:
         m=(lo+hi)//2

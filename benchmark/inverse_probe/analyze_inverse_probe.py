@@ -5,7 +5,6 @@ StudentT, ChiSquare and F INVERSE envelopes from measurement.
 Run after Export_InverseProbe has filled observed_vba.
 """
 import csv
-import re
 from collections import defaultdict
 from decimal import Decimal
 

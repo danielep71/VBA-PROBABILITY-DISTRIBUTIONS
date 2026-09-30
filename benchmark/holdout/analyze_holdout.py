@@ -21,8 +21,7 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
                             SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions,
-                            tail_cdf_name, tail_shape_args,
-                            UnsupportedTailFunction)
+                            tail_cdf_name, tail_shape_args)
 
 # Name -> callable, keyed by _contract_eval.TAIL_SUPPORTED. The gate holds the
 # identical table; the shared registry is what stops the two evaluators from

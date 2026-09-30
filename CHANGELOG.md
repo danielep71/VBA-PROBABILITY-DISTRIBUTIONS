@@ -106,6 +106,7 @@ Use only the categories needed by a release.
 - Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
 - Added a **Static checks** workflow for committed whitespace, procedure-scoped VBA jumps, release semantics (SemVer, `VERSION`/`CHANGELOG.md` agreement, dated releases, comparison links) and workflow validation with a version- and hash-pinned actionlint. The checkers are imported verbatim from the portfolio template into `tools/`, with their source revision and SHA-256 recorded in `tools/README.md`.
 - Added Dependabot for GitHub Actions, proposing weekly reviewed pull requests that move each pinned action SHA and its version comment together.
+- Added a correctness-only Python lint (Ruff, syntax errors and pyflakes rules via `ruff.toml`) to the **Static checks** workflow, installed from a hash-locked requirements file.
 
 - Added this changelog and the portfolio-standard release-history policy for
   VBA Probability Distributions.
@@ -122,6 +123,7 @@ Use only the categories needed by a release.
 - `migrate_references.py` now asserts that every observation value, row key and row order is unchanged, rather than only the number of filled observations (#17).
 - Pinned every GitHub Action to a full commit SHA with its release as a trailing comment, resolved from each action's own repository; each pin is the commit its floating major tag already referenced, so no executed code changed.
 - Release guide steps 3 and 5 now name the concrete release-semantics command and require a green **Static checks** run on the exact candidate.
+- Fixed 41 lint findings across the benchmark tooling: unused or redundant imports, unused variables (including two vestigial claim constants in the reference generator) and placeholder-free f-string prefixes. The generator's 1,404 rows are unchanged.
 
 - Future material changes must be staged here before release and describe
   observable behavior, compatibility, evidence, and known limitations.

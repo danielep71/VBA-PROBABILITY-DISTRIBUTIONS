@@ -19,8 +19,7 @@ points into:
 It writes cross_check_scipy.md so the README's "cross-checked against SciPy" claim
 is a regenerable artifact, honestly scoped by SciPy's reliable range.
 """
-import argparse, csv, glob, os
-from decimal import Decimal
+import argparse, csv
 import mpmath as mp
 from scipy import stats, special
 mp.mp.dps = 50

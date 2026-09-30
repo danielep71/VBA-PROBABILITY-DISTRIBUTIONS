@@ -1,0 +1,14 @@
+# Correctness-only lint for the repository's Python tooling.
+#
+# E9 (syntax and I/O errors) and F (pyflakes: undefined names, unused imports
+# and variables, redefinitions, placeholder-free f-strings) catch real defects
+# without imposing a formatting style on the benchmark and evidence tooling.
+# Style rules are deliberately not selected: the template's full rule set would
+# flag some 600 compact-style lines whose rewrite would add churn to evidence
+# scripts without finding defects.
+#
+# Run: python -m ruff check .   (the Static checks workflow runs the same command)
+target-version = "py310"
+
+[lint]
+select = ["E9", "F"]

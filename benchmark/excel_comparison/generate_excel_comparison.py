@@ -26,7 +26,6 @@ REFERENCES
     mpmath at 50 digits. Continued fractions and series are evaluated directly
     where mpmath's own incomplete functions do not converge at these arguments.
 """
-import csv
 import mpmath as mp
 
 mp.mp.dps = 50

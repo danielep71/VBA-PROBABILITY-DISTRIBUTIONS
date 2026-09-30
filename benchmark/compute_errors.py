@@ -32,7 +32,7 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions, expected_error_drift,
                             tail_cdf_name, tail_shape_args,
-                            tail_required_args, UnsupportedTailFunction)
+                            tail_required_args)
 
 _IBETA_IMPORT_ERROR = None
 try:
@@ -184,8 +184,7 @@ def main():
     # diagnostic remains the first and only failure class.  Once the main grid is
     # freshly bound, an absent or stale holdout binding blocks before any release
     # verdict can be published.
-    from _manifest import (load_holdout_manifest, verify_holdout_binding,
-                           HOLDOUT_MANIFEST_NAME)
+    from _manifest import (load_holdout_manifest, verify_holdout_binding)
     _holdout_grid = os.path.join(HERE, "holdout", "holdout_grid.csv")
     _holdout_manifest = load_holdout_manifest(_root)
     _holdout_problems = verify_holdout_binding(

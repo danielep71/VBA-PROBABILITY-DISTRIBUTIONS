@@ -168,8 +168,8 @@ def main():
         if rw > LOGGAMMA_CONTRACT:
             print(f"   NOTE: relative error there reaches {float(rw):.2e} at X={rat}, above")
             print(f"   PROB_LogGamma's published {float(LOGGAMMA_CONTRACT):.1e}. That is the zero of")
-            print(f"   Log(Gamma) at X = 1, not a kernel defect -- but the published claim is")
-            print(f"   stated as relative over Z in [1E-8, 1E+50] and does not hold there.")
+            print("   Log(Gamma) at X = 1, not a kernel defect -- but the published claim is")
+            print("   stated as relative over Z in [1E-8, 1E+50] and does not hold there.")
 
     # ---- 2. head to head ------------------------------------------------------
     print("\n2) KERNEL vs PROB_LogGamma(1# + X) -- the defect being removed")

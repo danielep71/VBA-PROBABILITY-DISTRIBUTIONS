@@ -37,7 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from analyze_positive_ratio_subnormal import (      # noqa: E402
-    COLUMNS, MIN_SUBNORMAL, Point, bits_available, load, parse_hilo,
+    COLUMNS, Point, bits_available, load, parse_hilo,
     REGISTERED_CLAIMS, classify_output, crossover_of, envelope,
     reference, twin_check,
     verify_constructions, verify_reference_invariants,
@@ -456,7 +456,6 @@ def test_unavailable_claimed_bucket_does_not_pass():
 def test_cli_exits_nonzero_when_a_claim_is_rejected():
     """The verdict must reach the process. A hosted gate running this step
     would otherwise go green on evidence that rejects the claim."""
-    import csv as _csv
     with tempfile.TemporaryDirectory() as tmp:
         rows = valid_rows()
         # force a violation inside the claimed range by making the candidate

@@ -50,7 +50,7 @@ def main():
           f"at (Large,Small)=({prod_at[0]}, {prod_at[1]})  meets 5E-15: {prod_worst <= CLAIM}")
     print(f"   full grid incl. balanced points: worst {float(full_worst):.2e} "
           f"at ({full_at[0]}, {full_at[1]}) -- points at ratio >= {float(SWITCH)} use the")
-    print(f"   identity, not the delta, so a larger error there is expected and harmless.")
+    print("   identity, not the delta, so a larger error there is expected and harmless.")
     print(f"   (ERROR rows: {derr})\n")
 
     # 2. crossover envelope by ratio
@@ -70,7 +70,6 @@ def main():
     print("2) LogBeta crossover envelope (worst over Small at each ratio)")
     print(f"   {'ratio':>10} {'identity':>11} {'stable':>11} {'both<claim':>11} {'better':>9}")
     ratios = sorted(set(ident) | set(stable), reverse=True)
-    safe_switch = None
     for ratio in ratios:
         iw = max(ident[ratio]) if ident.get(ratio) else None
         sw = max(stable[ratio]) if stable.get(ratio) else None
@@ -88,7 +87,7 @@ def main():
         overlap = [r for r in stable_ok if r in ident_ok]
         if overlap:
             print(f"\n   Clean overlap (both <= 5E-15) up to ratio {max(overlap):.0e}.")
-            print(f"   Recommended PROB_LOGBETA_STABLE_RATIO: a value in that overlap,")
+            print("   Recommended PROB_LOGBETA_STABLE_RATIO: a value in that overlap,")
             print(f"   e.g. {max(overlap):.0e} (switch to stable below it).")
 
 if __name__ == "__main__":

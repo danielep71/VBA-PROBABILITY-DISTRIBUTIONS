@@ -24,7 +24,7 @@ re-deriving policy here:
 Refuses to write if any row is blocked, if the audit does not match the current
 generator, or if any key is ambiguous. Report-only unless --write is given.
 """
-import argparse, csv, importlib.util, os, struct, sys
+import argparse, csv, importlib.util, struct, sys
 from collections import Counter
 
 import mpmath as mp

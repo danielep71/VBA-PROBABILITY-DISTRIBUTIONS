@@ -34,7 +34,7 @@ def main():
         if not matched or not c["threshold"].strip():
             continue
         absolute = c["metric"].strip().lower() == "absolute"
-        worst = Decimal(-1); at = ""
+        worst = Decimal(-1)
         for r in matched:
             o = parse(r["observed_vba"])
             if o is None:
@@ -43,7 +43,7 @@ def main():
             ae = abs(o - ref)
             e = ae if absolute else (ae / abs(ref) if ref != 0 else Decimal(0))
             if e > worst:
-                worst = e; at = f"a1={r['arg1']} a2={r['arg2']} a3={r['arg3']}"
+                worst = e
         if worst < 0:
             results.append((c, None, None, "NO OBS")); continue
         thr = Decimal(c["threshold"]); ok = worst <= thr; tested += 1

@@ -4,7 +4,6 @@ Report the measured accuracy of K_STATS_StudentT_Density at large df.
 Run after Export_TDensityLargeDf has filled observed_vba.
 """
 import csv
-import re
 from collections import defaultdict
 from decimal import Decimal
 

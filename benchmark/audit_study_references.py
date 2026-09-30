@@ -26,7 +26,7 @@ Classification matches audit_references.py:
 
 Report only. Writes nothing but its own CSV.
 """
-import argparse, csv, math, os, sys
+import argparse, csv, os
 from collections import Counter
 
 import mpmath as mp

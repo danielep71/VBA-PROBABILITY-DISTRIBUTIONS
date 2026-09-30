@@ -165,7 +165,6 @@ def main():
         else:
             cls = "GENERATOR_ONLY_UNEXPLAINED"; origin = "generate_reference_values"
         counts[cls] += 1
-        src = g or n
         out.append({
             "key": "|".join(k), "function": k[0],
             "arguments": ";".join(x for x in k[1:5] if x),

@@ -114,6 +114,23 @@ jobs:
           --output test-results/release-semantics.json
           --summary test-results/release-semantics.md
 
+      - name: Install the hash-locked Python linter
+        id: ruff-install
+        continue-on-error: true
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            -r tools/requirements-lint-ci.txt
+          python -m ruff --version | tee test-results/ruff-version.txt
+
+      - name: Lint Python tooling for correctness
+        id: ruff
+        continue-on-error: true
+        # Rules come from ruff.toml: syntax errors and pyflakes only.
+        run: python -m ruff check --no-cache --output-format concise . | tee test-results/ruff.txt
+
       - name: Install the pinned workflow validator
         id: actionlint-install
         continue-on-error: true
@@ -170,6 +187,8 @@ jobs:
           VBA_JUMPS: ${{ steps.vba-jumps.outcome }}
           RELEASE_SEMANTICS_SELF_TEST: ${{ steps.release-semantics-self-test.outcome }}
           RELEASE_SEMANTICS: ${{ steps.release-semantics.outcome }}
+          RUFF_INSTALL: ${{ steps.ruff-install.outcome }}
+          RUFF: ${{ steps.ruff.outcome }}
           ACTIONLINT_INSTALL: ${{ steps.actionlint-install.outcome }}
           ACTIONLINT: ${{ steps.actionlint.outcome }}
         run: |
@@ -181,6 +200,8 @@ jobs:
             "VBA jumps:$VBA_JUMPS" \
             "Release-semantics fixtures:$RELEASE_SEMANTICS_SELF_TEST" \
             "Release semantics:$RELEASE_SEMANTICS" \
+            "Python linter install:$RUFF_INSTALL" \
+            "Python correctness lint:$RUFF" \
             "Workflow validator install:$ACTIONLINT_INSTALL" \
             "Workflow validation:$ACTIONLINT"; do
             label="${item%%:*}"

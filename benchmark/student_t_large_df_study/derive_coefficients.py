@@ -104,7 +104,6 @@ def derive(max_order):
 def main():
     t0 = time.time()
     coeffs = derive(MAX_ORDER)
-    t = sp.symbols("t", positive=True)
     out = {
         "expansion": "S(t; nu) = Q(t) + phi(t) * sum_k g_k(t) / nu^k",
         "max_order": MAX_ORDER,

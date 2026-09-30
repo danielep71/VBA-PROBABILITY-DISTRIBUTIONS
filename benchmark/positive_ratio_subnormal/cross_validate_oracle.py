@@ -194,7 +194,7 @@ def main() -> int:
     r_rows = run_r(points)
     if r_rows is None:
         print("Rscript or Rmpfr unavailable -- the committed record stands.")
-        print(f"Install with: apt-get install r-base-core r-cran-rmpfr")
+        print("Install with: apt-get install r-base-core r-cran-rmpfr")
         return 0
 
     results, worst, problems = compare(points, r_rows)

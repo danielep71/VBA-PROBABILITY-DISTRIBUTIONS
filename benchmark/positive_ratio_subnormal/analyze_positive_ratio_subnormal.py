@@ -578,8 +578,8 @@ def decomposition(surf: list[Point]) -> None:
     label is assigned from an arbitrary threshold.
     """
     shapes = sorted({p.shape_id for p in surf})
-    print(f"\n   LANDMARK vs STRESS (current path; landmark has no transform "
-          f"error)")
+    print("\n   LANDMARK vs STRESS (current path; landmark has no transform "
+          "error)")
     print(f"   {'shape':>9} {'bits':>5} {'landmark':>12} {'stress':>12} "
           f"{'ratio':>14}")
     for sid in shapes:
@@ -751,7 +751,7 @@ def test_claims(points: list[Point]) -> bool:
                   f"at <= {claim} bits'")
             print(f"   No violation found, but {len(unavailable)} of "
                   f"{len(tested)} claimed buckets have no comparable evidence,")
-            print(f"   so the claim is not established:")
+            print("   so the claim is not established:")
             for bits, wc, wa in unavailable:
                 which = ("candidate" if wa is None else "current")
                 print(f"   {bits:>5} bits: {which} unavailable")

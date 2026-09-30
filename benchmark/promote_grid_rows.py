@@ -32,7 +32,7 @@ argument with Val(), so "0.85" and "0.84999999999999998" are the same row.
 Report-only unless --write. New rows arrive with observed_vba blank; fill them
 with Export_Accuracy_MissingOnly, which leaves every existing cell untouched.
 """
-import argparse, csv, importlib.util, os, struct, sys
+import argparse, csv, importlib.util, struct, sys
 from collections import Counter
 
 GRID_FIELDS_NOTE = "columns are taken from the existing grid header"
