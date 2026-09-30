@@ -20,7 +20,7 @@
 <br>
 
 [![License](https://img.shields.io/github/license/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=2ea44f)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=6f42c1)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/stargazers)
+[![Stars](https://img.shields.io/github/stars/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=6f42c1)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
 [![Forks](https://img.shields.io/github/forks/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=0969da)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/network/members)
 [![Issues](https://img.shields.io/github/issues/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=d73a49)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues)
 [![Last commit](https://img.shields.io/github/last-commit/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=orange)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/commits/main)
