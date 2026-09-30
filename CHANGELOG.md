@@ -106,6 +106,8 @@ Use only the categories needed by a release.
 - Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
 - Added a **Static checks** workflow for committed whitespace, procedure-scoped VBA jumps, release semantics (SemVer, `VERSION`/`CHANGELOG.md` agreement, dated releases, comparison links) and workflow validation with a version- and hash-pinned actionlint. The checkers are imported verbatim from the portfolio template into `tools/`, with their source revision and SHA-256 recorded in `tools/README.md`.
 - Added Dependabot for GitHub Actions, proposing weekly reviewed pull requests that move each pinned action SHA and its version comment together.
+- Added CodeQL security analysis (`security-extended`) of the Python tooling and the GitHub Actions workflows. Pushes and a weekly schedule publish to code scanning; pull requests are analyzed read-only, without write permission. CodeQL does not analyze VBA.
+- Added OpenSSF Scorecard for the default branch, published to the public Scorecard service and to code scanning.
 - Added a correctness-only Python lint (Ruff, syntax errors and pyflakes rules via `ruff.toml`) to the **Static checks** workflow, installed from a hash-locked requirements file.
 - Replaced the Markdown bug and feature templates with GitHub issue forms, and added a documentation form. Defect class, source identity (tag or full commit SHA), exact call, runnable example, independent reference, environment and whether the regression harness detects the defect are now required fields; all existing guidance, including bit-exact `hi;lo` arguments, boundary localisation and contract coverage, is retained.
 

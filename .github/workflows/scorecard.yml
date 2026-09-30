@@ -1,0 +1,68 @@
+name: OpenSSF Scorecard
+run-name: Scorecard — ${{ github.ref_name }} @ ${{ github.sha }}
+
+# Supply-chain posture of the default branch, published to the public
+# Scorecard service and to code scanning. Adapted from the portfolio template's
+# scorecard.yml; its release-branch job is omitted because this repository
+# releases from main only.
+#
+# Publication (publish_results: true) is accepted by the Scorecard service
+# only from the default branch, and only from a job that uses approved actions
+# and no run steps. Keep that job's step list exactly this shape.
+
+on:
+  branch_protection_rule:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 4"
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: scorecard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  published:
+    name: Published default-branch posture
+    if: >-
+      github.event.repository.private == false &&
+      (github.event_name == 'schedule' ||
+      github.event_name == 'branch_protection_rule' ||
+      github.ref_name == github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+
+    steps:
+      - name: Check out the exact SHA under analysis
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Run OpenSSF Scorecard
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+          file_mode: git
+
+      - name: Keep the Scorecard SARIF
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: scorecard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: results.sarif
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to code scanning
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: results.sarif

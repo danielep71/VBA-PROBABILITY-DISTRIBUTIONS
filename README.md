@@ -1031,8 +1031,10 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ ISSUE_TEMPLATE/
 │  ├─ workflows/
 │  │  ├─ accuracy-gate.yml
+│  │  ├─ codeql.yml
 │  │  ├─ excel-vba-regression.yml
 │  │  ├─ labels-sync.yml
+│  │  ├─ scorecard.yml
 │  │  └─ static-checks.yml
 │  ├─ actionlint.yaml
 │  ├─ dependabot.yml
