@@ -1,116 +1,154 @@
 {
   "schema_version": 1,
   "prune": true,
+  "renames": {
+    "testing": "tests"
+  },
   "labels": [
     {
-      "name": "bug",
-      "color": "d73a4a",
-      "description": "Confirmed defect in numerical behavior, correctness, error handling, or documented contract."
-    },
-    {
-      "name": "enhancement",
-      "color": "a2eeef",
-      "description": "New capability or meaningful improvement to existing behavior."
-    },
-    {
-      "name": "documentation",
-      "color": "0075ca",
-      "description": "README, Wiki, examples, source comments, or other user-facing documentation."
-    },
-    {
-      "name": "refactor",
-      "color": "6f42c1",
-      "description": "Internal restructuring or maintainability work with no intended behavior change."
-    },
-    {
-      "name": "testing",
-      "color": "006b75",
-      "description": "Regression tests, numerical edge coverage, fault injection, and test infrastructure."
-    },
-    {
-      "name": "CI",
-      "color": "24292f",
-      "description": "Continuous integration, automated checks, Excel regression gates, and evidence automation."
-    },
-    {
-      "name": "release",
-      "color": "b60276",
-      "description": "Release process, packaging, provenance, tagging, changelog, and artifact governance."
-    },
-    {
-      "name": "performance",
-      "color": "0e8a16",
-      "description": "Runtime performance, algorithmic efficiency, scalability, or performance benchmarking."
-    },
-    {
-      "name": "P1",
-      "color": "b60205",
-      "description": "Critical: release-blocking correctness or silent-wrong-result defect; fix immediately."
-    },
-    {
-      "name": "P2",
-      "color": "d93f0b",
-      "description": "High: material numerical defect or engineering risk; fix in the next planned milestone."
-    },
-    {
-      "name": "P3",
-      "color": "fbca04",
-      "description": "Normal: non-blocking improvement, hardening, refactor, documentation, or cleanup."
-    },
-    {
-      "name": "core",
-      "color": "1d76db",
-      "description": "Core floating-point primitives, constants, guards, arithmetic helpers, and shared numerics."
-    },
-    {
-      "name": "special-functions",
-      "color": "5319e7",
-      "description": "Gamma, beta, log-gamma/log-beta, incomplete functions, combinatorial and inverse kernels."
-    },
-    {
-      "name": "normal-family",
-      "color": "c5def5",
-      "description": "Standard Normal, Normal, Lognormal, Gaussian tails, intervals, and inverse-normal behavior."
-    },
-    {
-      "name": "t-family",
-      "color": "0052cc",
-      "description": "Student t, Chi-square, F distributions, and their shared numerical paths."
-    },
-    {
-      "name": "continuous",
-      "color": "bfe5bf",
-      "description": "Gamma, Beta, Exponential, Weibull, Uniform, and other continuous-distribution surfaces."
-    },
-    {
-      "name": "discrete",
-      "color": "d4c5f9",
-      "description": "Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric, and Discrete Uniform."
-    },
-    {
       "name": "accuracy",
-      "color": "e99695",
-      "description": "Accuracy contracts, numerical envelopes, references, holdouts, benchmarks, and limitations."
+      "color": "E99695",
+      "description": "Accuracy contracts, numerical envelopes, references, holdouts, benchmarks, and limitations"
     },
     {
       "name": "api",
-      "color": "0366d6",
-      "description": "Worksheet/VBA API, parameterization, compatibility, return values, and caller contracts."
+      "color": "0366D6",
+      "description": "Worksheet/VBA API, parameterization, compatibility, return values, and caller contracts"
+    },
+    {
+      "name": "behavior-change",
+      "color": "C24E00",
+      "description": "Intentional externally observable behavior change"
+    },
+    {
+      "name": "blocked",
+      "color": "B60205",
+      "description": "Cannot proceed until a named dependency is complete"
+    },
+    {
+      "name": "bug",
+      "color": "D73A4A",
+      "description": "Confirmed defect in behavior, correctness, error handling, or a documented contract"
+    },
+    {
+      "name": "ci",
+      "color": "24292F",
+      "description": "Automated quality checks, workflow maintenance, or release certification"
+    },
+    {
+      "name": "continuous",
+      "color": "BFE5BF",
+      "description": "Gamma, Beta, Exponential, Weibull, Uniform, and other continuous-distribution surfaces"
+    },
+    {
+      "name": "core",
+      "color": "BFDADC",
+      "description": "Core floating-point primitives, constants, guards, arithmetic helpers, and shared numerics"
+    },
+    {
+      "name": "discrete",
+      "color": "D4C5F9",
+      "description": "Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric, and Discrete Uniform"
+    },
+    {
+      "name": "documentation",
+      "color": "0075CA",
+      "description": "User-facing or maintainer-facing documentation"
+    },
+    {
+      "name": "duplicate",
+      "color": "CFD3D7",
+      "description": "An existing issue or pull request already covers this work"
+    },
+    {
+      "name": "enhancement",
+      "color": "A2EEEF",
+      "description": "New capability or meaningful improvement to supported behavior"
     },
     {
       "name": "good first issue",
-      "color": "7057ff",
-      "description": "Well-scoped task suitable for a first contribution to the repository."
+      "color": "7057FF",
+      "description": "Well-scoped task suitable for a first contribution"
     },
     {
       "name": "help wanted",
       "color": "008672",
-      "description": "Maintainer welcomes external investigation, implementation, validation, or review."
+      "description": "Maintainer welcomes external investigation, implementation, validation, or review"
     },
     {
-      "name": "blocked",
-      "color": "bfd4f2",
-      "description": "Cannot progress until a dependency, decision, prerequisite fix, or evidence step is resolved."
+      "name": "invalid",
+      "color": "E4E669",
+      "description": "Report is incomplete, unsupported, or not actionable as submitted"
+    },
+    {
+      "name": "normal-family",
+      "color": "C5DEF5",
+      "description": "Standard Normal, Normal, Lognormal, Gaussian tails, intervals, and inverse-normal behavior"
+    },
+    {
+      "name": "P1",
+      "color": "B60205",
+      "description": "Critical release blocker or serious correctness, data, or application-state risk"
+    },
+    {
+      "name": "P2",
+      "color": "D93F0B",
+      "description": "Material correctness, robustness, or maintainability defect"
+    },
+    {
+      "name": "P3",
+      "color": "FBCA04",
+      "description": "Non-blocking quality, testing, documentation, or technical-debt improvement"
+    },
+    {
+      "name": "performance",
+      "color": "0E8A16",
+      "description": "Runtime performance, algorithmic efficiency, scalability, or performance benchmarking"
+    },
+    {
+      "name": "question",
+      "color": "D876E3",
+      "description": "Further information or a maintainer decision is required"
+    },
+    {
+      "name": "refactor",
+      "color": "6F42C1",
+      "description": "Internal restructuring intended to preserve supported behavior"
+    },
+    {
+      "name": "release",
+      "color": "B60276",
+      "description": "Release preparation, certification, evidence, packaging, or publication"
+    },
+    {
+      "name": "repository",
+      "color": "1D76DB",
+      "description": "Repository structure, governance, metadata, tooling, or maintenance"
+    },
+    {
+      "name": "security",
+      "color": "8B0000",
+      "description": "Security boundary, vulnerability handling, supply chain, or hardening"
+    },
+    {
+      "name": "special-functions",
+      "color": "5319E7",
+      "description": "Gamma, beta, log-gamma/log-beta, incomplete functions, combinatorial and inverse kernels"
+    },
+    {
+      "name": "t-family",
+      "color": "0052CC",
+      "description": "Student t, Chi-square, F distributions, and their shared numerical paths"
+    },
+    {
+      "name": "tests",
+      "color": "006B75",
+      "description": "Regression coverage, test harnesses, fixtures, or manual validation"
+    },
+    {
+      "name": "wontfix",
+      "color": "6E7781",
+      "description": "Maintainers have decided not to implement or continue this work"
     }
   ]
 }
