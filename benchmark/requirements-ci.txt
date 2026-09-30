@@ -1,0 +1,3 @@
+# Tested reference and symbolic-derivation versions for the Accuracy Gate.
+mpmath==1.3.0
+sympy==1.14.0

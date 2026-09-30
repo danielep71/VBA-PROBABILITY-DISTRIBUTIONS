@@ -38,7 +38,12 @@ of the following holds:
      version of it. This is the repair path used by c496f1b.
 
 Run: python3 check_manifest_provenance.py [--since <rev>]
+CI sets PROVENANCE_BASE_SHA to the PR base or push-before commit. An explicit
+CLI baseline takes precedence. Missing/unrelated event baselines (including a
+new-branch zero sentinel) fail closed; use --since with a valid ancestor for
+manual range checks. With no baseline, local/manual runs check the latest commit.
 """
+import argparse
 import os
 import subprocess
 import sys
@@ -133,20 +138,30 @@ def check_commit(commit):
 
 
 def main():
-    since = None
-    if "--since" in sys.argv:
-        since = sys.argv[sys.argv.index("--since") + 1]
-    if since:
-        rev = f"{since}..HEAD"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--since", help="check every commit after this ancestor of HEAD")
+    args = parser.parse_args()
+    before = args.since or os.environ.get("PROVENANCE_BASE_SHA", "")
+    if before:
+        # A supplied event range must never degrade to a last-commit check.
+        resolved = git("rev-parse", "--verify", f"{before}^{{commit}}")
+        if resolved.returncode != 0:
+            print(f"FAIL: manifest provenance baseline is unavailable: {before}")
+            return 1
+        base = resolved.stdout.strip()
+        if git("merge-base", "--is-ancestor", base, "HEAD").returncode != 0:
+            print(f"FAIL: manifest provenance baseline is not an ancestor of HEAD: {before}")
+            return 1
+        rev = f"{base}..HEAD"
     else:
-        before = os.environ.get("GITHUB_EVENT_BEFORE", "")
-        rev = (f"{before}..HEAD" if before and not set(before) == {"0"}
-               else "HEAD~1..HEAD")
+        # Local/manual checks have no event range: check the latest commit.
+        parent = git("rev-parse", "--verify", "HEAD~1")
+        rev = "HEAD~1..HEAD" if parent.returncode == 0 else "HEAD"
     res = git("rev-list", rev)
     if res.returncode != 0:
-        commits = [git("rev-parse", "HEAD").stdout.strip()]
-    else:
-        commits = [c for c in res.stdout.split() if c]
+        print(f"FAIL: cannot enumerate manifest provenance range: {rev}")
+        return 1
+    commits = [c for c in res.stdout.split() if c]
     if not commits:
         print("PASS: manifest provenance (no commits in range)")
         return 0

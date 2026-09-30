@@ -1,10 +1,13 @@
 """Fixtures for check_manifest_provenance.py and the certification bridge."""
+import contextlib
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from unittest.mock import patch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -252,6 +255,41 @@ def case_two_commit_push(tmp):
     c2 = commit(tmp, "manifest only")
     return G.check_commit(c1), G.check_commit(c2)
 
+
+def case_event_range(tmp):
+    base = G.git("rev-parse", "HEAD").stdout.strip()
+    write(tmp, MAIN_M, json.dumps({"v": 999}) + "\n")
+    commit(tmp, "invalid rebind earlier in push")
+    write(tmp, "README.md", "harmless last commit\n")
+    tip = commit(tmp, "documentation only")
+
+    def invoke(argv, env):
+        with patch.object(sys, "argv", ["check_manifest_provenance.py", *argv]), \
+                patch.dict(os.environ, env, clear=True), \
+                contextlib.redirect_stdout(io.StringIO()):
+            return G.main()
+
+    check(invoke([], {}) == 0, "local latest-commit control must pass")
+    check(invoke([], {"PROVENANCE_BASE_SHA": base}) == 1,
+          "event range must catch an invalid earlier commit behind a harmless tip")
+    check(invoke(["--since", base], {}) == 1, "CLI range must catch earlier rebind")
+    check(invoke(["--since", tip], {"PROVENANCE_BASE_SHA": base}) == 0,
+          "explicit CLI baseline must take precedence")
+    check(invoke(["--since", "f" * 40], {}) == 1,
+          "unavailable CLI baseline must fail closed")
+    check(invoke([], {"PROVENANCE_BASE_SHA": "f" * 40}) == 1,
+          "unavailable baseline must fail closed")
+    check(invoke([], {"PROVENANCE_BASE_SHA": "0" * 40}) == 1,
+          "new-branch sentinel must require an explicit usable baseline")
+    run(tmp, "git", "checkout", "-qb", "other", base)
+    write(tmp, "OTHER.md", "divergent commit\n")
+    divergent = commit(tmp, "other branch")
+    run(tmp, "git", "checkout", "--detach", tip)
+    check(invoke([], {"PROVENANCE_BASE_SHA": divergent}) == 1,
+          "unrelated baseline must fail closed")
+
+
+with_repo(case_event_range)
 
 check(with_repo(case_grid_cochange) == [], "grid co-change must pass")
 check(with_repo(case_record_valid) == [], "canonical exact-SHA export record must pass")

@@ -11,15 +11,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - "benchmark/**"
-      - "src/**"
-      - "tests/**"
-      - "docs/PUBLIC_API.txt"
-      - ".github/workflows/accuracy-gate.yml"
-  # This job is a required main-branch check. Keep the pull-request trigger
-  # unfiltered so every PR reports the required context instead of remaining
-  # permanently pending when only documentation or repository metadata changes.
+  # Run on every main push and PR: repository metadata and tools are inputs
+  # to the assurance checks too. Required-check enforcement is tracked in #31.
   pull_request:
     branches: [main]
 
@@ -33,7 +26,11 @@ permissions:
 jobs:
   accuracy-gate:
     name: Strict accuracy gate (pure Python, no Excel)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # PRs use the base of the synthetic merge; pushes include EVERY new commit.
+      PROVENANCE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,6 +40,7 @@ jobs:
           # checkout makes those controls silently untestable and also weakens
           # exact-restoration detection. Keep the commit graph available.
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -51,14 +49,24 @@ jobs:
 
       - name: Install reference dependencies
         id: deps
-        # SymPy is required by student_t_large_df_study/test_coefficients.py,
-        # which re-derives the #34 tail coefficients under the evidence-tool
-        # step. It was added to the shim in b8d633d without being added here;
-        # runs 181 and 184 failed on ImportError before reaching the strict
-        # gate, while the local mirror passed on machines that had SymPy. The
-        # local signature cannot detect a missing hosted dependency. Pinned so
-        # the derivation is reproducible.
-        run: python -m pip install --upgrade pip mpmath "sympy==1.14.0"
+        # Keep the hosted oracle and symbolic derivation on tested versions.
+        run: python -m pip install -r benchmark/requirements-ci.txt
+
+      - name: Verify the evaluation tooling itself
+        working-directory: benchmark
+        # These run BEFORE the gate deliberately. compute_errors.py and
+        # analyze_holdout.py both read their semantics from _contract_eval.py,
+        # so a broken evaluator makes every verdict below meaningless rather
+        # than merely wrong. Fail on the tooling first.
+        # ONE list, not two. This step previously enumerated the tooling
+        # scripts by hand while refresh_evidence.py ran test_evidence_tools.py,
+        # and the two lists diverged: test_igamma_parity.py was added to the
+        # shim and never to this step, so the parity drift detector ran
+        # locally and never in CI. Calling the shim here makes the local
+        # signature and the hosted gate execute the identical set by
+        # construction. Add new tooling checks to test_evidence_tools.py only.
+        run: |
+          python test_evidence_tools.py
 
       - name: "Verify the study analyzer for #13"
         working-directory: benchmark/positive_ratio_subnormal
@@ -81,23 +89,6 @@ jobs:
           python analyze_positive_ratio_subnormal.py chisquare_probe.csv > /dev/null
           python analyze_positive_ratio_subnormal.py gamma_holdout.csv --claims
           python analyze_positive_ratio_subnormal.py chisquare_holdout.csv --claims
-
-      - name: Verify the evaluation tooling itself
-        working-directory: benchmark
-        # These run BEFORE the gate deliberately. compute_errors.py and
-        # analyze_holdout.py both read their semantics from _contract_eval.py,
-        # so a broken evaluator makes every verdict below meaningless rather
-        # than merely wrong. Fail on the tooling first.
-        # ONE list, not two. This step previously enumerated the tooling
-        # scripts by hand while refresh_evidence.py ran test_evidence_tools.py,
-        # and the two lists diverged: test_igamma_parity.py was added to the
-        # shim and never to this step, so the parity drift detector ran
-        # locally and never in CI. Calling the shim here makes the local
-        # signature and the hosted gate execute the identical set by
-        # construction. Add new tooling checks to test_evidence_tools.py only.
-        run: |
-          python test_evidence_tools.py
-          python test_manifest.py
 
       - name: Run strict accuracy gate on the committed grid
         working-directory: benchmark
@@ -140,18 +131,8 @@ jobs:
         run: python check_source_thresholds.py
 
       - name: Test the holdout analyzer
-        # Runs after the strict gate's intentional stale-evidence failure. These
-        # are unit fixtures, not evidence: nothing here reads the holdout grid
-        # or produces a verdict, so there is no reason for them to wait behind
-        # the gate. Under the default fail-fast they were skipped on every red
-        # run through Phase 0, leaving the holdout arm's fixture coverage
-        # established by local runs only. The condition is guarded rather than
-        # bare always(): not after a cancellation, and not on a runner whose
-        # Python setup failed, where a pass would mean nothing.
-        #
-        # "Verify the independent holdout" below is deliberately NOT given this
-        # condition. It reads the holdout grid and emits verdicts, and it stays
-        # skipped while the binding is stale by design.
+        # Keep fixture proofs running even when a numerical verdict fails,
+        # provided dependencies installed and the run was not cancelled.
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         working-directory: benchmark/holdout
         # The holdout analyzer has its own metric semantics and its own fixtures.

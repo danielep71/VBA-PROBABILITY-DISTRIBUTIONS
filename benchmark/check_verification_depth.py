@@ -23,10 +23,7 @@ ALLOWED_STATES = {
     "green",
     "green_checker",
     "green_fixture_proof",
-    "green_fixture_proof_live_main_stale",
     "green_with_registered_transition_debt",
-    "expected_red_until_excel_export",
-    "fixture_green_live_holdout_unbound_until_excel_export",
 }
 
 
