@@ -9,6 +9,7 @@ legitimate edits the file is expected to receive.
 Run: python3 test_root_readme.py   (exit 0 = pass, nonzero = fail)
 """
 import os
+import re
 
 import check_root_readme as G
 from _manifest import repo_root
@@ -69,10 +70,20 @@ check(any("out of order" in p for p in probs), "reordered sections detected")
 # gets deleted, so these matter as much as the negative cases.
 
 # 6a. #28 regenerating the assurance figures.
-regenerated = REAL
-for old, new in (("**112**", "**118**"), ("**835**", "**909**"),
-                 ("**161**", "**166**"), ("**1 905**", "**2 088**")):
-    regenerated = regenerated.replace(old, new)
+# Rewrite whatever bold figures the assurance block currently holds, rather
+# than naming specific literals. A fixed literal list goes silently inert the
+# moment the README stops containing those values - that is exactly how the
+# original 835/161/1 905 list became a no-op - so the replacement count is
+# asserted as well.
+i_start = REAL.index("### 📐 Assurance at a glance")
+i_end = REAL.index("## ✨ What this project is")
+new_block, n_figures = re.subn(
+    r"\*\*([0-9][0-9, ]*)\*\*",
+    lambda m: "**%d**" % (int(re.sub(r"[, ]", "", m.group(1))) + 1),
+    REAL[i_start:i_end])
+check(n_figures >= 4,
+      f"fixture rewrote the assurance figures (found {n_figures}, expected >= 4)")
+regenerated = REAL[:i_start] + new_block + REAL[i_end:]
 check(G.check(regenerated, regenerated.count("\n") + 1) == [],
       "regenerated assurance figures still pass (#28 must not trip the guard)")
 

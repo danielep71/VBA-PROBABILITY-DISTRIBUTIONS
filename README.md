@@ -13,7 +13,7 @@
 [![No WorksheetFunction](https://img.shields.io/badge/WorksheetFunction-Not_Required-8A2BE2?style=for-the-badge)](#why-not-worksheetfunction)
 [![No External DLL](https://img.shields.io/badge/External_DLL-None-555555?style=for-the-badge)](#installation)
 [![Tail Aware](https://img.shields.io/badge/Tail_API-Direct_Survival-c2185b?style=for-the-badge)](#why-direct-survival-functions-matter)
-[![Excel CI](https://img.shields.io/badge/Excel_Regression-902_Assertions-d97706?style=for-the-badge&logo=githubactions&logoColor=white)](docs/EXCEL_VBA_CI.md)
+[![Excel CI](https://img.shields.io/badge/Excel_Regression-909_Assertions-d97706?style=for-the-badge&logo=githubactions&logoColor=white)](docs/EXCEL_VBA_CI.md)
 [![Accuracy Contracts](https://img.shields.io/badge/Accuracy_Contracts-165_Active-0f766e?style=for-the-badge)](benchmark/accuracy_summary.md)
 [![Independent Holdout](https://img.shields.io/badge/Holdout-80_Validated-4c1d95?style=for-the-badge)](benchmark/holdout/holdout_summary.md)
 
@@ -63,7 +63,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **902** | deterministic VBA assertions in the last verified exact-source Excel run |
+| **909** | deterministic VBA assertions, all passing in the last exact-source Excel certification |
 | **165** | active accuracy contracts measured against 50-digit references (166 registry rows; one characterization-only) |
 | **80** | of those additionally validated on an **independent holdout** |
 | **2,088** | observation rows in the accuracy grid (`probability_accuracy_grid.csv`) |
