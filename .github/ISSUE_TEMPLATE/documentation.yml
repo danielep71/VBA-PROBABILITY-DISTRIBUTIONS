@@ -1,0 +1,69 @@
+name: "📖 Documentation request"
+description: "Report incorrect, stale, missing, or unclear documentation, including stale counts and evidence claims."
+title: "[Docs]: "
+labels: ["documentation"]
+assignees: ["danielep71"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Documentation must match supported behavior and reproducible evidence. Figures such as assertion, contract and grid-row counts must match their authorities (for example `benchmark/excel_regression_record.json`, `benchmark/accuracy_contracts.csv`, `benchmark/probability_accuracy_grid.csv`).
+
+        Do not disclose vulnerabilities, credentials, private workbooks or restricted data here. Follow `SECURITY.md` for private security reporting.
+
+  - type: input
+    id: location
+    attributes:
+      label: Document and location
+      description: Identify the file, heading or anchor, or the Wiki page. Use a stable link when available.
+      placeholder: "README.md — Assurance at a glance / https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/<commit>/README.md"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: problem_type
+    attributes:
+      label: Documentation problem
+      options:
+        - Incorrect behavior, parameterization or contract
+        - Stale version, count, command or evidence
+        - Missing explanation or example
+        - Unclear wording or navigation
+        - Broken link or asset
+        - Accessibility or rendering problem
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Current problem and impact
+      description: Quote only the minimum necessary text and explain how it misleads or blocks the reader.
+    validations:
+      required: true
+
+  - type: textarea
+    id: correction
+    attributes:
+      label: Proposed correction
+      description: Describe the corrected outcome, example, navigation or wording.
+    validations:
+      required: true
+
+  - type: textarea
+    id: authority
+    attributes:
+      label: Authoritative source
+      description: Link the source code, contract registry, evidence file, issue or release that establishes the correction. State "not applicable" when appropriate.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched open and closed issues and did not find an equivalent report.
+          required: true
+        - label: This report contains no vulnerability details, secrets, private links or restricted data.
+          required: true

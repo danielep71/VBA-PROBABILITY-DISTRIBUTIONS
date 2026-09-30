@@ -1,0 +1,63 @@
+name: "✨ Feature request"
+description: "Suggest a new distribution, routine, or enhancement."
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: ["danielep71"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: ✨ Problem / use case
+      description: What are you trying to compute that the library does not currently support? Describe the real scenario, not just the proposed feature.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 💡 Proposed behavior
+      description: What you would like the library to do — the function surface, inputs, and returned quantity.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔀 Alternatives considered
+      description: Other approaches, including any current workaround (e.g. composing existing `K_STATS_*` functions or `Application.WorksheetFunction`).
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 🎯 Scope
+      description: Which areas would this likely touch? Check any that apply.
+      options:
+        - label: Normal family (Standard Normal, Normal, Lognormal)
+        - label: Classical test-statistic family (Student t, Chi-square, F)
+        - label: Positive continuous family (Gamma, Exponential, Weibull)
+        - label: Bounded continuous family (Beta, Uniform)
+        - label: A new distribution not yet covered
+        - label: Special functions / numerical kernels (PROB_*)
+        - label: Moments (mean / variance / std dev)
+        - label: Test harness
+        - label: Documentation only
+
+  - type: textarea
+    id: numerics
+    attributes:
+      label: 📐 Numerical notes
+      description: Any known reference implementation, algorithm, accuracy target, or tail-behavior concern that would guide implementation and verification.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📎 Additional context
+      description: Examples, formulae, or links that help explain the idea.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched open and closed issues and did not find an equivalent request.
+          required: true

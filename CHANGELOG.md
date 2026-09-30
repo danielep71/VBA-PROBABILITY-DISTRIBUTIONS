@@ -107,6 +107,7 @@ Use only the categories needed by a release.
 - Added a **Static checks** workflow for committed whitespace, procedure-scoped VBA jumps, release semantics (SemVer, `VERSION`/`CHANGELOG.md` agreement, dated releases, comparison links) and workflow validation with a version- and hash-pinned actionlint. The checkers are imported verbatim from the portfolio template into `tools/`, with their source revision and SHA-256 recorded in `tools/README.md`.
 - Added Dependabot for GitHub Actions, proposing weekly reviewed pull requests that move each pinned action SHA and its version comment together.
 - Added a correctness-only Python lint (Ruff, syntax errors and pyflakes rules via `ruff.toml`) to the **Static checks** workflow, installed from a hash-locked requirements file.
+- Replaced the Markdown bug and feature templates with GitHub issue forms, and added a documentation form. Defect class, source identity (tag or full commit SHA), exact call, runnable example, independent reference, environment and whether the regression harness detects the defect are now required fields; all existing guidance, including bit-exact `hi;lo` arguments, boundary localisation and contract coverage, is retained.
 
 - Added this changelog and the portfolio-standard release-history policy for
   VBA Probability Distributions.

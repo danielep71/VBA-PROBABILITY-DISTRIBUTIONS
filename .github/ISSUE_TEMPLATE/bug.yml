@@ -1,0 +1,255 @@
+name: "🐞 Bug report"
+description: "Report a wrong result, a spurious error, a wrong error code, a performance defect, or a crash."
+title: "[Bug]: "
+labels: ["bug"]
+assignees: ["danielep71"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a defect. Numerical reports are most useful when the exact Double tested, an independent reference and the environment are all stated.
+
+        > [!IMPORTANT]
+        > Do not use this public form for a suspected security vulnerability. Use the private vulnerability-reporting channel described in `SECURITY.md`. Do not attach workbooks containing confidential, personal, client or production data.
+
+  - type: dropdown
+    id: defect_class
+    attributes:
+      label: 🚦 Defect class
+      description: |
+        The single most important field: it sets severity independently of how large the numerical discrepancy is. A silent wrong value outranks everything else, because the caller has no way to detect it; a spurious error is visible and self-announcing.
+      options:
+        - Silent wrong value — a plausible number is returned and it is wrong
+        - Spurious error — a valid input is refused, though the correct answer is representable
+        - Wrong error code — correctly refused, but the wrong CVErr is returned
+        - Unhandled runtime error — a VBA error escapes to the caller
+        - Accuracy shortfall — within the documented envelope, but misses its accuracy contract
+        - Performance or non-convergence
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 🐞 Description
+      description: Describe the defect and its practical impact.
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: 🔖 Version and source state
+      description: A release tag, or the full 40-character commit SHA when using `main` or another snapshot. Do not write only "latest".
+      placeholder: "v1.0.0, or 0123456789abcdef0123456789abcdef01234567"
+    validations:
+      required: true
+
+  - type: textarea
+    id: call
+    attributes:
+      label: 🔢 Exact call and result
+      description: The function call, what it returned, what it should return, and the optional ByRef Status text when available.
+      render: text
+      value: |
+        Function: K_STATS_...(...)
+        Returned: <value / #NUM! / #VALUE! / runtime error number and description>
+        Expected: <value or error code>
+        Status:   <optional ByRef Status text, when available>
+    validations:
+      required: true
+
+  - type: textarea
+    id: bit_exactness
+    attributes:
+      label: Argument bit-exactness
+      description: |
+        **Required whenever any argument is subnormal, denormal, near an overflow boundary, or beyond about 15 significant digits.** A VBA source literal cannot be relied on to denote such a value, and `Val()` cannot be relied on to parse one, so a decimal written here may not be the number that was actually tested. Give each such argument as a two-part sum `hi;lo` summing to the exact Double, or state how it was constructed by arithmetic.
+      render: text
+      value: |
+        Argument:     <name>
+        hi;lo:        <e.g. 5.56268464626800E-309;4.94065645841247E-324>
+        Constructed:  <e.g. halve 1# 1024 times, or 1E-300 / 1E+20, or N/A - literal>
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Smallest runnable example
+      description: Build extreme arguments by arithmetic inside this Sub rather than pasting a decimal literal, so the example reproduces the exact Double that was tested.
+      render: vba
+      value: |
+        Option Explicit
+
+        Public Sub ReproduceIssue()
+
+            Dim Status As String
+            Dim Result As Variant
+
+            Result = K_STATS_...(Status:=Status)
+
+            Debug.Print Result
+            Debug.Print Status
+
+        End Sub
+    validations:
+      required: true
+
+  - type: textarea
+    id: reference
+    attributes:
+      label: 🔬 Independent reference
+      description: |
+        How the expected result was obtained: for example SciPy with the exact function and version, mpmath with the precision used, R, Julia or MATLAB, an authoritative table or paper, or an exact mathematical identity. Include enough digits to evaluate the discrepancy; give a subnormal or beyond-15-digit expected value as `hi;lo` too.
+      render: text
+      value: |
+        Reference system:
+        Reference function:
+        Version:
+        Precision:
+        Expected result:
+    validations:
+      required: true
+
+  - type: textarea
+    id: boundary
+    attributes:
+      label: 🎯 Boundary localisation
+      description: |
+        Optional, but the most valuable evidence you can supply for a numerical defect. If the defect appears below or above some threshold, narrow it to the two adjacent Doubles that straddle it — the last input that works and the first that fails. A boundary pinned to adjacent Doubles turns "it breaks somewhere down there" into a specific, testable claim about a specific expression.
+      render: text
+      value: |
+        Last good input:   <hi;lo or construction>   Returned: <value>
+        First bad input:   <hi;lo or construction>   Returned: <value / error>
+        Adjacent Doubles?  yes / no / unknown
+        Predicted boundary and why: <e.g. 1/DoubleMax, because the expression forms 1/N>
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔁 Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 🧪 Environment
+      description: The locale matters because the decimal separator affects parsing and Format$.
+      render: text
+      value: |
+        Excel version:
+        Office build:
+        Office bitness:   32-bit / 64-bit
+        Operating system:
+        Locale:
+        Use context:      worksheet formula / VBA call
+        Workbook type:    .xlsm / .xlsb / other
+    validations:
+      required: true
+
+  - type: textarea
+    id: harness_output
+    attributes:
+      label: ✅ Regression-harness result
+      description: Run the most relevant suite when possible and paste the Immediate Window output.
+      render: text
+      value: |
+        Test_STATS_PROBDIST_RunAll            ->
+        Test_STATS_PROBDIST_RunCore           ->
+        Test_STATS_PROBDIST_RunNormalFamily   ->
+        Test_STATS_PROBDIST_RunTFamily        ->
+        Test_STATS_PROBDIST_RunContinuous     ->
+        Test_STATS_PROBDIST_RunDiscrete       ->
+
+  - type: dropdown
+    id: harness_detects
+    attributes:
+      label: Does the harness detect this defect?
+      description: If the harness passes, say so plainly. A defect the harness cannot see is a gap in the evidence set as well as a defect in the code, and both need fixing.
+      options:
+        - Yes — a suite fails (named above)
+        - No — every suite passes and the defect is still present
+        - Not run
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: 📋 Contract coverage
+      description: |
+        Optional but strongly encouraged. This library is contract-driven: a region that no active contract claims is scored by nothing and reported by nothing. If the failing region is not covered, that missing coverage is a separate finding from the defect itself, and it is usually why the defect survived.
+      render: text
+      value: |
+        Governing contract:  <contract_id from benchmark/accuracy_contracts.csv, or none>
+        Threshold:           <as frozen, or N/A>
+        Failing region covered by an active contract?  yes / no / unsure
+        Grid rows in the failing region:               <count, or none>
+
+  - type: checkboxes
+    id: region
+    attributes:
+      label: 📐 Numerical region
+      description: Check any that apply.
+      options:
+        - label: Central distribution body
+        - label: Lower tail
+        - label: Upper tail
+        - label: Probability close to 0
+        - label: Probability close to 1
+        - label: Support boundary
+        - label: Very small parameter
+        - label: Very large parameter
+        - label: Subnormal or denormal argument
+        - label: Overflow or underflow region
+        - label: Parameter-validation boundary
+        - label: Cancellation-prone region
+        - label: Inverse round-trip
+        - label: Moment calculation
+        - label: Error-code classification
+        - label: Performance or apparent non-convergence
+
+  - type: textarea
+    id: surface
+    attributes:
+      label: 🌐 Affected surface
+      description: Optional. Which public functions can reach the defect, and which provably cannot. Naming what is not affected bounds the remediation and gives the reviewer a movement prediction to check against.
+      render: text
+      value: |
+        Reachable from:
+        Provably unaffected:
+        Reason the unaffected paths cannot reach it:
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: 🛠️ Proposed fix
+      description: Optional. Give the replacement expression and the evidence for it, particularly whether it changes results anywhere the current code already works. Do not propose loosening a frozen threshold to accommodate a defect; a breached contract is a regression to investigate first.
+      render: text
+      value: |
+        Proposed change:
+        Measured worst error:
+        Bit-identical to current where current works?  yes / no / partly
+        Expected contract impact:
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📎 Additional context
+      description: Screenshots, formulas, benchmark artifacts or links that help reproduce the issue.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched open and closed issues and did not find an equivalent report.
+          required: true
+        - label: I reproduced this against the exact source identity stated above.
+          required: true
+        - label: This report contains no vulnerability details, secrets, private links, or confidential, personal, client or production data.
+          required: true
