@@ -7,6 +7,8 @@ Milestone: v1.0.0
 
 The live readiness sections below reflect this audit. The backlog-reconciliation log and issue register preserve the dated 2026-08-30 snapshot; GitHub issues are authoritative for later changes.
 
+The documentation branch also incorporates concurrent CI commit `bec5708`, preserving its pinned actions, Dependabot configuration, static workflow and repository tools. The numerical/evidence snapshot below remains dated to `d2e1592`; no new Excel evidence is asserted.
+
 ## Executive decision
 
 v1.0.0 is not release-ready.
@@ -71,7 +73,7 @@ This deliberately accepts a later inverse-evidence wave. Where practical it is c
 ### Live CI state
 
 - Accuracy Gate #233 at `d2e1592` passed, following green runs #231 and #232. The expected-red pre-export waiver is retired.
-- The mandatory verification-depth inventory contains 14 controls. Green portable fixtures do not establish validity of the retained export certificate (#47).
+- The mandatory verification-depth inventory contained 14 controls at `d2e1592`; concurrent commit `bec5708` adds three static repository controls (17 total). Green portable fixtures do not establish validity of the retained export certificate (#47).
 - Excel VBA Regression #133 certified `74041b3` with 909/909 PASS. It is a retained source-bound runtime result, not an Excel run on the audited HEAD.
 - Workflow major upgrades landed in PR #36; #30 is closed.
 - No release can rely on branch rules enforcing required checks until the #31 settings gap is resolved.

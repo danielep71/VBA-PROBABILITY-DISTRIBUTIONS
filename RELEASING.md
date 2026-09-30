@@ -123,6 +123,10 @@ Move relevant entries from **Unreleased** into a dated `[MAJOR.MINOR.PATCH] - YY
 - Do not claim an artifact, platform, or guarantee that was not certified.
 - Keep an empty Unreleased section for future work.
 - Add or verify the comparison link for the new version.
+- Confirm the result with `python3 tools/check_release_semantics.py --root .`,
+  which rejects invalid SemVer, misordered or duplicated releases, impossible
+  or regressing dates, wrong comparison links, and a release heading that
+  disagrees with `VERSION`.
 
 ## 4. Verify documentation and installation
 
@@ -135,7 +139,12 @@ Move relevant entries from **Unreleased** into a dated `[MAJOR.MINOR.PATCH] - YY
 ## 5. Run static gates
 
 - Validate the six-module production manifest and dependency order.
-- Run repository static checks and scan for credentials or generated noise.
+- Require a green **Static checks** workflow
+  ([`.github/workflows/static-checks.yml`](.github/workflows/static-checks.yml))
+  on the exact candidate SHA: committed whitespace, procedure-scoped VBA jumps,
+  release semantics, and workflow validation. The same checks run locally as
+  listed in [`tools/README.md`](tools/README.md).
+- Scan for credentials or generated noise.
 - Confirm accuracy manifests, grids, tolerances, and provenance files are internally consistent.
 
 Capture commands, tool versions, timestamps, and complete results. Rerun affected gates after any change.

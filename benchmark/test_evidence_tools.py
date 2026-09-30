@@ -32,6 +32,9 @@ commands = (
     ("test_source_thresholds.py",),
     ("check_source_thresholds.py",),
     ("holdout/test_analyze_holdout.py",),
+    ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
+    ("../tools/check_vba_jumps.py", "--root", "..", "--self-test"),
+    ("../tools/check_release_semantics.py", "--root", "..", "--self-test"),
     ("test_verification_depth.py",),
     ("check_verification_depth.py",),
 )

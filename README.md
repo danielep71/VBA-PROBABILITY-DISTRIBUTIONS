@@ -385,8 +385,7 @@ Option Explicit
 
 Public Sub Example_PoissonQuantile()
 '
-'==============================================================================
-' Example_PoissonQuantile
+'=======================================================================' Example_PoissonQuantile
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Demonstrates a worksheet-facing probability-distribution call from VBA,
@@ -394,8 +393,7 @@ Public Sub Example_PoissonQuantile()
 '
 ' DEPENDENCIES
 '   - K_STATS_Poisson_InverseCumulative
-'==============================================================================
-'
+'======================================================================='
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -1023,7 +1021,11 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ workflows/
 │  │  ├─ accuracy-gate.yml
 │  │  ├─ excel-vba-regression.yml
-│  │  └─ labels-sync.yml
+│  │  ├─ labels-sync.yml
+│  │  └─ static-checks.yml
+│  ├─ actionlint.yaml
+│  ├─ dependabot.yml
+│  ├─ repository-profile.json
 │  └─ PULL_REQUEST_TEMPLATE.md
 ├─ .gitignore
 ├─ assets/
@@ -1081,6 +1083,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 ├─ INSTALLATION.md
 ├─ RELEASING.md
 ├─ VERSION
+├─ tools/                       # static repository gates, from the portfolio template
 ├─ CODE_OF_CONDUCT.md
 ├─ CONTRIBUTING.md
 ├─ LICENSE

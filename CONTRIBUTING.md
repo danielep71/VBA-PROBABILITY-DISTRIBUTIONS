@@ -100,6 +100,7 @@ the review artifact.
 | `benchmark/` | High-precision external accuracy gate and evidence |
 | `docs/` and wiki | API, architecture, accuracy, and diagnostics |
 | `ci/` | Windows/Excel runner adapter |
+| `tools/` | Static repository checks: committed whitespace, VBA jumps and release semantics |
 | `benchmark/` Python tools | Manifests, error computation, source validation and negative controls |
 
 The README and current tree are authoritative if a listed optional directory is

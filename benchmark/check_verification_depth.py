@@ -153,6 +153,7 @@ def main() -> int:
         "reference-helper-degradation", "generated-contract-table",
         "source-threshold-single-source", "holdout-analyzer-semantics",
         "excel-exact-sha-certification", "grid-regeneration-safety",
+        "committed-whitespace", "vba-procedure-jumps", "release-semantics",
     }
     for cid in sorted(required - seen):
         failures.append(f"required release-blocking control missing from inventory: {cid}")
