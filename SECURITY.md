@@ -296,6 +296,46 @@ Workflow code and configuration are security-sensitive.
 Automation that writes repository content or publishes releases must have
 explicit, least-privilege authorization.
 
+<a id="automation-credentials"></a>
+
+### Repository automation credentials
+
+One workflow uses a credential beyond the per-run workflow token.
+
+| Control | `TRAFFIC_TOKEN` |
+|---|---|
+| Consumer | `.github/workflows/daily-traffic.yml` only |
+| Purpose | Read the GitHub traffic API, which retains data for 14 days, and keep a longer history |
+| Type | Fine-grained personal access token, this repository only |
+| Permission | `Administration: read`, the minimum the traffic API accepts; nothing else |
+| Storage | Secret of the `analytics` environment, not a repository-level secret |
+| Rotation | Every 90 days, and at once on any trigger below |
+| Writes | None. Pushes to `traffic-history` and alert issues use the workflow token |
+
+Rotate the token immediately when:
+
+- `daily-traffic.yml` is changed by anyone other than the maintainer;
+- any other workflow or job declares the `analytics` environment;
+- a workflow log, artifact or issue may have exposed it;
+- the export fails with an authentication error (it may have expired).
+
+**Why it is isolated.** `Administration: read` exposes repository settings, not
+only traffic counts. The traffic job therefore runs no repository code: it
+imports no VBA, runs no tests, accuracy contracts or repository scripts, and
+must never be extended to do so. Static checks, the Accuracy Gate and the Excel
+VBA regression run in separate workflows that never declare `analytics`. An
+environment name is not a workflow-identity boundary, so keep that declaration
+out of every build, test and release job, and review any change that adds it as
+a security change.
+
+**What the public `traffic-history` branch contains.** Daily aggregate views,
+unique views, clones and unique clones; star, fork, watcher and open-issue
+counts; the top referring sites and popular repository paths as GitHub reports
+them; and the shields.io badge files behind the README traffic badges. It
+contains no personal data about individual visitors, no source code and no
+credentials. It is data only: nothing in it is executed, and it is never merged
+into `main`.
+
 ---
 
 <a id="safe-use"></a>
