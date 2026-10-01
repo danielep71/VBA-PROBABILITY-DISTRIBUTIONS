@@ -21,6 +21,9 @@ SHA40 = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 STAGES = ("import", "compile", "regression", "cleanup")
 STAGE_STATUSES = {"PASS", "FAIL", "NOT_RUN", "TIMEOUT"}
+RECORD_KEYS = frozenset({"schema_version", "repository", "candidate_sha", "execution",
+                         "started_at", "finished_at", "runner", "environment", "sources",
+                         "stages", "harness", "log", "grids"})
 
 
 class CertificationError(ValueError):
@@ -85,6 +88,11 @@ def _load_json_bytes(raw, label):
 
 def load_policy(root, ref="HEAD"):
     policy = _load_json_bytes(git_bytes(root, ref, POLICY_PATH), "Excel evidence policy")
+    return validate_policy(policy)
+
+
+def validate_policy(policy):
+    """Schema checks shared by the Git-backed loader and git-free readers."""
     expected = {"schema_version", "repository", "workflow", "entry_point",
                 "expected_assertions", "regression_sources", "grid_exporters"}
     if set(policy) != expected:
@@ -307,10 +315,7 @@ def validate_record(record, root, *, policy_ref="HEAD", evidence_ref=None,
                     expected_candidate_sha=None, require_pass=False,
                     require_grid=None, log_directory=None):
     policy = load_policy(root, policy_ref)
-    expected = {"schema_version", "repository", "candidate_sha", "execution",
-                "started_at", "finished_at", "runner", "environment", "sources",
-                "stages", "harness", "log", "grids"}
-    _require_keys(record, expected, "Excel certification record")
+    _require_keys(record, RECORD_KEYS, "Excel certification record")
     if record["schema_version"] != 1:
         raise CertificationError("unsupported Excel certification schema")
     if record["repository"] != policy["repository"]:

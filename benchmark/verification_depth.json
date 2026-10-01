@@ -24,6 +24,13 @@
       "current_state": "green"
     },
     {
+      "id": "root-readme-assurance",
+      "live_command": "render_readme_assurance.py --check",
+      "proof_command": "test_render_readme_assurance.py",
+      "negative_claim": "hand-edited assurance figures, stale Excel, main-grid or holdout evidence, missing or malformed inputs, contradictory tallies, and a readiness registry that drops #34 or #35 or claims certification with open blockers are rejected",
+      "current_state": "green"
+    },
+    {
       "id": "incomplete-gamma-parity",
       "live_command": "test_igamma_parity.py",
       "proof_command": "test_drift_guard_mutations.py",

@@ -57,6 +57,8 @@ REGENERATE = [
     ("main-grid coverage summary", HERE, ["check_grid_coverage.py"]),
     ("benchmark README contract table", HERE, ["render_contract_table.py", "--write"]),
     ("independent holdout summary", HOLDOUT, ["analyze_holdout.py"]),
+    # Last: the root README block is rendered from every summary above (#28).
+    ("root README assurance block", HERE, ["render_readme_assurance.py", "--write"]),
 ]
 
 MAIN_BINDING = (
@@ -85,6 +87,7 @@ VERIFY = [
     # not read-only. Under --check the summary is restored afterwards, keeping
     # that mode honest about changing nothing.
     ("independent holdout", HOLDOUT, ["analyze_holdout.py"]),
+    ("root README assurance block", HERE, ["render_readme_assurance.py", "--check"]),
 ]
 
 HOLDOUT_SUMMARY = "benchmark/holdout/holdout_summary.md"
@@ -95,6 +98,7 @@ ARTIFACTS = [
     "benchmark/README.md",
     "benchmark/observation_manifest.json",
     "benchmark/holdout/holdout_summary.md",
+    "README.md",
 ]
 
 
@@ -113,7 +117,7 @@ def git(*args):
     does not put it on PATH, which is the supported setup here. write_manifest.py
     reads .git directly for exactly this reason. Every git call in this script is
     therefore a convenience - it names which artifacts changed - and the
-    regeneration and all seven checks work without it.
+    regeneration and all eight checks work without it.
     """
     try:
         proc = subprocess.run(["git"] + list(args), cwd=ROOT,
