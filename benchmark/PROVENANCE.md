@@ -196,8 +196,12 @@ The manifests bind committed observation bytes to source. Separately, `excel-cer
 The root README's evidence badges, its "Assurance at a glance" table and its
 evidence-state list are three generated regions. `render_readme_assurance.py`
 builds one data model from committed records and renders all three from it, so a
-badge and the table cannot disagree. It reads no GitHub state and needs no git,
-so the render is reproducible offline.
+badge and the table cannot disagree. It reads no GitHub state and remains
+reproducible offline, but requires local Git history containing the retained
+Excel candidate. The canonical certification validator checks that candidate's
+existence and exact source blobs before rendering; an all-PASS record also
+requires observed Excel version, build and Office bitness. Missing history or
+an invalid evidence claim fails without changing the README.
 
 | Figure | Authority | Cross-checks |
 | --- | --- | --- |

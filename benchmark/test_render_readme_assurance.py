@@ -15,6 +15,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 
 import render_readme_assurance as R
@@ -32,6 +33,10 @@ def check(cond, msg):
 
 def fixture():
     root = tempfile.mkdtemp(prefix="readme-assurance-")
+    # Retain real candidate objects without copying/mutating the source repo.
+    # No checkout: the private working inputs are copied explicitly below.
+    subprocess.run(["git", "clone", "--shared", "--no-checkout", REAL_ROOT, root],
+                   check=True, capture_output=True)
     paths = list(R.INPUTS)
     for pattern in BAS_PATTERNS:
         paths += [os.path.relpath(p, REAL_ROOT).replace(os.sep, "/")
@@ -144,6 +149,60 @@ finally:
     shutil.rmtree(root)
 
 # 5. Missing and malformed inputs fail closed.
+def retarget_candidate(root, candidate):
+    def change(record):
+        record["candidate_sha"] = candidate
+        record["runner"]["workflow"]["sha"] = candidate
+    edit_json(root, R.EXCEL_RECORD, change)
+
+
+expect_failure("nonexistent candidate with matching workflow SHA",
+               lambda r: retarget_candidate(r, "0" * 40), "excel_regression_record.json")
+expect_failure("missing candidate history",
+               lambda r: shutil.rmtree(path(r, ".git")), "excel_regression_record.json")
+expect_failure("source digest inconsistent with candidate",
+               lambda r: edit_json(r, R.EXCEL_RECORD,
+                                   lambda d: d["sources"][0].update(sha256="sha256:" + "0" * 64)),
+               "source digest")
+
+
+def unrelated_candidate(root):
+    subprocess.run(["git", "read-tree", "HEAD"], cwd=root, check=True, capture_output=True)
+    source = "src/M_STATS_PROBDIST_CORE.bas"
+    edit(root, source, "Option Explicit", "Option Explicit\n' unrelated candidate")
+    subprocess.run(["git", "add", source], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                    "commit", "-qm", "Unrelated candidate"],
+                   cwd=root, check=True, capture_output=True)
+    candidate = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root,
+                                        text=True).strip()
+    retarget_candidate(root, candidate)
+
+
+expect_failure("existing but unrelated candidate", unrelated_candidate, "source digest")
+for field in ("excel_version", "excel_build", "office_bitness"):
+    expect_failure(f"PASS stages with unavailable {field}",
+                   lambda r, field=field: edit_json(r, R.EXCEL_RECORD,
+                       lambda d: d["environment"].update({field: "unavailable"})),
+                   "green evidence requires observed")
+
+expect_failure("uncommitted policy drift",
+               lambda r: edit_json(r, R.POLICY, lambda d: d.update(expected_assertions=910)),
+               "policy differs from committed HEAD")
+
+# Failed sessions may truthfully retain unavailable environment fields, but
+# they must never become green evidence. The canonical schema still applies.
+root = fixture()
+try:
+    edit_json(root, R.EXCEL_RECORD,
+              lambda d: d["stages"]["cleanup"].update(status="FAIL"))
+    edit_json(root, R.EXCEL_RECORD,
+              lambda d: d["environment"].update(office_bitness="unavailable"))
+    check(R.excel_facts(root)["green"] is False,
+          "failed session with unavailable environment stays non-green")
+finally:
+    shutil.rmtree(root)
+
 expect_failure("missing Excel record",
                lambda r: os.remove(path(r, R.EXCEL_RECORD)), "required input missing")
 expect_failure("missing readiness registry",
