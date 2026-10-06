@@ -581,7 +581,7 @@ GO requires every item:
 - [ ] a retained self-hosted Excel workflow artifact exists for the exact release commit;
 - [ ] main grid and independent holdouts were exported from the same release source;
 - [ ] both export claims validate against committed grid bytes (#47), with retained logs and holdout certification (#29);
-- [ ] required PR, status-check and conversation-resolution policy is configured and verified (#31);
+- [ ] required PR and status-check policy is configured and verified (#31); all actionable release-review findings are resolved or explicitly dispositioned with evidence;
 - [ ] zero FAIL and zero PENDING;
 - [ ] zero missing main-grid dispositions;
 - [ ] the temporary #22 coverage-debt fingerprint has been deleted and strict mode is authoritative;
@@ -593,7 +593,11 @@ GO requires every item:
 - [ ] clean import/example smoke test passes;
 - [ ] annotated v1.0.0 tag and GitHub Release verified.
 
-Any unchecked item means NO-GO.
+Any unchecked item means NO-GO. GitHub's automatic conversation-resolution
+requirement is not enabled in the verified ruleset and is not an additional
+release gate. The review-finding disposition above is a maintainer obligation;
+an unresolved actionable finding cannot be waived merely because GitHub allows
+the conversation to remain open.
 
 ## Complete v1.0.0 milestone issue register
 
