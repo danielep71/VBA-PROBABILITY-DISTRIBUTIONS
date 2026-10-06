@@ -14,7 +14,7 @@ Every inventoried control records:
 
 `benchmark/check_verification_depth.py` fails when an entry is incomplete, duplicated, references a missing script, uses an unknown state, disappears from the mandatory v1.0.0 set, or names a proof that is not executed by `benchmark/test_evidence_tools.py`.
 
-The proof shim runs before `compute_errors.py`. This ordering is contractual. The former expected-red pre-export waiver is retired: the numerical gate is now green. Proofs still run first so a numerical or provenance failure cannot skip tests that the evaluators and guards reject controlled violations. At `bec5708`, the inventory contains 17 controls, including grid-regeneration safety, exact-SHA Excel certification, and the three static repository checks added during this audit.
+The proof shim runs before `compute_errors.py`. This ordering is contractual. The former expected-red pre-export waiver is retired: the numerical gate is now green. Proofs still run first so a numerical or provenance failure cannot skip tests that the evaluators and guards reject controlled violations. At `bec5708`, the inventory contains 17 controls, including grid-regeneration safety, exact-SHA Excel certification, and the three static repository checks added during this audit. The root README assurance renderer (#28) is the 18th: its live command `render_readme_assurance.py --check` runs last in the Accuracy Gate, and `test_render_readme_assurance.py` runs in the proof shim.
 
 ## Positive path versus negative path
 

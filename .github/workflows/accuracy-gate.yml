@@ -159,3 +159,14 @@ jobs:
         run: |
           python analyze_holdout.py
           git diff --exit-code holdout_summary.md
+
+      - name: "Verify the root README assurance block matches committed evidence (#28)"
+        # Runs last, after every summary it reads has been regenerated and
+        # diffed above. The badges, the "Assurance at a glance" table and the
+        # evidence-state list are rendered from committed records only; any
+        # hand edit, a stale Excel record or binding, or an input that
+        # contradicts another fails here. Incomplete certification must be
+        # owned by an open blocker in release_readiness.json.
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        working-directory: benchmark
+        run: python render_readme_assurance.py --check

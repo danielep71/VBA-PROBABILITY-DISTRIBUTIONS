@@ -145,6 +145,7 @@ def main() -> int:
     # an explicit policy change, not an accidental edit that makes the matrix green.
     required = {
         "contract-evaluator", "main-grid-coverage", "root-readme-integrity",
+        "root-readme-assurance",
         "incomplete-gamma-parity", "student-t-coefficient-integrity",
         "public-api-drift", "manifest-content-binding", "manifest-provenance",
         "reference-helper-degradation", "generated-contract-table",
