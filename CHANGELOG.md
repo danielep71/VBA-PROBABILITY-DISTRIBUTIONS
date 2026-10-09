@@ -142,6 +142,9 @@ Use only the categories needed by a release.
 
 ### Fixed
 
+- Clarified that the MPL exemption for independently written files does not
+  extend to new files containing copied or adapted MPL-covered code (#63).
+
 - Fixed `generate_reference_values.py` overwriting the committed grid by default. Run as previously documented, it replaced the 2,088-row `probability_accuracy_grid.csv` with 1,404 generator rows, deleting 706 rows and blanking every Excel observation. It is now report-only by default; `--out` writes reference rows only to a non-authoritative file and refuses the committed main or holdout grid and any file that already carries observations (#17).
 - Fixed the `migrate_references.py` write check, which compared only the number of filled observations and so could not detect one observation replaced by another. It now asserts every observation value, row key and row order (#17).
 
