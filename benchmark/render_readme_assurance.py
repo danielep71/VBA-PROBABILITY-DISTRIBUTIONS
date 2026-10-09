@@ -3,8 +3,9 @@
 Single source of truth: every figure in the three generated regions of the root
 README - the evidence badges, the "Assurance at a glance" table and the
 evidence-state list - comes from one data model built here from committed,
-machine-readable authorities. Nothing is scraped from GitHub, nothing depends on
-git, and no value falls back to a previous figure or to zero.
+machine-readable authorities. Nothing is scraped from GitHub and no value falls
+back to a previous figure or to zero. Git on PATH and local history are required to validate
+the retained Excel candidate and its exact source bytes; rendering stays offline.
 
     python render_readme_assurance.py --write   regenerate the three regions
     python render_readme_assurance.py --check   fail if README.md differs from
@@ -35,11 +36,8 @@ from datetime import date
 
 from _manifest import normalized_hash, verify_holdout_binding, verify_source_binding
 from check_grid_coverage import _load_json, evaluate_paths, validate_strict, validate_transition
-from excel_certification import (RECORD_KEYS, SHA40, CertificationError, _require_keys,
-                                 _required_sources, _source_map, _timestamp,
-                                 _validate_environment, _validate_grids, _validate_harness,
-                                 _validate_log, _validate_runner, _validate_stages,
-                                 row_count_file, validate_policy)
+from excel_certification import (CertificationError, _source_map, _timestamp,
+                                 row_count_file, validate_record)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -299,35 +297,23 @@ def holdout_facts(root, contracts):
 
 
 def excel_facts(root):
-    """Git-free reading of the retained Excel record (validation shared with
-    excel_certification.py). Freshness compares LF-normalized working-tree
-    content with the certified digests, as the manifests do."""
+    """Validate the retained record against its actual candidate, then assess
+    working-tree freshness separately. A changed checkout can be rendered STALE;
+    an invalid candidate/source claim must never be rendered as evidence."""
     policy = _read_json(root, POLICY)
     record = _read_json(root, EXCEL_RECORD)
     try:
-        validate_policy(policy)
-        _require_keys(record, RECORD_KEYS, "Excel certification record")
-        if record["schema_version"] != 1:
-            raise CertificationError("unsupported Excel certification schema")
-        if record["repository"] != policy["repository"]:
-            raise CertificationError("record repository differs from policy")
-        if not isinstance(record["candidate_sha"], str) or not SHA40.fullmatch(record["candidate_sha"]):
-            raise CertificationError("candidate_sha must be a full lowercase Git SHA")
-        if record["execution"] not in ("automated", "manual"):
-            raise CertificationError("execution must be automated or manual")
-        started = _timestamp(record["started_at"], "started_at")
+        # Canonical validation checks candidate existence and raw source blobs,
+        # not just the shape of the SHA/digests or their working-tree matches.
+        committed_policy = validate_record(record, root)
+        if policy != committed_policy:
+            raise CertificationError("Excel evidence policy differs from committed HEAD")
+        green = all(stage["status"] == "PASS" for stage in record["stages"].values())
+        if green:
+            # PASS stages alone cannot certify an unobserved Excel environment.
+            validate_record(record, root, require_pass=True)
         finished = _timestamp(record["finished_at"], "finished_at")
-        if finished < started:
-            raise CertificationError("finished_at precedes started_at")
-        _validate_runner(record, policy)
-        _validate_environment(record["environment"], require_green=False)
-        _validate_stages(record, require_pass=False)
-        _validate_harness(record, policy)
-        _validate_log(record, None)
-        _validate_grids(record, policy, root, None, None)
         sources = _source_map(record)
-        if sorted(sources) != _required_sources(policy, record):
-            raise CertificationError("certified source inventory differs from policy")
     except CertificationError as exc:
         raise AssuranceError(f"{EXCEL_RECORD}: {exc}")
 
@@ -353,7 +339,7 @@ def excel_facts(root):
         "candidate": record["candidate_sha"][:7],
         "passed": harness["passed"],
         "assertions": harness["assertions"],
-        "green": all(stage["status"] == "PASS" for stage in record["stages"].values()),
+        "green": green,
         "excel": f"Excel {environment['excel_version']} build {environment['excel_build']}, "
                  f"{environment['office_bitness']}",
         "finished": finished.date().isoformat(),

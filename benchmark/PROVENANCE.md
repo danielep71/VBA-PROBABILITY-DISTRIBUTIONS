@@ -15,6 +15,17 @@ therefore keeps **two complementary evidence layers**:
 
 Neither layer substitutes for the other.
 
+## Local tooling prerequisites
+
+Evidence refresh, the README assurance renderer and exact-SHA certification
+require **Git on PATH and a checkout with complete history**. GitHub Desktop
+alone does not normally put its bundled Git on PATH: add that Git executable's
+directory to PATH or install Git separately before running these tools. A ZIP
+source download is not enough to validate historical candidate blobs. The VBA
+library itself does not require Git. Refresh checks the Git prerequisite before
+writing any summary or manifest; an unavailable executable is a blocking error,
+not permission to skip provenance validation.
+
 ## Exact-SHA Excel certification
 
 `.github/excel-evidence-policy.json` defines the regression entry point, exact
@@ -196,8 +207,12 @@ The manifests bind committed observation bytes to source. Separately, `excel-cer
 The root README's evidence badges, its "Assurance at a glance" table and its
 evidence-state list are three generated regions. `render_readme_assurance.py`
 builds one data model from committed records and renders all three from it, so a
-badge and the table cannot disagree. It reads no GitHub state and needs no git,
-so the render is reproducible offline.
+badge and the table cannot disagree. It reads no GitHub state and remains
+reproducible offline, but requires local Git history containing the retained
+Excel candidate. The canonical certification validator checks that candidate's
+existence and exact source blobs before rendering; an all-PASS record also
+requires observed Excel version, build and Office bitness. Missing history or
+an invalid evidence claim fails without changing the README.
 
 | Figure | Authority | Cross-checks |
 | --- | --- | --- |

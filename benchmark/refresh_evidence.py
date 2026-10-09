@@ -23,6 +23,10 @@ WHAT IT DOES NOT DO
     old measurements as belonging to new code.
 
 USAGE
+    Requires Git on PATH and a checkout with complete history. GitHub Desktop
+    users must add its bundled Git to PATH or install Git separately. Git is
+    not needed to use the VBA library; it is needed to validate its evidence.
+
     python refresh_evidence.py            regenerate, then verify
     python refresh_evidence.py --check    verify only, change nothing
     python refresh_evidence.py            regenerate SUMMARIES only; writes
@@ -37,6 +41,9 @@ USAGE
 import os
 import subprocess
 import sys
+
+from excel_certification import CertificationError, git_text
+from render_readme_assurance import AssuranceError, excel_facts
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -113,11 +120,9 @@ def git(*args):
     """
     Run git, or report politely that it is unavailable.
 
-    git is NOT required by this project: GitHub Desktop bundles its own copy and
-    does not put it on PATH, which is the supported setup here. write_manifest.py
-    reads .git directly for exactly this reason. Every git call in this script is
-    therefore a convenience - it names which artifacts changed - and the
-    regeneration and all eight checks work without it.
+    These status/diff calls provide convenience output only. Evidence validation
+    separately requires Git on PATH and local history, checked before any writes
+    in main(). GitHub Desktop's bundled Git is usable when added to PATH.
     """
     try:
         proc = subprocess.run(["git"] + list(args), cwd=ROOT,
@@ -160,6 +165,17 @@ def main():
     if unknown or (check_only and (bind_main or bind_exported_holdout)):
         raise SystemExit("usage: refresh_evidence.py [--check | "
                          "--bind-exported-main] [--bind-exported-holdout]")
+    # Do not regenerate summaries or bind manifests and only then discover
+    # that the mandatory Git-backed verification cannot run.
+    try:
+        # HEAD alone can exist in a depth-1 checkout while historical candidates
+        # and the provenance guard's negative-control commits are unavailable.
+        if git_text(ROOT, "rev-parse", "--is-shallow-repository").strip() != "false":
+            raise CertificationError("complete Git history is required; fetch --unshallow first")
+        excel_facts(ROOT)
+    except (CertificationError, AssuranceError) as exc:
+        print(f"FAIL: evidence refresh prerequisite: {exc}")
+        raise SystemExit(1)
     saved = None
     if check_only:
         path = os.path.join(ROOT, HOLDOUT_SUMMARY)
