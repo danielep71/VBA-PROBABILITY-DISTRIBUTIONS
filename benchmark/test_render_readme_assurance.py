@@ -14,7 +14,10 @@ import glob
 import io
 import json
 import os
+from pathlib import Path
 import shutil
+import subprocess
+import sys
 import tempfile
 
 import render_readme_assurance as R
@@ -32,6 +35,10 @@ def check(cond, msg):
 
 def fixture():
     root = tempfile.mkdtemp(prefix="readme-assurance-")
+    # Retain real candidate objects without copying/mutating the source repo.
+    # No checkout: the private working inputs are copied explicitly below.
+    subprocess.run(["git", "clone", "--shared", "--no-checkout", REAL_ROOT, root],
+                   check=True, capture_output=True)
     paths = list(R.INPUTS)
     for pattern in BAS_PATTERNS:
         paths += [os.path.relpath(p, REAL_ROOT).replace(os.sep, "/")
@@ -144,8 +151,85 @@ finally:
     shutil.rmtree(root)
 
 # 5. Missing and malformed inputs fail closed.
+def retarget_candidate(root, candidate):
+    def change(record):
+        record["candidate_sha"] = candidate
+        record["runner"]["workflow"]["sha"] = candidate
+    edit_json(root, R.EXCEL_RECORD, change)
+
+
+expect_failure("nonexistent candidate with matching workflow SHA",
+               lambda r: retarget_candidate(r, "0" * 40), "excel_regression_record.json")
+expect_failure("missing candidate history",
+               lambda r: shutil.rmtree(path(r, ".git")), "excel_regression_record.json")
+expect_failure("source digest inconsistent with candidate",
+               lambda r: edit_json(r, R.EXCEL_RECORD,
+                                   lambda d: d["sources"][0].update(sha256="sha256:" + "0" * 64)),
+               "source digest")
+
+
+def unrelated_candidate(root):
+    subprocess.run(["git", "read-tree", "HEAD"], cwd=root, check=True, capture_output=True)
+    source = "src/M_STATS_PROBDIST_CORE.bas"
+    edit(root, source, "Option Explicit", "Option Explicit\n' unrelated candidate")
+    subprocess.run(["git", "add", source], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                    "commit", "-qm", "Unrelated candidate"],
+                   cwd=root, check=True, capture_output=True)
+    candidate = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root,
+                                        text=True).strip()
+    retarget_candidate(root, candidate)
+
+
+expect_failure("existing but unrelated candidate", unrelated_candidate, "source digest")
+for field in ("excel_version", "excel_build", "office_bitness"):
+    expect_failure(f"PASS stages with unavailable {field}",
+                   lambda r, field=field: edit_json(r, R.EXCEL_RECORD,
+                       lambda d: d["environment"].update({field: "unavailable"})),
+                   "green evidence requires observed")
+
+expect_failure("uncommitted policy drift",
+               lambda r: edit_json(r, R.POLICY, lambda d: d.update(expected_assertions=910)),
+               "policy differs from committed HEAD")
+
+# Failed sessions may truthfully retain unavailable environment fields, but
+# they must never become green evidence. The canonical schema still applies.
+root = fixture()
+try:
+    edit_json(root, R.EXCEL_RECORD,
+              lambda d: d["stages"]["cleanup"].update(status="FAIL"))
+    edit_json(root, R.EXCEL_RECORD,
+              lambda d: d["environment"].update(office_bitness="unavailable"))
+    check(R.excel_facts(root)["green"] is False,
+          "failed session with unavailable environment stays non-green")
+finally:
+    shutil.rmtree(root)
+
 expect_failure("missing Excel record",
                lambda r: os.remove(path(r, R.EXCEL_RECORD)), "required input missing")
+
+# A supported prerequisite failure must be a clean error before any mutation,
+# including the binding modes. Use real entry points with an empty PATH rather
+# than mocking away the executable lookup that caused the review finding.
+before_inputs = {rel: read(REAL_ROOT, rel) for rel in R.INPUTS}
+with tempfile.TemporaryDirectory(prefix="no-git-path-") as empty_path:
+    env = dict(os.environ, PATH=empty_path)
+    for script, args in (
+        ("render_readme_assurance.py", ["--write"]),
+        ("render_readme_assurance.py", ["--check"]),
+        ("refresh_evidence.py", []),
+        ("refresh_evidence.py", ["--check"]),
+        ("refresh_evidence.py", ["--bind-exported-main", "--bind-exported-holdout"]),
+    ):
+        proc = subprocess.run([sys.executable, os.path.join(R.HERE, script)] + args,
+                              cwd=REAL_ROOT, env=env, capture_output=True, text=True)
+        output = proc.stdout + proc.stderr
+        check(proc.returncode == 1, f"{script} {args}: missing Git exits 1")
+        check("requires Git on PATH" in output, f"{script} {args}: actionable prerequisite")
+        check("Traceback" not in output, f"{script} {args}: no uncaught exception")
+        check("Regenerating" not in output, f"{script} {args}: no regeneration attempted")
+        check(all(read(REAL_ROOT, rel) == text for rel, text in before_inputs.items()),
+              f"{script} {args}: all evidence inputs remain unchanged")
 expect_failure("missing readiness registry",
                lambda r: os.remove(path(r, R.READINESS)), "required input missing")
 expect_failure("malformed Excel record",
@@ -170,6 +254,46 @@ expect_failure("README markers missing",
                "expected exactly one 'evidence state' region")
 
 # 6. Contradictory inputs fail closed.
+
+# HEAD existing is not sufficient. A real shallow checkout must be rejected
+# before refresh rewrites even one artifact, in ordinary and binding modes.
+with tempfile.TemporaryDirectory(prefix="shallow-refresh-") as shallow:
+    subprocess.run(["git", "clone", "--depth=1", Path(REAL_ROOT).as_uri(), shallow],
+                   check=True, capture_output=True)
+    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py"):
+        shutil.copyfile(os.path.join(R.HERE, script), path(shallow, "benchmark/" + script))
+    before = {rel: read(shallow, rel) for rel in R.INPUTS}
+    for args in ([], ["--check"], ["--bind-exported-main", "--bind-exported-holdout"]):
+        proc = subprocess.run([sys.executable, path(shallow, "benchmark/refresh_evidence.py")] + args,
+                              cwd=shallow, capture_output=True, text=True)
+        output = proc.stdout + proc.stderr
+        check(proc.returncode == 1 and "complete Git history is required" in output,
+              f"shallow refresh {args}: fails its history preflight")
+        check("Traceback" not in output and "Regenerating" not in output,
+              f"shallow refresh {args}: stops cleanly before writes")
+        check(all(read(shallow, rel) == text for rel, text in before.items()),
+              f"shallow refresh {args}: all evidence inputs unchanged")
+
+# Complete history alone is not sufficient either: validate the retained
+# candidate before regeneration, independently of the shallow-repository guard.
+with tempfile.TemporaryDirectory(prefix="invalid-candidate-refresh-") as invalid:
+    subprocess.run(["git", "clone", "--shared", REAL_ROOT, invalid],
+                   check=True, capture_output=True)
+    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py"):
+        shutil.copyfile(os.path.join(R.HERE, script), path(invalid, "benchmark/" + script))
+    retarget_candidate(invalid, "0" * 40)
+    before = {rel: read(invalid, rel) for rel in R.INPUTS}
+    for args in ([], ["--check"], ["--bind-exported-main", "--bind-exported-holdout"]):
+        proc = subprocess.run([sys.executable, path(invalid, "benchmark/refresh_evidence.py")] + args,
+                              cwd=invalid, capture_output=True, text=True)
+        output = proc.stdout + proc.stderr
+        check(proc.returncode == 1 and "evidence refresh prerequisite" in output,
+              f"invalid candidate refresh {args}: fails candidate preflight")
+        check("Traceback" not in output and "Regenerating" not in output,
+              f"invalid candidate refresh {args}: stops cleanly before writes")
+        check(all(read(invalid, rel) == text for rel, text in before.items()),
+              f"invalid candidate refresh {args}: all evidence inputs unchanged")
+
 expect_failure("verdict tally contradicts table",
                lambda r: edit(r, R.SUMMARY, "FAIL: 0, KNOWN", "FAIL: 1, KNOWN"),
                "tally states FAIL")
