@@ -144,6 +144,9 @@ Use only the categories needed by a release.
 
 ### Fixed
 
+- Clarified that the MPL exemption for independently written files does not
+  extend to new files containing copied or adapted MPL-covered code (#63).
+
 - Evidence refresh checks its Git prerequisite before any writes and reports
   an actionable error when Git cannot run. Git on PATH and full local history
   are now explicit evidence-tool prerequisites, including for Desktop users.

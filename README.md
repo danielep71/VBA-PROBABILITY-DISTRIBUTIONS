@@ -1595,7 +1595,7 @@ When reproducibility matters, cite the release tag or full commit SHA used.
 
 Released under the [Mozilla Public License 2.0](LICENSE) (MPL-2.0). Copyright © 2026 Daniele Penza.
 
-MPL 2.0 is a file-level copyleft licence. You may use the library in any workbook, add-in or larger work, including proprietary and commercial ones, under terms of your choice. If you distribute a modified version of a file from this repository, that file must remain under MPL 2.0 and its source must be made available. Files you write yourself are not affected.
+MPL 2.0 is a file-level copyleft license. You may use the library in any workbook, add-in or larger work, including proprietary and commercial ones, provided you comply with MPL 2.0 for the covered code. If you distribute a modified covered file, its source must remain available under MPL 2.0. A new file containing copied or adapted MPL-covered code is also covered; independently written files containing no MPL-covered code may use other terms. See [MPL 2.0 §§1.10 and 3.1–3.3](https://www.mozilla.org/en-US/MPL/2.0/).
 
 The licence applies to every file in this repository, including the VBA modules, which do not carry individual headers. This section is the Exhibit A notice for all of them:
 
