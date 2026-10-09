@@ -144,6 +144,16 @@ Use only the categories needed by a release.
 
 ### Fixed
 
+- Evidence refresh checks its Git prerequisite before any writes and reports
+  an actionable error when Git cannot run. Git on PATH and full local history
+  are now explicit evidence-tool prerequisites, including for Desktop users.
+
+- README assurance rendering now validates the retained Excel candidate and
+  exact source blobs with the canonical certification validator, and rejects
+  all-PASS records without an observed Excel version, build or Office bitness.
+  Negative fixtures cover both review findings from #60; local Git history is
+  required, with no network access during rendering.
+
 - Fixed `generate_reference_values.py` overwriting the committed grid by default. Run as previously documented, it replaced the 2,088-row `probability_accuracy_grid.csv` with 1,404 generator rows, deleting 706 rows and blanking every Excel observation. It is now report-only by default; `--out` writes reference rows only to a non-authoritative file and refuses the committed main or holdout grid and any file that already carries observations (#17).
 - Fixed the `migrate_references.py` write check, which compared only the number of filled observations and so could not detect one observation replaced by another. It now asserts every observation value, row key and row order (#17).
 
@@ -170,4 +180,3 @@ Use only the categories needed by a release.
   changes made before this changelog was introduced.
 
 ---
-
