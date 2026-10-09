@@ -4,7 +4,7 @@
 [![Versioning: SemVer](https://img.shields.io/badge/versioning-SemVer-3f4551)](#versioning)
 [![Evidence: required](https://img.shields.io/badge/evidence-required-success)](#evidence-record)
 [![Security policy](https://img.shields.io/badge/security-policy-success)](SECURITY.md)
-[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![License: MPL 2.0](https://img.shields.io/badge/license-MPL_2.0-yellow.svg)](LICENSE)
 
 This maintainer guide turns a reviewed commit into a traceable VBA Probability Distributions release. Source identity, validation, packaging, provenance, and publication must describe the same candidate.
 
@@ -22,7 +22,7 @@ This maintainer guide turns a reviewed commit into a traceable VBA Probability D
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 | Installation contract | [INSTALLATION.md](INSTALLATION.md) |
 | Vulnerability handling | [SECURITY.md](SECURITY.md) |
-| License | [MIT](LICENSE) |
+| License | [MPL 2.0](LICENSE) |
 
 <a id="release-invariants"></a>
 ## 🔒 Release invariants
@@ -361,7 +361,7 @@ Do not silently replace assets or move the tag.
 - [CHANGELOG.md](CHANGELOG.md) — release history
 - [SECURITY.md](SECURITY.md) — supported versions and private reporting
 - [VERSION](VERSION) — authoritative version
-- [LICENSE](LICENSE) — MIT license
+- [LICENSE](LICENSE) — Mozilla Public License 2.0
 
 ---
 

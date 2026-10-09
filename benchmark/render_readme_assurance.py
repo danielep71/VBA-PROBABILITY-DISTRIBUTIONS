@@ -4,7 +4,7 @@ Single source of truth: every figure in the three generated regions of the root
 README - the evidence badges, the "Assurance at a glance" table and the
 evidence-state list - comes from one data model built here from committed,
 machine-readable authorities. Nothing is scraped from GitHub and no value falls
-back to a previous figure or to zero. Local Git history is required to validate
+back to a previous figure or to zero. Git on PATH and local history are required to validate
 the retained Excel candidate and its exact source bytes; rendering stays offline.
 
     python render_readme_assurance.py --write   regenerate the three regions

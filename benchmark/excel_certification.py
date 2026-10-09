@@ -31,8 +31,14 @@ class CertificationError(ValueError):
 
 
 def _run_git(root, *args):
-    return subprocess.run(["git"] + list(args), cwd=root, capture_output=True,
-                          check=False)
+    try:
+        return subprocess.run(["git"] + list(args), cwd=root, capture_output=True,
+                              check=False)
+    except OSError as exc:
+        raise CertificationError(
+            "Git could not be executed. Evidence validation requires Git on PATH "
+            "and a checkout with complete history. Install Git or add GitHub "
+            "Desktop's bundled Git to PATH, then retry.") from exc
 
 
 def git_text(root, *args):

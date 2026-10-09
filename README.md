@@ -1593,7 +1593,15 @@ When reproducibility matters, cite the release tag or full commit SHA used.
 
 # 📄 License
 
-Released under the [MIT License](LICENSE).
+Released under the [Mozilla Public License 2.0](LICENSE) (MPL-2.0). Copyright © 2026 Daniele Penza.
+
+MPL 2.0 is a file-level copyleft licence. You may use the library in any workbook, add-in or larger work, including proprietary and commercial ones, under terms of your choice. If you distribute a modified version of a file from this repository, that file must remain under MPL 2.0 and its source must be made available. Files you write yourself are not affected.
+
+The licence applies to every file in this repository, including the VBA modules, which do not carry individual headers. This section is the Exhibit A notice for all of them:
+
+> This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+Earlier revisions of this repository were published under the MIT License. Copies obtained under those terms keep them.
 
 You may use, modify, and distribute the software subject to the terms of the license. Numerical software should always be independently validated for its intended use, especially in regulated, financial, actuarial, engineering, or safety-critical contexts.
 

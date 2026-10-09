@@ -15,6 +15,17 @@ therefore keeps **two complementary evidence layers**:
 
 Neither layer substitutes for the other.
 
+## Local tooling prerequisites
+
+Evidence refresh, the README assurance renderer and exact-SHA certification
+require **Git on PATH and a checkout with complete history**. GitHub Desktop
+alone does not normally put its bundled Git on PATH: add that Git executable's
+directory to PATH or install Git separately before running these tools. A ZIP
+source download is not enough to validate historical candidate blobs. The VBA
+library itself does not require Git. Refresh checks the Git prerequisite before
+writing any summary or manifest; an unavailable executable is a blocking error,
+not permission to skip provenance validation.
+
 ## Exact-SHA Excel certification
 
 `.github/excel-evidence-policy.json` defines the regression entry point, exact

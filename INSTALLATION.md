@@ -8,7 +8,7 @@
 [![Validation](https://img.shields.io/badge/Validation-Required-d97706?style=flat-square)](#validation)
 [![Security](https://img.shields.io/badge/Security-Review_before_enabling-d73a49?style=flat-square)](SECURITY.md)
 [![Version](https://img.shields.io/badge/Version-VERSION_file-6f42c1?style=flat-square)](VERSION)
-[![License](https://img.shields.io/badge/License-MIT-217346?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-MPL_2.0-217346?style=flat-square)](LICENSE)
 
 <br>
 
@@ -41,7 +41,7 @@ The retained runtime evidence covers 64-bit Office. Do not infer a certified 32-
 | Office bitness | Use only environments actually validated by the release |
 | Version identity | Root `VERSION` file and the selected tag/commit |
 | Source policy | Exported repository source is authoritative |
-| Licence | MIT |
+| Licence | Mozilla Public License 2.0 (MPL-2.0) |
 | Current deployment status | Source-first numerical library; no external numerical runtime is required for normal use. |
 
 Compatibility claims apply only to environments actually certified for the
@@ -248,7 +248,7 @@ owns and document anything intentionally retained.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — source and validation standards
 - [RELEASING.md](RELEASING.md) — maintainer release and provenance procedure
 - [SECURITY.md](SECURITY.md) — private vulnerability reporting
-- [LICENSE](LICENSE) — MIT licence terms
+- [LICENSE](LICENSE) — Mozilla Public License 2.0 terms
 
 ---
 

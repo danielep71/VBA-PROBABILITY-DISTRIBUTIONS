@@ -16,6 +16,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
 import render_readme_assurance as R
@@ -205,6 +206,29 @@ finally:
 
 expect_failure("missing Excel record",
                lambda r: os.remove(path(r, R.EXCEL_RECORD)), "required input missing")
+
+# A supported prerequisite failure must be a clean error before any mutation,
+# including the binding modes. Use real entry points with an empty PATH rather
+# than mocking away the executable lookup that caused the review finding.
+before_inputs = {rel: read(REAL_ROOT, rel) for rel in R.INPUTS}
+with tempfile.TemporaryDirectory(prefix="no-git-path-") as empty_path:
+    env = dict(os.environ, PATH=empty_path)
+    for script, args in (
+        ("render_readme_assurance.py", ["--write"]),
+        ("render_readme_assurance.py", ["--check"]),
+        ("refresh_evidence.py", []),
+        ("refresh_evidence.py", ["--check"]),
+        ("refresh_evidence.py", ["--bind-exported-main", "--bind-exported-holdout"]),
+    ):
+        proc = subprocess.run([sys.executable, os.path.join(R.HERE, script)] + args,
+                              cwd=REAL_ROOT, env=env, capture_output=True, text=True)
+        output = proc.stdout + proc.stderr
+        check(proc.returncode == 1, f"{script} {args}: missing Git exits 1")
+        check("requires Git on PATH" in output, f"{script} {args}: actionable prerequisite")
+        check("Traceback" not in output, f"{script} {args}: no uncaught exception")
+        check("Regenerating" not in output, f"{script} {args}: no regeneration attempted")
+        check(all(read(REAL_ROOT, rel) == text for rel, text in before_inputs.items()),
+              f"{script} {args}: all evidence inputs remain unchanged")
 expect_failure("missing readiness registry",
                lambda r: os.remove(path(r, R.READINESS)), "required input missing")
 expect_failure("malformed Excel record",
