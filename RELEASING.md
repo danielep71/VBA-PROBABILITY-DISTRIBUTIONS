@@ -81,7 +81,7 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 
 Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient; #47 and #29 must be resolved.
 
-**Current enforcement gap (2026-09-30):** the active `Protect main` ruleset blocks deletion and force pushes, but does not require pull requests, status checks or resolved review conversations. Classic branch protection is absent. Those settings do not enforce this release policy; resolve and verify the required controls under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) before publication.
+**Verified enforcement (2026-09-30):** the active `Protect main` ruleset requires pull requests, up-to-date `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` checks from GitHub Actions, and blocks deletion and force pushes, with no bypass actors. Required approvals remain zero and conversation resolution is not mandatory. The active `Protect releases` ruleset blocks updates, deletion and force pushes for `v*` tags while allowing initial creation. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
 
 ## 1. Freeze and identify the candidate
 
@@ -209,7 +209,14 @@ these items easy to verify:
 - compatibility, migration, and security notes;
 - remaining limitations.
 
-Require configured checks and record the resulting `main` SHA. If the merge changes source identity, certify that commit before tagging.
+Require configured checks and record the resulting `main` SHA. Steps 6–7 on a
+pull-request candidate are pre-merge validation only. Before tagging, repeat
+static and Excel certification on the final `main` commit, then rebuild every
+publishable artifact from that commit in a clean location. Compile, reopen and
+retest the rebuilt packages, and regenerate their filename/size/SHA-256 manifest.
+Do not publish artifacts built from the PR head or synthetic merge candidate.
+If `main` advances before tagging, retain the exact certified release commit or
+restart certification and packaging for the new candidate; never silently retarget.
 
 <a id="merge-convention"></a>
 
@@ -223,12 +230,16 @@ updates. There is no direct-push path.
   `main`. Its title and body describe the delivered change, link the relevant
   issues and evidence, and state what was validated. Do not paste the
   intermediate commit log.
-- **Merge the reviewed head only, with checks green.** Merge exactly the head
-  SHA that was reviewed and checked. A check that has not run is not green. If a
-  check cannot run, for example because the self-hosted Excel runner is offline,
-  merge only when the change cannot affect what that check tests (such as a
-  Markdown-only change) and record that reasoning in the pull request before
-  merging.
+- **Merge the reviewed head with its current integration checks green.** Record
+  the reviewed PR head SHA and the target base SHA. On `pull_request` events,
+  the current workflows check out GitHub's synthetic merge commit; record that
+  tested SHA and its workflow runs separately from the reviewed head. Require
+  successful configured checks for the current head/base combination, with the
+  branch up to date. A head change needs renewed review; a base change needs
+  fresh integration checks. A check that has not run is not green. A required
+  check cannot be waived. If a non-required check cannot run, for example because
+  the self-hosted Excel runner is offline, merge only when the change cannot
+  affect what it tests and record that reasoning in the PR before merging.
 - **Keep evidence changes atomic.** A committed grid, its manifest and its
   export record land in one commit. `benchmark/check_manifest_provenance.py`
   examines each commit separately, and a squash merge guarantees they change
@@ -236,9 +247,10 @@ updates. There is no direct-push path.
   commits where a manifest changed without its grid.
 - **A merge creates a new source identity.** A squash (and GitHub's rebase
   merge) produces a new SHA, so exact-SHA Excel certification of the pull
-  request head does not certify the merged commit. Certify the final `main`
-  commit before tagging, and never silently rebind or reuse pull-request-head
-  evidence.
+  request head or synthetic merge does not certify the merged commit. Certify
+  the final `main` commit, rebuild/retest all publishable artifacts from it and
+  regenerate their hashes before tagging, as required by step 8. Never silently
+  rebind PR evidence or relabel a pre-merge package as a final-commit build.
 - **History-preserving merges are the exception.** Use one only when the commit
   order is itself evidence, for example a preregistration committed before the
   source fix it governs (as in PR #27). Record the reason in the pull request
@@ -247,10 +259,10 @@ updates. There is no direct-push path.
   history or move tags. Earlier direct pushes and merge commits stay as they
   are; this convention applies to future merges.
 
-Until the `Protect main` ruleset requires pull requests and status checks (see
-the enforcement gap under [Readiness review](#readiness-review), tracked in
-[#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31)),
-this convention is maintainer policy that GitHub does not enforce.
+GitHub enforces the PR and hosted-check requirements described in
+[Readiness review](#readiness-review). Review quality, artifact reconstruction
+and exact-release certification remain explicit maintainer responsibilities;
+a green merge button does not establish them.
 
 ## 9. Create the annotated tag
 
@@ -273,6 +285,7 @@ Before pushing, confirm the tag equals `VERSION`, targets the certified commit, 
 Retain at least:
 
 - candidate commit SHA
+- reviewed PR head, target base and tested synthetic merge SHA (where applicable)
 - static-check result
 - Excel version and bitness
 - regression outputs
