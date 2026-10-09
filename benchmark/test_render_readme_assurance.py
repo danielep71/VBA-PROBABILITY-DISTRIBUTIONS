@@ -14,6 +14,7 @@ import glob
 import io
 import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -253,6 +254,46 @@ expect_failure("README markers missing",
                "expected exactly one 'evidence state' region")
 
 # 6. Contradictory inputs fail closed.
+
+# HEAD existing is not sufficient. A real shallow checkout must be rejected
+# before refresh rewrites even one artifact, in ordinary and binding modes.
+with tempfile.TemporaryDirectory(prefix="shallow-refresh-") as shallow:
+    subprocess.run(["git", "clone", "--depth=1", Path(REAL_ROOT).as_uri(), shallow],
+                   check=True, capture_output=True)
+    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py"):
+        shutil.copyfile(os.path.join(R.HERE, script), path(shallow, "benchmark/" + script))
+    before = {rel: read(shallow, rel) for rel in R.INPUTS}
+    for args in ([], ["--check"], ["--bind-exported-main", "--bind-exported-holdout"]):
+        proc = subprocess.run([sys.executable, path(shallow, "benchmark/refresh_evidence.py")] + args,
+                              cwd=shallow, capture_output=True, text=True)
+        output = proc.stdout + proc.stderr
+        check(proc.returncode == 1 and "complete Git history is required" in output,
+              f"shallow refresh {args}: fails its history preflight")
+        check("Traceback" not in output and "Regenerating" not in output,
+              f"shallow refresh {args}: stops cleanly before writes")
+        check(all(read(shallow, rel) == text for rel, text in before.items()),
+              f"shallow refresh {args}: all evidence inputs unchanged")
+
+# Complete history alone is not sufficient either: validate the retained
+# candidate before regeneration, independently of the shallow-repository guard.
+with tempfile.TemporaryDirectory(prefix="invalid-candidate-refresh-") as invalid:
+    subprocess.run(["git", "clone", "--shared", REAL_ROOT, invalid],
+                   check=True, capture_output=True)
+    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py"):
+        shutil.copyfile(os.path.join(R.HERE, script), path(invalid, "benchmark/" + script))
+    retarget_candidate(invalid, "0" * 40)
+    before = {rel: read(invalid, rel) for rel in R.INPUTS}
+    for args in ([], ["--check"], ["--bind-exported-main", "--bind-exported-holdout"]):
+        proc = subprocess.run([sys.executable, path(invalid, "benchmark/refresh_evidence.py")] + args,
+                              cwd=invalid, capture_output=True, text=True)
+        output = proc.stdout + proc.stderr
+        check(proc.returncode == 1 and "evidence refresh prerequisite" in output,
+              f"invalid candidate refresh {args}: fails candidate preflight")
+        check("Traceback" not in output and "Regenerating" not in output,
+              f"invalid candidate refresh {args}: stops cleanly before writes")
+        check(all(read(invalid, rel) == text for rel, text in before.items()),
+              f"invalid candidate refresh {args}: all evidence inputs unchanged")
+
 expect_failure("verdict tally contradicts table",
                lambda r: edit(r, R.SUMMARY, "FAIL: 0, KNOWN", "FAIL: 1, KNOWN"),
                "tally states FAIL")

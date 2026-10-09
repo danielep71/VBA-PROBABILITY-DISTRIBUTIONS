@@ -43,6 +43,7 @@ import subprocess
 import sys
 
 from excel_certification import CertificationError, git_text
+from render_readme_assurance import AssuranceError, excel_facts
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -167,8 +168,12 @@ def main():
     # Do not regenerate summaries or bind manifests and only then discover
     # that the mandatory Git-backed verification cannot run.
     try:
-        git_text(ROOT, "rev-parse", "--verify", "HEAD^{commit}")
-    except CertificationError as exc:
+        # HEAD alone can exist in a depth-1 checkout while historical candidates
+        # and the provenance guard's negative-control commits are unavailable.
+        if git_text(ROOT, "rev-parse", "--is-shallow-repository").strip() != "false":
+            raise CertificationError("complete Git history is required; fetch --unshallow first")
+        excel_facts(ROOT)
+    except (CertificationError, AssuranceError) as exc:
         print(f"FAIL: evidence refresh prerequisite: {exc}")
         raise SystemExit(1)
     saved = None
