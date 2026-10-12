@@ -145,6 +145,7 @@ Use only the categories needed by a release.
 
 ### Fixed
 
+- The retained Excel certification record now validates against the committed main grid (#47). Excel exports CSV with CRLF line endings and Git stores grids as LF, so the record's grid digest never matched the committed bytes. An exported grid entry now carries two exact digests: `sha256` of the committed LF bytes and `raw_sha256` of the bytes Excel wrote. The validator requires the first to equal the committed blob and the second to equal an exact line-ending form of it. The finalizer records both and refuses grids Git would not store as LF. The retained record was reconciled from its own evidence, with a `corrections` entry the validator restricts to re-expressing a recorded digest; no run, export or observation was added. The Accuracy Gate and `refresh_evidence.py` now validate the retained record itself on every change, and the README shows the main-grid export as certified. The dated evidence-snapshot paragraphs in five documents are replaced by a pointer to the generated README block.
 - Clarified that the MPL exemption for independently written files does not
   extend to new files containing copied or adapted MPL-covered code (#63).
 

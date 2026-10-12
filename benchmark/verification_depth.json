@@ -95,10 +95,10 @@
     },
     {
       "id": "excel-exact-sha-certification",
-      "live_command": "check_excel_certification.py --record <record> --require-pass",
+      "live_command": "check_excel_certification.py --record excel_regression_record.json --require-pass",
       "proof_command": "test_excel_certification.py",
-      "negative_claim": "candidate/source/workflow SHA drift, assertion drift, cleanup failure and false grid export hash/row/target claims are rejected",
-      "current_state": "green_fixture_proof"
+      "negative_claim": "candidate/source/workflow SHA drift, assertion drift, cleanup failure, false grid export hash/row/target claims, a raw export digest that is not an exact line-ending form of the committed grid, and corrections that do more than re-express a recorded digest are rejected",
+      "current_state": "green"
     },
     {
       "id": "grid-regeneration-safety",

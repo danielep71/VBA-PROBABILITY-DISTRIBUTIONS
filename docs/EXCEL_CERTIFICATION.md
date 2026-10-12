@@ -8,7 +8,7 @@ The contract is defined by `.github/excel-evidence-policy.json` and validated by
 `benchmark/excel_certification.py` / `benchmark/check_excel_certification.py`.
 The self-hosted workflow emits `artifacts/excel-vba-ci/excel-certification.json`.
 
-**Evidence snapshot — 2026-09-30, source baseline `d2e1592`.** The latest retained Excel runtime result is 909/909 PASS on candidate `74041b3` (Excel 16.0 build 20228, 64-bit); the certified VBA bytes remain unchanged. This is not a new Excel run on the documentation commit. Main and holdout manifests are source-bound, but release export certification is incomplete: [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47) tracks the retained main-grid digest mismatch and [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29) tracks holdout export certification. The numerical gate is green with 36 unclaimed main-grid rows tracked by [#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22). No stable release has been published; [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks readiness.
+**Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 
 ## What a regression record proves
 
@@ -95,11 +95,12 @@ The finalizer:
 3. requires Excel version/build/bitness in `excel_environment.json` to match the
    regression record;
 4. adds the relevant exporter module to the certified source inventory;
-5. records each freshly exported grid's SHA-256, row count, and UTC timestamp;
+5. confirms Git stores each selected grid as LF, then records its canonical and raw SHA-256
+   (see [Grid byte policy](#grid-byte-policy)), row count, and UTC timestamp;
 6. revalidates the completed record structure, candidate and source inventory;
 7. writes `benchmark/excel_regression_record.json`.
 
-The finalizer hashes working-tree grid bytes. It does **not** compare the new export claims with committed grid bytes at this stage. Git line-ending normalization can change those bytes on commit; #47 tracks this gap. Finalizer success alone is insufficient for release certification.
+The finalizer cannot compare the new claims with a commit that does not exist yet, so finalizer success alone is insufficient for release certification: the evidence commit must pass the validation below.
 
 It refuses to write without `--from-fresh-export`. The flag is an explicit
 operator assertion; the Python tool cannot itself observe an Excel export.
@@ -131,7 +132,51 @@ python benchmark/check_excel_certification.py \
   --log-directory <retained-log-dir>
 ```
 
-Repeat with `--require-grid benchmark/holdout/holdout_grid.csv` for the holdout. Retain the regression log beside the downloaded record or supply its directory as above. Any digest mismatch blocks certification. Do not hand-edit a digest to manufacture a passing record; resolve #47 and produce evidence through the corrected export path.
+Repeat with `--require-grid benchmark/holdout/holdout_grid.csv` for the holdout. Retain the regression log beside the downloaded record or supply its directory as above. Any digest mismatch blocks certification. Do not hand-edit a digest to manufacture a passing record; the only permitted edit is a recorded correction (see [Corrections](#corrections)).
+
+<a id="grid-byte-policy"></a>
+
+## Grid byte policy
+
+Excel writes CSV exports with CRLF line endings. `.gitattributes` stores every
+`*.csv` as `text eol=lf`, so Git commits the same rows with LF line endings. An
+exported grid entry therefore carries two exact digests:
+
+| Field | Digest of |
+| --- | --- |
+| `sha256` | the canonical grid: the bytes Git stores, with each CRLF converted to LF |
+| `raw_sha256` | the bytes Excel wrote, before Git normalized them |
+
+Against a commit, the validator requires `sha256` to equal the committed blob
+exactly, `raw_sha256` to equal one exact line-ending form of that blob (the blob
+itself, or its CRLF form when the blob contains no CR), and `row_count` to match.
+Neither digest is normalized before comparison, so a changed value, row or byte
+other than a line ending fails both. Regression-only records written by the
+Excel workflow carry no export claim; their grid entries may omit `raw_sha256`.
+
+<a id="corrections"></a>
+
+## Corrections
+
+The retained record predates this policy: its finalizer stored the raw CRLF
+digest as `sha256`, so it could never validate against the committed grid
+(#47). It was reconciled from its own evidence, without a new run or export:
+the recorded digest moved to `raw_sha256`, where it matches the CRLF form of the
+committed grid exactly, and `sha256` names the committed LF bytes. The record's
+`corrections` array documents the change: issue, date, field, recorded value,
+corrected value and reason.
+
+The validator accepts a correction only if it re-expresses a recorded export
+digest in this way: the recorded value must be the grid's `raw_sha256` and the
+corrected value its `sha256`. A correction cannot add an export, change a count
+or alter any other field.
+
+The Accuracy Gate validates the retained record on every change with:
+
+```bash
+python benchmark/check_excel_certification.py \
+  --record benchmark/excel_regression_record.json --require-pass
+```
 
 ## Evidence-only follow-up commits
 

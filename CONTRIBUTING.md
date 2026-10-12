@@ -237,7 +237,7 @@ under review.
 - Test central, boundary, tail, invalid-domain, underflow/overflow, inverse, and round-trip behavior as applicable.
 - Record exact commit, Excel/Office bitness, reference system/version/precision, tested points, tolerance, worst observed error, and failures.
 
-When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. The #47 digest mismatch and #29 holdout certification remain unresolved. Never rebind old measurements to new code.
+When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. Holdout export certification (#29) remains unresolved. Never rebind old measurements to new code.
 
 ### Evidence principles
 
