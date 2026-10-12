@@ -15,6 +15,7 @@ commands = (
     ("test_grid_coverage.py",),
     ("check_grid_coverage.py", "--mode", "auto", "--check-summary"),
     ("test_grid_regeneration.py",),
+    ("test_binary64.py",),
     ("check_grid_keys.py",),
     ("test_root_readme.py",),
     ("check_root_readme.py",),

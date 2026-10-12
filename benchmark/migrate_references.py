@@ -24,7 +24,7 @@ re-deriving policy here:
 Refuses to write if any row is blocked, if the audit does not match the current
 generator, or if any key is ambiguous. Report-only unless --write is given.
 """
-import argparse, csv, importlib.util, struct, sys
+import argparse, csv, importlib.util, sys
 from collections import Counter
 
 import mpmath as mp
@@ -32,19 +32,8 @@ import mpmath as mp
 BLOCKING = {"BLOCKED_GENERATOR", "BLOCKED_ORACLE"}
 
 
-def bits(t):
-    t = (t or "").strip()
-    if t == "":
-        return ""
-    try:
-        return struct.pack(">d", float(t)).hex()
-    except (ValueError, OverflowError):
-        return "?" + t
-
-
-def key(r):
-    return (r["function"], bits(r["arg1"]), bits(r["arg2"]), bits(r["arg3"]),
-            bits(r["arg4"]), r["regime"], r.get("evidence_set", ""))
+# One shared definition of argument identity (#32).
+from _grid_safety import canonical_key as key  # noqa: E402
 
 
 def audit_key(r):

@@ -16,23 +16,12 @@ Take the snapshot BEFORE running promote_grid_rows.py --write:
 
     copy probability_accuracy_grid.csv grid_before_promotion.csv
 """
-import argparse, csv, struct, sys
+import argparse, csv, sys
 from collections import Counter
 
 
-def bits(t):
-    t = (t or "").strip()
-    if t == "":
-        return ""
-    try:
-        return struct.pack(">d", float(t)).hex()
-    except (ValueError, OverflowError):
-        return "?" + t
-
-
-def key(r):
-    return (r["function"], bits(r["arg1"]), bits(r["arg2"]), bits(r["arg3"]),
-            bits(r["arg4"]), r["regime"], r.get("evidence_set", ""))
+# One shared definition of argument identity (#32).
+from _grid_safety import canonical_key as key  # noqa: E402
 
 
 def main():

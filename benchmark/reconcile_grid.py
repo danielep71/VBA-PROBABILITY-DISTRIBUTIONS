@@ -30,7 +30,7 @@ Where a GRID_ONLY_UNEXPLAINED row's arguments appear in a study folder's own
 grid, that folder is reported as a probable origin. It is a lead, not a
 declaration: study grids use a different schema, so the match is numeric only.
 """
-import argparse, csv, glob, importlib.util, os, struct, sys
+import argparse, csv, glob, importlib.util, os, sys
 from collections import Counter, defaultdict
 
 import mpmath as mp
@@ -39,20 +39,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 COMPARE = ("claim", "metric", "expected_error")
 
 
-def f64(text):
-    """IEEE-754 bit pattern of an argument cell; '' for blank, '?...' if unparsable."""
-    t = (text or "").strip()
-    if t == "":
-        return ""
-    try:
-        return struct.pack(">d", float(t)).hex()
-    except (ValueError, OverflowError):
-        return "?" + t
-
-
-def key(r):
-    return (r["function"], f64(r["arg1"]), f64(r["arg2"]), f64(r["arg3"]),
-            f64(r["arg4"]), r["regime"], r.get("evidence_set", ""))
+# One shared definition of argument identity (#32).
+from _binary64 import double_key as f64  # noqa: E402
+from _grid_safety import canonical_key as key  # noqa: E402
 
 
 def load_generator(path):
