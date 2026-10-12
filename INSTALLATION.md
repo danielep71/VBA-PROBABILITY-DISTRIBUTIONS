@@ -110,6 +110,22 @@ fail by design. Do not report that as a repository defect.
 A source archive is sufficient when you only need the production modules listed
 above for a fresh installation.
 
+### Release bundle
+
+Each GitHub Release attaches `VBA-Probability-Distributions-X.Y.Z.zip`, its
+`SHA256SUMS` and a build-provenance attestation. The bundle holds the production
+modules and the regression harness with CRLF line endings, ready for **File →
+Import File…**, plus the licence and documentation. Verify it before importing:
+
+```text
+sha256sum --check SHA256SUMS
+gh attestation verify VBA-Probability-Distributions-X.Y.Z.zip --repo danielep71/VBA-PROBABILITY-DISTRIBUTIONS
+```
+
+After extracting, `sha256sum --check MANIFEST.sha256` (inside the bundle folder)
+verifies every module and document. On Windows, `Get-FileHash -Algorithm SHA256`
+gives the same digests.
+
 ---
 
 ## 🚀 Fresh installation

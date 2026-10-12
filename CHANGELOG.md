@@ -99,6 +99,7 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Added a release workflow (#31). Pushing an annotated `vX.Y.Z` tag verifies the release: the tag must equal `VERSION` and be on `main`, release semantics must validate, the retained Excel record must validate at the tagged commit, the README assurance block must be current, and `benchmark/release_readiness.json` must declare the version certified. The workflow then builds a reproducible source bundle (modules with CRLF line endings, licence, documentation and a member manifest) with `SHA256SUMS`, attests both with GitHub build provenance, and drafts a GitHub Release with the changelog section and an asset table for the maintainer to publish. A manual run rehearses the checks and the build without attesting or releasing. The bundle builder's self-test runs in Static checks.
 - Extended weekly Dependabot updates to the benchmark and lint Python requirements, with maintainer assignment and an initial priority label. mpmath 1.4 is held back: no SymPy release accepts it yet, and a change of the reference library is a deliberate evidence change, not a routine update.
 
 - Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
