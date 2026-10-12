@@ -157,7 +157,9 @@ jobs:
             args+=(--notes dist/release-notes.md)
           fi
           python3 .github/scripts/build_release_bundle.py "${args[@]}"
-          sha256sum --check --strict dist/SHA256SUMS
+          # SHA256SUMS names the bundle without a directory, as users verify it
+          # beside the download, so check it from inside dist.
+          (cd dist && sha256sum --check --strict SHA256SUMS)
           { echo "Built:"; cat dist/SHA256SUMS; } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Keep the built files
@@ -238,7 +240,7 @@ jobs:
           VERSION: ${{ needs.verify.outputs.version }}
         run: |
           set -euo pipefail
-          sha256sum --check --strict dist/SHA256SUMS
+          (cd dist && sha256sum --check --strict SHA256SUMS)
           # A draft never overwrites: an existing release for this tag fails here.
           gh release create "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
