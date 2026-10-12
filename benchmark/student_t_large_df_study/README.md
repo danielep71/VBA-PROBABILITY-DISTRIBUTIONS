@@ -64,6 +64,19 @@ existing route. The CF is retained outside the region and is accurate there.
 | `test_coefficients.py` | CI fixture: re-derives 1–5, parses all 8, pins numerically |
 | `validate_expansion.py` | applies the design; writes `results.json` |
 | `results.json` | every measurement, decision trace, seams, holdout |
+| `binary64_route_model.py` | binary64 model of the production route and the VBA normal-tail kernel |
+| `test_binary64_route_model.py` | CI fixture pinning finding F1 |
+| `PRODUCTION_FEASIBILITY.md` | finding F1: the adopted route is not buildable on the existing normal-tail kernel |
+
+## Production feasibility (finding F1)
+
+The truncation results above do not carry over to production unchanged.
+Evaluated in binary64 with the existing VBA normal-tail kernel
+(`PROB_NormalUpperTailPositive`), the adopted route is as inaccurate as that
+kernel, up to 5.3E-10 at t = 6, and worse than the current continued fraction at
+7 of the 36 fitting points inside the region. With a correctly rounded Q(t) it
+meets 2^-50 everywhere. See `PRODUCTION_FEASIBILITY.md`; the production design
+needs a decision and a new preregistration before VBA is written.
 
 ## Oracle gap
 

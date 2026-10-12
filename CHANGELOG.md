@@ -165,6 +165,7 @@ Use only the categories needed by a release.
 
 ### Documentation
 
+- Recorded finding F1 for #34 before any VBA change (`benchmark/student_t_large_df_study/PRODUCTION_FEASIBILITY.md`). A binary64 model of the planned large-df Student-t tail route shows that its series is sound (2^-50 at every fitting point with an exact normal tail), but the existing VBA normal-tail kernel limits it to the kernel's own accuracy, up to 5.3E-10 at t = 6. With that kernel the route would be worse than the current code at 7 of 36 fitting points, against the study's preregistered improvement rule. The model reproduces every committed Excel normal-tail observation within 2 ulps (9 of 12 exactly), and `test_binary64_route_model.py` pins the finding. The production design now needs a decision and a new preregistration.
 - `INSTALLATION.md` now explains that a GitHub source archive omits `.github/`, `.gitattributes`, `.gitignore`, `.editorconfig` and Git history, so maintainer validation needs a `git clone`.
 - Reconciled release-readiness, provenance and certification instructions with the current evidence; corrected comparison totals, qualified numerical claims, and repaired the disabled Discussions navigation.
 
