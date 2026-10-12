@@ -77,10 +77,8 @@ def good_record(root, sha, policy, export_main=False):
     if export_main:
         grid = "benchmark/main.csv"
         source_paths.append(policy["grid_exporters"][grid])
-        raw = E.git_bytes(root, sha, grid)
-        grids[grid] = {"exported": True, "sha256": E.sha256_bytes(raw),
-                       "row_count": E.row_count_bytes(raw),
-                       "exported_utc": "2026-09-16T04:00:01Z"}
+        grids[grid] = E.export_grid_entry(E.git_bytes(root, sha, grid),
+                                          "2026-09-16T04:00:01Z")
     sources = [{"path": p, "sha256": digest_at(root, sha, p)} for p in sorted(source_paths)]
     return {
         "schema_version": 1,
@@ -172,9 +170,82 @@ try:
     expect_fail(root, wrong_rows, "exported grid row-count mismatch must fail",
                 policy_ref=sha, evidence_ref=sha, require_grid="benchmark/main.csv")
 
+    # #47: the record must name both exact digests of an exported grid.
+    no_raw = copy.deepcopy(exported)
+    del no_raw["grids"]["benchmark/main.csv"]["raw_sha256"]
+    expect_fail(root, no_raw, "exported grid without raw_sha256 must fail",
+                policy_ref=sha, evidence_ref=sha)
+
+    unrelated_raw = copy.deepcopy(exported)
+    unrelated_raw["grids"]["benchmark/main.csv"]["raw_sha256"] = E.sha256_bytes(b"other bytes\n")
+    expect_fail(root, unrelated_raw, "raw digest of unrelated bytes must fail",
+                policy_ref=sha, evidence_ref=sha)
+
+    claimed_null = copy.deepcopy(record)
+    claimed_null["grids"]["benchmark/main.csv"]["raw_sha256"] = "sha256:" + "a" * 64
+    expect_fail(root, claimed_null, "non-exported grid must not carry a raw digest",
+                policy_ref=sha)
+    with_null = copy.deepcopy(record)
+    with_null["grids"]["benchmark/main.csv"]["raw_sha256"] = None
+    E.validate_record(with_null, root, policy_ref=sha, evidence_ref=sha)
+
     regression_only = good_record(root, sha, policy)
     expect_fail(root, regression_only, "regression-only record cannot authorize grid binding",
                 policy_ref=sha, evidence_ref=sha, require_grid="benchmark/main.csv")
+
+    # #47: a real Excel export is CRLF; Git commits it as LF under
+    # `*.csv text eol=lf`. The finalizer's entry for the raw export must
+    # validate against the commit, while the pre-#47 entry (raw digest stored
+    # as the canonical one) must not.
+    write(root, ".gitattributes", "*.csv text eol=lf\n")
+    commit(root, "attributes")
+    exported_lines = "function,value\nA,1\nB,2\nD,4\n"
+    crlf = exported_lines.replace("\n", "\r\n").encode()
+    with open(os.path.join(root, "benchmark/main.csv"), "wb") as f:
+        f.write(crlf)
+    entry = E.export_grid_entry(crlf, "2026-09-16T04:00:01Z")
+    export_sha = commit(root, "fresh CRLF export committed as LF")
+    blob = E.git_bytes(root, export_sha, "benchmark/main.csv")
+    check(blob == exported_lines.encode(), "fixture commit stores the export as LF")
+    check(entry["sha256"] != entry["raw_sha256"], "CRLF export has distinct raw and canonical digests")
+    crlf_record = good_record(root, sha, policy, export_main=True)
+    crlf_record["grids"]["benchmark/main.csv"] = entry
+    E.validate_record(crlf_record, root, policy_ref=export_sha, evidence_ref=export_sha,
+                      require_pass=True, require_grid="benchmark/main.csv")
+
+    legacy = copy.deepcopy(crlf_record)
+    legacy["grids"]["benchmark/main.csv"]["sha256"] = entry["raw_sha256"]
+    expect_fail(root, legacy, "raw CRLF digest recorded as canonical must fail (#47)",
+                policy_ref=export_sha, evidence_ref=export_sha)
+
+    changed_value = copy.deepcopy(crlf_record)
+    changed = E.export_grid_entry(crlf.replace(b"D,4", b"D,5"), "2026-09-16T04:00:01Z")
+    changed_value["grids"]["benchmark/main.csv"] = changed
+    expect_fail(root, changed_value, "a changed observation must fail both digests",
+                policy_ref=export_sha, evidence_ref=export_sha)
+
+    # Corrections may only move the originally recorded digest to raw_sha256.
+    corrected = copy.deepcopy(crlf_record)
+    corrected["corrections"] = [{
+        "issue": 47, "date": "2026-10-12",
+        "field": "grids.benchmark/main.csv.sha256",
+        "recorded": entry["raw_sha256"], "corrected": entry["sha256"],
+        "reason": "raw CRLF export digest re-expressed as the committed LF digest"}]
+    E.validate_record(corrected, root, policy_ref=export_sha, evidence_ref=export_sha,
+                      require_grid="benchmark/main.csv")
+    for label, change in (
+            ("correction naming a value that is not the raw digest",
+             lambda c: c.update(recorded="sha256:" + "b" * 64)),
+            ("correction of a non-grid field", lambda c: c.update(field="harness.passed")),
+            ("correction without a reason", lambda c: c.update(reason=" ")),
+            ("correction with a malformed date", lambda c: c.update(date="12/10/2026"))):
+        bad = copy.deepcopy(corrected)
+        change(bad["corrections"][0])
+        expect_fail(root, bad, f"{label} must fail", policy_ref=export_sha,
+                    evidence_ref=export_sha)
+    empty = copy.deepcopy(corrected)
+    empty["corrections"] = []
+    expect_fail(root, empty, "an empty corrections list must fail", policy_ref=export_sha)
 
     write(root, "benchmark/note.md", "evidence-only\n")
     evidence_sha = commit(root, "evidence-only")
@@ -193,5 +264,6 @@ if FAILS:
         print("  - " + item)
     raise SystemExit(1)
 print("PASS: Excel certification fixtures (exact candidate/workflow SHA, source inventory, "
-      "assertion count, non-green host evidence, cleanup, grid digest/rows/target, and "
+      "assertion count, non-green host evidence, cleanup, grid digest/rows/target, "
+      "CRLF export committed as LF with canonical and raw digests, corrections, and "
       "later-source drift)")

@@ -67,7 +67,7 @@ manifest contract. The canonical Excel certification record is stricter about
 source identity: it hashes the exact canonical Git blob bytes. Both approaches
 are stable across ordinary CRLF/LF working-tree checkout differences.
 
-**Evidence snapshot — 2026-09-30, source baseline `d2e1592`.** The latest retained Excel runtime result is 909/909 PASS on candidate `74041b3` (Excel 16.0 build 20228, 64-bit); the certified VBA bytes remain unchanged. This is not a new Excel run on the documentation commit. Main and holdout manifests are source-bound, but release export certification is incomplete: [#47](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/47) tracks the retained main-grid digest mismatch and [#29](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/29) tracks holdout export certification. The numerical gate is green with 36 unclaimed main-grid rows tracked by [#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22). No stable release has been published; [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks readiness.
+**Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 
 ## What the hosted gate enforces
 
@@ -93,7 +93,7 @@ rules.
 
 ## Fresh-export operating procedure
 
-Commands below run from the repository root. The current #47 blocker must be resolved before final release certification; these steps describe the required evidence chain, not a claim that the retained export certificate currently passes.
+Commands below run from the repository root. These steps describe the required evidence chain; the README assurance block shows which certifications currently pass.
 
 ### 1. Certify the exact source candidate in Excel
 
@@ -136,7 +136,7 @@ python benchmark/finalize_excel_certification.py \
 - the selected grid exists and its SHA-256 and row count can be bound; and
 - the completed record structure and source inventory revalidate.
 
-The finalizer hashes working-tree grids; it does not yet check the committed grid bytes. The evidence commit must pass the canonical validator afterward, including grid digest and row-count checks. See #47 and the commands in [EXCEL_CERTIFICATION.md](../docs/EXCEL_CERTIFICATION.md).
+The finalizer records two exact digests for each exported grid (#47): `sha256` over the canonical bytes Git commits under `*.csv text eol=lf`, and `raw_sha256` over the bytes Excel wrote. It refuses a grid that Git would not store as LF. The evidence commit must still pass the canonical validator afterward, which checks both digests and the row count against the committed grid. See the grid byte policy in [EXCEL_CERTIFICATION.md](../docs/EXCEL_CERTIFICATION.md#grid-byte-policy).
 
 It writes `benchmark/excel_regression_record.json`. The tool cannot observe an
 Excel export itself: `--from-fresh-export` is an explicit operator assertion,
@@ -179,7 +179,7 @@ conditions holds:
 | **B** | `benchmark/excel_regression_record.json` is also modified and the canonical validator proves a green exact-SHA run **plus an explicit fresh-export claim for that exact grid**, whose committed SHA-256 and row count match. |
 | **C** | The commit modifies only the manifest and restores bytes identical to an earlier committed version. This is the exact-restoration repair path. |
 
-B permits a genuinely fresh export that produces a byte-identical grid. It requires a valid canonical export record. The retained record currently fails the main-grid digest check (#47) and does not claim a holdout export (#29), so it cannot currently authorize this exception.
+B permits a genuinely fresh export that produces a byte-identical grid. It requires a valid canonical export record. The retained record's main-grid export claim validates against the committed grid (#47); it claims no holdout export (#29).
 
 
 ## Why binding is verified, not declared
@@ -224,7 +224,7 @@ an invalid evidence claim fails without changing the README.
 | Observation rows and main-grid binding | `probability_accuracy_grid.csv`, `observation_manifest.json` | `verify_source_binding`; any mismatch is **STALE** |
 | Main-grid coverage (claimed, exempt, missing) | `check_grid_coverage.py` over the grid, registry and `accuracy_row_exemptions.json` | The transition fingerprint `coverage_debt_v1_0_0.json` must hold, as in the gate |
 | Holdout verdicts and observations | `holdout/holdout_summary.md`, `holdout/holdout_manifest.json` | The tally equals the table; only registered contracts; `verify_holdout_binding`; any mismatch is **STALE** |
-| Grid export certification | The `grids` entries of the Excel record | Certified only if the record exported the grid with the committed digest and row count |
+| Grid export certification | The `grids` entries of the Excel record | Certified only if the record exported the grid with the canonical (committed) digest and row count; the Accuracy Gate also validates the raw export digest |
 | Release state and blockers | `release_readiness.json` | See below |
 
 **Stale versus incomplete.** Stale evidence means that source or observations

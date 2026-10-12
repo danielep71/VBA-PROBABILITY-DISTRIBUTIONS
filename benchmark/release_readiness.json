@@ -79,8 +79,11 @@
       "issue": 47,
       "class": "assurance",
       "gate": "main_grid_export",
-      "status": "open",
-      "summary": "Retained Excel record's main-grid digest differs from the committed grid"
+      "status": "resolved",
+      "summary": "Retained Excel record's main-grid digest differs from the committed grid",
+      "resolution": {
+        "evidence": "excel_regression_record.json carries canonical (committed LF) and raw (exported CRLF) grid digests with a #47 correction entry; check_excel_certification.py --require-pass validates it against the committed tree in the Accuracy Gate"
+      }
     }
   ]
 }

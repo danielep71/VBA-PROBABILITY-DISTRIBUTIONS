@@ -64,7 +64,7 @@ study folder.
 
 ## Running it
 
-Follow the complete [fresh-export procedure](PROVENANCE.md#fresh-export-operating-procedure): certify the exact candidate, export grids and environment, finalize the canonical record, bind the selected manifests, regenerate summaries, and validate committed evidence. The retained main-grid export digest mismatch (#47) and holdout certification (#29) remain release blockers.
+Follow the complete [fresh-export procedure](PROVENANCE.md#fresh-export-operating-procedure): certify the exact candidate, export grids and environment, finalize the canonical record, bind the selected manifests, regenerate summaries, and validate committed evidence. Holdout export certification (#29) remains a release blocker.
 
 The abbreviated commands below run from `benchmark/`; they do not replace certification and binding.
 

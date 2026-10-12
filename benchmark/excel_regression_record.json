@@ -90,15 +90,27 @@
   "grids": {
     "benchmark/probability_accuracy_grid.csv": {
       "exported": true,
-      "sha256": "sha256:7170df8f0effc6eb696abb05d0743aff7114ba9316d7c031a58c12d1abb721ac",
+      "sha256": "sha256:ff73b0735b5dfbacb165dd3131cfb0143c9ab4381fd55fe69817c34c86a1fa38",
+      "raw_sha256": "sha256:7170df8f0effc6eb696abb05d0743aff7114ba9316d7c031a58c12d1abb721ac",
       "row_count": 2088,
       "exported_utc": "2026-09-16T20:08:37Z"
     },
     "benchmark/holdout/holdout_grid.csv": {
       "exported": false,
       "sha256": null,
+      "raw_sha256": null,
       "row_count": null,
       "exported_utc": null
     }
-  }
+  },
+  "corrections": [
+    {
+      "issue": 47,
+      "date": "2026-10-12",
+      "field": "grids.benchmark/probability_accuracy_grid.csv.sha256",
+      "recorded": "sha256:7170df8f0effc6eb696abb05d0743aff7114ba9316d7c031a58c12d1abb721ac",
+      "corrected": "sha256:ff73b0735b5dfbacb165dd3131cfb0143c9ab4381fd55fe69817c34c86a1fa38",
+      "reason": "The finalizer hashed the CRLF bytes Excel exported, but Git stores this grid as LF (*.csv text eol=lf). The recorded digest is kept as raw_sha256 and equals the CRLF form of the committed grid exactly; sha256 now names the committed LF bytes. No export, run or observation was added or changed."
+    }
+  ]
 }
