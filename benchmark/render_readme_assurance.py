@@ -37,7 +37,8 @@ from datetime import date
 from _manifest import normalized_hash, verify_holdout_binding, verify_source_binding
 from check_grid_coverage import _load_json, evaluate_paths, validate_strict, validate_transition
 from excel_certification import (CertificationError, _source_map, _timestamp,
-                                 row_count_file, validate_record)
+                                 canonical_grid_bytes, row_count_bytes, sha256_bytes,
+                                 validate_record)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -296,6 +297,15 @@ def holdout_facts(root, contracts):
             "problems": problems}
 
 
+def _grid_matches(path, entry):
+    """Compare the checked-out grid in its committed form (#47): CRLF from a
+    Windows checkout becomes LF, exactly as Git stores it."""
+    with open(path, "rb") as f:
+        canonical = canonical_grid_bytes(f.read())
+    return (sha256_bytes(canonical) == entry["sha256"]
+            and row_count_bytes(canonical) == entry["row_count"])
+
+
 def excel_facts(root):
     """Validate the retained record against its actual candidate, then assess
     working-tree freshness separately. A changed checkout can be rendered STALE;
@@ -327,9 +337,7 @@ def excel_facts(root):
     for rel, entry in record["grids"].items():
         if not entry["exported"]:
             grids[rel] = "not exported"
-        elif (os.path.isfile(_path(root, rel))
-              and normalized_hash(_path(root, rel)) == entry["sha256"]
-              and row_count_file(_path(root, rel)) == entry["row_count"]):
+        elif os.path.isfile(_path(root, rel)) and _grid_matches(_path(root, rel), entry):
             grids[rel] = "certified"
         else:
             grids[rel] = "digest differs"

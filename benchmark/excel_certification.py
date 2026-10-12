@@ -5,6 +5,17 @@ source bytes. A green regression record does not, by itself, prove that either
 accuracy grid was freshly exported. Grid claims are separate and require an
 explicit exported=true entry with matching committed bytes and the exporter
 module included in the certified source inventory.
+
+Grid byte policy (#47). Excel writes CSV exports with CRLF line endings; the
+repository stores grids under `*.csv text eol=lf`, so Git commits LF bytes. An
+exported grid entry therefore carries two exact digests:
+
+    sha256      the canonical grid: the bytes Git stores (CRLF converted to LF)
+    raw_sha256  the bytes Excel wrote, before Git normalized them
+
+Validation against a commit requires sha256 to equal the committed blob exactly
+and raw_sha256 to equal one exact line-ending form of that blob (the blob
+itself, or its CRLF form). Neither digest is normalized when compared.
 """
 from __future__ import annotations
 
@@ -13,7 +24,7 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime
+from datetime import date, datetime
 
 POLICY_PATH = ".github/excel-evidence-policy.json"
 RETAINED_RECORD = "benchmark/excel_regression_record.json"
@@ -21,6 +32,8 @@ SHA40 = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 STAGES = ("import", "compile", "regression", "cleanup")
 STAGE_STATUSES = {"PASS", "FAIL", "NOT_RUN", "TIMEOUT"}
+GRID_KEYS = frozenset({"exported", "sha256", "raw_sha256", "row_count", "exported_utc"})
+CORRECTION_KEYS = frozenset({"issue", "date", "field", "recorded", "corrected", "reason"})
 RECORD_KEYS = frozenset({"schema_version", "repository", "candidate_sha", "execution",
                          "started_at", "finished_at", "runner", "environment", "sources",
                          "stages", "harness", "log", "grids"})
@@ -75,6 +88,36 @@ def sha256_file(path):
 def row_count_bytes(raw):
     text = raw.decode("utf-8-sig")
     return max(len(text.splitlines()) - 1, 0)
+
+
+def canonical_grid_bytes(raw):
+    """Bytes Git stores for a grid under `text eol=lf`: every CRLF becomes LF."""
+    return raw.replace(b"\r\n", b"\n")
+
+
+def export_forms(committed):
+    """Exact raw-export byte forms that commit to these canonical bytes.
+
+    The committed bytes themselves always qualify. Their CRLF form qualifies
+    only when they contain no CR, because otherwise the conversion would not be
+    reversible and the raw bytes could not be reconstructed exactly.
+    """
+    forms = [committed]
+    if b"\r" not in committed:
+        forms.append(committed.replace(b"\n", b"\r\n"))
+    return forms
+
+
+def export_grid_entry(raw, exported_utc):
+    """The record entry for freshly exported grid bytes (used by the finalizer)."""
+    canonical = canonical_grid_bytes(raw)
+    return {
+        "exported": True,
+        "sha256": sha256_bytes(canonical),
+        "raw_sha256": sha256_bytes(raw),
+        "row_count": row_count_bytes(canonical),
+        "exported_utc": exported_utc,
+    }
 
 
 def row_count_file(path):
@@ -294,15 +337,21 @@ def _validate_grids(record, policy, root, evidence_ref, require_grid):
     if set(grids) != set(policy["grid_exporters"]):
         raise CertificationError("grids keys must exactly match policy grid targets")
     for grid, entry in grids.items():
-        _require_keys(entry, {"exported", "sha256", "row_count", "exported_utc"}, f"grid {grid}")
+        expected = GRID_KEYS
+        if isinstance(entry, dict) and entry.get("exported") is not True and "raw_sha256" not in entry:
+            # Regression-only records written by ci/Run-ExcelVbaTests.ps1 carry
+            # no export claim and predate raw_sha256; both shapes are accepted.
+            expected = GRID_KEYS - {"raw_sha256"}
+        _require_keys(entry, expected, f"grid {grid}")
         if type(entry["exported"]) is not bool:
             raise CertificationError(f"grid {grid} exported must be boolean")
         if not entry["exported"]:
-            if any(entry[k] is not None for k in ("sha256", "row_count", "exported_utc")):
+            if any(entry[k] is not None for k in expected - {"exported"}):
                 raise CertificationError(f"grid {grid} not exported but carries export claims")
             continue
-        if not isinstance(entry["sha256"], str) or not SHA256.fullmatch(entry["sha256"]):
-            raise CertificationError(f"grid {grid} has invalid sha256")
+        for field in ("sha256", "raw_sha256"):
+            if not isinstance(entry[field], str) or not SHA256.fullmatch(entry[field]):
+                raise CertificationError(f"grid {grid} has invalid {field}")
         if type(entry["row_count"]) is not int or entry["row_count"] < 0:
             raise CertificationError(f"grid {grid} has invalid row_count")
         _timestamp(entry["exported_utc"], f"grid {grid} exported_utc")
@@ -310,6 +359,10 @@ def _validate_grids(record, policy, root, evidence_ref, require_grid):
             raw = git_bytes(root, evidence_ref, grid)
             if sha256_bytes(raw) != entry["sha256"]:
                 raise CertificationError(f"grid {grid} digest differs from {evidence_ref}")
+            if entry["raw_sha256"] not in {sha256_bytes(form) for form in export_forms(raw)}:
+                raise CertificationError(
+                    f"grid {grid} raw export digest is not an exact line-ending form of "
+                    f"the grid at {evidence_ref}")
             if row_count_bytes(raw) != entry["row_count"]:
                 raise CertificationError(f"grid {grid} row count differs from {evidence_ref}")
     if require_grid is not None:
@@ -317,11 +370,50 @@ def _validate_grids(record, policy, root, evidence_ref, require_grid):
             raise CertificationError(f"record does not claim a fresh export of {require_grid}")
 
 
+def _validate_corrections(record):
+    """A correction may only re-express a recorded raw export digest (#47).
+
+    It names the grid digest it changed, the value originally recorded, the
+    value now recorded and why. The originally recorded value must survive as
+    that grid's raw_sha256, so a correction can never introduce a new export
+    claim; the committed bytes are then checked by _validate_grids.
+    """
+    corrections = record["corrections"]
+    if not isinstance(corrections, list) or not corrections:
+        raise CertificationError("corrections must be a non-empty array when present")
+    for item in corrections:
+        _require_keys(item, CORRECTION_KEYS, "correction")
+        if type(item["issue"]) is not int or item["issue"] <= 0:
+            raise CertificationError("correction issue must be a positive integer")
+        try:
+            date.fromisoformat(item["date"])
+        except (TypeError, ValueError):
+            raise CertificationError("correction date must be YYYY-MM-DD")
+        if not isinstance(item["reason"], str) or not item["reason"].strip():
+            raise CertificationError("correction reason is required")
+        field = item["field"]
+        grid = field[len("grids."):-len(".sha256")] if isinstance(field, str) else None
+        if (not isinstance(field, str) or not field.startswith("grids.")
+                or not field.endswith(".sha256") or grid not in record["grids"]):
+            raise CertificationError(f"correction field {field!r} is not a grid sha256")
+        entry = record["grids"][grid]
+        if entry.get("exported") is not True:
+            raise CertificationError(f"correction targets non-exported grid {grid}")
+        if item["recorded"] != entry["raw_sha256"] or item["corrected"] != entry["sha256"]:
+            raise CertificationError(
+                f"correction for {grid} must move the recorded digest to raw_sha256 "
+                "and name the canonical sha256")
+        if item["recorded"] == item["corrected"]:
+            raise CertificationError(f"correction for {grid} changes nothing")
+
+
 def validate_record(record, root, *, policy_ref="HEAD", evidence_ref=None,
                     expected_candidate_sha=None, require_pass=False,
                     require_grid=None, log_directory=None):
     policy = load_policy(root, policy_ref)
-    _require_keys(record, RECORD_KEYS, "Excel certification record")
+    _require_keys(record, RECORD_KEYS | ({"corrections"} if isinstance(record, dict)
+                                         and "corrections" in record else set()),
+                  "Excel certification record")
     if record["schema_version"] != 1:
         raise CertificationError("unsupported Excel certification schema")
     if record["repository"] != policy["repository"]:
@@ -345,6 +437,8 @@ def validate_record(record, root, *, policy_ref="HEAD", evidence_ref=None,
     _validate_harness(record, policy)
     _validate_log(record, log_directory)
     _validate_grids(record, policy, root, evidence_ref, require_grid)
+    if "corrections" in record:
+        _validate_corrections(record)
 
     source_map = _source_map(record)
     required = _required_sources(policy, record)

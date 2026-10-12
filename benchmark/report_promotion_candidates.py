@@ -8,7 +8,7 @@ Answers, before promote_grid_rows.py --allow-add is run:
   * whether any candidate falls outside its contract's stated domain;
   * whether any candidate key is duplicated, or already in the main grid.
 """
-import csv, importlib.util, struct, sys
+import csv, importlib.util, sys
 from collections import Counter, defaultdict
 
 import mpmath as mp
@@ -27,14 +27,8 @@ STUDIES = {
 }
 
 
-def bits(t):
-    t = (t or "").strip()
-    if t == "":
-        return ""
-    try:
-        return struct.pack(">d", float(t)).hex()
-    except (ValueError, OverflowError):
-        return "?" + t
+# One shared definition of argument identity (#32).
+from _binary64 import double_key as bits  # noqa: E402
 
 
 def main():
