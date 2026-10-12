@@ -131,6 +131,9 @@ def export_record(tmp, targets, break_hash=False, break_rows=False,
             rows += 7
         grids[rel] = {"exported": not mark_not_exported,
                       "sha256": digest if not mark_not_exported else None,
+                      # The fixture writes LF bytes, so the raw export and the
+                      # committed bytes are the same form (#47).
+                      "raw_sha256": E.sha256_bytes(raw) if not mark_not_exported else None,
                       "row_count": rows if not mark_not_exported else None,
                       "exported_utc": "2026-09-16T04:00:01Z" if not mark_not_exported else None}
         if not mark_not_exported:

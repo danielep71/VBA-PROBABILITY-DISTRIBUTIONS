@@ -5,9 +5,11 @@ immediately after the selected grids were re-exported from the exact candidate
 and Export_ExcelEnvironment refreshed benchmark/excel_environment.json.
 
 The selected grid bytes may legitimately differ from HEAD at this point: they
-are the fresh, not-yet-committed Excel output. The finalizer hashes those
-working-tree bytes. The per-commit manifest-provenance guard later verifies that
-the retained record matches the bytes actually committed with the manifest.
+are the fresh, not-yet-committed Excel output. The finalizer records two exact
+digests of each (#47): raw_sha256 over the bytes Excel wrote, and sha256 over
+the canonical bytes Git will commit under `*.csv text eol=lf` (CRLF to LF). The
+per-commit manifest-provenance guard and the Accuracy Gate later verify both
+against the bytes actually committed.
 """
 import argparse
 import datetime
@@ -15,9 +17,9 @@ import json
 import os
 import sys
 
-from excel_certification import (CertificationError, git_bytes, git_head,
-                                 load_policy, row_count_file, sha256_bytes,
-                                 sha256_file, validate_record)
+from excel_certification import (CertificationError, export_grid_entry, git_bytes,
+                                 git_head, git_text, load_policy, sha256_bytes,
+                                 validate_record)
 
 ENV_PATH = "benchmark/excel_environment.json"
 DEFAULT_OUT = "benchmark/excel_regression_record.json"
@@ -91,12 +93,15 @@ def main():
             grid_abs = os.path.join(root, grid)
             if not os.path.isfile(grid_abs):
                 raise CertificationError(f"fresh-export target is missing: {grid}")
-            record["grids"][grid] = {
-                "exported": True,
-                "sha256": sha256_file(grid_abs),
-                "row_count": row_count_file(grid_abs),
-                "exported_utc": now,
-            }
+            # sha256 is only the committed digest if Git really normalizes
+            # this path to LF; refuse rather than record a digest that cannot
+            # match the commit.
+            attributes = git_text(root, "check-attr", "text", "eol", "--", grid)
+            if f"{grid}: text: set" not in attributes or f"{grid}: eol: lf" not in attributes:
+                raise CertificationError(f"{grid} must be stored with `text eol=lf` "
+                                         "(see .gitattributes)")
+            with open(grid_abs, "rb") as f:
+                record["grids"][grid] = export_grid_entry(f.read(), now)
         record["sources"] = [
             {"path": path, "sha256": source_map[path]} for path in sorted(source_map)
         ]

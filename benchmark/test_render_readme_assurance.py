@@ -21,7 +21,6 @@ import sys
 import tempfile
 
 import render_readme_assurance as R
-from _manifest import normalized_hash
 
 fails = []
 REAL_ROOT = R.ROOT
@@ -316,17 +315,33 @@ expect_failure("registry claims certification with open blockers",
                "claims v1.0.0 is certified")
 expect_failure("incomplete gate without an owner",
                lambda r: edit_json(r, R.READINESS, lambda d: d.update(
-                   blockers=[b for b in d["blockers"] if b["issue"] != 47])),
+                   blockers=[b for b in d["blockers"] if b["issue"] != 29])),
+               "holdout_export is incomplete")
+
+
+def reopen_47(d):
+    for blocker in d["blockers"]:
+        if blocker["issue"] == 47:
+            blocker["status"] = "open"
+            del blocker["resolution"]
+
+
+expect_failure("satisfied gate still owned by an open blocker",
+               lambda r: edit_json(r, R.READINESS, reopen_47), "still lists #47 open")
+
+
+def restore_pre_47_record(r):
+    """The record as it was before #47: the raw CRLF export digest stored as
+    the grid digest, with no correction trail."""
+    def change(d):
+        entry = d["grids"][R.GRID]
+        entry["sha256"] = entry["raw_sha256"]
+        del d["corrections"]
+    edit_json(r, R.EXCEL_RECORD, change)
+
+
+expect_failure("uncertified main grid with #47 marked resolved", restore_pre_47_record,
                "main_grid_export is incomplete")
-
-
-def certify_main_grid(r):
-    digest = normalized_hash(path(r, R.GRID))
-    edit_json(r, R.EXCEL_RECORD, lambda d: d["grids"][R.GRID].update(sha256=digest))
-
-
-expect_failure("satisfied gate still owned by an open blocker", certify_main_grid,
-               "still lists #47 open")
 
 if fails:
     print("FAIL: README assurance renderer")

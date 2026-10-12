@@ -94,6 +94,10 @@ VERIFY = [
     # not read-only. Under --check the summary is restored afterwards, keeping
     # that mode honest about changing nothing.
     ("independent holdout", HOLDOUT, ["analyze_holdout.py"]),
+    # The retained record is live evidence, not a fixture: its candidate,
+    # sources and exported-grid digests must match this commit (#47).
+    ("retained Excel record", HERE, ["check_excel_certification.py", "--record",
+                                     "excel_regression_record.json", "--require-pass"]),
     ("root README assurance block", HERE, ["render_readme_assurance.py", "--check"]),
 ]
 

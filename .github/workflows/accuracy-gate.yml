@@ -160,6 +160,16 @@ jobs:
           python analyze_holdout.py
           git diff --exit-code holdout_summary.md
 
+      - name: "Validate the retained Excel certification record against this commit (#47)"
+        # The fixture proofs above test the validator; this step validates the
+        # committed record itself as live evidence. Its exact candidate must
+        # exist, its certified sources must match this commit, and every grid it
+        # claims as exported must match the committed bytes (sha256) and an
+        # exact line-ending form of them (raw_sha256). Full history is required.
+        if: ${{ !cancelled() }}
+        working-directory: benchmark
+        run: python check_excel_certification.py --record excel_regression_record.json --require-pass
+
       - name: "Verify the root README assurance block matches committed evidence (#28)"
         # Runs last, after every summary it reads has been regenerated and
         # diffed above. The badges, the "Assurance at a glance" table and the
