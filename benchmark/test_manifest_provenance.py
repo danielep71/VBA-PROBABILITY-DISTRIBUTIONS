@@ -431,7 +431,25 @@ check(with_repo(case_helper_record_missing_field)[0] is True,
 #
 # The clone checks out HEAD, so the WORKING-TREE writer is copied in: otherwise
 # the fixture silently exercises the previous revision.
-def case_writer_subprocess():
+#
+# The precondition is set explicitly rather than read from live state (#47): a
+# retained record that validly claims a fresh export of the grid is the
+# documented exception that lets the writer proceed. The negative case
+# therefore commits a regression-only record in the clone; the positive case
+# keeps the record's export claim and must get past this interlock.
+def regression_only(record):
+    """The record with every grid export claim withdrawn."""
+    record = json.loads(json.dumps(record))
+    exporters = set(POLICY_EXPORTERS.values())
+    for entry in record["grids"].values():
+        entry.update(exported=False, sha256=None, raw_sha256=None, row_count=None,
+                     exported_utc=None)
+    record["sources"] = [s for s in record["sources"] if s["path"] not in exporters]
+    record.pop("corrections", None)
+    return record
+
+
+def case_writer_subprocess(withdraw_export_claim):
     tmp = tempfile.mkdtemp()
     try:
         clone = os.path.join(tmp, "clone")
@@ -441,8 +459,18 @@ def case_writer_subprocess():
         if r.returncode != 0:
             return None                      # git unavailable: skip, not fail
         bench = os.path.join(clone, "benchmark")
-        for mod in ("write_manifest.py", "_manifest.py"):
+        for mod in ("write_manifest.py", "_manifest.py", "excel_certification.py"):
             shutil.copy2(os.path.join(HERE, mod), os.path.join(bench, mod))
+        record_path = os.path.join(bench, "excel_regression_record.json")
+        if withdraw_export_claim:
+            with open(record_path, encoding="utf-8") as f:
+                record = regression_only(json.load(f))
+            with open(record_path, "w", encoding="utf-8", newline="\n") as f:
+                json.dump(record, f, indent=2)
+                f.write("\n")
+            subprocess.run(["git", "-c", "user.name=fixture", "-c", "user.email=fixture@example",
+                            "commit", "-qam", "regression-only record"],
+                           cwd=clone, capture_output=True, check=True)
         manifest = os.path.join(bench, "observation_manifest.json")
         before = open(manifest, "rb").read()
         run = subprocess.run([sys.executable,
@@ -455,7 +483,10 @@ def case_writer_subprocess():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-_res = case_writer_subprocess()
+POLICY_EXPORTERS = json.load(open(os.path.join(os.path.dirname(HERE),
+                                               ".github", "excel-evidence-policy.json"),
+                                  encoding="utf-8"))["grid_exporters"]
+_res = case_writer_subprocess(withdraw_export_claim=True)
 if _res is None:
     print("  (skipped: git unavailable for the writer subprocess case)")
 else:
@@ -464,6 +495,9 @@ else:
           "write_manifest.py --from-fresh-export must refuse with an unchanged grid")
     check("unchanged from HEAD" in _out, "the refusal must name the unchanged grid")
     check(_untouched, "a refused write must not modify the manifest")
+    _rc, _out, _untouched = case_writer_subprocess(withdraw_export_claim=False)
+    check(_rc == 0 and "unchanged from HEAD" not in _out,
+          "a validated fresh-export record for the unchanged grid clears the interlock")
 
 if fails:
     print("FAIL: manifest provenance guard")
