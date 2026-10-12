@@ -12,15 +12,16 @@ applies before it writes anything:
   * a reference-only output must never land on the committed grid, nor on
     any other file that already carries observations.
 
-reconcile_grid.py, promote_grid_rows.py, migrate_references.py and
-check_promotion.py keep their own byte-identical key() for now; unifying the
-helpers across the whole generator belongs to #32. test_grid_regeneration.py
-pins all of them to canonical_key() so they cannot drift apart silently.
+The argument bit pattern is _binary64.double_key, shared with the reference
+generator (#32). reconcile_grid.py, promote_grid_rows.py, migrate_references.py,
+check_promotion.py and report_promotion_candidates.py import canonical_key and
+double_key instead of keeping copies; test_binary64.py pins that they do.
 """
 import csv
 import os
-import struct
 from collections import Counter
+
+from _binary64 import double_key
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COMMITTED_GRID = os.path.join(HERE, "probability_accuracy_grid.csv")
@@ -31,15 +32,7 @@ GRID_FIELDS = ["function", "vba_kernel", "claim", "metric",
                "regime", "evidence_set", "expected_error"]
 
 
-def f64_bits(text):
-    """IEEE-754 bit pattern of an argument cell; '' for blank, '?...' if unparsable."""
-    t = (text or "").strip()
-    if t == "":
-        return ""
-    try:
-        return struct.pack(">d", float(t)).hex()
-    except (ValueError, OverflowError):
-        return "?" + t
+f64_bits = double_key  # historical name, kept for existing callers
 
 
 def canonical_key(row):

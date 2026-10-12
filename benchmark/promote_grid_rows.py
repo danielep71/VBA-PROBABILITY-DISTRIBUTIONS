@@ -32,25 +32,14 @@ argument with Val(), so "0.85" and "0.84999999999999998" are the same row.
 Report-only unless --write. New rows arrive with observed_vba blank; fill them
 with Export_Accuracy_MissingOnly, which leaves every existing cell untouched.
 """
-import argparse, csv, importlib.util, struct, sys
+import argparse, csv, importlib.util, sys
 from collections import Counter
 
 GRID_FIELDS_NOTE = "columns are taken from the existing grid header"
 
 
-def bits(t):
-    t = (t or "").strip()
-    if t == "":
-        return ""
-    try:
-        return struct.pack(">d", float(t)).hex()
-    except (ValueError, OverflowError):
-        return "?" + t
-
-
-def key(r):
-    return (r["function"], bits(r["arg1"]), bits(r["arg2"]), bits(r["arg3"]),
-            bits(r["arg4"]), r["regime"], r.get("evidence_set", ""))
+# One shared definition of argument identity (#32).
+from _grid_safety import canonical_key as key  # noqa: E402
 
 
 def load_generator(path):

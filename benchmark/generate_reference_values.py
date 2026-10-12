@@ -301,37 +301,9 @@ _F_VAL = {"F_Cumulative", "F_Survival", "F_InverseCumulative"}
 # Canonicalisation is therefore applied at the reference helpers and at row
 # emission, NOT at parameter binding. Binding-time canonicalisation pushes it
 # into the design layer and moves 28 NegativeBinomial test points.
-def _as_binary64_mpf(x):
-    """The exact binary64 value of x, promoted back into high precision."""
-    num, den = float(x).as_integer_ratio()
-    return mp.mpf(num) / mp.mpf(den)
-
-
-def D(x):
-    """Canonicalise an emitted argument to the Double the exporter will receive.
-
-    The committed argument field is an INPUT TOKEN, not an exact real number.
-    The exporter does ParseDouble = Val(S), so the authoritative test input is
-    the Double produced by Val() on the serialised token - not the Double
-    nearest the pre-serialisation design value. Those two paths coincide almost
-    everywhere, but they are a double rounding apart, and two grid rows sit on
-    the exception:
-
-        design 6235507341273914.5 -> nearest Double 6235507341273915
-        token  "6235507341273914.5" -> Val() -> 6235507341273914
-
-    Above 2^52 the Double grid has spacing 2, so the .5 cannot exist and the two
-    routes land on adjacent Doubles. Following the token reproduces the value the
-    historical observation was actually measured at, which keeps the numeric key
-    set invariant and needs no re-export.
-
-    Python ints pass through: they are count inputs, exact in binary64, and
-    downstream code treats them as ints."""
-    if isinstance(x, (list, tuple)):
-        return type(x)(D(v) for v in x)
-    if isinstance(x, int):
-        return x
-    return _as_binary64_mpf(mp.nstr(x, 17))
+# The helpers live in _binary64.py so every grid tool shares one definition
+# (#32); D is the generator's historical name for as_reference_arg.
+from _binary64 import as_reference_arg as D, format_double_arg  # noqa: E402
 
 
 # Set while a quantile solver is bisecting. Canonicalisation must apply to the
@@ -828,10 +800,10 @@ def build_discrete_rows():
     def row(func, kernel, args, ref, claim, metric):
         rows.append({
             "function": func, "vba_kernel": kernel, "claim": claim, "metric": metric,
-            "arg1": mp.nstr(D(args[0]), 17) if len(args) > 0 else "",
-            "arg2": mp.nstr(D(args[1]), 17) if len(args) > 1 else "",
-            "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "",
-            "arg4": mp.nstr(D(args[3]), 17) if len(args) > 3 else "",
+            "arg1": format_double_arg(args[0]) if len(args) > 0 else "",
+            "arg2": format_double_arg(args[1]) if len(args) > 1 else "",
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "",
+            "arg4": format_double_arg(args[3]) if len(args) > 3 else "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": "all", "evidence_set": "main grid",
         })
@@ -1020,9 +992,9 @@ def build_deep_tail_rows():
         rows.append({
             "function": func, "vba_kernel": "K_STATS_" + func,
             "claim": REL, "metric": "rel",
-            "arg1": mp.nstr(D(args[0]), 17) if len(args) > 0 else "",
-            "arg2": mp.nstr(D(args[1]), 17) if len(args) > 1 else "",
-            "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "",
+            "arg1": format_double_arg(args[0]) if len(args) > 0 else "",
+            "arg2": format_double_arg(args[1]) if len(args) > 1 else "",
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "",
             "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": "deep_tail", "evidence_set": "main grid",
@@ -1102,8 +1074,8 @@ def build_tiny_unbalanced_rows():
         rows.append({
             "function": func, "vba_kernel": func if func.startswith("PROB_") else "K_STATS_" + func,
             "claim": claim, "metric": metric,
-            "arg1": mp.nstr(D(args[0]), 17), "arg2": mp.nstr(D(args[1]), 17),
-            "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "", "arg4": "",
+            "arg1": format_double_arg(args[0]), "arg2": format_double_arg(args[1]),
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "", "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
             "regime": regime, "evidence_set": "main grid",
         })
@@ -1198,10 +1170,10 @@ def build_rows():
                 "vba_kernel": vba_kernel,
                 "claim": claim,
                 "metric": metric,
-                "arg1": mp.nstr(D(args[0]), 17) if len(args) > 0 else "",
-                "arg2": mp.nstr(D(args[1]), 17) if len(args) > 1 else "",
-                "arg3": mp.nstr(D(args[2]), 17) if len(args) > 2 else "",
-                "arg4": mp.nstr(D(args[3]), 17) if len(args) > 3 else "",
+                "arg1": format_double_arg(args[0]) if len(args) > 0 else "",
+                "arg2": format_double_arg(args[1]) if len(args) > 1 else "",
+                "arg3": format_double_arg(args[2]) if len(args) > 2 else "",
+                "arg4": format_double_arg(args[3]) if len(args) > 3 else "",
                 "reference": mp.nstr(ref, 25),
                 "observed_vba": "",
                 "regime": regime,
