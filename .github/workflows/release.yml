@@ -1,0 +1,251 @@
+name: Release
+run-name: Release — ${{ github.event_name == 'push' && github.ref_name || format('rehearsal of {0}', inputs.ref) }}
+
+# Builds, attests and drafts a GitHub Release from an annotated vX.Y.Z tag
+# (RELEASING.md steps 7, 9 and 10; #31). The draft is published by the
+# maintainer after review; nothing here publishes or changes a tag.
+#
+#   tag push        verify -> build -> attest -> draft release
+#   manual run      rehearsal: verify (certification reported, not required)
+#                   and build a workflow artifact; no attestation, no release
+#
+# Verification is fail-closed: a lower-case annotated tag equal to VERSION on a
+# commit reachable from main, valid release semantics, a retained Excel record
+# that validates against the tagged commit, a current README assurance block,
+# and release_readiness.json declaring this release certified.
+#
+# Signing happens only here, through GitHub's OIDC-backed build-provenance
+# attestation. Nothing is signed locally.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Revision to rehearse (no attestation or release is created)
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    name: Verify the release candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+      rehearsal: ${{ steps.identity.outputs.rehearsal }}
+    steps:
+      - name: Check out the candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || inputs.ref }}
+          persist-credentials: false
+          # Full history: the Excel record names its candidate commit.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Establish the release identity
+        id: identity
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.ref_name }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < VERSION)"
+          if [[ "$EVENT" == "push" ]]; then
+            if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+              echo "::error::$TAG is not a lower-case vMAJOR.MINOR.PATCH tag"; exit 1
+            fi
+            if [[ "$TAG" != "v$version" ]]; then
+              echo "::error::tag $TAG does not match VERSION $version"; exit 1
+            fi
+            # Re-fetch the tag itself so its object type is the remote's.
+            git fetch --no-tags --force "$REPO_URL" "refs/tags/$TAG:refs/tags/$TAG"
+            if [[ "$(git cat-file -t "refs/tags/$TAG")" != "tag" ]]; then
+              echo "::error::$TAG must be an annotated tag"; exit 1
+            fi
+            git fetch --no-tags "$REPO_URL" "refs/heads/main:refs/remotes/upstream/main"
+            if ! git merge-base --is-ancestor HEAD upstream/main; then
+              echo "::error::$TAG does not point to a commit on main"; exit 1
+            fi
+            rehearsal=false
+          else
+            rehearsal=true
+          fi
+          printf 'version=%s\nrehearsal=%s\n' "$version" "$rehearsal" >> "$GITHUB_OUTPUT"
+          printf 'Release candidate %s, version %s, rehearsal=%s\n' \
+            "$(git rev-parse HEAD)" "$version" "$rehearsal" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate release semantics
+        run: python3 tools/check_release_semantics.py --root .
+
+      - name: Validate the retained Excel certification record
+        working-directory: benchmark
+        run: python check_excel_certification.py --record excel_regression_record.json --require-pass
+
+      - name: Verify the README assurance block is current
+        working-directory: benchmark
+        run: python render_readme_assurance.py --check
+
+      - name: Require a certified release in the readiness registry
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+          REHEARSAL: ${{ steps.identity.outputs.rehearsal }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          data = json.load(open("benchmark/release_readiness.json", encoding="utf-8"))
+          tag = "v" + os.environ["VERSION"]
+          blockers = [b["issue"] for b in data["blockers"] if b["status"] == "open"]
+          state = (f"release_readiness.json: release {data['release']}, "
+                   f"certified={data['certified']}, open blockers {blockers or 'none'}")
+          print(state)
+          if data["release"] == tag and data["certified"] is True:
+              raise SystemExit(0)
+          if os.environ["REHEARSAL"] == "true":
+              print(f"::warning::{tag} is not certified; a tag push would stop here")
+              raise SystemExit(0)
+          print(f"::error::{tag} is not declared certified; {state}")
+          raise SystemExit(1)
+          PY
+
+  build:
+    name: Build the source bundle
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || inputs.ref }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Build the bundle, checksums and notes
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+          REHEARSAL: ${{ needs.verify.outputs.rehearsal }}
+        run: |
+          set -euo pipefail
+          args=(--version "$VERSION" --ref HEAD --out dist)
+          # A release needs its dated changelog section; a rehearsal of an
+          # unreleased version has none, so it builds the bundle only.
+          if [[ "$REHEARSAL" != "true" ]]; then
+            args+=(--notes dist/release-notes.md)
+          fi
+          python3 .github/scripts/build_release_bundle.py "${args[@]}"
+          # SHA256SUMS names the bundle without a directory, as users verify it
+          # beside the download, so check it from inside dist.
+          (cd dist && sha256sum --check --strict SHA256SUMS)
+          { echo "Built:"; cat dist/SHA256SUMS; } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the built files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  attest:
+    name: Attest build provenance
+    needs: [verify, build]
+    if: needs.verify.outputs.rehearsal == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Fetch the built files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist
+
+      - name: Attest the bundle and its checksums
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.zip
+            dist/SHA256SUMS
+
+      - name: Keep the attestation bundle as a release asset
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p attestation
+          cp "$BUNDLE" "attestation/VBA-Probability-Distributions-$VERSION.intoto.jsonl"
+
+      - name: Upload the attestation bundle
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-attestation
+          path: attestation/
+          if-no-files-found: error
+          retention-days: 30
+
+  draft:
+    name: Draft the GitHub Release
+    needs: [verify, attest]
+    if: needs.verify.outputs.rehearsal == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch the built files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist
+
+      - name: Fetch the attestation bundle
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-attestation
+          path: dist
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum --check --strict SHA256SUMS)
+          # A draft never overwrites: an existing release for this tag fails here.
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --verify-tag \
+            --title "VBA Probability Distributions $VERSION" \
+            --notes-file dist/release-notes.md \
+            dist/*.zip dist/SHA256SUMS dist/*.intoto.jsonl

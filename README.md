@@ -1043,6 +1043,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 ├─ .github/
 │  ├─ ISSUE_TEMPLATE/
 │  ├─ scripts/
+│  │  ├─ build_release_bundle.py
 │  │  └─ labels-drift.mjs
 │  ├─ workflows/
 │  │  ├─ accuracy-gate.yml
@@ -1051,6 +1052,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  │  ├─ excel-vba-regression.yml
 │  │  ├─ labels-drift.yml
 │  │  ├─ labels-sync.yml
+│  │  ├─ release.yml
 │  │  ├─ scorecard.yml
 │  │  └─ static-checks.yml
 │  ├─ actionlint.yaml

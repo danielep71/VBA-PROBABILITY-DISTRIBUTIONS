@@ -169,11 +169,32 @@ Certification rules:
 
 ## 7. Build release artifacts
 
-Planned outputs:
+Pushing the annotated tag (step 9) runs `.github/workflows/release.yml`, which
+builds the release outputs from the tagged commit:
 
-- Versioned source bundle, if published
-- Demo or validation workbook, if supported
-- Source archive created by GitHub from the tag
+- `VBA-Probability-Distributions-X.Y.Z.zip`: the production modules in `src/`
+  and the regression harness in `tests/` with CRLF line endings for VBE import,
+  plus `LICENSE`, `README.md`, `INSTALLATION.md`, `CHANGELOG.md`, `SECURITY.md`,
+  `VERSION` and a `MANIFEST.sha256` of every member;
+- `SHA256SUMS` for the bundle;
+- `VBA-Probability-Distributions-X.Y.Z.intoto.jsonl`, a GitHub build-provenance
+  attestation of both, signed in the workflow through GitHub's OIDC identity;
+- the source archive GitHub creates from the tag.
+
+The bundle is built by `.github/scripts/build_release_bundle.py` from Git
+objects at the tag, never from a working tree, so the same commit always
+produces the same bytes. Before building, the workflow refuses a tag that is
+not annotated, not lower-case `vX.Y.Z`, not equal to `VERSION` or not on
+`main`; release semantics, the retained Excel record, the README assurance
+block and a `certified: true` entry for the version in
+`benchmark/release_readiness.json` must all validate at the tagged commit.
+
+Rehearse at any time with **Actions → Release → Run workflow** on `main`: it
+runs the same checks, reports missing certification as a warning, builds the
+bundle as a workflow artifact, and creates no attestation or release.
+
+A demo or validation workbook is not part of the automated release; publish one
+only if the installation guide promises it, following the steps below.
 
 For each artifact:
 
@@ -302,7 +323,10 @@ A release note summarizes evidence; it does not replace it.
 
 ## 10. Publish the GitHub Release
 
-Create the release from the annotated tag and include:
+The release workflow creates a **draft** release for the tag, with the three
+assets above and notes made of the version's CHANGELOG section plus an asset
+table with sizes and SHA-256. Review and complete the draft, then publish it.
+Before publishing, make sure it includes:
 
 1. User-facing summary and highlights.
 2. Upgrade or migration notes.
@@ -313,7 +337,7 @@ Create the release from the annotated tag and include:
 7. Full changelog comparison link.
 8. Security-reporting link.
 
-Upload the already-hashed artifacts. Do not rebuild between tagging and upload.
+Upload only the already-hashed artifacts the workflow attached. Do not rebuild between tagging and upload. If the workflow failed, fix the cause, delete the draft if one exists, and re-run the workflow; never edit an asset by hand.
 
 ## 11. Verify after publication
 
