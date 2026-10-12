@@ -114,6 +114,13 @@ jobs:
           --output test-results/release-semantics.json
           --summary test-results/release-semantics.md
 
+      - name: Exercise the release bundle builder
+        id: release-bundle-self-test
+        continue-on-error: true
+        # Fixtures for .github/scripts/build_release_bundle.py, which the
+        # Release workflow runs on a version tag (#31).
+        run: python3 .github/scripts/build_release_bundle.py --self-test
+
       - name: Install the hash-locked Python linter
         id: ruff-install
         continue-on-error: true
@@ -187,6 +194,7 @@ jobs:
           VBA_JUMPS: ${{ steps.vba-jumps.outcome }}
           RELEASE_SEMANTICS_SELF_TEST: ${{ steps.release-semantics-self-test.outcome }}
           RELEASE_SEMANTICS: ${{ steps.release-semantics.outcome }}
+          RELEASE_BUNDLE_SELF_TEST: ${{ steps.release-bundle-self-test.outcome }}
           RUFF_INSTALL: ${{ steps.ruff-install.outcome }}
           RUFF: ${{ steps.ruff.outcome }}
           ACTIONLINT_INSTALL: ${{ steps.actionlint-install.outcome }}
@@ -200,6 +208,7 @@ jobs:
             "VBA jumps:$VBA_JUMPS" \
             "Release-semantics fixtures:$RELEASE_SEMANTICS_SELF_TEST" \
             "Release semantics:$RELEASE_SEMANTICS" \
+            "Release bundle fixtures:$RELEASE_BUNDLE_SELF_TEST" \
             "Python linter install:$RUFF_INSTALL" \
             "Python correctness lint:$RUFF" \
             "Workflow validator install:$ACTIONLINT_INSTALL" \
