@@ -107,7 +107,9 @@ that through the predictions in §7.
   `PROB_NormalSurvival`, the interval logic and the inverse are not modified.
 
 **Density:** `PROB_NormalPDF(z) = C * E(|z|)` inside the existing underflow
-guard.
+guard. `PROB_NormalPDF` serves `NormalStandard_Density` and the Halley step.
+`Normal_Density` and `Lognormal_Density` compute the density in log space
+without it. Their own exponent rounding is outside #72.
 
 **Fit.** The fit is deterministic and uses mpmath at 60 digits:
 - linearised least squares for relative error at the 500 Chebyshev nodes of
@@ -217,18 +219,23 @@ row's binary64 arguments.
   - has error ≤ `B`.
 
   This applies to the main grid, `survival_boundary` and `holdout_older`.
-- **P2 Standardised surfaces.** For every committed row of `Normal_*` and
-  `Lognormal_*` cumulative, survival and density, error ≤ `B + κ · δ`:
+- **P2 Standardised surfaces.** For every committed row of
+  `Normal_Cumulative`, `Normal_Survival`, `Lognormal_Cumulative` and
+  `Lognormal_Survival`, error ≤ `B + κ · δ`:
   - `κ` is the condition number with respect to `z`:
     - `z·φ(z)/Q(z)` for survival;
-    - `|z|·φ(z)/Φ(z)` for cumulative;
-    - `z²` for density.
+    - `|z|·φ(z)/Φ(z)` for cumulative.
   - `δ` bounds the relative error of the computed `z`:
     - `2^-52` for Normal;
     - `2^-52 + 2^-52·|ln x| / |ln x − μ|` for Lognormal, allowing one ulp in
       VBA `Log`.
 
   The derivation computes and records the bound for every such row.
+
+  `Normal_Density` and `Lognormal_Density` are not affected. They evaluate the
+  density in log space, as `Exp(-0.5·Z·Z − Log(σ) − …)`, and call neither the
+  kernel nor `PROB_NormalPDF`. This repair does not change them, and their
+  observations are predicted to be bit-identical to the committed ones.
 - **P3 Interval surfaces.** For every committed row of
   `NormalStandard_IntervalProbability` and `Normal_IntervalProbability`, error
   ≤ `(Q₁·b₁ + Q₂·b₂) / P`:
@@ -265,8 +272,8 @@ The derivation commit must record, machine-readably:
 - oracle stability and independence figures;
 - current-kernel and candidate errors by band;
 - seam results;
-- the P1 predicted values and P2/P3 bounds for every committed row they
-  cover;
+- the P1 and P4 predicted values, and the P2/P3 bounds, for every committed
+  row they cover outside the independent holdout;
 - runtime.
 
 A fixture in the evidence-tool suite pins the coefficients, the literals and
