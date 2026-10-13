@@ -1,13 +1,15 @@
 # Normal upper-tail kernel study (#72)
 
-**Status: derivation run; FAILED acceptance condition A2 only.** Excel-free. This study
+**Status: derivation and validation complete; PASS under Amendment 1.** Excel-free. This study
 designs and validates a replacement for `PROB_NormalUpperTailPositive` before
 any VBA is written. It is not evidence that the kernel is fixed. The fix lands
 only in a real-Excel wave, together with source, regression tests, exports
 and truthful provenance.
 
 Design: `PREREGISTRATION.md`, frozen before the committed derivation. Its §0
-discloses the scratch exploration that chose the design.
+discloses the scratch exploration that chose the design. Amendment 1, written
+after the first run, replaces one acceptance condition (A2) and is disclosed
+as such.
 
 ## Defect
 
@@ -36,27 +38,28 @@ The acceptance bound is `2^-50` relative, the bound of the #34 study.
 `derive_kernel.py` ran the preregistered fit in 74 s. `validate_kernel.py`
 applied the design and wrote `results.json`.
 
-**Failed: A2.** A2 requires every coefficient to be positive. One is not: the
-numerator's `z^7` coefficient is −2.54E-10. A2 exists so that Horner
-evaluation cannot cancel. The term's actual effect is a cancellation factor of
-1 + 1.5E-7 on `[0, 3]`, so the numerical purpose is met, but the condition as
-written fails.
+**First run: failed A2 only (#74).** A2 required every coefficient to be
+positive. The numerator's `z^7` coefficient is −2.54E-10. A2 exists so that
+Horner evaluation cannot cancel, and the term's actual effect is a
+cancellation factor of only 1 + 1.5E-7 on `[0, 3]`. The scratch prototype
+(§0) had the same sign; its positivity check left out the last numerator
+coefficient. Under §6 the study failed, and the holdout was not evaluated.
 
-The scratch prototype (§0 of the preregistration) had the same sign. Its
-positivity check left out the last numerator coefficient, so this was missed
-before the design was frozen.
+**Amendment 1.** The maintainer chose an amendment over a new
+preregistration. A2 is replaced by A2′, which bounds the cancellation factor
+by `1 + 2^-20`. The coefficients were not refitted, and nothing else changed.
+The frozen A2 stays recorded as `A2_as_frozen`.
 
-Under §6, a failed condition fails the study, and the holdout H was **not**
-evaluated.
-
-Every other condition passed:
+**Second run: PASS.** The holdout was evaluated once:
 
 | Condition | Result |
 | --- | --- |
 | A1 approximant | 1.03E-17 ≤ 2^-55 on 23,001 points |
+| A2′ cancellation (Amendment 1) | numerator 1 + 1.5E-7, denominator 1 (all positive), limit 1 + 2^-20 |
 | A3 literals | all 17 constants rebuild their Double exactly |
 | A4 continued fraction | truncation 2.0E-18 at z = 3 ≤ 2^-56, decreasing to 4.3E-50 at z = 10 |
 | A5 kernel on V (23,751 points + seams) | worst Q 5.3E-16, 1 − Q 3.9E-16, density 3.4E-16, all ≤ 2^-50 (8.9E-16) |
+| A6 holdout H (15,000 points, evaluated once) | worst Q 5.5E-16, 1 − Q 3.9E-16, density 3.3E-16 |
 | A7 #34 route | worst 3.7E-16 at the 36 fitting points; 1.8E-16 at its 21 holdout points |
 | A8 no regression | holds at all 3,227 points where today's kernel meets the bound |
 | Oracle stability | ≥ 58.0 digits; quadrature leg ≥ 98.3 digits at 151 points |
@@ -89,15 +92,15 @@ was recorded.** Neither touches the design or a threshold:
 - `Normal_IntervalProbability` rows were read as `(lower, upper, mean)`. The
   density-helper exporter calls them as `(lower, upper, 0, sd)`.
 
-**Decision needed.** Per the preregistration, a failed study produces no VBA
-recommendation until either an amendment, disclosed as made after seeing the
-result, or a new preregistration resolves it.
+**Next.** The kernel is ready to be implemented in VBA with the recorded
+literals, in the Excel wave that §9 describes. That wave tests the §7
+predictions against real Excel.
 
 ## Files
 
 | File | Role |
 | --- | --- |
-| `PREREGISTRATION.md` | frozen design, acceptance conditions and predictions for the Excel wave |
+| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, and Amendment 1 |
 | `derive_kernel.py` | the preregistered fit; writes `kernel_coefficients.json` |
 | `kernel_coefficients.json` | coefficients to 40 digits, their Doubles, and VBA `hi`/`lo` literal pairs |
 | `kernel_model.py` | binary64 model of the candidate, of today's kernel, and of every affected public path |
