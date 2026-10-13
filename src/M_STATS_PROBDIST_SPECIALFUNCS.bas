@@ -7,8 +7,9 @@ Option Private Module
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Provides the log-gamma, log-beta, regularized incomplete beta and
-'   regularized incomplete gamma functions, together with their inverses, as
-'   distribution-agnostic kernels with an explicit success/failure contract.
+'   regularized incomplete gamma functions, together with their inverses, and
+'   the standard normal upper tail, as distribution-agnostic kernels with an
+'   explicit success/failure contract.
 '
 ' WHY THIS EXISTS
 '   Every distribution outside the normal family reduces to one of two objects:
@@ -17,6 +18,10 @@ Option Private Module
 '   gamma, beta, Poisson, binomial and the negative binomial are all thin
 '   wrappers around them. Isolating those objects here means the hard numerics
 '   are written, tested and fixed exactly once.
+'
+'   The standard normal upper tail is here for the same reason. The normal
+'   family needs it, and so does the large-df Student-t route (#34), both to
+'   full relative precision; two copies would be two chances to disagree.
 '
 '   Every iterative routine here returns Boolean and reports non-convergence
 '   through FailMsg. A continued fraction that hits its iteration cap and then
@@ -50,6 +55,9 @@ Option Private Module
 '     - PROB_TryGammaSeriesP
 '     - PROB_TryGammaContinuedFractionQ
 '     - PROB_TryGammaInvP
+'
+'   Standard normal upper tail (#72):
+'     - PROB_NormalUpperTail
 '
 '   Stable log-density kernels (CR-P1-01 / CR-P1-02):
 '     - PROB_TryDeviancePart      Loader deviance bd0(x, m)
@@ -100,6 +108,12 @@ Option Private Module
 '       by bisection.
 '   - PROB_TryGammaInvP:
 '       Wilson-Hilferty seed refined by Newton's method safeguarded by bisection.
+'   - PROB_NormalUpperTail:
+'       A degree-(7, 7) rational approximation fitted in this repository by a
+'       preregistered, deterministic procedure
+'       (benchmark/normal_tail_study/derive_kernel.py) below Z = 3, and the
+'       classical Laplace continued fraction for the Mills ratio at and above
+'       it. No third-party coefficients are used.
 '   Nothing here is a newly-invented algorithm; the Try contract, the (X, Y)
 '   argument pair and the iteration budgets are the local contribution.
 '
@@ -152,6 +166,7 @@ Option Private Module
 ' UPDATED
 '   2026-08-11 - Surface list completed with the stable log-density kernels;
 '                LogGammaDelta accuracy figure re-measured and contracted.
+'   2026-10-13 - Standard normal upper tail added (#72).
 '==============================================================================
 
 '==============================================================================
@@ -262,6 +277,39 @@ Private Const PROB_LG1P_C23 As Double = -4.34782660530403E-02
 Private Const PROB_LG1P_C24 As Double = 4.16666691503412E-02
 Private Const PROB_LG1P_C25 As Double = -4.00000011921401E-02
 Private Const PROB_LG1P_C26 As Double = 3.84615390346752E-02
+
+'Standard normal upper tail (#72). Every value below is fixed by the
+'preregistered study in benchmark/normal_tail_study, which records each one
+'to 40 digits in kernel_coefficients.json. A constant that a 15-digit literal
+'cannot hold is written as the sum of two such literals, and that sum is the
+'correctly rounded Double; test_vba_kernel_source.py checks every pair against
+'the study. Do not retype, round or "tidy" these values.
+'
+'P and D are the numerator and denominator of the degree-(7, 7) rational
+'approximation to Q(Z) * Exp(Z ^ 2 / 2) on 0 <= Z < 3, with D(0) = 1. Every
+'coefficient except P7 is positive; P7 is -2.5E-10, and its whole effect on
+'[0, 3] is a cancellation factor of 1 + 1.5E-7 (Amendment 1 of the study).
+Private Const PROB_NT_P0 As Double = 0.5
+Private Const PROB_NT_P1 As Double = 0.480184367590059 - 3.88578058618805E-16
+Private Const PROB_NT_P2 As Double = 0.23576729183073 + 3.33066907387547E-16
+Private Const PROB_NT_P3 As Double = 6.89088968314517E-02
+Private Const PROB_NT_P4 As Double = 1.24964409031359E-02 + 4.16333634234434E-17
+Private Const PROB_NT_P5 As Double = 1.31859652187628E-03 + 1.0842021724855E-18
+Private Const PROB_NT_P6 As Double = 6.34118830319193E-05 + 1.35525271560688E-20
+Private Const PROB_NT_P7 As Double = -2.54113287998232E-10 + 1.55096364853693E-25
+Private Const PROB_NT_D1 As Double = 1.75825329598299 - 4.88498130835069E-15
+Private Const PROB_NT_D2 As Double = 1.37441774250694 + 4.44089209850063E-16
+Private Const PROB_NT_D3 As Double = 0.621279362780297 - 3.33066907387547E-16
+Private Const PROB_NT_D4 As Double = 0.176120941664172 - 3.60822483003176E-16
+Private Const PROB_NT_D5 As Double = 3.14745662345996E-02 + 3.46944695195361E-17
+Private Const PROB_NT_D6 As Double = 3.30581981247468E-03
+Private Const PROB_NT_D7 As Double = 1.58922498110447E-04 - 2.71050543121376E-19
+
+Private Const PROB_NT_INV_SQRT_TWO_PI As Double = _
+    0.398942280401433 - 2.77555756156289E-16
+Private Const PROB_NT_SPLIT        As Double = 3#     'Rational below, continued fraction at and above
+Private Const PROB_NT_CF_LEVELS    As Long = 60       'Laplace continued-fraction depth; truncation 2.0E-18 at Z = 3
+Private Const PROB_NT_UNDERFLOW_Z  As Double = 38.5   'At approximately 38.49 the one-sided tail rounds to zero in Double
 
 
 '==============================================================================
@@ -2521,6 +2569,122 @@ Public Function PROB_TryGammaInvP( _
         Result = X
     'Return success
         PROB_TryGammaInvP = True
+End Function
+
+
+'==============================================================================
+' STANDARD NORMAL UPPER TAIL
+'==============================================================================
+
+Public Function PROB_NormalUpperTail( _
+    ByVal Z As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_NormalUpperTail
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Q(Z) = P(N(0,1) > Z) for Z >= 0 without subtracting from one, to
+'   full relative precision wherever Q(Z) is a normal Double.
+'
+' WHY THIS EXISTS
+'   The normal family's previous kernel combined a Hart rational approximation
+'   below Z = 7.07 with a sixteen-level continued fraction above it. It was
+'   accurate in absolute terms only, and its exponential factor rounded Z ^ 2
+'   first (#72). The Student-t large-df route (#34) needs the same tail to full
+'   relative precision, so the repaired kernel lives here, once, for both.
+'
+' METHOD
+'   Q(Z) = E(Z) * F(Z), with E(Z) = Exp(-Z ^ 2 / 2) from PROB_ExpNegHalfSquare,
+'   whose main argument is exact, and F(Z) = Q(Z) * Exp(Z ^ 2 / 2):
+'
+'     0 <= Z < 3      F is the rational P(Z) / D(Z), each evaluated by Horner
+'                     in Z. Every coefficient but one is positive, so there is
+'                     no cancellation to speak of.
+'     3 <= Z < 38.5   F = (1 / Sqr(2 * Pi)) / d, where d is the Laplace
+'                     continued fraction Z + 1/(Z + 2/(Z + 3/(Z + ...))),
+'                     evaluated backwards over 60 levels.
+'     Z >= 38.5       0: the one-sided tail rounds to zero in Double.
+'
+'   Every operation is written in the order the binary64 model in
+'   benchmark/normal_tail_study evaluates it. Do not reassociate.
+'
+' ACCURACY
+'   Not stated here. The binary64 model of this exact arithmetic, its
+'   validation and holdout, and the predictions for every affected public
+'   function are recorded in benchmark/normal_tail_study. Contracts are in
+'   benchmark/accuracy_contracts.csv and change only with Excel evidence.
+'
+' PRECONDITION
+'   Z >= 0. Callers reflect negative arguments.
+'
+' UPDATED
+'   2026-10-13 - New (#72); replaces PROB_NormalUpperTailPositive in
+'                M_STATS_PROBDIST_NORMALFAMILY.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Exponential         As Double          'Exp(-Z ^ 2 / 2), split exponent
+    Dim SumP                As Double          'Rational numerator accumulator
+    Dim SumD                As Double          'Rational denominator accumulator
+    Dim Denominator         As Double          'Continued-fraction denominator
+    Dim Level               As Long            'Continued-fraction level
+
+'------------------------------------------------------------------------------
+' HANDLE TRUE DOUBLE UNDERFLOW
+'------------------------------------------------------------------------------
+    'The one-sided tail rounds to zero at approximately Z = 38.49
+        If Z >= PROB_NT_UNDERFLOW_Z Then
+            PROB_NormalUpperTail = 0#
+            Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' CALCULATE COMMON EXPONENTIAL FACTOR
+'------------------------------------------------------------------------------
+    'The underflow cutoff above keeps Z inside the helper's precondition
+        Exponential = PROB_ExpNegHalfSquare(Z)
+
+'------------------------------------------------------------------------------
+' CENTRAL REGION
+'------------------------------------------------------------------------------
+    'Rational approximation to Q(Z) * Exp(Z ^ 2 / 2) below the split
+        If Z < PROB_NT_SPLIT Then
+            SumP = PROB_NT_P7 * Z + PROB_NT_P6
+            SumP = SumP * Z + PROB_NT_P5
+            SumP = SumP * Z + PROB_NT_P4
+            SumP = SumP * Z + PROB_NT_P3
+            SumP = SumP * Z + PROB_NT_P2
+            SumP = SumP * Z + PROB_NT_P1
+            SumP = SumP * Z + PROB_NT_P0
+
+            SumD = PROB_NT_D7 * Z + PROB_NT_D6
+            SumD = SumD * Z + PROB_NT_D5
+            SumD = SumD * Z + PROB_NT_D4
+            SumD = SumD * Z + PROB_NT_D3
+            SumD = SumD * Z + PROB_NT_D2
+            SumD = SumD * Z + PROB_NT_D1
+            SumD = SumD * Z + 1#
+
+            PROB_NormalUpperTail = Exponential * (SumP / SumD)
+
+'------------------------------------------------------------------------------
+' TAIL
+'------------------------------------------------------------------------------
+        Else
+        'Evaluate the Laplace continued fraction backwards, then scale by the
+        'Mills ratio phi(Z) / Denominator
+            Denominator = Z
+
+            For Level = PROB_NT_CF_LEVELS To 1 Step -1
+                Denominator = Z + CDbl(Level) / Denominator
+            Next Level
+
+            PROB_NormalUpperTail = _
+                Exponential * (PROB_NT_INV_SQRT_TWO_PI / Denominator)
+        End If
 End Function
 
 
