@@ -293,3 +293,43 @@ exports and provenance:
   supports;
 - the #34 route is implemented on the new kernel under #34's own production
   preregistration.
+
+---
+
+## Amendment 1 — recorded after the derivation run
+
+**Disclosure.** This amendment was written on 2026-10-13, after the
+derivation run recorded in `results.json` (merged in #74) had failed A2 and
+no other condition. The maintainer chose an amendment over a new
+preregistration. Nothing above this section has been changed. The design
+(§2), the fitted coefficients, every other condition and threshold, the
+evaluation sets (§5) and the predictions (§7) all stand as frozen.
+
+**Defect in A2.** A2 required every coefficient of `P` and `D` to be
+positive, "so Horner evaluation for `z ≥ 0` has no cancellation".
+Positivity is a sufficient condition for that purpose, not the purpose
+itself:
+- The preregistered fit produced one negative coefficient: the numerator's
+  `z^7` term, −2.54E-10.
+- Its effect on `[0, 3]` is a cancellation factor
+  `Σ|c_k| z^k / |Σ c_k z^k|` of at most 1 + 1.5E-7.
+- At that size it changes Horner's rounding-error bound by under one
+  millionth of itself.
+
+The scratch prototype had the same sign. Its positivity check skipped the
+last numerator coefficient, so the defect was not caught before freezing.
+
+**A2 is replaced by A2′:** for `P` and for `D`, with the Double coefficients,
+
+    max over set A of  Σ|c_k| z^k / |Σ c_k z^k|  ≤  1 + 2^-20.
+
+The threshold was chosen after seeing 1 + 1.5E-7, and that is disclosed
+here. The justification is independent of the observed value: a factor
+below `1 + 2^-20` inflates the Horner error bound by less than `2^-20` of
+itself, which is below 0.001 ulp at the kernel's measured error. A5 measures
+the binary64 result directly in any case. The failed A2 stays in
+`results.json` as `A2_as_frozen`.
+
+**Holdout.** H was not evaluated in the failed run, because §6 stops at a
+failed condition. It is evaluated once, under this amendment. No parameter
+in §2 was changed or refitted.

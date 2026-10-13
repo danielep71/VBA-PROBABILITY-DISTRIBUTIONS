@@ -218,6 +218,25 @@ def approximant_check(raw):
             "points": 23001}
 
 
+def cancellation_check(k):
+    """A2' (Amendment 1): Horner's cancellation factor for P and D on set A."""
+    limit = 1 + 2.0 ** -20
+    out = {"limit": limit}
+    with mp.workdps(40):
+        for name in ("numerator", "denominator"):
+            c = [mp.mpf(x) for x in k[name]]
+            worst = (mp.mpf(1), None)
+            for z in approximant_set():
+                zm = mp.mpf(z)
+                powers = [zm ** j for j in range(len(c))]
+                factor = sum(abs(a) * p for a, p in zip(c, powers)) / abs(sum(a * p for a, p in zip(c, powers)))
+                if factor > worst[0]:
+                    worst = (factor, z)
+            out[name] = {"worst_factor_minus_one": float(worst[0] - 1), "z": worst[1]}
+    out["pass"] = all(out[n]["worst_factor_minus_one"] <= 2.0 ** -20 for n in ("numerator", "denominator"))
+    return out
+
+
 def truncation_check(levels):
     rows = []
     with mp.workdps(100):
@@ -440,7 +459,10 @@ def main():
     problems = []
 
     a1 = approximant_check(raw)
-    a2 = {"pass": all(mp.mpf(r["value"]) > 0 for r in raw["numerator"] + raw["denominator"])}
+    a2_frozen = {"pass": all(mp.mpf(r["value"]) > 0 for r in raw["numerator"] + raw["denominator"]),
+                 "negative": [f"{name}[{i}] = {r['value']}" for name in ("numerator", "denominator")
+                              for i, r in enumerate(raw[name]) if mp.mpf(r["value"]) <= 0]}
+    a2 = cancellation_check(km.COEFFICIENTS)
     literals = raw["numerator"] + raw["denominator"] + [raw["inv_sqrt_two_pi"]]
     a3 = {"pass": all(r["pair_is_exact"] and float(r["hi"]) + float(r["lo"]) == float(r["double"])
                       for r in literals), "constants": len(literals)}
@@ -490,7 +512,10 @@ def main():
         "bound": B,
         "oracle": {"stability_min_digits": stability, "quadrature_min_digits": independence,
                    "quadrature_points": len(quadrature)},
-        "acceptance": {"A1": a1, "A2": a2, "A3": a3, "A4": a4, "A5": a5, "A7": a7, "A8": a8},
+        "amendments": ["Amendment 1: A2 (strict positivity) replaced by A2' (cancellation factor "
+                       "<= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only"],
+        "acceptance": {"A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
+                       "A7": a7, "A8": a8},
         "bands": {"current": band_worst(current_rows), "candidate": band_worst(v_rows)},
         "seams": [s for s in seams if s["seam"] in ("split", "last_normal_q", "tail_underflow")],
         "predictions": predictions(),

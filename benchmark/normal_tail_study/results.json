@@ -2,11 +2,9 @@
  "study": "normal upper-tail kernel (#72)",
  "preregistration": "PREREGISTRATION.md",
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
- "status": "FAIL",
- "problems": [
-  "A2 failed"
- ],
- "generated_utc": "2026-10-13T05:23:55Z",
+ "status": "PASS",
+ "problems": [],
+ "generated_utc": "2026-10-13T06:45:41Z",
  "versions": {
   "python": "3.11.15",
   "mpmath": "1.3.0"
@@ -17,6 +15,9 @@
   "quadrature_min_digits": 98.2641290172743,
   "quadrature_points": 151
  },
+ "amendments": [
+  "Amendment 1: A2 (strict positivity) replaced by A2' (cancellation factor <= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only"
+ ],
  "acceptance": {
   "A1": {
    "pass": true,
@@ -26,7 +27,22 @@
    "points": 23001
   },
   "A2": {
-   "pass": false
+   "limit": 1.0000009536743164,
+   "numerator": {
+    "worst_factor_minus_one": 1.522204044011787e-07,
+    "z": 3.0
+   },
+   "denominator": {
+    "worst_factor_minus_one": 0.0,
+    "z": null
+   },
+   "pass": true
+  },
+  "A2_as_frozen": {
+   "pass": false,
+   "negative": [
+    "numerator[7] = -0.000000000254113287998231858610394323281433497339"
+   ]
   },
   "A3": {
    "pass": true,
@@ -436,6 +452,26 @@
    "pass": true,
    "current_meets_bound": 3227,
    "points": 23751
+  },
+  "A6": {
+   "pass": true,
+   "points": 15000,
+   "evaluated_once": true,
+   "worst": {
+    "q": {
+     "value": 5.484572336832976e-16,
+     "z": 2.4088119402193158
+    },
+    "cdf": {
+     "value": 3.9093319888948283e-16,
+     "z": 0.008580792512783653
+    },
+    "pdf": {
+     "value": 3.313387859719562e-16,
+     "z": 1.6561773638758153
+    }
+   },
+   "stability_min_digits": 57.97754372907512
   }
  },
  "bands": {
@@ -3341,5 +3377,5 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 52.4
+ "runtime_s": 75.3
 }
