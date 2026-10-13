@@ -71,6 +71,11 @@ Option Explicit
 '   - TOL_ABS_LARGE_DF covers the large-parameter special-function error floor.
 '   - TOL_ABS_ULP and TOL_ABS_FEW_ULP are used only for constant-level checks.
 '   - TOL_REL_TIGHT, TOL_REL_LOOSE and TOL_REL_TAIL cover relative comparisons.
+'   - TOL_REL_NORMAL_TAIL pins the repaired normal tail (#72). It is about twice
+'     the preregistered 2^-50 bound, which leaves room for VBA Exp differing
+'     from the study's model in the last bit, and it is far below the old
+'     kernel's error at every point it is used except 10.3 and 20.3, which are
+'     there to pin values, not to discriminate.
 '   - TOL_REL_ACKLAM is not a project tolerance. It is the published relative
 '     error bound of the Acklam inverse-normal approximation, asserted directly
 '     so that a mistyped coefficient fails a named check.
@@ -86,6 +91,8 @@ Option Explicit
 '         record where each helper changes branch, not how accurate it is, and
 '         use only VBA intrinsics so that they also verify CORE invariant I2
 '         (no Excel object-model dependency).
+'     C5  PROB_ExpNegHalfSquare must not round Z ^ 2 before the exponential
+'         (#72).
 '
 '   Normal Family
 '     N1  The raw Acklam inverse-normal kernel must return its computed value.
@@ -94,6 +101,9 @@ Option Explicit
 '     N4  The normal density constant must equal the correctly rounded Double.
 '     N5  Same-tail normal interval probabilities must not collapse to zero.
 '     N6  Tiny lognormal variance and parameter conversion must use Expm1/Log1p.
+'     N7  The normal upper tail, the standard density and the tail quantiles
+'         must keep full RELATIVE precision across the tail (#72), not only the
+'         absolute precision of the former Hart/West kernel.
 '
 '   T Family
 '     T1  Large-degree chi-square calculations must never return partial sums.
@@ -183,6 +193,7 @@ Private Const TOL_REL_TIGHT     As Double = 0.0000000001  '1E-10 relative
 Private Const TOL_REL_LOOSE     As Double = 0.000001      '1E-6 relative
 Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
 Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
+Private Const TOL_REL_NORMAL_TAIL As Double = 0.000000000000002 '2E-15 relative, #72
 
 
 '==============================================================================
@@ -475,6 +486,7 @@ Private Sub RunCoreSuite()
     Test_Core_SpecialFunctionKernels
     Test_Core_GammaSeriesPrefactorAccuracy
     Test_Core_NormalInvRaw
+    Test_Core_ExpNegHalfSquare
     Test_Core_Characterization
 End Sub
 
@@ -507,6 +519,7 @@ Private Sub RunNormalFamilySuite()
     Test_NF_StandardNormalCumulative
     Test_NF_StandardNormalInverse
     Test_NF_InverseTails
+    Test_NF_TailRelativeAccuracy
     Test_NF_InverseRoundTrips
     Test_NF_Symmetry
     Test_NF_GeneralNormal
@@ -1559,6 +1572,51 @@ Private Sub Test_Core_NormalInvRaw()
     AssertTrue "raw lower branch", (PROB_NormalInvCDFRaw(0.001) < -3#)
     AssertTrue "raw upper branch", (PROB_NormalInvCDFRaw(0.999) > 3#)
 End Sub
+Private Sub Test_Core_ExpNegHalfSquare()
+'
+'==============================================================================
+' Test_Core_ExpNegHalfSquare
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins PROB_ExpNegHalfSquare (#72, regression C5): Exp(-Z ^ 2 / 2) without
+'   rounding Z ^ 2 first.
+'
+' WHY
+'   Exp(-0.5 * Z * Z) carries a relative error of up to Z ^ 2 / 2 ulps wherever
+'   Z * Z is not exact: 4.6E-14 at Z = 33.4191. The split form does not.
+'
+' BEHAVIOR
+'   - References are the correctly rounded Doubles of 60-digit values, restored
+'     from split literals.
+'   - The off-grid points discriminate the split form from the naive one.
+'
+' DEPENDENCIES
+'   - PROB_ExpNegHalfSquare
+'   - AssertClose
+'   - AssertRelClose
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-10-13 - Added for #72.
+'==============================================================================
+'
+    Debug.Print "-- Core PROB_ExpNegHalfSquare (#72)"
+
+    AssertClose "exp(-0^2/2) is exactly 1", PROB_ExpNegHalfSquare(0#), 1#, 0#
+    AssertRelClose "exp(-z^2/2) at 0.1", _
+        PROB_ExpNegHalfSquare(0.1), _
+        0.995012479192682 + 3.33066907387547E-16, TOL_REL_NORMAL_TAIL
+    AssertRelClose "exp(-z^2/2) at 20.3", _
+        PROB_ExpNegHalfSquare(20.3), _
+        3.27939308254085E-90 - 3.48812070093468E-105, TOL_REL_NORMAL_TAIL
+    AssertRelClose "exp(-z^2/2) at 33.4191 (naive form 4.6E-14)", _
+        PROB_ExpNegHalfSquare(33.4191), _
+        3.03452587304421E-243 - 3.64218297787732E-258, TOL_REL_NORMAL_TAIL
+End Sub
+
+
 Private Sub Test_Core_Characterization()
 '
 '==============================================================================
@@ -1893,7 +1951,8 @@ Private Sub Test_NF_StandardNormalCumulative()
     AssertClose "Phi(1.959963984540054)", _
         K_STATS_NormalStandard_Cumulative(1.95996398454005), 0.975, TOL_ABS_TIGHT
 
-    'Both sides of the rational / continued-fraction split at Z = Sqr(50)
+    'Both sides of the former Hart / continued-fraction split at Z = Sqr(50).
+    'Kept as a continuity regression after #72 moved the kernel's split to 3.
     AssertClose "Phi split seam", _
         CDbl(K_STATS_NormalStandard_Cumulative(-7.07106781)) - _
         CDbl(K_STATS_NormalStandard_Cumulative(-7.07106782)), 0#, 1E-16
@@ -1987,8 +2046,9 @@ Private Sub Test_NF_InverseTails()
         -37.0470962993614, TOL_REL_TAIL
 
     'Inside the cutoff, Halley works and the accuracy floor is the RELATIVE
-    'accuracy of PROB_NormalCDF past its Sqr(50) split, which is about 1E-10.
-    'The Hart/West arrangement is 1E-15 in ABSOLUTE terms, not relative.
+    'accuracy of PROB_NormalCDF in the tail. With the former Hart/West kernel
+    'that was about 1E-10; Test_NF_TailRelativeAccuracy pins the repaired
+    'kernel (#72) much more tightly. These loose checks are kept unchanged.
     AssertRelClose "InvPhi(1e-100)", _
         K_STATS_NormalStandard_InverseCumulative(1E-100), _
         -21.2734535609655, TOL_REL_TAIL
@@ -1998,6 +2058,107 @@ Private Sub Test_NF_InverseTails()
     AssertRelClose "InvPhi(1e-6)", _
         K_STATS_NormalStandard_InverseCumulative(0.000001), _
         -4.75342430882289, TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_NF_TailRelativeAccuracy()
+'
+'==============================================================================
+' Test_NF_TailRelativeAccuracy
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins full RELATIVE precision of the repaired normal tail (#72, regression
+'   N7) for the upper tail, the lower tail, the standard density and the tail
+'   quantiles of all three families.
+'
+' WHY
+'   The former Hart/West kernel was accurate in absolute terms only: about
+'   1.5E-14 relative at Z = 3, 8.4E-10 at 6.25 and 2.9E-9 at 7.07, plus up to
+'   4.6E-14 anywhere Z * Z was not exact. Tail quantiles inherited it at about
+'   1E-10. Each assertion below names the old kernel's error at its point.
+'
+' BEHAVIOR
+'   - References are the correctly rounded Doubles of 60-digit values, restored
+'     from split literals. Arguments are exact in their literal form.
+'   - Both sides of the new split at 3 are checked.
+'   - The same references are predicted, row by row, by the preregistered
+'     binary64 model in benchmark/normal_tail_study.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - AssertRelClose
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-10-13 - Added for #72.
+'==============================================================================
+'
+    Debug.Print "-- Normal tail, full relative precision (#72)"
+
+    'Upper tail on both sides of the split at 3 and through the former
+    'Hart region, then off-grid in the far tail
+    AssertRelClose "Q(2.99) (old kernel 1.5E-14)", _
+        K_STATS_NormalStandard_Survival(2.99), _
+        1.39488723549225E-03 - 6.50521303491303E-19, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(3 - 1 ulp) (old kernel 1.5E-14)", _
+        K_STATS_NormalStandard_Survival(3# - 4.44089209850063E-16), _
+        1.3498980316301E-03 - 3.46944695195361E-18, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(3) (old kernel 1.5E-14)", _
+        K_STATS_NormalStandard_Survival(3#), _
+        1.34989803163009E-03 + 4.55364912443912E-18, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(4.5) (old kernel 6.3E-12)", _
+        K_STATS_NormalStandard_Survival(4.5), _
+        3.39767312473006E-06 + 4.2351647362715E-22, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(5.5) (old kernel 1.8E-10)", _
+        K_STATS_NormalStandard_Survival(5.5), _
+        1.89895624658877E-08 + 1.65436122510606E-23, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(6.25) (old kernel 8.4E-10)", _
+        K_STATS_NormalStandard_Survival(6.25), _
+        2.05226342521894E-10 - 1.03397576569128E-25, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(7.07) (old kernel 2.9E-9)", _
+        K_STATS_NormalStandard_Survival(7.07), _
+        7.74668486563648E-13 - 2.01948391736579E-28, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(10.3) (old kernel 1.5E-15)", _
+        K_STATS_NormalStandard_Survival(10.3), _
+        3.52306507892641E-25 + 2.29588740394978E-40, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(20.3) (old kernel 1.3E-15)", _
+        K_STATS_NormalStandard_Survival(20.3), _
+        6.42924446769835E-92 - 4.08764144640782E-107, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(33.4191) (old kernel 4.6E-14)", _
+        K_STATS_NormalStandard_Survival(33.4191), _
+        3.61924652386784E-245 - 4.8779236310857E-260, TOL_REL_NORMAL_TAIL
+
+    'The lower tail is the same kernel, returned without a complement
+    AssertRelClose "Phi(-6.25)", _
+        K_STATS_NormalStandard_Cumulative(-6.25), _
+        2.05226342521894E-10 - 1.03397576569128E-25, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Phi(-33.4191)", _
+        K_STATS_NormalStandard_Cumulative(-33.4191), _
+        3.61924652386784E-245 - 4.8779236310857E-260, TOL_REL_NORMAL_TAIL
+
+    'Density with the split exponential
+    AssertRelClose "phi(20.3) (old 1.4E-15)", _
+        K_STATS_NormalStandard_Density(20.3), _
+        1.30828855468153E-90 - 8.72030175233669E-106, TOL_REL_NORMAL_TAIL
+    AssertRelClose "phi(33.4191) (old 4.6E-14)", _
+        K_STATS_NormalStandard_Density(33.4191), _
+        1.2106006717294E-243 + 4.42265075885103E-258, TOL_REL_NORMAL_TAIL
+
+    'Tail quantiles at the former split_boundary probability
+    AssertRelClose "isf(1E-12) (old 5.5E-11)", _
+        K_STATS_NormalStandard_InverseSurvival(0.000000000001), _
+        7.03448382530113 + 1.77635683940025E-15, TOL_REL_NORMAL_TAIL
+    AssertRelClose "InvPhi(1E-12) (old 5.5E-11)", _
+        K_STATS_NormalStandard_InverseCumulative(0.000000000001), _
+        -(7.03448382530113 + 1.77635683940025E-15), TOL_REL_NORMAL_TAIL
+    AssertRelClose "Normal isf(1E-12, 100, 15) (old 2.8E-11)", _
+        K_STATS_Normal_InverseSurvival(0.000000000001, 100#, 15#), _
+        205.517257379517, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Lognormal isf(1E-12, 0, 1) (old 3.8E-10)", _
+        K_STATS_Lognormal_InverseSurvival(0.000000000001, 0#, 1#), _
+        1135.10884648154 + 2.95585778076202E-12, TOL_REL_NORMAL_TAIL
 End Sub
 
 

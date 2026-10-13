@@ -47,6 +47,7 @@ Option Private Module
 '     - PROB_Log1p
 '     - PROB_Expm1
 '     - PROB_LogExpm1
+'     - PROB_ExpNegHalfSquare
 '     - PROB_NormalInvCDFRaw
 '
 '   Diagnostics:
@@ -69,6 +70,10 @@ Option Private Module
 '       the author. Published relative-error bound 1.15E-9, confirmed here at
 '       1.130E-9 for the literals actually compiled; see the PUBLISHED ACCURACY
 '       block on that function. Used as a root-finder seed, not a final answer.
+'   - PROB_ExpNegHalfSquare:
+'       Exp(-Z^2 / 2) with Z split at a multiple of 1/256, so that the dominant
+'       square is exact. W. J. Cody's ANORM (SPECFUN, 1993) uses the same
+'       splitting at 1/16; the idea is used here, not the code. Public.
 '
 ' DESIGN INVARIANTS
 '   Non-negotiable contracts for this module. A change that breaks any one of
@@ -116,6 +121,7 @@ Option Private Module
 '                module free of any Excel object-model reference. Accuracy of
 '                PROB_NormalInvCDFRaw recorded permanently. No executable
 '                behavior changed.
+'   2026-10-13 - PROB_ExpNegHalfSquare added for the normal-tail repair (#72).
 '==============================================================================
 
 '==============================================================================
@@ -868,6 +874,61 @@ Public Function PROB_LogExpm1( _
     Else
         PROB_LogExpm1 = Log(PROB_Expm1(X))
     End If
+End Function
+
+
+Public Function PROB_ExpNegHalfSquare( _
+    ByVal Z As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_ExpNegHalfSquare
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Exp(-Z ^ 2 / 2) for Z >= 0 without first rounding Z ^ 2.
+'
+' RATIONALE
+'   The naive Exp(-0.5 * Z * Z) rounds Z * Z before the exponential. That is an
+'   absolute error of up to Z ^ 2 / 2 units in the last place of a number near
+'   one in the exponent argument, and the exponential turns it into a relative
+'   error of the same size in the result: it grows with Z ^ 2 wherever Z * Z is
+'   not exactly representable. Writing Z = ZHigh + (Z - ZHigh), with
+'   ZHigh = Int(Z * 256) / 256, gives
+'
+'       Z ^ 2 = ZHigh ^ 2 + (Z - ZHigh) * (Z + ZHigh)
+'
+'   where ZHigh * ZHigh is exact, Z - ZHigh is exact, and the remaining term is
+'   below 2 * Z / 256 in magnitude, so its rounding no longer scales with
+'   Z ^ 2. The two exponentials are multiplied in the order written; the
+'   binary64 model in benchmark/normal_tail_study evaluates exactly this
+'   expression, so it must not be reassociated.
+'
+'   No numeric accuracy figure is quoted here: measured thresholds live in
+'   accuracy_contracts.csv where the gate can check them.
+'
+' PRECONDITION
+'   0 <= Z < 262144 (2 ^ 18). Below that bound Int(Z * 256) has at most 26
+'   significant bits, so its square is exact. The normal-family callers stop
+'   at Abs(Z) = 38.6.
+'
+' UPDATED
+'   2026-10-13 - New (#72).
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim ZHigh               As Double          'Z truncated to a multiple of 1/256
+
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'Split Z so that the dominant square is exact
+        ZHigh = Int(Z * 256#) / 256#
+
+    'Exact main exponential times a small correction exponential
+        PROB_ExpNegHalfSquare = _
+            Exp(-0.5 * (ZHigh * ZHigh)) * Exp(-0.5 * ((Z - ZHigh) * (Z + ZHigh)))
 End Function
 
 

@@ -79,23 +79,26 @@ Option Explicit
 '   K_STATS_Lognormal_ParametersFromMeanStdDev  (none - custom method-of-moments)
 '
 ' ALGORITHM PROVENANCE
-'   - Standard normal CDF (PROB_NormalCDF):
-'       Hart rational/continued-fraction approximation (Hart et al.,
-'       "Computer Approximations", 1968), in the double-precision arrangement
-'       popularised by Graeme West, "Better Approximations to Cumulative Normal
-'       Functions" (Wilmott Magazine, 2009). Public, published; not proprietary.
-'       Accurate to approximately 1E-15.
+'   - Standard normal CDF, survival and interval (PROB_NormalCDF,
+'     PROB_NormalSurvival, PROB_NormalIntervalProbability):
+'       The shared upper-tail kernel PROB_NormalUpperTail in
+'       M_STATS_PROBDIST_SPECIALFUNCS (#72): a rational approximation fitted in
+'       this repository below Z = 3 and the classical Laplace continued fraction
+'       above, with the exponential factor from PROB_ExpNegHalfSquare. It
+'       replaced a Hart/West arrangement that was accurate in absolute terms
+'       only. Design, measurements and predictions: benchmark/normal_tail_study.
 '   - Inverse standard normal (PROB_NormalInvCDF):
 '       Peter J. Acklam's rational approximation (released freely for any use by
 '       the author), taken from the shared kernel PROB_NormalInvCDFRaw in
 '       M_STATS_PROBDIST_CORE and refined here with a single Halley iteration.
 '       Raw Acklam
-'       alone is accurate to ~1.15E-9 relative; the Halley step lifts the central
-'       region to ~5E-16. In the tail the Halley step is bounded by the RELATIVE
-'       accuracy of the Hart/West tail approximation. The dedicated tail kernel
-'       preserves representable lower-tail probabilities to approximately
-'       |z| = 38.49; refinement is skipped only after the evaluated CDF or PDF
-'       has genuinely rounded to an endpoint. Public.
+'       alone is accurate to ~1.15E-9 relative; one Halley step on the
+'       cumulative and the density lifts it to the accuracy of those two
+'       functions, which since #72 is full relative precision in the tail as
+'       well as the centre. The tail kernel preserves representable lower-tail
+'       probabilities to approximately |z| = 38.49; refinement is skipped only
+'       after the evaluated CDF or PDF has genuinely rounded to an endpoint.
+'       Public.
 '   - Lognormal moment and parameter formulas:
 '       Standard closed-form textbook results (method of moments). Not proprietary.
 '   The raw Acklam kernel lives in M_STATS_PROBDIST_CORE as
@@ -127,8 +130,11 @@ Option Explicit
 '       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_SQRT_DOUBLE_MAX,
 '                    PROB_PARAMETER_MAGNITUDE_GUARD
 '       Predicates : PROB_IsWithinSupportedMagnitude, PROB_IsValidProbabilityOpen
-'       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw
+'       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw,
+'                    PROB_ExpNegHalfSquare
 '       Diagnostics: PROB_SetStatus
+'   - M_STATS_PROBDIST_SPECIALFUNCS
+'       Kernels    : PROB_NormalUpperTail
 '
 ' MAGNITUDE POLICY
 '   Core separates true IEEE-754 finiteness (PROB_IsFinite) from the project's
@@ -212,6 +218,11 @@ Option Explicit
 ' UPDATED
 '   2026-08-11 - Exact-limit recovery on standardization overflow documented;
 '                per-function BEHAVIOR notes and dates brought current.
+'   2026-10-13 - Upper tail moved to the repaired shared kernel
+'                PROB_NormalUpperTail, and the density to the split exponential
+'                PROB_ExpNegHalfSquare (#72). PROB_NormalUpperTailPositive,
+'                PROB_TAIL_UNDERFLOW_Z, PROB_NORMAL_TAIL_CF_TERMS and
+'                PROB_CDF_SPLIT removed.
 '==============================================================================
 
 '==============================================================================
@@ -238,20 +249,15 @@ Private Const PROB_INV_SQRT_TWO_PI As Double = _
 'At approximately 38.58 the standard-normal density rounds to zero in Double.
 Private Const PROB_PDF_UNDERFLOW_Z As Double = 38.6
 
-'At approximately 38.49 the one-sided normal tail rounds to zero in Double.
-Private Const PROB_TAIL_UNDERFLOW_Z As Double = 38.5
-
 'Standardized magnitude used to recover an exact limit when standardization
 'overflows. 40 rather than 39 is deliberate: it clears both measured underflow
-'thresholds above (38.58 and 38.49) with roughly 1.5 in hand, so the cumulative,
+'thresholds (38.58 above, and 38.49 in PROB_NormalUpperTail) with roughly 1.5 in
+'hand, so the cumulative,
 'the survival and the density are all already at their limiting values there and
 'no kernel is asked to work near its own boundary. Any value comfortably above
 'PROB_PDF_UNDERFLOW_Z would serve; the margin is what makes it robust to a
 'future re-measurement of those thresholds.
 Private Const PROB_NF_Z_SATURATION As Double = 40#
-Private Const PROB_NORMAL_TAIL_CF_TERMS As Long = 16 'Laplace continued-fraction depth
-
-Private Const PROB_CDF_SPLIT As Double = 7.07106781186547
 
 
 Public Function K_STATS_NormalStandard_Density( _
@@ -395,16 +401,12 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 '
 ' PROVENANCE
 '   - Standard normal CDF (PROB_NormalCDF):
-'       Hart-style high-degree rational approximation in the central region,
-'       combined with a continued-fraction approximation in the far tail. The
-'       VBA arrangement and coefficients follow the implementation described by
-'       Graeme West, "Better Approximations to Cumulative Normal Functions",
-'       Wilmott, 2002, pp. 70-76. West attributes the underlying high-precision
-'       rational approximation to Hart et al., "Computer Approximations", Wiley,
-'       1968. The method is intended to deliver double-precision accuracy over
-'       the real line, subject to normal floating-point saturation in extreme
-'       tails.
-'       Accurate to ~1E-15.
+'       The tail Q(|Z|) from the shared kernel PROB_NormalUpperTail (#72),
+'       returned directly for Z < 0 and as 1 - Q(Z) for Z >= 0. The kernel is a
+'       rational approximation fitted in this repository below 3 and the
+'       Laplace continued fraction above, subject to ordinary floating-point
+'       saturation in the extreme tails. Design and measurements:
+'       benchmark/normal_tail_study.
 '
 ' INPUTS
 '   Z
@@ -518,26 +520,27 @@ Public Function K_STATS_NormalStandard_Survival( _
 '   exceedance probabilities and probability-of-default style calculations.
 '   Evaluating it as 1 - Cumulative loses all precision once the cumulative
 '   probability rounds to one; this routine evaluates the positive tail directly
-'   and stays accurate deep into the tail in ABSOLUTE terms (see ACCURACY for
-'   the relative-error domain restriction).
+'   and is designed to keep full RELATIVE precision deep into the tail (see
+'   ACCURACY).
 '
 ' WORKSHEET EQUIVALENT
 '   1 - NORM.S.DIST(Z, TRUE). The subtraction form collapses in the far upper
 '   tail (once Q falls below ~1E-16); this routine does not.
 '
 ' PROVENANCE
-'   Same Hart/West standard normal tail kernel as PROB_NormalCDF, evaluated on
-'   the upper tail without subtracting from one. Public; ~1E-15 ABSOLUTE (see
-'   ACCURACY for the relative-error domain restriction).
+'   The shared standard normal tail kernel PROB_NormalUpperTail (#72), the same
+'   one PROB_NormalCDF uses, evaluated on the upper tail without subtracting
+'   from one. Public.
 '
 ' ACCURACY
 '   Direct upper-tail evaluation avoids the catastrophic cancellation of
-'   1 - Cumulative, and ABSOLUTE error stays near 1E-17 across the tail. The
-'   tight RELATIVE bound is domain-restricted: beyond the central region
-'   (standardized z above roughly 2.75 - 3.25) relative error grows
-'   monotonically - about 1E-14 at z = 3, 1E-13 at z = 4, 5E-11 at z = 5 and
-'   5E-10 at z = 6. Characterized as SurvivalTailRel in
-'   benchmark/numerical_limitations.csv (evidence: benchmark/survival_boundary).
+'   1 - Cumulative. Until #72 the tail kernel was accurate in ABSOLUTE terms
+'   only, and the RELATIVE contract was restricted to the central region
+'   (SurvivalTailRel in benchmark/numerical_limitations.csv). The repaired
+'   kernel is designed for full relative precision across the representable
+'   tail; its binary64 measurements and the predictions for this function are
+'   in benchmark/normal_tail_study. The contracted domain and threshold in
+'   benchmark/accuracy_contracts.csv change only with Excel evidence.
 '
 ' INPUTS
 '   Z
@@ -895,7 +898,7 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 ' PROVENANCE
 '   Standard probability identity:
 '       P(Lower <= Z <= Upper) = Phi(Upper) - Phi(Lower).
-'   Phi is evaluated using this module's Hart/West standard normal CDF kernel.
+'   Phi and its tails come from the shared kernel PROB_NormalUpperTail (#72).
 '   The identity is textbook material; the numerical accuracy is inherited from
 '   PROB_NormalCDF, with tail-oriented branching for same-tail intervals.
 '
@@ -1267,18 +1270,11 @@ Public Function K_STATS_Normal_Cumulative( _
 '   Standard normalisation identity:
 '       P(X <= x) = Phi((x - Mean) / StdDev).
 '
-'   Phi is evaluated using this module's standard normal CDF kernel. The kernel
-'   follows the Hart-style rational approximation in the central region and a
-'   continued-fraction approximation in the far tail, in the double-precision
-'   VBA arrangement described by Graeme West, "Better Approximations to
-'   Cumulative Normal Functions", Wilmott, 2002, pp. 70-76. West attributes the
-'   underlying high-precision approximation to Hart et al., "Computer
-'   Approximations", Wiley, 1968.
-'
-'   The method is intended to deliver double-precision accuracy over the
-'   practical real line, subject to ordinary floating-point saturation in the
-'   extreme tails.
-'   Accurate to ~1E-15.
+'   Phi is evaluated by PROB_NormalCDF on the shared tail kernel
+'   PROB_NormalUpperTail (#72): a rational approximation fitted in this
+'   repository below 3 and the Laplace continued fraction above, subject to
+'   ordinary floating-point saturation in the extreme tails. Design and
+'   measurements: benchmark/normal_tail_study.
 '
 ' INPUTS
 '   X
@@ -1414,12 +1410,13 @@ Public Function K_STATS_Normal_Survival( _
 '
 ' ACCURACY
 '   Direct upper-tail evaluation avoids the catastrophic cancellation of
-'   1 - Cumulative, and ABSOLUTE error stays near 1E-17 across the tail. The
-'   tight RELATIVE bound is domain-restricted: beyond the central region
-'   (standardized z above roughly 2.75 - 3.25) relative error grows
-'   monotonically - about 1E-14 at z = 3, 1E-13 at z = 4, 5E-11 at z = 5 and
-'   5E-10 at z = 6. Characterized as SurvivalTailRel in
-'   benchmark/numerical_limitations.csv (evidence: benchmark/survival_boundary).
+'   1 - Cumulative. Until #72 the tail kernel was accurate in ABSOLUTE terms
+'   only, and the RELATIVE contract was restricted to the central region
+'   (SurvivalTailRel in benchmark/numerical_limitations.csv). The repaired
+'   kernel is designed for full relative precision across the representable
+'   tail; its binary64 measurements and the predictions for this function are
+'   in benchmark/normal_tail_study. The contracted domain and threshold in
+'   benchmark/accuracy_contracts.csv change only with Excel evidence.
 '
 ' INPUTS
 '   X
@@ -2306,7 +2303,8 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '   the mathematically correct left-tail value for a positive-support variable.
 '
 ' PROVENANCE
-'   Standard normal CDF (Hart/West) of the standardized log variate. Public.
+'   Standard normal CDF (PROB_NormalCDF, on the shared tail kernel
+'   PROB_NormalUpperTail) of the standardized log variate. Public.
 '
 ' INPUTS
 '   X
@@ -2460,12 +2458,13 @@ Public Function K_STATS_Lognormal_Survival( _
 '
 ' ACCURACY
 '   Direct upper-tail evaluation avoids the catastrophic cancellation of
-'   1 - Cumulative, and ABSOLUTE error stays near 1E-17 across the tail. The
-'   tight RELATIVE bound is domain-restricted: beyond the central region
-'   (standardized z above roughly 2.75 - 3.25) relative error grows
-'   monotonically - about 1E-14 at z = 3, 1E-13 at z = 4, 5E-11 at z = 5 and
-'   5E-10 at z = 6. Characterized as SurvivalTailRel in
-'   benchmark/numerical_limitations.csv (evidence: benchmark/survival_boundary).
+'   1 - Cumulative. Until #72 the tail kernel was accurate in ABSOLUTE terms
+'   only, and the RELATIVE contract was restricted to the central region
+'   (SurvivalTailRel in benchmark/numerical_limitations.csv). The repaired
+'   kernel is designed for full relative precision across the representable
+'   tail; its binary64 measurements and the predictions for this function are
+'   in benchmark/normal_tail_study. The contracted domain and threshold in
+'   benchmark/accuracy_contracts.csv change only with Excel evidence.
 '
 ' INPUTS
 '   X
@@ -3429,6 +3428,15 @@ Private Function PROB_NormalPDF( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns the standard normal density using a fast Double-to-Double contract.
+'
+' METHOD
+'   PROB_INV_SQRT_TWO_PI * Exp(-Z ^ 2 / 2), with the exponential from
+'   PROB_ExpNegHalfSquare so that Z ^ 2 is not rounded first (#72). Serves
+'   K_STATS_NormalStandard_Density and the Halley step of PROB_NormalInvCDF;
+'   Normal_Density and Lognormal_Density work in log space and do not use it.
+'
+' UPDATED
+'   2026-10-13 - Split exponential (#72).
 '==============================================================================
 '
     'Avoid squaring very large inputs and return zero only once the density is
@@ -3436,87 +3444,7 @@ Private Function PROB_NormalPDF( _
         If Abs(Z) >= PROB_PDF_UNDERFLOW_Z Then
             PROB_NormalPDF = 0#
         Else
-            PROB_NormalPDF = PROB_INV_SQRT_TWO_PI * Exp(-0.5 * Z * Z)
-        End If
-End Function
-
-
-Private Function PROB_NormalUpperTailPositive( _
-    ByVal Z As Double) _
-    As Double
-'
-'==============================================================================
-' PROB_NormalUpperTailPositive
-'------------------------------------------------------------------------------
-' PURPOSE
-'   Returns Q(Z) = P(N(0,1) > Z) for Z >= 0 without subtracting from one.
-'
-' METHOD
-'   Uses the Hart rational approximation in the main region and a sixteen-level
-'   Laplace continued fraction in the far tail. The cutoff is applied only where
-'   the true one-sided probability rounds to zero in Double precision.
-'==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Denominator         As Double          'Continued-fraction denominator
-    Dim Exponential         As Double          'Exp(-Z^2 / 2), the common factor
-    Dim SumA                As Double          'Hart numerator accumulator
-    Dim SumB                As Double          'Hart denominator accumulator
-    Dim TermIndex           As Long            'Continued-fraction term index
-
-'------------------------------------------------------------------------------
-' HANDLE TRUE DOUBLE UNDERFLOW
-'------------------------------------------------------------------------------
-    'The one-sided tail rounds to zero at approximately Z = 38.49
-        If Z >= PROB_TAIL_UNDERFLOW_Z Then
-            PROB_NormalUpperTailPositive = 0#
-            Exit Function
-        End If
-
-'------------------------------------------------------------------------------
-' CALCULATE COMMON EXPONENTIAL FACTOR
-'------------------------------------------------------------------------------
-    'The underflow cutoff above also prevents overflow in Z squared here
-        Exponential = Exp(-0.5 * Z * Z)
-
-'------------------------------------------------------------------------------
-' MAIN REGION
-'------------------------------------------------------------------------------
-    'Use the Hart rational approximation below the tail split
-        If Z < PROB_CDF_SPLIT Then
-            SumA = 3.52624965998911E-02 * Z + 0.700383064443688
-            SumA = SumA * Z + 6.37396220353165
-            SumA = SumA * Z + 33.912866078383
-            SumA = SumA * Z + 112.079291497871
-            SumA = SumA * Z + 221.213596169931
-            SumA = SumA * Z + 220.206867912376
-
-            SumB = 8.83883476483184E-02 * Z + 1.75566716318264
-            SumB = SumB * Z + 16.064177579207
-            SumB = SumB * Z + 86.7807322029461
-            SumB = SumB * Z + 296.564248779674
-            SumB = SumB * Z + 637.333633378831
-            SumB = SumB * Z + 793.826512519948
-            SumB = SumB * Z + 440.413735824752
-
-            PROB_NormalUpperTailPositive = Exponential * SumA / SumB
-
-'------------------------------------------------------------------------------
-' FAR TAIL
-'------------------------------------------------------------------------------
-        Else
-        'Evaluate the Laplace continued fraction backwards, then scale by the
-        'Mills ratio phi(Z) / Denominator
-            Denominator = Z
-
-            For TermIndex = PROB_NORMAL_TAIL_CF_TERMS To 1 Step -1
-                Denominator = Z + CDbl(TermIndex) / Denominator
-            Next TermIndex
-
-            PROB_NormalUpperTailPositive = _
-                Exponential * PROB_INV_SQRT_TWO_PI / Denominator
+            PROB_NormalPDF = PROB_INV_SQRT_TWO_PI * PROB_ExpNegHalfSquare(Abs(Z))
         End If
 End Function
 
@@ -3533,9 +3461,9 @@ Private Function PROB_NormalCDF( _
 '==============================================================================
 '
     If Z < 0# Then
-        PROB_NormalCDF = PROB_NormalUpperTailPositive(-Z)
+        PROB_NormalCDF = PROB_NormalUpperTail(-Z)
     Else
-        PROB_NormalCDF = 1# - PROB_NormalUpperTailPositive(Z)
+        PROB_NormalCDF = 1# - PROB_NormalUpperTail(Z)
     End If
 End Function
 
@@ -3553,9 +3481,9 @@ Private Function PROB_NormalSurvival( _
 '==============================================================================
 '
     If Z >= 0# Then
-        PROB_NormalSurvival = PROB_NormalUpperTailPositive(Z)
+        PROB_NormalSurvival = PROB_NormalUpperTail(Z)
     Else
-        PROB_NormalSurvival = 1# - PROB_NormalUpperTailPositive(-Z)
+        PROB_NormalSurvival = 1# - PROB_NormalUpperTail(-Z)
     End If
 End Function
 
@@ -3586,14 +3514,14 @@ Private Function PROB_NormalIntervalProbability( _
     'Both bounds in the negative tail: use symmetry and positive tails.
         ElseIf UpperZ <= 0# Then
             Probability = _
-                PROB_NormalUpperTailPositive(-UpperZ) - _
-                PROB_NormalUpperTailPositive(-LowerZ)
+                PROB_NormalUpperTail(-UpperZ) - _
+                PROB_NormalUpperTail(-LowerZ)
 
     'The interval crosses zero: subtract the two excluded tails from one.
         Else
             Probability = 1# - _
-                PROB_NormalUpperTailPositive(-LowerZ) - _
-                PROB_NormalUpperTailPositive(UpperZ)
+                PROB_NormalUpperTail(-LowerZ) - _
+                PROB_NormalUpperTail(UpperZ)
         End If
 
     'Protect the public probability contract from final rounding residuals.
@@ -3613,14 +3541,14 @@ Private Function PROB_NormalInvCDF( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns the inverse standard normal cumulative distribution function at
-'   machine precision (~1E-15).
+'   machine precision.
 '
 ' METHOD / PROVENANCE
 '   Peter J. Acklam's rational approximation (public, released freely), taken
 '   from the shared kernel PROB_NormalInvCDFRaw in M_STATS_PROBDIST_CORE, refined by a
 '   single Halley iteration. Acklam alone gives ~1.15E-9 relative error; the
-'   Halley step, using the double-precision PROB_NormalCDF/PROB_NormalPDF, lifts
-'   accuracy to ~1E-15.
+'   Halley step, using PROB_NormalCDF and PROB_NormalPDF, lifts it to the
+'   accuracy of those two functions.
 '
 '   The Halley update, for F = CDF, f = PDF, on solving F(x) = p:
 '       e = F(x) - p
@@ -3630,11 +3558,12 @@ Private Function PROB_NormalInvCDF( _
 '   estimate is already the best available.
 '
 ' ACCURACY
-'   Relative error below 5E-16 for Probability in [0.001, 0.999]. Beyond the
-'   z = PROB_CDF_SPLIT (7.07) branch of PROB_NormalCDF the achievable accuracy is
-'   bounded by the RELATIVE accuracy of that CDF in its tail, which is about
-'   1E-10; the Hart/West arrangement is 1E-15 in ABSOLUTE terms, not relative.
-'   Tail quantiles therefore carry roughly 1E-10 relative error, not 1E-15.
+'   Bounded by the RELATIVE accuracy of PROB_NormalCDF and PROB_NormalPDF at the
+'   root. Until #72 the tail kernel was accurate in absolute terms only, which
+'   held tail quantiles near 1E-10 relative (the split_boundary contracts). The
+'   repaired kernel removes that limit; the predicted value of every committed
+'   inverse row is recorded in benchmark/normal_tail_study, and the contracts
+'   change only with Excel evidence.
 '
 ' PRECONDITION
 '   Probability must be strictly between 0 and 1.

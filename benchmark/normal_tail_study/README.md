@@ -92,9 +92,16 @@ was recorded.** Neither touches the design or a threshold:
 - `Normal_IntervalProbability` rows were read as `(lower, upper, mean)`. The
   density-helper exporter calls them as `(lower, upper, 0, sd)`.
 
-**Next.** The kernel is ready to be implemented in VBA with the recorded
-literals, in the Excel wave that §9 describes. That wave tests the §7
-predictions against real Excel.
+**VBA (pending the Excel wave).** The kernel is implemented as
+`PROB_NormalUpperTail` (`M_STATS_PROBDIST_SPECIALFUNCS`) and
+`PROB_ExpNegHalfSquare` (`M_STATS_PROBDIST_CORE`). `test_vba_kernel_source.py`
+checks that every VBA constant evaluates exactly to the Double recorded here,
+that the arithmetic is written in the modelled order, and that every reference
+in the new VBA regression tests is correctly rounded and reproduced by the
+model. Five deliberate mutations were each caught: a constant's last digit,
+a reassociated product, the old 16-level depth, a 1/16 split, and a test
+reference. The §7 predictions are checked against the Excel export of this
+source before any contract changes.
 
 ## Files
 
@@ -107,3 +114,4 @@ predictions against real Excel.
 | `validate_kernel.py` | applies §3–§8; writes `results.json` |
 | `results.json` | every measurement, the acceptance record and the per-row predictions |
 | `test_kernel_model.py` | CI fixture pinning the coefficients, literals and recorded result |
+| `test_vba_kernel_source.py` | CI fixture binding the VBA source and its regression references to the validated model |
