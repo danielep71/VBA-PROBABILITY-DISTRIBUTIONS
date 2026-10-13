@@ -84,6 +84,13 @@
       "resolution": {
         "evidence": "excel_regression_record.json carries canonical (committed LF) and raw (exported CRLF) grid digests with a #47 correction entry; check_excel_certification.py --require-pass validates it against the committed tree in the Accuracy Gate"
       }
+    },
+    {
+      "issue": 72,
+      "class": "numerical_defect",
+      "gate": null,
+      "status": "open",
+      "summary": "Normal upper-tail kernel loses relative accuracy beyond z = 3 and through its exponential factor"
     }
   ]
 }
