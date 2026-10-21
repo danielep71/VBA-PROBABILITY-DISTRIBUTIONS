@@ -5,11 +5,11 @@ Option Explicit
 ' M_STATS_PROBDIST_TDENS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Self-contained export macro for the large-shape density study (CR-P1-01).
-'   Fills observed_vba in t_density_large_df_grid.csv for the Gamma, Chi-square,
-'   Student t density across df from 1E2 to 1E20, so the accuracy of the
-'   LogGammaHalfDiff asymptotic path at large df can be
-'   measured from real VBA and set beside the stable Loader target.
+'   Self-contained export macro for the large-df Student t density study.
+'   Fills observed_vba in t_density_large_df_grid.csv for StudentT_Density
+'   across df 1E2..1E20, so the accuracy of the PROB_LogGammaHalfDiff
+'   asymptotic path can be measured from real VBA against 50-digit mpmath
+'   references.
 '
 ' USAGE
 '   Run Export_TDensityLargeDf and pick t_density_large_df_grid.csv.
@@ -18,10 +18,10 @@ Option Explicit
 '   function, vba_kernel, claim, metric, arg1, arg2, arg3, reference,
 '   observed_vba, regime, evidence_set
 '
-'   arg1 is X, arg2 and arg3 are the shape/df parameters (arg3 is empty for the
-'   two-parameter Student t density). This macro writes observed_vba (column
-'   index 8) and never reads the reference column, so the observed side stays
-'   independent. This is the study grid, not the 12-column main grid.
+'   arg1 is X and arg2 is the degrees of freedom; arg3 is unused (always
+'   empty). This macro writes observed_vba (column index 8) and never reads
+'   the reference column, so the observed side stays independent. This is the
+'   study grid, not the 13-column main grid.
 '
 ' ERROR POLICY
 '   The K_STATS_ functions return Variant and may return CVErr. A CVErr, a
@@ -42,7 +42,7 @@ Public Sub Export_TDensityLargeDf()
 ' Export_TDensityLargeDf
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Fills the observed_vba column of the large-shape density grid in place.
+'   Fills the observed_vba column of the large-df t density grid in place.
 '
 ' BEHAVIOR
 '   Reads the whole file and normalizes line endings before splitting, so
@@ -65,8 +65,8 @@ Public Sub Export_TDensityLargeDf()
     Dim Cols                As Variant         'Split fields of one row
     Dim Sep                 As String          'Field separator
     Dim A1                  As Double          'Evaluation point X (arg1)
-    Dim A2                  As Double          'First shape / df (arg2)
-    Dim A3                  As Double          'Second shape / df (arg3)
+    Dim A2                  As Double          'Degrees of freedom (arg2)
+    Dim A3                  As Double          'Unused; arg3 is always empty
     Dim Filled              As Long            'Rows written
     Dim I                   As Long            'Row index
 '------------------------------------------------------------------------------
@@ -146,13 +146,12 @@ Private Function EvaluateTDensity( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Dispatches the public t density function and returns a string token: a
-'   full-precision number on success, or ERROR on any error. Chi-square takes
-'   two parameters (X, df); the others take three (X and two shapes/df).
+'   full-precision number on success, or ERROR on any error.
 '
 ' INPUTS
 '   FuncName    contract function name from the grid
 '   A1          evaluation point X
-'   A2, A3      shape / degrees-of-freedom parameters (A3 unused by Chi-square)
+'   A2          degrees of freedom; A3 unused
 '
 ' RETURNS
 '   Full-precision hi;lo token, or the literal ERROR.
@@ -249,7 +248,7 @@ Private Function ParseDouble(ByVal Text As String) As Double
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Parses a grid number written with a US decimal point, independent of the
-'   local list/decimal separators. An empty field (Chi-square arg3) reads zero.
+'   local list/decimal separators. An empty field (the unused arg3) reads zero.
 '==============================================================================
 '
 '------------------------------------------------------------------------------

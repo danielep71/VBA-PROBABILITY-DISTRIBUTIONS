@@ -9,13 +9,14 @@ Option Explicit
 '   calling the PUBLIC incomplete-function INVERSE kernels directly.
 '
 ' WHY THIS EXISTS
-'   The forward envelopes were raised on evidence that measured the FORWARD
-'   kernels only. The inverses add safeguarded Newton plus bisection with their
-'   own iteration budget, and F_InverseCumulative is measured to refuse at df
-'   (1E6, 3) - inside the raised forward cap - so the forward evidence does not
-'   transfer. The inverses therefore kept their older, lower caps. The inverse
-'   kernels are Public and carry no envelope, so probing them directly measures
-'   where each inverse actually converges without editing the caps first.
+'   The forward envelopes were raised on forward-kernel evidence only, so the
+'   inverses were held at their older caps until this probe measured them. The
+'   inverses add safeguarded Newton plus bisection with their own iteration
+'   budget, so the forward evidence could not simply be transferred. The
+'   inverse kernels are Public and carry no envelope, so probing them directly
+'   measures where each inverse actually converges without editing the caps
+'   first. Its result is that the inverses now share the forward envelopes
+'   (PROB_F_MAX_DF, PROB_T_MAX_DF, PROB_CHI_MAX_DF).
 '
 ' GRID FORMAT (study grid; 12 columns, arg4 present)
 '   function, vba_kernel, claim, metric, arg1, arg2, arg3, arg4,
