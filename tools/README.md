@@ -48,8 +48,9 @@ version and SHA-256 changes together, compare hashes with PyPI's release
 metadata and the downloaded wheel, and retain a complete pinned dependency
 closure. Reference-library changes require the full assurance and numerical
 gates; do not rewrite committed observations to accommodate a dependency bump.
-Ruff's lock selects the Ubuntu x86-64 CI wheel; it is not a portable developer
-lock. actionlint is separately version- and checksum-pinned in the static
+Ruff's lock lists the hash of every published wheel (one per platform) and the
+sdist, and Dependabot regenerates the whole set; CI installs the Ubuntu x86-64
+wheel. actionlint is separately version- and checksum-pinned in the static
 workflow and needs a reviewed manual update.
 
 The optional gmpy2/MPFR and R/Rmpfr research tools are outside these CI locks;

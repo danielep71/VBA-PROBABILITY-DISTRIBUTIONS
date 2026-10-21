@@ -79,8 +79,9 @@ def main():
             absent += 1
             problems.append(f"no study row for {r['function']} arg1={r['arg1']}")
             continue
-        # The study serialises 34 significant digits, the grid 25. Equality of
-        # the decoded values is therefore the wrong test: it would flag pure
+        # The studies serialise 30 (LogGamma1p) or 34 (LogGamma) significant
+        # digits, the grid 25. Equality of the decoded values is therefore the
+        # wrong test: it would flag pure
         # truncation as a difference. The candidate must agree with the audited
         # study value to within the GRID's own serialisation, half an ulp at 25
         # digits, and anything beyond that is a real numerical difference.

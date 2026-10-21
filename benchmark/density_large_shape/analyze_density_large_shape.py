@@ -2,10 +2,12 @@
 Score the large-shape density study and show the before/after for CR-P1-01.
 
 For each (function, shape) it reports, once the VBA observations are exported:
-  * the worst absolute log-density error of the current kernel (naive form);
+  * the worst absolute log-density error of the exported VBA kernel (labelled
+    "naive": it was the naive form when this study was opened; the committed
+    observations come from the kernel after the CR-P1-01 Loader reroute);
   * the worst relative density error where representable;
-  * for comparison, the error a stable Loader-in-Double implementation achieves,
-    so the improvement the fix would deliver is visible next to the defect.
+  * for comparison, the error a Loader-in-Double implementation using this
+    script's own stirlerr achieves.
 
 Run with no observations to see the stable-target column alone (the naive column
 needs the exported VBA values).

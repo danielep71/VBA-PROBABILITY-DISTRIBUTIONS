@@ -291,7 +291,8 @@ def evidence_gaps(rows, observed_key="observed_vba"):
 # KEEP THESE IN SYNC WITH THE VBA CONSTANTS. They were raised on 2026-07-29
 # from 1E5/1E6/1E6 after benchmark/envelope_probe showed the previous
 # boundaries were measuring the CR-P1-02 prefactor cancellation rather than an
-# intrinsic limit; check_source_thresholds.py verifies the pairing.
+# intrinsic limit. Nothing verifies the pairing automatically
+# (check_source_thresholds.py skips Const lines), so update both together.
 # The inverses share the forward caps. They were briefly capped lower, on the
 # assumption that a measured F_InverseCumulative refusal reflected the inverse
 # iteration giving up; benchmark/inverse_probe showed the refusal was the newly
@@ -392,7 +393,9 @@ def row_validity(row, measure):
     because its reference, observation, or a required argument would not parse.
       * the observation must parse in full (every hi;lo part), not merely be non-blank;
       * ordinary contracts need a parseable reference;
-      * tail_probability_residual contracts need parseable arg1/arg2/arg3;
+      * tail_probability_residual contracts need the parseable columns
+        registered for their function in TAIL_SUPPORTED (an unregistered
+        function is rejected);
       * scaled_output_error contracts need a parseable, NON-ZERO arg1, because
         the measure divides by it. Without this the measurer would skip such a
         row while dispositions() still reported it valid, and a contract could

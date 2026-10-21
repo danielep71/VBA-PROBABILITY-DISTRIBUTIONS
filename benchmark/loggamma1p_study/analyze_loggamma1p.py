@@ -7,6 +7,8 @@ Analyze the LogGamma1p study (ICR-P1-01 prerequisite, issue #12).
   3. Seam continuity at PROB_LG1P_SERIES_MAX, one ulp either side.
   4. Subnormal-result degradation against its closed form, 2^-1075 / X.
   5. Recommended contract threshold under the 1-2-5 rule.
+  6. Independent holdout (needs --holdout): disjointness, argument integrity,
+     holdout worst and verdict.
 
 Metric note. The contract metric is the SCALED absolute error,
 
@@ -33,7 +35,10 @@ getcontext().prec = 60
 # 2.4E-16, so the output was internally inconsistent as well as stale.
 # Pass --threshold to have a verdict printed.
 CONTRACT = None
-LOGGAMMA_CONTRACT = Decimal("6.1E-14")  # PROB_LogGamma's own published relative bound
+# PROB_LogGamma's former global relative claim, retired under #15 in favour of
+# the LogGamma.* regime contracts in accuracy_contracts.csv. Kept only for the
+# section 1 note on the hand-over branch; it is not a contract threshold.
+LOGGAMMA_CONTRACT = Decimal("6.1E-14")
 SERIES_MAX = Decimal("0.25")
 TWO_POW_M1075 = Decimal(2) ** -1075
 ULP = Decimal(2) ** -52

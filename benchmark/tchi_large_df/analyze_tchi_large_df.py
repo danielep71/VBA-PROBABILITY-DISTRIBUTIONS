@@ -2,8 +2,9 @@
 Score the large-df t / Chi-square study once the VBA observations are exported,
 and report where (if anywhere) the public kernels diverge from the true value.
 
-Answers the P2-02 question: in the accepted-but-not-contracted regime, does the
-kernel return the correct (normal-limit) value, or a silently wrong one? For each
+Answers the P2-02 question: in what was then the accepted-but-not-contracted
+regime (the CDF, survival and inverse now reject df above 1E8), does the kernel
+return the correct (normal-limit) value, or a silently wrong one? For each
 (function, df) it prints the worst relative error of observed vs reference. Run
 with no observations to see the reference-side structure (which df are genuinely
 non-normal vs already at the normal limit).

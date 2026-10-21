@@ -11,8 +11,10 @@ on:
       - "ci/**"
       - ".github/excel-evidence-policy.json"
       - ".github/workflows/excel-vba-regression.yml"
-  # Unfiltered PR reporting; enforcement and trusted-candidate policy are
-  # tracked in #31. Fork PRs deliberately cannot execute on this Windows host.
+  # Unfiltered PR reporting. Not a required check: a skipped fork-PR job would
+  # report success. Excel certification is enforced at release (release.yml
+  # validates benchmark/excel_regression_record.json; see #31). Fork PRs
+  # deliberately cannot execute on this Windows host.
   pull_request:
     branches:
       - main

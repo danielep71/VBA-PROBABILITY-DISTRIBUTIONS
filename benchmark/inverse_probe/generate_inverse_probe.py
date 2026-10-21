@@ -48,12 +48,15 @@ CHI_DF = [1e6, 1e7, 1e8]
 # which silently probed shapes twice the intended size and therefore missed the
 # very configuration that motivated the study.
 F_DF_BALANCED = [(2e5, 2e5), (2e6, 2e6), (2e8, 2e8), (2e10, 2e10)]
-F_DF_UNBALANCED = [(1e6, 3.0), (2.0, 1e6),          # the measured refusals
+# The first two pairs are the public-function refusals that motivated the
+# study (cap-driven at the time; the probe found the kernel converges at both).
+F_DF_UNBALANCED = [(1e6, 3.0), (2.0, 1e6),
                    (1e6, 4.0), (1e8, 10.0), (10.0, 1e8),
                    (1e10, 100.0), (100.0, 1e10)]
 T_DF = [1e6, 1e7, 1e8]
-# 0.95 and 0.99 are included because the measured refusals occur there too, and
-# an inverse can converge at the median while failing further into the tail.
+# 0.95 and 0.99 are included because the motivating refusals were reported there
+# too, and an inverse can converge at the median while failing further into the
+# tail.
 PROBS = [mp.mpf("0.1"), mp.mpf("0.5"), mp.mpf("0.9"),
          mp.mpf("0.95"), mp.mpf("0.99")]
 

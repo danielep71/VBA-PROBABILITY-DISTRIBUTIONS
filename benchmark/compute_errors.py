@@ -5,20 +5,20 @@ numerical release gate.
 Contract schema (accuracy_contracts.csv):
   contract_id,function,regime,measure,metric,threshold,domain,provenance,status,evidence,notes
 
-Grid schema (probability_accuracy_grid.csv), positional up to observed_vba:
-  function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,evidence_set
+Grid schema (probability_accuracy_grid.csv; see _grid_safety.GRID_FIELDS):
+  function,vba_kernel,claim,metric,arg1,arg2,arg3,arg4,reference,observed_vba,regime,evidence_set,expected_error
 
 Join: grid (function, regime) -> contract (function, regime). One observation may
 feed several contracts (e.g. an inverse quantile supports both a quantile_error
 and a tail_probability_residual contract). Verdicts are grouped by contract_id.
 
 Measures:
-  output_error / quantile_error  -> error of observed vs reference (rel or abs)
-  log_absolute_error             -> absolute error
-  tail_probability_residual      -> requires the forward CDF at the observed
-                                    quantile; verified in its study directory,
-                                    surfaced here as CHARACTERIZATION ONLY unless
-                                    integrated into the grid.
+  output_error / quantile_error / log_absolute_error
+                                 -> error of observed vs reference; the
+                                    contract's metric picks absolute or relative
+  tail_probability_residual      -> forward CDF (TAIL_SUPPORTED) at the observed
+                                    quantile, normalised by min(p, 1-p)
+  scaled_output_error            -> Abs(obs - ref) / Abs(arg1)
 """
 import argparse, csv, os, sys
 from collections import defaultdict
@@ -180,10 +180,9 @@ def main():
             sys.exit(1)
 
     # HOLDOUT PROVENANCE GATE: verify only after the main binding is clean.  The
-    # staged order is deliberate: while #23 evidence is stale, its exact two-path
-    # diagnostic remains the first and only failure class.  Once the main grid is
-    # freshly bound, an absent or stale holdout binding blocks before any release
-    # verdict can be published.
+    # staged order is deliberate: a stale main binding is reported first and
+    # alone; only once it is clean can an absent or stale holdout binding block
+    # a release verdict.
     from _manifest import (load_holdout_manifest, verify_holdout_binding)
     _holdout_grid = os.path.join(HERE, "holdout", "holdout_grid.csv")
     _holdout_manifest = load_holdout_manifest(_root)
@@ -363,8 +362,9 @@ def main():
         # An ACTIVE contract must have every IN-ENVELOPE matched row observed with
         # a real value. A blank row (unobserved) or an unexpected ERROR (a kernel
         # failure inside the accuracy envelope) BLOCKS as PENDING rather than being
-        # silently dropped. Rows in the F envelope-reject region (expected_error)
-        # carry no accuracy claim and are excluded from scoring entirely.
+        # silently dropped. Rows in an envelope-reject region (F, Student-t or
+        # Chi-square df beyond its cap; expected_error) carry no accuracy claim
+        # and are excluded from scoring entirely.
         disp = dispositions(matched, measure)
         in_env = len(matched) - disp.n_expected
 

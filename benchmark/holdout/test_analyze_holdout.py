@@ -11,6 +11,13 @@ Proves:
   1. measure=output_error,       metric=absolute -> Abs(observed - reference)
   2. measure=log_absolute_error, metric=absolute -> Abs(observed - reference)
   3. any measure,                metric=relative -> Abs(observed - reference)/Abs(reference)
+  4. an unknown metric or measure fails loudly;
+  5. envelope-reject rows are excluded, while in-envelope ERROR rows and
+     wrong-direction rows are flagged;
+  6. preflight blocks invalid scaled_output_error rows;
+  7. tail dispatch is registry-driven and fail-closed (Beta, F, Student-t,
+     Chi-square);
+  8. an evaluator failure is recorded as INCOMPLETE, not scored.
 Run: python3 test_analyze_holdout.py   (exit 0 = pass, nonzero = fail)
 """
 from decimal import Decimal

@@ -2,9 +2,11 @@
 # =====================================================================
 # Rmpfr cross-check of the frozen 69-point Chi-square reference set.
 #
-# This is the REQUIRED independent leg of the #22 feasibility checkpoint
-# (v1.0.0 plan, Track A2 item 6). Until it runs and is verified, the
-# checkpoint stays PROVISIONAL and no final agreement figure is recorded.
+# This is the Rmpfr igamma leg of the #22 feasibility checkpoint (v1.0.0
+# plan, Track A2 item 6). It has run and is recorded for df = 1E6 and 1E7
+# (chisq_rmpfr_1e6.json, chisq_rmpfr_1e7.json). MPFR aborts above shape
+# ~4.5E7, so df = 1E8 is covered by chisq_gmpy2.py plus the quadrature leg.
+# The composite authority is in chisq_crosscheck.json.
 #
 # IDENTICAL INPUTS. Probabilities are read from chisq_reference.json as
 # hex float literals, so the exact IEEE-754 binary64 value crosses the
@@ -24,7 +26,11 @@
 # library from the Python series/CF route.
 #
 # USAGE
-#   Rscript rmpfr_crosscheck.R [chisq_reference.json] [chisq_rmpfr.json]
+#   Rscript rmpfr_crosscheck.R [chisq_reference.json] [chisq_rmpfr.json] [df]
+# The committed records were produced one df per process:
+#   Rscript rmpfr_crosscheck.R chisq_reference.json chisq_rmpfr_1e6.json 1e6
+#   Rscript rmpfr_crosscheck.R chisq_reference.json chisq_rmpfr_1e7.json 1e7
+#   (df = 1E8 aborts in mpfr_gamma_inc; it is covered by chisq_gmpy2.py)
 #
 # REQUIREMENTS
 #   install.packages(c("Rmpfr", "jsonlite"))

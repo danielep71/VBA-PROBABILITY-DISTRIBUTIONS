@@ -4,20 +4,10 @@ generate_reference_values.py
 ============================================================================
 Phase 1 of the reproducible accuracy harness for VBA-PROBABILITY-DISTRIBUTIONS.
 
-Emits a grid of inputs and high-precision REFERENCE values for every function
-that publishes a measured-accuracy claim in the VBA source:
-
-  SPECIALFUNCS kernels
-    PROB_LogGamma           see accuracy_contracts.csv (regime-aware; the global
-                            6.1E-14 relative claim was withdrawn)
-    PROB_LogGammaHalfDiff   rel err <= 2E-14 for Z > 0 (tested range)
-    PROB_StirlingError      abs err: see accuracy_contracts.csv (1E-13 abs; 3E-17 was overfit)
-    PROB_LogChoose          rel err <= 3.2E-16 for N in [2, 2^53], all K
-
-  TFAMILY public UDFs
-    StudentT density / cumulative / survival / quantile
-    ChiSquare cumulative / survival / quantile
-    F cumulative / survival / quantile
+Emits inputs and high-precision REFERENCE values for the main-grid surfaces
+whose contracts are in accuracy_contracts.csv (special functions, normal,
+T/Chi-square/F, continuous and discrete families, plus the deep-tail and
+tiny-unbalanced regimes).
 
 The reference column is computed with mpmath at 50 decimal digits. The
 `observed_vba` column is left EMPTY: it is filled by the companion VBA export
@@ -348,8 +338,9 @@ def _solving(f):
 # Promoted study evidence: LogGamma regimes and LogGamma1p
 # ---------------------------------------------------------------------------
 # These points are NOT a fresh ad-hoc list. They are the design points of
-# benchmark/loggamma_regimes_study and benchmark/loggamma1p_study, whose 233
-# references were independently audited at the exact Val(token) Doubles and
+# benchmark/loggamma_regimes_study and benchmark/loggamma1p_study, whose 265
+# references (all four study grids, holdouts included) were independently
+# audited at the exact Val(token) Doubles and
 # came back REFERENCE_CORRECT (see study_reference_audit.csv). Reproducing the
 # same points here keeps the promotion traceable to the evidence that justifies
 # it; promote_grid_rows.py verifies the match at binary64 keys before appending.
@@ -1288,15 +1279,16 @@ def build_rows():
         add("Lognormal_Mean", "K_STATS_Lognormal_Mean", (ml, sl), mp.e ** (ml + sl * sl / 2))
         add("Lognormal_Variance", "K_STATS_Lognormal_Variance", (ml, sl), (mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl))
         add("Lognormal_StdDev", "K_STATS_Lognormal_StdDev", (ml, sl), mp.sqrt((mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl)))
-    # ParametersFromMeanStdDev returns a 1x2 array; test each output separately
+    # ParametersFromMeanStdDev returns a 1x2 array. This loop emits no rows: the
+    # committed Lognormal_ParametersFromMeanStdDev rows come from the
+    # density_helpers evidence set.
     for (mean, sd) in [(mp.mpf(2), mp.mpf("0.5")), (mp.mpf(10), mp.mpf(3))]:
         mlref, slref = _lognorm_params(mean, sd)
 
 
     # ===================== CONTINUOUS FAMILY =====================
-    # Bounds set from measured worst-case error over the tested grid (5E-15 for
-    # near-machine-epsilon functions, 2E-14 where a digit is lost). Exponential is
-    # parameterized by RATE (Lambda), not scale.
+    # Claims come from accuracy_contracts.csv. Exponential is parameterized by
+    # RATE (Lambda), not scale.
 
     # --- Gamma(X, Shape k, ScaleParam theta) ---
     for (x, k, th) in [(mp.mpf(2), mp.mpf(2), mp.mpf(1)), (mp.mpf(5), mp.mpf(3), mp.mpf(2)),

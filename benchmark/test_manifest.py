@@ -103,9 +103,8 @@ def _holdout_tree():
     return d, src, exporter, grid, contracts
 
 
-# The holdout binding is deliberately tested as its own evidence record.  The
-# committed historical holdout has no manifest yet; these fixtures prove the
-# mechanism before the first truthful post-#23 binding is written.
+# The holdout binding is deliberately tested as its own evidence record, on
+# synthetic trees, independently of the committed holdout_manifest.json.
 hd, hsrc, hexporter, hgrid, hcontracts = _holdout_tree()
 hman = M.build_holdout_manifest(hd, hgrid, hcontracts, generated_utc="t0")
 

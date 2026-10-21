@@ -16,7 +16,8 @@ is measured.
 The study worst is reported alongside as a ratio. It should be near 1; anything
 else needs explaining rather than normalising away.
 
-Report only. Writes nothing.
+Writes the freeze record (freeze_record.csv by default); changes no grid or
+registry.
 """
 import argparse, csv, os, sys
 from decimal import Decimal, getcontext
@@ -27,9 +28,9 @@ sys.path.insert(0, HERE)
 from _contract_eval import (parse_observed, parse_reference, calculate_error,
                             calculate_scaled_error)
 
-# Margin floor, grounded in the registry rather than asserted. Of the 69
-# existing frozen contracts with a finite holdout margin, 4 sit below 2x and the
-# thinnest is 1.3x; the median band is 3-5x. A 2.5x floor is therefore stricter
+# Margin floor, grounded in the registry rather than asserted. When this floor
+# was chosen, 69 frozen contracts had a finite holdout margin; 4 sat below 2x and
+# the thinnest was 1.3x; the median band was 3-5x. A 2.5x floor is therefore stricter
 # than the repository has historically accepted, without demanding headroom that
 # no existing contract is held to. The margin is measured against the COMBINED
 # worst - the binding number - not against whichever of main or holdout happens

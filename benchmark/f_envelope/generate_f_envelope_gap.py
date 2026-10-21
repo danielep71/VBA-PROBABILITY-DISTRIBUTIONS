@@ -1,23 +1,25 @@
 """
-F accuracy-envelope study.
+F accuracy-envelope study - GAP sweep.
 
 Finds the df boundary where the public F CDF/survival cross the 1.1E-10 accuracy
 contract. F_CDF(x; d1, d2) = I_y(d1/2, d2/2), y = d1*x / (d1*x + d2), so the
 degrading quantity is the incomplete-beta shape parameter max(d1/2, d2/2). This
-sweeps that parameter finely around 1E7 in BOTH orientations (large first vs
-large second beta parameter), because the continued fraction can behave
-differently on each side. References are the 50-digit continued-fraction
-incomplete beta, validated self-consistent to ~1E-41 in this region.
+sweep fills the region below the base sweep (generate_f_envelope.py): that
+parameter from ~50 to 1E6, in BOTH orientations (large first vs large second
+beta parameter), because the continued fraction can behave differently on each
+side. References are the 50-digit continued-fraction incomplete beta, as in the
+base sweep.
 """
 import argparse, csv
 import mpmath as mp
 import os as _os, sys as _sys
-# Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
+# Single-sourced incomplete beta: benchmark/_ibeta.py (the local f_cdf is a
+# thin wrapper over it).
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta
 mp.mp.dps = 50
 
-# incomplete-beta shape parameter targets (= df/2), fine around 1E7
+# incomplete-beta shape parameter targets (= df/2), ~50 to 1E6, below the base sweep
 BETA_PARAMS = [50, 100, 200, 500, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6]
 XS = ["0.3", "0.6", "1.0", "1.7", "3.0"]   # span the mass for large-df F
 

@@ -1,4 +1,5 @@
-# environment.txt — dependency versions used to generate the reference grid
+# environment.txt — environment of the original 2026-07-21 reference-grid
+# generation; grid rows added or regenerated later are not re-recorded here.
 generated_date       = 2026-07-21
 python               = 3.12.3
 platform             = Linux-6.18.5-x86_64-with-glibc2.39

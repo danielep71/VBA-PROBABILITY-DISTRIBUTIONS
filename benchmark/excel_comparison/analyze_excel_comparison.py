@@ -15,16 +15,18 @@ TWO SEPARATE QUESTIONS, TWO SEPARATE COLUMNS
 
     An earlier version printed a single verdict and a win/loss tally. It gave
     "1.8E-14 vs 1.8E-16" the same weight as "no correct digits vs exact", and so
-    reported a roughly even contest when the real picture is "never meaningfully
-    behind, occasionally far ahead".
+    reported a roughly even contest when the real picture is "usually level,
+    occasionally far ahead, and in one measured case (Student t survival at
+    df = 1E7) a grade behind".
 
 THE THRESHOLDS, AND WHY THEY SIT WHERE THEY DO
     REFERENCE_DIGITS = 12
         Safe as a BUILDING BLOCK. A value this accurate can be fed into further
         computation - iteration, root-finding, accumulation over many calls -
         without its error becoming visible in the result. This is the standard
-        the library's own accuracy contracts are written to, and it is
-        deliberately far stricter than any single reported number needs.
+        most of the library's core accuracy contracts meet (several regime
+        contracts are deliberately looser; see accuracy_contracts.csv), and it
+        is deliberately far stricter than any single reported number needs.
 
     REPORT_DIGITS = 6
         Safe as a DIRECTLY REPORTED statistic. No published p-value, critical

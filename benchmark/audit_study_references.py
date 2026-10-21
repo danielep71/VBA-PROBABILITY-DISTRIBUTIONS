@@ -1,5 +1,6 @@
 """
-Audit the study references that the five #12/#15 contracts will be frozen from.
+Audit the study references behind the four frozen #12/#15 contracts (and the
+characterization-only LogGamma1p.series_seam).
 
 The main grid's 658 stale references were not the product of sloppy formulas.
 They were computed at the intended decimal rather than at the Double the
@@ -19,7 +20,8 @@ same treatment before anything is promoted:
 The regimes study carries subnormal arguments and seam neighbours one ulp
 apart, which is exactly where the decimal-vs-Double distinction bites hardest.
 
-Classification matches audit_references.py:
+Classification uses the same floor and MARGIN rule as audit_references.py, but
+a three-way scheme (there is no generator to compare):
   REFERENCE_CORRECT   committed reference agrees with the oracle
   REFERENCE_STALE     it does not, by more than the serialisation floor
   ORACLE_AMBIGUOUS    the oracle could not be certified

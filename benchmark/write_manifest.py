@@ -17,7 +17,8 @@ Provenance is recorded automatically where it can be read without guessing:
 Explicit flags still override both, and anything genuinely unavailable is
 recorded as "unrecorded" rather than guessed:
 
-    python write_manifest.py --excel-version 2408 --excel-build 16.0.17928.20216 \
+    python write_manifest.py --from-fresh-export --excel-version 2408 \
+                             --excel-build 16.0.17928.20216 \
                              --office-bitness 64 --commit-sha <sha>
 
 The independent holdout has a dedicated binding because its exporter and grid
@@ -212,10 +213,11 @@ def main():
     # manifest to a newer commit while the observations were unchanged - the same
     # false binding as 9fba175, reached through the flag meant to prevent it.
     #
-    # A real export rewrites the grid. If the grid is byte-identical to HEAD,
-    # nothing was exported and the assertion is provably false, so refuse. The
-    # genuine exception - a .bas change that alters no observation value, giving
-    # a byte-identical grid after a real export - is the same one
+    # A real export rewrites the grid. If git reports the grid unchanged from
+    # HEAD (line endings aside), nothing was exported and the assertion is
+    # provably false, so refuse. The genuine exception - a .bas change that
+    # alters no observation value, giving an unchanged grid after a real
+    # export - is the same one
     # check_manifest_provenance.py already recognises: a validated
     # excel_regression_record.json naming this grid as exported.
     if a.from_fresh_export and not a.dry_run:

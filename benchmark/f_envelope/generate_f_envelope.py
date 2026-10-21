@@ -12,7 +12,8 @@ incomplete beta, validated self-consistent to ~1E-41 in this region.
 import argparse, csv
 import mpmath as mp
 import os as _os, sys as _sys
-# Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
+# Single-sourced incomplete beta: benchmark/_ibeta.py (the local f_cdf is a
+# thin wrapper over it).
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta
 mp.mp.dps = 50
