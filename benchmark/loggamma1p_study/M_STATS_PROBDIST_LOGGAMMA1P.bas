@@ -25,7 +25,7 @@ Option Explicit
 '
 ' WHY LogGamma1pOverX IS MEASURED HERE
 '   The contract metric is the SCALED error, Abs(observed - reference) / X,
-'   because the scaled Gamma inverse computes
+'   because the planned scaled Gamma inverse (ICR-P1-01B, #14) will compute
 '   [LogProbability + LogGamma1p(Shape)] / Shape. Dividing in VBA rather than in
 '   Python captures the rounding of the division the caller will actually incur.
 '

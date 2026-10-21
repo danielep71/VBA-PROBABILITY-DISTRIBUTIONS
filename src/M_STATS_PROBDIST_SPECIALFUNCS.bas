@@ -35,6 +35,10 @@ Option Private Module
 '     - PROB_LogGammaDelta
 '     - PROB_LogGammaHalfDiff
 '     - PROB_LogBeta
+'     - PROB_TryLogGamma1p
+'
+'   Validated envelopes:
+'     - PROB_DENSITY_SHAPE_MAX
 '
 '   Positive-ratio dispatch (#13):
 '     - PROB_PositiveRatioClass, PROB_ClassifyPositiveRatio
@@ -119,7 +123,8 @@ Option Private Module
 '
 ' DESIGN PRINCIPLES
 '   - Every iterative routine returns Boolean. False means the answer is unknown,
-'     not approximately known. Result is left unchanged on failure.
+'     not approximately known. On a False return the ByRef result is not
+'     contractual and must not be read (CORE invariant I3).
 '   - The incomplete beta takes BOTH X and Y = 1 - X. The caller supplies each
 '     from a form that does not cancel, and the routine never re-derives one from
 '     the other by subtraction. This is what makes Student t exact near zero and
@@ -216,7 +221,7 @@ Public Enum PROB_PositiveRatioClass
     PROB_PRC_PRECISION_RECOVERY = 1    'Positive subnormal below the cutoff
     PROB_PRC_HARD_UNDERFLOW = 2        'Positive ratio stored as zero
 End Enum
-Private Const PROB_IBETA_LOADER_MIN_SHAPE As Double = 1000# 'A + B at or above which the incomplete-beta factor uses the Loader decomposition instead of the literal form (measured crossover; see the header of PROB_TryBetaRegularized)
+Private Const PROB_IBETA_LOADER_MIN_SHAPE As Double = 1000# 'A + B at or above which the incomplete-beta factor uses the Loader decomposition instead of the literal form (measured crossover; see the COMPUTE COMMON FACTOR comment in PROB_TryBetaRegularized and benchmark/cdf_large_shape)
 Public Const PROB_DENSITY_SHAPE_MAX As Double = 1E+20 'Validated large-shape density envelope (Gamma/Chi-square/Beta/F); measured, benchmark/density_large_shape
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
 Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (validated by the committed seam study and independent holdout)
@@ -241,15 +246,15 @@ Private Const PROB_LANCZOS_P8 As Double = 1.50563273514931E-07
 '                        + Sum(k = 2..) (-1)^k * Zeta(k) * X^k / k
 '
 'C1 is -EulerGamma; Ck is (-1)^k * Zeta(k) / k. Fixed table, never evaluated
-'at run time. Twenty-six terms hold the series at the coefficient rounding
+'at run time. Twenty-six terms hold the series at the arithmetic rounding
 'floor throughout the retained interval; see PROB_TryLogGamma1p.
 Private Const PROB_LG1P_SERIES_MAX As Double = 0.25   'Measured series/Lanczos seam
 'C1 is written as a split expression rather than a fifteen-digit literal. It
 'dominates the scaled-error floor and is the one coefficient that survives
 'division by Shape in the scaled Gamma inverse, so a single ulp here is worth
 'more than it is anywhere else in the table. The sum below is the exactly
-'rounded Double for -0.5772156649015329; the fifteen-digit form is one ulp away
-'and leaves a 2.3E-16 floor. Same pattern as PROB_DS_MAX_EXACT_INTEGER.
+'rounded Double for -0.5772156649015329; the fifteen-digit form is 8 ulps away
+'and raises the scaled-error floor. Same pattern as PROB_DS_MAX_EXACT_INTEGER.
 Private Const PROB_LG1P_C1  As Double = _
     -0.577215664901532 - 8.88178419700125E-16
 Private Const PROB_LG1P_C2  As Double = 0.822467033424113
@@ -331,9 +336,11 @@ Public Function PROB_LogGamma( _
 '   this project validate strictly positive parameters before arriving here.
 '
 ' ACCURACY
-'   Under revision. The previous claim, relative error below 6.1E-14 across Z in
-'   [1E-8, 1E+50], is withdrawn as a global statement for two reasons measured in
-'   benchmark/loggamma1p_study:
+'   Held to the LogGamma.small_positive, LogGamma.near_zero and LogGamma.general
+'   contracts in benchmark/accuracy_contracts.csv (evidence:
+'   benchmark/loggamma_regimes_study). The former claim, relative error below
+'   6.1E-14 across Z in [1E-8, 1E+50], was withdrawn as a global statement for
+'   two reasons measured in that study:
 '
 '     - Log(Gamma(Z)) is zero at Z = 1 and Z = 2, so a single global RELATIVE
 '       contract is ill-conditioned by construction. Relative error reaches
@@ -366,12 +373,12 @@ Public Function PROB_LogGamma( _
     'Use Gamma(Z) = Gamma(1 + Z) / Z. This keeps the first-order -EulerGamma * Z
     'term, which the reflection route below loses, and it never forms
     'Sin(PROB_PI * Z) at an argument that has entered the subnormal range.
-    'Measured in benchmark/loggamma1p_study: at the smallest positive Double the
-    'reflection route reaches 6.2E-05 relative, this route 5.9E-17. The series
-    'helper is called directly rather than through PROB_TryLogGamma1p, because
-    'the branch condition already establishes the helper's precondition and a
-    'Double-returning kernel has no channel to report a failure that cannot
-    'happen.
+    'Measured in benchmark/loggamma_regimes_study: at the smallest positive Double
+    'the reflection route reaches 6.2E-05 relative; this route is held to
+    'LogGamma.small_positive.log_abs. The series helper is called directly
+    'rather than through PROB_TryLogGamma1p, because the branch condition
+    'already establishes the helper's precondition and a Double-returning kernel
+    'has no channel to report a failure that cannot happen.
         If Z <= PROB_LG1P_SERIES_MAX Then
             PROB_LogGamma = PROB_LogGamma1pSeries(Z) - Log(Z)
             Exit Function
@@ -438,28 +445,27 @@ Public Function PROB_TryLogGamma1p( _
 '   (about 1.11E-16), so the first-order term -EulerGamma * X is lost outright
 '   and the result collapses to zero. The loss is not confined to that boundary:
 '   it is already worth a factor of four at X = 1E-14 and grows without limit as
-'   X falls. Callers that divide the result by X - the scaled Gamma quantile in
-'   particular - inherit the whole error, so a lost increment becomes a lost
-'   quantile. This kernel evaluates the Maclaurin series in X directly, so the
-'   increment is never asked to survive an addition to one.
+'   X falls. Callers that divide the result by X inherit the whole error, so a
+'   lost increment becomes a lost quantile. This kernel is provided for such
+'   callers, chiefly the scaled Gamma quantile seed in PROB_TryGammaInvP, which
+'   has not yet been rerouted onto it (#14). It evaluates the Maclaurin series
+'   in X directly, so the increment is never asked to survive an addition to
+'   one.
 '
 ' METHOD
 '   For X at or below PROB_LG1P_SERIES_MAX the fixed Maclaurin table is summed by
 '   Horner. The interval and the term count were chosen together from measured
 '   error envelopes, not from the theoretical radius of convergence: twenty-six
-'   terms hold the series at its coefficient rounding floor across the whole
+'   terms hold the series at its arithmetic rounding floor across the whole
 '   retained interval, and the seam sits where the series is still roughly two
 '   orders of magnitude better than the Lanczos route it hands over to.
 '   Above the seam, 1# + X preserves the increment and PROB_LogGamma is used.
 '
 ' RECURSION SAFETY
-'   Once PROB_LogGamma routes small positive Z through this routine the call
-'   graph will look circular. It is not. PROB_LogGamma calls this routine only
-'   for a small positive Z inside the series regime. This routine delegates back
-'   to PROB_LogGamma only when X exceeds the series crossover, in which case the
-'   delegated argument is 1 + X, which is greater than one and therefore cannot
-'   re-enter the small-positive PROB_LogGamma branch. The mutual call terminates
-'   after at most one hop in each direction.
+'   PROB_LogGamma does not call this routine; both share the leaf
+'   PROB_LogGamma1pSeries. This routine delegates to PROB_LogGamma only when X
+'   exceeds the series crossover, with argument 1 + X > 1.25, which takes the
+'   Lanczos branch and cannot re-enter the small-Z route.
 '
 ' INPUTS
 '   X         Increment above one. Must be finite and non-negative.
@@ -476,12 +482,14 @@ Public Function PROB_TryLogGamma1p( _
 '
 '       Abs(Result - Reference) / X
 '
-'   because the scaled Gamma inverse divides this result by X. Ordinary absolute
-'   error would look flattering and prove nothing about that caller.
+'   because the scaled Gamma inverse it is built for divides this result by X
+'   (#14). Ordinary absolute error would look flattering and prove nothing
+'   about that caller.
 '
-'   Measured against 60-digit arithmetic, scaled absolute error is at or below
-'   2.4E-16 across X in [3.9E-308, 0.25]. The floor is set by the fifteen-digit
-'   coefficient literals, not by the series truncation.
+'   Scaled absolute error is held to LogGamma1p.small.scaled_abs in
+'   benchmark/accuracy_contracts.csv (evidence: benchmark/loggamma1p_study). The
+'   floor is the rounding of the final Acc * X, not the series truncation or the
+'   coefficient literals.
 '
 ' LIMITATION - SUBNORMAL RESULT
 '   Below X = 3.9E-308 the product EulerGamma * X is itself subnormal, so the
@@ -580,9 +588,9 @@ Private Function PROB_LogGamma1pSeries( _
 '                                      never re-enter the small-Z route.
 '
 ' ACCURACY
-'   Scaled absolute error, Abs(Result - Reference) / X, at or below 1.4E-16
-'   across X in [3.855E-308, 0.25]; see PROB_TryLogGamma1p and
-'   benchmark/loggamma1p_study.
+'   Scaled absolute error, Abs(Result - Reference) / X, is held to
+'   LogGamma1p.small.scaled_abs in benchmark/accuracy_contracts.csv; see
+'   PROB_TryLogGamma1p and benchmark/loggamma1p_study.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -649,9 +657,9 @@ Public Function PROB_LogGammaHalfDiff( _
 ' WHY THIS EXISTS
 '   This difference appears in the Student t density (with Z = df/2) and in
 '   Log(Beta(Z, 1/2)). Formed as a literal subtraction it cancels catastrophically
-'   for large Z: at Z = 5E+5 the two log-gammas are each about 6.4E+6 and the
-'   answer is about 6.6, so 14 of the 16 available digits are lost. The
-'   asymptotic expansion computes the difference directly.
+'   for large Z: at Z = 5E+5 the two log-gammas are each about 6.1E+6 and the
+'   answer is about 6.6, so about six of the sixteen available digits are lost.
+'   The asymptotic expansion computes the difference directly.
 '
 ' ACCURACY
 '   Relative error at or below 2E-14 across the tested range (Z > 0), measured
@@ -735,7 +743,7 @@ Public Function PROB_LogGammaDelta( _
 '   Measured worst relative error 6.9E-15 inside the documented regime
 '   (Small / LargeArg <= 0.1) across Small in [0.25, ~10] and LargeArg up to
 '   1E+50, validated against 50-digit
-'   arithmetic. (VBA measurement is the authority; see benchmark/logbeta_study.)
+'   arithmetic. (VBA measurement is the authority; see benchmark/delta_seam_study.)
 '
 ' DEPENDENCIES
 '   - PROB_Log1p
@@ -1001,8 +1009,9 @@ Public Function PROB_StirlingError( _
 '   delta(N) is O(1 / (12 * N)) and is therefore computed with full relative
 '   accuracy at every N. Any quantity that would otherwise be assembled by
 '   subtracting two large log-gammas can instead be assembled from three small
-'   deltas plus an exactly-computed leading term. PROB_LogChoose is the first
-'   consumer; the binomial and Poisson mass functions will be the next.
+'   deltas plus an exactly-computed leading term. Consumers: PROB_LogChoose,
+'   PROB_TryGammaLogPdf, PROB_TryBetaLogPdf, and the binomial and Poisson mass
+'   functions in M_STATS_PROBDIST_DISCRETE.
 '
 ' PRECONDITION
 '   N >= 0.
@@ -1032,10 +1041,9 @@ Public Function PROB_StirlingError( _
 '
 '   The small-N table constants are written as a two-part sum, hi + lo, where hi
 '   is the value to 15 significant digits and lo is the residual. VBA source
-'   literals hold only about 15 significant digits, so a single literal of a
-'   value near 0.15 holds only about 15 significant digits, so the residual term
-'   restores the missing low-order bits at load time. Each part is itself a <= 15-digit literal that
-'   the editor preserves.
+'   literals hold only about 15 significant digits, so the residual term
+'   restores the missing low-order bits at load time. Each part is itself a
+'   <= 15-digit literal that the editor preserves.
 '
 ' DOMAIN
 '   Finite for every N from the smallest positive Double upward. The earlier
@@ -1593,6 +1601,7 @@ Public Function PROB_TryBetaRegularized( _
 '
 ' DEPENDENCIES
 '   - PROB_LogBeta
+'   - PROB_TryBetaLogPdf (A + B >= PROB_IBETA_LOADER_MIN_SHAPE)
 '   - PROB_TryExp
 '   - PROB_TryBetaContinuedFraction
 '==============================================================================
@@ -1820,7 +1829,9 @@ Public Function PROB_TryBetaInvRegularized( _
 ' RETURNS
 '   Boolean
 '     TRUE  => ResultX and ResultY hold the solution.
-'     FALSE => an inner incomplete beta evaluation failed; FailMsg says so.
+'     FALSE => an inner incomplete beta evaluation failed, Newton/bisection did
+'              not settle within PROB_INV_MAX_ITER, or (both shapes below one)
+'              no representable interior quantile exists; FailMsg says which.
 '
 ' DEPENDENCIES
 '   - PROB_NormalInvCDFRaw, PROB_LogBeta, PROB_TryExp
@@ -2111,6 +2122,9 @@ Public Function PROB_TryGammaRegularizedQ( _
 '   Q is not usefully recovered as 1 - P. For a chi-square with 10 degrees of
 '   freedom at x = 200, Q is 1.6E-37 while 1 - P evaluates to exactly zero. Any
 '   right-tail p-value has to come from here.
+'
+'   Note: below X = A + 1 this routine still forms Q as 1 - P from the series,
+'   which loses relative accuracy when Q is small there; tracked by #24.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2236,14 +2250,15 @@ Public Function PROB_TryGammaSeriesP( _
 ' RETURNS
 '   Boolean
 '     TRUE  => Result holds P(A, X).
-'     FALSE => PROB_GAMMA_MAX_ITER was exhausted without meeting PROB_NUM_EPS.
+'     FALSE => PROB_GAMMA_MAX_ITER was exhausted without meeting
+'              PROB_GAMMA_SERIES_EPS, or the prefactor failed (FailMsg set).
 '              Result is left unchanged; a partial sum is never returned.
 '
 ' NOTE
-'   The term count grows like 2.4 * Sqr(A) at the worst point X = A. At A = 800
-'   (a chi-square with 1600 degrees of freedom) it exceeds 200 terms, which is
-'   where the previous 200-iteration budget began returning silently wrong
-'   answers, reaching a 37 percent error by df = 100000.
+'   The term count grows like roughly 7 * Sqr(A) at the worst point X = A. At
+'   A = 800 (a chi-square with 1600 degrees of freedom) it exceeds 200 terms,
+'   which is where the previous 200-iteration budget began returning silently
+'   wrong answers, reaching a 37 percent error by df = 100000.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2408,11 +2423,14 @@ Public Function PROB_TryGammaInvP( _
 ' RETURNS
 '   Boolean
 '     TRUE  => Result holds the quantile.
-'     FALSE => an inner incomplete gamma evaluation failed; FailMsg says so.
+'     FALSE => an inner incomplete gamma evaluation failed, Newton/bisection
+'              did not settle within PROB_INV_MAX_ITER, or Probability = 1
+'              (the quantile is unbounded); FailMsg says which.
 '
 ' DEPENDENCIES
 '   - PROB_NormalInvCDFRaw, PROB_LogGamma, PROB_TryExp
 '   - PROB_TryGammaRegularizedP, PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaLogPdf
 '==============================================================================
 '
 '------------------------------------------------------------------------------

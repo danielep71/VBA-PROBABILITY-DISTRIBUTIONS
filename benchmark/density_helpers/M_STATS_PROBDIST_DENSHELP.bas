@@ -5,9 +5,12 @@ Option Explicit
 ' M_STATS_PROBDIST_DENSHELP
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Fills observed_vba for four public UDFs that the main export does not cover
-'   (ChiSquare_Density, F_Density, Normal_IntervalProbability and
+'   Fills observed_vba for the density_helpers rows (ChiSquare_Density,
+'   F_Density, Normal_IntervalProbability and
 '   Lognormal_ParametersFromMeanStdDev) in probability_accuracy_grid.csv.
+'   Main-grid rows of the first two are owned by
+'   M_STATS_PROBDIST_ACCURACYEXPORT; this macro owns only
+'   evidence_set = density_helpers.
 '
 ' SCOPE
 '   Touches ONLY rows whose evidence_set is "density_helpers" and leaves every
@@ -17,11 +20,11 @@ Option Explicit
 ' USAGE
 '   Run Export_DensityHelpers and select probability_accuracy_grid.csv.
 '
-' GRID FORMAT (12-column arg4 schema; index in brackets)
+' GRID FORMAT (13-column arg4 schema; index in brackets)
 '   [0] function     [1] vba_kernel  [2] claim      [3] metric
 '   [4] arg1         [5] arg2        [6] arg3       [7] arg4
 '   [8] reference    [9] observed_vba               [10] regime
-'   [11] evidence_set
+'   [11] evidence_set                [12] expected_error
 '
 '   This macro reads function, arg1..arg3, regime and evidence_set, and writes
 '   observed_vba only. Because it writes into the SHARED main grid, the header
@@ -46,7 +49,7 @@ Option Explicit
 '   2026-07-23
 '==============================================================================
 
-'Column indices in the 12-column main-grid schema
+'Column indices in the 13-column main-grid schema
 Private Const COL_FUNCTION      As Long = 0
 Private Const COL_ARG1          As Long = 4
 Private Const COL_ARG2          As Long = 5
@@ -112,7 +115,7 @@ Public Sub Export_DensityHelpers()
     'This macro writes into the shared main grid. If the schema ever moves,
     'refuse rather than write an observation into the wrong column.
         If Not HeaderIsExpected(Lines(0), Sep) Then
-            MsgBox "Grid header does not match the expected 12-column schema." & _
+            MsgBox "Grid header does not match the expected grid schema." & _
                    vbCrLf & "Nothing was written.", vbExclamation, "Density helpers export"
             Exit Sub
         End If

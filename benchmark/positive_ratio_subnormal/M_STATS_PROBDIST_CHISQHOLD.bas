@@ -4,14 +4,8 @@ Option Explicit
 'Column count of the committed schema, checked against every row written
 Private Const PROBE_FIELDS As Long = 14
 
-'Shape is part of the experimental design, not a setting: each surface has a
-'different conditioning problem and one shape cannot serve all three. At
-'Shape is part of the experimental design, not a setting: each surface has
-'a different conditioning problem and one shape cannot serve all three. At
-'Shape = 0.5 the survival is already correctly saturated at 1.0 across the
-'whole subnormal ladder and cannot constrain dispatch. The slices are
-'therefore surface-specific; shape_id is provenance, echo_shape is
-'authoritative.
+'Shape slices are surface-specific; shape_id is provenance, echo_df is
+'authoritative (see ShapeSlicesFor).
 '==============================================================================
 ' M_STATS_PROBDIST_CHISQHOLD
 '------------------------------------------------------------------------------
@@ -204,18 +198,9 @@ Private Function ShapeSlicesFor(ByVal Surface As String) As Variant
 '   universal set wastes evidence on slices that cannot discriminate.
 '
 ' WHY SURVIVAL IS DIFFERENT
-'   At Shape = 0.5 with a standardized argument near 1E-308 the lower tail is
-'   about 1E-154, so Q = 1 - P rounds to exactly 1 across the whole subnormal
-'   ladder. Both branches return 1 and both are right, so the slice carries no
-'   information about dispatch. Near Shape = 0.001 the survival stays close to
-'   0.5 throughout, which keeps the bucket varying while the probability
-'   regime stays put. Shape = 0.5 is retained so that the saturation is
-'   recorded as characterisation rather than silently dropped.
-'
-' WHY SHAPE = 1 IS IN THE OTHER TWO
-'   The z ^ (Shape - 1) dependence disappears there, so transform sensitivity
-'   should behave differently. It is a structural control: if the analyzer
-'   reports otherwise, that is immediately informative.
+'   Survival slices are the df admitted by min(P, Q) > 2 ^ -20 on the exact
+'   reference at every holdout bucket (HOLDOUT_DESIGN.md). The fitting arm's
+'   saturation and Shape = 1 controls are not part of the holdout.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -368,7 +353,8 @@ Private Function SmallestPositiveDouble() As Double
 '   The stored value decides, not the expression. VBA does not necessarily
 '   round an intermediate expression to Double at every operator, so testing
 '   MinSub / 2# in a loop condition would let the loop run past the floor and
-'   leave zero behind. See CONTRIBUTING, "Force the rounding boundary".
+'   leave zero behind. See the IMPORTANT note under "Start here" in
+'   CONTRIBUTING.md (forced Double rounding boundaries).
 '==============================================================================
 '
 '------------------------------------------------------------------------------

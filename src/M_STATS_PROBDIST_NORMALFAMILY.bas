@@ -127,10 +127,11 @@ Option Explicit
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
-'       Constants  : PROB_EPS, PROB_DOUBLE_MAX, PROB_SQRT_DOUBLE_MAX,
-'                    PROB_PARAMETER_MAGNITUDE_GUARD
-'       Predicates : PROB_IsWithinSupportedMagnitude, PROB_IsValidProbabilityOpen
-'       Primitives : PROB_TryExp, PROB_Expm1, PROB_Log1p, PROB_NormalInvCDFRaw,
+'       Constants  : PROB_EPS, PROB_SQRT_DOUBLE_MAX, PROB_HALF_LOG_TWO_PI
+'       Predicates : PROB_IsFinite, PROB_IsWithinSupportedMagnitude,
+'                    PROB_IsValidProbabilityOpen
+'       Primitives : PROB_TryExp, PROB_TryStandardize, PROB_TryAffineTransform,
+'                    PROB_Log1p, PROB_LogExpm1, PROB_NormalInvCDFRaw,
 '                    PROB_ExpNegHalfSquare
 '       Diagnostics: PROB_SetStatus
 '   - M_STATS_PROBDIST_SPECIALFUNCS
@@ -144,9 +145,12 @@ Option Explicit
 '
 '     PROB_IsFinite                     the standard-normal Z arguments and the
 '                                       standard-normal interval bounds. The
-'                                       kernels cut off at Abs(Z) > 37 or 38 and
-'                                       return 0 or 1 without arithmetic, so no
-'                                       magnitude restriction is needed.
+'                                       kernels return their limiting values
+'                                       without further arithmetic beyond the
+'                                       Double underflow points
+'                                       (PROB_NT_UNDERFLOW_Z,
+'                                       PROB_PDF_UNDERFLOW_Z), so no magnitude
+'                                       restriction is needed.
 '
 '     PROB_IsWithinSupportedMagnitude   the log-space lognormal parameters, where
 '                                       StdDevLog is squared by the moment
@@ -164,9 +168,12 @@ Option Explicit
 '   Every standardization Z = (X - Mean) / StdDev and location-scale
 '   reconstruction Mean + StdDev * Z now routes through PROB_TryStandardize and
 '   PROB_TryAffineTransform. An overflow - for example X = 9E99 with
-'   StdDev = 1E-300 - is caught and returned as CVErr(xlErrNum) with a diagnostic,
-'   rather than falling through to the unexpected-error handler as
-'   CVErr(xlErrValue). The 1E100 bound on the general-normal arguments is now
+'   StdDev = 1E-300 - is caught rather than falling through to the
+'   unexpected-error handler as CVErr(xlErrValue). A directional standardization
+'   overflow returns the exact limit (see STANDARDIZATION OVERFLOW RETURNS AN
+'   EXACT LIMIT below); an indeterminate one, a ZScore overflow or a quantile
+'   reconstruction overflow returns CVErr(xlErrNum) with a diagnostic. The 1E100
+'   bound on the general-normal arguments is now
 '   redundant for overflow protection and could be relaxed to PROB_IsFinite in a
 '   later pass; it is retained for now as a conservative, harmless restriction.
 '
@@ -656,7 +663,8 @@ Public Function K_STATS_NormalStandard_InverseCumulative( _
 '   module's standard normal CDF and PDF. In the practical central range, this is
 '   intended to reach near double-precision accuracy, subject to ordinary
 '   floating-point saturation and PDF underflow in the extreme tails.
-'   Accurate to ~1E-15.
+'   Accuracy is held per regime by the NormalStandard_InverseCumulative
+'   contracts in benchmark/accuracy_contracts.csv; see PROB_NormalInvCDF.
 '
 ' INPUTS
 '   Probability
@@ -1547,7 +1555,9 @@ Public Function K_STATS_Normal_InverseCumulative( _
 '   NORM.INV(Probability, Mean, StdDev)  (Excel 2010+).
 '
 ' PROVENANCE
-'   Acklam inverse (Halley-refined) rescaled to Mean/StdDev. Public; ~1E-15.
+'   Acklam inverse (Halley-refined) rescaled to Mean/StdDev. Public; accuracy
+'   is held by the Normal_InverseCumulative contracts in
+'   benchmark/accuracy_contracts.csv.
 '
 ' INPUTS
 '   Probability
@@ -1964,9 +1974,6 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   A standardization overflow REMAINS an error here, unlike the probability
-'   surfaces in this module: the unrepresentable standardized value is itself
-'   the requested result, so there is no exact limit to return.
 '   A standardization overflow on either bound returns the exact limit for that
 '   bound rather than CVErr(xlErrNum). The kernel clamps the difference to
 '   [0, 1], so a saturated bound cannot invert the interval.
@@ -2013,7 +2020,7 @@ Public Function K_STATS_Normal_IntervalProbability( _
 '------------------------------------------------------------------------------
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
-    'Validate finite bounds
+    'Validate bounds against the supported magnitude
         If Not PROB_IsWithinSupportedMagnitude(LowerBound) Then
             FailMsg = "LowerBound must be within the parameter-magnitude guard (|LowerBound| < 1E100)"
             GoTo Fail_Num
@@ -2192,7 +2199,7 @@ Public Function K_STATS_Lognormal_Density( _
 '------------------------------------------------------------------------------
 ' VALIDATE PARAMETERS
 '------------------------------------------------------------------------------
-    'Validate X is finite
+    'Validate X against the supported magnitude
         If Not PROB_IsWithinSupportedMagnitude(X) Then
             FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             GoTo Fail_Num
@@ -2364,7 +2371,7 @@ Public Function K_STATS_Lognormal_Cumulative( _
 '------------------------------------------------------------------------------
 ' VALIDATE PARAMETERS
 '------------------------------------------------------------------------------
-    'Validate X is finite
+    'Validate X against the supported magnitude
         If Not PROB_IsWithinSupportedMagnitude(X) Then
             FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             GoTo Fail_Num
@@ -2524,7 +2531,7 @@ Public Function K_STATS_Lognormal_Survival( _
 '------------------------------------------------------------------------------
 ' VALIDATE PARAMETERS
 '------------------------------------------------------------------------------
-    'Validate X is finite
+    'Validate X against the supported magnitude
         If Not PROB_IsWithinSupportedMagnitude(X) Then
             FailMsg = "X must be within the parameter-magnitude guard (|X| < 1E100)"
             GoTo Fail_Num
@@ -3126,10 +3133,10 @@ Public Function K_STATS_Lognormal_StdDev( _
 '   None native. Equal to SQRT of the lognormal variance.
 '
 ' PROVENANCE
-'   Standard closed-form result, computed as Sqr(Exp(StdDevLog^2) - 1) *
-'   Exp(MeanLog + 0.5 * StdDevLog^2). This reduced-magnitude arrangement uses a
-'   smaller exponent than Sqr(Variance) and therefore overflows later.
-'   Not proprietary.
+'   Standard closed-form result Sqr(Exp(StdDevLog^2) - 1) *
+'   Exp(MeanLog + 0.5 * StdDevLog^2), evaluated as a single logarithmic
+'   expression through PROB_LogExpm1 so it overflows only when the true
+'   standard deviation does. Not proprietary.
 '
 ' INPUTS
 '   MeanLog
@@ -3540,8 +3547,8 @@ Private Function PROB_NormalInvCDF( _
 ' PROB_NormalInvCDF
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the inverse standard normal cumulative distribution function at
-'   machine precision.
+'   Returns the inverse standard normal cumulative distribution function
+'   (Halley-refined Acklam); see ACCURACY.
 '
 ' METHOD / PROVENANCE
 '   Peter J. Acklam's rational approximation (public, released freely), taken
@@ -3698,8 +3705,9 @@ Private Function PROB_ValidateLogParameters( _
 '
 '   This is a real constraint, not defensive habit: a merely finite StdDevLog of
 '   1E155 would square to infinity. The standard-normal routines carry no such
-'   constraint - their kernels cut off at Abs(Z) > 37 and return 0 or 1 without
-'   arithmetic - and therefore validate with PROB_IsFinite instead.
+'   constraint - their kernels return 0 or 1 without further arithmetic beyond
+'   the Double underflow points (PROB_NT_UNDERFLOW_Z, PROB_PDF_UNDERFLOW_Z) -
+'   and therefore validate with PROB_IsFinite instead.
 '==============================================================================
 '
 '------------------------------------------------------------------------------

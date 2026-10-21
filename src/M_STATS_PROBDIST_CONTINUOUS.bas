@@ -89,10 +89,14 @@ Option Explicit
 ' BETA ACCURACY REGIMES
 '   Beta accuracy is regime-specific and is governed by the machine-readable
 '   contract in benchmark/accuracy_contracts.csv (rendered in benchmark/README).
-'   The regime is set by the shape ratio min(Alpha, Beta) / max(Alpha, Beta):
+'   Regimes are keyed on the shape ratio min(Alpha, Beta) / max(Alpha, Beta)
+'   and on the shape magnitude:
 '   - Balanced shapes (ratio >= 0.1) retain the tight contract.
 '   - Strongly unbalanced shapes (ratio < 0.1) carry SEPARATE MEASURED thresholds,
 '     validated on an independent holdout and frozen.
+'   - Very small and very large shapes carry their own magnitude regimes
+'     (tiny_unbalanced, large_shape, extreme_shape); see accuracy_contracts.csv
+'     for the full list.
 '
 '   THE THRESHOLDS THEMSELVES ARE NOT REPEATED HERE. They are in
 '   accuracy_contracts.csv, which is the single authority, and they move as
@@ -140,7 +144,9 @@ Option Explicit
 '
 '   - M_STATS_PROBDIST_SPECIALFUNCS
 '       PROB_LogGamma
-'       PROB_LogBeta
+'       PROB_TryGammaLogPdf
+'       PROB_TryBetaLogPdf
+'       PROB_DENSITY_SHAPE_MAX
 '       PROB_TryGammaRegularizedP
 '       PROB_TryGammaRegularizedQ
 '       PROB_TryGammaInvP
@@ -155,8 +161,11 @@ Option Explicit
 '     benchmark/cdf_large_shape rather than restated here (the gamma series is
 '     bounded by PROB_GAMMA_MAX_ITER, and the beta range moved substantially
 '     after CR-P1-02). A shape between that range and the representational bound is
-'     accepted, attempted, and returns a clean non-convergence error, not a wrong
-'     answer.
+'     accepted and attempted. The incomplete-gamma series then returns a clean
+'     non-convergence error. The incomplete-beta continued fraction can instead
+'     pass its convergence test with a degraded value (IncompleteBeta.* rows in
+'     benchmark/numerical_limitations.csv), so Beta shapes beyond the contracted
+'     range in benchmark/accuracy_contracts.csv carry no accuracy claim.
 '   - Evaluation points, rates, scales and Uniform bounds may use the full finite
 '     Double range where the implemented formula remains numerically meaningful.
 '
@@ -1139,8 +1148,9 @@ Public Function K_STATS_Beta_Density( _
 '   Returns the Beta probability density at X for shapes Alpha and Beta.
 '
 ' WHY THIS EXISTS
-'   The density is evaluated in the logarithmic domain through PROB_LogBeta so
-'   large shape parameters do not form unstable Gamma-function ratios directly.
+'   The density is evaluated in the logarithmic domain through the shared Loader
+'   kernel PROB_TryBetaLogPdf, so large shape parameters never form or subtract
+'   large log-gamma values.
 '
 ' WORKSHEET EQUIVALENT
 '   BETA.DIST(X, Alpha, Beta, FALSE)
@@ -1220,7 +1230,7 @@ Public Function K_STATS_Beta_Density( _
         End If
 
     'Enforce the validated large-shape density envelope (measured to 1E20 in
-    'benchmark/density_large_shape; ~3E-2 relative by shape 1E30 beyond it).
+    'benchmark/density_large_shape).
         If Alpha > PROB_DENSITY_SHAPE_MAX Or Beta > PROB_DENSITY_SHAPE_MAX Then
             FailMsg = _
                 "Beta shapes exceed the validated density accuracy " & _
@@ -1583,7 +1593,9 @@ Public Function K_STATS_Beta_InverseCumulative( _
 '
 ' BEHAVIOR
 '   - Uses the paired beta-inverse kernel, which returns the quantile and its
-'     complement without reconstructing the smaller value by subtraction.
+'     complement. The kernel solves for one member U and forms the other as
+'     1 - U, so when that reconstructed member is tiny it carries a large
+'     relative error (open #35).
 '
 ' ERROR POLICY
 '   - Invalid inputs or non-convergence return #NUM!.

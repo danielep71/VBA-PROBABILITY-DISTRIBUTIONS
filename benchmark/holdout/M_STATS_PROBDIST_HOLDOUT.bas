@@ -23,7 +23,7 @@ Option Explicit
 '
 ' GRID FORMAT (header row, then one row per evaluation)
 '   function, vba_kernel, claim, metric, arg1, arg2, arg3, arg4, reference,
-'   observed_vba, regime, evidence_set
+'   observed_vba, regime, evidence_set, expected_error
 '
 '   This macro reads function/arg1..arg4/regime and writes observed_vba only.
 '   It never reads the reference column, so the observed side stays independent.
@@ -119,7 +119,7 @@ Public Sub Export_Holdout()
             A3 = ParseDouble(Cols(6))
             A4 = ParseDouble(Cols(7))
 
-            'observed_vba is column index 9 in the 12-column arg4 schema;
+            'observed_vba is column index 9 in the 13-column arg4 schema;
             'the regime (index 10) disambiguates multi-output functions
             Cols(9) = EvaluateHoldout(Trim$(Cols(0)), A1, A2, A3, A4, _
                                       Trim$(CStr(Cols(10))))

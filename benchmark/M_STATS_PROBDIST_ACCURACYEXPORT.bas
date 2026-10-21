@@ -5,10 +5,10 @@ Option Explicit
 ' M_STATS_PROBDIST_ACCURACYEXPORT
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Phase 2 of the reproducible accuracy harness. Reads the grid produced by
-'   generate_reference_values.py, evaluates each library function at every grid
-'   point, and writes the observed values back so compute_errors.py can measure
-'   the error against the mpmath reference.
+'   Phase 2 of the reproducible accuracy harness. Reads the committed accuracy
+'   grid, evaluates each library function at every grid point, and writes the
+'   observed values back so compute_errors.py can measure the error against
+'   the mpmath reference.
 '
 ' WHY THIS EXISTS
 '   The reference values are generated in Python (mpmath, 50 digits). The
@@ -16,18 +16,21 @@ Option Explicit
 '   is the bridge: it fills the observed_vba column that Python cannot.
 '
 ' WORKFLOW
-'   1. python generate_reference_values.py         -> probability_accuracy_grid.csv
+'   1. The committed probability_accuracy_grid.csv is maintained by
+'      promote_grid_rows.py / migrate_references.py
+'      (generate_reference_values.py is report-only, #17).
 '   2. Place probability_accuracy_grid.csv next to this workbook (or set the path
 '      in ACCURACY_GRID_PATH) and run Export_Accuracy_Observations.
 '   3. python compute_errors.py                    -> accuracy_summary.md
 '
 ' GRID FORMAT (header row, then one row per evaluation)
 '   function, vba_kernel, claim, metric, arg1, arg2, arg3, arg4, reference,
-'   observed_vba, regime, evidence_set
+'   observed_vba, regime, evidence_set, expected_error
 '
 '   This macro reads function and arg1..arg4 and writes observed_vba (column
 '   index 9). It never reads the reference column, so the observed side stays
-'   independent of the value it will be compared against.
+'   independent of the value it will be compared against. It never reads or
+'   writes expected_error (index 12); that column passes through unchanged.
 '
 ' SCOPE
 '   Only rows whose evidence_set is "main grid" are evaluated. Study-sourced
@@ -37,7 +40,9 @@ Option Explicit
 ' ERROR POLICY
 '   A function that returns a worksheet error (CVErr) or raises writes the token
 '   ERROR into observed_vba; compute_errors.py treats a non-numeric observed
-'   value as a failed point. Empty inputs are passed as the function defaults.
+'   value as a failed point. Every row resets A1 - A4 to 0 before parsing; an
+'   empty cell therefore passes 0, not the function's optional default, so a
+'   row must supply every argument its function uses.
 '
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_SPECIALFUNCS (PROB_* kernels)
@@ -69,11 +74,11 @@ Public Sub Export_Accuracy_MissingOnly()
 '
 ' WHY THIS EXISTS
 '   Promoting new evidence rows must not recompute the observations already in
-'   the grid. A full re-export would rewrite all 2030 cells, and any difference
-'   - an Excel build change, a locale difference, a kernel edit made since -
-'   would land silently in the same commit as the promotion, making the diff
-'   impossible to attribute. This mode makes the promotion diff contain exactly
-'   the promoted rows.
+'   the grid. A full re-export would rewrite every main-grid observation, and
+'   any difference - an Excel build change, a locale difference, a kernel edit
+'   made since - would land silently in the same commit as the promotion,
+'   making the diff impossible to attribute. This mode makes the promotion
+'   diff contain exactly the promoted rows.
 '==============================================================================
 '
     ExportAccuracy True
@@ -83,10 +88,14 @@ End Sub
 Private Sub ExportAccuracy(ByVal MissingOnly As Boolean)
 '
 '==============================================================================
-' Export_Accuracy_Observations
+' ExportAccuracy
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Fills the observed_vba column of the accuracy grid in place.
+'
+' INPUTS
+'   MissingOnly     True fills only blank observed_vba cells
+'                   (Export_Accuracy_MissingOnly)
 '
 ' BEHAVIOR
 '   Reads the whole file and normalizes line endings before splitting, so
@@ -158,6 +167,14 @@ Private Sub ExportAccuracy(ByVal MissingOnly As Boolean)
             End If
 
             FuncName = Trim$(Cols(0))
+
+            'Reset every argument, so an empty cell passes 0 and can never
+            'carry over the previous row's value
+            A1 = 0#
+            A2 = 0#
+            A3 = 0#
+            A4 = 0#
+
             HasA1 = (Len(Trim$(Cols(4))) > 0)
             HasA2 = (Len(Trim$(Cols(5))) > 0)
             HasA3 = (Len(Trim$(Cols(6))) > 0)
@@ -170,7 +187,7 @@ Private Sub ExportAccuracy(ByVal MissingOnly As Boolean)
             Observed = EvaluateOne(FuncName, A1, A2, A3, A4, HasA2, HasA3, HasA4)
 
             'Rebuild the row with observed_vba filled (column index 9 in the
-            '12-column arg4 schema)
+            '13-column arg4 schema; expected_error at index 12 is untouched)
             Cols(9) = Observed
             Lines(I) = Join(Cols, Sep)
 ContinueRow:

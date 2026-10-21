@@ -55,10 +55,10 @@ Option Private Module
 '
 ' ALGORITHM PROVENANCE
 '   - PROB_Log1p:
-'       Kahan's compensated form, Log(1+X) = Log(U) * X / (U - 1) with U = 1+X.
-'       Exact to 1 ulp across the whole representable range of X, unlike a
-'       Taylor-below-a-threshold arrangement, which is only as good as its
-'       threshold. Public, published; not proprietary.
+'       Kahan's compensated form, Log(1+X) = Log(U) * X / (U - 1) with U = 1+X,
+'       which keeps full relative precision for small X without a
+'       Taylor-below-a-threshold arrangement. Accuracy is not restated here
+'       (invariant I7). Public, published; not proprietary.
 '   - PROB_Expm1:
 '       Kahan's compensated form, Exp(X) - 1 = (U - 1) * X / Log(U) with
 '       U = Exp(X). The mirror image of PROB_Log1p: it recovers the low bits of
@@ -67,9 +67,9 @@ Option Private Module
 '       precision instead of collapsing to zero. Public, published.
 '   - PROB_NormalInvCDFRaw:
 '       Peter J. Acklam's rational approximation, released freely for any use by
-'       the author. Published relative-error bound 1.15E-9, confirmed here at
-'       1.130E-9 for the literals actually compiled; see the PUBLISHED ACCURACY
-'       block on that function. Used as a root-finder seed, not a final answer.
+'       the author. Published relative-error bound 1.15E-9; see the PUBLISHED
+'       ACCURACY block on that function. Used as a root-finder seed, not a final
+'       answer.
 '   - PROB_ExpNegHalfSquare:
 '       Exp(-Z^2 / 2) with Z split at a multiple of 1/256, so that the dominant
 '       square is exact. W. J. Cody's ANORM (SPECFUN, 1993) uses the same
@@ -735,9 +735,9 @@ Public Function PROB_Log1p( _
 '   relative error of the logarithm is about 1.1E-16 / X. At X = 1E-8 that is a
 '   relative error of 1E-8. Kahan's compensated form recovers the lost bits by
 '   scaling Log(U) by the exactly-representable ratio X / (U - 1), restoring full
-'   relative precision across the small-X range. The compensation is applied
-'   only while U - 1 still carries information: once it rounds to exactly -1,
-'   -1 is the correctly rounded result and the rescale is skipped.
+'   relative precision across the small-X range. The compensation is skipped
+'   only when U rounds back to exactly one, where X itself is the correctly
+'   rounded result.
 '
 '   No numeric accuracy figure is quoted here on purpose: a measured threshold
 '   belongs in accuracy_contracts.csv where the gate can check it, not in a
@@ -790,8 +790,8 @@ Public Function PROB_Expm1( _
 '   0 across the whole left tail. Kahan's compensated form recovers the lost bits
 '   by scaling U - 1 by the exactly-representable ratio X / Log(U), restoring full
 '   relative precision across the small-X range. As with PROB_Log1p, no numeric
-'   accuracy figure is quoted here: measured thresholds live in
-'   accuracy_contracts.csv where the gate can check them.
+'   accuracy figure is quoted here. The regression and characterization tests
+'   in M_STATS_PROBDIST_TEST (C1, C4) cover this helper directly.
 '
 '   This is the exact mirror of PROB_Log1p and exists for the same reason: the
 '   Exponential and Weibull cumulative distribution functions are 1 - Exp(-z),
@@ -963,31 +963,22 @@ Public Function PROB_NormalInvCDFRaw( _
 '   PUBLISHED BOUND
 '     Relative error below 1.15E-9 over the whole open interval (0, 1).
 '
-'   CONFIRMED FOR THE LITERALS ACTUALLY COMPILED HERE (2026-08-13)
-'     Reference: 60-digit mpmath inverse normal, Newton-refined.
-'     - Maximum relative error 1.130E-9, over a 100,000-point uniform grid on
-'       (0, 1) together with every decade point from 1E-1 down to 1E-309.
-'     - The 1.15E-9 bound holds down to approximately Probability = 1E-315 and
-'       degrades to about 1.8E-9 only at the smallest subnormal probability.
-'     - The two branch seams are continuous to 4.5E-9 absolute, which is the
-'       expected size for two independent approximations each good to 1.15E-9
-'       relative at an ordinate near 1.97.
-'
 '   ON THE 15-DIGIT COEFFICIENT LITERALS
 '     Twenty of the twenty-one coefficients below differ from Acklam's published
-'     Doubles by one ULP, because the VBE canonicalizes long decimal literals.
-'     This is deliberate and must not be "repaired" with split expressions: the
-'     measurement above was made with these exact truncated literals and lands
-'     at 1.130E-9 against 1.129E-9 for the published Doubles. A one-ULP
-'     coefficient perturbation moves the result by order 1E-16, seven orders of
-'     magnitude below the approximation error it sits inside.
+'     Doubles by up to 18 ULPs (a few parts in 1E15 relative), because the VBE
+'     canonicalizes long decimal literals to 15 significant digits. This is
+'     deliberate and must not be "repaired" with split expressions: a
+'     perturbation of that size moves the result by orders of magnitude less
+'     than the approximation error it sits inside.
 '
 '   PRACTICAL MEANING
 '     Roughly nine correct significant digits. This is a seed, never an answer.
-'     One Halley step cubes the error, so a single refinement reaches machine
-'     precision and no caller needs a second. The characterization tests in
-'     M_STATS_PROBDIST_TEST assert this bound directly, so a mistyped
-'     coefficient cannot pass silently.
+'     One Halley step cubes the seed error, so a single refinement removes the
+'     Acklam error entirely and no caller needs a second. The refined result is
+'     then limited by the accuracy of the CDF and density used in the step (see
+'     PROB_NormalInvCDF in M_STATS_PROBDIST_NORMALFAMILY), not by the seed. The
+'     characterization tests in M_STATS_PROBDIST_TEST assert this bound
+'     directly, so a mistyped coefficient cannot pass silently.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
