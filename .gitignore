@@ -92,6 +92,10 @@
 /coverage/
 /htmlcov/
 
+# Excel/VBA runner output (ci/Run-ExcelVbaTests.ps1); promote a record to
+# benchmark/excel_regression_record.json deliberately.
+/artifacts/
+
 .coverage
 .coverage.*
 coverage.xml
@@ -143,7 +147,7 @@ Icon?
 
 
 #------------------------------------------------------------------------------
-# EDITOR / IDE / LOCAL ASSISTANT STATE
+# EDITOR / IDE STATE
 #------------------------------------------------------------------------------
 # Project-wide configuration belongs in the repository; personal workspaces do
 # not. Re-include a specific shared editor file explicitly if one is introduced.
@@ -164,11 +168,6 @@ Icon?
 
 *.nppBackup
 session.xml
-
-.claude/
-.cursor/
-.aider*
-.continue/
 
 
 #------------------------------------------------------------------------------

@@ -9,10 +9,12 @@ WHY THIS STUDY EXISTS
     This grid measures it directly and supplies the evidence for contracts.
 
 REFERENCES
-    mpmath at 30 digits, computed twice by independent routes wherever both
-    converge (lower series and upper continued fraction), and accepted only when
-    the two agree. A reference that cannot be cross-checked is dropped rather
-    than trusted.
+    mpmath. Gamma references are computed at 30 digits by the route that
+    converges (ascending series below A + 1, Lentz continued fraction above),
+    recomputed at 45 digits, and accepted only when the two agree. Beta
+    references (balanced shapes) are cross-checked by the symmetry
+    I_x(a,a) = 1 - I_{1-x}(a,a). A reference that fails its check is dropped
+    rather than trusted.
 
 REACHABILITY
     The lower-tail series needs O(sqrt(A)) terms, so the VBA kernel reaches its

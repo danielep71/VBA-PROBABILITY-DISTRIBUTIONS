@@ -245,9 +245,9 @@ Original error: $($_.Exception.Message)
     $testComponent = $vbProject.VBComponents.Item("M_STATS_PROBDIST_TEST")
     $codeModule = $testComponent.CodeModule
 
-    # Inject the CI bridge into the same module as the private counters and suite
-    # drivers. It is not committed to the production .bas file and exists only
-    # in this temporary workbook.
+    # Inject the CI bridge into M_STATS_PROBDIST_TEST, beside its private
+    # counters and suite drivers. The bridge is never committed to
+    # tests/M_STATS_PROBDIST_TEST.bas and exists only in this temporary workbook.
     $ciBridge = @'
 
 Public Function Test_STATS_PROBDIST_RunAll_CI() As String

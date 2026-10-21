@@ -1,7 +1,8 @@
 """Render the benchmark README accuracy table from accuracy_contracts.csv.
 
 Single source of truth: edit accuracy_contracts.csv, then regenerate the table
-with `python3 render_contract_table.py`. Do not hand-edit it in README.md.
+with `python3 render_contract_table.py --write` (without --write it prints to
+stdout). Do not hand-edit it in README.md.
 Also lists numerical_limitations.csv (limitations that are not accuracy contracts).
 """
 import csv, os

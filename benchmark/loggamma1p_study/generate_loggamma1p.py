@@ -36,7 +36,11 @@ import math
 import mpmath as mp
 
 SERIES_MAX = 0.25                              # PROB_LG1P_SERIES_MAX
-NORMAL_RESULT_MIN = 1.0e-308                   # below this, EulerGamma*X is subnormal
+# Approximate regime cut-off. The exact boundary below which EulerGamma*X is
+# subnormal is PROB_MIN_NORMAL / EulerGamma = 3.854839696505424E-308 (see
+# README.md and generate_loggamma1p_holdout.py), so X = 1e-308 already has a
+# subnormal result; the committed grid tags it subnormal_result.
+NORMAL_RESULT_MIN = 1.0e-308
 ULP = 2.0 ** -52
 
 
@@ -72,7 +76,8 @@ def regime(x):
 GRID = [
     # --- subnormal result: documented representability limit, not contracted ---
     5e-324, 1e-322, 1e-320, 1e-318, 1e-315, 1e-312, 1e-310,
-    # --- normal result, decades ---
+    # --- normal result, decades (1e-308 is below the exact boundary: see
+    #     NORMAL_RESULT_MIN) ---
     1e-308, 1e-300, 1e-200, 1e-100, 1e-50, 1e-20,
     # --- the 1 + X absorption boundary and its approach ---
     1e-17, 1e-16, 2.0 ** -53, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10,

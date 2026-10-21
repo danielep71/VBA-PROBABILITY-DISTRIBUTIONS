@@ -4,8 +4,8 @@ reference helper (_ibeta / mpmath) is unavailable.
 
 This is a TOOLING fixture, not release evidence. It deliberately supplies a
 synthetic clean provenance seam so the intended degradation path is reachable
-even while the real repository is truthfully red for stale Excel observations.
-Otherwise Phase-0 stale provenance masks the behavior this test exists to prove.
+whatever the live provenance state is: stale provenance would otherwise mask the
+behavior this test exists to prove.
 
 The gate must NOT pass green with an ACTIVE contract left unevaluated. When the
 helper is missing/corrupt, an active tail_probability_residual contract must be
@@ -38,8 +38,9 @@ def clean_manifest_seam():
     """Synthetic _manifest module that proves only this fixture's gate path.
 
     Manifest correctness has its own independent mutation suite in test_manifest.py
-    and test_manifest_provenance.py. Requiring today's live stale evidence here
-    makes this helper-degradation proof unreachable and conflates two controls.
+    and test_manifest_provenance.py. Requiring the live evidence state here
+    would make this helper-degradation proof depend on it and conflate two
+    controls.
     """
     fake = types.ModuleType("_manifest")
     fake.MANIFEST_NAME = "observation_manifest.json"

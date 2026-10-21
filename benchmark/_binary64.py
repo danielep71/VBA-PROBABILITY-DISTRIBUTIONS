@@ -1,5 +1,7 @@
 """
-Binary64 argument identity, shared by every grid tool (#32).
+Binary64 argument identity, shared by the grid writers and the
+promotion/migration tools (#32). check_grid_coverage.py and audit_references.py
+still keep their own copies.
 
 The accuracy grids store each argument as a decimal INPUT TOKEN. The Excel
 exporter parses it with Val(), so the value the library receives is the IEEE-754

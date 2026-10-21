@@ -1,10 +1,12 @@
 """
 Student t and Chi-square LARGE-DEGREES-OF-FREEDOM characterization study (P2-02).
 
-The public t / Chi-square surfaces ACCEPT df up to the 1E100 representational
-bound but are only asserted "validated to roughly 1E9". This study measures the
-regime between the accuracy-contracted region and that bound so any enforced
-limit or capability claim rests on committed evidence, not an assertion.
+When this study was opened, the public t / Chi-square surfaces accepted df up
+to the 1E100 representational bound but were only asserted "validated to roughly
+1E9". This study measures the regime between the accuracy-contracted region and
+that bound so any enforced limit or capability claim rests on committed
+evidence, not an assertion. (Since then the CDF, survival and inverse reject df
+above PROB_T_MAX_DF / PROB_CHI_MAX_DF = 1E8; see benchmark/envelope_probe.)
 
 Regime structure (why references need care):
   * By the CLT the standardized t and Chi-square both converge to the standard

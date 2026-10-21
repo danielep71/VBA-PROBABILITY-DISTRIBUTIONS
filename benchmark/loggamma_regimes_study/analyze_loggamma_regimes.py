@@ -7,6 +7,7 @@ Analyze the PROB_LogGamma regime study.
   3. Subfinding A: the subnormal reflection defect, before and after.
   4. Subfinding B: why a global relative contract cannot work.
   5. Contract recommendation for the three replacement regimes.
+  6. Independent holdout freeze decision (needs --holdout).
 
 Metric. Absolute error in the logarithm is primary everywhere except `general`,
 because downstream callers propagate it: the relative error of Exp(v) is
@@ -25,8 +26,8 @@ SERIES_MAX = Decimal("0.25")
 EPS = Decimal(2) ** -52
 ABS_REGIMES = ("small_positive", "reflection", "near_zero", "exact_zero")
 
-# Provisional thresholds under validation. The holdout section is the only thing
-# entitled to turn these from provisional into frozen.
+# Thresholds as frozen in accuracy_contracts.csv (the LogGamma.* regime rows),
+# validated by the holdout section below. Keep them in step with the registry.
 PROPOSED = {
     "small_positive": (Decimal("5E-13"), "abs"),
     "reflection":     (Decimal("5E-13"), "abs"),   # shares the small_positive row

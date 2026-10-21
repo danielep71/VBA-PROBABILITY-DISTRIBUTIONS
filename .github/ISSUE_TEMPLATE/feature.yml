@@ -36,6 +36,7 @@ body:
         - label: Classical test-statistic family (Student t, Chi-square, F)
         - label: Positive continuous family (Gamma, Exponential, Weibull)
         - label: Bounded continuous family (Beta, Uniform)
+        - label: Discrete family (Binomial, Negative Binomial, Geometric, Poisson, Hypergeometric, Discrete Uniform)
         - label: A new distribution not yet covered
         - label: Special functions / numerical kernels (PROB_*)
         - label: Moments (mean / variance / std dev)

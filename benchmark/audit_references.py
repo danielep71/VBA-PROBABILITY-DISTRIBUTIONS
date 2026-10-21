@@ -11,10 +11,11 @@ exact value of the Double the exporter passes, so no decimal-conversion
 ambiguity enters the oracle at all.
 
 Self-certifying. Every oracle is evaluated twice, at DPS_LOW and DPS_HIGH, and
-the agreement between them is the measured uncertainty. A row is only decided
-when the winner beats the loser by MARGIN and both the gap and the oracle
-uncertainty are comfortably below that decision. Inverse functions additionally
-report the forward residual, so convergence is certified rather than assumed.
+the agreement between them is the measured uncertainty. That uncertainty widens
+the equivalence floor (to MARGIN times the uncertainty) rather than blocking the
+row, and a row is only called stale when the winner beats the loser by MARGIN
+outside that floor. The Beta and F inverses, solved by logit bisection,
+additionally report the forward residual; the other inverse oracles do not.
 
 Five numerical classifications, plus an orthogonal representation flag:
 
@@ -24,8 +25,8 @@ Five numerical classifications, plus an orthogonal representation flag:
   BOTH_EQUIVALENT_AT_COMMITTED_PRECISION
                      neither materially distinguishable at the committed
                      reference precision
-  ORACLE_AMBIGUOUS   the ORACLE's own certification is insufficient. Reserved
-                     for genuine oracle uncertainty, never for a margin tie.
+  ORACLE_AMBIGUOUS   the oracle raised or returned a non-finite value. Reserved
+                     for oracle failure, never for a margin tie.
 
 argument_text_diff / argument_bits_equal are flags, not classes. "0.85" and
 "0.84999999999999998" can differ textually while the reference is stale,
@@ -98,8 +99,8 @@ _NB_CACHE = {}
 def _nb_cdf(k, r, p):
     """I_p(r, k+1).
 
-    betainc does not converge for the large parameters this grid uses
-    (r = 5000, k ~ 21000) at any maxterms, so the mass is summed directly. The
+    Tries mp.betainc first; where it fails to converge (e.g. r = 5000,
+    k ~ 21000, at any maxterms) the mass is summed directly. The
     sum is exact - its truncation is the whole support - and the terms are built
     by the recurrence pmf(i+1)/pmf(i) = ((i + r)/(i + 1)) * (1 - p), which costs
     one multiply and one divide per term instead of three loggamma evaluations.

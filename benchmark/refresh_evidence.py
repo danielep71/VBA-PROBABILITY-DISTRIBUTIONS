@@ -1,6 +1,7 @@
 """
-Regenerate every committed evidence artifact, then run every check the hosted
-Accuracy Gate runs, in the same order.
+Regenerate every committed evidence artifact, then run the hosted Accuracy
+Gate's checks in the gate's order. Not every gate step is repeated: VERIFY
+below lists which are and which are not.
 
 WHY THIS EXISTS
     The regeneration steps have a mandatory order and an easily-forgotten member.
@@ -27,10 +28,9 @@ USAGE
     users must add its bundled Git to PATH or install Git separately. Git is
     not needed to use the VBA library; it is needed to validate its evidence.
 
-    python refresh_evidence.py            regenerate, then verify
+    python refresh_evidence.py            regenerate summaries (writes neither
+                                          manifest), then verify
     python refresh_evidence.py --check    verify only, change nothing
-    python refresh_evidence.py            regenerate SUMMARIES only; writes
-                                          neither manifest
     python refresh_evidence.py --bind-exported-main --bind-exported-holdout
                                           only immediately after a real Excel
                                           export of the corresponding grid
@@ -80,9 +80,18 @@ HOLDOUT_BINDING = (
     ["write_manifest.py", "--holdout", "--from-fresh-export"],
 )
 
-# Mirrors .github/workflows/accuracy-gate.yml, in the same order. The evaluator
-# tests run first on purpose: a broken evaluator makes every verdict below
-# meaningless rather than merely wrong.
+# Follows the order of .github/workflows/accuracy-gate.yml, but is not a full
+# mirror of it. Gate steps run here: test_evidence_tools.py, the strict
+# compute_errors.py run, test_gate_degradation.py, check_source_thresholds.py,
+# test_analyze_holdout.py, analyze_holdout.py, check_excel_certification.py
+# and render_readme_assurance.py --check. Gate steps NOT run here: the #13
+# positive-ratio study-analyzer step, and the `git diff --exit-code` checks on
+# accuracy_summary.md, README.md (after render_contract_table.py --write) and
+# holdout_summary.md; main() lists changed artifacts afterwards but does not
+# fail on them. test_manifest.py is an extra entry: the gate runs it only
+# inside test_evidence_tools.py. The evaluator tests run first on purpose: a
+# broken evaluator makes every verdict below meaningless rather than merely
+# wrong.
 VERIFY = [
     ("evaluator unit tests", HERE, ["test_evidence_tools.py"]),
     ("manifest unit tests", HERE, ["test_manifest.py"]),
@@ -196,9 +205,9 @@ def main():
             # summary embeds the manifest's SHA, so binding precedes it.
             regenerate.insert(0, MAIN_BINDING)
         if bind_exported_holdout:
-            # The flag is intentionally explicit.  The committed 559-row holdout
-            # predates current source and must not be rebound merely because a
-            # developer regenerated summaries.
+            # The flag is intentionally explicit: a holdout binding asserts a
+            # fresh Excel export of the holdout grid and must not be rewritten
+            # merely because a developer regenerated summaries.
             regenerate.insert(1 if bind_main else 0, HOLDOUT_BINDING)
         for label, cwd, argv in regenerate:
             code, out = run(cwd, argv)

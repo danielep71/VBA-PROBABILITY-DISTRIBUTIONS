@@ -1,8 +1,9 @@
 """
 Large-shape density characterization study (CR-P1-01).
 
-The continuous density kernels evaluate the log-density in the cancellation-prone
-normalization form, e.g. Gamma:
+When this study was opened (before CR-P1-01), the continuous density kernels
+evaluated the log-density in the cancellation-prone normalization form, e.g.
+Gamma:
 
     (a-1) log(y) - y - log Gamma(a),   y = X/Scale
 
@@ -10,7 +11,10 @@ At large shape each term is ~ a log a while the true log-density near the mode i
 only ~ log a, so the leading terms cancel and expose absolute error from the
 separately rounded components. This study measures that error across shape/df
 from 1E2 to 1E20 for Gamma, Chi-square, Beta and F densities, so the boundary
-where the public densities silently lose accuracy is committed evidence.
+where the public densities silently lose accuracy is committed evidence. The
+kernels now use the Loader decomposition (PROB_TryGammaLogPdf,
+PROB_TryBetaLogPdf); this study is the evidence for that repair and for
+PROB_DENSITY_SHAPE_MAX.
 
 References are self-checked TWO ways, which also validates the reviewer's Loader
 deviance formulas (15.2 / 15.3): the direct high-precision log-density and the

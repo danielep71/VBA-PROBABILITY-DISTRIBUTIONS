@@ -31,7 +31,8 @@
 #     regression are deliberately separate workflows, so that a high-privilege
 #     analytics token is never available to a job that executes repository
 #     code. Its pushes use the workflow token and therefore trigger no other
-#     workflow; every CI workflow is also filtered to main.
+#     workflow; no CI workflow's push filter matches the traffic-history
+#     branch.
 # ---------------------------------------------------------------------------
 
 name: Daily traffic export
@@ -57,7 +58,8 @@ jobs:
 
     # Least privilege. Both grants are used:
     #   contents: write  pushes the CSV history to the traffic-history branch
-    #   issues:   write  opens an alert issue on a traffic spike or new referrer
+    #   issues:   write  opens an alert issue on a traffic spike, a new referrer,
+    #                    or a star/fork increase
     # Nothing else is granted.
     permissions:
       contents: write

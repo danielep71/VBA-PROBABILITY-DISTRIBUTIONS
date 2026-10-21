@@ -2,7 +2,8 @@ name: Static checks
 run-name: Static checks — ${{ github.ref_name }} @ ${{ github.sha }}
 
 # Excel-free integrity checks of the repository itself: committed whitespace,
-# procedure-scoped VBA jumps, release semantics and workflow validity. They
+# procedure-scoped VBA jumps, release semantics, release-bundle builder
+# fixtures, Python correctness lint (Ruff) and workflow validity. They
 # complement, but never replace, the Excel/VBA regression, the numerical
 # Accuracy Gate or release certification. The checkers live in tools/ and are
 # imported from the portfolio template; see tools/README.md.

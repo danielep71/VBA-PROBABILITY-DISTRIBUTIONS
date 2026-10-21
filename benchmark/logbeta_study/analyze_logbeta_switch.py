@@ -4,13 +4,15 @@ Analyze the LogBeta switch study: relative error of PROB_LogBeta vs ratio.
 Reads logbeta_switch_grid.csv after the VBA export macro has filled observed_vba
 (as hi;lo two-part sums). Prints, per Small value, the relative error at each
 Small/Large ratio, flags where it crosses the 5E-15 Beta claim, and marks where
-the asymptotic branch currently fires (ratio <= 1E-15).
+the one-term asymptotic branch fired in the module this grid was exported from
+(ratio <= 1E-15). That branch has since been replaced by PROB_LogGammaDelta
+below PROB_LOGBETA_STABLE_RATIO = 0.1 (see benchmark/delta_seam_study).
 """
 import argparse, csv
 from decimal import Decimal, getcontext
 getcontext().prec = 60
 
-SWITCH = Decimal("1E-15")     # current PROB_EPS branch threshold
+SWITCH = Decimal("1E-15")     # PROB_EPS branch threshold at the time of this study (since removed)
 CLAIM  = Decimal("5E-15")
 
 def parse_observed(s):

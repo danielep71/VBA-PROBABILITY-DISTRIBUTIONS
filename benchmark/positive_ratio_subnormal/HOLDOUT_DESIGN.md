@@ -58,7 +58,8 @@ exercised on the even ladder.
 ## Shapes — density and cumulative
 
 Eight, derived from irrational constants so their mantissas carry no structure
-the fitting set shares. Six of eight have the low mantissa bit set.
+the fitting set shares. Five of eight have the low mantissa bit set (an
+earlier version of this note said six; the frozen values below are unchanged).
 
 | provenance | frozen binary64 |
 | --- | --- |

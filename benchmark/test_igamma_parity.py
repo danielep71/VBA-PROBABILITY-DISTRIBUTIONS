@@ -154,10 +154,10 @@ if fails:
 print(f"PASS: incomplete-gamma parity - production and study agree on all "
       f"{len(records)} committed quantiles")
 if worst is None:
-    # Every point was bit-identical. The two implementations are currently
-    # arithmetically equivalent, so the effective drift threshold is the first
-    # differing digit, not the 40-digit contractual floor. Any divergence at
-    # all turns this fixture red.
+    # Every point was bit-identical: the two implementations are currently
+    # arithmetically equivalent. Any future divergence is reported as a
+    # measured minimum agreement and fails only below the REQUIRED_DIGITS
+    # contractual floor.
     print(f"      minimum agreement: EXACT (bit-identical at {DPS} dps at every "
           f"point; contractual floor {REQUIRED_DIGITS} digits)")
 else:
