@@ -13,8 +13,10 @@ points into:
                     precision) -> two independent methods concur;
   - beyond SciPy  : the incomplete-beta shape parameter is large enough that SciPy
                     is itself unreliable; these rely on the reference's own
-                    50-vs-80-digit self-consistency (reported separately), not on
-                    SciPy.
+                    50-vs-80-digit self-consistency, not on SciPy. No committed
+                    tool records that comparison for these points;
+                    f_envelope/README.md describes it for the F envelope region
+                    only.
 
 It writes cross_check_scipy.md so the README's "cross-checked against SciPy" claim
 is a regenerable artifact, honestly scoped by SciPy's reliable range.

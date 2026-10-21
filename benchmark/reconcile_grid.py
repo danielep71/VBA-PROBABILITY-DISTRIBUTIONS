@@ -1,10 +1,10 @@
 """
 Reconcile probability_accuracy_grid.csv against its declared generator.
 
-REPORT ONLY. This script never writes the grid. It exists because the grid holds
-2030 Excel observations that cannot be regenerated, and because
-generate_reference_values.py no longer reproduces it in either direction (issue
-#17). Nothing may write that file until the divergence is understood.
+REPORT ONLY. This script never writes the grid. The grid holds Excel
+observations that cannot be regenerated, and generate_reference_values.py does
+not reproduce it in either direction (#17, #32). Changes to the grid go only
+through promote_grid_rows.py or migrate_references.py.
 
 Key. Arguments are compared as IEEE-754 bit patterns, not as text. The exporter
 parses every argument with Val(), so "0.85" and "0.84999999999999998" reach the
@@ -180,10 +180,10 @@ def main():
         withorigin = sum(1 for r in un if r["function"] == fn and r["probable_origin"])
         print(f"   {n:4d}  {fn:36s} probable origin found for {withorigin}")
     # Attribution strength, stated honestly: a numeric argument tuple matching a
-    # study folder's own grid is a lead, not a declaration. With 18 folders in
-    # play, common arguments collide. If nothing is uniquely attributed, origin
-    # cannot be reconstructed after the fact and must instead be WRITTEN by
-    # whatever promotes a row.
+    # study folder's own grid is a lead, not a declaration. With many study
+    # folders in play (the run prints how many), common arguments collide. If
+    # nothing is uniquely attributed, origin cannot be reconstructed after the
+    # fact and must instead be WRITTEN by whatever promotes a row.
     uniq = sum(1 for r in un if r["probable_origin"] and ";" not in r["probable_origin"])
     multi = Counter(len(r["probable_origin"].split(";")) for r in un if r["probable_origin"])
     obs = sum(1 for r in un if r["observed"])

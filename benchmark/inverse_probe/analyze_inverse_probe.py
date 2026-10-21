@@ -8,7 +8,10 @@ import csv
 from collections import defaultdict
 from decimal import Decimal
 
-CAPS = {"chi": 1e6, "t": 1e6, "bal": 1e5, "unb": 1e5}      # current inverse caps
+# The separate inverse caps in force when this probe ran. Since removed: the
+# inverses now share the forward envelopes PROB_T_MAX_DF = 1E8,
+# PROB_CHI_MAX_DF = 1E8 and PROB_F_MAX_DF = 1E10. Not used by main().
+CAPS = {"chi": 1e6, "t": 1e6, "bal": 1e5, "unb": 1e5}
 LABEL = {"chi": "ChiSquare (gamma inv)", "t": "StudentT (beta inv, B=1/2)",
          "bal": "F balanced", "unb": "F unbalanced"}
 

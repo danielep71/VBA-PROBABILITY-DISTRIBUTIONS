@@ -57,13 +57,12 @@ CLAIMS = [
     ("cap claim",
      re.compile(r"\bvalidated to (?:roughly |about |approximately )?[0-9.]+\s*[Ee]\+?[0-9]+",
                 re.IGNORECASE)),
-    # "unrestricted" / "NOT enveloped" assertions about a public surface. Every
-    # density now carries PROB_DENSITY_SHAPE_MAX, so these claims went stale
-    # silently.
-    # "unrestricted" / "NOT enveloped" said ABOUT A DENSITY OR ENVELOPE. Every
-    # density now carries PROB_DENSITY_SHAPE_MAX, so these claims went stale
-    # silently. Requires the subject nearby so "an unrestricted scale parameter"
-    # - a statement about an argument, not an envelope - is not flagged.
+    # "unrestricted" / "NOT enveloped" said ABOUT A DENSITY OR ENVELOPE. The
+    # Gamma, Chi-square, Beta and F densities now carry PROB_DENSITY_SHAPE_MAX,
+    # so such claims went stale silently; envelope status belongs in the
+    # registries, not in source prose. Requires the subject nearby so "an
+    # unrestricted scale parameter" - a statement about an argument, not an
+    # envelope - is not flagged.
     ("envelope claim",
      # (?:\b|_) not \b: "F_Density" is one word to the regex engine because the
      # underscore is a word character, so \bdensity\b never matches inside it.

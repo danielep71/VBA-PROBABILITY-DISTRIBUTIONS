@@ -11,8 +11,9 @@ The root file - the public face of the project - had no guard at all.
 
 WHY NOT A WHOLE-FILE HASH
 
-The root README is meant to change. #28 will regenerate the assurance
-figures into it, and prose is edited routinely. A content hash would fail
+The root README is meant to change: render_readme_assurance.py regenerates
+the assurance figures in it (#28), and prose is edited routinely. A content
+hash would fail
 on every legitimate edit, and a guard that cries wolf gets deleted.
 
 WHAT IS ACTUALLY GUARDED

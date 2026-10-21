@@ -11,6 +11,11 @@ generalise and can be frozen. Covers:
   F inverse (validated range)                -> quantile_error + tail residual
   PROB_LogBeta (all, dispatched)             -> log_absolute_error
 
+plus fresh discrete-family points (Binomial, Poisson, Geometric,
+NegativeBinomial, Hypergeometric, DiscreteUniform), deep-tail and split_boundary
+normal-family inverses, ChiSquare/F density, Normal_IntervalProbability,
+Lognormal_ParametersFromMeanStdDev, and tiny_unbalanced Beta/F/LogBeta rows.
+
 Grid schema matches the main grid so `compute_errors.py --grid holdout_grid.csv`
 verdicts it directly against the frozen contract.
 References: mpmath / continued-fraction incomplete beta at 50 digits.
@@ -305,7 +310,8 @@ def _deep_tail_holdout_rows():
     return out
 
 
-# --- Freeze evidence for the remaining measured-provisional contracts ---
+# --- Freeze evidence for the contracts that were measured provisional when
+# this holdout was built (now validated and frozen) ---
 def _chi2_pdf(x,df):
     x,df=mp.mpf(x),mp.mpf(df); return x**(df/2-1)*mp.e**(-x/2)/(2**(df/2)*mp.gamma(df/2))
 def _f_pdf(x,d1,d2):
@@ -318,7 +324,8 @@ def _ln_params(mean,sd):
     return mp.log(mean**2/mp.sqrt(sd**2+mean**2)), mp.sqrt(mp.log(1+sd**2/mean**2))
 
 def _provisional_freeze_holdout_rows():
-    """Fresh points for the contracts still marked measured provisional."""
+    """Fresh points that froze the contracts which were measured provisional
+    when this holdout was built (now validated and frozen)."""
     out=[]
     def R(fn,a1,a2,a3,ref,regime): out.append(row(fn,"K_STATS_"+fn,a1,a2,a3,ref,regime))
 

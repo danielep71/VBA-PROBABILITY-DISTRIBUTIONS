@@ -17,7 +17,13 @@
 #
 # This script evaluates the incomplete gamma from first principles using
 # only mpfr ARITHMETIC - add, multiply, divide, exp, log, lgamma - and
-# never calls igamma. It restores a second implementation at df = 1E8.
+# never calls igamma. It was written to restore a second implementation
+# at df = 1E8.
+#
+# SUPERSEDED by chisq_gmpy2.py, which runs the same route on the same MPFR
+# library about 1,600x faster and is the df = 1E8 leg the study uses.
+# Retained as the record of why gmpy2 was chosen; its output
+# (chisq_rmpfr_series_1e8.json) was never committed.
 #
 # WHAT THIS IS, AND IS NOT
 #

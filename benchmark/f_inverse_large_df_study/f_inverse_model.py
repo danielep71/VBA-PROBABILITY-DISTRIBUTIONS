@@ -30,7 +30,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _ibeta import ibeta, beta_invcdf                                # noqa: E402
 
 DPS = 50
-PROB_EPS = 2.0 ** -52                     # relative Newton stop, as VBA
+# Relative Newton stop, as VBA: this models PROB_MACH_EPS (2^-52), which
+# PROB_TryBetaInvRegularized uses; VBA's own PROB_EPS is 1E-15.
+PROB_EPS = 2.0 ** -52
 MAX_NEWTON = 200
 COMPONENTS = ("C1", "C2", "C3", "C4", "C5", "C6", "C7")
 

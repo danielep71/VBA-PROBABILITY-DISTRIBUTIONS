@@ -2,15 +2,17 @@
 
 Benchmark coverage for four public UDFs that previously had no rows in the main
 accuracy grid, so their header accuracy language was uncorroborated. Each is now
-measured against a 50-digit mpmath reference on the main grid and gated by a
-contract in `../accuracy_contracts.csv` (`evidence = density_helpers`).
+measured against a 50-digit mpmath reference on the main grid (rows tagged
+`evidence_set = density_helpers`) and gated by a contract in
+`../accuracy_contracts.csv`; the contracts are validated on the independent
+holdout (`evidence = holdout`).
 
 | Function | What it computes | Worst measured rel. error | Contract |
 |---|---|---:|---:|
 | `ChiSquare_Density` | chi-square density | 2.37E-14 | 1E-13 |
 | `F_Density` | F density | 4.81E-14 | 1E-13 |
 | `Normal_IntervalProbability` | P(a ≤ X ≤ b) for a normal (a normal-density integral) | 1.17E-15 | 1E-14 |
-| `Lognormal_ParametersFromMeanStdDev` | arithmetic (Mean, StdDev) → (MeanLog, StdDevLog) | 1.17E-16 | 5E-15 |
+| `Lognormal_ParametersFromMeanStdDev` | arithmetic (Mean, StdDev) → (MeanLog, StdDevLog) | MeanLog 1.29E-16 / StdDevLog 1.17E-16 | 5E-15 |
 
 The name is approximate: the first three are density or density-integral
 computations, while `Lognormal_ParametersFromMeanStdDev` is a moment-to-parameter

@@ -1078,7 +1078,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ survival_boundary/        # study: survival tail boundaries
 │  ├─ t_density_large_df/       # study: Student t density at large df
 │  ├─ tchi_large_df/            # study: t and chi-square at large df
-│  ├─ density_helpers/          # study: shared log-density kernels
+│  ├─ density_helpers/          # study: density-helper coverage rows
 │  ├─ holdout_older/            # earlier holdout sample, retained
 │  ├─ M_STATS_PROBDIST_ACCURACYEXPORT.bas
 │  ├─ README.md

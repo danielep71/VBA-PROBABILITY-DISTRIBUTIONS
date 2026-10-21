@@ -42,8 +42,11 @@ STABILIZATION
   point may be silently dropped: any rejection fails the checkpoint.
 
 This module produces the mpmath-route values only. It records no final
-agreement figure and does not mark the checkpoint complete: the independent
-Rmpfr leg has not run.
+agreement figure and does not mark the checkpoint complete. Its PROVISIONAL
+status and messages date from when it was written, before the independent
+Rmpfr leg had run. All legs (quadrature, gmpy2/MPFR, Rmpfr) have since run,
+and the composite authority is derived by chisq_crosscheck.py into
+chisq_crosscheck.json.
 """
 import json
 import platform

@@ -1,7 +1,7 @@
 """
 Non-destructive promotion of new evidence rows into probability_accuracy_grid.csv.
 
-The grid holds 2030 Excel observations that cannot be regenerated: the generator
+The grid holds Excel observations that cannot be regenerated: the generator
 emits observed_vba blank by design, so a full rebuild would discard them. This
 tool is the only sanctioned way to add rows, and it is deliberately incapable of
 the operations that would lose evidence.
@@ -21,7 +21,7 @@ the operations that would lose evidence.
       not already contain is a hard failure, not a silent insertion
   refuses to run on a grid containing any duplicate canonical key (#17)
 
-That last rule is the point. "Patch existing" alone is not enough for the
+The --allow-add rule is the point. "Patch existing" alone is not enough for the
 LogGamma and LogGamma1p contracts, because some of their rows must become new
 main-grid evidence - and a patcher that quietly adds rows is just another
 generator wearing a safety label.

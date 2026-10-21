@@ -43,9 +43,12 @@ INPUT SCHEMA (long form, one row per public surface)
     surface             density | cumulative | survival
     point_id            stable identifier, unique within family
     construction        landmark | transform_stress | decimal_twin | underflow
+    shape_id            shape slice identifier
     bucket_bits         significand bits available in the target quotient
     echo_x              public X as received, hi;lo
-    echo_param          ScaleParam (gamma) or DegreesFreedom (chisquare), hi;lo
+    echo_shape          (gamma) Shape as received, hi;lo
+    echo_scale          (gamma) ScaleParam as received, hi;lo
+    echo_df             (chisquare) DegreesFreedom as received, hi;lo
     stored_standardx    what VBA stored for the standardized argument, hi;lo
     log_standardx       Log(X) - Log(param) as VBA formed it, hi;lo
     current_status      OK | ERROR | CVERR

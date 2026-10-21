@@ -12,9 +12,13 @@ minimum subnormal, one-ulp seams and the maximum finite Double,
   * every argument in the committed main and holdout grids parses, and
     re-emitting it reproduces the same Double.
 
-It also pins every grid tool to the one shared definition, so a copy cannot be
-reintroduced silently. Parity of VBA Val() with float() on these tokens needs
-Excel and stays open in #32.
+It also pins reconcile_grid, promote_grid_rows, migrate_references,
+check_promotion, report_promotion_candidates and the generator to the one
+shared definition, so a copy cannot be reintroduced silently in them.
+audit_references.py and check_grid_coverage.py still keep local bit-pattern
+helpers (the latter is checked for agreement in test_grid_regeneration.py).
+Parity of VBA Val() with float() on these tokens needs Excel and stays open in
+#32.
 
 Run: python3 test_binary64.py   (exit 0 = pass, nonzero = fail)
 """

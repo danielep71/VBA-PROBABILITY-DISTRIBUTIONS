@@ -252,7 +252,8 @@ expect_failure("README markers missing",
                lambda r: edit(r, R.README, R._markers("evidence state")[0], ""),
                "expected exactly one 'evidence state' region")
 
-# 6. Contradictory inputs fail closed.
+# 5b. refresh_evidence.py preflight: complete history and a valid candidate
+# before any write.
 
 # HEAD existing is not sufficient. A real shallow checkout must be rejected
 # before refresh rewrites even one artifact, in ordinary and binding modes.
@@ -293,6 +294,7 @@ with tempfile.TemporaryDirectory(prefix="invalid-candidate-refresh-") as invalid
         check(all(read(invalid, rel) == text for rel, text in before.items()),
               f"invalid candidate refresh {args}: all evidence inputs unchanged")
 
+# 6. Contradictory inputs fail closed.
 expect_failure("verdict tally contradicts table",
                lambda r: edit(r, R.SUMMARY, "FAIL: 0, KNOWN", "FAIL: 1, KNOWN"),
                "tally states FAIL")

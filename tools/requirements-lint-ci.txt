@@ -1,7 +1,10 @@
-# Hash-locked lint requirements for the Static checks workflow (Ubuntu x86-64).
-# The ruff wheel is Python-version independent (py3-none-manylinux).
-# CI installs with --only-binary=:all: --require-hashes. When bumping, take the
-# new hash from PyPI and verify it against the downloaded wheel.
+# Hash-locked lint requirements for the Static checks workflow.
+# The lock lists the hash of every file PyPI publishes for this ruff release
+# (one Python-version-independent py3-none wheel per platform, plus the sdist);
+# Dependabot regenerates the whole set on each bump. CI runs on Ubuntu x86-64
+# and installs with --only-binary=:all: --require-hashes, which selects the
+# manylinux x86_64 wheel. When reviewing a bump, compare the hashes with PyPI's
+# release metadata.
 
 ruff==0.17.1 \
     --hash=sha256:056c5d5fa0ac790051ae165d7035c7bf956d02de2db557f2e9b31d877a505fca \

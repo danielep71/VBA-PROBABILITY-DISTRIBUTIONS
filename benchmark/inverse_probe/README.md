@@ -17,14 +17,18 @@ K_STATS_F_InverseCumulative(0.5, 1E6, 3)  ->  #NUM!
 df 1E6 is comfortably inside the raised forward cap of 1E10, yet the inverse
 refuses. Extending a forward measurement to the inverse would therefore have
 widened the accepted domain past the demonstrated one — the precise failure
-CR-P1-01B was reopened for. The inverses consequently kept their previously
-validated caps:
+CR-P1-01B was reopened for. At the time of this probe the inverses therefore
+kept their previously validated caps:
 
 | function | constant | cap |
 | --- | --- | --- |
 | `F_InverseCumulative` | `PROB_F_INV_MAX_DF` | 1E5 |
 | `StudentT_InverseCumulative` | `PROB_T_INV_MAX_DF` | 1E6 |
 | `ChiSquare_InverseCumulative` | `PROB_CHI_INV_MAX_DF` | 1E6 |
+
+These separate inverse caps no longer exist. On this probe's evidence the
+inverses now share the forward caps `PROB_F_MAX_DF` (1E10), `PROB_T_MAX_DF`
+(1E8) and `PROB_CHI_MAX_DF` (1E8) in `src/M_STATS_PROBDIST_TFAMILY.bas`.
 
 ## Approach
 
@@ -38,8 +42,10 @@ F_InverseCumulative(p, d1, d2)     -> PROB_TryBetaInvRegularized(p, q, d1/2, d2/
 StudentT_InverseCumulative(p, df)  -> the same beta inverse with B = 1/2
 ```
 
-Both kernels take the probability **and its complement** as a pair, so no tail
-is reconstructed by subtraction.
+Both kernels take the probability **and its complement** as a pair, so neither
+input probability is reconstructed by subtraction. The beta inverse does form
+one member of its root pair as `1 - U`; when that member is tiny its relative
+accuracy is lost, which is open #35.
 
 ## Mapping: beta shapes are df/2
 

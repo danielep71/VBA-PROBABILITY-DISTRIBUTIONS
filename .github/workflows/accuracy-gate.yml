@@ -12,7 +12,8 @@ on:
   push:
     branches: [main]
   # Run on every main push and PR: repository metadata and tools are inputs
-  # to the assurance checks too. Required-check enforcement is tracked in #31.
+  # to the assurance checks too. This job is a required status check on main
+  # (ruleset 'Protect main'; see #31).
   pull_request:
     branches: [main]
 

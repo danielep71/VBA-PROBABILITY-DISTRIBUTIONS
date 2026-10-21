@@ -11,8 +11,9 @@ References: mpmath at 60 digits.
   F_Cumulative(x,d1,d2)  = I_{d1 x/(d1 x+d2)}(d1/2, d2/2)
   F_Survival             = 1 - CDF
 
-X is chosen near each distribution's mass (mean / median) so the value is
-representable and the relative error is meaningful.
+X is chosen near each distribution's mass (Beta: the mean and a mode-ish point;
+F: x = 1 and the mean d2/(d2-2)) so the value is representable and the relative
+error is meaningful.
 """
 import argparse, csv
 import mpmath as mp

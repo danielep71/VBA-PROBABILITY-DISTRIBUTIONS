@@ -337,9 +337,9 @@ check("--from-fresh-export" in R.HOLDOUT_BINDING[2],
 # real export rewrites the grid, so a grid byte-identical to HEAD proves the
 # assertion false.
 #
-# The helper is exercised against synthetic repositories; write_manifest.py
-# resolves its own repository root, so a subprocess cannot be pointed at one.
-# The subprocess is checked once, below, against this repository.
+# The helper is exercised against synthetic repositories. write_manifest.py
+# resolves its own repository root, so the end-to-end subprocess cases below
+# run in a throwaway clone of this repository.
 import write_manifest as W                                            # noqa: E402
 
 

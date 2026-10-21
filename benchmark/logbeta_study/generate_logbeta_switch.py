@@ -1,10 +1,12 @@
 """
 Unbalanced-Beta switch study for PROB_LogBeta.
 
-PROB_LogBeta chooses between:
+When this study was run, PROB_LogBeta chose between:
   - the asymptotic branch  LogGamma(Small) - Small*Log(Large), used when
     Small/Large <= PROB_EPS (1E-15);
   - the general identity    LogGamma(A) + LogGamma(B) - LogGamma(A+B).
+(Superseded: PROB_LogBeta now uses LogGamma(Small) - PROB_LogGammaDelta(Large,
+Small) below PROB_LOGBETA_STABLE_RATIO = 0.1; see benchmark/delta_seam_study.)
 
 The general identity loses precision by cancellation as A and B become
 unbalanced (error ~ macheps * Large/Small). This grid measures PROB_LogBeta
