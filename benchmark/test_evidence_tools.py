@@ -24,6 +24,7 @@ commands = (
     ("student_t_large_df_study/test_coefficients.py",),
     ("student_t_large_df_study/test_binary64_route_model.py",),
     ("normal_tail_study/test_kernel_model.py",),
+    ("normal_tail_study/test_vba_kernel_source.py",),
     ("test_excel_certification.py",),
     ("test_drift_guard_mutations.py",),
     ("test_public_api.py",),

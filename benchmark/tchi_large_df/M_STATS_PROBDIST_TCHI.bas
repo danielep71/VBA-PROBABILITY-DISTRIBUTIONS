@@ -22,7 +22,7 @@ Option Explicit
 '   arg1 is the evaluation point (x for CDF/survival, probability for inverse)
 '   and arg2 is the degrees of freedom; arg3 is unused. This macro writes
 '   observed_vba (column index 8) and never reads the reference column, so the
-'   observed side stays independent. This is the study grid, not the 12-column
+'   observed side stays independent. This is the study grid, not the 13-column
 '   main grid.
 '
 ' ERROR POLICY

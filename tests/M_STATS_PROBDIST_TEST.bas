@@ -68,9 +68,16 @@ Option Explicit
 '   - TOL_ABS_TIGHT is a ten-decimal-place absolute tolerance. It is not a claim
 '     of machine precision.
 '   - TOL_ABS_LOOSE covers raw approximations and moment round-trips.
-'   - TOL_ABS_LARGE_DF covers the large-parameter special-function error floor.
-'   - TOL_ABS_ULP and TOL_ABS_FEW_ULP are used only for constant-level checks.
+'   - TOL_ABS_LARGE_DF is a legacy 1E-9 absolute check on the Student t density
+'     at df 1E6; the tighter large-df density checks use a relative tolerance.
+'   - TOL_ABS_ULP and TOL_ABS_FEW_ULP are declared but not currently used;
+'     constant-level checks use exact binary equality.
 '   - TOL_REL_TIGHT, TOL_REL_LOOSE and TOL_REL_TAIL cover relative comparisons.
+'   - TOL_REL_NORMAL_TAIL pins the repaired normal tail (#72). It is about twice
+'     the preregistered 2^-50 bound, which leaves room for VBA Exp differing
+'     from the study's model in the last bit, and it is far below the old
+'     kernel's error at every point it is used except 10.3 and 20.3, which are
+'     there to pin values, not to discriminate.
 '   - TOL_REL_ACKLAM is not a project tolerance. It is the published relative
 '     error bound of the Acklam inverse-normal approximation, asserted directly
 '     so that a mistyped coefficient fails a named check.
@@ -82,10 +89,22 @@ Option Explicit
 '         known values, complements, inverse round-trips and paired arguments.
 '     C3  PROB_LogBeta must remain stable for extremely unbalanced arguments.
 '     C4  CHARACTERIZATION. The branch seams of PROB_Log1p, PROB_Expm1,
-'         PROB_TryExp and PROB_NormalInvCDFRaw must not move. These assertions
-'         record where each helper changes branch, not how accurate it is, and
+'         PROB_TryExp and PROB_NormalInvCDFRaw must not move, and the Acklam
+'         seed must meet its published bound. Most of these assertions record
+'         where each helper changes branch rather than how accurate it is; all
 '         use only VBA intrinsics so that they also verify CORE invariant I2
 '         (no Excel object-model dependency).
+'     C5  PROB_ExpNegHalfSquare must not round Z ^ 2 before the exponential
+'         (#72).
+'     C6  PROB_StirlingError must not overflow in its small-N recurrence when
+'         1 / N exceeds the Double range; a subnormal Gamma shape must return
+'         its density, not CVErr (#18).
+'     C7  PROB_Expm1 must stay in [-1, 0) for X < 0 across the subnormal
+'         window, so that the Exponential and Weibull CDFs never exceed one
+'         (#21).
+'     C8  The incomplete-gamma series-P prefactor must stay accurate at
+'         off-grid small shapes, which cannot use the stored Stirling table
+'         (#23).
 '
 '   Normal Family
 '     N1  The raw Acklam inverse-normal kernel must return its computed value.
@@ -94,6 +113,13 @@ Option Explicit
 '     N4  The normal density constant must equal the correctly rounded Double.
 '     N5  Same-tail normal interval probabilities must not collapse to zero.
 '     N6  Tiny lognormal variance and parameter conversion must use Expm1/Log1p.
+'     N7  The normal upper tail, the standard density and the tail quantiles
+'         must keep full RELATIVE precision across the tail (#72), not only the
+'         absolute precision of the former Hart/West kernel.
+'     N8  Lognormal moments must be reconstructed in one logarithm, so that a
+'         finite moment is not lost to intermediate overflow or underflow.
+'     N9  Lognormal moments must take both PROB_LogExpm1 branches (v < 709 and
+'         v >= 709) without overflow.
 '
 '   T Family
 '     T1  Large-degree chi-square calculations must never return partial sums.
@@ -105,6 +131,8 @@ Option Explicit
 '     T6  Small-degree and tiny-argument branches must return #NUM! for genuine
 '         overflow, never an unexpected #VALUE!.
 '     T7  Extreme F ratios must be assembled without intermediate overflow.
+'     T8  The F and Student t inverses must share the forward accuracy
+'         envelope, not a separate lower cap (benchmark/inverse_probe).
 '
 '   Continuous Family
 '     D1  Gamma scale-ratio overflow must saturate to the mathematical limit.
@@ -123,8 +151,9 @@ Option Explicit
 '         direct-tail identities and inverse least-integer contracts must hold.
 '     DS3 Discrete Uniform must preserve signed supports, real-threshold step
 '         behavior, direct survival, quantile jump boundaries and exact moments.
-'     DS4 Predictable discrete domain and range failures must return #NUM!, never
-'         a sentinel value or an unexpected #VALUE!.
+'     DS4 Predictable discrete domain and range failures must return a CVErr,
+'         never a sentinel value; Discrete Uniform failures are asserted as
+'         #NUM! specifically.
 '
 ' ERROR POLICY
 '   - A failed assertion increments the failure counter and prints one line.
@@ -183,6 +212,7 @@ Private Const TOL_REL_TIGHT     As Double = 0.0000000001  '1E-10 relative
 Private Const TOL_REL_LOOSE     As Double = 0.000001      '1E-6 relative
 Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
 Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
+Private Const TOL_REL_NORMAL_TAIL As Double = 0.000000000000002 '2E-15 relative, #72
 
 
 '==============================================================================
@@ -475,6 +505,7 @@ Private Sub RunCoreSuite()
     Test_Core_SpecialFunctionKernels
     Test_Core_GammaSeriesPrefactorAccuracy
     Test_Core_NormalInvRaw
+    Test_Core_ExpNegHalfSquare
     Test_Core_Characterization
 End Sub
 
@@ -507,6 +538,7 @@ Private Sub RunNormalFamilySuite()
     Test_NF_StandardNormalCumulative
     Test_NF_StandardNormalInverse
     Test_NF_InverseTails
+    Test_NF_TailRelativeAccuracy
     Test_NF_InverseRoundTrips
     Test_NF_Symmetry
     Test_NF_GeneralNormal
@@ -1115,8 +1147,8 @@ Private Sub Test_Core_LogGamma()
         PROB_LogGammaDelta(0.5, 0.3) + PROB_LogGammaDelta(0.8, 0.4), _
         TOL_REL_TIGHT
 
-    'LogBeta unbalanced regression: the middle band (ratio ~1E-2 to 1E-13) that
-    'the previous one-term asymptotic could not reach is now handled by the stable
+    'REGRESSION C3: the unbalanced middle band (ratio ~1E-2 to 1E-13) that the
+    'previous one-term asymptotic could not reach is now handled by the stable
     'log-gamma difference. References are 50-digit mpmath values.
     AssertRelClose "LogBeta unbalanced (8E5, 0.8)", _
         PROB_LogBeta(800000#, 0.8), -10.7218338269202, TOL_REL_TIGHT
@@ -1142,8 +1174,10 @@ Private Sub Test_Core_LogBetaTinyUnbalanced()
 '   Lanczos regime: the old route was 1.99E-6 absolute at (1E-12, 9.9E-14) and
 '   8.98E-3 at (1E-16, 9.9E-18), against a 1E-10 tolerance. None of these
 '   points were in the committed grids, so 108/108 PASS coexisted with the
-'   defect. Downstream Beta and F are covered too: F density evaluates
-'   PROB_LogBeta(DF1 / 2, DF2 / 2) and so reaches the same dispatch.
+'   defect. Downstream Beta and F cumulative and survival are covered too:
+'   below PROB_IBETA_LOADER_MIN_SHAPE the incomplete-beta prefactor evaluates
+'   PROB_LogBeta(A, B), so F reaches it through LogBeta(DF1 / 2, DF2 / 2). The
+'   densities use PROB_TryBetaLogPdf and are pinned here as values only.
 '
 ' CALLED FROM
 '   - RunCoreSuite
@@ -1183,6 +1217,7 @@ Private Sub Test_Core_LogBetaTinyUnbalanced()
         0.909918107370337, TOL_REL_TIGHT
 
     Debug.Print "-- F surface at both-small df (reaches LogBeta(DF1/2, DF2/2))"
+    'Only the CDF and survival reach LogBeta; the densities are values only.
     AssertRelClose "F density below branch (0.0099; 2E-12, 1.98E-13)", _
         K_STATS_F_Density(0.0099, 0.000000000002, 0.000000000000198), _
         9.09918107368146E-12, TOL_REL_TIGHT
@@ -1416,8 +1451,8 @@ Private Sub Test_Core_GammaSeriesPrefactorAccuracy()
 ' Test_Core_GammaSeriesPrefactorAccuracy
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Pins the incomplete-gamma series-P accuracy floor reported in #23 at the
-'   shared kernel and public Gamma/Chi-square surfaces.
+'   Pins the incomplete-gamma series-P accuracy floor reported in #23
+'   (regression C8) at the shared kernel and public Gamma/Chi-square surfaces.
 '
 ' WHY
 '   The prior harness exercised the series only at half-integer or integer
@@ -1559,6 +1594,51 @@ Private Sub Test_Core_NormalInvRaw()
     AssertTrue "raw lower branch", (PROB_NormalInvCDFRaw(0.001) < -3#)
     AssertTrue "raw upper branch", (PROB_NormalInvCDFRaw(0.999) > 3#)
 End Sub
+Private Sub Test_Core_ExpNegHalfSquare()
+'
+'==============================================================================
+' Test_Core_ExpNegHalfSquare
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins PROB_ExpNegHalfSquare (#72, regression C5): Exp(-Z ^ 2 / 2) without
+'   rounding Z ^ 2 first.
+'
+' WHY
+'   Exp(-0.5 * Z * Z) carries a relative error of up to Z ^ 2 / 2 ulps wherever
+'   Z * Z is not exact: 4.6E-14 at Z = 33.4191. The split form does not.
+'
+' BEHAVIOR
+'   - References are the correctly rounded Doubles of 60-digit values, restored
+'     from split literals.
+'   - The off-grid points discriminate the split form from the naive one.
+'
+' DEPENDENCIES
+'   - PROB_ExpNegHalfSquare
+'   - AssertClose
+'   - AssertRelClose
+'
+' CALLED FROM
+'   - RunCoreSuite
+'
+' UPDATED
+'   2026-10-13 - Added for #72.
+'==============================================================================
+'
+    Debug.Print "-- Core PROB_ExpNegHalfSquare (#72)"
+
+    AssertClose "exp(-0^2/2) is exactly 1", PROB_ExpNegHalfSquare(0#), 1#, 0#
+    AssertRelClose "exp(-z^2/2) at 0.1", _
+        PROB_ExpNegHalfSquare(0.1), _
+        0.995012479192682 + 3.33066907387547E-16, TOL_REL_NORMAL_TAIL
+    AssertRelClose "exp(-z^2/2) at 20.3", _
+        PROB_ExpNegHalfSquare(20.3), _
+        3.27939308254085E-90 - 3.48812070093468E-105, TOL_REL_NORMAL_TAIL
+    AssertRelClose "exp(-z^2/2) at 33.4191 (naive form 4.6E-14)", _
+        PROB_ExpNegHalfSquare(33.4191), _
+        3.03452587304421E-243 - 3.64218297787732E-258, TOL_REL_NORMAL_TAIL
+End Sub
+
+
 Private Sub Test_Core_Characterization()
 '
 '==============================================================================
@@ -1569,9 +1649,11 @@ Private Sub Test_Core_Characterization()
 '   one: PROB_Log1p, PROB_Expm1, PROB_TryExp and PROB_NormalInvCDFRaw.
 '
 ' WHY THIS EXISTS
-'   The sections above check that these helpers are ACCURATE. None of them
-'   checks WHERE each helper changes branch, and a seam is the thing most likely
-'   to move silently under an edit that looks harmless. A characterization test
+'   The sections above check that PROB_Log1p, PROB_TryExp and
+'   PROB_NormalInvCDFRaw are ACCURATE; PROB_Expm1 has no earlier section and is
+'   covered only here (CH2, CH3). None of the earlier sections checks WHERE
+'   each helper changes branch, and a seam is the thing most likely to move
+'   silently under an edit that looks harmless. A characterization test
 '   records behavior that is true today and must stay true, so that a moved seam
 '   surfaces as one named failure here instead of as a small accuracy drift in
 '   some distribution three modules away.
@@ -1681,12 +1763,13 @@ Private Sub Test_Core_Characterization()
         AssertExactlyEqual "CH3 Expm1(-1E+300) is exactly -1", _
             PROB_Expm1(-1E+300), -1#
 
-    'Subnormal window regression. Roughly -745.14 < X < -709.1 the exponential
-    'is subnormal and carries fewer than 53 significant bits, so Log(U) no
-    'longer recovers X. The old compensated rescale divided by that Log and
-    'returned values BELOW -1 - outside the range of Exp(X) - 1 - by up to
-    '9.3E-4 at X = -745.13, which two public CDFs propagated as a probability
-    'above one. Branching on U - 1# = -1# before the rescale removed it.
+    'REGRESSION C7: the subnormal window (#21). Roughly -745.14 < X < -709.1
+    'the exponential is subnormal and carries fewer than 53 significant bits,
+    'so Log(U) no longer recovers X. The old compensated rescale divided by
+    'that Log and returned values BELOW -1 - outside the range of Exp(X) - 1 -
+    'by up to 9.3E-4 at X = -745.13, which two public CDFs propagated as a
+    'probability above one. Branching on U - 1# = -1# before the rescale
+    'removed it.
         AssertExactlyEqual "CH3 Expm1(-709.1) is exactly -1", _
             PROB_Expm1(-709.1), -1#
         AssertExactlyEqual "CH3 Expm1(-730) is exactly -1", _
@@ -1893,7 +1976,8 @@ Private Sub Test_NF_StandardNormalCumulative()
     AssertClose "Phi(1.959963984540054)", _
         K_STATS_NormalStandard_Cumulative(1.95996398454005), 0.975, TOL_ABS_TIGHT
 
-    'Both sides of the rational / continued-fraction split at Z = Sqr(50)
+    'Both sides of the former Hart / continued-fraction split at Z = Sqr(50).
+    'Kept as a continuity regression after #72 moved the kernel's split to 3.
     AssertClose "Phi split seam", _
         CDbl(K_STATS_NormalStandard_Cumulative(-7.07106781)) - _
         CDbl(K_STATS_NormalStandard_Cumulative(-7.07106782)), 0#, 1E-16
@@ -1987,8 +2071,9 @@ Private Sub Test_NF_InverseTails()
         -37.0470962993614, TOL_REL_TAIL
 
     'Inside the cutoff, Halley works and the accuracy floor is the RELATIVE
-    'accuracy of PROB_NormalCDF past its Sqr(50) split, which is about 1E-10.
-    'The Hart/West arrangement is 1E-15 in ABSOLUTE terms, not relative.
+    'accuracy of PROB_NormalCDF in the tail. With the former Hart/West kernel
+    'that was about 1E-10; Test_NF_TailRelativeAccuracy pins the repaired
+    'kernel (#72) much more tightly. These loose checks are kept unchanged.
     AssertRelClose "InvPhi(1e-100)", _
         K_STATS_NormalStandard_InverseCumulative(1E-100), _
         -21.2734535609655, TOL_REL_TAIL
@@ -1998,6 +2083,107 @@ Private Sub Test_NF_InverseTails()
     AssertRelClose "InvPhi(1e-6)", _
         K_STATS_NormalStandard_InverseCumulative(0.000001), _
         -4.75342430882289, TOL_REL_TIGHT
+End Sub
+
+
+Private Sub Test_NF_TailRelativeAccuracy()
+'
+'==============================================================================
+' Test_NF_TailRelativeAccuracy
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins full RELATIVE precision of the repaired normal tail (#72, regression
+'   N7) for the upper tail, the lower tail, the standard density and the tail
+'   quantiles of all three families.
+'
+' WHY
+'   The former Hart/West kernel was accurate in absolute terms only: about
+'   1.5E-14 relative at Z = 3, 8.4E-10 at 6.25 and 2.9E-9 at 7.07, plus up to
+'   4.6E-14 anywhere Z * Z was not exact. Tail quantiles inherited it at about
+'   1E-10. Each assertion below names the old kernel's error at its point.
+'
+' BEHAVIOR
+'   - References are the correctly rounded Doubles of 60-digit values, restored
+'     from split literals. Arguments are exact in their literal form.
+'   - Both sides of the new split at 3 are checked.
+'   - The same references are predicted, row by row, by the preregistered
+'     binary64 model in benchmark/normal_tail_study.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - AssertRelClose
+'
+' CALLED FROM
+'   - RunNormalFamilySuite
+'
+' UPDATED
+'   2026-10-13 - Added for #72.
+'==============================================================================
+'
+    Debug.Print "-- Normal tail, full relative precision (#72)"
+
+    'Upper tail on both sides of the split at 3 and through the former
+    'Hart region, then off-grid in the far tail
+    AssertRelClose "Q(2.99) (old kernel 1.5E-14)", _
+        K_STATS_NormalStandard_Survival(2.99), _
+        1.39488723549225E-03 - 6.50521303491303E-19, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(3 - 1 ulp) (old kernel 1.5E-14)", _
+        K_STATS_NormalStandard_Survival(3# - 4.44089209850063E-16), _
+        1.3498980316301E-03 - 3.46944695195361E-18, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(3) (old kernel 1.5E-14)", _
+        K_STATS_NormalStandard_Survival(3#), _
+        1.34989803163009E-03 + 4.55364912443912E-18, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(4.5) (old kernel 6.3E-12)", _
+        K_STATS_NormalStandard_Survival(4.5), _
+        3.39767312473006E-06 + 4.2351647362715E-22, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(5.5) (old kernel 1.8E-10)", _
+        K_STATS_NormalStandard_Survival(5.5), _
+        1.89895624658877E-08 + 1.65436122510606E-23, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(6.25) (old kernel 8.4E-10)", _
+        K_STATS_NormalStandard_Survival(6.25), _
+        2.05226342521894E-10 - 1.03397576569128E-25, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(7.07) (old kernel 2.9E-9)", _
+        K_STATS_NormalStandard_Survival(7.07), _
+        7.74668486563648E-13 - 2.01948391736579E-28, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(10.3) (old kernel 1.5E-15)", _
+        K_STATS_NormalStandard_Survival(10.3), _
+        3.52306507892641E-25 + 2.29588740394978E-40, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(20.3) (old kernel 1.3E-15)", _
+        K_STATS_NormalStandard_Survival(20.3), _
+        6.42924446769835E-92 - 4.08764144640782E-107, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Q(33.4191) (old kernel 4.6E-14)", _
+        K_STATS_NormalStandard_Survival(33.4191), _
+        3.61924652386784E-245 - 4.8779236310857E-260, TOL_REL_NORMAL_TAIL
+
+    'The lower tail is the same kernel, returned without a complement
+    AssertRelClose "Phi(-6.25)", _
+        K_STATS_NormalStandard_Cumulative(-6.25), _
+        2.05226342521894E-10 - 1.03397576569128E-25, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Phi(-33.4191)", _
+        K_STATS_NormalStandard_Cumulative(-33.4191), _
+        3.61924652386784E-245 - 4.8779236310857E-260, TOL_REL_NORMAL_TAIL
+
+    'Density with the split exponential
+    AssertRelClose "phi(20.3) (old 1.4E-15)", _
+        K_STATS_NormalStandard_Density(20.3), _
+        1.30828855468153E-90 - 8.72030175233669E-106, TOL_REL_NORMAL_TAIL
+    AssertRelClose "phi(33.4191) (old 4.6E-14)", _
+        K_STATS_NormalStandard_Density(33.4191), _
+        1.2106006717294E-243 + 4.42265075885103E-258, TOL_REL_NORMAL_TAIL
+
+    'Tail quantiles at the former split_boundary probability
+    AssertRelClose "isf(1E-12) (old 5.5E-11)", _
+        K_STATS_NormalStandard_InverseSurvival(0.000000000001), _
+        7.03448382530113 + 1.77635683940025E-15, TOL_REL_NORMAL_TAIL
+    AssertRelClose "InvPhi(1E-12) (old 5.5E-11)", _
+        K_STATS_NormalStandard_InverseCumulative(0.000000000001), _
+        -(7.03448382530113 + 1.77635683940025E-15), TOL_REL_NORMAL_TAIL
+    AssertRelClose "Normal isf(1E-12, 100, 15) (old 2.8E-11)", _
+        K_STATS_Normal_InverseSurvival(0.000000000001, 100#, 15#), _
+        205.517257379517, TOL_REL_NORMAL_TAIL
+    AssertRelClose "Lognormal isf(1E-12, 0, 1) (old 3.8E-10)", _
+        K_STATS_Lognormal_InverseSurvival(0.000000000001, 0#, 1#), _
+        1135.10884648154 + 2.95585778076202E-12, TOL_REL_NORMAL_TAIL
 End Sub
 
 
@@ -2209,7 +2395,7 @@ Private Sub Test_NF_IntervalProbability()
     AssertClose "gen P(-1..1 | 0,1)", _
         K_STATS_Normal_IntervalProbability(-1#, 1#), 0.682689492137086, TOL_ABS_TIGHT
 
-    'REGRESSION: direct CDF subtraction returned zero because Phi(9) and
+    'REGRESSION N5: direct CDF subtraction returned zero because Phi(9) and
     'Phi(10) both round to one. Tail-oriented branching preserves the mass.
     AssertRelClose "std P(9..10) positive tail", _
         K_STATS_NormalStandard_IntervalProbability(9#, 10#), _
@@ -2365,7 +2551,7 @@ Private Sub Test_NF_LognormalMoments()
         AssertClose "logn stddev^2 == variance", CDbl(SdV) * CDbl(SdV), CDbl(VarV), TOL_ABS_LOOSE
     End If
 
-    'REGRESSION: Exp(sigma^2) - 1 rounded to zero at sigma = 1E-8.
+    'REGRESSION N6: Exp(sigma^2) - 1 rounded to zero at sigma = 1E-8.
     AssertRelClose "logn tiny-sigma variance", _
         K_STATS_Lognormal_Variance(0#, 0.00000001), _
         1E-16, TOL_REL_TIGHT
@@ -2419,7 +2605,7 @@ Private Sub Test_NF_LognormalUnderflow()
     'Overflow must still fail loudly; the guard is not simply removed
     AssertIsError "logn variance still overflows", K_STATS_Lognormal_Variance(1000#, 1#)
 
-    Debug.Print "-- Lognormal moment log-reconstruction (REGRESSION N4)"
+    Debug.Print "-- Lognormal moment log-reconstruction (REGRESSION N8)"
 
     'Magnitudes that are extreme but REPRESENTABLE were previously lost: the old
     'code evaluated the large and small exponential factors separately, so an
@@ -2445,7 +2631,7 @@ Private Sub Test_NF_LognormalUnderflow()
     AssertIsError "logn stddev sigma=0 invalid", _
         K_STATS_Lognormal_StdDev(2#, 0#)
 
-    Debug.Print "-- Lognormal moment LogExpm1 branch boundary (REGRESSION N5)"
+    Debug.Print "-- Lognormal moment LogExpm1 branch boundary (REGRESSION N9)"
 
     'These cases pin BOTH branches of PROB_LogExpm1 (the v >= 709 crossover) and
     'the underflow/overflow recovery the single-log reconstruction provides.
@@ -2534,7 +2720,7 @@ Private Sub Test_NF_ParameterRoundTrip()
     AssertClose "roundtrip StdDev", _
         K_STATS_Lognormal_StdDev(MeanLog, StdDevLog), 0.5, TOL_ABS_LOOSE
 
-    'REGRESSION: Log(1 + CV^2) rounded to zero for CV = 1E-10.
+    'REGRESSION N6: Log(1 + CV^2) rounded to zero for CV = 1E-10.
     P = K_STATS_Lognormal_ParametersFromMeanStdDev(1#, 0.0000000001)
 
     If IsError(P) Then
@@ -2592,7 +2778,8 @@ Private Sub Test_NF_ErrorContract()
     AssertIsError "std inv survival p=1", K_STATS_NormalStandard_InverseSurvival(1#)
     AssertIsError "normal inv survival sd=0", K_STATS_Normal_InverseSurvival(0.025, 0#, 0#)
     AssertIsError "logn inv survival sd=0", K_STATS_Lognormal_InverseSurvival(0.5, 0#, 0#)
-    'Parameter conversion rejects StdDev = 0 and non-positive Mean
+    'Parameter conversion rejects a non-positive Mean (StdDev = 0 is a valid
+    'degenerate conversion, see Test_NF_ParameterRoundTrip)
     AssertIsError "param Mean=0", K_STATS_Lognormal_ParametersFromMeanStdDev(0#, 1#)
     'Reversed interval bounds
     AssertIsError "std interval reversed", _
@@ -2698,8 +2885,9 @@ Private Sub Test_NF_MagnitudePolicy()
 '   need the 1E100 restriction keep rejecting beyond it.
 '
 ' WHY
-'   1E200 is a finite Double. The standard-normal kernels cut off at Abs(Z) > 37
-'   or 38 and return 0 or 1 without arithmetic, so there is nothing for a
+'   1E200 is a finite Double. The standard-normal kernels return 0 or 1 without
+'   arithmetic once Abs(Z) reaches PROB_NT_UNDERFLOW_Z (38.5, tail) or
+'   PROB_PDF_UNDERFLOW_Z (38.6, density), so there is nothing for a
 '   magnitude bound to protect. The lognormal moment routines square StdDevLog
 '   and the general-normal routines standardize by a division, so they keep the
 '   conservative domain.
@@ -2742,11 +2930,11 @@ Private Sub Test_NF_MagnitudePolicy()
     AssertIsError "normal density rejects X 1E200", _
         K_STATS_Normal_Density(1E+200, 0#, 1#)
 
-    'Standardization overflow (formerly the KNOWN GAP) is now a clean numeric
-    'error via PROB_TryStandardize, not an unexpected xlErrValue.
-    'POLICY CHANGE: a standardization overflow no longer forces #NUM! when the
-    'limit is exact. This density is exactly zero (Exp(-Z*Z/2) annihilates the
-    '1/StdDev factor), so it is now returned instead of an error.
+    'Standardization overflow (formerly the KNOWN GAP) is detected by
+    'PROB_TryStandardize, which reports the overflow direction. Where the limit
+    'is exact the surface returns it; only the z-score, whose result is itself
+    'unrepresentable, returns an error. This density is exactly zero
+    '(Exp(-Z*Z/2) annihilates the 1/StdDev factor).
     AssertClose "normal density tiny StdDev overflow -> exact zero", _
         K_STATS_Normal_Density(9E+99, 0#, 1E-300), 0#, 0#
     'A standardized variate can overflow with every input inside the magnitude
@@ -3056,8 +3244,9 @@ Private Sub Test_TF_StudentTCumulative()
         K_STATS_StudentT_Cumulative(0.0000000001, 0.1), _
         0.500000000014809, 0.000000000000002
     'Student t accuracy envelope (strict validated-domain policy): below / at /
-    'above 1E6. The incomplete-beta tail silently diverges past ~1E6 (see
-    'benchmark/tchi_large_df); the surface now returns CVErr instead. Density
+    'above PROB_T_MAX_DF = 1E8, raised from 1E6 after CR-P1-02 (see
+    'benchmark/envelope_probe). Beyond it the incomplete-beta tail degrades
+    '(benchmark/tchi_large_df) and the surface returns CVErr instead. Density
     'is closed-form and unrestricted.
     AssertTrue "t cdf below envelope (1e7) accepted", _
         (Not IsError(K_STATS_StudentT_Cumulative(1#, 10000000#)))
@@ -3455,9 +3644,10 @@ Private Sub Test_TF_ChiSquareLargeDF()
     AssertTrue "chi2 cdf(1e6) is not a partial sum", _
         (Abs(CDbl(K_STATS_ChiSquare_Cumulative(1000000#, 1000000#)) - 0.5) < 0.001)
     'Chi-square accuracy envelope (strict validated-domain policy): validated to
-    'df 1E6 above, rejected beyond. The incomplete-gamma path is unmeasured on
-    '1E6..1E16 and diverges by df 1E16 (see benchmark/tchi_large_df). Density is
-    'closed-form and carries its own 1E20 envelope (CR-P1-01B).
+    'PROB_CHI_MAX_DF = 1E8 (raised from 1E6 after CR-P1-02, see
+    'benchmark/envelope_probe), rejected beyond, where the lower-tail series
+    'reaches PROB_GAMMA_MAX_ITER. Density is closed-form and carries its own
+    '1E20 envelope (CR-P1-01B).
     AssertTrue "chi2 cdf at envelope boundary (1e8) accepted", _
         (Not IsError(K_STATS_ChiSquare_Cumulative(100000000#, 100000000#)))
     AssertIsError "chi2 cdf above envelope (1.1e8)", _
@@ -3730,11 +3920,12 @@ Private Sub Test_TF_FSurvival()
     AssertClose "F sf + cdf = 1", _
         CDbl(K_STATS_F_Survival(2#, 7#, 12#)) + _
         CDbl(K_STATS_F_Cumulative(2#, 7#, 12#)), 1#, TOL_ABS_TIGHT
-    'F envelope: survival above the range is rejected; density stays unrestricted.
+    'F envelope: survival above PROB_F_MAX_DF (1E10) is rejected; the density is
+    'governed by its own separate 1E20 envelope, not by this cap.
     AssertIsError "F sf above envelope (2e10)", _
         K_STATS_F_Survival(1#, 10#, 20000000000#)
-    'REGRESSION: this exact call returned #NUM! while the inverse carried its own
-    'lower cap. The inverse kernel converges here (measured 2.2E-16 in
+    'REGRESSION T8: this exact call returned #NUM! while the inverse carried its
+    'own lower cap. The inverse kernel converges here (measured 2.2E-16 in
     'benchmark/inverse_probe); the refusal was the cap, not the numerics.
     AssertTrue "F inverse unbalanced ratio (1e6,3) accepted", _
         (Not IsError(K_STATS_F_InverseCumulative(0.5, 1000000#, 3#)))
@@ -4514,9 +4705,11 @@ End Sub
 '   Reference values pre-verified against Python mpmath at 50 significant digits
 '   before this module was written. Kernel-driven values (Gamma / Beta CDF, both
 '   inverses) carry the same tolerances as the T family; closed-form values
-'   (Exponential, Weibull, Uniform, all moments) are checked to machine
-'   precision. Left-tail values built on PROB_Expm1 / PROB_Log1p are checked
-'   relatively, since an absolute tolerance would be vacuous at 1E-10.
+'   (Exponential, Weibull, Uniform, all moments) use the ten-decimal
+'   TOL_ABS_TIGHT, or a relative tolerance at extreme magnitudes; these are not
+'   machine-precision claims, which live in benchmark/accuracy_contracts.csv.
+'   Left-tail values built on PROB_Expm1 / PROB_Log1p are checked relatively,
+'   since an absolute tolerance would be vacuous at 1E-10.
 '==============================================================================
 
 Private Sub Test_CN_GammaDensity()
@@ -4567,7 +4760,7 @@ Private Sub Test_CN_GammaDensity()
     AssertIsError "gamma pdf above density envelope (2e20)", _
         K_STATS_Gamma_Density(2E+20, 2E+20, 1#)
 
-    'Stirling reciprocal-boundary regression (#18). The small-N recurrence
+    'REGRESSION C6: Stirling reciprocal boundary (#18). The small-N recurrence
     'once formed (N + 1#) / N, which overflows below N = 2 ^ -1024, and the
     'shape guard has no lower cutoff, so a valid subnormal shape was refused
     'with CVErr while its true density was small and representable. No main-
@@ -5037,9 +5230,10 @@ Private Sub Test_CN_ExponentialCumulative()
     AssertClose "exp cdf product overflow tends one", _
         K_STATS_Exponential_Cumulative(1E+308, 1E+308), 1#, 0#
 
-    'Far right tail must not exceed one. Before the PROB_Expm1 subnormal fix
-    'these returned up to 1.0007521466129217, a probability above one that
-    'nothing downstream could detect.
+    'REGRESSION C7: the far right tail must not exceed one. Before the
+    'PROB_Expm1 subnormal fix (#21) these returned values above one, peaking
+    'at 1.000926774504277 at 745.13 (1.0007521466129217 at 745), a probability
+    'above one that nothing downstream could detect.
     AssertExactlyEqual "exp cdf(715,1) is exactly one", _
         K_STATS_Exponential_Cumulative(715#, 1#), 1#
     AssertExactlyEqual "exp cdf(745,1) is exactly one", _
@@ -5304,7 +5498,7 @@ Private Sub Test_CN_WeibullMoments()
     AssertClose "weibull std(1.5,2)", K_STATS_Weibull_StdDev(1.5, 2#), _
         1.22587158350935, TOL_ABS_TIGHT
 
-    'REGRESSION: direct subtraction of two Gamma values collapsed to zero for
+    'REGRESSION D3: direct subtraction of two Gamma values collapsed to zero for
     'large Shape. The asymptotic branch preserves the small positive factor.
     AssertRelClose "weibull var(shape=1e8,scale=2)", _
         K_STATS_Weibull_Variance(100000000#, 2#), _
@@ -6315,7 +6509,7 @@ Private Sub Test_DS_Hypergeometric()
 '   Hypergeometric mass, directional-summation tails, moments, inverse and support errors.
 '
 ' CALLED FROM
-'   - RunDiscreteSuite (add the registration line, see foot of file)
+'   - RunDiscreteSuite
 '
 ' UPDATED
 '   2026-07-21
