@@ -1052,6 +1052,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  │  ├─ excel-vba-regression.yml
 │  │  ├─ labels-drift.yml
 │  │  ├─ labels-sync.yml
+│  │  ├─ link-check.yml
 │  │  ├─ release.yml
 │  │  ├─ scorecard.yml
 │  │  └─ static-checks.yml

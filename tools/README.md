@@ -22,6 +22,8 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_vba_source.py`, `check_vba_conditionals.py`, `check_vba_visibility.py` | The VBA source rules of [VBA source checks](#vba-source-checks); their fixtures are unit tests in [`tests/test_check_vba.py`](../tests/test_check_vba.py), not `--self-test` |
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
+| `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
+| `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
 
 ## Running every static check
 
@@ -46,6 +48,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `release-semantics` | `check_release_semantics.py` |
 | `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
+| `markdown-links` | `check_links.py`: relative links and anchors in every tracked Markdown file |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
 | `ruff` | `python -m ruff check .`, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes rules |
 | `mypy` | `python -m mypy`: strict type checking of `tools/` and `.github/scripts/`, configured in [`mypy.ini`](../mypy.ini) |
@@ -329,9 +332,10 @@ it once, as `PYTHON_VERSION` in its top-level `env`, and every
 `actions/setup-python` step reads `${{ env.PYTHON_VERSION }}`:
 [`static-checks.yml`](../.github/workflows/static-checks.yml),
 [`accuracy-gate.yml`](../.github/workflows/accuracy-gate.yml),
-[`release.yml`](../.github/workflows/release.yml) and
-[`issue-triage.yml`](../.github/workflows/issue-triage.yml). To move to a new
-patch release, change all four together; first confirm that
+[`release.yml`](../.github/workflows/release.yml),
+[`issue-triage.yml`](../.github/workflows/issue-triage.yml) and
+[`link-check.yml`](../.github/workflows/link-check.yml). To move to a new
+patch release, change all five together; first confirm that
 [actions/python-versions](https://github.com/actions/python-versions) publishes
 it for `ubuntu-24.04` x64. The Accuracy Gate's reference wheels
 (`benchmark/requirements-ci.txt`) are pure Python, so a patch release does not
@@ -411,6 +415,73 @@ modules, re-import them into the VBE, refresh their evidence, remove their
 entries, and delete the baseline file once it lists none. Exit codes: 0 pass,
 1 a module or baseline entry fails, 2 an unreadable or malformed baseline.
 
+## Markdown links
+
+`check_links.py` reads every tracked `*.md` file. Offline, on every change
+through the `markdown-links` check, it fails when:
+
+- a relative link (Markdown, or an HTML `href`/`src` attribute) names a missing
+  or empty file, a path outside the repository or a root-relative path; paths are
+  URL-decoded first, so `my%20file.md` names `my file.md`, and character
+  references are decoded, so `notes&amp;examples.md` names `notes&examples.md`,
+  and backslash escapes are honoured, so `notes\).md` names `notes).md`;
+- a fragment names no anchor of the target Markdown file. Anchors are the
+  heading slugs GitHub generates from the rendered heading (lower case;
+  punctuation and emphasis delimiters dropped, so `__API__` gives `api` while
+  `snake_case` keeps its underscore; emoji dropped but their spaces kept;
+  duplicates suffixed `-1`, `-2`, ...) and explicit `<a id>`/`<a name>` anchors.
+
+Links inside fenced code blocks, indented code blocks (following CommonMark,
+relative to the enclosing list item), code spans (including spans that continue
+over line breaks) and HTML comments are ignored, and so is text that only looks
+like a link, such as `\[text](path)`. Headings inside HTML comments create no
+anchor. Blockquote (`>`) and list-item markers are read before fences and
+headings, so `> ~~~` opens a fence and `- ## Title` is a heading. External links,
+including this repository's wiki and issues, are not requested offline.
+
+### False reports
+
+The checker approximates GitHub's Markdown renderer; it is not a full
+CommonMark parser. Where the rendering is ambiguous it accepts rather than
+reports: a heading's slug with its `_` emphasis left in place is accepted too,
+and lines that may be indented code are skipped. If it still reports a link
+that GitHub renders correctly (or does not render as a link at all), do not
+change the parser for it: add a reviewed entry to
+[`link_check_exclusions.json`](link_check_exclusions.json), with the Markdown
+file, the link exactly as the report prints it, and the reason:
+
+```json
+{
+  "schema_version": 1,
+  "exclusions": [
+    {"path": "docs/EXAMPLE.md", "link": "notes.md#anchor", "reason": "Why GitHub renders this correctly"}
+  ]
+}
+```
+
+An entry that no longer matches a report fails the check as a stale exclusion,
+and an entry without a path, link or reason is rejected, so the list only
+holds live, explained exceptions. It is empty today.
+
+The [Link check](../.github/workflows/link-check.yml) workflow runs
+`check_links.py --external` weekly and on demand. It is not a required check
+and never runs on pull requests. Each external link is requested once, with
+timeouts and two retries. A wiki page is requested as its raw Markdown, which
+answers 404 when the page is missing. HTTP 403, 429 and 5xx answers and network
+failures are warnings, because rate limits, bot protection and outages say
+nothing about the link; any other non-2xx answer fails the run. Links that are
+deliberately not requested are listed, with their reason, in `UNCHECKED` in
+`check_links.py`: currently the code-scanning alert pages, which only signed-in
+users with write access can open.
+
+Fixtures for every rule are in
+[`tests/test_check_links.py`](../tests/test_check_links.py). To check the
+external links locally:
+
+```bash
+python3 tools/check_links.py --external --repository danielep71/VBA-PROBABILITY-DISTRIBUTIONS
+```
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
@@ -480,6 +551,9 @@ layout; they are not verbatim copies.
 | `.github/binary-allowlist.json` | The template's schema (`schema_version`, and a `sha256` and `reason` per path), holding this repository's demo workbook. |
 | `format_vba.py` | `tools/format_vba.py`: the same five layout rules, kept because they match this repository's dominant layout; tracked modules in place of the template's source directories, a committed baseline with a two-way ratchet for modules bound to Excel evidence, `--no-baseline`, statement keywords excluded from labels, and continued comments left in place. |
 | `tests/test_format_vba.py` | `tests/test_format_vba.py`: its rule, literal and header cases, extended with token-stream, idempotence and drift-undo checks on every tracked module's text and the baseline ratchet in temporary Git repositories. |
+| `check_links.py` | `tools/check_links.py`: offline relative-link and GitHub-slug anchor check, and the `--external` request with warnings for 403, 429 and 5xx. This repository is public, so its own wiki pages (as raw Markdown) and issues are requested; only the pages in `UNCHECKED` are skipped. The parser, container and comment handling, and the reviewed exclusions file are this repository's own. |
+| `tests/test_check_links.py` | `tests/test_check_links.py`, with fixtures for percent-encoded paths, HTML attributes, duplicate and punctuated headings, wiki-page requests and `UNCHECKED`. |
+| `.github/workflows/link-check.yml` | `.github/workflows/link-check.yml`: the weekly and manual external-link run, with this repository's action pins and Python version. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
 | `tools/setup_repository.py` | The template's settings script: preview/apply/check modes, ruleset comparison and read-back; reworked for this repository's baseline (merge methods, features, two required checks), a `--verify` mode and a JSON evidence record |
 | `tests/test_setup_repository.py` | The template's fake-API tests, rebuilt on API responses recorded from this repository |
