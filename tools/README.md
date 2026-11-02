@@ -17,6 +17,8 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
+| `check_vba_source.py`, `check_vba_conditionals.py`, `check_vba_visibility.py` | The VBA source rules of [VBA source checks](#vba-source-checks); their fixtures are unit tests in [`tests/test_check_vba.py`](../tests/test_check_vba.py), not `--self-test` |
+| `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 
 ## Running every static check
 
@@ -36,6 +38,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `whitespace-self-test`, `vba-jumps-self-test`, `release-semantics-self-test` | Each checker's `--self-test` fixtures |
 | `whitespace` | `check_committed_whitespace.py --mode committed` on the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
+| `vba-source`, `vba-conditionals`, `vba-visibility` | `check_vba_source.py`, `check_vba_conditionals.py` and `check_vba_visibility.py` on every tracked VBA module |
 | `release-semantics` | `check_release_semantics.py` |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
@@ -192,6 +195,70 @@ A change made in the GitHub settings first shows up as drift. The fixtures in
 offline, through the static-check runner's `python-tests` check, against API responses recorded from this
 repository on 2026-11-02 and copies of them changed to show drift.
 
+## VBA source checks
+
+Three checks read every tracked `.bas`, `.cls` and `.frm` file: the production
+modules in `src/`, the test module in `tests/`, and the exporters and probes
+under `benchmark/`. `run_static_checks.py` runs them; each also runs on its
+own, for example `python3 tools/check_vba_source.py`. Their positive and
+negative fixtures are in [`tests/test_check_vba.py`](../tests/test_check_vba.py).
+They share the lexer in `vba_lexer.py`, so a keyword in a comment (`'Declare`,
+`Rem Public Sub`), in a continued comment or in a string literal is never read
+as code.
+
+| Check | Enforces |
+| --- | --- |
+| `check_vba_source.py` | Each component in `src/` or `tests/` (no subdirectories) or under `benchmark/`; its file name starts with `M_STATS_PROBDIST_`, has at most 31 characters and equals its one `Attribute VB_Name`, unique ignoring case; a `.bas` export starts with that line; ASCII only; `Option Explicit`; `Option Private Module` in the modules of `OPTION_PRIVATE_REQUIRED` and never in a module that declares a `Public K_STATS_` procedure; no `Option Base`, tab or trailing white space; closed string literals; LF in the Git index with CRLF checkout (`git ls-files --eol` and the `vba-source` attribute of `.gitattributes`) |
+| `check_vba_conditionals.py` | `#If`, `#ElseIf`, `#Else`, `#End If` and module `#Const` evaluated in three compilation environments: VBA6 Win32, VBA7 Win32 and VBA7 Win64. An unknown symbol, an unbalanced block, or a malformed, duplicate or non-Boolean `#Const` fails. Every `Declare` reachable under VBA7 is `PtrSafe` |
+| `check_vba_visibility.py` | Every procedure and module-level declaration states `Public` or `Private` (`Global` counts as `Public`), and `Friend` appears only in a class module. No public name (procedure, `Const`, `Enum`, `Type`, variable or `Declare`) is declared twice in one standard module or in two standard modules of a collision group, in an environment they share |
+
+**Option Private Module.** I require it in `M_STATS_PROBDIST_CORE` and
+`M_STATS_PROBDIST_SPECIALFUNCS`, the internal numerical layers: their
+`Public PROB_*` routines are shared across the project but stay out of the
+worksheet Function Wizard and out of other projects. The four modules that
+declare the `K_STATS_*` worksheet functions must not have it, because it would
+hide those functions. Today the two internal layers have it and no other module
+does. The test module and the benchmark exporters are neither required nor
+forbidden to have it. A path in `OPTION_PRIVATE_REQUIRED` that is no longer a
+tracked component fails the check, so a rename cannot drop the rule silently.
+
+**Compilation environments.** The symbols are Microsoft's compiler constants:
+`VBA6` (True under VBA7 too), `VBA7`, `Win16` (always False here), `Win32` (True
+on 64-bit Windows too), `Win64` and `Mac` (always False here). A module `#Const`
+is defined from its line on, in the environments that reach it, and its value
+may use the compiler constants and the module's earlier `#Const` symbols. A
+condition is evaluated only in the environments that can enter its branch:
+inside the enclosing active branch and, for an `#ElseIf`, before any branch of
+its block was taken. A `#Const` defined inside a branch can therefore be used
+within that branch. A symbol undefined in an environment that evaluates it
+fails, although VBA would read it as `Empty`: a
+project-level conditional-compilation argument is invisible in an exported
+module, and the check fails closed rather than guess.
+`M_STATS_PROBDIST_CORE` uses `#Const PROB_WRITE_STATUS_BAR = False`, and
+`benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas` uses `#If Win64`. No module
+contains a `Declare` statement today.
+
+**Collision groups.** One group, `one VBA project` (`COLLISION_GROUPS`), holds
+every standard module under `src/`, `tests/` and `benchmark/`. The Excel
+regression imports the production and test modules into one workbook
+(`regression_sources` in
+[`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json)),
+each exporter or probe is imported into a workbook that already holds the
+production modules, and the main-grid manifest binds production, test, exporter
+and study modules together. One group is the superset of every import set, so
+no combination of them can raise *Ambiguous name detected*. `Enum` members and
+private names are not compared, and class-module members are not in the
+project's global namespace. `benchmark/check_public_api.py` remains the freeze
+of the `K_STATS_*` signatures; this check keeps no inventory of its own.
+
+What these checks cannot prove:
+
+- they neither compile nor run VBA, and they resolve no call;
+- they model the three environments statically, not on a 32-bit or 64-bit
+  host, and do not prove that a `Declare` uses the right argument widths;
+- `check_vba_jumps.py` keeps its own lexer and reads both branches of an `#If`
+  together rather than per environment.
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
@@ -258,3 +325,8 @@ layout; they are not verbatim copies.
 | `tests/test_setup_repository.py` | The template's fake-API tests, rebuilt on API responses recorded from this repository |
 | `docs/repo_governance/repository-settings.json` | The template's settings configuration format, filled with this repository's live settings |
 | `docs/repo_governance/DISTRIBUTION.md` | The template's distribution review, adapted to a public repository and given a pinned Gitleaks history scan |
+| `vba_lexer.py` | The shared lexer of `tools/vba_lexer.py`, without the facade-prefix and house-style lookups. |
+| `check_vba_source.py` | `tools/check_vba_source.py`: this repository's flat `src/` and `tests/` and nested `benchmark/` homes and `M_STATS_PROBDIST_` names in place of role homes and prefixes; `Option Private Module` required in a named set of modules and forbidden beside `K_STATS_` worksheet functions; no form or workbook rules. |
+| `check_vba_conditionals.py` | `tools/check_vba_conditionals.py`, extended to module `#Const` symbols and to the `Win16` and `Mac` constants, with one directive walk shared by the reachable-source model and the `PtrSafe` rule. |
+| `check_vba_visibility.py` | The visibility and collision parts of `tools/check_vba_public_api.py`, without its inventory, signature and public-variable rules; multi-identifier `Const` and variable statements are read name by name, and collisions are evaluated per collision group. |
+| `tests/test_check_vba.py` | The fixture repositories and the source, conditional, public-API and lexer cases of `tests/test_check_vba.py`, rewritten for this repository's modules and rules. |
