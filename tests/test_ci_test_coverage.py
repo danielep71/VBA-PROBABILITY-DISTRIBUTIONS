@@ -329,6 +329,29 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(report["status"], "pass", report["findings"])
         self.assertEqual({row["level"] for row in report["tests"]}, {"with full proofs"})
 
+    def test_selection_gate_must_quote_the_variable_for_expansion(self) -> None:
+        # Review finding: single quotes stop expansion, so `'$FULL_PROOFS'` is a
+        # literal string and the gated test never runs; shlex hides the quotes.
+        binding = "- env:\n    FULL_PROOFS: ${{ needs.select.outputs.full }}\n  run: |\n"
+        for gate in ("if [[ '$FULL_PROOFS' == 'true' ]]; then",
+                     "if [[ '$FULL_PROOFS' == \"true\" ]]; then",
+                     "if [[ \"$FULL_PROOFS\" == 'true' ]]; then",
+                     "if [[ \\$FULL_PROOFS == \"true\" ]]; then",
+                     "if [[ \"\\$FULL_PROOFS\" == \"true\" ]]; then"):
+            with self.subTest(gate=gate):
+                steps = binding + textwrap.indent(f"{gate}\n  python test_tool.py\nfi", "    ")
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_tool.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_tool.py"])
+        for gate in ('if [[ "$FULL_PROOFS" == "true" ]]; then',
+                     'if [[ "${FULL_PROOFS}" == "true" ]]; then'):
+            with self.subTest(gate=gate):
+                steps = binding + textwrap.indent(f"{gate}\n  python test_tool.py\nfi", "    ")
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_tool.py": SCRIPT})
+                report = repository.check()
+                self.assertEqual(report["status"], "pass", report["findings"])
+
     def test_rebinding_the_selection_variable_withholds_credit(self) -> None:
         # Review finding: the env binding is not trusted once the step itself
         # can assign the variable before the gate.

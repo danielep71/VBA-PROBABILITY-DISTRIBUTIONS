@@ -125,7 +125,10 @@ metadata-only. Two gates are recognized:
 - the `then` branch of a single
   `if [[ "$VAR" == "true" ]]; then` ... `else` ... `fi` block, where `VAR` is
   bound exactly to `${{ needs.select.outputs.full }}`. The `else` branch does
-  not count.
+  not count. The operand must be double-quoted (`"$VAR"`, `"${VAR}"` or the
+  expression itself) and compared with `true` by `==` or `=`, in `[[ ]]` or
+  `[ ]`. The gate is matched on the raw line, so quoting that stops expansion,
+  such as `'$VAR'`, is reported rather than credited.
 
 Otherwise a job or step `if:` counts only when it is exactly `always()`,
 `success()` or `!cancelled()`. A job gets no credit when a job it needs has any

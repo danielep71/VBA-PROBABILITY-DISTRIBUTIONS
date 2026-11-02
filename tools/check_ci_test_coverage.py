@@ -29,7 +29,9 @@ the accuracy-proof selection is *selected*. Two forms count:
 ``needs.select.outputs.full == 'true'`` in an ``if:``, or the ``then`` branch of
 one ``if [[ "$VAR" == "true" ]]; then`` ... ``fi``. VAR must be bound exactly
 to ``${{ needs.select.outputs.full }}``, or the expression itself may appear
-inline. The ``else`` branch earns nothing. A selected run counts only when
+inline. The gate is matched on the raw line: the operand must be
+double-quoted and compared with ``true``, so ``'$VAR'``, which Bash never
+expands, is not mistaken for a read. The ``else`` branch earns nothing. A selected run counts only when
 ``tools/select_accuracy_checks.py`` does not treat a change to that file as
 metadata-only, so editing the file always makes it run. Any other condition
 earns nothing. ``EXEMPT`` lists reasoned exceptions and is empty.
@@ -491,6 +493,16 @@ def comparison_operands(words: list[str]) -> tuple[str, str] | None:
     return None
 
 
+# The one recognised gate, matched on the raw line before shell lexing: the
+# operand must be a double-quoted variable or selection-output expression, so
+# that quoting which stops expansion (`'$VAR'`) can never pass as a read.
+GATE_LINE = re.compile(
+    r'if (?:\[\[ "(?P<a>OPERAND)" ==? (?:"true"|true) \]\]'
+    r'|\[ "(?P<b>OPERAND)" ==? (?:"true"|true) \]); then'
+    .replace("OPERAND", r"\$[A-Za-z_]\w*|\$\{[A-Za-z_]\w*\}|\$\{\{\s*needs\."
+             + re.escape(SELECT_JOB) + r"\.outputs\.full\s*\}\}"))
+
+
 def is_selection_gate(tokens: list[str], selection_vars: set[str]) -> bool:
     """`if [[ "$VAR" == "true" ]]; then` with VAR bound exactly to the selection output."""
     if tokens[:1] != ["if"] or tokens[-2:] != [";", "then"]:
@@ -559,7 +571,8 @@ def analyze_script(script: str, selection_vars: set[str]) -> tuple[list[tuple[st
         if rebound:
             reason = reason or f"{where}: the step may rebind the selection variable `{rebound[0]}`"
             continue
-        if branch is None and tokens[0] == "if" and is_selection_gate(tokens, selection_vars):
+        if (branch is None and tokens[0] == "if" and GATE_LINE.fullmatch(line.strip())
+                and is_selection_gate(tokens, selection_vars)):
             branch = SELECTED
             continue
         if branch is not None and tokens == ["else"]:
