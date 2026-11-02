@@ -127,6 +127,10 @@ def checks(context: Context) -> list[Check]:
               [python, "tools/check_vba_jumps.py", "--root", ".",
                "--output", f"{results}/vba-jumps.json", "--summary", f"{results}/vba-jumps.md"],
               summary=f"{results}/vba-jumps.md", reports=(f"{results}/vba-jumps.json",)),
+        # VBA source rules; their fixtures are in tests/test_check_vba.py (python-tests).
+        Check("vba-source", [python, "tools/check_vba_source.py", "--root", "."]),
+        Check("vba-conditionals", [python, "tools/check_vba_conditionals.py", "--root", "."]),
+        Check("vba-visibility", [python, "tools/check_vba_visibility.py", "--root", "."]),
         Check("release-semantics-self-test",
               [python, "tools/check_release_semantics.py", "--root", ".", "--self-test"]),
         Check("release-semantics",
@@ -135,6 +139,8 @@ def checks(context: Context) -> list[Check]:
                "--summary", f"{results}/release-semantics.md"],
               summary=f"{results}/release-semantics.md",
               reports=(f"{results}/release-semantics.json",)),
+        # Tracked binaries: approved assets/ images, or a reviewed SHA-256 in the allowlist.
+        Check("binaries", [python, "tools/check_binaries.py", "--root", "."]),
         Check("release-bundle-self-test",
               [python, ".github/scripts/build_release_bundle.py", "--self-test"]),
         # Relative links and anchors only; external links: .github/workflows/link-check.yml.

@@ -284,8 +284,9 @@ class CheckListTest(unittest.TestCase):
         checks = self.by_name(Context(ROOT))
         self.assertEqual(list(checks), [
             "whitespace-self-test", "whitespace", "vba-jumps-self-test", "vba-jumps",
-            "release-semantics-self-test", "release-semantics", "release-bundle-self-test",
-            "markdown-links", "python-tests", "ruff", "actionlint"])
+            "vba-source", "vba-conditionals", "vba-visibility", "release-semantics-self-test",
+            "release-semantics", "binaries", "release-bundle-self-test", "markdown-links",
+            "python-tests", "ruff", "actionlint"])
         for check in checks.values():
             script = next((part for part in check.command if part.endswith(".py")), None)
             if script is not None:
