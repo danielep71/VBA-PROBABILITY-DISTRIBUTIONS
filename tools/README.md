@@ -359,6 +359,24 @@ fixes; 3.10 reached end of life in October 2026. The non-required job
 needs no installed tool, the unit tests included. `mypy.ini` (`python_version`)
 and `ruff.toml` (`target-version`) check the code against the same floor.
 
+## Building the workbook under test (`devbuild/`)
+
+`devbuild/` builds the Excel workbook under test from the modules that
+`.github/excel-evidence-policy.json` lists, without Excel and without Trust
+access to the VBA project object model, and checks the result against its
+manifest.
+[`docs/EXCEL_VBA_CI.md`](../docs/EXCEL_VBA_CI.md#building-the-workbook-under-test-from-source)
+describes the workbook, the stamp, the manifest and the bindings.
+
+| File | Does |
+| --- | --- |
+| `devbuild/vba_project.py` | Writes `vbaProject.bin` from [MS-OVBA] and [MS-CFB] (compressed source, `dir`, `PROJECT` and `PROJECTwm` streams, no p-code), and reads it back |
+| `devbuild/build_workbook.py` | Builds the `.xlsm` with the commit stamp and writes its SHA-256 manifest |
+| `devbuild/verify_workbook.py` | Reports the binding of a workbook to its commit and sources: `VERIFIED`, `FAIL` or `UNVERIFIED` |
+
+[`tests/test_build_workbook.py`](../tests/test_build_workbook.py) holds their
+fixtures, and the `python-tests` check runs them.
+
 ## VBA source layout
 
 [`format_vba.py`](format_vba.py) states the layout of every tracked `.bas`,
@@ -567,3 +585,7 @@ layout; they are not verbatim copies.
 | `requirements-lint-ci.txt`, `mypy.ini` | mypy 2.4.1 and its dependency closure from `tools/requirements-quality-ci.txt`, with the hash of every published file, and the strict settings of `pyproject.toml` `[tool.mypy]`, scoped to `tools/` and `.github/scripts/`. |
 | `probe_actionlint.py`, `tests/test_quality_gates.py` | The actionlint unknown-key and mypy strict-mode probes of `tests/test_quality_gates.py`; the actionlint probe is a runner check that reuses the actionlint check's own command, with stand-in commands as offline fixtures. |
 | `.github/workflows/static-checks.yml` (minimum-python job) | The `minimum-python` job of `.github/workflows/repository-integrity.yml`, running this repository's runner without installed tools. |
+| `devbuild/vba_project.py` | `tools/devbuild/vba_project.py`: the [MS-OVBA] compression, the `dir`, `PROJECT` and `PROJECTwm` streams and the [MS-CFB] writer. Class modules are dropped; the decompressor and compound-file reader move in from the template's tests so the verifier can read a built project; names longer than 31 characters and duplicate modules are refused. |
+| `devbuild/build_workbook.py` | `tools/devbuild/build_workbook.py`: the module list comes from `regression_sources` instead of the template's workbook configuration, with failure on a missing or unlisted module; one `Build` sheet carries the stamp; the package is stored with a fixed host field so it does not depend on the zlib build or the platform; it writes a SHA-256 manifest of the modules and the workbook. |
+| `devbuild/verify_workbook.py` | The `VERIFIED`/`FAIL`/`UNVERIFIED` binding and the stamp reader of `tools/check_excel_run.py`, and the manifest idea of `tools/devbuild/export_manifest.py`, applied to a built workbook and checked against the commit's policy and Git blobs. |
+| `tests/test_build_workbook.py` | `tests/test_devbuild.py`: specification compression examples, compound-file and project-stream parse-back, determinism and builds in temporary Git repositories, extended with raw header and FAT checks, `dir` records, and positive and negative manifest bindings. |
