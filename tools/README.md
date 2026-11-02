@@ -165,7 +165,11 @@ tracked component fails the check, so a rename cannot drop the rule silently.
 on 64-bit Windows too), `Win64` and `Mac` (always False here). A module `#Const`
 is defined from its line on, in the environments that reach it, and its value
 may use the compiler constants and the module's earlier `#Const` symbols. A
-symbol defined nowhere fails, although VBA would read it as `Empty`: a
+condition is evaluated only in the environments that can enter its branch:
+inside the enclosing active branch and, for an `#ElseIf`, before any branch of
+its block was taken. A `#Const` defined inside a branch can therefore be used
+within that branch. A symbol undefined in an environment that evaluates it
+fails, although VBA would read it as `Empty`: a
 project-level conditional-compilation argument is invisible in an exported
 module, and the check fails closed rather than guess.
 `M_STATS_PROBDIST_CORE` uses `#Const PROB_WRITE_STATUS_BAR = False`, and

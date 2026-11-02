@@ -183,23 +183,42 @@ class State:
         self.findings.append(Finding(self.path, line, message))
 
 
-def condition_values(state: State, line: int, label: str, remainder: str) -> dict[str, bool]:
-    """The condition's value per environment; False everywhere when indeterminate."""
+def condition_values(state: State, line: int, label: str, remainder: str,
+                     eligible: dict[str, bool]) -> dict[str, bool]:
+    """The condition's value in each environment that can enter the branch.
+
+    An environment that cannot (its enclosing branch is inactive or, for an
+    #ElseIf, an earlier branch was taken) does not evaluate the condition, as
+    VBA does not: a #Const defined only inside the enclosing branch is then
+    never looked up where it does not exist. An environment whose evaluation
+    fails is reported and reads the condition as False.
+    """
     match = re.match(r"^(.*?)\s+Then\s*$", remainder.strip(), re.IGNORECASE)
-    try:
-        if match is None or not match.group(1).strip():
-            raise ExpressionError(f"#{label} must end with Then and contain a condition")
-        return {name: evaluate(match.group(1), state.symbols(name)) for name in ENVIRONMENTS}
-    except ExpressionError as error:
-        state.reject(line, f"indeterminate #{label} directive: {error}")
+    if match is None or not match.group(1).strip():
+        state.reject(line, f"indeterminate #{label} directive: #{label} must end with Then "
+                           "and contain a condition")
         return {name: False for name in ENVIRONMENTS}
+    values = {name: False for name in ENVIRONMENTS}
+    errors: list[str] = []
+    for name in ENVIRONMENTS:
+        if not eligible[name]:
+            continue
+        try:
+            values[name] = evaluate(match.group(1), state.symbols(name))
+        except ExpressionError as error:
+            if str(error) not in errors:
+                errors.append(str(error))
+    for message in errors:
+        state.reject(line, f"indeterminate #{label} directive: {message}")
+    return values
 
 
 def handle_if(state: State, line: int, remainder: str) -> None:
-    values = condition_values(state, line, "If", remainder)
+    eligible = {name: state.active(name) for name in ENVIRONMENTS}
+    values = condition_values(state, line, "If", remainder, eligible)
     for name, stack in state.stacks.items():
-        selected = state.active(name) and values[name]
-        stack.append(Frame(state.active(name), selected, selected))
+        selected = eligible[name] and values[name]
+        stack.append(Frame(eligible[name], selected, selected))
 
 
 def handle_elseif(state: State, line: int, remainder: str) -> None:
@@ -209,7 +228,9 @@ def handle_elseif(state: State, line: int, remainder: str) -> None:
     if any(stack[-1].else_seen for stack in state.stacks.values()):
         state.reject(line, "#ElseIf after #Else")
         return
-    values = condition_values(state, line, "ElseIf", remainder)
+    eligible = {name: stack[-1].parent_active and not stack[-1].branch_taken
+                for name, stack in state.stacks.items()}
+    values = condition_values(state, line, "ElseIf", remainder, eligible)
     for name, stack in state.stacks.items():
         frame = stack[-1]
         selected = frame.parent_active and not frame.branch_taken and values[name]

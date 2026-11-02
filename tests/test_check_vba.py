@@ -419,6 +419,28 @@ Private Declare Function Bad Lib "kernel32" () As Long
     Private Declare PtrSafe Function Modern Lib "kernel32" () As LongPtr
 #End If
 ''',
+    # HOST exists only under VBA7; VBA6 never enters the outer branch, so it
+    # never evaluates the nested #If.
+    "const-used-within-its-defining-branch": '''#If VBA7 Then
+    #Const HOST = True
+    #If HOST Then
+        Private Declare PtrSafe Function Modern Lib "kernel32" () As LongPtr
+    #End If
+#Else
+    Private Declare Function Legacy Lib "kernel32" () As Long
+#End If
+''',
+    # LEGACY exists only under VBA6; under VBA7 the first branch is taken, so
+    # the #ElseIf is not evaluated there.
+    "elseif-not-evaluated-after-a-taken-branch": '''#If Not VBA7 Then
+    #Const LEGACY = True
+#End If
+#If VBA7 Then
+    Private Declare PtrSafe Function Modern Lib "kernel32" () As LongPtr
+#ElseIf LEGACY Then
+    Private Declare Function Legacy Lib "kernel32" () As Long
+#End If
+''',
 }
 CONDITIONAL_INVALID = {
     "declare-reachable-only-under-vba7": ('''#If VBA7 Then
@@ -463,6 +485,17 @@ CONDITIONAL_INVALID = {
     "const-defined-in-one-environment-only": ("#If VBA7 Then\n#Const HOST = True\n#End If\n"
                                               "#If HOST Then\n#End If\n",
                                               "unsupported conditional-compilation symbol"),
+    # A #Const defined in an inactive branch does not leak: VBA6 reaches the
+    # #ElseIf (Win64 is False there) without HOST.
+    "elseif-uses-const-from-another-environment": ("#If VBA7 Then\n#Const HOST = True\n#End If\n"
+                                                   "#If Win64 Then\n#ElseIf HOST Then\n#End If\n",
+                                                   "indeterminate #ElseIf directive: unsupported "
+                                                   "conditional-compilation symbol 'HOST'"),
+    "nested-if-uses-const-outside-its-branch": ("#If VBA7 Then\n#Const HOST = True\n#End If\n"
+                                                "#If Not VBA7 Then\n#If HOST Then\n#End If\n"
+                                                "#End If\n",
+                                                "indeterminate #If directive: unsupported "
+                                                "conditional-compilation symbol 'HOST'"),
     "const-redefines-compiler-constant": ("#Const Win64 = False\n",
                                           "redefines a compiler constant"),
     "duplicate-const": ("#Const FLAG = True\n#Const FLAG = False\n", "defined twice"),
@@ -514,6 +547,20 @@ class ConditionalTest(Assertions):
         self.assertEqual(findings, [])
         self.assertEqual(sources["vba7-win64"].split("\n"), ["", "", "B", ""])
         self.assertEqual(sources["vba7-win32"].split("\n"), ["", "", "", ""])
+
+    def test_branch_local_const_keeps_its_branch_reachable(self) -> None:
+        sources, findings = check_vba_conditionals.reachable_sources(
+            "x.bas", "#If VBA7 Then\n#Const HOST = True\n#If HOST Then\nB\n#End If\n#End If")
+        self.assertEqual(findings, [])
+        for name in ("vba7-win32", "vba7-win64"):
+            self.assertEqual(sources[name].split("\n")[3], "B")
+        self.assertEqual(sources["vba6-win32"].split("\n")[3], "")
+        sources, findings = check_vba_conditionals.reachable_sources(
+            "x.bas", "#If Not VBA7 Then\n#Const LEGACY = True\n#End If\n"
+                     "#If VBA7 Then\nA\n#ElseIf LEGACY Then\nB\n#End If")
+        self.assertEqual(findings, [])
+        self.assertEqual(sources["vba7-win64"].split("\n")[4:7], ["A", "", ""])
+        self.assertEqual(sources["vba6-win32"].split("\n")[4:7], ["", "", "B"])
 
     def test_main_exit_codes(self) -> None:
         for files, expected in ((VALID, 0), (standalone("#If Unknown Then\n#End If\n"), 1)):
