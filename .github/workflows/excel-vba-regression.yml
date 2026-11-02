@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - "release/**"
     paths:
       - "src/**"
       - "tests/**"
@@ -18,6 +19,7 @@ on:
   pull_request:
     branches:
       - main
+      - "release/**"
 
 concurrency:
   group: excel-vba-${{ github.workflow }}-${{ github.ref }}
