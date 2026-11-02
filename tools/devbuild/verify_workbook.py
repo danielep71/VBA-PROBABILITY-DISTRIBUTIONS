@@ -47,7 +47,7 @@ from xml.etree import ElementTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_workbook  # noqa: E402
-from vba_project import VBA_PROJECT_STREAM, CompoundFile, decompress  # noqa: E402
+from vba_project import VBA_ENCODING, VBA_PROJECT_STREAM, CompoundFile, decompress  # noqa: E402
 
 ROOT = build_workbook.ROOT
 VERIFIED, FAIL, UNVERIFIED = "VERIFIED", "FAIL", "UNVERIFIED"
@@ -152,7 +152,7 @@ def workbook_findings(data: bytes, recorded: Recorded) -> list[str]:
                         f"expected {expected_stamp[build_workbook.STAMP_COMMIT]!r}")
     try:
         project = CompoundFile(vba_bin)
-        project_text = project.read("PROJECT").decode(build_workbook.VBA_ENCODING)
+        project_text = project.read("PROJECT").decode(VBA_ENCODING)
         streams = set(project.children(project.children(0)["VBA"]))
         version = project.read("VBA/_VBA_PROJECT")
     except (KeyError, ValueError, UnicodeDecodeError) as error:
@@ -224,7 +224,7 @@ def source_findings(root: Path, recorded: Recorded, verdict: Verdict) -> list[st
                             f"{recorded.commit[:12]}, the manifest records "
                             f"{item['git_blob_sha256']}")
         try:
-            embedded = build_workbook.module_text(blob).encode(build_workbook.VBA_ENCODING)
+            embedded = build_workbook.module_text(blob).encode(VBA_ENCODING)
         except ValueError as error:
             findings.append(f"{path} at {recorded.commit[:12]}: {error}")
             continue

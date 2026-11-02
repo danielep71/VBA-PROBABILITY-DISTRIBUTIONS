@@ -51,6 +51,12 @@ defaults:
   run:
     shell: bash
 
+env:
+  # The CI interpreter, an exact patch release, for every job; tools/README.md
+  # ("Python versions") lists where it is set. The audit runs on the version
+  # its tests run on in the Static checks workflow.
+  PYTHON_VERSION: "3.12.16"
+
 jobs:
   audit:
     if: github.event_name != 'pull_request'
@@ -76,7 +82,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.13.18"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -113,7 +119,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.13.18"
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24.22.2"

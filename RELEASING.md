@@ -81,7 +81,7 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 
 Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, and #29 must be resolved.
 
-**Verified enforcement (2026-09-30):** the active `Protect main` ruleset requires pull requests, up-to-date `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` checks from GitHub Actions, and blocks deletion and force pushes, with no bypass actors. Required approvals remain zero and conversation resolution is not mandatory. The active `Protect releases` ruleset blocks updates, deletion and force pushes for `v*` tags while allowing initial creation. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
+**Enforcement baseline:** the repository settings, security features and rulesets, including the required checks `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` on `main`, are recorded in [`docs/repo_governance/repository-settings.json`](docs/repo_governance/repository-settings.json) and explained in [SETTINGS.md](docs/repo_governance/SETTINGS.md). `python3 tools/setup_repository.py --verify` compares them with GitHub and fails on drift; a prose statement of enforcement is not evidence. Required approvals remain zero. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
 
 ## 1. Freeze and identify the candidate
 
@@ -149,6 +149,12 @@ Move relevant entries from **Unreleased** into a dated `[MAJOR.MINOR.PATCH] - YY
   [`tools/README.md`](tools/README.md).
 - Scan for credentials or generated noise.
 - Confirm accuracy manifests, grids, tolerances, and provenance files are internally consistent.
+- Complete the [distribution review](docs/repo_governance/DISTRIBUTION.md) in
+  its own issue, including the pinned full-history secret scan, and close it.
+  Do not tag or publish while it is open.
+- Verify the repository settings and keep the dated record:
+  `python3 tools/setup_repository.py --verify --evidence <dir>/settings-{date}.json`
+  must report `VERIFIED` (see [`tools/README.md`](tools/README.md)).
 
 Capture commands, tool versions, timestamps, and complete results. Rerun affected gates after any change.
 
@@ -309,6 +315,8 @@ Retain at least:
 - candidate commit SHA
 - reviewed PR head, target base and tested synthetic merge SHA (where applicable)
 - static-check result
+- closed distribution-review issue and its secret-scan result
+- repository-settings evidence record (`VERIFIED`)
 - Excel version and bitness
 - regression outputs
 - accuracy grid and independent-reference provenance
@@ -382,7 +390,7 @@ Do not silently replace assets or move the tag.
 | 2 | Version surfaces synchronized | ☐ |
 | 3 | Changelog finalized | ☐ |
 | 4 | Installation verified cleanly | ☐ |
-| 5 | Static checks pass | ☐ |
+| 5 | Static checks pass; distribution review closed; settings `VERIFIED` | ☐ |
 | 6 | Excel certification passes | ☐ |
 | 7 | Artifacts built and packaged-tested | ☐ |
 | 8 | Hashes and evidence recorded | ☐ |
@@ -398,6 +406,7 @@ Do not silently replace assets or move the tag.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — change and review workflow
 - [CHANGELOG.md](CHANGELOG.md) — release history
 - [SECURITY.md](SECURITY.md) — supported versions and private reporting
+- [DISTRIBUTION.md](docs/repo_governance/DISTRIBUTION.md) — distribution review before a public release
 - [VERSION](VERSION) — authoritative version
 - [LICENSE](LICENSE) — Mozilla Public License 2.0
 
