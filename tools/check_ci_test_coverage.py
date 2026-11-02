@@ -18,6 +18,12 @@ restructured rather than trusted. Credit comes from:
 * an entry of a registered runner list (``RUNNERS``) that such a step invokes,
   with the runner's own filter for its reduced mode applied.
 
+A job or step ``if:`` counts only when it is exactly ``always()``,
+``success()``, ``!cancelled()`` or the selection gate below, and a job earns
+nothing when a job it needs has any other condition. A step that may rebind
+a selection variable (``VAR=``, ``export``, ``declare``, ``read``,
+``printf -v``, ``${VAR:=...}``, ``unset`` ...) earns nothing.
+
 A run is *unconditional* when nothing but job success gates it. A run gated by
 the accuracy-proof selection is *selected*. Two forms count:
 ``needs.select.outputs.full == 'true'`` in an ``if:``, or the ``then`` branch of
@@ -27,6 +33,14 @@ inline. The ``else`` branch earns nothing. A selected run counts only when
 ``tools/select_accuracy_checks.py`` does not treat a change to that file as
 metadata-only, so editing the file always makes it run. Any other condition
 earns nothing. ``EXEMPT`` lists reasoned exceptions and is empty.
+
+Threat model and limits: the guard catches a test file that no CI step runs by
+accident, such as a new file nobody listed, a renamed one, or a step that
+silently skips it. It does not try to defeat a deliberately misleading
+workflow; review does that. It never infers that something runs. A shape
+outside the recognized ones is reported rather than credited, so its failure
+mode is a false report that makes the author simplify the step, not a false
+pass.
 
 Workflows are read with a small standard-library parser for the block-style
 YAML subset GitHub workflows use; anything outside it is an error (exit 2).
@@ -388,15 +402,11 @@ def runs_on_every_pull_request(triggers: Any) -> tuple[bool, str]:
     return True, "every pull request"
 
 
-ALWAYS_TERMS = (
-    re.compile(r"always\(\)"),
-    re.compile(r"!\s*cancelled\(\)"),
-    re.compile(r"success\(\)"),
-    re.compile(r"steps\.[\w-]+\.(outcome|conclusion)\s*==\s*'success'"),
-    re.compile(r"needs\.[\w-]+\.result\s*==\s*'success'"),
-)
+# The only `if:` expressions credited, on a job or a step. Anything else
+# (step outcomes, github.event fields, conjunctions ...) earns no credit:
+# whether it holds would depend on other steps, jobs or the event.
 SELECTION_TERM = re.compile(r"needs\." + re.escape(SELECT_JOB) + r"\.outputs\.full\s*==\s*'true'")
-UNGATED_TERMS = (re.compile(r"always\(\)"), re.compile(r"!\s*cancelled\(\)"))
+UNGATED_TERMS = {"always()", "!cancelled()"}
 
 
 def condition_level(expression: Any) -> tuple[int, bool]:
@@ -406,19 +416,13 @@ def condition_level(expression: Any) -> tuple[int, bool]:
     text = str(expression).strip()
     if text.startswith("${{") and text.endswith("}}"):
         text = text[3:-2].strip()
-    if "||" in text:
-        return NEVER, False
-    level, ungated = ALWAYS, False
-    for term in (part.strip() for part in text.split("&&")):
-        while term.startswith("(") and term.endswith(")"):
-            term = term[1:-1].strip()
-        if SELECTION_TERM.fullmatch(term):
-            level = max(level, SELECTED)
-        elif any(pattern.fullmatch(term) for pattern in ALWAYS_TERMS):
-            ungated = ungated or any(pattern.fullmatch(term) for pattern in UNGATED_TERMS)
-        else:
-            return NEVER, False
-    return level, ungated
+    if text in UNGATED_TERMS:
+        return ALWAYS, True
+    if text == "success()":
+        return ALWAYS, False
+    if SELECTION_TERM.fullmatch(text):
+        return SELECTED, False
+    return NEVER, False
 
 
 def truthy(value: Any) -> bool:
@@ -498,6 +502,19 @@ def is_selection_gate(tokens: list[str], selection_vars: set[str]) -> bool:
     return any(op in refs or SELECTION_OUTPUT.fullmatch(op) for op in operands)
 
 
+def names_variable(token: str, var: str) -> bool:
+    """Whether ``token`` names ``var`` other than as a plain `$VAR`/`${VAR}` read.
+
+    Covers every way a step could rebind the selection variable before the
+    gate: `VAR=`, `export`/`declare`/`readonly VAR=`, `read VAR`,
+    `printf -v VAR`, `${VAR:=...}`, a nameref `ref=VAR`. Some harmless mentions
+    are caught too; that is a false report, never a false pass.
+    """
+    name = re.escape(var)
+    reads_removed = re.sub(r"\$\{" + name + r"\}|\$" + name + r"(?!\w)", "", token)
+    return re.search(r"(?<!\w)" + name + r"(?!\w)", reads_removed) is not None
+
+
 def strip_redirections(tokens: list[str]) -> list[str]:
     words: list[str] = []
     index = 0
@@ -536,6 +553,11 @@ def analyze_script(script: str, selection_vars: set[str]) -> tuple[list[tuple[st
             token in HEREDOCS for token in tokens
         ):
             reason = reason or f"{where}: command substitution or heredoc"
+            continue
+        rebound = sorted(var for var in selection_vars
+                         if any(names_variable(token, var) for token in tokens))
+        if rebound:
+            reason = reason or f"{where}: the step may rebind the selection variable `{rebound[0]}`"
             continue
         if branch is None and tokens[0] == "if" and is_selection_gate(tokens, selection_vars):
             branch = SELECTED
@@ -629,9 +651,12 @@ def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
         level, ungated = condition_level(job.get("if"))
         needs = job.get("needs") or []
         needs = needs if isinstance(needs, list) else [needs]
-        if not ungated:
-            for need in needs:
-                level = max(level, job_level(str(need), trail + (job_id,)))
+        for need in needs:
+            needed = job_level(str(need), trail + (job_id,))
+            # A needed job outside the whitelist withholds credit even from an
+            # always() job; a selected one gates this job unless always() runs it.
+            if needed == NEVER or not ungated:
+                level = max(level, needed)
         if truthy(job.get("continue-on-error")):
             level = NEVER
         levels[job_id] = level

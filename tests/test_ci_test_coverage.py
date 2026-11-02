@@ -329,6 +329,73 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(report["status"], "pass", report["findings"])
         self.assertEqual({row["level"] for row in report["tests"]}, {"with full proofs"})
 
+    def test_rebinding_the_selection_variable_withholds_credit(self) -> None:
+        # Review finding: the env binding is not trusted once the step itself
+        # can assign the variable before the gate.
+        gate = 'if [[ "$FULL_PROOFS" == "true" ]]; then\n  python test_tool.py\nfi'
+        for line in ("FULL_PROOFS=true", "export FULL_PROOFS=true", "declare -x FULL_PROOFS=true",
+                     "readonly FULL_PROOFS=true", "read FULL_PROOFS < answer.txt",
+                     "printf -v FULL_PROOFS true", "unset FULL_PROOFS",
+                     'echo "${FULL_PROOFS:=true}"', "declare -n ref=FULL_PROOFS"):
+            with self.subTest(line=line):
+                steps = ("- env:\n    FULL_PROOFS: ${{ needs.select.outputs.full }}\n  run: |\n"
+                         + textwrap.indent(f"{line}\n{gate}", "    "))
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_tool.py": SCRIPT})
+                findings = self.findings(repository.check())
+                self.assertEqual(list(findings), ["test_tool.py"])
+                self.assertIn("not credited from", findings["test_tool.py"])
+
+    def test_only_whitelisted_if_conditions_and_needs_chains_give_credit(self) -> None:
+        # Review finding: a step outcome condition depends on whether that
+        # other step ran, so it earns no credit; nor does any other condition.
+        for condition in ("steps.optional.outcome == 'success'",
+                          "${{ !cancelled() && steps.deps.outcome == 'success' }}",
+                          "github.event_name == 'pull_request'",
+                          "always() && needs.select.outputs.full == 'true'",
+                          "failure()", "needs.select.outputs.full != 'false'"):
+            with self.subTest(step_if=condition):
+                steps = (f"- id: optional\n  if: github.event_name == 'push'\n  run: echo optional\n"
+                         f"- if: \"{condition}\"\n  run: python test_a.py")
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_a.py": SCRIPT})
+                findings = self.findings(repository.check())
+                self.assertEqual(list(findings), ["test_a.py"])
+                self.assertIn("not credited from", findings["test_a.py"])
+        for condition in ("github.event_name == 'pull_request'", "success() && always()"):
+            with self.subTest(job_if=condition):
+                repository = self.repo({
+                    ".github/workflows/ci.yml": workflow(
+                        "- run: python test_a.py", job_extra=f"    if: \"{condition}\"\n"),
+                    "test_a.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
+        # A needed job outside the whitelist withholds credit, even from always().
+        chain = textwrap.dedent("""\
+            on:
+              pull_request:
+            jobs:
+              prepare:
+                if: github.event_name == 'push'
+                runs-on: ubuntu-24.04
+                steps:
+                  - run: echo prepared
+              after:
+                needs: prepare
+            {after_if}    runs-on: ubuntu-24.04
+                steps:
+                  - run: python test_a.py
+            """)
+        for after_if in ("", "    if: always()\n"):
+            with self.subTest(needs=after_if or "plain"):
+                text = chain.format(after_if=after_if)
+                self.assertEqual(guard.load_yaml(text)["jobs"]["after"].get("if"),
+                                 "always()" if after_if else None)
+                repository = self.repo({".github/workflows/ci.yml": text, "test_a.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
+        repository = self.repo({".github/workflows/ci.yml": chain.format(after_if="").replace(
+            "    if: github.event_name == 'push'\n", ""), "test_a.py": SCRIPT})
+        self.assertEqual(repository.check()["status"], "pass")
+
     def test_named_unittest_modules_must_define_a_testcase(self) -> None:
         # Review finding: unittest never runs checks kept under
         # `if __name__ == "__main__"` in a module it is given by name.
@@ -344,9 +411,10 @@ class CoverageTests(unittest.TestCase):
 
     def test_recognized_step_shapes_give_credit(self) -> None:
         steps = """\
-            - if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+            - if: ${{ !cancelled() }}
               run: python test_a.py
-            - working-directory: sub
+            - if: success()
+              working-directory: sub
               run: |
                 # comments, blank lines, plain commands and redirections are fine
                 echo "preparing" > log.txt

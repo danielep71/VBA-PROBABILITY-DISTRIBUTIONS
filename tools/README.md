@@ -124,8 +124,18 @@ metadata-only. Two gates are recognized:
   bound exactly to `${{ needs.select.outputs.full }}`. The `else` branch does
   not count.
 
-Any other condition does not count either. The report names each withheld step
-and the reason. Workflows are read with a small parser for block-style YAML; a
+Otherwise a job or step `if:` counts only when it is exactly `always()`,
+`success()` or `!cancelled()`. A job gets no credit when a job it needs has any
+other condition. A step that may rebind the selection variable gets none either:
+`VAR=`, `export`, `declare`, `read`, `printf -v`, `${VAR:=...}` and `unset` all
+count as rebinding. The report names each withheld step and the reason.
+
+**Threat model and limits.** The guard catches a test file that no CI step runs
+by accident: a new file nobody listed, a renamed one, or a step that silently
+skips it. It does not try to defeat a deliberately misleading workflow; review
+does that. Anything outside the recognized shapes is reported rather than
+credited. Its failure mode is therefore a false report, which you resolve by
+simplifying the step, never a false pass. Workflows are read with a small parser for block-style YAML; a
 construct outside it is an error (exit 2), not a pass.
 
 To add a test, add a benchmark test to the `commands` list in
