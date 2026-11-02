@@ -3,14 +3,19 @@ run-name: Static checks — ${{ github.ref_name }} @ ${{ github.sha }}
 
 # Excel-free integrity checks of the repository itself: committed whitespace,
 # procedure-scoped VBA jumps, release semantics, release-bundle builder
-# fixtures, the Python unit tests under tests/, Python correctness lint (Ruff)
-# and workflow validity. They complement, but never replace, the Excel/VBA
-# regression, the numerical Accuracy Gate or release certification.
+# fixtures, the Python unit tests under tests/, Python correctness lint (Ruff),
+# strict type checking (mypy) and workflow validity (actionlint, with a probe
+# that proves it rejects an invalid workflow). They complement, but never
+# replace, the Excel/VBA regression, the numerical Accuracy Gate or release
+# certification.
 #
 # One command, tools/run_static_checks.py, runs every check, here and locally;
 # see tools/README.md. Every check runs even when an earlier one fails, so one
 # run reports every problem. With --strict, a check whose tool failed to
 # install fails instead of being skipped, and any failed check fails the job.
+#
+# The minimum-python job runs the same command on the documented minimum
+# Python. It is not a required check.
 
 on:
   push:
@@ -32,6 +37,13 @@ defaults:
   run:
     shell: bash
 
+env:
+  # The CI interpreter, an exact patch release, used by every workflow that
+  # sets up Python; tools/README.md ("Python versions") lists where it is set.
+  PYTHON_VERSION: "3.12.16"
+  # The documented minimum Python, checked by the minimum-python job.
+  MINIMUM_PYTHON_VERSION: "3.11.18"
+
 jobs:
   static-checks:
     name: Repository integrity (static, no Excel)
@@ -40,7 +52,6 @@ jobs:
     env:
       PYTHONUTF8: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      PYTHON_VERSION: "3.12"
       # Pinned by version and content hash; bump both together.
       ACTIONLINT_VERSION: "1.7.12"
       ACTIONLINT_LINUX_AMD64_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
@@ -61,7 +72,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install the hash-locked Python linter
+      - name: Install the hash-locked Python linter and type checker
         continue-on-error: true
         run: |
           python -m pip install \
@@ -71,6 +82,7 @@ jobs:
             -r tools/requirements-lint-ci.txt
           mkdir -p test-results
           python -m ruff --version | tee test-results/ruff-version.txt
+          python -m mypy --version | tee test-results/mypy-version.txt
 
       - name: Install the pinned workflow validator
         continue-on-error: true
@@ -110,3 +122,35 @@ jobs:
           path: test-results/
           if-no-files-found: warn
           retention-days: 30
+
+  minimum-python:
+    # Not a required check: it confirms that the repository's Python tooling
+    # still runs on the documented minimum Python (tools/README.md). It installs
+    # no tool, so Ruff, mypy and actionlint are reported as skipped; every other
+    # check, the unit tests under tests/ included, runs and must pass.
+    name: Minimum Python (3.11, not required)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Check out the exact SHA under review
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Full history: the whitespace check inspects the candidate range.
+          fetch-depth: 0
+
+      - name: Set up the minimum Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.MINIMUM_PYTHON_VERSION }}
+
+      - name: Run every check that needs no installed tool
+        env:
+          CANDIDATE_SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+        run: python tools/run_static_checks.py --summary "$GITHUB_STEP_SUMMARY"

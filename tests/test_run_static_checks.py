@@ -284,8 +284,10 @@ class CheckListTest(unittest.TestCase):
         checks = self.by_name(Context(ROOT))
         self.assertEqual(list(checks), [
             "whitespace-self-test", "whitespace", "vba-jumps-self-test", "vba-jumps",
-            "vba-layout", "release-semantics-self-test", "release-semantics", "release-bundle-self-test",
-            "python-tests", "ruff", "actionlint"])
+            "vba-source", "vba-conditionals", "vba-visibility", "vba-layout",
+            "release-semantics-self-test", "release-semantics", "binaries",
+            "release-bundle-self-test", "python-tests", "ruff", "mypy", "actionlint",
+            "actionlint-probe"])
         for check in checks.values():
             script = next((part for part in check.command if part.endswith(".py")), None)
             if script is not None:
@@ -312,9 +314,16 @@ class CheckListTest(unittest.TestCase):
                 mock.patch("shutil.which", return_value=None):
             checks = self.by_name(Context(ROOT))
         self.assertIn("ruff is not installed", str(checks["ruff"].missing))
+        self.assertIn("mypy is not installed", str(checks["mypy"].missing))
         self.assertIn("actionlint is not on PATH", str(checks["actionlint"].missing))
+        self.assertEqual(checks["actionlint-probe"].missing, checks["actionlint"].missing)
         missing = {name for name, check in checks.items() if check.missing}
-        self.assertEqual(missing, {"ruff", "actionlint"})
+        self.assertEqual(missing, {"ruff", "mypy", "actionlint", "actionlint-probe"})
+
+    def test_mypy_reads_its_configuration(self) -> None:
+        # Scope and strictness live in mypy.ini, so the command passes no paths.
+        self.assertEqual(self.by_name(Context(ROOT))["mypy"].command[1:], ["-m", "mypy"])
+        self.assertTrue((ROOT / "mypy.ini").is_file())
 
     def test_explicit_actionlint(self) -> None:
         with tempfile.TemporaryDirectory(prefix="static-checks-tool-") as directory:
@@ -326,6 +335,12 @@ class CheckListTest(unittest.TestCase):
             self.assertIsNone(check.missing)
             self.assertEqual(check.command, [str(path), "-no-color",
                                              "-config-file", ".github/actionlint.yaml"])
+            # The probe runs exactly the command of the actionlint check.
+            with mock.patch.dict(os.environ, {"PATH": ""}):
+                probe = self.by_name(Context(ROOT, actionlint=str(path)))["actionlint-probe"]
+            self.assertIsNone(probe.missing)
+            self.assertEqual(probe.command[1:3], ["tools/probe_actionlint.py", "--"])
+            self.assertEqual(probe.command[3:], check.command)
             # A pinned path that is absent is missing, even with actionlint on PATH.
             absent = str(Path(directory) / "absent" / "actionlint")
             with mock.patch.dict(os.environ, {"PATH": directory}):
