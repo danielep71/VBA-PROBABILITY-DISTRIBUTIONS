@@ -1,7 +1,7 @@
 name: "✨ Feature request"
 description: "Suggest a new distribution, routine, or enhancement."
 title: "[Feature]: "
-labels: ["enhancement"]
+labels: ["enhancement", "P3"]
 assignees: ["danielep71"]
 body:
   - type: textarea
@@ -62,3 +62,20 @@ body:
       options:
         - label: I searched open and closed issues and did not find an equivalent request.
           required: true
+
+  - type: input
+    id: target_end_date
+    attributes:
+      label: Target end date (Europe/Rome)
+      description: Proposed date in YYYY-MM-DD format, before the milestone due date. Triage confirms the milestone and date.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and blocking status
+      description: List prerequisite issue numbers or an external condition. Use None when there are no prerequisites.
+      value: None
+    validations:
+      required: true
