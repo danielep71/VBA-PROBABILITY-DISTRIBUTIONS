@@ -93,7 +93,9 @@ Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
 (mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff) weekly. Updates
 are assigned to the maintainer with priority P3 for initial triage; raise the
 priority when a security advisory or other material risk requires it. Review
-and merge remain manual. Set the applicable milestone during PR triage.
+and merge remain manual. Pull requests carry no milestone: during PR triage,
+link each one to an issue and set the milestone on that issue
+([`ISSUE_LABELS.md`](../docs/repo_governance/ISSUE_LABELS.md)).
 
 Both CI Python environments install wheels with `--require-hashes`. Review
 version and SHA-256 changes together, compare hashes with PyPI's release
@@ -135,11 +137,13 @@ template repository itself and is not imported.
 
 ### Adapted from `danielep71/MyTemplate` at `9ff7670`
 
-These files are adapted, not imported verbatim: they are written for this
-repository's own checks and layout.
+These files adapt a template solution to this repository's own names, checks and
+layout; they are not verbatim copies.
 
-| File | What was adapted |
+| File | Adaptation |
 | --- | --- |
 | `run_static_checks.py` | The runner of `tools/check_repository.py`: every check runs, per-check logs, `report.json` (commit, dirty state, pull request head, tracked-file SHA-256), Markdown summary and `--strict`. The check list is this repository's own. |
 | `tests/test_run_static_checks.py` | The approach of `tests/test_check_repository.py`: injected checks run in temporary Git repositories. |
 | `.github/workflows/static-checks.yml` | The single runner step of `.github/workflows/repository-integrity.yml`, with the report directory kept as an artifact. |
+| `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
+| `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
