@@ -17,6 +17,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
+| `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
 
 ## Running every static check
 
@@ -38,6 +39,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
 | `release-semantics` | `check_release_semantics.py` |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
+| `markdown-links` | `check_links.py`: relative links and anchors in every tracked Markdown file |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
 | `ruff` | `python -m ruff check .`, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes rules |
 | `actionlint` | `actionlint -config-file .github/actionlint.yaml` on every workflow |
@@ -86,6 +88,41 @@ Markdown file it writes, added to the run summary). Then add the name to
 [`tests/test_run_static_checks.py`](../tests/test_run_static_checks.py). The
 workflow needs no change unless the check needs a new tool installed. A new
 `tests/test_*.py` file needs no entry: `python-tests` discovers it.
+
+## Markdown links
+
+`check_links.py` reads every tracked `*.md` file. Offline, on every change
+through the `markdown-links` check, it fails when:
+
+- a relative link (Markdown, or an HTML `href`/`src` attribute) names a missing
+  or empty file, a path outside the repository or a root-relative path; paths are
+  URL-decoded first, so `my%20file.md` names `my file.md`;
+- a fragment names no anchor of the target Markdown file. Anchors are the
+  heading slugs GitHub generates (lower case; punctuation dropped; emoji dropped
+  but their spaces kept; duplicates suffixed `-1`, `-2`, ...) and explicit
+  `<a id>`/`<a name>` anchors.
+
+Links inside fenced or inline code are ignored. External links, including this
+repository's wiki and issues, are not requested offline.
+
+The [Link check](../.github/workflows/link-check.yml) workflow runs
+`check_links.py --external` weekly and on demand. It is not a required check
+and never runs on pull requests. Each external link is requested once, with
+timeouts and two retries. A wiki page is requested as its raw Markdown, which
+answers 404 when the page is missing. HTTP 403, 429 and 5xx answers and network
+failures are warnings, because rate limits, bot protection and outages say
+nothing about the link; any other non-2xx answer fails the run. Links that are
+deliberately not requested are listed, with their reason, in `UNCHECKED` in
+`check_links.py`: currently the code-scanning alert pages, which only signed-in
+users with write access can open.
+
+Fixtures for every rule are in
+[`tests/test_check_links.py`](../tests/test_check_links.py). To check the
+external links locally:
+
+```bash
+python3 tools/check_links.py --external --repository danielep71/VBA-PROBABILITY-DISTRIBUTIONS
+```
 
 ## Dependency updates
 
@@ -146,4 +183,7 @@ layout; they are not verbatim copies.
 | `tests/test_run_static_checks.py` | The approach of `tests/test_check_repository.py`: injected checks run in temporary Git repositories. |
 | `.github/workflows/static-checks.yml` | The single runner step of `.github/workflows/repository-integrity.yml`, with the report directory kept as an artifact. |
 | `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
+| `check_links.py` | `tools/check_links.py`: offline relative-link and GitHub-slug anchor check, and the `--external` request with warnings for 403, 429 and 5xx. This repository is public, so its own wiki pages (as raw Markdown) and issues are requested; only the pages in `UNCHECKED` are skipped. |
+| `tests/test_check_links.py` | `tests/test_check_links.py`, with fixtures for percent-encoded paths, HTML attributes, duplicate and punctuated headings, wiki-page requests and `UNCHECKED`. |
+| `.github/workflows/link-check.yml` | `.github/workflows/link-check.yml`: the weekly and manual external-link run, with this repository's action pins and Python version. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |

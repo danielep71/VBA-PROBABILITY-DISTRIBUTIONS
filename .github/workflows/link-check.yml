@@ -1,0 +1,49 @@
+name: Link check
+run-name: Link check — ${{ github.ref_name }} @ ${{ github.sha }}
+
+# Requests every external link in the tracked Markdown files once a week and
+# on demand: other sites, this repository's wiki pages, issues and pull
+# requests. Relative links and anchors are checked offline on every change by
+# the markdown-links check of Static checks (tools/run_static_checks.py).
+# External sites change without a commit, so this workflow runs on a schedule,
+# never on pull requests, and is not a required check. HTTP 403, 429 and 5xx
+# answers are warnings, not failures; see tools/check_links.py.
+
+on:
+  schedule:
+    # Weekly, off the hour; GitHub may start scheduled runs late.
+    - cron: "43 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-check-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  external:
+    name: External links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Check out the selected ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Check relative links, anchors and external links
+        run: python tools/check_links.py --external --repository "$GITHUB_REPOSITORY"
