@@ -1,9 +1,6 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "prune": true,
-  "renames": {
-    "testing": "tests"
-  },
   "labels": [
     {
       "name": "accuracy",
@@ -33,7 +30,7 @@
     {
       "name": "ci",
       "color": "24292F",
-      "description": "Automated quality checks, workflow maintenance, or release certification"
+      "description": "Automated quality checks, workflow maintenance, or dependency updates"
     },
     {
       "name": "continuous",
@@ -46,14 +43,9 @@
       "description": "Core floating-point primitives, constants, guards, arithmetic helpers, and shared numerics"
     },
     {
-      "name": "discrete",
-      "color": "D4C5F9",
-      "description": "Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric, and Discrete Uniform"
-    },
-    {
       "name": "documentation",
       "color": "0075CA",
-      "description": "User-facing or maintainer-facing documentation"
+      "description": "Documentation for users or for my repository maintenance"
     },
     {
       "name": "duplicate",
@@ -73,7 +65,7 @@
     {
       "name": "help wanted",
       "color": "008672",
-      "description": "Maintainer welcomes external investigation, implementation, validation, or review"
+      "description": "I welcome external investigation, implementation, validation, or review"
     },
     {
       "name": "invalid",
@@ -88,7 +80,7 @@
     {
       "name": "P1",
       "color": "B60205",
-      "description": "Critical release blocker or serious correctness, data, or application-state risk"
+      "description": "Confirmed calculation bug: wrong results for valid inputs (reserved for this case)"
     },
     {
       "name": "P2",
@@ -98,7 +90,7 @@
     {
       "name": "P3",
       "color": "FBCA04",
-      "description": "Non-blocking quality, testing, documentation, or technical-debt improvement"
+      "description": "Non-blocking quality, testing, documentation, setup or technical-debt work"
     },
     {
       "name": "performance",
@@ -108,7 +100,7 @@
     {
       "name": "question",
       "color": "D876E3",
-      "description": "Further information or a maintainer decision is required"
+      "description": "I need further information or need to make a decision"
     },
     {
       "name": "refactor",
@@ -148,7 +140,7 @@
     {
       "name": "wontfix",
       "color": "6E7781",
-      "description": "Maintainers have decided not to implement or continue this work"
+      "description": "I have decided not to implement or continue this work"
     }
   ]
 }

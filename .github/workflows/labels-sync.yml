@@ -1,126 +1,89 @@
-name: Label Taxonomy Sync
+name: Sync issue labels
+
+# Pull requests validate without write permission. Only a trusted push to the default branch
+# or an explicit manual dispatch on the default branch can reconcile the live repository
+# taxonomy; a dispatch on any other branch skips reconciliation.
+# The job runs the script's self-test, then reconciles; the script validates
+# before the first API mutation and verifies an exact post-run match.
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+  pull_request:
     paths:
-      - ".github/labels.json"
-      - ".github/workflows/labels-sync.yml"
-
-concurrency:
-  group: label-taxonomy-sync
-  cancel-in-progress: true
+      - .github/labels.json
+      - .github/scripts/labels-sync.mjs
+      - .github/workflows/labels-sync.yml
+  push:
+    paths:
+      - .github/labels.json
+      - .github/scripts/labels-sync.mjs
+      - .github/workflows/labels-sync.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
-  issues: write
+
+concurrency:
+  group: labels-sync-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  sync-labels:
-    name: Synchronize repository labels
+  validate:
+    name: Validate label manifest
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
 
     steps:
-      - name: Check out repository
+      - name: Check out the exact SHA under review
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Create, update, and prune labels
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          script: |
-            const fs = require('fs');
-            const config = JSON.parse(fs.readFileSync('.github/labels.json', 'utf8'));
-            const desired = config.labels;
-            const desiredByKey = new Map(desired.map(label => [label.name.toLowerCase(), label]));
+          node-version: "24.22.2"
+          package-manager-cache: false
 
-            const current = await github.paginate(github.rest.issues.listLabelsForRepo, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100
-            });
+      - name: Exercise validation and reconciliation paths
+        run: node .github/scripts/labels-sync.mjs --self-test
 
-            const currentByKey = new Map(current.map(label => [label.name.toLowerCase(), label]));
+      - name: Validate the canonical manifest
+        run: node .github/scripts/labels-sync.mjs --mode validate
 
-            // "renames" maps an old live name to its manifest name. The live
-            // label is renamed in place by the update below, so it stays on
-            // every issue and pull request; pruning it and creating the new
-            // name would strip it from all of them. If both names already
-            // exist, stop before any write: that needs a manual decision.
-            // labels-drift.mjs mirrors this mapping.
-            for (const [from, to] of Object.entries(config.renames ?? {})) {
-              const source = currentByKey.get(from.toLowerCase());
-              if (!source) continue;
-              if (currentByKey.has(to.toLowerCase())) {
-                throw new Error(`Both "${source.name}" and "${to}" exist; move issues to "${to}" and delete "${source.name}" by hand, then re-run.`);
-              }
-              currentByKey.delete(from.toLowerCase());
-              currentByKey.set(to.toLowerCase(), source);
-            }
-            const created = [];
-            const updated = [];
-            const removed = [];
-            const unchanged = [];
+  reconcile:
+    name: Reconcile live labels
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
 
-            for (const wanted of desired) {
-              const key = wanted.name.toLowerCase();
-              const existing = currentByKey.get(key);
+    steps:
+      - name: Check out the exact SHA to apply
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-              if (!existing) {
-                await github.rest.issues.createLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  name: wanted.name,
-                  color: wanted.color,
-                  description: wanted.description
-                });
-                created.push(wanted.name);
-                continue;
-              }
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+          package-manager-cache: false
 
-              const sameName = existing.name === wanted.name;
-              const sameColor = existing.color.toLowerCase() === wanted.color.toLowerCase();
-              const sameDescription = (existing.description || '') === (wanted.description || '');
+      - name: Exercise validation and reconciliation paths
+        run: node .github/scripts/labels-sync.mjs --self-test
 
-              if (!sameName || !sameColor || !sameDescription) {
-                await github.rest.issues.updateLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  name: existing.name,
-                  new_name: wanted.name,
-                  color: wanted.color,
-                  description: wanted.description
-                });
-                updated.push(wanted.name);
-              } else {
-                unchanged.push(wanted.name);
-              }
-            }
-
-            if (config.prune) {
-              for (const [key, existing] of currentByKey) {
-                if (!desiredByKey.has(key)) {
-                  await github.rest.issues.deleteLabel({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    name: existing.name
-                  });
-                  removed.push(existing.name);
-                }
-              }
-            }
-
-            await core.summary
-              .addHeading('Repository label taxonomy')
-              .addTable([
-                [{data: 'Action', header: true}, {data: 'Labels', header: true}],
-                ['Created', created.join(', ') || '—'],
-                ['Updated', updated.join(', ') || '—'],
-                ['Removed', removed.join(', ') || '—'],
-                ['Unchanged', unchanged.join(', ') || '—']
-              ])
-              .addRaw(`\nCanonical labels: ${desired.length}. Prune: ${config.prune ? 'enabled' : 'disabled'}.`)
-              .write();
+      - name: Reconcile and verify the versioned label catalogue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/labels-sync.mjs --mode reconcile --repository "${GITHUB_REPOSITORY}"
