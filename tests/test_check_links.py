@@ -107,6 +107,60 @@ class CheckTests(unittest.TestCase):
         })
         self.assertEqual((errors, count), ([], 0))
 
+    def test_code_span_across_lines_is_ignored(self) -> None:
+        # A code span may continue over line breaks within its paragraph.
+        errors, _, count = run_check({
+            "README.md": "Use this literal example: `\n[example](missing.md)\n`\n\n"
+                         "Or ``this `one`\n[x](missing.md#a) ``.\n",
+        })
+        self.assertEqual((errors, count), ([], 0))
+
+    def test_unclosed_backticks_do_not_hide_links(self) -> None:
+        # An unmatched run is literal, and a span never crosses a blank line.
+        errors, _, _ = run_check({
+            "README.md": "A lone ` backtick\n[a](missing-a.md)\n\n"
+                         "Open `here\n\n[b](missing-b.md) and `\n\n"
+                         "Escaped \\`[c](missing-c.md)\\`\n",
+        })
+        self.assertEqual(errors, ["README.md: missing target: missing-a.md",
+                                  "README.md: missing target: missing-b.md",
+                                  "README.md: missing target: missing-c.md"])
+
+    def test_indented_code_blocks_are_ignored(self) -> None:
+        errors, _, count = run_check({
+            "README.md": "Text\n\n    [a](missing.md)\n\n    [b](missing.md)\n\n"
+                         "\t[c](missing.md)\n\n# Heading\n    [d](missing.md)\n\n"
+                         "- item\n\n      [e](missing.md)\n\n"
+                         "1. step\n\n    ```text\n    [f](missing.md)\n    ```\n",
+        })
+        self.assertEqual((errors, count), ([], 0))
+
+    def test_indented_lines_that_are_not_code_are_checked(self) -> None:
+        # Indented code cannot interrupt a paragraph, and list content is
+        # indented relative to its item, not to the margin.
+        errors, _, _ = run_check({
+            "README.md": "Paragraph\n    [a](missing-a.md)\n\n"
+                         "- item\n\n    [b](missing-b.md)\n\n"
+                         "  - nested\n\n    [c](missing-c.md)\n\n"
+                         "1. step\n   continued [d](missing-d.md)\n",
+        })
+        self.assertEqual(errors, [f"README.md: missing target: missing-{name}.md"
+                                  for name in "abcd"])
+
+    def test_character_references_in_destinations_are_decoded(self) -> None:
+        errors, external, _ = run_check({
+            "README.md": '<a href="notes&amp;examples.md#top">x</a> '
+                         "[y](notes&amp;examples.md) [z](notes\\&examples.md)\n"
+                         '<img src="a&#32;b.svg"> <a href="a&ampb.md">literal</a>\n'
+                         '<a href="missing&amp;file.md">w</a>\n'
+                         "[q](https://example.com/?a=1&amp;b=2)\n",
+            "notes&examples.md": "# Top\n",
+            "a b.svg": "<svg/>\n",
+            "a&ampb.md": "# Literal\n",
+        })
+        self.assertEqual(errors, ["README.md: missing target: missing&file.md"])
+        self.assertEqual(external, {"https://example.com/?a=1&b=2"})
+
     def test_missing_files_anchors_and_paths_are_errors(self) -> None:
         errors, _, _ = run_check({
             "README.md": "[a](docs/missing.md) [b](docs/guide.md#nowhere) [c](/abs.md)\n"

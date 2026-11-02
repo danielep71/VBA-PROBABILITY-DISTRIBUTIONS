@@ -3,10 +3,13 @@
 
 Offline (the default, run by tools/run_static_checks.py on every change), every
 relative link, in Markdown syntax or in an HTML href or src attribute, must name
-an existing directory or non-empty file inside the repository, after URL
-decoding (%20 is a space). Every fragment must name a heading anchor, generated
-with GitHub's slug rules, or an explicit <a id> or <a name> anchor of the
-Markdown file it points to. Links inside fenced or inline code are ignored.
+an existing directory or non-empty file inside the repository. The path is read
+as GitHub reads it: Markdown backslash escapes removed, character references
+decoded (&amp; is &), then URL-decoded (%20 is a space). Every fragment must name a heading
+anchor, generated with GitHub's slug rules, or an explicit <a id> or <a name>
+anchor of the Markdown file it points to. Links inside fenced code blocks,
+indented code blocks and code spans (which may continue over line breaks) are
+ignored.
 External links, including the wiki, issues and other pages of this repository
 on github.com, are only collected.
 
@@ -50,12 +53,26 @@ UNCHECKED: tuple[tuple[str, str], ...] = (
 # ---------------------------------------------------------------------------
 # Markdown parsing.
 
+REFERENCE = re.compile(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
+LIST_ITEM = re.compile(r"( *)([-*+]|\d{1,9}[.)])( {1,4}|$)")
+
+
+def decode_references(text: str) -> str:
+    """Decode complete character references (ending in ';'), as Markdown and HTML
+    attributes do: notes&amp;examples.md names notes&examples.md."""
+    return REFERENCE.sub(lambda match: html.unescape(match.group(0)), text)
+
+
+def decode_destination(text: str) -> str:
+    """A Markdown link destination as the renderer reads it: backslash escapes of
+    ASCII punctuation removed, then character references decoded."""
+    return decode_references(re.sub(r"\\([!-/:-@\[-`{-~])", r"\1", text))
+
+
 def github_slug(heading: str) -> str:
     """Anchor GitHub generates for a Markdown heading, before duplicate suffixes."""
     text = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", heading)
-    # Decode only complete character references (ending in ';'), as Markdown does.
-    text = re.sub(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});",
-                  lambda match: html.unescape(match.group(0)), re.sub(r"<[^>]+>", "", text))
+    text = decode_references(re.sub(r"<[^>]+>", "", text))
     return "".join(char for char in text.lower() if slug_character(char)).replace(" ", "-")
 
 
@@ -103,47 +120,139 @@ def ends_paragraph(line: str, heading: bool) -> bool:
             or bool(re.match(r" {4}| {0,3}([-*+]\s|\d+[.)]\s|[>|<])", line)))
 
 
+def strip_code_spans(text: str) -> str:
+    """Remove the code spans of one block of text, which may span several lines.
+
+    As in CommonMark, a backtick run opens a span only if an equally long run
+    follows in the same block; otherwise it is literal. The newlines inside a
+    removed span are kept, so the text keeps its lines.
+    """
+    runs = list(re.finditer(r"`+", text))
+    kept, position, index = [], 0, 0
+    while index < len(runs):
+        opener = runs[index]
+        escaped = opener.start() > 0 and text[opener.start() - 1] == "\\"
+        closer = None if escaped else next(
+            (later for later in range(index + 1, len(runs))
+             if len(runs[later].group()) == len(opener.group())), None)
+        if closer is None:
+            index += 1
+            continue
+        kept += [text[position:opener.start()],
+                 "\n" * text.count("\n", opener.start(), runs[closer].end())]
+        position, index = runs[closer].end(), closer + 1
+    return "".join(kept) + text[position:]
+
+
 def line_links(line: str) -> tuple[list[str], set[str]]:
-    """Links and explicit anchors on one line outside code."""
-    line = re.sub(r"(`+).*?\1", "", line)
-    anchors = {"".join(value) for value in
+    """Links and explicit anchors on one line whose code spans are already removed.
+    Destinations are decoded the way GitHub reads them."""
+    anchors = {decode_references("".join(value)) for value in
                re.findall(r"<a\s[^>]*?(?<![\w-])(?:id|name)" + ATTRIBUTE, line)}
-    links = inline_destinations(line)
-    links += ["".join(value) for value in
+    links = [decode_destination(link) for link in inline_destinations(line)]
+    links += [decode_destination("".join(value)) for value in
               re.findall(r"^ {0,3}\[(?!\^)[^\]]+\]:\s*(?:<([^>]*)>|(\S+))", line)]
     links += re.findall(r"<(https?://[^>\s]+)>", line)
-    links += ["".join(value) for value in re.findall(r"(?<![\w-])(?:href|src)" + ATTRIBUTE, line)]
+    links += [decode_references("".join(value)) for value in
+              re.findall(r"(?<![\w-])(?:href|src)" + ATTRIBUTE, line)]
     return links, anchors
 
 
-def markdown_links(text: str) -> tuple[list[str], set[str]]:
-    """Return (links, anchors) of a Markdown document, ignoring fenced and inline code."""
+def block_links(lines: Sequence[str]) -> tuple[list[str], set[str]]:
+    """Links and explicit anchors of one block of text lines, outside its code spans."""
     links: list[str] = []
     anchors: set[str] = set()
-    used: dict[str, int] = {}
-    fence: str | None = None
-    paragraph: list[str] = []
-    for line in text.splitlines():
-        match = FENCE.match(line)
-        if fence:
-            if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence):
-                fence = None
-            continue
-        if match:
-            fence, paragraph = match.group(1), []
-            continue
-        if paragraph and re.match(r" {0,3}(=+|-+)\s*$", line):
-            # Setext heading: the paragraph above an === or --- underline.
-            anchors.add(heading_anchor(github_slug(" ".join(paragraph)), used))
-            paragraph = []
-            continue
-        heading = re.match(r" {0,3}#{1,6}\s+(.*?)(?:\s+#+)?\s*$", line)
-        if heading:
-            anchors.add(heading_anchor(github_slug(heading.group(1)), used))
-        paragraph = [] if ends_paragraph(line, bool(heading)) else [*paragraph, line.strip()]
+    for line in strip_code_spans("\n".join(lines)).split("\n"):
         found, explicit = line_links(line)
         links += found
         anchors |= explicit
+    return links, anchors
+
+
+def indentation(line: str) -> int:
+    """Leading columns of a line, with tabs to the next multiple of 4."""
+    expanded = line.expandtabs(4)
+    return len(expanded) - len(expanded.lstrip(" "))
+
+
+def markdown_links(text: str) -> tuple[list[str], set[str]]:
+    """Return (links, anchors) of a Markdown document, ignoring fenced and indented
+    code blocks and code spans.
+
+    Indented code follows CommonMark conservatively: a line indented four columns
+    beyond the content of the open list item (or beyond the margin, outside lists)
+    is code unless it continues a paragraph, which code cannot interrupt.
+    """
+    links: list[str] = []
+    anchors: set[str] = set()
+    used: dict[str, int] = {}
+    fence: tuple[str, int] | None = None   # (opening run, its container's content column)
+    paragraph: list[str] = []              # candidate setext heading text
+    block: list[str] = []                  # lines whose code spans and links are read together
+    items: list[int] = []                  # content columns of the open list items
+    previous = "blank"                     # blank, text, code or closed (heading, fence, break)
+
+    def flush() -> None:
+        found, explicit = block_links(block)
+        links.extend(found)
+        anchors.update(explicit)
+        block.clear()
+
+    for line in text.splitlines():
+        expanded = line.expandtabs(4)
+        indent = indentation(line)
+        if fence:
+            relative = expanded[min(indent, fence[1]):]
+            match = FENCE.match(relative)
+            if (match and match.group(1)[0] == fence[0][0]
+                    and len(match.group(1)) >= len(fence[0])
+                    and not relative[match.end():].strip()):
+                fence, previous = None, "closed"
+            continue
+        if not line.strip():
+            flush()
+            paragraph, previous = [], "blank"
+            continue
+        base = items[-1] if items else 0
+        thematic = re.match(r" {0,3}([-*_])(\s*\1){2,}\s*$", expanded[min(indent, base):])
+        item = None if thematic or indent >= base + 4 else LIST_ITEM.match(expanded)
+        if item or previous != "text":
+            # A list item ends where a line starts left of its content.
+            while items and indent < items[-1]:
+                items.pop()
+            base = items[-1] if items else 0
+        if not item and indent >= base + 4 and previous != "text":
+            flush()
+            paragraph, previous = [], "code"
+            continue
+        relative = expanded[min(indent, base):]
+        match = FENCE.match(relative)
+        if match and not (match.group(1)[0] == "`" and "`" in relative[match.end():]):
+            flush()
+            fence, paragraph = (match.group(1), base), []
+            continue
+        if item:
+            flush()
+            items.append(len(item.group(0)) + (0 if item.group(3) else 1))
+        if paragraph and re.match(r" {0,3}(=+|-+)\s*$", relative):
+            # Setext heading: the paragraph above an === or --- underline.
+            anchors.add(heading_anchor(github_slug(" ".join(paragraph)), used))
+            flush()
+            paragraph, previous = [], "closed"
+            continue
+        heading = re.match(r" {0,3}#{1,6}\s+(.*?)(?:\s+#+)?\s*$", relative)
+        if heading or thematic:
+            flush()
+        if heading:
+            anchors.add(heading_anchor(github_slug(heading.group(1)), used))
+        paragraph = [] if ends_paragraph(line, bool(heading)) else [*paragraph, line.strip()]
+        block.append(line)
+        if heading or thematic:
+            flush()
+            previous = "closed"
+        else:
+            previous = "text"
+    flush()
     return links, anchors
 
 

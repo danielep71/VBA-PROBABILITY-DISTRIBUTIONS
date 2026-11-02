@@ -326,13 +326,16 @@ through the `markdown-links` check, it fails when:
 
 - a relative link (Markdown, or an HTML `href`/`src` attribute) names a missing
   or empty file, a path outside the repository or a root-relative path; paths are
-  URL-decoded first, so `my%20file.md` names `my file.md`;
+  URL-decoded first, so `my%20file.md` names `my file.md`, and character
+  references are decoded, so `notes&amp;examples.md` names `notes&examples.md`;
 - a fragment names no anchor of the target Markdown file. Anchors are the
   heading slugs GitHub generates (lower case; punctuation dropped; emoji dropped
   but their spaces kept; duplicates suffixed `-1`, `-2`, ...) and explicit
   `<a id>`/`<a name>` anchors.
 
-Links inside fenced or inline code are ignored. External links, including this
+Links inside fenced code blocks, indented code blocks (following CommonMark,
+relative to the enclosing list item) and code spans, including spans that
+continue over line breaks, are ignored. External links, including this
 repository's wiki and issues, are not requested offline.
 
 The [Link check](../.github/workflows/link-check.yml) workflow runs
