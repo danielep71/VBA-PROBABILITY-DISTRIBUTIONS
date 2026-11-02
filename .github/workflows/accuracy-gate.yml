@@ -26,6 +26,12 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # The CI interpreter, an exact patch release, for every job; tools/README.md
+  # ("Python versions") lists where it is set. benchmark/requirements-ci.txt
+  # holds pure-Python wheels, so a patch bump leaves the reference stack as is.
+  PYTHON_VERSION: "3.12.16"
+
 jobs:
   select:
     name: Select accuracy proofs
@@ -40,7 +46,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Run the tests/ unit tests
         # Every module under tests/ runs on every event, before selection:
         # change selection, issue triage and CI test coverage are all cheap,
@@ -81,7 +87,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install reference dependencies
         id: deps
@@ -215,7 +221,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Install reference dependencies
         run: >-
           python -m pip install --disable-pip-version-check
