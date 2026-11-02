@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "files": {
+    "examples/STATS-Distributions demo.xlsm": {
+      "sha256": "ac26efc2dcaa26f416f03f879d8019a604a2d2799bd1abb6176b2786f56b66c9",
+      "reason": "Macro-enabled demo workbook linked from the README, pinned as tracked since b8fec04. It can carry VBA macros, so every new version needs review before its digest changes."
+    }
+  }
+}
