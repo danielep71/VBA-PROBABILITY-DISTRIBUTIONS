@@ -329,6 +329,20 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(report["status"], "pass", report["findings"])
         self.assertEqual({row["level"] for row in report["tests"]}, {"with full proofs"})
 
+    def test_discovery_does_not_credit_non_identifier_module_names(self) -> None:
+        # Review finding: discovery silently skips `test_bad-name.py`.
+        steps = "- run: python -m unittest discover -s tests"
+        for bad in ("tests/test_bad-name.py", "tests/pkg-x/test_a.py"):
+            with self.subTest(bad=bad):
+                files = {".github/workflows/ci.yml": workflow(steps),
+                         "tests/test_ok.py": UNIT, bad: UNIT}
+                if bad.startswith("tests/pkg-x/"):
+                    files["tests/pkg-x/__init__.py"] = ""
+                repository = self.repo(files)
+                findings = self.findings(repository.check())
+                self.assertEqual(list(findings), [bad])
+                self.assertIn("not a Python identifier", findings[bad])
+
     def test_negative_branch_patterns_and_branches_ignore_withhold_credit(self) -> None:
         # Review finding: `['**', '!main']` excludes pull requests into main;
         # ordered include/exclude patterns are not modelled, so no credit.

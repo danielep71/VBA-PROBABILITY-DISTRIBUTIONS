@@ -866,9 +866,17 @@ def unittest_targets(root: Path, tracked: set[str], invocation: Invocation,
         relative = path if base == "." else (path[len(base) + 1:] if path.startswith(base + "/") else None)
         if relative is None or not TEST_FILE.fullmatch(name) or not fnmatch.fnmatchcase(name, pattern):
             continue
+        # Discovery imports by dotted name and silently skips a module or
+        # package whose name is not a Python identifier (`test_bad-name.py`).
+        parts = relative.split("/")[:-1]
+        if not all(part.isidentifier() for part in [*parts, name.removesuffix(".py")]):
+            coverage.notes.setdefault(path, []).append(
+                f"matched by {invocation.origin}, but unittest discovery skips a name "
+                "that is not a Python identifier"
+            )
+            continue
         # Discovery descends only into packages: every directory between the
         # start directory and the module must hold an __init__.py.
-        parts = relative.split("/")[:-1]
         initializers = [
             posixpath.join(base, *parts[: depth + 1], "__init__.py").removeprefix("./")
             for depth in range(len(parts))

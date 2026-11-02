@@ -148,7 +148,7 @@ construct outside it is an error (exit 2), not a pass.
 
 To add a test, add a benchmark test to the `commands` list in
 `benchmark/test_evidence_tools.py`. Put a `unittest` module under `tests/`,
-where discovery picks it up. `EXEMPT` in the checker takes a path and a reason.
+where discovery picks it up; its file and package names must be Python identifiers, because discovery silently skips any other name. `EXEMPT` in the checker takes a path and a reason.
 I keep it empty; the checker reports an exemption that is stale or already
 covered.
 
