@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -12,6 +13,14 @@ sys.path.insert(0, str(HERE))
 import check_public_api as A
 
 FAILS: list[str] = []
+FIXTURE_MODULES = (
+    "src/M_STATS_PROBDIST_CORE.bas",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
+    "src/M_STATS_PROBDIST_TFAMILY.bas",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas",
+    "src/M_STATS_PROBDIST_DISCRETE.bas",
+)
 
 
 def check(condition: bool, message: str) -> None:
@@ -29,6 +38,10 @@ def expect_pass(root: Path, manifest: Path, label: str) -> None:
     check(rc == 0, label + " must pass")
 
 
+def git(root: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)
+
+
 def module_text(decl: str, body: str = "    K_STATS_Test = X\n") -> str:
     return (
         'Attribute VB_Name = "M"\n'
@@ -42,7 +55,8 @@ def module_text(decl: str, body: str = "    K_STATS_Test = X\n") -> str:
 
 def make_repo() -> tuple[Path, Path]:
     root = Path(tempfile.mkdtemp())
-    for rel in A.MODULES:
+    git(root, "init", "-q")
+    for rel in FIXTURE_MODULES:
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         if rel.endswith("CORE.bas"):
@@ -57,6 +71,8 @@ def make_repo() -> tuple[Path, Path]:
             )
         else:
             path.write_text('Attribute VB_Name = "Empty"\nOption Explicit\n', encoding="utf-8")
+    # The production module list comes from the Git index, so stage the fixtures.
+    git(root, "add", "--", "src")
     manifest = root / "docs" / "PUBLIC_API.txt"
     manifest.parent.mkdir(parents=True, exist_ok=True)
     manifest.write_text(A.render(A.collect(root)), encoding="utf-8")
@@ -67,8 +83,8 @@ root, manifest = make_repo()
 try:
     expect_pass(root, manifest, "baseline")
 
-    core = root / A.MODULES[0]
-    second = root / A.MODULES[1]
+    core = root / FIXTURE_MODULES[0]
+    second = root / FIXTURE_MODULES[1]
     baseline = core.read_text(encoding="utf-8")
 
     # Function-body and formatting changes are not API changes.
@@ -135,6 +151,60 @@ try:
         encoding="utf-8",
     )
     expect_pass(root, manifest, "benchmark Public Sub outside production API")
+
+    # The production module list is derived from the tracked src/ files.
+    extra_api = (
+        'Attribute VB_Name = "Extra"\nOption Explicit\n\n'
+        "Public Function K_STATS_Extra(ByVal X As Double) As Double\n"
+        "    K_STATS_Extra = X\nEnd Function\n"
+    )
+    untracked = root / "src" / "M_STATS_PROBDIST_EXTRA.bas"
+    untracked.write_text(extra_api, encoding="utf-8")
+    check(
+        "src/M_STATS_PROBDIST_EXTRA.bas" not in A.production_modules(root),
+        "present-but-untracked src module must not be picked up",
+    )
+    expect_pass(root, manifest, "present-but-untracked src module")
+    git(root, "add", "--", str(untracked.relative_to(root)))
+    check(
+        "src/M_STATS_PROBDIST_EXTRA.bas" in A.production_modules(root),
+        "newly tracked src module must be picked up",
+    )
+    expect_fail(root, manifest, "newly tracked src module with K_STATS API")
+    git(root, "rm", "-q", "--cached", "--", str(untracked.relative_to(root)))
+    untracked.unlink()
+    expect_pass(root, manifest, "untracked module removed again")
+
+    nested = root / "src" / "sub" / "M_STATS_PROBDIST_NESTED.bas"
+    nested.parent.mkdir(parents=True, exist_ok=True)
+    nested.write_text(extra_api.replace("Extra", "Nested"), encoding="utf-8")
+    git(root, "add", "--", str(nested.relative_to(root)))
+    expect_fail(root, manifest, "tracked nested src module with K_STATS API")
+    git(root, "rm", "-q", "--cached", "--", str(nested.relative_to(root)))
+    shutil.rmtree(nested.parent)
+
+    # A tracked production module that is missing on disk fails closed.
+    third = root / FIXTURE_MODULES[2]
+    third_text = third.read_text(encoding="utf-8")
+    third.unlink()
+    expect_fail(root, manifest, "tracked production module missing on disk")
+    third.write_text(third_text, encoding="utf-8")
+    expect_pass(root, manifest, "tracked production module restored")
+
+    # Without Git the tracked set is unknown: fail closed, never glob.
+    no_git = Path(tempfile.mkdtemp())
+    try:
+        shutil.copytree(root / "src", no_git / "src")
+        shutil.copytree(root / "docs", no_git / "docs")
+        expect_fail(no_git, no_git / "docs" / "PUBLIC_API.txt", "root that is not a Git work tree")
+        nested_root = root / "nested"
+        shutil.copytree(no_git, nested_root)
+        expect_fail(nested_root, nested_root / "docs" / "PUBLIC_API.txt",
+                    "root below the Git top level")
+        shutil.rmtree(nested_root)
+    finally:
+        shutil.rmtree(no_git, ignore_errors=True)
+    expect_pass(root, manifest, "baseline after module-list fixtures")
 finally:
     shutil.rmtree(root, ignore_errors=True)
 
@@ -144,5 +214,6 @@ if FAILS:
         print("  - " + failure)
     raise SystemExit(1)
 print("PASS: public API checker fixtures (name, type, ByVal/ByRef, Optional/default, "
-      "parameter order, return type, additive API and module movement fail; "
-      "body/format/PROB-helper/benchmark-exporter edits pass)")
+      "parameter order, return type, additive API, module movement, a newly tracked or "
+      "missing src module and a non-Git root fail; body/format/PROB-helper/"
+      "benchmark-exporter edits and untracked src files pass)")

@@ -8,6 +8,12 @@ The contract is defined by `.github/excel-evidence-policy.json` and validated by
 `benchmark/excel_certification.py` / `benchmark/check_excel_certification.py`.
 The self-hosted workflow emits `artifacts/excel-vba-ci/excel-certification.json`.
 
+The policy's `regression_sources` stays an explicit list, because the Excel
+runner reads it and imports the modules in list order. `benchmark/check_module_lists.py`
+fails when that list differs from the `.bas` files Git tracks under `src/` and
+`tests/`, in either direction, or when such a file is present but untracked, so
+a new module cannot escape the evidence binding. The comparison ignores order.
+
 **Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 
 ## What a regression record proves
