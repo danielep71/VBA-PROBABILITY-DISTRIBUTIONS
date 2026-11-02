@@ -386,16 +386,18 @@ def runs_on_every_pull_request(triggers: Any) -> tuple[bool, str]:
     for key in ("paths", "paths-ignore"):
         if key in config:
             return False, f"pull_request is filtered by {key}"
+    # GitHub evaluates branch patterns in order, and a later `!pattern` can
+    # exclude what an earlier one included. Rather than model that, any
+    # negative pattern or branches-ignore withholds credit (conservative).
+    if "branches-ignore" in config:
+        return False, "pull_request uses branches-ignore, which is not evaluated"
     branches = config.get("branches")
     if branches is not None:
-        patterns = branches if isinstance(branches, list) else [branches]
-        if not any(fnmatch.fnmatchcase(DEFAULT_BRANCH, str(p)) for p in patterns):
+        patterns = [str(p) for p in (branches if isinstance(branches, list) else [branches])]
+        if any(p.startswith("!") for p in patterns):
+            return False, "pull_request branches use a negative pattern, which is not evaluated"
+        if not any(fnmatch.fnmatchcase(DEFAULT_BRANCH, p) for p in patterns):
             return False, f"pull_request branches exclude {DEFAULT_BRANCH}"
-    ignored = config.get("branches-ignore")
-    if ignored is not None:
-        patterns = ignored if isinstance(ignored, list) else [ignored]
-        if any(fnmatch.fnmatchcase(DEFAULT_BRANCH, str(p)) for p in patterns):
-            return False, f"pull_request branches-ignore covers {DEFAULT_BRANCH}"
     types = config.get("types")
     if types is not None:
         listed = set(types if isinstance(types, list) else [types])

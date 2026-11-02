@@ -102,7 +102,9 @@ The checker is deliberately conservative: it recognizes a few step shapes and
 reports everything else, so an ambiguous step has to be restructured. A file
 counts as run when either of these executes it:
 
-- a `run:` step of a workflow whose `pull_request` trigger has no path filter.
+- a `run:` step of a workflow whose `pull_request` trigger has no path filter,
+  no `branches-ignore` and no negative (`!`) branch pattern, and whose
+  `branches`, if any, include the default branch.
   The step must use the default or `bash` shell and must not be
   `continue-on-error`. Every line must be recognized: blank lines, comments, a
   top-level `cd <dir>`, plain commands (redirections and leading assignments

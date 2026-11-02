@@ -329,6 +329,21 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(report["status"], "pass", report["findings"])
         self.assertEqual({row["level"] for row in report["tests"]}, {"with full proofs"})
 
+    def test_negative_branch_patterns_and_branches_ignore_withhold_credit(self) -> None:
+        # Review finding: `['**', '!main']` excludes pull requests into main;
+        # ordered include/exclude patterns are not modelled, so no credit.
+        for on in ("pull_request:\n    branches: ['**', '!main']",
+                   "pull_request:\n    branches: ['!release/**', main]",
+                   "pull_request:\n    branches-ignore: [docs/**]"):
+            with self.subTest(on=on):
+                text = workflow("- run: python test_a.py", on=on)
+                repository = self.repo({".github/workflows/ci.yml": text, "test_a.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
+        text = workflow("- run: python test_a.py",
+                        on="pull_request:\n    branches: [main, 'release/**']")
+        repository = self.repo({".github/workflows/ci.yml": text, "test_a.py": SCRIPT})
+        self.assertEqual(repository.check()["status"], "pass")
+
     def test_selection_gate_must_quote_the_variable_for_expansion(self) -> None:
         # Review finding: single quotes stop expansion, so `'$FULL_PROOFS'` is a
         # literal string and the gated test never runs; shlex hides the quotes.
