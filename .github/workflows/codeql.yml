@@ -13,9 +13,9 @@ run-name: CodeQL — ${{ github.ref_name }} @ ${{ github.sha }}
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
   schedule:
     - cron: "17 4 * * 2"
   workflow_dispatch:
