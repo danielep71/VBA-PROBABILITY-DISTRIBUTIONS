@@ -274,27 +274,26 @@ class CoverageTests(unittest.TestCase):
                                         "test_a.py": SCRIPT})
                 self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
 
-    def test_outcome_must_be_enforced_not_merely_mentioned(self) -> None:
-        # Review finding: echoing the outcome does not make a failure blocking.
+    def test_continue_on_error_steps_are_never_credited(self) -> None:
+        # Review finding: a mentioned outcome does not make a failure blocking.
+        # Aggregation is not analyzed at all: a continue-on-error test step is
+        # reported whatever later steps do with its outcome.
         enforcers = [
             '- if: always()\n  run: echo "${{ steps.t.outcome }}"',
             '- if: always()\n  run: test "${{ steps.t.outcome }}" = failure',
             '- if: always()\n  run: test "${{ steps.t.outcome }}" = success || true',
-            '- if: always()\n  continue-on-error: true\n  run: test "${{ steps.t.outcome }}" = success',
-            '- if: github.event_name == \'push\'\n  run: test "${{ steps.t.outcome }}" = success',
             '- name: "outcome ${{ steps.t.outcome }}"\n  run: echo checked',
+            '- if: always()\n  env:\n    OUTCOME: ${{ steps.t.outcome }}\n'
+            '  run: test "$OUTCOME" = success',
         ]
         for enforcer in enforcers:
             with self.subTest(enforcer=enforcer):
                 steps = f"- id: t\n  continue-on-error: true\n  run: python test_a.py\n{enforcer}"
                 repository = self.repo({".github/workflows/ci.yml": workflow(steps),
                                         "test_a.py": SCRIPT})
-                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
-        steps = ("- id: t\n  continue-on-error: true\n  run: python test_a.py\n"
-                 "- if: always()\n  env:\n    OUTCOME: ${{ steps.t.outcome }}\n"
-                 '  run: test "$OUTCOME" = success')
-        repository = self.repo({".github/workflows/ci.yml": workflow(steps), "test_a.py": SCRIPT})
-        self.assertEqual(repository.check()["status"], "pass")
+                findings = self.findings(repository.check())
+                self.assertEqual(list(findings), ["test_a.py"])
+                self.assertIn("continue-on-error", findings["test_a.py"])
 
     def test_package_load_tests_hook_withholds_discovery_credit(self) -> None:
         # Review finding: a package hook replaces discovery below it.
@@ -309,29 +308,97 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(list(findings), ["tests/pkg/test_a.py"])
         self.assertIn("load_tests hook in tests/pkg/__init__.py", findings["tests/pkg/test_a.py"])
 
-    def test_recognized_conditions_and_aggregated_continue_on_error_give_credit(self) -> None:
+    def test_selection_variable_must_be_bound_exactly_to_the_selection_output(self) -> None:
+        # Review finding: `${{ needs.select.outputs.full == 'false' }}` is true
+        # exactly when full proofs are off, so it must not count as the output.
+        gate = 'if [[ "$FULL_PROOFS" == "true" ]]; then\n  python test_tool.py\nfi'
+        for value in ("${{ needs.select.outputs.full == 'false' }}",
+                      "${{ !needs.select.outputs.full }}",
+                      "${{ needs.other.outputs.full }}",
+                      "prefix-${{ needs.select.outputs.full }}"):
+            with self.subTest(value=value):
+                steps = (f"- env:\n    FULL_PROOFS: \"{value}\"\n  run: |\n"
+                         + textwrap.indent(gate, "    "))
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_tool.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_tool.py"])
+        steps = ("- env:\n    FULL_PROOFS: ${{needs.select.outputs.full}}\n  run: |\n"
+                 + textwrap.indent(gate, "    "))
+        repository = self.repo({".github/workflows/ci.yml": workflow(steps), "test_tool.py": SCRIPT})
+        report = repository.check()
+        self.assertEqual(report["status"], "pass", report["findings"])
+        self.assertEqual({row["level"] for row in report["tests"]}, {"with full proofs"})
+
+    def test_named_unittest_modules_must_define_a_testcase(self) -> None:
+        # Review finding: unittest never runs checks kept under
+        # `if __name__ == "__main__"` in a module it is given by name.
+        main_only = "import sys\nif __name__ == '__main__':\n    sys.exit(1)\n"
+        for command in ("python -m unittest test_a.py test_b.py",
+                        "python -m unittest test_a test_b"):
+            with self.subTest(command=command):
+                repository = self.repo({".github/workflows/ci.yml": workflow(f"- run: {command}"),
+                                        "test_a.py": main_only, "test_b.py": UNIT})
+                findings = self.findings(repository.check())
+                self.assertEqual(list(findings), ["test_a.py"])
+                self.assertIn("defines no unittest.TestCase", findings["test_a.py"])
+
+    def test_recognized_step_shapes_give_credit(self) -> None:
         steps = """\
             - if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
               run: python test_a.py
-            - id: b
-              continue-on-error: true
+            - working-directory: sub
               run: |
-                if [[ -n "$X" ]]; then echo prepared; fi
-                python test_b.py
-            - if: always()
-              run: test "${{ steps.b.outcome }}" = success
+                # comments, blank lines, plain commands and redirections are fine
+                echo "preparing" > log.txt
+                set -euo pipefail
+                OPT=1 python3 test_b.py > /dev/null 2>&1
+                cd ..
+                python test_c.py --flag value
             """
         repository = self.repo({".github/workflows/ci.yml": workflow(steps),
-                                "test_a.py": SCRIPT, "test_b.py": SCRIPT})
+                                "test_a.py": SCRIPT, "sub/test_b.py": SCRIPT, "test_c.py": SCRIPT})
         report = repository.check()
         self.assertEqual(report["status"], "pass", report["findings"])
         self.assertEqual({row["level"] for row in report["tests"]}, {"always"})
 
+    def test_one_unrecognized_line_withholds_credit_from_the_whole_step(self) -> None:
+        # Earlier lines can end the step before the test, so the reader does
+        # not try to follow them: the step must be restructured instead.
+        lines = {
+            "early exit": 'if [[ -z "$X" ]]; then exit 0; fi',
+            "exit": "exit 0",
+            "errexit off": "set +e",
+            "substitution": 'echo "$(date)"',
+            "subshell": "( cd sub )",
+            "list": "test -f marker && echo found",
+            "loop": "for f in a b; do echo $f; done",
+            "heredoc": "cat <<EOF",
+            "cd with list": "cd sub && echo moved",
+            "nested gate": 'if [[ "${{ needs.select.outputs.full }}" == "true" ]]; then\n'
+                           'if [[ "${{ needs.select.outputs.full }}" == "true" ]]; then\nfi\nfi',
+        }
+        for name, line in lines.items():
+            with self.subTest(name):
+                steps = "- run: |\n" + textwrap.indent(f"{line}\npython test_a.py", "    ")
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_a.py": SCRIPT})
+                findings = self.findings(repository.check())
+                self.assertEqual(list(findings), ["test_a.py"])
+                self.assertIn("not credited from", findings["test_a.py"])
+        for name, extra in {"shell": "  shell: sh\n", "interpreter option": ""}.items():
+            with self.subTest(name):
+                command = "python -u test_a.py" if name == "interpreter option" else "python test_a.py"
+                steps = f"- run: {command}\n{extra}"
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_a.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
+
     def test_job_skipped_with_a_selected_dependency_is_selected(self) -> None:
-        text = workflow("- run: echo select") + textwrap.indent(textwrap.dedent("""\
+        text = workflow("- run: echo select").replace("  check:\n", "  select:\n") \
+            + textwrap.indent(textwrap.dedent("""\
               study:
-                needs: check
-                if: needs.check.outputs.full == 'true'
+                needs: select
+                if: needs.select.outputs.full == 'true'
                 runs-on: ubuntu-24.04
                 steps:
                   - run: python test_study.py

@@ -95,12 +95,20 @@ in CI on every pull request. It runs on every event in the Accuracy Gate's
 its live check and fixtures (`tests/test_ci_test_coverage.py`) are registered in
 `benchmark/verification_depth.json`.
 
-A file counts as run when either of these executes it:
+The checker is deliberately conservative: it recognizes a few step shapes and
+reports everything else, so an ambiguous step has to be restructured. A file
+counts as run when either of these executes it:
 
-- a `run:` step of a workflow whose `pull_request` trigger has no path filter,
-  through `python <file>`, `python -m unittest <file or module>` or
-  `python -m unittest discover` (discovery counts only modules that define a
-  `unittest.TestCase`, inside packages without a `load_tests` hook);
+- a `run:` step of a workflow whose `pull_request` trigger has no path filter.
+  The step must use the default or `bash` shell and must not be
+  `continue-on-error`. Every line must be recognized: blank lines, comments, a
+  top-level `cd <dir>`, plain commands (redirections and leading assignments
+  allowed), and `python`/`python3` running `<file>`,
+  `-m unittest <file or module>` or `-m unittest discover`. One other line
+  withholds credit from the whole step: a command list, a pipeline, a subshell,
+  a substitution, a heredoc, a loop, `exit`, `set +e` or another `if`.
+  unittest counts only modules that define a `unittest.TestCase`, and discovery
+  only inside packages without a `load_tests` hook.
 - an entry of a runner list that such a step invokes. Only
   `benchmark/test_evidence_tools.py` is registered, and its `--checks-only`
   filter is applied. `benchmark/refresh_evidence.py` is not registered: CI never
@@ -108,20 +116,17 @@ A file counts as run when either of these executes it:
 
 A run gated by the accuracy-proof selection counts only if
 `select_accuracy_checks.py` does not treat a change to that test file as
-metadata-only. That covers a `needs.select.outputs.full == 'true'` condition,
-and the `then` branch of a shell test comparing that output with `true`.
+metadata-only. Two gates are recognized:
 
-When execution or failure propagation cannot be established, the run does not
-count. That applies to:
+- `if: needs.select.outputs.full == 'true'`;
+- the `then` branch of a single
+  `if [[ "$VAR" == "true" ]]; then` ... `else` ... `fi` block, where `VAR` is
+  bound exactly to `${{ needs.select.outputs.full }}`. The `else` branch does
+  not count.
 
-- any other condition or shell branch;
-- a command in an `&&`/`||` list, before a pipe, backgrounded or negated;
-- `continue-on-error`, unless a later unconditional step runs
-  `test "${{ steps.<id>.outcome }}" = success` (directly or through an env
-  variable).
-
-Workflows are read with a small parser for block-style YAML; a construct outside
-it is an error (exit 2), not a pass.
+Any other condition does not count either. The report names each withheld step
+and the reason. Workflows are read with a small parser for block-style YAML; a
+construct outside it is an error (exit 2), not a pass.
 
 To add a test, add a benchmark test to the `commands` list in
 `benchmark/test_evidence_tools.py`. Put a `unittest` module under `tests/`,

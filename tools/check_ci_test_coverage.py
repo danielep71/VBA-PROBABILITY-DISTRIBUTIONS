@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
 """Fail when a tracked test_*.py file is not executed on every pull request.
 
-Credit comes only from what CI really runs on a pull request to ``main``:
+The checker is deliberately conservative. It credits only a few explicitly
+recognized shapes and reports everything else, so an ambiguous step has to be
+restructured rather than trusted. Credit comes from:
 
 * a ``run:`` step of a workflow whose ``pull_request`` trigger has no path
-  filter, invoking ``python <file>``, ``python -m unittest <file|module>`` or
-  ``python -m unittest discover`` (resolved against the step's working
-  directory; discovery credits only modules that define a ``TestCase``, inside
-  packages without a ``load_tests`` hook);
+  filter, in the default or ``bash`` shell, without ``continue-on-error``, whose
+  every line is recognized: blank lines, comments, a top-level ``cd <dir>``,
+  plain commands (optionally with redirections and leading assignments), and
+  ``python``/``python3`` running ``<file>``, ``-m unittest <file|module>`` or
+  ``-m unittest discover``. A single other line (a command list, pipeline,
+  subshell, substitution, heredoc, loop, ``exit``, ``set +e``, any other
+  ``if`` ...) withholds credit from the whole step. unittest credits only
+  modules that define a ``TestCase``, and discovery only inside packages
+  without a ``load_tests`` hook;
 * an entry of a registered runner list (``RUNNERS``) that such a step invokes,
   with the runner's own filter for its reduced mode applied.
 
 A run is *unconditional* when nothing but job success gates it. A run gated by
-the accuracy-proof selection is *selected*: either ``needs.<job>.outputs.full
-== 'true'`` in an ``if:``, or the ``then`` branch of a shell test comparing a
-variable bound to that output with ``true``. A selected run counts only when
+the accuracy-proof selection is *selected*. Two forms count:
+``needs.select.outputs.full == 'true'`` in an ``if:``, or the ``then`` branch of
+one ``if [[ "$VAR" == "true" ]]; then`` ... ``fi``. VAR must be bound exactly
+to ``${{ needs.select.outputs.full }}``, or the expression itself may appear
+inline. The ``else`` branch earns nothing. A selected run counts only when
 ``tools/select_accuracy_checks.py`` does not treat a change to that file as
-metadata-only, so editing the file always makes it run.
-
-Credit is withheld whenever execution or failure propagation cannot be
-established: a path-filtered trigger, any other condition or shell branch, a
-command in an ``&&``/``||`` list, before a pipe, backgrounded or negated, and
-``continue-on-error`` unless a later unconditional step compares that step's
-outcome with ``success``. ``EXEMPT`` lists reasoned exceptions and is empty.
+metadata-only, so editing the file always makes it run. Any other condition
+earns nothing. ``EXEMPT`` lists reasoned exceptions and is empty.
 
 Workflows are read with a small standard-library parser for the block-style
 YAML subset GitHub workflows use; anything outside it is an error (exit 2).
@@ -48,6 +52,8 @@ TOOL_NAME = "Every tracked test file runs in CI"
 DEFAULT_BRANCH = "main"
 TEST_FILE = re.compile(r"test_[^/]*\.py")
 WORKFLOW_DIR = ".github/workflows"
+# The job whose `full` output is the accuracy-proof selection (select_accuracy_checks.py).
+SELECT_JOB = "select"
 
 # Tracked test files deliberately not run in CI: path -> reason. Keep it empty
 # unless a file truly cannot run on a hosted runner; the guard reports an entry
@@ -389,7 +395,7 @@ ALWAYS_TERMS = (
     re.compile(r"steps\.[\w-]+\.(outcome|conclusion)\s*==\s*'success'"),
     re.compile(r"needs\.[\w-]+\.result\s*==\s*'success'"),
 )
-SELECTION_TERM = re.compile(r"needs\.[\w-]+\.outputs\.full\s*==\s*'true'")
+SELECTION_TERM = re.compile(r"needs\." + re.escape(SELECT_JOB) + r"\.outputs\.full\s*==\s*'true'")
 UNGATED_TERMS = (re.compile(r"always\(\)"), re.compile(r"!\s*cancelled\(\)"))
 
 
@@ -421,19 +427,37 @@ def truthy(value: Any) -> bool:
 
 @dataclass
 class Invocation:
-    """One interpreter run: working directory (repository-relative) and argv."""
+    """One interpreter run: working directory (repository-relative) and argv.
+
+    ``reason`` explains why a NEVER-level invocation earns no credit.
+    """
 
     cwd: str
     argv: list[str]
     level: int
     origin: str
+    reason: str = ""
 
 
-SHELL_OPEN = {"if", "while", "until", "for", "case", "select"}
-SHELL_CLOSE = {"fi", "done", "esac"}
-SHELL_PREFIX = {"then", "else", "do", "elif", "time", "exec", "!", "{", "}", "(", ")"}
-SEPARATORS = {";", "&&", "||", "|", "&", ";;", "|&"}
-PYTHON = re.compile(r"(?:.*/)?python(?:3(?:\.\d+)?)?")
+# ``run:`` scripts are not interpreted as bash. Credit needs one of a few
+# explicitly recognized line shapes, and a single line outside them withholds
+# credit from the whole step: a false report makes the author restructure the
+# step, a false pass would hide a test that never runs.
+PYTHON_NAMES = {"python", "python3"}
+# Tokens that join or group commands: any of them makes a line unrecognized.
+CONTROL = {";", "&&", "||", "|", "&", ";;", "|&", "(", ")", "{", "}", "!"}
+REDIRECTS = {">", ">>", "<", ">&", "&>", "&>>", ">|"}
+HEREDOCS = {"<<", "<<<", "<<-"}
+# Commands that can end the script early, change error handling, or start
+# shell syntax this reader does not follow.
+UNSAFE_HEADS = {
+    "exit", "return", "exec", "eval", "source", ".", "trap", "shopt", "alias",
+    "function", "unset", "pushd", "popd", "break", "continue", "kill", "wait",
+    "builtin", "command", "enable", "ulimit", "coproc", "time", "if", "then",
+    "else", "elif", "fi", "for", "while", "until", "do", "done", "case", "esac",
+    "select", "[[",
+}
+SELECTION_OUTPUT = re.compile(r"\$\{\{\s*needs\." + re.escape(SELECT_JOB) + r"\.outputs\.full\s*\}\}")
 
 
 def logical_lines(script: str) -> list[str]:
@@ -450,13 +474,6 @@ def logical_lines(script: str) -> list[str]:
     return lines
 
 
-SELECTION_EXPRESSION = re.compile(r"\$\{\{\s*needs\.[\w-]+\.outputs\.full\s*\}\}")
-# A command joined to another by one of these can fail without failing the
-# step: `a || b` masks a, `a && b` may skip b, a pipeline reports only its last
-# command without pipefail, and `&` backgrounds it.
-MASKING = {"&&", "||", "|", "|&", "&"}
-
-
 def comparison_operands(words: list[str]) -> tuple[str, str] | None:
     """Operands of a lone `[ x = y ]`, `[[ x == y ]]` or `test x = y`."""
     if words[:1] == ["test"]:
@@ -470,80 +487,117 @@ def comparison_operands(words: list[str]) -> tuple[str, str] | None:
     return None
 
 
-def selection_branch_level(condition: list[str], selection_vars: set[str]) -> int:
-    """SELECTED only for the `then` branch of a proven `<selection> == true` test."""
-    operands = comparison_operands(condition)
+def is_selection_gate(tokens: list[str], selection_vars: set[str]) -> bool:
+    """`if [[ "$VAR" == "true" ]]; then` with VAR bound exactly to the selection output."""
+    if tokens[:1] != ["if"] or tokens[-2:] != [";", "then"]:
+        return False
+    operands = comparison_operands(tokens[1:-2])
     if operands is None or "true" not in operands:
-        return NEVER
+        return False
     refs = {f"${var}" for var in selection_vars} | {f"${{{var}}}" for var in selection_vars}
-    if any(op in refs or SELECTION_EXPRESSION.fullmatch(op) for op in operands):
-        return SELECTED
-    return NEVER
+    return any(op in refs or SELECTION_OUTPUT.fullmatch(op) for op in operands)
 
 
-def shell_commands(script: str, selection_vars: set[str]) -> list[tuple[list[str], int]]:
-    """Split a bash script into simple commands, each with its run level.
+def strip_redirections(tokens: list[str]) -> list[str]:
+    words: list[str] = []
+    index = 0
+    while index < len(tokens):
+        if tokens[index] in REDIRECTS:
+            if words and words[-1].isdigit():
+                words.pop()  # the file descriptor of `2>file`
+            index += 2
+            continue
+        words.append(tokens[index])
+        index += 1
+    return words
 
-    Conservative by design: a command runs ALWAYS only at top level, outside
-    any `&&`/`||` list or pipeline. Inside `if`, only the `then` branch of a
-    proven full-proof selection test is SELECTED; every other branch, loop,
-    `case` and condition command is NEVER.
+
+def analyze_script(script: str, selection_vars: set[str]) -> tuple[list[tuple[str, list[str], int]], str]:
+    """Return (cd target or "", python argv, level) per recognized line, and a reason.
+
+    A non-empty reason means the step is unrecognized and earns no credit.
     """
-    commands: list[tuple[list[str], int]] = []
-    frames: list[int] = []
-    carry: str | None = None
-    for line in logical_lines(script):
+    found: list[tuple[str, list[str], int]] = []
+    reason = ""
+    branch: int | None = None  # None outside the gate; level of the current branch inside
+    for number, line in enumerate(logical_lines(script), 1):
         lexer = shlex.shlex(line, posix=True, punctuation_chars=";&|()<>")
         lexer.whitespace_split = True
+        lexer.commenters = "#"
         try:
             tokens = list(lexer)
-        except ValueError:
-            if "test_" in line or "unittest" in line:
-                commands.append(([], NEVER))
-            carry = None
+        except ValueError as error:
+            reason = reason or f"line {number}: {error}"
             continue
-        segments: list[tuple[list[str], str | None, str | None]] = []
-        current: list[str] = []
-        before = carry
-        for token in tokens:
-            if token in SEPARATORS:
-                segments.append((current, before, token))
-                current, before = [], token
+        if not tokens:
+            continue
+        where = f"line {number} `{line.strip()}`"
+        if any("`" in token or "$(" in token for token in tokens) or any(
+            token in HEREDOCS for token in tokens
+        ):
+            reason = reason or f"{where}: command substitution or heredoc"
+            continue
+        if branch is None and tokens[0] == "if" and is_selection_gate(tokens, selection_vars):
+            branch = SELECTED
+            continue
+        if branch is not None and tokens == ["else"]:
+            branch = NEVER
+            continue
+        if branch is not None and tokens == ["fi"]:
+            branch = None
+            continue
+        words = strip_redirections(tokens)
+        while words and re.fullmatch(r"[A-Za-z_]\w*=\S*", words[0]):
+            words.pop(0)  # leading variable assignments
+        if not words:
+            continue
+        if any(token in CONTROL for token in words):
+            reason = reason or f"{where}: command lists, pipelines, grouping and `!` are not recognized"
+            continue
+        head, level = words[0], ALWAYS if branch is None else branch
+        if head in UNSAFE_HEADS:
+            reason = reason or (
+                f"{where}: only `if [[ \"$VAR\" == \"true\" ]]; then` on the selection output is recognized"
+                if head == "if" else f"{where}: `{head}` is not recognized")
+            continue
+        if head == "set" and any(word.startswith("+") for word in words[1:]):
+            reason = reason or f"{where}: `set +...` can disable error handling"
+            continue
+        if head == "cd":
+            if len(words) != 2 or words[1].startswith("-") or branch is not None:
+                reason = reason or f"{where}: only a top-level `cd <dir>` is recognized"
+                continue
+            found.append((words[1], [], level))
+        elif head in PYTHON_NAMES:
+            found.append(("", words[1:], level))
+    if branch is not None:
+        reason = reason or "unterminated `if`"
+    return found, reason
+
+
+def python_invocations(script: str, cwd: str, level: int, origin: str,
+                       selection_vars: set[str], reason: str = "") -> list[Invocation]:
+    lines, unrecognized = analyze_script(script, selection_vars)
+    reason = reason or unrecognized
+    found: list[Invocation] = []
+    for target, argv, line_level in lines:
+        if target:
+            moved = normalize(cwd, target)
+            if moved is None:
+                reason = reason or f"`cd {target}` leaves the repository"
             else:
-                current.append(token)
-        segments.append((current, before, None))
-        carry = None
-        if not segments[-1][0] and segments[-1][1] in MASKING:
-            carry = segments[-1][1]  # the list or pipeline continues on the next line
-        for words, before, after in segments:
-            words = list(words)
-            negated = False
-            while words and words[0] in SHELL_PREFIX:
-                keyword = words.pop(0)
-                negated = negated or keyword == "!"
-                if keyword in ("else", "elif") and frames:
-                    frames[-1] = NEVER
-            if not words:
-                continue
-            head = words[0]
-            if head in SHELL_CLOSE:
-                if frames:
-                    frames.pop()
-                continue
-            if head in SHELL_OPEN:
-                frames.append(selection_branch_level(words[1:], selection_vars)
-                              if head == "if" else NEVER)
-                if words[1:]:
-                    commands.append((words[1:], NEVER))  # a condition cannot fail the step
-                continue
-            level = max(frames, default=ALWAYS)
-            if before in MASKING or after in MASKING or negated:
-                level = NEVER
-            while words and re.fullmatch(r"\w+=.*", words[0]):
-                words.pop(0)
-            if words:
-                commands.append((words, level))
-    return commands
+                cwd = moved
+            continue
+        if not argv or (argv[0] == "-m" and argv[1:2] != ["unittest"]):
+            continue  # no script, or another module: not a test runner
+        why = reason
+        if not why and argv[0].startswith("-") and argv[0] != "-m":
+            why = f"interpreter option `{argv[0]}` is not recognized"
+        if not why and line_level == NEVER:
+            why = "it runs only in the `else` branch of the full-proof gate"
+        final = NEVER if why else max(level, line_level)
+        found.append(Invocation(cwd, argv, final, origin, why))
+    return found
 
 
 def normalize(cwd: str, relative: str) -> str | None:
@@ -551,53 +605,6 @@ def normalize(cwd: str, relative: str) -> str | None:
     if joined == ".." or joined.startswith("../") or posixpath.isabs(joined):
         return None
     return joined
-
-
-def python_invocations(script: str, cwd: str, level: int, origin: str,
-                       selection_vars: set[str]) -> list[Invocation]:
-    found: list[Invocation] = []
-    for words, command_level in shell_commands(script, selection_vars):
-        if not words:
-            continue
-        if words[0] == "cd" and len(words) == 2 and command_level == ALWAYS:
-            moved = normalize(cwd, words[1])
-            cwd = moved if moved is not None else cwd
-            continue
-        if not PYTHON.fullmatch(words[0]):
-            continue
-        argv = words[1:]
-        while argv and argv[0].startswith("-") and argv[0] not in ("-m", "-c"):
-            option = argv.pop(0)
-            if option in ("-W", "-X") and argv:
-                argv.pop(0)
-        if argv and argv[0] != "-c":
-            found.append(Invocation(cwd, argv, max(level, command_level), origin))
-    return found
-
-
-def enforces_success(step: Any, step_id: str, job_env: Any) -> bool:
-    """Whether ``step`` fails unless ``steps.<step_id>.outcome`` is success.
-
-    Only a top-level `test`/`[ ]`/`[[ ]]` comparison of that outcome (inline
-    or through an env variable bound to it) with `success`, in an unconditional
-    step that is not itself continue-on-error, counts; a mere mention does not.
-    """
-    if not isinstance(step, dict) or "run" not in step or truthy(step.get("continue-on-error")):
-        return False
-    if condition_level(step.get("if"))[0] != ALWAYS:
-        return False
-    outcome = re.compile(r"\$\{\{\s*steps\." + re.escape(step_id) + r"\.outcome\s*\}\}")
-    env = dict(job_env) if isinstance(job_env, dict) else {}
-    env.update(step.get("env") or {})
-    refs = {form.format(name) for name, value in env.items() if outcome.fullmatch(str(value))
-            for form in ("${}", "${{{}}}")}
-    for words, level in shell_commands(str(step["run"]), set()):
-        operands = comparison_operands(words) if level == ALWAYS else None
-        if operands and "success" in operands and any(
-            op in refs or outcome.fullmatch(op) for op in operands
-        ):
-            return True
-    return False
 
 
 def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
@@ -635,7 +642,7 @@ def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
         if not isinstance(job, dict) or "steps" not in job:
             continue
         level = job_level(job_id)
-        job_defaults = ((job.get("defaults") or {}).get("run") or {}) if isinstance(job.get("defaults"), dict) else {}
+        job_run = ((job.get("defaults") or {}).get("run") or {}) if isinstance(job.get("defaults"), dict) else {}
         job_env = job.get("env") or {}
         steps = job.get("steps") or []
         if not isinstance(steps, list):
@@ -643,27 +650,29 @@ def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
         for number, step in enumerate(steps, 1):
             if not isinstance(step, dict) or "run" not in step:
                 continue
+            origin = f"{path} › {job.get('name', job_id)} › {step.get('name', f'step {number}')}"
             step_level = max(level, condition_level(step.get("if"))[0])
-            if truthy(step.get("continue-on-error")):
-                step_id = step.get("id")
-                aggregated = step_id is not None and any(
-                    enforces_success(later, str(step_id), job_env) for later in steps[number:]
-                )
-                if not aggregated:
-                    step_level = NEVER
-            cwd = step.get("working-directory") or job_defaults.get("working-directory") \
+            why = ""
+            if level == NEVER:
+                why = "its job has an unrecognized condition, needs, or continue-on-error"
+            elif step_level == NEVER:
+                why = "its `if:` condition is not recognized"
+            elif truthy(step.get("continue-on-error")):
+                why = "the step is continue-on-error"
+            shell = step.get("shell") or job_run.get("shell") or defaults.get("shell")
+            if not why and shell not in (None, "bash"):
+                why = f"shell `{shell}` is not recognized (only the default or `bash`)"
+            cwd = step.get("working-directory") or job_run.get("working-directory") \
                 or defaults.get("working-directory") or "."
             cwd = normalize(".", str(cwd))
             if cwd is None or "${{" in cwd:
                 continue
             env = dict(job_env) if isinstance(job_env, dict) else {}
             env.update(step.get("env") or {})
-            selection_vars = {
-                str(name) for name, value in env.items()
-                if re.search(r"needs\.[\w-]+\.outputs\.full", str(value))
-            }
-            origin = f"{path} › {job.get('name', job_id)} › {step.get('name', f'step {number}')}"
-            found.extend(python_invocations(str(step["run"]), cwd, step_level, origin, selection_vars))
+            selection_vars = {str(name) for name, value in env.items()
+                              if SELECTION_OUTPUT.fullmatch(str(value).strip())}
+            found.extend(python_invocations(str(step["run"]), cwd, step_level, origin,
+                                            selection_vars, why))
     return found, reason
 
 
@@ -760,6 +769,8 @@ def unittest_targets(root: Path, tracked: set[str], invocation: Invocation,
         for arg in args:
             if arg in flags:
                 continue
+            if arg.startswith("-"):
+                return []  # an option this reader does not know
             candidate = arg if arg.endswith(".py") else None
             if candidate is None:
                 parts = arg.split(".")
@@ -769,8 +780,18 @@ def unittest_targets(root: Path, tracked: set[str], invocation: Invocation,
                         candidate = probe
                         break
             resolved = normalize(invocation.cwd, candidate) if candidate else None
-            if resolved is not None:
-                targets.append(resolved)
+            if resolved is None:
+                continue
+            # unittest loads only TestCase classes (or a load_tests hook) from a
+            # named module; checks under `if __name__ == "__main__"` never run.
+            if resolved in tracked and not defines_test_case(
+                (root / resolved).read_text(encoding="utf-8", errors="replace")
+            ):
+                coverage.notes.setdefault(resolved, []).append(
+                    f"named by {invocation.origin} but defines no unittest.TestCase"
+                )
+                continue
+            targets.append(resolved)
         return targets
     start, pattern = ".", "test*.py"
     positional: list[str] = []
@@ -841,10 +862,19 @@ def resolve(root: Path, tracked: set[str], invocations: list[Invocation]) -> Cov
     while queue:
         invocation = queue.pop(0)
         key = (invocation.cwd, tuple(invocation.argv), invocation.level, invocation.origin)
-        if key in seen or invocation.level == NEVER:
+        if key in seen:
             continue
         seen.add(key)
         argv = invocation.argv
+        if invocation.level == NEVER:
+            # Name the withheld step on the file it would have run, so the
+            # report says which step to restructure.
+            script = normalize(invocation.cwd, argv[0]) if argv[0] != "-m" else None
+            if script is not None and TEST_FILE.fullmatch(posixpath.basename(script)):
+                coverage.notes.setdefault(script, []).append(
+                    f"not credited from {invocation.origin}: {invocation.reason or 'never runs'}"
+                )
+            continue
         if argv[0] == "-m":
             if len(argv) > 1 and argv[1] == "unittest":
                 for path in unittest_targets(root, tracked, invocation, coverage):
