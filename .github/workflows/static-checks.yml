@@ -3,9 +3,9 @@ run-name: Static checks — ${{ github.ref_name }} @ ${{ github.sha }}
 
 # Excel-free integrity checks of the repository itself: committed whitespace,
 # procedure-scoped VBA jumps, release semantics, release-bundle builder
-# fixtures, Python correctness lint (Ruff) and workflow validity. They
-# complement, but never replace, the Excel/VBA regression, the numerical
-# Accuracy Gate or release certification. The checkers live in tools/ and are
+# fixtures, PR-milestone workflow fixtures, Python correctness lint (Ruff)
+# and workflow validity. They complement, but never replace, the Excel/VBA
+# regression, the numerical Accuracy Gate or release certification. The checkers live in tools/ and are
 # imported from the portfolio template; see tools/README.md.
 #
 # Every check runs even when an earlier one fails, so one run reports every
@@ -122,6 +122,13 @@ jobs:
         # Release workflow runs on a version tag (#31).
         run: python3 .github/scripts/build_release_bundle.py --self-test
 
+      - name: Exercise the PR-milestone workflow fixtures
+        id: pr-milestones-self-test
+        continue-on-error: true
+        # Shape and script of .github/workflows/pr-milestones.yml, which runs
+        # on pull_request_target and so is never tested by its own runs (#109).
+        run: python3 -m unittest discover -s tests -p 'test_pr_milestones_workflow.py'
+
       - name: Install the hash-locked Python linter
         id: ruff-install
         continue-on-error: true
@@ -196,6 +203,7 @@ jobs:
           RELEASE_SEMANTICS_SELF_TEST: ${{ steps.release-semantics-self-test.outcome }}
           RELEASE_SEMANTICS: ${{ steps.release-semantics.outcome }}
           RELEASE_BUNDLE_SELF_TEST: ${{ steps.release-bundle-self-test.outcome }}
+          PR_MILESTONES_SELF_TEST: ${{ steps.pr-milestones-self-test.outcome }}
           RUFF_INSTALL: ${{ steps.ruff-install.outcome }}
           RUFF: ${{ steps.ruff.outcome }}
           ACTIONLINT_INSTALL: ${{ steps.actionlint-install.outcome }}
@@ -210,6 +218,7 @@ jobs:
             "Release-semantics fixtures:$RELEASE_SEMANTICS_SELF_TEST" \
             "Release semantics:$RELEASE_SEMANTICS" \
             "Release bundle fixtures:$RELEASE_BUNDLE_SELF_TEST" \
+            "PR-milestone workflow fixtures:$PR_MILESTONES_SELF_TEST" \
             "Python linter install:$RUFF_INSTALL" \
             "Python correctness lint:$RUFF" \
             "Workflow validator install:$ACTIONLINT_INSTALL" \
