@@ -17,6 +17,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
 | `check_binaries.py` | Every tracked binary is an approved `assets/` image or has a reviewed SHA-256 in [`.github/binary-allowlist.json`](../.github/binary-allowlist.json) ([below](#tracked-binaries)); tested by `tests/test_check_binaries.py` |
+| `format_vba.py` | Checks (`--check`) or applies (`--write`) the [VBA source layout](#vba-source-layout), ratcheting `vba_layout_baseline.json`; its fixtures are [`tests/test_format_vba.py`](../tests/test_format_vba.py) |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
 | `check_vba_source.py`, `check_vba_conditionals.py`, `check_vba_visibility.py` | The VBA source rules of [VBA source checks](#vba-source-checks); their fixtures are unit tests in [`tests/test_check_vba.py`](../tests/test_check_vba.py), not `--self-test` |
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
@@ -41,6 +42,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `whitespace` | `check_committed_whitespace.py --mode committed` on the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
 | `vba-source`, `vba-conditionals`, `vba-visibility` | `check_vba_source.py`, `check_vba_conditionals.py` and `check_vba_visibility.py` on every tracked VBA module |
+| `vba-layout` | `format_vba.py --check` on every tracked VBA module, against `vba_layout_baseline.json` |
 | `release-semantics` | `check_release_semantics.py` |
 | `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
@@ -353,6 +355,62 @@ fixes; 3.10 reached end of life in October 2026. The non-required job
 needs no installed tool, the unit tests included. `mypy.ini` (`python_version`)
 and `ruff.toml` (`target-version`) check the code against the same floor.
 
+## VBA source layout
+
+[`format_vba.py`](format_vba.py) states the layout of every tracked `.bas`,
+`.cls` and `.frm` module under `src/`, `tests/` and `benchmark/`:
+
+1. CRLF line endings, one final line ending and no blank lines at the end of the
+   file;
+2. no trailing white space;
+3. indentation with spaces: each tab of a line's indentation becomes four spaces;
+4. procedure declarations (`Sub`, `Function`, `Property Get/Let/Set`, with any
+   `Public`, `Private`, `Friend` or `Static`), their `End` statements and labels
+   such as `Err_Handler:` start in column one;
+5. exactly two blank lines after each procedure's `End` statement, before the
+   next procedure, its comment banner or a section banner.
+
+Every other line keeps its indentation. That covers this repository's indented
+comment headings inside procedures (`'Declare`, `'Invert`, ...) with their
+statements indented under them, the documentation banner after a declaration,
+continuation lines and blank lines inside procedures and between module-level
+declarations. A physical line carried over by a continuation (a line ending in
+white space and `_`, in code or in a comment) is never moved, and no blank line
+is added to or removed from a logical line: after `End Sub ' note _`, the two
+blank lines wait until the continued comment has ended, and a blank line that
+ends a continuation stays, even at the end of the file. String literals, comments and the header the VBE
+writes (`VERSION`, `BEGIN ... END`, `Object` and `Attribute` lines) are never
+changed; statement keywords followed by a colon (`Else:`, `Loop:`) are not
+labels. The tests prove, on the text of every tracked module and on every
+synthetic case, that formatting leaves the token stream (everything but white
+space and line layout) and the logical lines and statements read by
+[`vba_lexer.py`](vba_lexer.py) unchanged.
+
+I chose these rules from the modules as they are. When I added the check (module
+bytes as of `937e3a6`), the only differences between the 35 tracked modules and this layout
+are blank lines: 38 missing and 37 surplus, in 17 modules. 494 of the 535 gaps
+after an `End` statement are already two blank lines (36 are one, one is none,
+four are three or four), and 20 of the 35 modules already end without blank
+lines (15 end with two or four). No module has a tab, trailing white space, an
+LF-only line ending, or a procedure, `End` or label line out of column one.
+
+```bash
+python3 tools/format_vba.py --check            # every tracked module, with the baseline
+python3 tools/format_vba.py --check --no-baseline
+python3 tools/format_vba.py --write src/M_STATS_PROBDIST_CORE.bas
+```
+
+Every module is bound by hash to the Excel certification record or the
+observation manifest, so I do not reformat one outside an Excel evidence wave.
+Until then, [`vba_layout_baseline.json`](vba_layout_baseline.json) lists the
+modules still out of layout, and the `vba-layout` check ratchets it: a module
+out of layout that it does not list fails, a listed module that is in layout
+fails until its entry is removed, and a listed path that is not a tracked
+module fails. To reformat during an Excel wave, run `--write` on the listed
+modules, re-import them into the VBE, refresh their evidence, remove their
+entries, and delete the baseline file once it lists none. Exit codes: 0 pass,
+1 a module or baseline entry fails, 2 an unreadable or malformed baseline.
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
@@ -420,6 +478,8 @@ layout; they are not verbatim copies.
 | `check_binaries.py` | The binary detection of `tools/check_binaries.py` (`text` unset in `.gitattributes`, or a NUL byte) and its allowlist schema. Here it reads the index rather than the working tree, admits only signature-checked images directly in `assets/`, prints the digest to record, and fails on a NUL-containing file that `.gitattributes` treats as text even when allowlisted. |
 | `tests/test_check_binaries.py` | The temporary-repository fixtures of the template's tests, extended to the digest-pinned demo workbook, the image signature, the stale entry and the unstaged allowlist. |
 | `.github/binary-allowlist.json` | The template's schema (`schema_version`, and a `sha256` and `reason` per path), holding this repository's demo workbook. |
+| `format_vba.py` | `tools/format_vba.py`: the same five layout rules, kept because they match this repository's dominant layout; tracked modules in place of the template's source directories, a committed baseline with a two-way ratchet for modules bound to Excel evidence, `--no-baseline`, statement keywords excluded from labels, and continued comments left in place. |
+| `tests/test_format_vba.py` | `tests/test_format_vba.py`: its rule, literal and header cases, extended with token-stream, idempotence and drift-undo checks on every tracked module's text and the baseline ratchet in temporary Git repositories. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
 | `tools/setup_repository.py` | The template's settings script: preview/apply/check modes, ruleset comparison and read-back; reworked for this repository's baseline (merge methods, features, two required checks), a `--verify` mode and a JSON evidence record |
 | `tests/test_setup_repository.py` | The template's fake-API tests, rebuilt on API responses recorded from this repository |
