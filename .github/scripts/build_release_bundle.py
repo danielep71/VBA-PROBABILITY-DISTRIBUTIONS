@@ -22,6 +22,8 @@ the bundle depends only on the committed bytes.
         --ref v1.0.0 --out dist --notes dist/release-notes.md
     python3 .github/scripts/build_release_bundle.py --self-test
 """
+from __future__ import annotations
+
 import argparse
 import hashlib
 import io
@@ -32,6 +34,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from collections.abc import Callable, Sequence
 
 NAME = "VBA-Probability-Distributions"
 DOCUMENTS = ("CHANGELOG.md", "INSTALLATION.md", "LICENSE", "README.md", "SECURITY.md",
@@ -46,7 +49,7 @@ class BundleError(Exception):
     pass
 
 
-def git(root, *args):
+def git(root: str, *args: str) -> bytes:
     proc = subprocess.run(["git", *args], cwd=root, capture_output=True, check=False)
     if proc.returncode:
         raise BundleError(proc.stderr.decode("utf-8", "replace").strip()
@@ -54,15 +57,15 @@ def git(root, *args):
     return proc.stdout
 
 
-def blob(root, ref, path):
+def blob(root: str, ref: str, path: str) -> bytes:
     try:
         return git(root, "show", f"{ref}:{path}")
     except BundleError:
         raise BundleError(f"{path} is missing at {ref}")
 
 
-def module_paths(root, ref):
-    paths = []
+def module_paths(root: str, ref: str) -> list[str]:
+    paths: list[str] = []
     for directory in MODULE_DIRS:
         listing = git(root, "ls-tree", "--name-only", f"{ref}:{directory}").decode()
         paths += [f"{directory}/{name}" for name in listing.split() if name.endswith(".bas")]
@@ -71,17 +74,17 @@ def module_paths(root, ref):
     return sorted(paths)
 
 
-def crlf(raw, path):
+def crlf(raw: bytes, path: str) -> bytes:
     if b"\r" in raw:
         raise BundleError(f"{path} contains CR at the committed revision; expected LF")
     return raw.replace(b"\n", b"\r\n")
 
 
-def sha256(raw):
+def sha256(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def members(root, ref, version):
+def members(root: str, ref: str, version: str) -> dict[str, bytes]:
     committed = blob(root, ref, "VERSION").decode("utf-8").strip()
     if committed != version:
         raise BundleError(f"VERSION at {ref} is {committed!r}, not {version!r}")
@@ -93,7 +96,7 @@ def members(root, ref, version):
     return files
 
 
-def write_zip(files, prefix):
+def write_zip(files: dict[str, bytes], prefix: str) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         for path in sorted(files):
@@ -105,13 +108,14 @@ def write_zip(files, prefix):
     return buffer.getvalue()
 
 
-def changelog_section(changelog, version):
+def changelog_section(changelog: str, version: str) -> tuple[str, str]:
     lines = changelog.splitlines()
     start = None
+    released = ""
     for i, line in enumerate(lines):
         match = HEADING.match(line)
         if match and match.group(1) == version:
-            start = i
+            start, released = i, match.group(2)
             break
     if start is None:
         raise BundleError(f"CHANGELOG.md has no dated '## [{version}] - YYYY-MM-DD' section")
@@ -120,10 +124,11 @@ def changelog_section(changelog, version):
     body = "\n".join(lines[start + 1:end]).strip()
     if not body:
         raise BundleError(f"CHANGELOG.md section {version} is empty")
-    return HEADING.match(lines[start]).group(2), body
+    return released, body
 
 
-def release_notes(root, ref, version, assets, repository):
+def release_notes(root: str, ref: str, version: str,
+                  assets: Sequence[tuple[str, bytes]], repository: str) -> str:
     changelog = blob(root, ref, "CHANGELOG.md").decode("utf-8")
     released, body = changelog_section(changelog, version)
     base = f"https://github.com/{repository}/blob/v{version}"
@@ -146,7 +151,8 @@ def release_notes(root, ref, version, assets, repository):
     ])
 
 
-def build(root, ref, version, out, notes_path=None, repository=None):
+def build(root: str, ref: str, version: str, out: str, notes_path: str | None = None,
+          repository: str | None = None) -> tuple[str, bytes]:
     if not SEMVER.fullmatch(version):
         raise BundleError(f"{version!r} is not a MAJOR.MINOR.PATCH version")
     prefix = f"{NAME}-{version}"
@@ -166,16 +172,16 @@ def build(root, ref, version, out, notes_path=None, repository=None):
     return zip_name, bundle
 
 
-def self_test():
-    failures = []
+def self_test() -> int:
+    failures: list[str] = []
 
-    def check(condition, message):
+    def check(condition: bool, message: str) -> None:
         if not condition:
             failures.append(message)
 
     tmp = tempfile.mkdtemp()
     try:
-        def put(path, text):
+        def put(path: str, text: str) -> None:
             full = os.path.join(tmp, path)
             os.makedirs(os.path.dirname(full) or tmp, exist_ok=True)
             with open(full, "w", encoding="utf-8", newline="\n") as f:
@@ -238,10 +244,11 @@ def self_test():
         git(tmp, "add", "-A")
         git(tmp, "-c", "core.autocrlf=false", "-c", "user.name=t", "-c", "user.email=t@t",
             "commit", "-qm", "undated")
-        for label, call in (
-                ("an undated release",
-                 lambda: release_notes(tmp, "HEAD", "1.2.3", [], "owner/repo")),
-                ("a module committed with CR", lambda: members(tmp, "HEAD", "1.2.3"))):
+        refusals: tuple[tuple[str, Callable[[], object]], ...] = (
+            ("an undated release",
+             lambda: release_notes(tmp, "HEAD", "1.2.3", [], "owner/repo")),
+            ("a module committed with CR", lambda: members(tmp, "HEAD", "1.2.3")))
+        for label, call in refusals:
             try:
                 call()
                 failures.append(f"{label} must be refused")
@@ -262,8 +269,8 @@ def self_test():
     return 0
 
 
-def main(argv=None):
-    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+def main(argv: Sequence[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--version", help="MAJOR.MINOR.PATCH, equal to VERSION at --ref")
     ap.add_argument("--ref", default="HEAD", help="Git revision to package")

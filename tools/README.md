@@ -17,6 +17,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
+| `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
 
 ## Running every static check
 
@@ -40,7 +41,9 @@ It works on the repository that contains it, from any directory. It runs:
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
 | `ruff` | `python -m ruff check .`, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes rules |
+| `mypy` | `python -m mypy`: strict type checking of `tools/` and `.github/scripts/`, configured in [`mypy.ini`](../mypy.ini) |
 | `actionlint` | `actionlint -config-file .github/actionlint.yaml` on every workflow |
+| `actionlint-probe` | `probe_actionlint.py` with the same actionlint command: a valid workflow must pass, and one with an unknown key and an undefined expression context must fail with both findings, so an invocation that checks nothing cannot pass |
 
 Every check runs even when an earlier one fails. The run writes, under
 `test-results/static-checks/`:
@@ -54,15 +57,15 @@ Every check runs even when an earlier one fails. The run writes, under
 
 The checks still write their own evidence to `test-results/`
 (`committed-whitespace.json`, `vba-jumps.json`, `release-semantics.json`, their
-`.md` summaries, `ruff.txt` and `actionlint.txt`). The exit code is 1 when any
-check failed.
+`.md` summaries, `ruff.txt`, `mypy.txt` and `actionlint.txt`). The exit code is
+1 when any check failed.
 
 Options:
 
 - `--strict` fails a check whose tool is missing instead of skipping it. CI
-  passes it. Without it, a missing Ruff or actionlint is reported as `SKIP` and
-  the run says so. Install Ruff with
-  `python3 -m pip install -r tools/requirements-lint-ci.txt`.
+  passes it. Without it, a missing Ruff, mypy or actionlint is reported as
+  `SKIP` and the run says so. Install Ruff and mypy with
+  `python3 -m pip install --only-binary=:all: --require-hashes -r tools/requirements-lint-ci.txt`.
 - `--head REV` and `--base REV` set the committed-whitespace range (default:
   `$CANDIDATE_SHA`, else `HEAD`; `$BASE_SHA`, else none).
 - `--pr-head SHA` records the pull request head (default: `$PR_HEAD_SHA`).
@@ -87,10 +90,44 @@ Markdown file it writes, added to the run summary). Then add the name to
 workflow needs no change unless the check needs a new tool installed. A new
 `tests/test_*.py` file needs no entry: `python-tests` discovers it.
 
+## Python versions
+
+CI runs one exact Python, `3.12.16`. Each workflow that sets up Python defines
+it once, as `PYTHON_VERSION` in its top-level `env`, and every
+`actions/setup-python` step reads `${{ env.PYTHON_VERSION }}`:
+[`static-checks.yml`](../.github/workflows/static-checks.yml),
+[`accuracy-gate.yml`](../.github/workflows/accuracy-gate.yml),
+[`release.yml`](../.github/workflows/release.yml) and
+[`issue-triage.yml`](../.github/workflows/issue-triage.yml). To move to a new
+patch release, change all four together; first confirm that
+[actions/python-versions](https://github.com/actions/python-versions) publishes
+it for `ubuntu-24.04` x64. The Accuracy Gate's reference wheels
+(`benchmark/requirements-ci.txt`) are pure Python, so a patch release does not
+change them. I run the issue audit on the same version as its tests rather than
+on a newer series, so the audited and the tested interpreter are the same.
+`tests/test_python_versions.py` fails if a workflow uses a floating or literal
+version, or if the workflows disagree.
+
+Two jobs run short inline scripts on the runner image's own `python3` and set
+up no Python: *Keep milestones issue-only* runs no action at all by design, and
+the daily traffic export keeps third-party code out of the job that holds its
+analytics token.
+
+The minimum Python is **3.11**: every tool under `tools/` and `.github/scripts/`
+and every test under `tests/` runs on it, using the standard library only (the
+Accuracy Gate's reference stack is pinned separately, on the CI version). I
+chose 3.11 because it is the oldest CPython series that still receives security
+fixes; 3.10 reached end of life in October 2026. The non-required job
+*Minimum Python (3.11, not required)* in `static-checks.yml` runs
+`run_static_checks.py` on `MINIMUM_PYTHON_VERSION` (`3.11.18`): every check that
+needs no installed tool, the unit tests included. `mypy.ini` (`python_version`)
+and `ruff.toml` (`target-version`) check the code against the same floor.
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
-(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff) weekly. Updates
+(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff, mypy and mypy's
+dependencies, in one grouped pull request) weekly. Updates
 are assigned to the maintainer with priority P3 for initial triage; raise the
 priority when a security advisory or other material risk requires it. Review
 and merge remain manual. Pull requests carry no milestone: during PR triage,
@@ -102,9 +139,11 @@ version and SHA-256 changes together, compare hashes with PyPI's release
 metadata and the downloaded wheel, and retain a complete pinned dependency
 closure. Reference-library changes require the full assurance and numerical
 gates; do not rewrite committed observations to accommodate a dependency bump.
-Ruff's lock lists the hash of every published wheel (one per platform) and the
-sdist, and Dependabot regenerates the whole set; CI installs the Ubuntu x86-64
-wheel. actionlint is separately version- and checksum-pinned in the static
+The lint lock lists, for Ruff, mypy and each of mypy's dependencies, the hash of
+every file PyPI publishes for the pinned release (every wheel and the sdist),
+checked against PyPI's release metadata; CI installs the Ubuntu x86-64 wheels
+with `--only-binary=:all: --require-hashes`. The lock must hold mypy's complete
+dependency closure: `--require-hashes` refuses any package it does not list. actionlint is separately version- and checksum-pinned in the static
 workflow and needs a reviewed manual update.
 
 The optional gmpy2/MPFR and R/Rmpfr research tools are outside these CI locks;
@@ -147,3 +186,6 @@ layout; they are not verbatim copies.
 | `.github/workflows/static-checks.yml` | The single runner step of `.github/workflows/repository-integrity.yml`, with the report directory kept as an artifact. |
 | `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
+| `requirements-lint-ci.txt`, `mypy.ini` | mypy 2.4.1 and its dependency closure from `tools/requirements-quality-ci.txt`, with the hash of every published file, and the strict settings of `pyproject.toml` `[tool.mypy]`, scoped to `tools/` and `.github/scripts/`. |
+| `probe_actionlint.py`, `tests/test_quality_gates.py` | The actionlint unknown-key and mypy strict-mode probes of `tests/test_quality_gates.py`; the actionlint probe is a runner check that reuses the actionlint check's own command, with stand-in commands as offline fixtures. |
+| `.github/workflows/static-checks.yml` (minimum-python job) | The `minimum-python` job of `.github/workflows/repository-integrity.yml`, running this repository's runner without installed tools. |

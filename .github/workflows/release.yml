@@ -39,6 +39,12 @@ defaults:
   run:
     shell: bash
 
+env:
+  # The CI interpreter, an exact patch release, for every job; tools/README.md
+  # ("Python versions") lists where it is set. The bundle is byte-identical for
+  # the same Python and zlib, so an exact pin also keeps rebuilds comparable.
+  PYTHON_VERSION: "3.12.16"
+
 jobs:
   verify:
     name: Verify the release candidate
@@ -59,7 +65,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Establish the release identity
         id: identity
@@ -142,7 +148,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Build the bundle, checksums and notes
         env:
