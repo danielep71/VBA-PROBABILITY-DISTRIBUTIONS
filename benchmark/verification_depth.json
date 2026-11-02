@@ -52,6 +52,13 @@
       "current_state": "green"
     },
     {
+      "id": "module-list-binding",
+      "live_command": "check_module_lists.py",
+      "proof_command": "test_module_lists.py",
+      "negative_claim": "a tracked src/ or tests/ module missing from the Excel evidence policy, a listed module that is absent, untracked or outside src/ and tests/, a present-but-untracked module, duplicates and a non-Git root are rejected",
+      "current_state": "green"
+    },
+    {
       "id": "manifest-content-binding",
       "live_command": "test_manifest.py",
       "proof_command": "test_manifest.py",

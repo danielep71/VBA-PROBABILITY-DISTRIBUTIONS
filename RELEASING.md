@@ -144,8 +144,9 @@ Move relevant entries from **Unreleased** into a dated `[MAJOR.MINOR.PATCH] - YY
 - Require a green **Static checks** workflow
   ([`.github/workflows/static-checks.yml`](.github/workflows/static-checks.yml))
   on the exact candidate SHA: committed whitespace, procedure-scoped VBA jumps,
-  release semantics, and workflow validation. The same checks run locally as
-  listed in [`tools/README.md`](tools/README.md).
+  release semantics, and workflow validation. The same checks run locally with
+  `python3 tools/run_static_checks.py --strict`; see
+  [`tools/README.md`](tools/README.md).
 - Scan for credentials or generated noise.
 - Confirm accuracy manifests, grids, tolerances, and provenance files are internally consistent.
 - Complete the [distribution review](docs/repo_governance/DISTRIBUTION.md) in

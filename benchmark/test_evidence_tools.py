@@ -31,6 +31,8 @@ commands = (
     ("test_drift_guard_mutations.py",),
     ("test_public_api.py",),
     ("check_public_api.py",),
+    ("test_module_lists.py",),
+    ("check_module_lists.py",),
     ("test_manifest.py",),
     ("test_manifest_provenance.py",),
     ("check_manifest_provenance.py",),
