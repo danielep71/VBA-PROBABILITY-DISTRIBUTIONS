@@ -134,6 +134,22 @@ class BinaryCheckTest(unittest.TestCase):
             (root / ALLOWLIST).write_text(json.dumps(allowlist({"book.xlsm": WORKBOOK})))
             self.assertFinding(check_binaries.check(root)[0], "book.xlsm: binary file")
 
+    def test_unstaged_gitattributes_are_not_read(self) -> None:
+        # Review finding: attributes must come from the index, like the contents.
+        payload = b"data\0more"
+        with tempfile.TemporaryDirectory(prefix="binaries-") as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitattributes").write_bytes(b"* text=auto\n")
+            (root / "payload.bin").write_bytes(payload)
+            (root / ".github").mkdir()
+            (root / ALLOWLIST).write_text(json.dumps(allowlist({"payload.bin": payload})))
+            subprocess.run(["git", "add", "."], cwd=root, check=True)
+            # An unstaged rule that would make the staged file binary is ignored.
+            (root / ".gitattributes").write_bytes(b"* text=auto\npayload.bin -text\n")
+            self.assertFinding(check_binaries.check(root)[0],
+                               "payload.bin: contains a NUL byte but .gitattributes treats it as text")
+
     def test_malformed_allowlist(self) -> None:
         digest = "a" * 64
         for listed, text in (([], "needs schema_version 1"),

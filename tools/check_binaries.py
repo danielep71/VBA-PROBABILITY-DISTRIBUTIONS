@@ -92,7 +92,9 @@ def text_attributes(root: Path, names: Sequence[str]) -> dict[str, str]:
     if not names:
         return {}
     stdin = "".join(f"{name}\0" for name in names).encode("utf-8", "surrogateescape")
-    fields = git(root, "check-attr", "-z", "--stdin", "text", stdin=stdin) \
+    # --cached: attributes from the index's .gitattributes, the same snapshot
+    # as the checked contents and allowlist, never from unstaged edits.
+    fields = git(root, "check-attr", "--cached", "-z", "--stdin", "text", stdin=stdin) \
         .decode("utf-8", "surrogateescape").split("\0")
     return {fields[index]: fields[index + 2] for index in range(0, len(fields) - 2, 3)}
 
