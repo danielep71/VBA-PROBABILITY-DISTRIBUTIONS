@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
 import format_vba  # noqa: E402
+import vba_lexer  # noqa: E402
 
 HEAD = ['Attribute VB_Name = "M_STATS_PROBDIST_PROBE"', "Option Explicit",
         "Option Private Module", ""]
@@ -47,6 +48,20 @@ def tokens(text: str) -> list[str]:
             for token in TOKEN.findall(text)]
 
 
+def logical_lines(text: str) -> tuple[list[tuple[str, str]], list[str]]:
+    """The logical lines and statements tools/vba_lexer.py reads in a module.
+
+    Continuations (in code and in comments) are joined and comments removed,
+    so a blank line added to or removed from a logical line, or comment text
+    turned into code, changes the result. Blank logical lines are left out.
+    """
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    units = [(kind, code) for _, _, kind, code in vba_lexer.logical_units(lines)
+             if code.strip()]
+    return units, [statement for _, statement in vba_lexer.statements("\n".join(lines))
+                   if statement]
+
+
 def real_modules() -> dict[str, str]:
     if not HAS_GIT:
         return {}
@@ -58,6 +73,8 @@ class RuleTest(unittest.TestCase):
         formatted = format_vba.format_text(module(*before))
         self.assertEqual(body_of(formatted), after)
         self.assertEqual(format_vba.format_text(formatted), formatted, "not idempotent")
+        self.assertEqual(logical_lines(formatted), logical_lines(module(*before)),
+                         "logical lines changed")
 
     def test_formatted_module_is_unchanged(self) -> None:
         text = module("Public Function K_STATS_Probe() As Double", "'", "'Declare",
@@ -126,6 +143,49 @@ class RuleTest(unittest.TestCase):
         # A continuation at the end of a comment continues the comment.
         self.assertFormats(["Private Sub Run()", "    ' note _", "        Done:", "End Sub"],
                            ["Private Sub Run()", "    ' note _", "        Done:", "End Sub"])
+        # A tab before the underscore is a continuation too.
+        self.assertFormats(["Private Sub Run()", "    Debug.Print\t_", "        Done:",
+                            "End Sub"],
+                           ["Private Sub Run()", "    Debug.Print\t_", "        Done:",
+                            "End Sub"])
+
+    def test_end_with_a_continued_comment(self) -> None:
+        # The blank lines after End wait until its continued comment has ended:
+        # inserted earlier, they would end the comment and make its next
+        # physical line executable.
+        before = ["Private Sub One()", "End Sub ' explanation _", "    Debug.Print 1",
+                  "Private Sub Two()", "End Sub"]
+        self.assertFormats(before, ["Private Sub One()", "End Sub ' explanation _",
+                                    "    Debug.Print 1", "", "", "Private Sub Two()",
+                                    "End Sub"])
+        self.assertSameLogicalLines(module(*before))
+        self.assertFormats(["Private Sub One()", "End Sub ' a _", "  b _", "  c",
+                            "Private Sub Two()", "End Sub"],
+                           ["Private Sub One()", "End Sub ' a _", "  b _", "  c", "", "",
+                            "Private Sub Two()", "End Sub"])
+
+    def test_blank_lines_inside_a_logical_line_are_kept(self) -> None:
+        # A blank line after a continuation ends that logical line: it is
+        # neither removed nor joined to what follows, even after an End or at
+        # the end of the file.
+        cases = [
+            ["Private Sub One()", "    X = 1 _", "", "    Y = 2", "End Sub"],
+            ["Private Sub One()", "End Sub ' a _", "", "", "", "Private Sub Two()",
+             "End Sub"],
+            ["Private Sub One()", "End Sub ' a _", ""],
+            ["Private Sub One()", "    ' a _", "", "End Sub"],
+        ]
+        for before in cases:
+            with self.subTest(before=before):
+                text = module(*before)
+                formatted = format_vba.format_text(text)
+                self.assertEqual(format_vba.format_text(formatted), formatted)
+                self.assertSameLogicalLines(text)
+        self.assertFormats(["Private Sub One()", "End Sub ' a _", ""],
+                           ["Private Sub One()", "End Sub ' a _", ""])
+
+    def assertSameLogicalLines(self, text: str) -> None:
+        self.assertEqual(logical_lines(format_vba.format_text(text)), logical_lines(text))
 
     def test_two_blank_lines_after_end(self) -> None:
         self.assertFormats(["Private Sub One()", "End Sub", "'Header of Two",
@@ -248,6 +308,18 @@ class RealModuleTest(unittest.TestCase):
         for name, text in self.modules.items():
             with self.subTest(name):
                 self.assertEqual(tokens(format_vba.format_text(text)), tokens(text))
+
+    def test_logical_lines_are_unchanged(self) -> None:
+        # The sequence of logical lines and statements read by tools/vba_lexer.py
+        # is the same before and after formatting, as committed and with drift.
+        for name, text in self.modules.items():
+            with self.subTest(name):
+                self.assertTrue(logical_lines(text)[1])
+                self.assertEqual(logical_lines(format_vba.format_text(text)),
+                                 logical_lines(text))
+                drifted = deform(text)
+                self.assertEqual(logical_lines(format_vba.format_text(drifted)),
+                                 logical_lines(text))
 
     def test_idempotent(self) -> None:
         for name, text in self.modules.items():

@@ -373,13 +373,18 @@ and `ruff.toml` (`target-version`) check the code against the same floor.
 Every other line keeps its indentation. That covers this repository's indented
 comment headings inside procedures (`'Declare`, `'Invert`, ...) with their
 statements indented under them, the documentation banner after a declaration,
-continuation lines (a line after one ending in ` _`, including a continued
-comment, is never moved) and blank lines inside procedures and between
-module-level declarations. String literals, comments and the header the VBE
+continuation lines and blank lines inside procedures and between module-level
+declarations. A physical line carried over by a continuation (a line ending in
+white space and `_`, in code or in a comment) is never moved, and no blank line
+is added to or removed from a logical line: after `End Sub ' note _`, the two
+blank lines wait until the continued comment has ended, and a blank line that
+ends a continuation stays, even at the end of the file. String literals, comments and the header the VBE
 writes (`VERSION`, `BEGIN ... END`, `Object` and `Attribute` lines) are never
 changed; statement keywords followed by a colon (`Else:`, `Loop:`) are not
-labels. The tests prove, on the text of every tracked module, that formatting
-leaves the token stream (everything but white space and line layout) unchanged.
+labels. The tests prove, on the text of every tracked module and on every
+synthetic case, that formatting leaves the token stream (everything but white
+space and line layout) and the logical lines and statements read by
+[`vba_lexer.py`](vba_lexer.py) unchanged.
 
 I chose these rules from the modules as they are. When I added the check (module
 bytes as of `937e3a6`), the only differences between the 35 tracked modules and this layout

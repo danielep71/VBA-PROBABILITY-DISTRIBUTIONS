@@ -13,7 +13,9 @@ in tools/README.md):
 
 Every other line keeps its indentation, so the repository's indented comment
 headings inside procedures ('Declare, 'Invert, ...) and its continuation-line
-layout are left as they are. No rule changes a string literal or a comment's
+layout are left as they are. No blank line is added to or removed from a
+logical line: a line that a continuation carries over, in code or in a
+comment, is kept as it stands, blank or not. No rule changes a string literal or a comment's
 text: rules work on indentation, on the end of a line, or on whole lines they
 recognise outside literals, and a comment starts only at an apostrophe outside
 a literal. The header the VBE writes (VERSION, BEGIN ... END, Object and
@@ -57,6 +59,8 @@ LABEL = re.compile(r"^([A-Za-z_]\w*):$")
 # Statement keywords that a colon separator can follow; none of them is a label.
 NOT_LABELS = frozenset({"do", "else", "end", "loop", "next", "rem", "resume", "return",
                         "stop", "wend"})
+# The line-continuation rule of tools/vba_lexer.py: white space, then a final _.
+CONTINUATION = re.compile(r"\s_$")
 HEADER_LINE = re.compile(r"^(?:VERSION\s|Object\s*=|Attribute\s)", re.IGNORECASE)
 
 
@@ -110,12 +114,31 @@ def outer_level(line: str) -> bool:
     return bool(PROCEDURE.match(code) or PROCEDURE_END.match(code) or is_label(code))
 
 
+def continues(line: str) -> bool:
+    """Whether the next physical line belongs to this line's logical line.
+
+    A line continuation also continues a comment, so the whole line is tested.
+    """
+    return bool(CONTINUATION.search(line))
+
+
 def format_body(lines: Sequence[str]) -> list[str]:
+    """The formatted body lines.
+
+    No blank line is ever inserted into, or removed from, one logical line:
+    a physical line that a continuation (in code or in a comment) carries
+    over is emitted as it stands, blank or not, and the blank lines after a
+    procedure's End wait until its whole logical line has been emitted.
+    """
     out: list[str] = []
     continued = False
     pending_end = False
     for raw in lines:
         line = expand_indentation(raw.rstrip())
+        if continued:
+            out.append(line)
+            continued = continues(line)
+            continue
         if not line:
             if not pending_end:
                 out.append(line)
@@ -124,13 +147,13 @@ def format_body(lines: Sequence[str]) -> list[str]:
             # Exactly two blank lines between a procedure's End and what follows it.
             out.extend([""] * BLANK_LINES_AFTER_END)
             pending_end = False
-        if not continued and outer_level(line):
+        if outer_level(line):
             line = line.lstrip()
             pending_end = bool(PROCEDURE_END.match(split_code_comment(line)[0].strip()))
         out.append(line)
-        # A line continuation also continues a comment, so test the whole line.
-        continued = line.endswith(" _")
-    while out and not out[-1]:
+        continued = continues(line)
+    # A blank line that ends a continuation belongs to it and stays.
+    while out and not out[-1] and not (len(out) > 1 and continues(out[-2])):
         out.pop()
     return out
 
