@@ -127,6 +127,8 @@ def checks(context: Context) -> list[Check]:
               [python, "tools/check_vba_jumps.py", "--root", ".",
                "--output", f"{results}/vba-jumps.json", "--summary", f"{results}/vba-jumps.md"],
               summary=f"{results}/vba-jumps.md", reports=(f"{results}/vba-jumps.json",)),
+        # Ratchets tools/vba_layout_baseline.json; its fixtures run in python-tests.
+        Check("vba-layout", [python, "tools/format_vba.py", "--check", "--root", "."]),
         Check("release-semantics-self-test",
               [python, "tools/check_release_semantics.py", "--root", ".", "--self-test"]),
         Check("release-semantics",

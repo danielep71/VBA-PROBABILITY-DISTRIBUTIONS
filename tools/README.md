@@ -16,6 +16,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_vba_jumps.py` | Every `GoTo`, `GoSub`, `Resume` and `On Error GoTo` target resolves inside its own procedure, across all tracked `.bas`/`.cls`/`.frm` modules |
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
+| `format_vba.py` | Checks (`--check`) or applies (`--write`) the [VBA source layout](#vba-source-layout), ratcheting `vba_layout_baseline.json`; its fixtures are [`tests/test_format_vba.py`](../tests/test_format_vba.py) |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
 
 ## Running every static check
@@ -36,6 +37,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `whitespace-self-test`, `vba-jumps-self-test`, `release-semantics-self-test` | Each checker's `--self-test` fixtures |
 | `whitespace` | `check_committed_whitespace.py --mode committed` on the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
+| `vba-layout` | `format_vba.py --check` on every tracked VBA module, against `vba_layout_baseline.json` |
 | `release-semantics` | `check_release_semantics.py` |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
@@ -86,6 +88,57 @@ Markdown file it writes, added to the run summary). Then add the name to
 [`tests/test_run_static_checks.py`](../tests/test_run_static_checks.py). The
 workflow needs no change unless the check needs a new tool installed. A new
 `tests/test_*.py` file needs no entry: `python-tests` discovers it.
+
+## VBA source layout
+
+[`format_vba.py`](format_vba.py) states the layout of every tracked `.bas`,
+`.cls` and `.frm` module under `src/`, `tests/` and `benchmark/`:
+
+1. CRLF line endings, one final line ending and no blank lines at the end of the
+   file;
+2. no trailing white space;
+3. indentation with spaces: each tab of a line's indentation becomes four spaces;
+4. procedure declarations (`Sub`, `Function`, `Property Get/Let/Set`, with any
+   `Public`, `Private`, `Friend` or `Static`), their `End` statements and labels
+   such as `Err_Handler:` start in column one;
+5. exactly two blank lines after each procedure's `End` statement, before the
+   next procedure, its comment banner or a section banner.
+
+Every other line keeps its indentation. That covers this repository's indented
+comment headings inside procedures (`'Declare`, `'Invert`, ...) with their
+statements indented under them, the documentation banner after a declaration,
+continuation lines (a line after one ending in ` _`, including a continued
+comment, is never moved) and blank lines inside procedures and between
+module-level declarations. String literals, comments and the header the VBE
+writes (`VERSION`, `BEGIN ... END`, `Object` and `Attribute` lines) are never
+changed; statement keywords followed by a colon (`Else:`, `Loop:`) are not
+labels. The tests prove, on the text of every tracked module, that formatting
+leaves the token stream (everything but white space and line layout) unchanged.
+
+I chose these rules from the modules as they are. When I added the check (module
+bytes as of `937e3a6`), the only differences between the 35 tracked modules and this layout
+are blank lines: 38 missing and 37 surplus, in 17 modules. 494 of the 535 gaps
+after an `End` statement are already two blank lines (36 are one, one is none,
+four are three or four), and 20 of the 35 modules already end without blank
+lines (15 end with two or four). No module has a tab, trailing white space, an
+LF-only line ending, or a procedure, `End` or label line out of column one.
+
+```bash
+python3 tools/format_vba.py --check            # every tracked module, with the baseline
+python3 tools/format_vba.py --check --no-baseline
+python3 tools/format_vba.py --write src/M_STATS_PROBDIST_CORE.bas
+```
+
+Every module is bound by hash to the Excel certification record or the
+observation manifest, so I do not reformat one outside an Excel evidence wave.
+Until then, [`vba_layout_baseline.json`](vba_layout_baseline.json) lists the
+modules still out of layout, and the `vba-layout` check ratchets it: a module
+out of layout that it does not list fails, a listed module that is in layout
+fails until its entry is removed, and a listed path that is not a tracked
+module fails. To reformat during an Excel wave, run `--write` on the listed
+modules, re-import them into the VBE, refresh their evidence, remove their
+entries, and delete the baseline file once it lists none. Exit codes: 0 pass,
+1 a module or baseline entry fails, 2 an unreadable or malformed baseline.
 
 ## Dependency updates
 
@@ -146,4 +199,6 @@ layout; they are not verbatim copies.
 | `tests/test_run_static_checks.py` | The approach of `tests/test_check_repository.py`: injected checks run in temporary Git repositories. |
 | `.github/workflows/static-checks.yml` | The single runner step of `.github/workflows/repository-integrity.yml`, with the report directory kept as an artifact. |
 | `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
+| `format_vba.py` | `tools/format_vba.py`: the same five layout rules, kept because they match this repository's dominant layout; tracked modules in place of the template's source directories, a committed baseline with a two-way ratchet for modules bound to Excel evidence, `--no-baseline`, statement keywords excluded from labels, and continued comments left in place. |
+| `tests/test_format_vba.py` | `tests/test_format_vba.py`: its rule, literal and header cases, extended with token-stream, idempotence and drift-undo checks on every tracked module's text and the baseline ratchet in temporary Git repositories. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
