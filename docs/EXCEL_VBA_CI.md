@@ -136,6 +136,79 @@ assertions pass and cleanup succeeds. Missing modules, source/checkout identity
 problems, Excel automation failures, invalid counters, assertion-count drift,
 test failures, and cleanup failures all produce a nonzero result.
 
+## Building the workbook under test from source
+
+The adapter above needs **Trust access to the VBA project object model**
+because it imports the modules and injects the CI bridge through the VBE, and
+it assembles the tested workbook at run time. An offline builder produces the
+workbook under test instead, as a reproducible file bound to one commit
+(#110). The Excel job does not use it yet: the adapter and the workflow are
+unchanged, and they stay the path of record until a built workbook has been
+certified on the runner.
+
+Build and check it on any machine with Python 3.10+ and Git; no Excel is
+needed:
+
+```bash
+python3 tools/devbuild/build_workbook.py
+python3 tools/devbuild/verify_workbook.py \
+  test-results/workbook-build/probdist-regression.manifest.json --require-verified
+```
+
+The builder writes `test-results/workbook-build/probdist-regression.xlsm` and,
+beside it, `probdist-regression.manifest.json`:
+
+- **Modules.** The VBA project holds exactly the modules listed in
+  `regression_sources` of `.github/excel-evidence-policy.json`, in that order,
+  plus empty `ThisWorkbook` and `shBuild` document modules. A listed module that
+  is missing, a `.bas` under `src/` or `tests/` that is not listed, or a module
+  whose `VB_Name` differs from its file name stops the build. Every module is
+  embedded as it is, with CRLF line endings; no tracked file is changed.
+- **Compiled on open.** The source is stored compressed as [MS-OVBA]
+  specifies, and `_VBA_PROJECT` carries no p-code cache, so Excel compiles the
+  project from source when it opens the workbook. Writing the project needs no
+  VBE access.
+- **Commit stamp.** The `Build` sheet holds the commit and its committer time
+  under the workbook-level defined names `build_commit` and
+  `build_commit_time`. A build from a working tree with tracked changes appends
+  `(working tree with changes: NOT evidence-grade)` to the commit.
+- **Reproducible.** A rebuild of the same commit and working tree is
+  byte-identical: the stamp uses the committer time, not the clock, the VBA
+  project ID derives from the commit, and the package parts are stored in a
+  fixed order with a fixed timestamp.
+- **Manifest.** The manifest records the commit, whether the build was clean,
+  the stamp, and the SHA-256 of the workbook and of every module, both of its
+  Git blob (the same `sha256:` digest as the `sources` of a regression record)
+  and of the text embedded in the workbook.
+
+`verify_workbook.py` reports the binding of a workbook to its sources:
+
+| Binding | Meaning |
+| --- | --- |
+| `VERIFIED` | The workbook's SHA-256, its stamp, its VBA project (compiled from source, the recorded modules and nothing else, each with the recorded digest) and the commit's policy and Git blobs all agree with the manifest, and the build was clean |
+| `FAIL` | At least one of those checks found a mismatch, or `--commit` names another commit |
+| `UNVERIFIED` | Nothing to check against (no manifest, no workbook, or a commit this clone does not have), or a build from a working tree with changes |
+
+It exits 1 on `FAIL`, and on `UNVERIFIED` with `--require-verified`. The
+binding proves which sources the workbook holds; it does not prove that the
+project compiles or that any test passes. Only an Excel run proves that.
+
+The built workbook holds no CI bridge. The bridge reads the private assertion
+counters of `M_STATS_PROBDIST_TEST`, so it can only live inside that module,
+and committing it there changes an evidence-bound source. Until that is
+decided, a built workbook can run `Test_STATS_PROBDIST_RunAll` but cannot
+return the counters that the result contract above requires.
+
+What remains before the Excel job uses a built workbook:
+
+1. a CI entry point that the built workbook can return counters through,
+   committed and listed in the policy;
+2. an Excel job that builds the workbook, requires `VERIFIED` against
+   `GITHUB_SHA`, opens it without VBE access, runs the entry point and records
+   the workbook's SHA-256 in the regression record;
+3. a first certified run of that job on the runner, recorded before the COM
+   path is retired.
+
 ## Troubleshooting
 
 ### Programmatic access denied

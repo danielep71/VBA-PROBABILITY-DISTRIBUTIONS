@@ -87,6 +87,24 @@ Markdown file it writes, added to the run summary). Then add the name to
 workflow needs no change unless the check needs a new tool installed. A new
 `tests/test_*.py` file needs no entry: `python-tests` discovers it.
 
+## Building the workbook under test (`devbuild/`)
+
+`devbuild/` builds the Excel workbook under test from the modules that
+`.github/excel-evidence-policy.json` lists, without Excel and without Trust
+access to the VBA project object model, and checks the result against its
+manifest.
+[`docs/EXCEL_VBA_CI.md`](../docs/EXCEL_VBA_CI.md#building-the-workbook-under-test-from-source)
+describes the workbook, the stamp, the manifest and the bindings.
+
+| File | Does |
+| --- | --- |
+| `devbuild/vba_project.py` | Writes `vbaProject.bin` from [MS-OVBA] and [MS-CFB] (compressed source, `dir`, `PROJECT` and `PROJECTwm` streams, no p-code), and reads it back |
+| `devbuild/build_workbook.py` | Builds the `.xlsm` with the commit stamp and writes its SHA-256 manifest |
+| `devbuild/verify_workbook.py` | Reports the binding of a workbook to its commit and sources: `VERIFIED`, `FAIL` or `UNVERIFIED` |
+
+[`tests/test_build_workbook.py`](../tests/test_build_workbook.py) holds their
+fixtures, and the `python-tests` check runs them.
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
@@ -147,3 +165,7 @@ layout; they are not verbatim copies.
 | `.github/workflows/static-checks.yml` | The single runner step of `.github/workflows/repository-integrity.yml`, with the report directory kept as an artifact. |
 | `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
+| `devbuild/vba_project.py` | `tools/devbuild/vba_project.py`: the [MS-OVBA] compression, the `dir`, `PROJECT` and `PROJECTwm` streams and the [MS-CFB] writer. Class modules are dropped; the decompressor and compound-file reader move in from the template's tests so the verifier can read a built project; names longer than 31 characters and duplicate modules are refused. |
+| `devbuild/build_workbook.py` | `tools/devbuild/build_workbook.py`: the module list comes from `regression_sources` instead of the template's workbook configuration, with failure on a missing or unlisted module; one `Build` sheet carries the stamp; the package is stored with a fixed host field so it does not depend on the zlib build or the platform; it writes a SHA-256 manifest of the modules and the workbook. |
+| `devbuild/verify_workbook.py` | The `VERIFIED`/`FAIL`/`UNVERIFIED` binding and the stamp reader of `tools/check_excel_run.py`, and the manifest idea of `tools/devbuild/export_manifest.py`, applied to a built workbook and checked against the commit's policy and Git blobs. |
+| `tests/test_build_workbook.py` | `tests/test_devbuild.py`: specification compression examples, compound-file and project-stream parse-back, determinism and builds in temporary Git repositories, extended with raw header and FAT checks, `dir` records, and positive and negative manifest bindings. |
