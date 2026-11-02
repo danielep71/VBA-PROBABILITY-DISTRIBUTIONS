@@ -193,6 +193,25 @@ class RunTest(RepositoryTest):
         self.assertEqual((self.out / "summary.md").read_text(encoding="utf-8"),
                          text.removeprefix("before\n"))
 
+    def test_stale_json_report_is_removed_when_the_checker_fails_first(self) -> None:
+        # A checker that fails before writing its JSON report must not leave the
+        # passing report of an earlier run in place.
+        self.commit()
+        self.write({"results/check.json": '{"status": "pass"}\n'})
+        listed = [Check("broken", FAILING, summary="results/check.md",
+                        reports=("results/check.json",))]
+        code, _, report = self.run_checks(listed)
+        self.assertEqual(code, 1)
+        self.assertEqual(self.statuses(report), {"broken": ("fail", 1)})
+        self.assertFalse((self.root / "results/check.json").exists())
+
+    def test_every_json_report_of_the_check_list_is_tracked(self) -> None:
+        context = Context(self.root, head="HEAD")
+        for check in R.checks(context):
+            for argument, value in zip(check.command, check.command[1:]):
+                if argument == "--output" and value.endswith(".json"):
+                    self.assertIn(value, check.reports, check.name)
+
     def test_logs_of_an_earlier_run_are_removed(self) -> None:
         self.commit()
         self.run_checks([Check("old", PASSING)])

@@ -67,6 +67,10 @@ class Check:
     missing: why the check cannot run here (its tool is not installed), if it cannot.
     output:  a path, relative to the root, that also receives the command's output.
     summary: a Markdown file the command writes; it is added to the run summary.
+    reports: other files the command writes, such as its JSON report.
+
+    Every path in output, summary and reports is deleted before the command runs,
+    so a file left by an earlier run can never stand in for this run's evidence.
     """
 
     name: str
@@ -74,6 +78,7 @@ class Check:
     missing: str | None = None
     output: str | None = None
     summary: str | None = None
+    reports: tuple[str, ...] = ()
 
 
 @dataclass
@@ -114,20 +119,22 @@ def checks(context: Context) -> list[Check]:
     return [
         Check("whitespace-self-test",
               [python, "tools/check_committed_whitespace.py", "--root", ".", "--self-test"]),
-        Check("whitespace", whitespace, summary=f"{results}/committed-whitespace.md"),
+        Check("whitespace", whitespace, summary=f"{results}/committed-whitespace.md",
+              reports=(f"{results}/committed-whitespace.json",)),
         Check("vba-jumps-self-test",
               [python, "tools/check_vba_jumps.py", "--root", ".", "--self-test"]),
         Check("vba-jumps",
               [python, "tools/check_vba_jumps.py", "--root", ".",
                "--output", f"{results}/vba-jumps.json", "--summary", f"{results}/vba-jumps.md"],
-              summary=f"{results}/vba-jumps.md"),
+              summary=f"{results}/vba-jumps.md", reports=(f"{results}/vba-jumps.json",)),
         Check("release-semantics-self-test",
               [python, "tools/check_release_semantics.py", "--root", ".", "--self-test"]),
         Check("release-semantics",
               [python, "tools/check_release_semantics.py", "--root", ".",
                "--output", f"{results}/release-semantics.json",
                "--summary", f"{results}/release-semantics.md"],
-              summary=f"{results}/release-semantics.md"),
+              summary=f"{results}/release-semantics.md",
+              reports=(f"{results}/release-semantics.json",)),
         Check("release-bundle-self-test",
               [python, ".github/scripts/build_release_bundle.py", "--self-test"]),
         Check("python-tests", [python, "-m", "unittest", "discover", "-s", "tests", "-v"]),
@@ -156,7 +163,7 @@ def git(root: Path, *args: str) -> str:
 
 def run_check(check: Check, root: Path, strict: bool) -> Result:
     # A stale file from an earlier run must not pass for this run's evidence.
-    for stale in (check.output, check.summary):
+    for stale in (check.output, check.summary, *check.reports):
         if stale:
             (root / stale).unlink(missing_ok=True)
     if check.missing:
