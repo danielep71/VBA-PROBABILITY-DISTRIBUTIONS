@@ -1,7 +1,7 @@
 name: "🐞 Bug report"
 description: "Report a wrong result, a spurious error, a wrong error code, a performance defect, or a crash."
 title: "[Bug]: "
-labels: ["bug"]
+labels: ["bug", "P2"]
 assignees: ["danielep71"]
 body:
   - type: markdown
@@ -253,3 +253,20 @@ body:
           required: true
         - label: This report contains no vulnerability details, secrets, private links, or confidential, personal, client or production data.
           required: true
+
+  - type: input
+    id: target_end_date
+    attributes:
+      label: Target end date (Europe/Rome)
+      description: Proposed date in YYYY-MM-DD format, before the milestone due date. Triage confirms the milestone and date.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and blocking status
+      description: 'List prerequisite issue numbers (for example, #12). For an external blocker write "External condition: waiting for access to an Excel host". Use None when there are no prerequisites.'
+      value: None
+    validations:
+      required: true
