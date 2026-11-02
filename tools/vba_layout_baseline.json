@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "description": "Tracked VBA modules still out of the layout of tools/format_vba.py. Each is bound by hash to Excel evidence, so it is reformatted only together with its re-import and evidence refresh; remove its entry then. python tools/format_vba.py --check fails on any other module out of layout and on any listed module in layout. Delete this file when the list is empty.",
+  "files": [
+    "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas",
+    "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_UNBAL.bas",
+    "benchmark/delta_seam_study/M_STATS_PROBDIST_DELTA_SEAM.bas",
+    "benchmark/density_helpers/M_STATS_PROBDIST_DENSHELP.bas",
+    "benchmark/envelope_probe/M_STATS_PROBDIST_ENVPROBE.bas",
+    "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas",
+    "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas",
+    "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas",
+    "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas",
+    "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas",
+    "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas",
+    "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas",
+    "src/M_STATS_PROBDIST_CORE.bas",
+    "src/M_STATS_PROBDIST_DISCRETE.bas",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/M_STATS_PROBDIST_TFAMILY.bas",
+    "tests/M_STATS_PROBDIST_TEST.bas"
+  ]
+}

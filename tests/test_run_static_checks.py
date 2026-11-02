@@ -284,9 +284,10 @@ class CheckListTest(unittest.TestCase):
         checks = self.by_name(Context(ROOT))
         self.assertEqual(list(checks), [
             "whitespace-self-test", "whitespace", "vba-jumps-self-test", "vba-jumps",
-            "vba-source", "vba-conditionals", "vba-visibility", "release-semantics-self-test",
-            "release-semantics", "binaries", "release-bundle-self-test", "python-tests", "ruff",
-            "mypy", "actionlint", "actionlint-probe"])
+            "vba-source", "vba-conditionals", "vba-visibility", "vba-layout",
+            "release-semantics-self-test", "release-semantics", "binaries",
+            "release-bundle-self-test", "python-tests", "ruff", "mypy", "actionlint",
+            "actionlint-probe"])
         for check in checks.values():
             script = next((part for part in check.command if part.endswith(".py")), None)
             if script is not None:
@@ -294,6 +295,8 @@ class CheckListTest(unittest.TestCase):
         self.assertEqual(checks["python-tests"].command[1:],
                          ["-m", "unittest", "discover", "-s", "tests", "-v"])
         self.assertIn("--self-test", checks["release-bundle-self-test"].command)
+        self.assertEqual(checks["vba-layout"].command[1:],
+                         ["tools/format_vba.py", "--check", "--root", "."])
         self.assertEqual(checks["vba-jumps"].command[-4:],
                          ["--output", "test-results/vba-jumps.json",
                           "--summary", "test-results/vba-jumps.md"])
