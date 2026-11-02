@@ -28,7 +28,9 @@ correctness, robustness or maintainability defects; P3 covers non-blocking work.
 Each issue has a target end date (YYYY-MM-DD, Europe/Rome) strictly before its
 milestone due date and a Dependencies and blocking status section. I use
 `blocked` exactly while a named prerequisite issue or external condition is
-unresolved. Pull request references do not count as prerequisite issues.
+unresolved. Write an external blocker as `External condition: waiting for access to an Excel host`
+on its own line (an optional list bullet is accepted). Use `None` when there
+are no prerequisites. Pull request references do not count as prerequisite issues.
 
 Forms provide default priorities and collect dates and dependencies; triage
 confirms their meaning. Existing issues are audited under the same rules, with

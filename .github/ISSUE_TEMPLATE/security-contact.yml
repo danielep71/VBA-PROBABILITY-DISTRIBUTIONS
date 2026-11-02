@@ -24,7 +24,7 @@ body:
     id: dependencies
     attributes:
       label: "🔗 Dependencies and blocking status"
-      description: Leave "None" unless something must happen before I can reply.
+      description: 'Leave "None" unless something must happen before I can reply. List prerequisite issue numbers or write "External condition: ..." followed by the blocker.'
       value: None
     validations:
       required: true
