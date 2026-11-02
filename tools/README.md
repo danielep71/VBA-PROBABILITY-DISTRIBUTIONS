@@ -41,7 +41,9 @@ Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
 (mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff) weekly. Updates
 are assigned to the maintainer with priority P3 for initial triage; raise the
 priority when a security advisory or other material risk requires it. Review
-and merge remain manual. Set the applicable milestone during PR triage.
+and merge remain manual. Pull requests carry no milestone: during PR triage,
+link each one to an issue and set the milestone on that issue
+([`ISSUE_LABELS.md`](../docs/repo_governance/ISSUE_LABELS.md)).
 
 Both CI Python environments install wheels with `--require-hashes`. Review
 version and SHA-256 changes together, compare hashes with PyPI's release
@@ -80,3 +82,13 @@ else. This repository has **not** adopted the template contract, a template
 profile or the template's directory layout, and the file must not be read as
 claiming any of them. The template's release-history policy applies only to the
 template repository itself and is not imported.
+
+### Adapted from `danielep71/MyTemplate` at `9ff7670`
+
+These files adapt a template solution to this repository's own names and
+layout; they are not verbatim copies.
+
+| File | Adaptation |
+| --- | --- |
+| `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
+| `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
