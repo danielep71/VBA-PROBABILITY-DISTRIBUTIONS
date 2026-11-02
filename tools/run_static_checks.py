@@ -135,6 +135,8 @@ def checks(context: Context) -> list[Check]:
                "--summary", f"{results}/release-semantics.md"],
               summary=f"{results}/release-semantics.md",
               reports=(f"{results}/release-semantics.json",)),
+        # Tracked binaries: approved assets/ images, or a reviewed SHA-256 in the allowlist.
+        Check("binaries", [python, "tools/check_binaries.py", "--root", "."]),
         Check("release-bundle-self-test",
               [python, ".github/scripts/build_release_bundle.py", "--self-test"]),
         Check("python-tests", [python, "-m", "unittest", "discover", "-s", "tests", "-v"]),

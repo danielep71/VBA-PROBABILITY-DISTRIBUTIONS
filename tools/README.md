@@ -16,6 +16,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_vba_jumps.py` | Every `GoTo`, `GoSub`, `Resume` and `On Error GoTo` target resolves inside its own procedure, across all tracked `.bas`/`.cls`/`.frm` modules |
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
+| `check_binaries.py` | Every tracked binary is an approved `assets/` image or has a reviewed SHA-256 in [`.github/binary-allowlist.json`](../.github/binary-allowlist.json) ([below](#tracked-binaries)); tested by `tests/test_check_binaries.py` |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
 
 ## Running every static check
@@ -37,6 +38,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `whitespace` | `check_committed_whitespace.py --mode committed` on the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
 | `release-semantics` | `check_release_semantics.py` |
+| `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
 | `ruff` | `python -m ruff check .`, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes rules |
@@ -86,6 +88,57 @@ Markdown file it writes, added to the run summary). Then add the name to
 [`tests/test_run_static_checks.py`](../tests/test_run_static_checks.py). The
 workflow needs no change unless the check needs a new tool installed. A new
 `tests/test_*.py` file needs no entry: `python-tests` discovers it.
+
+## Tracked binaries
+
+A binary file cannot be reviewed in a diff, and the demo workbook can carry VBA
+macros. `check_binaries.py` therefore admits a tracked binary only by an
+approved path or by a reviewed SHA-256:
+
+```bash
+python3 tools/check_binaries.py
+```
+
+It reads every regular file in the Git index (in CI, the checked-out commit)
+and treats a file as binary when [`.gitattributes`](../.gitattributes) unsets
+its `text` attribute (the `office-doc`, `opaque` and `vba-form-bin` macros) or
+its content contains a NUL byte. It prints every binary it allowed, with its
+SHA-256, and fails on:
+
+- a binary that is neither an approved image nor in the allowlist;
+- an allowlisted file whose SHA-256 differs from the recorded one, whatever it
+  now contains;
+- an allowlist entry for a file that is not tracked;
+- a NUL-containing file that `.gitattributes` does not declare binary. Git may
+  rewrite the line endings of such a file, so an allowlist entry does not admit
+  it: add a binary rule to `.gitattributes` first;
+- an allowlist that is not valid JSON, or an entry without a 64-digit lowercase
+  `sha256` and a non-empty `reason`.
+
+The approved path is narrow on purpose: a `.png`, `.jpg` or `.jpeg` file
+directly in `assets/` (the README and social-preview images), whose bytes start
+with the signature of that format, so a renamed workbook or archive does not
+pass as an image. Every other binary needs an entry in
+[`.github/binary-allowlist.json`](../.github/binary-allowlist.json). I allow the
+demo workbook `examples/STATS-Distributions demo.xlsm` only there, by digest, so
+that any new version of it fails until someone reviews it.
+
+The digest is the SHA-256 of the blob Git stores. Git applies no line-ending
+conversion to a file declared binary, so it equals the SHA-256 of the
+checked-out file. The allowlist is read from the index too: stage a change
+before checking it.
+
+To add or update a binary after reviewing it:
+
+1. For the workbook, open it with macros disabled and inspect its VBA project
+   and any external links before trusting the new version.
+2. Stage the file and run the check. The failure prints the file's current
+   SHA-256 and the entry to write.
+3. Set that `sha256` in `.github/binary-allowlist.json`, update the `reason`
+   (why the file is tracked and what was reviewed), and commit both in the same
+   pull request, so the digest change is reviewed with the file.
+
+Remove the entry when you remove the file.
 
 ## Dependency updates
 
@@ -146,4 +199,7 @@ layout; they are not verbatim copies.
 | `tests/test_run_static_checks.py` | The approach of `tests/test_check_repository.py`: injected checks run in temporary Git repositories. |
 | `.github/workflows/static-checks.yml` | The single runner step of `.github/workflows/repository-integrity.yml`, with the report directory kept as an artifact. |
 | `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
+| `check_binaries.py` | The binary detection of `tools/check_binaries.py` (`text` unset in `.gitattributes`, or a NUL byte) and its allowlist schema. Here it reads the index rather than the working tree, admits only signature-checked images directly in `assets/`, prints the digest to record, and fails on a NUL-containing file that `.gitattributes` treats as text even when allowlisted. |
+| `tests/test_check_binaries.py` | The temporary-repository fixtures of the template's tests, extended to the digest-pinned demo workbook, the image signature, the stale entry and the unstaged allowlist. |
+| `.github/binary-allowlist.json` | The template's schema (`schema_version`, and a `sha256` and `reason` per path), holding this repository's demo workbook. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
