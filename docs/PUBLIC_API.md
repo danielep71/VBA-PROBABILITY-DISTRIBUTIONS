@@ -5,8 +5,8 @@ worksheet-facing VBA product surface of VBA-PROBABILITY-DISTRIBUTIONS.
 
 ## Scope
 
-The product API is the set of `Public K_STATS_*` declarations in the six
-production modules under `src/`:
+The product API is the set of `Public K_STATS_*` declarations in the
+production modules: every `.bas` file Git tracks under `src/`. Today these are:
 
 - `M_STATS_PROBDIST_CORE.bas`
 - `M_STATS_PROBDIST_SPECIALFUNCS.bas`
@@ -14,6 +14,14 @@ production modules under `src/`:
 - `M_STATS_PROBDIST_TFAMILY.bas`
 - `M_STATS_PROBDIST_CONTINUOUS.bas`
 - `M_STATS_PROBDIST_DISCRETE.bas`
+
+The checker derives this list from `git ls-files`; it keeps no list of its own.
+A new production module is therefore frozen as soon as it is committed, and a
+`.bas` file present under `src/` but not tracked is ignored. Run the checker
+from a Git work tree: without one it cannot tell committed modules from local
+files and fails closed. `benchmark/check_module_lists.py` separately reports an
+untracked `.bas` file under `src/` or `tests/`, and binds the Excel evidence
+policy to the same tracked modules.
 
 The v1.0.0 baseline contains **112 declarations**.
 

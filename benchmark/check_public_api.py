@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Freeze and verify the worksheet-facing VBA product API.
 
-The product API is the set of Public K_STATS_* declarations in the six
-production modules under src/. Benchmark/test Public Subs are deliberately out
-of scope. Project-scoped PROB_* routines are also out of scope: they may be
+The product API is the set of Public K_STATS_* declarations in the production
+modules: every `.bas` file Git tracks under src/. The module list is derived
+from `git ls-files`, not maintained by hand, so a new production module is
+frozen as soon as it is committed; an untracked file on disk is not part of the
+product and is ignored. A root that is not a Git work tree fails closed (see
+_tracked_modules.py). Benchmark/test Public Subs are deliberately out of
+scope. Project-scoped PROB_* routines are also out of scope: they may be
 Public inside Option Private Module modules so production modules can share
 numerical kernels without exposing them in Excel's Function Wizard.
 
@@ -18,16 +22,11 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _tracked_modules import TrackedFilesError, production_modules  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs" / "PUBLIC_API.txt"
-MODULES = (
-    "src/M_STATS_PROBDIST_CORE.bas",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
-    "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
-    "src/M_STATS_PROBDIST_TFAMILY.bas",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas",
-    "src/M_STATS_PROBDIST_DISCRETE.bas",
-)
 HEADER = (
     "# VBA-PROBABILITY-DISTRIBUTIONS public API v1\n"
     "# <module><TAB><kind><TAB><name><TAB><normalized declaration>\n"
@@ -120,7 +119,13 @@ def declarations_from_text(module: str, text: str) -> list[tuple[str, str, str, 
 
 def collect(root: Path) -> list[tuple[str, str, str, str]]:
     all_api: list[tuple[str, str, str, str]] = []
-    for rel in MODULES:
+    try:
+        modules = production_modules(root)
+    except TrackedFilesError as exc:
+        raise ApiError(f"cannot list the tracked production modules: {exc}") from exc
+    if not modules:
+        raise ApiError("no tracked production modules under src/")
+    for rel in modules:
         path = root / rel
         if not path.is_file():
             raise ApiError(f"required production module missing: {rel}")
