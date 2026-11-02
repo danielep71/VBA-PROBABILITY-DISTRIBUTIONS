@@ -14,15 +14,26 @@ The binding is:
   workbook, or a commit this repository does not have) or the build came
   from a working tree with changes, which is never evidence-grade.
 
-The checks: the workbook's SHA-256 equals the manifest's; its build stamp
-(defined name build_commit) names the manifest's commit; its VBA project
-compiles from source (_VBA_PROJECT version 0xFFFF, no p-code) and holds the
-manifest's modules and document modules, no more and no fewer, each module
-stream decompressing to text with the recorded SHA-256; the modules are
-exactly the regression_sources of .github/excel-evidence-policy.json at the
-commit, in its order; and each module's Git blob at the commit has the
-recorded SHA-256, and so, for a clean build, has its embedded text. With
---commit, the manifest's commit must be that commit.
+The checks:
+
+- the workbook's SHA-256 equals the manifest's, it holds exactly the
+  builder's package parts, and its build stamp (defined name build_commit)
+  names the manifest's commit;
+- its VBA project holds exactly the PROJECT, PROJECTwm and VBA entries, and
+  VBA exactly _VBA_PROJECT, dir and one stream per module, with no other
+  entry. _VBA_PROJECT is version 0xFFFF without p-code. The dir, PROJECT and
+  PROJECTwm streams equal what the builder writes for the recorded modules:
+  the same module list, stream names and kinds, and source offsets 0. The
+  ThisWorkbook and shBuild document modules are the empty modules the builder
+  generates, and each module's text has the recorded SHA-256;
+- the modules are exactly the regression_sources of
+  .github/excel-evidence-policy.json at the commit, in its order, and each
+  module's Git blob at the commit has the recorded SHA-256. For a clean
+  build, so does its embedded text;
+- for a clean build that passes all of the above, the workbook is
+  byte-identical to a rebuild from the commit's policy and Git blobs.
+
+With --commit, the manifest's commit must be that commit.
 
 The exit code is 0 for VERIFIED, 1 for FAIL, and for UNVERIFIED 0, or 1 with
 --require-verified. The check runs no Excel: VERIFIED binds the workbook to
@@ -47,7 +58,17 @@ from xml.etree import ElementTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_workbook  # noqa: E402
-from vba_project import VBA_ENCODING, VBA_PROJECT_STREAM, CompoundFile, decompress  # noqa: E402
+from vba_project import (  # noqa: E402
+    VBA_ENCODING,
+    VBA_PROJECT_STREAM,
+    CompoundFile,
+    Module,
+    build_dir,
+    build_project_text,
+    build_projectwm,
+    decompress,
+    document_module,
+)
 
 ROOT = build_workbook.ROOT
 VERIFIED, FAIL, UNVERIFIED = "VERIFIED", "FAIL", "UNVERIFIED"
@@ -55,6 +76,9 @@ SPREADSHEET = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 RELATIONSHIP = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
 PACKAGE = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 REFERENCE = re.compile(r"^(?:'((?:[^']|'')+)'|([^'!]+))!\$?([A-Z]{1,3})\$?([0-9]+)$")
+# [MS-CFB] directory entry types, and the entries of the project root storage.
+EMPTY, STORAGE, STREAM = 0, 1, 2
+ROOT_ENTRIES = ("PROJECT", "PROJECTwm", "VBA")
 PROJECT_MODULE = re.compile(r"^(Module|Document|Class|BaseClass|Package)=([^/\r\n]+)")
 
 
@@ -136,54 +160,119 @@ def read_stamp(package: zipfile.ZipFile, name: str) -> str | None:
     return cell_text(package, part, f"{match.group(3)}{match.group(4)}")
 
 
-def workbook_findings(data: bytes, recorded: Recorded) -> list[str]:
-    """What the workbook's stamp and VBA project contradict in the manifest."""
+def expected_modules(recorded: Recorded) -> list[Module]:
+    """The modules the builder declares for the manifest's module names. Their
+    source is left empty: the dir, PROJECT and PROJECTwm streams depend only on
+    the names and kinds."""
+    return [document_module(build_workbook.WORKBOOK_CODE_NAME, True),
+            document_module(build_workbook.SHEET_CODE_NAME, False),
+            *(Module(str(item["name"]), "") for item in recorded.modules)]
+
+
+def tree_findings(project: CompoundFile, names: Sequence[str]) -> list[str]:
+    """The root storage must hold exactly PROJECT, PROJECTwm and VBA; VBA exactly
+    _VBA_PROJECT, dir and one stream per expected module; and the compound file
+    no other entry, reachable or not."""
     findings: list[str] = []
+    root = project.children(0)
+    if sorted(root) != sorted(ROOT_ENTRIES):
+        findings.append(f"workbook: the VBA project root holds {sorted(root)}, expected "
+                        f"{sorted(ROOT_ENTRIES)}")
+    if "VBA" not in root or project.entries[root["VBA"]]["kind"] != STORAGE:
+        return [*findings, "workbook: the VBA project has no VBA storage"]
+    vba = project.children(root["VBA"])
+    expected = {"_VBA_PROJECT", "dir", *names}
+    findings += [f"workbook: the VBA storage holds an unexpected entry {name}"
+                 for name in sorted(set(vba) - expected)]
+    findings += [f"workbook: the VBA storage lacks the stream {name}"
+                 for name in sorted(expected - set(vba))]
+    storages = {0, root["VBA"]}
+    reachable = {*storages, *root.values(), *vba.values()}
+    for sid, entry in enumerate(project.entries):
+        if entry["kind"] != EMPTY and sid not in reachable:
+            findings.append(f"workbook: the VBA project holds an unlisted entry "
+                            f"{entry['name']!r}")
+        elif sid in reachable and sid not in storages and entry["kind"] != STREAM:
+            findings.append(f"workbook: VBA project entry {entry['name']!r} is not a stream")
+    return findings
+
+
+def project_findings(vba_bin: bytes, recorded: Recorded) -> list[str]:
+    """Every stream of the VBA project against what the builder writes for the
+    manifest: the tree, _VBA_PROJECT, dir, PROJECT, PROJECTwm, the generated
+    document modules, and the digest of each module's text."""
+    modules = expected_modules(recorded)
+    try:
+        project = CompoundFile(vba_bin)
+        findings = tree_findings(project, [module.name for module in modules])
+    except (KeyError, ValueError) as error:
+        return [f"workbook: VBA project not readable: {error}"]
+
+    def stream(path: str, compressed: bool = False) -> bytes | None:
+        try:
+            data = project.read(path)
+            return decompress(data) if compressed else data
+        except (KeyError, ValueError) as error:
+            findings.append(f"workbook: {path} not readable: {error}")
+            return None
+
+    version = stream("VBA/_VBA_PROJECT")
+    if version is not None and version != VBA_PROJECT_STREAM:
+        findings.append("workbook: _VBA_PROJECT is not version 0xFFFF without a performance "
+                        "cache, so Excel would not compile the project from source")
+    directory = stream("VBA/dir", compressed=True)
+    if directory is not None and directory != build_dir("VBAProject", modules):
+        findings.append("workbook: VBA/dir differs from the dir stream of the recorded "
+                        "modules (module list, stream names, source offsets without p-code "
+                        "or module types)")
+    text = stream("PROJECT")
+    if text is not None and text != build_project_text(
+            build_workbook.project_id(recorded.commit), modules):
+        declared = [match.group(1, 2) for match in map(
+            PROJECT_MODULE.match, text.decode(VBA_ENCODING, "replace").split("\r\n")) if match]
+        findings.append(f"workbook: the PROJECT stream differs from the builder's for the "
+                        f"recorded modules; it declares {declared}")
+    pairs = stream("PROJECTwm")
+    if pairs is not None and pairs != build_projectwm(modules):
+        findings.append("workbook: the PROJECTwm stream differs from the recorded modules")
+    for module in modules[:2]:
+        source = stream(f"VBA/{module.name}", compressed=True)
+        if source is not None and source != module.source.encode(VBA_ENCODING):
+            findings.append(f"workbook: document module {module.name} is not the empty "
+                            "module the builder writes")
+    for item in recorded.modules:
+        name = str(item["name"])
+        source = stream(f"VBA/{name}", compressed=True)
+        if source is not None and build_workbook.sha256(source) != item["module_sha256"]:
+            findings.append(f"workbook: module {name} has sha256 "
+                            f"{build_workbook.sha256(source)}, the manifest records "
+                            f"{item['module_sha256']}")
+    return findings
+
+
+def workbook_findings(data: bytes, recorded: Recorded) -> list[str]:
+    """What the workbook's parts, stamp and VBA project contradict in the manifest."""
+    findings: list[str] = []
+    documents = [build_workbook.WORKBOOK_CODE_NAME, build_workbook.SHEET_CODE_NAME]
+    if list(recorded.document_modules) != documents:
+        findings.append(f"the manifest records document modules "
+                        f"{list(recorded.document_modules)}, the builder writes {documents}")
     expected_stamp = build_workbook.stamp_values(recorded.commit, "", recorded.clean)
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as package:
+            parts = tuple(package.namelist())
             stamp = read_stamp(package, build_workbook.STAMP_COMMIT)
             vba_bin = package.read("xl/vbaProject.bin")
     except (KeyError, ValueError, IndexError, zipfile.BadZipFile,
             ElementTree.ParseError) as error:
-        return [f"workbook: not readable: {error!r}"]
+        return [*findings, f"workbook: not readable: {error!r}"]
+    if parts != build_workbook.PARTS:
+        findings.append(f"workbook: holds the parts {list(parts)}, the builder writes "
+                        f"{list(build_workbook.PARTS)}")
     if stamp != expected_stamp[build_workbook.STAMP_COMMIT]:
         findings.append(f"workbook: build stamp {build_workbook.STAMP_COMMIT} is {stamp!r}, "
                         f"expected {expected_stamp[build_workbook.STAMP_COMMIT]!r}")
-    try:
-        project = CompoundFile(vba_bin)
-        project_text = project.read("PROJECT").decode(VBA_ENCODING)
-        streams = set(project.children(project.children(0)["VBA"]))
-        version = project.read("VBA/_VBA_PROJECT")
-    except (KeyError, ValueError, UnicodeDecodeError) as error:
-        return [*findings, f"workbook: VBA project not readable: {error}"]
-    if version != VBA_PROJECT_STREAM:
-        findings.append("workbook: _VBA_PROJECT is not version 0xFFFF without a performance "
-                        "cache, so Excel would not compile the project from source")
-    declared = [match.group(1, 2) for match in map(PROJECT_MODULE.match,
-                                                   project_text.split("\r\n")) if match]
-    expected = [("Document", name) for name in recorded.document_modules] + \
-        [("Module", str(item["name"])) for item in recorded.modules]
-    if declared != expected:
-        findings.append(f"workbook: the VBA project declares {declared}, the manifest "
-                        f"records {expected}")
-    names = [name for _, name in expected]
-    unexpected = sorted(streams - {*names, "dir", "_VBA_PROJECT"})
-    if unexpected:
-        findings.append(f"workbook: the VBA project holds streams the manifest does not "
-                        f"record: {', '.join(unexpected)}")
-    for item in recorded.modules:
-        name = str(item["name"])
-        try:
-            text = decompress(project.read(f"VBA/{name}"))
-        except (KeyError, ValueError) as error:
-            findings.append(f"workbook: module {name} not readable: {error}")
-            continue
-        if build_workbook.sha256(text) != item["module_sha256"]:
-            findings.append(f"workbook: module {name} has sha256 "
-                            f"{build_workbook.sha256(text)}, the manifest records "
-                            f"{item['module_sha256']}")
-    return findings
+    return findings + project_findings(vba_bin, recorded)
 
 
 def source_findings(root: Path, recorded: Recorded, verdict: Verdict) -> list[str]:
@@ -240,6 +329,26 @@ def source_findings(root: Path, recorded: Recorded, verdict: Verdict) -> list[st
     return findings
 
 
+def rebuild_findings(root: Path, recorded: Recorded, data: bytes) -> list[str]:
+    """A clean build is a function of its commit: rebuild the workbook from the
+    commit's policy and Git blobs and require the same bytes, so that no part,
+    stream or cell can differ from what the builder writes."""
+    try:
+        policy = json.loads(build_workbook.git_bytes(
+            root, "show", f"{recorded.commit}:{build_workbook.POLICY}").decode("utf-8"))
+        sources = build_workbook.sources_at(root, recorded.commit,
+                                            build_workbook.regression_sources(policy))
+        time = build_workbook.git(root, "show", "-s", "--format=%cI", recorded.commit)
+        expected = build_workbook.render(sources, recorded.commit, time, True)
+    except (build_workbook.BuildError, ValueError) as error:
+        return [f"workbook: cannot be rebuilt from {recorded.commit[:12]}: {error}"]
+    if expected != data:
+        return [f"workbook: differs from the rebuild of {recorded.commit[:12]} (sha256 "
+                f"{build_workbook.sha256(data)}, the rebuild gives "
+                f"{build_workbook.sha256(expected)})"]
+    return []
+
+
 def verify(root: Path, manifest: Path, workbook: Path | None = None,
            commit: str | None = None) -> Verdict:
     verdict = Verdict()
@@ -278,6 +387,8 @@ def verify(root: Path, manifest: Path, workbook: Path | None = None,
                              "not checked")
     if known:
         findings += source_findings(root, recorded, verdict)
+    if known and recorded.clean and not findings:
+        findings += rebuild_findings(root, recorded, data)
     verdict.findings += findings
     if findings:
         verdict.status = FAIL

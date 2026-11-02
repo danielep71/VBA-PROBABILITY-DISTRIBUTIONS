@@ -185,7 +185,7 @@ beside it, `probdist-regression.manifest.json`:
 
 | Binding | Meaning |
 | --- | --- |
-| `VERIFIED` | The workbook's SHA-256, its stamp, its VBA project (compiled from source, the recorded modules and nothing else, each with the recorded digest) and the commit's policy and Git blobs all agree with the manifest, and the build was clean |
+| `VERIFIED` | The build was clean and every check passes. The workbook's SHA-256 and stamp match the manifest. Its package parts are the builder's. Its VBA project holds exactly the builder's streams: `_VBA_PROJECT` without p-code; `dir`, `PROJECT` and `PROJECTwm` equal to what the builder writes for the recorded modules; the generated empty document modules; and each module with the recorded digest. The commit's policy and Git blobs agree with the manifest. Finally, the workbook is byte-identical to a rebuild from the commit |
 | `FAIL` | At least one of those checks found a mismatch, or `--commit` names another commit |
 | `UNVERIFIED` | Nothing to check against (no manifest, no workbook, or a commit this clone does not have), or a build from a working tree with changes |
 

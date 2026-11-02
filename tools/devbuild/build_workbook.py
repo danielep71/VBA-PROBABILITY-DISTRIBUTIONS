@@ -274,6 +274,11 @@ STYLES = (f'{XML_HEADER}<styleSheet xmlns="{MAIN}">'
           'xfId="0" builtinId="0"/></cellStyles></styleSheet>')
 
 
+# The package parts, in the order they are written.
+PARTS = ("[Content_Types].xml", "_rels/.rels", "xl/workbook.xml", "xl/_rels/workbook.xml.rels",
+         "xl/styles.xml", "xl/worksheets/sheet1.xml", "xl/vbaProject.bin")
+
+
 def package(cells: dict[tuple[int, int], str], vba_bin: bytes) -> bytes:
     """The .xlsm package: the same bytes for the same input, on any platform."""
     parts = {
@@ -305,6 +310,7 @@ def package(cells: dict[tuple[int, int], str], vba_bin: bytes) -> bytes:
         "xl/worksheets/sheet1.xml": worksheet_xml(cells).encode("utf-8"),
         "xl/vbaProject.bin": vba_bin,
     }
+    assert tuple(parts) == PARTS
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         for name, data in parts.items():
@@ -357,6 +363,24 @@ def default_manifest(target: Path) -> Path:
     return target.with_name(target.stem + MANIFEST_SUFFIX)
 
 
+def render(sources: Sequence[Source], commit: str, time: str, clean: bool) -> bytes:
+    """The workbook bytes: a function of the modules and the stamp only."""
+    vba_bin = build_vba_project(vba_modules(sources), project_id(commit))
+    return package(sheet_cells(stamp_values(commit, time, clean), sources), vba_bin)
+
+
+def sources_at(root: Path, commit: str, listed: Sequence[str]) -> list[Source]:
+    """The listed modules as the commit stores them, with CRLF line endings."""
+    sources = []
+    for item in listed:
+        blob = git_bytes(root, "cat-file", "blob", f"{commit}:{item}")
+        try:
+            sources.append(Source(item, Path(item).stem, module_text(blob)))
+        except ValueError as error:
+            raise BuildError(f"{item} at {commit[:12]}: {error}") from error
+    return sources
+
+
 def build(root: Path, target: Path, manifest_path: Path | None = None) -> Build:
     """Write the workbook to ``target`` and its manifest beside it (or to
     ``manifest_path``); describe what they hold."""
@@ -366,9 +390,7 @@ def build(root: Path, target: Path, manifest_path: Path | None = None) -> Build:
     result = Build(commit, git(root, "show", "-s", "--format=%cI", "HEAD"),
                    is_clean(root, listed), tuple(sources), target,
                    manifest_path or default_manifest(target))
-    vba_bin = build_vba_project(vba_modules(sources), project_id(commit))
-    data = package(sheet_cells(stamp_values(result.commit, result.time, result.clean), sources),
-                   vba_bin)
+    data = render(sources, result.commit, result.time, result.clean)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
     result.manifest.parent.mkdir(parents=True, exist_ok=True)

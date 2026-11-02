@@ -529,10 +529,119 @@ class VerifyTest(unittest.TestCase):
         self.assertIn("expected", verdict.findings[0])
         self.assertEqual(W.verify(self.root, self.manifest, commit="HEAD~1").status, W.VERIFIED)
 
+    # The scenarios below change the workbook and record its new SHA-256 in the
+    # manifest, as someone substituting a workbook would; only the content checks
+    # can catch them.
+    def repackage(self, parts: dict[str, bytes]) -> None:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            for name, data in parts.items():
+                info = zipfile.ZipInfo(name, date_time=B.ZIP_TIME)
+                info.create_system = 0
+                archive.writestr(info, data)
+        self.workbook.write_bytes(buffer.getvalue())
+        workbook = {**self.data["workbook"], "sha256": digest(buffer.getvalue())}
+        self.rewrite({**self.data, "workbook": workbook})
+
+    def parts(self) -> dict[str, bytes]:
+        with zipfile.ZipFile(self.workbook) as package:
+            return {name: package.read(name) for name in package.namelist()}
+
+    def tamper_project(self, change: Any) -> None:
+        """Rewrite vbaProject.bin after ``change`` edits its tree of streams."""
+        parts = self.parts()
+        cfb = V.CompoundFile(parts["xl/vbaProject.bin"])
+        vba = cfb.children(cfb.children(0)["VBA"])
+        tree: dict[str, Any] = {"PROJECT": cfb.read("PROJECT"),
+                                "PROJECTwm": cfb.read("PROJECTwm"),
+                                "VBA": {name: cfb.read(f"VBA/{name}") for name in vba}}
+        change(tree)
+        self.repackage({**parts, "xl/vbaProject.bin": V.write_cfb(tree)})
+
+    def test_an_equivalent_repackaging_fails_only_the_rebuild(self) -> None:
+        # The same streams, written in another directory order: every content
+        # check passes, and only the byte comparison with the rebuild fails.
+        self.tamper_project(lambda tree: None)
+        verdict = W.verify(self.root, self.manifest)
+        self.assertEqual(verdict.status, W.FAIL)
+        self.assertEqual(len(verdict.findings), 1, verdict.findings)
+        self.assertIn("differs from the rebuild", verdict.findings[0])
+
+    def test_a_changed_document_module_fails(self) -> None:
+        source = V.document_module("ThisWorkbook", True).source + \
+            "Private Sub Workbook_Open()\r\n    Shell \"calc.exe\"\r\nEnd Sub\r\n"
+        self.tamper_project(lambda tree: tree["VBA"].update(
+            ThisWorkbook=V.compress(source.encode("cp1252"))))
+        self.assert_fails("document module ThisWorkbook is not the empty module")
+
+    def test_a_deleted_document_module_fails(self) -> None:
+        self.tamper_project(lambda tree: tree["VBA"].pop("ThisWorkbook"))
+        self.assert_fails("lacks the stream ThisWorkbook")
+
+    def test_a_deleted_dir_stream_fails(self) -> None:
+        self.tamper_project(lambda tree: tree["VBA"].pop("dir"))
+        self.assert_fails("lacks the stream dir")
+
+    def test_an_altered_dir_stream_fails(self) -> None:
+        # The same modules, but the source of the first one behind a fake p-code
+        # offset, which Excel would read as compiled code.
+        modules = W.expected_modules(W.load_manifest(self.manifest))
+        directory = V.build_dir("VBAProject", modules).replace(
+            struct.pack("<HII", 0x0031, 4, 0), struct.pack("<HII", 0x0031, 4, 16), 1)
+        self.tamper_project(lambda tree: tree["VBA"].update(dir=V.compress(directory)))
+        self.assert_fails("VBA/dir differs")
+
+    def test_a_dir_stream_without_a_module_fails(self) -> None:
+        modules = W.expected_modules(W.load_manifest(self.manifest))[:-1]
+        self.tamper_project(lambda tree: tree["VBA"].update(
+            dir=V.compress(V.build_dir("VBAProject", modules))))
+        self.assert_fails("VBA/dir differs")
+
+    def test_an_extra_module_stream_fails(self) -> None:
+        extra = standard("M_STATS_PROBDIST_EXTRA", "Public Sub Run()\r\nEnd Sub\r\n")
+        self.tamper_project(lambda tree: tree["VBA"].update(
+            M_STATS_PROBDIST_EXTRA=V.compress(extra.source.encode("cp1252"))))
+        self.assert_fails("unexpected entry M_STATS_PROBDIST_EXTRA")
+
+    def test_a_consistently_declared_extra_module_fails(self) -> None:
+        # The extra module is declared in dir, PROJECT and PROJECTwm too.
+        recorded = W.load_manifest(self.manifest)
+        extra = standard("M_STATS_PROBDIST_EXTRA", "Public Sub Run()\r\nEnd Sub\r\n")
+        modules = [*W.expected_modules(recorded), extra]
+
+        def change(tree: dict[str, Any]) -> None:
+            tree["VBA"]["dir"] = V.compress(V.build_dir("VBAProject", modules))
+            tree["VBA"][extra.name] = V.compress(extra.source.encode("cp1252"))
+            tree["PROJECT"] = V.build_project_text(B.project_id(recorded.commit), modules)
+            tree["PROJECTwm"] = V.build_projectwm(modules)
+        self.tamper_project(change)
+        verdict = W.verify(self.root, self.manifest)
+        self.assertEqual(verdict.status, W.FAIL)
+        for expected in ("unexpected entry M_STATS_PROBDIST_EXTRA", "VBA/dir differs",
+                         "PROJECT stream differs", "PROJECTwm stream differs"):
+            self.assertTrue(any(expected in finding for finding in verdict.findings),
+                            (expected, verdict.findings))
+
+    def test_a_performance_cache_or_extra_storage_fails(self) -> None:
+        self.tamper_project(lambda tree: tree["VBA"].update(__SRP_0=b"\x00" * 8))
+        self.assert_fails("unexpected entry __SRP_0")
+        self.tamper_project(lambda tree: tree.update(Extra={"Stream": b"x"}))
+        self.assert_fails("the VBA project root holds")
+
+    def test_an_extra_package_part_fails(self) -> None:
+        self.repackage({**self.parts(), "xl/vbaProjectSignature.bin": b"x"})
+        self.assert_fails("holds the parts")
+
+    def test_a_changed_sheet_fails_the_rebuild(self) -> None:
+        parts = self.parts()
+        sheet = parts["xl/worksheets/sheet1.xml"].replace(b"Never commit", b"Please commit")
+        self.repackage({**parts, "xl/worksheets/sheet1.xml": sheet})
+        self.assert_fails("differs from the rebuild")
+
     def test_other_document_modules_fail(self) -> None:
         vba_project = {**self.data["vba_project"], "document_modules": ["ThisWorkbook", "shOther"]}
         self.rewrite({**self.data, "vba_project": vba_project})
-        self.assert_fails("the VBA project declares")
+        self.assert_fails("the builder writes ['ThisWorkbook', 'shBuild']")
 
     def test_a_reordered_module_list_fails(self) -> None:
         self.rewrite({**self.data, "modules": self.data["modules"][::-1]})
