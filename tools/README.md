@@ -35,6 +35,49 @@ python3 tools/check_release_semantics.py --root .
 python3 -m ruff check .
 ```
 
+## Repository settings
+
+[`setup_repository.py`](setup_repository.py) compares the live GitHub settings
+with the baseline in
+[`docs/repo_governance/repository-settings.json`](../docs/repo_governance/repository-settings.json):
+visibility, merge methods and repository features, the five security features,
+and the five repository rulesets with their required checks and allowed merge
+methods. [SETTINGS.md](../docs/repo_governance/SETTINGS.md) explains each
+value. It calls the REST API through an authenticated `gh` CLI and needs
+Python 3.10 or later.
+
+```bash
+python3 tools/setup_repository.py                  # preview: differences and the plan; read-only
+python3 tools/setup_repository.py --verify \
+  --evidence settings-{date}.json                  # read-only; exit 1 on drift
+python3 tools/setup_repository.py --apply          # writes the plan, then reads everything back
+```
+
+- **Preview** (the default) lists every difference and the writes that would
+  remove it. **Verify** reads the same state and exits with status 1 on any
+  difference, including a value GitHub does not report to the token in use.
+  Neither writes.
+- **Apply** needs administrative access and refuses to run unless the
+  repository's visibility already matches the baseline (the tool never
+  changes visibility) and, before it writes a ruleset, every required check
+  has succeeded on the default-branch HEAD. Replacing a ruleset that exists
+  under a baseline name also needs `--update-existing`, because the whole
+  ruleset is replaced. There is no automatic rollback; rerun the preview after
+  a failure.
+- `--evidence PATH` writes a JSON record of every managed value as observed,
+  with the check time, the baseline's SHA-256 and the result (`VERIFIED` or
+  `DRIFT`). `{date}` in the path becomes the UTC date.
+- Rulesets outside the baseline are named as notes and never changed.
+- When the `vulnerability-alerts` endpoint cannot be read, enabled Dependabot
+  security updates count as proof that alerts are on, because GitHub allows
+  them only with alerts; the record names that source.
+
+Change a setting by editing the baseline in a pull request, then apply it.
+A change made in the GitHub settings first shows up as drift. The fixtures in
+[`tests/test_setup_repository.py`](../tests/test_setup_repository.py) run
+offline, in the static workflow, against API responses recorded from this
+repository on 2026-11-02 and copies of them changed to show drift.
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
@@ -76,7 +119,21 @@ copies stay identical to a published template revision.
 `check_release_semantics.py` reads a single field, `repository`, from
 [`.github/repository-profile.json`](../.github/repository-profile.json); it uses it
 to validate changelog comparison links. That file deliberately records nothing
-else. This repository has **not** adopted the template contract, a template
+else; the repository settings baseline is a separate file,
+[`docs/repo_governance/repository-settings.json`](../docs/repo_governance/repository-settings.json).
+This repository has **not** adopted the template contract, a template
 profile or the template's directory layout, and the file must not be read as
 claiming any of them. The template's release-history policy applies only to the
 template repository itself and is not imported.
+
+### Adapted from `danielep71/MyTemplate` at `9ff7670`
+
+These files are adapted, not copied: names, layout and scope follow this
+repository, and template-only features are dropped.
+
+| File | What was adapted |
+| --- | --- |
+| `tools/setup_repository.py` | The template's settings script: preview/apply/check modes, ruleset comparison and read-back; reworked for this repository's baseline (merge methods, features, two required checks), a `--verify` mode and a JSON evidence record |
+| `tests/test_setup_repository.py` | The template's fake-API tests, rebuilt on API responses recorded from this repository |
+| `docs/repo_governance/repository-settings.json` | The template's settings configuration format, filled with this repository's live settings |
+| `docs/repo_governance/DISTRIBUTION.md` | The template's distribution review, adapted to a public repository and given a pinned Gitleaks history scan |

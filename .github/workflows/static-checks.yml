@@ -3,7 +3,8 @@ run-name: Static checks — ${{ github.ref_name }} @ ${{ github.sha }}
 
 # Excel-free integrity checks of the repository itself: committed whitespace,
 # procedure-scoped VBA jumps, release semantics, release-bundle builder
-# fixtures, Python correctness lint (Ruff) and workflow validity. They
+# fixtures, repository-settings tool fixtures, Python correctness lint (Ruff)
+# and workflow validity. They
 # complement, but never replace, the Excel/VBA regression, the numerical
 # Accuracy Gate or release certification. The checkers live in tools/ and are
 # imported from the portfolio template; see tools/README.md.
@@ -122,6 +123,13 @@ jobs:
         # Release workflow runs on a version tag (#31).
         run: python3 .github/scripts/build_release_bundle.py --self-test
 
+      - name: Exercise the repository settings tool
+        id: repository-settings-self-test
+        continue-on-error: true
+        # Validates the settings baseline and runs tools/setup_repository.py
+        # against recorded API responses; no network, no token, no writes.
+        run: python3 -m unittest discover -s tests -p 'test_setup_repository.py'
+
       - name: Install the hash-locked Python linter
         id: ruff-install
         continue-on-error: true
@@ -196,6 +204,7 @@ jobs:
           RELEASE_SEMANTICS_SELF_TEST: ${{ steps.release-semantics-self-test.outcome }}
           RELEASE_SEMANTICS: ${{ steps.release-semantics.outcome }}
           RELEASE_BUNDLE_SELF_TEST: ${{ steps.release-bundle-self-test.outcome }}
+          REPOSITORY_SETTINGS_SELF_TEST: ${{ steps.repository-settings-self-test.outcome }}
           RUFF_INSTALL: ${{ steps.ruff-install.outcome }}
           RUFF: ${{ steps.ruff.outcome }}
           ACTIONLINT_INSTALL: ${{ steps.actionlint-install.outcome }}
@@ -210,6 +219,7 @@ jobs:
             "Release-semantics fixtures:$RELEASE_SEMANTICS_SELF_TEST" \
             "Release semantics:$RELEASE_SEMANTICS" \
             "Release bundle fixtures:$RELEASE_BUNDLE_SELF_TEST" \
+            "Repository settings fixtures:$REPOSITORY_SETTINGS_SELF_TEST" \
             "Python linter install:$RUFF_INSTALL" \
             "Python correctness lint:$RUFF" \
             "Workflow validator install:$ACTIONLINT_INSTALL" \
