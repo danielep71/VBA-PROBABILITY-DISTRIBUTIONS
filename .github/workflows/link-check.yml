@@ -26,6 +26,11 @@ defaults:
   run:
     shell: bash
 
+env:
+  # The CI interpreter, an exact patch release, shared with every workflow that
+  # sets up Python; tools/README.md ("Python versions") lists where it is set.
+  PYTHON_VERSION: "3.12.16"
+
 jobs:
   external:
     name: External links
@@ -43,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Check relative links, anchors and external links
         run: python tools/check_links.py --external --repository "$GITHUB_REPOSITORY"

@@ -12,7 +12,7 @@ problem. The run writes, under test-results/static-checks/:
   $GITHUB_STEP_SUMMARY.
 
 The checks keep writing their own evidence (test-results/*.json and *.md) as
-before. A check whose tool is not installed (Ruff, actionlint) is skipped and
+before. A check whose tool is not installed (Ruff, mypy, actionlint) is skipped and
 reported as such; --strict, which CI passes, makes it fail instead. The exit
 code is 1 when any check failed.
 
@@ -116,6 +116,10 @@ def checks(context: Context) -> list[Check]:
     actionlint_missing = None if actionlint else (
         f"actionlint is not an executable at {context.actionlint}" if context.actionlint
         else "actionlint is not on PATH; install it or pass --actionlint")
+    # -config-file makes the self-hosted runner label declaration explicit.
+    actionlint_command = [actionlint or context.actionlint or "actionlint", "-no-color",
+                          "-config-file", ".github/actionlint.yaml"]
+    lint_install = "install it with python -m pip install -r tools/requirements-lint-ci.txt"
     return [
         Check("whitespace-self-test",
               [python, "tools/check_committed_whitespace.py", "--root", ".", "--self-test"]),
@@ -149,15 +153,18 @@ def checks(context: Context) -> list[Check]:
         # Rules come from ruff.toml: syntax errors and pyflakes only.
         Check("ruff",
               [python, "-m", "ruff", "check", "--no-cache", "--output-format", "concise", "."],
-              missing=module_missing("ruff", "install it with "
-                                     "python -m pip install -r tools/requirements-lint-ci.txt"),
+              missing=module_missing("ruff", lint_install),
               output=f"{results}/ruff.txt"),
-        # -config-file makes the self-hosted runner label declaration explicit.
-        Check("actionlint",
-              [actionlint or context.actionlint or "actionlint", "-no-color",
-               "-config-file", ".github/actionlint.yaml"],
-              missing=actionlint_missing,
+        # Scope, strictness and target Python come from mypy.ini.
+        Check("mypy", [python, "-m", "mypy"],
+              missing=module_missing("mypy", lint_install),
+              output=f"{results}/mypy.txt"),
+        Check("actionlint", actionlint_command, missing=actionlint_missing,
               output=f"{results}/actionlint.txt"),
+        # The same command must reject a deliberately invalid workflow.
+        Check("actionlint-probe",
+              [python, "tools/probe_actionlint.py", "--", *actionlint_command],
+              missing=actionlint_missing),
     ]
 
 

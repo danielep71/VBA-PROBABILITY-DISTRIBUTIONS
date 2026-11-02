@@ -75,3 +75,9 @@ updates:
     labels: ["ci", "P3"]
     commit-message:
       prefix: "deps(python)"
+    groups:
+      # Ruff, mypy and mypy's dependencies share one hash-locked file that
+      # installs only as a complete closure, so one pull request moves them.
+      python-quality-tools:
+        patterns:
+          - "*"
