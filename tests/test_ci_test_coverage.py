@@ -232,6 +232,83 @@ class CoverageTests(unittest.TestCase):
                                         "test_a.py": SCRIPT})
                 self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
 
+    def test_test_run_only_when_full_proofs_are_off_is_reported(self) -> None:
+        # Review finding: the else branch runs only on metadata-only changes,
+        # so editing the test (which selects full proofs) would skip it.
+        scripts = {
+            "else branch": 'if [[ "$FULL_PROOFS" == "true" ]]; then\n  echo full\n'
+                           "else\n  python test_tool.py\nfi",
+            "elif branch": 'if [[ "$FULL_PROOFS" == "true" ]]; then\n  echo full\n'
+                           "elif true; then\n  python test_tool.py\nfi",
+            "negated test": 'if [[ "$FULL_PROOFS" != "true" ]]; then\n  python test_tool.py\nfi',
+            "unproven test": 'if [[ -n "$FULL_PROOFS" ]]; then\n  python test_tool.py\nfi',
+        }
+        for name, script in scripts.items():
+            with self.subTest(name):
+                steps = ("- env:\n    FULL_PROOFS: ${{ needs.select.outputs.full }}\n  run: |\n"
+                         + textwrap.indent(script, "    "))
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_tool.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_tool.py"])
+        inline = ('- run: |\n    if [ "${{ needs.select.outputs.full }}" = true ]; then\n'
+                  "      python test_tool.py\n    fi")
+        repository = self.repo({".github/workflows/ci.yml": workflow(inline), "test_tool.py": SCRIPT})
+        self.assertEqual(repository.check()["status"], "pass")
+
+    def test_failure_masking_and_short_circuit_lists_give_no_credit(self) -> None:
+        # Review findings: `python test_a.py || true` masks a failure, and
+        # `[ ... ] && python test_a.py` may skip the test while the step passes.
+        cases = [
+            "python test_a.py || true",
+            "python test_a.py || echo failed || true",
+            '[ "$RUN_TESTS" = true ] && python test_a.py\necho done',
+            "python test_a.py &&\n  echo ran",
+            "python test_a.py | tee log.txt",
+            "! python test_a.py",
+            "python test_a.py &",
+        ]
+        for script in cases:
+            with self.subTest(script=script):
+                steps = "- run: |\n" + textwrap.indent(script, "    ")
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_a.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
+
+    def test_outcome_must_be_enforced_not_merely_mentioned(self) -> None:
+        # Review finding: echoing the outcome does not make a failure blocking.
+        enforcers = [
+            '- if: always()\n  run: echo "${{ steps.t.outcome }}"',
+            '- if: always()\n  run: test "${{ steps.t.outcome }}" = failure',
+            '- if: always()\n  run: test "${{ steps.t.outcome }}" = success || true',
+            '- if: always()\n  continue-on-error: true\n  run: test "${{ steps.t.outcome }}" = success',
+            '- if: github.event_name == \'push\'\n  run: test "${{ steps.t.outcome }}" = success',
+            '- name: "outcome ${{ steps.t.outcome }}"\n  run: echo checked',
+        ]
+        for enforcer in enforcers:
+            with self.subTest(enforcer=enforcer):
+                steps = f"- id: t\n  continue-on-error: true\n  run: python test_a.py\n{enforcer}"
+                repository = self.repo({".github/workflows/ci.yml": workflow(steps),
+                                        "test_a.py": SCRIPT})
+                self.assertEqual(list(self.findings(repository.check())), ["test_a.py"])
+        steps = ("- id: t\n  continue-on-error: true\n  run: python test_a.py\n"
+                 "- if: always()\n  env:\n    OUTCOME: ${{ steps.t.outcome }}\n"
+                 '  run: test "$OUTCOME" = success')
+        repository = self.repo({".github/workflows/ci.yml": workflow(steps), "test_a.py": SCRIPT})
+        self.assertEqual(repository.check()["status"], "pass")
+
+    def test_package_load_tests_hook_withholds_discovery_credit(self) -> None:
+        # Review finding: a package hook replaces discovery below it.
+        repository = self.repo({
+            ".github/workflows/ci.yml": workflow("- run: python -m unittest discover -s tests"),
+            "tests/pkg/__init__.py": "def load_tests(loader, tests, pattern):\n    return tests\n",
+            "tests/pkg/test_a.py": UNIT,
+            "tests/plain/__init__.py": "",
+            "tests/plain/test_b.py": UNIT,
+        })
+        findings = self.findings(repository.check())
+        self.assertEqual(list(findings), ["tests/pkg/test_a.py"])
+        self.assertIn("load_tests hook in tests/pkg/__init__.py", findings["tests/pkg/test_a.py"])
+
     def test_recognized_conditions_and_aggregated_continue_on_error_give_credit(self) -> None:
         steps = """\
             - if: ${{ !cancelled() && steps.deps.outcome == 'success' }}

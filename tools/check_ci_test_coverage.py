@@ -6,17 +6,23 @@ Credit comes only from what CI really runs on a pull request to ``main``:
 * a ``run:`` step of a workflow whose ``pull_request`` trigger has no path
   filter, invoking ``python <file>``, ``python -m unittest <file|module>`` or
   ``python -m unittest discover`` (resolved against the step's working
-  directory; discovery credits only modules that define a ``TestCase``);
+  directory; discovery credits only modules that define a ``TestCase``, inside
+  packages without a ``load_tests`` hook);
 * an entry of a registered runner list (``RUNNERS``) that such a step invokes,
   with the runner's own filter for its reduced mode applied.
 
 A run is *unconditional* when nothing but job success gates it. A run gated by
-the accuracy-proof selection (``needs.<job>.outputs.full``, or a shell
-conditional on a variable bound to it) is *selected*: it counts only when
+the accuracy-proof selection is *selected*: either ``needs.<job>.outputs.full
+== 'true'`` in an ``if:``, or the ``then`` branch of a shell test comparing a
+variable bound to that output with ``true``. A selected run counts only when
 ``tools/select_accuracy_checks.py`` does not treat a change to that file as
-metadata-only, so editing the file always makes it run. Any other condition,
-a path-filtered trigger or an unaggregated ``continue-on-error`` earns no
-credit. ``EXEMPT`` lists reasoned exceptions and is empty.
+metadata-only, so editing the file always makes it run.
+
+Credit is withheld whenever execution or failure propagation cannot be
+established: a path-filtered trigger, any other condition or shell branch, a
+command in an ``&&``/``||`` list, before a pipe, backgrounded or negated, and
+``continue-on-error`` unless a later unconditional step compares that step's
+outcome with ``success``. ``EXEMPT`` lists reasoned exceptions and is empty.
 
 Workflows are read with a small standard-library parser for the block-style
 YAML subset GitHub workflows use; anything outside it is an error (exit 2).
@@ -444,11 +450,48 @@ def logical_lines(script: str) -> list[str]:
     return lines
 
 
+SELECTION_EXPRESSION = re.compile(r"\$\{\{\s*needs\.[\w-]+\.outputs\.full\s*\}\}")
+# A command joined to another by one of these can fail without failing the
+# step: `a || b` masks a, `a && b` may skip b, a pipeline reports only its last
+# command without pipefail, and `&` backgrounds it.
+MASKING = {"&&", "||", "|", "|&", "&"}
+
+
+def comparison_operands(words: list[str]) -> tuple[str, str] | None:
+    """Operands of a lone `[ x = y ]`, `[[ x == y ]]` or `test x = y`."""
+    if words[:1] == ["test"]:
+        words = words[1:]
+    elif len(words) >= 2 and (words[0], words[-1]) in (("[", "]"), ("[[", "]]")):
+        words = words[1:-1]
+    else:
+        return None
+    if len(words) == 3 and words[1] in ("=", "=="):
+        return words[0], words[2]
+    return None
+
+
+def selection_branch_level(condition: list[str], selection_vars: set[str]) -> int:
+    """SELECTED only for the `then` branch of a proven `<selection> == true` test."""
+    operands = comparison_operands(condition)
+    if operands is None or "true" not in operands:
+        return NEVER
+    refs = {f"${var}" for var in selection_vars} | {f"${{{var}}}" for var in selection_vars}
+    if any(op in refs or SELECTION_EXPRESSION.fullmatch(op) for op in operands):
+        return SELECTED
+    return NEVER
+
+
 def shell_commands(script: str, selection_vars: set[str]) -> list[tuple[list[str], int]]:
-    """Split a bash script into simple commands, each with its run level."""
+    """Split a bash script into simple commands, each with its run level.
+
+    Conservative by design: a command runs ALWAYS only at top level, outside
+    any `&&`/`||` list or pipeline. Inside `if`, only the `then` branch of a
+    proven full-proof selection test is SELECTED; every other branch, loop,
+    `case` and condition command is NEVER.
+    """
     commands: list[tuple[list[str], int]] = []
-    depth = 0
-    conditional_on: list[int] = []
+    frames: list[int] = []
+    carry: str | None = None
     for line in logical_lines(script):
         lexer = shlex.shlex(line, posix=True, punctuation_chars=";&|()<>")
         lexer.whitespace_split = True
@@ -457,46 +500,49 @@ def shell_commands(script: str, selection_vars: set[str]) -> list[tuple[list[str
         except ValueError:
             if "test_" in line or "unittest" in line:
                 commands.append(([], NEVER))
+            carry = None
             continue
+        segments: list[tuple[list[str], str | None, str | None]] = []
         current: list[str] = []
-        after_or = False
-        for token in tokens + [";"]:
-            if token not in SEPARATORS:
+        before = carry
+        for token in tokens:
+            if token in SEPARATORS:
+                segments.append((current, before, token))
+                current, before = [], token
+            else:
                 current.append(token)
-                continue
-            words = list(current)
-            current = []
+        segments.append((current, before, None))
+        carry = None
+        if not segments[-1][0] and segments[-1][1] in MASKING:
+            carry = segments[-1][1]  # the list or pipeline continues on the next line
+        for words, before, after in segments:
+            words = list(words)
+            negated = False
             while words and words[0] in SHELL_PREFIX:
-                words.pop(0)
+                keyword = words.pop(0)
+                negated = negated or keyword == "!"
+                if keyword in ("else", "elif") and frames:
+                    frames[-1] = NEVER
             if not words:
-                after_or = token == "||"
                 continue
             head = words[0]
-            if head in SHELL_OPEN:
-                depth += 1
-                condition = " ".join(words)
-                gated_by_selection = any(
-                    re.search(r"\$\{?" + re.escape(var) + r"\b", condition) for var in selection_vars
-                )
-                conditional_on.append(SELECTED if gated_by_selection else NEVER)
-                words = words[1:]
-                if not words or head in ("for", "case", "select"):
-                    after_or = token == "||"
-                    continue
-            elif head in SHELL_CLOSE:
-                depth = max(0, depth - 1)
-                if conditional_on:
-                    conditional_on.pop()
-                after_or = token == "||"
+            if head in SHELL_CLOSE:
+                if frames:
+                    frames.pop()
                 continue
-            level = max(conditional_on, default=ALWAYS)
-            if after_or:
+            if head in SHELL_OPEN:
+                frames.append(selection_branch_level(words[1:], selection_vars)
+                              if head == "if" else NEVER)
+                if words[1:]:
+                    commands.append((words[1:], NEVER))  # a condition cannot fail the step
+                continue
+            level = max(frames, default=ALWAYS)
+            if before in MASKING or after in MASKING or negated:
                 level = NEVER
             while words and re.fullmatch(r"\w+=.*", words[0]):
                 words.pop(0)
             if words:
                 commands.append((words, level))
-            after_or = token == "||"
     return commands
 
 
@@ -527,6 +573,31 @@ def python_invocations(script: str, cwd: str, level: int, origin: str,
         if argv and argv[0] != "-c":
             found.append(Invocation(cwd, argv, max(level, command_level), origin))
     return found
+
+
+def enforces_success(step: Any, step_id: str, job_env: Any) -> bool:
+    """Whether ``step`` fails unless ``steps.<step_id>.outcome`` is success.
+
+    Only a top-level `test`/`[ ]`/`[[ ]]` comparison of that outcome (inline
+    or through an env variable bound to it) with `success`, in an unconditional
+    step that is not itself continue-on-error, counts; a mere mention does not.
+    """
+    if not isinstance(step, dict) or "run" not in step or truthy(step.get("continue-on-error")):
+        return False
+    if condition_level(step.get("if"))[0] != ALWAYS:
+        return False
+    outcome = re.compile(r"\$\{\{\s*steps\." + re.escape(step_id) + r"\.outcome\s*\}\}")
+    env = dict(job_env) if isinstance(job_env, dict) else {}
+    env.update(step.get("env") or {})
+    refs = {form.format(name) for name, value in env.items() if outcome.fullmatch(str(value))
+            for form in ("${}", "${{{}}}")}
+    for words, level in shell_commands(str(step["run"]), set()):
+        operands = comparison_operands(words) if level == ALWAYS else None
+        if operands and "success" in operands and any(
+            op in refs or outcome.fullmatch(op) for op in operands
+        ):
+            return True
+    return False
 
 
 def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
@@ -565,7 +636,6 @@ def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
             continue
         level = job_level(job_id)
         job_defaults = ((job.get("defaults") or {}).get("run") or {}) if isinstance(job.get("defaults"), dict) else {}
-        job_text = repr(job)
         job_env = job.get("env") or {}
         steps = job.get("steps") or []
         if not isinstance(steps, list):
@@ -576,8 +646,8 @@ def workflow_invocations(path: str, data: Any) -> tuple[list[Invocation], str]:
             step_level = max(level, condition_level(step.get("if"))[0])
             if truthy(step.get("continue-on-error")):
                 step_id = step.get("id")
-                aggregated = step_id is not None and re.search(
-                    r"steps\." + re.escape(str(step_id)) + r"\.outcome", job_text.replace(repr(step), "")
+                aggregated = step_id is not None and any(
+                    enforces_success(later, str(step_id), job_env) for later in steps[number:]
                 )
                 if not aggregated:
                     step_level = NEVER
@@ -616,6 +686,21 @@ def defines_test_case(source: str) -> bool:
                 if name.endswith("TestCase"):
                     return True
     return False
+
+
+def defines_load_tests(source: str) -> bool:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return True  # cannot establish what discovery does here
+    return any(
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Assign, ast.ImportFrom))
+        and (getattr(node, "name", None) == "load_tests"
+             or any(isinstance(t, ast.Name) and t.id == "load_tests" for t in getattr(node, "targets", []))
+             or any(alias.asname == "load_tests" or alias.name == "load_tests"
+                    for alias in getattr(node, "names", [])))
+        for node in tree.body
+    )
 
 
 def runner_commands(root: Path, runner_path: str, runner: Runner) -> list[tuple[str, ...]]:
@@ -723,10 +808,21 @@ def unittest_targets(root: Path, tracked: set[str], invocation: Invocation,
         # Discovery descends only into packages: every directory between the
         # start directory and the module must hold an __init__.py.
         parts = relative.split("/")[:-1]
-        if not all(
-            posixpath.join(base, *parts[: depth + 1], "__init__.py").removeprefix("./") in tracked
+        initializers = [
+            posixpath.join(base, *parts[: depth + 1], "__init__.py").removeprefix("./")
             for depth in range(len(parts))
-        ):
+        ]
+        if not all(init in tracked for init in initializers):
+            continue
+        # A package load_tests hook replaces automatic discovery below it and
+        # may drop any module, so modules under one are not credited.
+        start_init = posixpath.join(base, "__init__.py").removeprefix("./")
+        hooked = [init for init in ([start_init] if start_init in tracked else []) + initializers
+                  if defines_load_tests((root / init).read_text(encoding="utf-8", errors="replace"))]
+        if hooked:
+            coverage.notes.setdefault(path, []).append(
+                f"discovered by {invocation.origin} under the load_tests hook in {hooked[0]}"
+            )
             continue
         source = (root / path).read_text(encoding="utf-8", errors="replace")
         if defines_test_case(source):

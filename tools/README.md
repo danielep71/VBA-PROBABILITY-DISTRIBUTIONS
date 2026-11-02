@@ -100,18 +100,28 @@ A file counts as run when either of these executes it:
 - a `run:` step of a workflow whose `pull_request` trigger has no path filter,
   through `python <file>`, `python -m unittest <file or module>` or
   `python -m unittest discover` (discovery counts only modules that define a
-  `unittest.TestCase`, inside packages);
+  `unittest.TestCase`, inside packages without a `load_tests` hook);
 - an entry of a runner list that such a step invokes. Only
   `benchmark/test_evidence_tools.py` is registered, and its `--checks-only`
   filter is applied. `benchmark/refresh_evidence.py` is not registered: CI never
   runs it.
 
-A step gated by the accuracy-proof selection (`needs.select.outputs.full`) counts
-only if `select_accuracy_checks.py` does not treat a change to that test file as
-metadata-only. Other conditions, `||` lists and `continue-on-error` without an
-aggregating `steps.<id>.outcome` check do not count. Workflows are read with a
-small parser for block-style YAML; a construct outside it is an error (exit 2),
-not a pass.
+A run gated by the accuracy-proof selection counts only if
+`select_accuracy_checks.py` does not treat a change to that test file as
+metadata-only. That covers a `needs.select.outputs.full == 'true'` condition,
+and the `then` branch of a shell test comparing that output with `true`.
+
+When execution or failure propagation cannot be established, the run does not
+count. That applies to:
+
+- any other condition or shell branch;
+- a command in an `&&`/`||` list, before a pipe, backgrounded or negated;
+- `continue-on-error`, unless a later unconditional step runs
+  `test "${{ steps.<id>.outcome }}" = success` (directly or through an env
+  variable).
+
+Workflows are read with a small parser for block-style YAML; a construct outside
+it is an error (exit 2), not a pass.
 
 To add a test, add a benchmark test to the `commands` list in
 `benchmark/test_evidence_tools.py`. Put a `unittest` module under `tests/`,
