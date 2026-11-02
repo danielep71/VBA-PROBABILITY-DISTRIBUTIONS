@@ -41,8 +41,15 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-      - name: Test conservative change selection
-        run: python -m unittest discover -s tests -p 'test_select_accuracy_checks.py'
+      - name: Run the tests/ unit tests
+        # Every module under tests/ runs on every event, before selection:
+        # change selection, issue triage and CI test coverage are all cheap,
+        # offline and independent of the selected proof depth.
+        run: python -m unittest discover -s tests
+      - name: Verify every tracked test file runs in CI
+        # Fails when a tracked test_*.py is executed by no workflow step and
+        # no runner list on every pull request (tools/check_ci_test_coverage.py).
+        run: python tools/check_ci_test_coverage.py --root . --summary "$GITHUB_STEP_SUMMARY"
       - name: Select proofs for the complete change
         id: select
         env:

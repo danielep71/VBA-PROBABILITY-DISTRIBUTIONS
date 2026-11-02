@@ -90,6 +90,73 @@ Markdown file it writes, added to the run summary). Then add the name to
 workflow needs no change unless the check needs a new tool installed. A new
 `tests/test_*.py` file needs no entry: `python-tests` discovers it.
 
+## CI test coverage
+
+`check_ci_test_coverage.py` fails when a tracked `test_*.py` file does not run
+in CI on every pull request. It runs on every event in the Accuracy Gate's
+`Select accuracy proofs` job, after `python -m unittest discover -s tests`, and
+its live check and fixtures (`tests/test_ci_test_coverage.py`) are registered in
+`benchmark/verification_depth.json`.
+
+The checker is deliberately conservative: it recognizes a few step shapes and
+reports everything else, so an ambiguous step has to be restructured. A file
+counts as run when either of these executes it:
+
+- a `run:` step of a workflow whose `pull_request` trigger has no path filter,
+  no `branches-ignore` and no negative (`!`) branch pattern, and whose
+  `branches`, if any, include the default branch.
+  The step must use the default or `bash` shell and must not be
+  `continue-on-error`. Every line must be recognized: blank lines, comments, a
+  top-level `cd <dir>`, plain commands (redirections and leading assignments
+  allowed), and `python`/`python3` running `<file>`,
+  `-m unittest <file or module>` or `-m unittest discover`. One other line
+  withholds credit from the whole step: a command list, a pipeline, a subshell,
+  a substitution, a heredoc, a loop, `exit`, `set +e` or another `if`.
+  unittest counts only modules that define a `unittest.TestCase`, and discovery
+  only inside packages without a `load_tests` hook.
+- an entry of a runner list that such a step invokes. Only
+  `benchmark/test_evidence_tools.py` is registered, and its `--checks-only`
+  filter is applied. `benchmark/refresh_evidence.py` is not registered: CI never
+  runs it.
+
+A run gated by the accuracy-proof selection counts only if
+`select_accuracy_checks.py` does not treat a change to that test file as
+metadata-only. Two gates are recognized:
+
+- `if: needs.select.outputs.full == 'true'`;
+- the `then` branch of a single
+  `if [[ "$VAR" == "true" ]]; then` ... `else` ... `fi` block, where `VAR` is
+  bound exactly to `${{ needs.select.outputs.full }}`. The `else` branch does
+  not count. The operand must be double-quoted (`"$VAR"`, `"${VAR}"` or the
+  expression itself) and compared with `true` by `==` or `=`, in `[[ ]]` or
+  `[ ]`. The gate is matched on the raw line, so quoting that stops expansion,
+  such as `'$VAR'`, is reported rather than credited.
+
+Otherwise a job or step `if:` counts only when it is exactly `always()`,
+`success()` or `!cancelled()`. A job gets no credit when a job it needs has any
+other condition. A step that may rebind the selection variable gets none either:
+`VAR=`, `export`, `declare`, `read`, `printf -v`, `${VAR:=...}` and `unset` all
+count as rebinding. The report names each withheld step and the reason.
+
+**Threat model and limits.** The guard catches a test file that no CI step runs
+by accident: a new file nobody listed, a renamed one, or a step that silently
+skips it. It does not try to defeat a deliberately misleading workflow; review
+does that. Anything outside the recognized shapes is reported rather than
+credited. Its failure mode is therefore a false report, which you resolve by
+simplifying the step, never a false pass. Workflows are read with a small parser for block-style YAML; a
+construct outside it is an error (exit 2), not a pass.
+
+To add a test, add a benchmark test to the `commands` list in
+`benchmark/test_evidence_tools.py`. Put a `unittest` module under `tests/`,
+where discovery picks it up; its file and package names must be Python identifiers, because discovery silently skips any other name. `EXEMPT` in the checker takes a path and a reason.
+I keep it empty; the checker reports an exemption that is stale or already
+covered.
+
+```bash
+python3 tools/check_ci_test_coverage.py --root .
+python3 -m unittest discover -s tests
+```
+
 ## Repository settings
 
 [`setup_repository.py`](setup_repository.py) compares the live GitHub settings
