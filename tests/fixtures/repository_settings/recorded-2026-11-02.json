@@ -1,0 +1,428 @@
+{
+  "description": "Read-only GitHub REST responses for danielep71/VBA-PROBABILITY-DISTRIBUTIONS, recorded on 2026-11-02 with gh api. Repository metadata is trimmed to the fields tools/setup_repository.py reads; the two Dependabot endpoints answered HTTP 403 to the recording token. Query strings are not part of the keys.",
+  "recorded_on": "2026-11-02",
+  "responses": {
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS": {
+      "status": 200,
+      "body": {
+        "full_name": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+        "visibility": "public",
+        "private": false,
+        "default_branch": "main",
+        "archived": false,
+        "disabled": false,
+        "permissions": {
+          "admin": true,
+          "maintain": true,
+          "push": true,
+          "triage": true,
+          "pull": true
+        },
+        "allow_merge_commit": true,
+        "allow_squash_merge": true,
+        "allow_rebase_merge": true,
+        "allow_auto_merge": false,
+        "allow_update_branch": true,
+        "delete_branch_on_merge": true,
+        "web_commit_signoff_required": false,
+        "has_issues": true,
+        "has_projects": false,
+        "has_wiki": true,
+        "has_discussions": false,
+        "has_downloads": false,
+        "security_and_analysis": {
+          "secret_scanning": {
+            "status": "enabled"
+          },
+          "secret_scanning_push_protection": {
+            "status": "enabled"
+          },
+          "dependabot_security_updates": {
+            "status": "enabled"
+          },
+          "secret_scanning_non_provider_patterns": {
+            "status": "disabled"
+          },
+          "secret_scanning_validity_checks": {
+            "status": "disabled"
+          }
+        }
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets": {
+      "status": 200,
+      "body": [
+        {
+          "id": 26368180,
+          "name": "Prevent release branch deletion",
+          "target": "branch",
+          "source_type": "Repository",
+          "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+          "enforcement": "active",
+          "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgGSWLQ",
+          "_links": {
+            "self": {
+              "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/26368180"
+            },
+            "html": {
+              "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/26368180"
+            }
+          },
+          "created_at": "2026-11-02T13:08:51.989Z",
+          "updated_at": "2026-11-02T13:08:52.017Z"
+        },
+        {
+          "id": 22186928,
+          "name": "Protect main",
+          "target": "branch",
+          "source_type": "Repository",
+          "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+          "enforcement": "active",
+          "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgFSi7A",
+          "_links": {
+            "self": {
+              "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/22186928"
+            },
+            "html": {
+              "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/22186928"
+            }
+          },
+          "created_at": "2026-09-03T10:46:28.873Z",
+          "updated_at": "2026-11-02T13:05:11.980Z"
+        },
+        {
+          "id": 26368120,
+          "name": "Protect release branches",
+          "target": "branch",
+          "source_type": "Repository",
+          "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+          "enforcement": "active",
+          "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgGSWHg",
+          "_links": {
+            "self": {
+              "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/26368120"
+            },
+            "html": {
+              "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/26368120"
+            }
+          },
+          "created_at": "2026-11-02T13:07:59.448Z",
+          "updated_at": "2026-11-02T13:07:59.678Z"
+        },
+        {
+          "id": 24272257,
+          "name": "Protect release tags",
+          "target": "tag",
+          "source_type": "Repository",
+          "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+          "enforcement": "active",
+          "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgFyXYE",
+          "_links": {
+            "self": {
+              "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/24272257"
+            },
+            "html": {
+              "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/24272257"
+            }
+          },
+          "created_at": "2026-09-30T20:46:39.816Z",
+          "updated_at": "2026-11-02T13:04:10.910Z"
+        },
+        {
+          "id": 24274070,
+          "name": "Protect traffic history",
+          "target": "branch",
+          "source_type": "Repository",
+          "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+          "enforcement": "active",
+          "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgFyZJY",
+          "_links": {
+            "self": {
+              "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/24274070"
+            },
+            "html": {
+              "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/24274070"
+            }
+          },
+          "created_at": "2026-09-30T21:30:43.090Z",
+          "updated_at": "2026-09-30T21:30:43.112Z"
+        }
+      ]
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/26368180": {
+      "status": 200,
+      "body": {
+        "id": 26368180,
+        "name": "Prevent release branch deletion",
+        "target": "branch",
+        "source_type": "Repository",
+        "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "exclude": [],
+            "include": [
+              "refs/heads/release/**"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "deletion"
+          }
+        ],
+        "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgGSWLQ",
+        "created_at": "2026-11-02T13:08:51.989Z",
+        "updated_at": "2026-11-02T13:08:52.017Z",
+        "bypass_actors": [],
+        "current_user_can_bypass": "never",
+        "_links": {
+          "self": {
+            "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/26368180"
+          },
+          "html": {
+            "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/26368180"
+          }
+        }
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/22186928": {
+      "status": 200,
+      "body": {
+        "id": 22186928,
+        "name": "Protect main",
+        "target": "branch",
+        "source_type": "Repository",
+        "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "exclude": [],
+            "include": [
+              "~DEFAULT_BRANCH"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "deletion"
+          },
+          {
+            "type": "non_fast_forward"
+          },
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "dismiss_stale_reviews_on_push": false,
+              "required_reviewers": [],
+              "require_code_owner_review": false,
+              "require_last_push_approval": false,
+              "required_review_thread_resolution": true,
+              "require_extra_approval_for_unattributed_changes": true,
+              "allowed_merge_methods": [
+                "merge"
+              ]
+            }
+          },
+          {
+            "type": "required_status_checks",
+            "parameters": {
+              "strict_required_status_checks_policy": true,
+              "do_not_enforce_on_create": false,
+              "required_status_checks": [
+                {
+                  "context": "Repository integrity (static, no Excel)",
+                  "integration_id": 15368
+                },
+                {
+                  "context": "Strict accuracy gate (pure Python, no Excel)",
+                  "integration_id": 15368
+                }
+              ]
+            }
+          }
+        ],
+        "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgFSi7A",
+        "created_at": "2026-09-03T10:46:28.873Z",
+        "updated_at": "2026-11-02T13:05:11.980Z",
+        "bypass_actors": [],
+        "current_user_can_bypass": "never",
+        "_links": {
+          "self": {
+            "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/22186928"
+          },
+          "html": {
+            "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/22186928"
+          }
+        }
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/26368120": {
+      "status": 200,
+      "body": {
+        "id": 26368120,
+        "name": "Protect release branches",
+        "target": "branch",
+        "source_type": "Repository",
+        "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "exclude": [],
+            "include": [
+              "refs/heads/release/**"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "deletion"
+          },
+          {
+            "type": "non_fast_forward"
+          },
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "dismiss_stale_reviews_on_push": false,
+              "required_reviewers": [],
+              "require_code_owner_review": false,
+              "require_last_push_approval": false,
+              "required_review_thread_resolution": true,
+              "require_extra_approval_for_unattributed_changes": true,
+              "allowed_merge_methods": [
+                "merge",
+                "squash"
+              ]
+            }
+          },
+          {
+            "type": "required_status_checks",
+            "parameters": {
+              "strict_required_status_checks_policy": true,
+              "do_not_enforce_on_create": true,
+              "required_status_checks": [
+                {
+                  "context": "Repository integrity (static, no Excel)",
+                  "integration_id": 15368
+                }
+              ]
+            }
+          }
+        ],
+        "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgGSWHg",
+        "created_at": "2026-11-02T13:07:59.448Z",
+        "updated_at": "2026-11-02T13:07:59.678Z",
+        "bypass_actors": [],
+        "current_user_can_bypass": "never",
+        "_links": {
+          "self": {
+            "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/26368120"
+          },
+          "html": {
+            "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/26368120"
+          }
+        }
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/24272257": {
+      "status": 200,
+      "body": {
+        "id": 24272257,
+        "name": "Protect release tags",
+        "target": "tag",
+        "source_type": "Repository",
+        "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "exclude": [],
+            "include": [
+              "refs/tags/v*"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "deletion"
+          },
+          {
+            "type": "non_fast_forward"
+          },
+          {
+            "type": "update"
+          }
+        ],
+        "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgFyXYE",
+        "created_at": "2026-09-30T20:46:39.816Z",
+        "updated_at": "2026-11-02T13:04:10.910Z",
+        "bypass_actors": [],
+        "current_user_can_bypass": "never",
+        "_links": {
+          "self": {
+            "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/24272257"
+          },
+          "html": {
+            "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/24272257"
+          }
+        }
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/24274070": {
+      "status": 200,
+      "body": {
+        "id": 24274070,
+        "name": "Protect traffic history",
+        "target": "branch",
+        "source_type": "Repository",
+        "source": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "exclude": [],
+            "include": [
+              "refs/heads/traffic-history"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "deletion"
+          },
+          {
+            "type": "non_fast_forward"
+          }
+        ],
+        "node_id": "RRS_lACqUmVwb3NpdG9yec5NE5D-zgFyZJY",
+        "created_at": "2026-09-30T21:30:43.090Z",
+        "updated_at": "2026-09-30T21:30:43.112Z",
+        "bypass_actors": [],
+        "current_user_can_bypass": "never",
+        "_links": {
+          "self": {
+            "href": "https://api.github.com/repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rulesets/24274070"
+          },
+          "html": {
+            "href": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/rules/24274070"
+          }
+        }
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/private-vulnerability-reporting": {
+      "status": 200,
+      "body": {
+        "enabled": true
+      }
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/vulnerability-alerts": {
+      "status": 403,
+      "body": null
+    },
+    "repos/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/automated-security-fixes": {
+      "status": 403,
+      "body": null
+    }
+  }
+}
