@@ -48,6 +48,12 @@ class SlugTests(unittest.TestCase):
         self.assertEqual(slug("Rock &amp; Roll"), "rock--roll")
         self.assertEqual(slug("K_STATS_* API: v1.0.0 (draft)?"), "k_stats_-api-v100-draft")
         self.assertEqual(slug("[Unreleased]"), "unreleased")
+        # GitHub slugs the rendered text: "_" emphasis delimiters go, "_" in words stays.
+        self.assertEqual(slug("__API__"), "api")
+        self.assertEqual(slug("__API__ and _x_"), "api-and-x")
+        self.assertEqual(slug("foo_bar_ baz"), "foo_bar_-baz")
+        self.assertEqual(slug("`__init__` and __init__"), "__init__-and-init")
+        self.assertEqual(slug("__API__", emphasis=False), "__api__")
 
     def test_duplicate_and_setext_headings(self) -> None:
         _, anchors = check_links.markdown_links("# Notes\n\n## Notes\n\nTitle\n=====\n")
@@ -160,6 +166,29 @@ class CheckTests(unittest.TestCase):
         })
         self.assertEqual(errors, ["README.md: missing target: missing&file.md"])
         self.assertEqual(external, {"https://example.com/?a=1&b=2"})
+
+    def test_escaped_parentheses_in_destinations(self) -> None:
+        errors, _, count = run_check({
+            "README.md": "[ok](notes\\).md) [ok](notes\\(draft.md) [ok](a(b).md#top)\n"
+                         "[bad](gone\\).md)\n",
+            "notes).md": "# Notes\n",
+            "notes(draft.md": "# Draft\n",
+            "a(b).md": "# Top\n",
+        })
+        self.assertEqual(count, 4)
+        self.assertEqual(errors, ["README.md: missing target: gone).md"])
+
+    def test_heading_emphasis_is_not_part_of_the_slug(self) -> None:
+        errors, _, _ = run_check({
+            "README.md": "[a](guide.md#api) [b](guide.md#snake_case-names) "
+                         "[c](guide.md#__init__-method) [d](guide.md#old-new-bold-text)\n"
+                         "[e](guide.md#_private-helper) [f](guide.md#api-1)\n"
+                         "[g](guide.md#nowhere) [h](guide.md#api-2)\n",
+            "guide.md": "# __API__\n## snake_case names\n## `__init__` method\n"
+                        "## ~~old~~ *new* **bold** _text_\n## _private helper\n## API\n",
+        })
+        self.assertEqual(errors, ["README.md: missing anchor: guide.md#nowhere",
+                                  "README.md: missing anchor: guide.md#api-2"])
 
     def test_missing_files_anchors_and_paths_are_errors(self) -> None:
         errors, _, _ = run_check({

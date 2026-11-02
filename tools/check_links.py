@@ -54,6 +54,7 @@ UNCHECKED: tuple[tuple[str, str], ...] = (
 # Markdown parsing.
 
 REFERENCE = re.compile(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
+ESCAPABLE = re.compile(r"[!-/:-@\[-`{-~]")  # ASCII punctuation, escapable with a backslash
 LIST_ITEM = re.compile(r"( *)([-*+]|\d{1,9}[.)])( {1,4}|$)")
 
 
@@ -66,14 +67,63 @@ def decode_references(text: str) -> str:
 def decode_destination(text: str) -> str:
     """A Markdown link destination as the renderer reads it: backslash escapes of
     ASCII punctuation removed, then character references decoded."""
-    return decode_references(re.sub(r"\\([!-/:-@\[-`{-~])", r"\1", text))
+    return decode_references(re.sub(r"\\(" + ESCAPABLE.pattern + ")", r"\1", text))
 
 
-def github_slug(heading: str) -> str:
-    """Anchor GitHub generates for a Markdown heading, before duplicate suffixes."""
+def github_slug(heading: str, emphasis: bool = True) -> str:
+    """Anchor GitHub generates for a Markdown heading, before duplicate suffixes.
+
+    GitHub slugs the rendered text. "*" and "~" are punctuation, which the slug
+    drops anyway; "_" is kept, so with emphasis (the default) the "_" runs that
+    delimit emphasis are removed first: "__API__" gives "api", while
+    "snake_case" and "`__init__`" keep their underscores.
+    """
     text = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", heading)
+    if emphasis:
+        text = strip_underscore_emphasis(text)
     text = decode_references(re.sub(r"<[^>]+>", "", text))
     return "".join(char for char in text.lower() if slug_character(char)).replace(" ", "-")
+
+
+def strip_underscore_emphasis(text: str) -> str:
+    """Remove the "_" runs that delimit emphasis, outside code spans.
+
+    A run can open when it is followed by a non-space and not preceded by a
+    letter or digit, and close when it is preceded by a non-space and not
+    followed by a letter or digit (CommonMark's rule for "_": never inside a
+    word). An opener pairs with the next closer of the same length; unpaired
+    runs are literal. heading_anchors also accepts the slug without this step,
+    so a case that GitHub renders differently cannot cause a false error.
+    """
+    parts = re.split(r"((`+).+?\2)", text)
+    # re.split gives [text, code span, its backticks, text, ...]; only text changes.
+    for index in range(0, len(parts), 3):
+        parts[index] = strip_segment_emphasis(parts[index])
+    return "".join(part for index, part in enumerate(parts) if index % 3 != 2)
+
+
+def strip_segment_emphasis(segment: str) -> str:
+    def side(position: int) -> str:
+        return segment[position] if 0 <= position < len(segment) else " "
+
+    runs = list(re.finditer(r"_+", segment))
+    removed: set[int] = set()
+    for number, opener in enumerate(runs):
+        if number in removed or side(opener.end()).isspace() \
+                or side(opener.start() - 1).isalnum():
+            continue
+        for later in range(number + 1, len(runs)):
+            closer = runs[later]
+            if (len(closer.group()) == len(opener.group())
+                    and not side(closer.start() - 1).isspace()
+                    and not side(closer.end()).isalnum()):
+                removed |= {number, later}
+                break
+    kept, position = [], 0
+    for number, run in enumerate(runs):
+        kept.append(segment[position:run.start()] + ("" if number in removed else run.group()))
+        position = run.end()
+    return "".join(kept) + segment[position:]
 
 
 def slug_character(char: str) -> bool:
@@ -93,6 +143,12 @@ def heading_anchor(slug: str, used: dict[str, int]) -> str:
     return anchor
 
 
+def heading_anchors(heading: str, used: dict[str, int]) -> set[str]:
+    """The anchor of a heading, plus its slug with "_" emphasis left in place, which
+    is accepted too: where GitHub's rendering is ambiguous, no error is reported."""
+    return {heading_anchor(github_slug(heading), used), github_slug(heading, emphasis=False)}
+
+
 def inline_destinations(line: str) -> list[str]:
     """Destinations of [text](destination "title"), allowing <...> and balanced parentheses."""
     found = []
@@ -103,12 +159,19 @@ def inline_destinations(line: str) -> list[str]:
             if end > 1:
                 found.append(rest[1:end])
             continue
-        depth, destination = 0, ""
-        for char in rest:
+        depth, destination, index = 0, "", 0
+        while index < len(rest):
+            char = rest[index]
+            if char == "\\" and ESCAPABLE.fullmatch(rest[index + 1:index + 2]):
+                # An escaped character, such as \) or \(, never delimits.
+                destination += rest[index:index + 2]
+                index += 2
+                continue
             if char.isspace() or (char == ")" and depth == 0):
                 break
             depth += {"(": 1, ")": -1}.get(char, 0)
             destination += char
+            index += 1
         if destination:
             found.append(destination)
     return found
@@ -236,7 +299,7 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
             items.append(len(item.group(0)) + (0 if item.group(3) else 1))
         if paragraph and re.match(r" {0,3}(=+|-+)\s*$", relative):
             # Setext heading: the paragraph above an === or --- underline.
-            anchors.add(heading_anchor(github_slug(" ".join(paragraph)), used))
+            anchors |= heading_anchors(" ".join(paragraph), used)
             flush()
             paragraph, previous = [], "closed"
             continue
@@ -244,7 +307,7 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
         if heading or thematic:
             flush()
         if heading:
-            anchors.add(heading_anchor(github_slug(heading.group(1)), used))
+            anchors |= heading_anchors(heading.group(1), used)
         paragraph = [] if ends_paragraph(line, bool(heading)) else [*paragraph, line.strip()]
         block.append(line)
         if heading or thematic:

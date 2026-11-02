@@ -364,11 +364,18 @@ through the `markdown-links` check, it fails when:
 - a relative link (Markdown, or an HTML `href`/`src` attribute) names a missing
   or empty file, a path outside the repository or a root-relative path; paths are
   URL-decoded first, so `my%20file.md` names `my file.md`, and character
-  references are decoded, so `notes&amp;examples.md` names `notes&examples.md`;
+  references are decoded, so `notes&amp;examples.md` names `notes&examples.md`,
+  and backslash escapes are honoured, so `notes\).md` names `notes).md`;
 - a fragment names no anchor of the target Markdown file. Anchors are the
-  heading slugs GitHub generates (lower case; punctuation dropped; emoji dropped
-  but their spaces kept; duplicates suffixed `-1`, `-2`, ...) and explicit
-  `<a id>`/`<a name>` anchors.
+  heading slugs GitHub generates from the rendered heading (lower case;
+  punctuation and emphasis delimiters dropped, so `__API__` gives `api` while
+  `snake_case` keeps its underscore; emoji dropped but their spaces kept;
+  duplicates suffixed `-1`, `-2`, ...) and explicit `<a id>`/`<a name>` anchors.
+
+The checker approximates GitHub's Markdown rendering; it is not a full
+CommonMark parser. Where the rendering is ambiguous it accepts rather than
+reports: a heading's slug with its `_` emphasis left in place is accepted
+too, and lines that may be indented code are skipped.
 
 Links inside fenced code blocks, indented code blocks (following CommonMark,
 relative to the enclosing list item) and code spans, including spans that
