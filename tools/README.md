@@ -35,6 +35,43 @@ python3 tools/check_release_semantics.py --root .
 python3 -m ruff check .
 ```
 
+## CI test coverage
+
+`check_ci_test_coverage.py` fails when a tracked `test_*.py` file does not run
+in CI on every pull request. It runs on every event in the Accuracy Gate's
+`Select accuracy proofs` job, after `python -m unittest discover -s tests`, and
+its live check and fixtures (`tests/test_ci_test_coverage.py`) are registered in
+`benchmark/verification_depth.json`.
+
+A file counts as run when either of these executes it:
+
+- a `run:` step of a workflow whose `pull_request` trigger has no path filter,
+  through `python <file>`, `python -m unittest <file or module>` or
+  `python -m unittest discover` (discovery counts only modules that define a
+  `unittest.TestCase`, inside packages);
+- an entry of a runner list that such a step invokes. Only
+  `benchmark/test_evidence_tools.py` is registered, and its `--checks-only`
+  filter is applied. `benchmark/refresh_evidence.py` is not registered: CI never
+  runs it.
+
+A step gated by the accuracy-proof selection (`needs.select.outputs.full`) counts
+only if `select_accuracy_checks.py` does not treat a change to that test file as
+metadata-only. Other conditions, `||` lists and `continue-on-error` without an
+aggregating `steps.<id>.outcome` check do not count. Workflows are read with a
+small parser for block-style YAML; a construct outside it is an error (exit 2),
+not a pass.
+
+To add a test, add a benchmark test to the `commands` list in
+`benchmark/test_evidence_tools.py`. Put a `unittest` module under `tests/`,
+where discovery picks it up. `EXEMPT` in the checker takes a path and a reason.
+I keep it empty; the checker reports an exemption that is stale or already
+covered.
+
+```bash
+python3 tools/check_ci_test_coverage.py --root .
+python3 -m unittest discover -s tests
+```
+
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`

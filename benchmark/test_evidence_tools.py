@@ -42,6 +42,8 @@ commands = (
     ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
     ("../tools/check_vba_jumps.py", "--root", "..", "--self-test"),
     ("../tools/check_release_semantics.py", "--root", "..", "--self-test"),
+    ("../tests/test_ci_test_coverage.py",),
+    ("../tools/check_ci_test_coverage.py", "--root", ".."),
     ("test_verification_depth.py",),
     ("check_verification_depth.py",),
 )

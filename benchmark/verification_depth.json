@@ -127,6 +127,13 @@
       "proof_command": "../tools/check_release_semantics.py --root .. --self-test",
       "negative_claim": "invalid SemVer, out-of-order or duplicated releases, impossible or regressing cut dates, a wrong or missing comparison link, and a latest release heading that disagrees with VERSION are rejected",
       "current_state": "green"
+    },
+    {
+      "id": "ci-test-coverage",
+      "live_command": "../tools/check_ci_test_coverage.py --root ..",
+      "proof_command": "../tests/test_ci_test_coverage.py",
+      "negative_claim": "a tracked test file that no pull-request workflow step or runner list executes, one run only under a path filter, an unrecognized condition or an unaggregated continue-on-error, a selected-only test whose change counts as metadata-only, and a stale reference or exemption are reported",
+      "current_state": "green"
     }
   ]
 }
