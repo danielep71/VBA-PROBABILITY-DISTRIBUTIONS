@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 import subprocess
 import sys
 import tempfile
@@ -189,6 +190,70 @@ class CheckTests(unittest.TestCase):
         })
         self.assertEqual(errors, ["README.md: missing anchor: guide.md#nowhere",
                                   "README.md: missing anchor: guide.md#api-2"])
+
+    def test_fences_and_headings_inside_containers(self) -> None:
+        errors, _, _ = run_check({
+            "README.md": "> ~~~md\n> [example](missing.md)\n> ~~~\n> [b](missing-b.md)\n\n"
+                         "- ~~~md\n  [example](missing.md)\n  ~~~\n\n"
+                         "> # Quoted heading\n\n- ## Item heading\n1. # Numbered\n\n"
+                         "> ```\n> code\n\n[a](missing-a.md)\n\n"
+                         "[q](#quoted-heading) [i](#item-heading) [n](#numbered)\n",
+        })
+        self.assertEqual(errors, ["README.md: missing target: missing-b.md",
+                                  "README.md: missing target: missing-a.md"])
+
+    def test_html_comments_are_ignored(self) -> None:
+        errors, _, _ = run_check({
+            "README.md": "<!--\n[example](missing.md)\n# Hidden\n\n<a id=\"ghost\"></a>\n-->\n"
+                         "Text <!-- [a](missing.md) --> more <!-- [b](missing.md)\n"
+                         "[c](missing.md) --> end\n\n"
+                         "> <!-- [d](missing.md) -->\n\n"
+                         "<!-- one line --> [e](missing.md)\n\n"
+                         "[f](missing-f.md) [h](#hidden) [g](#ghost)\n",
+        })
+        self.assertEqual(errors, ["README.md: missing target: missing-f.md",
+                                  "README.md: missing anchor: #hidden",
+                                  "README.md: missing anchor: #ghost"])
+
+    def test_link_needs_an_unescaped_opener(self) -> None:
+        errors, _, _ = run_check({
+            "README.md": "\\[example](missing.md) !\\[alt](missing.png) [x\\](missing.md)\n"
+                         "\\\\[real](missing-r.md) ![alt](missing-img.png)\n"
+                         "[![badge](badge.svg)](missing-n.md) [text\nmore](missing-m.md)\n",
+            "badge.svg": "<svg/>\n",
+        })
+        self.assertEqual(errors, ["README.md: missing target: missing-r.md",
+                                  "README.md: missing target: missing-img.png",
+                                  "README.md: missing target: missing-n.md",
+                                  "README.md: missing target: missing-m.md"])
+
+    def test_reviewed_exclusions(self) -> None:
+        exclusions = {"schema_version": 1, "exclusions": [
+            {"path": "README.md", "link": "missing.md#part", "reason": "rendered as text"},
+            {"path": "README.md", "link": "gone.md", "reason": "fixed since"},
+            {"path": "README.md", "link": "other.md"},
+        ]}
+        errors, _, _ = run_check({
+            "README.md": "[a](missing.md#part) [b](still-missing.md)\n",
+            "tools/link_check_exclusions.json": json.dumps(exclusions),
+        })
+        self.assertEqual(errors, [
+            "README.md: missing target: still-missing.md",
+            "tools/link_check_exclusions.json: entry 2 needs exactly a non-empty "
+            "path, link and reason",
+            "tools/link_check_exclusions.json: stale exclusion, README.md no longer "
+            "reports gone.md",
+        ])
+        errors, _, _ = run_check({"README.md": "# Top\n",
+                                  "tools/link_check_exclusions.json": "{"})
+        self.assertEqual(len(errors), 1)
+        self.assertIn("link_check_exclusions.json: unreadable", errors[0])
+
+    def test_repository_exclusions_file_is_valid(self) -> None:
+        entries, problems = check_links.load_exclusions(ROOT)
+        self.assertEqual(problems, [])
+        self.assertTrue((ROOT / check_links.EXCLUSIONS).is_file())
+        self.assertIsInstance(entries, list)
 
     def test_missing_files_anchors_and_paths_are_errors(self) -> None:
         errors, _, _ = run_check({

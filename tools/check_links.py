@@ -8,10 +8,16 @@ as GitHub reads it: Markdown backslash escapes removed, character references
 decoded (&amp; is &), then URL-decoded (%20 is a space). Every fragment must name a heading
 anchor, generated with GitHub's slug rules, or an explicit <a id> or <a name>
 anchor of the Markdown file it points to. Links inside fenced code blocks,
-indented code blocks and code spans (which may continue over line breaks) are
-ignored.
-External links, including the wiki, issues and other pages of this repository
-on github.com, are only collected.
+indented code blocks, code spans (which may continue over line breaks) and
+HTML comments are ignored, and so is text that only looks like a link, such as
+\[text](path). Blockquote and list-item markers are read before fences and
+headings. External links, including the wiki, issues and other pages of this
+repository on github.com, are only collected.
+
+The checker approximates GitHub's Markdown renderer; it is not a full CommonMark
+parser. A link it reports wrongly is listed, with the reason, in
+tools/link_check_exclusions.json; an entry that no longer matches a report is
+itself reported, so the list cannot go stale.
 
 With --external (the weekly Link check workflow), each external http(s) link is
 also requested once, with timeouts and retries:
@@ -28,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import os
 import re
 import subprocess
@@ -40,6 +47,7 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 FENCE = re.compile(r" {0,3}(`{3,}|~{3,})")
+EXCLUSIONS = "tools/link_check_exclusions.json"
 ATTRIBUTE = r"""\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))"""
 
 # Pages of this repository that --external deliberately does not request:
@@ -56,6 +64,8 @@ UNCHECKED: tuple[tuple[str, str], ...] = (
 REFERENCE = re.compile(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
 ESCAPABLE = re.compile(r"[!-/:-@\[-`{-~]")  # ASCII punctuation, escapable with a backslash
 LIST_ITEM = re.compile(r"( *)([-*+]|\d{1,9}[.)])( {1,4}|$)")
+QUOTE = re.compile(r" {0,3}>[ \t]?")
+COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def decode_references(text: str) -> str:
@@ -149,32 +159,50 @@ def heading_anchors(heading: str, used: dict[str, int]) -> set[str]:
     return {heading_anchor(github_slug(heading), used), github_slug(heading, emphasis=False)}
 
 
-def inline_destinations(line: str) -> list[str]:
-    """Destinations of [text](destination "title"), allowing <...> and balanced parentheses."""
+def inline_destinations(text: str) -> list[str]:
+    """Destinations of [text](destination "title") and ![alt](destination), allowing
+    <...> and balanced parentheses. A "](" counts only after an unescaped "[" in the
+    same block of text, so \\[text](path) is plain text."""
     found = []
-    for match in re.finditer(r"\]\(", line):
-        rest = line[match.end():].lstrip()
-        if rest.startswith("<"):
-            end = rest.find(">")
-            if end > 1:
-                found.append(rest[1:end])
+    openers = 0
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == "\\" and ESCAPABLE.fullmatch(text[index + 1:index + 2]):
+            index += 2
             continue
-        depth, destination, index = 0, "", 0
-        while index < len(rest):
-            char = rest[index]
-            if char == "\\" and ESCAPABLE.fullmatch(rest[index + 1:index + 2]):
-                # An escaped character, such as \) or \(, never delimits.
-                destination += rest[index:index + 2]
-                index += 2
-                continue
-            if char.isspace() or (char == ")" and depth == 0):
-                break
-            depth += {"(": 1, ")": -1}.get(char, 0)
-            destination += char
-            index += 1
-        if destination:
-            found.append(destination)
+        if char == "[":
+            openers += 1
+        elif char == "]" and openers:
+            openers -= 1
+            if text.startswith("(", index + 1):
+                destination = link_destination(text[index + 2:])
+                if destination:
+                    found.append(destination)
+        index += 1
     return found
+
+
+def link_destination(rest: str) -> str:
+    """The destination at the start of the text after "](", or "" if there is none."""
+    rest = rest.lstrip(" \t")
+    if rest.startswith("<"):
+        end = rest.find(">")
+        return rest[1:end] if end > 1 and "\n" not in rest[:end] else ""
+    depth, destination, index = 0, "", 0
+    while index < len(rest):
+        char = rest[index]
+        if char == "\\" and ESCAPABLE.fullmatch(rest[index + 1:index + 2]):
+            # An escaped character, such as \\) or \\(, never delimits.
+            destination += rest[index:index + 2]
+            index += 2
+            continue
+        if char.isspace() or (char == ")" and depth == 0):
+            break
+        depth += {"(": 1, ")": -1}.get(char, 0)
+        destination += char
+        index += 1
+    return destination
 
 
 def ends_paragraph(line: str, heading: bool) -> bool:
@@ -208,12 +236,12 @@ def strip_code_spans(text: str) -> str:
 
 
 def line_links(line: str) -> tuple[list[str], set[str]]:
-    """Links and explicit anchors on one line whose code spans are already removed.
-    Destinations are decoded the way GitHub reads them."""
+    """Reference definitions, autolinks, HTML links and explicit anchors on one line
+    whose code spans and comments are already removed. Destinations are decoded the
+    way GitHub reads them."""
     anchors = {decode_references("".join(value)) for value in
                re.findall(r"<a\s[^>]*?(?<![\w-])(?:id|name)" + ATTRIBUTE, line)}
-    links = [decode_destination(link) for link in inline_destinations(line)]
-    links += [decode_destination("".join(value)) for value in
+    links = [decode_destination("".join(value)) for value in
               re.findall(r"^ {0,3}\[(?!\^)[^\]]+\]:\s*(?:<([^>]*)>|(\S+))", line)]
     links += re.findall(r"<(https?://[^>\s]+)>", line)
     links += [decode_references("".join(value)) for value in
@@ -222,10 +250,13 @@ def line_links(line: str) -> tuple[list[str], set[str]]:
 
 
 def block_links(lines: Sequence[str]) -> tuple[list[str], set[str]]:
-    """Links and explicit anchors of one block of text lines, outside its code spans."""
-    links: list[str] = []
+    """Links and explicit anchors of one block of text lines, outside its code spans
+    and HTML comments."""
+    text = strip_code_spans("\n".join(lines))
+    text = COMMENT.sub(lambda match: "\n" * match.group().count("\n"), text)
+    links = [decode_destination(link) for link in inline_destinations(text)]
     anchors: set[str] = set()
-    for line in strip_code_spans("\n".join(lines)).split("\n"):
+    for line in text.split("\n"):
         found, explicit = line_links(line)
         links += found
         anchors |= explicit
@@ -238,18 +269,30 @@ def indentation(line: str) -> int:
     return len(expanded) - len(expanded.lstrip(" "))
 
 
+def strip_quotes(line: str) -> tuple[int, str]:
+    """Blockquote depth of a line, and the line without its ">" markers."""
+    depth = 0
+    while match := QUOTE.match(line):
+        depth, line = depth + 1, line[match.end():]
+    return depth, line
+
+
 def markdown_links(text: str) -> tuple[list[str], set[str]]:
     """Return (links, anchors) of a Markdown document, ignoring fenced and indented
-    code blocks and code spans.
+    code blocks, code spans and HTML comments.
 
-    Indented code follows CommonMark conservatively: a line indented four columns
-    beyond the content of the open list item (or beyond the margin, outside lists)
-    is code unless it continues a paragraph, which code cannot interrupt.
+    Blockquote markers are removed, and list-item markers read, before fences and
+    headings are recognised. Indented code follows CommonMark conservatively: a
+    line indented four columns beyond the content of the open list item (or
+    beyond the margin, outside lists) is code unless it continues a paragraph,
+    which code cannot interrupt.
     """
     links: list[str] = []
     anchors: set[str] = set()
     used: dict[str, int] = {}
-    fence: tuple[str, int] | None = None   # (opening run, its container's content column)
+    fence: tuple[str, int, int] | None = None  # (opening run, content column, quote depth)
+    comment = False                        # inside an HTML comment block
+    quote = 0                              # blockquote depth of the previous line
     paragraph: list[str] = []              # candidate setext heading text
     block: list[str] = []                  # lines whose code spans and links are read together
     items: list[int] = []                  # content columns of the open list items
@@ -261,7 +304,16 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
         anchors.update(explicit)
         block.clear()
 
-    for line in text.splitlines():
+    for raw in text.splitlines():
+        depth, line = strip_quotes(raw)
+        if depth < quote and previous == "text" and line.strip() and not fence:
+            depth = quote   # a lazy continuation line of the quoted paragraph
+        if depth != quote:
+            # A new or closed blockquote: its blocks, lists and fences end here.
+            flush()
+            if fence and depth < fence[2]:
+                fence = None
+            items, paragraph, previous, quote = [], [], "blank", depth
         expanded = line.expandtabs(4)
         indent = indentation(line)
         if fence:
@@ -271,6 +323,11 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
                     and len(match.group(1)) >= len(fence[0])
                     and not relative[match.end():].strip()):
                 fence, previous = None, "closed"
+            continue
+        if comment:
+            # An HTML comment block ends on the line that contains "-->".
+            if "-->" in line:
+                comment, previous = False, "closed"
             continue
         if not line.strip():
             flush()
@@ -288,16 +345,26 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
             flush()
             paragraph, previous = [], "code"
             continue
-        relative = expanded[min(indent, base):]
+        if item:
+            flush()
+            # The item's content is read as a block of its own: a fence or a heading
+            # may start on the marker's line.
+            base = len(item.group(0)) + (0 if item.group(3) else 1)
+            items.append(base)
+            relative = expanded[base:]
+        else:
+            relative = expanded[min(indent, base):]
         match = FENCE.match(relative)
         if match and not (match.group(1)[0] == "`" and "`" in relative[match.end():]):
             flush()
-            fence, paragraph = (match.group(1), base), []
+            fence, paragraph = (match.group(1), base, quote), []
             continue
-        if item:
+        if re.match(r" {0,3}<!--", relative):
             flush()
-            items.append(len(item.group(0)) + (0 if item.group(3) else 1))
-        if paragraph and re.match(r" {0,3}(=+|-+)\s*$", relative):
+            comment = "-->" not in relative[relative.index("<!--") + 4:]
+            paragraph, previous = [], "closed"
+            continue
+        if paragraph and not item and re.match(r" {0,3}(=+|-+)\s*$", relative):
             # Setext heading: the paragraph above an === or --- underline.
             anchors |= heading_anchors(" ".join(paragraph), used)
             flush()
@@ -309,7 +376,7 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
         if heading:
             anchors |= heading_anchors(heading.group(1), used)
         paragraph = [] if ends_paragraph(line, bool(heading)) else [*paragraph, line.strip()]
-        block.append(line)
+        block.append(relative if item else line)
         if heading or thematic:
             flush()
             previous = "closed"
@@ -348,8 +415,40 @@ def local_error(root: Path, source: Path, link: str, anchors: dict[Path, set[str
     return None
 
 
+def load_exclusions(root: Path) -> tuple[list[dict[str, str]], list[str]]:
+    """The reviewed exclusions of root, and the problems with the file itself.
+
+    Each entry names a Markdown file ("path", relative to the root), a link as
+    the report prints it ("link") and why it is not an error ("reason").
+    """
+    path = root / EXCLUSIONS
+    if not path.is_file():
+        return [], []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        entries = data["exclusions"]
+        if data.get("schema_version") != 1 or not isinstance(entries, list):
+            raise ValueError("schema_version must be 1 and exclusions a list")
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        return [], [f"{EXCLUSIONS}: unreadable: {error}"]
+    valid, problems = [], []
+    for number, entry in enumerate(entries):
+        if (not isinstance(entry, dict) or set(entry) != {"path", "link", "reason"}
+                or not all(isinstance(value, str) and value.strip() for value in entry.values())):
+            problems.append(f"{EXCLUSIONS}: entry {number} needs exactly a non-empty "
+                            "path, link and reason")
+        else:
+            valid.append(entry)
+    return valid, problems
+
+
 def check(root: Path = ROOT) -> tuple[list[str], set[str], int]:
-    """Return (errors, external URLs, number of links checked) for the Markdown files."""
+    """Return (errors, external URLs, number of links checked) for the Markdown files.
+
+    A reported link listed in the exclusions file is not an error; an exclusion
+    that matches no reported link is.
+    """
+    root = root.resolve()
     errors: list[str] = []
     documents: dict[Path, tuple[list[str], set[str]]] = {}
     for path in tracked_markdown(root):
@@ -359,9 +458,13 @@ def check(root: Path = ROOT) -> tuple[list[str], set[str], int]:
             continue
         documents[path.resolve()] = markdown_links(path.read_text(encoding="utf-8"))
     anchors = {path: found for path, (_, found) in documents.items()}
+    exclusions, problems = load_exclusions(root)
+    excluded = {(entry["path"], entry["link"]) for entry in exclusions}
+    unmatched = set(excluded)
     external: set[str] = set()
     count = 0
     for source, (links, _) in sorted(documents.items()):
+        name = source.relative_to(root).as_posix()
         for link in links:
             count += 1
             url = urlsplit(link)
@@ -372,8 +475,13 @@ def check(root: Path = ROOT) -> tuple[list[str], set[str], int]:
                 continue
             problem = (f"unsupported URL scheme: {link}" if url.scheme
                        else local_error(root, source, link, anchors))
-            if problem:
-                errors.append(f"{source.relative_to(root.resolve()).as_posix()}: {problem}")
+            if problem and (name, link) in excluded:
+                unmatched.discard((name, link))
+            elif problem:
+                errors.append(f"{name}: {problem}")
+    errors += problems
+    errors += [f"{EXCLUSIONS}: stale exclusion, {path} no longer reports {link}"
+               for path, link in sorted(unmatched)]
     return errors, external, count
 
 

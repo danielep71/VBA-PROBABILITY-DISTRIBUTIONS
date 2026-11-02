@@ -22,6 +22,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
 | `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
+| `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
 
 ## Running every static check
 
@@ -372,15 +373,37 @@ through the `markdown-links` check, it fails when:
   `snake_case` keeps its underscore; emoji dropped but their spaces kept;
   duplicates suffixed `-1`, `-2`, ...) and explicit `<a id>`/`<a name>` anchors.
 
-The checker approximates GitHub's Markdown rendering; it is not a full
-CommonMark parser. Where the rendering is ambiguous it accepts rather than
-reports: a heading's slug with its `_` emphasis left in place is accepted
-too, and lines that may be indented code are skipped.
-
 Links inside fenced code blocks, indented code blocks (following CommonMark,
-relative to the enclosing list item) and code spans, including spans that
-continue over line breaks, are ignored. External links, including this
-repository's wiki and issues, are not requested offline.
+relative to the enclosing list item), code spans (including spans that continue
+over line breaks) and HTML comments are ignored, and so is text that only looks
+like a link, such as `\[text](path)`. Headings inside HTML comments create no
+anchor. Blockquote (`>`) and list-item markers are read before fences and
+headings, so `> ~~~` opens a fence and `- ## Title` is a heading. External links,
+including this repository's wiki and issues, are not requested offline.
+
+### False reports
+
+The checker approximates GitHub's Markdown renderer; it is not a full
+CommonMark parser. Where the rendering is ambiguous it accepts rather than
+reports: a heading's slug with its `_` emphasis left in place is accepted too,
+and lines that may be indented code are skipped. If it still reports a link
+that GitHub renders correctly (or does not render as a link at all), do not
+change the parser for it: add a reviewed entry to
+[`link_check_exclusions.json`](link_check_exclusions.json), with the Markdown
+file, the link exactly as the report prints it, and the reason:
+
+```json
+{
+  "schema_version": 1,
+  "exclusions": [
+    {"path": "docs/EXAMPLE.md", "link": "notes.md#anchor", "reason": "Why GitHub renders this correctly"}
+  ]
+}
+```
+
+An entry that no longer matches a report fails the check as a stale exclusion,
+and an entry without a path, link or reason is rejected, so the list only
+holds live, explained exceptions. It is empty today.
 
 The [Link check](../.github/workflows/link-check.yml) workflow runs
 `check_links.py --external` weekly and on demand. It is not a required check
@@ -468,7 +491,7 @@ layout; they are not verbatim copies.
 | `check_binaries.py` | The binary detection of `tools/check_binaries.py` (`text` unset in `.gitattributes`, or a NUL byte) and its allowlist schema. Here it reads the index rather than the working tree, admits only signature-checked images directly in `assets/`, prints the digest to record, and fails on a NUL-containing file that `.gitattributes` treats as text even when allowlisted. |
 | `tests/test_check_binaries.py` | The temporary-repository fixtures of the template's tests, extended to the digest-pinned demo workbook, the image signature, the stale entry and the unstaged allowlist. |
 | `.github/binary-allowlist.json` | The template's schema (`schema_version`, and a `sha256` and `reason` per path), holding this repository's demo workbook. |
-| `check_links.py` | `tools/check_links.py`: offline relative-link and GitHub-slug anchor check, and the `--external` request with warnings for 403, 429 and 5xx. This repository is public, so its own wiki pages (as raw Markdown) and issues are requested; only the pages in `UNCHECKED` are skipped. |
+| `check_links.py` | `tools/check_links.py`: offline relative-link and GitHub-slug anchor check, and the `--external` request with warnings for 403, 429 and 5xx. This repository is public, so its own wiki pages (as raw Markdown) and issues are requested; only the pages in `UNCHECKED` are skipped. The parser, container and comment handling, and the reviewed exclusions file are this repository's own. |
 | `tests/test_check_links.py` | `tests/test_check_links.py`, with fixtures for percent-encoded paths, HTML attributes, duplicate and punctuated headings, wiki-page requests and `UNCHECKED`. |
 | `.github/workflows/link-check.yml` | `.github/workflows/link-check.yml`: the weekly and manual external-link run, with this repository's action pins and Python version. |
 | `tests/test_pr_milestones_workflow.py` | Offline tests of that workflow: a dependency-free structure check with negative fixtures in place of the template's YAML-parser invariants, and the template's script tests extended to the job summary and the read-only-token path. |
