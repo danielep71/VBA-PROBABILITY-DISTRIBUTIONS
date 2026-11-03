@@ -251,6 +251,20 @@ try:
     evidence_sha = commit(root, "evidence-only")
     E.validate_record(record, root, policy_ref=evidence_sha, evidence_ref=evidence_sha,
                       require_pass=True)
+
+    # #76: identical numerical source bytes do not make a later commit the
+    # certified candidate. The record certifies its own candidate when that
+    # commit is required, and must not certify the later commit when it is.
+    check(all(digest_at(root, sha, p) == digest_at(root, evidence_sha, p)
+              for p in policy["regression_sources"]),
+          "fixture's later commit keeps every certified source byte")
+    E.validate_record(record, root, policy_ref=sha, evidence_ref=sha,
+                      expected_candidate_sha=sha, require_pass=True)
+    expect_fail(root, record,
+                "a record must not certify a later commit with identical source bytes (#76)",
+                policy_ref=evidence_sha, evidence_ref=evidence_sha,
+                expected_candidate_sha=evidence_sha, require_pass=True)
+
     write(root, "src/A.bas", "Attribute VB_Name = \"A\"\n' drift\n")
     drift_sha = commit(root, "source drift")
     expect_fail(root, record, "later source drift must invalidate retained record",
@@ -265,5 +279,6 @@ if FAILS:
     raise SystemExit(1)
 print("PASS: Excel certification fixtures (exact candidate/workflow SHA, source inventory, "
       "assertion count, non-green host evidence, cleanup, grid digest/rows/target, "
-      "CRLF export committed as LF with canonical and raw digests, corrections, and "
+      "CRLF export committed as LF with canonical and raw digests, corrections, "
+      "exact-candidate binding of a later commit with identical sources, and "
       "later-source drift)")

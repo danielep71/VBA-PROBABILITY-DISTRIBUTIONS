@@ -6,13 +6,20 @@ run-name: Release — ${{ github.event_name == 'push' && github.ref_name || form
 # maintainer after review; nothing here publishes or changes a tag.
 #
 #   tag push        verify -> build -> attest -> draft release
-#   manual run      rehearsal: verify (certification reported, not required)
-#                   and build a workflow artifact; no attestation, no release
+#   manual run      rehearsal: verify (exact-commit certification and the
+#                   readiness registry reported, not required) and build a
+#                   workflow artifact; no attestation, no release
+#
+# Every run fixes one candidate: the checked-out HEAD^{commit}. On a tag push it
+# must equal the tag's peeled commit; on a rehearsal it is the commit of the
+# dispatched ref. Verification, the build and the attestation all use it.
 #
 # Verification is fail-closed: a lower-case annotated tag equal to VERSION on a
 # commit reachable from main, valid release semantics, a retained Excel record
-# that validates against the tagged commit, a current README assurance block,
-# and release_readiness.json declaring this release certified.
+# whose certified VBA bytes are unchanged at the candidate, a green Excel VBA
+# Regression run of the candidate commit itself (#76; a record for any other
+# commit fails, even with identical VBA bytes), a current README assurance
+# block, and release_readiness.json declaring this release certified.
 #
 # Signing happens only here, through GitHub's OIDC-backed build-provenance
 # attestation. Nothing is signed locally.
@@ -53,6 +60,12 @@ jobs:
     outputs:
       version: ${{ steps.identity.outputs.version }}
       rehearsal: ${{ steps.identity.outputs.rehearsal }}
+      candidate: ${{ steps.identity.outputs.candidate }}
+      certification: ${{ steps.certification.outputs.certification }}
+    permissions:
+      contents: read
+      # Lists the Excel VBA Regression runs and downloads their artifacts.
+      actions: read
     steps:
       - name: Check out the candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -76,6 +89,9 @@ jobs:
         run: |
           set -euo pipefail
           version="$(tr -d '[:space:]' < VERSION)"
+          # The exact commit this run checked out. Every later check, the build
+          # and the attestation use this SHA, never a ref that could move.
+          candidate="$(git rev-parse --verify 'HEAD^{commit}')"
           if [[ "$EVENT" == "push" ]]; then
             if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
               echo "::error::$TAG is not a lower-case vMAJOR.MINOR.PATCH tag"; exit 1
@@ -88,24 +104,63 @@ jobs:
             if [[ "$(git cat-file -t "refs/tags/$TAG")" != "tag" ]]; then
               echo "::error::$TAG must be an annotated tag"; exit 1
             fi
+            tagged="$(git rev-parse --verify "refs/tags/$TAG^{commit}")"
+            if [[ "$tagged" != "$candidate" ]]; then
+              echo "::error::checked-out commit $candidate is not the commit $tagged of $TAG"; exit 1
+            fi
             git fetch --no-tags "$REPO_URL" "refs/heads/main:refs/remotes/upstream/main"
-            if ! git merge-base --is-ancestor HEAD upstream/main; then
+            if ! git merge-base --is-ancestor "$candidate" upstream/main; then
               echo "::error::$TAG does not point to a commit on main"; exit 1
             fi
             rehearsal=false
           else
             rehearsal=true
           fi
-          printf 'version=%s\nrehearsal=%s\n' "$version" "$rehearsal" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\nrehearsal=%s\ncandidate=%s\n' \
+            "$version" "$rehearsal" "$candidate" >> "$GITHUB_OUTPUT"
           printf 'Release candidate %s, version %s, rehearsal=%s\n' \
-            "$(git rev-parse HEAD)" "$version" "$rehearsal" | tee -a "$GITHUB_STEP_SUMMARY"
+            "$candidate" "$version" "$rehearsal" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Validate release semantics
         run: python3 tools/check_release_semantics.py --root .
 
-      - name: Validate the retained Excel certification record
+      # The retained record names the earlier Excel candidate whose grid
+      # exports it certifies; a commit cannot contain a record of itself. This
+      # step proves its certified VBA bytes are unchanged at the candidate. It
+      # does not certify the candidate; the next step does.
+      - name: Validate the retained Excel record against the candidate
         working-directory: benchmark
-        run: python check_excel_certification.py --record excel_regression_record.json --require-pass
+        env:
+          CANDIDATE: ${{ steps.identity.outputs.candidate }}
+        run: >-
+          python check_excel_certification.py --record excel_regression_record.json
+          --evidence-ref "$CANDIDATE" --require-pass
+
+      - name: Certify the exact candidate commit in Excel
+        id: certification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE: ${{ steps.identity.outputs.candidate }}
+          REHEARSAL: ${{ steps.identity.outputs.rehearsal }}
+        run: |
+          set -euo pipefail
+          # Requires a green Excel VBA Regression run of this exact commit and
+          # validates its record with --candidate-sha "$CANDIDATE". A tag push
+          # fails without one; a rehearsal reports UNCERTIFIED as a warning.
+          mode=tag
+          if [[ "$REHEARSAL" == "true" ]]; then mode=rehearsal; fi
+          python3 .github/scripts/certify_release_candidate.py \
+            --repository "$GITHUB_REPOSITORY" --candidate "$CANDIDATE" --mode "$mode" \
+            --work-dir "$RUNNER_TEMP/excel-runs" --keep-dir "$RUNNER_TEMP/excel-certification"
+
+      - name: Keep the exact-candidate Excel record
+        if: steps.certification.outputs.certification == 'CERTIFIED'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-excel-certification
+          path: ${{ runner.temp }}/excel-certification/
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Verify the README assurance block is current
         working-directory: benchmark
@@ -142,7 +197,8 @@ jobs:
       - name: Check out the candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event_name == 'push' && github.ref || inputs.ref }}
+          # The commit the verify job checked, not a ref that could move.
+          ref: ${{ needs.verify.outputs.candidate }}
           persist-credentials: false
 
       - name: Set up Python
@@ -154,9 +210,13 @@ jobs:
         env:
           VERSION: ${{ needs.verify.outputs.version }}
           REHEARSAL: ${{ needs.verify.outputs.rehearsal }}
+          CANDIDATE: ${{ needs.verify.outputs.candidate }}
         run: |
           set -euo pipefail
-          args=(--version "$VERSION" --ref HEAD --out dist)
+          if [[ "$(git rev-parse --verify 'HEAD^{commit}')" != "$CANDIDATE" ]]; then
+            echo "::error::checked-out commit is not the verified candidate $CANDIDATE"; exit 1
+          fi
+          args=(--version "$VERSION" --ref "$CANDIDATE" --out dist)
           # A release needs its dated changelog section; a rehearsal of an
           # unreleased version has none, so it builds the bundle only.
           if [[ "$REHEARSAL" != "true" ]]; then
@@ -179,7 +239,10 @@ jobs:
   attest:
     name: Attest build provenance
     needs: [verify, build]
-    if: needs.verify.outputs.rehearsal == 'false'
+    # Never for a rehearsal or a candidate without its own Excel certification.
+    if: >-
+      needs.verify.outputs.rehearsal == 'false' &&
+      needs.verify.outputs.certification == 'CERTIFIED'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -221,7 +284,9 @@ jobs:
   draft:
     name: Draft the GitHub Release
     needs: [verify, attest]
-    if: needs.verify.outputs.rehearsal == 'false'
+    if: >-
+      needs.verify.outputs.rehearsal == 'false' &&
+      needs.verify.outputs.certification == 'CERTIFIED'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

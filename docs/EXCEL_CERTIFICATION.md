@@ -192,6 +192,54 @@ is unchanged. This permits an evidence-only commit without pretending that
 Excel executed the evidence file itself. Any later change to a certified VBA
 module invalidates the record and requires a new Excel run.
 
+Retaining the record keeps its grid-export evidence valid; it does not certify
+the later commit. A release needs an Excel run of the tagged commit itself, as
+described next.
+
+<a id="exact-tag-certification"></a>
+
+## Release certification of the exact tagged commit
+
+A commit cannot contain a record of itself, so the retained record always names
+an earlier candidate than the commit that holds it. Validated without
+`--candidate-sha`, it would also pass at any later commit with identical VBA
+bytes, such as a documentation-only commit that Excel never ran (#76). The
+checker says which binding it checked: `exact candidate: not required` or
+`exact candidate: required and matched`.
+
+The release workflow (`.github/workflows/release.yml`) therefore certifies each
+release commit separately:
+
+1. It takes the checked-out `HEAD^{commit}` as the candidate. On a tag push the
+   candidate must equal the tag's peeled commit; on a rehearsal it is the commit
+   of the dispatched ref.
+2. It validates the retained record with `--evidence-ref <candidate>`, which
+   proves the certified VBA bytes and grids are unchanged there.
+3. `.github/scripts/certify_release_candidate.py` finds the successful `push`
+   and `workflow_dispatch` runs of the Excel VBA Regression workflow whose head
+   commit is the candidate, downloads each run's artifact, newest first, and
+   validates its record against the candidate:
+
+   ```bash
+   python benchmark/check_excel_certification.py \
+     --record <artifact-dir>/excel-certification.json \
+     --candidate-sha <candidate> --evidence-ref <candidate> \
+     --require-pass --log-directory <artifact-dir>
+   ```
+
+   The record must also name the self-hosted runner and the run it was
+   downloaded from. Pull request runs are not used, because they execute a
+   synthetic merge commit.
+4. The first run that passes makes the candidate **CERTIFIED**. Otherwise it is
+   **UNCERTIFIED**, and the job summary lists every reason. A tag push then
+   fails before anything is built, attested or drafted. A rehearsal reports a
+   warning, builds its practice bundle and never attests or releases it.
+
+[RELEASING.md](../RELEASING.md#exact-tag-binding) describes how to produce
+that run before tagging. `tests/test_certify_release_candidate.py` holds the
+positive fixture (a green run of the exact commit) and the negative ones,
+including a later commit with identical numerical source bytes.
+
 ## Failure and cleanup semantics
 
 The record is written after cleanup. Import, compile, regression, and cleanup
