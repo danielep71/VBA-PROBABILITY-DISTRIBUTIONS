@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-03T23:01:05Z",
+ "generated_utc": "2026-11-03T23:06:46Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -38,7 +38,7 @@
    },
    "normal_tail_study/holdout_record.py": {
     "role": "validator: the exposure record and the modes",
-    "sha256": "a677ef6030874faed7e9382880eca490657fffcaf8f2c1d5c8466c01d58b642c"
+    "sha256": "8e793b08ae33265d6e3d02610347de72d82e1fb461752f66e47f62365d043ccc"
    },
    "normal_tail_study/result_binding.py": {
     "role": "validator: this binding",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 33.0,
+ "runtime_s": 33.4,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3610,6 +3610,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "results.json has no provenance block: it does not record which generator, model, validator, design and inputs produced it"
+   ]
+  },
+  {
+   "utc": "2026-11-03T23:06:12Z",
+   "reason": "Merge of release/1.0.0 brings #138: holdout_record.py creates its lock and temporary output with mode 0o600. No study logic changed.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "normal_tail_study/holdout_record.py (validator: the exposure record and the modes): recorded a677ef6030874faed7e9382880eca490657fffcaf8f2c1d5c8466c01d58b642c, now 8e793b08ae33265d6e3d02610347de72d82e1fb461752f66e47f62365d043ccc"
    ]
   }
  ]
