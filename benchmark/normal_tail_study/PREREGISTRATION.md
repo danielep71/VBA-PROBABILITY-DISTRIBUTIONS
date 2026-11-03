@@ -333,3 +333,29 @@ the binary64 result directly in any case. The failed A2 stays in
 **Holdout.** H was not evaluated in the failed run, because §6 stops at a
 failed condition. It is evaluated once, under this amendment. No parameter
 in §2 was changed or refitted.
+
+---
+
+## Note — 2026-11-03: the one-shot holdout record is now enforced (#80)
+
+**This note is not an amendment.** It changes nothing above: not the design,
+the conditions, the thresholds, the evaluation sets or the predictions. It
+records no new measurement.
+
+- H was evaluated in the run recorded on 2026-10-13 (#75), under Amendment 1.
+  Its A6 result stays in `results.json` unchanged, and the recorded status
+  stays PASS.
+- The validator of #75 kept the "evaluated once" of §5 only by convention.
+  Every run of it evaluated H and wrote `evaluated_once: true` again, so it
+  could neither prevent nor detect a repeat. The committed record reports one
+  evaluation. Nothing shows a repeat, but that validator could not have shown
+  one.
+- From #80 on, `results.json` carries a `holdout_exposure` record with status
+  `EVALUATED` and one exposure. It binds the coefficient file, the first
+  15,729 bytes of this file (its text through Amendment 1), the SHA-256 of
+  H's seeded points and the SHA-256 of the A6 block. `validate_kernel.py`
+  refuses a second first evaluation, and its replay and regeneration modes
+  never evaluate H.
+- H was not evaluated to make this change.
+- Later amendments must be appended after this note. The recorded design
+  identity accepts appended text only.
