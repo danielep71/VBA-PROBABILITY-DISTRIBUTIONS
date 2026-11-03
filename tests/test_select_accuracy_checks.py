@@ -104,7 +104,7 @@ class ExecutionTests(unittest.TestCase):
     def test_single_list_full_and_live_modes(self):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
-        self.assertEqual(len(full), 35)
+        self.assertEqual(len(full), 36)
         expected = [c for c in full if Path(c[0]).name.startswith('check_')
                     and '--self-test' not in c]
         self.assertEqual(live, expected)

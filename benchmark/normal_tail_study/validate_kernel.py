@@ -365,35 +365,65 @@ def exact_z(fn, args):
         return mp.mpf(args[0])
 
 
-def condition(z, value):
-    """|z| * phi(z) / F: sensitivity of a tail or cumulative value to z."""
+# P2 conditioning, as restated by Amendment 2 (#78). F is the function the row
+# evaluates at its exact standardised argument z: the survival S(z) = Q(z) or
+# the cumulative Phi(z), for either sign of z.
+#
+#   kappa = |z| phi(z) / F    the relative condition number |z F'(z) / F(z)|;
+#                             nonnegative for both signs (the frozen survival
+#                             expression z phi / Q is negative for z < 0)
+#   eta   >= |z~ - z|         first-order bound on the absolute error of the
+#                             computed z~
+#   bound = B + phi(z) eta / F
+#
+# Wherever z != 0, eta = delta |z| with the frozen delta of §7 P2, so
+# phi eta / F = kappa delta exactly. The absolute form also holds at z = 0,
+# where delta is 0/0 for Lognormal.
+
+U52 = 2 ** -52                          # two roundings of 2^-53 each, or one ulp of VBA Log
+
+
+def density(z):
     with mp.workdps(60):
-        if z == 0:
-            return 0.0
-        return float(abs(z) * mp.exp(-z * z / 2) / mp.sqrt(2 * mp.pi) / mp.mpf(str(value)))
+        return mp.exp(-z * z / 2) / mp.sqrt(2 * mp.pi)
 
 
-def delta_z(fn, args):
-    if fn.startswith("Lognormal"):
-        with mp.workdps(60):
-            lx = mp.log(mp.mpf(args[0]))
-            den = abs(lx - mp.mpf(args[1]))
-            extra = 0.0 if den == 0 else float(2.0 ** -52 * abs(lx) / den)
-        return 2.0 ** -52 + extra
-    if fn.startswith("Normal_"):
-        return 2.0 ** -52
-    return 0.0
+def condition(z, value):
+    """kappa = |z| phi(z) / F, the relative condition number of F at z (Amendment 2)."""
+    with mp.workdps(60):
+        return float(abs(z) * density(z) / mp.mpf(str(value)))
+
+
+def z_error(fn, args, z):
+    """eta: first-order bound on |z~ - z| for the computed standardised argument (Amendment 2).
+
+    NormalStandard: z is the argument itself, eta = 0.
+    Normal: z~ = fl(fl(x + (-mu)) / sigma), two roundings, eta = 2^-52 |z|.
+    Lognormal: z~ = fl(fl(L~ + (-mu)) / sigma) with |L~ - ln x| <= 2^-52 |ln x|
+    (one ulp of VBA Log), eta = 2^-52 (|z| + |ln x| / sigma).
+    """
+    with mp.workdps(60):
+        if fn.startswith("Lognormal"):
+            return U52 * (abs(z) + abs(mp.log(mp.mpf(args[0]))) / mp.mpf(args[2]))
+        if fn.startswith("Normal_"):
+            return U52 * abs(z)
+        return mp.mpf(0)
+
+
+def standardisation_term(z, value, eta):
+    """phi(z) eta / F: first-order relative error of F caused by an error eta in z."""
+    with mp.workdps(60):
+        return float(density(z) * eta / mp.mpf(str(value)))
 
 
 def interval_bound(fn, args, reference):
     with mp.workdps(60):
         if fn == "NormalStandard_IntervalProbability":
-            lo, hi, delta = args[0], args[1], 0.0
+            lo, hi = args[0], args[1]
             zl, zu = mp.mpf(lo), mp.mpf(hi)
         else:
             lo = km.standardize(args[0], args[2], args[3])
             hi = km.standardize(args[1], args[2], args[3])
-            delta = 2.0 ** -52
             zl = (mp.mpf(args[0]) - mp.mpf(args[2])) / mp.mpf(args[3])
             zu = (mp.mpf(args[1]) - mp.mpf(args[2])) / mp.mpf(args[3])
         _, branch, _ = km.interval(lo, hi)
@@ -406,7 +436,7 @@ def interval_bound(fn, args, reference):
         p = mp.mpf(str(reference))
         total = 0.0
         for z, tail in tails:
-            b = B + condition(z, tail) * delta
+            b = B + standardisation_term(z, tail, z_error(fn, args, z))
             total += float(tail * b / p)
         if branch == "crossing":
             total += float(2.0 ** -53 / p)
@@ -443,7 +473,12 @@ def predictions():
                     rec["bound"] = B
                 elif fn in STANDARDISED:
                     rec["prediction"] = "P2"
-                    rec["bound"] = B + condition(exact_z(fn, args), reference) * delta_z(fn, args)
+                    z = exact_z(fn, args)
+                    eta = z_error(fn, args, z)
+                    rec["z"] = float(z)
+                    rec["condition"] = condition(z, reference)
+                    rec["z_error"] = float(eta)
+                    rec["bound"] = B + standardisation_term(z, reference, eta)
                 elif fn in INTERVALS:
                     rec["prediction"] = "P3"
                     rec["bound"], rec["branch"] = interval_bound(fn, args, reference)
@@ -465,10 +500,14 @@ def predictions():
             "rows": len(mine),
             "worst_predicted_error": max(r["predicted_error"] for r in mine),
             "outside_bound": [r["function"] + " " + str(r["args"]) for r in bounded if not r["within_bound"]],
+            "bounds_finite_nonnegative": all(math.isfinite(r["bound"]) and r["bound"] >= 0 for r in bounded),
             "max_model_vs_committed_ulps": max((r["model_vs_committed_ulps"] or 0) for r in mine),
         }
     summary["P4"]["predicted_breaches"] = [r["function"] + " " + str(r["args"])
                                            for r in rows if r.get("predicted_breach")]
+    p2 = [r for r in rows if r["prediction"] == "P2"]
+    summary["P2"]["negative_z_rows"] = [r["function"] + " " + str(r["args"]) for r in p2 if r["z"] < 0]
+    summary["P2"]["centre_rows"] = [r["function"] + " " + str(r["args"]) for r in p2 if r["z"] == 0]
     summary["unchanged_rows"] = unchanged
     return {"grids": list(GRIDS), "summary": summary, "rows": rows}
 
@@ -538,7 +577,11 @@ def compute():
         "oracle": {"stability_min_digits": stability, "quadrature_min_digits": independence,
                    "quadrature_points": len(quadrature)},
         "amendments": ["Amendment 1: A2 (strict positivity) replaced by A2' (cancellation factor "
-                       "<= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only"],
+                       "<= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only",
+                       "Amendment 2 (#78): P2 conditioning restated as kappa = |z| phi(z) / F for survival "
+                       "and cumulative alike, and kappa * delta as phi(z) * eta / F with eta = 2^-52 |z| "
+                       "(Normal) or 2^-52 (|z| + |ln x| / sigma) (Lognormal), defined at z = 0; recorded "
+                       "after A6 was observed, nothing refitted, no threshold changed"],
         "acceptance": {"A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
                        "A7": a7, "A8": a8},
         "bands": {"current": band_worst(current_rows), "candidate": band_worst(v_rows)},

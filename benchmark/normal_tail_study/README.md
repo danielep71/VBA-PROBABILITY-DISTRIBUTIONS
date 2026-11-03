@@ -1,7 +1,8 @@
 # Normal upper-tail kernel study (#72)
 
 **Status: recorded PASS under Amendment 1, retained; the one-shot holdout
-record is enforced (#80); study acceptance stays open under #78 and #79.**
+record is enforced (#80); Amendment 2 restates the P2 conditioning rule
+(#78); study acceptance stays open under #78 and #79.**
 Excel-free. This study
 designs and validates a replacement for `PROB_NormalUpperTailPositive` before
 any VBA is written. It is not evidence that the kernel is fixed. The fix lands
@@ -12,7 +13,9 @@ Design: `PREREGISTRATION.md`, frozen before the committed derivation. Its §0
 discloses the scratch exploration that chose the design. Amendment 1, written
 after the first run, replaces one acceptance condition (A2) and is disclosed
 as such. A dated note of 2026-11-03 records how the one-shot holdout rule is
-now enforced; it is not an amendment.
+now enforced; it is not an amendment. Amendment 2, of the same date and
+written after the holdout had been evaluated, restates the conditioning term
+of the P2 bounds; see [Conditioning of the P2 bounds](#conditioning-of-the-p2-bounds-amendment-2-78).
 
 ## Defect
 
@@ -176,6 +179,43 @@ some network file systems, so run the validator on a local checkout.
 The holdout counts as spent, and only a new, disclosed preregistration with a
 new holdout can replace it.
 
+## Conditioning of the P2 bounds (Amendment 2, #78)
+
+The frozen P2 rule bounds a standardised row's error by `B + κ·δ`. Two of
+its expressions fail on covered rows:
+- the survival condition number `z·φ(z)/Q(z)` is negative for `z < 0`, so
+  the bound falls below `B` (four rows);
+- the Lognormal `δ` divides by `|ln x − μ|`, which is zero at `x = 1, μ = 0`
+  (two rows).
+
+The validator had used `|z|` and dropped the zero-denominator term since the
+first run (#74), without saying so. I appended Amendment 2 to
+`PREREGISTRATION.md` to state and derive the rule. I wrote it after the
+holdout had been evaluated (2026-10-13) and the predictions recorded, and it
+says so. Nothing was refitted, no threshold changed, and the holdout was not
+evaluated.
+
+The restated rule is `error ≤ B + φ(z)·η / F(z)`:
+- `F` is the survival `Q` or the cumulative `Φ` at the exact `z`, and
+  `κ = |z|·φ(z)/F(z)` is its relative condition number `|z·F′/F|`, which is
+  nonnegative for both signs;
+- `η` bounds the absolute error of the computed `z`: `2^-52·|z|` for Normal,
+  and `2^-52·(|z| + |ln x|/σ)` for Lognormal (two roundings and one ulp of
+  `Log`).
+
+Where `z ≠ 0`, `φ·η/F` is exactly the frozen `κ·δ`. At the centre, `Log(1)`
+is exactly 0, `η = 0` and the bound is `B`. Near it, the term is finite and
+tends to `√(2/π)·2^-52·|μ|/σ`. P3 inherits the same term for each tail.
+
+After regenerating `results.json` (`--regenerate`, holdout not evaluated),
+every P2 row records `z`, `κ` and `η`. Every predicted value, predicted
+error and pass/fail outcome is unchanged. One bound,
+`Lognormal_Cumulative(0.45, 0.2, 0.6)`, moved by one ulp because the same
+quantity is now evaluated in another order. `test_conditioning.py` checks the
+recorded rows against the frozen product. It also checks negative-`z`,
+exact-centre (`x = 1, μ = 0`) and near-centre rows, the split at 3, and the
+37.5 and 38.5 cut-offs.
+
 ## Running the validator
 
 Run these from this directory. Each one needs an explicit mode:
@@ -206,15 +246,15 @@ The exit status is 0 on success, 1 on a study failure or replay mismatch, 2 on
 a usage error and 3 on a refusal. A refusal leaves the output unchanged, and
 says so with its SHA-256.
 
-To change the §7 predictions, for example after amending the conditioning
-rules under #78, change `validate_kernel.py`, append the amendment to
-`PREREGISTRATION.md`, then run:
+To change the §7 predictions, as Amendment 2 did under #78, change
+`validate_kernel.py`, append the amendment to `PREREGISTRATION.md`, then run:
 
 ```sh
-python3 validate_kernel.py --regenerate --reason "#78: <amendment>"
+python3 validate_kernel.py --regenerate --reason "#<issue>: <amendment>"
 python3 validate_kernel.py --verify
 python3 test_kernel_model.py
 python3 test_holdout_record.py
+python3 test_conditioning.py
 ```
 
 H is not evaluated at any step, and the recorded A6 is kept.
@@ -223,7 +263,7 @@ H is not evaluated at any step, and the recorded A6 is kept.
 
 | File | Role |
 | --- | --- |
-| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, Amendment 1 and the dated #80 note |
+| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, Amendment 1, the dated #80 note and Amendment 2 (#78) |
 | `derive_kernel.py` | the preregistered fit; writes `kernel_coefficients.json` |
 | `kernel_coefficients.json` | coefficients to 40 digits, their Doubles, and VBA `hi`/`lo` literal pairs |
 | `kernel_model.py` | binary64 model of the candidate, of today's kernel, and of every affected public path |
@@ -231,4 +271,5 @@ H is not evaluated at any step, and the recorded A6 is kept.
 | `holdout_record.py` | the holdout exposure record and its checks (#80); standard library only |
 | `results.json` | every measurement, the acceptance record, the per-row predictions and the holdout exposure record |
 | `test_kernel_model.py` | CI fixture pinning the coefficients, literals, recorded result and recorded A6 |
+| `test_conditioning.py` | CI fixture of Amendment 2: the recorded P2 bounds, negative-`z`, centre, near-centre and seam rows |
 | `test_holdout_record.py` | CI fixtures of the exposure controls, on synthetic studies |
