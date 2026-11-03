@@ -359,3 +359,124 @@ records no new measurement.
 - H was not evaluated to make this change.
 - Later amendments must be appended after this note. The recorded design
   identity accepts appended text only.
+
+---
+
+## Amendment 2 — 2026-11-03: conditioning of the P2 bounds (#78)
+
+**Disclosure.** I wrote this amendment on 2026-11-03. By then these results
+had been observed:
+- the holdout H, evaluated once on 2026-10-13 (#75, run started 06:45:41Z),
+  A6 PASS;
+- every other measurement of that run: A1–A5, A7, A8, the oracles, the seams
+  and the bands;
+- the §7 predicted values and bounds that run recorded for every covered row,
+  all within their bounds;
+- the committed Excel observations of today's code at those rows, which the
+  predictions read as inputs.
+
+No Excel observation of the candidate kernel exists, so no §7 prediction has
+been tested yet. Nothing above this section has been changed. The design
+(§2), the fitted coefficients, A1–A8 and their thresholds, `B`, the
+evaluation sets (§5) and P1, P3 and P4 stand as frozen. Nothing was refitted,
+and H was not evaluated to write or apply this amendment. No acceptance
+condition depends on P2, so none can change status through it.
+
+**Defects in P2 as frozen.** Two expressions in §7 P2 do not give an error
+bound for every covered row:
+- The survival condition number `z·φ(z)/Q(z)` is negative for `z < 0`. There
+  `B + κ·δ` is below `B` and falls as `δ` grows, so it is not an upper bound.
+  Four covered survival rows have `z < 0`: `Normal_Survival(3, 5, 2)`,
+  `Normal_Survival(-2.1, 0.4, 1.7)`, `Lognormal_Survival(0.5, 0, 1)` and
+  `Lognormal_Survival(0.45, 0.2, 0.6)`.
+- The Lognormal `δ` divides by `|ln x − μ|`, which is zero at the centre
+  `ln x = μ`. Two covered rows are there: `Lognormal_Cumulative(1, 0, 1)` and
+  `Lognormal_Survival(1, 0, 1)`. Their `δ` is 0/0, so `κ·δ` is undefined.
+
+From the first derivation run (#74) on, the validator computed `|z|·φ/F` and
+dropped the Lognormal `δ` term at a zero denominator, without disclosing
+either. The recorded bounds therefore came from a rule this text did not
+state. This amendment states that rule and derives it.
+
+**Conditioning for both signs.** A covered row evaluates `F` at its exact
+standardised argument `z`, where `F` is the survival `S(z) = Q(z)` (for
+`z < 0`, `1 − Q(|z|)`) or the cumulative `Φ(z)`. The relative condition
+number of `F` with respect to `z` is
+
+    κ_F(z) = |z · F′(z) / F(z)|,
+
+so that, to first order, `|F(z(1 + δ)) − F(z)| / F(z) = κ_F(z)·|δ|` for
+either sign of `z` and of `δ`. Since `S′ = −φ`, `Φ′ = φ`, and `φ`, `S` and
+`Φ` are positive for every finite `z`:
+
+    κ_S(z) = |z|·φ(z) / Q(z),        κ_Φ(z) = |z|·φ(z) / Φ(z).
+
+Both are nonnegative. The frozen survival expression is `κ_S` for `z ≥ 0` and
+`−κ_S` for `z < 0`; it is replaced by `κ_S`. The frozen cumulative expression
+already is `κ_Φ` and is unchanged.
+
+**Absolute form of the standardisation term.** `κ·δ` is the relative error in
+`F` caused by a relative error `δ` in `z`. With `η = δ·|z|`, a bound on the
+absolute error `|z̃ − z|` of the computed argument, it equals
+`φ(z)·η / F(z)`. The arithmetic bounds `η` directly. With `u = 2^-53` and
+`|ε₁|, |ε₂| ≤ u`:
+- Normal: `z̃ = fl(fl(x + (−μ)) / σ) = z(1 + ε₁)(1 + ε₂)`, so
+  `|z̃ − z| ≤ (2u + u²)|z|`, and `η = 2^-52·|z|`.
+- Lognormal: `L̃ = Log(x)` with `|L̃ − ln x| ≤ 2^-52·|ln x|`, the one-ulp
+  allowance of the frozen text, and `z̃ = fl(fl(L̃ + (−μ)) / σ)`. Then
+
+      z̃ − z = (L̃ − ln x)(1 + ε₁)(1 + ε₂) / σ + z·((1 + ε₁)(1 + ε₂) − 1),
+
+  so to first order `η = 2^-52·(|z| + |ln x| / σ)`.
+
+Where `z ≠ 0`, `η / |z|` is exactly the frozen `δ`: `2^-52` for Normal, and
+`2^-52 + 2^-52·|ln x| / |ln x − μ|` for Lognormal, because
+`|z| = |ln x − μ| / σ`. P2 is therefore restated as
+
+    error ≤ B + φ(z)·η / F(z),
+
+which equals the frozen `B + κ·δ`, with `κ ≥ 0`, wherever `δ` is defined,
+and is defined for every row. P3 takes "their P1/P2 bounds" and so inherits
+this term for each tail: `η = 2^-52·|z|` for `Normal_IntervalProbability`,
+and `η = 0` for `NormalStandard_IntervalProbability`.
+
+The rule stays first order, as frozen. The terms it neglects are smaller than
+the standardisation term by a factor of order `|z|·η + 2^-52`, below 1E-14 at
+every covered row.
+
+**Centre.** For a positive Double `x` and a Double `μ`, `ln x = μ` holds only
+at `x = 1, μ = 0`. For any other positive rational `x`, `ln x` is
+transcendental (Lindemann–Weierstrass), so it is not a Double. At `x = 1` the
+frozen allowance `2^-52·|ln x|` is zero, and a faithfully rounded `Log`
+returns the exact result, 0. Then `z̃ = (0 + (−0)) / σ = 0` exactly, `η = 0`,
+and the bound is `B`: the row evaluates the kernel at `z = 0`, where P1 and
+A5 already bound `Q` and `1 − Q` by `B`. This is the value of the absolute
+form, not a special case: `φ·η / F` is continuous in `(x, μ)`, and it tends
+to 0 as `x → 1` with `μ = 0`, because `η` does.
+
+Near the centre, where `ln x ≠ μ` but `|ln x − μ| ≪ |ln x|`, the frozen `δ`
+is very large and `κ` very small. Their product is finite and tends to
+`√(2/π)·2^-52·|μ| / σ` as `z → 0`, since `F(0) = 1/2`. The absolute form
+evaluates it without forming `0·∞`.
+
+The term has no seam of its own. It is continuous in `z` through 0, the split
+at 3 and the 37.5 and 38.5 cut-offs; the kernel's own seams are unchanged and
+covered by A5. Where the reference `F` is not a normal Double (survival
+above the last `z` with a normal `Q`, cumulative below its negative), the
+bound is finite but, as §4 states, the error is characterised, not bounded.
+
+**What changes in the record.** `results.json` is regenerated without
+evaluating H:
+- every P2 row records `z`, `κ` and `η`, and its bound as
+  `B + φ(z)·η / F(z)`;
+- the P2 and P3 bounds the validator recorded already followed this rule. All
+  are unchanged except `Lognormal_Cumulative(0.45, 0.2, 0.6)`, which moves by
+  one ulp, from evaluating the same quantity in another order;
+- every predicted value and predicted error is unchanged, and every row stays
+  within its bound;
+- under the frozen sign, the four negative-`z` survival rows would have had
+  bounds of `B − κ·δ`. These are still above their predicted errors, so no
+  recorded outcome depended on the correction.
+
+`test_conditioning.py` pins this: the recorded P2 rows, negative-`z`, exact
+centre and near-centre rows, and the seams.
