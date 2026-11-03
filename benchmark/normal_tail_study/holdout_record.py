@@ -329,7 +329,7 @@ def acquire_lock(study: Study, mode: str) -> str:
     lock = lock_path(study.output)
     token = f"pid {os.getpid()}, mode {mode}, since {utc_now()}, token {os.urandom(8).hex()}"
     try:
-        fd = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+        fd = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError as e:
         raise StateError(lock_held(study.output)) from e
     with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -390,7 +390,7 @@ def write_atomic(study: Study, result: dict[str, Any], expected: str | None) -> 
     data = (json.dumps(result, indent=1) + "\n").encode("utf-8")
     tmp = temporary_path(study.output)
     try:
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError as e:
         raise StateError(f"{tmp} appeared while this run was computing (another run?); "
                          f"{study.output} was not overwritten") from e

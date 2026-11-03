@@ -422,6 +422,23 @@ class Locking(Base):
         other.evaluated, other.logs, other.computed, other.on_compute = [], [], 0, None
         return other
 
+    @unittest.skipIf(os.name != "posix", "POSIX file modes")
+    def test_lock_and_output_are_owner_only(self):
+        # Neither the lock nor the atomically written output is readable by
+        # other users (CodeQL: overly permissive file permissions).
+        self.assertEqual(self.s.run("init"), hr.OK)
+        modes = []
+
+        def observe():
+            self.s.on_compute = None
+            modes.append(os.stat(self.lock()).st_mode & 0o777)
+        self.s.on_compute = observe
+        self.assertEqual(self.s.run("first_evaluation"), hr.OK)
+        self.assertEqual(len(modes), 1)
+        self.assertEqual(modes[0] & 0o077, 0, oct(modes[0]))
+        output_mode = os.stat(self.s.output).st_mode & 0o777
+        self.assertEqual(output_mode & 0o077, 0, oct(output_mode))
+
     def test_second_run_during_v_is_refused_and_h_evaluated_once(self):
         self.assertEqual(self.s.run("init"), hr.OK)
         other, outcome = self.second_actor(), []
