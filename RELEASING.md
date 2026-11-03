@@ -81,7 +81,7 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 
 Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, and #29 must be resolved.
 
-**Verified enforcement (2026-09-30):** the active `Protect main` ruleset requires pull requests, up-to-date `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` checks from GitHub Actions, and blocks deletion and force pushes, with no bypass actors. Required approvals remain zero and conversation resolution is not mandatory. The active `Protect releases` ruleset blocks updates, deletion and force pushes for `v*` tags while allowing initial creation. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
+**Enforcement baseline:** the repository settings, security features and rulesets, including the required checks `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` on `main`, are recorded in [`docs/repo_governance/repository-settings.json`](docs/repo_governance/repository-settings.json) and explained in [SETTINGS.md](docs/repo_governance/SETTINGS.md). `python3 tools/setup_repository.py --verify` compares them with GitHub and fails on drift; a prose statement of enforcement is not evidence. Required approvals remain zero. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
 
 ## 1. Freeze and identify the candidate
 
@@ -144,10 +144,17 @@ Move relevant entries from **Unreleased** into a dated `[MAJOR.MINOR.PATCH] - YY
 - Require a green **Static checks** workflow
   ([`.github/workflows/static-checks.yml`](.github/workflows/static-checks.yml))
   on the exact candidate SHA: committed whitespace, procedure-scoped VBA jumps,
-  release semantics, and workflow validation. The same checks run locally as
-  listed in [`tools/README.md`](tools/README.md).
+  release semantics, and workflow validation. The same checks run locally with
+  `python3 tools/run_static_checks.py --strict`; see
+  [`tools/README.md`](tools/README.md).
 - Scan for credentials or generated noise.
 - Confirm accuracy manifests, grids, tolerances, and provenance files are internally consistent.
+- Complete the [distribution review](docs/repo_governance/DISTRIBUTION.md) in
+  its own issue, including the pinned full-history secret scan, and close it.
+  Do not tag or publish while it is open.
+- Verify the repository settings and keep the dated record:
+  `python3 tools/setup_repository.py --verify --evidence <dir>/settings-{date}.json`
+  must report `VERIFIED` (see [`tools/README.md`](tools/README.md)).
 
 Capture commands, tool versions, timestamps, and complete results. Rerun affected gates after any change.
 
@@ -244,13 +251,34 @@ restart certification and packaging for the new candidate; never silently retarg
 ### Merge convention
 
 **Decision (2026-09-30): pull requests only.** Every change reaches `main`
-through a pull request, including the maintainer's own changes and Dependabot
-updates. There is no direct-push path.
+through a pull request, including my own changes and Dependabot updates. There
+is no direct-push path.
 
-- **Squash and merge by default.** Each pull request leaves one commit on
-  `main`. Its title and body describe the delivered change, link the relevant
-  issues and evidence, and state what was validated. Do not paste the
-  intermediate commit log.
+**Decision (2026-11-02): merge commits.** The `Protect main` ruleset allows
+merge commits only; the `Protect release branches` ruleset allows merge commits
+or squash, and I use merge commits there too.
+[`docs/repo_governance/SETTINGS.md`](docs/repo_governance/SETTINGS.md) records
+both rulesets.
+
+- **Every branch commit reaches `main`.** A merge commit keeps the branch
+  history, so each commit on the branch must stand on its own: a focused change,
+  a message that says what changed and why, and a tree that passes the checks.
+  The pull request title and body describe the delivered change, link the
+  relevant issues and evidence, and state what was validated; the merge commit
+  names the pull request.
+- **Release branches.** While a release branch such as `release/1.0.0` is
+  active, task pull requests branch from it and target it, and Dependabot
+  targets it through `target-branch` in `.github/dependabot.yml`.
+  - GitHub closes an issue from a keyword only when a pull request merges into
+    the default branch. After a task pull request merges into the release
+    branch, I close its issue by hand with its *Resolution* section.
+  - The integration pull request merges the release branch into `main` with a
+    merge commit. It uses `Refs #` for the issues and pull requests it carries,
+    never a closing keyword.
+  - Right after each integration, a sync pull request merges `main` back into
+    the release branch, so the next task branch starts from the same history.
+  - Integration and sync pull requests follow the same review and check rules
+    as any other pull request.
 - **Merge the reviewed head with its current integration checks green.** Record
   the reviewed PR head SHA and the target base SHA. On `pull_request` events,
   the current workflows check out GitHub's synthetic merge commit; record that
@@ -262,23 +290,32 @@ updates. There is no direct-push path.
   the self-hosted Excel runner is offline, merge only when the change cannot
   affect what it tests and record that reasoning in the PR before merging.
 - **Keep evidence changes atomic.** A committed grid, its manifest and its
-  export record land in one commit. `benchmark/check_manifest_provenance.py`
-  examines each commit separately, and a squash merge guarantees they change
-  together. Never merge an evidence branch in a way that brings in intermediate
-  commits where a manifest changed without its grid.
-- **A merge creates a new source identity.** A squash (and GitHub's rebase
-  merge) produces a new SHA, so exact-SHA Excel certification of the pull
-  request head or synthetic merge does not certify the merged commit. Certify
-  the final `main` commit, rebuild/retest all publishable artifacts from it and
-  regenerate their hashes before tagging, as required by step 8. Never silently
-  rebind PR evidence or relabel a pre-merge package as a final-commit build.
-- **History-preserving merges are the exception.** Use one only when the commit
-  order is itself evidence, for example a preregistration committed before the
-  source fix it governs (as in PR #27). Record the reason in the pull request
-  before merging.
-- **Never rewrite history.** Do not force-push `main`, rewrite published
-  history or move tags. Earlier direct pushes and merge commits stay as they
-  are; this convention applies to future merges.
+  export record change together, in one commit. Because a merge commit brings
+  every branch commit onto `main`, that commit must not be split across the
+  branch. `benchmark/check_manifest_provenance.py` examines each commit of the
+  pull request's range separately, so a commit that changes a manifest without
+  its grid fails the Accuracy Gate before merge. Make each such change in a
+  single commit.
+- **A merge creates a new source identity.** The merge commit has its own SHA,
+  different from the pull request head and from the synthetic merge the checks
+  ran on, so exact-SHA Excel certification of either does not certify the
+  merged commit. Certify the final `main` commit, rebuild/retest all
+  publishable artifacts from it and regenerate their hashes before tagging, as
+  required by step 8. Never silently rebind PR evidence or relabel a pre-merge
+  package as a final-commit build.
+- **Commit order is evidence.** A preregistration committed before the source
+  fix it governs (as in PR #27) keeps that order on `main`. Do not reorder or
+  squash such commits.
+- **Release history check.** The history policy of
+  `tools/check_release_semantics.py`, which reports any multi-parent commit
+  without a reviewed exception, applies only to the template repository it
+  comes from. This repository's `.github/repository-profile.json` does not enable
+  it, so pull request merge commits pass the release check.
+  [`tests/test_release_history_scope.py`](tests/test_release_history_scope.py)
+  pins that, with a release tag and an unreviewed merge commit.
+- **Never rewrite history.** Do not force-push `main` or a release branch,
+  rewrite published history or move tags. Earlier squash merges and direct
+  pushes stay as they are.
 
 GitHub enforces the PR and hosted-check requirements described in
 [Readiness review](#readiness-review). Review quality, artifact reconstruction
@@ -308,6 +345,8 @@ Retain at least:
 - candidate commit SHA
 - reviewed PR head, target base and tested synthetic merge SHA (where applicable)
 - static-check result
+- closed distribution-review issue and its secret-scan result
+- repository-settings evidence record (`VERIFIED`)
 - Excel version and bitness
 - regression outputs
 - accuracy grid and independent-reference provenance
@@ -381,7 +420,7 @@ Do not silently replace assets or move the tag.
 | 2 | Version surfaces synchronized | ☐ |
 | 3 | Changelog finalized | ☐ |
 | 4 | Installation verified cleanly | ☐ |
-| 5 | Static checks pass | ☐ |
+| 5 | Static checks pass; distribution review closed; settings `VERIFIED` | ☐ |
 | 6 | Excel certification passes | ☐ |
 | 7 | Artifacts built and packaged-tested | ☐ |
 | 8 | Hashes and evidence recorded | ☐ |
@@ -397,6 +436,7 @@ Do not silently replace assets or move the tag.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — change and review workflow
 - [CHANGELOG.md](CHANGELOG.md) — release history
 - [SECURITY.md](SECURITY.md) — supported versions and private reporting
+- [DISTRIBUTION.md](docs/repo_governance/DISTRIBUTION.md) — distribution review before a public release
 - [VERSION](VERSION) — authoritative version
 - [LICENSE](LICENSE) — Mozilla Public License 2.0
 

@@ -31,6 +31,8 @@ commands = (
     ("test_drift_guard_mutations.py",),
     ("test_public_api.py",),
     ("check_public_api.py",),
+    ("test_module_lists.py",),
+    ("check_module_lists.py",),
     ("test_manifest.py",),
     ("test_manifest_provenance.py",),
     ("check_manifest_provenance.py",),
@@ -42,6 +44,8 @@ commands = (
     ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
     ("../tools/check_vba_jumps.py", "--root", "..", "--self-test"),
     ("../tools/check_release_semantics.py", "--root", "..", "--self-test"),
+    ("../tests/test_ci_test_coverage.py",),
+    ("../tools/check_ci_test_coverage.py", "--root", ".."),
     ("test_verification_depth.py",),
     ("check_verification_depth.py",),
 )
