@@ -23,6 +23,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
 | `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
+| `traffic_alert.py` | Decides whether the daily traffic snapshot needs an alert issue and writes one that passes Issue triage; run by the alert job of `daily-traffic.yml` ([Traffic alerts](#traffic-alerts)) |
 | `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
 
 ## Running every static check
@@ -325,6 +326,31 @@ To add or update a binary after reviewing it:
 
 Remove the entry when you remove the file.
 
+## Traffic alerts
+
+The *Daily traffic export* workflow (`daily-traffic.yml`) has two jobs. The
+traffic job holds the analytics token, runs no repository code, and pushes the
+CSV history to the `traffic-history` branch. The alert job then runs
+[`traffic_alert.py`](traffic_alert.py) on that history, with no environment and
+only the workflow token. It opens at most one issue per snapshot when:
+
+- the 14-day views at least double and grow by 100 or more;
+- stars or forks increase;
+- a referrer never seen before brings at least 5 views.
+
+Clones never raise an alert, because every workflow checkout counts as a clone;
+the alert still shows them. The issue carries the issue form's assignee, the
+`P3` and `repository` labels and the open milestone with the earliest due date
+after the snapshot. Its body has a target end date a week out (always before
+that due date) and a dependency section, so Issue triage accepts it.
+[`tests/test_traffic_alert.py`](../tests/test_traffic_alert.py) holds the
+fixtures, including an alert checked by `check_issues.py`.
+
+```bash
+python3 tools/traffic_alert.py --data <traffic-history>/data \
+  --milestone-due YYYY-MM-DD --output alert.json
+```
+
 ## Python versions
 
 CI runs one exact Python, `3.12.16`. Each workflow that sets up Python defines
@@ -333,9 +359,10 @@ it once, as `PYTHON_VERSION` in its top-level `env`, and every
 [`static-checks.yml`](../.github/workflows/static-checks.yml),
 [`accuracy-gate.yml`](../.github/workflows/accuracy-gate.yml),
 [`release.yml`](../.github/workflows/release.yml),
-[`issue-triage.yml`](../.github/workflows/issue-triage.yml) and
-[`link-check.yml`](../.github/workflows/link-check.yml). To move to a new
-patch release, change all five together; first confirm that
+[`issue-triage.yml`](../.github/workflows/issue-triage.yml),
+[`link-check.yml`](../.github/workflows/link-check.yml) and
+[`daily-traffic.yml`](../.github/workflows/daily-traffic.yml) (its alert job).
+To move to a new patch release, change all six together; first confirm that
 [actions/python-versions](https://github.com/actions/python-versions) publishes
 it for `ubuntu-24.04` x64. The Accuracy Gate's reference wheels
 (`benchmark/requirements-ci.txt`) are pure Python, so a patch release does not
@@ -346,8 +373,8 @@ version, or if the workflows disagree.
 
 Two jobs run short inline scripts on the runner image's own `python3` and set
 up no Python: *Keep milestones issue-only* runs no action at all by design, and
-the daily traffic export keeps third-party code out of the job that holds its
-analytics token.
+the traffic job of the daily traffic export keeps third-party code out of the
+job that holds its analytics token.
 
 The minimum Python is **3.11**: every tool under `tools/` and `.github/scripts/`
 and every test under `tests/` runs on it, using the standard library only (the
@@ -593,3 +620,6 @@ layout; they are not verbatim copies.
 | `devbuild/build_workbook.py` | `tools/devbuild/build_workbook.py`: the module list comes from `regression_sources` instead of the template's workbook configuration, with failure on a missing or unlisted module; one `Build` sheet carries the stamp; the package is stored with a fixed host field so it does not depend on the zlib build or the platform; it writes a SHA-256 manifest of the modules and the workbook. |
 | `devbuild/verify_workbook.py` | The `VERIFIED`/`FAIL`/`UNVERIFIED` binding and the stamp reader of `tools/check_excel_run.py`, and the manifest idea of `tools/devbuild/export_manifest.py`, applied to a built workbook and checked against the commit's policy and Git blobs. |
 | `tests/test_build_workbook.py` | `tests/test_devbuild.py`: specification compression examples, compound-file and project-stream parse-back, determinism and builds in temporary Git repositories, extended with raw header and FAT checks, `dir` records, and positive and negative manifest bindings. |
+| `traffic_alert.py` | The alert part of `tools/traffic_history.py`: the views, stars, forks and new-referrer reasons without clones, and the triage-ready body with a target end date before the milestone's due date. It reads this repository's `traffic-history` CSV columns, and the snapshot collection stays in `daily-traffic.yml`. |
+| `tests/test_traffic_alert.py` | The alert cases of `tests/test_traffic_history.py`, rewritten for this repository's CSV files, plus a check that the generated issue passes `check_issues.py`. |
+| `.github/workflows/daily-traffic.yml` (alert job) | The `alert` job of `.github/workflows/traffic-history.yml`: no environment, milestone lookup and duplicate check, `gh issue create` with assignee, labels and milestone. |
