@@ -43,10 +43,13 @@ leaves an EVALUATION_STARTED record refusing a re-evaluation.
   verify            read-only replay: recomputes everything except H and
                     compares it with results.json. Never evaluates H and never
                     writes; the recorded A6 is reported as retained, not as a
-                    new measurement.
+                    new measurement. With a study binding (#79), a record
+                    whose bound identities no longer match the files is
+                    reported STALE before anything is recomputed.
   regenerate        recomputes everything except H and rewrites results.json,
                     carrying holdout_exposure and acceptance.A6 over unchanged
-                    and appending the reason to `regenerations`.
+                    and appending the reason, and the identities that changed,
+                    to `regenerations`.
   first_evaluation  refused unless the status is NOT_EVALUATED. Writes V with
                     EVALUATION_STARTED, evaluates H, then writes EVALUATED.
 
@@ -75,7 +78,7 @@ OK, FAILED, USAGE, REFUSED = 0, 1, 2, 3
 
 # Key order of results.json, so a regeneration rewrites the file in place.
 ORDER = ("study", "preregistration", "coefficients_sha256", "status", "problems", "generated_utc",
-         "versions", "bound", "oracle", "amendments", "acceptance", "bands", "seams", "predictions",
+         "versions", "provenance", "bound", "oracle", "amendments", "acceptance", "bands", "seams", "predictions",
          "holdout_559_inspected", "runtime_s", "holdout_exposure", "regenerations")
 # Fields a replay does not reproduce: when and where it ran, and the regeneration log.
 VOLATILE = ("generated_utc", "versions", "runtime_s", "regenerations")
@@ -97,6 +100,9 @@ class Study:
     compute: Callable[[], dict[str, Any]]
     evaluate_holdout: Callable[[list[float]], dict[str, Any]]
     log: Callable[[str], None] = print
+    # The study's result binding (#79): one message per recorded identity that
+    # no longer matches its file; [] when the record is current.
+    binding: Callable[[dict[str, Any]], list[str]] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -463,6 +469,14 @@ def verify(study: Study, reason: str | None = None) -> int:
         raise StateError(f"{study.output} does not exist. --verify never creates a record; restore it from git")
     require_identity(state, study)
     exposure = state["holdout_exposure"]
+    changed = study.binding(state) if study.binding else []
+    if changed:
+        study.log("STALE: the record no longer matches the files that produced it. Nothing was recomputed, "
+                  f"the holdout was not evaluated, and nothing was written. Record: {describe(exposure)}.")
+        for d in changed:
+            study.log(f"  - {d}")
+        study.log("  If the change is intended, run --regenerate --reason TEXT, then --verify.")
+        return FAILED
     body, _ = compute(study)
     expected = normalise(assemble(body, exposure, state["acceptance"].get("A6")))
     diffs = differences({k: v for k, v in expected.items() if k not in VOLATILE},
@@ -496,9 +510,11 @@ def regenerate(study: Study, reason: str | None = None) -> int:
                          "restore it from git (or use --init for a new study)")
     require_identity(state, study)
     exposure, a6 = state["holdout_exposure"], state["acceptance"].get("A6")
+    entry: dict[str, Any] = {"utc": utc_now(), "reason": reason.strip(), "holdout_evaluated": False}
+    if study.binding:
+        entry["identities_changed"] = study.binding(state)
     body, started = compute(study)
-    regenerations = list(state.get("regenerations", [])) + [
-        {"utc": utc_now(), "reason": reason.strip(), "holdout_evaluated": False}]
+    regenerations = list(state.get("regenerations", [])) + [entry]
     result = finish(assemble(body, exposure, a6, regenerations), started)
     if result["holdout_exposure"] != exposure or result["acceptance"].get("A6") != a6:
         raise StateError("internal error: the exposure record would change; nothing was written")

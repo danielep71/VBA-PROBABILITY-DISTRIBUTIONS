@@ -29,6 +29,8 @@ commands = (
     ("normal_tail_study/test_kernel_model.py",),
     ("normal_tail_study/test_holdout_record.py",),
     ("normal_tail_study/test_conditioning.py",),
+    ("normal_tail_study/test_fit_convergence.py",),
+    ("normal_tail_study/test_result_binding.py",),
     ("test_excel_certification.py",),
     ("test_drift_guard_mutations.py",),
     ("test_public_api.py",),

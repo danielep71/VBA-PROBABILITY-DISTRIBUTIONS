@@ -2,6 +2,10 @@
 Apply PREREGISTRATION.md (#72) to the fitted kernel and write results.json.
 
 The steps follow the preregistration:
+  - fit convergence (Amendment 3, #79): fit_convergence.json must record
+    CONVERGED for the committed coefficients, and the levelled error of those
+    coefficients is recomputed here; a missing, unconverged or capped record
+    fails the study;
   - §3 oracles: 60- and 100-dps agreement at every point, and quadrature at
     every 25th grid point;
   - A1 to A5 and A8 on the validation set V and the approximant set A;
@@ -16,13 +20,19 @@ H is evaluated once (§5). results.json records that exposure in its
 reads and checks the existing record before it computes or writes anything,
 and refuses a missing, malformed or inconsistent one.
 
+results.json also binds the SHA-256 of every file that produces it, in its
+`provenance` block (result_binding.py, #79).
+
     python validate_kernel.py --verify
-        Read-only replay. Recomputes everything except H and compares it
-        with results.json. Never evaluates H, never writes.
+        Read-only replay. Reports a record whose bound files changed as STALE
+        without recomputing; otherwise recomputes everything except H and
+        compares it with results.json. Never evaluates H, never writes.
     python validate_kernel.py --regenerate --reason TEXT
-        Recomputes everything except H and rewrites results.json. The
-        recorded holdout_exposure and acceptance.A6 are carried over
-        unchanged; the reason is appended to `regenerations`.
+        Recomputes everything except H and rewrites results.json, with the
+        identities of the files as they are now. The recorded
+        holdout_exposure and acceptance.A6 are carried over unchanged; the
+        reason and the identities that changed are appended to
+        `regenerations`.
     python validate_kernel.py --first-evaluation
         Evaluates H once. Refused unless holdout_exposure.status is
         NOT_EVALUATED; for this study it is EVALUATED (#75).
@@ -47,8 +57,10 @@ from decimal import Decimal
 
 import mpmath as mp
 
+import derive_kernel as dk
 import holdout_record as hr
 import kernel_model as km
+import result_binding as rb
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BENCH = os.path.dirname(HERE)
@@ -220,6 +232,85 @@ def band_worst(rows, key="q"):
 
 def kernel_pass(rows):
     return all(r.get(k, 0.0) <= B for r in rows for k in ("q", "cdf", "pdf"))
+
+
+# ---------------------------------------------------------------------------
+# Fit convergence (Amendment 3, #79)
+# ---------------------------------------------------------------------------
+
+def load_convergence(path=dk.CONVERGENCE_OUT):
+    """The recorded convergence record, or None if it is missing or unreadable."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def levelling_of(raw):
+    """The Amendment 3 evidence of the committed 40-digit coefficients at the fit's 500 nodes."""
+    with mp.workdps(dk.DPS):
+        p = [mp.mpf(r["value"]) for r in raw["numerator"]]
+        d = [mp.mpf(r["value"]) for r in raw["denominator"]]
+        xs = dk.chebyshev_nodes(dk.LOWER, dk.UPPER, dk.NODES)
+        denominators = [dk.horner(d, x) for x in xs]
+        signed = [dk.horner(p, x) / dx / dk.target(x) - 1 for x, dx in zip(xs, denominators)]
+        return dk.measure(xs, signed, denominators, dk.DEGREE_P + dk.DEGREE_D + 2)
+
+
+def _agree(a, b, tol=1e-9):
+    return (isinstance(a, float) and isinstance(b, float) and math.isfinite(a) and math.isfinite(b)
+            and abs(a - b) <= tol * max(abs(a), abs(b)))
+
+
+def convergence_check(raw, record, coefficients_sha):
+    """Fit convergence: the recorded decision, its consistency, and the committed candidate recomputed.
+
+    Fails on a missing record or status, on any status but CONVERGED, on a
+    record made for other coefficients or under another criterion, on a
+    status the recorded evidence does not support, and when the committed
+    coefficients themselves are not levelled.
+    """
+    points = dk.DEGREE_P + dk.DEGREE_D + 2
+    problems = list(dk.recommendable(record))
+    record = record if isinstance(record, dict) else {}
+    if record and record.get("kernel_coefficients_sha256") != coefficients_sha:
+        problems.append(f"the convergence record belongs to coefficients {record.get('kernel_coefficients_sha256')}, "
+                        f"not to kernel_coefficients.json ({coefficients_sha})")
+    criterion = record.get("criterion") if isinstance(record.get("criterion"), dict) else {}
+    if record and (criterion.get("levelling_tolerance"), criterion.get("alternation_points_required"),
+                   criterion.get("iteration_cap")) != (dk.LEVELLING_TOLERANCE, points, dk.ITERATIONS):
+        problems.append(f"the convergence record was made under another criterion: {criterion}")
+    history, selected = record.get("history"), record.get("selected_iteration")
+    if record:
+        if not isinstance(history, list) or len(history) != dk.ITERATIONS:
+            problems.append(f"the convergence record does not hold the {dk.ITERATIONS}-iteration history")
+        elif not isinstance(selected, int) or not 1 <= selected <= len(history):
+            problems.append(f"the selected iteration {selected!r} is not in the history")
+        else:
+            maxima = [h.get("node_max") if isinstance(h, dict) else None for h in history]
+            if (None in maxima or not all(isinstance(m, float) for m in maxima)
+                    or selected != 1 + maxima.index(min(maxima))):
+                problems.append("the selected iteration is not the first with the smallest node maximum (§2)")
+            if record.get("selected") != history[selected - 1]:
+                problems.append("the recorded selected evidence is not that iteration's history entry")
+            if dk.decide(history, selected, points) != record.get("status"):
+                problems.append(f"the recorded status {record.get('status')} does not follow from the recorded "
+                                f"evidence ({dk.decide(history, selected, points)})")
+    recomputed = levelling_of(raw)
+    if not dk.levelled(recomputed, points):
+        problems.append(f"the committed coefficients are not levelled: {recomputed}")
+    chosen = record.get("selected") if isinstance(record.get("selected"), dict) else {}
+    if record and not (chosen.get("alternation_points") == recomputed["alternation_points"]
+                       and _agree(chosen.get("node_max"), recomputed["node_max"])
+                       and _agree(chosen.get("levelled_min"), recomputed["levelled_min"])):
+        problems.append(f"the recorded selected iterate {chosen} does not match the committed coefficients "
+                        f"{recomputed}")
+    return {"pass": not problems, "status": record.get("status"), "record": os.path.basename(dk.CONVERGENCE_OUT),
+            "criterion": {"alternation_points_required": points, "levelling_tolerance": dk.LEVELLING_TOLERANCE,
+                          "iteration_cap": dk.ITERATIONS},
+            "selected_iteration": selected, "first_levelled_iteration": record.get("first_levelled_iteration"),
+            "recomputed_from_committed_coefficients": recomputed, "problems": problems}
 
 
 # ---------------------------------------------------------------------------
@@ -521,6 +612,7 @@ def compute():
     raw = km.COEFFICIENTS["raw"]
     problems = []
 
+    convergence = convergence_check(raw, load_convergence(), coefficients_sha)
     a1 = approximant_check(raw)
     a2_frozen = {"pass": all(mp.mpf(r["value"]) > 0 for r in raw["numerator"] + raw["denominator"]),
                  "negative": [f"{name}[{i}] = {r['value']}" for name in ("numerator", "denominator")
@@ -556,6 +648,8 @@ def compute():
           "current_meets_bound": len(meets_now), "points": len(current_rows)}
     a7 = route_check()
 
+    if not convergence["pass"]:
+        problems.append("fit convergence failed: " + "; ".join(convergence["problems"]))
     if stability < 50:
         problems.append(f"oracle stability {stability:.1f} < 50 digits")
     if independence < 40:
@@ -573,6 +667,7 @@ def compute():
         "coefficients_sha256": coefficients_sha,
         "problems": problems,
         "versions": {"python": platform.python_version(), "mpmath": mp.__version__},
+        "provenance": rb.identities(),
         "bound": B,
         "oracle": {"stability_min_digits": stability, "quadrature_min_digits": independence,
                    "quadrature_points": len(quadrature)},
@@ -581,8 +676,13 @@ def compute():
                        "Amendment 2 (#78): P2 conditioning restated as kappa = |z| phi(z) / F for survival "
                        "and cumulative alike, and kappa * delta as phi(z) * eta / F with eta = 2^-52 |z| "
                        "(Normal) or 2^-52 (|z| + |ln x| / sigma) (Lognormal), defined at z = 0; recorded "
-                       "after A6 was observed, nothing refitted, no threshold changed"],
-        "acceptance": {"A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
+                       "after A6 was observed, nothing refitted, no threshold changed",
+                       "Amendment 3 (#79): fit convergence defined (16-point alternation, levelling ratio "
+                       "<= 0.01 against the de la Vallee Poussin bound; CAP_EXHAUSTED and NOT_CONVERGED fail) "
+                       "and results bound to the SHA-256 of their generator, models, validator, design and "
+                       "inputs; recorded after the fit and A6 were observed, nothing refitted, no threshold "
+                       "changed"],
+        "acceptance": {"fit_convergence": convergence, "A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
                        "A7": a7, "A8": a8},
         "bands": {"current": band_worst(current_rows), "candidate": band_worst(v_rows)},
         "seams": [s for s in seams if s["seam"] in ("split", "last_normal_q", "tail_underflow")],
@@ -602,7 +702,7 @@ def evaluate_holdout(points):
 def make_study(output=OUT, log=None):
     return hr.Study(output=output, preregistration=PREREGISTRATION, coefficients=km.COEFFICIENTS_PATH,
                     holdout_definition=HOLDOUT_DEFINITION, compute=compute,
-                    evaluate_holdout=evaluate_holdout, log=log or print)
+                    evaluate_holdout=evaluate_holdout, log=log or print, binding=rb.stale)
 
 
 def main(argv=None):

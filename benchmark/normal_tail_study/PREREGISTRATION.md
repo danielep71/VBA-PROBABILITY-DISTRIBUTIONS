@@ -480,3 +480,128 @@ evaluating H:
 
 `test_conditioning.py` pins this: the recorded P2 rows, negative-`z`, exact
 centre and near-centre rows, and the seams.
+
+---
+
+## Amendment 3 — 2026-11-03: fit convergence and result provenance (#79)
+
+**Disclosure.** I wrote this amendment on 2026-11-03. By then these results
+had been observed:
+- the fit of §2 and its coefficients, recorded on 2026-10-13 (#74), with a
+  node maximum of 1.03E-17 and A1 at 1.03E-17;
+- the holdout H, evaluated once on 2026-10-13 (#75, run started 06:45:41Z),
+  A6 PASS;
+- every other measurement, prediction and bound recorded since, including
+  those of Amendment 2;
+- the convergence evidence of the fit, described below. I observed it before
+  I fixed the tolerance, by running the frozen fit again with that evidence
+  recorded.
+
+Nothing above this section has been changed. The fit of §2 stands as frozen:
+the nodes, weights, Lawson reweighting, precision, the cap of 120 iterations
+and the selection of the iterate with the smallest node maximum. Nothing was
+refitted: the run reproduced every field of `kernel_coefficients.json` except
+its runtime, and the file was left byte-identical. A1–A8, their thresholds,
+`B`, the evaluation sets of §5 and the predictions of §7 are unchanged. H was
+not evaluated to write or apply this amendment.
+
+**Defect: no convergence criterion.** §6 makes "a fit that does not converge"
+a study failure, but §2 defines no criterion. The derivation ran 120
+iterations, kept the best iterate and recorded no convergence decision, so no
+record could show a failure. A small A1 error is not a convergence result: a
+stalled or oscillating iteration can still leave an iterate that meets A1.
+
+**Criterion.** Let `e(x) = P(x) / (D(x) f(x)) − 1` be an iterate's signed
+relative error at the 500 nodes, in increasing `x`. Split the nodes into
+maximal runs of one sign; each run contributes its largest `|e|`, so
+consecutive extrema alternate. Let `L` be the largest `t` such that the
+extrema of size at least `t` still alternate at `m + n + 2 = 16` points.
+
+By de la Vallée Poussin's theorem for weighted rational approximation, no
+rational of type (7, 7) with a denominator positive on the nodes has a smaller
+node maximum than `L`. If one did, `P*·D − P·D*` would change sign at least
+15 times among the 16 points, but it is a polynomial of degree at most 14 and
+not identically zero. The levelling ratio `ρ = max|e| / L − 1` therefore bounds
+how far an iterate is from the best node maximum of its type.
+
+The selected iterate is:
+- **CONVERGED** if `e` is finite, `D > 0` at every node, `e` alternates at 16
+  or more points, and `ρ ≤ 0.01`;
+- **CAP_EXHAUSTED** if it is not, and it is the 120th iterate. The node
+  maximum was still falling when the cap stopped the fit;
+- **NOT_CONVERGED** otherwise. The iteration stalled or oscillated without
+  levelling, or produced a non-finite or nonpositive iterate.
+
+CAP_EXHAUSTED and NOT_CONVERGED fail the study under §6, and so does a
+missing record or status. The cap is not raised to rescue a fit, because §2
+freezes it. For a failed fit, `derive_kernel.py` records the status, writes
+no coefficient file, accepts no existing one and exits 1. The validator then
+records a problem, and the study fails before any VBA recommendation.
+
+**Tolerance.** I chose 1% after seeing the ratio of this fit, 3.34E-3. The
+choice is not blind. A tolerance below 3.34E-3 would have failed this fit as
+CAP_EXHAUSTED, because the selected iterate is the last one. The
+justification does not depend on the observed value. At `ρ ≤ 0.01`, no (7, 7)
+rational can lower the node maximum by more than 1% of itself: about 1E-19
+here, below 2^-61.6 whenever A1 holds. That is under 1/3000 of `B`, so a fit
+closer to the best approximation could not change a kernel result that A5 or
+A6 measures.
+
+**Observed evidence.** These figures are recorded in `fit_convergence.json`:
+- the node maximum fell at every one of the 120 iterations, from 8.29E-17
+  to 1.0323E-17;
+- every iterate alternated at 16 points;
+- the levelling ratio fell from 70.6 to 3.34E-3, and first reached 1% at
+  iterate 53;
+- the selected iterate is the 120th: node maximum 1.03232E-17, `L` =
+  1.02888E-17, minimum `D` 1.000013;
+- over the last ten iterations the node maximum moved by 2.4E-4 of itself.
+
+The status is CONVERGED.
+
+The validator does not take the record on trust. It requires CONVERGED for
+the SHA-256 of `kernel_coefficients.json`, under this criterion, and checks
+that the status follows from the recorded history and selection. It then
+recomputes the evidence from the committed 40-digit coefficients and requires
+the criterion there as well.
+
+**Defect: incomplete result provenance.** `results.json` bound the
+coefficient file, and the holdout record also binds the frozen design text
+and H. Nothing bound the generator, the models, the validator, the full
+design or the inputs the predictions read. A change to any of them could leave
+recorded measurements stale while the fixture, which recomputes only a
+subsample, stayed green.
+
+**Binding.** This part is a record control, not a design change.
+`results.json` now carries a `provenance` block. It holds the SHA-256 of
+every file that produces or shapes the record:
+- the generator `derive_kernel.py` and its record `fit_convergence.json`;
+- the models `kernel_model.py`, `binary64_route_model.py` and the #34 route
+  coefficients;
+- the validator `validate_kernel.py`, `holdout_record.py` and
+  `result_binding.py`;
+- this file, whole, with its amendments;
+- the three grids of the §7 predictions, `accuracy_contracts.csv`, and the
+  #34 study's `results.json`, which supplies the A7 points.
+
+The candidate stays bound by `coefficients_sha256`. The frozen prefix and H
+stay bound by `holdout_exposure`, unchanged.
+
+A fixture compares those identities with the files in CI, in well under a
+second, and fails on any difference. A legitimate change to a bound file
+therefore needs `validate_kernel.py --regenerate --reason TEXT`. That run
+recomputes everything except H and records which identities changed. It
+cannot change the candidate or the frozen text, because the holdout record
+refuses both.
+
+**What changes in the record.** `results.json` is regenerated without
+evaluating H. It records:
+- `acceptance.fit_convergence`, PASS;
+- the `provenance` block;
+- this amendment in `amendments`;
+- a regeneration entry with `holdout_evaluated: false`.
+
+Every other recorded value is unchanged, and the recorded status stays PASS.
+`test_fit_convergence.py` and `test_result_binding.py` pin this. They include
+deliberate nonconvergent, capped and missing-status fits, and mutations of
+each bound file.

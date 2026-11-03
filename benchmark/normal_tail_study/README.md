@@ -2,7 +2,8 @@
 
 **Status: recorded PASS under Amendment 1, retained; the one-shot holdout
 record is enforced (#80); Amendment 2 restates the P2 conditioning rule
-(#78); study acceptance stays open under #78 and #79.**
+(#78); Amendment 3 defines fit convergence, which the fit meets, and binds
+the result to the files that produce it (#79).**
 Excel-free. This study
 designs and validates a replacement for `PROB_NormalUpperTailPositive` before
 any VBA is written. It is not evidence that the kernel is fixed. The fix lands
@@ -16,6 +17,10 @@ as such. A dated note of 2026-11-03 records how the one-shot holdout rule is
 now enforced; it is not an amendment. Amendment 2, of the same date and
 written after the holdout had been evaluated, restates the conditioning term
 of the P2 bounds; see [Conditioning of the P2 bounds](#conditioning-of-the-p2-bounds-amendment-2-78).
+Amendment 3, of the same date and also written after the holdout had been
+evaluated, defines the fit convergence criterion and binds the result to its
+generator, models, validator, design and inputs; see
+[Fit convergence and result binding](#fit-convergence-and-result-binding-amendment-3-79).
 
 ## Defect
 
@@ -63,6 +68,7 @@ that now enforce it.
 
 | Condition | Result |
 | --- | --- |
+| Fit convergence (Amendment 3) | CONVERGED: iterate 120 of 120 alternates at 16 points, levelled to 3.34E-3 ≤ 1% (first within 1% at iterate 53) |
 | A1 approximant | 1.03E-17 ≤ 2^-55 on 23,001 points |
 | A2′ cancellation (Amendment 1) | numerator 1 + 1.5E-7, denominator 1 (all positive), limit 1 + 2^-20 |
 | A3 literals | all 17 constants rebuild their Double exactly |
@@ -101,10 +107,13 @@ was recorded.** Neither touches the design or a threshold:
 - `Normal_IntervalProbability` rows were read as `(lower, upper, mean)`. The
   density-helper exporter calls them as `(lower, upper, 0, sd)`.
 
-**Next.** The kernel is ready to be implemented in VBA with the recorded
-literals, in the Excel wave that §9 describes. That wave tests the §7
-predictions against real Excel. Before that, #78 (conditioning rules of the
-P2 predictions) and #79 (fit convergence and result provenance) must close.
+**Next.** The study's acceptance evidence now covers every §6 failure
+condition: A1–A8, the oracles and, under Amendment 3, fit convergence. The
+record is bound to the files that produced it. The kernel can be implemented
+in VBA with the recorded literals, in the Excel wave that §9 describes. That
+wave tests the §7 predictions against real Excel. This study is not evidence
+that the VBA kernel is fixed. Exact-source Excel validation remains open
+under #72.
 
 ## Holdout exposure record (#80)
 
@@ -128,7 +137,7 @@ change a threshold or change the design. The block records:
   seeded points. Generating the points evaluates nothing on them;
 - `a6_sha256`, the SHA-256 of the canonical A6 block;
 - the SHA-256 of the validator and model committed with the record, for
-  information. Binding the current code to the results is #79.
+  information. The current code is bound by the `provenance` block (#79).
 
 The exposure status is one of:
 
@@ -216,6 +225,60 @@ recorded rows against the frozen product. It also checks negative-`z`,
 exact-centre (`x = 1, μ = 0`) and near-centre rows, the split at 3, and the
 37.5 and 38.5 cut-offs.
 
+## Fit convergence and result binding (Amendment 3, #79)
+
+§6 makes a fit that does not converge a study failure, but §2 defined no
+criterion. The derivation kept the best of 120 Lawson iterations and
+recorded no decision. Separately, `results.json` bound only the coefficient
+file, so a change to the generator, a model, the validator or an input grid
+could leave recorded values stale while the fixture stayed green. I appended
+Amendment 3 to `PREREGISTRATION.md` to close both gaps. I wrote it after the
+fit and the holdout had been observed, and it says so. Nothing was refitted,
+no threshold changed, and the holdout was not evaluated.
+
+**Criterion.** The selected iterate's signed relative error at the 500 nodes
+must alternate at `7 + 7 + 2 = 16` points and be levelled:
+`node_max / L − 1 ≤ 0.01`. Here `L` is the de la Vallée Poussin lower bound on
+the best node maximum any (7, 7) rational can reach. Otherwise the fit is
+`CAP_EXHAUSTED`, if the node maximum was still falling at the frozen cap, or
+`NOT_CONVERGED`. Either one fails the study, and so does a missing record or
+status. I chose the 1% tolerance after seeing this fit's ratio, 3.34E-3, and
+the amendment discloses that. A tolerance below 3.34E-3 would have failed
+this fit.
+
+**Evidence.** I re-ran the frozen fit with the evidence recorded. It
+reproduced `kernel_coefficients.json` exactly, so the file is byte-identical,
+and it wrote `fit_convergence.json`, which holds the node maximum, alternation
+count and levelling ratio of all 120 iterates. Over those iterates:
+- the node maximum fell at every iteration;
+- every iterate alternated at 16 points;
+- the ratio first reached 1% at iterate 53;
+- the selected 120th iterate is levelled to 3.34E-3: CONVERGED.
+
+`derive_kernel.py` refuses to write or accept coefficients for any other
+status. The validator checks the record against the committed coefficients.
+It also recomputes their levelled error and requires the criterion there.
+
+**Binding.** `results.json` has a `provenance` block. It records the SHA-256
+of:
+- `derive_kernel.py` and `fit_convergence.json`;
+- `kernel_model.py`, the #34 route model and its coefficients;
+- `validate_kernel.py`, `holdout_record.py` and `result_binding.py`;
+- the whole `PREREGISTRATION.md`;
+- the three §7 grids, `accuracy_contracts.csv` and the #34 study's
+  `results.json`.
+
+The candidate stays bound by `coefficients_sha256`. `test_kernel_model.py`
+and `test_result_binding.py` compare every identity with the files in CI, in
+under a second. Any difference fails them, and `--verify` reports it as
+STALE without recomputing.
+
+A legitimate change to a bound file needs
+`validate_kernel.py --regenerate --reason TEXT`. That run records the
+identities that changed. It cannot re-bind the candidate or the frozen text,
+because the holdout record refuses both. So a change to the main accuracy
+grid, for example, now also requires this study to be regenerated.
+
 ## Running the validator
 
 Run these from this directory. Each one needs an explicit mode:
@@ -227,15 +290,16 @@ python3 validate_kernel.py --first-evaluation
 python3 validate_kernel.py --init
 ```
 
-- `--verify` is a read-only replay. It recomputes everything except H (A1–A5,
-  A7, A8, the oracles, seams, bands and §7 predictions) and compares it with
-  `results.json`. It never evaluates H and never writes. It reports the
+- `--verify` is a read-only replay. If a bound file changed since the record
+  was written, it reports STALE and stops. Otherwise it recomputes everything
+  except H (fit convergence, A1–A5, A7, A8, the oracles, seams, bands and §7
+  predictions) and compares it with `results.json`. It never evaluates H and never writes. It reports the
   recorded A6 as retained, not as a new measurement, so a replay cannot pass
   for an independent evaluation. It takes about 35 s.
 - `--regenerate --reason "TEXT"` recomputes everything except H and rewrites
   `results.json`. It carries `holdout_exposure` and `acceptance.A6` over
-  unchanged, and appends `{utc, reason, holdout_evaluated: false}` to
-  `regenerations`. The status is derived again from the recomputed
+  unchanged, and appends `{utc, reason, holdout_evaluated: false,
+  identities_changed}` to `regenerations`. The status is derived again from the recomputed
   conditions and the retained A6.
 - `--first-evaluation` evaluates H once. For this study it is refused: the
   exposure is `EVALUATED`.
@@ -255,21 +319,32 @@ python3 validate_kernel.py --verify
 python3 test_kernel_model.py
 python3 test_holdout_record.py
 python3 test_conditioning.py
+python3 test_fit_convergence.py
+python3 test_result_binding.py
 ```
 
-H is not evaluated at any step, and the recorded A6 is kept.
+H is not evaluated at any step, and the recorded A6 is kept. The same
+sequence applies to any change to a bound file (Amendment 3).
+
+To check the fit itself, run `python3 derive_kernel.py --verify`. It fits
+again (about 40 to 75 s), compares the result with `kernel_coefficients.json`
+and `fit_convergence.json`, and writes nothing.
 
 ## Files
 
 | File | Role |
 | --- | --- |
-| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, Amendment 1, the dated #80 note and Amendment 2 (#78) |
-| `derive_kernel.py` | the preregistered fit; writes `kernel_coefficients.json` |
+| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, Amendment 1, the dated #80 note, Amendment 2 (#78) and Amendment 3 (#79) |
+| `derive_kernel.py` | the preregistered fit and its convergence decision; writes `fit_convergence.json`, and `kernel_coefficients.json` only for a converged fit that does not replace a recorded one |
 | `kernel_coefficients.json` | coefficients to 40 digits, their Doubles, and VBA `hi`/`lo` literal pairs |
+| `fit_convergence.json` | the convergence status, the criterion and the per-iteration evidence of the fit (Amendment 3) |
 | `kernel_model.py` | binary64 model of the candidate, of today's kernel, and of every affected public path |
 | `validate_kernel.py` | applies §3–§8; verifies, regenerates or writes `results.json` |
 | `holdout_record.py` | the holdout exposure record and its checks (#80); standard library only |
-| `results.json` | every measurement, the acceptance record, the per-row predictions and the holdout exposure record |
+| `result_binding.py` | the identities `results.json` binds, and the check that they are current (#79); standard library only |
+| `results.json` | every measurement, the acceptance record, the per-row predictions, the provenance block and the holdout exposure record |
 | `test_kernel_model.py` | CI fixture pinning the coefficients, literals, recorded result and recorded A6 |
 | `test_conditioning.py` | CI fixture of Amendment 2: the recorded P2 bounds, negative-`z`, centre, near-centre and seam rows |
 | `test_holdout_record.py` | CI fixtures of the exposure controls, on synthetic studies |
+| `test_fit_convergence.py` | CI fixtures of Amendment 3's convergence decision: the committed record, and deliberate capped, nonconvergent and missing-status fits |
+| `test_result_binding.py` | CI fixtures of the result binding: the committed identities, and mutations of every bound file |
