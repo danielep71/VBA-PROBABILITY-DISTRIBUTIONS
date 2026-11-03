@@ -323,7 +323,10 @@ Rotate the token immediately when:
 only traffic counts. The traffic job therefore runs no repository code: it
 imports no VBA, runs no tests, accuracy contracts or repository scripts, and
 must never be extended to do so. Static checks, the Accuracy Gate and the Excel
-VBA regression run in separate workflows that never declare `analytics`. An
+VBA regression run in separate workflows that never declare `analytics`. The
+traffic alert runs in a second job of the same workflow, with no environment
+and only `issues: write`: it runs `tools/traffic_alert.py` on the published
+history and never sees the token. An
 environment name is not a workflow-identity boundary, so keep that declaration
 out of every build, test and release job, and review any change that adds it as
 a security change.
