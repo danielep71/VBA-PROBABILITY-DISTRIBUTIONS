@@ -551,7 +551,11 @@ else; the repository settings baseline is a separate file,
 This repository has **not** adopted the template contract, a template
 profile or the template's directory layout, and the file must not be read as
 claiming any of them. The template's release-history policy applies only to the
-template repository itself and is not imported.
+template repository itself and is not imported: the checker inspects history
+only when the profile sets `"mode": "template"`, so the merge commits that
+`Protect main` requires are never reported here.
+[`tests/test_release_history_scope.py`](../tests/test_release_history_scope.py)
+fails if that changes.
 
 ### Adapted from `danielep71/MyTemplate` at `9ff7670`
 

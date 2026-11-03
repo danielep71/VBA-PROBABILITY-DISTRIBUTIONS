@@ -306,10 +306,13 @@ both rulesets.
 - **Commit order is evidence.** A preregistration committed before the source
   fix it governs (as in PR #27) keeps that order on `main`. Do not reorder or
   squash such commits.
-- **Release history check.** `tools/check_release_semantics.py` reports a
-  multi-parent commit that no reviewed history exception covers, once a
-  previous release tag gives it a range. Until it accepts pull request merge
-  commits (#100), each merge commit in a release range needs that review.
+- **Release history check.** The history policy of
+  `tools/check_release_semantics.py`, which reports any multi-parent commit
+  without a reviewed exception, applies only to the template repository it
+  comes from. This repository's `.github/repository-profile.json` does not enable
+  it, so pull request merge commits pass the release check.
+  [`tests/test_release_history_scope.py`](tests/test_release_history_scope.py)
+  pins that, with a release tag and an unreviewed merge commit.
 - **Never rewrite history.** Do not force-push `main` or a release branch,
   rewrite published history or move tags. Earlier squash merges and direct
   pushes stay as they are.
