@@ -3377,5 +3377,43 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 75.3
+ "runtime_s": 75.3,
+ "holdout_exposure": {
+  "status": "EVALUATED",
+  "exposures": 1,
+  "started_utc": "2026-10-13T06:45:41Z",
+  "candidate": {
+   "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b"
+  },
+  "design": {
+   "preregistration": "PREREGISTRATION.md",
+   "bytes": 15729,
+   "sha256": "0c2f399c94465367ba20f15dfc882f38de6d39dd26dde7c249ea7ae29f42038c"
+  },
+  "holdout": {
+   "definition": [
+    {
+     "seed": 72002,
+     "count": 10000,
+     "low": 0,
+     "high": 37.5
+    },
+    {
+     "seed": 72003,
+     "count": 5000,
+     "low": 0,
+     "high": 8
+    }
+   ],
+   "points": 15000,
+   "points_sha256": "6ecd4da037b3e2b3d7c9452aea0d798ba0fd42453929f48953c738f279109ca6"
+  },
+  "a6_sha256": "2f4d18e6f2d54a1467ba7d92ad0232fa600212ea4ef2a881db79e8b2cf4a9b56",
+  "recorded_by": "validate_kernel.py as committed in b1922bd845be3a0c1a75fd5417d5649a1fbdd4b7 (#75)",
+  "note": "Added on 2026-11-03 (#80) from the acceptance.A6 block committed in #75, without evaluating the holdout again. The committed record reports one evaluation (A6.evaluated_once). The validator of that commit could neither prevent nor detect a repeat, so the count is the record's own report, not an enforced guarantee; from #80 on, the validator enforces it. started_utc is the generated_utc of the recorded run, which wrote V immediately before evaluating H. The candidate, design and holdout identities are those of the files committed with the record, unchanged since.",
+  "code_committed_with_record": {
+   "validate_kernel.py": "a7ef33d0bfc8fa9ac286b59764497653d497e4b744f76372c3d836c484b5c516",
+   "kernel_model.py": "0e50dd4e2fced094d1d0cac1a305934e062034300c7bd3410eb8b0726c89f762"
+  }
+ }
 }

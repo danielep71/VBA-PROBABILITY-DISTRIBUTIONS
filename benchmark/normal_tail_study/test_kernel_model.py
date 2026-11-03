@@ -9,6 +9,11 @@ Fixture for the #72 normal-tail kernel study (PREREGISTRATION.md §8).
      recorded as failed: exactly one coefficient, the numerator's z^7 term,
      is negative (about -2.5E-10). The holdout H was evaluated once, and the
      independent holdout was not read.
+  2b. The holdout exposure record (#80) is EVALUATED with one exposure, is
+     consistent with itself, binds the committed coefficient file, the
+     preregistration (which may only grow by appended amendments) and the
+     seeded holdout points, and still holds the A6 block recorded in #75,
+     pinned by its SHA-256 and figures.
   3. A subsample of A5 is recomputed: the candidate kernel's Q, 1 - Q and
      density meet 2^-50 on part of the validation set and at the split seam.
   4. A7 is recomputed: the #34 order-5 route on the candidate kernel meets
@@ -31,6 +36,7 @@ import mpmath as mp
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import holdout_record as hr                                      # noqa: E402
 import kernel_model as km                                        # noqa: E402
 import validate_kernel as vk                                     # noqa: E402
 
@@ -85,6 +91,29 @@ check(res["acceptance"]["A2_as_frozen"]["pass"] is False
 check(res["acceptance"]["A2"]["numerator"]["worst_factor_minus_one"] <= 2.0 ** -20, "A2' limit exceeded")
 check(res["acceptance"]["A6"].get("evaluated_once") is True, "holdout not recorded as evaluated once")
 check(res["holdout_559_inspected"] is False, "the independent holdout must not be read")
+
+# 2b. Holdout exposure record (#80) ----------------------------------------
+# The A6 block recorded in #75, pinned by its canonical SHA-256 and its
+# figures. Regenerating results.json must carry it over unchanged.
+RECORDED_A6_SHA256 = "2f4d18e6f2d54a1467ba7d92ad0232fa600212ea4ef2a881db79e8b2cf4a9b56"
+for msg in hr.check_record(res):
+    check(False, f"holdout exposure record: {msg}")
+exposure = res.get("holdout_exposure", {})
+check(exposure.get("status") == hr.EVALUATED and exposure.get("exposures") == 1,
+      f"holdout exposure is {exposure.get('status')}, {exposure.get('exposures')} exposure(s); expected EVALUATED, 1")
+check(exposure.get("started_utc") == "2026-10-13T06:45:41Z", "the recorded holdout run time changed")
+if isinstance(exposure.get("candidate"), dict) and isinstance(exposure.get("design"), dict) \
+        and isinstance(exposure.get("holdout"), dict):
+    for msg in hr.check_identity(exposure, vk.make_study()):
+        check(False, f"holdout exposure identity: {msg}")
+a6 = res["acceptance"]["A6"]
+check(hr.digest(a6) == RECORDED_A6_SHA256, "acceptance.A6 differs from the block recorded in #75")
+check(a6["points"] == 15000 and a6["pass"] is True
+      and (a6["worst"]["q"]["value"], a6["worst"]["cdf"]["value"], a6["worst"]["pdf"]["value"])
+      == (5.484572336832976e-16, 3.9093319888948283e-16, 3.313387859719562e-16),
+      "the recorded A6 figures changed")
+for entry in res.get("regenerations", []):
+    check(entry.get("holdout_evaluated") is False, f"regeneration {entry} evaluated the holdout")
 check(res["oracle"]["stability_min_digits"] >= 50, "oracle stability below 50 digits")
 check(res["oracle"]["quadrature_min_digits"] >= 40, "quadrature agreement below 40 digits")
 

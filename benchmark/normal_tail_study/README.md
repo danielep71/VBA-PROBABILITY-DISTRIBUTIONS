@@ -1,6 +1,8 @@
 # Normal upper-tail kernel study (#72)
 
-**Status: derivation and validation complete; PASS under Amendment 1.** Excel-free. This study
+**Status: recorded PASS under Amendment 1, retained; the one-shot holdout
+record is enforced (#80); study acceptance stays open under #78 and #79.**
+Excel-free. This study
 designs and validates a replacement for `PROB_NormalUpperTailPositive` before
 any VBA is written. It is not evidence that the kernel is fixed. The fix lands
 only in a real-Excel wave, together with source, regression tests, exports
@@ -9,7 +11,8 @@ and truthful provenance.
 Design: `PREREGISTRATION.md`, frozen before the committed derivation. Its §0
 discloses the scratch exploration that chose the design. Amendment 1, written
 after the first run, replaces one acceptance condition (A2) and is disclosed
-as such.
+as such. A dated note of 2026-11-03 records how the one-shot holdout rule is
+now enforced; it is not an amendment.
 
 ## Defect
 
@@ -50,7 +53,10 @@ preregistration. A2 is replaced by A2′, which bounds the cancellation factor
 by `1 + 2^-20`. The coefficients were not refitted, and nothing else changed.
 The frozen A2 stays recorded as `A2_as_frozen`.
 
-**Second run: PASS.** The holdout was evaluated once:
+**Second run: PASS.** The committed record reports one evaluation of the
+holdout. The validator of that run could neither prevent nor detect a repeat;
+[Holdout exposure record](#holdout-exposure-record-80) describes the controls
+that now enforce it.
 
 | Condition | Result |
 | --- | --- |
@@ -94,16 +100,135 @@ was recorded.** Neither touches the design or a threshold:
 
 **Next.** The kernel is ready to be implemented in VBA with the recorded
 literals, in the Excel wave that §9 describes. That wave tests the §7
-predictions against real Excel.
+predictions against real Excel. Before that, #78 (conditioning rules of the
+P2 predictions) and #79 (fit convergence and result provenance) must close.
+
+## Holdout exposure record (#80)
+
+The preregistration evaluates the holdout H once (§5). Until #80 that rule
+was kept only by convention: every run of `validate_kernel.py` evaluated H
+again and rewrote `evaluated_once: true`, and the fixture trusted that
+Boolean. Nothing shows that a repeat happened, but nothing could have shown
+one.
+
+**I kept the recorded PASS and its evidence exactly.** I added a
+`holdout_exposure` block to `results.json` after the last recorded value;
+every recorded measurement, including the A6 block of #75, is byte-for-byte
+unchanged. I did not evaluate H to make this change, and I did not refit,
+change a threshold or change the design. The block records:
+- `status` `EVALUATED` with one exposure, and `started_utc`, the time of the
+  recorded run, which wrote V immediately before evaluating H;
+- the candidate: the SHA-256 of `kernel_coefficients.json`;
+- the design: the byte length and SHA-256 of `PREREGISTRATION.md` as
+  committed with the record. Later amendments may only append to it;
+- the input: H's seeds, counts and ranges, and the SHA-256 of its 15,000
+  seeded points. Generating the points evaluates nothing on them;
+- `a6_sha256`, the SHA-256 of the canonical A6 block;
+- the SHA-256 of the validator and model committed with the record, for
+  information. Binding the current code to the results is #79.
+
+The exposure status is one of:
+
+| `holdout_exposure.status` | meaning | `acceptance.A6` |
+| --- | --- | --- |
+| `NOT_EVALUATED` | H has not been evaluated | absent |
+| `EVALUATION_STARTED` | a first evaluation began and recorded no result; H counts as exposed | absent |
+| `EVALUATED` | H was evaluated once | present, matching `a6_sha256` |
+
+**Controls.** `holdout_record.py` enforces the record, and
+`validate_kernel.py` uses it:
+- Every mode reads and checks the existing record before it computes or
+  writes anything. A missing, malformed or self-contradicting record is
+  refused, never reset. So is a record whose candidate, holdout definition or
+  frozen preregistration text no longer matches the files.
+- `--first-evaluation` runs only from `NOT_EVALUATED`. It writes V with
+  `EVALUATION_STARTED` before it evaluates H, so a crash leaves the exposure
+  recorded. A second attempt is refused before anything is computed, and the
+  output stays byte-identical.
+- `--first-evaluation`, `--regenerate` and `--init` first take an exclusive
+  lock: they create `.results.json.lock` with `O_CREAT | O_EXCL` before they
+  read the record, and hold it through every write and the holdout
+  evaluation until they return or fail. A second run is refused while the
+  lock exists, before it reads, computes or evaluates anything, so two
+  concurrent first evaluations evaluate H once. `--verify` takes no lock, but
+  is refused while one exists.
+- Writes are atomic: an exclusively created temporary file, then a rename. A
+  temporary file left by a killed run blocks every mode until you inspect it.
+  A write is also refused if the output changed while the run was computing;
+  the check runs after the temporary file is created.
+
+**If a run is killed while it holds the lock**, the lock file stays behind,
+because it is a plain file rather than an OS lock. Every mode is then refused
+and names the lock. To recover, make sure no validator is running, check
+`holdout_exposure.status` in `results.json`, then delete
+`.results.json.lock` by hand. Deleting the lock never reopens the holdout: an
+`EVALUATION_STARTED` record still refuses a re-evaluation. Exclusive creation
+is atomic on local POSIX and Windows (NTFS) file systems, but may not be on
+some network file systems, so run the validator on a local checkout.
+- `test_kernel_model.py` pins the A6 block by its SHA-256 and figures, and
+  checks the record and its identity, so CI rejects a replaced A6.
+- `test_holdout_record.py` exercises first evaluation, second-run refusal,
+  interrupted runs, concurrent runs, stale locks and evidence preservation on
+  synthetic studies. It never evaluates the real H.
+
+**If a first evaluation is interrupted**, the record stays at
+`EVALUATION_STARTED` with status FAIL. No mode evaluates H again from there.
+The holdout counts as spent, and only a new, disclosed preregistration with a
+new holdout can replace it.
+
+## Running the validator
+
+Run these from this directory. Each one needs an explicit mode:
+
+```sh
+python3 validate_kernel.py --verify
+python3 validate_kernel.py --regenerate --reason "TEXT"
+python3 validate_kernel.py --first-evaluation
+python3 validate_kernel.py --init
+```
+
+- `--verify` is a read-only replay. It recomputes everything except H (A1–A5,
+  A7, A8, the oracles, seams, bands and §7 predictions) and compares it with
+  `results.json`. It never evaluates H and never writes. It reports the
+  recorded A6 as retained, not as a new measurement, so a replay cannot pass
+  for an independent evaluation. It takes about 35 s.
+- `--regenerate --reason "TEXT"` recomputes everything except H and rewrites
+  `results.json`. It carries `holdout_exposure` and `acceptance.A6` over
+  unchanged, and appends `{utc, reason, holdout_evaluated: false}` to
+  `regenerations`. The status is derived again from the recomputed
+  conditions and the retained A6.
+- `--first-evaluation` evaluates H once. For this study it is refused: the
+  exposure is `EVALUATED`.
+- `--init` is for a new study only. It writes V with `NOT_EVALUATED` when no
+  results file exists.
+
+The exit status is 0 on success, 1 on a study failure or replay mismatch, 2 on
+a usage error and 3 on a refusal. A refusal leaves the output unchanged, and
+says so with its SHA-256.
+
+To change the §7 predictions, for example after amending the conditioning
+rules under #78, change `validate_kernel.py`, append the amendment to
+`PREREGISTRATION.md`, then run:
+
+```sh
+python3 validate_kernel.py --regenerate --reason "#78: <amendment>"
+python3 validate_kernel.py --verify
+python3 test_kernel_model.py
+python3 test_holdout_record.py
+```
+
+H is not evaluated at any step, and the recorded A6 is kept.
 
 ## Files
 
 | File | Role |
 | --- | --- |
-| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, and Amendment 1 |
+| `PREREGISTRATION.md` | frozen design, acceptance conditions, predictions for the Excel wave, Amendment 1 and the dated #80 note |
 | `derive_kernel.py` | the preregistered fit; writes `kernel_coefficients.json` |
 | `kernel_coefficients.json` | coefficients to 40 digits, their Doubles, and VBA `hi`/`lo` literal pairs |
 | `kernel_model.py` | binary64 model of the candidate, of today's kernel, and of every affected public path |
-| `validate_kernel.py` | applies §3–§8; writes `results.json` |
-| `results.json` | every measurement, the acceptance record and the per-row predictions |
-| `test_kernel_model.py` | CI fixture pinning the coefficients, literals and recorded result |
+| `validate_kernel.py` | applies §3–§8; verifies, regenerates or writes `results.json` |
+| `holdout_record.py` | the holdout exposure record and its checks (#80); standard library only |
+| `results.json` | every measurement, the acceptance record, the per-row predictions and the holdout exposure record |
+| `test_kernel_model.py` | CI fixture pinning the coefficients, literals, recorded result and recorded A6 |
+| `test_holdout_record.py` | CI fixtures of the exposure controls, on synthetic studies |

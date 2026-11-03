@@ -11,11 +11,29 @@ The steps follow the preregistration:
     holdout;
   - last, A6 on the holdout H.
 
-V is written to results.json before H is evaluated, so the holdout is looked
-at once, after validation has been recorded.
+H is evaluated once (§5). results.json records that exposure in its
+`holdout_exposure` block, and holdout_record.py (#80) enforces it: every mode
+reads and checks the existing record before it computes or writes anything,
+and refuses a missing, malformed or inconsistent one.
 
-    python validate_kernel.py
+    python validate_kernel.py --verify
+        Read-only replay. Recomputes everything except H and compares it
+        with results.json. Never evaluates H, never writes.
+    python validate_kernel.py --regenerate --reason TEXT
+        Recomputes everything except H and rewrites results.json. The
+        recorded holdout_exposure and acceptance.A6 are carried over
+        unchanged; the reason is appended to `regenerations`.
+    python validate_kernel.py --first-evaluation
+        Evaluates H once. Refused unless holdout_exposure.status is
+        NOT_EVALUATED; for this study it is EVALUATED (#75).
+    python validate_kernel.py --init
+        New study only: writes V with status NOT_EVALUATED when results.json
+        does not exist.
+
+Exit status: 0 success, 1 study failure or mismatch, 2 usage, 3 refused (the
+output is left unchanged).
 """
+import argparse
 import csv
 import hashlib
 import json
@@ -25,16 +43,17 @@ import platform
 import random
 import struct
 import sys
-import time
 from decimal import Decimal
 
 import mpmath as mp
 
+import holdout_record as hr
 import kernel_model as km
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BENCH = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "results.json")
+PREREGISTRATION = os.path.join(HERE, "PREREGISTRATION.md")
 sys.path.insert(0, os.path.join(BENCH, "student_t_large_df_study"))
 import binary64_route_model as rm  # noqa: E402
 
@@ -120,10 +139,15 @@ def validation_set():
     return grid, [rnd.uniform(0, 37.5) for _ in range(20000)]
 
 
+# Holdout H (§5). Its points are bound by SHA-256 in holdout_exposure.
+HOLDOUT_DEFINITION = [
+    {"seed": 72002, "count": 10000, "low": 0, "high": 37.5},
+    {"seed": 72003, "count": 5000, "low": 0, "high": 8},
+]
+
+
 def holdout_set():
-    a = random.Random(72002)
-    b = random.Random(72003)
-    return [a.uniform(0, 37.5) for _ in range(10000)] + [b.uniform(0, 8) for _ in range(5000)]
+    return hr.holdout_points(HOLDOUT_DEFINITION)
 
 
 def approximant_set():
@@ -451,8 +475,8 @@ def predictions():
 
 # ---------------------------------------------------------------------------
 
-def main():
-    started = time.time()
+def compute():
+    """Everything except H: the oracles, A1-A5, A7, A8, the seams and §7."""
     with open(km.COEFFICIENTS_PATH, "rb") as f:
         coefficients_sha = hashlib.sha256(f.read()).hexdigest()
     raw = km.COEFFICIENTS["raw"]
@@ -501,13 +525,14 @@ def main():
         if not check["pass"]:
             problems.append(f"{name} failed")
 
-    result = {
+    print(f"computed without the holdout: kernel worst Q {a5['worst']['q']['value']:.3e}, "
+          f"pdf {a5['worst']['pdf']['value']:.3e}; route worst "
+          f"{max(a7['fitting']['worst'], a7['holdout']['worst']):.3e}; {len(problems)} problem(s)")
+    return {
         "study": "normal upper-tail kernel (#72)",
         "preregistration": "PREREGISTRATION.md",
         "coefficients_sha256": coefficients_sha,
-        "status": "PENDING_HOLDOUT" if not problems else "FAIL",
         "problems": problems,
-        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "versions": {"python": platform.python_version(), "mpmath": mp.__version__},
         "bound": B,
         "oracle": {"stability_min_digits": stability, "quadrature_min_digits": independence,
@@ -521,32 +546,39 @@ def main():
         "predictions": predictions(),
         "holdout_559_inspected": False,
     }
-    write(result)
-
-    if not problems:
-        h_rows = [measure_point(z) for z in holdout_set()]
-        a6 = {"pass": kernel_pass(h_rows), "points": len(h_rows), "evaluated_once": True,
-              "worst": {k: worst_of(h_rows, k) for k in ("q", "cdf", "pdf")},
-              "stability_min_digits": min(r["stability_digits"] for r in h_rows)}
-        result["acceptance"]["A6"] = a6
-        if not a6["pass"]:
-            problems.append("A6 failed")
-        result["status"] = "PASS" if not problems else "FAIL"
-    result["runtime_s"] = round(time.time() - started, 1)
-    write(result)
-    print(f"{result['status']}: kernel worst Q {a5['worst']['q']['value']:.3e}, "
-          f"pdf {a5['worst']['pdf']['value']:.3e}; route worst "
-          f"{max(a7['fitting']['worst'], a7['holdout']['worst']):.3e}; "
-          f"{len(problems)} problem(s); {result['runtime_s']} s")
-    for p in problems:
-        print("  -", p)
-    return 0 if result["status"] == "PASS" else 1
 
 
-def write(result):
-    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(result, f, indent=1)
-        f.write("\n")
+def evaluate_holdout(points):
+    """A6. Called only by holdout_record.first_evaluation, once per study."""
+    h_rows = [measure_point(z) for z in points]
+    return {"pass": kernel_pass(h_rows), "points": len(h_rows), "evaluated_once": True,
+            "worst": {k: worst_of(h_rows, k) for k in ("q", "cdf", "pdf")},
+            "stability_min_digits": min(r["stability_digits"] for r in h_rows)}
+
+
+def make_study(output=OUT, log=None):
+    return hr.Study(output=output, preregistration=PREREGISTRATION, coefficients=km.COEFFICIENTS_PATH,
+                    holdout_definition=HOLDOUT_DEFINITION, compute=compute,
+                    evaluate_holdout=evaluate_holdout, log=log or print)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--verify", action="store_const", dest="mode", const="verify",
+                      help="read-only replay of everything except the holdout")
+    mode.add_argument("--regenerate", action="store_const", dest="mode", const="regenerate",
+                      help="rewrite everything except the holdout; keep the recorded exposure and A6")
+    mode.add_argument("--first-evaluation", action="store_const", dest="mode", const="first_evaluation",
+                      help="evaluate the holdout once; refused once an exposure is recorded")
+    mode.add_argument("--init", action="store_const", dest="mode", const="init",
+                      help="new study only: write V with status NOT_EVALUATED")
+    parser.add_argument("--reason", help="why --regenerate is run; recorded in results.json")
+    parser.add_argument("--output", default=OUT, help="the results file (default: results.json here)")
+    args = parser.parse_args(argv)
+    if args.reason is not None and args.mode != "regenerate":
+        parser.error("--reason applies to --regenerate only")
+    return hr.run(make_study(os.path.abspath(args.output)), args.mode, args.reason)
 
 
 if __name__ == "__main__":
