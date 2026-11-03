@@ -43,6 +43,13 @@ def main():
     grids = [path for path, entry in record["grids"].items() if entry["exported"]]
     print("PASS: Excel certification record")
     print(f"  candidate: {record['candidate_sha']}")
+    # Without --candidate-sha the record may name an earlier commit whose
+    # certified VBA bytes are unchanged; that does not certify the evidence
+    # commit itself (#76). Say which binding was checked.
+    if a.candidate_sha is None:
+        print(f"  exact candidate: not required; certified sources unchanged at {evidence_ref}")
+    else:
+        print(f"  exact candidate: required and matched ({a.candidate_sha})")
     print(f"  regression: {record['harness']['passed']}/{record['harness']['assertions']} PASS")
     print("  exported grids: " + (", ".join(grids) if grids else "none (regression-only evidence)"))
     return 0
