@@ -126,10 +126,12 @@ not present.
 8. Update documentation and release notes required by the change.
 9. Push the branch and open a pull request with evidence and limitations.
 
-Every change, including the maintainer's own, reaches `main` through a pull
-request; there is no direct-push path. Pull requests are squash-merged by
-default. The complete rules, including atomic evidence changes and
-certification after merge, are in the
+Every change, including mine, reaches `main` through a pull request; there is
+no direct-push path. Pull requests are merged with a merge commit, so every
+commit on the branch reaches `main`: keep each one focused and valid on its own.
+While a release branch such as `release/1.0.0` is active, open task pull
+requests against it rather than `main`. The complete rules, including atomic
+evidence changes, release branches and certification after merge, are in the
 [merge convention](RELEASING.md#merge-convention).
 
 ### Commit discipline

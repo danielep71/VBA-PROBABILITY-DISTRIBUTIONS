@@ -251,13 +251,34 @@ restart certification and packaging for the new candidate; never silently retarg
 ### Merge convention
 
 **Decision (2026-09-30): pull requests only.** Every change reaches `main`
-through a pull request, including the maintainer's own changes and Dependabot
-updates. There is no direct-push path.
+through a pull request, including my own changes and Dependabot updates. There
+is no direct-push path.
 
-- **Squash and merge by default.** Each pull request leaves one commit on
-  `main`. Its title and body describe the delivered change, link the relevant
-  issues and evidence, and state what was validated. Do not paste the
-  intermediate commit log.
+**Decision (2026-11-02): merge commits.** The `Protect main` ruleset allows
+merge commits only; the `Protect release branches` ruleset allows merge commits
+or squash, and I use merge commits there too.
+[`docs/repo_governance/SETTINGS.md`](docs/repo_governance/SETTINGS.md) records
+both rulesets.
+
+- **Every branch commit reaches `main`.** A merge commit keeps the branch
+  history, so each commit on the branch must stand on its own: a focused change,
+  a message that says what changed and why, and a tree that passes the checks.
+  The pull request title and body describe the delivered change, link the
+  relevant issues and evidence, and state what was validated; the merge commit
+  names the pull request.
+- **Release branches.** While a release branch such as `release/1.0.0` is
+  active, task pull requests branch from it and target it, and Dependabot
+  targets it through `target-branch` in `.github/dependabot.yml`.
+  - GitHub closes an issue from a keyword only when a pull request merges into
+    the default branch. After a task pull request merges into the release
+    branch, I close its issue by hand with its *Resolution* section.
+  - The integration pull request merges the release branch into `main` with a
+    merge commit. It uses `Refs #` for the issues and pull requests it carries,
+    never a closing keyword.
+  - Right after each integration, a sync pull request merges `main` back into
+    the release branch, so the next task branch starts from the same history.
+  - Integration and sync pull requests follow the same review and check rules
+    as any other pull request.
 - **Merge the reviewed head with its current integration checks green.** Record
   the reviewed PR head SHA and the target base SHA. On `pull_request` events,
   the current workflows check out GitHub's synthetic merge commit; record that
@@ -269,23 +290,29 @@ updates. There is no direct-push path.
   the self-hosted Excel runner is offline, merge only when the change cannot
   affect what it tests and record that reasoning in the PR before merging.
 - **Keep evidence changes atomic.** A committed grid, its manifest and its
-  export record land in one commit. `benchmark/check_manifest_provenance.py`
-  examines each commit separately, and a squash merge guarantees they change
-  together. Never merge an evidence branch in a way that brings in intermediate
-  commits where a manifest changed without its grid.
-- **A merge creates a new source identity.** A squash (and GitHub's rebase
-  merge) produces a new SHA, so exact-SHA Excel certification of the pull
-  request head or synthetic merge does not certify the merged commit. Certify
-  the final `main` commit, rebuild/retest all publishable artifacts from it and
-  regenerate their hashes before tagging, as required by step 8. Never silently
-  rebind PR evidence or relabel a pre-merge package as a final-commit build.
-- **History-preserving merges are the exception.** Use one only when the commit
-  order is itself evidence, for example a preregistration committed before the
-  source fix it governs (as in PR #27). Record the reason in the pull request
-  before merging.
-- **Never rewrite history.** Do not force-push `main`, rewrite published
-  history or move tags. Earlier direct pushes and merge commits stay as they
-  are; this convention applies to future merges.
+  export record change together, in one commit. Because a merge commit brings
+  every branch commit onto `main`, that commit must not be split across the
+  branch. `benchmark/check_manifest_provenance.py` examines each commit of the
+  pull request's range separately, so a commit that changes a manifest without
+  its grid fails the Accuracy Gate before merge. Make each such change in a
+  single commit.
+- **A merge creates a new source identity.** The merge commit has its own SHA,
+  different from the pull request head and from the synthetic merge the checks
+  ran on, so exact-SHA Excel certification of either does not certify the
+  merged commit. Certify the final `main` commit, rebuild/retest all
+  publishable artifacts from it and regenerate their hashes before tagging, as
+  required by step 8. Never silently rebind PR evidence or relabel a pre-merge
+  package as a final-commit build.
+- **Commit order is evidence.** A preregistration committed before the source
+  fix it governs (as in PR #27) keeps that order on `main`. Do not reorder or
+  squash such commits.
+- **Release history check.** `tools/check_release_semantics.py` reports a
+  multi-parent commit that no reviewed history exception covers, once a
+  previous release tag gives it a range. Until it accepts pull request merge
+  commits (#100), each merge commit in a release range needs that review.
+- **Never rewrite history.** Do not force-push `main` or a release branch,
+  rewrite published history or move tags. Earlier squash merges and direct
+  pushes stay as they are.
 
 GitHub enforces the PR and hosted-check requirements described in
 [Readiness review](#readiness-review). Review quality, artifact reconstruction
