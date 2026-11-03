@@ -79,7 +79,7 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 - The working tree and exported VBA sources are reproducible.
 - Maintainers and required reviewers are available.
 
-Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, and #29 must be resolved.
+Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, a green **Excel VBA Regression** run of the release commit itself must exist (see [exact-tag binding](#exact-tag-binding)), and #29 must be resolved.
 
 **Enforcement baseline:** the repository settings, security features and rulesets, including the required checks `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` on `main`, are recorded in [`docs/repo_governance/repository-settings.json`](docs/repo_governance/repository-settings.json) and explained in [SETTINGS.md](docs/repo_governance/SETTINGS.md). `python3 tools/setup_repository.py --verify` compares them with GitHub and fails on drift; a prose statement of enforcement is not evidence. Required approvals remain zero. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
 
@@ -173,6 +173,10 @@ Certification rules:
 - Test the advertised environment matrix.
 - Treat warnings, repairs, or unexplained numerical deltas as failures.
 - If code changes after certification, restart static and Excel validation.
+- Finish with a green **Excel VBA Regression** run of the exact commit you will
+  tag, after every documentation and evidence commit. The release workflow
+  requires that run; a run of any other commit does not count (see
+  [exact-tag binding](#exact-tag-binding)).
 
 ## 7. Build release artifacts
 
@@ -190,15 +194,64 @@ builds the release outputs from the tagged commit:
 
 The bundle is built by `.github/scripts/build_release_bundle.py` from Git
 objects at the tag, never from a working tree, so the same commit always
-produces the same bytes. Before building, the workflow refuses a tag that is
-not annotated, not lower-case `vX.Y.Z`, not equal to `VERSION` or not on
-`main`; release semantics, the retained Excel record, the README assurance
-block and a `certified: true` entry for the version in
-`benchmark/release_readiness.json` must all validate at the tagged commit.
+produces the same bytes. The workflow takes the checked-out `HEAD^{commit}` as
+the candidate and uses that SHA for every check, the build and the
+attestation. Before building, it refuses a tag that is not annotated, not
+lower-case `vX.Y.Z`, not equal to `VERSION`, not on `main`, or whose peeled
+commit is not that candidate. Release semantics, the retained Excel record, the
+exact-commit Excel certification below, the README assurance block and a
+`certified: true` entry for the version in `benchmark/release_readiness.json`
+must all validate at the tagged commit.
 
-Rehearse at any time with **Actions → Release → Run workflow** on `main`: it
-runs the same checks, reports missing certification as a warning, builds the
-bundle as a workflow artifact, and creates no attestation or release.
+<a id="exact-tag-binding"></a>
+
+**Exact-tag Excel binding (#76).** The retained record,
+`benchmark/excel_regression_record.json`, names the earlier commit whose grids
+Excel exported. A commit cannot contain a record of itself, so that record
+proves only that the certified VBA bytes are unchanged at the tag. The workflow
+therefore also requires a green **Excel VBA Regression** run of the tagged
+commit itself. `.github/scripts/certify_release_candidate.py` lists the
+successful `push` and `workflow_dispatch` runs of that workflow whose head
+commit is the candidate, downloads the run's `excel-vba-regression-<run id>`
+artifact and validates its record with:
+
+```bash
+python benchmark/check_excel_certification.py \
+  --record <artifact-dir>/excel-certification.json \
+  --candidate-sha <tag-commit> --evidence-ref <tag-commit> \
+  --require-pass --log-directory <artifact-dir>
+```
+
+The record must also name the self-hosted runner and the run it came from. A
+record for any other commit fails, even when every VBA byte is identical, for
+example a run from before a documentation-only commit. The job summary states
+the result, and the certifying record and log are kept for 90 days as the
+`release-excel-certification` workflow artifact. Keep your own copy as release
+evidence.
+
+Produce that run before you tag. When `main` is at the commit you will tag, run
+**Actions → Excel VBA Regression → Run workflow** on `main` and wait for it to
+pass:
+
+```bash
+gh workflow run excel-vba-regression.yml --ref main
+gh run list --workflow excel-vba-regression.yml --commit "$(git rev-parse 'main^{commit}')"
+```
+
+If `main` moves before the run starts, the run certifies the newer commit, not
+the one you meant to tag. The run's artifact expires after 30 days; tag within
+that time or run the workflow again. If a tag push stops only because the run
+is missing, run the Excel workflow on the tag (`--ref vX.Y.Z`), then re-run the
+failed release jobs.
+
+Rehearse at any time with **Actions → Release → Run workflow**: it runs the
+same checks against the exact commit of the ref you choose, builds the bundle
+as a workflow artifact, and creates no attestation or release. Exact-commit
+certification runs on a rehearsal too, against that commit. When the commit has
+no valid Excel run of its own, the job summary reports it as **UNCERTIFIED**
+with the reasons and a warning; missing readiness certification is also a
+warning. A tag push fails on either, and the attestation and draft jobs run only
+for a tag whose exact-commit certification is **CERTIFIED**.
 
 A demo or validation workbook is not part of the automated release; publish one
 only if the installation guide promises it, following the steps below.
@@ -324,12 +377,15 @@ a green merge button does not establish them.
 
 ## 9. Create the annotated tag
 
-Tag only the certified commit on `main`.
+Tag only the certified commit on `main`: the commit that the green Excel VBA
+Regression run of step 6 executed. The release workflow fails for any other
+commit.
 
 ```bash
 git switch main
 git pull --ff-only
 git rev-parse HEAD
+gh run list --workflow excel-vba-regression.yml --commit "$(git rev-parse HEAD)" --status success
 git tag -a vX.Y.Z -m "VBA Probability Distributions X.Y.Z"
 git show --no-patch --decorate vX.Y.Z
 git push origin vX.Y.Z
@@ -348,7 +404,8 @@ Retain at least:
 - closed distribution-review issue and its secret-scan result
 - repository-settings evidence record (`VERIFIED`)
 - Excel version and bitness
-- regression outputs
+- regression outputs, including the Excel VBA Regression run and artifact of
+  the tagged commit
 - accuracy grid and independent-reference provenance
 - artifact SHA-256 hashes
 - version and tag
