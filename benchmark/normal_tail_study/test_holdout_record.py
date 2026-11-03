@@ -22,7 +22,12 @@ never evaluated here. They prove that:
      and every malformed or self-contradicting record, is refused, never
      reset;
   6. validate_kernel.py refuses a first evaluation of the committed record
-     before computing anything, and the committed record passes the checks.
+     before computing anything, and the committed record passes the checks;
+  7. two concurrent first evaluations evaluate the holdout exactly once: the
+     second run meets the lock before it reads the record, at each point of
+     the first run (computing V, evaluating H), in-process and from another
+     thread; a stale lock blocks every mode until it is removed by hand, and
+     a run releases its lock on every exit path.
 
 Run: python3 test_holdout_record.py   (exit 0 = pass, nonzero = fail)
 """
@@ -33,6 +38,7 @@ import os
 import shutil
 import sys
 import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -403,6 +409,143 @@ class Malformed(Base):
                 for mode in ("verify", "regenerate", "first_evaluation"):
                     self.assert_refused(mode, before, "r" if mode == "regenerate" else None)
         self.assertEqual(self.s.computed, 0)
+
+
+class Locking(Base):
+    def lock(self):
+        return hr.lock_path(self.s.output)
+
+    def second_actor(self):
+        """Another run on the same files, with its own counted evaluator."""
+        other = Synthetic.__new__(Synthetic)
+        other.__dict__.update(self.s.__dict__)
+        other.evaluated, other.logs, other.computed, other.on_compute = [], [], 0, None
+        return other
+
+    def test_second_run_during_v_is_refused_and_h_evaluated_once(self):
+        self.assertEqual(self.s.run("init"), hr.OK)
+        other, outcome = self.second_actor(), []
+
+        def race():
+            # The first run has read the NOT_EVALUATED record and is computing V.
+            self.s.on_compute = None
+            outcome.append(other.run("first_evaluation"))
+        self.s.on_compute = race
+        self.assertEqual(self.s.run("first_evaluation"), hr.OK)
+        self.assertEqual(outcome, [hr.REFUSED])
+        self.assertEqual((other.computed, other.evaluated), (0, []))
+        self.assertIn("holds the lock", other.log())
+        self.assertEqual(len(self.s.evaluated), 1)
+        ex = self.s.record()["holdout_exposure"]
+        self.assertEqual((ex["status"], ex["exposures"]), (hr.EVALUATED, 1))
+        self.assertFalse(os.path.lexists(self.lock()))
+
+    def test_second_run_during_h_is_refused(self):
+        self.assertEqual(self.s.run("init"), hr.OK)
+        other, outcome = self.second_actor(), []
+        evaluate = self.s.evaluate
+
+        def evaluate_with_race(points):
+            # EVALUATION_STARTED is written and the first run is evaluating H.
+            for mode in ("first_evaluation", "regenerate", "init", "verify"):
+                outcome.append(other.run(mode, "r" if mode == "regenerate" else None))
+            return evaluate(points)
+        self.s.evaluate = evaluate_with_race
+        self.assertEqual(self.s.run("first_evaluation"), hr.OK)
+        self.assertEqual(outcome, [hr.REFUSED] * 4)
+        self.assertEqual((other.computed, other.evaluated), (0, []))
+        self.assertEqual(len(self.s.evaluated), 1)
+
+    def test_concurrent_threads_evaluate_h_once(self):
+        self.assertEqual(self.s.run("init"), hr.OK)
+        other = self.second_actor()
+        inside, release, results = threading.Event(), threading.Event(), {}
+        evaluate = self.s.evaluate
+
+        def blocking_evaluate(points):
+            inside.set()
+            self.assertTrue(release.wait(10))
+            return evaluate(points)
+        self.s.evaluate = blocking_evaluate
+        first = threading.Thread(target=lambda: results.setdefault("first", self.s.run("first_evaluation")))
+        first.start()
+        try:
+            self.assertTrue(inside.wait(10))
+            results["second"] = other.run("first_evaluation")
+        finally:
+            release.set()
+            first.join(10)
+        self.assertEqual(results, {"first": hr.OK, "second": hr.REFUSED})
+        self.assertEqual(other.evaluated, [])
+        self.assertEqual(len(self.s.evaluated), 1)
+        self.assertEqual(self.s.record()["holdout_exposure"]["exposures"], 1)
+
+    def test_stale_lock_blocks_every_mode_until_removed_by_hand(self):
+        self.assertEqual(self.s.run("init"), hr.OK)
+        before = self.s.bytes()
+        with open(self.lock(), "w", encoding="utf-8") as f:
+            f.write("pid 1, mode first_evaluation, killed\n")
+        self.s.computed = 0
+        for mode in ("first_evaluation", "regenerate", "init", "verify"):
+            self.assert_refused(mode, before, "r" if mode == "regenerate" else None)
+        self.assertEqual(self.s.computed, 0)
+        with open(self.lock(), encoding="utf-8") as f:
+            self.assertEqual(f.read(), "pid 1, mode first_evaluation, killed\n")
+        self.assertIn("delete the lock file by hand", self.s.log())
+        self.assertIn("killed", self.s.log())
+        os.unlink(self.lock())
+        self.assertEqual(self.s.run("first_evaluation"), hr.OK)
+        self.assertEqual(len(self.s.evaluated), 1)
+
+    def test_removing_a_stale_lock_does_not_allow_a_reevaluation(self):
+        self.assertEqual(self.s.run("init"), hr.OK)
+        self.s.holdout_error = SystemExit(9)          # a run that dies inside H
+        with self.assertRaises(SystemExit):
+            self.s.run("first_evaluation")
+        with open(self.lock(), "w", encoding="utf-8") as f:
+            f.write("left by a killed run\n")
+        os.unlink(self.lock())                         # the documented manual step
+        self.s.holdout_error, self.s.evaluated = None, []
+        self.assert_refused("first_evaluation", self.s.bytes())
+        self.assertEqual(self.s.record()["holdout_exposure"]["status"], hr.STARTED)
+
+    def test_lock_is_released_on_every_exit_path(self):
+        self.assertEqual(self.s.run("init"), hr.OK)                      # success
+        self.assertFalse(os.path.lexists(self.lock()))
+        self.assertEqual(self.s.run("init"), hr.REFUSED)                 # refusal inside the lock
+        self.assertFalse(os.path.lexists(self.lock()))
+        self.s.on_compute = mock.Mock(side_effect=RuntimeError("compute"))
+        with self.assertRaises(RuntimeError):                            # crash in V
+            self.s.run("regenerate", "r")
+        self.assertFalse(os.path.lexists(self.lock()))
+        self.s.on_compute = None
+        self.s.problems = ["A5 failed"]
+        self.assertEqual(self.s.run("first_evaluation"), hr.FAILED)      # failed condition
+        self.assertFalse(os.path.lexists(self.lock()))
+        self.s.problems = []
+        self.s.holdout_error = KeyboardInterrupt()
+        with self.assertRaises(KeyboardInterrupt):                       # crash in H
+            self.s.run("first_evaluation")
+        self.assertFalse(os.path.lexists(self.lock()))
+
+    def test_verify_takes_no_lock(self):
+        self.evaluated_study()
+        seen = []
+        self.s.on_compute = lambda: seen.append(os.path.lexists(self.lock()))
+        self.assertEqual(self.s.run("verify"), hr.OK)
+        self.assertEqual(seen, [False])
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["PREREGISTRATION.md", "coefficients.json", "results.json"])
+
+    def test_a_replaced_lock_is_left_in_place(self):
+        self.assertEqual(self.s.run("init"), hr.OK)
+
+        def replace_lock():
+            with open(self.lock(), "w", encoding="utf-8") as f:
+                f.write("someone else\n")
+        self.s.on_compute = replace_lock
+        self.s.run("regenerate", "r")
+        self.assertTrue(os.path.lexists(self.lock()))
+        self.assertIn("left in place", self.s.log())
 
 
 class CommittedRecord(unittest.TestCase):

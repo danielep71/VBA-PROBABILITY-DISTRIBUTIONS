@@ -26,6 +26,18 @@ reset. A write goes through an exclusively created temporary file and
 os.replace, so a crash leaves either the old or the new file; a temporary file
 left behind by a killed run blocks every mode until someone inspects it.
 
+Every writing mode first takes an exclusive lock: it creates
+`.results.json.lock` beside the output with O_CREAT | O_EXCL, before it reads
+the record, and holds it through every write, the holdout evaluation
+included, until it returns or raises. A second run is refused while the lock
+exists, before it reads, computes or evaluates anything; --verify takes no
+lock but is refused while one exists. Exclusive creation is atomic on local
+POSIX and Windows (NTFS) file systems; it may not be on some network file
+systems, so run the validator on a local checkout. The lock is a plain file,
+not an OS lock, so it is not released when a process is killed: a stale lock
+blocks every mode until it is removed by hand, and a removed lock still
+leaves an EVALUATION_STARTED record refusing a re-evaluation.
+
   init              new study only: results.json must not exist. Writes V with
                     status NOT_EVALUATED.
   verify            read-only replay: recomputes everything except H and
@@ -295,6 +307,50 @@ def temporary_path(output: str) -> str:
     return os.path.join(os.path.dirname(output), "." + os.path.basename(output) + ".tmp")
 
 
+def lock_path(output: str) -> str:
+    return os.path.join(os.path.dirname(output), "." + os.path.basename(output) + ".lock")
+
+
+def lock_held(output: str) -> str:
+    lock = lock_path(output)
+    try:
+        with open(lock, encoding="utf-8", errors="replace") as f:
+            holder = f.read().strip() or "no holder recorded"
+    except OSError:
+        holder = "unreadable"
+    return (f"{lock} exists ({holder}): another validator run holds the lock, or a run was killed "
+            "while holding it. Nothing was read, computed or evaluated. If no validator is running, "
+            f"check holdout_exposure.status in {os.path.basename(output)} (EVALUATION_STARTED means the "
+            "holdout counts as exposed), then delete the lock file by hand and run again")
+
+
+def acquire_lock(study: Study, mode: str) -> str:
+    """Create the lock file exclusively; return the token written into it."""
+    lock = lock_path(study.output)
+    token = f"pid {os.getpid()}, mode {mode}, since {utc_now()}, token {os.urandom(8).hex()}"
+    try:
+        fd = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except FileExistsError as e:
+        raise StateError(lock_held(study.output)) from e
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(token + "\n")
+    return token
+
+
+def release_lock(study: Study, token: str) -> None:
+    """Remove the lock, but only if it is still the one this run created."""
+    lock = lock_path(study.output)
+    try:
+        with open(lock, encoding="utf-8") as f:
+            mine = f.read().strip() == token
+    except OSError:
+        return
+    if mine:
+        os.unlink(lock)
+    else:
+        study.log(f"  warning: {lock} was replaced while this run held it; left in place")
+
+
 def read_state(study: Study) -> tuple[dict[str, Any] | None, str | None]:
     """The checked record and the SHA-256 of its bytes, or (None, None) if absent."""
     tmp = temporary_path(study.output)
@@ -325,11 +381,12 @@ def require_identity(state: dict[str, Any], study: Study) -> None:
 
 
 def write_atomic(study: Study, result: dict[str, Any], expected: str | None) -> str:
-    """Replace the output, provided it still has the bytes this run read."""
-    current = file_sha256(study.output) if os.path.exists(study.output) else None
-    if current != expected:
-        raise StateError(f"{study.output} changed while this run was computing (another run?); "
-                         "it was not overwritten")
+    """Replace the output, provided it still has the bytes this run read.
+
+    The caller holds the study lock (run). The temporary file is created
+    exclusively before the digest is compared and kept until the replace, so
+    even a writer that bypassed the lock cannot slip between check and write.
+    """
     data = (json.dumps(result, indent=1) + "\n").encode("utf-8")
     tmp = temporary_path(study.output)
     try:
@@ -339,6 +396,10 @@ def write_atomic(study: Study, result: dict[str, Any], expected: str | None) -> 
                          f"{study.output} was not overwritten") from e
     try:
         with os.fdopen(fd, "wb") as f:
+            current = file_sha256(study.output) if os.path.exists(study.output) else None
+            if current != expected:
+                raise StateError(f"{study.output} changed while this run was computing (another run?); "
+                                 "it was not overwritten")
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
@@ -494,7 +555,15 @@ def run(study: Study, mode: str, reason: str | None = None) -> int:
 
     before = fingerprint()
     try:
-        return MODES[mode](study, reason)
+        if mode == "verify":
+            if os.path.lexists(lock_path(study.output)):
+                raise StateError(lock_held(study.output))
+            return verify(study, reason)
+        token = acquire_lock(study, mode)
+        try:
+            return MODES[mode](study, reason)
+        finally:
+            release_lock(study, token)
     except StateError as e:
         study.log(f"REFUSED ({mode.replace('_', '-')}): {e}")
         after = fingerprint()

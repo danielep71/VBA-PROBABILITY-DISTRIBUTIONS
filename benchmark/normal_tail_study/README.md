@@ -145,14 +145,31 @@ The exposure status is one of:
   `EVALUATION_STARTED` before it evaluates H, so a crash leaves the exposure
   recorded. A second attempt is refused before anything is computed, and the
   output stays byte-identical.
+- `--first-evaluation`, `--regenerate` and `--init` first take an exclusive
+  lock: they create `.results.json.lock` with `O_CREAT | O_EXCL` before they
+  read the record, and hold it through every write and the holdout
+  evaluation until they return or fail. A second run is refused while the
+  lock exists, before it reads, computes or evaluates anything, so two
+  concurrent first evaluations evaluate H once. `--verify` takes no lock, but
+  is refused while one exists.
 - Writes are atomic: an exclusively created temporary file, then a rename. A
   temporary file left by a killed run blocks every mode until you inspect it.
-  A write is also refused if the output changed while the run was computing.
+  A write is also refused if the output changed while the run was computing;
+  the check runs after the temporary file is created.
+
+**If a run is killed while it holds the lock**, the lock file stays behind,
+because it is a plain file rather than an OS lock. Every mode is then refused
+and names the lock. To recover, make sure no validator is running, check
+`holdout_exposure.status` in `results.json`, then delete
+`.results.json.lock` by hand. Deleting the lock never reopens the holdout: an
+`EVALUATION_STARTED` record still refuses a re-evaluation. Exclusive creation
+is atomic on local POSIX and Windows (NTFS) file systems, but may not be on
+some network file systems, so run the validator on a local checkout.
 - `test_kernel_model.py` pins the A6 block by its SHA-256 and figures, and
   checks the record and its identity, so CI rejects a replaced A6.
 - `test_holdout_record.py` exercises first evaluation, second-run refusal,
-  interrupted runs and evidence preservation on synthetic studies. It never
-  evaluates the real H.
+  interrupted runs, concurrent runs, stale locks and evidence preservation on
+  synthetic studies. It never evaluates the real H.
 
 **If a first evaluation is interrupted**, the record stays at
 `EVALUATION_STARTED` with status FAIL. No mode evaluates H again from there.
