@@ -14,15 +14,18 @@
 #     contains no identifying information about individual visitors.
 #
 #   Credentials
-#     TRAFFIC_TOKEN is a fine-grained personal access token with
-#     `Administration: read` on this repository, which is what the traffic API
-#     requires. It is stored in the repository-level `analytics` environment.
-#     That environment is not a workflow-identity boundary: any job declaring
+#     The traffic API requires `Administration: read`. A GitHub App installed
+#     on this repository provides it. Its client ID and private key are stored
+#     in the repository-level `analytics` environment as TRAFFIC_APP_CLIENT_ID
+#     and TRAFFIC_APP_PRIVATE_KEY. Each run mints an installation token scoped
+#     to this repository with `administration: read` only; the token expires
+#     after an hour and is revoked when the job ends.
+#     The environment is not a workflow-identity boundary: any job declaring
 #     it may request access, subject to the configured environment protections.
 #
-#     Rotate it every 90 days, and immediately if this workflow is ever
-#     modified by someone other than the maintainer. See SECURITY.md,
-#     "Repository automation credentials".
+#     Rotate the private key immediately if this workflow is ever modified by
+#     someone other than me. See SECURITY.md, "Repository automation
+#     credentials".
 #
 #   Scope
 #     This is repository analytics. It is not CI. The traffic job, the only one
@@ -103,16 +106,30 @@ jobs:
 
           mkdir -p data
 
+      # Short-lived installation token for the traffic API, limited to this
+      # repository and to administration: read. The client ID is not secret, so
+      # it may be stored as an environment variable or as a secret. The action's
+      # post step revokes the token when the job ends.
+      - name: Mint traffic API token
+        id: traffic-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.TRAFFIC_APP_CLIENT_ID || secrets.TRAFFIC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TRAFFIC_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-administration: read
+
       - name: Fetch GitHub traffic API data
         shell: bash
         env:
-          TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+          TRAFFIC_API_TOKEN: ${{ steps.traffic-token.outputs.token }}
         run: |
           set -euo pipefail
 
-          if [ -z "${TRAFFIC_TOKEN:-}" ]; then
-            echo "::error::Missing TRAFFIC_TOKEN secret in the analytics environment"
-            echo "Create a fine-grained token with Administration: read permission for this repository."
+          if [ -z "${TRAFFIC_API_TOKEN:-}" ]; then
+            echo "::error::The GitHub App did not return a traffic API token"
+            echo "Check TRAFFIC_APP_CLIENT_ID and TRAFFIC_APP_PRIVATE_KEY in the analytics environment, and that the app is installed on this repository with Administration: read."
             exit 1
           fi
 
@@ -129,7 +146,7 @@ jobs:
             status=$(curl -sS -L \
               -o "$output" \
               -w "%{http_code}" \
-              -H "Authorization: Bearer $TRAFFIC_TOKEN" \
+              -H "Authorization: Bearer $TRAFFIC_API_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: $API_VERSION" \
               "$url")

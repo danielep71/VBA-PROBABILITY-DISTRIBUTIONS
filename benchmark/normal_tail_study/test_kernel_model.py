@@ -14,6 +14,10 @@ Fixture for the #72 normal-tail kernel study (PREREGISTRATION.md §8).
      preregistration (which may only grow by appended amendments) and the
      seeded holdout points, and still holds the A6 block recorded in #75,
      pinned by its SHA-256 and figures.
+  2c. Result binding and fit convergence (#79, Amendment 3): every file that
+     produces results.json still has the SHA-256 the record binds
+     (result_binding.py), and the record holds a passed fit_convergence check
+     for a CONVERGED fit of the committed coefficients.
   3. A subsample of A5 is recomputed: the candidate kernel's Q, 1 - Q and
      density meet 2^-50 on part of the validation set and at the split seam.
   4. A7 is recomputed: the #34 order-5 route on the candidate kernel meets
@@ -22,8 +26,9 @@ Fixture for the #72 normal-tail kernel study (PREREGISTRATION.md §8).
      surfaces in the main and survival_boundary grids, the model of today's
      code reproduces the observation within 4 ulps.
 
-If the coefficients, the kernel model or the recorded result change, this
-fixture fails until the study is re-run.
+If the coefficients, the generator, the models, the validator, the design, an
+input or the recorded result change, this fixture fails until the study is
+regenerated (validate_kernel.py --regenerate --reason TEXT).
 
 Run: python3 test_kernel_model.py   (exit 0 = pass, nonzero = fail)
 """
@@ -38,6 +43,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import holdout_record as hr                                      # noqa: E402
 import kernel_model as km                                        # noqa: E402
+import result_binding as rb                                      # noqa: E402
 import validate_kernel as vk                                     # noqa: E402
 
 fails = []
@@ -114,6 +120,18 @@ check(a6["points"] == 15000 and a6["pass"] is True
       "the recorded A6 figures changed")
 for entry in res.get("regenerations", []):
     check(entry.get("holdout_evaluated") is False, f"regeneration {entry} evaluated the holdout")
+
+# 2c. Result binding and fit convergence (#79) ------------------------------
+for msg in rb.stale(res):
+    check(False, f"stale result: {msg}. Run validate_kernel.py --regenerate --reason TEXT if the change is intended")
+convergence = res["acceptance"].get("fit_convergence", {})
+check(convergence.get("pass") is True and convergence.get("status") == "CONVERGED" and not convergence.get("problems"),
+      f"fit convergence not recorded as passed: {convergence.get('status')}, {convergence.get('problems')}")
+fit_record = vk.load_convergence()
+check(fit_record is not None and fit_record.get("status") == "CONVERGED"
+      and fit_record.get("kernel_coefficients_sha256") == res["coefficients_sha256"],
+      "fit_convergence.json does not record CONVERGED for the committed coefficients")
+check(any(a.startswith("Amendment 3 (#79)") for a in res.get("amendments", [])), "Amendment 3 not recorded")
 check(res["oracle"]["stability_min_digits"] >= 50, "oracle stability below 50 digits")
 check(res["oracle"]["quadrature_min_digits"] >= 40, "quadrature agreement below 40 digits")
 
@@ -169,5 +187,6 @@ if fails:
     sys.exit(1)
 print(f"PASS: #72 normal-tail kernel: design and literals pinned; recorded result PASS under Amendment 1 "
       f"(z^7 numerator coefficient {float(raw['numerator'][7]['value']):.2e}, cancellation {float(condition - 1):.1e}); "
+      f"fit CONVERGED and the record bound to {len(rb.BOUND)} current files and the candidate (Amendment 3); "
       f"A5 subsample worst {worst:.2e}; #34 route meets 2^-50 at 36 points; "
       f"today's code reproduced within 4 ulps at {len(direct)} Excel observations")
