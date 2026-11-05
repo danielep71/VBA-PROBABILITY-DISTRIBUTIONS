@@ -1,7 +1,7 @@
 """
-Binary64 argument identity, shared by the grid writers and the
-promotion/migration tools (#32). check_grid_coverage.py and audit_references.py
-still keep their own copies.
+Binary64 argument identity, shared by every grid tool (#32, #90): the grid
+writers, the promotion/migration tools, the coverage gate and the reference
+audit. test_binary64.py pins each of them to this definition.
 
 The accuracy grids store each argument as a decimal INPUT TOKEN. The Excel
 exporter parses it with Val(), so the value the library receives is the IEEE-754
@@ -34,7 +34,12 @@ def double_key(text):
     """IEEE-754 bit pattern of an argument cell; '' for blank, '?...' if unparsable.
 
     Python reads "1e999", "inf" and "nan" as non-finite floats; VBA Val() never
-    produces those, so such a token is marked rather than given a key."""
+    produces those, so such a token is marked rather than given a key.
+
+    The key is the bit pattern, so "-0" and "0" are two identities
+    (8000000000000000 and 0000000000000000), and a subnormal keys to its own
+    pattern like any other finite Double. A decimal that underflows ("1e-400")
+    is finite: it keys to the zero it parses to."""
     t = (text or "").strip()
     if t == "":
         return ""

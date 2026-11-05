@@ -85,8 +85,9 @@ def quiet(fn, *args):
 
 # ---------------------------------------------------------------------------
 # K. Canonical-key parity. Four tools bind _grid_safety.canonical_key as key()
-# (test_binary64.py pins the identity); check_grid_coverage keeps its own
-# identity. All must agree with _grid_safety.canonical_key, including across
+# and check_grid_coverage builds its identity from it (test_binary64.py pins
+# the bindings and the non-finite, blank-regime, signed-zero and subnormal
+# edges). All must agree with _grid_safety.canonical_key, including across
 # decimal spellings of one Double.
 # ---------------------------------------------------------------------------
 samples = [
