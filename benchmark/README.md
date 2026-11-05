@@ -380,7 +380,8 @@ implementation. This cross-check is a regenerable artifact,
 `cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion. The
 committed record covers `beta_f_unbalanced/beta_f_unbalanced_grid.csv`,
 `beta_f_unbalanced/beta_f_inverse_grid.csv` and `holdout/holdout_grid.csv` as
-they stood at `release/1.0.0` commit `c9b1819` (2026-11-05). It lists the
+they stood at commit `ce9a274` (2026-11-05), after the #159 re-reference of
+`beta_f_unbalanced`. It lists the
 SHA-256 of each grid and the SciPy, NumPy and mpmath versions it ran with.
 Each of the 675 reference rows in those grids is in exactly one class:
 
@@ -396,8 +397,10 @@ Each of the 675 reference rows in those grids is in exactly one class:
   the difference shown, and the record does not say which side carries it.
 - **8 beyond SciPy's reliable range**: `F_Cumulative` and `F_Survival` at
   df2 = 1E8 and 1E10, where the incomplete-beta shape parameter is above 1E7.
-  They are **not independently confirmed**: no committed tool records a check
-  of their reference values.
+  They are **not independently confirmed** by SciPy. The four `F_Survival`
+  rows are recomputed by a direct route in `check_survival_references.py`
+  (see [Survival reference basis](#survival-reference-basis)); no committed
+  tool checks the four `F_Cumulative` references.
 - **12 not mapped**: `Lognormal_ParametersFromMeanStdDev` (8 rows) and
   `Normal_IntervalProbability` (4 rows) have no exact SciPy equivalent, so
   they were never compared and are **not independently confirmed** here.
