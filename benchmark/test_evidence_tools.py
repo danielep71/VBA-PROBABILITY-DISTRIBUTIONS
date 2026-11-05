@@ -35,6 +35,7 @@ commands = (
     ("normal_tail_study/test_fit_convergence.py",),
     ("normal_tail_study/test_result_binding.py",),
     ("normal_tail_study/test_ulps_apart.py",),
+    ("beta_balanced_survival/test_beta_route_model.py",),
     ("test_excel_certification.py",),
     ("test_drift_guard_mutations.py",),
     ("test_public_api.py",),
