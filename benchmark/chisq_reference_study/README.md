@@ -11,6 +11,17 @@ df = 1E8 requires shape 5E7, so that block is covered by the accepted
 gmpy2/MPFR substitution plus algorithm-independent quadrature. The
 substitution is recorded in `docs/V1_0_0_IMPLEMENTATION_PLAN.md`.
 
+**Record amendment (2026-11-05, #87).** `chisq_reference.json` still carries
+the `"status": "PROVISIONAL - INCOMPLETE"` and `completion_blocked_on` text it
+was generated with on 2026-08-29, before the Rmpfr re-run had been verified.
+I left those fields as generated and added a dated `status_amendments` entry
+after them. It records the checkpoint as complete and cites the evidence:
+`chisq_crosscheck.json` and its leg records, and the maintainer decision in the
+plan. No other byte of the record changed. I did not regenerate it, because a
+re-run rewrites `generated_utc` and every `runtime_s`. `chisq_reference.py` no
+longer writes a checkpoint status: its record says `"PRIMARY ROUTE ONLY"` and
+points to `chisq_crosscheck.py`, which derives the status from the leg records.
+
 ## Frozen design
 
 69 references: 23 probabilities at each of df = 1E6, 1E7, 1E8.
@@ -50,6 +61,11 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 
 `chisq_reference.py` can be run one df at a time if a runtime cap applies;
 `chisq_crosscheck.py` reads either the merged file or the chunks.
+
+Running `chisq_reference.py` overwrites the committed `chisq_reference.json`.
+The new file has fresh timings and a different header, and it drops the dated
+`status_amendments` entry. Write to another path if you only want to compare:
+call `main(out_path=...)`.
 
 ## Results
 

@@ -2,6 +2,26 @@
   "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
   "status": "PROVISIONAL - INCOMPLETE",
   "completion_blocked_on": "independent legs recorded; maintainer verification of the Rmpfr re-run pending. No final agreement figure is marked authoritative until then.",
+  "status_amendments": [
+    {
+      "date": "2026-11-05",
+      "issue": "#87",
+      "amends": [
+        "status",
+        "completion_blocked_on"
+      ],
+      "kept_as_generated": "status and completion_blocked_on above are left exactly as generated on 2026-08-29, before the Rmpfr re-run had been verified.",
+      "checkpoint_status": "COMPLETE",
+      "evidence": [
+        "chisq_crosscheck.json: composite_authority.status COMPLETE, generated 2026-09-01T11:02:59Z by chisq_crosscheck.py from the committed leg records",
+        "quadrature (algorithm-independent): 69/69 points, minimum agreement 109.873 digits",
+        "gmpy2/MPFR arithmetic (implementation-independent, chisq_gmpy2.json): 69/69 points, minimum agreement 115.1094 digits",
+        "Rmpfr igamma (chisq_rmpfr_1e6.json, chisq_rmpfr_1e7.json): 46/69 points, df 1E6 and 1E7 only, minimum agreement 115.9555 digits; it did not run at df 1E8 because mpfr_gamma_inc aborts above shape ~4.5E7",
+        "docs/V1_0_0_IMPLEMENTATION_PLAN.md: maintainer decision accepting the df 1E8 gmpy2/MPFR substitution"
+      ],
+      "unchanged": "every other field, including all 69 references and the convergence block. The record was not regenerated: a re-run rewrites generated_utc and every runtime_s."
+    }
+  ],
   "generated_utc": "2026-08-29T22:32:14Z",
   "versions": {
     "python": "3.12.3",

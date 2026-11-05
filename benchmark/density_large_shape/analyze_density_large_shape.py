@@ -107,8 +107,12 @@ def main():
 
     if any_obs:
         print(f"\nworst naive absolute log-density error: {worst_naive:.2e}")
-        print("The loader column is what a stable Loader-in-Double kernel achieves on the")
-        print("same points (StirlingError + stable deviance); the gap is the CR-P1-01 defect.")
+        print("The 'naive' columns are the exported VBA kernel. The committed observations")
+        print("come from the kernel after the CR-P1-01 Loader reroute, so they measure the")
+        print("repaired kernel, not the naive form. The loader column is what this script's")
+        print("own Loader-in-Double (its stirlerr + stable deviance) achieves on the same")
+        print("points. A gap between the two columns compares two Loader implementations;")
+        print("it is not the CR-P1-01 defect.")
     else:
         print("\nNo observations yet - showing the stable Loader target only. Export the VBA")
         print("densities into observed_vba and re-run to see the current-kernel error beside it.")

@@ -174,7 +174,13 @@ def build():
 
 if __name__ == "__main__":
     rows, dropped, worst = build()
-    print(f"self-check (independent routes) worst disagreement: {mp.nstr(worst, 6)}")
+    # Neither check is an independent route. Gamma recomputes one route (series
+    # or continued fraction, whichever converges) at 30 and 45 digits; Beta
+    # evaluates the same continued-fraction routine on both sides of the
+    # symmetry I_x(a,a) = 1 - I_{1-x}(a,a).
+    print("self-check (Gamma: one route at 30 and 45 digits; Beta: symmetry "
+          f"I_x(a,a) = 1 - I_(1-x)(a,a), one routine) worst disagreement: "
+          f"{mp.nstr(worst, 6)}")
     if worst > TOL:
         raise SystemExit("ABORT: reference self-check failed; no grid written")
     fields = ["function", "vba_kernel", "claim", "metric", "arg1", "arg2", "arg3",
