@@ -206,12 +206,6 @@ def _Phi_inv(p):
     return _bisect(lambda z: _Phi(z) - p, mp.mpf("-40"), mp.mpf("40"))
 
 
-def _lognorm_params(mean, sd):
-    mean, sd = mp.mpf(mean), mp.mpf(sd)
-    varlog = mp.log(1 + (sd / mean) ** 2)
-    return mp.log(mean) - varlog / 2, mp.sqrt(varlog)
-
-
 
 def _gamma_pdf(x, k, th):
     x, k, th = mp.mpf(x), mp.mpf(k), mp.mpf(th)
@@ -1279,11 +1273,9 @@ def build_rows():
         add("Lognormal_Mean", "K_STATS_Lognormal_Mean", (ml, sl), mp.e ** (ml + sl * sl / 2))
         add("Lognormal_Variance", "K_STATS_Lognormal_Variance", (ml, sl), (mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl))
         add("Lognormal_StdDev", "K_STATS_Lognormal_StdDev", (ml, sl), mp.sqrt((mp.e ** (sl * sl) - 1) * mp.e ** (2 * ml + sl * sl)))
-    # ParametersFromMeanStdDev returns a 1x2 array. This loop emits no rows: the
-    # committed Lognormal_ParametersFromMeanStdDev rows come from the
-    # density_helpers evidence set.
-    for (mean, sd) in [(mp.mpf(2), mp.mpf("0.5")), (mp.mpf(10), mp.mpf(3))]:
-        mlref, slref = _lognorm_params(mean, sd)
+    # Lognormal_ParametersFromMeanStdDev is not generated here (#89). Its
+    # committed rows (two outputs, param_meanlog and param_stddevlog) belong to
+    # the density_helpers evidence set; test_grid_regeneration.py pins that.
 
 
     # ===================== CONTINUOUS FAMILY =====================
@@ -1398,7 +1390,6 @@ for _f in (
         "_chi2_sf",
         "_f_cdf",
         "_f_sf",
-        "_lognorm_params",
         "_gamma_pdf",
         "_gamma_cdf",
         "_gamma_sf",

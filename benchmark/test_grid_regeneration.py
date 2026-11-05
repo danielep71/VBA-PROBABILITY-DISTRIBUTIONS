@@ -12,8 +12,13 @@ against the real committed grid and verify it is left byte-identical:
 Both snapshot the committed grid first and restore it if a regression ever
 does write to it, so a failing run cannot leave the evidence damaged.
 
+Section L (#89) reads the generator source and the committed grid, read only:
+no `for` loop in a build_* function may compute values without emitting a row,
+and the Lognormal_ParametersFromMeanStdDev rows stay the density_helpers set.
+
 Run: python3 test_grid_regeneration.py   (exit 0 = pass, nonzero = fail)
 """
+import ast
 import contextlib
 import copy
 import csv
@@ -413,6 +418,57 @@ with tempfile.TemporaryDirectory() as tmp:
     check(rc == 1 and "canonical" in out, "C3: a non-canonical schema fails")
 
 
+# ---------------------------------------------------------------------------
+# L. Generator loops emit what they compute (#89).
+# ---------------------------------------------------------------------------
+GENERATOR = os.path.join(HERE, "generate_reference_values.py")
+
+
+def silent_loops(source):
+    """Line numbers of `for` loops in a build_* function that never emit a row.
+
+    A loop emits when it calls one of the function's nested row writers
+    (add, row, du_row) or appends to a list directly.
+    """
+    silent = []
+    for fn in ast.parse(source).body:
+        if not (isinstance(fn, ast.FunctionDef) and fn.name.startswith("build")):
+            continue
+        writers = {n.name for n in ast.walk(fn)
+                   if isinstance(n, ast.FunctionDef) and n is not fn}
+        for loop in (n for n in ast.walk(fn) if isinstance(n, ast.For)):
+            emits = any(
+                isinstance(c, ast.Call) and (
+                    (isinstance(c.func, ast.Name) and c.func.id in writers)
+                    or (isinstance(c.func, ast.Attribute)
+                        and c.func.attr in ("append", "extend")))
+                for c in ast.walk(loop))
+            if not emits:
+                silent.append(loop.lineno)
+    return silent
+
+
+with open(GENERATOR, encoding="utf-8") as fh:
+    gen_source = fh.read()
+check(silent_loops(gen_source) == [],
+      f"L1: generator loops that compute but never emit: {silent_loops(gen_source)}")
+dead = ("def build_rows():\n    rows = []\n\n    def add(*a):\n        rows.append(a)\n"
+        "    for (mean, sd) in [(2, 0.5)]:\n        mlref, slref = mean, sd\n"
+        "    return rows\n")
+check(silent_loops(dead) == [6], "L2: the #89 dead-loop shape is detected")
+LPARAMS = "Lognormal_ParametersFromMeanStdDev"
+check(not any(isinstance(c, ast.Call) and c.args
+              and isinstance(c.args[0], ast.Constant) and c.args[0].value == LPARAMS
+              for c in ast.walk(ast.parse(gen_source))),
+      f"L3: the generator emits no {LPARAMS} rows")
+with open(gs.COMMITTED_GRID, newline="", encoding="utf-8") as fh:
+    lp_rows = [r for r in csv.DictReader(fh) if r["function"] == LPARAMS]
+check(len(lp_rows) == 10
+      and {r["evidence_set"] for r in lp_rows} == {"density_helpers"}
+      and {r["regime"] for r in lp_rows} == {"param_meanlog", "param_stddevlog"},
+      f"L4: the committed {LPARAMS} rows are the 10 density_helpers rows")
+
+
 if fails:
     print("FAIL: grid-regeneration safeguards (#17)")
     for f in fails:
@@ -422,4 +478,4 @@ print("PASS: grid-regeneration safeguards (#17): key parity; generator refusal o
       "grid, copy, committed and holdout targets; fresh non-authoritative output; "
       "duplicate keys; real default run; promotion acknowledgement, metadata, "
       "stale ack, duplicates, retention, retirement; audited reference "
-      "migration; duplicate guard")
+      "migration; duplicate guard; no silent generator loops")
