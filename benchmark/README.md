@@ -372,14 +372,20 @@ per function via the `metric` column.
 
 ## Reference integrity
 
-The continued-fraction / mpmath references are cross-checked against SciPy, an
+The Beta/F references in three grids are cross-checked against SciPy, an
 INDEPENDENT implementation, wherever SciPy is reliable (incomplete-beta shape
 parameter <= 1E7). This cross-check is a regenerable artifact,
-`cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion: at the
-current grids 242 points are independently confirmed by SciPy (worst relative
-difference about 7E-11, i.e. SciPy's own double-precision limit), and 8 extreme
-points lie beyond SciPy's reliable range and instead rest on the reference's
-50-vs-80-digit self-consistency. SciPy corroborates the reference where it can
-compute; it cannot certify the extreme-parameter points it cannot itself evaluate.
+`cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion. The
+committed record covers `beta_f_unbalanced/beta_f_unbalanced_grid.csv`,
+`beta_f_unbalanced/beta_f_inverse_grid.csv` and `holdout/holdout_grid.csv` as
+they stood on 2026-07-21 (commit `0e1cfe7`); it lists the SHA-256 of each. On
+those grids, 242 points are independently confirmed by SciPy (worst relative
+difference about 7E-11, i.e. SciPy's own double-precision limit). The other 8,
+`F_Cumulative` and `F_Survival` at df2 = 1E8 and 1E10, lie beyond SciPy's
+reliable range and are **not independently confirmed**: no committed tool
+records a check of their reference values. SciPy corroborates the reference
+where it can compute; it cannot certify the extreme-parameter points it cannot
+itself evaluate. Those grids have changed since, so re-running the script on
+today's files gives different counts; that run is not committed.
 The survival references are computed on the upper tail directly (never `1 - CDF`),
 so they stay accurate in the deep tail where a naive subtraction would collapse.

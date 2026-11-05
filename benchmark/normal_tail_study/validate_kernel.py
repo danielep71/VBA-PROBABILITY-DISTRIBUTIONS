@@ -410,14 +410,27 @@ def parse_observed(raw):
     return float(total)
 
 
+_MAGNITUDE = (1 << 63) - 1
+
+
+def ordered(x):
+    """The ordered-integer image of a binary64 x: monotone in x, +0 and -0 both 0.
+
+    A non-negative Double keeps its bit pattern; a negative one maps to minus
+    its magnitude bits. Subnormals, the sign change and binade boundaries are
+    then ordinary steps of one, and the largest finite Double is one step from
+    infinity. NaN has no position in the order and raises ValueError, so a NaN
+    model value or observation stops the run instead of recording a distance.
+    """
+    if math.isnan(x):
+        raise ValueError("NaN has no position in the binary64 order")
+    bits = struct.unpack("<Q", struct.pack("<d", x))[0]
+    return -(bits & _MAGNITUDE) if bits >> 63 else bits
+
+
 def ulps_apart(a, b):
-    if a == b:
-        return 0
-    ia = struct.unpack(">q", struct.pack(">d", a))[0]
-    ib = struct.unpack(">q", struct.pack(">d", b))[0]
-    if (ia < 0) != (ib < 0):
-        return abs(ia) + abs(ib)
-    return abs(ia - ib)
+    """Number of representable binary64 steps between a and b (#148)."""
+    return abs(ordered(a) - ordered(b))
 
 
 def contract_thresholds():
