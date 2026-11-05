@@ -53,6 +53,7 @@ from render_readme_assurance import AssuranceError, excel_facts
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 HOLDOUT = os.path.join(HERE, "holdout")
+HOLDOUT_OLDER = os.path.join(HERE, "holdout_older")
 
 # Placeholder in VERIFY argv. main() replaces it with a temporary directory
 # that exists only for the verify pass.
@@ -73,6 +74,10 @@ REGENERATE = [
     ("main-grid coverage summary", HERE, ["check_grid_coverage.py"]),
     ("benchmark README contract table", HERE, ["render_contract_table.py", "--write"]),
     ("independent holdout summary", HOLDOUT, ["analyze_holdout.py"]),
+    # Exits non-zero while an older-families contract fails; the summary
+    # records the failure and check_holdout_older_summary.py, run by
+    # test_evidence_tools.py, fails only when it is stale (#164).
+    ("older-families holdout summary", HOLDOUT_OLDER, ["analyze_holdout_older.py"]),
     # Last: the root README block is rendered from every summary above (#28).
     ("root README assurance block", HERE, ["render_readme_assurance.py", "--write"]),
 ]
@@ -129,6 +134,7 @@ ARTIFACTS = [
     "benchmark/README.md",
     "benchmark/observation_manifest.json",
     "benchmark/holdout/holdout_summary.md",
+    "benchmark/holdout_older/holdout_older_summary.md",
     "README.md",
 ]
 
