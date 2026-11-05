@@ -51,6 +51,7 @@ commands = (
     ("test_df_cap_mirrors.py",),
     ("check_df_cap_mirrors.py",),
     ("test_survival_references.py",),
+    ("cdf_large_shape/test_generate_cdf_large_shape.py",),
     ("check_survival_references.py",),
     ("holdout/test_analyze_holdout.py",),
     ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
