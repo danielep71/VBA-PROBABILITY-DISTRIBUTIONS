@@ -54,6 +54,8 @@ commands = (
     ("cdf_large_shape/test_generate_cdf_large_shape.py",),
     ("check_survival_references.py",),
     ("holdout/test_analyze_holdout.py",),
+    ("holdout_older/test_analyze_holdout_older.py",),
+    ("holdout_older/check_holdout_older_summary.py",),
     ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
     ("../tools/check_vba_jumps.py", "--root", "..", "--self-test"),
     ("../tools/check_release_semantics.py", "--root", "..", "--self-test"),
