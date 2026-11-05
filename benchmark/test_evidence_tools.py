@@ -16,6 +16,7 @@ failures = []
 commands = (
     ("test_contract_eval.py",),
     ("test_grid_coverage.py",),
+    ("test_cross_check_scipy.py",),
     ("check_grid_coverage.py", "--mode", "auto", "--check-summary"),
     ("test_grid_regeneration.py",),
     ("test_binary64.py",),
