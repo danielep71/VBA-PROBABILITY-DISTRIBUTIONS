@@ -104,3 +104,83 @@ requires when a design proves wrong:
 `test_binary64_route_model.py` pins this finding. It fails if the kernel, the
 adopted predicate or the measured conclusions change, so the finding cannot
 silently become stale.
+
+---
+
+## Amendment 1 — true ULP distance and source binding (2026-11-05, #77)
+
+I added this amendment after review of #70. The record above is unchanged; where
+it disagrees with this amendment, this amendment holds.
+
+**The ULP figures were relative epsilon, not ULPs.** The Method section's "the
+other 3 within 1.25 ulps", and the fixture's original two-ulp check, divided the
+difference by `|observed| · 2^-52`. That is relative error in units of machine
+epsilon, not binary64 spacing. Below a power of two it understates the step count
+by up to almost 2×, so a three-step mismatch could pass the two-ULP limit: at the
+committed `NormalStandard_Survival(1.96)` value, three steps measure 1.875 on that
+scale. I re-measured the 12 observations with the ordered-integer distance between
+binary64 bit patterns (`model_fidelity.ulp_distance`: +0 and −0 coincide, and
+subnormals, binade boundaries and the sign change are ordinary steps):
+
+| Observation | Original scale | True ULPs |
+| --- | ---: | ---: |
+| `NormalStandard_Cumulative(1)` | 0.59 | 1 |
+| `NormalStandard_Survival(1)` | 0.79 | 1 |
+| `NormalStandard_Survival(1.96)` | 1.25 | 2 |
+| the other 9 | 0 | 0 |
+
+Corrected statement: the port matches 9 of the 12 observations exactly and the
+other 3 within 1, 1 and 2 ULPs. The two-ULP limit is unchanged and still holds; no
+committed observation exceeds it. The Result table reports relative error against
+the oracle, not ULPs, and is unaffected.
+
+**The attribution to `Exp` is withdrawn.** The Method section attributes the
+differences to the last bit of VBA `Exp` against the C library's `exp`. That was
+not verified. A probe I ran while writing this amendment reproduces both `z = 1`
+observations with a one-step-larger `exp`, but no shift of `exp` by up to two steps
+reproduces `NormalStandard_Survival(1.96)`. The cause of the differences is not
+established; the two-ULP limit is an empirical tolerance on the committed
+observations, not a derived bound. The module docstring of `binary64_route_model.py`
+repeats the withdrawn sentence. I left that file unchanged because
+`../normal_tail_study/results.json` binds its bytes.
+
+**The model is now bound to its VBA source.** The finding relies on the port being
+line for line, and the committed observations reach only `|z| = 3`: a change to the
+Hart coefficients above 3, to the 7.07 split or to the continued-fraction depth
+would not have shown. `source_binding.json` now records the SHA-256 of the text of
+`PROB_NormalPDF`, `PROB_NormalUpperTailPositive`, `PROB_NormalCDF`,
+`PROB_NormalSurvival` and the constants `PROB_INV_SQRT_TWO_PI`,
+`PROB_TAIL_UNDERFLOW_Z`, `PROB_NORMAL_TAIL_CF_TERMS`, `PROB_CDF_SPLIT` and
+`PROB_PDF_UNDERFLOW_Z` in `src/M_STATS_PROBDIST_NORMALFAMILY.bas`, and of the
+model file.
+
+A digest shows that the source changed, not that the model still mirrors it, so
+`model_fidelity.py` also checks the extraction statement by statement. Its
+inventory lists all 55 executable statements of the four procedures, in source
+order. 51 are cross-checked. One is intentionally unchecked, the density's
+underflow guard (4 statements). That guard returns 0 only at
+`|Z| ≥ PROB_PDF_UNDERFLOW_Z = 38.6`, and the route evaluates `φ` only for
+`|t| ≤ T_MAX = 8`. The binding requires the constant to stay above `T_MAX`. A
+statement in neither group fails the check, so any new or changed statement forces
+a decision.
+
+The cross-checked statements are translated to Python and compared by syntax tree
+with the model function that mirrors each procedure. The comparison keeps
+operators, signs (including Python unary signs), literals, loop bounds, branches
+and order. The constants are compared the same way. `test_binary64_route_model.py`
+now fails when any of these differs. `test_model_fidelity.py` proves this with
+mutations: a Hart coefficient, a Hart sign, the split, the continued-fraction depth
+and initializer, a loop bound, a predicate, the density, its guard constant, a
+comment, the model, and a statement in neither group.
+
+The binding describes the source this finding measured: the `.bas` file last changed
+in `a1de93f` (2026-08-13), before this finding was recorded in `1e09309`, and the
+model is byte-identical to `1e09309`. With the corrected metric and the binding, the
+fixture reproduces every conclusion above: the 36 points, the 7 **WORSE** points, the
+`t = 6, df = 1E6` and `t = 2, df = 1E8` comparisons, and the kernel's degradation.
+
+A change to the bound VBA, including the #72 normal-tail repair, makes this finding
+stale. It stays stale until the finding is re-measured, this document is amended,
+and the binding is re-recorded with
+`python3 model_fidelity.py --record --reason TEXT`, which refuses while the model
+does not mirror the source.
