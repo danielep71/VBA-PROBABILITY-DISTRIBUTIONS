@@ -1,5 +1,5 @@
 {
- "rule": "SHA-256 of the text of each bound VBA procedure and constant declaration in the source (CRLF normalized to LF) and of the model file. A change to any of them makes finding F1 stale until it is re-measured, the study documents are updated, and model_fidelity.py --record --reason TEXT re-records the binding (#77).",
+ "rule": "SHA-256 of the text of each bound VBA procedure and constant declaration in the source (CRLF normalized to LF) and of the model file. A change to any of them makes finding F1 stale until it is re-measured, the study documents and the statement inventory are updated, and model_fidelity.py --record --reason TEXT re-records the binding (#77).",
  "source": "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
  "model": "benchmark/student_t_large_df_study/binary64_route_model.py",
  "evidence": [
@@ -16,7 +16,8 @@
   "PROB_INV_SQRT_TWO_PI": "13d290abf53716c193c6b02c0ecd11805ec25e88b8b0952131cb4ebaee60d6e6",
   "PROB_TAIL_UNDERFLOW_Z": "e42ed97b38ca329014928bf6e21f4d20b3c00ed52bb92c8757f169118ce0d1ee",
   "PROB_NORMAL_TAIL_CF_TERMS": "8a7a4731fa9cd0c1f1bf443eee40886ecce6bd232ca19375ae3b0b2f58ec55ae",
-  "PROB_CDF_SPLIT": "fe2fb7e93508ae80349dc948a50b2093e6597bfe36ec44205f908408a8d1839f"
+  "PROB_CDF_SPLIT": "fe2fb7e93508ae80349dc948a50b2093e6597bfe36ec44205f908408a8d1839f",
+  "PROB_PDF_UNDERFLOW_Z": "38e0798d36b854c5fcad04adeff169efb9ebd6c2ca75fb126321013e37f710dd"
  },
  "model_sha256": "4fb3b447bcc84dbf552af5401a546dc644004033189282217270262e47ab8595",
  "history": [
@@ -25,6 +26,13 @@
    "reason": "Initial binding of finding F1 to the VBA normal-tail kernel it mirrors, after verifying the extraction (#77).",
    "identities_changed": [
     "initial binding"
+   ]
+  },
+  {
+   "date": "2026-11-05",
+   "reason": "Bound PROB_PDF_UNDERFLOW_Z, the guard constant of the density's intentionally unchecked underflow guard, after replacing the literal and predicate cross-check with the full statement inventory and translation (#77 review of #147). The source and model are unchanged.",
+   "identities_changed": [
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas constant PROB_PDF_UNDERFLOW_Z: recorded None, now 38e0798d36b854c5fcad04adeff169efb9ebd6c2ca75fb126321013e37f710dd"
    ]
   }
  ]

@@ -150,13 +150,28 @@ Hart coefficients above 3, to the 7.07 split or to the continued-fraction depth
 would not have shown. `source_binding.json` now records the SHA-256 of the text of
 `PROB_NormalPDF`, `PROB_NormalUpperTailPositive`, `PROB_NormalCDF`,
 `PROB_NormalSurvival` and the constants `PROB_INV_SQRT_TWO_PI`,
-`PROB_TAIL_UNDERFLOW_Z`, `PROB_NORMAL_TAIL_CF_TERMS` and `PROB_CDF_SPLIT` in
-`src/M_STATS_PROBDIST_NORMALFAMILY.bas`, and of the model file. `model_fidelity.py`
-also checks that the model's Hart coefficients and constants equal the VBA literals
-and that each of 12 route predicates and statements has its counterpart in the
-model. `test_binary64_route_model.py` now fails when any of these differs, and
-`test_model_fidelity.py` proves it with mutations of a Hart coefficient, the split,
-the continued-fraction depth, a predicate, the density, a comment and the model.
+`PROB_TAIL_UNDERFLOW_Z`, `PROB_NORMAL_TAIL_CF_TERMS`, `PROB_CDF_SPLIT` and
+`PROB_PDF_UNDERFLOW_Z` in `src/M_STATS_PROBDIST_NORMALFAMILY.bas`, and of the
+model file.
+
+A digest shows that the source changed, not that the model still mirrors it, so
+`model_fidelity.py` also checks the extraction statement by statement. Its
+inventory lists all 55 executable statements of the four procedures, in source
+order. 51 are cross-checked. One is intentionally unchecked, the density's
+underflow guard (4 statements). That guard returns 0 only at
+`|Z| ≥ PROB_PDF_UNDERFLOW_Z = 38.6`, and the route evaluates `φ` only for
+`|t| ≤ T_MAX = 8`. The binding requires the constant to stay above `T_MAX`. A
+statement in neither group fails the check, so any new or changed statement forces
+a decision.
+
+The cross-checked statements are translated to Python and compared by syntax tree
+with the model function that mirrors each procedure. The comparison keeps
+operators, signs (including Python unary signs), literals, loop bounds, branches
+and order. The constants are compared the same way. `test_binary64_route_model.py`
+now fails when any of these differs. `test_model_fidelity.py` proves this with
+mutations: a Hart coefficient, a Hart sign, the split, the continued-fraction depth
+and initializer, a loop bound, a predicate, the density, its guard constant, a
+comment, the model, and a statement in neither group.
 
 The binding describes the source this finding measured: the `.bas` file last changed
 in `a1de93f` (2026-08-13), before this finding was recorded in `1e09309`, and the
