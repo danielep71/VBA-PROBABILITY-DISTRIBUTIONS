@@ -13,8 +13,10 @@ REFERENCES
     prefactor -X + A*Log(X) - LogGamma(A) subtracts terms of size A*Log(A), so
     the fixed 30 digits used before kept only 17 to 24 significant digits at
     shapes of 1E6 and above. Each reference is now computed at 40 + log10(A)
-    digits and again 15 digits higher, and kept only when the two agree to 32
-    significant digits.
+    digits and again 15 digits higher, and kept only when both evaluations
+    converge before their iteration caps and the two agree to 32 significant
+    digits. Agreement alone is not enough: at A = X = 1E12 the series reaches
+    its cap, and both precisions return the same truncated sum (#167).
 
     Gamma: the route that converges, the ascending series below A + 1 and the
     Lentz continued fraction above it. The continued fraction gives the
@@ -60,6 +62,19 @@ SHAPES = [1e2, 1e4, 1e6, 1e8, 1e10, 1e12]
 Z = [-3, -1, 0, 1, 3]
 
 
+SERIES_CAP = 3000000        # iteration caps; reaching one is a failure, not a value
+CF_CAP = 200000
+
+
+class NotConverged(ArithmeticError):
+    """An iterative evaluation reached its cap before meeting its tolerance.
+
+    Two precisions can truncate at the same term and agree with each other, so
+    agreement alone does not certify a value: a capped evaluation is rejected
+    before the two precisions are compared (#167).
+    """
+
+
 def _eps():
     """Convergence tolerance tied to the working precision."""
     return mp.mpf(10) ** -(mp.mp.dps - 4)
@@ -73,24 +88,34 @@ def _gamma_log_prefactor(A, X):
     return -X + A * mp.log(X) - mp.loggamma(A)
 
 
-def gamma_P_series(A, X):
-    """Regularized lower incomplete gamma by the ascending series."""
+def gamma_P_series(A, X, cap=None):
+    """Regularized lower incomplete gamma by the ascending series.
+
+    Raises NotConverged if the series reaches its cap before its tolerance.
+    """
     A = mp.mpf(A); X = mp.mpf(X)
     eps = _eps()
-    Ap = A; S = 1 / A; Del = S; n = 0
-    while n < 3000000:
-        Ap += 1; Del *= X / Ap; S += Del; n += 1
+    cap = SERIES_CAP if cap is None else cap
+    Ap = A; S = 1 / A; Del = S
+    for _ in range(cap):
+        Ap += 1; Del *= X / Ap; S += Del
         if abs(Del) <= abs(S) * eps:
             break
+    else:
+        raise NotConverged(f"gamma series: {cap} terms at A={mp.nstr(A, 6)}, X={mp.nstr(X, 6)}")
     return S * mp.e ** _gamma_log_prefactor(A, X)
 
 
-def gamma_Q_cf(A, X):
-    """Regularized upper incomplete gamma by the Lentz continued fraction."""
+def gamma_Q_cf(A, X, cap=None):
+    """Regularized upper incomplete gamma by the Lentz continued fraction.
+
+    Raises NotConverged if the fraction reaches its cap before its tolerance.
+    """
     A = mp.mpf(A); X = mp.mpf(X)
     tiny, eps = _tiny(), _eps()
+    cap = CF_CAP if cap is None else cap
     b = X + 1 - A; c = 1 / tiny; d = 1 / b; h = d
-    for i in range(1, 200000):
+    for i in range(1, cap):
         an = -mp.mpf(i) * (mp.mpf(i) - A)
         b += 2
         d = an * d + b
@@ -100,6 +125,8 @@ def gamma_Q_cf(A, X):
         d = 1 / d; de = d * c; h *= de
         if abs(de - 1) <= eps:
             break
+    else:
+        raise NotConverged(f"gamma fraction: {cap} terms at A={mp.nstr(A, 6)}, X={mp.nstr(X, 6)}")
     return h * mp.e ** _gamma_log_prefactor(A, X)
 
 
@@ -112,15 +139,19 @@ def gamma_PQ(A, X):
     return 1 - Q, Q
 
 
-def beta_cf(A, B, X):
-    """Lentz continued fraction for the incomplete beta, direct orientation."""
+def beta_cf(A, B, X, cap=None):
+    """Lentz continued fraction for the incomplete beta, direct orientation.
+
+    Raises NotConverged if the fraction reaches its cap before its tolerance.
+    """
     A = mp.mpf(A); B = mp.mpf(B); X = mp.mpf(X)
     tiny, eps = _tiny(), _eps()
+    cap = CF_CAP if cap is None else cap
     qab = A + B; qap = A + 1; qam = A - 1
     c = mp.mpf(1); d = 1 - qab * X / qap
     if abs(d) < tiny: d = tiny
     d = 1 / d; h = d
-    for m in range(1, 200000):
+    for m in range(1, cap):
         m2 = 2 * m
         aa = m * (B - m) * X / ((qam + m2) * (A + m2))
         d = 1 + aa * d
@@ -136,6 +167,8 @@ def beta_cf(A, B, X):
         d = 1 / d; de = d * c; h *= de
         if abs(de - 1) <= eps:
             break
+    else:
+        raise NotConverged(f"beta fraction: {cap} terms at A={mp.nstr(A, 6)}, B={mp.nstr(B, 6)}")
     return h
 
 
@@ -197,11 +230,16 @@ def build():
             X = mp.mpf(float(A + z * sd))
             if X <= 0:
                 continue
-            # Self-check by recomputation at higher precision: a value that has
-            # genuinely converged does not move; one that hit an iteration cap
-            # or ran out of digits does.
-            P, Q = _at(dps, gamma_PQ, A, X)
-            P2, Q2 = _at(dps + CHECK_EXTRA, gamma_PQ, A, X)
+            # A point is dropped if either evaluation reaches an iteration cap:
+            # two precisions can truncate at the same term and still agree.
+            # Otherwise the recomputation at higher precision catches a value
+            # that ran out of digits.
+            try:
+                P, Q = _at(dps, gamma_PQ, A, X)
+                P2, Q2 = _at(dps + CHECK_EXTRA, gamma_PQ, A, X)
+            except NotConverged:
+                dropped += 1
+                continue
             if not (0 < P2 < 1) or not (_agree(P, P2) and _agree(Q, Q2)):
                 dropped += 1
                 continue
@@ -215,10 +253,14 @@ def build():
             X = mp.mpf(float(mp.mpf("0.5") + z * bsd))
             if not (0 < X < 1):
                 continue
-            I, S = _at(dps, beta_I, A, A, X), _at(dps, beta_S, A, A, X)
-            I2 = _at(dps + CHECK_EXTRA, beta_I, A, A, X)
-            S2 = _at(dps + CHECK_EXTRA, beta_S, A, A, X)
-            sym = _at(dps + CHECK_EXTRA, beta_S, A, A, 1 - X)   # = I_x(a,a)
+            try:
+                I, S = _at(dps, beta_I, A, A, X), _at(dps, beta_S, A, A, X)
+                I2 = _at(dps + CHECK_EXTRA, beta_I, A, A, X)
+                S2 = _at(dps + CHECK_EXTRA, beta_S, A, A, X)
+                sym = _at(dps + CHECK_EXTRA, beta_S, A, A, 1 - X)   # = I_x(a,a)
+            except NotConverged:
+                dropped += 1
+                continue
             if not (0 < I2 < 1) or not (_agree(I, I2) and _agree(S, S2) and _agree(sym, I2)):
                 dropped += 1
                 continue
