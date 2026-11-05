@@ -107,6 +107,16 @@ was recorded.** Neither touches the design or a threshold:
 - `Normal_IntervalProbability` rows were read as `(lower, upper, mean)`. The
   density-helper exporter calls them as `(lower, upper, 0, sd)`.
 
+**A later correction to the 4-ulp measure (#148, 2026-11-05).** `ulps_apart`,
+which counts the binary64 steps between the model of today's code and each
+Excel observation, mapped −0.0 to a huge negative integer: (−0.0, 5E-324)
+measured about 2^63 instead of 1. It now counts steps on the ordered-integer
+image of each Double, with +0 and −0 as one point, and raises on NaN. No
+recorded pair is zero or crosses zero, so no recorded value changed; the
+record was regenerated only for the validator's new digest.
+`test_ulps_apart.py` checks the edge cases and agreement with the Student-t
+study's `model_fidelity.ulp_distance`.
+
 **Next.** The study's acceptance evidence now covers every §6 failure
 condition: A1–A8, the oracles and, under Amendment 3, fit convergence. The
 record is bound to the files that produced it. The kernel can be implemented
@@ -321,6 +331,7 @@ python3 test_holdout_record.py
 python3 test_conditioning.py
 python3 test_fit_convergence.py
 python3 test_result_binding.py
+python3 test_ulps_apart.py
 ```
 
 H is not evaluated at any step, and the recorded A6 is kept. The same
@@ -348,3 +359,4 @@ and `fit_convergence.json`, and writes nothing.
 | `test_holdout_record.py` | CI fixtures of the exposure controls, on synthetic studies |
 | `test_fit_convergence.py` | CI fixtures of Amendment 3's convergence decision: the committed record, and deliberate capped, nonconvergent and missing-status fits |
 | `test_result_binding.py` | CI fixtures of the result binding: the committed identities, and mutations of every bound file |
+| `test_ulps_apart.py` | CI fixtures of the validator's ULP distance (#148): signed zero, subnormals, binade boundaries, NaN, symmetry, and agreement with `model_fidelity.ulp_distance` |

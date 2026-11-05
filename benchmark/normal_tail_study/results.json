@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-03T23:06:46Z",
+ "generated_utc": "2026-11-05T08:13:18Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -34,7 +34,7 @@
    },
    "normal_tail_study/validate_kernel.py": {
     "role": "validator: sets, oracles, checks and predictions",
-    "sha256": "b8823dc62d4761bd893d6176bc80cd93522043288cee020dfab9bef472d9777f"
+    "sha256": "a1691b86edf1990a972b8a1a357eed0ba4cdbac5c724498ec84a54b0fa887065"
    },
    "normal_tail_study/holdout_record.py": {
     "role": "validator: the exposure record and the modes",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 33.4,
+ "runtime_s": 46.6,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3618,6 +3618,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "normal_tail_study/holdout_record.py (validator: the exposure record and the modes): recorded a677ef6030874faed7e9382880eca490657fffcaf8f2c1d5c8466c01d58b642c, now 8e793b08ae33265d6e3d02610347de72d82e1fb461752f66e47f62365d043ccc"
+   ]
+  },
+  {
+   "utc": "2026-11-05T08:12:31Z",
+   "reason": "#148: ulps_apart now measures true binary64 steps with +0 and -0 as one point; no study value changes, because no measured pair is zero or crosses zero.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "normal_tail_study/validate_kernel.py (validator: sets, oracles, checks and predictions): recorded b8823dc62d4761bd893d6176bc80cd93522043288cee020dfab9bef472d9777f, now a1691b86edf1990a972b8a1a357eed0ba4cdbac5c724498ec84a54b0fa887065"
    ]
   }
  ]
