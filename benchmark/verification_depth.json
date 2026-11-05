@@ -101,6 +101,13 @@
       "current_state": "green"
     },
     {
+      "id": "older-holdout-summary-currency",
+      "live_command": "holdout_older/check_holdout_older_summary.py",
+      "proof_command": "holdout_older/test_analyze_holdout_older.py",
+      "negative_claim": "a contract tightened or retired after the summary was written, a hand-edited verdict and a missing summary fail; a current summary that records FAIL verdicts passes",
+      "current_state": "green"
+    },
+    {
       "id": "excel-exact-sha-certification",
       "live_command": "check_excel_certification.py --record excel_regression_record.json --require-pass",
       "proof_command": "test_excel_certification.py",

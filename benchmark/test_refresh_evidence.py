@@ -27,7 +27,8 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 GUARD = "REFRESH_EVIDENCE_FIXTURE"
-SUMMARIES = ("benchmark/accuracy_summary.md", "benchmark/holdout/holdout_summary.md")
+SUMMARIES = ("benchmark/accuracy_summary.md", "benchmark/holdout/holdout_summary.md",
+             "benchmark/holdout_older/holdout_older_summary.md")
 STALE = "\n<!-- fixture: stale line that only a refresh may remove (#88) -->\n"
 CHECK_LINE = "--check left the working tree unchanged"
 
