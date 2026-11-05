@@ -291,8 +291,11 @@ def evidence_gaps(rows, observed_key="observed_vba"):
 # KEEP THESE IN SYNC WITH THE VBA CONSTANTS. They were raised on 2026-07-29
 # from 1E5/1E6/1E6 after benchmark/envelope_probe showed the previous
 # boundaries were measuring the CR-P1-02 prefactor cancellation rather than an
-# intrinsic limit. Nothing verifies the pairing automatically
-# (check_source_thresholds.py skips Const lines), so update both together.
+# intrinsic limit. Update both together: check_df_cap_mirrors.py (#86), run by
+# test_evidence_tools.py, parses the three PROB_*_MAX_DF declarations, converts
+# each literal to its binary64 Double and fails unless every mirror below is
+# bit-identical, bound once, and a float literal. Its negative fixtures are in
+# test_df_cap_mirrors.py.
 # The inverses share the forward caps. They were briefly capped lower, on the
 # assumption that a measured F_InverseCumulative refusal reflected the inverse
 # iteration giving up; benchmark/inverse_probe showed the refusal was the newly

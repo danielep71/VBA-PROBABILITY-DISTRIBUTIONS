@@ -141,6 +141,13 @@
       "proof_command": "../tests/test_ci_test_coverage.py",
       "negative_claim": "a tracked test file that no pull-request workflow step or runner list executes, one run only under a path filter, an unrecognized condition or an unaggregated continue-on-error, a selected-only test whose change counts as metadata-only, and a stale reference or exemption are reported",
       "current_state": "green"
+    },
+    {
+      "id": "df-cap-mirror",
+      "live_command": "check_df_cap_mirrors.py",
+      "proof_command": "test_df_cap_mirrors.py",
+      "negative_claim": "a changed or one-ulp-drifted VBA PROB_*_MAX_DF or Python *_MAX_DF value, a missing or renamed constant, a duplicate in the module, a procedure or another module, and an unparsable, inexact or wrongly typed literal are rejected",
+      "current_state": "green"
     }
   ]
 }
