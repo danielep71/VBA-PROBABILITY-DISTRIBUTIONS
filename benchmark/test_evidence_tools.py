@@ -23,6 +23,7 @@ commands = (
     ("test_root_readme.py",),
     ("check_root_readme.py",),
     ("test_render_readme_assurance.py",),
+    ("test_refresh_evidence.py",),
     ("test_igamma_parity.py",),
     ("student_t_large_df_study/test_coefficients.py",),
     ("student_t_large_df_study/test_binary64_route_model.py",),
