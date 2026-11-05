@@ -44,6 +44,8 @@ commands = (
     ("test_render_contract_table.py",),
     ("test_source_thresholds.py",),
     ("check_source_thresholds.py",),
+    ("test_df_cap_mirrors.py",),
+    ("check_df_cap_mirrors.py",),
     ("holdout/test_analyze_holdout.py",),
     ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
     ("../tools/check_vba_jumps.py", "--root", "..", "--self-test"),
