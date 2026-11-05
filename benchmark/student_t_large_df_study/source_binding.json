@@ -1,0 +1,31 @@
+{
+ "rule": "SHA-256 of the text of each bound VBA procedure and constant declaration in the source (CRLF normalized to LF) and of the model file. A change to any of them makes finding F1 stale until it is re-measured, the study documents are updated, and model_fidelity.py --record --reason TEXT re-records the binding (#77).",
+ "source": "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
+ "model": "benchmark/student_t_large_df_study/binary64_route_model.py",
+ "evidence": [
+  "benchmark/student_t_large_df_study/PRODUCTION_FEASIBILITY.md (finding F1)",
+  "benchmark/student_t_large_df_study/test_binary64_route_model.py"
+ ],
+ "procedures": {
+  "PROB_NormalPDF": "47987f5e9d7574b5a8047455d9eca2d172dc629aac15c65fc46fe75f61a19942",
+  "PROB_NormalUpperTailPositive": "301cf245d0f31431752f354c3fee348c0895665561b1bc506e384917aaa636ce",
+  "PROB_NormalCDF": "3143813bac5d1e886fad0df636fe8fbd5d0cdd627de42d4a3acdb71c5a1aa342",
+  "PROB_NormalSurvival": "af2c4717ce3fc685ff6ddd61c8619ab918d691ff261e39bc504ee0c4bd2bac11"
+ },
+ "constants": {
+  "PROB_INV_SQRT_TWO_PI": "13d290abf53716c193c6b02c0ecd11805ec25e88b8b0952131cb4ebaee60d6e6",
+  "PROB_TAIL_UNDERFLOW_Z": "e42ed97b38ca329014928bf6e21f4d20b3c00ed52bb92c8757f169118ce0d1ee",
+  "PROB_NORMAL_TAIL_CF_TERMS": "8a7a4731fa9cd0c1f1bf443eee40886ecce6bd232ca19375ae3b0b2f58ec55ae",
+  "PROB_CDF_SPLIT": "fe2fb7e93508ae80349dc948a50b2093e6597bfe36ec44205f908408a8d1839f"
+ },
+ "model_sha256": "4fb3b447bcc84dbf552af5401a546dc644004033189282217270262e47ab8595",
+ "history": [
+  {
+   "date": "2026-11-05",
+   "reason": "Initial binding of finding F1 to the VBA normal-tail kernel it mirrors, after verifying the extraction (#77).",
+   "identities_changed": [
+    "initial binding"
+   ]
+  }
+ ]
+}

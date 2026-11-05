@@ -66,6 +66,9 @@ existing route. The CF is retained outside the region and is accurate there.
 | `results.json` | every measurement, decision trace, seams, holdout |
 | `binary64_route_model.py` | binary64 model of the production route and the VBA normal-tail kernel |
 | `test_binary64_route_model.py` | CI fixture pinning finding F1 |
+| `model_fidelity.py` | true binary64 ULP distance, and the binding of the model to its VBA source |
+| `source_binding.json` | SHA-256 of the bound VBA procedures, constants and model |
+| `test_model_fidelity.py` | CI fixture: ULP edge cases, three-step and source-mutation negatives |
 | `PRODUCTION_FEASIBILITY.md` | finding F1: the adopted route is not buildable on the existing normal-tail kernel |
 
 ## Production feasibility (finding F1)
@@ -77,6 +80,14 @@ kernel, up to 5.3E-10 at t = 6, and worse than the current continued fraction at
 7 of the 36 fitting points inside the region. With a correctly rounded Q(t) it
 meets 2^-50 everywhere. See `PRODUCTION_FEASIBILITY.md`; the production design
 needs a decision and a new preregistration before VBA is written.
+
+**2026-11-05 (#77).** The model's fidelity to Excel is now measured in true
+binary64 ULPs: 9 of the 12 committed normal observations match exactly and the
+other 3 are 1, 1 and 2 ULPs apart, within the unchanged two-ULP limit. The
+"1.25 ulps" first recorded was relative error in units of machine epsilon. The
+model is also bound to the VBA procedures and constants it mirrors, so a change to
+the normal-tail kernel fails the F1 fixture until the finding is re-measured.
+F1's conclusions are unchanged. See Amendment 1 of `PRODUCTION_FEASIBILITY.md`.
 
 ## Oracle gap
 

@@ -2,9 +2,14 @@
 Fixture for finding F1 (PRODUCTION_FEASIBILITY.md): the adopted #34 route is
 not implementable with the existing VBA normal-tail kernel.
 
+  0. Source binding: the model is bound to the VBA procedures and constants
+     it mirrors (model_fidelity.py, source_binding.json). A change to any of
+     them, or to the model, fails this fixture until the finding is
+     re-measured and the binding re-recorded.
   1. Fidelity: the binary64 port of PROB_NormalUpperTailPositive reproduces
      every committed Excel observation of NormalStandard_Survival and
-     NormalStandard_Cumulative to within 2 ulps, most of them exactly.
+     NormalStandard_Cumulative to within 2 true binary64 ULPs (ordered-integer
+     distance), 9 of the 12 exactly and the others 1, 1 and 2 ULPs apart.
   2. The order-5 series itself is sound in binary64: with a correctly rounded
      Q(t) the route meets the preregistered bound 2^-50 at every forward
      fitting point inside the adopted region (df >= 1E5, |t| <= 8).
@@ -16,7 +21,9 @@ not implementable with the existing VBA normal-tail kernel.
      records for SurvivalTailRel: above 1E-14 by z = 3, above 1E-11 by z = 5.
 
 If the normal-tail kernel or the adopted predicate changes, this fixture fails
-until the finding is re-measured and the document updated.
+until the finding is re-measured and the document updated. The kernel is
+checked by its bound source text, not only by the committed observations,
+whose largest |z| is 3.
 
 Run: python3 test_binary64_route_model.py   (exit 0 = pass, nonzero = fail)
 """
@@ -31,6 +38,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BENCHMARK = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import binary64_route_model as M                                 # noqa: E402
+import model_fidelity as F                                       # noqa: E402
 
 fails = []
 
@@ -40,9 +48,14 @@ def check(cond, msg):
         fails.append(msg)
 
 
+# 0. The model is the one bound to today's VBA source.
+for problem in F.stale(F.load_record()):
+    fails.append("source binding: " + problem)
+
 # 1. Port fidelity against Excel.
 kernels = {"NormalStandard_Survival": M.vba_survival, "NormalStandard_Cumulative": M.vba_cdf}
 seen = exact = 0
+apart = []
 for grid in ("probability_accuracy_grid.csv", os.path.join("holdout", "holdout_grid.csv")):
     with open(os.path.join(BENCHMARK, grid), newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -54,11 +67,15 @@ for grid in ("probability_accuracy_grid.csv", os.path.join("holdout", "holdout_g
             modelled = kernel(float(row["arg1"]))
             seen += 1
             exact += observed == modelled
-            ulps = abs(observed - modelled) / (abs(observed) * 2.0 ** -52)
-            check(ulps <= 2.0, f"{row['function']}({row['arg1']}): port differs from Excel "
-                               f"by {ulps:.2f} ulps")
+            ulps = F.ulp_distance(observed, modelled)
+            apart += [ulps] if ulps else []
+            check(F.within_ulps(observed, modelled),
+                  f"{row['function']}({row['arg1']}): port differs from Excel by {ulps} ULPs "
+                  f"(limit {F.FIDELITY_LIMIT_ULPS})")
 check(seen >= 12, f"expected at least 12 committed normal observations, found {seen}")
 check(exact * 4 >= seen * 3, f"only {exact}/{seen} observations reproduced exactly")
+check(sorted(apart) == [1, 1, 2], f"ULP distances of the inexact observations are {sorted(apart)}, "
+                                  "not the [1, 1, 2] that PRODUCTION_FEASIBILITY.md records")
 
 # 2-3. Route accuracy inside the adopted region.
 rows = M.feasibility()
@@ -93,5 +110,6 @@ if fails:
         print("  - " + f)
     raise SystemExit(1)
 print(f"PASS: #34 production feasibility (finding F1): port matches Excel on {seen} normal "
-      f"observations ({exact} exactly, all within 2 ulps); exact-Q route meets 2^-50 at all "
+      f"observations ({exact} exactly, the others {sorted(apart)} true ULPs apart, limit "
+      f"{F.FIDELITY_LIMIT_ULPS}); source binding current; exact-Q route meets 2^-50 at all "
       f"36 fitting points; existing-kernel route worse than today at {len(worse)} points")
