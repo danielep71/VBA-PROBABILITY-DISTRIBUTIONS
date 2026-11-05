@@ -49,6 +49,8 @@ commands = (
     ("check_source_thresholds.py",),
     ("test_df_cap_mirrors.py",),
     ("check_df_cap_mirrors.py",),
+    ("test_survival_references.py",),
+    ("check_survival_references.py",),
     ("holdout/test_analyze_holdout.py",),
     ("../tools/check_committed_whitespace.py", "--root", "..", "--self-test"),
     ("../tools/check_vba_jumps.py", "--root", "..", "--self-test"),
