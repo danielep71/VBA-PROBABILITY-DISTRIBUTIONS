@@ -28,14 +28,29 @@ repaired regime had no coverage. This grid supplies it.
 
 ## References
 
-`generate_cdf_large_shape.py` computes every reference with mpmath at 30 digits,
-using the route that converges — the ascending series below `A + 1`, the Lentz
-continued fraction above it — and then **recomputes at 45 digits and requires
-agreement**. A value that has genuinely converged does not move; one that hit an
-iteration cap does. Points that fail the check are dropped rather than trusted,
-and the generator aborts before writing if the worst disagreement exceeds
-tolerance. Beta references are cross-checked against the symmetry
-`I_x(a,b) = 1 - I_{1-x}(b,a)`.
+`generate_cdf_large_shape.py` computes every reference with mpmath at
+`40 + log10(A)` digits, using the route that converges — the ascending series
+below `A + 1`, the Lentz continued fraction above it — and then **recomputes 15
+digits higher and requires agreement to 32 significant digits**. A value that has
+genuinely converged does not move; one that hit an iteration cap or ran out of
+digits does. Points that fail the check are dropped rather than trusted, and the
+generator aborts before writing if the worst disagreement exceeds tolerance. The
+survival is computed directly on the side where the continued fraction
+converges, never as `1 - CDF` in the tail. Beta references are cross-checked
+against the symmetry `I_x(a,b) = 1 - I_{1-x}(b,a)`.
+
+**Amendment, 2026-11-05 (#159).** Until this date the references were computed
+at a fixed 30 digits and checked at 45. The log prefactor subtracts terms of size
+`A·log(A)`, so at shapes of 1E6 and above the 30-digit value kept only 17 to 24
+significant digits, and the survival was formed as `1 - CDF`. The generator now
+works at the precision above, and the committed grid was re-referenced with
+`python generate_cdf_large_shape.py --merge-references --write`, which changes
+reference cells only: all 96 references moved, by at most 4.9E-18 relative, and
+no observation changed. The old values are in `../study_reference_rebase.csv`.
+At the new precision the check also accepts 24 points the old check dropped (all
+Gamma points at A = 1E12, three at 1E10, the centre at 1E8, and the Beta centre
+at 1E8 and above). They are not in the grid: adding a point needs an Excel
+export. The merge lists them.
 
 ## Reachability, and why some points are expected to fail
 

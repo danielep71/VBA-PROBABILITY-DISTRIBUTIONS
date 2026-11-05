@@ -78,3 +78,7 @@ a hi;lo pair to preserve full Double precision through the CSV.
 4. Reconcile documentation against the emitted table and preserve all outcomes.
 
 The generator rewrites the comparison grid. Use a disposable checkout when reproducing references; preserve the committed observations until a real replacement export is available.
+
+To re-reference the committed grid without touching either observation column, run `python generate_excel_comparison.py --merge-references` (report) and add `--write` to patch it.
+
+**Amendment, 2026-11-05 (#159).** The `Beta_Survival(0.999,2,3)` reference was `1 - CDF` at the decimal 0.999, exactly 3.997E-9, which keeps 15 digits of the value at the Double 0.999 the exporter passes. It is now `I_{1-x}(3, 2)` at that Double, and the F survival is computed directly as an upper tail. The grid was re-referenced with `--merge-references --write`: one reference moved, by 2.7E-15 relative. The analyzer now reads the library result there as full precision instead of 15 digits; the grade of each side, Excel at report and the library at reference, is unchanged. The old value is in `../study_reference_rebase.csv`.

@@ -56,9 +56,9 @@ test_cross_check_scipy.py runs them in CI without it; only evaluating SciPy
 needs it.
 
 USAGE, from benchmark/, with SciPy installed. The committed record was generated
-with these three grids as they stood at release/1.0.0 commit c9b1819
-(2026-11-05); its input list carries their SHA-256 values. If a grid changes,
-re-run and commit the record with it.
+with these three grids as they stood at commit ce9a274 (2026-11-05), after
+the #159 re-reference of beta_f_unbalanced; its input list carries their
+SHA-256 values. If a grid changes, re-run and commit the record with it.
 
     python3 cross_check_scipy.py --grids
         beta_f_unbalanced/beta_f_unbalanced_grid.csv

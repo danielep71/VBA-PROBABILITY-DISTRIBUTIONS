@@ -32,6 +32,30 @@ def ibeta(x, a, b):
     if x < (a + 1) / (a + b + 2): return bt * betacf(a, b, x) / a
     return 1 - bt * betacf(b, a, 1 - x) / b
 
+def ibeta_upper(x, a, b, xc=None):
+    """Upper tail 1 - I_x(a, b), computed directly (#159).
+
+    xc is 1 - x when the caller can form it without cancellation (for F,
+    d2 / (d1 x + d2)); otherwise it is formed here, exactly for a binary64 x at
+    the working precision. Where the continued fraction converges on the upper
+    side the tail is returned as bt * cf / b with no subtraction. Below that
+    switch point, which lies near the mean, the survival is the larger part of
+    the mass and 1 - I_x(a, b) cannot cancel."""
+    x, a, b = mp.mpf(x), mp.mpf(a), mp.mpf(b)
+    xc = 1 - x if xc is None else mp.mpf(xc)
+    if x <= 0: return mp.mpf(1)
+    if xc <= 0: return mp.mpf(0)
+    lbt = mp.loggamma(a + b) - mp.loggamma(a) - mp.loggamma(b) + a * mp.log(x) + b * mp.log(xc)
+    bt = mp.e ** lbt
+    if x < (a + 1) / (a + b + 2): return 1 - bt * betacf(a, b, x) / a
+    return bt * betacf(b, a, xc) / b
+
+def f_sf(x, d1, d2):
+    """F upper tail, direct: 1 - y = d2 / (d1 x + d2) is never formed as 1 - y."""
+    d1, d2, x = mp.mpf(d1), mp.mpf(d2), mp.mpf(x)
+    if x <= 0: return mp.mpf(1)
+    return ibeta_upper(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2, xc=d2 / (d1 * x + d2))
+
 def beta_invcdf(p, a, b):
     p, a, b = mp.mpf(p), mp.mpf(a), mp.mpf(b)
     lo, hi = mp.mpf(0), mp.mpf(1)   # exact support of the Beta quantile; not a cap

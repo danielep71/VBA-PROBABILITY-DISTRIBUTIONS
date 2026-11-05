@@ -33,6 +33,18 @@ where that actually begins.
   self-consistent to ~1E-41 (50 vs 80 dps) across the whole region, so it is
   trustworthy ground truth exactly where the double-precision kernel is suspect.
 
+**Amendment, 2026-11-05 (#159).** The references were evaluated at the decimal
+token of x (`"0.3"` as three tenths) in the base and gap sweeps, and at the
+17-digit decimal of x at 40 digits in the both-large sweep, not at the Double
+the exporter passes. At these degrees of freedom half an ulp of x cost up to 16
+of the 30 printed digits of the survival. All three generators now evaluate at
+the exact binary64 argument through `_fenv_common.py`, with the survival computed
+directly. The committed grids were re-referenced with
+`--merge-references --write`, which changes reference cells only: 180, 168 and
+164 references moved, by at most 7.5E-17, 7.5E-17 and 4.2E-14 relative, and no
+observation changed. The old values are in `../study_reference_rebase.csv`. The
+analyzer's degradation curve and envelope boundary are unchanged.
+
 ## Files
 
 The study has three sweeps. The strict envelope is the **minimum** boundary over
@@ -43,6 +55,7 @@ all of them, so all three matter.
 | `generate_f_envelope.py` | Writes `f_envelope_grid.csv`; base sweep, beta shape ~1E6 to 5E9. |
 | `generate_f_envelope_gap.py` | Writes `f_envelope_gap_grid.csv`; fills the region below the base sweep, shape ~50 to 1E6. |
 | `generate_f_envelope_bothlarge.py` | Writes `f_envelope_bothlarge_grid.csv`; both df large (`d1=d2` and `d2=3*d1`), which degrades earlier than one-large. |
+| `_fenv_common.py` | Shared reference rows and reference-only merge for the three generators. |
 | `f_envelope_grid.csv`, `f_envelope_gap_grid.csv`, `f_envelope_bothlarge_grid.csv` | The sweep grids; `arg1=x`, `arg2=d1`, `arg3=d2`. 11-column study schema, `observed_vba` at index 8. |
 | `M_STATS_PROBDIST_FENV.bas` | Export macro `Export_FEnvelope` (base sweep). |
 | `M_STATS_PROBDIST_FENVGAP.bas` | Export macro `Export_FEnvelopeGap` (gap sweep). |

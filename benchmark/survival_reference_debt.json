@@ -1,0 +1,868 @@
+{
+  "schema_version": 1,
+  "issue": "#159",
+  "floor": "relative difference <= 1E-24 (25 significant digits), as SER_FLOOR in audit_references.py",
+  "blockers": {
+    "main-grid-observation-binding": "A manifest binding blocks this re-base until a fresh Excel export. probability_accuracy_grid.csv is bound byte for byte by observation_manifest.json and by the main-grid export claim of excel_regression_record.json; a reference change makes the strict gate fail STALE EVIDENCE, and write_manifest.py may rebind only after a fresh Excel export (PROVENANCE.md). Re-based with the next main-grid export, in the #81 wave.",
+    "holdout-observation-binding": "A manifest binding blocks this re-base until a fresh Excel export. holdout/holdout_grid.csv is bound byte for byte by holdout/holdout_manifest.json; a reference change makes the strict gate fail STALE HOLDOUT EVIDENCE, and the manifest may be rebound only after a fresh Excel holdout export (PROVENANCE.md, #29). Re-based with that export, in the #81 wave, from the fixed holdout/generate_holdout.py.",
+    "normal-tail-record": "Re-based with the #81 wave, when the #72 kernel evidence is redone. normal_tail_study/results.json reads these rows and records each one's predicted and current-model error against its committed reference, so they keep their committed references and results.json keeps its recorded values until then. The fixed generators report the new values with --merge-references."
+  },
+  "entries": [
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "NormalStandard_Survival",
+      "arguments": [
+        "1.96"
+      ],
+      "reference": "0.02499789514822043413658427",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Normal_Survival",
+      "arguments": [
+        "1.96",
+        "0.0",
+        "1.0"
+      ],
+      "reference": "0.02499789514822043413658427",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.00069951034276006795",
+        "0.7",
+        "1000.0"
+      ],
+      "reference": "0.343559921926956463822202888116",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.0011979634621144055",
+        "0.7",
+        "1000.0"
+      ],
+      "reference": "0.189144334939014380782774480896",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "2.499993750015625e-6",
+        "2.5",
+        "1000000.0"
+      ],
+      "reference": "0.415880492098917202022706480599",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "2.9999895000367499e-6",
+        "2.5",
+        "1000000.0"
+      ],
+      "reference": "0.30621964819490226273229052799",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.13099041533546326",
+        "10.25",
+        "68.0"
+      ],
+      "reference": "0.467047093043271244936405256917",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.13564668769716088",
+        "10.25",
+        "68.0"
+      ],
+      "reference": "0.419572906573804758148419746785",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "7.9993600511959043e-5",
+        "0.8",
+        "10000.0"
+      ],
+      "reference": "0.352983840637144524665415759134",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.00012997660421124198",
+        "0.8",
+        "10000.0"
+      ],
+      "reference": "0.201666415121230142927133665727",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "1.2999831002196971e-5",
+        "1.3",
+        "100000.0"
+      ],
+      "reference": "0.383728581890740563528855662924",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "1.7999586009521781e-5",
+        "1.3",
+        "100000.0"
+      ],
+      "reference": "0.248133962014276580941485623546",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "5.7499669376901083e-6",
+        "5.75",
+        "1000000.0"
+      ],
+      "reference": "0.444511310544986350271028102821",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "6.2499578127847637e-6",
+        "5.75",
+        "1000000.0"
+      ],
+      "reference": "0.366424841222238797929809787374",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.99920063948840927",
+        "1000.0",
+        "0.8"
+      ],
+      "reference": "0.646870925816320675100999088476",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.99870233579556798",
+        "1000.0",
+        "0.8"
+      ],
+      "reference": "0.798008856347679066384238087992",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.99997500062498438",
+        "100000.0",
+        "2.5"
+      ],
+      "reference": "0.584116762005866903008120421895",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.99997000104996325",
+        "100000.0",
+        "2.5"
+      ],
+      "reference": "0.693773783858329117240551690087",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.98999999999999988",
+        "2.0e-12",
+        "1.9799999999999999e-13"
+      ],
+      "reference": "0.9099181073701292365996096",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "10.101010101010102",
+        "1.9799999999999999e-13",
+        "2.0e-12"
+      ],
+      "reference": "0.09008189262966337373939041",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "101.01010101010102",
+        "1.9799999999999999e-13",
+        "2.0e-12"
+      ],
+      "reference": "0.09008189262945587305608797",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.0099000000000000008",
+        "2.0e-16",
+        "1.9799999999999999e-17"
+      ],
+      "reference": "0.9099181073703367372829121",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.5",
+        "1000000.0",
+        "1000000.0"
+      ],
+      "reference": "0.5000000000000000000000008141722962",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.50035355339059329",
+        "1000000.0",
+        "1000000.0"
+      ],
+      "reference": "0.1586552539314408491805275697530392",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Gamma_Survival",
+      "arguments": [
+        "99990000.0",
+        "100000000.0",
+        "1.0"
+      ],
+      "reference": "0.8413447464718561695908864629179275",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Gamma_Survival",
+      "arguments": [
+        "100010000.0",
+        "100000000.0",
+        "1.0"
+      ],
+      "reference": "0.1586552535282011864330430060052216",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.49996464466094065",
+        "100000000.0",
+        "100000000.0"
+      ],
+      "reference": "0.8413447460687035565489182938825485",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.5000353553390593",
+        "100000000.0",
+        "100000000.0"
+      ],
+      "reference": "0.1586552539316763598618224242701569",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.49999646446609408",
+        "10000000000.0",
+        "10000000000.0"
+      ],
+      "reference": "0.8413447460675638065612008756920018",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.50000353553390597",
+        "10000000000.0",
+        "10000000000.0"
+      ],
+      "reference": "0.1586552539286370293410540544401388",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.49999964644660938",
+        "1000000000000.0",
+        "1000000000000.0"
+      ],
+      "reference": "0.8413447460865596262786444446740215",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.50000035355339056",
+        "1000000000000.0",
+        "1000000000000.0"
+      ],
+      "reference": "0.1586552539514320147028180381466968",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "ChiSquare_Survival",
+      "arguments": [
+        "9995527.8640449997",
+        "10000000.0"
+      ],
+      "reference": "0.841344754136838454159530934201115",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "ChiSquare_Survival",
+      "arguments": [
+        "10000000.0",
+        "10000000.0"
+      ],
+      "reference": "0.4999405291960621623213808144565377",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "ChiSquare_Survival",
+      "arguments": [
+        "10004472.135955",
+        "10000000.0"
+      ],
+      "reference": "0.1586552458682916482525645514244159",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "ChiSquare_Survival",
+      "arguments": [
+        "99985857.864376262",
+        "100000000.0"
+      ],
+      "reference": "0.8413447468753166837281197378356431",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "ChiSquare_Survival",
+      "arguments": [
+        "100000000.0",
+        "100000000.0"
+      ],
+      "reference": "0.4999811936805463185328154097821035",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "ChiSquare_Survival",
+      "arguments": [
+        "100014142.13562374",
+        "100000000.0"
+      ],
+      "reference": "0.1586552531248455668976497624633062",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "StudentT_Survival",
+      "arguments": [
+        "0.5",
+        "10000000.0"
+      ],
+      "reference": "0.3085375442270075419605538885814367",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "StudentT_Survival",
+      "arguments": [
+        "1.0",
+        "10000000.0"
+      ],
+      "reference": "0.1586552660299929749085254451130222",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "StudentT_Survival",
+      "arguments": [
+        "2.0",
+        "10000000.0"
+      ],
+      "reference": "0.02275014544592147663979032443262028",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "StudentT_Survival",
+      "arguments": [
+        "0.5",
+        "100000000.0"
+      ],
+      "reference": "0.3085375392760889685805770472608069",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "StudentT_Survival",
+      "arguments": [
+        "1.0",
+        "100000000.0"
+      ],
+      "reference": "0.1586552551413106709858562907612743",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "StudentT_Survival",
+      "arguments": [
+        "2.0",
+        "100000000.0"
+      ],
+      "reference": "0.02275013329795337644141058418090493",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.999",
+        "1000000.0",
+        "1000000.0"
+      ],
+      "reference": "0.6915504831211844351360545977130932",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "1.001",
+        "1000000.0",
+        "1000000.0"
+      ],
+      "reference": "0.3086255495710781017123048265445538",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.999",
+        "100000000.0",
+        "100000000.0"
+      ],
+      "reference": "0.9999997170443669409117515764296396",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "1.0",
+        "100000000.0",
+        "100000000.0"
+      ],
+      "reference": "0.5000000000000000000000925481909044",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "probability_accuracy_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "1.001",
+        "100000000.0",
+        "100000000.0"
+      ],
+      "reference": "0.0000002903893620961724788958997248836887",
+      "blocker": "main-grid-observation-binding",
+      "reason": "observation_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.00018329972838312976",
+        "0.55",
+        "3000"
+      ],
+      "reference": "0.325028097209848835502999670696",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "3.7998556054869915e-5",
+        "1.9",
+        "50000"
+      ],
+      "reference": "0.40358782772966842240026040556",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "8.2493194311469304e-5",
+        "3.3",
+        "40000"
+      ],
+      "reference": "0.426767735843115996381927697787",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.00059964021587047771",
+        "0.42",
+        "700"
+      ],
+      "reference": "0.302900673993733182641219767823",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.037072701011073664",
+        "7.7",
+        "200"
+      ],
+      "reference": "0.454732922090187763164504095069",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "0.9954210631096954",
+        "250",
+        "1.15"
+      ],
+      "reference": "0.622659588172663949330152271166",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "3.5999870400466558e-6",
+        "0.9",
+        "250000"
+      ],
+      "reference": "0.361004964795551790725653741041",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "Beta_Survival",
+      "arguments": [
+        "4.8886498882276866e-5",
+        "4.4",
+        "90000"
+      ],
+      "reference": "0.436570022678110689561338200558",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.78876569975907738",
+        "3",
+        "5000"
+      ],
+      "reference": "0.5",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.60555810316614205",
+        "1.5",
+        "200000"
+      ],
+      "reference": "0.5",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.90655665698650023",
+        "7",
+        "50000"
+      ],
+      "reference": "0.5",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "1.1916470780535437",
+        "500000",
+        "4"
+      ],
+      "reference": "0.5",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.017142857142857144793218165152686658906064905912108",
+        "0.00014",
+        "1.2e-05"
+      ],
+      "reference": "0.921061525365684773132577585598",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "0.17142857142857144793218165152686658906064905912108",
+        "0.00014",
+        "1.2e-05"
+      ],
+      "reference": "0.921048801484665675395409423593",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout/holdout_grid.csv",
+      "function": "F_Survival",
+      "arguments": [
+        "1.7142857142857144793218165152686658906064905912108",
+        "0.00014",
+        "1.2e-05"
+      ],
+      "reference": "0.921036076980708718872565011531",
+      "blocker": "holdout-observation-binding",
+      "reason": "holdout_manifest.json binds this grid; blocked until a fresh Excel export (#81 wave)"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "Normal_Survival",
+      "arguments": [
+        "1.35",
+        "0.4",
+        "1.7"
+      ],
+      "reference": "0.288141081295014969526745707411",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "Normal_Survival",
+      "arguments": [
+        "-2.1",
+        "0.4",
+        "1.7"
+      ],
+      "reference": "0.929298746256693534011444458825",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "NormalStandard_Survival",
+      "arguments": [
+        "0.73"
+      ],
+      "reference": "0.2326950923008974309549897355",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "NormalStandard_Survival",
+      "arguments": [
+        "-1.85"
+      ],
+      "reference": "0.96784322520438628903265937975",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "NormalStandard_Survival",
+      "arguments": [
+        "3.1"
+      ],
+      "reference": "0.000967603213218356892115671924507",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "Lognormal_Survival",
+      "arguments": [
+        "2.3",
+        "0.2",
+        "0.6"
+      ],
+      "reference": "0.145747300746737150396324820119",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "holdout_older/holdout_older_grid.csv",
+      "function": "Lognormal_Survival",
+      "arguments": [
+        "0.45",
+        "0.2",
+        "0.6"
+      ],
+      "reference": "0.951961717615892238173815509363",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "survival_boundary/survival_boundary_grid.csv",
+      "function": "Lognormal_Survival",
+      "arguments": [
+        "12.182493960703473",
+        "0.0",
+        "1.0"
+      ],
+      "reference": "0.00620966532577613516697810457419",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    },
+    {
+      "grid": "survival_boundary/survival_boundary_grid.csv",
+      "function": "Lognormal_Survival",
+      "arguments": [
+        "33.115451958692314",
+        "0.0",
+        "1.0"
+      ],
+      "reference": "0.000232629079035525036349925886728",
+      "blocker": "normal-tail-record",
+      "reason": "re-based with the #81 wave, when the #72 kernel evidence is redone"
+    }
+  ]
+}

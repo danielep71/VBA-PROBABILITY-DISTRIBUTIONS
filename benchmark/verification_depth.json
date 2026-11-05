@@ -148,6 +148,13 @@
       "proof_command": "test_df_cap_mirrors.py",
       "negative_claim": "a changed or one-ulp-drifted VBA PROB_*_MAX_DF or Python *_MAX_DF value, a missing or renamed constant, a duplicate in the module, a procedure or another module, and an unparsable, inexact or wrongly typed literal are rejected",
       "current_state": "green"
+    },
+    {
+      "id": "survival-reference-basis",
+      "live_command": "check_survival_references.py",
+      "proof_command": "test_survival_references.py",
+      "negative_claim": "a survival reference taken at the decimal token instead of the binary64 argument, one formed as 1 - CDF at 53 bits, one below the 25-digit floor, stale or orphaned debt, an undefined blocker, an unknown survival function, an unlisted or empty grid and an uncertified oracle are rejected",
+      "current_state": "green_with_registered_transition_debt"
     }
   ]
 }
