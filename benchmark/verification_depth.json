@@ -104,7 +104,7 @@
       "id": "older-holdout-summary-currency",
       "live_command": "holdout_older/check_holdout_older_summary.py",
       "proof_command": "holdout_older/test_analyze_holdout_older.py",
-      "negative_claim": "a contract tightened or retired after the summary was written, a hand-edited verdict and a missing summary fail; a current summary that records FAIL verdicts passes",
+      "negative_claim": "a contract tightened or retired after the summary was written, a hand-edited verdict, a missing summary and a grid row neither scored nor covered by a characterization_only contract fail; a current summary that records FAIL verdicts passes",
       "current_state": "green"
     },
     {

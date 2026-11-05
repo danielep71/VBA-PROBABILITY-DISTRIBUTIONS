@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-05T12:56:57Z",
+ "generated_utc": "2026-11-05T23:01:39Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -58,7 +58,7 @@
    },
    "holdout_older/holdout_older_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "e58eb7702407e3568c4fda6c980959ab05a1ab17e1b6a2bfa92bda045ae69814"
+    "sha256": "33b668ea1adf3449a7c1a6d2eb2199f3ec8f1b30e7dee477df7c39c0e6935ad4"
    },
    "accuracy_contracts.csv": {
     "role": "input: the P4 contracts",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 52.0,
+ "runtime_s": 31.6,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3634,6 +3634,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded dffcef6a30caeac4130e277811af6d426af1fe78efbc14627c7fa9db696c7b8b, now e58eb7702407e3568c4fda6c980959ab05a1ab17e1b6a2bfa92bda045ae69814"
+   ]
+  },
+  {
+   "utc": "2026-11-05T23:01:07Z",
+   "reason": "#171: three holdout_older LogGamma rows move from regime all to general; no argument, reference or observation changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded e58eb7702407e3568c4fda6c980959ab05a1ab17e1b6a2bfa92bda045ae69814, now 33b668ea1adf3449a7c1a6d2eb2199f3ec8f1b30e7dee477df7c39c0e6935ad4"
    ]
   }
  ]
