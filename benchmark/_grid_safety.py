@@ -14,8 +14,10 @@ applies before it writes anything:
 
 The argument bit pattern is _binary64.double_key, shared with the reference
 generator (#32). reconcile_grid.py, promote_grid_rows.py, migrate_references.py,
-check_promotion.py and report_promotion_candidates.py import canonical_key and
-double_key instead of keeping copies; test_binary64.py pins that they do.
+check_promotion.py, report_promotion_candidates.py, check_grid_coverage.py and
+audit_references.py import canonical_key and double_key instead of keeping
+copies (#90); test_binary64.py pins that they do and that none of them
+reintroduces a private bit-pattern helper.
 """
 import csv
 import os
