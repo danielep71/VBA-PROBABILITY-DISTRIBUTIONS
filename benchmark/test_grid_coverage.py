@@ -112,10 +112,38 @@ corrupt_row = copy.deepcopy(frozen); corrupt_row["rows"][0]["arg1_bits"] = "not-
 check(any("invalid binary64" in x for x in C.validate_transition(corrupt_row, baseline)),
       "corrupted fingerprint identity fails")
 
+# 12. rows the shared identity (#90) cannot place fail closed, never as a
+# private identity: non-finite or unparsable arguments, a blank regime (no
+# longer read as 'all') and key fields with surrounding whitespace
+refusals = {
+    "non-finite argument": row(arg1="inf"),
+    "unparsable argument": row(arg1="1.#INF"),
+    "blank regime": row(regime=""),
+    "blank function": row(function=""),
+    "untrimmed function": row(function=" F_InverseCumulative"),
+    "untrimmed regime": row(regime="envelope_domain "),
+    "untrimmed evidence_set": row(evidence_set="main grid "),
+}
+for label, bad_row in refusals.items():
+    refused = C.evaluate_coverage([bad_row], [contract(), contract(regime="all")], [])
+    check(refused["main_rows"] == 0 and len(refused["errors"]) == 1
+          and C.validate_strict(refused) == refused["errors"],
+          f"{label} is a blocking error ({refused['errors']})")
+check(C.identity_key(C.row_identity(row(arg1="inf")))[1] == "?inf",
+      "a non-finite argument keys to the marked double_key, as in every grid tool")
+missing_column = {k: v for k, v in row().items() if k != "regime"}
+check(any("no 'regime' column" in x
+          for x in C.evaluate_coverage([missing_column], [contract()], [])["errors"]),
+      "a row without a regime column fails closed")
+zeros = C.evaluate_coverage([row(arg1="-0"), row(arg1="0")], [], [])
+check(zeros["missing_rows"] == 2 and len(zeros["missing_identities"]) == 2,
+      "-0 and +0 are two identities")
+
 if fails:
     print("FAIL: main-grid coverage fixtures")
     for failure in fails:
         print("  - " + failure)
     raise SystemExit(1)
 print("PASS: main-grid coverage checker (strict, exemption, baseline, new/change, "
-      "resolved/deleted, corrupted fingerprint, non-main row)")
+      "resolved/deleted, corrupted fingerprint, non-main row, shared-identity "
+      "refusals and signed zeros)")
