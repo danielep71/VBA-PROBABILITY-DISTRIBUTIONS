@@ -44,10 +44,16 @@ replacement_source names that action, so the migration script is mechanical:
 
 Report only; writes nothing but its own CSV.
 """
-import argparse, csv, importlib.util, os, struct, sys
+import argparse, csv, importlib.util, os, sys
 import time as _time
 from collections import Counter
 import mpmath as mp
+
+# One shared definition of argument identity (#32, #90): the argument bit
+# pattern and the row key are the ones every other grid tool uses, so a row the
+# audit matches against the generator is the row the gate and the writers see.
+from _binary64 import double_key as bits
+from _grid_safety import canonical_key as key
 
 DPS_LOW, DPS_HIGH = 160, 260
 
@@ -402,15 +408,8 @@ def main():
     g = importlib.util.module_from_spec(spec); sys.modules["gen"] = g
     spec.loader.exec_module(g)
 
-    def bits(t):
-        t = (t or "").strip()
-        if t == "": return ""
-        try: return struct.pack(">d", float(t)).hex()
-        except (ValueError, OverflowError): return "?" + t
-
     mp.mp.dps = 50
-    K = lambda r: (r["function"], bits(r["arg1"]), bits(r["arg2"]), bits(r["arg3"]),
-                   bits(r["arg4"]), r["regime"], r.get("evidence_set", ""))
+    K = key
     N = {K(r): r for r in g.build_rows()}
     grid = list(csv.DictReader(open(a.grid)))
     dis = [r for r in grid if K(r) in N and r["reference"] != N[K(r)]["reference"]]

@@ -7,6 +7,12 @@ fails on any missing disposition.  During the v1.0.0 transition only, transition
 mode permits the unresolved subset of one frozen binary64 fingerprint and
 reports it as KNOWN COVERAGE DEBT; it rejects new, changed, or removed debt rows.
 
+Row identity is the one every grid tool shares (#90): _grid_safety.canonical_key,
+built on _binary64.double_key. A main-grid row that this key cannot place as a
+valid identity - a blank function or regime, surrounding whitespace in a key
+field, or an argument double_key marks as non-finite or unparsable - is a
+blocking error, not a row with a private identity of its own.
+
 Run:
     python check_grid_coverage.py --mode strict
     python check_grid_coverage.py --mode transition --check-summary
@@ -15,12 +21,14 @@ import argparse
 import csv
 import hashlib
 import json
-import math
 import os
-import struct
+import sys
 from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from _grid_safety import canonical_key  # noqa: E402
+
 IDENTITY_SCHEMA = "function+arg1..arg4(binary64)+regime+evidence_set/v1"
 FINGERPRINT_SCHEMA = "coverage-debt/v1"
 EXEMPTION_SCHEMA = "accuracy-row-exemptions/v1"
@@ -35,41 +43,49 @@ def normalized_hash(path):
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
-def _bits(text):
-    """Canonical binary64 argument identity; blank arguments remain blank."""
-    value = (text or "").strip()
-    if not value:
-        return ""
-    number = float(value)
-    if not math.isfinite(number):
-        raise ValueError(f"non-finite argument {value!r}")
-    return struct.pack(">d", number).hex()
+IDENTITY_FIELDS = ("function", "arg1_bits", "arg2_bits", "arg3_bits", "arg4_bits",
+                   "regime", "evidence_set")
 
 
 def row_identity(row):
-    """Return the canonical, JSON-serializable identity of one grid row."""
-    function = (row.get("function") or "").strip()
-    regime = (row.get("regime") or "all").strip()
-    evidence_set = (row.get("evidence_set") or "").strip()
-    if not function or not regime:
-        raise ValueError("row has a blank function or regime")
-    identity = {"function": function}
+    """The JSON-serializable form of _grid_safety.canonical_key(row).
+
+    identity_key(row_identity(row)) == canonical_key(row) for every row, so
+    the gate, the writers and the audit key a row identically. Whether that
+    identity is acceptable on the main grid is identity_problem's question."""
+    try:
+        return dict(zip(IDENTITY_FIELDS, canonical_key(row)))
+    except KeyError as exc:
+        raise ValueError(f"row has no {exc.args[0]!r} column") from None
+
+
+def identity_problem(identity):
+    """Why a row identity cannot carry a disposition, or None if it can.
+
+    Every other grid tool keys a blank regime as '' rather than 'all', and
+    keeps key fields verbatim, so the gate refuses such rows instead of
+    reading them under an identity no other tool would give them. A marked
+    argument ('?' + token, from double_key) is a token VBA Val() never
+    turns into a finite Double."""
+    if not identity["function"] or not identity["regime"]:
+        return "row has a blank function or regime"
+    for field in ("function", "regime", "evidence_set"):
+        value = identity[field] or ""
+        if value != value.strip():
+            return f"{field} {value!r} has surrounding whitespace"
     for field in ARG_FIELDS:
-        identity[field + "_bits"] = _bits(row.get(field, ""))
-    identity["regime"] = regime
-    identity["evidence_set"] = evidence_set
-    return identity
+        bits = identity[field + "_bits"]
+        if bits.startswith("?"):
+            return f"non-finite or unparsable argument {field} {bits[1:]!r}"
+    return None
 
 
 def identity_key(identity):
-    return tuple(identity[k] for k in (
-        "function", "arg1_bits", "arg2_bits", "arg3_bits", "arg4_bits",
-        "regime", "evidence_set"))
+    return tuple(identity[k] for k in IDENTITY_FIELDS)
 
 
 def _identity_from_json(value):
-    required = ("function", "arg1_bits", "arg2_bits", "arg3_bits",
-                "arg4_bits", "regime", "evidence_set")
+    required = IDENTITY_FIELDS
     if not isinstance(value, dict) or any(k not in value for k in required):
         raise ValueError("identity is missing canonical fields")
     for field in ("arg1_bits", "arg2_bits", "arg3_bits", "arg4_bits"):
@@ -115,14 +131,19 @@ def evaluate_coverage(rows, contracts, exemptions):
             continue
         try:
             ident = row_identity(row)
-        except (ValueError, OverflowError) as exc:
+        except ValueError as exc:
             errors.append(f"grid row {index}: {exc}")
+            continue
+        problem = identity_problem(ident)
+        if problem:
+            errors.append(f"grid row {index}: {problem}")
             continue
         main.append((row, ident, identity_key(ident)))
 
+    # identity_problem has already refused blank and untrimmed key fields, so
+    # the identity's function and regime are the row's, verbatim.
     unclaimed = [(row, ident, key) for row, ident, key in main
-                 if ((row.get("function") or "").strip(),
-                     (row.get("regime") or "all").strip()) not in contract_keys]
+                 if (ident["function"], ident["regime"]) not in contract_keys]
     unclaimed_keys = Counter(key for _, _, key in unclaimed)
     duplicate_missing = [key for key, count in unclaimed_keys.items() if count > 1]
     if duplicate_missing:
@@ -158,8 +179,7 @@ def evaluate_coverage(rows, contracts, exemptions):
             errors.append(f"stale exemption {exemption_id or pos}: matches no unclaimed main-grid row")
 
     claimed = [(row, ident, key) for row, ident, key in main
-               if ((row.get("function") or "").strip(),
-                   (row.get("regime") or "all").strip()) in contract_keys]
+               if (ident["function"], ident["regime"]) in contract_keys]
     exempt = [(row, ident, key) for row, ident, key in unclaimed if key in exemption_keys]
     missing = [(row, ident, key) for row, ident, key in unclaimed if key not in exemption_keys]
     return {
@@ -171,8 +191,8 @@ def evaluate_coverage(rows, contracts, exemptions):
         "main_identities": Counter(key for _, _, key in main),
         "missing_identities": Counter(key for _, _, key in missing),
         "missing_identity_objects": [ident for _, ident, _ in missing],
-        "missing_groups": Counter((row["function"], row.get("regime", "all") or "all")
-                                  for row, _, _ in missing),
+        "missing_groups": Counter((ident["function"], ident["regime"])
+                                  for _, ident, _ in missing),
         "errors": errors,
     }
 
