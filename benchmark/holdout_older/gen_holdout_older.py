@@ -201,13 +201,17 @@ add("Uniform_InverseCumulative","all","0.137","1.0","4.0", M('1.0')+M('0.137')*(
 
 
 # ---- Special-function kernels (PROB_*) ----
-def add_sf(fn, a1, a2, ref):
+def add_sf(fn, a1, a2, ref, regime="all"):
     R.append({"function": fn, "vba_kernel": f"PROB_{fn}", "claim": "holdout", "metric": "rel",
               "arg1": mp.nstr(mp.mpf(a1),17), "arg2": "" if a2 is None else mp.nstr(mp.mpf(a2),17),
-              "arg3": "", "reference": mp.nstr(ref,30), "observed_vba": "", "regime": "all",
+              "arg3": "", "reference": mp.nstr(ref,30), "observed_vba": "", "regime": regime,
               "evidence_set": "holdout_older"})
+# LogGamma has no `all` contract since 1fac483 retired LogGamma.all.output.
+# 0.65, 3.7 and 12.3 are Z >= 0.5 outside the neighbourhoods of 1 and 2, the
+# domain of LogGamma.general.output_rel, so they carry the main grid's
+# `general` label (#171).
 for z in ["3.7","12.3","0.65"]:
-    add_sf("LogGamma", z, None, mp.loggamma(M(z)))
+    add_sf("LogGamma", z, None, mp.loggamma(M(z)), regime="general")
 for n,k in [("40","12"),("100","7")]:
     add_sf("LogChoose", n, k, mp.loggamma(M(n)+1)-mp.loggamma(M(k)+1)-mp.loggamma(M(n)-M(k)+1))
 for z in ["3.7","250000"]:

@@ -12,6 +12,12 @@ observation and contract, and every grid row that no thresholded contract
 claims, so a failure or a silently unscored row is visible in the committed
 record rather than only in this script's console output (#164).
 
+An unscored row has one accepted disposition: a contract for its function and
+regime whose status is `characterization_only`, the registry's existing marker
+for evidence that is measured but not claimed. Such a row is listed with that
+contract. Any other unscored row is listed with no disposition, and
+check_holdout_older_summary.py fails on it (#171).
+
 Usage, from this directory:
 
     python analyze_holdout_older.py          rewrite holdout_older_summary.md
@@ -31,6 +37,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 GRID = os.path.join(HERE, "holdout_older_grid.csv")
 CONTRACTS = os.path.join(HERE, "..", "accuracy_contracts.csv")
 SUMMARY = os.path.join(HERE, "holdout_older_summary.md")
+
+CHARACTERIZATION = "characterization_only"
 
 # Failing contracts whose cause is tracked elsewhere. The note is printed next
 # to each failing row of that contract. A contract that fails and is not listed
@@ -64,7 +72,9 @@ def evaluate(rows, contracts):
 
     Returns (results, failing, unclaimed): one (contract, worst, margin, verdict)
     per contract, one (contract, row, error) per row above its threshold, and
-    the grid rows no thresholded contract claims.
+    one (row, contract) per grid row no thresholded contract claims, where the
+    contract is the `characterization_only` contract for that function and
+    regime, or None when the row has no disposition.
     """
     grid_by = {}
     for r in rows:
@@ -93,8 +103,18 @@ def evaluate(rows, contracts):
         ok = worst <= thr
         margin = float(thr / worst) if worst > 0 else float("inf")
         results.append((c, worst, margin, "PASS" if ok else "FAIL"))
-    unclaimed = [r for r in rows if (r["function"], r["regime"]) not in claimed]
+    characterized = {}
+    for c in sorted(contracts, key=lambda c: c["contract_id"]):
+        if c.get("status", "").strip() == CHARACTERIZATION:
+            characterized.setdefault((c["function"], c["regime"]), c)
+    unclaimed = [(r, characterized.get((r["function"], r["regime"])))
+                 for r in rows if (r["function"], r["regime"]) not in claimed]
     return results, failing, unclaimed
+
+
+def undisposed(unclaimed):
+    """The unscored rows that are not marked characterization only."""
+    return [r for r, c in unclaimed if c is None]
 
 
 def args_text(r):
@@ -102,7 +122,8 @@ def args_text(r):
 
 
 def render(rows, contracts):
-    """The summary text and the per-contract results, from the inputs alone."""
+    """The summary text, the per-contract results, the failing rows and the
+    unscored rows, from the inputs alone."""
     results, failing, unclaimed = evaluate(rows, contracts)
     md = ["# Older-families holdout summary", "",
           "Fresh, off-compliance-grid validation of the contracts that predated the "
@@ -138,13 +159,17 @@ def render(rows, contracts):
     md += ["", "## Rows no contract scores", ""]
     if unclaimed:
         md += ["No contract with a threshold has this function and regime, so these rows "
-               "are not scored above.", "",
-               "| Function (arguments) | Regime |", "|---|---|"]
-        for r in unclaimed:
-            md.append(f"| {r['function']}({args_text(r)}) | {r['regime']} |")
+               "are not scored above. A row is accepted only when a `characterization_only` "
+               "contract covers it; `check_holdout_older_summary.py` fails on a row with no "
+               "disposition.", "",
+               "| Function (arguments) | Regime | Disposition |", "|---|---|---|"]
+        for r, c in unclaimed:
+            disposition = (f"characterization only ({c['contract_id']})" if c is not None
+                           else "none")
+            md.append(f"| {r['function']}({args_text(r)}) | {r['regime']} | {disposition} |")
     else:
         md.append("None.")
-    return "\n".join(md) + "\n", results, failing
+    return "\n".join(md) + "\n", results, failing, unclaimed
 
 
 def load(grid, contracts):
@@ -161,7 +186,7 @@ def main():
     ap.add_argument("--contracts", default=CONTRACTS)
     ap.add_argument("--out", default=SUMMARY)
     a = ap.parse_args()
-    text, results, failing = render(*load(a.grid, a.contracts))
+    text, results, failing, unclaimed = render(*load(a.grid, a.contracts))
     with open(a.out, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
 
@@ -173,6 +198,9 @@ def main():
     for c, worst, margin, verdict in results:
         if verdict != "PASS":
             print(f"  {verdict}: {c['contract_id']} (worst {float(worst):.2e} vs {c['threshold']})" if worst else f"  {verdict}: {c['contract_id']}")
+    for r in undisposed(unclaimed):
+        print(f"  UNSCORED: {r['function']}({args_text(r)}) in regime {r['regime']} "
+              "has no contract and is not marked characterization only")
     if nfail:
         raise SystemExit(1)
 

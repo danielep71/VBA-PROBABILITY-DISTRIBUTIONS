@@ -9,10 +9,10 @@ calibrate a threshold.
 | `gen_holdout_older.py` | Builds the grid's references with mpmath at 40 digits; `--merge-references` re-references the committed grid. |
 | `holdout_older_grid.csv` | The grid; `observed_vba` filled by the macro. |
 | `M_STATS_PROBDIST_HOLDOUTOLDER.bas` | Export macro. |
-| `analyze_holdout_older.py` | Writes `holdout_older_summary.md`: the per-contract holdout worst against its threshold, every failing row, and every row no contract scores. Exits non-zero while a contract fails. |
+| `analyze_holdout_older.py` | Writes `holdout_older_summary.md`: the per-contract holdout worst against its threshold, every failing row, and every row no contract scores, with its disposition. Exits non-zero while a contract fails. |
 | `holdout_older_summary.md` | The recorded summary. |
-| `check_holdout_older_summary.py` | Fails when the committed summary differs from a re-run on the committed grid and registry. Runs in `../test_evidence_tools.py`. |
-| `test_analyze_holdout_older.py` | Fixture proof that a stale, hand-edited or missing summary fails the check. |
+| `check_holdout_older_summary.py` | Fails when the committed summary differs from a re-run on the committed grid and registry, or when a row is neither scored nor covered by a `characterization_only` contract. Runs in `../test_evidence_tools.py`. |
+| `test_analyze_holdout_older.py` | Fixture proof that a stale, hand-edited or missing summary fails the check, and so does a row with no disposition. |
 
 ## Amendment, 2026-11-05 (#159)
 
@@ -123,3 +123,86 @@ the Accuracy Gate and `../refresh_evidence.py --check` run it. A bare
 needs no mpmath. It checks currency, not verdicts: the summary records the three
 FAIL verdicts and still passes. A registry or grid change that is committed
 without a re-run fails. `test_analyze_holdout_older.py` is the negative fixture.
+
+## Amendment, 2026-11-05 (#171)
+
+The three `LogGamma` rows move from regime `all` to regime `general`, the label
+the main grid gives the same domain. I changed only those three `regime` cells:
+no argument, reference or observation changed. `gen_holdout_older.py` emits the
+same label, so `--merge-references` still matches every row and changes no
+reference. The summary is regenerated: 60 PASS and 3 FAIL across 63 contracts,
+and no row is left unscored.
+
+### Why the rows were unscored
+
+`1fac483` (2026-08-13) retired `LogGamma.all.output`, the global relative claim.
+Three regime contracts replaced it, and the main grid labels its `LogGamma` rows
+with their regimes:
+
+| Contract | Metric | Threshold | Domain |
+|---|---|---|---|
+| `LogGamma.small_positive.log_abs` | absolute | 5E-13 | 0 < Z <= 0.25 |
+| `LogGamma.near_zero.log_abs` | absolute | 5E-14 | 0.9 <= Z <= 1.1 and 1.9 <= Z <= 2.1 |
+| `LogGamma.general.output_rel` | relative | 5E-13 | Z >= 0.5 outside those two neighbourhoods |
+
+The reflection interval 0.25 < Z < 0.5 has no contract. This grid kept the
+label `all`, which no contract has any more, so the analyzer dropped the rows.
+Since #164 the summary listed them under "Rows no contract scores".
+
+### Evidence for each row
+
+I recomputed each reference at 70 digits at the binary64 argument by two
+independent routes: `mpmath.loggamma`, and the recurrence to Z + 60 followed by
+the Stirling series with exact Bernoulli numbers. The two routes agree to
+better than 1.2E-58 relative, and the committed references agree with them to
+better than 4.3E-31.
+
+| Row | Binary64 argument | `PROB_LogGamma` branch | Contract domain | Relative error | Absolute error |
+|---|---|---|---|---:|---:|
+| `LogGamma(3.7)` | 3.700000000000000177636 | Lanczos, Z >= 0.5 | `general` | 1.30E-14 | 1.86E-14 |
+| `LogGamma(12.3)` | 12.30000000000000071054 | Lanczos, Z >= 0.5 | `general` | 2.24E-15 | 4.08E-14 |
+| `LogGamma(0.65)` | 0.6500000000000000222045 | Lanczos, Z >= 0.5 | `general` | 6.46E-15 | 2.10E-15 |
+
+Against the 5E-13 of `LogGamma.general.output_rel`, the worst row has a margin
+of 38.5x. None of the three arguments is in the main grid or in either grid of
+`../loggamma_regimes_study`, so they did not set that threshold.
+
+### The observations still represent today's `PROB_LogGamma`
+
+The observations were exported on 2026-07-21 (`9ee6d7c`). Unlike the Gamma rows,
+they still describe the current code:
+
+- Since `9ee6d7c`, the only commit that changed `PROB_LogGamma` is `f6c7d9f`
+  (2026-08-12). It added the small-positive branch for Z <= 0.25 and rewrote the
+  accuracy comment. The reflection branch and the Lanczos branch, which all
+  three rows take, are unchanged.
+- The constants that branch reads have the same values: the nine
+  `PROB_LANCZOS_P*` coefficients, `PROB_LANCZOS_G` and `PROB_HALF_LOG_TWO_PI`.
+  `ae37be9` only joined `PROB_HALF_LOG_TWO_PI`'s split declaration onto one
+  line.
+- `17f9930` and `8c1506f` (#23) changed callers of `PROB_LogGamma`, the
+  incomplete-gamma prefactor and `PROB_StirlingError`, not `PROB_LogGamma`
+  itself. The exporter calls `PROB_LogGamma` directly for these rows.
+- A binary64 replay of the Lanczos branch reproduces all three observations
+  bit for bit. The replay evaluates each statement with 64-bit-significand
+  intermediates and rounds each `Log` result and each assignment to binary64.
+  The same replay reproduces all 27 main-grid observations of the Lanczos
+  branch bit for bit, so it models the exporter's arithmetic and not only
+  these three points.
+
+### The disposition check
+
+`check_holdout_older_summary.py` now also fails when the summary is current and
+a row is neither scored by a contract with a threshold nor covered by a contract
+with status `characterization_only`. That status is the registry's existing
+marker for evidence that is measured but not claimed; the main-grid coverage
+gate uses it too. The summary lists each unscored row with its disposition.
+`test_analyze_holdout_older.py` adds two negative fixtures: a row with no
+contract, the state `1fac483` left these rows in, and a row whose only contract
+has no threshold and is not `characterization_only`.
+
+The grid's SHA-256 changed, so I regenerated `../normal_tail_study/results.json`
+with `validate_kernel.py --regenerate`. Only the bound hash, the timestamp, the
+runtime and a new `regenerations` entry changed. Every recorded value is the
+same, and `--verify` reports VERIFIED. The 7 survival references that
+`../survival_reference_debt.json` holds for #159 are untouched.
