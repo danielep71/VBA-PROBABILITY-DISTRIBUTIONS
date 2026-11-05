@@ -30,7 +30,10 @@ USAGE
 
     python refresh_evidence.py            regenerate summaries (writes neither
                                           manifest), then verify
-    python refresh_evidence.py --check    verify only, change nothing
+    python refresh_evidence.py --check    verify only, change nothing: the
+                                          verify outputs go to a temporary
+                                          directory, and the run fails if the
+                                          working tree changed
     python refresh_evidence.py --bind-exported-main --bind-exported-holdout
                                           only immediately after a real Excel
                                           export of the corresponding grid
@@ -38,9 +41,11 @@ USAGE
                                           bind a holdout just exported by Excel,
                                           then regenerate and verify
 """
+import hashlib
 import os
 import subprocess
 import sys
+import tempfile
 
 from excel_certification import CertificationError, git_text
 from render_readme_assurance import AssuranceError, excel_facts
@@ -48,6 +53,10 @@ from render_readme_assurance import AssuranceError, excel_facts
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 HOLDOUT = os.path.join(HERE, "holdout")
+
+# Placeholder in VERIFY argv. main() replaces it with a temporary directory
+# that exists only for the verify pass.
+SCRATCH = "{scratch}"
 
 # (label, working directory, argv). Order matters: the manifest must be written
 # before the summary, because the summary embeds the manifest's commit SHA and
@@ -92,25 +101,27 @@ HOLDOUT_BINDING = (
 # inside test_evidence_tools.py. The evaluator tests run first on purpose: a
 # broken evaluator makes every verdict below meaningless rather than merely
 # wrong.
+# No step here writes a committed path. The two steps that write a summary
+# get a SCRATCH output, as the hosted gate gives its strict run
+# ${RUNNER_TEMP}. Before #88 the strict gate ran with compute_errors.py's
+# default --out, so `--check` rewrote the tracked accuracy_summary.md. Only
+# REGENERATE writes the committed summaries.
 VERIFY = [
     ("evaluator unit tests", HERE, ["test_evidence_tools.py"]),
     ("manifest unit tests", HERE, ["test_manifest.py"]),
-    ("strict accuracy gate", HERE, ["compute_errors.py"]),
+    ("strict accuracy gate", HERE, ["compute_errors.py", "--out",
+                                    os.path.join(SCRATCH, "accuracy_summary.md")]),
     ("gate blocks without references", HERE, ["test_gate_degradation.py"]),
     ("source claims vs registries", HERE, ["check_source_thresholds.py"]),
     ("holdout analyzer tests", HOLDOUT, ["test_analyze_holdout.py"]),
-    # analyze_holdout.py WRITES holdout_summary.md as a side effect, so it is
-    # not read-only. Under --check the summary is restored afterwards, keeping
-    # that mode honest about changing nothing.
-    ("independent holdout", HOLDOUT, ["analyze_holdout.py"]),
+    ("independent holdout", HOLDOUT, ["analyze_holdout.py", "--out",
+                                      os.path.join(SCRATCH, "holdout_summary.md")]),
     # The retained record is live evidence, not a fixture: its candidate,
     # sources and exported-grid digests must match this commit (#47).
     ("retained Excel record", HERE, ["check_excel_certification.py", "--record",
                                      "excel_regression_record.json", "--require-pass"]),
     ("root README assurance block", HERE, ["render_readme_assurance.py", "--check"]),
 ]
-
-HOLDOUT_SUMMARY = "benchmark/holdout/holdout_summary.md"
 
 ARTIFACTS = [
     "benchmark/accuracy_summary.md",
@@ -143,6 +154,27 @@ def git(*args):
     except (FileNotFoundError, OSError):
         return None, ""
     return proc.returncode, proc.stdout.strip()
+
+
+def worktree_state():
+    """
+    Fingerprint the working tree as Git sees it: the status of every tracked
+    and untracked (not ignored) path, and the bytes of every tracked change
+    against HEAD. --check compares the fingerprint before and after
+    verification, so a write to the tree fails the run whichever step made
+    it. None when Git cannot report the state.
+    """
+    digest = hashlib.sha256()
+    for args in (["status", "--porcelain=v1", "-z", "--untracked-files=all"],
+                 ["diff", "HEAD", "--binary", "--no-ext-diff", "--no-textconv"]):
+        try:
+            proc = subprocess.run(["git"] + args, cwd=ROOT, capture_output=True)
+        except (FileNotFoundError, OSError):
+            return None
+        if proc.returncode != 0:
+            return None
+        digest.update(proc.stdout + b"\0")
+    return digest.hexdigest()
 
 
 def warn_if_export_looks_missing():
@@ -189,12 +221,7 @@ def main():
     except (CertificationError, AssuranceError) as exc:
         print(f"FAIL: evidence refresh prerequisite: {exc}")
         raise SystemExit(1)
-    saved = None
-    if check_only:
-        path = os.path.join(ROOT, HOLDOUT_SUMMARY)
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
-                saved = f.read()
+    before = worktree_state() if check_only else None
 
     if not check_only:
         warn_if_export_looks_missing()
@@ -218,18 +245,23 @@ def main():
 
     print("Verifying, in the order the hosted Accuracy Gate runs")
     failures = []
-    for label, cwd, argv in VERIFY:
-        code, out = run(cwd, argv)
-        print(f"  {'PASS' if code == 0 else 'FAIL'}  {label}")
-        if code != 0:
-            failures.append((label, out))
+    with tempfile.TemporaryDirectory(prefix="refresh-evidence-") as scratch:
+        for label, cwd, argv in VERIFY:
+            code, out = run(cwd, [a.replace(SCRATCH, scratch) for a in argv])
+            print(f"  {'PASS' if code == 0 else 'FAIL'}  {label}")
+            if code != 0:
+                failures.append((label, out))
 
-    if check_only and saved is not None:
-        # Restore what analyze_holdout.py rewrote, so --check is genuinely
-        # read-only rather than merely usually harmless.
-        with open(os.path.join(ROOT, HOLDOUT_SUMMARY), "w",
-                  encoding="utf-8", newline="\n") as f:
-            f.write(saved)
+    if check_only:
+        # VERIFY writes nothing committed by construction; this confirms it.
+        # Nothing is restored: a step that writes to the tree is a defect to
+        # fix, not a side effect to hide.
+        label = "--check left the working tree unchanged"
+        unchanged = before is not None and worktree_state() == before
+        print(f"  {'PASS' if unchanged else 'FAIL'}  {label}")
+        if not unchanged:
+            failures.append((label, "the working tree changed during verification "
+                                    "(or Git could not report it); see git status"))
 
     print()
     code, out = git("status", "--porcelain", *ARTIFACTS)
