@@ -1,7 +1,11 @@
 """
 Fixture proof for the older-families holdout summary and its staleness check (#164).
 
-Proves, on synthetic inputs in a temporary directory:
+Cases 1-8 use a synthetic grid and registry written to a temporary directory,
+so they depend on no value in the committed grid. Case 9 uses the record
+committed before #164 and asserts only that the check rejects it.
+
+Proves:
   1. a summary just written by analyze_holdout_older.py passes the check, even
      when it records a FAIL - the check is about currency, not verdicts;
   2. the analyzer still exits non-zero while a contract fails;
@@ -12,11 +16,14 @@ Proves, on synthetic inputs in a temporary directory:
   6. NEGATIVE: a retired contract (the 1fac483 shape) fails the check;
   7. NEGATIVE: a hand edit that turns FAIL into PASS fails the check;
   8. NEGATIVE: a missing summary fails the check rather than passing;
-  9. the committed summary from before #164 fails against the committed grid
-     and registry, which is the drift this check exists to catch.
+  9. NEGATIVE: the summary committed in ecf3e45, read with `git show` and
+     pinned by SHA-256, fails against the committed grid and registry. That is
+     the drift this check exists to catch. No row text is asserted, so a
+     re-export or a registry change does not break this case.
 Run: python3 test_analyze_holdout_older.py   (exit 0 = pass, nonzero = fail)
 """
 import csv
+import hashlib
 import os
 import subprocess
 import sys
@@ -126,22 +133,28 @@ with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
     ok, msg = C.check(out, grid, regs)
     check(not ok and "cannot read" in msg, "8: a missing summary must fail the check\n" + msg)
 
-# 9. The real record before #164, embedded so the fixture does not depend on Git:
-# its verdict line and two Gamma rows as committed in ecf3e45.
-with tempfile.TemporaryDirectory(prefix="holdout-older-real-") as d:
-    current = read(A.SUMMARY)
-    stale = os.path.join(d, "holdout_older_summary.md")
-    head = current.split("## Failing rows")[0]
-    old = (head.replace("| Gamma_Cumulative.all.output | relative | 3E-15 | 1.45e-14 | 0.2x | validated and frozen | FAIL |",
-                        "| Gamma_Cumulative.all.output | relative | 2E-14 | 1.49e-14 | 1.3x | validated and frozen | PASS |")
-               .replace("| Gamma_Survival.all.output | relative | 5E-15 | 2.16e-14 | 0.2x | validated and frozen | FAIL |",
-                        "| Gamma_Survival.all.output | relative | 5E-14 | 2.13e-14 | 2.3x | validated and frozen | PASS |"))
-    check(old != head, "9: the fixture must actually reintroduce the pre-#164 rows")
-    with open(stale, "w", encoding="utf-8", newline="\n") as f:
-        f.write(old.rstrip("\n") + "\n")
-    ok, msg = C.check(stale, A.GRID, A.CONTRACTS)
-    check(not ok and "-| Gamma_Cumulative.all.output | relative | 2E-14" in msg,
-          "9: the pre-#164 summary must fail against the committed grid and registry\n" + msg)
+# 9. The real record before #164, as committed in ecf3e45. Pinned by digest so
+# the case cannot silently test some other file. Nothing about its rows or
+# today's render is assumed beyond "they differ", so a re-export or a registry
+# change leaves this case valid.
+PRE_164_COMMIT = "ecf3e45"
+PRE_164_PATH = "benchmark/holdout_older/holdout_older_summary.md"
+PRE_164_SHA256 = "f99024b122fa7c24fc697c131fdbe9339d7955f8462db0a337eda3f81a1b265b"
+proc = subprocess.run(["git", "-C", HERE, "show", f"{PRE_164_COMMIT}:{PRE_164_PATH}"],
+                      capture_output=True)
+check(proc.returncode == 0,
+      "9: git show of the pre-#164 summary failed (full history is required): "
+      + proc.stderr.decode(errors="replace"))
+if proc.returncode == 0:
+    check(hashlib.sha256(proc.stdout).hexdigest() == PRE_164_SHA256,
+          "9: the pre-#164 summary does not have its pinned SHA-256")
+    with tempfile.TemporaryDirectory(prefix="holdout-older-real-") as d:
+        stale = os.path.join(d, "holdout_older_summary.md")
+        with open(stale, "wb") as f:
+            f.write(proc.stdout)
+        ok, msg = C.check(stale, A.GRID, A.CONTRACTS)
+        check(not ok and "is stale" in msg,
+              "9: the pre-#164 summary must fail against the committed grid and registry\n" + msg)
 
 if fails:
     print(f"FAIL: {len(fails)} holdout_older summary check(s)")
