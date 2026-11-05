@@ -372,20 +372,39 @@ per function via the `metric` column.
 
 ## Reference integrity
 
-The Beta/F references in three grids are cross-checked against SciPy, an
-INDEPENDENT implementation, wherever SciPy is reliable (incomplete-beta shape
-parameter <= 1E7). This cross-check is a regenerable artifact,
+The references in three grids are cross-checked against SciPy, an INDEPENDENT
+implementation. This cross-check is a regenerable artifact,
 `cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion. The
 committed record covers `beta_f_unbalanced/beta_f_unbalanced_grid.csv`,
 `beta_f_unbalanced/beta_f_inverse_grid.csv` and `holdout/holdout_grid.csv` as
-they stood on 2026-07-21 (commit `0e1cfe7`); it lists the SHA-256 of each. On
-those grids, 242 points are independently confirmed by SciPy (worst relative
-difference about 7E-11, i.e. SciPy's own double-precision limit). The other 8,
-`F_Cumulative` and `F_Survival` at df2 = 1E8 and 1E10, lie beyond SciPy's
-reliable range and are **not independently confirmed**: no committed tool
-records a check of their reference values. SciPy corroborates the reference
-where it can compute; it cannot certify the extreme-parameter points it cannot
-itself evaluate. Those grids have changed since, so re-running the script on
-today's files gives different counts; that run is not committed.
+they stood at `release/1.0.0` commit `c9b1819` (2026-11-05). It lists the
+SHA-256 of each grid and the SciPy, NumPy and mpmath versions it ran with.
+Each of the 675 reference rows in those grids is in exactly one class:
+
+- **655 confirmed by SciPy.** The function has an exact SciPy equivalent and
+  the point lies where SciPy is reliable (incomplete-beta shape parameter
+  <= 1E7 for Beta and F). They cover Beta, F, `PROB_LogBeta`, the chi-square
+  and F densities, the normal and lognormal inverses, and every Binomial,
+  Poisson, Geometric, Negative Binomial, Hypergeometric and Discrete Uniform
+  function in the grids. The largest relative differences are
+  `Binomial_LogPMF` 2.3E-10, `Poisson_PMF` 1.6E-10, `PROB_LogBeta` 7.1E-11,
+  `Poisson_LogPMF` 1.9E-11 and `Hypergeometric_LogPMF` 1.5E-11; every other
+  function agrees within 2.0E-12. Agreement corroborates a reference only to
+  the difference shown, and the record does not say which side carries it.
+- **8 beyond SciPy's reliable range**: `F_Cumulative` and `F_Survival` at
+  df2 = 1E8 and 1E10, where the incomplete-beta shape parameter is above 1E7.
+  They are **not independently confirmed**: no committed tool records a check
+  of their reference values.
+- **12 not mapped**: `Lognormal_ParametersFromMeanStdDev` (8 rows) and
+  `Normal_IntervalProbability` (4 rows) have no exact SciPy equivalent, so
+  they were never compared and are **not independently confirmed** here.
+
+SciPy corroborates the reference where it can compute; it cannot certify the
+extreme-parameter points it cannot itself evaluate, or functions the script
+does not map. The record covers no other grid: the main grid
+`probability_accuracy_grid.csv` and the study grids are outside it. When SciPy is installed, `test_cross_check_scipy.py` checks every
+mapping against hand-computed and mpmath values, so a wrong parameterisation
+fails. CI has no SciPy and runs only its classification fixture, which shows
+that an unmapped function is reported as not mapped, never as beyond range.
 The survival references are computed on the upper tail directly (never `1 - CDF`),
 so they stay accurate in the deep tail where a naive subtraction would collapse.
