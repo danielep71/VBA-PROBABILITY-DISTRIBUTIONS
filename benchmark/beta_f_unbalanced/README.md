@@ -25,7 +25,24 @@ So this study measures each of `Beta_Density`, `Beta_Cumulative`, `Beta_Survival
   distribution's mass (the mean and a mode-ish point).
 - **F**: strongly asymmetric `(df1, df2)` — (1, 1E4), (2.5, 1E8), (10, 1E10),
   (1E6, 3) — at X = 1 and near the mean.
-- 64 points; references are mpmath at 60 digits.
+- 64 points; references are mpmath at 60 digits, evaluated at the exact
+  binary64 value of each stored argument token, with the survival computed
+  directly as an upper tail.
+
+**Amendment, 2026-11-05 (#159).** Until this date the references were evaluated
+at the unrounded design value of X, half an ulp from the Double the exporter
+passes, and the survival was formed as `1 - CDF`. At shape 1E5 that cost the
+Beta survival up to 13 of its digits. The committed grid was re-referenced with
+`python generate_beta_f_unbalanced.py --merge-references --write`, which changes
+reference cells only: 54 references moved (19 survival), by at most 1.8E-12
+relative, and no observation changed. The old values are in
+`../study_reference_rebase.csv`. One recorded reading moves with them: the
+analyzer's Beta_Density worst case falls from 1.23E-12 to 2.18E-14, because the
+old worst case was the argument mismatch, not the library. The frozen
+`Beta_Density.unbalanced.output_rel` threshold (4E-12) was set from the old
+reading and is unchanged here. The 16 main-grid `Beta_Survival` rows promoted
+from this study keep their old references until the main grid is re-exported;
+`../survival_reference_debt.json` registers them.
 
 ## Files
 

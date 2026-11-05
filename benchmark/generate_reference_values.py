@@ -1046,6 +1046,19 @@ def _tu_f_cdf(x, d1, d2):
     return mp.betainc(d1 / 2, d2 / 2, 0, d1 * x / (d1 * x + d2), regularized=True)
 
 
+# Survival as a direct upper tail (#159), never 1 - CDF: I_{1-x}(b, a) for Beta
+# and I_{d2/(d1 x + d2)}(d2/2, d1/2) for F, with 1 - y formed without a
+# subtraction.
+def _tu_beta_sf(x, a, b):
+    x, a, b = mp.mpf(x), mp.mpf(a), mp.mpf(b)
+    return mp.betainc(b, a, 0, 1 - x, regularized=True)
+
+
+def _tu_f_sf(x, d1, d2):
+    x, d1, d2 = mp.mpf(x), mp.mpf(d1), mp.mpf(d2)
+    return mp.betainc(d2 / 2, d1 / 2, 0, d2 / (d1 * x + d2), regularized=True)
+
+
 def build_tiny_unbalanced_rows():
     rows = []
     LOGABS, REL = "abs<=2E-13", "rel<=1E-12"
@@ -1078,7 +1091,8 @@ def build_tiny_unbalanced_rows():
             row("Beta_Density", (x, mp.mpf(a), mp.mpf(b)), _tu_beta_density(x, a, b), REL, "rel", "tiny_unbalanced")
             c = _tu_beta_cdf(x, a, b)
             row("Beta_Cumulative", (x, mp.mpf(a), mp.mpf(b)), c, REL, "rel", "tiny_unbalanced")
-            row("Beta_Survival", (x, mp.mpf(a), mp.mpf(b)), 1 - c, REL, "rel", "tiny_unbalanced")
+            row("Beta_Survival", (x, mp.mpf(a), mp.mpf(b)), _tu_beta_sf(x, a, b), REL, "rel",
+                "tiny_unbalanced")
 
     # --- F forward surface; x straddles the log-ratio branch at x = DF2 / DF1 ---
     for d1, d2 in [(2e-12, 1.98e-13), (1.98e-13, 2e-12), (2e-16, 1.98e-17),
@@ -1088,7 +1102,8 @@ def build_tiny_unbalanced_rows():
             row("F_Density", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_density(x, d1, d2), REL, "rel", "tiny_unbalanced")
             c = _tu_f_cdf(x, d1, d2)
             row("F_Cumulative", (x, mp.mpf(d1), mp.mpf(d2)), c, REL, "rel", "tiny_unbalanced")
-            row("F_Survival", (x, mp.mpf(d1), mp.mpf(d2)), 1 - c, REL, "rel", "tiny_unbalanced")
+            row("F_Survival", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_sf(x, d1, d2), REL, "rel",
+                "tiny_unbalanced")
 
     # --- Inverses: ONLY where the quantile stays representable ---
     for pr, a, b, q in _TU_BETA_INV:
@@ -1099,6 +1114,87 @@ def build_tiny_unbalanced_rows():
             "tail_rel<=1E-9", "rel", "tiny_unbalanced_representable")
 
     return rows
+
+
+# ===========================================================================
+# ENVELOPE DOMAIN  (regime "envelope_domain", #159)
+#
+#   The main grid has carried these cumulative and survival rows since the
+#   envelope_probe study opened the large-df domain, but no generator emitted
+#   them (grid_reconciliation.csv: GRID_ONLY_UNEXPLAINED), and their survival
+#   references were 1 minus a 30-digit cumulative, good to 11.5-23.7 digits.
+#   They are generated here at the exact binary64 arguments, each survival a
+#   direct upper tail:
+#
+#     ChiSquare  df 1E6, 1E7, 1E8; x = df + z sqrt(2 df), z = -1, 0, +1
+#     StudentT   df 1E6, 1E7, 1E8; t = 0.5, 1, 2
+#     F          (d1, d2) = (1E6, 1E6), (1E8, 1E8); f = 0.999, 1, 1.001
+#
+#   Both F shapes are large there, so the F references use the single-sourced
+#   continued fraction of benchmark/_ibeta.py on the side where it converges,
+#   rather than mpmath's hypergeometric betainc. The 36 envelope_domain inverse
+#   rows are not generated: they are not survival references, and solving them
+#   at these df costs minutes per row.
+# ===========================================================================
+from _ibeta import f_cdf as _cf_f_cdf, f_sf as _cf_f_sf  # noqa: E402
+
+_ENV_CHI_DF = [1e6, 1e7, 1e8]
+_ENV_T_DF = [1e6, 1e7, 1e8]
+_ENV_T_X = ["0.5", "1.0", "2.0"]
+_ENV_F_DF = [(1e6, 1e6), (1e8, 1e8)]
+_ENV_F_X = ["0.999", "1.0", "1.001"]
+
+
+def _env_chi_pq(x, df):
+    """(P, Q) of Chi-square(df) at x: the ascending series below a + 1 and the
+    Lentz continued fraction above, each giving its own tail directly. mpmath's
+    lower gammainc does not converge at these shapes, and its upper one is the
+    route the #159 survival audit uses, so this generator takes another."""
+    a, z = mp.mpf(df) / 2, mp.mpf(x) / 2
+    eps = mp.mpf(10) ** -(mp.mp.dps - 5)
+    front = mp.e ** (-z + a * mp.log(z) - mp.loggamma(a))
+    if z < a + 1:
+        ap, term = a, 1 / a
+        total = term
+        while abs(term) > abs(total) * eps:
+            ap += 1
+            term *= z / ap
+            total += term
+        p = total * front
+        return p, 1 - p
+    tiny = mp.mpf(10) ** -(3 * mp.mp.dps)
+    b = z + 1 - a; c = 1 / tiny; d = 1 / b; h = d
+    i = 0
+    while True:
+        i += 1
+        an = -i * (i - a)
+        b += 2
+        d = an * d + b
+        d = tiny if abs(d) < tiny else d
+        c = b + an / c
+        c = tiny if abs(c) < tiny else c
+        d = 1 / d
+        h *= d * c
+        if abs(d * c - 1) <= eps:
+            break
+    q = h * front
+    return 1 - q, q
+
+
+def _env_chi_cdf(x, df):
+    return _env_chi_pq(x, df)[0]
+
+
+def _env_chi_sf(x, df):
+    return _env_chi_pq(x, df)[1]
+
+
+def _env_f_cdf(x, d1, d2):
+    return _cf_f_cdf(x, d1, d2)
+
+
+def _env_f_sf(x, d1, d2):
+    return _cf_f_sf(x, d1, d2)
 
 
 def build_rows():
@@ -1340,6 +1436,31 @@ def build_rows():
     for (pq, a, b) in [(mp.mpf("0.5"), mp.mpf(0), mp.mpf(10)), (mp.mpf("0.9"), mp.mpf(1), mp.mpf(4))]:
         add("Uniform_InverseCumulative", "K_STATS_Uniform_InverseCumulative", (pq, a, b), mp.mpf(a) + mp.mpf(pq) * (mp.mpf(b) - mp.mpf(a)))
 
+    # --- envelope_domain (#159); claim "measured" as the committed rows carry ---
+    _env = dict(claim="measured", metric="rel", regime="envelope_domain")
+    for df in _ENV_CHI_DF:
+        for z in (-1, 0, 1):
+            # Round the design point to its Double once. Printing it to 17
+            # digits first and parsing that would round twice and can land on
+            # the neighbouring Double (it does at df = 1E8, z = +1).
+            x = mp.mpf(float(mp.mpf(df) + z * mp.sqrt(2 * mp.mpf(df))))
+            add("ChiSquare_Cumulative", "K_STATS_ChiSquare_Cumulative", (x, df),
+                _env_chi_cdf(x, df), **_env)
+            add("ChiSquare_Survival", "K_STATS_ChiSquare_Survival", (x, df),
+                _env_chi_sf(x, df), **_env)
+    for df in _ENV_T_DF:
+        for t in _ENV_T_X:
+            add("StudentT_Cumulative", "K_STATS_StudentT_Cumulative", (t, df),
+                _student_t_cdf(t, df), **_env)
+            add("StudentT_Survival", "K_STATS_StudentT_Survival", (t, df),
+                _student_t_sf(t, df), **_env)
+    for d1, d2 in _ENV_F_DF:
+        for f in _ENV_F_X:
+            add("F_Cumulative", "K_STATS_F_Cumulative", (f, d1, d2),
+                _env_f_cdf(f, d1, d2), **_env)
+            add("F_Survival", "K_STATS_F_Survival", (f, d1, d2),
+                _env_f_sf(f, d1, d2), **_env)
+
     rows += build_discrete_rows()
     rows += build_deep_tail_rows()
     rows += build_tiny_unbalanced_rows()
@@ -1430,6 +1551,12 @@ for _f in (
         "_tu_beta_cdf",
         "_tu_f_density",
         "_tu_f_cdf",
+        "_tu_beta_sf",
+        "_tu_f_sf",
+        "_env_chi_cdf",
+        "_env_chi_sf",
+        "_env_f_cdf",
+        "_env_f_sf",
 ):
     globals()[_f] = _canonical_args(globals()[_f])
 
