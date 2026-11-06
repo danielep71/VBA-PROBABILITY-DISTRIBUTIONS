@@ -80,6 +80,7 @@ and a dispatch without inputs, behave as before.
 | `export_main` | `true`/`false` | Export `benchmark/probability_accuracy_grid.csv` |
 | `export_holdout` | `true`/`false` | Export `benchmark/holdout/holdout_grid.csv` |
 | `export_holdout_older` | `true`/`false` | Export `benchmark/holdout_older/holdout_older_grid.csv` |
+| `export_survival_boundary` | `true`/`false` | Export `benchmark/survival_boundary/survival_boundary_grid.csv` |
 | `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
 
 When any export input is set, the job runs the regression as usual and, only
@@ -236,7 +237,8 @@ commit:
 .\ci\Export-ExcelGrids.ps1 -Main true -Holdout true
 ```
 
-`-HoldoutOlder true` adds the older-families holdout, `-MainMode missing-only`
+`-HoldoutOlder true` adds the older-families holdout, `-SurvivalBoundary true`
+the survival-boundary sweep, `-MainMode missing-only`
 selects the missing-only main export and `-MacroTimeoutMinutes` changes the
 watchdog's limit. The artifact lands in `artifacts\excel-grid-export`. Its
 manifest records no workflow run.

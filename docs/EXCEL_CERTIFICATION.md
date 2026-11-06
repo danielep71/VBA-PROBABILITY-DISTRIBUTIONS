@@ -148,9 +148,10 @@ runner does. The steps below use the GitHub CLI.
    entry with this evidence, run `python benchmark/refresh_evidence.py` again
    (no bind flags; the manifests are already bound), and continue.
 
-   `holdout_older` has no exporter in the evidence policy, so the record makes
-   no claim for it and no manifest binds it. The tool copies the grid and the
-   plain refresh regenerates `holdout_older_summary.md`.
+   `holdout_older` and `survival_boundary` have no exporter in the evidence
+   policy, so the record makes no claim for them and no manifest binds them.
+   The tool copies the grid, and the plain refresh regenerates
+   `holdout_older_summary.md`.
 
 4. **Commit** the changed files together, with the printed message as the
    body.

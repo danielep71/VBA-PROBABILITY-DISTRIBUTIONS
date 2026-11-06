@@ -41,8 +41,8 @@ WHAT IT DOES
     1. Copies each grid and excel_environment.json into place, byte for byte.
     2. Runs finalize_excel_certification.py --from-fresh-export with --main
        and/or --holdout, which records raw_sha256 from those bytes.
-       holdout_older has no exporter in the Excel evidence policy, so the
-       record makes no claim for it.
+       holdout_older and survival_boundary have no exporter in the Excel
+       evidence policy, so the record makes no claim for them.
     3. Rewrites each grid with the LF bytes Git stores under `*.csv text
        eol=lf`, as a fresh checkout of the evidence commit would hold them.
     4. Runs refresh_evidence.py with --bind-exported-main and/or
@@ -127,6 +127,11 @@ GRIDS = {
                               None, {"full": "Export_HoldoutOlder"},
                               "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas",
                               None, None),
+    "survival_boundary": GridSpec("survival_boundary",
+                                  "benchmark/survival_boundary/survival_boundary_grid.csv", 8, 11,
+                                  None, {"full": "Export_SurvivalBoundary"},
+                                  "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas",
+                                  None, None),
 }
 
 
