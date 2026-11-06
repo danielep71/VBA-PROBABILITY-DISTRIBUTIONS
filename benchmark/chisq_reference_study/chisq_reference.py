@@ -42,11 +42,17 @@ STABILIZATION
   point may be silently dropped: any rejection fails the checkpoint.
 
 This module produces the mpmath-route values only. It records no final
-agreement figure and does not mark the checkpoint complete. Its PROVISIONAL
-status and messages date from when it was written, before the independent
-Rmpfr leg had run. All legs (quadrature, gmpy2/MPFR, Rmpfr) have since run,
-and the composite authority is derived by chisq_crosscheck.py into
+agreement figure and sets no checkpoint status: its record says so, and its
+messages point to chisq_crosscheck.py, which derives the composite authority
+from the committed leg records (quadrature, gmpy2/MPFR, Rmpfr) into
 chisq_crosscheck.json.
+
+STATUS HISTORY. Until 2026-11-05 (#87) this module wrote the checkpoint status
+"PROVISIONAL - INCOMPLETE" and printed that the Rmpfr leg had not run. That was
+true when the module was written, and stayed in the output after every leg had
+run. The committed chisq_reference.json keeps the status it was generated with
+on 2026-08-29, followed by a dated status_amendments entry that cites the
+evidence for the completed checkpoint.
 """
 import json
 import platform
@@ -426,10 +432,10 @@ def main(out_path="chisq_reference.json"):
 
     payload = {
         "checkpoint": "v1.0.0 plan Track A2 item 6 - Chi-square reference feasibility",
-        "status": "PROVISIONAL - INCOMPLETE",
-        "completion_blocked_on": (
-            "independent Rmpfr leg has not been run; no final agreement figure "
-            "is recorded and the checkpoint must not be marked complete"),
+        "status": "PRIMARY ROUTE ONLY",
+        "checkpoint_status": (
+            "not set by this record: chisq_crosscheck.py derives it from the "
+            "committed leg records into chisq_crosscheck.json"),
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "runtime_s_total": round(time.time() - started, 3),
         "versions": {
@@ -476,7 +482,9 @@ def main(out_path="chisq_reference.json"):
         print("CHECKPOINT FAILS: at least one point did not converge or stabilize.")
         return 1
     print("mpmath route converged and stabilized at every frozen point.")
-    print("Checkpoint remains PROVISIONAL: the Rmpfr leg has not run.")
+    print("This record holds the primary route only and sets no checkpoint status.")
+    print("chisq_crosscheck.py derives that status from the committed leg records")
+    print("into chisq_crosscheck.json.")
     return 0
 
 

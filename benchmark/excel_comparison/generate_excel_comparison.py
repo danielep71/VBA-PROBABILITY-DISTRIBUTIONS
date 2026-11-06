@@ -25,7 +25,21 @@ WHAT IS AND IS NOT BEING CLAIMED
 REFERENCES
     mpmath at 50 digits. Continued fractions and series are evaluated directly
     where mpmath's own incomplete functions do not converge at these arguments.
+    Survival references are upper tails computed directly, at the Double each
+    argument parses to (#159). The Beta survival at 0.999 was first taken as
+    1 - CDF at the decimal 0.999, which kept 15 of its digits; it is now
+    I_{1-x}(3, 2) at the Double x.
+
+    The committed grid holds Excel and library observations. Re-reference it,
+    changing reference cells only, with
+
+        python generate_excel_comparison.py --merge-references          # report
+        python generate_excel_comparison.py --merge-references --write  # patch
 """
+import argparse
+import os
+import sys
+
 import mpmath as mp
 
 mp.mp.dps = 50
@@ -119,9 +133,9 @@ def t_sf(t, df):
 
 
 def f_sf(f, d1, d2):
+    """Upper tail, direct: I_{d2/(d1 f + d2)}(d2/2, d1/2)."""
     d1 = mp.mpf(d1); d2 = mp.mpf(d2); f = mp.mpf(f)
-    x = d1 * f / (d1 * f + d2)
-    return 1 - beta_I(d1 / 2, d2 / 2, x)
+    return beta_I(d2 / 2, d1 / 2, d2 / (d1 * f + d2))
 
 
 
@@ -217,7 +231,7 @@ CASES = [
      "K_STATS_Beta_Cumulative(0.3,2,3)", beta_cdf(0.3, 2, 3),
      "body"),
     ("beta survival, near 1", "1-BETA.DIST(0.999,2,3,TRUE)",
-     "K_STATS_Beta_Survival(0.999,2,3)", 1 - beta_cdf(mp.mpf("0.999"), 2, 3),
+     "K_STATS_Beta_Survival(0.999,2,3)", beta_cdf(1 - mp.mpf(0.999), 3, 2),
      "no direct survival; true value is about 4E-9"),
     # ---- Exponential: no .RT -------------------------------------------------
     ("exponential survival, deep", "1-EXPON.DIST(50,1,TRUE)",
@@ -264,7 +278,37 @@ CASES = [
 ]
 
 
+def merge(write):
+    """Re-reference the committed grid; both observation columns are kept."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.dirname(here))
+    from _study_merge import merge_references, print_report
+    rows = [{"label": label, "excel_formula": xl, "kstats_call": ks,
+             "reference": mp.nstr(ref, 34), "observed_excel": "",
+             "observed_kstats": "", "why": why}
+            for label, xl, ks, ref, why in CASES]
+
+    def describe(r):
+        name, args = r["kstats_call"].split("(", 1)
+        return name.replace("K_STATS_", ""), args.rstrip(")").replace(",", ";"), ""
+
+    changes, held = merge_references(
+        os.path.join(here, "excel_comparison_grid.csv"), rows,
+        lambda r: r["kstats_call"], {"observed_excel", "observed_kstats"},
+        delimiter="|", write=write, describe=describe)
+    print_report("excel_comparison_grid.csv", changes, held, write)
+
+
 if __name__ == "__main__":
+    _ap = argparse.ArgumentParser()
+    _ap.add_argument("--merge-references", action="store_true",
+                     help="re-reference the committed grid, keeping every observation")
+    _ap.add_argument("--write", action="store_true",
+                     help="with --merge-references: patch the committed grid")
+    _args = _ap.parse_args()
+    if _args.merge_references:
+        merge(_args.write)
+        sys.exit(0)
     # PIPE-delimited, not comma. Every interesting field here contains commas -
     # "normal survival, z = 8", "CHISQ.DIST(1E6,1E6,TRUE)" - and the VBA exporter
     # splits on the delimiter without quote handling, so a comma delimiter wrote

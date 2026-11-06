@@ -333,3 +333,275 @@ the binary64 result directly in any case. The failed A2 stays in
 **Holdout.** H was not evaluated in the failed run, because §6 stops at a
 failed condition. It is evaluated once, under this amendment. No parameter
 in §2 was changed or refitted.
+
+---
+
+## Note — 2026-11-03: the one-shot holdout record is now enforced (#80)
+
+**This note is not an amendment.** It changes nothing above: not the design,
+the conditions, the thresholds, the evaluation sets or the predictions. It
+records no new measurement.
+
+- H was evaluated in the run recorded on 2026-10-13 (#75), under Amendment 1.
+  Its A6 result stays in `results.json` unchanged, and the recorded status
+  stays PASS.
+- The validator of #75 kept the "evaluated once" of §5 only by convention.
+  Every run of it evaluated H and wrote `evaluated_once: true` again, so it
+  could neither prevent nor detect a repeat. The committed record reports one
+  evaluation. Nothing shows a repeat, but that validator could not have shown
+  one.
+- From #80 on, `results.json` carries a `holdout_exposure` record with status
+  `EVALUATED` and one exposure. It binds the coefficient file, the first
+  15,729 bytes of this file (its text through Amendment 1), the SHA-256 of
+  H's seeded points and the SHA-256 of the A6 block. `validate_kernel.py`
+  refuses a second first evaluation, and its replay and regeneration modes
+  never evaluate H.
+- H was not evaluated to make this change.
+- Later amendments must be appended after this note. The recorded design
+  identity accepts appended text only.
+
+---
+
+## Amendment 2 — 2026-11-03: conditioning of the P2 bounds (#78)
+
+**Disclosure.** I wrote this amendment on 2026-11-03. By then these results
+had been observed:
+- the holdout H, evaluated once on 2026-10-13 (#75, run started 06:45:41Z),
+  A6 PASS;
+- every other measurement of that run: A1–A5, A7, A8, the oracles, the seams
+  and the bands;
+- the §7 predicted values and bounds that run recorded for every covered row,
+  all within their bounds;
+- the committed Excel observations of today's code at those rows, which the
+  predictions read as inputs.
+
+No Excel observation of the candidate kernel exists, so no §7 prediction has
+been tested yet. Nothing above this section has been changed. The design
+(§2), the fitted coefficients, A1–A8 and their thresholds, `B`, the
+evaluation sets (§5) and P1, P3 and P4 stand as frozen. Nothing was refitted,
+and H was not evaluated to write or apply this amendment. No acceptance
+condition depends on P2, so none can change status through it.
+
+**Defects in P2 as frozen.** Two expressions in §7 P2 do not give an error
+bound for every covered row:
+- The survival condition number `z·φ(z)/Q(z)` is negative for `z < 0`. There
+  `B + κ·δ` is below `B` and falls as `δ` grows, so it is not an upper bound.
+  Four covered survival rows have `z < 0`: `Normal_Survival(3, 5, 2)`,
+  `Normal_Survival(-2.1, 0.4, 1.7)`, `Lognormal_Survival(0.5, 0, 1)` and
+  `Lognormal_Survival(0.45, 0.2, 0.6)`.
+- The Lognormal `δ` divides by `|ln x − μ|`, which is zero at the centre
+  `ln x = μ`. Two covered rows are there: `Lognormal_Cumulative(1, 0, 1)` and
+  `Lognormal_Survival(1, 0, 1)`. Their `δ` is 0/0, so `κ·δ` is undefined.
+
+From the first derivation run (#74) on, the validator computed `|z|·φ/F` and
+dropped the Lognormal `δ` term at a zero denominator, without disclosing
+either. The recorded bounds therefore came from a rule this text did not
+state. This amendment states that rule and derives it.
+
+**Conditioning for both signs.** A covered row evaluates `F` at its exact
+standardised argument `z`, where `F` is the survival `S(z) = Q(z)` (for
+`z < 0`, `1 − Q(|z|)`) or the cumulative `Φ(z)`. The relative condition
+number of `F` with respect to `z` is
+
+    κ_F(z) = |z · F′(z) / F(z)|,
+
+so that, to first order, `|F(z(1 + δ)) − F(z)| / F(z) = κ_F(z)·|δ|` for
+either sign of `z` and of `δ`. Since `S′ = −φ`, `Φ′ = φ`, and `φ`, `S` and
+`Φ` are positive for every finite `z`:
+
+    κ_S(z) = |z|·φ(z) / Q(z),        κ_Φ(z) = |z|·φ(z) / Φ(z).
+
+Both are nonnegative. The frozen survival expression is `κ_S` for `z ≥ 0` and
+`−κ_S` for `z < 0`; it is replaced by `κ_S`. The frozen cumulative expression
+already is `κ_Φ` and is unchanged.
+
+**Absolute form of the standardisation term.** `κ·δ` is the relative error in
+`F` caused by a relative error `δ` in `z`. With `η = δ·|z|`, a bound on the
+absolute error `|z̃ − z|` of the computed argument, it equals
+`φ(z)·η / F(z)`. The arithmetic bounds `η` directly. With `u = 2^-53` and
+`|ε₁|, |ε₂| ≤ u`:
+- Normal: `z̃ = fl(fl(x + (−μ)) / σ) = z(1 + ε₁)(1 + ε₂)`, so
+  `|z̃ − z| ≤ (2u + u²)|z|`, and `η = 2^-52·|z|`.
+- Lognormal: `L̃ = Log(x)` with `|L̃ − ln x| ≤ 2^-52·|ln x|`, the one-ulp
+  allowance of the frozen text, and `z̃ = fl(fl(L̃ + (−μ)) / σ)`. Then
+
+      z̃ − z = (L̃ − ln x)(1 + ε₁)(1 + ε₂) / σ + z·((1 + ε₁)(1 + ε₂) − 1),
+
+  so to first order `η = 2^-52·(|z| + |ln x| / σ)`.
+
+Where `z ≠ 0`, `η / |z|` is exactly the frozen `δ`: `2^-52` for Normal, and
+`2^-52 + 2^-52·|ln x| / |ln x − μ|` for Lognormal, because
+`|z| = |ln x − μ| / σ`. P2 is therefore restated as
+
+    error ≤ B + φ(z)·η / F(z),
+
+which equals the frozen `B + κ·δ`, with `κ ≥ 0`, wherever `δ` is defined,
+and is defined for every row. P3 takes "their P1/P2 bounds" and so inherits
+this term for each tail: `η = 2^-52·|z|` for `Normal_IntervalProbability`,
+and `η = 0` for `NormalStandard_IntervalProbability`.
+
+The rule stays first order, as frozen. The terms it neglects are smaller than
+the standardisation term by a factor of order `|z|·η + 2^-52`, below 1E-14 at
+every covered row.
+
+**Centre.** For a positive Double `x` and a Double `μ`, `ln x = μ` holds only
+at `x = 1, μ = 0`. For any other positive rational `x`, `ln x` is
+transcendental (Lindemann–Weierstrass), so it is not a Double. At `x = 1` the
+frozen allowance `2^-52·|ln x|` is zero, and a faithfully rounded `Log`
+returns the exact result, 0. Then `z̃ = (0 + (−0)) / σ = 0` exactly, `η = 0`,
+and the bound is `B`: the row evaluates the kernel at `z = 0`, where P1 and
+A5 already bound `Q` and `1 − Q` by `B`. This is the value of the absolute
+form, not a special case: `φ·η / F` is continuous in `(x, μ)`, and it tends
+to 0 as `x → 1` with `μ = 0`, because `η` does.
+
+Near the centre, where `ln x ≠ μ` but `|ln x − μ| ≪ |ln x|`, the frozen `δ`
+is very large and `κ` very small. Their product is finite and tends to
+`√(2/π)·2^-52·|μ| / σ` as `z → 0`, since `F(0) = 1/2`. The absolute form
+evaluates it without forming `0·∞`.
+
+The term has no seam of its own. It is continuous in `z` through 0, the split
+at 3 and the 37.5 and 38.5 cut-offs; the kernel's own seams are unchanged and
+covered by A5. Where the reference `F` is not a normal Double (survival
+above the last `z` with a normal `Q`, cumulative below its negative), the
+bound is finite but, as §4 states, the error is characterised, not bounded.
+
+**What changes in the record.** `results.json` is regenerated without
+evaluating H:
+- every P2 row records `z`, `κ` and `η`, and its bound as
+  `B + φ(z)·η / F(z)`;
+- the P2 and P3 bounds the validator recorded already followed this rule. All
+  are unchanged except `Lognormal_Cumulative(0.45, 0.2, 0.6)`, which moves by
+  one ulp, from evaluating the same quantity in another order;
+- every predicted value and predicted error is unchanged, and every row stays
+  within its bound;
+- under the frozen sign, the four negative-`z` survival rows would have had
+  bounds of `B − κ·δ`. These are still above their predicted errors, so no
+  recorded outcome depended on the correction.
+
+`test_conditioning.py` pins this: the recorded P2 rows, negative-`z`, exact
+centre and near-centre rows, and the seams.
+
+---
+
+## Amendment 3 — 2026-11-03: fit convergence and result provenance (#79)
+
+**Disclosure.** I wrote this amendment on 2026-11-03. By then these results
+had been observed:
+- the fit of §2 and its coefficients, recorded on 2026-10-13 (#74), with a
+  node maximum of 1.03E-17 and A1 at 1.03E-17;
+- the holdout H, evaluated once on 2026-10-13 (#75, run started 06:45:41Z),
+  A6 PASS;
+- every other measurement, prediction and bound recorded since, including
+  those of Amendment 2;
+- the convergence evidence of the fit, described below. I observed it before
+  I fixed the tolerance, by running the frozen fit again with that evidence
+  recorded.
+
+Nothing above this section has been changed. The fit of §2 stands as frozen:
+the nodes, weights, Lawson reweighting, precision, the cap of 120 iterations
+and the selection of the iterate with the smallest node maximum. Nothing was
+refitted: the run reproduced every field of `kernel_coefficients.json` except
+its runtime, and the file was left byte-identical. A1–A8, their thresholds,
+`B`, the evaluation sets of §5 and the predictions of §7 are unchanged. H was
+not evaluated to write or apply this amendment.
+
+**Defect: no convergence criterion.** §6 makes "a fit that does not converge"
+a study failure, but §2 defines no criterion. The derivation ran 120
+iterations, kept the best iterate and recorded no convergence decision, so no
+record could show a failure. A small A1 error is not a convergence result: a
+stalled or oscillating iteration can still leave an iterate that meets A1.
+
+**Criterion.** Let `e(x) = P(x) / (D(x) f(x)) − 1` be an iterate's signed
+relative error at the 500 nodes, in increasing `x`. Split the nodes into
+maximal runs of one sign; each run contributes its largest `|e|`, so
+consecutive extrema alternate. Let `L` be the largest `t` such that the
+extrema of size at least `t` still alternate at `m + n + 2 = 16` points.
+
+By de la Vallée Poussin's theorem for weighted rational approximation, no
+rational of type (7, 7) with a denominator positive on the nodes has a smaller
+node maximum than `L`. If one did, `P*·D − P·D*` would change sign at least
+15 times among the 16 points, but it is a polynomial of degree at most 14 and
+not identically zero. The levelling ratio `ρ = max|e| / L − 1` therefore bounds
+how far an iterate is from the best node maximum of its type.
+
+The selected iterate is:
+- **CONVERGED** if `e` is finite, `D > 0` at every node, `e` alternates at 16
+  or more points, and `ρ ≤ 0.01`;
+- **CAP_EXHAUSTED** if it is not, and it is the 120th iterate. The node
+  maximum was still falling when the cap stopped the fit;
+- **NOT_CONVERGED** otherwise. The iteration stalled or oscillated without
+  levelling, or produced a non-finite or nonpositive iterate.
+
+CAP_EXHAUSTED and NOT_CONVERGED fail the study under §6, and so does a
+missing record or status. The cap is not raised to rescue a fit, because §2
+freezes it. For a failed fit, `derive_kernel.py` records the status, writes
+no coefficient file, accepts no existing one and exits 1. The validator then
+records a problem, and the study fails before any VBA recommendation.
+
+**Tolerance.** I chose 1% after seeing the ratio of this fit, 3.34E-3. The
+choice is not blind. A tolerance below 3.34E-3 would have failed this fit as
+CAP_EXHAUSTED, because the selected iterate is the last one. The
+justification does not depend on the observed value. At `ρ ≤ 0.01`, no (7, 7)
+rational can lower the node maximum by more than 1% of itself: about 1E-19
+here, below 2^-61.6 whenever A1 holds. That is under 1/3000 of `B`, so a fit
+closer to the best approximation could not change a kernel result that A5 or
+A6 measures.
+
+**Observed evidence.** These figures are recorded in `fit_convergence.json`:
+- the node maximum fell at every one of the 120 iterations, from 8.29E-17
+  to 1.0323E-17;
+- every iterate alternated at 16 points;
+- the levelling ratio fell from 70.6 to 3.34E-3, and first reached 1% at
+  iterate 53;
+- the selected iterate is the 120th: node maximum 1.03232E-17, `L` =
+  1.02888E-17, minimum `D` 1.000013;
+- over the last ten iterations the node maximum moved by 2.4E-4 of itself.
+
+The status is CONVERGED.
+
+The validator does not take the record on trust. It requires CONVERGED for
+the SHA-256 of `kernel_coefficients.json`, under this criterion, and checks
+that the status follows from the recorded history and selection. It then
+recomputes the evidence from the committed 40-digit coefficients and requires
+the criterion there as well.
+
+**Defect: incomplete result provenance.** `results.json` bound the
+coefficient file, and the holdout record also binds the frozen design text
+and H. Nothing bound the generator, the models, the validator, the full
+design or the inputs the predictions read. A change to any of them could leave
+recorded measurements stale while the fixture, which recomputes only a
+subsample, stayed green.
+
+**Binding.** This part is a record control, not a design change.
+`results.json` now carries a `provenance` block. It holds the SHA-256 of
+every file that produces or shapes the record:
+- the generator `derive_kernel.py` and its record `fit_convergence.json`;
+- the models `kernel_model.py`, `binary64_route_model.py` and the #34 route
+  coefficients;
+- the validator `validate_kernel.py`, `holdout_record.py` and
+  `result_binding.py`;
+- this file, whole, with its amendments;
+- the three grids of the §7 predictions, `accuracy_contracts.csv`, and the
+  #34 study's `results.json`, which supplies the A7 points.
+
+The candidate stays bound by `coefficients_sha256`. The frozen prefix and H
+stay bound by `holdout_exposure`, unchanged.
+
+A fixture compares those identities with the files in CI, in well under a
+second, and fails on any difference. A legitimate change to a bound file
+therefore needs `validate_kernel.py --regenerate --reason TEXT`. That run
+recomputes everything except H and records which identities changed. It
+cannot change the candidate or the frozen text, because the holdout record
+refuses both.
+
+**What changes in the record.** `results.json` is regenerated without
+evaluating H. It records:
+- `acceptance.fit_convergence`, PASS;
+- the `provenance` block;
+- this amendment in `amendments`;
+- a regeneration entry with `holdout_evaluated: false`.
+
+Every other recorded value is unchanged, and the recorded status stays PASS.
+`test_fit_convergence.py` and `test_result_binding.py` pin this. They include
+deliberate nonconvergent, capped and missing-status fits, and mutations of
+each bound file.

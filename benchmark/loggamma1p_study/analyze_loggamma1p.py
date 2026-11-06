@@ -172,9 +172,10 @@ def main():
         print(f"   Hand-over branch worst scaled: {fmt(hw)} at X={hat}")
         if rw > LOGGAMMA_CONTRACT:
             print(f"   NOTE: relative error there reaches {float(rw):.2e} at X={rat}, above")
-            print(f"   PROB_LogGamma's published {float(LOGGAMMA_CONTRACT):.1e}. That is the zero of")
-            print("   Log(Gamma) at X = 1, not a kernel defect -- but the published claim is")
-            print("   stated as relative over Z in [1E-8, 1E+50] and does not hold there.")
+            print(f"   PROB_LogGamma's former global claim of {float(LOGGAMMA_CONTRACT):.1e} relative over")
+            print("   Z in [1E-8, 1E+50]. That claim did not hold near the zero of Log(Gamma)")
+            print("   at X = 1 and was retired under #15; PROB_LogGamma is now judged by the")
+            print("   LogGamma.* regime contracts in accuracy_contracts.csv, not by this study.")
 
     # ---- 2. head to head ------------------------------------------------------
     print("\n2) KERNEL vs PROB_LogGamma(1# + X) -- the defect being removed")
@@ -211,8 +212,11 @@ def main():
         jump = abs(obs - prev) / abs(obs) if prev is not None and obs != 0 else None
         print(f"   X={x:>22}  rel={fmt(rel, 10)}  step from previous={fmt(jump, 10)}")
         prev = obs
-    print("   A step of order 1E-14 here is PROB_LogGamma's own 6.1E-14 contract,")
-    print("   not a defect in the series; it shrinks only if that kernel improves.")
+    print("   One ulp above the seam the kernel hands over to PROB_LogGamma, so the step")
+    print("   there is PROB_LogGamma's own error, not a defect in the series; it shrinks")
+    print("   only if that kernel improves. PROB_LogGamma is judged by the LogGamma.*")
+    print("   regime contracts in accuracy_contracts.csv (its former global 6.1E-14")
+    print("   claim was retired under #15).")
 
     # ---- 4. subnormal-result limitation ---------------------------------------
     print("\n4) SUBNORMAL-RESULT LIMITATION -- measured vs half-ulp bound 2^-1075 / X")

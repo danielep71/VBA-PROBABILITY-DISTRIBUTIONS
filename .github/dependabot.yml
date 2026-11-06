@@ -17,13 +17,14 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Rome"
+    # While a release branch is active, updates go through it to main.
+    target-branch: "release/1.0.0"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps(actions)"
     assignees: ["danielep71"]
     labels:
       - "ci"
-      - "tests"
       - "P3"
     groups:
       # github/codeql-action publishes init, analyze and upload-sarif as
@@ -43,9 +44,11 @@ updates:
       day: "monday"
       time: "06:15"
       timezone: "Europe/Rome"
+    # While a release branch is active, updates go through it to main.
+    target-branch: "release/1.0.0"
     open-pull-requests-limit: 5
     assignees: ["danielep71"]
-    labels: ["ci", "tests", "P3"]
+    labels: ["ci", "P3"]
     commit-message:
       prefix: "deps(python)"
     ignore:
@@ -65,8 +68,16 @@ updates:
       day: "monday"
       time: "06:30"
       timezone: "Europe/Rome"
+    # While a release branch is active, updates go through it to main.
+    target-branch: "release/1.0.0"
     open-pull-requests-limit: 5
     assignees: ["danielep71"]
-    labels: ["ci", "tests", "P3"]
+    labels: ["ci", "P3"]
     commit-message:
       prefix: "deps(python)"
+    groups:
+      # Ruff, mypy and mypy's dependencies share one hash-locked file that
+      # installs only as a complete closure, so one pull request moves them.
+      python-quality-tools:
+        patterns:
+          - "*"

@@ -3,21 +3,27 @@ run-name: Static checks — ${{ github.ref_name }} @ ${{ github.sha }}
 
 # Excel-free integrity checks of the repository itself: committed whitespace,
 # procedure-scoped VBA jumps, release semantics, release-bundle builder
-# fixtures, Python correctness lint (Ruff) and workflow validity. They
-# complement, but never replace, the Excel/VBA regression, the numerical
-# Accuracy Gate or release certification. The checkers live in tools/ and are
-# imported from the portfolio template; see tools/README.md.
+# fixtures, the Python unit tests under tests/, Python correctness lint (Ruff),
+# strict type checking (mypy) and workflow validity (actionlint, with a probe
+# that proves it rejects an invalid workflow). They complement, but never
+# replace, the Excel/VBA regression, the numerical Accuracy Gate or release
+# certification.
 #
-# Every check runs even when an earlier one fails, so one run reports every
-# problem; the final step turns any failed check into a failed job.
+# One command, tools/run_static_checks.py, runs every check, here and locally;
+# see tools/README.md. Every check runs even when an earlier one fails, so one
+# run reports every problem. With --strict, a check whose tool failed to
+# install fails instead of being skipped, and any failed check fails the job.
+#
+# The minimum-python job runs the same command on the documented minimum
+# Python. It is not a required check.
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
     tags: ["v*"]
   # Unfiltered, like the other required checks, so every pull request reports.
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
   workflow_dispatch:
 
 permissions:
@@ -31,6 +37,13 @@ defaults:
   run:
     shell: bash
 
+env:
+  # The CI interpreter, an exact patch release, used by every workflow that
+  # sets up Python; tools/README.md ("Python versions") lists where it is set.
+  PYTHON_VERSION: "3.12.16"
+  # The documented minimum Python, checked by the minimum-python job.
+  MINIMUM_PYTHON_VERSION: "3.11.18"
+
 jobs:
   static-checks:
     name: Repository integrity (static, no Excel)
@@ -39,7 +52,6 @@ jobs:
     env:
       PYTHONUTF8: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      PYTHON_VERSION: "3.12"
       # Pinned by version and content hash; bump both together.
       ACTIONLINT_VERSION: "1.7.12"
       ACTIONLINT_LINUX_AMD64_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
@@ -60,70 +72,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Prepare the results directory
-        run: mkdir -p test-results
-
-      - name: Exercise committed-whitespace fixtures
-        id: whitespace-self-test
-        continue-on-error: true
-        run: python3 tools/check_committed_whitespace.py --root . --self-test
-
-      - name: Validate committed candidate whitespace
-        id: whitespace
-        continue-on-error: true
-        env:
-          CANDIDATE_SHA: ${{ github.sha }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
-        run: |
-          args=(
-            --root .
-            --mode committed
-            --head "$CANDIDATE_SHA"
-            --output test-results/committed-whitespace.json
-            --summary test-results/committed-whitespace.md
-          )
-          if [[ -n "$BASE_SHA" ]]; then
-            args+=(--base "$BASE_SHA")
-          fi
-          python3 tools/check_committed_whitespace.py "${args[@]}"
-
-      - name: Exercise procedure-scoped VBA jump fixtures
-        id: vba-jumps-self-test
-        continue-on-error: true
-        run: python3 tools/check_vba_jumps.py --root . --self-test
-
-      - name: Validate procedure-scoped VBA jumps
-        id: vba-jumps
-        continue-on-error: true
-        run: >-
-          python3 tools/check_vba_jumps.py
-          --root .
-          --output test-results/vba-jumps.json
-          --summary test-results/vba-jumps.md
-
-      - name: Exercise release-semantics fixtures
-        id: release-semantics-self-test
-        continue-on-error: true
-        run: python3 tools/check_release_semantics.py --root . --self-test
-
-      - name: Validate release semantics
-        id: release-semantics
-        continue-on-error: true
-        run: >-
-          python3 tools/check_release_semantics.py
-          --root .
-          --output test-results/release-semantics.json
-          --summary test-results/release-semantics.md
-
-      - name: Exercise the release bundle builder
-        id: release-bundle-self-test
-        continue-on-error: true
-        # Fixtures for .github/scripts/build_release_bundle.py, which the
-        # Release workflow runs on a version tag (#31).
-        run: python3 .github/scripts/build_release_bundle.py --self-test
-
-      - name: Install the hash-locked Python linter
-        id: ruff-install
+      - name: Install the hash-locked Python linter and type checker
         continue-on-error: true
         run: |
           python -m pip install \
@@ -131,21 +80,16 @@ jobs:
             --only-binary=:all: \
             --require-hashes \
             -r tools/requirements-lint-ci.txt
+          mkdir -p test-results
           python -m ruff --version | tee test-results/ruff-version.txt
-
-      - name: Lint Python tooling for correctness
-        id: ruff
-        continue-on-error: true
-        # Rules come from ruff.toml: syntax errors and pyflakes only.
-        run: python -m ruff check --no-cache --output-format concise . | tee test-results/ruff.txt
+          python -m mypy --version | tee test-results/mypy-version.txt
 
       - name: Install the pinned workflow validator
-        id: actionlint-install
         continue-on-error: true
         run: |
           dir="${RUNNER_TEMP}/actionlint-${ACTIONLINT_VERSION}"
           archive="${dir}/actionlint.tar.gz"
-          mkdir -p "$dir"
+          mkdir -p "$dir" test-results
           curl --fail --location --proto '=https' --tlsv1.2 --retry 3 \
             --retry-all-errors --silent --show-error --output "$archive" \
             "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
@@ -153,29 +97,22 @@ jobs:
             | sha256sum --check --strict
           tar --no-same-owner -xzf "$archive" -C "$dir" actionlint
           "$dir/actionlint" -version | tee test-results/actionlint-version.txt
-          printf 'path=%s\n' "$dir/actionlint" >> "$GITHUB_OUTPUT"
 
-      - name: Validate workflows
-        id: actionlint
-        continue-on-error: true
+      - name: Run every static check
+        # The installs above continue on error so that this one command still
+        # runs and reports every check; --strict fails a check whose tool is
+        # missing. Per-check logs, report.json (commit, dirty state, pull
+        # request head, SHA-256 of every tracked file) and the job summary go
+        # to test-results/static-checks/.
         env:
-          ACTIONLINT: ${{ steps.actionlint-install.outputs.path }}
-        run: |
-          test -n "$ACTIONLINT"
-          # -config-file makes the self-hosted runner label declaration explicit.
-          "$ACTIONLINT" -no-color -config-file .github/actionlint.yaml \
-            | tee test-results/actionlint.txt
-          exit "${PIPESTATUS[0]}"
-
-      - name: Publish summary
-        if: always()
-        run: |
-          for f in committed-whitespace vba-jumps release-semantics; do
-            if [[ -f "test-results/$f.md" ]]; then
-              cat "test-results/$f.md" >> "$GITHUB_STEP_SUMMARY"
-              printf '\n' >> "$GITHUB_STEP_SUMMARY"
-            fi
-          done
+          CANDIDATE_SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+        # The pinned actionlint path, never one found on PATH.
+        run: >-
+          python tools/run_static_checks.py --strict
+          --actionlint "${RUNNER_TEMP}/actionlint-${ACTIONLINT_VERSION}/actionlint"
+          --summary "$GITHUB_STEP_SUMMARY"
 
       - name: Upload static-check evidence
         if: always()
@@ -186,40 +123,34 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Enforce every check
-        if: always()
+  minimum-python:
+    # Not a required check: it confirms that the repository's Python tooling
+    # still runs on the documented minimum Python (tools/README.md). It installs
+    # no tool, so Ruff, mypy and actionlint are reported as skipped; every other
+    # check, the unit tests under tests/ included, runs and must pass.
+    name: Minimum Python (3.11, not required)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Check out the exact SHA under review
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Full history: the whitespace check inspects the candidate range.
+          fetch-depth: 0
+
+      - name: Set up the minimum Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.MINIMUM_PYTHON_VERSION }}
+
+      - name: Run every check that needs no installed tool
         env:
-          WHITESPACE_SELF_TEST: ${{ steps.whitespace-self-test.outcome }}
-          WHITESPACE: ${{ steps.whitespace.outcome }}
-          VBA_JUMPS_SELF_TEST: ${{ steps.vba-jumps-self-test.outcome }}
-          VBA_JUMPS: ${{ steps.vba-jumps.outcome }}
-          RELEASE_SEMANTICS_SELF_TEST: ${{ steps.release-semantics-self-test.outcome }}
-          RELEASE_SEMANTICS: ${{ steps.release-semantics.outcome }}
-          RELEASE_BUNDLE_SELF_TEST: ${{ steps.release-bundle-self-test.outcome }}
-          RUFF_INSTALL: ${{ steps.ruff-install.outcome }}
-          RUFF: ${{ steps.ruff.outcome }}
-          ACTIONLINT_INSTALL: ${{ steps.actionlint-install.outcome }}
-          ACTIONLINT: ${{ steps.actionlint.outcome }}
-        run: |
-          failed=0
-          for item in \
-            "Committed-whitespace fixtures:$WHITESPACE_SELF_TEST" \
-            "Committed whitespace:$WHITESPACE" \
-            "VBA jump fixtures:$VBA_JUMPS_SELF_TEST" \
-            "VBA jumps:$VBA_JUMPS" \
-            "Release-semantics fixtures:$RELEASE_SEMANTICS_SELF_TEST" \
-            "Release semantics:$RELEASE_SEMANTICS" \
-            "Release bundle fixtures:$RELEASE_BUNDLE_SELF_TEST" \
-            "Python linter install:$RUFF_INSTALL" \
-            "Python correctness lint:$RUFF" \
-            "Workflow validator install:$ACTIONLINT_INSTALL" \
-            "Workflow validation:$ACTIONLINT"; do
-            label="${item%%:*}"
-            outcome="${item##*:}"
-            printf '%-32s %s\n' "$label" "$outcome"
-            # Anything but success fails, including a step that never ran.
-            if [[ "$outcome" != "success" ]]; then
-              failed=1
-            fi
-          done
-          exit "$failed"
+          CANDIDATE_SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+        run: python tools/run_static_checks.py --summary "$GITHUB_STEP_SUMMARY"

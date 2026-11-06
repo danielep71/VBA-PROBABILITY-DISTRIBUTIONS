@@ -1,10 +1,37 @@
 name: Excel VBA Regression
 
 on:
+  # A dispatch runs the regression, as every other event does. The export
+  # inputs below add an unattended grid export after a green regression, in
+  # the same job on the same runner (#181). They default to off, so a plain
+  # dispatch is a regression-only run. A dispatch uses this file as it exists
+  # at the dispatched ref, so a branch can test changes to the export before
+  # they reach main.
   workflow_dispatch:
+    inputs:
+      export_main:
+        description: "Also export benchmark/probability_accuracy_grid.csv after a green regression"
+        type: boolean
+        default: false
+      export_holdout:
+        description: "Also export benchmark/holdout/holdout_grid.csv after a green regression"
+        type: boolean
+        default: false
+      export_holdout_older:
+        description: "Also export benchmark/holdout_older/holdout_older_grid.csv after a green regression"
+        type: boolean
+        default: false
+      main_mode:
+        description: "Main grid only: full re-export, or missing-only (fill blank observed_vba cells). The holdout exporters always fill every row."
+        type: choice
+        options:
+          - full
+          - missing-only
+        default: full
   push:
     branches:
       - main
+      - "release/**"
     paths:
       - "src/**"
       - "tests/**"
@@ -18,6 +45,7 @@ on:
   pull_request:
     branches:
       - main
+      - "release/**"
 
 concurrency:
   group: excel-vba-${{ github.workflow }}-${{ github.ref }}
@@ -40,7 +68,9 @@ jobs:
       - X64
       - excel
 
-    timeout-minutes: 20
+    # 20 minutes for the regression alone. A run that also exports gets 120,
+    # more than the export adapter's own per-macro watchdog limits add up to.
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older) && 120 || 20 }}
 
     steps:
       - name: Check out repository
@@ -61,4 +91,27 @@ jobs:
             artifacts/excel-vba-ci/test-result.txt
             artifacts/excel-vba-ci/excel-certification.json
           if-no-files-found: warn
+          retention-days: 30
+
+      # Runs only after the regression step succeeded, which it does only for
+      # a green record; the adapter checks the record again before Excel
+      # starts. It never writes to the repository.
+      - name: Export selected grids through Excel COM
+        id: export
+        if: github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older)
+        shell: cmd
+        env:
+          EXPORT_MAIN: ${{ inputs.export_main }}
+          EXPORT_HOLDOUT: ${{ inputs.export_holdout }}
+          EXPORT_HOLDOUT_OLDER: ${{ inputs.export_holdout_older }}
+          EXPORT_MAIN_MODE: ${{ inputs.main_mode }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Export-ExcelGrids.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" -Main "%EXPORT_MAIN%" -Holdout "%EXPORT_HOLDOUT%" -HoldoutOlder "%EXPORT_HOLDOUT_OLDER%" -MainMode "%EXPORT_MAIN_MODE%"
+
+      - name: Upload exact-SHA grid export
+        if: always() && steps.export.outcome != 'skipped'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: excel-grid-export-${{ github.run_id }}
+          path: artifacts/excel-grid-export/
+          if-no-files-found: error
           retention-days: 30

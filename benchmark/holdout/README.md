@@ -36,6 +36,17 @@ incomplete gamma at 50 digits.
 | `M_STATS_PROBDIST_HOLDOUT.bas` | Export macro `Export_Holdout` for all contracted public functions (Beta/F, `PROB_LogBeta`, and the six discrete families). |
 | `analyze_holdout.py` | Per-contract holdout worst vs frozen threshold + margin. |
 
+**Survival references (#159, 2026-11-05).** `generate_holdout.py` now computes
+every Beta and F survival reference directly as an upper tail, at the exact
+Double each written argument token parses to. Before, they were `1 - CDF` at the
+unrounded design value, and 15 of the 72 committed survival references miss the
+25-digit floor (worst 14.2 digits). `holdout_grid.csv` is bound byte for byte by
+`holdout_manifest.json`, so those references can change only together with a
+fresh Excel holdout export; until then `../survival_reference_debt.json`
+registers them, and the fixed generator supplies the replacement values (every
+survival reference it emits for the committed rows meets the floor, the worst at
+29.6 digits).
+
 ## How to run
 
 1. Import `M_STATS_PROBDIST_HOLDOUT.bas`, `Debug > Compile`.

@@ -8,6 +8,12 @@ The contract is defined by `.github/excel-evidence-policy.json` and validated by
 `benchmark/excel_certification.py` / `benchmark/check_excel_certification.py`.
 The self-hosted workflow emits `artifacts/excel-vba-ci/excel-certification.json`.
 
+The policy's `regression_sources` stays an explicit list, because the Excel
+runner reads it and imports the modules in list order. `benchmark/check_module_lists.py`
+fails when that list differs from the `.bas` files Git tracks under `src/` and
+`tests/`, in either direction, or when such a file is present but untracked, so
+a new module cannot escape the evidence binding. The comparison ignores order.
+
 **Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 
 ## What a regression record proves
@@ -48,7 +54,8 @@ Its record therefore contains both policy-declared grids with:
 
 A 909/909 regression PASS cannot be used to rebind an accuracy manifest. This
 separation is deliberate: regression execution and numerical observation export
-are different evidence events.
+are different evidence events. A dispatched export run produces both events in
+one job, as two artifacts; see [Automated fresh export](#automated-fresh-export).
 
 ## Validate a downloaded workflow artifact
 
@@ -68,12 +75,118 @@ Validation fails on, among other things, a short/wrong candidate SHA, changed
 source bytes, wrong assertion count, failed cleanup, a changed/missing retained
 log, or inconsistent harness counters.
 
-## Add fresh grid-export claims
+<a id="automated-fresh-export"></a>
 
-This step is intentionally separate and must be run from the exact candidate
-checkout immediately after the selected grid or grids were really exported in
-Excel. `benchmark/excel_environment.json` must have been refreshed by the same
-Excel environment.
+## Automated fresh export
+
+The self-hosted runner exports the grids unattended (#181). The only manual
+part is keeping the runner online; the evidence commit is still made by a
+person, because the runner never writes to the repository.
+[EXCEL_VBA_CI.md](EXCEL_VBA_CI.md#unattended-grid-export) describes what the
+runner does. The steps below use the GitHub CLI.
+
+1. **Dispatch** the Excel VBA Regression workflow on the commit to export.
+   Select only the grids you mean to claim:
+
+   ```bash
+   gh workflow run excel-vba-regression.yml --ref <branch> \
+     -f export_main=true -f export_holdout=true \
+     -f export_holdout_older=false -f main_mode=full
+   ```
+
+   The run exports from the head of `<branch>` when it starts. Note that SHA:
+   the evidence commit must be its child.
+
+2. **Wait** for the run and **download** its export artifact into an empty
+   directory outside the checkout:
+
+   ```bash
+   gh run list --workflow excel-vba-regression.yml --branch <branch> --limit 1
+   gh run watch <run id>
+   gh run download <run id> --name excel-grid-export-<run id> --dir <artifact-dir>
+   ```
+
+   A failed run still uploads the artifact; `export-manifest.json` and
+   `export-log.txt` give the reason.
+
+3. **Apply** it from a clean checkout of the exported commit:
+
+   ```bash
+   git switch <branch>     # its head must still be the exported SHA
+   python benchmark/apply_excel_export.py --artifact <artifact-dir> \
+     --grid main --grid holdout
+   ```
+
+   `--grid` names the grids you expect, and the tool refuses an artifact that
+   holds others. It refuses, writing nothing, unless the export passed on the
+   runner, the artifact names the full `HEAD`, the regression record is green
+   for `HEAD` with its retained log, the environment file names `HEAD`, and
+   every requested grid is present with the raw SHA-256 the manifest records.
+   It then checks each grid against `HEAD` again: only the `observed_vba` cells
+   its exporter owns may change, every one of them must be filled, and the
+   bytes must be the CRLF lines Excel writes. Then it:
+
+   1. copies the grids and `excel_environment.json` into place;
+   2. runs `finalize_excel_certification.py --from-fresh-export` with `--main`
+      and/or `--holdout`, which records each grid's raw digest from the bytes
+      Excel wrote;
+   3. rewrites the grids with the LF bytes Git stores;
+   4. runs `refresh_evidence.py` with `--bind-exported-main` and/or
+      `--bind-exported-holdout`;
+   5. validates the finalized record with `check_excel_certification.py`
+      against a snapshot commit of the working tree (`git stash create`, which
+      moves no ref), so the exact bytes you will commit are checked;
+   6. prints the files to commit, the commit message and the validation
+      commands for step 5.
+
+   Before the evidence commit exists, the `retained Excel record` step of
+   `refresh_evidence.py` compares the new record with `HEAD` and fails when a
+   grid's bytes changed. The tool expects that one failure; the snapshot check
+   replaces it. Any other failure leaves the files in place and ends with
+   `NOT READY`. The usual one is a release gate that the export satisfies while
+   `benchmark/release_readiness.json` still lists its blocker open: resolve that
+   entry with this evidence, run `python benchmark/refresh_evidence.py` again
+   (no bind flags; the manifests are already bound), and continue.
+
+   `holdout_older` has no exporter in the evidence policy, so the record makes
+   no claim for it and no manifest binds it. The tool copies the grid and the
+   plain refresh regenerates `holdout_older_summary.md`.
+
+4. **Commit** the changed files together, with the printed message as the
+   body.
+
+5. **Validate** the evidence commit with the printed commands: for each
+   claimed grid,
+
+   ```bash
+   python benchmark/check_excel_certification.py \
+     --record benchmark/excel_regression_record.json \
+     --candidate-sha <exported-sha> --evidence-ref HEAD --require-pass \
+     --require-grid benchmark/probability_accuracy_grid.csv \
+     --log-directory <artifact-dir>
+   ```
+
+   then `python benchmark/check_manifest_provenance.py --since <exported-sha>`
+   and `python benchmark/refresh_evidence.py --check`. Push and open the pull
+   request; the Accuracy Gate repeats the checks.
+
+The dispatched run's regression artifact, `excel-vba-regression-<run id>`, is
+the same as any other run's, so a successful export run also certifies its
+commit for [release](#exact-tag-certification).
+
+`excel_environment.json` from an automated export carries two fields that
+`Export_ExcelEnvironment` does not write: `commit_sha`, the exported commit,
+and `commit_sha_recorded_by`, set to `ci/Export-ExcelGrids.ps1`. The finalizer
+refuses an environment file whose `commit_sha` is not the candidate.
+`write_manifest.py` still records the manifest's `commit_sha` from the
+checkout's `HEAD`, which the apply step requires to be the same commit.
+
+## Manual fresh export (fallback)
+
+Use this path when the runner is unavailable. It is intentionally separate and
+must be run from the exact candidate checkout immediately after the selected
+grid or grids were really exported in Excel. `benchmark/excel_environment.json`
+must have been refreshed by the same Excel environment.
 
 Start with the green regression record produced for that exact candidate, then:
 
@@ -185,6 +298,54 @@ A later commit may retain that record only while every certified VBA source byte
 is unchanged. This permits an evidence-only commit without pretending that
 Excel executed the evidence file itself. Any later change to a certified VBA
 module invalidates the record and requires a new Excel run.
+
+Retaining the record keeps its grid-export evidence valid; it does not certify
+the later commit. A release needs an Excel run of the tagged commit itself, as
+described next.
+
+<a id="exact-tag-certification"></a>
+
+## Release certification of the exact tagged commit
+
+A commit cannot contain a record of itself, so the retained record always names
+an earlier candidate than the commit that holds it. Validated without
+`--candidate-sha`, it would also pass at any later commit with identical VBA
+bytes, such as a documentation-only commit that Excel never ran (#76). The
+checker says which binding it checked: `exact candidate: not required` or
+`exact candidate: required and matched`.
+
+The release workflow (`.github/workflows/release.yml`) therefore certifies each
+release commit separately:
+
+1. It takes the checked-out `HEAD^{commit}` as the candidate. On a tag push the
+   candidate must equal the tag's peeled commit; on a rehearsal it is the commit
+   of the dispatched ref.
+2. It validates the retained record with `--evidence-ref <candidate>`, which
+   proves the certified VBA bytes and grids are unchanged there.
+3. `.github/scripts/certify_release_candidate.py` finds the successful `push`
+   and `workflow_dispatch` runs of the Excel VBA Regression workflow whose head
+   commit is the candidate, downloads each run's artifact, newest first, and
+   validates its record against the candidate:
+
+   ```bash
+   python benchmark/check_excel_certification.py \
+     --record <artifact-dir>/excel-certification.json \
+     --candidate-sha <candidate> --evidence-ref <candidate> \
+     --require-pass --log-directory <artifact-dir>
+   ```
+
+   The record must also name the self-hosted runner and the run it was
+   downloaded from. Pull request runs are not used, because they execute a
+   synthetic merge commit.
+4. The first run that passes makes the candidate **CERTIFIED**. Otherwise it is
+   **UNCERTIFIED**, and the job summary lists every reason. A tag push then
+   fails before anything is built, attested or drafted. A rehearsal reports a
+   warning, builds its practice bundle and never attests or releases it.
+
+[RELEASING.md](../RELEASING.md#exact-tag-binding) describes how to produce
+that run before tagging. `tests/test_certify_release_candidate.py` holds the
+positive fixture (a green run of the exact commit) and the negative ones,
+including a later commit with identical numerical source bytes.
 
 ## Failure and cleanup semantics
 

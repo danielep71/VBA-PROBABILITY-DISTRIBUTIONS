@@ -51,6 +51,27 @@ normal, with `|t_cdf(x, df) - Phi(x)| ~ C(x)/df`. Consequences:
 `generate_tchi_large_df.py` asserts the WH validation and drops any
 non-self-consistent row before writing the grid.
 
+**Amendment, 2026-11-05 (#159).** Two corrections to the references above:
+
+- **Survival precision.** The generator never set `mp.mp.dps`. Each CDF was
+  computed under its own working precision, but the survival was then formed as
+  `1 - CDF` at mpmath's default 53 bits, so all 75 survival references were
+  accurate to only about 16 digits. The module now sets its precision
+  explicitly, and each survival is computed directly inside its self-checked
+  evaluation: `I_z(df/2, 1/2) / 2` for Student t.
+- **Chi-square cumulative and survival.** Wilson-Hilferty is exact to Double
+  precision at `df >= 1E16`, but only to 16-29 significant digits, below the
+  25-digit reference floor. These rows now use Temme's uniform asymptotic
+  expansion (DLMF 8.12, terms `c0` and `c1`), which gives each tail directly and
+  is exact to better than `1E-38` relative at `df >= 1E16`; the generator
+  validates it against the exact incomplete gamma at `df = 2E8`. The inverse
+  rows keep the Wilson-Hilferty quantile.
+
+The committed grid was re-referenced with
+`python generate_tchi_large_df.py --merge-references --write`, which changes
+reference cells only: 89 references moved, by at most 1.6E-16 relative, and no
+observation changed. The old values are in `../study_reference_rebase.csv`.
+
 ## Running it
 
 ```

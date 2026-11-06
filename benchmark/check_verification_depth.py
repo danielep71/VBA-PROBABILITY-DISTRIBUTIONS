@@ -147,11 +147,13 @@ def main() -> int:
         "contract-evaluator", "main-grid-coverage", "root-readme-integrity",
         "root-readme-assurance",
         "incomplete-gamma-parity", "student-t-coefficient-integrity",
-        "public-api-drift", "manifest-content-binding", "manifest-provenance",
+        "public-api-drift", "module-list-binding",
+        "manifest-content-binding", "manifest-provenance",
         "reference-helper-degradation", "generated-contract-table",
         "source-threshold-single-source", "holdout-analyzer-semantics",
         "excel-exact-sha-certification", "grid-regeneration-safety",
         "committed-whitespace", "vba-procedure-jumps", "release-semantics",
+        "ci-test-coverage", "df-cap-mirror", "older-holdout-summary-currency",
     }
     for cid in sorted(required - seen):
         failures.append(f"required release-blocking control missing from inventory: {cid}")

@@ -19,14 +19,30 @@ Lognormal_ParametersFromMeanStdDev, and tiny_unbalanced Beta/F/LogBeta rows.
 Grid schema matches the main grid so `compute_errors.py --grid holdout_grid.csv`
 verdicts it directly against the frozen contract.
 References: mpmath / continued-fraction incomplete beta at 50 digits.
+
+Survival references (#159) are upper tails computed directly
+(_ibeta.ibeta_upper and _ibeta.f_sf, never 1 - CDF), at the exact Double the
+row's argument token parses to (survival_at). Before #159 the Beta and F
+survival references were taken as 1 - CDF at the unrounded design value, half
+an ulp from the Double the exporter passes. The committed holdout_grid.csv is
+bound by holdout_manifest.json, so its references change only together with a
+fresh Excel holdout export; until then check_survival_references.py registers
+the affected rows as debt.
 """
 import argparse, csv
 import mpmath as mp
 import os as _os, sys as _sys
 # Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
-from _ibeta import ibeta, beta_invcdf, f_cdf, f_invcdf
+from _ibeta import ibeta, ibeta_upper, beta_invcdf, f_cdf, f_invcdf, f_sf
+from _binary64 import exact_binary64_mpf
 mp.mp.dps = 50
+
+
+def survival_at(fn, a1, a2, a3):
+    """Beta or F survival at the Doubles the written tokens parse to."""
+    x, p, q = (exact_binary64_mpf(v if isinstance(v, str) else str(v)) for v in (a1, a2, a3))
+    return ibeta_upper(x, p, q) if fn == "Beta_Survival" else f_sf(x, p, q)
 
 # FRESH unbalanced Beta shapes (min/max < 0.1), none in the fitting set
 BETA_UNBAL = [("0.55","3000"),("1.9","50000"),("3.3","40000"),("0.42","700"),
@@ -141,7 +157,8 @@ def build():
         A,B=mp.mpf(a),mp.mpf(b); x=A/(A+B)
         rows.append(row("Beta_Density","K_STATS_Beta_Density",mp.nstr(x,17),a,b,beta_pdf(x,A,B),"unbalanced"))
         rows.append(row("Beta_Cumulative","K_STATS_Beta_Cumulative",mp.nstr(x,17),a,b,ibeta(x,A,B),"unbalanced"))
-        rows.append(row("Beta_Survival","K_STATS_Beta_Survival",mp.nstr(x,17),a,b,1-ibeta(x,A,B),"unbalanced"))
+        rows.append(row("Beta_Survival","K_STATS_Beta_Survival",mp.nstr(x,17),a,b,
+                        survival_at("Beta_Survival",mp.nstr(x,17),a,b),"unbalanced"))
     # Beta inverse unbalanced
     for a,b in BETA_UNBAL[:5]:
         for p in PROBS:
@@ -153,7 +170,8 @@ def build():
             x=f_invcdf("0.5",mp.mpf(d1),mp.mpf(d2))
         for xval in (mp.mpf(1), x):
             rows.append(row("F_Cumulative","K_STATS_F_Cumulative",mp.nstr(xval,17),d1,d2,f_cdf(xval,mp.mpf(d1),mp.mpf(d2)),"validated"))
-            rows.append(row("F_Survival","K_STATS_F_Survival",mp.nstr(xval,17),d1,d2,1-f_cdf(xval,mp.mpf(d1),mp.mpf(d2)),"validated"))
+            rows.append(row("F_Survival","K_STATS_F_Survival",mp.nstr(xval,17),d1,d2,
+                            survival_at("F_Survival",mp.nstr(xval,17),d1,d2),"validated"))
     # F inverse validated
     for d1,d2 in F_VAL:
         for p in F_PROBS:
@@ -388,7 +406,7 @@ def _tiny_unbalanced_holdout_rows():
             R("Beta_Density", x, a, b, _tuh_bdens(x, a, b), "tiny_unbalanced")
             c = _tuh_bcdf(x, a, b)
             R("Beta_Cumulative", x, a, b, c, "tiny_unbalanced")
-            R("Beta_Survival", x, a, b, 1 - c, "tiny_unbalanced")
+            R("Beta_Survival", x, a, b, survival_at("Beta_Survival", x, a, b), "tiny_unbalanced")
     # F forward surface; x straddles the DF2/DF1 branch
     for d1, d2 in [(6e-11, 5.4e-12), (1e-14, 8e-16), (4e-7, 3e-8), (1.4e-4, 1.2e-5)]:
         br = mp.mpf(d2) / mp.mpf(d1)
@@ -396,7 +414,7 @@ def _tiny_unbalanced_holdout_rows():
             R("F_Density", x, d1, d2, _tuh_fdens(x, d1, d2), "tiny_unbalanced")
             c = _tuh_fcdf(x, d1, d2)
             R("F_Cumulative", x, d1, d2, c, "tiny_unbalanced")
-            R("F_Survival", x, d1, d2, 1 - c, "tiny_unbalanced")
+            R("F_Survival", x, d1, d2, survival_at("F_Survival", x, d1, d2), "tiny_unbalanced")
     # Inverses: only where the quantile stays representable
     for pr, a, b, q in _TUH_BETA_INV:
         R("Beta_InverseCumulative", pr, a, b, mp.mpf(q), "tiny_unbalanced_representable")

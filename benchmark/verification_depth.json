@@ -52,6 +52,13 @@
       "current_state": "green"
     },
     {
+      "id": "module-list-binding",
+      "live_command": "check_module_lists.py",
+      "proof_command": "test_module_lists.py",
+      "negative_claim": "a tracked src/ or tests/ module missing from the Excel evidence policy, a listed module that is absent, untracked or outside src/ and tests/, a present-but-untracked module, duplicates and a non-Git root are rejected",
+      "current_state": "green"
+    },
+    {
       "id": "manifest-content-binding",
       "live_command": "test_manifest.py",
       "proof_command": "test_manifest.py",
@@ -94,6 +101,13 @@
       "current_state": "green"
     },
     {
+      "id": "older-holdout-summary-currency",
+      "live_command": "holdout_older/check_holdout_older_summary.py",
+      "proof_command": "holdout_older/test_analyze_holdout_older.py",
+      "negative_claim": "a contract tightened or retired after the summary was written, a hand-edited verdict, a missing summary and a grid row neither scored nor covered by a characterization_only contract fail; a current summary that records FAIL verdicts passes",
+      "current_state": "green"
+    },
+    {
       "id": "excel-exact-sha-certification",
       "live_command": "check_excel_certification.py --record excel_regression_record.json --require-pass",
       "proof_command": "test_excel_certification.py",
@@ -127,6 +141,27 @@
       "proof_command": "../tools/check_release_semantics.py --root .. --self-test",
       "negative_claim": "invalid SemVer, out-of-order or duplicated releases, impossible or regressing cut dates, a wrong or missing comparison link, and a latest release heading that disagrees with VERSION are rejected",
       "current_state": "green"
+    },
+    {
+      "id": "ci-test-coverage",
+      "live_command": "../tools/check_ci_test_coverage.py --root ..",
+      "proof_command": "../tests/test_ci_test_coverage.py",
+      "negative_claim": "a tracked test file that no pull-request workflow step or runner list executes, one run only under a path filter, an unrecognized condition or an unaggregated continue-on-error, a selected-only test whose change counts as metadata-only, and a stale reference or exemption are reported",
+      "current_state": "green"
+    },
+    {
+      "id": "df-cap-mirror",
+      "live_command": "check_df_cap_mirrors.py",
+      "proof_command": "test_df_cap_mirrors.py",
+      "negative_claim": "a changed or one-ulp-drifted VBA PROB_*_MAX_DF or Python *_MAX_DF value, a missing or renamed constant, a duplicate in the module, a procedure or another module, and an unparsable, inexact or wrongly typed literal are rejected",
+      "current_state": "green"
+    },
+    {
+      "id": "survival-reference-basis",
+      "live_command": "check_survival_references.py",
+      "proof_command": "test_survival_references.py",
+      "negative_claim": "a survival reference taken at the decimal token instead of the binary64 argument, one formed as 1 - CDF at 53 bits, one below the 25-digit floor, stale or orphaned debt, an undefined blocker, an unknown survival function, an unlisted or empty grid and an uncertified oracle are rejected",
+      "current_state": "green_with_registered_transition_debt"
     }
   ]
 }

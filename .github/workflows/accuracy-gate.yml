@@ -9,13 +9,15 @@ name: Accuracy Gate
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * 1"
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   # Run on every main push and PR: repository metadata and tools are inputs
   # to the assurance checks too. This job is a required status check on main
   # (ruleset 'Protect main'; see #31).
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
 
 concurrency:
   group: accuracy-gate-${{ github.workflow }}-${{ github.ref }}
@@ -24,9 +26,48 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # The CI interpreter, an exact patch release, for every job; tools/README.md
+  # ("Python versions") lists where it is set. benchmark/requirements-ci.txt
+  # holds pure-Python wheels, so a patch bump leaves the reference stack as is.
+  PYTHON_VERSION: "3.12.16"
+
 jobs:
-  accuracy-gate:
-    name: Strict accuracy gate (pure Python, no Excel)
+  select:
+    name: Select accuracy proofs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      full: ${{ steps.select.outputs.full }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run the tests/ unit tests
+        # Every module under tests/ runs on every event, before selection:
+        # change selection, issue triage and CI test coverage are all cheap,
+        # offline and independent of the selected proof depth.
+        run: python -m unittest discover -s tests
+      - name: Verify every tracked test file runs in CI
+        # Fails when a tracked test_*.py is executed by no workflow step and
+        # no runner list on every pull request (tools/check_ci_test_coverage.py).
+        run: python tools/check_ci_test_coverage.py --root . --summary "$GITHUB_STEP_SUMMARY"
+      - name: Select proofs for the complete change
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+        run: >-
+          python tools/select_accuracy_checks.py --event "$EVENT_NAME"
+          --base "$BASE_SHA" --output "$GITHUB_OUTPUT" --summary "$GITHUB_STEP_SUMMARY"
+
+  accuracy-core:
+    name: Live accuracy evidence and evaluator checks
+    needs: select
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -46,7 +87,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install reference dependencies
         id: deps
@@ -67,32 +108,17 @@ jobs:
         # and the two lists diverged: test_igamma_parity.py was added to the
         # shim and never to this step, so the parity drift detector ran
         # locally and never in CI. Calling the shim here makes the local
-        # signature and the hosted gate execute the identical set by
-        # construction. Add new tooling checks to test_evidence_tools.py only.
+        # signature and full hosted runs execute the identical set. Metadata-only
+        # CI selects live checks from that same list; local runs stay full.
+        # Add new tooling checks to test_evidence_tools.py only.
+        env:
+          FULL_PROOFS: ${{ needs.select.outputs.full }}
         run: |
-          python test_evidence_tools.py
-
-      - name: "Verify the study analyzer for #13"
-        working-directory: benchmark/positive_ratio_subnormal
-        # The positive-ratio analyzer defines the evidence contract for
-        # #13: what a row means, how the exact standardized argument is
-        # reconstructed, how output representability is classified. It has
-        # produced five defects during development - a missing density
-        # Jacobian, a missing candidate recorded as zero error, an absent
-        # overflowed-output class, an ambiguous binding shape and an oracle
-        # precision inconsistency - none of which CI would have caught.
-        #
-        # The --claims runs gate the preregistered holdout verdicts themselves.
-        # They exit non-zero on a rejected or pending claim, so a holdout that
-        # stops supporting a registered cutoff turns the gate red rather than
-        # requiring somebody to read the output.
-        # Runs while #13 is active; remove when the study closes.
-        run: |
-          python test_analyze_positive_ratio_subnormal.py
-          python analyze_positive_ratio_subnormal.py gamma_probe.csv > /dev/null
-          python analyze_positive_ratio_subnormal.py chisquare_probe.csv > /dev/null
-          python analyze_positive_ratio_subnormal.py gamma_holdout.csv --claims
-          python analyze_positive_ratio_subnormal.py chisquare_holdout.csv --claims
+          if [[ "$FULL_PROOFS" == "true" ]]; then
+            python test_evidence_tools.py
+          else
+            python test_evidence_tools.py --checks-only
+          fi
 
       - name: Run strict accuracy gate on the committed grid
         working-directory: benchmark
@@ -181,3 +207,66 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         working-directory: benchmark
         run: python render_readme_assurance.py --check
+
+  study:
+    name: Positive-ratio study proofs
+    needs: select
+    if: needs.select.outputs.full == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install reference dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          --only-binary=:all: --require-hashes -r benchmark/requirements-ci.txt
+      - name: "Verify the study analyzer for #13"
+        working-directory: benchmark/positive_ratio_subnormal
+        # The positive-ratio analyzer defines the evidence contract for
+        # #13: what a row means, how the exact standardized argument is
+        # reconstructed, how output representability is classified. It has
+        # produced five defects during development - a missing density
+        # Jacobian, a missing candidate recorded as zero error, an absent
+        # overflowed-output class, an ambiguous binding shape and an oracle
+        # precision inconsistency - none of which CI would have caught.
+        #
+        # The --claims runs gate the preregistered holdout verdicts themselves.
+        # They exit non-zero on a rejected or pending claim, so a holdout that
+        # stops supporting a registered cutoff turns the gate red rather than
+        # requiring somebody to read the output.
+        # Runs while #13 is active; remove when the study closes.
+        run: |
+          python test_analyze_positive_ratio_subnormal.py
+          python analyze_positive_ratio_subnormal.py gamma_probe.csv > /dev/null
+          python analyze_positive_ratio_subnormal.py chisquare_probe.csv > /dev/null
+          python analyze_positive_ratio_subnormal.py gamma_holdout.csv --claims
+          python analyze_positive_ratio_subnormal.py chisquare_holdout.csv --claims
+
+
+  accuracy-gate:
+    name: Strict accuracy gate (pure Python, no Excel)
+    needs: [select, accuracy-core, study]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every applicable check to succeed
+        env:
+          SELECTION: ${{ needs.select.result }}
+          FULL_PROOFS: ${{ needs.select.outputs.full }}
+          CORE: ${{ needs.accuracy-core.result }}
+          STUDY: ${{ needs.study.result }}
+        run: |
+          test "$SELECTION" = success
+          test "$CORE" = success
+          case "$FULL_PROOFS" in
+            true) test "$STUDY" = success ;;
+            false) test "$STUDY" = skipped ;;
+            *) exit 1 ;;
+          esac

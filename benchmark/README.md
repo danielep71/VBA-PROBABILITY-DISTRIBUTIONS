@@ -49,7 +49,10 @@ required, and they answer different questions.
 | `M_STATS_PROBDIST_ACCURACYEXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
 | `compute_errors.py` | Joins observed vs reference, finds max-error locations, checks each claim, writes the summary. Phase 3. |
 | `accuracy_summary.md` | The generated verdict table. |
-| `_ibeta.py` | Continued-fraction incomplete beta / F reference helper. Single-sourced: this is the only copy, and the study scripts import it from here. |
+| `_ibeta.py` | Continued-fraction incomplete beta / F reference helper, including the direct upper tails `ibeta_upper` and `f_sf`. Single-sourced: this is the only copy, and the study scripts import it from here. |
+| `check_survival_references.py`, `_survival_oracle.py` | Fail-closed audit of every committed survival reference against a direct upper-tail recomputation at its binary64 argument (#159). See [Survival reference basis](#survival-reference-basis). |
+| `survival_reference_debt.json` | The survival references known to miss the 25-digit floor that a binding prevents re-referencing yet, each with its blocker. |
+| `_study_merge.py`, `study_reference_rebase.csv` | Reference-only merge of a regenerated study grid into the committed grid, keeping every observation, and the record of every reference it changed (old and new value). |
 | `environment.txt` | Python and dependency versions, reference precision, date. |
 
 ### Study-folder conventions
@@ -372,14 +375,95 @@ per function via the `metric` column.
 
 ## Reference integrity
 
-The continued-fraction / mpmath references are cross-checked against SciPy, an
-INDEPENDENT implementation, wherever SciPy is reliable (incomplete-beta shape
-parameter <= 1E7). This cross-check is a regenerable artifact,
-`cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion: at the
-current grids 242 points are independently confirmed by SciPy (worst relative
-difference about 7E-11, i.e. SciPy's own double-precision limit), and 8 extreme
-points lie beyond SciPy's reliable range and instead rest on the reference's
-50-vs-80-digit self-consistency. SciPy corroborates the reference where it can
-compute; it cannot certify the extreme-parameter points it cannot itself evaluate.
+The references in three grids are cross-checked against SciPy, an INDEPENDENT
+implementation. This cross-check is a regenerable artifact,
+`cross_check_scipy.py` -> `cross_check_scipy.md`, not a bare assertion. The
+committed record covers `beta_f_unbalanced/beta_f_unbalanced_grid.csv`,
+`beta_f_unbalanced/beta_f_inverse_grid.csv` and `holdout/holdout_grid.csv` as
+they stood at commit `ce9a274` (2026-11-05), after the #159 re-reference of
+`beta_f_unbalanced`. It lists the
+SHA-256 of each grid and the SciPy, NumPy and mpmath versions it ran with.
+Each of the 675 reference rows in those grids is in exactly one class:
+
+- **655 confirmed by SciPy.** The function has an exact SciPy equivalent and
+  the point lies where SciPy is reliable (incomplete-beta shape parameter
+  <= 1E7 for Beta and F). They cover Beta, F, `PROB_LogBeta`, the chi-square
+  and F densities, the normal and lognormal inverses, and every Binomial,
+  Poisson, Geometric, Negative Binomial, Hypergeometric and Discrete Uniform
+  function in the grids. The largest relative differences are
+  `Binomial_LogPMF` 2.3E-10, `Poisson_PMF` 1.6E-10, `PROB_LogBeta` 7.1E-11,
+  `Poisson_LogPMF` 1.9E-11 and `Hypergeometric_LogPMF` 1.5E-11; every other
+  function agrees within 2.0E-12. Agreement corroborates a reference only to
+  the difference shown, and the record does not say which side carries it.
+- **8 beyond SciPy's reliable range**: `F_Cumulative` and `F_Survival` at
+  df2 = 1E8 and 1E10, where the incomplete-beta shape parameter is above 1E7.
+  They are **not independently confirmed** by SciPy. The four `F_Survival`
+  rows are recomputed by a direct route in `check_survival_references.py`
+  (see [Survival reference basis](#survival-reference-basis)); no committed
+  tool checks the four `F_Cumulative` references.
+- **12 not mapped**: `Lognormal_ParametersFromMeanStdDev` (8 rows) and
+  `Normal_IntervalProbability` (4 rows) have no exact SciPy equivalent, so
+  they were never compared and are **not independently confirmed** here.
+
+SciPy corroborates the reference where it can compute; it cannot certify the
+extreme-parameter points it cannot itself evaluate, or functions the script
+does not map. The record covers no other grid: the main grid
+`probability_accuracy_grid.csv` and the study grids are outside it. When SciPy is installed, `test_cross_check_scipy.py` checks every
+mapping against hand-computed and mpmath values, so a wrong parameterisation
+fails. CI has no SciPy and runs only its classification fixture, which shows
+that an unmapped function is reported as not mapped, never as beyond range.
 The survival references are computed on the upper tail directly (never `1 - CDF`),
 so they stay accurate in the deep tail where a naive subtraction would collapse.
+
+### Survival reference basis
+
+Every committed survival reference must equal the survival function at the
+binary64 Double its argument tokens parse to, which is what the exporter passes,
+to at least 25 significant digits (relative difference at most `1E-24`, the
+`SER_FLOOR` of `audit_references.py`). `check_survival_references.py` enforces
+this on every survival row of the main grid, the independent holdout and every
+study grid that carries one (#159):
+
+- It recomputes each value by a direct upper-tail route at the exact Double
+  (`_survival_oracle.py`): `I_{1-x}(b, a)` for Beta and F, the upper incomplete
+  gamma for Gamma and Chi-square, `erfc` for the normal family, closed forms and
+  exact sums elsewhere, with quadrature where both shapes are huge. It never uses
+  `mpmath.betainc(a, b, x, 1)`, which is itself a complement.
+- Each value is computed at two working precisions that rise with the shape
+  magnitude, and must agree with itself to 32 digits before it can judge a
+  reference.
+- A CSV under `benchmark/` that carries survival rows but is not listed in the
+  checker fails the check, so a new grid cannot escape it.
+- Rows that miss the floor but cannot be re-referenced yet are registered in
+  `survival_reference_debt.json`, one exact cell per entry, with the blocker
+  that prevents the change. A registered cell that is fixed or removed makes its
+  entry stale, and the check fails until the entry is deleted.
+
+The registry holds 73 references today:
+
+- **49 main-grid and 15 holdout references.** `observation_manifest.json`, the
+  Excel export record and `holdout/holdout_manifest.json` bind these grids byte
+  for byte, so a manifest binding blocks the re-base until a fresh Excel export.
+  I re-base them with the next export, in the #81 wave. The fixed generators
+  already produce floor-meeting values for every one of them. One gap must be
+  closed in that wave: the main generator does not yet emit the main-grid copies
+  of the `beta_f_unbalanced` and `cdf_large_shape` rows (evidence sets
+  `beta_f_unbalanced` and the `large_shape`/`extreme_shape` regimes), so neither
+  `migrate_references.py` nor `promote_grid_rows.py` can re-reference those
+  copies yet.
+- **9 references the #72 normal-tail record reads**, 7 in
+  `holdout_older/holdout_older_grid.csv` and 2 in
+  `survival_boundary/survival_boundary_grid.csv`. They are re-based with the #81
+  wave, when the #72 kernel evidence is redone; until then
+  `normal_tail_study/results.json` keeps its recorded values.
+
+The check runs every row, without sampling, in about 100 CPU seconds, in
+parallel by default. It is wired into `test_evidence_tools.py` with its negative
+fixtures, `test_survival_references.py`; one of them stores a reference at the
+decimal token instead of the binary64 argument and requires the check to fail.
+
+Study generators re-reference their committed grids with
+`--merge-references` (report) and `--merge-references --write` (patch). The
+merge changes reference cells only, refuses when the generator and the grid
+disagree on any other column or on the row set, and records every change in
+`study_reference_rebase.csv`.

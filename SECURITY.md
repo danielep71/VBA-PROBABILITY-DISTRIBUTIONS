@@ -302,28 +302,31 @@ explicit, least-privilege authorization.
 
 One workflow uses a credential beyond the per-run workflow token.
 
-| Control | `TRAFFIC_TOKEN` |
+| Control | Traffic GitHub App |
 |---|---|
-| Consumer | `.github/workflows/daily-traffic.yml` only |
+| Consumer | `.github/workflows/daily-traffic.yml` only, in its traffic job |
 | Purpose | Read the GitHub traffic API, which retains data for 14 days, and keep a longer history |
-| Type | Fine-grained personal access token, this repository only |
-| Permission | `Administration: read`, the minimum the traffic API accepts; nothing else |
-| Storage | Secret of the `analytics` environment, not a repository-level secret |
-| Rotation | Every 90 days, and at once on any trigger below |
+| Type | GitHub App installed on this repository. Each run mints an installation token with [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token), pinned to a full commit SHA |
+| Permission | The token is scoped to this repository with `administration: read`, the minimum the traffic API accepts, and nothing else. The app should hold only that and the mandatory `Metadata: read` |
+| Storage | `TRAFFIC_APP_CLIENT_ID` and `TRAFFIC_APP_PRIVATE_KEY` in the `analytics` environment, not at repository level |
+| Lifetime | The token expires after one hour and is revoked when the job ends. The private key has no expiry: rotate it on any trigger below |
 | Writes | None. Pushes to `traffic-history` and alert issues use the workflow token |
 
-Rotate the token immediately when:
+Rotate the private key immediately, and delete the old one in the app's
+settings, when:
 
-- `daily-traffic.yml` is changed by anyone other than the maintainer;
+- `daily-traffic.yml` is changed by anyone other than me;
 - any other workflow or job declares the `analytics` environment;
-- a workflow log, artifact or issue may have exposed it;
-- the export fails with an authentication error (it may have expired).
+- a workflow log, artifact or issue may have exposed the key or a token.
 
 **Why it is isolated.** `Administration: read` exposes repository settings, not
 only traffic counts. The traffic job therefore runs no repository code: it
 imports no VBA, runs no tests, accuracy contracts or repository scripts, and
 must never be extended to do so. Static checks, the Accuracy Gate and the Excel
-VBA regression run in separate workflows that never declare `analytics`. An
+VBA regression run in separate workflows that never declare `analytics`. The
+traffic alert runs in a second job of the same workflow, with no environment
+and only `issues: write`: it runs `tools/traffic_alert.py` on the published
+history and never sees the token. An
 environment name is not a workflow-identity boundary, so keep that declaration
 out of every build, test and release job, and review any change that adds it as
 a security change.

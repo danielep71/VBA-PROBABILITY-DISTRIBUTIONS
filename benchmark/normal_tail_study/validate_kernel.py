@@ -2,6 +2,10 @@
 Apply PREREGISTRATION.md (#72) to the fitted kernel and write results.json.
 
 The steps follow the preregistration:
+  - fit convergence (Amendment 3, #79): fit_convergence.json must record
+    CONVERGED for the committed coefficients, and the levelled error of those
+    coefficients is recomputed here; a missing, unconverged or capped record
+    fails the study;
   - §3 oracles: 60- and 100-dps agreement at every point, and quadrature at
     every 25th grid point;
   - A1 to A5 and A8 on the validation set V and the approximant set A;
@@ -11,11 +15,35 @@ The steps follow the preregistration:
     holdout;
   - last, A6 on the holdout H.
 
-V is written to results.json before H is evaluated, so the holdout is looked
-at once, after validation has been recorded.
+H is evaluated once (§5). results.json records that exposure in its
+`holdout_exposure` block, and holdout_record.py (#80) enforces it: every mode
+reads and checks the existing record before it computes or writes anything,
+and refuses a missing, malformed or inconsistent one.
 
-    python validate_kernel.py
+results.json also binds the SHA-256 of every file that produces it, in its
+`provenance` block (result_binding.py, #79).
+
+    python validate_kernel.py --verify
+        Read-only replay. Reports a record whose bound files changed as STALE
+        without recomputing; otherwise recomputes everything except H and
+        compares it with results.json. Never evaluates H, never writes.
+    python validate_kernel.py --regenerate --reason TEXT
+        Recomputes everything except H and rewrites results.json, with the
+        identities of the files as they are now. The recorded
+        holdout_exposure and acceptance.A6 are carried over unchanged; the
+        reason and the identities that changed are appended to
+        `regenerations`.
+    python validate_kernel.py --first-evaluation
+        Evaluates H once. Refused unless holdout_exposure.status is
+        NOT_EVALUATED; for this study it is EVALUATED (#75).
+    python validate_kernel.py --init
+        New study only: writes V with status NOT_EVALUATED when results.json
+        does not exist.
+
+Exit status: 0 success, 1 study failure or mismatch, 2 usage, 3 refused (the
+output is left unchanged).
 """
+import argparse
 import csv
 import hashlib
 import json
@@ -25,16 +53,19 @@ import platform
 import random
 import struct
 import sys
-import time
 from decimal import Decimal
 
 import mpmath as mp
 
+import derive_kernel as dk
+import holdout_record as hr
 import kernel_model as km
+import result_binding as rb
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BENCH = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "results.json")
+PREREGISTRATION = os.path.join(HERE, "PREREGISTRATION.md")
 sys.path.insert(0, os.path.join(BENCH, "student_t_large_df_study"))
 import binary64_route_model as rm  # noqa: E402
 
@@ -120,10 +151,15 @@ def validation_set():
     return grid, [rnd.uniform(0, 37.5) for _ in range(20000)]
 
 
+# Holdout H (§5). Its points are bound by SHA-256 in holdout_exposure.
+HOLDOUT_DEFINITION = [
+    {"seed": 72002, "count": 10000, "low": 0, "high": 37.5},
+    {"seed": 72003, "count": 5000, "low": 0, "high": 8},
+]
+
+
 def holdout_set():
-    a = random.Random(72002)
-    b = random.Random(72003)
-    return [a.uniform(0, 37.5) for _ in range(10000)] + [b.uniform(0, 8) for _ in range(5000)]
+    return hr.holdout_points(HOLDOUT_DEFINITION)
 
 
 def approximant_set():
@@ -196,6 +232,85 @@ def band_worst(rows, key="q"):
 
 def kernel_pass(rows):
     return all(r.get(k, 0.0) <= B for r in rows for k in ("q", "cdf", "pdf"))
+
+
+# ---------------------------------------------------------------------------
+# Fit convergence (Amendment 3, #79)
+# ---------------------------------------------------------------------------
+
+def load_convergence(path=dk.CONVERGENCE_OUT):
+    """The recorded convergence record, or None if it is missing or unreadable."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def levelling_of(raw):
+    """The Amendment 3 evidence of the committed 40-digit coefficients at the fit's 500 nodes."""
+    with mp.workdps(dk.DPS):
+        p = [mp.mpf(r["value"]) for r in raw["numerator"]]
+        d = [mp.mpf(r["value"]) for r in raw["denominator"]]
+        xs = dk.chebyshev_nodes(dk.LOWER, dk.UPPER, dk.NODES)
+        denominators = [dk.horner(d, x) for x in xs]
+        signed = [dk.horner(p, x) / dx / dk.target(x) - 1 for x, dx in zip(xs, denominators)]
+        return dk.measure(xs, signed, denominators, dk.DEGREE_P + dk.DEGREE_D + 2)
+
+
+def _agree(a, b, tol=1e-9):
+    return (isinstance(a, float) and isinstance(b, float) and math.isfinite(a) and math.isfinite(b)
+            and abs(a - b) <= tol * max(abs(a), abs(b)))
+
+
+def convergence_check(raw, record, coefficients_sha):
+    """Fit convergence: the recorded decision, its consistency, and the committed candidate recomputed.
+
+    Fails on a missing record or status, on any status but CONVERGED, on a
+    record made for other coefficients or under another criterion, on a
+    status the recorded evidence does not support, and when the committed
+    coefficients themselves are not levelled.
+    """
+    points = dk.DEGREE_P + dk.DEGREE_D + 2
+    problems = list(dk.recommendable(record))
+    record = record if isinstance(record, dict) else {}
+    if record and record.get("kernel_coefficients_sha256") != coefficients_sha:
+        problems.append(f"the convergence record belongs to coefficients {record.get('kernel_coefficients_sha256')}, "
+                        f"not to kernel_coefficients.json ({coefficients_sha})")
+    criterion = record.get("criterion") if isinstance(record.get("criterion"), dict) else {}
+    if record and (criterion.get("levelling_tolerance"), criterion.get("alternation_points_required"),
+                   criterion.get("iteration_cap")) != (dk.LEVELLING_TOLERANCE, points, dk.ITERATIONS):
+        problems.append(f"the convergence record was made under another criterion: {criterion}")
+    history, selected = record.get("history"), record.get("selected_iteration")
+    if record:
+        if not isinstance(history, list) or len(history) != dk.ITERATIONS:
+            problems.append(f"the convergence record does not hold the {dk.ITERATIONS}-iteration history")
+        elif not isinstance(selected, int) or not 1 <= selected <= len(history):
+            problems.append(f"the selected iteration {selected!r} is not in the history")
+        else:
+            maxima = [h.get("node_max") if isinstance(h, dict) else None for h in history]
+            if (None in maxima or not all(isinstance(m, float) for m in maxima)
+                    or selected != 1 + maxima.index(min(maxima))):
+                problems.append("the selected iteration is not the first with the smallest node maximum (§2)")
+            if record.get("selected") != history[selected - 1]:
+                problems.append("the recorded selected evidence is not that iteration's history entry")
+            if dk.decide(history, selected, points) != record.get("status"):
+                problems.append(f"the recorded status {record.get('status')} does not follow from the recorded "
+                                f"evidence ({dk.decide(history, selected, points)})")
+    recomputed = levelling_of(raw)
+    if not dk.levelled(recomputed, points):
+        problems.append(f"the committed coefficients are not levelled: {recomputed}")
+    chosen = record.get("selected") if isinstance(record.get("selected"), dict) else {}
+    if record and not (chosen.get("alternation_points") == recomputed["alternation_points"]
+                       and _agree(chosen.get("node_max"), recomputed["node_max"])
+                       and _agree(chosen.get("levelled_min"), recomputed["levelled_min"])):
+        problems.append(f"the recorded selected iterate {chosen} does not match the committed coefficients "
+                        f"{recomputed}")
+    return {"pass": not problems, "status": record.get("status"), "record": os.path.basename(dk.CONVERGENCE_OUT),
+            "criterion": {"alternation_points_required": points, "levelling_tolerance": dk.LEVELLING_TOLERANCE,
+                          "iteration_cap": dk.ITERATIONS},
+            "selected_iteration": selected, "first_levelled_iteration": record.get("first_levelled_iteration"),
+            "recomputed_from_committed_coefficients": recomputed, "problems": problems}
 
 
 # ---------------------------------------------------------------------------
@@ -295,14 +410,27 @@ def parse_observed(raw):
     return float(total)
 
 
+_MAGNITUDE = (1 << 63) - 1
+
+
+def ordered(x):
+    """The ordered-integer image of a binary64 x: monotone in x, +0 and -0 both 0.
+
+    A non-negative Double keeps its bit pattern; a negative one maps to minus
+    its magnitude bits. Subnormals, the sign change and binade boundaries are
+    then ordinary steps of one, and the largest finite Double is one step from
+    infinity. NaN has no position in the order and raises ValueError, so a NaN
+    model value or observation stops the run instead of recording a distance.
+    """
+    if math.isnan(x):
+        raise ValueError("NaN has no position in the binary64 order")
+    bits = struct.unpack("<Q", struct.pack("<d", x))[0]
+    return -(bits & _MAGNITUDE) if bits >> 63 else bits
+
+
 def ulps_apart(a, b):
-    if a == b:
-        return 0
-    ia = struct.unpack(">q", struct.pack(">d", a))[0]
-    ib = struct.unpack(">q", struct.pack(">d", b))[0]
-    if (ia < 0) != (ib < 0):
-        return abs(ia) + abs(ib)
-    return abs(ia - ib)
+    """Number of representable binary64 steps between a and b (#148)."""
+    return abs(ordered(a) - ordered(b))
 
 
 def contract_thresholds():
@@ -341,35 +469,65 @@ def exact_z(fn, args):
         return mp.mpf(args[0])
 
 
-def condition(z, value):
-    """|z| * phi(z) / F: sensitivity of a tail or cumulative value to z."""
+# P2 conditioning, as restated by Amendment 2 (#78). F is the function the row
+# evaluates at its exact standardised argument z: the survival S(z) = Q(z) or
+# the cumulative Phi(z), for either sign of z.
+#
+#   kappa = |z| phi(z) / F    the relative condition number |z F'(z) / F(z)|;
+#                             nonnegative for both signs (the frozen survival
+#                             expression z phi / Q is negative for z < 0)
+#   eta   >= |z~ - z|         first-order bound on the absolute error of the
+#                             computed z~
+#   bound = B + phi(z) eta / F
+#
+# Wherever z != 0, eta = delta |z| with the frozen delta of §7 P2, so
+# phi eta / F = kappa delta exactly. The absolute form also holds at z = 0,
+# where delta is 0/0 for Lognormal.
+
+U52 = 2 ** -52                          # two roundings of 2^-53 each, or one ulp of VBA Log
+
+
+def density(z):
     with mp.workdps(60):
-        if z == 0:
-            return 0.0
-        return float(abs(z) * mp.exp(-z * z / 2) / mp.sqrt(2 * mp.pi) / mp.mpf(str(value)))
+        return mp.exp(-z * z / 2) / mp.sqrt(2 * mp.pi)
 
 
-def delta_z(fn, args):
-    if fn.startswith("Lognormal"):
-        with mp.workdps(60):
-            lx = mp.log(mp.mpf(args[0]))
-            den = abs(lx - mp.mpf(args[1]))
-            extra = 0.0 if den == 0 else float(2.0 ** -52 * abs(lx) / den)
-        return 2.0 ** -52 + extra
-    if fn.startswith("Normal_"):
-        return 2.0 ** -52
-    return 0.0
+def condition(z, value):
+    """kappa = |z| phi(z) / F, the relative condition number of F at z (Amendment 2)."""
+    with mp.workdps(60):
+        return float(abs(z) * density(z) / mp.mpf(str(value)))
+
+
+def z_error(fn, args, z):
+    """eta: first-order bound on |z~ - z| for the computed standardised argument (Amendment 2).
+
+    NormalStandard: z is the argument itself, eta = 0.
+    Normal: z~ = fl(fl(x + (-mu)) / sigma), two roundings, eta = 2^-52 |z|.
+    Lognormal: z~ = fl(fl(L~ + (-mu)) / sigma) with |L~ - ln x| <= 2^-52 |ln x|
+    (one ulp of VBA Log), eta = 2^-52 (|z| + |ln x| / sigma).
+    """
+    with mp.workdps(60):
+        if fn.startswith("Lognormal"):
+            return U52 * (abs(z) + abs(mp.log(mp.mpf(args[0]))) / mp.mpf(args[2]))
+        if fn.startswith("Normal_"):
+            return U52 * abs(z)
+        return mp.mpf(0)
+
+
+def standardisation_term(z, value, eta):
+    """phi(z) eta / F: first-order relative error of F caused by an error eta in z."""
+    with mp.workdps(60):
+        return float(density(z) * eta / mp.mpf(str(value)))
 
 
 def interval_bound(fn, args, reference):
     with mp.workdps(60):
         if fn == "NormalStandard_IntervalProbability":
-            lo, hi, delta = args[0], args[1], 0.0
+            lo, hi = args[0], args[1]
             zl, zu = mp.mpf(lo), mp.mpf(hi)
         else:
             lo = km.standardize(args[0], args[2], args[3])
             hi = km.standardize(args[1], args[2], args[3])
-            delta = 2.0 ** -52
             zl = (mp.mpf(args[0]) - mp.mpf(args[2])) / mp.mpf(args[3])
             zu = (mp.mpf(args[1]) - mp.mpf(args[2])) / mp.mpf(args[3])
         _, branch, _ = km.interval(lo, hi)
@@ -382,7 +540,7 @@ def interval_bound(fn, args, reference):
         p = mp.mpf(str(reference))
         total = 0.0
         for z, tail in tails:
-            b = B + condition(z, tail) * delta
+            b = B + standardisation_term(z, tail, z_error(fn, args, z))
             total += float(tail * b / p)
         if branch == "crossing":
             total += float(2.0 ** -53 / p)
@@ -419,7 +577,12 @@ def predictions():
                     rec["bound"] = B
                 elif fn in STANDARDISED:
                     rec["prediction"] = "P2"
-                    rec["bound"] = B + condition(exact_z(fn, args), reference) * delta_z(fn, args)
+                    z = exact_z(fn, args)
+                    eta = z_error(fn, args, z)
+                    rec["z"] = float(z)
+                    rec["condition"] = condition(z, reference)
+                    rec["z_error"] = float(eta)
+                    rec["bound"] = B + standardisation_term(z, reference, eta)
                 elif fn in INTERVALS:
                     rec["prediction"] = "P3"
                     rec["bound"], rec["branch"] = interval_bound(fn, args, reference)
@@ -441,23 +604,28 @@ def predictions():
             "rows": len(mine),
             "worst_predicted_error": max(r["predicted_error"] for r in mine),
             "outside_bound": [r["function"] + " " + str(r["args"]) for r in bounded if not r["within_bound"]],
+            "bounds_finite_nonnegative": all(math.isfinite(r["bound"]) and r["bound"] >= 0 for r in bounded),
             "max_model_vs_committed_ulps": max((r["model_vs_committed_ulps"] or 0) for r in mine),
         }
     summary["P4"]["predicted_breaches"] = [r["function"] + " " + str(r["args"])
                                            for r in rows if r.get("predicted_breach")]
+    p2 = [r for r in rows if r["prediction"] == "P2"]
+    summary["P2"]["negative_z_rows"] = [r["function"] + " " + str(r["args"]) for r in p2 if r["z"] < 0]
+    summary["P2"]["centre_rows"] = [r["function"] + " " + str(r["args"]) for r in p2 if r["z"] == 0]
     summary["unchanged_rows"] = unchanged
     return {"grids": list(GRIDS), "summary": summary, "rows": rows}
 
 
 # ---------------------------------------------------------------------------
 
-def main():
-    started = time.time()
+def compute():
+    """Everything except H: the oracles, A1-A5, A7, A8, the seams and §7."""
     with open(km.COEFFICIENTS_PATH, "rb") as f:
         coefficients_sha = hashlib.sha256(f.read()).hexdigest()
     raw = km.COEFFICIENTS["raw"]
     problems = []
 
+    convergence = convergence_check(raw, load_convergence(), coefficients_sha)
     a1 = approximant_check(raw)
     a2_frozen = {"pass": all(mp.mpf(r["value"]) > 0 for r in raw["numerator"] + raw["denominator"]),
                  "negative": [f"{name}[{i}] = {r['value']}" for name in ("numerator", "denominator")
@@ -493,6 +661,8 @@ def main():
           "current_meets_bound": len(meets_now), "points": len(current_rows)}
     a7 = route_check()
 
+    if not convergence["pass"]:
+        problems.append("fit convergence failed: " + "; ".join(convergence["problems"]))
     if stability < 50:
         problems.append(f"oracle stability {stability:.1f} < 50 digits")
     if independence < 40:
@@ -501,52 +671,70 @@ def main():
         if not check["pass"]:
             problems.append(f"{name} failed")
 
-    result = {
+    print(f"computed without the holdout: kernel worst Q {a5['worst']['q']['value']:.3e}, "
+          f"pdf {a5['worst']['pdf']['value']:.3e}; route worst "
+          f"{max(a7['fitting']['worst'], a7['holdout']['worst']):.3e}; {len(problems)} problem(s)")
+    return {
         "study": "normal upper-tail kernel (#72)",
         "preregistration": "PREREGISTRATION.md",
         "coefficients_sha256": coefficients_sha,
-        "status": "PENDING_HOLDOUT" if not problems else "FAIL",
         "problems": problems,
-        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "versions": {"python": platform.python_version(), "mpmath": mp.__version__},
+        "provenance": rb.identities(),
         "bound": B,
         "oracle": {"stability_min_digits": stability, "quadrature_min_digits": independence,
                    "quadrature_points": len(quadrature)},
         "amendments": ["Amendment 1: A2 (strict positivity) replaced by A2' (cancellation factor "
-                       "<= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only"],
-        "acceptance": {"A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
+                       "<= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only",
+                       "Amendment 2 (#78): P2 conditioning restated as kappa = |z| phi(z) / F for survival "
+                       "and cumulative alike, and kappa * delta as phi(z) * eta / F with eta = 2^-52 |z| "
+                       "(Normal) or 2^-52 (|z| + |ln x| / sigma) (Lognormal), defined at z = 0; recorded "
+                       "after A6 was observed, nothing refitted, no threshold changed",
+                       "Amendment 3 (#79): fit convergence defined (16-point alternation, levelling ratio "
+                       "<= 0.01 against the de la Vallee Poussin bound; CAP_EXHAUSTED and NOT_CONVERGED fail) "
+                       "and results bound to the SHA-256 of their generator, models, validator, design and "
+                       "inputs; recorded after the fit and A6 were observed, nothing refitted, no threshold "
+                       "changed"],
+        "acceptance": {"fit_convergence": convergence, "A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
                        "A7": a7, "A8": a8},
         "bands": {"current": band_worst(current_rows), "candidate": band_worst(v_rows)},
         "seams": [s for s in seams if s["seam"] in ("split", "last_normal_q", "tail_underflow")],
         "predictions": predictions(),
         "holdout_559_inspected": False,
     }
-    write(result)
-
-    if not problems:
-        h_rows = [measure_point(z) for z in holdout_set()]
-        a6 = {"pass": kernel_pass(h_rows), "points": len(h_rows), "evaluated_once": True,
-              "worst": {k: worst_of(h_rows, k) for k in ("q", "cdf", "pdf")},
-              "stability_min_digits": min(r["stability_digits"] for r in h_rows)}
-        result["acceptance"]["A6"] = a6
-        if not a6["pass"]:
-            problems.append("A6 failed")
-        result["status"] = "PASS" if not problems else "FAIL"
-    result["runtime_s"] = round(time.time() - started, 1)
-    write(result)
-    print(f"{result['status']}: kernel worst Q {a5['worst']['q']['value']:.3e}, "
-          f"pdf {a5['worst']['pdf']['value']:.3e}; route worst "
-          f"{max(a7['fitting']['worst'], a7['holdout']['worst']):.3e}; "
-          f"{len(problems)} problem(s); {result['runtime_s']} s")
-    for p in problems:
-        print("  -", p)
-    return 0 if result["status"] == "PASS" else 1
 
 
-def write(result):
-    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(result, f, indent=1)
-        f.write("\n")
+def evaluate_holdout(points):
+    """A6. Called only by holdout_record.first_evaluation, once per study."""
+    h_rows = [measure_point(z) for z in points]
+    return {"pass": kernel_pass(h_rows), "points": len(h_rows), "evaluated_once": True,
+            "worst": {k: worst_of(h_rows, k) for k in ("q", "cdf", "pdf")},
+            "stability_min_digits": min(r["stability_digits"] for r in h_rows)}
+
+
+def make_study(output=OUT, log=None):
+    return hr.Study(output=output, preregistration=PREREGISTRATION, coefficients=km.COEFFICIENTS_PATH,
+                    holdout_definition=HOLDOUT_DEFINITION, compute=compute,
+                    evaluate_holdout=evaluate_holdout, log=log or print, binding=rb.stale)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--verify", action="store_const", dest="mode", const="verify",
+                      help="read-only replay of everything except the holdout")
+    mode.add_argument("--regenerate", action="store_const", dest="mode", const="regenerate",
+                      help="rewrite everything except the holdout; keep the recorded exposure and A6")
+    mode.add_argument("--first-evaluation", action="store_const", dest="mode", const="first_evaluation",
+                      help="evaluate the holdout once; refused once an exposure is recorded")
+    mode.add_argument("--init", action="store_const", dest="mode", const="init",
+                      help="new study only: write V with status NOT_EVALUATED")
+    parser.add_argument("--reason", help="why --regenerate is run; recorded in results.json")
+    parser.add_argument("--output", default=OUT, help="the results file (default: results.json here)")
+    args = parser.parse_args(argv)
+    if args.reason is not None and args.mode != "regenerate":
+        parser.error("--reason applies to --regenerate only")
+    return hr.run(make_study(os.path.abspath(args.output)), args.mode, args.reason)
 
 
 if __name__ == "__main__":
