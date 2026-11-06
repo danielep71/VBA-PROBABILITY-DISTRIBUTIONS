@@ -623,3 +623,17 @@ layout; they are not verbatim copies.
 | `traffic_alert.py` | The alert part of `tools/traffic_history.py`: the views, stars, forks and new-referrer reasons without clones, and the triage-ready body with a target end date before the milestone's due date. It reads this repository's `traffic-history` CSV columns, and the snapshot collection stays in `daily-traffic.yml`. |
 | `tests/test_traffic_alert.py` | The alert cases of `tests/test_traffic_history.py`, rewritten for this repository's CSV files, plus a check that the generated issue passes `check_issues.py`. |
 | `.github/workflows/daily-traffic.yml` (alert job) | The `alert` job of `.github/workflows/traffic-history.yml`: no environment, milestone lookup and duplicate check, `gh issue create` with assignee, labels and milestone. |
+
+### Adapted from `danielep71/MyTemplate` at `6927f23`
+
+Label management, adapted from template revision
+`6927f233b8bd23479dc7f0cfb045e59139814b40` (#201, #202, #203). Both repositories
+are licensed under the Mozilla Public License 2.0.
+
+| File | Adaptation |
+| --- | --- |
+| `.github/scripts/labels-sync.mjs` | The template's safe pruning and summary escaping, applied to this repository's script. Before any change, every label pruning would delete is checked against all issues and pull requests, open and closed. A name containing a comma is checked by reading every issue page by page, at most 100 pages, failing on a malformed page. `inlineCode` and a `markdownEscape` that removes `\r` render every value. The self-test gains the template's pruning and escaping fixtures. |
+| `.github/scripts/labels-drift.mjs` | The same helpers, imported from the synchronization script, for every name, colour, repository and manifest path in the drift report. The self-test gains a backtick name, a pipe name and a hostile live label. |
+| `.github/workflows/labels-sync.yml` | `pull-requests: read` on the reconcile job, so the issues API includes pull requests in that check. |
+| `docs/repo_governance/ISSUE_LABELS.md` | The structure of the template's guide: the pruning paragraph, the usage tables, closing issues and the catalogue table. It is rewritten for this repository's 28 labels, with an Areas table for its 8 repository-specific labels, and keeps this repository's issue rules, `External condition:` example, milestone automation and self-test commands. |
+| `tests/test_issue_labels.py` | The catalogue, usage, label-count and Dependabot checks of the template's `tests/test_repository_consistency.py`. They are extended to the common/repository-specific split, a rule for each area label, the closing-issues section, the assignee of all four issue forms, and flow-style YAML lists. |
