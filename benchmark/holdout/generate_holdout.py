@@ -472,6 +472,28 @@ def student_t_large_df_rows():
 STUDENT_T_INVERSE_SEED = 3434
 
 
+def student_t_inverse_draws():
+    """The arguments of INVERSE_PREREGISTRATION.md section 6, in draw order:
+    (function, arg1, arg2) for 16 forward points (a survival and a cumulative
+    row each) and 24 inverse points, from random.Random(3434)."""
+    import math
+    import random
+    rng = random.Random(STUDENT_T_INVERSE_SEED)
+    draws = []
+    for i in range(16):
+        t = rng.uniform(0.25, 8.0)
+        if i >= 8:
+            t = -t
+        df = 10 ** rng.uniform(5.0, 8.0)
+        draws += [("StudentT_Survival", t, df), ("StudentT_Cumulative", t, df)]
+    for i in range(24):
+        tau = 10 ** rng.uniform(-14.0, math.log10(0.4))
+        p = 1 - tau if i < 12 else tau
+        df = 10 ** rng.uniform(5.0, 8.0)
+        draws.append(("StudentT_InverseCumulative", p, df))
+    return draws
+
+
 def student_t_inverse_rows():
     """The untouched holdout of the Student-t inverse polish (#34), drawn
     exactly as INVERSE_PREREGISTRATION.md section 6 fixes it:
@@ -481,9 +503,6 @@ def student_t_inverse_rows():
     and p = tau for the last 12, then df = 10^U(5, 8)). Arguments are the
     Doubles themselves; references are the direct upper tail at those Doubles,
     at 50 digits, and the quantile from the same oracle."""
-    import math
-    import random
-    rng = random.Random(STUDENT_T_INVERSE_SEED)
     out = []
 
     def tail(t, df):
@@ -497,22 +516,18 @@ def student_t_inverse_rows():
                     "regime": "envelope_domain", "evidence_set": "holdout"})
 
     with mp.workdps(50):
-        for i in range(16):
-            t = rng.uniform(0.25, 8.0)
-            if i >= 8:
-                t = -t
-            df = 10 ** rng.uniform(5.0, 8.0)
-            s = tail(abs(t), df)
-            R("StudentT_Survival", t, df, s if t >= 0 else 1 - s)
-            R("StudentT_Cumulative", t, df, 1 - s if t >= 0 else s)
-        for i in range(24):
-            tau = 10 ** rng.uniform(-14.0, math.log10(0.4))
-            p = 1 - tau if i < 12 else tau
-            df = 10 ** rng.uniform(5.0, 8.0)
-            target = 1 - mp.mpf(p) if p > 0.5 else mp.mpf(p)
-            seed = mp.sqrt(2) * mp.erfinv(2 * abs(mp.mpf(p) - mp.mpf("0.5")))
-            q = mp.findroot(lambda x: tail(x, df) - target, seed)
-            R("StudentT_InverseCumulative", p, df, q if p > 0.5 else -q)
+        for fn, a, df in student_t_inverse_draws():
+            if fn == "StudentT_Survival":
+                s = tail(abs(a), df)
+                R(fn, a, df, s if a >= 0 else 1 - s)
+            elif fn == "StudentT_Cumulative":
+                s = tail(abs(a), df)
+                R(fn, a, df, 1 - s if a >= 0 else s)
+            else:
+                target = 1 - mp.mpf(a) if a > 0.5 else mp.mpf(a)
+                seed = mp.sqrt(2) * mp.erfinv(2 * abs(mp.mpf(a) - mp.mpf("0.5")))
+                q = mp.findroot(lambda x: tail(x, df) - target, seed)
+                R(fn, a, df, q if a > 0.5 else -q)
     return out
 
 
