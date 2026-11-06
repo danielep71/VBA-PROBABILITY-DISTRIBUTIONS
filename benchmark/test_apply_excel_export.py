@@ -28,8 +28,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import apply_excel_export as A  # noqa: E402
 import excel_certification as E  # noqa: E402
+import _manifest as M  # noqa: E402
 
-TOOLS = ("apply_excel_export.py", "excel_certification.py",
+TOOLS = ("apply_excel_export.py", "excel_certification.py", "_manifest.py",
          "finalize_excel_certification.py", "check_excel_certification.py")
 MAIN, HOLDOUT, OLDER = (A.GRIDS[n].path for n in ("main", "holdout", "holdout_older"))
 HEADER13 = ("function,vba_kernel,claim,metric,arg1,arg2,arg3,arg4,reference,"
@@ -115,7 +116,13 @@ class Fixture:
         for tool in TOOLS:
             shutil.copy(os.path.join(HERE, tool), os.path.join(root, "benchmark", tool))
         write(root, "benchmark/refresh_evidence.py", STUB)
+        self.bind_main()
         self.head = self.commit("base")
+
+    def bind_main(self):
+        """The part of observation_manifest.json a missing-only export reads."""
+        write(self.root, "benchmark/" + M.MANIFEST_NAME, json.dumps(
+            {"source_binding": M.source_hashes(self.root)}, indent=2) + "\n")
 
     def commit(self, message):
         git(self.root, "add", "-A")
@@ -382,6 +389,22 @@ class ApplyExcelExportTests(unittest.TestCase):
         self.assertEqual(code, 0, output)
         self.assertEqual(refresh, ["--bind-exported-main"])
         self.assertIn("missing-only export by Export_Accuracy_MissingOnly", output)
+
+    def test_missing_only_after_a_vba_change_is_refused(self):
+        fx = self.fx
+        write(fx.root, "src/A.bas", 'Attribute VB_Name = "A"\n\' a numerical change\n')
+        fx.head = fx.commit("change a kernel")
+        out = fx.artifact(names=("main",), mode="missing-only")
+        self.refused(out, "differ from the source they were bound to: src/A.bas")
+        code, output, _ = fx.apply(fx.artifact(names=("main",), name="full"))
+        self.assertEqual(code, 0, "a full export after the change is accepted:\n" + output)
+
+    def test_missing_only_without_a_main_binding_is_refused(self):
+        fx = self.fx
+        os.remove(os.path.join(fx.root, "benchmark", M.MANIFEST_NAME))
+        fx.head = fx.commit("drop the binding")
+        self.refused(fx.artifact(names=("main",), mode="missing-only"),
+                     "needs the committed observation_manifest.json")
 
     def test_finalizer_refuses_environment_of_another_commit(self):
         fx = self.fx

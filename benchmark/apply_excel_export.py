@@ -31,7 +31,11 @@ WHAT IT REFUSES
       observed_vba cells its exporter owns, fills every one of them, and holds
       exactly the bytes VBA's Print # writes (CRLF lines). The manifest's
       counts must agree with this recount;
-    * the imported modules the manifest lists hash to their blobs at HEAD.
+    * the imported modules the manifest lists hash to their blobs at HEAD;
+    * a missing-only main export keeps the observations already in the grid,
+      so it is accepted only while no .bas module differs from the source
+      binding of the committed observation_manifest.json. After any VBA
+      change only a full export can make those observations current.
 
 WHAT IT DOES
     1. Copies each grid and excel_environment.json into place, byte for byte.
@@ -71,6 +75,7 @@ from dataclasses import dataclass
 
 from excel_certification import (CertificationError, canonical_grid_bytes, git_bytes,
                                  git_text, sha256_bytes, validate_record)
+import _manifest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -316,6 +321,9 @@ def check_artifact(root: str, artifact: str, expected: list[str] | None) -> Plan
     for name in requested:
         spec, entry = GRIDS[name], by_name[name]
         grids.append((spec,) + check_grid(root, artifact, head, spec, entry))
+    for spec, mode, _, _ in grids:
+        if mode == "missing-only":
+            check_kept_observations(root, spec)
 
     sources = manifest.get("sources")
     if not isinstance(sources, list) or not sources:
@@ -336,6 +344,26 @@ def check_artifact(root: str, artifact: str, expected: list[str] | None) -> Plan
             raise ApplyError(f"{MANIFEST} does not list {spec.exporter} as the imported "
                              f"exporter of {spec.path}")
     return Plan(head, artifact, manifest, record, grids, environment)
+
+
+def check_kept_observations(root: str, spec: GridSpec) -> None:
+    """A missing-only export leaves every filled observed_vba cell as it was,
+    and the finalizer and the binding then certify the whole grid for HEAD.
+    That is true only if the kept observations came from the same VBA, so the
+    committed main binding must still match every .bas module (#181)."""
+    manifest = _manifest.load_manifest(root)
+    binding = manifest.get("source_binding") if isinstance(manifest, dict) else None
+    if not isinstance(binding, dict) or not binding:
+        raise ApplyError(f"{spec.path}: a missing-only export needs the committed "
+                         f"{_manifest.MANIFEST_NAME} to show which source produced the "
+                         "observations it keeps; run a full export")
+    current = _manifest.source_hashes(root)
+    drift = sorted(path for path in set(binding) | set(current)
+                   if binding.get(path) != current.get(path))
+    if drift:
+        raise ApplyError(f"{spec.path}: a missing-only export keeps the existing "
+                         "observations, but these modules differ from the source they "
+                         f"were bound to: {', '.join(drift)}; run a full export")
 
 
 def check_environment(artifact: str, manifest: dict[str, object],

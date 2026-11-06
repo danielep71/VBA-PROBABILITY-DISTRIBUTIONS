@@ -116,6 +116,9 @@ $excel = $null
 $workbook = $null
 $vbProject = $null
 $excelProcessId = 0
+# True only once the COM instance is proven to be a process this script
+# started. Until then cleanup never quits, watches or kills that Excel.
+$excelOwned = $false
 
 #------------------------------------------------------------------------------
 # LOGGING
@@ -540,6 +543,7 @@ try {
     if ($existing -contains [int]$excelProcessId) {
         Stop-Export "Excel COM returned a pre-existing Excel process ($excelProcessId); the watchdog may only kill its own"
     }
+    $excelOwned = $true
     $excelSummary.process_id = [int]$excelProcessId
     $excelSummary.version = [string]$excel.Version
     $excelSummary.build = [string]$excel.Build
@@ -618,7 +622,8 @@ finally {
     # Cleanup: close the owned workbook and Excel; never touch other processes.
     #--------------------------------------------------------------------------
     $cleanupErrors = New-Object System.Collections.Generic.List[string]
-    if ($null -ne $excel -and -not $excelKilled) {
+    $unownedExcel = ($null -ne $excel -and -not $excelOwned)
+    if ($null -ne $excel -and $excelOwned -and -not $excelKilled) {
         # Close and Quit run under the watchdog too: Excel launched through COM
         # is not in the job's process tree, so a dialog here would outlive the
         # job's timeout.
@@ -657,7 +662,11 @@ finally {
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()
 
-    if ($excelProcessId -ne 0) {
+    if ($unownedExcel) {
+        # A refused instance may be another session's Excel: leave it running.
+        $cleanupDetail = "Excel ownership was not confirmed (process $excelProcessId); released the COM reference without closing, watching or killing any Excel process"
+    }
+    elseif ($excelProcessId -ne 0) {
         $owned = Get-Process -Id $excelProcessId -ErrorAction SilentlyContinue
         $waited = 0
         while ($null -ne $owned -and -not $owned.HasExited -and $waited -lt 30) {
