@@ -1,0 +1,3575 @@
+{
+ "issue": "#72 / #81 Excel wave: \u00a77 predictions against the exported observations",
+ "baseline": "7fb08ae48d27e6340fe5d89eea3863d37d50d05b",
+ "predictions_sha256": "65efc48f72a46ad77119fc870c600b0305cc207a6792b0a8f72d8795f2adbf19",
+ "grids": {
+  "holdout_older/holdout_older_grid.csv": {
+   "exported": true,
+   "rows": 39,
+   "fail": 0
+  },
+  "probability_accuracy_grid.csv": {
+   "exported": true,
+   "rows": 118,
+   "fail": 0
+  },
+  "survival_boundary/survival_boundary_grid.csv": {
+   "exported": false,
+   "rows": 19
+  },
+  "holdout/holdout_grid.csv": {
+   "exported": true,
+   "rows": 64,
+   "fail": 1
+  }
+ },
+ "summary": {
+  "P2": {
+   "rows": 22,
+   "fail": 0,
+   "worst_error": 3.0441347692532407e-16,
+   "max_ulps_from_predicted": 0
+  },
+  "P4": {
+   "rows": 80,
+   "fail": 0,
+   "worst_error": 2.938829041107811e-15,
+   "max_ulps_from_predicted": 4
+  },
+  "P1": {
+   "rows": 27,
+   "fail": 0,
+   "worst_error": 2.0162273079667333e-16,
+   "max_ulps_from_predicted": 2
+  },
+  "P3": {
+   "rows": 11,
+   "fail": 0,
+   "worst_error": 1.1274452968608602e-15,
+   "max_ulps_from_predicted": 0
+  },
+  "unchanged": {
+   "rows": 17,
+   "fail": 0,
+   "worst_error": 0.0,
+   "max_ulps_from_predicted": 0
+  },
+  "P5/P4": {
+   "rows": 60,
+   "fail": 1,
+   "worst_error": 3.8575703397354405e-15,
+   "max_ulps_from_predicted": 11
+  },
+  "P5/P3": {
+   "rows": 4,
+   "fail": 0,
+   "worst_error": 2.234734352274762e-16,
+   "max_ulps_from_predicted": 0
+  }
+ },
+ "falsified": [
+  "P5/P4 holdout/holdout_grid.csv Lognormal_InverseSurvival [4e-12, -1.0, 1.5]: 11 ulps from the predicted 10486.265410500178 (limit 8)"
+ ],
+ "rows": [
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_Cumulative",
+   "args": [
+    1.35,
+    0.4,
+    1.7
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.7118589187049851",
+   "error": 6.605749573866924e-17,
+   "bound": 9.476650670274163e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    1.35,
+    0.4,
+    1.7
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.288141081295015",
+   "error": 2.9456173705684044e-17,
+   "bound": 1.0351414985275898e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_Cumulative",
+   "args": [
+    -2.1,
+    0.4,
+    1.7
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.07070125374330646",
+   "error": 3.3540473910451917e-17,
+   "bound": 1.513070726919929e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    -2.1,
+    0.4,
+    1.7
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.9292987462566935",
+   "error": 2.7315459276433695e-17,
+   "bound": 9.357203643685664e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_Cumulative",
+   "args": [
+    5.2,
+    1.1,
+    0.8
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.9999998512311268",
+   "error": 3.2695447982530346e-17,
+   "bound": 8.881793182376627e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_InverseCumulative",
+   "args": [
+    0.137,
+    0.4,
+    1.7
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-1.4596254994258437",
+   "error": 6.800572223378922e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    0.137,
+    0.4,
+    1.7
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "2.2596254994258436",
+   "error": 1.2254179743045606e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_InverseCumulative",
+   "args": [
+    0.9973,
+    1.1,
+    0.8
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "3.3257203630276826",
+   "error": 9.413491422478035e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    0.9973,
+    1.1,
+    0.8
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-1.1257203630276824",
+   "error": 2.938829041107811e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    0.73
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.7673049076991025",
+   "error": 4.551081864916811e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    0.73
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.2326950923008974",
+   "error": 8.848694024763444e-17,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    0.73
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.3056274100302099",
+   "error": 3.13723766957678e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    -1.85
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.032156774795613706",
+   "error": 1.5628423622334912e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    -1.85
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.9678432252043863",
+   "error": 3.065462645040639e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    -1.85
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.07206487433621798",
+   "error": 1.0219443026565164e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    3.1
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.9990323967867817",
+   "error": 4.149342766545265e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    3.1
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.0009676032132183567",
+   "error": 1.500364176499945e-16,
+   "ulps_from_predicted": 2,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    3.1
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.00326681905619992",
+   "error": 1.5952319816558593e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.137
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-1.0938973526034375",
+   "error": 8.919874878465326e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.137
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "1.0938973526034375",
+   "error": 8.919874878465326e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.9973
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "2.782150453784603",
+   "error": 1.5263002457240628e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.9973
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-2.782150453784603",
+   "error": 1.5263002457240628e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.0021
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-2.862736263505904",
+   "error": 6.02609649943931e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.0021
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "2.862736263505904",
+   "error": 6.02609649943931e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_IntervalProbability",
+   "args": [
+    -1.85,
+    0.73
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.7351481329034889",
+   "error": 6.316108733762214e-17,
+   "bound": 4.710044135831052e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_Cumulative",
+   "args": [
+    2.3,
+    0.2,
+    0.6
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.8542526992532629",
+   "error": 1.1418500699507525e-17,
+   "bound": 1.0334136201559116e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    2.3,
+    0.2,
+    0.6
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.14574730074673717",
+   "error": 1.2351028444039527e-16,
+   "bound": 1.7394296015764498e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_Cumulative",
+   "args": [
+    0.45,
+    0.2,
+    0.6
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.04803828238410775",
+   "error": 3.0441347692532407e-16,
+   "bound": 2.271029837782541e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    0.45,
+    0.2,
+    0.6
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.9519617176158922",
+   "error": 2.837284562767955e-17,
+   "bound": 9.57960434762112e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_Cumulative",
+   "args": [
+    12.0,
+    0.9,
+    0.4
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.9999628792179402",
+   "error": 2.8374041155350656e-17,
+   "bound": 8.885297903357373e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_InverseCumulative",
+   "args": [
+    0.137,
+    0.2,
+    0.6
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "0.6335993834567224",
+   "error": 2.0493697204993766e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    0.137,
+    0.2,
+    0.6
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "2.3545235942344767",
+   "error": 1.2969034176049551e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_InverseCumulative",
+   "args": [
+    0.9973,
+    0.9,
+    0.4
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "7.484694346103176",
+   "error": 1.7204276525674135e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    0.9973,
+    0.9,
+    0.4
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "0.8082691402839487",
+   "error": 1.5927937985460072e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Normal_Density",
+   "args": [
+    1.35,
+    0.4,
+    1.7
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.137
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.9973
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.0021
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout_older/holdout_older_grid.csv",
+   "function": "Lognormal_Density",
+   "args": [
+    2.3,
+    0.2,
+    0.6
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    -2.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.05399096651318806",
+   "error": 2.0162273079667333e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    -2.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.022750131948179205",
+   "error": 9.162455183539894e-17,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    -2.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.9772498680518208",
+   "error": 1.417218250196849e-18,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    -0.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.3520653267642995",
+   "error": 1.3223884314223904e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    -0.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.30853753872598694",
+   "error": 1.3269819002902993e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    -0.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.691462461274013",
+   "error": 1.3949206150467418e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    0.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.3520653267642995",
+   "error": 1.3223884314223904e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    0.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.691462461274013",
+   "error": 1.3949206150467418e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    0.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.30853753872598694",
+   "error": 1.3269819002902993e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    1.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.24197072451914337",
+   "error": 6.418004665136927e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    1.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.8413447460685429",
+   "error": 2.7109838608251146e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    1.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.15865525393145705",
+   "error": 3.1179902418786796e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    1.96
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.05844094433345146",
+   "error": 3.7309305805481346e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    1.96
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.9750021048517795",
+   "error": 5.077360401011511e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    1.96
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.02499789514822043",
+   "error": 1.0150188459814622e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Density",
+   "args": [
+    3.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.0044318484119380075",
+   "error": 7.93543284724383e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Cumulative",
+   "args": [
+    3.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.9986501019683699",
+   "error": 8.953082444375999e-18,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    3.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.0013498980316300946",
+   "error": 3.743902535004695e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.01
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-2.326347874040841",
+   "error": 4.327071694015831e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.01
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "2.326347874040841",
+   "error": 4.327071694015831e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.25
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-0.6744897501960818",
+   "error": 1.0862550706027363e-16,
+   "ulps_from_predicted": 1,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.25
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "0.6744897501960818",
+   "error": 1.0862550706027363e-16,
+   "ulps_from_predicted": 1,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "0.0",
+   "error": 0.0,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "0.0",
+   "error": 0.0,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.975
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "1.9599639845400536",
+   "error": 3.215270040064245e-16,
+   "ulps_from_predicted": 4,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.975
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-1.9599639845400536",
+   "error": 3.215270040064245e-16,
+   "ulps_from_predicted": 4,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    0.999
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "3.090232306167819",
+   "error": 1.7551275726789778e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    0.999
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "-3.090232306167819",
+   "error": 1.7551275726789778e-15,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_IntervalProbability",
+   "args": [
+    -1.96,
+    1.96
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.9500042097035591",
+   "error": 1.264579743780127e-17,
+   "bound": 1.6360715341268562e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_IntervalProbability",
+   "args": [
+    -1.0,
+    2.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.8185946141203637",
+   "error": 2.955516223841949e-17,
+   "bound": 3.3245106518397806e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_IntervalProbability",
+   "args": [
+    0.0,
+    3.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.4986501019683699",
+   "error": 1.7930401820261642e-17,
+   "bound": 8.929872036380281e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Cumulative",
+   "args": [
+    1.96,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.9750021048517795",
+   "error": 5.077360401011511e-17,
+   "bound": 9.142644484476854e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    1.96,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.02499789514822043",
+   "error": 1.0150188459814622e-16,
+   "bound": 1.9056213998106278e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Cumulative",
+   "args": [
+    110.0,
+    100.0,
+    15.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.7475074624530771",
+   "error": 4.34890261427216e-19,
+   "bound": 9.51439064570501e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    110.0,
+    100.0,
+    15.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.2524925375469229",
+   "error": 1.2874983115277234e-18,
+   "bound": 1.0754623869001936e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Cumulative",
+   "args": [
+    3.0,
+    5.0,
+    2.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.15865525393145705",
+   "error": 3.1179902418786796e-17,
+   "bound": 1.2268264795525188e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    3.0,
+    5.0,
+    2.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.8413447460685429",
+   "error": 2.7109838608251146e-17,
+   "bound": 9.520384416237655e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseCumulative",
+   "args": [
+    0.99,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "134.89521811061263",
+   "error": 1.1324868898061762e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    0.99,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "65.10478188938737",
+   "error": 2.3464799616004204e-16,
+   "ulps_from_predicted": 1,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseCumulative",
+   "args": [
+    0.025,
+    10.0,
+    2.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "6.080072030919892",
+   "error": 6.121379405152871e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    0.025,
+    10.0,
+    2.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "13.919927969080108",
+   "error": 2.6737514658546455e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Cumulative",
+   "args": [
+    1.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.5",
+   "error": 0.0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    1.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.5",
+   "error": 0.0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Cumulative",
+   "args": [
+    2.0,
+    0.5,
+    0.25
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.780117089512224",
+   "error": 1.272012193659063e-16,
+   "bound": 1.18686433001885e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    2.0,
+    0.5,
+    0.25
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.21988291048777592",
+   "error": 1.9883625201199785e-16,
+   "bound": 1.947878705271462e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Cumulative",
+   "args": [
+    0.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.2441085957855827",
+   "error": 1.6477377225845782e-16,
+   "bound": 1.283812439933306e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    0.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.7558914042144174",
+   "error": 1.2665026333915998e-16,
+   "bound": 1.015945007050722e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseCumulative",
+   "args": [
+    0.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "1.0",
+   "error": 0.0,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    0.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "1.0",
+   "error": 0.0,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseCumulative",
+   "args": [
+    0.025,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "0.14086349409321747",
+   "error": 4.3080604516060785e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    0.025,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "all",
+   "observed": "7.099071384231337",
+   "error": 7.58366813244567e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    -1.0,
+    1.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.6826894921370859",
+   "error": 6.682018864549973e-17,
+   "bound": 7.328474240651317e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    0.0,
+    2.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.4772498680518208",
+   "error": 2.901994119960908e-18,
+   "bound": 1.0230954986804335e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    -3.0,
+    -1.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.15730535589982694",
+   "error": 8.828594482353072e-17,
+   "bound": 1.263743499995462e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    1.0,
+    2.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.1359051219832778",
+   "error": 2.508176786805747e-16,
+   "bound": 1.7572954209349972e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    -5.0,
+    5.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.9999994266968563",
+   "error": 2.233976527737594e-17,
+   "bound": 1.1102617649012475e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    0.0,
+    1.0,
+    0.0,
+    2.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.19146246127401306",
+   "error": 2.138402101546327e-16,
+   "bound": 3.954888553974949e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    2.0,
+    4.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P3",
+   "regime": "all",
+   "observed": "0.022718460706346113",
+   "error": 1.1274452968608602e-15,
+   "bound": 1.9512755421476376e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-12
+   ],
+   "prediction": "P4",
+   "regime": "split_boundary",
+   "observed": "7.034483825301132",
+   "error": 2.2697576331264924e-26,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-12
+   ],
+   "prediction": "P4",
+   "regime": "split_boundary",
+   "observed": "-7.034483825301132",
+   "error": 2.2697576331264924e-26,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-12,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "split_boundary",
+   "observed": "205.517257379517",
+   "error": 7.004880519810391e-26,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-12,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "split_boundary",
+   "observed": "2.7758628689758496",
+   "error": 1.0093729296939536e-25,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-12,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "split_boundary",
+   "observed": "1135.1088464815432",
+   "error": 4.006200397240101e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-12,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "split_boundary",
+   "observed": "91.58265635503582",
+   "error": 3.1033943068832456e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-15
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "7.941345326170997",
+   "error": 2.5848278409803373e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-15
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-7.941345326170997",
+   "error": 2.5848278409803373e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-15,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "219.12017989256495",
+   "error": 1.4321809156740654e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-15,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "3.456008994628248",
+   "error": 1.0879519829488181e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-15,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "2811.139865527906",
+   "error": 2.5518415752640133e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-15,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "144.12380153300856",
+   "error": 3.532998104077352e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-18
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "8.757290348782314",
+   "error": 7.694410882850407e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-18
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-8.757290348782314",
+   "error": 7.694410882850407e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-18,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "231.35935523173472",
+   "error": 5.297146235404817e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-18,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "4.067967761586736",
+   "error": 1.5063348696665163e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-18,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "6356.863337703421",
+   "error": 6.237933066218494e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-18,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "216.728447176475",
+   "error": 3.668525671363548e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-30
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "11.464024688443615",
+   "error": 4.371626360504452e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-30
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-11.464024688443615",
+   "error": 4.371626360504452e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-30,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "271.96037032665424",
+   "error": 2.4611636534916522e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-30,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "6.098018516332711",
+   "error": 6.163858726147343e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-30,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "95227.56131048953",
+   "error": 4.550527644206776e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-30,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "838.8335905813292",
+   "error": 2.905463692648285e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-50
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "14.933337534788489",
+   "error": 4.76515896115396e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-50
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-14.933337534788489",
+   "error": 4.76515896115396e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-50,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "324.0000630218274",
+   "error": 1.1732236763990125e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-50,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "8.700003151091366",
+   "error": 1.0822389374219812e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-50,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "3058201.435006559",
+   "error": 1.2529018024439034e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-50,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "4753.653538605194",
+   "error": 7.559607776816215e-17,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-100
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "21.273453560965326",
+   "error": 6.573912073590986e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-100
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-21.273453560965326",
+   "error": 6.573912073590986e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-100,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "419.1018034144799",
+   "error": 5.853037486515395e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-100,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "13.455090170723995",
+   "error": 1.439642539891986e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-100,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "1733578421.6318007",
+   "error": 1.39676500858237e-15,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-100,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "113179.09793479106",
+   "error": 6.776627077777523e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-200
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "30.20559417957964",
+   "error": 5.393534863847524e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-200
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-30.20559417957964",
+   "error": 5.393534863847524e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-200,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "553.0839126936946",
+   "error": 3.133667620453189e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-200,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "20.154195634684733",
+   "error": 2.7512628500292885e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-200,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "13125712118468.832",
+   "error": 1.6056321234065324e-15,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-200,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "9848178.673327371",
+   "error": 8.13965980247585e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-300
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "37.0470962993612",
+   "error": 3.469972673863597e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-300
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "-37.0470962993612",
+   "error": 3.469972673863597e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-300,
+    100.0,
+    15.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "655.706444490418",
+   "error": 7.73517951231391e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-300,
+    -2.5,
+    0.75
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "25.2853222245209",
+   "error": 3.8130543877381515e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-300,
+    0.0,
+    1.0
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "1.2284273959249794e+16",
+   "error": 1.3349545870109781e-15,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-300,
+    1.0,
+    0.5
+   ],
+   "prediction": "P4",
+   "regime": "deep_tail",
+   "observed": "301279254.87748015",
+   "error": 6.129472239268667e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.01
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.25
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.5
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.975
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "NormalStandard_InverseCumulativeFast",
+   "args": [
+    0.999
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Density",
+   "args": [
+    1.96,
+    0.0,
+    1.0
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Density",
+   "args": [
+    110.0,
+    100.0,
+    15.0
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Normal_Density",
+   "args": [
+    3.0,
+    5.0,
+    2.0
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Density",
+   "args": [
+    1.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Density",
+   "args": [
+    2.0,
+    0.5,
+    0.25
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Density",
+   "args": [
+    0.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "Lognormal_Density",
+   "args": [
+    3.720075976020836e-44,
+    0.0,
+    2.5
+   ],
+   "prediction": "unchanged",
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-13
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "7.348796102800677",
+   "error": 1.4631349149754722e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-13
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "-7.348796102800677",
+   "error": 1.4631349149754722e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-13,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "79.3951844112027",
+   "error": 5.016431304718122e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-13,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "16.467351426161493",
+   "error": 1.2586806912886245e-16,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-13,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "139.70295815889162",
+   "error": 3.071947881425142e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-13,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "22543.321888089074",
+   "error": 2.4534007350607247e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-20
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "9.262340089798407",
+   "error": 6.731807243022033e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-20
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "-9.262340089798407",
+   "error": 6.731807243022033e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-20,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "87.04936035919363",
+   "error": 2.8651462961497795e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-20,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "20.677148197556498",
+   "error": 7.111331749944901e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-20,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "300.34626806126147",
+   "error": 5.077217136907481e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-20,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "397722.6311665674",
+   "error": 9.072962468161772e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-40
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "13.31092137142517",
+   "error": 5.3433406582613836e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-40
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "-13.31092137142517",
+   "error": 5.3433406582613836e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-40,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "103.24368548570068",
+   "error": 2.755608230305274e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-40,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "29.584027017135377",
+   "error": 1.9161789061683632e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-40,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "1516.8158006930291",
+   "error": 6.848528435479429e-17,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-40,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "172581829.71896484",
+   "error": 7.880179611106666e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-75
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "18.377208319607927",
+   "error": 6.109081104518576e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-75
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "-18.377208319607927",
+   "error": 6.109081104518576e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-75,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "123.50883327843171",
+   "error": 3.6359458062740404e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-75,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "40.72985830313744",
+   "error": 7.808609463528955e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-75,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "11508.985163466254",
+   "error": 4.992258521803251e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-75,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "344655939450.74756",
+   "error": 1.6484531431521441e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-150
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "26.122961190593983",
+   "error": 5.70395813195448e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-150
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "-26.122961190593983",
+   "error": 5.70395813195448e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-150,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "154.49184476237593",
+   "error": 3.857919546319185e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-150,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "57.770514619306766",
+   "error": 4.352326702296129e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-150,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "255042.24478361476",
+   "error": 6.448520819374008e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-150,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "3.830825433995001e+16",
+   "error": 1.7739050136875975e-16,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    1e-250
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "33.79958617269484",
+   "error": 5.920992846658046e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    1e-250
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "-33.79958617269484",
+   "error": 5.920992846658046e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-250,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "185.19834469077935",
+   "error": 4.32243837346657e-18,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    1e-250,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "74.65908957992865",
+   "error": 6.300017959650826e-17,
+   "ulps_from_predicted": 0,
+   "contract": 5e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-250,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "5497667.498550314",
+   "error": 5.799424710783688e-17,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    1e-250,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "deep_tail",
+   "observed": "3.838540845240893e+21",
+   "error": 3.8575703397354405e-15,
+   "ulps_from_predicted": 0,
+   "contract": 1e-14,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    -1.5,
+    2.25,
+    0.0,
+    1.0
+   ],
+   "prediction": "P5/P3",
+   "regime": "all",
+   "observed": "0.9209683260760972",
+   "error": 1.3651601562365253e-17,
+   "bound": 2.6082514400507115e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    0.4,
+    3.1,
+    0.0,
+    2.5
+   ],
+   "prediction": "P5/P3",
+   "regime": "all",
+   "observed": "0.3289528400339802",
+   "error": 2.234734352274762e-16,
+   "bound": 1.6659473077440565e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    -4.0,
+    -0.75,
+    0.0,
+    1.5
+   ],
+   "prediction": "P5/P3",
+   "regime": "all",
+   "observed": "0.3047071581583972",
+   "error": 1.8690340693224521e-16,
+   "bound": 1.0609311881937734e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_IntervalProbability",
+   "args": [
+    -0.2,
+    0.2,
+    0.0,
+    0.3
+   ],
+   "prediction": "P5/P3",
+   "regime": "all",
+   "observed": "0.4950149249061543",
+   "error": 1.459874498188615e-16,
+   "bound": 1.3214041107870128e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    4e-12
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "6.838547749167049",
+   "error": 6.527762177760477e-17,
+   "ulps_from_predicted": 1,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    4e-12
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "-6.838547749167049",
+   "error": 6.527762177760477e-17,
+   "ulps_from_predicted": 1,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    4e-12,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "77.3541909966682",
+   "error": 2.2844232770319907e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    4e-12,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "15.34480504816751",
+   "error": 1.4503533112647835e-16,
+   "ulps_from_predicted": 1,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    4e-12,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "113.91118885696586",
+   "error": 3.573606411422791e-16,
+   "ulps_from_predicted": 7,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    4e-12,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "10486.265410500198",
+   "error": 1.1786701879970763e-15,
+   "ulps_from_predicted": 11,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "FAIL",
+   "problems": [
+    "11 ulps from the predicted 10486.265410500178 (limit 8)"
+   ]
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    2e-12
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "6.9371814280356805",
+   "error": 3.989182436693013e-18,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    2e-12
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "-6.9371814280356805",
+   "error": 3.989182436693013e-18,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    2e-12,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "77.74872571214271",
+   "error": 9.281338080793093e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    2e-12,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "15.561799141678499",
+   "error": 1.1023627298449598e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    2e-12,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "118.49521395738502",
+   "error": 3.0807264043179664e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    2e-12,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "12158.358347070822",
+   "error": 8.247931715558184e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    5e-13
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "7.130506848171325",
+   "error": 3.966476508876946e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    5e-13
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "-7.130506848171325",
+   "error": 3.966476508876946e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    5e-13,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "78.5220273926853",
+   "error": 5.965247397092947e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    5e-13,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "15.987115065976916",
+   "error": 1.166986985389943e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    5e-13,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "128.02207874862606",
+   "error": 3.0430930872426645e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    5e-13,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "16248.57143590781",
+   "error": 5.263234617675565e-18,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseSurvival",
+   "args": [
+    2e-13
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "7.255561154127699",
+   "error": 2.2680836174297983e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "NormalStandard_InverseCumulative",
+   "args": [
+    2e-13
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "-7.255561154127699",
+   "error": 2.2680836174297983e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    2e-13,
+    50.0,
+    4.0
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "79.02224461651079",
+   "error": 9.824671737477264e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Normal_InverseSurvival",
+   "args": [
+    2e-13,
+    0.3,
+    2.2
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "16.26223453908094",
+   "error": 4.3276788032559556e-17,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 2e-10,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    2e-13,
+    2.0,
+    0.4
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "134.5888346448055",
+   "error": 5.449213398008773e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "Lognormal_InverseSurvival",
+   "args": [
+    2e-13,
+    -1.0,
+    1.5
+   ],
+   "prediction": "P5/P4",
+   "regime": "split_boundary",
+   "observed": "19601.114996783184",
+   "error": 7.067655260357345e-16,
+   "ulps_from_predicted": 0,
+   "bound": 1e-14,
+   "contract": 1e-09,
+   "status": "PASS",
+   "problems": []
+  }
+ ]
+}

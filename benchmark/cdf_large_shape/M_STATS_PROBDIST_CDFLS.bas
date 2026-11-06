@@ -5,9 +5,9 @@ Option Explicit
 ' M_STATS_PROBDIST_CDFLS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Self-contained export macro for the large-shape CDF study (CR-P1-01).
-'   Fills observed_vba in cdf_large_shape_grid.csv for the Gamma, Chi-square,
-'   Beta cumulative and survival probabilities across shape from 1E2 to 1E12, so
+'   Self-contained export macro for the large-shape CDF study (CR-P1-02).
+'   Fills observed_vba in cdf_large_shape_grid.csv for the Gamma and Beta
+'   cumulative and survival probabilities across shape from 1E2 to 1E12, so
 '   the accuracy of the CR-P1-02 incomplete-gamma and incomplete-beta repair can be
 '   measured from real VBA and set beside the stable Loader target.
 '
@@ -18,10 +18,10 @@ Option Explicit
 '   function, vba_kernel, claim, metric, arg1, arg2, arg3, reference,
 '   observed_vba, regime, evidence_set
 '
-'   arg1 is X, arg2 and arg3 are the shape/df parameters (arg3 is empty for the
-'   three-parameter Gamma and Beta calls). This macro writes observed_vba (column
+'   arg1 is X; for Gamma arg2 is Shape and arg3 is ScaleParam; for Beta arg2
+'   and arg3 are Alpha and Beta. This macro writes observed_vba (column
 '   index 8) and never reads the reference column, so the observed side stays
-'   independent. This is the study grid, not the 12-column main grid.
+'   independent. This is the study grid, not the 13-column main grid.
 '
 ' ERROR POLICY
 '   The K_STATS_ functions return Variant and may return CVErr. A CVErr, a
@@ -147,13 +147,12 @@ Private Function EvaluateCdf( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Dispatches the public cumulative and survival functions and returns a token: a
-'   full-precision number on success, or ERROR on any error. Chi-square takes
-'   two parameters (X, df); the others take three (X and two shapes/df).
+'   full-precision number on success, or ERROR on any error.
 '
 ' INPUTS
 '   FuncName    contract function name from the grid
 '   A1          evaluation point X
-'   A2, A3      shape / degrees-of-freedom parameters (A3 unused by Chi-square)
+'   A2, A3      Gamma shape and scale, or Beta alpha and beta
 '
 ' RETURNS
 '   Full-precision hi;lo token, or the literal ERROR.
@@ -253,7 +252,7 @@ Private Function ParseDouble(ByVal Text As String) As Double
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Parses a grid number written with a US decimal point, independent of the
-'   local list/decimal separators. An empty field (Chi-square arg3) reads zero.
+'   local list/decimal separators.
 '==============================================================================
 '
 '------------------------------------------------------------------------------

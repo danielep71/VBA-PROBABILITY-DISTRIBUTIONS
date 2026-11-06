@@ -184,3 +184,33 @@ stale. It stays stale until the finding is re-measured, this document is amended
 and the binding is re-recorded with
 `python3 model_fidelity.py --record --reason TEXT`, which refuses while the model
 does not mirror the source.
+
+---
+
+## Amendment 2 — the kernel F1 measured is frozen (2026-11-06, #81)
+
+Option A is being carried out: #81 replaces `PROB_NormalUpperTailPositive` with
+the repaired kernel of `benchmark/normal_tail_study` (#72). F1 is a finding about
+the kernel it replaces, so it now stays bound to that kernel instead of to the
+live source. Nothing above changes.
+
+- **Source.** `f1_frozen/M_STATS_PROBDIST_NORMALFAMILY.bas.frozen` is
+  `src/M_STATS_PROBDIST_NORMALFAMILY.bas` as commit `495d0cf` held it, byte for
+  byte, with CRLF line endings like the module. `model_fidelity.py` reads the
+  bound procedures and constants from it. Their recorded identities are
+  unchanged.
+- **Observations.** `f1_frozen/normal_observations.csv` holds the 12
+  `NormalStandard_Survival` and `NormalStandard_Cumulative` observations of the
+  main grid and the holdout at `495d0cf`, the ones Amendment 1 measured.
+  `test_binary64_route_model.py` reads them there, because the #81 export
+  replaces the grid observations with those of the new kernel.
+- **Origin.** `source_binding.json` gains an `origin` block: the commit, the
+  copy's Git blob id and the observations' SHA-256. `origin_problems` checks
+  both always. Where the commit is in the clone, as in CI, it also rebuilds both
+  copies from that commit and compares them byte for byte. A change to either
+  copy fails the F1 fixture.
+
+The repaired kernel is bound to its own model by
+`benchmark/normal_tail_study/test_vba_kernel_source.py`. The normal-tail study
+measured the #34 route with it at all 36 fitting points. A production route for
+#34 is designed against that kernel, not this one.

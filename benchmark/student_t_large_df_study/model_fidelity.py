@@ -15,8 +15,10 @@ ULP distance
 
 Source binding
     source_binding.json records the SHA-256 of the text of every VBA procedure
-    and constant the model depends on in src/M_STATS_PROBDIST_NORMALFAMILY.bas,
-    and of the model file itself. stale() compares them with the files as they
+    and constant the model depends on in SOURCE, and of the model file itself.
+    SOURCE is the verbatim copy of src/M_STATS_PROBDIST_NORMALFAMILY.bas as
+    ORIGIN_COMMIT held it, before #81 replaced the kernel; origin_problems()
+    checks that copy and the Excel observations F1 used against that commit. stale() compares them with the files as they
     are now, and also checks that the extraction is faithful:
 
     * Statement inventory. INVENTORY lists every executable statement of the
@@ -70,8 +72,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 RECORD = os.path.join(HERE, "source_binding.json")
 
-SOURCE = "src/M_STATS_PROBDIST_NORMALFAMILY.bas"
+# Finding F1 measured the normal-tail kernel that #81 replaced (#72). The module
+# as it stood before that change is kept verbatim under f1_frozen/, and the
+# finding stays bound to that copy and to the Excel observations of that
+# kernel; ORIGIN names the commit and the files they were copied from.
+SOURCE = "benchmark/student_t_large_df_study/f1_frozen/M_STATS_PROBDIST_NORMALFAMILY.bas.frozen"
+OBSERVATIONS = "benchmark/student_t_large_df_study/f1_frozen/normal_observations.csv"
 MODEL = "benchmark/student_t_large_df_study/binary64_route_model.py"
+ORIGIN_COMMIT = "495d0cf4b767657a864b303e06bbbbbe794750a8"
+ORIGIN_SOURCE = "src/M_STATS_PROBDIST_NORMALFAMILY.bas"
+ORIGIN_GRIDS = ("benchmark/probability_accuracy_grid.csv", "benchmark/holdout/holdout_grid.csv")
+OBSERVED_FUNCTIONS = ("NormalStandard_Survival", "NormalStandard_Cumulative")
 
 # The fidelity limit of the port against committed Excel observations, in true ULPs.
 FIDELITY_LIMIT_ULPS = 2
@@ -195,7 +206,9 @@ INVENTORY: dict[str, tuple[tuple[str, str | None], ...]] = {
 RULE = ("SHA-256 of the text of each bound VBA procedure and constant declaration in the source "
         "(CRLF normalized to LF) and of the model file. A change to any of them makes finding F1 stale "
         "until it is re-measured, the study documents and the statement inventory are updated, and "
-        "model_fidelity.py --record --reason TEXT re-records the binding (#77).")
+        "model_fidelity.py --record --reason TEXT re-records the binding (#77). Since #81 replaced the "
+        "kernel, the source is a verbatim copy of the module at the origin commit, and origin records "
+        "the Git blob of that copy and the SHA-256 of the Excel observations F1 was measured against.")
 
 
 # ---------------------------------------------------------------------------
@@ -548,6 +561,75 @@ def inventory_problems(name: str, found: list[str]) -> list[str]:
     return out
 
 
+def git_blob_id(text: str) -> str:
+    """The Git blob id of LF text, as Git stores a normalized text file."""
+    data = text.encode("latin-1")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def observation_rows(grids: dict[str, str]) -> str:
+    """The F1 observations in a set of grid texts, as normal_observations.csv holds them."""
+    import csv
+    import io
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    writer.writerow(("grid", "function", "arg1", "observed_vba"))
+    for grid in ORIGIN_GRIDS:
+        for row in csv.DictReader(io.StringIO(grids[grid])):
+            raw = (row.get("observed_vba") or "").strip()
+            if row["function"] in OBSERVED_FUNCTIONS and raw and "ERR" not in raw.upper():
+                writer.writerow((grid, row["function"], row["arg1"], raw))
+    return out.getvalue()
+
+
+def origin_identities(root: str = ROOT) -> dict[str, Any]:
+    """The origin block: where the frozen files came from, and their identities now."""
+    return {"commit": ORIGIN_COMMIT, "source": ORIGIN_SOURCE,
+            "source_git_blob": git_blob_id(read_text(os.path.join(root, SOURCE))),
+            "grids": list(ORIGIN_GRIDS),
+            "observations": OBSERVATIONS,
+            "observations_sha256": sha256_text(read_text(os.path.join(root, OBSERVATIONS)))}
+
+
+def _git_show(root: str, spec: str) -> str | None:
+    import subprocess
+    try:
+        proc = subprocess.run(["git", "-C", root, "show", spec], capture_output=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.replace(b"\r\n", b"\n").decode("latin-1")
+
+
+def origin_problems(recorded: Any, root: str = ROOT) -> list[str]:
+    """Every way the frozen copies differ from their recorded origin; [] if they are faithful.
+
+    The recorded Git blob and observation digest are checked always. Where the
+    origin commit is in the clone (CI checks out full history), the copies are
+    also rebuilt from that commit and compared byte for byte."""
+    if not isinstance(recorded, dict) or not isinstance(recorded.get("origin"), dict):
+        return ["source_binding.json records no origin for the frozen copies"]
+    origin = recorded["origin"]
+    try:
+        now = origin_identities(root)
+    except OSError as e:
+        return [f"cannot read a frozen copy: {e}"]
+    out = [f"origin {key}: recorded {origin.get(key)!r}, now {value!r}"
+           for key, value in now.items() if origin.get(key) != value]
+    source = _git_show(root, f"{ORIGIN_COMMIT}:{ORIGIN_SOURCE}")
+    if source is not None:
+        if git_blob_id(source) != now["source_git_blob"]:
+            out.append(f"{SOURCE} is not the {ORIGIN_SOURCE} of {ORIGIN_COMMIT[:7]}")
+        grids = {grid: _git_show(root, f"{ORIGIN_COMMIT}:{grid}") for grid in ORIGIN_GRIDS}
+        if all(text is not None for text in grids.values()):
+            if observation_rows(grids) != read_text(os.path.join(root, OBSERVATIONS)):
+                out.append(f"{OBSERVATIONS} is not the F1 rows of the grids of {ORIGIN_COMMIT[:7]}")
+        else:
+            out.append(f"the grids of {ORIGIN_COMMIT[:7]} cannot be read although its source can")
+    return out
+
+
 def identities(root: str = ROOT) -> dict[str, Any]:
     """The identities of the bound source and model as they are under root now."""
     source = read_text(os.path.join(root, SOURCE))
@@ -687,7 +769,7 @@ def record(reason: str, root: str = ROOT, path: str = RECORD, date: str | None =
     history = list(previous.get("history", [])) if isinstance(previous, dict) else []
     history.append({"date": date or datetime.date.today().isoformat(), "reason": reason,
                     "identities_changed": changed})
-    body = {"rule": RULE, "source": SOURCE, "model": MODEL,
+    body = {"rule": RULE, "source": SOURCE, "model": MODEL, "origin": origin_identities(root),
             "evidence": ["benchmark/student_t_large_df_study/PRODUCTION_FEASIBILITY.md (finding F1)",
                          "benchmark/student_t_large_df_study/test_binary64_route_model.py"],
             **now, "history": history}

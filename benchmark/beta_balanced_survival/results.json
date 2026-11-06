@@ -1,17 +1,17 @@
 {
  "binding": {
   "continuous:K_STATS_Beta_Cumulative": "4635ebada58095530c35db83034d99346cd883cae3f47b7c2e90328b26ac1153",
-  "continuous:K_STATS_Beta_Density": "c889d255536560c1a132c3a2593e9c76d0d283ece9cc51acc865970478d57128",
+  "continuous:K_STATS_Beta_Density": "9e03e5b84ca132a1c7652594cd5e860a1a5ec0a791dac12203f24be478ecb38a",
   "continuous:K_STATS_Beta_Survival": "d506676f2ddbca5ffded2bc02c8c92cd74cb4b05ebb720e871772f6e6ce5a0d9",
-  "core:PROB_Log1p": "de88b2e6ed65aae6f6a6a2b4c120ff4bfcf1d7d064f2f4829927f13b695bd248",
+  "core:PROB_Log1p": "80f61ebba4e7f85f16a85c32df3f88ae91dc35348e6a89c389fb543db8a256ec",
   "core:PROB_TryExp": "55ccf9c562420f058a796ac195eb9fe650c81612ce5783c1e39739f340e7b13b",
   "special:PROB_LogBeta": "b7475698116da275be5f8f2fb04efe0475ae0cb0e9f2a0edec3e0c851971d8d2",
-  "special:PROB_LogGamma": "9a9d7f16f199694f925d70ebd3067a1d74e31dfaff712ba6bcf6edb09a6f2d71",
-  "special:PROB_LogGammaHalfDiff": "f8677ab041009d921c11ab803451577a661a2a6e03d78e21d022299ab08aff93",
-  "special:PROB_StirlingError": "c7308efd6e25f9fc0c0f24329c9c6a228f666c999f0757ae50966d853455a884",
+  "special:PROB_LogGamma": "26acac02356395ef7bbe5b56fab0fd463b090fa6903af0e1d36ea816153facaa",
+  "special:PROB_LogGammaHalfDiff": "45464d0e3cda023f3044a7c3ebf99e808e5e24bf0d1ed56eaed2db568178f7ce",
+  "special:PROB_StirlingError": "80c310ce6519ddecf41d2508970cbc7ee20eed9e43073884772c34ec207ed2ad",
   "special:PROB_TryBetaContinuedFraction": "8843910b3141aeeb9d42ac06cf97a47c5cf06cc7644137a93c4034b913931d0d",
   "special:PROB_TryBetaLogPdf": "872e689fab7923d2c56111e85dbd091f4b93e6d3d3c619054b793225c9fab623",
-  "special:PROB_TryBetaRegularized": "7ea178eece88f414f621b0b894735bd4b70a478a648a309806c9ab8fd5974888",
+  "special:PROB_TryBetaRegularized": "5924dd38d4497d8d32f2bb38473f8e64fa0a4f71e3ac9679e4c2605a52c55cc6",
   "special:PROB_TryDeviancePart": "0743e5942ab56c2a5e111df7f9156f2072b36efc7f23cb8561deea1ab93a4d52"
  },
  "fidelity": {
@@ -22,9 +22,9 @@
     "observations": 58
    },
    "Beta_Density": {
-    "exact": 133,
+    "exact": 134,
     "max_ulps": 0,
-    "observations": 133
+    "observations": 134
    },
    "Beta_Survival": {
     "exact": 58,
@@ -52,27 +52,21 @@
     "observations": 27
    },
    "StirlingError": {
-    "exact": 12,
+    "exact": 14,
     "max_ulps": 0,
-    "observations": 12
+    "observations": 14
    }
   },
-  "exact": 368,
+  "exact": 371,
   "limit_ulps": 2,
   "max_ulps": 0,
-  "observations": 368,
+  "observations": 371,
   "predates_source": {
    "beta_f_unbalanced": {
     "exact": 0,
     "max_ulps": 604926,
     "observations": 88,
     "why": "exported 2026-07-19, before the Loader dispatch of PROB_TryBetaRegularized (2026-07-29) and the later changes to PROB_TryBetaLogPdf, PROB_TryDeviancePart and PROB_StirlingError"
-   },
-   "holdout_older": {
-    "exact": 0,
-    "max_ulps": 20367,
-    "observations": 3,
-    "why": "exported 2026-07-21, before the later changes to PROB_TryBetaLogPdf, PROB_TryDeviancePart and PROB_StirlingError"
    }
   },
   "refused_not_modelled": 416
@@ -183,7 +177,7 @@
     "branch": "reflected",
     "contract_threshold": null,
     "function": "Beta_Survival",
-    "gate_error": 1.101e-14,
+    "gate_error": 1.12e-14,
     "grid": "probability_accuracy_grid.csv",
     "regime": "unbalanced",
     "value": 0.4670471,
@@ -209,7 +203,7 @@
     "branch": "reflected",
     "contract_threshold": null,
     "function": "Beta_Survival",
-    "gate_error": 1.554e-14,
+    "gate_error": 1.528e-14,
     "grid": "probability_accuracy_grid.csv",
     "regime": "unbalanced",
     "value": 0.4195729,

@@ -28,7 +28,7 @@ A green record binds:
 - import, execution-backed compile, regression, and cleanup outcomes;
 - the retained regression-log SHA-256.
 
-The policy currently requires 909 assertions. A run with 908 or 910 assertions
+The policy currently requires 931 assertions. A run with 930 or 932 assertions
 is incomplete even if every executed assertion passes.
 
 `compile = PASS` in an automated record means the complete imported project was
@@ -52,7 +52,7 @@ Its record therefore contains both policy-declared grids with:
 }
 ```
 
-A 909/909 regression PASS cannot be used to rebind an accuracy manifest. This
+A green regression PASS cannot be used to rebind an accuracy manifest. This
 separation is deliberate: regression execution and numerical observation export
 are different evidence events. A dispatched export run produces both events in
 one job, as two artifacts; see [Automated fresh export](#automated-fresh-export).
@@ -148,9 +148,10 @@ runner does. The steps below use the GitHub CLI.
    entry with this evidence, run `python benchmark/refresh_evidence.py` again
    (no bind flags; the manifests are already bound), and continue.
 
-   `holdout_older` has no exporter in the evidence policy, so the record makes
-   no claim for it and no manifest binds it. The tool copies the grid and the
-   plain refresh regenerates `holdout_older_summary.md`.
+   `holdout_older` and `survival_boundary` have no exporter in the evidence
+   policy, so the record makes no claim for them and no manifest binds them.
+   The tool copies the grid, and the plain refresh regenerates
+   `holdout_older_summary.md`.
 
 4. **Commit** the changed files together, with the printed message as the
    body.

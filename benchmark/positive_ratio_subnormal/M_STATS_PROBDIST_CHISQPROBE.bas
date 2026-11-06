@@ -4,14 +4,8 @@ Option Explicit
 'Column count of the committed schema, checked against every row written
 Private Const PROBE_FIELDS As Long = 14
 
-'Shape is part of the experimental design, not a setting: each surface has a
-'different conditioning problem and one shape cannot serve all three. At
-'Shape is part of the experimental design, not a setting: each surface has
-'a different conditioning problem and one shape cannot serve all three. At
-'Shape = 0.5 the survival is already correctly saturated at 1.0 across the
-'whole subnormal ladder and cannot constrain dispatch. The slices are
-'therefore surface-specific; shape_id is provenance, echo_shape is
-'authoritative.
+'Shape slices are surface-specific; shape_id is provenance, echo_df is
+'authoritative (see ShapeSlicesFor).
 '==============================================================================
 ' M_STATS_PROBDIST_CHISQPROBE
 '------------------------------------------------------------------------------
@@ -330,7 +324,8 @@ Private Function SmallestPositiveDouble() As Double
 '   The stored value decides, not the expression. VBA does not necessarily
 '   round an intermediate expression to Double at every operator, so testing
 '   MinSub / 2# in a loop condition would let the loop run past the floor and
-'   leave zero behind. See CONTRIBUTING, "Force the rounding boundary".
+'   leave zero behind. See the IMPORTANT note under "Start here" in
+'   CONTRIBUTING.md (forced Double rounding boundaries).
 '==============================================================================
 '
 '------------------------------------------------------------------------------

@@ -7,9 +7,8 @@ Option Explicit
 ' PURPOSE
 '   Self-contained export macro for the large-shape density study (CR-P1-01).
 '   Fills observed_vba in density_large_shape_grid.csv for the Gamma, Chi-square,
-'   Beta and F densities across shape/df from 1E2 to 1E20, so the boundary where
-'   the current (cancellation-prone) log-density form loses accuracy can be
-'   measured from real VBA and set beside the stable Loader target.
+'   Beta and F densities across shape/df from 1E2 to 1E20, so the accuracy of
+'   the Loader-form densities (CR-P1-01 reroute) can be measured from real VBA.
 '
 ' USAGE
 '   Run Export_DensityLargeShape and pick density_large_shape_grid.csv.
@@ -18,10 +17,11 @@ Option Explicit
 '   function, vba_kernel, claim, metric, arg1, arg2, arg3, reference,
 '   observed_vba, regime, evidence_set
 '
-'   arg1 is X, arg2 and arg3 are the shape/df parameters (arg3 is empty for the
-'   two-parameter Chi-square density). This macro writes observed_vba (column
-'   index 8) and never reads the reference column, so the observed side stays
-'   independent. This is the study grid, not the 12-column main grid.
+'   arg1 is X; arg2/arg3 are Shape/ScaleParam (Gamma), Alpha/Beta (Beta),
+'   d1/d2 (F); arg3 is empty for Chi-square. This macro writes observed_vba
+'   (column index 8) and never reads the reference column, so the observed
+'   side stays independent. This is the study grid, not the 13-column main
+'   grid.
 '
 ' ERROR POLICY
 '   The K_STATS_ functions return Variant and may return CVErr. A CVErr, a

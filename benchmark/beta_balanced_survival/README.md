@@ -61,19 +61,22 @@ with Z >= 0.5, plain binary64 evaluation reproduces 11 and 64-bit
 intermediates reproduce all 57. The model uses the second.
 
 **Fidelity.** Every committed Excel observation the model can evaluate is
-compared with it, in all grids: 368 observations of `LogGamma`,
+compared with it, in all grids: 371 observations of `LogGamma`,
 `LogGammaHalfDiff`, `PROB_LogBeta`, `StirlingError`, `Beta_Density`,
-`Beta_Survival` and `Beta_Cumulative`. **All 368 are reproduced bit for bit
+`Beta_Survival` and `Beta_Cumulative`. **All 371 are reproduced bit for bit
 (0 ULP).** They include the six balanced `Beta_Survival` and
-`Beta_Cumulative` observations and 133 `Beta_Density` observations, which
-validate the Loader branch at small and large shapes. 91 observations are
+`Beta_Cumulative` observations and 134 `Beta_Density` observations, which
+validate the Loader branch at small and large shapes. 88 observations are
 excluded because they were exported before a later change to a procedure they
 reach: the `beta_f_unbalanced` evidence (exported 2026-07-19, before the
-Loader dispatch of 2026-07-29) and three `holdout_older` density and
-Stirling-error rows (exported 2026-07-21, before later
-`PROB_StirlingError` changes). The balanced literal route those `holdout_older`
-Beta observations take has not changed since their export; the model
-reproduces them exactly.
+Loader dispatch of 2026-07-29).
+
+*2026-11-06 (#81).* Until then three `holdout_older` density and
+Stirling-error rows were excluded too: exported on 2026-07-21, before later
+`PROB_StirlingError` changes, they were up to 20,367 ULP from the model. The
+#81 wave re-exported `holdout_older` (run 42210983927), and the model now
+reproduces all three exactly, so they count with the rest. The balanced
+`Beta_Survival` and `Beta_Cumulative` observations of that grid did not change.
 
 **Point sets**, all deterministic:
 
@@ -99,7 +102,9 @@ Each point is evaluated in four variants of the model, to attribute the error:
 
 Every committed `Beta_Survival` and `Beta_Cumulative` observation with ratio
 >= 0.1 and both shapes in [0.5, 100). The gate error uses the committed
-reference cell; the binary64 error uses the reference recomputed here. 210
+reference cell; the binary64 error uses the reference recomputed here. Since
+the #81 wave re-based the two main-grid copies of `beta_f_unbalanced` rows
+below (#159), their gate and binary64 errors agree. 210
 rows fall outside: 114 with ratio below 0.1, 84 with a shape of 100 or more
 (the `large_shape` and `extreme_shape` contracts) and 12 with both shapes
 below 0.5 (`tiny_unbalanced`).
@@ -119,9 +124,9 @@ below 0.5 (`tiny_unbalanced`).
 | `holdout_older` | Beta_Cumulative | (0.15, 4.3, 1.9) | balanced | direct | 6.79E-16 | 6.68E-16 | 2E-14 |
 | `holdout_older` | Beta_Survival | (0.15, 4.3, 1.9) | balanced | reflected | 3.00E-17 | 1.19E-17 | 5E-15 |
 | `probability_accuracy_grid` | Beta_Cumulative | (0.13099041533546326, 10.25, 68.0) | unbalanced | direct | 9.76E-15 | 9.85E-15 | - |
-| `probability_accuracy_grid` | Beta_Survival | (0.13099041533546326, 10.25, 68.0) | unbalanced | reflected | 1.10E-14 | 1.12E-14 | - |
+| `probability_accuracy_grid` | Beta_Survival | (0.13099041533546326, 10.25, 68.0) | unbalanced | reflected | 1.12E-14 | 1.12E-14 | - |
 | `probability_accuracy_grid` | Beta_Cumulative | (0.13564668769716088, 10.25, 68.0) | unbalanced | direct | 1.13E-14 | 1.11E-14 | - |
-| `probability_accuracy_grid` | Beta_Survival | (0.13564668769716088, 10.25, 68.0) | unbalanced | reflected | 1.55E-14 | 1.53E-14 | - |
+| `probability_accuracy_grid` | Beta_Survival | (0.13564668769716088, 10.25, 68.0) | unbalanced | reflected | 1.53E-14 | 1.53E-14 | - |
 | `beta_f_unbalanced` | Beta_Cumulative | (0.13099041533546326, 10.25, 68.0) | - | direct | 9.92E-15 | 9.85E-15 | - |
 | `beta_f_unbalanced` | Beta_Survival | (0.13099041533546326, 10.25, 68.0) | - | reflected | 1.12E-14 | 1.12E-14 | - |
 | `beta_f_unbalanced` | Beta_Cumulative | (0.13564668769716088, 10.25, 68.0) | - | direct | 1.11E-14 | 1.11E-14 | - |
@@ -227,7 +232,8 @@ to #163:
 - `Beta_Survival.balanced.output_rel`: **2E-13**, with the domain stated as
   ratio >= 0.1 and both shapes in [0.5, 100). The modelled worst is 1.38E-13
   (1.45x margin): 6.70E-14 below shape 20 and 1.38E-13 from 20 to 100. The
-  committed Excel worst in the domain is 1.55E-14.
+  committed Excel worst in the domain is 1.53E-14 (1.55E-14 against the
+  committed reference until #81 re-based it).
 - `Beta_Cumulative.balanced.output_rel` shares the route and the mechanism and
   is exceeded by the model at 144 `domain` points (worst 5.94E-14; 1.34E-13 at
   shape 100). It needs the same recalibration, under its own issue.

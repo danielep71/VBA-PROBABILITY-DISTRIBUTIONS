@@ -19,7 +19,7 @@ Option Explicit
 '
 '   arg1 is x, arg2 is d1 and arg3 is d2. This macro writes observed_vba
 '   (column index 8) and never reads the reference column, so the observed side
-'   stays independent. Note this is the study grid, not the 12-column main grid.
+'   stays independent. Note this is the study grid, not the 13-column main grid.
 '
 ' ERROR POLICY
 '   The K_STATS_ functions return Variant and may return CVErr. A CVErr, a

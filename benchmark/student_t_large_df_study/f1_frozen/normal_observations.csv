@@ -1,0 +1,13 @@
+grid,function,arg1,observed_vba
+benchmark/probability_accuracy_grid.csv,NormalStandard_Cumulative,-2.0,2.27501319481792E-002;2.77555756156289E-017
+benchmark/probability_accuracy_grid.csv,NormalStandard_Survival,-2.0,9.77249868051821E-001;-2.22044604925031E-016
+benchmark/probability_accuracy_grid.csv,NormalStandard_Cumulative,-0.5,3.08537538725987E-001;-5.55111512312578E-017
+benchmark/probability_accuracy_grid.csv,NormalStandard_Survival,-0.5,6.91462461274013E-001;0E+000
+benchmark/probability_accuracy_grid.csv,NormalStandard_Cumulative,0.5,6.91462461274013E-001;0E+000
+benchmark/probability_accuracy_grid.csv,NormalStandard_Survival,0.5,3.08537538725987E-001;-5.55111512312578E-017
+benchmark/probability_accuracy_grid.csv,NormalStandard_Cumulative,1.0,8.41344746068543E-001;-1.11022302462516E-016
+benchmark/probability_accuracy_grid.csv,NormalStandard_Survival,1.0,1.58655253931457E-001;5.55111512312578E-017
+benchmark/probability_accuracy_grid.csv,NormalStandard_Cumulative,1.96,9.75002104851780E-001;-4.44089209850063E-016
+benchmark/probability_accuracy_grid.csv,NormalStandard_Survival,1.96,2.49978951482205E-002;-4.51028103753970E-017
+benchmark/probability_accuracy_grid.csv,NormalStandard_Cumulative,3.0,9.98650101968370E-001;-1.11022302462516E-016
+benchmark/probability_accuracy_grid.csv,NormalStandard_Survival,3.0,1.34989803163011E-003;4.98732999343332E-018

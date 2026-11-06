@@ -61,6 +61,9 @@ param(
     [string]$HoldoutOlder = "false",
 
     [Parameter(Mandatory = $false)]
+    [string]$SurvivalBoundary = "false",
+
+    [Parameter(Mandatory = $false)]
     [ValidateSet("full", "missing-only")]
     [string]$MainMode = "full",
 
@@ -451,10 +454,12 @@ try {
     $wantMain = ConvertTo-BooleanSwitch -Value $Main -Name "Main"
     $wantHoldout = ConvertTo-BooleanSwitch -Value $Holdout -Name "Holdout"
     $wantHoldoutOlder = ConvertTo-BooleanSwitch -Value $HoldoutOlder -Name "HoldoutOlder"
+    $wantSurvivalBoundary = ConvertTo-BooleanSwitch -Value $SurvivalBoundary -Name "SurvivalBoundary"
     if ($wantMain) { $selected += Get-ExportGridSpec -Name "main" -MainMode $MainMode }
     if ($wantHoldout) { $selected += Get-ExportGridSpec -Name "holdout" }
     if ($wantHoldoutOlder) { $selected += Get-ExportGridSpec -Name "holdout_older" }
-    if ($selected.Count -eq 0) { Stop-Export "no grid selected; pass -Main, -Holdout or -HoldoutOlder true" }
+    if ($wantSurvivalBoundary) { $selected += Get-ExportGridSpec -Name "survival_boundary" }
+    if ($selected.Count -eq 0) { Stop-Export "no grid selected; pass -Main, -Holdout, -HoldoutOlder or -SurvivalBoundary true" }
     Write-ExportLog ("Selected grids: " + (($selected | ForEach-Object { "$($_.Name) ($($_.Macro))" }) -join ", "))
     if (-not $wantMain -and $MainMode -ne "full") {
         Write-ExportLog "Main-grid mode $MainMode is ignored: the main grid is not selected"

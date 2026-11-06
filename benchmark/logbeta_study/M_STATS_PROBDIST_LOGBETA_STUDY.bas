@@ -7,8 +7,10 @@ Option Explicit
 ' PURPOSE
 '   Self-contained export macro for the unbalanced-Beta switch study. Fills the
 '   observed_vba column of logbeta_switch_grid.csv by calling PROB_LogBeta at
-'   each (A, B) pair, so the asymptotic-versus-general switch in PROB_LogBeta can
-'   be characterized against the mpmath reference.
+'   each (A, B) pair, so the unbalanced-argument behaviour of PROB_LogBeta
+'   (originally the one-term asymptotic switch; now the
+'   PROB_LOGBETA_STABLE_RATIO stable-delta dispatch) can be characterized
+'   against the mpmath reference.
 '
 ' WHY THIS EXISTS AS A SEPARATE MODULE
 '   It deliberately does not touch the main M_STATS_PROBDIST_ACCURACYEXPORT

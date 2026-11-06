@@ -8,18 +8,23 @@ Private Const PROBE_FIELDS As Long = 16
 ' M_STATS_PROBDIST_STIRLINGPROBE
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Characterization probe for the PROB_StirlingError small-N recurrence, which
-'   forms the explicit reciprocal
+'   Characterization probe for the former PROB_StirlingError small-N
+'   recurrence, which formed the explicit reciprocal
 '
 '       (N + 1#) / N
 '
-'   for every 0 < N < 0.5. Once 1 / N exceeds the Double range the quotient is
-'   not representable and the expression faults BEFORE Log() is ever called.
-'   The boundary is 1 / DoubleMax, about 5.5626846462680035E-309, which is
-'   inside the subnormal range and inside the accepted parameter domain: the
-'   Gamma shape guard is PROB_IsPositiveWithinSupportedMagnitude, which tests
-'   Shape > 0 and an UPPER bound of 1E100 only. No lower cutoff exists, so
+'   for every 0 < N < 0.5 (#18, fixed by adopting candidate B below). Once
+'   1 / N exceeded the Double range the quotient was not representable and the
+'   expression faulted BEFORE Log() was ever called. The boundary is
+'   1 / DoubleMax, about 5.5626846462680035E-309, which is inside the subnormal
+'   range and inside the accepted parameter domain: the Gamma shape guard is
+'   PROB_IsPositiveWithinSupportedMagnitude, which tests Shape > 0 and an
+'   UPPER bound of 1E100 only. No lower cutoff exists, so
 '   K_STATS_Gamma_Density(1, 1E-320, 1) reaches the branch.
+'
+'   The committed CSV was regenerated after the fix (17ebb1c), so its current_*
+'   columns measure the repaired kernel; the pre-fix run, with its Error 6
+'   failures, is in git history at d5861a9.
 '
 ' WHAT THIS PROBE DECIDES
 '   Three things that cannot be settled outside real VBA:
@@ -83,8 +88,8 @@ Private Const PROBE_FIELDS As Long = 16
 '
 ' SCOPE
 '   This is a characterization probe, not a benchmark. It promotes no grid row,
-'   claims no threshold and touches no registry. It exists to decide one
-'   question before any source edit is proposed.
+'   claims no threshold and touches no registry. It was written to decide one
+'   question before any source edit was proposed.
 '
 ' DEPENDENCIES
 '   - PROB_StirlingError, PROB_TryLogGamma1p (M_STATS_PROBDIST_SPECIALFUNCS)

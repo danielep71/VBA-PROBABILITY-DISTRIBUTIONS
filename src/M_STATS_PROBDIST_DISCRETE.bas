@@ -185,8 +185,9 @@ Option Explicit
 '   shared Binomial log-masses (p = n/N); its CDF/SF sum the near tail by an
 '   exact successive-ratio recurrence, so only a few standard deviations of
 '   terms are evaluated. Cumulative and inverse counts are capped for the
-'   summation and bracketing paths; the single-point masses accept the full
-'   exact-integer domain.
+'   summation and bracketing paths; the Negative Binomial single-point masses
+'   accept the full exact-integer domain, while every Hypergeometric entry
+'   point, masses included, is limited to PopulationSize <= 100,000,000.
 '
 '   Discrete Uniform is closed-form. The support cardinality is validated once
 '   and reused by PMF, CDF, SF, inverse and moments. The CDF and survival are
@@ -195,7 +196,6 @@ Option Explicit
 ' DEPENDENCIES
 '   - M_STATS_PROBDIST_CORE
 '       PROB_HALF_LOG_TWO_PI
-'       PROB_MACH_EPS
 '       PROB_IsFinite
 '       PROB_IsValidProbabilityOpen
 '       PROB_TryAdd
@@ -209,6 +209,7 @@ Option Explicit
 '
 '   - M_STATS_PROBDIST_SPECIALFUNCS
 '       PROB_StirlingError
+'       PROB_TryDeviancePart
 '       PROB_TryBetaRegularized
 '       PROB_TryGammaRegularizedP
 '       PROB_TryGammaRegularizedQ
@@ -242,7 +243,9 @@ Private Const PROB_DS_MAX_POISSON_KERNEL_MEAN As Double = 10000000#
 'Maximum Poisson count/quantile passed to the current incomplete-gamma kernel.
 Private Const PROB_DS_MAX_POISSON_KERNEL_COUNT As Double = 20000000#
 
-'Iteration guards for finite integer searches and Loader's deviance series.
+'Iteration guards for the finite integer searches, and magnitude caps for the
+'Negative Binomial and Hypergeometric kernels. (The Loader deviance-series
+'guard is PROB_BD0_MAX_ITER in M_STATS_PROBDIST_SPECIALFUNCS.)
 Private Const PROB_DS_MAX_INVERSE_ITER As Long = 128
 Private Const PROB_DS_MAX_BRACKET_ITER As Long = 64
 Private Const PROB_DS_MAX_GEOMETRIC_CORRECTIONS As Long = 8
@@ -320,8 +323,8 @@ Public Function K_STATS_Binomial_PMF( _
 '   quantities stay near unity for every representable count.
 '
 ' INPUTS
-'   NumberSuccesses  Evaluation point, truncated toward zero. Must be an exact
-'                    integer to carry positive mass.
+'   NumberSuccesses  Evaluation point, truncated toward zero; a non-integer
+'                    returns the mass of its truncated integer.
 '   Trials           Number of trials, truncated toward zero.
 '   ProbSuccess      Success probability in [0, 1].
 '   Status           Optional ByRef diagnostic message.
@@ -332,7 +335,7 @@ Public Function K_STATS_Binomial_PMF( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns zero for a count outside [0, Trials].
+'   - A negative count, or a count above Trials, returns #NUM!.
 '   - Returns exact endpoint masses at k = 0 and k = n without summation.
 '   - Supports exact integer counts through 2^53 - 1.
 '
@@ -607,9 +610,9 @@ Public Function K_STATS_Binomial_Cumulative( _
 '
 ' WHY THIS EXISTS
 '   Summing masses term by term costs O(n) and loses accuracy as the count grows.
-'   The regularized incomplete beta gives the same quantity in closed form, at
-'   fixed cost and full precision, through the standard identity
-'   P(X <= k) = I(1-p; n-k, k+1).
+'   The regularized incomplete beta gives the same quantity without an O(n) sum,
+'   through the standard identity P(X <= k) = I(1-p; n-k, k+1). Accuracy is
+'   bounded by the Binomial_Cumulative row of benchmark/accuracy_contracts.csv.
 '
 ' INPUTS
 '   NumberSuccesses  Evaluation point. Truncated toward zero; a non-integer is
@@ -624,7 +627,7 @@ Public Function K_STATS_Binomial_Cumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns zero below the support and one at or above Trials.
+'   - Returns one at k = Trials; a negative k or k > Trials returns #NUM!.
 '   - Use K_STATS_Binomial_Survival for the upper tail: subtracting this result
 '     from one destroys a small right tail once the CDF rounds to one.
 '   - Trials are limited to PROB_DS_MAX_BINOMIAL_KERNEL_N for the kernel path.
@@ -789,9 +792,10 @@ Public Function K_STATS_Binomial_Survival( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Returns one below the support and zero at or above Trials.
+'   - Returns zero at k = Trials; a negative k or k > Trials returns #NUM!.
 '   - Evaluates the complementary incomplete beta directly, so a deep right tail
-'     retains full relative accuracy.
+'     keeps its relative accuracy (no 1 - CDF cancellation); see the
+'     Binomial_Survival row of benchmark/accuracy_contracts.csv.
 '   - Trials are limited to PROB_DS_MAX_BINOMIAL_KERNEL_N for the kernel path.
 '
 ' ERROR POLICY
@@ -946,7 +950,7 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 ' INPUTS
 '   Probability  Target cumulative probability in the OPEN interval (0, 1).
 '   Trials       Number of trials, truncated toward zero.
-'   ProbSuccess  Success probability in [0, 1].
+'   ProbSuccess  Success probability in the OPEN interval (0, 1).
 '   Status       Optional ByRef diagnostic message.
 '
 ' RETURNS
@@ -1103,14 +1107,13 @@ Public Function K_STATS_Binomial_Mean( _
 '   Returns the expected number of successes for a Binomial random variable: Trials * ProbSuccess.
 '
 ' WHY THIS EXISTS
-'   The closed form is elementary, but the product can overflow for large Trials
-'   even when the arguments are individually ordinary. The multiplication is
-'   therefore routed through PROB_TryMultiply, which reports overflow rather than
-'   returning an infinity that would propagate silently into a worksheet.
+'   The closed form is elementary. The multiplication is still routed through
+'   PROB_TryMultiply, which reports overflow rather than returning an infinity,
+'   so every moment shares the module's overflow contract, although the
+'   validated domain (Trials <= 2^53 - 1, p in [0, 1]) cannot overflow.
 '
 ' INPUTS
-'   Trials       Number of trials, truncated toward zero. Must be an exact
-'                integer.
+'   Trials       Number of trials, truncated toward zero; at most 2^53 - 1.
 '   ProbSuccess  Success probability in the CLOSED interval [0, 1].
 '   Status       Optional ByRef diagnostic message.
 '
@@ -1125,8 +1128,8 @@ Public Function K_STATS_Binomial_Mean( _
 '   - Trials must be exactly representable as an integer (through 2^53 - 1).
 '
 ' ERROR POLICY
-'   - Non-integer or out-of-range Trials, a probability outside [0, 1], or an
-'     overflowing product return #NUM!.
+'   - Negative, non-finite or out-of-range Trials, a probability outside
+'     [0, 1], or an overflowing product return #NUM!.
 '   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
@@ -1262,14 +1265,13 @@ Public Function K_STATS_Binomial_Variance( _
 '   Returns the variance of the success count for a Binomial random variable: Trials * ProbSuccess * (1 - ProbSuccess).
 '
 ' WHY THIS EXISTS
-'   The closed form is elementary, but the product can overflow for large Trials
-'   even when the arguments are individually ordinary. The multiplication is
-'   therefore routed through PROB_TryMultiply, which reports overflow rather than
-'   returning an infinity that would propagate silently into a worksheet.
+'   The closed form is elementary. The multiplication is still routed through
+'   PROB_TryMultiply, which reports overflow rather than returning an infinity,
+'   so every moment shares the module's overflow contract, although the
+'   validated domain (Trials <= 2^53 - 1, p in [0, 1]) cannot overflow.
 '
 ' INPUTS
-'   Trials       Number of trials, truncated toward zero. Must be an exact
-'                integer.
+'   Trials       Number of trials, truncated toward zero; at most 2^53 - 1.
 '   ProbSuccess  Success probability in the CLOSED interval [0, 1].
 '   Status       Optional ByRef diagnostic message.
 '
@@ -1284,8 +1286,8 @@ Public Function K_STATS_Binomial_Variance( _
 '   - Trials must be exactly representable as an integer (through 2^53 - 1).
 '
 ' ERROR POLICY
-'   - Non-integer or out-of-range Trials, a probability outside [0, 1], or an
-'     overflowing product return #NUM!.
+'   - Negative, non-finite or out-of-range Trials, a probability outside
+'     [0, 1], or an overflowing product return #NUM!.
 '   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
@@ -1427,14 +1429,13 @@ Public Function K_STATS_Binomial_StdDev( _
 '   Returns the standard deviation of the success count for a Binomial random variable: Sqr(Trials * ProbSuccess * (1 - ProbSuccess)).
 '
 ' WHY THIS EXISTS
-'   The closed form is elementary, but the product can overflow for large Trials
-'   even when the arguments are individually ordinary. The multiplication is
-'   therefore routed through PROB_TryMultiply, which reports overflow rather than
-'   returning an infinity that would propagate silently into a worksheet.
+'   The closed form is elementary. The multiplication is still routed through
+'   PROB_TryMultiply, which reports overflow rather than returning an infinity,
+'   so every moment shares the module's overflow contract, although the
+'   validated domain (Trials <= 2^53 - 1, p in [0, 1]) cannot overflow.
 '
 ' INPUTS
-'   Trials       Number of trials, truncated toward zero. Must be an exact
-'                integer.
+'   Trials       Number of trials, truncated toward zero; at most 2^53 - 1.
 '   ProbSuccess  Success probability in the CLOSED interval [0, 1].
 '   Status       Optional ByRef diagnostic message.
 '
@@ -1449,8 +1450,8 @@ Public Function K_STATS_Binomial_StdDev( _
 '   - Trials must be exactly representable as an integer (through 2^53 - 1).
 '
 ' ERROR POLICY
-'   - Non-integer or out-of-range Trials, a probability outside [0, 1], or an
-'     overflowing product return #NUM!.
+'   - Negative, non-finite or out-of-range Trials, a probability outside
+'     [0, 1], or an overflowing product return #NUM!.
 '   - Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
@@ -1754,7 +1755,8 @@ End Function
 '
 ' BEHAVIOR
 '   Uses P(X<=k) = Q(k+1, lambda).
-'   Applies the tested incomplete-gamma count and mean limits.
+'   Applies the supported incomplete-gamma limits (NumberEvents <= 20,000,000,
+'   Mean <= 10,000,000); accuracy is validated to Mean = 1E6.
 '   Mean = 0 returns one.
 '
 ' ERROR POLICY
@@ -1870,7 +1872,8 @@ End Function
 '
 ' BEHAVIOR
 '   Uses P(X>k) = P(k+1, lambda).
-'   Applies the tested incomplete-gamma count and mean limits.
+'   Applies the supported incomplete-gamma limits; accuracy is validated to
+'   Mean = 1E6.
 '   Mean = 0 returns zero.
 '
 ' ERROR POLICY
@@ -4140,7 +4143,8 @@ Public Function K_STATS_Hypergeometric_Survival( _
 '------------------------------------------------------------------------------
 ' COMPUTE
 '------------------------------------------------------------------------------
-    'P(X > k) as the small upper tail, summed directly with no cancellation
+    'P(X > k): sum the upper tail directly when k is at or above the mean,
+    'otherwise 1 minus the small lower tail
         If Not PROB_DS_TryHypergeometricSF( _
             K, n, Kp, Np, Value, FailMsg) Then GoTo Fail_Num
 
@@ -5413,7 +5417,8 @@ Private Function PROB_DS_ValidatePoissonMeanKernel( _
 ' PROB_DS_ValidatePoissonMeanKernel
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Validates a Poisson mean against the tested incomplete-gamma domain.
+'   Validates a Poisson mean against the supported incomplete-gamma domain
+'   (PROB_DS_MAX_POISSON_KERNEL_MEAN).
 '
 ' UPDATED
 '   2026-07-19

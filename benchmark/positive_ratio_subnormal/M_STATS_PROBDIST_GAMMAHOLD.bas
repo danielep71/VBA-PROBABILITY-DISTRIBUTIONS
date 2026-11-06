@@ -4,16 +4,10 @@ Option Explicit
 'Column count of the committed schema, checked against every row written
 Private Const PROBE_FIELDS As Long = 15
 
-'Shape is part of the experimental design, not a setting: each surface has a
-'different conditioning problem and one shape cannot serve all three. At
-'Shape is part of the experimental design, not a setting: each surface has
-'a different conditioning problem and one shape cannot serve all three. At
-'Shape = 0.5 the survival is already correctly saturated at 1.0 across the
-'whole subnormal ladder and cannot constrain dispatch. The slices are
-'therefore surface-specific; shape_id is provenance, echo_shape is
-'authoritative.
+'Shape slices are surface-specific; shape_id is provenance, echo_shape is
+'authoritative (see ShapeSlicesFor).
 '==============================================================================
-' M_STATS_PROBDIST_GAMMAPROBE
+' M_STATS_PROBDIST_GAMMAHOLD
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Independent HOLDOUT exporter for ICR-P1-01A (#13), Gamma arm.
@@ -37,7 +31,7 @@ Private Const PROBE_FIELDS As Long = 15
 '
 '   Shapes: the fitting arm used round decimals. These are derived from
 '   irrational constants, so their mantissas carry no structure the fitting
-'   set shares; six of eight have the low mantissa bit set.
+'   set shares; five of eight have the low mantissa bit set.
 '
 '   Constructions were re-verified at the odd buckets before this module was
 '   written: every landmark and stress is exactly representable, lands on its
@@ -81,7 +75,7 @@ Private Const PROBE_FIELDS As Long = 15
 ' WHY THE EXACT QUOTIENT IS NOT EXPORTED
 '   The analyzer reconstructs it as a rational from the echoed binary64
 '   operands. Serialising it here would let this module launder its own
-'   rounding into the reference, which is the failure #17 exists to prevent.
+'   rounding into the reference, defeating the independence of the oracle.
 '
 ' OUTPUT
 '   The committed 15-column schema, long form: one row per public surface,
@@ -97,7 +91,7 @@ Private Const PROBE_FIELDS As Long = 15
 '                                      (M_STATS_PROBDIST_CONTINUOUS)
 '   - PROB_TryLogGamma1p, PROB_LogGamma
 '                                      (M_STATS_PROBDIST_SPECIALFUNCS)
-'   - PROB_Expm1, PROB_TryExp                      (M_STATS_PROBDIST_CORE)
+'   - PROB_TryDivide, PROB_Expm1, PROB_TryExp      (M_STATS_PROBDIST_CORE)
 '
 ' UPDATED
 '   2026-08-14
@@ -208,18 +202,10 @@ Private Function ShapeSlicesFor(ByVal Surface As String) As Variant
 '   universal set wastes evidence on slices that cannot discriminate.
 '
 ' WHY SURVIVAL IS DIFFERENT
-'   At Shape = 0.5 with a standardized argument near 1E-308 the lower tail is
-'   about 1E-154, so Q = 1 - P rounds to exactly 1 across the whole subnormal
-'   ladder. Both branches return 1 and both are right, so the slice carries no
-'   information about dispatch. Near Shape = 0.001 the survival stays close to
-'   0.5 throughout, which keeps the bucket varying while the probability
-'   regime stays put. Shape = 0.5 is retained so that the saturation is
-'   recorded as characterisation rather than silently dropped.
-'
-' WHY SHAPE = 1 IS IN THE OTHER TWO
-'   The z ^ (Shape - 1) dependence disappears there, so transform sensitivity
-'   should behave differently. It is a structural control: if the analyzer
-'   reports otherwise, that is immediately informative.
+'   Survival slices are those admitted by min(P, Q) > 2 ^ -20 on the exact
+'   reference at every holdout bucket (HOLDOUT_DESIGN.md). The fitting arm's
+'   Shape = 0.5 saturation control and Shape = 1 structural control are not
+'   part of the holdout.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -265,9 +251,9 @@ Private Sub BuildPoints( _
 ' BuildPoints
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Constructs the point set: fifteen buckets from 52 bits down to 1, each with
-'   a landmark and three transform stresses, plus hard-underflow cases and two
-'   decimal twins.
+'   Constructs the point set: the thirteen frozen holdout buckets (50 down to
+'   3), each with a landmark and three transform stresses, plus hard-underflow
+'   cases and two decimal twins.
 '
 ' THE CONSTRUCTION
 '   With m = 2 ^ -1074 the subnormal ULP and N = 2 ^ (k - 1):
@@ -277,8 +263,8 @@ Private Sub BuildPoints( _
 '       1/2 ULP    X = (2N + 1) * m,  Scale = 2   exact quotient N*m + m/2
 '       2/3 ULP    X = (3N + 2) * m,  Scale = 3   exact quotient N*m + 2m/3
 '
-'   Every X above is exactly representable, including at k = 52 where the
-'   scale-3 forms sit near 1.5 * MIN_NORMAL and the spacing is still one m.
+'   Every X above is exactly representable, verified at all thirteen holdout
+'   buckets before this module was written.
 '   The integer coefficients stay below 2 ^ 53, so forming them in Double is
 '   exact, and multiplying by m is a pure exponent shift.
 '==============================================================================
@@ -370,7 +356,8 @@ Private Function SmallestPositiveDouble() As Double
 '   The stored value decides, not the expression. VBA does not necessarily
 '   round an intermediate expression to Double at every operator, so testing
 '   MinSub / 2# in a loop condition would let the loop run past the floor and
-'   leave zero behind. See CONTRIBUTING, "Force the rounding boundary".
+'   leave zero behind. See the IMPORTANT note under "Start here" in
+'   CONTRIBUTING.md (forced Double rounding boundaries).
 '==============================================================================
 '
 '------------------------------------------------------------------------------

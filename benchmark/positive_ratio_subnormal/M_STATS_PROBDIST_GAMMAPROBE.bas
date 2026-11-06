@@ -4,14 +4,8 @@ Option Explicit
 'Column count of the committed schema, checked against every row written
 Private Const PROBE_FIELDS As Long = 15
 
-'Shape is part of the experimental design, not a setting: each surface has a
-'different conditioning problem and one shape cannot serve all three. At
-'Shape is part of the experimental design, not a setting: each surface has
-'a different conditioning problem and one shape cannot serve all three. At
-'Shape = 0.5 the survival is already correctly saturated at 1.0 across the
-'whole subnormal ladder and cannot constrain dispatch. The slices are
-'therefore surface-specific; shape_id is provenance, echo_shape is
-'authoritative.
+'Shape slices are surface-specific; shape_id is provenance, echo_shape is
+'authoritative (see ShapeSlicesFor).
 '==============================================================================
 ' M_STATS_PROBDIST_GAMMAPROBE
 '------------------------------------------------------------------------------
@@ -55,7 +49,7 @@ Private Const PROBE_FIELDS As Long = 15
 ' WHY THE EXACT QUOTIENT IS NOT EXPORTED
 '   The analyzer reconstructs it as a rational from the echoed binary64
 '   operands. Serialising it here would let this module launder its own
-'   rounding into the reference, which is the failure #17 exists to prevent.
+'   rounding into the reference, defeating the independence of the oracle.
 '
 ' OUTPUT
 '   The committed 15-column schema, long form: one row per public surface,
@@ -71,7 +65,7 @@ Private Const PROBE_FIELDS As Long = 15
 '                                      (M_STATS_PROBDIST_CONTINUOUS)
 '   - PROB_TryLogGamma1p, PROB_LogGamma
 '                                      (M_STATS_PROBDIST_SPECIALFUNCS)
-'   - PROB_Expm1, PROB_TryExp                      (M_STATS_PROBDIST_CORE)
+'   - PROB_TryDivide, PROB_Expm1, PROB_TryExp      (M_STATS_PROBDIST_CORE)
 '
 ' UPDATED
 '   2026-08-14
@@ -325,7 +319,8 @@ Private Function SmallestPositiveDouble() As Double
 '   The stored value decides, not the expression. VBA does not necessarily
 '   round an intermediate expression to Double at every operator, so testing
 '   MinSub / 2# in a loop condition would let the loop run past the floor and
-'   leave zero behind. See CONTRIBUTING, "Force the rounding boundary".
+'   leave zero behind. See the IMPORTANT note under "Start here" in
+'   CONTRIBUTING.md (forced Double rounding boundaries).
 '==============================================================================
 '
 '------------------------------------------------------------------------------

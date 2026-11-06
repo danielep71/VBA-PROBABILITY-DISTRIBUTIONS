@@ -1,0 +1,327 @@
+{
+ "issue": "#72 / #81 Excel wave: \u00a77 predictions against the exported observations",
+ "baseline": "bb52717b9b6743e69d57ef13465b92a08bb7fa97",
+ "predictions_sha256": "20e714dbb85750a2f1f47c15799f8997b18a1c4eb6c1e9e489557c79171e74ee",
+ "grids": {
+  "holdout_older/holdout_older_grid.csv": {
+   "exported": false,
+   "rows": 34
+  },
+  "probability_accuracy_grid.csv": {
+   "exported": false,
+   "rows": 106
+  },
+  "survival_boundary/survival_boundary_grid.csv": {
+   "exported": true,
+   "rows": 19,
+   "fail": 0
+  }
+ },
+ "summary": {
+  "P1": {
+   "rows": 14,
+   "fail": 0,
+   "worst_error": 2.630245116436938e-16,
+   "max_ulps_from_predicted": 2
+  },
+  "P2": {
+   "rows": 5,
+   "fail": 0,
+   "worst_error": 2.3061905466406424e-16,
+   "max_ulps_from_predicted": 0
+  }
+ },
+ "falsified": [],
+ "rows": [
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    1.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.06680720126885807",
+   "error": 7.93853932053687e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    2.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.022750131948179205",
+   "error": 9.16245517108502e-17,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    2.25
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.012224472655044703",
+   "error": 4.327170880791342e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    2.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.006209665325776137",
+   "error": 2.3061905466406424e-16,
+   "ulps_from_predicted": 2,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    2.75
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.002979763235054556",
+   "error": 2.630245116436938e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    3.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.0013498980316300946",
+   "error": 3.743902552221551e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    3.25
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.0005770250423907671",
+   "error": 1.174201759527786e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    3.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "0.00023262907903552504",
+   "error": 3.269692432261509e-17,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    3.75
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "8.841728520080388e-05",
+   "error": 1.5873638516208888e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    4.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "3.1671241833119924e-05",
+   "error": 9.703410488432057e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    4.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "3.397673124730061e-06",
+   "error": 2.050856263077001e-16,
+   "ulps_from_predicted": 1,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    5.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "2.8665157187919396e-07",
+   "error": 1.853106946051871e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    5.5
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "1.898956246588772e-08",
+   "error": 9.475968533084416e-17,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "NormalStandard_Survival",
+   "args": [
+    6.0
+   ],
+   "prediction": "P1",
+   "regime": "all",
+   "observed": "9.865876450376983e-10",
+   "error": 1.587421902170157e-16,
+   "ulps_from_predicted": 0,
+   "bound": 8.881784197001252e-16,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    2.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.006209665325776137",
+   "error": 2.3061905466406424e-16,
+   "bound": 2.4551165532037994e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    3.5,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.00023262907903552504",
+   "error": 3.269692432261509e-17,
+   "bound": 3.80359508933602e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "Normal_Survival",
+   "args": [
+    5.0,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "2.8665157187919396e-07",
+   "error": 1.853106946051871e-16,
+   "bound": 6.646354541312951e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    12.182493960703473,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.006209665325776137",
+   "error": 1.835041543524774e-16,
+   "bound": 4.0220546867074735e-15,
+   "status": "PASS",
+   "problems": []
+  },
+  {
+   "grid": "survival_boundary/survival_boundary_grid.csv",
+   "function": "Lognormal_Survival",
+   "args": [
+    33.11545195869231,
+    0.0,
+    1.0
+   ],
+   "prediction": "P2",
+   "regime": "all",
+   "observed": "0.00023262907903552504",
+   "error": 2.2145850509296156e-16,
+   "bound": 6.719011758971915e-15,
+   "status": "PASS",
+   "problems": []
+  }
+ ]
+}

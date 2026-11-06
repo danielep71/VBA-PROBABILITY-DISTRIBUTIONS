@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-05T23:01:39Z",
+ "generated_utc": "2026-11-06T14:39:35Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -50,19 +50,19 @@
    },
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "ff73b0735b5dfbacb165dd3131cfb0143c9ab4381fd55fe69817c34c86a1fa38"
+    "sha256": "c4691546db29eb7ed835b3c74a5022e3d6272c5c59a6c9d959e2cedd1f258051"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "6fc0a0a3f9b1db8040a814fbba736625c86673c85ccf0069a47f81952786322c"
+    "sha256": "2e833b348ee0d6fd2847fb5117558a0e680b08ea785f30c449f4a43512c00c4b"
    },
    "holdout_older/holdout_older_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "33b668ea1adf3449a7c1a6d2eb2199f3ec8f1b30e7dee477df7c39c0e6935ad4"
+    "sha256": "59cebdcb8bd52be0b97e2f7a843dce331ef08f7e925a2d81254877469e880f6d"
    },
    "accuracy_contracts.csv": {
     "role": "input: the P4 contracts",
-    "sha256": "b42a6413b2df245f89c214a9679194cb66742ba96f330bf4f8e37dc0ab13c9b6"
+    "sha256": "5b48e3c7b51d31597d4baab0bf5bbc6fdca71e8b4bcb513d02a4616c04a3b058"
    },
    "student_t_large_df_study/results.json": {
     "role": "input: the A7 route points",
@@ -689,17 +689,17 @@
   "summary": {
    "P1": {
     "rows": 41,
-    "worst_predicted_error": 3.741369906274914e-16,
+    "worst_predicted_error": 2.0162273079667333e-16,
     "outside_bound": [],
     "bounds_finite_nonnegative": true,
-    "max_model_vs_committed_ulps": 4
+    "max_model_vs_committed_ulps": 2552768
    },
    "P2": {
     "rows": 27,
-    "worst_predicted_error": 2.2982819262899464e-16,
+    "worst_predicted_error": 2.366986392259335e-16,
     "outside_bound": [],
     "bounds_finite_nonnegative": true,
-    "max_model_vs_committed_ulps": 4,
+    "max_model_vs_committed_ulps": 248193,
     "negative_z_rows": [
      "Normal_Cumulative [3.0, 5.0, 2.0]",
      "Normal_Survival [3.0, 5.0, 2.0]",
@@ -727,7 +727,7 @@
     "worst_predicted_error": 2.938829041107811e-15,
     "outside_bound": [],
     "bounds_finite_nonnegative": true,
-    "max_model_vs_committed_ulps": 4,
+    "max_model_vs_committed_ulps": 1917576,
     "predicted_breaches": []
    },
    "unchanged_rows": 17
@@ -760,7 +760,7 @@
     "predicted_hex": "3f974bcf82c9d860",
     "predicted_error": 6.087772638682866e-17,
     "current_model_error": 9.758913957201942e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 7,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -936,7 +936,7 @@
     "predicted_hex": "3fadebf8b151adfd",
     "predicted_error": 3.7309305805481346e-17,
     "current_model_error": 1.560427380429105e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -966,9 +966,9 @@
     ],
     "predicted": "0.02499789514822043",
     "predicted_hex": "3f99990c58859311",
-    "predicted_error": 1.0150188459814622e-16,
-    "current_model_error": 5.924459320844514e-16,
-    "model_vs_committed_ulps": 2,
+    "predicted_error": 1.8455845426888526e-16,
+    "current_model_error": 5.093893624137123e-16,
+    "model_vs_committed_ulps": 5,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -1016,7 +1016,7 @@
     "predicted_hex": "3f561de1f985b5d7",
     "predicted_error": 3.743902535004695e-17,
     "current_model_error": 1.5137098677504373e-14,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 94,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -1032,7 +1032,7 @@
     "predicted_hex": "c0029c5c4630ff0f",
     "predicted_error": 4.327071694015831e-17,
     "current_model_error": 1.4762472686063682e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1048,7 +1048,7 @@
     "predicted_hex": "40029c5c4630ff0f",
     "predicted_error": 4.327071694015831e-17,
     "current_model_error": 1.4762472686063682e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1064,7 +1064,7 @@
     "predicted_hex": "bfe5956b87528a49",
     "predicted_error": 5.597640487425203e-17,
     "current_model_error": 5.597640487425203e-17,
-    "model_vs_committed_ulps": 2,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1080,7 +1080,7 @@
     "predicted_hex": "3fe5956b87528a49",
     "predicted_error": 5.597640487425203e-17,
     "current_model_error": 5.597640487425203e-17,
-    "model_vs_committed_ulps": 2,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1193,7 +1193,7 @@
     "predicted_hex": "3fee666f3a77a6ce",
     "predicted_error": 1.0421926624139994e-16,
     "current_model_error": 1.0421926624139994e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P3",
     "bound": 1.6360715341268562e-16,
     "branch": "crossing",
@@ -1267,9 +1267,9 @@
     ],
     "predicted": "0.02499789514822043",
     "predicted_hex": "3f99990c58859311",
-    "predicted_error": 1.0150188459814622e-16,
-    "current_model_error": 5.924459320844514e-16,
-    "model_vs_committed_ulps": 2,
+    "predicted_error": 1.8455845426888526e-16,
+    "current_model_error": 5.093893624137123e-16,
+    "model_vs_committed_ulps": 5,
     "prediction": "P2",
     "z": 1.96,
     "condition": 4.582155826096387,
@@ -1311,7 +1311,7 @@
     "predicted_hex": "3fd028d675cfe0a4",
     "predicted_error": 1.2874983115277234e-18,
     "current_model_error": 1.2874983115277234e-18,
-    "model_vs_committed_ulps": 1,
+    "model_vs_committed_ulps": 0,
     "prediction": "P2",
     "z": 0.6666666666666666,
     "condition": 0.8434520048946962,
@@ -1410,7 +1410,7 @@
     "predicted_hex": "401851fe6708803e",
     "predicted_error": 6.121379405152871e-17,
     "current_model_error": 8.486645223228829e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1428,7 +1428,7 @@
     "predicted_hex": "402bd700cc7bbfe1",
     "predicted_error": 2.6737514658546455e-17,
     "current_model_error": 1.0087498760051805e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1530,7 +1530,7 @@
     "predicted_hex": "3fcf3ef351c928eb",
     "predicted_error": 5.107201781467521e-17,
     "current_model_error": 1.7633149107289e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 3,
     "prediction": "P2",
     "z": -0.6931471805599453,
     "condition": 0.890888613048622,
@@ -1551,7 +1551,7 @@
     "predicted_hex": "3fe830432b8db5c5",
     "predicted_error": 2.0225732132569053e-17,
     "current_model_error": 2.0225732132569053e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P2",
     "z": -0.6931471805599453,
     "condition": 0.2877047775912737,
@@ -1608,7 +1608,7 @@
     "predicted_hex": "3fc207d0a22a5302",
     "predicted_error": 4.3080604516060785e-18,
     "current_model_error": 2.0134687305738637e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1626,7 +1626,7 @@
     "predicted_hex": "401c6572f80cf8e0",
     "predicted_error": 7.58366813244567e-17,
     "current_model_error": 2.0094859690160852e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -1782,7 +1782,7 @@
     "predicted_hex": "401c234fba57a32a",
     "predicted_error": 2.2697576331264924e-26,
     "current_model_error": 5.4603812096028335e-11,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 432469,
     "prediction": "P4",
     "contract": 1e-10,
     "predicted_breach": false,
@@ -1800,7 +1800,7 @@
     "predicted_hex": "c01c234fba57a32a",
     "predicted_error": 2.2697576331264924e-26,
     "current_model_error": 5.4603812096028335e-11,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 432469,
     "prediction": "P4",
     "contract": 1e-10,
     "predicted_breach": false,
@@ -1820,7 +1820,7 @@
     "predicted_hex": "4069b08d5f59147c",
     "predicted_error": 7.004880519810391e-26,
     "current_model_error": 2.8034866799977806e-11,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 202720,
     "prediction": "P4",
     "contract": 2e-10,
     "predicted_breach": false,
@@ -1840,7 +1840,7 @@
     "predicted_hex": "400634f7978374c0",
     "predicted_error": 1.0093729296939536e-25,
     "current_model_error": 1.0378090424706114e-10,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 648702,
     "prediction": "P4",
     "contract": 2e-10,
     "predicted_breach": false,
@@ -1860,7 +1860,7 @@
     "predicted_hex": "4091bc6f7573ba0d",
     "predicted_error": 4.006200397240101e-16,
     "current_model_error": 3.8411008702870853e-10,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1917576,
     "prediction": "P4",
     "contract": 1e-09,
     "predicted_breach": false,
@@ -1880,7 +1880,7 @@
     "predicted_hex": "4056e54a3de16bde",
     "predicted_error": 3.1033943068832456e-16,
     "current_model_error": 1.9205557386248132e-10,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1237711,
     "prediction": "P4",
     "contract": 1e-09,
     "predicted_breach": false,
@@ -2106,7 +2106,7 @@
     "predicted_hex": "4026ed94a4dacdc8",
     "predicted_error": 4.371626360504452e-17,
     "current_model_error": 1.1123427843198707e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2122,7 +2122,7 @@
     "predicted_hex": "c026ed94a4dacdc8",
     "predicted_error": 4.371626360504452e-17,
     "current_model_error": 1.1123427843198707e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2158,7 +2158,7 @@
     "predicted_hex": "4018645ef74834ac",
     "predicted_error": 6.163858726147343e-17,
     "current_model_error": 2.2966207616592033e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 2,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2176,7 +2176,7 @@
     "predicted_hex": "40f73fb8fb20b537",
     "predicted_error": 4.550527644206776e-16,
     "current_model_error": 1.225879366038103e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 11,
     "prediction": "P4",
     "contract": 1e-14,
     "predicted_breach": false
@@ -2194,7 +2194,7 @@
     "predicted_hex": "408a36ab3189e880",
     "predicted_error": 2.905463692648285e-16,
     "current_model_error": 6.581613040888346e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 7,
     "prediction": "P4",
     "contract": 1e-14,
     "predicted_breach": false
@@ -2314,7 +2314,7 @@
     "predicted_hex": "403546010d755221",
     "predicted_error": 6.573912073590986e-17,
     "current_model_error": 1.0126308549351863e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2330,7 +2330,7 @@
     "predicted_hex": "c03546010d755221",
     "predicted_error": 6.573912073590986e-17,
     "current_model_error": 1.0126308549351863e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2348,7 +2348,7 @@
     "predicted_hex": "407a31a0fc9dfcff",
     "predicted_error": 5.853037486515395e-17,
     "current_model_error": 7.710115522537987e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2366,7 +2366,7 @@
     "predicted_hex": "402ae901942ffb32",
     "predicted_error": 1.439642539891986e-16,
     "current_model_error": 1.2007809977596655e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 2,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2384,7 +2384,7 @@
     "predicted_hex": "41d9d513ad686f6c",
     "predicted_error": 1.39676500858237e-15,
     "current_model_error": 2.1790080740138503e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 26,
     "prediction": "P4",
     "contract": 1e-14,
     "predicted_breach": false
@@ -2402,7 +2402,7 @@
     "predicted_hex": "40fba1b19124124c",
     "predicted_error": 6.776627077777523e-16,
     "current_model_error": 1.1223764948187795e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 14,
     "prediction": "P4",
     "contract": 1e-14,
     "predicted_breach": false
@@ -2418,7 +2418,7 @@
     "predicted_hex": "403e34a1d1f58ae2",
     "predicted_error": 5.393534863847524e-17,
     "current_model_error": 6.368238990620458e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2434,7 +2434,7 @@
     "predicted_hex": "c03e34a1d1f58ae2",
     "predicted_error": 5.393534863847524e-17,
     "current_model_error": 6.368238990620458e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P4",
     "contract": 5e-16,
     "predicted_breach": false
@@ -2488,7 +2488,7 @@
     "predicted_hex": "42a7e022d10589aa",
     "predicted_error": 1.6056321234065324e-15,
     "current_model_error": 1.96560268480196e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 24,
     "prediction": "P4",
     "contract": 1e-14,
     "predicted_breach": false
@@ -2506,7 +2506,7 @@
     "predicted_hex": "4162c8ae558be5d8",
     "predicted_error": 8.13965980247585e-16,
     "current_model_error": 2.779618073140732e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 19,
     "prediction": "P4",
     "contract": 1e-14,
     "predicted_breach": false
@@ -2642,7 +2642,7 @@
     "predicted_hex": "3f974bcf82c9d860",
     "predicted_error": 6.087772651137739e-17,
     "current_model_error": 9.75891395844743e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 7,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2658,7 +2658,7 @@
     "predicted_hex": "3f890924f21d3612",
     "predicted_error": 4.327170880791342e-17,
     "current_model_error": 1.8517750097809218e-16,
-    "model_vs_committed_ulps": 2,
+    "model_vs_committed_ulps": 1,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2674,7 +2674,7 @@
     "predicted_hex": "3f796f4e57e49ce4",
     "predicted_error": 4.873955565846342e-17,
     "current_model_error": 3.680401489851323e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 28,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2706,7 +2706,7 @@
     "predicted_hex": "3f561de1f985b5d7",
     "predicted_error": 3.743902552221551e-17,
     "current_model_error": 1.5137098677676544e-14,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 94,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2722,7 +2722,7 @@
     "predicted_hex": "3f42e86fd7d03407",
     "predicted_error": 1.174201759527786e-16,
     "current_model_error": 1.2518501260330388e-14,
-    "model_vs_committed_ulps": 2,
+    "model_vs_committed_ulps": 66,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2738,7 +2738,7 @@
     "predicted_hex": "3f2e7dbc92b77dd6",
     "predicted_error": 1.492131157829199e-16,
     "current_model_error": 7.057611510062209e-14,
-    "model_vs_committed_ulps": 4,
+    "model_vs_committed_ulps": 606,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2754,7 +2754,7 @@
     "predicted_hex": "3f172d9564b2dce1",
     "predicted_error": 1.5873638516208888e-16,
     "current_model_error": 2.2516162800033044e-13,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1470,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2770,7 +2770,7 @@
     "predicted_hex": "3f009ad7954afff8",
     "predicted_error": 9.703410488432057e-17,
     "current_model_error": 1.2356974122212704e-13,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 578,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2786,7 +2786,7 @@
     "predicted_hex": "3ecc80728dd3b03b",
     "predicted_error": 8.043665094141971e-17,
     "current_model_error": 6.2695499506487455e-12,
-    "model_vs_committed_ulps": 2,
+    "model_vs_committed_ulps": 50296,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2802,7 +2802,7 @@
     "predicted_hex": "3e933ca2f2133832",
     "predicted_error": 1.853106946051871e-16,
     "current_model_error": 4.583711525052166e-11,
-    "model_vs_committed_ulps": 1,
+    "model_vs_committed_ulps": 248193,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2818,7 +2818,7 @@
     "predicted_hex": "3e5463cfa9c7fce8",
     "predicted_error": 9.475968533084416e-17,
     "current_model_error": 1.832430735171005e-10,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1051676,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2834,7 +2834,7 @@
     "predicted_hex": "3e10f30ef0092d49",
     "predicted_error": 1.587421902170157e-16,
     "current_model_error": 5.350768466995692e-10,
-    "model_vs_committed_ulps": 1,
+    "model_vs_committed_ulps": 2552768,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -2852,7 +2852,7 @@
     "predicted_hex": "3f796f4e57e49ce4",
     "predicted_error": 4.873955565846342e-17,
     "current_model_error": 3.680401489851323e-15,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 28,
     "prediction": "P2",
     "z": 2.5,
     "condition": 7.056861994159768,
@@ -2873,7 +2873,7 @@
     "predicted_hex": "3f2e7dbc92b77dd6",
     "predicted_error": 1.492131157829199e-16,
     "current_model_error": 7.057611510062209e-14,
-    "model_vs_committed_ulps": 4,
+    "model_vs_committed_ulps": 606,
     "prediction": "P2",
     "z": 3.5,
     "condition": 13.12986942700195,
@@ -2894,7 +2894,7 @@
     "predicted_hex": "3e933ca2f2133832",
     "predicted_error": 1.853106946051871e-16,
     "current_model_error": 4.583711525052166e-11,
-    "model_vs_committed_ulps": 1,
+    "model_vs_committed_ulps": 248193,
     "prediction": "P2",
     "z": 5.0,
     "condition": 25.93251983562921,
@@ -2913,9 +2913,9 @@
     ],
     "predicted": "0.006209665325776135",
     "predicted_hex": "3f796f4e57e49ce4",
-    "predicted_error": 4.873955565846342e-17,
-    "current_model_error": 3.680401489851323e-15,
-    "model_vs_committed_ulps": 0,
+    "predicted_error": 9.585445597005026e-17,
+    "current_model_error": 3.727516390162909e-15,
+    "model_vs_committed_ulps": 28,
     "prediction": "P2",
     "z": 2.5,
     "condition": 7.056861994159768,
@@ -2934,14 +2934,14 @@
     ],
     "predicted": "0.00023262907903552507",
     "predicted_hex": "3f2e7dbc92b77dd6",
-    "predicted_error": 1.492131157829199e-16,
-    "current_model_error": 7.057611510062209e-14,
-    "model_vs_committed_ulps": 4,
+    "predicted_error": 1.049423136326568e-16,
+    "current_model_error": 7.083027053003765e-14,
+    "model_vs_committed_ulps": 606,
     "prediction": "P2",
     "z": 3.5,
-    "condition": 13.129869427001951,
+    "condition": 13.129869427001948,
     "z_error": 1.5543122344752192e-15,
-    "bound": 6.719011758971916e-15,
+    "bound": 6.719011758971915e-15,
     "within_bound": true
    },
    {
@@ -2976,8 +2976,8 @@
     ],
     "predicted": "0.2881410812950149",
     "predicted_hex": "3fd270e74a32f464",
-    "predicted_error": 1.6319650525897355e-16,
-    "current_model_error": 1.6319650525897355e-16,
+    "predicted_error": 9.949733796533871e-17,
+    "current_model_error": 9.949733796533871e-17,
     "model_vs_committed_ulps": 1,
     "prediction": "P2",
     "z": 0.5588235294117647,
@@ -2999,7 +2999,7 @@
     "predicted_hex": "3fb2197a349d1b5d",
     "predicted_error": 2.2982819262899464e-16,
     "current_model_error": 4.261159113475374e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 2,
     "prediction": "P2",
     "z": -1.4705882352941178,
     "condition": 2.8142647619417986,
@@ -3018,8 +3018,8 @@
     ],
     "predicted": "0.9292987462566935",
     "predicted_hex": "3fedbcd0b96c5c94",
-    "predicted_error": 2.7315459276433695e-17,
-    "current_model_error": 2.7315459276433695e-17,
+    "predicted_error": 4.241701817111505e-17,
+    "current_model_error": 4.241701817111505e-17,
     "model_vs_committed_ulps": 0,
     "prediction": "P2",
     "z": -1.4705882352941178,
@@ -3146,9 +3146,9 @@
     ],
     "predicted": "0.23269509230089744",
     "predicted_hex": "3fcdc8f3e9af9f87",
-    "predicted_error": 3.079179202463132e-17,
-    "current_model_error": 2.6934925656916283e-16,
-    "model_vs_committed_ulps": 0,
+    "predicted_error": 7.460688014355372e-18,
+    "current_model_error": 2.460181525588869e-16,
+    "model_vs_committed_ulps": 3,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -3180,7 +3180,7 @@
     "predicted_hex": "3fa076da502f1a5c",
     "predicted_error": 5.94990302270449e-17,
     "current_model_error": 5.94990302270449e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -3194,8 +3194,8 @@
     ],
     "predicted": "0.9678432252043863",
     "predicted_hex": "3feef8925afd0e5a",
-    "predicted_error": 3.065462645040639e-17,
-    "current_model_error": 3.065462645040639e-17,
+    "predicted_error": 3.7267935769207824e-17,
+    "current_model_error": 3.7267935769207824e-17,
     "model_vs_committed_ulps": 0,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
@@ -3228,7 +3228,7 @@
     "predicted_hex": "3feff812c9faffc7",
     "predicted_error": 4.149342766545265e-17,
     "current_model_error": 6.963640437963424e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -3242,9 +3242,9 @@
     ],
     "predicted": "0.0009676032132183565",
     "predicted_hex": "3f4fb4d81400e57b",
-    "predicted_error": 3.741369906274914e-16,
-    "current_model_error": 1.9234663144903487e-14,
-    "model_vs_committed_ulps": 0,
+    "predicted_error": 7.42704598900495e-17,
+    "current_model_error": 1.9534529675640936e-14,
+    "model_vs_committed_ulps": 173,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -3260,7 +3260,7 @@
     "predicted_hex": "3f6ac30420443997",
     "predicted_error": 1.5952319816558593e-16,
     "current_model_error": 6.905362252521546e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 4,
     "prediction": "P1",
     "bound": 8.881784197001252e-16,
     "within_bound": true
@@ -3340,7 +3340,7 @@
     "predicted_hex": "c006e6e24526a616",
     "predicted_error": 6.02609649943931e-17,
     "current_model_error": 6.807710909341126e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 4,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -3356,7 +3356,7 @@
     "predicted_hex": "4006e6e24526a616",
     "predicted_error": 6.02609649943931e-17,
     "current_model_error": 6.807710909341126e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 4,
     "prediction": "P4",
     "contract": 5e-15,
     "predicted_breach": false
@@ -3373,7 +3373,7 @@
     "predicted_hex": "3fe7865560912678",
     "predicted_error": 8.78592274716257e-17,
     "current_model_error": 8.78592274716257e-17,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P3",
     "bound": 4.710044135831052e-16,
     "branch": "crossing",
@@ -3411,12 +3411,12 @@
     ],
     "predicted": "0.14574730074673714",
     "predicted_hex": "3fc2a7d8f9180068",
-    "predicted_error": 6.692600819365735e-17,
-    "current_model_error": 3.1394657707444793e-16,
-    "model_vs_committed_ulps": 0,
+    "predicted_error": 2.366986392259335e-16,
+    "current_model_error": 1.4417394604217167e-16,
+    "model_vs_committed_ulps": 1,
     "prediction": "P2",
     "z": 1.0548485382251733,
-    "condition": 1.6553076985576163,
+    "condition": 1.655307698557616,
     "z_error": 5.424617221602545e-16,
     "bound": 1.7394296015764498e-15,
     "within_bound": true
@@ -3434,7 +3434,7 @@
     "predicted_hex": "3fa8987947976d4b",
     "predicted_error": 1.59968389392328e-16,
     "current_model_error": 4.488585644583201e-16,
-    "model_vs_committed_ulps": 0,
+    "model_vs_committed_ulps": 1,
     "prediction": "P2",
     "z": -1.6641794936962861,
     "condition": 3.4604686049100253,
@@ -3453,8 +3453,8 @@
     ],
     "predicted": "0.9519617176158922",
     "predicted_hex": "3fee76786b86892b",
-    "predicted_error": 2.837284562767955e-17,
-    "current_model_error": 2.837284562767955e-17,
+    "predicted_error": 3.246213913313302e-17,
+    "current_model_error": 3.246213913313302e-17,
     "model_vs_committed_ulps": 0,
     "prediction": "P2",
     "z": -1.6641794936962861,
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 31.6,
+ "runtime_s": 40.3,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3642,6 +3642,41 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded e58eb7702407e3568c4fda6c980959ab05a1ab17e1b6a2bfa92bda045ae69814, now 33b668ea1adf3449a7c1a6d2eb2199f3ec8f1b30e7dee477df7c39c0e6935ad4"
+   ]
+  },
+  {
+   "utc": "2026-11-06T11:41:25Z",
+   "reason": "#81: the main grid and holdout_older were re-exported in Excel with the repaired kernel (run 42210983927, evidence c6fd598). The \u00a77 predictions were checked against that export first (excel_wave_check.json); this regeneration recomputes them from the unchanged model, and model_vs_committed_ulps now compares the replaced kernel's model with the new observations.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded ff73b0735b5dfbacb165dd3131cfb0143c9ab4381fd55fe69817c34c86a1fa38, now 9e1cabf445855514eff4115268214188aa2871ee600aee2e00f93a899f00016b",
+    "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded 33b668ea1adf3449a7c1a6d2eb2199f3ec8f1b30e7dee477df7c39c0e6935ad4, now 1202c8d7c2c3467d211cb91195fd75c2a320af2de191087a474e2cb3fd66c901"
+   ]
+  },
+  {
+   "utc": "2026-11-06T13:34:20Z",
+   "reason": "#159 via #81: the 9 survival references this study reads (7 holdout_older, 2 survival_boundary) and the main-grid survival references were re-based to the binary64 argument (1a7e5ce), and the main grid and holdout were rebound by Excel run 42225655290 (93b36d8). Only references changed; no observation did.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded 9e1cabf445855514eff4115268214188aa2871ee600aee2e00f93a899f00016b, now c4691546db29eb7ed835b3c74a5022e3d6272c5c59a6c9d959e2cedd1f258051",
+    "survival_boundary/survival_boundary_grid.csv (input: \u00a77 rows and committed observations): recorded 6fc0a0a3f9b1db8040a814fbba736625c86673c85ccf0069a47f81952786322c, now 5d4d5d62e0bded9cacd79754e897ce2bfe749b93f7ac889047253ff8fe2afe84",
+    "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded 1202c8d7c2c3467d211cb91195fd75c2a320af2de191087a474e2cb3fd66c901, now 59cebdcb8bd52be0b97e2f7a843dce331ef08f7e925a2d81254877469e880f6d"
+   ]
+  },
+  {
+   "utc": "2026-11-06T14:15:28Z",
+   "reason": "#81: survival_boundary was re-exported in Excel with the repaired kernel (run 42231334906, evidence 68a6449); its 19 rows were checked against the \u00a77 predictions first (excel_wave_check_survival_boundary.json).",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "survival_boundary/survival_boundary_grid.csv (input: \u00a77 rows and committed observations): recorded 5d4d5d62e0bded9cacd79754e897ce2bfe749b93f7ac889047253ff8fe2afe84, now 2e833b348ee0d6fd2847fb5117558a0e680b08ea785f30c449f4a43512c00c4b"
+   ]
+  },
+  {
+   "utc": "2026-11-06T14:38:55Z",
+   "reason": "#81: the normal-family survival contracts were widened on the Excel evidence (0c8c997); the P4 contracts the record reads are unchanged.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "accuracy_contracts.csv (input: the P4 contracts): recorded b42a6413b2df245f89c214a9679194cb66742ba96f330bf4f8e37dc0ab13c9b6, now 5b48e3c7b51d31597d4baab0bf5bbc6fdca71e8b4bcb513d02a4616c04a3b058"
    ]
   }
  ]

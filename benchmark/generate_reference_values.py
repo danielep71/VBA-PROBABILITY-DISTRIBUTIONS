@@ -1102,7 +1102,9 @@ def build_tiny_unbalanced_rows():
             row("F_Density", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_density(x, d1, d2), REL, "rel", "tiny_unbalanced")
             c = _tu_f_cdf(x, d1, d2)
             row("F_Cumulative", (x, mp.mpf(d1), mp.mpf(d2)), c, REL, "rel", "tiny_unbalanced")
-            row("F_Survival", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_sf(x, d1, d2), REL, "rel",
+            # The survival reference is taken at the Double the exporter passes
+            # (#159): x = branch * k is not representable in general.
+            row("F_Survival", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_sf(mp.mpf(float(x)), d1, d2), REL, "rel",
                 "tiny_unbalanced")
 
     # --- Inverses: ONLY where the quantile stays representable ---
@@ -1328,7 +1330,8 @@ def build_rows():
     for z in [mp.mpf("-2"), mp.mpf("-0.5"), mp.mpf("0.5"), mp.mpf(1), mp.mpf("1.96"), mp.mpf(3)]:
         add("NormalStandard_Density", "K_STATS_NormalStandard_Density", (z,), _phi(z))
         add("NormalStandard_Cumulative", "K_STATS_NormalStandard_Cumulative", (z,), _Phi(z))
-        add("NormalStandard_Survival", "K_STATS_NormalStandard_Survival", (z,), _Phi_sf(z))
+        # Survival at the Double the exporter passes (#159): 1.96 is not representable.
+        add("NormalStandard_Survival", "K_STATS_NormalStandard_Survival", (z,), _Phi_sf(mp.mpf(float(z))))
     for pq in [mp.mpf("0.01"), mp.mpf("0.25"), mp.mpf("0.5"), mp.mpf("0.975"), mp.mpf("0.999")]:
         add("NormalStandard_InverseCumulative", "K_STATS_NormalStandard_InverseCumulative", (pq,), _Phi_inv(pq))
         add("NormalStandard_InverseSurvival", "K_STATS_NormalStandard_InverseSurvival", (pq,), -_Phi_inv(pq))
@@ -1342,7 +1345,8 @@ def build_rows():
         z = (x - m) / sd
         add("Normal_Density", "K_STATS_Normal_Density", (x, m, sd), _phi(z) / sd)
         add("Normal_Cumulative", "K_STATS_Normal_Cumulative", (x, m, sd), _Phi(z))
-        add("Normal_Survival", "K_STATS_Normal_Survival", (x, m, sd), _Phi_sf(z))
+        zb = (mp.mpf(float(x)) - mp.mpf(float(m))) / mp.mpf(float(sd))   # at the Doubles (#159)
+        add("Normal_Survival", "K_STATS_Normal_Survival", (x, m, sd), _Phi_sf(zb))
         add("Normal_ZScore", "K_STATS_Normal_ZScore", (x, m, sd), z)
     for (pq, m, sd) in [(mp.mpf("0.99"), mp.mpf(100), mp.mpf(15)), (mp.mpf("0.025"), mp.mpf(10), mp.mpf(2))]:
         add("Normal_InverseCumulative", "K_STATS_Normal_InverseCumulative", (pq, m, sd), m + sd * _Phi_inv(pq))

@@ -62,6 +62,9 @@
 *.cls   vba-source
 *.frm   vba-source
 *.frx   vba-form-bin
+# A verbatim copy of a module as an earlier commit held it, kept as evidence
+# (finding F1 of the Student-t study): CRLF like the module, never imported.
+*.bas.frozen    vba-source
 
 
 #------------------------------------------------------------------------------

@@ -199,9 +199,9 @@ PREDATES = {
                          "PROB_TryBetaRegularized (2026-07-29) and the later changes "
                          "to PROB_TryBetaLogPdf, PROB_TryDeviancePart and "
                          "PROB_StirlingError",
-    "holdout_older": "exported 2026-07-21, before the later changes to "
-                     "PROB_TryBetaLogPdf, PROB_TryDeviancePart and PROB_StirlingError",
 }
+# holdout_older was re-exported on 2026-11-06 (#81, run 42210983927) and is
+# compared like every other grid since.
 
 
 def reaches_loader(q, r):
@@ -218,8 +218,6 @@ def predates(grid, q, r):
         return None
     if grid.startswith("beta_f_unbalanced/") or r.get("evidence_set") == "beta_f_unbalanced":
         return "beta_f_unbalanced"
-    if grid.startswith("holdout_older/"):
-        return "holdout_older"
     return None
 
 

@@ -8,20 +8,21 @@ Private Const PROBE_FIELDS As Long = 9
 ' M_STATS_PROBDIST_EXPM1PROBE
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Characterization probe for the PROB_Expm1 subnormal saturation defect.
+'   Characterization probe for the PROB_Expm1 subnormal saturation defect
+'   (#21, fixed).
 '
-'   PROB_Expm1 rescales U - 1 by X / Log(U) with U = Exp(X). That ratio is
-'   exactly 1 in exact arithmetic, and stays within an ULP of 1 while U
-'   carries a full 53-bit significand. Below X of about -708.4 the
+'   Before the fix, PROB_Expm1 rescaled U - 1 by X / Log(U) with U = Exp(X).
+'   That ratio is exactly 1 in exact arithmetic, and stays within an ULP of 1
+'   while U carries a full 53-bit significand. Below X of about -708.4 the
 '   exponential is subnormal and carries fewer bits, so Log(U) no longer
-'   recovers X and the ratio drifts. Because U - 1 has already rounded to
-'   exactly -1 by then, the drift lands undiluted and the kernel returns
-'   values BELOW -1, outside the range of Exp(X) - 1.
+'   recovers X and the ratio drifts. Because U - 1 had already rounded to
+'   exactly -1 by then, the drift landed undiluted and the kernel returned
+'   values outside [-1, 0), including values BELOW -1.
 '
-'   Two public CDFs propagate that directly as a probability above one:
+'   Two public CDFs propagated that directly as a probability above one:
 '   K_STATS_Exponential_Cumulative and K_STATS_Weibull_Cumulative both compute
 '   -PROB_Expm1(-z) and neither clamps. PROB_DS_TryGeometricCDF reaches that
-'   kernel but clamps to [0, 1] afterwards, so it is protected by accident.
+'   kernel but clamps to [0, 1] afterwards, so it was protected by accident.
 '
 ' RUN THIS TWICE
 '   Once against the ORIGINAL kernel and once against the REPAIRED one, saving
@@ -34,13 +35,14 @@ Private Const PROBE_FIELDS As Long = 9
 '   before the rescale. The repaired kernel branches on U - 1# = -1#.
 '
 ' WHAT TO LOOK FOR
-'   Pre-fix, expm1 falls below -1 from about X = -716 downward, reaching
-'   -1.000926774504277 at X = -745.13, and both CDF columns exceed 1 over the
-'   same span. Post-fix, expm1 is exactly -1 across the whole window and both
-'   CDFs are exactly 1. The benign points from -0.025 to -100 must be
-'   BIT-IDENTICAL between the two runs: the repair changes the branch condition
-'   over a far wider span than the defect, so proving it changes no value
-'   outside the window is the point of including them.
+'   Pre-fix, expm1 drifts away from -1 in both directions from about
+'   X = -716, falling below -1 at several points (worst -1.000926774504277 at
+'   X = -745.13, where both CDFs exceed 1) and rising above it at others
+'   (e.g. -0.99993 at X = -742.6). Post-fix, expm1 is exactly -1 across the
+'   whole window and both CDFs are exactly 1. The benign points from -0.025 to
+'   -400 must be BIT-IDENTICAL between the two runs: the repair changes the
+'   branch condition over a far wider span than the defect, so proving it
+'   changes no value outside the window is the point of including them.
 '
 ' OUTPUT (one row per point, header first)
 '   point_id, x, exp_x, u_minus_1, expm1,
