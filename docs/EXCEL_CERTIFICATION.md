@@ -28,7 +28,7 @@ A green record binds:
 - import, execution-backed compile, regression, and cleanup outcomes;
 - the retained regression-log SHA-256.
 
-The policy currently requires 950 assertions. A run with 949 or 951 assertions
+The policy currently requires 955 assertions. A run with 954 or 956 assertions
 is incomplete even if every executed assertion passes.
 
 `compile = PASS` in an automated record means the complete imported project was

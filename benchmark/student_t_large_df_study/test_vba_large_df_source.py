@@ -18,9 +18,19 @@ production_route_model.py measures.
      test's tolerance, and each inverse reference's PT2 bound is below it.
   5. Mutations. A changed last digit of a coefficient, a reassociated product,
      a dropped order and a moved predicate bound each fail checks 1-3.
+  6. Inverse polish (INVERSE_PREREGISTRATION.md section 2). Its two constants,
+     its statements in the order of section 1, and their place after the
+     convergence check and before Result = X. A different step count, a
+     different tail bound, a missing XNew = X exit and the polish moved
+     before the convergence check each fail it.
+  7. Quantile references. Every reference in Test_TF_StudentTLargeDFQuantile
+     is the correctly rounded quantile; every outcome predict_inverse.py
+     allows there is within the test's tolerance, and the tolerance is below
+     the first wave's error at that row (excel_wave_check.json).
 
 Run: python3 test_vba_large_df_source.py   (exit 0 = pass)
 """
+import json
 import os
 import re
 import sys
@@ -31,13 +41,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import predict_production as PP  # noqa: E402
+import predict_inverse as PI  # noqa: E402
 import production_route_model as P  # noqa: E402
 import validate_expansion as V  # noqa: E402
 
 SOURCE = "src/M_STATS_PROBDIST_TFAMILY.bas"
 TESTS = "tests/M_STATS_PROBDIST_TEST.bas"
 LITERAL = r"\d+(?:\.\d+)?(?:E[-+]\d{2,3})?#?"
-TOLERANCES = {"TOL_REL_LARGE_DF_TAIL": 2e-15, "TOL_REL_LDF_OUTSIDE_DF": 5e-12, "TOL_REL_TAIL": 1e-9}
+TOLERANCES = {"TOL_REL_LDF_QUANTILE": 5e-16, "TOL_REL_LARGE_DF_TAIL": 2e-15, "TOL_REL_LDF_OUTSIDE_DF": 5e-12, "TOL_REL_TAIL": 1e-9}
 
 
 def read(rel):
@@ -187,6 +198,79 @@ def reference_problems(text):
     return problems
 
 
+POLISH = [
+    "If DegreesFreedom >= PROB_T_LDF_MIN_DF And Tail <= PROB_T_LDF_POLISH_MAX_TAIL Then",
+    "For PolishIdx = 1 To PROB_T_LDF_POLISH_STEPS",
+    "If X > PROB_T_LDF_MAX_ABS_T Then Exit For",
+    "If Not PROB_TryStudentTTail(X, DegreesFreedom, TailAtX, FailMsg) Then Exit Function",
+    "If Not PROB_TryStudentTPDF(X, DegreesFreedom, Density, FailMsg) Then Exit Function",
+    "If Density <= 0# Then Exit For",
+    "XNew = X + (TailAtX - Tail) / Density",
+    "If XNew = X Then Exit For",
+    "X = XNew",
+    "Next PolishIdx",
+    "End If",
+]
+
+
+def polish_problems(text):
+    """Check 6 on a module text; [] when the polish is the preregistered one."""
+    problems = []
+    flat = joined(text)
+    consts = {name: (kind, value.strip()) for name, kind, value in re.findall(
+        r"^Private Const (PROB_T_LDF_POLISH_\w+)\s+As (Double|Long) = ([^'\n]+)", flat, re.M)}
+    if consts.get("PROB_T_LDF_POLISH_STEPS") != ("Long", str(PI.STEPS)):
+        problems.append(f"PROB_T_LDF_POLISH_STEPS is {consts.get('PROB_T_LDF_POLISH_STEPS')}")
+    tail = consts.get("PROB_T_LDF_POLISH_MAX_TAIL")
+    if not tail or tail[0] != "Double" or float(tail[1].rstrip("#")) != PI.MAX_TAIL:
+        problems.append(f"PROB_T_LDF_POLISH_MAX_TAIL is {tail}")
+    inverse = procedure(text, "PROB_TryStudentTInvTail")
+    if inverse is None:
+        return problems + ["PROB_TryStudentTInvTail not found"]
+    lines = statements(inverse)
+    starts = [i for i in range(len(lines)) if lines[i:i + len(POLISH)] == POLISH]
+    if len(starts) != 1:
+        return problems + ["the polish statements are not exactly the preregistered ones"]
+    start = starts[0]
+    try:
+        converged = lines.index("If Not Converged Then")
+        returned = lines.index("Result = X")
+    except ValueError:
+        return problems + ["the convergence check or Result = X is missing"]
+    if not (converged < start and start + len(POLISH) == returned):
+        problems.append("the polish is not between the convergence check and Result = X")
+    return problems
+
+
+def quantile_problems(text):
+    """Check 7 on Test_TF_StudentTLargeDFQuantile."""
+    problems = []
+    sub = procedure(text, "Test_TF_StudentTLargeDFQuantile")
+    if sub is None:
+        return ["Test_TF_StudentTLargeDFQuantile not found"]
+    pattern = (r'AssertRelClose "([^"]+)", K_STATS_StudentT_InverseCumulative\(([^)]*)\), '
+               r'(-?' + LITERAL + r'(?:\s*[-+]\s*' + LITERAL + r')?), (\w+)')
+    checks = re.findall(pattern, joined(sub))
+    if len(checks) != 5:
+        problems.append(f"expected 5 quantile assertions, found {len(checks)}")
+    with open(os.path.join(HERE, "excel_wave_check.json"), encoding="utf-8") as f:
+        first = json.load(f)["PT2"]
+    for label, argtext, reftext, tol_name in checks:
+        p, df = (float(eval(a.replace("#", ""))) for a in argtext.split(","))
+        tol = TOLERANCES[tol_name]
+        reference = vba_value(reftext, problems, label)
+        qd, found, _, _ = PI.outcomes(p, df)
+        if reference != qd:
+            problems.append(f"{label}: reference {reference!r} is not the correctly rounded {qd!r}")
+            continue
+        if any(abs(x - qd) / qd > tol for x in found):
+            problems.append(f"{label}: an allowed outcome is outside the tolerance")
+        earlier = [r["error"] for r in first if float(r["args"][0]) == p and float(r["args"][1]) == df]
+        if not earlier or min(earlier) <= tol:
+            problems.append(f"{label}: the tolerance does not discriminate the first wave's error")
+    return problems
+
+
 def mutate(text, old, new):
     if text.count(old) < 1:
         raise AssertionError(f"mutation anchor not found: {old!r}")
@@ -198,6 +282,8 @@ def main():
     module = read(SOURCE)
     fails += source_problems(module)
     fails += reference_problems(read(TESTS))
+    fails += polish_problems(module)
+    fails += quantile_problems(read(TESTS))
     mutations = {
         "a coefficient's last digit": mutate(module, "PROB_T_LDF_G2_1 As Double = -5.20833333333333E-02",
                                              "PROB_T_LDF_G2_1 As Double = -5.20833333333334E-02"),
@@ -213,6 +299,25 @@ def main():
     for what, text in mutations.items():
         if not source_problems(text):
             fails.append(f"mutation not caught: {what}")
+    block = "\n".join(module.split("\n"))
+    polish_start = block.index("        If DegreesFreedom >= PROB_T_LDF_MIN_DF And Tail <= PROB_T_LDF_POLISH_MAX_TAIL Then")
+    polish_end = block.index("            Next PolishIdx\n        End If\n", polish_start) + len(
+        "            Next PolishIdx\n        End If\n")
+    polish_text = block[polish_start:polish_end]
+    check_at = block.index("    'Reject a solver that exhausted the iteration budget")
+    moved = block[:polish_start] + block[polish_end:]
+    moved = moved[:check_at] + polish_text + moved[check_at:]
+    polish_mutations = {
+        "a different step count": mutate(module, "PROB_T_LDF_POLISH_STEPS As Long = 3",
+                                         "PROB_T_LDF_POLISH_STEPS As Long = 4"),
+        "a different tail bound": mutate(module, "PROB_T_LDF_POLISH_MAX_TAIL As Double = 0.4",
+                                         "PROB_T_LDF_POLISH_MAX_TAIL As Double = 0.5"),
+        "a missing XNew = X exit": mutate(module, "                If XNew = X Then Exit For\n", ""),
+        "the polish moved before the convergence check": moved,
+    }
+    for what, text in polish_mutations.items():
+        if not polish_problems(text):
+            fails.append(f"mutation not caught: {what}")
     if fails:
         print("FAIL: #34 VBA large-df route source fidelity")
         for f in fails:
@@ -221,7 +326,8 @@ def main():
     print(f"PASS: #34 VBA large-df route: {sum(len(r) for r in P.COEFFICIENTS)} coefficients and "
           f"the predicate match the preregistration exactly; {len(expected_body())} statements in "
           f"order; dispatch wired; 18 test references correctly rounded and reproduced; "
-          f"{len(mutations)} mutations caught")
+          f"{len(mutations)} mutations caught; inverse polish as preregistered, 5 quantile "
+          f"references correctly rounded and discriminating, {len(polish_mutations)} polish mutations caught")
     return 0
 
 

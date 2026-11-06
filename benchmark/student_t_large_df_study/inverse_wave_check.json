@@ -1,0 +1,1469 @@
+{
+ "issue": "#34",
+ "design": "INVERSE_PREREGISTRATION.md \u00a74",
+ "baseline": "f1019e9815c5c39e021ad7db19fa9607684794b8",
+ "summary": {
+  "PI": {
+   "rows": 30,
+   "failed": 0,
+   "worst_error": 2.8135063302535643e-16
+  },
+  "PH": {
+   "rows": 56,
+   "failed": 0,
+   "worst_error": 2.539959660599746e-16
+  },
+  "PU": {
+   "probability_accuracy_grid.csv": {
+    "rows": 361,
+    "changed": 0
+   },
+   "tchi_large_df/tchi_large_df_grid.csv": {
+    "rows": 144,
+    "changed": 0
+   },
+   "holdout/holdout_grid.csv": {
+    "rows": 111,
+    "changed": 0
+   }
+  }
+ },
+ "pass": true,
+ "PI": [
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9",
+    "1000000.0"
+   ],
+   "outcomes": [
+    "1.2815524121299384",
+    "1.2815524121299386",
+    "1.2815524121299389"
+   ],
+   "bound": 9.377191669244186e-16,
+   "observed": "1.28155241212994E+000;-1.33226762955019E-015",
+   "error": 1.2848893488067913e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.99",
+    "1000000.0"
+   ],
+   "outcomes": [
+    "2.3263516031208047",
+    "2.326351603120805"
+   ],
+   "bound": 6.231517021791995e-16,
+   "observed": "2.32635160312081E+000;-4.88498130835069E-015",
+   "error": 1.2212894379624568e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9",
+    "10000000.0"
+   ],
+   "outcomes": [
+    "1.2815516502030828",
+    "1.281551650203083",
+    "1.2815516502030833"
+   ],
+   "bound": 9.377188020980957e-16,
+   "observed": "1.28155165020308E+000;3.10862446895044E-015",
+   "error": 1.1618692207183944e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.99",
+    "10000000.0"
+   ],
+   "outcomes": [
+    "2.326348246948322",
+    "2.3263482469483225"
+   ],
+   "bound": 6.231512660994597e-16,
+   "observed": "2.32634824694832E+000;2.66453525910038E-015",
+   "error": 9.228384415323577e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9",
+    "100000000.0"
+   ],
+   "outcomes": [
+    "1.281551574010448",
+    "1.2815515740104482",
+    "1.2815515740104484",
+    "1.2815515740104486"
+   ],
+   "bound": 9.377187656154884e-16,
+   "observed": "1.28155157401045E+000;-1.77635683940025E-015",
+   "error": 2.0502057837998536e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "probability_accuracy_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.99",
+    "100000000.0"
+   ],
+   "outcomes": [
+    "2.3263479113315837",
+    "2.326347911331584"
+   ],
+   "bound": 6.231512224915427e-16,
+   "observed": "2.32634791133158E+000;3.55271367880050E-015",
+   "error": 1.8184423319903303e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.90000000000000002",
+    "100000.0"
+   ],
+   "outcomes": [
+    "1.2815600314493607",
+    "1.281560031449361",
+    "1.2815600314493611",
+    "1.2815600314493614"
+   ],
+   "bound": 9.37722815212583e-16,
+   "observed": "1.28156003144936E+000;1.11022302462516E-015",
+   "error": 1.0433614961117526e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.98999999999999999",
+    "100000.0"
+   ],
+   "outcomes": [
+    "2.3263851653552674",
+    "2.326385165355268"
+   ],
+   "bound": 6.231560630335263e-16,
+   "observed": "2.32638516535527E+000;-2.22044604925031E-015",
+   "error": 8.845758189817459e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999",
+    "100000.0"
+   ],
+   "outcomes": [
+    "3.0903138094272373",
+    "3.0903138094272378"
+   ],
+   "bound": 5.507942916215635e-16,
+   "observed": "3.09031380942724E+000;-2.66453525910038E-015",
+   "error": 9.384155354051173e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.90000000000000002",
+    "1000000.0"
+   ],
+   "outcomes": [
+    "1.2815524121299384",
+    "1.2815524121299386",
+    "1.2815524121299389"
+   ],
+   "bound": 9.377191669244186e-16,
+   "observed": "1.28155241212994E+000;-1.33226762955019E-015",
+   "error": 1.2848893444439906e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.98999999999999999",
+    "1000000.0"
+   ],
+   "outcomes": [
+    "2.3263516031208047",
+    "2.326351603120805"
+   ],
+   "bound": 6.231517021791995e-16,
+   "observed": "2.32635160312081E+000;-4.88498130835069E-015",
+   "error": 1.2212894374477053e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999",
+    "1000000.0"
+   ],
+   "outcomes": [
+    "3.0902404563165193"
+   ],
+   "bound": 5.507897063112617e-16,
+   "observed": "3.09024045631652E+000;-4.44089209850063E-016",
+   "error": 8.859430362215192e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.90000000000000002",
+    "10000000.0"
+   ],
+   "outcomes": [
+    "1.2815516502030828",
+    "1.281551650203083",
+    "1.2815516502030833"
+   ],
+   "bound": 9.377188020980957e-16,
+   "observed": "1.28155165020308E+000;3.10862446895044E-015",
+   "error": 1.161869280716701e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.98999999999999999",
+    "10000000.0"
+   ],
+   "outcomes": [
+    "2.326348246948322",
+    "2.3263482469483225"
+   ],
+   "bound": 6.231512660994597e-16,
+   "observed": "2.32634824694832E+000;2.66453525910038E-015",
+   "error": 9.228384458873452e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999",
+    "10000000.0"
+   ],
+   "outcomes": [
+    "3.0902331211809115"
+   ],
+   "bound": 5.507892477893477e-16,
+   "observed": "3.09023312118091E+000;1.33226762955019E-015",
+   "error": 9.121617731463109e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.90000000000000002",
+    "100000000.0"
+   ],
+   "outcomes": [
+    "1.281551574010448",
+    "1.2815515740104482",
+    "1.2815515740104484",
+    "1.2815515740104486"
+   ],
+   "bound": 9.377187656154884e-16,
+   "observed": "1.28155157401045E+000;-1.77635683940025E-015",
+   "error": 2.050202933329042e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.98999999999999999",
+    "100000000.0"
+   ],
+   "outcomes": [
+    "2.3263479113315837",
+    "2.326347911331584"
+   ],
+   "bound": 6.231512224915427e-16,
+   "observed": "2.32634791133158E+000;3.55271367880050E-015",
+   "error": 1.8184423605797855e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "tchi_large_df/tchi_large_df_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999",
+    "100000000.0"
+   ],
+   "outcomes": [
+    "3.090232387669105",
+    "3.0902323876691056"
+   ],
+   "bound": 5.507892019372476e-16,
+   "observed": "3.09023238766911E+000;-4.44089209850063E-015",
+   "error": 2.3325515921819493e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.7691355867104285",
+    "556335.1252926881"
+   ],
+   "outcomes": [
+    "0.736003584654493",
+    "0.7360035846544931",
+    "0.7360035846544932",
+    "0.7360035846544933",
+    "0.7360035846544934",
+    "0.7360035846544936",
+    "0.7360035846544937",
+    "0.7360035846544938",
+    "0.7360035846544939"
+   ],
+   "bound": 1.588564749006237e-15,
+   "observed": "7.36003584654493E-001;4.44089209850063E-016",
+   "error": 3.300116874339999e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9252600829278168",
+    "5535158.742561438"
+   ],
+   "outcomes": [
+    "1.4413714286269388",
+    "1.441371428626939",
+    "1.4413714286269392"
+   ],
+   "bound": 8.518556500927944e-16,
+   "observed": "1.44137142862694E+000;-8.88178419700125E-016",
+   "error": 5.222379917561379e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.8987298199152913",
+    "27220514.058973886"
+   ],
+   "outcomes": [
+    "1.2743473311237885",
+    "1.2743473311237887",
+    "1.274347331123789"
+   ],
+   "bound": 9.422076456364662e-16,
+   "observed": "1.27434733112379E+000;-1.33226762955019E-015",
+   "error": 1.6388374468643247e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.7120545555841507",
+    "224434.1765043451"
+   ],
+   "outcomes": [
+    "0.5593977001511673",
+    "0.5593977001511674",
+    "0.5593977001511675",
+    "0.5593977001511676",
+    "0.5593977001511677",
+    "0.5593977001511679",
+    "0.559397700151168",
+    "0.5593977001511681",
+    "0.5593977001511682",
+    "0.5593977001511683"
+   ],
+   "bound": 2.1191917987013998e-15,
+   "observed": "5.59397700151168E-001;-1.11022302462516E-016",
+   "error": 2.8135063302535643e-16,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.7128743818735823",
+    "52678109.75532506"
+   ],
+   "outcomes": [
+    "0.5618015530375706",
+    "0.5618015530375707",
+    "0.5618015530375708",
+    "0.561801553037571",
+    "0.5618015530375711",
+    "0.5618015530375712",
+    "0.5618015530375713",
+    "0.5618015530375714",
+    "0.5618015530375715",
+    "0.5618015530375716",
+    "0.5618015530375717"
+   ],
+   "bound": 2.109515442000181e-15,
+   "observed": "5.61801553037571E-001;2.22044604925031E-016",
+   "error": 7.837554183187e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9158693512433376",
+    "1645887.7056856574"
+   ],
+   "outcomes": [
+    "1.3778127444173949",
+    "1.377812744417395",
+    "1.3778127444173953"
+   ],
+   "bound": 8.831146101691721e-16,
+   "observed": "1.37781274441740E+000;-4.88498130835069E-015",
+   "error": 8.553918062528657e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.0901461237772172",
+    "1061462.2325671252"
+   ],
+   "outcomes": [
+    "-1.3398566291309495",
+    "-1.3398566291309497",
+    "-1.33985662913095",
+    "-1.3398566291309502"
+   ],
+   "bound": 9.035148050203442e-16,
+   "observed": "-1.33985662913095E+000;2.22044604925031E-016",
+   "error": 1.41836574207323e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.054704436532653",
+    "186550.03808330797"
+   ],
+   "outcomes": [
+    "-1.6008633899703273",
+    "-1.6008633899703275"
+   ],
+   "bound": 7.865928774035023e-16,
+   "observed": "-1.60086338997033E+000;2.44249065417534E-015",
+   "error": 5.1306881772509105e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.10437084262568008",
+    "87327989.62730171"
+   ],
+   "outcomes": [
+    "-1.2570330121901514",
+    "-1.2570330121901516",
+    "-1.2570330121901518"
+   ],
+   "bound": 9.532488551500988e-16,
+   "observed": "-1.25703301219015E+000;-1.55431223447522E-015",
+   "error": 1.7309464719987004e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.23239111019431413",
+    "2430630.411761708"
+   ],
+   "outcomes": [
+    "-0.7309950934178161",
+    "-0.7309950934178162",
+    "-0.7309950934178163",
+    "-0.7309950934178164",
+    "-0.7309950934178165"
+   ],
+   "bound": 1.5997722808570825e-15,
+   "observed": "-7.30995093417816E-001;-3.33066907387547E-016",
+   "error": 6.237358400970838e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.3477789091232818",
+    "669516.9702628001"
+   ],
+   "outcomes": [
+    "-0.3913240910830139",
+    "-0.39132409108301397",
+    "-0.391324091083014",
+    "-0.3913240910830141",
+    "-0.39132409108301414",
+    "-0.3913240910830142",
+    "-0.39132409108301425",
+    "-0.3913240910830143",
+    "-0.39132409108301436",
+    "-0.3913240910830144",
+    "-0.39132409108301447",
+    "-0.3913240910830145",
+    "-0.3913240910830146",
+    "-0.39132409108301464",
+    "-0.3913240910830147",
+    "-0.39132409108301475",
+    "-0.3913240910830148",
+    "-0.39132409108301486"
+   ],
+   "bound": 3.1141415298583086e-15,
+   "observed": "-3.91324091083014E-001;-3.88578058618805E-016",
+   "error": 8.785074046932896e-18,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.30669242465805735",
+    "773615.1992433419"
+   ],
+   "outcomes": [
+    "-0.505247936344708",
+    "-0.5052479363447081",
+    "-0.5052479363447082",
+    "-0.5052479363447083",
+    "-0.5052479363447084",
+    "-0.5052479363447085",
+    "-0.5052479363447087",
+    "-0.5052479363447088",
+    "-0.5052479363447089",
+    "-0.505247936344709"
+   ],
+   "bound": 2.363337812312823e-15,
+   "observed": "-5.05247936344708E-001;-4.44089209850063E-016",
+   "error": 5.469884127225699e-17,
+   "member": true,
+   "pass": true
+  }
+ ],
+ "PU": {
+  "probability_accuracy_grid.csv": {
+   "rows": 361,
+   "changed": [],
+   "pass": true
+  },
+  "tchi_large_df/tchi_large_df_grid.csv": {
+   "rows": 144,
+   "changed": [],
+   "pass": true
+  },
+  "holdout/holdout_grid.csv": {
+   "rows": 111,
+   "changed": [],
+   "pass": true
+  }
+ },
+ "PH": [
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "2.284355022164725",
+    "19449701.632115375"
+   ],
+   "observed": "1.11753426896953E-002;-5.03069808033274E-017",
+   "predicted": "0.011175342689695248",
+   "bound": 8.881784197001252e-16,
+   "ulps": 1,
+   "error": 2.539959660599746e-16,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "2.284355022164725",
+    "19449701.632115375"
+   ],
+   "observed": "9.88824657310305E-001;-2.22044604925031E-016",
+   "predicted": "0.9888246573103048",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 2.5198687622621572e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "3.4375637247221458",
+    "109271.07468499093"
+   ],
+   "observed": "2.93595545458670E-004;1.62630325872826E-019",
+   "predicted": "0.00029359554545867016",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 1.7055470061281377e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "3.4375637247221458",
+    "109271.07468499093"
+   ],
+   "observed": "9.99706404454541E-001;3.33066907387547E-016",
+   "predicted": "0.9997064044545413",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 4.343004046442792e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "6.655750165996826",
+    "1350518.0028370747"
+   ],
+   "observed": "1.40982837119685E-011;1.29246970711411E-026",
+   "predicted": "1.4098283711968515e-11",
+   "bound": 8.881784197001252e-16,
+   "ulps": 1,
+   "error": 2.3664683476933607e-16,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "6.655750165996826",
+    "1350518.0028370747"
+   ],
+   "observed": "9.99999999985902E-001;-3.33066907387547E-016",
+   "predicted": "0.9999999999859017",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 5.611463497034888e-18,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "2.835164216830523",
+    "67889756.44964038"
+   ],
+   "observed": "2.29010744799853E-003;-4.77048955893622E-018",
+   "predicted": "0.0022901074479985254",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 4.92301224312371e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "2.835164216830523",
+    "67889756.44964038"
+   ],
+   "observed": "9.97709892552001E-001;4.44089209850063E-016",
+   "predicted": "0.9977098925520015",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 1.2492612355385783e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "3.59827661147519",
+    "2300290.2681556735"
+   ],
+   "observed": "1.60169770856097E-004;-1.62630325872826E-019",
+   "predicted": "0.00016016977085609683",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 1.735367514373893e-16,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "3.59827661147519",
+    "2300290.2681556735"
+   ],
+   "observed": "9.99839830229144E-001;-1.11022302462516E-016",
+   "predicted": "0.9998398302291439",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 7.833925166805994e-18,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "0.8081245532662258",
+    "23857519.702152472"
+   ],
+   "observed": "2.09509446209695E-001;1.38777878078145E-016",
+   "predicted": "0.2095094462096951",
+   "bound": 8.881784197001252e-16,
+   "ulps": 1,
+   "error": 2.203916303018625e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "0.8081245532662258",
+    "23857519.702152472"
+   ],
+   "observed": "7.90490553790305E-001;-1.11022302462516E-016",
+   "predicted": "0.7904905537903049",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 5.841199264481507e-18,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "6.555000502642501",
+    "5356792.580245064"
+   ],
+   "observed": "2.78233523762869E-011;3.23117426778526E-027",
+   "predicted": "2.7823352376286904e-11",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 2.74776639247612e-18,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "6.555000502642501",
+    "5356792.580245064"
+   ],
+   "observed": "9.99999999972177E-001;-3.33066907387547E-016",
+   "predicted": "0.9999999999721767",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 5.3156155856888424e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "2.731954994894948",
+    "476733.5077733059"
+   ],
+   "observed": "3.14810288418008E-003;8.67361737988404E-019",
+   "predicted": "0.0031481028841800814",
+   "bound": 8.881784197001252e-16,
+   "ulps": 1,
+   "error": 2.0608714604208814e-19,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "2.731954994894948",
+    "476733.5077733059"
+   ],
+   "observed": "9.96851897115820E-001;-1.11022302462516E-016",
+   "predicted": "0.9968518971158199",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 2.3057023154246296e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-4.425804212697012",
+    "31340790.780111104"
+   ],
+   "observed": "9.99995195801703E-001;-1.11022302462516E-016",
+   "predicted": "0.9999951958017029",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 3.182108842714221e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-4.425804212697012",
+    "31340790.780111104"
+   ],
+   "observed": "4.80419829710217E-006;8.47032947254300E-022",
+   "predicted": "4.8041982971021706e-06",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 9.342304246253743e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-2.9221327739878005",
+    "43369388.078245275"
+   ],
+   "observed": "9.98261782570041E-001;-3.33066907387547E-016",
+   "predicted": "0.9982617825700406",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 6.13450554043695e-18,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-2.9221327739878005",
+    "43369388.078245275"
+   ],
+   "observed": "1.73821742995939E-003;4.33680868994202E-018",
+   "predicted": "0.001738217429959394",
+   "bound": 8.881784197001252e-16,
+   "ulps": 1,
+   "error": 2.1940327622831712e-16,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-3.299834780195657",
+    "899870.475466259"
+   ],
+   "observed": "9.99516272392450E-001;4.44089209850063E-016",
+   "predicted": "0.9995162723924504",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 3.828499089361136e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-3.299834780195657",
+    "899870.475466259"
+   ],
+   "observed": "4.83727607549517E-004;3.25260651745651E-019",
+   "predicted": "0.0004837276075495173",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 1.2125216930547316e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-5.69938491816294",
+    "79412257.2491527"
+   ],
+   "observed": "9.99999993987956E-001;-2.22044604925031E-016",
+   "predicted": "0.9999999939879558",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 2.099001468882014e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-5.69938491816294",
+    "79412257.2491527"
+   ],
+   "observed": "6.01204421680337E-009;4.13590306276514E-024",
+   "predicted": "6.012044216803374e-09",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 7.689016743389911e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-6.07777059760366",
+    "96101472.77293815"
+   ],
+   "observed": "9.99999999390673E-001;1.11022302462516E-016",
+   "predicted": "0.9999999993906731",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 2.4684301718438477e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-6.07777059760366",
+    "96101472.77293815"
+   ],
+   "observed": "6.09326897567494E-010;4.13590306276514E-025",
+   "predicted": "6.093268975674944e-10",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 5.890948617537443e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-5.980091405322692",
+    "1921013.7651652792"
+   ],
+   "observed": "9.99999998884742E-001;-1.11022302462516E-016",
+   "predicted": "0.9999999988847419",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 2.6965375098508113e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-5.980091405322692",
+    "1921013.7651652792"
+   ],
+   "observed": "1.11525808112106E-009;1.44756607196780E-024",
+   "predicted": "1.1152580811210614e-09",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 6.985062245810433e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-4.522658394542081",
+    "7602727.974579047"
+   ],
+   "observed": "9.99996946566173E-001;4.44089209850063E-016",
+   "predicted": "0.9999969465661734",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 4.8295754597668246e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-4.522658394542081",
+    "7602727.974579047"
+   ],
+   "observed": "3.05343382651257E-006;3.81164826264435E-021",
+   "predicted": "3.0534338265125743e-06",
+   "bound": 8.881784197001252e-16,
+   "ulps": 1,
+   "error": 3.076545937880036e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Survival",
+   "args": [
+    "-4.220885417825049",
+    "8672906.13005765"
+   ],
+   "observed": "9.99987832645797E-001;3.33066907387547E-016",
+   "predicted": "0.9999878326457974",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 3.115627272068629e-17,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_Cumulative",
+   "args": [
+    "-4.220885417825049",
+    "8672906.13005765"
+   ],
+   "observed": "1.21673542025879E-005;-1.69406589450860E-021",
+   "predicted": "1.2167354202587898e-05",
+   "bound": 8.881784197001252e-16,
+   "ulps": 0,
+   "error": 1.6616852226515095e-16,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9932753294379304",
+    "298596.9351600807"
+   ],
+   "outcomes": [
+    "2.4716586107250698"
+   ],
+   "bound": 6.046898721273487e-16,
+   "observed": "2.47165861072507E+000;-4.44089209850063E-016",
+   "error": 2.3611740701404015e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9999999999956818",
+    "142245.1770607183"
+   ],
+   "outcomes": [
+    "6.828142643768962"
+   ],
+   "bound": 4.674284121365258e-16,
+   "observed": "6.82814264376896E+000;2.66453525910038E-015",
+   "error": 1.3619373920973463e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9999994713814226",
+    "616917.3375417546"
+   ],
+   "outcomes": [
+    "4.880723409767972",
+    "4.880723409767973"
+   ],
+   "bound": 4.889463533491173e-16,
+   "observed": "4.88072340976797E+000;1.77635683940025E-015",
+   "error": 7.60781493099464e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9999999647889494",
+    "26557495.11079473"
+   ],
+   "outcomes": [
+    "5.390092303908581"
+   ],
+   "bound": 4.811043302381575e-16,
+   "observed": "5.39009230390858E+000;8.88178419700125E-016",
+   "error": 7.604044264797443e-18,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9932546108689545",
+    "44706291.348934405"
+   ],
+   "outcomes": [
+    "2.470543936314181",
+    "2.4705439363141815"
+   ],
+   "bound": 6.048172626593571e-16,
+   "observed": "2.47054393631418E+000;1.33226762955019E-015",
+   "error": 5.2397252753117177e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9999999999154963",
+    "1885882.1344970553"
+   ],
+   "outcomes": [
+    "6.387183913047235"
+   ],
+   "bound": 4.706805445557828e-16,
+   "observed": "6.38718391304724E+000;-4.44089209850063E-015",
+   "error": 5.388300888356054e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9986021713872151",
+    "1853751.5610370175"
+   ],
+   "outcomes": [
+    "2.9893605171622464"
+   ],
+   "bound": 5.575537003375424e-16,
+   "observed": "2.98936051716225E+000;-3.55271367880050E-015",
+   "error": 3.2705073405527386e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9999999182938063",
+    "38887722.93400873"
+   ],
+   "outcomes": [
+    "5.2367695265812895"
+   ],
+   "bound": 4.832347679908527e-16,
+   "observed": "5.23676952658129E+000;-8.88178419700125E-016",
+   "error": 1.5727674403478043e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999505325158367",
+    "33747771.55682662"
+   ],
+   "outcomes": [
+    "3.2935382863802007",
+    "3.293538286380201"
+   ],
+   "bound": 5.388521966207354e-16,
+   "observed": "3.29353828638020E+000;1.33226762955019E-015",
+   "error": 4.656601203223307e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.9845268680564052",
+    "63561672.20207392"
+   ],
+   "outcomes": [
+    "2.157763036012286",
+    "2.1577630360122866"
+   ],
+   "bound": 6.48780534250818e-16,
+   "observed": "2.15776303601229E+000;-3.55271367880050E-015",
+   "error": 3.7447646200332795e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999999999933391",
+    "12554085.084785555"
+   ],
+   "outcomes": [
+    "6.423457476367113"
+   ],
+   "bound": 4.703870893519304e-16,
+   "observed": "6.42345747636711E+000;2.66453525910038E-015",
+   "error": 4.6670838864669664e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.999999937964675",
+    "37500881.46098665"
+   ],
+   "outcomes": [
+    "5.287395851595284"
+   ],
+   "bound": 4.825115721580985e-16,
+   "observed": "5.28739585159528E+000;4.44089209850063E-015",
+   "error": 4.698595197521585e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "7.212699683825629e-13",
+    "70041684.68839438"
+   ],
+   "outcomes": [
+    "-7.079905641976814",
+    "-7.079905641976815"
+   ],
+   "bound": 4.658205312340097e-16,
+   "observed": "-7.07990564197681E+000;-4.44089209850063E-015",
+   "error": 5.5020546960578804e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "6.743811906241703e-09",
+    "205695.33125081516"
+   ],
+   "outcomes": [
+    "-5.679999283358392"
+   ],
+   "bound": 4.775265671669671e-16,
+   "observed": "-5.67999928335839E+000;-2.66453525910038E-015",
+   "error": 3.689503299561463e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.021536905825740978",
+    "1189946.9374041362"
+   ],
+   "outcomes": [
+    "-2.022995722803398",
+    "-2.0229957228033983"
+   ],
+   "bound": 6.733688235617466e-16,
+   "observed": "-2.02299572280340E+000;2.22044604925031E-015",
+   "error": 4.613967231758543e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.0028236566980541656",
+    "6797520.732568604"
+   ],
+   "outcomes": [
+    "-2.767586936362702"
+   ],
+   "bound": 5.748439776165043e-16,
+   "observed": "-2.76758693636270E+000;-2.22044604925031E-015",
+   "error": 2.0627306091276726e-18,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "2.5009600139439965e-08",
+    "3789557.5241605733"
+   ],
+   "outcomes": [
+    "-5.451253218018185"
+   ],
+   "bound": 4.803026264593861e-16,
+   "observed": "-5.45125321801819E+000;4.44089209850063E-015",
+   "error": 6.922281775797809e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "1.4028365076501426e-06",
+    "29448330.83657717"
+   ],
+   "outcomes": [
+    "-4.684557023351713"
+   ],
+   "bound": 4.92634764213825e-16,
+   "observed": "-4.68455702335171E+000;-3.55271367880050E-015",
+   "error": 4.2896293144791374e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "2.7654140441590808e-11",
+    "884196.6070102406"
+   ],
+   "outcomes": [
+    "-6.555978838874722"
+   ],
+   "bound": 4.693578268054351e-16,
+   "observed": "-6.55597883887472E+000;-1.77635683940025E-015",
+   "error": 7.844361039727342e-19,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.00021630794780746156",
+    "1659675.9143103915"
+   ],
+   "outcomes": [
+    "-3.5193507748435824"
+   ],
+   "bound": 5.277747686661168e-16,
+   "observed": "-3.51935077484358E+000;-2.22044604925031E-015",
+   "error": 4.490734437819227e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "6.776430314234878e-08",
+    "10234336.333287934"
+   ],
+   "outcomes": [
+    "-5.271211930964725"
+   ],
+   "bound": 4.8274065931854e-16,
+   "observed": "-5.27121193096472E+000;-5.32907051820075E-015",
+   "error": 4.101987005930482e-18,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "1.6131604566381718e-10",
+    "182551.0892236396"
+   ],
+   "outcomes": [
+    "-6.287842730441828"
+   ],
+   "bound": 4.715136160617467e-16,
+   "observed": "-6.28784273044183E+000;1.77635683940025E-015",
+   "error": 2.4972211451356812e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.001303787293835058",
+    "24516509.648634728"
+   ],
+   "outcomes": [
+    "-3.010570747973646",
+    "-3.0105707479736465"
+   ],
+   "bound": 5.560793213252551e-16,
+   "observed": "-3.01057074797365E+000;3.55271367880050E-015",
+   "error": 6.261950515908095e-17,
+   "member": true,
+   "pass": true
+  },
+  {
+   "grid": "holdout/holdout_grid.csv",
+   "function": "StudentT_InverseCumulative",
+   "args": [
+    "0.0012160140536728453",
+    "25345034.594549086"
+   ],
+   "outcomes": [
+    "-3.0316729332611967",
+    "-3.031672933261197"
+   ],
+   "bound": 5.546408724927034e-16,
+   "observed": "-3.03167293326120E+000;2.66453525910038E-015",
+   "error": 3.910597722920762e-17,
+   "member": true,
+   "pass": true
+  }
+ ],
+ "not_reexported": []
+}

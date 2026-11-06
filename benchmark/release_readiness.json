@@ -68,8 +68,11 @@
       "issue": 34,
       "class": "silent_wrong",
       "gate": null,
-      "status": "open",
-      "summary": "Student-t CDF, survival and inverse lose upper-tail accuracy at large df"
+      "status": "resolved",
+      "summary": "Student-t CDF, survival and inverse lose upper-tail accuracy at large df",
+      "resolution": {
+        "evidence": "The large-df tail route (PROB_TF_StudentTLargeDFTail) and the inverse polish ship under two frozen preregistrations. Excel VBA Regression run 42260290029 at 9cbe5d9 passed 955/955 and exported the main grid, tchi_large_df and the holdout: all 30 polished inverse rows fell in their predicted outcome sets, 616 other Student-t, density and F rows were bit-identical, and 56 untouched holdout rows met their predictions (worst 2.8E-16). The Student-t survival, cumulative and quantile envelope_domain contracts are now 5E-15 over df 1E5..1E8 (benchmark/student_t_large_df_study/INVERSE_WAVE_RESULT.md)."
+      }
     },
     {
       "issue": 35,
