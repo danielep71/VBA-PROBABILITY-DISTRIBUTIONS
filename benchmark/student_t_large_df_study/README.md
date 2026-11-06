@@ -71,6 +71,11 @@ existing route. The CF is retained outside the region and is accurate there.
 | `f1_frozen/` | the module and the 12 Excel observations F1 measured, as commit `495d0cf` held them (#81) |
 | `test_model_fidelity.py` | CI fixture: ULP edge cases, three-step and source-mutation negatives |
 | `PRODUCTION_FEASIBILITY.md` | finding F1: the adopted route is not buildable on the existing normal-tail kernel |
+| `PRODUCTION_PREREGISTRATION.md` | the production route on the repaired kernel of #72, its VBA arithmetic, the Excel-wave predictions, the untouched holdout and the contracts, frozen before any VBA (#34) |
+| `production_route_model.py` | binary64 model of that route, statement by statement, with its coefficient literal pairs |
+| `predict_production.py` | measures the model against the oracle and records the predictions in `production_predictions.json` |
+| `production_predictions.json` | A1–A3 and the per-row PT1/PT2 predictions |
+| `test_production_route.py` | CI fixture: exact literals, reproducible predictions, A1 and A2 |
 
 ## Production feasibility (finding F1)
 
@@ -94,6 +99,26 @@ F1's conclusions are unchanged. See Amendment 1 of `PRODUCTION_FEASIBILITY.md`.
 a verbatim copy of the module at `495d0cf` and to the 12 Excel observations of
 that kernel, both under `f1_frozen/`, with their origin recorded and checked.
 See Amendment 2 of `PRODUCTION_FEASIBILITY.md`.
+
+## Production route (2026-11-06)
+
+#72 repaired the normal kernel through #81, so the route F1 could not build can
+now be built. `PRODUCTION_PREREGISTRATION.md` freezes it before any VBA is
+written: the study's order-5 expansion for `df ≥ 1E5`, `|t| ≤ 8`, evaluated in
+VBA statement by statement on `PROB_NormalUpperTail` and
+`PROB_ExpNegHalfSquare`.
+
+- **Model measurement.** On 1670 validation points the route is within
+  4.32E-16 of the oracle, below 2^-50. It is more accurate than the current
+  continued fraction at every study fitting point where that misses the bound.
+- **Predictions for the Excel wave.**
+  - 58 forward rows: within 4 ulps and 2^-50.
+  - 18 inverse rows: within a conditioning bound.
+  - Every other Student-t, density and F row: unchanged.
+- **Untouched holdout.** Seeded new rows are added to the independent holdout
+  at the wave.
+- **Contracts.** These follow if the predictions hold: 5E-15 for survival,
+  cumulative and inverse over `df 1E5..1E8`, `|t| ≤ 8`.
 
 ## Oracle gap
 
