@@ -1,16 +1,17 @@
 """
 Fixture proof for the older-families holdout summary and its staleness check (#164).
 
-Cases 1-8 use a synthetic grid and registry written to a temporary directory,
-so they depend on no value in the committed grid. Case 9 uses the record
-committed before #164 and asserts only that the check rejects it.
+Cases 1-8 and 10-11 use a synthetic grid and registry written to a temporary
+directory, so they depend on no value in the committed grid. Case 9 uses the
+record committed before #164 and asserts only that the check rejects it.
 
 Proves:
   1. a summary just written by analyze_holdout_older.py passes the check, even
      when it records a FAIL - the check is about currency, not verdicts;
   2. the analyzer still exits non-zero while a contract fails;
   3. a failing row is listed with its arguments, contract and tracked note;
-  4. a row no thresholded contract claims is listed, not dropped silently;
+  4. a row no thresholded contract claims is listed, not dropped silently,
+     with the characterization_only contract that covers it;
   5. NEGATIVE: the 43d2415 shape of drift - a contract tightened after the
      summary was written - makes the committed summary stale, and the check fails;
   6. NEGATIVE: a retired contract (the 1fac483 shape) fails the check;
@@ -19,7 +20,12 @@ Proves:
   9. NEGATIVE: the summary committed in ecf3e45, read with `git show` and
      pinned by SHA-256, fails against the committed grid and registry. That is
      the drift this check exists to catch. No row text is asserted, so a
-     re-export or a registry change does not break this case.
+     re-export or a registry change does not break this case;
+ 10. NEGATIVE (#171): a current summary fails when a row is neither scored nor
+     covered by a characterization_only contract - the state 1fac483 left the
+     three LogGamma rows in - and the row is named;
+ 11. NEGATIVE (#171): a contract without a threshold whose status is not
+     characterization_only does not count as a disposition.
 Run: python3 test_analyze_holdout_older.py   (exit 0 = pass, nonzero = fail)
 """
 import csv
@@ -39,7 +45,8 @@ GRID_FIELDS = ["function", "vba_kernel", "claim", "metric", "arg1", "arg2", "arg
 CONTRACT_FIELDS = ["contract_id", "function", "regime", "measure", "metric", "threshold",
                    "domain", "provenance", "status", "evidence", "notes"]
 
-# Relative errors 1E-15 (Foo) and 4E-15 (Bar); Baz has no contract.
+# Relative errors 1E-15 (Foo) and 4E-15 (Bar); Baz has no thresholded
+# contract and is covered by a characterization_only one (CONTRACTS[2]).
 GRID = [
     {"function": "Foo_Cumulative", "arg1": "1.5", "arg2": "2.0", "arg3": "",
      "reference": "0.5", "observed_vba": "5.00000000000000E-001;5E-016", "regime": "all"},
@@ -54,6 +61,9 @@ CONTRACTS = [
     {"contract_id": "Bar_Survival.balanced.output_rel", "function": "Bar_Survival",
      "regime": "balanced", "metric": "relative", "threshold": "1E-14",
      "provenance": "validated and frozen"},
+    {"contract_id": "Baz.all.characterization", "function": "Baz", "regime": "all",
+     "metric": "relative", "threshold": "", "provenance": "characterized",
+     "status": "characterization_only"},
 ]
 
 fails = []
@@ -89,7 +99,7 @@ def read(path):
 
 with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
     # 1-4. A current summary that records a failure.
-    tight = [dict(CONTRACTS[0]), dict(CONTRACTS[1], threshold="2E-15")]
+    tight = [dict(CONTRACTS[0]), dict(CONTRACTS[1], threshold="2E-15"), dict(CONTRACTS[2])]
     code, grid, regs, out = analyze(d, tight)
     text = read(out)
     ok, msg = C.check(out, grid, regs)
@@ -104,8 +114,9 @@ with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
     check("tracked in #999 |" in A.render(*A.load(grid, regs))[0],
           "3: a tracked contract's note is printed next to its failing row")
     del A.TRACKED["Bar_Survival.balanced.output_rel"]
-    check("| Baz(3.7) | all |" in text.split("## Rows no contract scores")[1],
-          "4: an unclaimed row is listed\n" + text)
+    check("| Baz(3.7) | all | characterization only (Baz.all.characterization) |"
+          in text.split("## Rows no contract scores")[1],
+          "4: an unclaimed row is listed with its characterization contract\n" + text)
 
     # 5. 43d2415: the registry is tightened after the summary was written.
     code, grid, regs, out = analyze(d, CONTRACTS)
@@ -116,7 +127,7 @@ with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
           "5: a contract tightened after the summary was written must fail the check\n" + msg)
 
     # 6. 1fac483: a contract is retired and its rows become unclaimed.
-    write_csv(regs, CONTRACT_FIELDS, CONTRACTS[:1])
+    write_csv(regs, CONTRACT_FIELDS, [CONTRACTS[0], CONTRACTS[2]])
     ok, msg = C.check(out, grid, regs)
     check(not ok and "+| Bar_Survival(0.82, 2.7, 3.4) | balanced |" in msg,
           "6: a retired contract must fail the check and list its rows as unclaimed\n" + msg)
@@ -132,6 +143,21 @@ with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
     os.remove(out)
     ok, msg = C.check(out, grid, regs)
     check(not ok and "cannot read" in msg, "8: a missing summary must fail the check\n" + msg)
+
+    # 10. 1fac483 after #164: the summary is current and lists the row, but
+    # nothing scores it and nothing marks it characterization only.
+    code, grid, regs, out = analyze(d, CONTRACTS[:2])
+    ok, msg = C.check(out, grid, regs)
+    check(not ok and "neither scored" in msg and "Baz(3.7) in regime all" in msg,
+          "10: a current summary with an undisposed row must fail the check\n" + msg)
+    check("| Baz(3.7) | all | none |" in read(out),
+          "10: the undisposed row is listed with no disposition\n" + read(out))
+
+    # 11. A thresholdless contract that is not characterization_only is no disposition.
+    code, grid, regs, out = analyze(d, CONTRACTS[:2] + [dict(CONTRACTS[2], status="active")])
+    ok, msg = C.check(out, grid, regs)
+    check(not ok and "neither scored" in msg,
+          "11: an active contract without a threshold must not count as a disposition\n" + msg)
 
 # 9. The real record before #164, as committed in ecf3e45. Pinned by digest so
 # the case cannot silently test some other file. Nothing about its rows or
@@ -162,4 +188,5 @@ if fails:
         print("  - " + m)
     raise SystemExit(1)
 print("PASS: a current holdout_older summary passes whatever its verdicts; a tightened or "
-      "retired contract, a hand-edited verdict, a missing file and the pre-#164 record fail")
+      "retired contract, a hand-edited verdict, a missing file, the pre-#164 record and a row "
+      "neither scored nor marked characterization only fail")

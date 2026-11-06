@@ -1,5 +1,6 @@
 """
-Fail when the committed holdout_older_summary.md is stale (#164).
+Fail when the committed holdout_older_summary.md is stale (#164), or when a
+grid row is neither scored nor marked characterization only (#171).
 
 Renders the summary from the committed grid and contract registry with the
 analyzer's own render() and compares it with the committed file. Any
@@ -14,10 +15,16 @@ Before this check existed the summary drifted twice without notice: 43d2415
 retightened two Gamma contracts and 1fac483 retired LogGamma.all.output, and
 the committed file kept the verdicts of 2026-07-21.
 
+A current summary still fails when a grid row has no disposition: no contract
+with a threshold scores it, and no contract with status `characterization_only`
+covers its function and regime. 1fac483 (2026-08-13) left three LogGamma rows
+in that state; after #164 the summary listed them, and nothing failed (#171).
+
 Usage:
     python check_holdout_older_summary.py
     python check_holdout_older_summary.py --summary S --grid G --contracts C
-Exit 0 when current, 1 when stale or unreadable.
+Exit 0 when current with every row disposed, 1 when stale, unreadable or a
+row has no disposition.
 """
 import argparse
 import difflib
@@ -32,7 +39,7 @@ import analyze_holdout_older as A  # noqa: E402
 def check(summary, grid, contracts):
     """Return (ok, message)."""
     try:
-        expected, results, _failing = A.render(*A.load(grid, contracts))
+        expected, results, _failing, unclaimed = A.render(*A.load(grid, contracts))
     except (OSError, KeyError, ValueError, ArithmeticError) as exc:
         return False, f"cannot render the summary: {exc!r}"
     try:
@@ -42,8 +49,18 @@ def check(summary, grid, contracts):
         return False, f"cannot read {summary}: {exc}"
     nfail = sum(1 for _, _, _, v in results if v == "FAIL")
     if committed == expected:
+        loose = A.undisposed(unclaimed)
+        if loose:
+            listed = "\n".join(f"  {r['function']}({A.args_text(r)}) in regime {r['regime']}"
+                                for r in loose)
+            return False, (f"{len(loose)} grid row(s) are neither scored by a contract nor "
+                           "marked characterization only; move each into the regime of a "
+                           "contract that covers it, or cover its function and regime with "
+                           f"a characterization_only contract\n{listed}")
+        marked = len(unclaimed)
         return True, (f"{os.path.basename(summary)} matches a re-run "
-                      f"({len(results)} contracts, {nfail} FAIL recorded)")
+                      f"({len(results)} contracts, {nfail} FAIL recorded; "
+                      f"{marked} row(s) marked characterization only)")
     diff = "".join(difflib.unified_diff(
         committed.splitlines(keepends=True), expected.splitlines(keepends=True),
         "committed", "re-run", n=0))
