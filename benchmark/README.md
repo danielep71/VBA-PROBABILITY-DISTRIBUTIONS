@@ -295,7 +295,7 @@ by rate (Lambda), not scale.
 | NormalStandard_InverseSurvival.all.output | NormalStandard_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
 | NormalStandard_InverseSurvival.deep_tail.output_rel | NormalStandard_InverseSurvival | deep_tail | output_error | relative | 5E-16 | validated and frozen |
 | NormalStandard_InverseSurvival.split_boundary.output_rel | NormalStandard_InverseSurvival | split_boundary | output_error | relative | 1E-10 | validated and frozen |
-| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 2E-14 | validated and frozen |
+| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_Cumulative.all.output | Normal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_Density.all.output | Normal_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_IntervalProbability.all.output_rel | Normal_IntervalProbability | all | output_error | relative | 1E-14 | validated and frozen |
@@ -340,7 +340,7 @@ by rate (Lambda), not scale.
 | Limitation | Affected | Domain | Observed effect | Status |
 |---|---|---|---|---|
 | IncompleteBeta.ExtremeShape | F_Cumulative;F_Survival;F_InverseCumulative | F degrees of freedom above 1E10 (measured accuracy envelope; raised from 1E5 after CR-P1-02, benchmark/envelope_probe; the both-large orientation binds, crossing near df 1.5E5-3E5) | the original 1E5 boundary was measuring the CR-P1-02 prefactor cancellation rather than an intrinsic limit; re-measured in benchmark/envelope_probe the kernel is accurate to 5.1E-10 relative at df 1E10, and the public F surface now REJECTS df above PROB_F_MAX_DF with CVErr(xlErrNum) | mitigated |
-| SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | characterized |
+| SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | resolved |
 | BetaInverse.InteriorQuantileRepresentability | Beta_InverseCumulative | both shapes sufficiently small (roughly a, b below 1E-3), interior probabilities | No representable interior quantile or meaningful forward round-trip exists; e.g. at a=1E-12, b=9.9E-14 the interior CDF is flat at ~0.0901 across the whole representable interval and the p=0.5 quantile needs 1-x ~ 1E-1E13. | characterized |
 | FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
 | IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 1.2E-09 relative at df 1E8 and degrading roughly tenfold per decade beyond; the public t surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
