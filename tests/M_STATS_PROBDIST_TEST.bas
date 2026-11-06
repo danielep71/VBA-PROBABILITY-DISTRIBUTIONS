@@ -78,6 +78,10 @@ Option Explicit
 '     from the study's model in the last bit, and it is far below the old
 '     kernel's error at every point it is used except 10.3 and 20.3, which are
 '     there to pin values, not to discriminate.
+'   - TOL_REL_LARGE_DF_TAIL pins the Student t large-df route (#34) at the
+'     same 2E-15. TOL_REL_LDF_OUTSIDE_DF is the continued fraction's
+'     characterized accuracy just below df = 1E5: 3.16E-12 in Excel at t = 2,
+'     df = 1E5 (tchi_large_df base export; PRODUCTION_AMENDMENT_1.md).
 '   - TOL_REL_ACKLAM is not a project tolerance. It is the published relative
 '     error bound of the Acklam inverse-normal approximation, asserted directly
 '     so that a mistyped coefficient fails a named check.
@@ -133,6 +137,8 @@ Option Explicit
 '     T7  Extreme F ratios must be assembled without intermediate overflow.
 '     T8  The F and Student t inverses must share the forward accuracy
 '         envelope, not a separate lower cap (benchmark/inverse_probe).
+'     T9  The Student t tail must keep full relative precision for df >= 1E5
+'         and Abs(X) <= 8, through the large-df expansion (#34).
 '
 '   Continuous Family
 '     D1  Gamma scale-ratio overflow must saturate to the mathematical limit.
@@ -213,6 +219,8 @@ Private Const TOL_REL_LOOSE     As Double = 0.000001      '1E-6 relative
 Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
 Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
 Private Const TOL_REL_NORMAL_TAIL As Double = 0.000000000000002 '2E-15 relative, #72
+Private Const TOL_REL_LARGE_DF_TAIL As Double = 0.000000000000002 '2E-15 relative, #34
+Private Const TOL_REL_LDF_OUTSIDE_DF As Double = 0.000000000005 '5E-12 relative, #34
 
 
 '==============================================================================
@@ -588,6 +596,7 @@ Private Sub RunTFamilySuite()
     Test_TF_StudentTInverse
     Test_TF_StudentTRoundTrips
     Test_TF_StudentTSymmetry
+    Test_TF_StudentTLargeDFTail
     Test_TF_ChiSquareDensity
     Test_TF_ChiSquareCumulative
     Test_TF_ChiSquareLargeDF
@@ -3510,6 +3519,116 @@ Private Sub Test_TF_StudentTSymmetry()
     AssertClose "t sf(x) = cdf(-x)", _
         CDbl(K_STATS_StudentT_Survival(2.2, 4#)) - _
         CDbl(K_STATS_StudentT_Cumulative(-2.2, 4#)), 0#, 0#
+End Sub
+
+
+Private Sub Test_TF_StudentTLargeDFTail()
+'
+'==============================================================================
+' Test_TF_StudentTLargeDFTail
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins the Student t large-df tail route (#34, regression T9): survival,
+'   cumulative and inverse for DegreesFreedom >= 1E5 and Abs(X) <= 8.
+'
+' WHY
+'   Above about df = 1E6 the incomplete-beta continued fraction rounded faster
+'   than it converged: the survival at t = 2, df = 1E8 was 1.17E-9 relative
+'   and the inverse at p = 0.99 about 968,000 ulps off. The order-5 large-df
+'   expansion replaces it inside the region. Each ladder point names the old
+'   route's error there.
+'
+' BEHAVIOR
+'   - References are the correctly rounded Doubles of 60-digit values of the
+'     study's oracle, restored from split literals.
+'   - Inside the region the tolerance is TOL_REL_LARGE_DF_TAIL; the seam points
+'     df = 1E5 and Abs(X) = 8 are inside.
+'   - One ulp outside the region the continued fraction still serves, and the
+'     controls there use its characterized accuracy (PRODUCTION_PREREGISTRATION
+'     section 7), so they show which route serves the point.
+'   - The forward references are reproduced by the binary64 model in
+'     benchmark/student_t_large_df_study within the tolerance.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - AssertRelClose, AssertClose
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-11-06 - Added for #34.
+'==============================================================================
+'
+    Debug.Print "-- Student t large-df tail (#34)"
+
+    'Survival ladder at t = 2
+    AssertRelClose "t sf(2, 1E+06) (old route 1.7E-11)", _
+        K_STATS_StudentT_Survival(2#, 1000000#), _
+        0.0227502669256596 + 3.46944695195361E-18, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t sf(2, 1E+07) (old route 3.0E-10)", _
+        K_STATS_StudentT_Survival(2#, 10000000#), _
+        0.0227501454459215 - 2.42861286636753E-17, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t sf(2, 1E+08) (old route 1.2E-9)", _
+        K_STATS_StudentT_Survival(2#, 100000000#), _
+        0.0227501332979534 - 2.42861286636753E-17, TOL_REL_LARGE_DF_TAIL
+
+    'Clean control, both signs, and the cumulative on both sides
+    AssertRelClose "t sf(1, 1E+08) control", _
+        K_STATS_StudentT_Survival(1#, 100000000#), _
+        0.158655255141311 - 3.33066907387547E-16, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t cdf(-2, 1E+08)", _
+        K_STATS_StudentT_Cumulative(-2#, 100000000#), _
+        0.0227501332979534 - 2.42861286636753E-17, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t cdf(2, 1E+08)", _
+        K_STATS_StudentT_Cumulative(2#, 100000000#), _
+        0.977249866702047 - 4.44089209850063E-16, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t sf(-2, 1E+07)", _
+        K_STATS_StudentT_Survival(-2#, 10000000#), _
+        0.977249854554079 - 4.44089209850063E-16, TOL_REL_LARGE_DF_TAIL
+
+    'The seam points themselves, and the model's worst validation point
+    AssertRelClose "t sf(2, 1E+05) at the df seam", _
+        K_STATS_StudentT_Survival(2#, 100000#), _
+        0.0227514817287532 + 3.12250225675825E-17, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t sf(8, 1E+06) at the t seam", _
+        K_STATS_StudentT_Survival(8#, 1000000#), _
+        6.22753171660126E-16, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t sf(8, 1E+08) at the t seam", _
+        K_STATS_StudentT_Survival(8#, 100000000#), _
+        6.22102625411477E-16, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t sf(4.55, 1E+06)", _
+        K_STATS_StudentT_Survival(4.55, 1000000#), _
+        2.68261048206043E-06 - 8.470329472543E-22, TOL_REL_LARGE_DF_TAIL
+
+    'Inverse ladder at p = 0.99, the
+    'p = 0.9 control, the lower tail and the exact median
+    AssertRelClose "t inv(0.99, 1E+06) (old route 4.5E-12)", _
+        K_STATS_StudentT_InverseCumulative(0.99, 1000000#), _
+        2.32635160312081 - 4.88498130835069E-15, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t inv(0.99, 1E+07) (old route 9.1E-11)", _
+        K_STATS_StudentT_InverseCumulative(0.99, 10000000#), _
+        2.32634824694832 + 2.66453525910038E-15, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t inv(0.99, 1E+08) (old route 1.9E-10)", _
+        K_STATS_StudentT_InverseCumulative(0.99, 100000000#), _
+        2.32634791133158 + 3.5527136788005E-15, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t inv(0.9, 1E+08) control", _
+        K_STATS_StudentT_InverseCumulative(0.9, 100000000#), _
+        1.28155157401045 - 1.55431223447522E-15, TOL_REL_LARGE_DF_TAIL
+    AssertRelClose "t inv(0.01, 1E+08)", _
+        K_STATS_StudentT_InverseCumulative(0.01, 100000000#), _
+        -2.32634791133158 - 3.99680288865056E-15, TOL_REL_LARGE_DF_TAIL
+    AssertClose "t inv(0.5, 1E+08) is exactly 0", _
+        K_STATS_StudentT_InverseCumulative(0.5, 100000000#), 0#, 0#
+
+    'Just outside the region the continued fraction still serves; these
+    'controls use its characterized accuracy, not the expansion's
+    AssertRelClose "t sf(2, 1E+05 - 1 ulp) on the continued fraction", _
+        K_STATS_StudentT_Survival(2#, 100000# - 1.45519152283669E-11), _
+        0.0227514817287532 + 3.12250225675825E-17, TOL_REL_LDF_OUTSIDE_DF
+    AssertRelClose "t sf(8 + 1 ulp, 1E+08) on the continued fraction", _
+        K_STATS_StudentT_Survival(8# + 1.77635683940025E-15, 100000000#), _
+        6.22102625411468E-16, TOL_REL_TAIL
 End Sub
 
 

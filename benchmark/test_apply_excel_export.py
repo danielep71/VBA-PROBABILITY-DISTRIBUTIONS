@@ -32,8 +32,8 @@ import _manifest as M  # noqa: E402
 
 TOOLS = ("apply_excel_export.py", "excel_certification.py", "_manifest.py",
          "finalize_excel_certification.py", "check_excel_certification.py")
-MAIN, HOLDOUT, OLDER, BOUNDARY = (A.GRIDS[n].path for n in ("main", "holdout", "holdout_older",
-                                                             "survival_boundary"))
+MAIN, HOLDOUT, OLDER, BOUNDARY, TCHI = (A.GRIDS[n].path for n in (
+    "main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df"))
 HEADER13 = ("function,vba_kernel,claim,metric,arg1,arg2,arg3,arg4,reference,"
             "observed_vba,regime,evidence_set,expected_error")
 GRID_TEXT = {
@@ -51,6 +51,10 @@ GRID_TEXT = {
               "evidence_set\n"
               "NormalStandard_Survival,K,boundary,rel,3.5,,,0.00023,2.3E-004;0E+000,all,"
               "survival_boundary\n",
+    TCHI: "function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,"
+          "evidence_set\n"
+          "StudentT_Survival,K,characterization,rel,2.0,100000000.0,,0.0227,2.27E-002;0E+000,"
+          "meaningful,tchi_large_df\n",
 }
 STUB = '''import json, os, sys
 with open(os.environ["REFRESH_STUB_LOG"], "w") as f:
@@ -397,6 +401,17 @@ class ApplyExcelExportTests(unittest.TestCase):
         self.assertIn(BOUNDARY, changed)
         self.assertNotIn(A.RETAINED_RECORD, changed)
         self.assertIn("full export by Export_SurvivalBoundary", output)
+
+    def test_tchi_large_df_only_binds_nothing(self):
+        fx = self.fx
+        out = fx.artifact(names=("tchi_large_df",))
+        code, output, refresh = fx.apply(out)
+        self.assertEqual(code, 0, output)
+        self.assertEqual(refresh, [])
+        changed = fx.dirty()
+        self.assertIn(TCHI, changed)
+        self.assertNotIn(A.RETAINED_RECORD, changed)
+        self.assertIn("full export by Export_TChiLargeDf", output)
 
     def test_missing_only_main_export(self):
         out = self.fx.artifact(names=("main",), mode="missing-only")

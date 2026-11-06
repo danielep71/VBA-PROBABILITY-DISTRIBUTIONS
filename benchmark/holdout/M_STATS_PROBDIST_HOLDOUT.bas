@@ -196,6 +196,9 @@ Private Function EvaluateHoldout( _
         Case "F_Cumulative":                       V = K_STATS_F_Cumulative(A1, A2, A3)
         Case "F_Survival":                         V = K_STATS_F_Survival(A1, A2, A3)
         Case "F_InverseCumulative":                V = K_STATS_F_InverseCumulative(A1, A2, A3)
+        Case "StudentT_Survival":                  V = K_STATS_StudentT_Survival(A1, A2)
+        Case "StudentT_Cumulative":                V = K_STATS_StudentT_Cumulative(A1, A2)
+        Case "StudentT_InverseCumulative":         V = K_STATS_StudentT_InverseCumulative(A1, A2)
         Case "PROB_LogBeta":                       V = PROB_LogBeta(A1, A2)
 
         'Density helpers and parameter conversion

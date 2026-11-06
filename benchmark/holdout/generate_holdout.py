@@ -29,7 +29,7 @@ bound by holdout_manifest.json, so its references change only together with a
 fresh Excel holdout export; until then check_survival_references.py registers
 the affected rows as debt.
 """
-import argparse, csv
+import argparse, csv, io
 import mpmath as mp
 import os as _os, sys as _sys
 # Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
@@ -422,8 +422,81 @@ def _tiny_unbalanced_holdout_rows():
         R("F_InverseCumulative", pr, d1, d2, mp.mpf(q), "tiny_unbalanced_representable")
     return out
 
+STUDENT_T_LARGE_DF_SEED = 34
+
+
+def student_t_large_df_rows():
+    """The untouched holdout of the Student-t large-df route (#34), drawn exactly
+    as PRODUCTION_PREREGISTRATION.md section 6 fixes it: random.Random(34);
+    16 forward points (t = U(0.25, 8), negative for the second 8, then
+    df = 10^U(5, 8)), each a survival and a cumulative row; then 12 inverse
+    points (p = U(0.6, 0.999), complemented for the last 6, then
+    df = 10^U(5, 8)). Arguments are the Doubles themselves; references are the
+    direct upper tail I_z(df/2, 1/2) / 2 at those Doubles, at 50 digits, and the
+    quantile from the same oracle."""
+    import random
+    rng = random.Random(STUDENT_T_LARGE_DF_SEED)
+    out = []
+
+    def tail(t, df):
+        t, df = mp.mpf(t), mp.mpf(df)
+        return mp.betainc(df / 2, mp.mpf(1) / 2, 0, df / (df + t * t), regularized=True) / 2
+
+    def R(fn, a1, a2, ref):
+        out.append({"function": fn, "vba_kernel": "K_STATS_" + fn, "claim": "", "metric": "",
+                    "arg1": repr(a1), "arg2": repr(a2), "arg3": "", "arg4": "",
+                    "reference": mp.nstr(ref, 30), "observed_vba": "",
+                    "regime": "envelope_domain", "evidence_set": "holdout"})
+
+    with mp.workdps(50):
+        for i in range(16):
+            t = rng.uniform(0.25, 8.0)
+            if i >= 8:
+                t = -t
+            df = 10 ** rng.uniform(5.0, 8.0)
+            s = tail(abs(t), df)
+            R("StudentT_Survival", t, df, s if t >= 0 else 1 - s)
+            R("StudentT_Cumulative", t, df, 1 - s if t >= 0 else s)
+        for i in range(12):
+            p = rng.uniform(0.6, 0.999)
+            if i >= 6:
+                p = 1 - p
+            df = 10 ** rng.uniform(5.0, 8.0)
+            target = 1 - mp.mpf(p) if p > 0.5 else mp.mpf(p)
+            seed = mp.sqrt(2) * mp.erfinv(2 * abs(mp.mpf(p) - mp.mpf("0.5")))
+            q = mp.findroot(lambda x: tail(x, df) - target, seed)
+            R("StudentT_InverseCumulative", p, df, q if p > 0.5 else -q)
+    return out
+
+
+def append_student_t_large_df(path="holdout_grid.csv"):
+    """Append the #34 rows to the committed grid once, with blank observations,
+    changing no existing byte."""
+    rows = student_t_large_df_rows()
+    with open(path, newline="", encoding="utf-8") as f:
+        text = f.read()
+    if "StudentT_" in text:
+        raise SystemExit("refusing: the holdout grid already holds Student-t rows")
+    fields = text.split("\n", 1)[0].split(",")
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=fields, lineterminator="\n")
+    for r in rows:
+        w.writerow({k: r.get(k, "") for k in fields})
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        f.write(text if text.endswith("\n") else text + "\n")
+        f.write(buf.getvalue())
+    print(f"appended {len(rows)} Student-t rows to {path}")
+
+
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument("--out",default="holdout_grid.csv"); a=ap.parse_args()
+    ap=argparse.ArgumentParser(); ap.add_argument("--out",default="holdout_grid.csv")
+    ap.add_argument("--append-student-t-large-df", action="store_true",
+                    help="append the #34 holdout rows to the committed grid once (section 6 of "
+                         "student_t_large_df_study/PRODUCTION_PREREGISTRATION.md)")
+    a=ap.parse_args()
+    if a.append_student_t_large_df:
+        append_student_t_large_df(a.out)
+        return
     rows=build()
     # Stamp the envelope marker from each row's own args (single-sourced predicate).
     import os as _os, sys as _sys

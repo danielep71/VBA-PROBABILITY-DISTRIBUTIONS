@@ -30,6 +30,7 @@ commands = (
     ("student_t_large_df_study/test_binary64_route_model.py",),
     ("student_t_large_df_study/test_model_fidelity.py",),
     ("student_t_large_df_study/test_production_route.py",),
+    ("student_t_large_df_study/test_vba_large_df_source.py",),
     ("normal_tail_study/test_kernel_model.py",),
     ("normal_tail_study/test_vba_kernel_source.py",),
     ("normal_tail_study/test_holdout_record.py",),
