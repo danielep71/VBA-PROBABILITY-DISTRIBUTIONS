@@ -139,6 +139,9 @@ Option Explicit
 '         envelope, not a separate lower cap (benchmark/inverse_probe).
 '     T9  The Student t tail must keep full relative precision for df >= 1E5
 '         and Abs(X) <= 8, through the large-df expansion (#34).
+'     T10 The Student t quantile must reach the large-df tail's accuracy for
+'         df >= 1E5 and a tail of at most 0.4, not stop on the loop's 1E-15
+'         relative step several Doubles short (#34).
 '
 '   Continuous Family
 '     D1  Gamma scale-ratio overflow must saturate to the mathematical limit.
@@ -221,6 +224,7 @@ Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
 Private Const TOL_REL_NORMAL_TAIL As Double = 0.000000000000002 '2E-15 relative, #72
 Private Const TOL_REL_LARGE_DF_TAIL As Double = 0.000000000000002 '2E-15 relative, #34
 Private Const TOL_REL_LDF_OUTSIDE_DF As Double = 0.000000000005 '5E-12 relative, #34
+Private Const TOL_REL_LDF_QUANTILE As Double = 0.0000000000000005 '5E-16 relative, #34
 
 
 '==============================================================================
@@ -597,6 +601,7 @@ Private Sub RunTFamilySuite()
     Test_TF_StudentTRoundTrips
     Test_TF_StudentTSymmetry
     Test_TF_StudentTLargeDFTail
+    Test_TF_StudentTLargeDFQuantile
     Test_TF_ChiSquareDensity
     Test_TF_ChiSquareCumulative
     Test_TF_ChiSquareLargeDF
@@ -3629,6 +3634,58 @@ Private Sub Test_TF_StudentTLargeDFTail()
     AssertRelClose "t sf(8 + 1 ulp, 1E+08) on the continued fraction", _
         K_STATS_StudentT_Survival(8# + 1.77635683940025E-15, 100000000#), _
         6.22102625411468E-16, TOL_REL_TAIL
+End Sub
+
+
+Private Sub Test_TF_StudentTLargeDFQuantile()
+'
+'==============================================================================
+' Test_TF_StudentTLargeDFQuantile
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins the Student t quantile polish on the large-df route (#34, regression
+'   T10) at the rows where the first Excel wave falsified PT2.
+'
+' WHY
+'   The safeguarded Newton loop of PROB_TryStudentTInvTail stops on a 1E-15
+'   relative step, often a bisection, which left these quantiles 3 to 6
+'   Doubles from the root (6.9E-16 to 9.5E-16 relative, EXCEL_WAVE_RESULT.md).
+'   Up to three plain Newton steps on the large-df tail remove them.
+'
+' BEHAVIOR
+'   - References are the correctly rounded quantiles of the study's 60-digit
+'     oracle, restored from split literals; each label names the first wave's
+'     error at that row.
+'   - The tolerance, TOL_REL_LDF_QUANTILE, is below every first-wave error and
+'     above every outcome predict_inverse.py records for these rows
+'     (INVERSE_PREREGISTRATION.md section 7).
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - AssertRelClose
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-11-06 - Added for #34.
+'==============================================================================
+'
+    AssertRelClose "t inv(0.99, 1E+06); first wave 6.95E-16", _
+        K_STATS_StudentT_InverseCumulative(0.99, 1000000#), _
+        2.32635160312081 - 4.88498130835069E-15, TOL_REL_LDF_QUANTILE
+    AssertRelClose "t inv(0.99, 1E+07); first wave 8.56E-16", _
+        K_STATS_StudentT_InverseCumulative(0.99, 10000000#), _
+        2.32634824694832 + 2.66453525910038E-15, TOL_REL_LDF_QUANTILE
+    AssertRelClose "t inv(0.999, 1E+05); first wave 7.68E-16", _
+        K_STATS_StudentT_InverseCumulative(0.999, 100000#), _
+        3.09031380942724 - 2.66453525910038E-15, TOL_REL_LDF_QUANTILE
+    AssertRelClose "t inv(0.999, 1E+06); first wave 9.51E-16", _
+        K_STATS_StudentT_InverseCumulative(0.999, 1000000#), _
+        3.09024045631652 - 4.44089209850063E-16, TOL_REL_LDF_QUANTILE
+    AssertRelClose "t inv(0.999, 1E+07); first wave 9.15E-16", _
+        K_STATS_StudentT_InverseCumulative(0.999, 10000000#), _
+        3.09023312118091 + 1.33226762955019E-15, TOL_REL_LDF_QUANTILE
 End Sub
 
 

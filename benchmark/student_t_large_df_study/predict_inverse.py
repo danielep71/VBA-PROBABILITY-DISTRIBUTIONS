@@ -39,7 +39,9 @@ any last-bit difference in PROB_TryStudentTPDF.
                  (p, df), with the worst error as a fraction of its bound.
 
 The holdout rows this file reads are the ones the first wave already observed.
-The new holdout of INVERSE_PREREGISTRATION.md §6 does not exist yet.
+The new holdout of INVERSE_PREREGISTRATION.md §6 is skipped: its rows are
+recognised by redrawing their arguments from the seed, never by reading them,
+and check_inverse_wave.py checks them (PH) after the export.
 
     python predict_inverse.py            write inverse_predictions.json
     python predict_inverse.py --check    recompute; fail if the file differs
@@ -165,12 +167,23 @@ def validation():
             "within_bound": all(r["worst"] <= r["bound"] for r in rows), "rows": rows}
 
 
+def section6_rows():
+    """(function, arg1, arg2) of the untouched holdout, redrawn from its seed."""
+    sys.path.insert(0, os.path.join(PP.BENCH, "holdout"))
+    import generate_holdout  # noqa: E402
+    return {(fn, a1, a2) for fn, a1, a2 in generate_holdout.student_t_inverse_draws()}
+
+
 def predictions():
     records, unchanged = [], {}
+    fresh = section6_rows()
     for grid in GRIDS:
         for row in PP.read(grid):
             fn = row.get("function", "")
             if not (fn.startswith("StudentT_") or fn.startswith("F_")):
+                continue
+            if grid.startswith("holdout/") and row.get("arg2", "").strip() and \
+                    (fn, float(row["arg1"]), float(row["arg2"])) in fresh:
                 continue
             key = {"grid": grid, "function": fn, "args": [row["arg1"], row["arg2"]],
                    "regime": row.get("regime", "")}
