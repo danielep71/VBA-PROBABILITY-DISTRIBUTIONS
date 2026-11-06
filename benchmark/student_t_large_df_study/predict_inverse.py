@@ -19,8 +19,10 @@ when DegreesFreedom >= 1E5 and the target tail is at most 0.4:
 polish() is that loop in binary64, with production_route_model.route_tail as
 TailAtX. outcomes() is the set of results the polish can return for a row:
   - every start within +-START_ULPS Doubles of the correctly rounded quantile;
-  - the route's tail shifted by up to +-TAIL_ULPS Doubles, at every step;
-  - the density scaled by 1 + d, for d in DENSITY_SHIFTS.
+  - the route's tail shifted by up to +-TAIL_ULPS Doubles, chosen
+    independently at every step;
+  - the density scaled by 1 + d, for d in DENSITY_SHIFTS, also chosen at every
+    step.
 The existing loop's stopping rule leaves X within about 6 Doubles of the
 quantile (EXCEL_WAVE_RESULT.md). The tail shift covers the model's 1-ulp
 disagreement with Excel (PT1 of the first wave), and the density shift covers
@@ -103,6 +105,31 @@ def polish(x, tail, df, tail_shift=0, density_shift=0.0):
     return x
 
 
+def reachable(starts, tail, df):
+    """Every result of the polish from these starts, with the tail shift and the
+    density scale chosen independently at every step: the states are expanded
+    step by step, so each Double is evaluated once per step."""
+    frontier, done = set(starts), set()
+    for _ in range(STEPS):
+        following = set()
+        for x in frontier:
+            if x > P.T_MAX:
+                done.add(x)
+                continue
+            t0, d0 = P.route_tail(x, df), density(x, df)
+            for e in range(-TAIL_ULPS, TAIL_ULPS + 1):
+                t = t0 + e * math.ulp(t0) if e else t0
+                for shift in DENSITY_SHIFTS:
+                    d = d0 * (1.0 + shift)
+                    if d <= 0.0:
+                        done.add(x)
+                        continue
+                    x_new = x + (t - tail) / d
+                    (done if x_new == x else following).add(x_new)
+        frontier = following
+    return done | frontier
+
+
 def exact_quantile(tail, df):
     with mp.workdps(60):
         seed = mp.sqrt(2) * mp.erfinv(1 - 2 * mp.mpf(tail))
@@ -116,12 +143,7 @@ def outcomes(p, df):
     qd = float(q)
     if abs(qd - P.T_MAX) <= SEAM_ULPS * math.ulp(P.T_MAX):
         raise SystemExit(f"p={p!r}, df={df!r}: quantile within {SEAM_ULPS} ulps of t = 8")
-    found = set()
-    for k in range(-START_ULPS, START_ULPS + 1):
-        start = qd + k * math.ulp(qd)
-        for e in range(-TAIL_ULPS, TAIL_ULPS + 1):
-            for d in DENSITY_SHIFTS:
-                found.add(polish(start, tail, df, e, d))
+    found = reachable({qd + k * math.ulp(qd) for k in range(-START_ULPS, START_ULPS + 1)}, tail, df)
     with mp.workdps(60):
         worst = max(float(abs((mp.mpf(x) - q) / q)) for x in found)
     return qd, sorted(found), worst, PP.quantile_bound(p, qd, df)

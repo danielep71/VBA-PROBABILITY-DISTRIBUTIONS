@@ -7,7 +7,8 @@ CI fixture for the inverse preregistration of the Student-t large-df route
      out; p = 0.5 and df just below 1E5 are out.
   2. The polish arithmetic: at a correctly rounded quantile the polish stays
      within a few Doubles, a start 16 Doubles away is pulled back inside the
-     outcome set, and a start above t = 8 is returned unchanged.
+     outcome set, a start above t = 8 is returned unchanged, and a tail shift
+     that changes from step to step stays inside the outcome set.
   3. inverse_predictions.json reproduces from the model and the grids, so a
      change to the model, the route model or an affected grid row fails until
      the predictions are deliberately re-recorded.
@@ -51,6 +52,17 @@ check(PI.polish(q, PI.tail_of(0.999), 1e6) in found, "a correctly rounded start 
 check(PI.polish(q + 16 * math.ulp(q), PI.tail_of(0.999), 1e6) in found,
       "a start 16 Doubles away is not pulled into the outcome set")
 check(PI.polish(8.5, 1e-16, 1e6) == 8.5, "a start above t = 8 must be returned unchanged")
+# A tail shift that changes from step to step: (+2, +2, -2) Doubles from this
+# start reaches a Double that no constant shift reaches; the set must hold it.
+q95, found95, _, _ = PI.outcomes(0.95, 1e5)
+x, tail95 = 1.6448688647849734, PI.tail_of(0.95)
+for shift in (2, 2, -2):
+    t = PI.P.route_tail(x, 1e5)
+    x_new = x + (t + shift * math.ulp(t) - tail95) / PI.density(x, 1e5)
+    if x_new == x:
+        break
+    x = x_new
+check(x in found95, "a per-step tail shift reaches a Double outside the outcome set")
 
 # 3. Reproduction
 if PI.main(["--check"]) != 0:

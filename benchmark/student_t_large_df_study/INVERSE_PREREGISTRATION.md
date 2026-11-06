@@ -87,8 +87,11 @@ Deliberate mutations must each fail it:
 `production_route_model.route_tail` as the tail. Its outcome set for a row is
 every result the polish returns when:
 - it starts within ±32 Doubles of the correctly rounded quantile;
-- the tail is shifted by up to ±2 Doubles at every step;
-- the density is scaled by 1 ± 1E-9.
+- the tail is shifted by up to ±2 Doubles, chosen independently at every step;
+- the density is scaled by 1 or 1 ± 1E-9, also chosen at every step.
+
+The states are expanded step by step, so every combination of per-step shifts
+is covered.
 
 The existing loop leaves `X` within about 6 Doubles. The tail shift covers the
 model's 1-ulp disagreement with Excel, measured in the first wave's PT1.
