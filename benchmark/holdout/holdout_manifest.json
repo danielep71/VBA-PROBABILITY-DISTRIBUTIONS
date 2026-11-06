@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-06T11:35:16Z",
-  "commit_sha": "7fb08ae",
+  "generated_utc": "2026-11-06T13:31:28Z",
+  "commit_sha": "d6d2003",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -20,7 +20,7 @@
     "expected_error"
   ],
   "observation_row_count": 559,
-  "observation_grid_sha256": "sha256:34efb3ebb0a4948f83ea2549e445814607b19b7566646bee3208e024381da19d",
+  "observation_grid_sha256": "sha256:7c512aa4893ed9531f74bd55a52a5a64a586906f1ca21c0abf46c09f8dc4e0b8",
   "source_binding": {
     "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:43a8545ba47ffb1260663d3784d7db3296fce84f28af5004629e24f7f59afd60",
     "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:98088a99e80dccbc5424ea2eb7d9a450f562bdcde5e65ef5a563f6099e4c84c2",
