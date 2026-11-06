@@ -172,13 +172,33 @@ for r in route_rows:
     e = rel(vk.route_candidate(r["t"], r["df"]), vk.rm.oracle_tail(r["t"], r["df"]))
     check(e <= B, f"#34 route on the candidate kernel exceeds 2^-50 at t={r['t']}, df={r['df']}: {e:.3e}")
 
-# 5. Fidelity of the model of today's code ----------------------------------
+# 5. Fidelity of the models to the committed Excel observations -------------
+# The main grid holds observations of the repaired kernel since the #81 export
+# (run 42210983927): there the candidate's recorded prediction must be within
+# 4 ulps of Excel (P1). survival_boundary was not re-exported, so its
+# observations are still those of the replaced kernel, and the model of that
+# kernel must reproduce them, as before.
+REEXPORTED = ("probability_accuracy_grid.csv",)
 direct = [r for r in res["predictions"]["rows"]
           if r["prediction"] == "P1" and r["grid"] != "holdout_older/holdout_older_grid.csv"]
 check(len(direct) >= 30, f"too few direct rows recorded: {len(direct)}")
+observed = {}
+for grid in REEXPORTED:
+    with open(os.path.join(vk.BENCH, grid), encoding="utf-8-sig") as f:
+        for row in vk.csv.DictReader(f):
+            if row["function"] in vk.DIRECT:
+                args = [a for a in vk.args_of(row) if a is not None]
+                observed[(grid, row["function"], tuple(args))] = vk.parse_observed(row["observed_vba"])
 for r in direct:
-    u = r["model_vs_committed_ulps"]
-    check(u is not None and u <= 4, f"model of today's code is {u} ulps from Excel at {r['function']} {r['args']}")
+    if r["grid"] in REEXPORTED:
+        o = observed.get((r["grid"], r["function"], tuple(r["args"])))
+        u = None if o is None else vk.ulps_apart(float(r["predicted"]), o)
+        check(u is not None and u <= 4,
+              f"the repaired kernel's prediction is {u} ulps from Excel at {r['function']} {r['args']}")
+    else:
+        u = r["model_vs_committed_ulps"]
+        check(u is not None and u <= 4,
+              f"the replaced kernel's model is {u} ulps from Excel at {r['function']} {r['args']}")
 
 if fails:
     print("FAIL: #72 normal-tail kernel study fixture")
@@ -189,4 +209,4 @@ print(f"PASS: #72 normal-tail kernel: design and literals pinned; recorded resul
       f"(z^7 numerator coefficient {float(raw['numerator'][7]['value']):.2e}, cancellation {float(condition - 1):.1e}); "
       f"fit CONVERGED and the record bound to {len(rb.BOUND)} current files and the candidate (Amendment 3); "
       f"A5 subsample worst {worst:.2e}; #34 route meets 2^-50 at 36 points; "
-      f"today's code reproduced within 4 ulps at {len(direct)} Excel observations")
+      f"the kernel each grid was exported with reproduced within 4 ulps at {len(direct)} Excel observations")
