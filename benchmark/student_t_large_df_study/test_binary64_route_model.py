@@ -48,30 +48,33 @@ def check(cond, msg):
         fails.append(msg)
 
 
-# 0. The model is the one bound to today's VBA source.
-for problem in F.stale(F.load_record()):
+# 0. The model is the one bound to the VBA source F1 measured: the module
+#    before #81 replaced the kernel, kept verbatim with its observations.
+_record = F.load_record()
+for problem in F.stale(_record):
     fails.append("source binding: " + problem)
+for problem in F.origin_problems(_record):
+    fails.append("origin: " + problem)
 
-# 1. Port fidelity against Excel.
+# 1. Port fidelity against the Excel observations of that kernel.
 kernels = {"NormalStandard_Survival": M.vba_survival, "NormalStandard_Cumulative": M.vba_cdf}
 seen = exact = 0
 apart = []
-for grid in ("probability_accuracy_grid.csv", os.path.join("holdout", "holdout_grid.csv")):
-    with open(os.path.join(BENCHMARK, grid), newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            kernel = kernels.get(row["function"])
-            raw = (row.get("observed_vba") or "").strip()
-            if kernel is None or not raw or "ERR" in raw.upper():
-                continue
-            observed = float(sum(Decimal(part) for part in raw.split(";")))
-            modelled = kernel(float(row["arg1"]))
-            seen += 1
-            exact += observed == modelled
-            ulps = F.ulp_distance(observed, modelled)
-            apart += [ulps] if ulps else []
-            check(F.within_ulps(observed, modelled),
-                  f"{row['function']}({row['arg1']}): port differs from Excel by {ulps} ULPs "
-                  f"(limit {F.FIDELITY_LIMIT_ULPS})")
+with open(os.path.join(os.path.dirname(BENCHMARK), F.OBSERVATIONS), newline="", encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+        kernel = kernels.get(row["function"])
+        raw = (row.get("observed_vba") or "").strip()
+        if kernel is None or not raw or "ERR" in raw.upper():
+            continue
+        observed = float(sum(Decimal(part) for part in raw.split(";")))
+        modelled = kernel(float(row["arg1"]))
+        seen += 1
+        exact += observed == modelled
+        ulps = F.ulp_distance(observed, modelled)
+        apart += [ulps] if ulps else []
+        check(F.within_ulps(observed, modelled),
+              f"{row['function']}({row['arg1']}): port differs from Excel by {ulps} ULPs "
+              f"(limit {F.FIDELITY_LIMIT_ULPS})")
 check(seen >= 12, f"expected at least 12 committed normal observations, found {seen}")
 check(exact * 4 >= seen * 3, f"only {exact}/{seen} observations reproduced exactly")
 check(sorted(apart) == [1, 1, 2], f"ULP distances of the inexact observations are {sorted(apart)}, "

@@ -32,7 +32,7 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 function Get-ExportGridSpec {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet("main", "holdout", "holdout_older")]
+        [ValidateSet("main", "holdout", "holdout_older", "survival_boundary")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -87,6 +87,22 @@ function Get-ExportGridSpec {
                 ScopeIndex     = -1
                 ScopeValue     = $null
                 SuccessPrefix  = "Older-families holdout export complete: "
+                ReportsCount   = $true
+            }
+        }
+        "survival_boundary" {
+            return [pscustomobject][ordered]@{
+                Name           = "survival_boundary"
+                Path           = "benchmark/survival_boundary/survival_boundary_grid.csv"
+                FileName       = "survival_boundary_grid.csv"
+                Exporter       = "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas"
+                Macro          = "Export_SurvivalBoundary"
+                Mode           = "full"
+                ObservedIndex  = 8
+                MinimumColumns = 11
+                ScopeIndex     = -1
+                ScopeValue     = $null
+                SuccessPrefix  = "Survival-boundary export complete: "
                 ReportsCount   = $true
             }
         }

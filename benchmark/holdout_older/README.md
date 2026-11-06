@@ -33,6 +33,8 @@ functions the #72 normal-tail record reads, 7 of them survival; they are re-base
 with the #81 wave, when the #72 kernel evidence is redone, and
 `../survival_reference_debt.json` registers the 7 survival references until then.
 
+*2026-11-06 (#81).* The #81 wave redid the #72 kernel evidence and re-based the 7 references with `../rebase_survival_debt.py`; the normal-tail record was regenerated against them. `../survival_reference_debt.json` is now empty.
+
 The corrected references reveal a contract breach, tracked in #163. Against
 the new reference, the measured error of `Beta_Survival(0.82, 2.7, 3.4)` is
 5.45E-15, above the 5E-15 threshold of `Beta_Survival.balanced.output_rel`;

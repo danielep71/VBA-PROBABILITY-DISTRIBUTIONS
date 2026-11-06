@@ -117,13 +117,67 @@ record was regenerated only for the validator's new digest.
 `test_ulps_apart.py` checks the edge cases and agreement with the Student-t
 study's `model_fidelity.ulp_distance`.
 
-**Next.** The study's acceptance evidence now covers every §6 failure
-condition: A1–A8, the oracles and, under Amendment 3, fit convergence. The
-record is bound to the files that produced it. The kernel can be implemented
-in VBA with the recorded literals, in the Excel wave that §9 describes. That
-wave tests the §7 predictions against real Excel. This study is not evidence
-that the VBA kernel is fixed. Exact-source Excel validation remains open
-under #72.
+**VBA (pending the Excel wave).** The kernel is implemented as
+`PROB_NormalUpperTail` (`M_STATS_PROBDIST_SPECIALFUNCS`) and
+`PROB_ExpNegHalfSquare` (`M_STATS_PROBDIST_CORE`). `test_vba_kernel_source.py`
+checks that every VBA constant evaluates exactly to the Double recorded here,
+that the arithmetic is written in the modelled order, and that every reference
+in the new VBA regression tests is correctly rounded and reproduced by the
+model. Five deliberate mutations were each caught: a constant's last digit,
+a reassociated product, the old 16-level depth, a 1/16 split, and a test
+reference. The §7 predictions are checked against the Excel export of this
+source before any contract changes.
+
+## Excel wave (2026-11-06, #81)
+
+The repaired kernel ran in Excel on `7fb08ae`: run 42210983927 passed the
+regression, 931 of 931 assertions, and exported the main grid, the
+independent holdout and `holdout_older` in the same job. Commit `c6fd598`
+holds the export. `check_excel_wave.py` checked every affected row against the
+§7 predictions that `results.json` recorded before the export, and wrote
+`excel_wave_check.json`.
+
+| Prediction | Rows | Outside | Worst error | Most ulps from predicted |
+| --- | ---: | ---: | ---: | ---: |
+| P1 direct | 27 | 0 | 2.02E-16 | 2 |
+| P2 standardised | 22 | 0 | 3.04E-16 | – |
+| P3 interval | 11 | 0 | 1.13E-15 | – |
+| P4 inverse | 80 | 0 | 2.94E-15 | 4 |
+| P5 holdout, P3 | 4 | 0 | 2.23E-16 | – |
+| P5 holdout, P4 | 60 | **1** | 3.86E-15 | **11** |
+| unchanged functions | 17 | 0 | bit-identical | – |
+
+**One prediction is falsified**: P5/P4 for the holdout row
+`Lognormal_InverseSurvival(4E-12, −1, 1.5)`. The row meets every error
+criterion: 1.18E-15 against the reference, inside the `split_boundary`
+target of 1E-14 and the 1E-9 contract. The observation was 4.5E-10 before
+the repair. But it lies 11 ulps from the predicted Double, and §7 allows 8
+for Lognormal.
+
+**Cause.** The observation is exactly `Exp(s⁺)`, where `s⁺` is one ulp above
+the model's exponent `s = μ + σ·z = 9.2578…`. One ulp of `s` is 1.78E-15,
+and `Exp` turns an absolute error in `s` into the same relative error in the
+result. That is 10.2 ulps of 10486.27, so a one-ulp difference in the
+exponent alone exceeds the 8-ulp allowance whenever `|s|` is above about 8.
+The allowance did not account for this amplification. Neither the model nor
+the prediction was changed after the export.
+
+**Not checked.** The 19 `survival_boundary` rows (14 P1, 5 P2) were not
+re-exported: their exporter, `Export_SurvivalBoundary`, asks for the grid
+through a file picker, which the unattended export cannot answer.
+
+*Later the same day.* The export learned to stage that grid beside the
+workbook, so the exporter finds it without the picker. Run 42231334906
+exported it on `bb52717` (evidence `68a6449`), and
+`check_excel_wave.py --no-holdout --out excel_wave_check_survival_boundary.json`
+found all 19 rows within their predictions:
+- P1: 14 rows, worst 2.63E-16, at most 2 ulps from the predicted value.
+- P2: 5 rows, worst 2.31E-16.
+
+The study record was then regenerated against the new grids (see
+`regenerations` in `results.json`): the recorded predictions are recomputed
+from the unchanged model, and `model_vs_committed_ulps` now compares the
+model of the replaced kernel with observations of the new one.
 
 ## Holdout exposure record (#80)
 
@@ -354,6 +408,10 @@ and `fit_convergence.json`, and writes nothing.
 | `holdout_record.py` | the holdout exposure record and its checks (#80); standard library only |
 | `result_binding.py` | the identities `results.json` binds, and the check that they are current (#79); standard library only |
 | `results.json` | every measurement, the acceptance record, the per-row predictions, the provenance block and the holdout exposure record |
+| `check_excel_wave.py` | checks the §7 predictions, and P5 on the holdout, against an Excel export; writes `excel_wave_check.json` |
+| `excel_wave_check.json` | the result for the export of `7fb08ae` (#81) |
+| `excel_wave_check_survival_boundary.json` | the result for the `survival_boundary` export of `bb52717` (#81) |
+| `test_vba_kernel_source.py` | CI fixture binding the VBA source and its regression references to the validated model |
 | `test_kernel_model.py` | CI fixture pinning the coefficients, literals, recorded result and recorded A6 |
 | `test_conditioning.py` | CI fixture of Amendment 2: the recorded P2 bounds, negative-`z`, centre, near-centre and seam rows |
 | `test_holdout_record.py` | CI fixtures of the exposure controls, on synthetic studies |

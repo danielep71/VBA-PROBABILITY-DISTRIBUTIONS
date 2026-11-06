@@ -52,6 +52,7 @@ required, and they answer different questions.
 | `_ibeta.py` | Continued-fraction incomplete beta / F reference helper, including the direct upper tails `ibeta_upper` and `f_sf`. Single-sourced: this is the only copy, and the study scripts import it from here. |
 | `check_survival_references.py`, `_survival_oracle.py` | Fail-closed audit of every committed survival reference against a direct upper-tail recomputation at its binary64 argument (#159). See [Survival reference basis](#survival-reference-basis). |
 | `survival_reference_debt.json` | The survival references known to miss the 25-digit floor that a binding prevents re-referencing yet, each with its blocker. |
+| `rebase_survival_debt.py` | Re-bases the registered survival references from the source that owns each row, once their bindings can be rebuilt (#159, #81). |
 | `_study_merge.py`, `study_reference_rebase.csv` | Reference-only merge of a regenerated study grid into the committed grid, keeping every observation, and the record of every reference it changed (old and new value). |
 | `environment.txt` | Python and dependency versions, reference precision, date. |
 
@@ -294,7 +295,7 @@ by rate (Lambda), not scale.
 | NormalStandard_InverseSurvival.all.output | NormalStandard_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
 | NormalStandard_InverseSurvival.deep_tail.output_rel | NormalStandard_InverseSurvival | deep_tail | output_error | relative | 5E-16 | validated and frozen |
 | NormalStandard_InverseSurvival.split_boundary.output_rel | NormalStandard_InverseSurvival | split_boundary | output_error | relative | 1E-10 | validated and frozen |
-| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 2E-14 | validated and frozen |
+| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_Cumulative.all.output | Normal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_Density.all.output | Normal_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Normal_IntervalProbability.all.output_rel | Normal_IntervalProbability | all | output_error | relative | 1E-14 | validated and frozen |
@@ -339,7 +340,7 @@ by rate (Lambda), not scale.
 | Limitation | Affected | Domain | Observed effect | Status |
 |---|---|---|---|---|
 | IncompleteBeta.ExtremeShape | F_Cumulative;F_Survival;F_InverseCumulative | F degrees of freedom above 1E10 (measured accuracy envelope; raised from 1E5 after CR-P1-02, benchmark/envelope_probe; the both-large orientation binds, crossing near df 1.5E5-3E5) | the original 1E5 boundary was measuring the CR-P1-02 prefactor cancellation rather than an intrinsic limit; re-measured in benchmark/envelope_probe the kernel is accurate to 5.1E-10 relative at df 1E10, and the public F surface now REJECTS df above PROB_F_MAX_DF with CVErr(xlErrNum) | mitigated |
-| SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | characterized |
+| SurvivalTailRel | Normal_Survival;Lognormal_Survival;NormalStandard_Survival | upper tail beyond the central region (standardized z above ~2.75-3.25) | relative error grows monotonically: ~1E-14 at z=3, ~1E-13 at z=4, ~5E-11 at z=5, ~5E-10 at z=6 | resolved |
 | BetaInverse.InteriorQuantileRepresentability | Beta_InverseCumulative | both shapes sufficiently small (roughly a, b below 1E-3), interior probabilities | No representable interior quantile or meaningful forward round-trip exists; e.g. at a=1E-12, b=9.9E-14 the interior CDF is flat at ~0.0901 across the whole representable interval and the p=0.5 quantile needs 1-x ~ 1E-1E13. | characterized |
 | FInverse.InteriorQuantileRepresentability | F_InverseCumulative | both degrees of freedom sufficiently small, interior probabilities | The interior CDF plateaus and the mathematical quantile leaves the representable Double range for probabilities away from the plateau. | characterized |
 | IncompleteBeta.StudentTLargeDF | StudentT_Cumulative;StudentT_Survival;StudentT_InverseCumulative | Student t degrees of freedom above 1E8 (measured envelope; raised from 1E6 after CR-P1-02, benchmark/envelope_probe) | measured 1.2E-09 relative at df 1E8 and degrading roughly tenfold per decade beyond; the public t surface REJECTS df > 1E8 with CVErr(xlErrNum) | mitigated |
@@ -439,23 +440,18 @@ study grid that carries one (#159):
   that prevents the change. A registered cell that is fixed or removed makes its
   entry stale, and the check fails until the entry is deleted.
 
-The registry holds 73 references today:
+The registry is empty since the #81 wave (2026-11-06). It held 73 references:
+49 in the main grid, 15 in the holdout, and 9 that the #72 normal-tail record
+reads (7 in `holdout_older`, 2 in `survival_boundary`).
+`rebase_survival_debt.py` re-based all 73 from the source that owns each row:
+- the `beta_f_unbalanced` and `cdf_large_shape` study grids for their
+  main-grid copies;
+- `generate_reference_values.py`, `holdout/generate_holdout.py` and the two
+  study generators for the rest.
 
-- **49 main-grid and 15 holdout references.** `observation_manifest.json`, the
-  Excel export record and `holdout/holdout_manifest.json` bind these grids byte
-  for byte, so a manifest binding blocks the re-base until a fresh Excel export.
-  I re-base them with the next export, in the #81 wave. The fixed generators
-  already produce floor-meeting values for every one of them. One gap must be
-  closed in that wave: the main generator does not yet emit the main-grid copies
-  of the `beta_f_unbalanced` and `cdf_large_shape` rows (evidence sets
-  `beta_f_unbalanced` and the `large_shape`/`extreme_shape` regimes), so neither
-  `migrate_references.py` nor `promote_grid_rows.py` can re-reference those
-  copies yet.
-- **9 references the #72 normal-tail record reads**, 7 in
-  `holdout_older/holdout_older_grid.csv` and 2 in
-  `survival_boundary/survival_boundary_grid.csv`. They are re-based with the #81
-  wave, when the #72 kernel evidence is redone; until then
-  `normal_tail_study/results.json` keeps its recorded values.
+Each new value had to meet the floor against the oracle. Only the reference
+cell changed, and the old and new values are in `study_reference_rebase.csv`.
+The main grid and the holdout were then re-exported from Excel to rebind them.
 
 The check runs every row, without sampling, in about 100 CPU seconds, in
 parallel by default. It is wired into `test_evidence_tools.py` with its negative

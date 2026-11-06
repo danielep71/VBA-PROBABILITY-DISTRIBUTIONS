@@ -29,7 +29,7 @@ Option Explicit
 '   observed_vba (column index 8) and reads the regime (index 9) for functions
 '   that publish more than one output. It never reads the reference column, so
 '   the observed side stays independent. Note this is the study grid, not the
-'   12-column main grid.
+'   13-column main grid.
 '
 ' SCOPE
 '   The grid currently holds only the three survival functions. The dispatch

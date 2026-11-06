@@ -148,6 +148,8 @@ class CommittedBinding(unittest.TestCase):
         self.assertEqual((record["source"], record["model"]), (F.SOURCE, F.MODEL))
         self.assertTrue(record["history"])
         self.assertEqual(F.extraction_problems(), [])
+        self.assertEqual(F.origin_problems(record), [])
+        self.assertEqual(record["origin"]["commit"], F.ORIGIN_COMMIT)
 
     def test_inventory_covers_every_statement(self):
         source = F.read_text(os.path.join(F.ROOT, F.SOURCE))
@@ -174,16 +176,14 @@ class CommittedBinding(unittest.TestCase):
 
 
 class Copy(unittest.TestCase):
-    """A temporary root with the bound source, the study folder and the grids F1 reads."""
+    """A temporary root holding the study folder, with the frozen source and observations F1 reads."""
 
     def setUp(self):
         self.root = tempfile.mkdtemp()
         self.study = os.path.join(self.root, "benchmark", "student_t_large_df_study")
         shutil.copytree(HERE, self.study, ignore=shutil.ignore_patterns("__pycache__"))
-        for name in (F.SOURCE, "benchmark/probability_accuracy_grid.csv", "benchmark/holdout/holdout_grid.csv"):
-            target = os.path.join(self.root, name)
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            shutil.copyfile(os.path.join(F.ROOT, name), target)
+        # The frozen source and observations live in the study folder; the
+        # model's results.json and coefficients come with it too.
         self.record_path = os.path.join(self.study, "source_binding.json")
         self.assertEqual(self.stale(), [])
 
@@ -456,6 +456,42 @@ class Record(Copy):
         self.assertEqual(entry["reason"], "synthetic: depth 24")
         self.assertEqual(len(entry["identities_changed"]), 2)
         self.assertEqual(len(F.load_record(self.record_path)["history"]), len(F.load_record()["history"]) + 1)
+
+
+class Origin(Copy):
+    """The frozen copies stay what the origin commit held (#81 replaced the kernel)."""
+
+    def origin(self):
+        return F.origin_problems(F.load_record(self.record_path), self.root)
+
+    def test_copies_match_their_record(self):
+        self.assertEqual(self.origin(), [])
+
+    def test_edited_frozen_source_fails(self):
+        self.replace(F.SOURCE, "'Use the Hart rational approximation below the tail split",
+                     "'Use the Hart rational approximation below the split")
+        self.assert_names(self.origin(), "origin source_git_blob")
+
+    def test_edited_observation_fails(self):
+        self.replace(F.OBSERVATIONS, "1.34989803163011E-003;4.98732999343332E-018",
+                     "1.34989803163011E-003;4.98732999343333E-018")
+        self.assert_names(self.origin(), "origin observations_sha256")
+
+    def test_missing_origin_block_fails(self):
+        record = F.load_record(self.record_path)
+        del record["origin"]
+        self.assertEqual(F.origin_problems(record, self.root),
+                         ["source_binding.json records no origin for the frozen copies"])
+
+    def test_copies_are_rebuilt_from_the_origin_commit(self):
+        """In this clone the origin commit is present: the copies are rebuilt from it."""
+        if F._git_show(F.ROOT, f"{F.ORIGIN_COMMIT}:{F.ORIGIN_SOURCE}") is None:
+            self.skipTest("origin commit not in this clone")
+        grids = {g: F._git_show(F.ROOT, f"{F.ORIGIN_COMMIT}:{g}") for g in F.ORIGIN_GRIDS}
+        with open(os.path.join(F.ROOT, F.OBSERVATIONS), encoding="utf-8", newline="") as f:
+            self.assertEqual(F.observation_rows(grids), f.read())
+        self.assertEqual(F.git_blob_id(F._git_show(F.ROOT, f"{F.ORIGIN_COMMIT}:{F.ORIGIN_SOURCE}")),
+                         F.git_blob_id(F.read_text(os.path.join(F.ROOT, F.SOURCE))))
 
 
 class FindingFixtureFailsClosed(Copy):

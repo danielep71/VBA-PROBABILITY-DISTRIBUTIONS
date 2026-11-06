@@ -1,7 +1,18 @@
 {
- "rule": "SHA-256 of the text of each bound VBA procedure and constant declaration in the source (CRLF normalized to LF) and of the model file. A change to any of them makes finding F1 stale until it is re-measured, the study documents and the statement inventory are updated, and model_fidelity.py --record --reason TEXT re-records the binding (#77).",
- "source": "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
+ "rule": "SHA-256 of the text of each bound VBA procedure and constant declaration in the source (CRLF normalized to LF) and of the model file. A change to any of them makes finding F1 stale until it is re-measured, the study documents and the statement inventory are updated, and model_fidelity.py --record --reason TEXT re-records the binding (#77). Since #81 replaced the kernel, the source is a verbatim copy of the module at the origin commit, and origin records the Git blob of that copy and the SHA-256 of the Excel observations F1 was measured against.",
+ "source": "benchmark/student_t_large_df_study/f1_frozen/M_STATS_PROBDIST_NORMALFAMILY.bas.frozen",
  "model": "benchmark/student_t_large_df_study/binary64_route_model.py",
+ "origin": {
+  "commit": "495d0cf4b767657a864b303e06bbbbbe794750a8",
+  "source": "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
+  "source_git_blob": "ceaadce4cfdfa0ea32fed31ea23bc141941c4c4b",
+  "grids": [
+   "benchmark/probability_accuracy_grid.csv",
+   "benchmark/holdout/holdout_grid.csv"
+  ],
+  "observations": "benchmark/student_t_large_df_study/f1_frozen/normal_observations.csv",
+  "observations_sha256": "561a45da550feb375c0adbe0295a984c748b8becea9f4df4097058163253a4d3"
+ },
  "evidence": [
   "benchmark/student_t_large_df_study/PRODUCTION_FEASIBILITY.md (finding F1)",
   "benchmark/student_t_large_df_study/test_binary64_route_model.py"
@@ -33,6 +44,13 @@
    "reason": "Bound PROB_PDF_UNDERFLOW_Z, the guard constant of the density's intentionally unchecked underflow guard, after replacing the literal and predicate cross-check with the full statement inventory and translation (#77 review of #147). The source and model are unchanged.",
    "identities_changed": [
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas constant PROB_PDF_UNDERFLOW_Z: recorded None, now 38e0798d36b854c5fcad04adeff169efb9ebd6c2ca75fb126321013e37f710dd"
+   ]
+  },
+  {
+   "date": "2026-11-06",
+   "reason": "Finding F1 re-bound to a verbatim copy of src/M_STATS_PROBDIST_NORMALFAMILY.bas at 495d0cf and to the 12 Excel observations of that kernel, because #81 replaces the normal-tail kernel F1 measured (#72). Procedure, constant and model identities are unchanged; only the source path moves and the origin block is added.",
+   "identities_changed": [
+    "source_binding.json names a different source or model"
    ]
   }
  ]

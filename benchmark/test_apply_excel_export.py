@@ -32,7 +32,8 @@ import _manifest as M  # noqa: E402
 
 TOOLS = ("apply_excel_export.py", "excel_certification.py", "_manifest.py",
          "finalize_excel_certification.py", "check_excel_certification.py")
-MAIN, HOLDOUT, OLDER = (A.GRIDS[n].path for n in ("main", "holdout", "holdout_older"))
+MAIN, HOLDOUT, OLDER, BOUNDARY = (A.GRIDS[n].path for n in ("main", "holdout", "holdout_older",
+                                                             "survival_boundary"))
 HEADER13 = ("function,vba_kernel,claim,metric,arg1,arg2,arg3,arg4,reference,"
             "observed_vba,regime,evidence_set,expected_error")
 GRID_TEXT = {
@@ -46,6 +47,10 @@ GRID_TEXT = {
     OLDER: "function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,"
            "evidence_set\n"
            "Normal_Cumulative,K,holdout,rel,1.35,0.4,1.7,0.71,7.1E-001;0E+000,all,holdout_older\n",
+    BOUNDARY: "function,vba_kernel,claim,metric,arg1,arg2,arg3,reference,observed_vba,regime,"
+              "evidence_set\n"
+              "NormalStandard_Survival,K,boundary,rel,3.5,,,0.00023,2.3E-004;0E+000,all,"
+              "survival_boundary\n",
 }
 STUB = '''import json, os, sys
 with open(os.environ["REFRESH_STUB_LOG"], "w") as f:
@@ -380,6 +385,18 @@ class ApplyExcelExportTests(unittest.TestCase):
         changed = fx.dirty()
         self.assertIn(OLDER, changed)
         self.assertNotIn(A.RETAINED_RECORD, changed)
+
+    def test_survival_boundary_only_binds_nothing(self):
+        fx = self.fx
+        out = fx.artifact(names=("survival_boundary",))
+        code, output, refresh = fx.apply(out)
+        self.assertEqual(code, 0, output)
+        self.assertEqual(refresh, [])
+        self.assertNotIn("finalize_excel_certification.py", output.split("Commit message:")[0])
+        changed = fx.dirty()
+        self.assertIn(BOUNDARY, changed)
+        self.assertNotIn(A.RETAINED_RECORD, changed)
+        self.assertIn("full export by Export_SurvivalBoundary", output)
 
     def test_missing_only_main_export(self):
         out = self.fx.artifact(names=("main",), mode="missing-only")

@@ -22,3 +22,33 @@ The standard-normal survival core (shared by `Normal_Survival`, `Lognormal_Survi
 > 5E-15 holds through z=2.75 (worst 3.63E-15) and breaches at z=3.0; 2E-14 holds through z=3.25 and breaches at z=3.5. Hence: `Normal_Survival` / `Lognormal_Survival` tight (5E-15) domain restricted to |z| <= 2.75; `NormalStandard_Survival` (2E-14) to |z| <= 3.25. Deeper-tail relative behavior recorded as `SurvivalTailRel` in numerical_limitations.csv. Even at z=6 the survival value is right to ~5E-10 relative, far better than 1-CDF cancellation.
 
 **Generator and references (#159, 2026-11-05).** `generate_survival_boundary.py` reproduces this grid; it was built without a committed generator. The generator computes every reference as the direct upper tail `erfc(z / sqrt 2) / 2` at the exact Double of the stored arguments. The two committed `Lognormal_Survival` references were taken at the design value z = 2.5 and 3.5, not at `log(x)` for the Double x the exporter passes, and keep about 16 of their 30 digits. The #72 normal-tail record (`../normal_tail_study/results.json`) binds this grid and records each row's error against its committed reference, so `--merge-references` holds every row back and reports the change; `../survival_reference_debt.json` registers the two references until that study decides.
+
+## Repaired kernel (#72, #81, 2026-11-06)
+
+The table above measures the replaced kernel. Run 42231334906 re-exported this grid with the repaired kernel on `bb52717`:
+
+| z | survival | relative error |
+|---:|---:|---:|
+| 1.50 | 6.681e-02 | 9.34e-17 |
+| 2.00 | 2.275e-02 | 1.64e-16 |
+| 2.25 | 1.222e-02 | 2.59e-17 |
+| 2.50 | 6.210e-03 | 2.20e-16 |
+| 2.75 | 2.980e-03 | 2.21e-16 |
+| 3.00 | 1.350e-03 | 2.00e-17 |
+| 3.25 | 5.770e-04 | 1.14e-16 |
+| 3.50 | 2.326e-04 | 7.68e-17 |
+| 3.75 | 8.842e-05 | 2.11e-16 |
+| 4.00 | 3.167e-05 | 1.85e-16 |
+| 4.50 | 3.398e-06 | 2.56e-16 |
+| 5.00 | 2.867e-07 | 1.23e-16 |
+| 5.50 | 1.899e-08 | 2.47e-17 |
+| 6.00 | 9.866e-10 | 6.70e-17 |
+
+All 19 rows are within the §7 predictions of `../normal_tail_study` (`excel_wave_check_survival_boundary.json`). `Normal_Survival` at z = 2.5, 3.5 and 5 measures at most 2.2E-16, and `Lognormal_Survival` at z = 2.5 and 3.5 at most 1.8E-16.
+
+The survival contracts were then widened as far as this evidence and the input-rounding bound support:
+- `NormalStandard_Survival`: 5E-15 for |Z| <= 6, instead of 2E-14 for |Z| <= 3.25;
+- `Normal_Survival`: 5E-15 for |z| <= 4;
+- `Lognormal_Survival`: 5E-15 for |z| <= 3.5.
+
+`SurvivalTailRel` is resolved.

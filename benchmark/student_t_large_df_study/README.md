@@ -67,7 +67,8 @@ existing route. The CF is retained outside the region and is accurate there.
 | `binary64_route_model.py` | binary64 model of the production route and the VBA normal-tail kernel |
 | `test_binary64_route_model.py` | CI fixture pinning finding F1 |
 | `model_fidelity.py` | true binary64 ULP distance, and the binding of the model to its VBA source |
-| `source_binding.json` | SHA-256 of the bound VBA procedures, constants and model |
+| `source_binding.json` | SHA-256 of the bound VBA procedures, constants and model, and the origin of the frozen copies |
+| `f1_frozen/` | the module and the 12 Excel observations F1 measured, as commit `495d0cf` held them (#81) |
 | `test_model_fidelity.py` | CI fixture: ULP edge cases, three-step and source-mutation negatives |
 | `PRODUCTION_FEASIBILITY.md` | finding F1: the adopted route is not buildable on the existing normal-tail kernel |
 
@@ -88,6 +89,11 @@ other 3 are 1, 1 and 2 ULPs apart, within the unchanged two-ULP limit. The
 model is also bound to the VBA procedures and constants it mirrors, so a change to
 the normal-tail kernel fails the F1 fixture until the finding is re-measured.
 F1's conclusions are unchanged. See Amendment 1 of `PRODUCTION_FEASIBILITY.md`.
+
+**2026-11-06 (#81).** #81 replaces the kernel F1 measured. F1 now stays bound to
+a verbatim copy of the module at `495d0cf` and to the 12 Excel observations of
+that kernel, both under `f1_frozen/`, with their origin recorded and checked.
+See Amendment 2 of `PRODUCTION_FEASIBILITY.md`.
 
 ## Oracle gap
 
