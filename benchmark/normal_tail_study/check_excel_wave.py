@@ -160,6 +160,7 @@ def main(argv=None):
     ap.add_argument("--predictions", default=os.path.join(HERE, "results.json"),
                     help="the results.json that recorded the predictions (default: this folder's)")
     ap.add_argument("--no-holdout", action="store_true", help="skip P5")
+    ap.add_argument("--out", default=OUT, help="where to write the result (default: excel_wave_check.json)")
     a = ap.parse_args(argv)
 
     with open(a.predictions, "rb") as f:
@@ -225,7 +226,7 @@ def main(argv=None):
                       + "; ".join(r["problems"]) for r in rows if r["status"] == "FAIL"],
         "rows": rows,
     }
-    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
+    with open(a.out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(report, f, indent=1)
         f.write("\n")
     for grid, status in grid_status.items():

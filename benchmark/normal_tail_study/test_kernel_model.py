@@ -173,12 +173,12 @@ for r in route_rows:
     check(e <= B, f"#34 route on the candidate kernel exceeds 2^-50 at t={r['t']}, df={r['df']}: {e:.3e}")
 
 # 5. Fidelity of the models to the committed Excel observations -------------
-# The main grid holds observations of the repaired kernel since the #81 export
-# (run 42210983927): there the candidate's recorded prediction must be within
-# 4 ulps of Excel (P1). survival_boundary was not re-exported, so its
-# observations are still those of the replaced kernel, and the model of that
-# kernel must reproduce them, as before.
-REEXPORTED = ("probability_accuracy_grid.csv",)
+# The main grid (run 42210983927) and survival_boundary (run 42231334906) hold
+# observations of the repaired kernel since the #81 wave: there the
+# candidate's recorded prediction must be within 4 ulps of Excel (P1). A grid
+# not yet re-exported would keep the replaced kernel's observations, which the
+# model of that kernel must reproduce.
+REEXPORTED = ("probability_accuracy_grid.csv", "survival_boundary/survival_boundary_grid.csv")
 direct = [r for r in res["predictions"]["rows"]
           if r["prediction"] == "P1" and r["grid"] != "holdout_older/holdout_older_grid.csv"]
 check(len(direct) >= 30, f"too few direct rows recorded: {len(direct)}")

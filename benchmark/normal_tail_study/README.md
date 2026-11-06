@@ -164,8 +164,15 @@ the prediction was changed after the export.
 
 **Not checked.** The 19 `survival_boundary` rows (14 P1, 5 P2) were not
 re-exported: their exporter, `Export_SurvivalBoundary`, asks for the grid
-through a file picker, which the unattended export cannot answer. They stay
-open under #72.
+through a file picker, which the unattended export cannot answer.
+
+*Later the same day.* The export learned to stage that grid beside the
+workbook, so the exporter finds it without the picker. Run 42231334906
+exported it on `bb52717` (evidence `68a6449`), and
+`check_excel_wave.py --no-holdout --out excel_wave_check_survival_boundary.json`
+found all 19 rows within their predictions:
+- P1: 14 rows, worst 2.63E-16, at most 2 ulps from the predicted value.
+- P2: 5 rows, worst 2.31E-16.
 
 The study record was then regenerated against the new grids (see
 `regenerations` in `results.json`): the recorded predictions are recomputed
@@ -403,6 +410,7 @@ and `fit_convergence.json`, and writes nothing.
 | `results.json` | every measurement, the acceptance record, the per-row predictions, the provenance block and the holdout exposure record |
 | `check_excel_wave.py` | checks the §7 predictions, and P5 on the holdout, against an Excel export; writes `excel_wave_check.json` |
 | `excel_wave_check.json` | the result for the export of `7fb08ae` (#81) |
+| `excel_wave_check_survival_boundary.json` | the result for the `survival_boundary` export of `bb52717` (#81) |
 | `test_vba_kernel_source.py` | CI fixture binding the VBA source and its regression references to the validated model |
 | `test_kernel_model.py` | CI fixture pinning the coefficients, literals, recorded result and recorded A6 |
 | `test_conditioning.py` | CI fixture of Amendment 2: the recorded P2 bounds, negative-`z`, centre, near-centre and seam rows |
