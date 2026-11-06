@@ -2,9 +2,10 @@
 """Preview, apply or verify the repository settings baseline through the GitHub CLI.
 
 The baseline is docs/repo_governance/repository-settings.json: visibility,
-merge methods and repository features, the security features, and the
-repository rulesets with their required checks. Preview (the default) and
-verify only read; apply writes and then reads everything back.
+merge methods and repository features, the security features, the GitHub
+Actions settings, and the repository rulesets with their required checks.
+Preview (the default) and verify only read; apply writes and then reads
+everything back. Actions settings are read and reported, never written.
 """
 # Postponed annotations keep the version check in main() reachable on old Pythons.
 from __future__ import annotations
@@ -24,9 +25,9 @@ from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = ROOT / 'docs' / 'repo_governance' / 'repository-settings.json'
-SCHEMA_VERSION = 1
-EVIDENCE_SCHEMA_VERSION = 1
-TOP_KEYS = {'schema_version', 'repository', 'visibility', 'settings', 'security', 'rulesets'}
+SCHEMA_VERSION = 2
+EVIDENCE_SCHEMA_VERSION = 2
+TOP_KEYS = {'schema_version', 'repository', 'visibility', 'settings', 'security', 'actions', 'rulesets'}
 RULE_KEYS = ('name', 'target', 'enforcement', 'conditions', 'rules', 'bypass_actors')
 SETTING_KEYS = (
     'allow_merge_commit', 'allow_squash_merge', 'allow_rebase_merge', 'allow_auto_merge',
@@ -39,6 +40,28 @@ SECURITY_KEYS = (
     'secret_scanning', 'secret_scanning_push_protection',
 )
 ANALYSIS_KEYS = ('secret_scanning', 'secret_scanning_push_protection')
+# Free only on public repositories; a private one needs a paid licence for secret scanning.
+PUBLIC_ONLY_KEYS = ('private_vulnerability_reporting', 'secret_scanning', 'secret_scanning_push_protection')
+# Dependabot security updates that are enabled but paused open no pull requests.
+PAUSED = 'on (paused)'
+PAUSE_NOTE = ('NOTE: Dependabot security updates are enabled but paused, so they open no pull '
+              'requests. GitHub pauses them when Dependabot pull requests go unanswered; '
+              'answering or closing the open Dependabot pull requests resumes them. Until then '
+              'they are drift, and --apply cannot resume them.')
+# GitHub Actions settings: baseline key -> (endpoint under repos/{r}/, response field, type, allowed).
+ACTIONS_SETTINGS: dict[str, tuple[str, str, type, tuple[Any, ...]]] = {
+    'actions_enabled': ('actions/permissions', 'enabled', bool, ()),
+    'sha_pinning_required': ('actions/permissions', 'sha_pinning_required', bool, ()),
+    'default_workflow_permissions': ('actions/permissions/workflow', 'default_workflow_permissions',
+                                     str, ('read', 'write')),
+    'can_approve_pull_request_reviews': ('actions/permissions/workflow',
+                                         'can_approve_pull_request_reviews', bool, ()),
+    'fork_pr_approval_policy': ('actions/permissions/fork-pr-contributor-approval', 'approval_policy',
+                                str, ('first_time_contributors_new_to_github',
+                                      'first_time_contributors', 'all_external_contributors')),
+    'artifact_and_log_retention_days': ('actions/permissions/artifact-and-log-retention', 'days',
+                                        int, ()),
+}
 MERGE_METHOD_SETTINGS = {
     'merge': 'allow_merge_commit', 'squash': 'allow_squash_merge', 'rebase': 'allow_rebase_merge',
 }
@@ -129,6 +152,21 @@ def load_baseline(path: Path) -> dict[str, Json]:
     _bools(value['settings'], SETTING_KEYS, 'repository settings')
     _bools(value['security'], SECURITY_KEYS, 'security features')
     security = value['security']
+    public_only = [key for key in PUBLIC_ONLY_KEYS if security[key]]
+    if value['visibility'] == 'private' and public_only:
+        raise SetupError('A private baseline cannot turn on ' + ', '.join(public_only) + ': GitHub '
+                         'offers them free only on public repositories, and a private repository '
+                         'needs a paid licence this tool does not manage.')
+    actions = value['actions']
+    if not isinstance(actions, dict) or set(actions) != set(ACTIONS_SETTINGS):
+        raise SetupError('The baseline must give exactly the documented Actions settings: '
+                         + ', '.join(ACTIONS_SETTINGS) + '.')
+    for key, (_, _, kind, allowed) in ACTIONS_SETTINGS.items():
+        if type(actions[key]) is not kind or (allowed and actions[key] not in allowed):
+            raise SetupError(f'The baseline Actions setting {key} must be a {kind.__name__}'
+                             + (f' among {", ".join(allowed)}.' if allowed else '.'))
+    if not 1 <= actions['artifact_and_log_retention_days'] <= 400:
+        raise SetupError('The baseline artifact and log retention must be 1 to 400 days.')
     if security['secret_scanning_push_protection'] and not security['secret_scanning']:
         raise SetupError('Push protection requires secret scanning.')
     if security['automated_security_fixes'] and not security['vulnerability_alerts']:
@@ -186,15 +224,19 @@ def security_states(call: Call, root: str, metadata: dict[str, Json]) -> dict[st
         if failure is None else
         {'observed': None, 'source': f'GET private-vulnerability-reporting unreadable (HTTP {failure})'})
 
-    fixes = status('dependabot_security_updates')
-    if fixes['observed'] is None:
-        value, failure = read(call, root + '/automated-security-fixes')
-        if failure is None:
-            fixes = {'observed': bool((value or {}).get('enabled')), 'source': 'GET automated-security-fixes'}
-        elif failure == '404':
-            fixes = {'observed': False, 'source': 'GET automated-security-fixes (404: off)'}
-        else:
-            fixes = {'observed': None, 'source': f'GET automated-security-fixes unreadable (HTTP {failure})'}
+    # Only the endpoint reports a pause, so it is always read; security_and_analysis
+    # says enabled for paused updates too, and stands in only when the endpoint is unreadable.
+    value, failure = read(call, root + '/automated-security-fixes')
+    if failure is None:
+        enabled, paused = bool((value or {}).get('enabled')), bool((value or {}).get('paused'))
+        fixes: dict[str, Json] = {'observed': (PAUSED if paused else True) if enabled else False,
+                                  'paused': paused and enabled, 'source': 'GET automated-security-fixes'}
+    elif failure == '404':
+        fixes = {'observed': False, 'paused': False, 'source': 'GET automated-security-fixes (404: off)'}
+    else:
+        fixes = dict(status('dependabot_security_updates'), paused=None)
+        fixes['source'] += (f'; paused state unknown (GET automated-security-fixes unreadable: '
+                            f'HTTP {failure})')
 
     # 204 means on and 404 off. When the endpoint cannot be read, enabled
     # security updates still prove the alerts on: GitHub requires them.
@@ -203,7 +245,7 @@ def security_states(call: Call, root: str, metadata: dict[str, Json]) -> dict[st
         alerts: dict[str, Json] = {'observed': True, 'source': 'GET vulnerability-alerts (204: on)'}
     elif failure == '404':
         alerts = {'observed': False, 'source': 'GET vulnerability-alerts (404: off)'}
-    elif fixes['observed'] is True:
+    elif fixes['observed'] in (True, PAUSED):
         alerts = {'observed': True, 'source': f'inferred from Dependabot security updates being on '
                                               f'(GET vulnerability-alerts unreadable: HTTP {failure})'}
     else:
@@ -214,6 +256,23 @@ def security_states(call: Call, root: str, metadata: dict[str, Json]) -> dict[st
     for key in ANALYSIS_KEYS:
         states[key] = status(key)
     return {key: states[key] for key in SECURITY_KEYS}
+
+
+def actions_states(call: Call, root: str) -> dict[str, dict[str, Json]]:
+    """Each Actions setting as observed, or None with the reason it could not be read."""
+    states: dict[str, dict[str, Json]] = {}
+    bodies: dict[str, tuple[Json, str | None]] = {}
+    for key, (endpoint, field, _, _) in ACTIONS_SETTINGS.items():
+        if endpoint not in bodies:
+            bodies[endpoint] = read(call, f'{root}/{endpoint}')
+        value, failure = bodies[endpoint]
+        if failure is not None:
+            states[key] = {'observed': None, 'source': f'GET {endpoint} unreadable (HTTP {failure})'}
+        elif not isinstance(value, dict) or field not in value:
+            states[key] = {'observed': None, 'source': f'GET {endpoint} does not report {field}'}
+        else:
+            states[key] = {'observed': value[field], 'source': f'GET {endpoint}'}
+    return states
 
 
 def observe(call: Call, repo: str) -> dict[str, Json]:
@@ -231,6 +290,7 @@ def observe(call: Call, repo: str) -> dict[str, Json]:
         'rulesets': {r['name']: call('GET', f'{root}/rulesets/{r["id"]}') for r in own},
         'inherited': [r['name'] for r in listed if r.get('source_type', 'Repository') != 'Repository'],
         'security': security_states(call, root, metadata),
+        'actions': actions_states(call, root),
     }
 
 
@@ -280,13 +340,19 @@ def assess(baseline: dict[str, Json], state: dict[str, Json]) -> dict[str, Json]
             found = ['rules: observed and baseline differ']
         rulesets.append({'name': desired['name'], 'id': actual.get('id'),
                          'status': 'differs' if found else 'matches', 'differences': found})
+    # Actions settings are never written: an unreadable one is unverified (None), not drift.
+    actions = [{'setting': key, 'baseline': value, **state['actions'][key],
+                'matches': None if state['actions'][key]['observed'] is None
+                else state['actions'][key]['observed'] == value}
+               for key, value in baseline['actions'].items()]
     managed = {r['name'] for r in baseline['rulesets']}
     visibility = {'baseline': baseline['visibility'], 'observed': metadata.get('visibility'),
                   'matches': metadata.get('visibility') == baseline['visibility']}
     drift = (not visibility['matches'] or not all(row['matches'] for row in settings + security)
+             or any(row['matches'] is False for row in actions)
              or any(row['status'] != 'matches' for row in rulesets))
     return {'result': 'DRIFT' if drift else 'VERIFIED', 'visibility': visibility,
-            'settings': settings, 'security': security, 'rulesets': rulesets,
+            'settings': settings, 'security': security, 'actions': actions, 'rulesets': rulesets,
             'unmanaged_rulesets': sorted(name for name in state['rulesets'] if name not in managed),
             'inherited_rulesets': sorted(state['inherited'])}
 
@@ -331,6 +397,15 @@ def print_report(report: dict[str, Json]) -> None:
         if not row['matches']:
             print(f'DIFF security {row["feature"]}: observed {json.dumps(row["observed"])}, '
                   f'baseline {json.dumps(row["baseline"])} [{row["source"]}]')
+        if row.get('paused'):
+            print(PAUSE_NOTE)
+    for row in report['actions']:
+        if row['matches'] is False:
+            print(f'DIFF actions {row["setting"]}: observed {json.dumps(row["observed"])}, '
+                  f'baseline {json.dumps(row["baseline"])} (never changed by this tool; change it '
+                  'in the repository Actions settings)')
+        elif row['matches'] is None:
+            print(f'NOTE: actions {row["setting"]} not verified: {row["source"]}.')
     for row in report['rulesets']:
         if row['status'] == 'missing':
             print(f'DIFF ruleset "{row["name"]}": missing')
@@ -363,6 +438,7 @@ def evidence(baseline_path: Path, repo: str, state: dict[str, Json], report: dic
         'visibility': report['visibility'],
         'settings': report['settings'],
         'security': report['security'],
+        'actions': report['actions'],
         'rulesets': report['rulesets'],
         'unmanaged_rulesets': report['unmanaged_rulesets'],
         'inherited_rulesets': report['inherited_rulesets'],
@@ -438,7 +514,10 @@ def run(args: argparse.Namespace, call: Call = api, now: datetime | None = None)
     if args.evidence:
         write_evidence(args.evidence, evidence(args.baseline, repo, state, report, steps, mode, stamp), stamp)
     if report['result'] == 'VERIFIED':
-        print('VERIFIED: every setting in the baseline matches. Settings outside it are not checked.')
+        unread = [row['setting'] for row in report['actions'] if row['matches'] is None]
+        print('VERIFIED: every setting in the baseline matches'
+              + (f', except {len(unread)} Actions setting(s) that could not be read (see NOTE)'
+                 if unread else '') + '. Settings outside it are not checked.')
         return 0
     if args.apply:
         print_report(report)
