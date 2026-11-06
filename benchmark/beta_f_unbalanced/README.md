@@ -44,6 +44,8 @@ reading and is unchanged here. The 16 main-grid `Beta_Survival` rows promoted
 from this study keep their old references until the main grid is re-exported;
 `../survival_reference_debt.json` registers them.
 
+*2026-11-06 (#81).* The #81 wave re-based these references with `../rebase_survival_debt.py`, and the Excel export rebound the grid; `../survival_reference_debt.json` is now empty.
+
 ## Files
 
 | File | Role |

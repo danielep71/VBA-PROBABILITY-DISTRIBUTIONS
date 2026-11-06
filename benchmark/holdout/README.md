@@ -47,6 +47,8 @@ registers them, and the fixed generator supplies the replacement values (every
 survival reference it emits for the committed rows meets the floor, the worst at
 29.6 digits).
 
+*2026-11-06 (#81).* The #81 wave re-based these references with `../rebase_survival_debt.py`, and the Excel export rebound the grid; `../survival_reference_debt.json` is now empty.
+
 ## How to run
 
 1. Import `M_STATS_PROBDIST_HOLDOUT.bas`, `Debug > Compile`.
