@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-06T14:33:42Z",
-  "commit_sha": "0c8c997",
+  "generated_utc": "2026-11-06T15:48:00Z",
+  "commit_sha": "c8bb0ae",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -19,18 +19,18 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_row_count": 559,
-  "observation_grid_sha256": "sha256:7c512aa4893ed9531f74bd55a52a5a64a586906f1ca21c0abf46c09f8dc4e0b8",
+  "observation_row_count": 603,
+  "observation_grid_sha256": "sha256:0844a5b9db329ebfccffde78f92dfc3227aa0fe16858326bb5f33031a59977de",
   "source_binding": {
-    "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:43a8545ba47ffb1260663d3784d7db3296fce84f28af5004629e24f7f59afd60",
+    "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:914a68538334c0fa127eb4f88cfa8301ce8862d53ee3b093f88d5cbd84f251f5",
     "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:98088a99e80dccbc5424ea2eb7d9a450f562bdcde5e65ef5a563f6099e4c84c2",
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:7ecf915a51ea83828ea6e079a871aeca5dba6282e520ee70995f33ac812db9c4",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:8e4dda5287bcdd71e2466ade4018dd0b9b5f4c4831c701d5ea76f04b051f4b28",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:aaa95c2d9a0f13b882e69faeccb55f433200333cbbf68d9881d903055f5214af",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:af658f337df4e895aabbea23c8c046e5689f2957239b9bf40cad98d7c589f9aa"
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:86ddb66e466a1ae8fbd3cad1e4c6baf5e050d4ab4a123e473bbfb33fa681e1b1"
   },
-  "contract_registry_sha256": "sha256:5b48e3c7b51d31597d4baab0bf5bbc6fdca71e8b4bcb513d02a4616c04a3b058",
+  "contract_registry_sha256": "sha256:fc7afe3718a95ac80f2075598fb005787458d9dfddf69d57efc293e062d4f5a9",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20430",

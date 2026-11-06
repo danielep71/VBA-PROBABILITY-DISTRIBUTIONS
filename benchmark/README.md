@@ -164,7 +164,7 @@ by rate (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**166 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**167 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 | Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
 |---|---|---|---|---|---|---|
@@ -317,12 +317,13 @@ by rate (Lambda), not scale.
 | Poisson_Variance.all.output_rel | Poisson_Variance | all | output_error | relative | 5E-15 | validated and frozen |
 | StirlingError.all.output | StirlingError | all | output_error | absolute | 1E-13 | validated and frozen |
 | StudentT_Cumulative.all.output | StudentT_Cumulative | all | output_error | relative | 1.3E-12 | validated and frozen |
-| StudentT_Cumulative.envelope_domain.output_rel | StudentT_Cumulative | envelope_domain | output_error | relative | 2E-10 | validated and frozen |
+| StudentT_Cumulative.envelope_domain.output_rel | StudentT_Cumulative | envelope_domain | output_error | relative | 5E-15 | validated and frozen |
 | StudentT_Density.all.output | StudentT_Density | all | output_error | relative | 2E-14 | validated and frozen |
 | StudentT_Density.large_df.output_rel | StudentT_Density | large_df | output_error | relative | 5E-12 | validated and frozen |
 | StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | validated and frozen |
+| StudentT_InverseCumulative.envelope_domain.quantile_rel | StudentT_InverseCumulative | envelope_domain | quantile_error | relative | 5E-15 | validated and frozen |
 | StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | validated and frozen |
-| StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 5E-09 | validated and frozen |
+| StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 5E-15 | validated and frozen |
 | Uniform_Cumulative.all.output | Uniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
 | Uniform_Density.all.output | Uniform_Density | all | output_error | relative | 5E-15 | validated and frozen |
 | Uniform_InverseCumulative.all.output | Uniform_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
