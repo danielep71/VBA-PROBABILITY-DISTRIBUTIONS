@@ -135,11 +135,24 @@ arguments. `production_predictions.json` records every row's prediction.
   - The `p = 0.5` rows stay exactly 0.
 - **PT3, unchanged.** Every other Student-t row of these grids, every
   `StudentT_Density` row and every `F_*` row is **bit-identical** to its
-  observation before the change. That covers the balanced-huge F comparator at
+  baseline observation. That covers the balanced-huge F comparator at
   `df1 = df2 = 1E8`: the change is Student-t specific and must leave F
   unchanged.
+  - **Main grid baseline:** its committed observations, exported from current
+    source by #81's last export (`0c8c997`).
+  - **`tchi_large_df` baseline:** its committed observations are stale. 89
+    non-density Student-t rows above `df = 1E8` hold numbers, although the
+    current public functions reject those arguments through
+    `PROB_T_ValidateEnvelope`; they predate that envelope. Before the
+    implementation is exported, the wave therefore exports this grid once from
+    the base commit, by the same unattended path. That export is the PT3
+    baseline for this grid.
 - **PT4, untouched holdout.** The rows of §6 are checked once, with the PT1 and
   PT2 rules.
+
+`tchi_large_df` is exported by its own exporter, `Export_TChiLargeDf`. Like
+`survival_boundary`, it finds its grid beside the workbook. The wave adds it to
+the unattended export before it takes the baseline.
 
 A row outside its prediction falsifies it. It is recorded against #34 before
 any contract changes. No prediction is re-derived after the export.
@@ -180,12 +193,20 @@ No threshold is widened. The inverse domain excludes `|p − 0.5| < 0.1`, where
 the quantile's conditioning `min(p, 1−p) / (|q| f(q))` exceeds 4 and the PT2
 bound passes 5E-15.
 
-**VBA regressions** that come with the route, at 2E-15 relative:
-- the `t = 2` survival and `p = 0.99` inverse ladders at `df = 1E6, 1E7, 1E8`;
-- the clean controls `t = 1` and `p = 0.9`;
-- `p = 0.5`;
-- both signs;
-- `df = 1E5` and `|t| = 8` on each side of the seams.
+**VBA regressions** that come with the route:
+- **Inside the region, at 2E-15 relative:**
+  - the `t = 2` survival and `p = 0.99` inverse ladders at `df = 1E6, 1E7, 1E8`;
+  - the clean controls `t = 1` and `p = 0.9`;
+  - `p = 0.5`;
+  - both signs;
+  - the seam points themselves: `df = 1E5` and `|t| = 8`.
+- **Just outside the region:** the continued fraction still serves these
+  points, and the controls only show that it does. They use its characterized
+  accuracy, not the route's:
+  - 2E-12 relative at the Double below `df = 1E5`, for `|t| ≤ 8` (1.25E-12
+    measured at `t = 2`, §4);
+  - 1E-9 relative at the Double above `|t| = 8`, for `df ≤ 1E8` (4.7E-10
+    measured at `df = 1E8`, §4 and §9).
 
 The forward references are correctly rounded and reproduced by the model. The
 inverse checks are round trips through the survival.
