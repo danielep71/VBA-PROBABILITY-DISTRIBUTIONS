@@ -9,8 +9,10 @@ import process from "node:process";
 import {
   MAX_RETRY_DELAY_MS,
   compareNames,
+  inlineCode,
   listLiveLabels,
   loadJson,
+  markdownEscape,
   normalizedLiveLabel,
   planChanges,
   resolveDesired,
@@ -95,13 +97,10 @@ function buildReport({ repository, manifestPath, manifest, desiredLabels, liveLa
   };
 }
 
-function markdownEscape(value) {
-  return String(value).replaceAll("|", "\\|").replaceAll("\n", " ");
-}
-
 function compactLabel(label) {
   if (label === null) return "—";
-  return `\`${markdownEscape(label.name)}\` / \`${label.color}\` / ${markdownEscape(label.description)}`;
+  return `${inlineCode(label.name, { table: true })} / ${inlineCode(label.color, { table: true })} / `
+    + markdownEscape(label.description);
 }
 
 function markdownReport(report) {
@@ -109,8 +108,8 @@ function markdownReport(report) {
     "# Repository label drift",
     "",
     `- Status: **${String(report.status).toUpperCase()}**`,
-    `- Repository: \`${report.repository ?? "fixture"}\``,
-    `- Manifest: \`${report.manifest}\``,
+    `- Repository: ${inlineCode(report.repository ?? "fixture")}`,
+    `- Manifest: ${inlineCode(report.manifest)}`,
     `- Desired / observed: **${report.counts.desired} / ${report.counts.observed}**`,
     `- Differences: **${report.counts.differences}**`,
     `- Create / update / delete: **${report.counts.create} / ${report.counts.update} / ${report.counts.delete}**`,
@@ -126,7 +125,7 @@ function markdownReport(report) {
     );
     for (const difference of report.differences) {
       lines.push(
-        `| ${difference.action} | \`${markdownEscape(difference.name)}\` | `
+        `| ${difference.action} | ${inlineCode(difference.name, { table: true })} | `
         + `${difference.fields.length > 0 ? difference.fields.join(", ") : "—"} | `
         + `${compactLabel(difference.observed)} | ${compactLabel(difference.desired)} |`
       );
@@ -228,7 +227,20 @@ async function runSelfTest(manifestPath) {
   assert.equal(specialReport.status, "drift");
   assert.deepEqual(specialReport.differences.map(item => [item.action, item.name]),
     [["delete", "needs|triage"], ["delete", "wip `x`"]]);
-  assert.match(markdownReport(specialReport), /needs\\\|triage/);
+  const specialMarkdown = markdownReport(specialReport);
+  assert.ok(specialMarkdown.includes("| delete | `needs\\|triage` | — | `needs\\|triage` / `ABCDEF` / pipe | — |"),
+    specialMarkdown);
+  assert.ok(specialMarkdown.includes("| delete | `` wip `x` `` | — | `` wip `x` `` / `ABCDEF` / backtick | — |"),
+    specialMarkdown);
+
+  // Live values come from the API: a line break or pipe in them must not split the row.
+  const hostile = buildReport({
+    repository: "fixture/hostile", manifestPath, manifest, desiredLabels,
+    liveLabels: [...structuredClone(desiredLabels),
+      { name: "x", color: "AB|`\r\n", description: "line\r\nbreak | pipe" }]
+  });
+  const hostileRow = markdownReport(hostile).split("\n").find(line => line.startsWith("| delete |"));
+  assert.equal(hostileRow, "| delete | `x` | — | `x` / `` AB\\|`  `` / line break \\| pipe | — |");
 
   process.stdout.write(
     "SELF-TEST PASS: retry delays and deterministic no-drift, create/update/delete and special-name drift fixtures are read-only.\n"
