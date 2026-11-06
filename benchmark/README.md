@@ -52,6 +52,7 @@ required, and they answer different questions.
 | `_ibeta.py` | Continued-fraction incomplete beta / F reference helper, including the direct upper tails `ibeta_upper` and `f_sf`. Single-sourced: this is the only copy, and the study scripts import it from here. |
 | `check_survival_references.py`, `_survival_oracle.py` | Fail-closed audit of every committed survival reference against a direct upper-tail recomputation at its binary64 argument (#159). See [Survival reference basis](#survival-reference-basis). |
 | `survival_reference_debt.json` | The survival references known to miss the 25-digit floor that a binding prevents re-referencing yet, each with its blocker. |
+| `rebase_survival_debt.py` | Re-bases the registered survival references from the source that owns each row, once their bindings can be rebuilt (#159, #81). |
 | `_study_merge.py`, `study_reference_rebase.csv` | Reference-only merge of a regenerated study grid into the committed grid, keeping every observation, and the record of every reference it changed (old and new value). |
 | `environment.txt` | Python and dependency versions, reference precision, date. |
 
@@ -439,23 +440,18 @@ study grid that carries one (#159):
   that prevents the change. A registered cell that is fixed or removed makes its
   entry stale, and the check fails until the entry is deleted.
 
-The registry holds 73 references today:
+The registry is empty since the #81 wave (2026-11-06). It held 73 references:
+49 in the main grid, 15 in the holdout, and 9 that the #72 normal-tail record
+reads (7 in `holdout_older`, 2 in `survival_boundary`).
+`rebase_survival_debt.py` re-based all 73 from the source that owns each row:
+- the `beta_f_unbalanced` and `cdf_large_shape` study grids for their
+  main-grid copies;
+- `generate_reference_values.py`, `holdout/generate_holdout.py` and the two
+  study generators for the rest.
 
-- **49 main-grid and 15 holdout references.** `observation_manifest.json`, the
-  Excel export record and `holdout/holdout_manifest.json` bind these grids byte
-  for byte, so a manifest binding blocks the re-base until a fresh Excel export.
-  I re-base them with the next export, in the #81 wave. The fixed generators
-  already produce floor-meeting values for every one of them. One gap must be
-  closed in that wave: the main generator does not yet emit the main-grid copies
-  of the `beta_f_unbalanced` and `cdf_large_shape` rows (evidence sets
-  `beta_f_unbalanced` and the `large_shape`/`extreme_shape` regimes), so neither
-  `migrate_references.py` nor `promote_grid_rows.py` can re-reference those
-  copies yet.
-- **9 references the #72 normal-tail record reads**, 7 in
-  `holdout_older/holdout_older_grid.csv` and 2 in
-  `survival_boundary/survival_boundary_grid.csv`. They are re-based with the #81
-  wave, when the #72 kernel evidence is redone; until then
-  `normal_tail_study/results.json` keeps its recorded values.
+Each new value had to meet the floor against the oracle. Only the reference
+cell changed, and the old and new values are in `study_reference_rebase.csv`.
+The main grid and the holdout were then re-exported from Excel to rebind them.
 
 The check runs every row, without sampling, in about 100 CPU seconds, in
 parallel by default. It is wired into `test_evidence_tools.py` with its negative
