@@ -80,7 +80,8 @@ Option Explicit
 '     there to pin values, not to discriminate.
 '   - TOL_REL_LARGE_DF_TAIL pins the Student t large-df route (#34) at the
 '     same 2E-15. TOL_REL_LDF_OUTSIDE_DF is the continued fraction's
-'     characterized accuracy just below df = 1E5 (1.25E-12 measured).
+'     characterized accuracy just below df = 1E5: 3.16E-12 in Excel at t = 2,
+'     df = 1E5 (tchi_large_df base export; PRODUCTION_AMENDMENT_1.md).
 '   - TOL_REL_ACKLAM is not a project tolerance. It is the published relative
 '     error bound of the Acklam inverse-normal approximation, asserted directly
 '     so that a mistyped coefficient fails a named check.
@@ -219,7 +220,7 @@ Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
 Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
 Private Const TOL_REL_NORMAL_TAIL As Double = 0.000000000000002 '2E-15 relative, #72
 Private Const TOL_REL_LARGE_DF_TAIL As Double = 0.000000000000002 '2E-15 relative, #34
-Private Const TOL_REL_LDF_OUTSIDE_DF As Double = 0.000000000002 '2E-12 relative, #34
+Private Const TOL_REL_LDF_OUTSIDE_DF As Double = 0.000000000005 '5E-12 relative, #34
 
 
 '==============================================================================
