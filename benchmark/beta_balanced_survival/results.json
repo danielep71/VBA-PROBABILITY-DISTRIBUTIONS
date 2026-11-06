@@ -22,9 +22,9 @@
     "observations": 58
    },
    "Beta_Density": {
-    "exact": 133,
+    "exact": 134,
     "max_ulps": 0,
-    "observations": 133
+    "observations": 134
    },
    "Beta_Survival": {
     "exact": 58,
@@ -52,27 +52,21 @@
     "observations": 27
    },
    "StirlingError": {
-    "exact": 12,
+    "exact": 14,
     "max_ulps": 0,
-    "observations": 12
+    "observations": 14
    }
   },
-  "exact": 368,
+  "exact": 371,
   "limit_ulps": 2,
   "max_ulps": 0,
-  "observations": 368,
+  "observations": 371,
   "predates_source": {
    "beta_f_unbalanced": {
     "exact": 0,
     "max_ulps": 604926,
     "observations": 88,
     "why": "exported 2026-07-19, before the Loader dispatch of PROB_TryBetaRegularized (2026-07-29) and the later changes to PROB_TryBetaLogPdf, PROB_TryDeviancePart and PROB_StirlingError"
-   },
-   "holdout_older": {
-    "exact": 0,
-    "max_ulps": 20367,
-    "observations": 3,
-    "why": "exported 2026-07-21, before the later changes to PROB_TryBetaLogPdf, PROB_TryDeviancePart and PROB_StirlingError"
    }
   },
   "refused_not_modelled": 416

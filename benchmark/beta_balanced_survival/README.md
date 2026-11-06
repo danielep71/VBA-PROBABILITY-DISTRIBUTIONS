@@ -61,19 +61,22 @@ with Z >= 0.5, plain binary64 evaluation reproduces 11 and 64-bit
 intermediates reproduce all 57. The model uses the second.
 
 **Fidelity.** Every committed Excel observation the model can evaluate is
-compared with it, in all grids: 368 observations of `LogGamma`,
+compared with it, in all grids: 371 observations of `LogGamma`,
 `LogGammaHalfDiff`, `PROB_LogBeta`, `StirlingError`, `Beta_Density`,
-`Beta_Survival` and `Beta_Cumulative`. **All 368 are reproduced bit for bit
+`Beta_Survival` and `Beta_Cumulative`. **All 371 are reproduced bit for bit
 (0 ULP).** They include the six balanced `Beta_Survival` and
-`Beta_Cumulative` observations and 133 `Beta_Density` observations, which
-validate the Loader branch at small and large shapes. 91 observations are
+`Beta_Cumulative` observations and 134 `Beta_Density` observations, which
+validate the Loader branch at small and large shapes. 88 observations are
 excluded because they were exported before a later change to a procedure they
 reach: the `beta_f_unbalanced` evidence (exported 2026-07-19, before the
-Loader dispatch of 2026-07-29) and three `holdout_older` density and
-Stirling-error rows (exported 2026-07-21, before later
-`PROB_StirlingError` changes). The balanced literal route those `holdout_older`
-Beta observations take has not changed since their export; the model
-reproduces them exactly.
+Loader dispatch of 2026-07-29).
+
+*2026-11-06 (#81).* Until then three `holdout_older` density and
+Stirling-error rows were excluded too: exported on 2026-07-21, before later
+`PROB_StirlingError` changes, they were up to 20,367 ULP from the model. The
+#81 wave re-exported `holdout_older` (run 42210983927), and the model now
+reproduces all three exactly, so they count with the rest. The balanced
+`Beta_Survival` and `Beta_Cumulative` observations of that grid did not change.
 
 **Point sets**, all deterministic:
 
