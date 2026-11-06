@@ -182,6 +182,8 @@ def predictions():
             fn = row.get("function", "")
             if not (fn.startswith("StudentT_") or fn.startswith("F_")):
                 continue
+            if row.get("regime") == "seam":
+                continue                     # the #210 seam study (seam_study.py), added later
             if grid.startswith("holdout/") and row.get("arg2", "").strip() and \
                     (fn, float(row["arg1"]), float(row["arg2"])) in fresh:
                 continue

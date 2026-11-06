@@ -97,6 +97,13 @@
       "gate": null,
       "status": "open",
       "summary": "Normal upper-tail kernel loses relative accuracy beyond z = 3 and through its exponential factor"
+    },
+    {
+      "issue": 213,
+      "class": "silent_wrong",
+      "gate": null,
+      "status": "open",
+      "summary": "Student-t inverse misses its 5E-15 contract at quantiles just inside 8 in magnitude (1.3E-12 at df = 1E7)"
     }
   ]
 }
