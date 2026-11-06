@@ -32,7 +32,7 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 function Get-ExportGridSpec {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet("main", "holdout", "holdout_older", "survival_boundary")]
+        [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -103,6 +103,22 @@ function Get-ExportGridSpec {
                 ScopeIndex     = -1
                 ScopeValue     = $null
                 SuccessPrefix  = "Survival-boundary export complete: "
+                ReportsCount   = $true
+            }
+        }
+        "tchi_large_df" {
+            return [pscustomobject][ordered]@{
+                Name           = "tchi_large_df"
+                Path           = "benchmark/tchi_large_df/tchi_large_df_grid.csv"
+                FileName       = "tchi_large_df_grid.csv"
+                Exporter       = "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas"
+                Macro          = "Export_TChiLargeDf"
+                Mode           = "full"
+                ObservedIndex  = 8
+                MinimumColumns = 9
+                ScopeIndex     = -1
+                ScopeValue     = $null
+                SuccessPrefix  = "Large-df t / Chi-square study complete: "
                 ReportsCount   = $true
             }
         }
