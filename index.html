@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VBA Probability Distributions — Keep the tail in view</title>
+  <meta name="description" content="Tail-aware probability distributions for Excel and VBA. Explore the functions, copy worksheet examples, and inspect independent numerical evidence.">
+  <meta name="theme-color" content="#00338d">
+  <link rel="canonical" href="https://danielep71.github.io/VBA-PROBABILITY-DISTRIBUTIONS/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="VBA Probability Distributions — Keep the tail in view">
+  <meta property="og:description" content="Native Excel/VBA algorithms. Direct survival functions. Reviewable source and independent numerical evidence.">
+  <meta property="og:url" content="https://danielep71.github.io/VBA-PROBABILITY-DISTRIBUTIONS/">
+  <meta property="og:image" content="https://danielep71.github.io/VBA-PROBABILITY-DISTRIBUTIONS/assets/social3.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/probability-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/probability-site.css">
+  <script src="assets/probability-site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><nav class="wrap" aria-label="Main navigation">
+  <a class="brand" href="./" aria-label="VBA Probability Distributions home"><span aria-hidden="true">P</span><span class="brand-name">VBA Probability<small>Distributions for Excel</small></span></a>
+  <div class="nav-links"><a href="#approach">The approach</a><a href="#catalogue">Distributions</a><a href="#examples">Examples</a><a href="#evidence">Evidence</a><a class="nav-source" href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS">GitHub ↗</a></div>
+</nav></header>
+<main id="main">
+<section class="hero"><div class="wrap hero-grid">
+  <div><p class="eyebrow">Numerical foundations / Excel &amp; VBA</p>
+    <h1>Understand the probability.<br><em>Keep the tail<br>in view.</em></h1>
+    <p class="lead">A native numerical library for the spreadsheets you need to explain.</p>
+    <p class="hero-copy">Calculate densities, probabilities and quantiles with inspectable VBA algorithms, direct upper-tail functions and explicit numerical contracts.</p>
+    <div class="actions"><a class="button primary" href="#examples">Try a worksheet formula ↓</a><a class="button secondary" href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/tree/main/src">Explore the source ↗</a></div>
+  </div>
+  <figure class="hero-art"><div class="chart-heading"><span class="chart-label">THE UPPER TAIL</span><span class="chart-equation">Q(x) = P(Z &gt; x)</span></div>
+    <img src="assets/probability-tail.svg" width="640" height="340" alt="Standard-normal density with the area to the right of a positive threshold x shaded in blue">
+    <div class="chart-code"><span>DIRECT SURVIVAL / EXCEL</span><code>=K_STATS_NormalStandard_Survival(15)</code><strong>≈ 3.67096619931 × 10<sup>−51</sup></strong></div>
+    <figcaption>The curve illustrates a tail area. The formula is a separate deep-tail example; run it in Excel after importing the library.</figcaption>
+  </figure>
+</div><div class="wrap principles"><span>Pure VBA at runtime</span><span>Direct survival API</span><span>Independent reference values</span><span>MPL-2.0 licensed</span></div></section>
+
+<div class="wrap"><aside class="status" aria-label="Development status"><span class="status-label">DEVELOPMENT SOURCE</span><p>Accuracy claims apply to tested functions and parameter regimes. Review the <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/README.md#assurance-at-a-glance">current evidence</a> and <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/benchmark/release_readiness.json">release readiness</a> before adopting a version.</p></aside></div>
+
+<section id="approach" class="wrap"><p class="eyebrow">01 / The numerical approach</p><div class="section-heading"><h2>Small probabilities.<br>Consequential details.</h2><p class="intro">For research, risk models, independent validation and teaching. Follow a calculation from the worksheet call to the kernel and the evidence behind it.</p></div>
+  <ol class="steps">
+    <li><span class="number">01 / EXPRESS</span><h3>Ask for the tail directly</h3><p>Use survival functions for upper-tail probabilities. Subtracting a CDF from one can lose a small but representable result when the CDF rounds to one.</p><code class="inline-example">Survival(x) → P(X &gt; x)</code></li>
+    <li><span class="number">02 / INSPECT</span><h3>Read the calculation</h3><p>Shared special functions, guarded arithmetic and inverse solvers are implemented in exported VBA modules. No external numerical runtime is needed to use the library.</p><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design">Explore the numerical design ↗</a></li>
+    <li><span class="number">03 / CHALLENGE</span><h3>Check the measured domain</h3><p>Independent references, accuracy contracts and holdout observations make the tested scope visible. Explicit diagnostics distinguish invalid inputs and numerical limits.</p><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/benchmark/README.md">Read the benchmark method ↗</a></li>
+  </ol>
+  <p class="note">Direct-tail APIs avoid the information loss in a caller's <code>1 − CDF</code> expression. This is not a claim that every alternative Excel formula fails, or that every library function has uniform accuracy across its entire domain.</p>
+</section>
+
+<section class="tint" id="catalogue"><div class="wrap"><p class="eyebrow">02 / Distribution catalogue</p><div class="section-heading"><h2>A consistent vocabulary<br>for different distributions.</h2><p class="intro">Start with a distribution, then inspect its parameterization and supported operations. Inverse survival is available for the Normal family.</p></div>
+  <div class="catalogue-tools" hidden><div class="filters" role="group" aria-label="Distribution type"><button type="button" data-filter="all" aria-pressed="true">All distributions</button><button type="button" data-filter="continuous" aria-pressed="false">Continuous</button><button type="button" data-filter="discrete" aria-pressed="false">Discrete</button></div><label class="search-label">Find a distribution<input id="distribution-search" type="search" placeholder="e.g. Normal, Gamma, Poisson" autocomplete="off"></label></div>
+  <p id="catalogue-count" class="small" aria-live="polite">17 distribution surfaces</p>
+  <div class="table-scroll" role="region" aria-label="Distribution capabilities" tabindex="0"><table><caption class="sr-only">Distribution functions and additional operations</caption><thead><tr><th scope="col">Distribution</th><th scope="col">Core operations</th><th scope="col">Also available</th></tr></thead><tbody id="distribution-rows">
+  <!-- Distribution rows are static HTML so the catalogue also works without JavaScript. -->
+    <tr data-kind="continuous" data-search="standard normal normalstandard"><th scope="row">Standard Normal<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>Inverse survival · interval probability · fast inverse helper</td></tr>
+    <tr data-kind="continuous" data-search="normal normal"><th scope="row">Normal<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>Inverse survival · interval probability · Z-score</td></tr>
+    <tr data-kind="continuous" data-search="lognormal lognormal"><th scope="row">Lognormal<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>Inverse survival · moments · parameter conversion</td></tr>
+    <tr data-kind="continuous" data-search="student t studentt"><th scope="row">Student t<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>—</td></tr>
+    <tr data-kind="continuous" data-search="chi-square chisquare"><th scope="row">Chi-square<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>—</td></tr>
+    <tr data-kind="continuous" data-search="f f"><th scope="row">F<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>—</td></tr>
+    <tr data-kind="continuous" data-search="gamma gamma"><th scope="row">Gamma<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>Mean · variance · standard deviation</td></tr>
+    <tr data-kind="continuous" data-search="beta beta"><th scope="row">Beta<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>Mean · variance · standard deviation</td></tr>
+    <tr data-kind="continuous" data-search="exponential exponential"><th scope="row">Exponential<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>—</td></tr>
+    <tr data-kind="continuous" data-search="weibull weibull"><th scope="row">Weibull<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>Mean · variance · standard deviation</td></tr>
+    <tr data-kind="continuous" data-search="uniform uniform"><th scope="row">Uniform<small>Continuous</small></th><td>Density · CDF · survival · inverse CDF</td><td>—</td></tr>
+    <tr data-kind="discrete" data-search="binomial binomial"><th scope="row">Binomial<small>Discrete</small></th><td>PMF · CDF · survival · inverse CDF</td><td>Log-PMF · mean · variance · standard deviation</td></tr>
+    <tr data-kind="discrete" data-search="poisson poisson"><th scope="row">Poisson<small>Discrete</small></th><td>PMF · CDF · survival · inverse CDF</td><td>Log-PMF · mean · variance · standard deviation</td></tr>
+    <tr data-kind="discrete" data-search="geometric geometric"><th scope="row">Geometric<small>Discrete</small></th><td>PMF · CDF · survival · inverse CDF</td><td>Log-PMF · mean · variance · standard deviation</td></tr>
+    <tr data-kind="discrete" data-search="negative binomial negativebinomial"><th scope="row">Negative Binomial<small>Discrete</small></th><td>PMF · CDF · survival · inverse CDF</td><td>Log-PMF · mean · variance · standard deviation</td></tr>
+    <tr data-kind="discrete" data-search="hypergeometric hypergeometric"><th scope="row">Hypergeometric<small>Discrete</small></th><td>PMF · CDF · survival · inverse CDF</td><td>Log-PMF · mean · variance · standard deviation</td></tr>
+    <tr data-kind="discrete" data-search="discrete uniform discreteuniform"><th scope="row">Discrete Uniform<small>Discrete</small></th><td>PMF · CDF · survival · inverse CDF</td><td>Log-PMF · mean · variance · standard deviation</td></tr>
+  </tbody></table></div>
+  <p id="catalogue-empty" class="empty" hidden>No matching distribution. Try a different name or select “All distributions”.</p>
+  <a class="section-link" href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/API-Reference">Open the complete API reference ↗</a>
+</div></section>
+
+<section id="examples" class="wrap"><p class="eyebrow">03 / Worksheet examples</p><div class="section-heading"><h2>From a question<br>to a formula.</h2><p class="intro">Import the VBA modules into desktop Excel, then call the functions from a cell. These examples show the API; this page does not execute VBA.</p></div>
+  <div class="example-layout"><div class="example-options" role="group" aria-label="Choose a worksheet example" hidden>
+    <button type="button" data-example="tail" aria-pressed="true"><span>01</span><strong>Upper-tail probability</strong><small>Standard Normal survival</small></button>
+    <button type="button" data-example="inverse" aria-pressed="false"><span>02</span><strong>A threshold from a tiny tail</strong><small>Direct inverse survival</small></button>
+    <button type="button" data-example="poisson" aria-pressed="false"><span>03</span><strong>A count threshold</strong><small>Poisson quantile</small></button>
+    <button type="button" data-example="interval" aria-pressed="false"><span>04</span><strong>Probability in an interval</strong><small>Standard Normal interval</small></button>
+  </div><div class="example-panel"><div class="example-topline"><span class="number">EXCEL / K_STATS_ API</span><label id="separator-control" hidden>Formula locale<select id="separator"><option value="en">English</option><option value="it">Italian</option></select></label></div>
+    <h3 id="example-title">Upper-tail probability</h3><p id="example-description">Calculate P(Z &gt; 8) for a standard Normal variable without subtracting a rounded CDF from one.</p>
+    <pre><code id="example-code">=K_STATS_NormalStandard_Survival(8)</code></pre>
+    <div class="example-bottom"><p id="example-note">The probability is approximately 6.22 × 10⁻¹⁶. This is a usage example, not a domain-wide accuracy guarantee.</p><button class="copy-button" type="button" id="copy-formula" hidden>Copy formula</button></div>
+    <p id="copy-status" class="small" role="status"></p>
+  </div></div>
+  <noscript><p>More examples, including inverse survival and Poisson quantiles, are available in the <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/README.md">README</a>.</p></noscript>
+</section>
+
+<section id="start" class="tint"><div class="wrap"><p class="eyebrow">04 / Get started</p><h2>Source you can bring<br>into your own workbook.</h2><div class="split">
+  <div><h3>One coherent source revision</h3><p>Clone the repository for development, or inspect the source before importing it. Keep all modules from the same revision.</p><pre class="install-code"><code>git clone https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS.git</code></pre>
+    <ol class="install-steps"><li>Import <strong>CORE</strong>, then <strong>SPECIALFUNCS</strong>, then the distribution-family modules from <code>src/</code>.</li><li>Compile the project in the VBA editor and save your workbook in a macro-capable format.</li><li>For validation, import the matching test module and run <code>Test_STATS_PROBDIST_RunAll</code>.</li></ol>
+    <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/INSTALLATION.md">Follow the complete installation guide ↗</a>
+  </div><div class="resources"><h3>Choose your starting point</h3>
+    <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/tree/main/src"><strong>Production source <span aria-hidden="true">↗</span></strong><span>Exported modules and their numerical implementations.</span></a>
+    <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/examples/STATS-Distributions%20demo.xlsm"><strong>Demo workbook <span aria-hidden="true">↗</span></strong><span>Explore the supplied example; authoritative source remains in the repository.</span></a>
+    <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki"><strong>Documentation wiki <span aria-hidden="true">↗</span></strong><span>API, architecture, numerical design and diagnostics.</span></a>
+    <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/CONTRIBUTING.md"><strong>Contribute <span aria-hidden="true">↗</span></strong><span>Reproduce a case, explain a contract or improve the documentation.</span></a>
+  </div></div>
+  <p class="note">The installation guide defines the host and validation requirements. Retained Excel evidence covers a specific Windows / 64-bit Office environment; it does not establish compatibility with every Excel platform.</p>
+</div></section>
+
+<section id="evidence" class="wrap"><p class="eyebrow">05 / Evidence and boundaries</p><h2>Confidence comes with a record.</h2><p class="intro">Inspect the current records rather than relying on a frozen badge. Each kind of evidence answers a different question.</p>
+  <div class="cards"><article><p class="number">RUNTIME</p><h3>Did this source run in Excel?</h3><p>The retained regression record identifies the executed source, Excel environment, assertions and exported grids.</p><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/benchmark/excel_regression_record.json">Inspect the Excel record ↗</a></article>
+    <article><p class="number">NUMERICAL ACCURACY</p><h3>How close are the results?</h3><p>Independent references and explicit contracts record errors within tested regimes. The holdout adds separate observations.</p><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/benchmark/accuracy_summary.md">Read the accuracy summary ↗</a><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/benchmark/holdout/holdout_summary.md">Inspect the independent holdout ↗</a></article>
+    <article><p class="number">RELEASE READINESS</p><h3>What still needs to be resolved?</h3><p>Passing recorded tests does not certify a release. Coverage gaps, numerical limitations and outstanding work remain explicit.</p><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31">Follow the release tracker ↗</a><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues">Explore the open work ↗</a></article></div>
+</section>
+<section class="closing"><div class="wrap"><div><p class="eyebrow">Research / Risk modelling / Education</p><h2>Build on a calculation<br>you can inspect.</h2></div><a class="button primary" href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS">Open the repository ↗</a></div></section>
+</main>
+<footer><div class="wrap footer-grid"><div><p><strong>VBA Probability Distributions</strong></p><p>An independent open-source project by Daniele Penza.</p></div><div><p><a href="https://danielep71.github.io/K-Risk-Engines/">Explore K-Risk Engines ↗</a></p><p><a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/LICENSE">MPL-2.0</a> · <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/main/SECURITY.md">Security</a> · <a href="https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki">Wiki</a></p></div></div></footer>
+</body>
+</html>
