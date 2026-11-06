@@ -531,12 +531,6 @@ try {
     $existing = @(Get-Process -Name "EXCEL" -ErrorAction SilentlyContinue | ForEach-Object { $_.Id })
     $excel = New-Object -ComObject Excel.Application
     $cleanupDetail = "Excel was started"
-    $excel.Visible = $false
-    $excel.DisplayAlerts = $false
-    $excel.EnableEvents = $false
-    $excel.ScreenUpdating = $false
-    # msoAutomationSecurityLow = 1 in this process only, as the regression adapter.
-    $excel.AutomationSecurity = 1
 
     $excelProcessId = [CiExcelExportWin32]::ProcessIdOfWindow([long]$excel.Hwnd)
     if ($excelProcessId -eq 0) { Stop-Export "cannot identify the owned Excel process" }
@@ -544,6 +538,14 @@ try {
         Stop-Export "Excel COM returned a pre-existing Excel process ($excelProcessId); the watchdog may only kill its own"
     }
     $excelOwned = $true
+    # Settings change only on an instance proven to be this script's own, so a
+    # refused pre-existing Excel is left exactly as the user had it.
+    $excel.Visible = $false
+    $excel.DisplayAlerts = $false
+    $excel.EnableEvents = $false
+    $excel.ScreenUpdating = $false
+    # msoAutomationSecurityLow = 1 in this process only, as the regression adapter.
+    $excel.AutomationSecurity = 1
     $excelSummary.process_id = [int]$excelProcessId
     $excelSummary.version = [string]$excel.Version
     $excelSummary.build = [string]$excel.Build
