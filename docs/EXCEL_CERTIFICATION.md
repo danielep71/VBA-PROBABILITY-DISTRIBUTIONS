@@ -54,7 +54,8 @@ Its record therefore contains both policy-declared grids with:
 
 A 909/909 regression PASS cannot be used to rebind an accuracy manifest. This
 separation is deliberate: regression execution and numerical observation export
-are different evidence events.
+are different evidence events. A dispatched export run produces both events in
+one job, as two artifacts; see [Automated fresh export](#automated-fresh-export).
 
 ## Validate a downloaded workflow artifact
 
@@ -74,12 +75,118 @@ Validation fails on, among other things, a short/wrong candidate SHA, changed
 source bytes, wrong assertion count, failed cleanup, a changed/missing retained
 log, or inconsistent harness counters.
 
-## Add fresh grid-export claims
+<a id="automated-fresh-export"></a>
 
-This step is intentionally separate and must be run from the exact candidate
-checkout immediately after the selected grid or grids were really exported in
-Excel. `benchmark/excel_environment.json` must have been refreshed by the same
-Excel environment.
+## Automated fresh export
+
+The self-hosted runner exports the grids unattended (#181). The only manual
+part is keeping the runner online; the evidence commit is still made by a
+person, because the runner never writes to the repository.
+[EXCEL_VBA_CI.md](EXCEL_VBA_CI.md#unattended-grid-export) describes what the
+runner does. The steps below use the GitHub CLI.
+
+1. **Dispatch** the Excel VBA Regression workflow on the commit to export.
+   Select only the grids you mean to claim:
+
+   ```bash
+   gh workflow run excel-vba-regression.yml --ref <branch> \
+     -f export_main=true -f export_holdout=true \
+     -f export_holdout_older=false -f main_mode=full
+   ```
+
+   The run exports from the head of `<branch>` when it starts. Note that SHA:
+   the evidence commit must be its child.
+
+2. **Wait** for the run and **download** its export artifact into an empty
+   directory outside the checkout:
+
+   ```bash
+   gh run list --workflow excel-vba-regression.yml --branch <branch> --limit 1
+   gh run watch <run id>
+   gh run download <run id> --name excel-grid-export-<run id> --dir <artifact-dir>
+   ```
+
+   A failed run still uploads the artifact; `export-manifest.json` and
+   `export-log.txt` give the reason.
+
+3. **Apply** it from a clean checkout of the exported commit:
+
+   ```bash
+   git switch <branch>     # its head must still be the exported SHA
+   python benchmark/apply_excel_export.py --artifact <artifact-dir> \
+     --grid main --grid holdout
+   ```
+
+   `--grid` names the grids you expect, and the tool refuses an artifact that
+   holds others. It refuses, writing nothing, unless the export passed on the
+   runner, the artifact names the full `HEAD`, the regression record is green
+   for `HEAD` with its retained log, the environment file names `HEAD`, and
+   every requested grid is present with the raw SHA-256 the manifest records.
+   It then checks each grid against `HEAD` again: only the `observed_vba` cells
+   its exporter owns may change, every one of them must be filled, and the
+   bytes must be the CRLF lines Excel writes. Then it:
+
+   1. copies the grids and `excel_environment.json` into place;
+   2. runs `finalize_excel_certification.py --from-fresh-export` with `--main`
+      and/or `--holdout`, which records each grid's raw digest from the bytes
+      Excel wrote;
+   3. rewrites the grids with the LF bytes Git stores;
+   4. runs `refresh_evidence.py` with `--bind-exported-main` and/or
+      `--bind-exported-holdout`;
+   5. validates the finalized record with `check_excel_certification.py`
+      against a snapshot commit of the working tree (`git stash create`, which
+      moves no ref), so the exact bytes you will commit are checked;
+   6. prints the files to commit, the commit message and the validation
+      commands for step 5.
+
+   Before the evidence commit exists, the `retained Excel record` step of
+   `refresh_evidence.py` compares the new record with `HEAD` and fails when a
+   grid's bytes changed. The tool expects that one failure; the snapshot check
+   replaces it. Any other failure leaves the files in place and ends with
+   `NOT READY`. The usual one is a release gate that the export satisfies while
+   `benchmark/release_readiness.json` still lists its blocker open: resolve that
+   entry with this evidence, run `python benchmark/refresh_evidence.py` again
+   (no bind flags; the manifests are already bound), and continue.
+
+   `holdout_older` has no exporter in the evidence policy, so the record makes
+   no claim for it and no manifest binds it. The tool copies the grid and the
+   plain refresh regenerates `holdout_older_summary.md`.
+
+4. **Commit** the changed files together, with the printed message as the
+   body.
+
+5. **Validate** the evidence commit with the printed commands: for each
+   claimed grid,
+
+   ```bash
+   python benchmark/check_excel_certification.py \
+     --record benchmark/excel_regression_record.json \
+     --candidate-sha <exported-sha> --evidence-ref HEAD --require-pass \
+     --require-grid benchmark/probability_accuracy_grid.csv \
+     --log-directory <artifact-dir>
+   ```
+
+   then `python benchmark/check_manifest_provenance.py --since <exported-sha>`
+   and `python benchmark/refresh_evidence.py --check`. Push and open the pull
+   request; the Accuracy Gate repeats the checks.
+
+The dispatched run's regression artifact, `excel-vba-regression-<run id>`, is
+the same as any other run's, so a successful export run also certifies its
+commit for [release](#exact-tag-certification).
+
+`excel_environment.json` from an automated export carries two fields that
+`Export_ExcelEnvironment` does not write: `commit_sha`, the exported commit,
+and `commit_sha_recorded_by`, set to `ci/Export-ExcelGrids.ps1`. The finalizer
+refuses an environment file whose `commit_sha` is not the candidate.
+`write_manifest.py` still records the manifest's `commit_sha` from the
+checkout's `HEAD`, which the apply step requires to be the same commit.
+
+## Manual fresh export (fallback)
+
+Use this path when the runner is unavailable. It is intentionally separate and
+must be run from the exact candidate checkout immediately after the selected
+grid or grids were really exported in Excel. `benchmark/excel_environment.json`
+must have been refreshed by the same Excel environment.
 
 Start with the green regression record produced for that exact candidate, then:
 

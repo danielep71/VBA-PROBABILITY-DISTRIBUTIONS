@@ -56,11 +56,19 @@ def _read_commit_sha(root):
         if not head.startswith("ref:"):
             return head[:7]                          # detached HEAD
         ref = head.split(":", 1)[1].strip()
-        loose = os.path.join(git, *ref.split("/"))
-        if os.path.isfile(loose):
-            with open(loose, encoding="utf-8") as f:
-                return f.read().strip()[:7]
-        packed = os.path.join(git, "packed-refs")    # refs may be packed
+        # A linked worktree keeps HEAD in its own git dir, but branch refs
+        # live in the common git dir named by its `commondir` file.
+        common = git
+        commondir = os.path.join(git, "commondir")
+        if os.path.isfile(commondir):
+            with open(commondir, encoding="utf-8") as f:
+                common = os.path.normpath(os.path.join(git, f.read().strip()))
+        for base in dict.fromkeys((git, common)):
+            loose = os.path.join(base, *ref.split("/"))
+            if os.path.isfile(loose):
+                with open(loose, encoding="utf-8") as f:
+                    return f.read().strip()[:7]
+        packed = os.path.join(common, "packed-refs")  # refs may be packed
         if os.path.isfile(packed):
             with open(packed, encoding="utf-8") as f:
                 for line in f:

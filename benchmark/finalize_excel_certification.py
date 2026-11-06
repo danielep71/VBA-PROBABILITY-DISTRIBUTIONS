@@ -66,6 +66,12 @@ def main():
 
         with open(os.path.join(root, ENV_PATH), encoding="utf-8-sig") as f:
             env = json.load(f)
+        # Export_ExcelEnvironment cannot know the commit; ci/Export-ExcelGrids.ps1
+        # adds it as commit_sha (#181). When present it must name this
+        # candidate, or the environment file belongs to another export.
+        if "commit_sha" in env and env["commit_sha"] != head:
+            raise CertificationError(
+                f"{ENV_PATH} commit_sha={env['commit_sha']!r} is not the candidate {head}")
         expected_env = record["environment"]
         comparisons = {
             "excel_version": str(env.get("excel_version", "")).strip(),

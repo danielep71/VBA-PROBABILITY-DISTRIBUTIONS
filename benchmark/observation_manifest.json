@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-09-16T20:34:19Z",
-  "commit_sha": "74041b3",
+  "generated_utc": "2026-11-06T10:20:26Z",
+  "commit_sha": "f1dc6f6",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -59,7 +59,7 @@
   "contract_registry_sha256": "sha256:b42a6413b2df245f89c214a9679194cb66742ba96f330bf4f8e37dc0ab13c9b6",
   "environment": {
     "excel_version": "16.0",
-    "excel_build": "20228",
+    "excel_build": "20430",
     "office_bitness": "64"
   },
   "notes": ""

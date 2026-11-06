@@ -264,8 +264,8 @@ def main():
             f"`{_manifest.get('grid_schema_version','?')}`), verified against the "
             "checked-out tree before evaluation.",
             "",
-            f"- source commit: `{_manifest.get('commit_sha','unrecorded')}`  ",
-            f"- observations exported: `{_manifest.get('generated_utc','unrecorded')}`  ",
+            f"- source commit: `{_manifest.get('commit_sha','unrecorded')}`",
+            f"- observations exported: `{_manifest.get('generated_utc','unrecorded')}`",
             f"- Excel: `{env.get('excel_version','unrecorded')}` build "
             f"`{env.get('excel_build','unrecorded')}` ({env.get('office_bitness','unrecorded')}-bit)",
             "",

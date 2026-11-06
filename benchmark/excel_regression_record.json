@@ -1,24 +1,24 @@
 {
   "schema_version": 1,
   "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
-  "candidate_sha": "74041b31c3119b277408609e4a0de1bd780f9a4d",
+  "candidate_sha": "f1dc6f6a7403e62a36db8980092f73044cf29031",
   "execution": "automated",
-  "started_at": "2026-09-16T19:52:06.8022681Z",
-  "finished_at": "2026-09-16T19:52:17.6708053Z",
+  "started_at": "2026-11-06T10:07:02.5506033Z",
+  "finished_at": "2026-11-06T10:07:12.6188468Z",
   "runner": {
     "class": "self-hosted-excel",
-    "identity": "PROBDIST",
+    "identity": "ITPF545VX1",
     "workflow": {
       "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
       "path": ".github/workflows/excel-vba-regression.yml",
-      "sha": "74041b31c3119b277408609e4a0de1bd780f9a4d",
-      "run_id": 35143062120,
+      "sha": "f1dc6f6a7403e62a36db8980092f73044cf29031",
+      "run_id": 42200065180,
       "run_attempt": 1
     }
   },
   "environment": {
     "excel_version": "16.0",
-    "excel_build": "20228",
+    "excel_build": "20430",
     "office_bitness": "64-bit",
     "windows": "Microsoft Windows NT 10.0.26200.0",
     "os_architecture": "X64",
@@ -29,6 +29,10 @@
     {
       "path": "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas",
       "sha256": "sha256:f862f76ebcba91c140e205f7ff4da7f1425fd83aee88b8135c0a766f05255388"
+    },
+    {
+      "path": "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas",
+      "sha256": "sha256:ac42166bb978eb48d45490cd7fb715a448b83561ea6ebeeed50c10d9636f9693"
     },
     {
       "path": "src/M_STATS_PROBDIST_CONTINUOUS.bas",
@@ -85,7 +89,7 @@
   },
   "log": {
     "path": "test-result.txt",
-    "sha256": "sha256:94cde6085c7c10e3b878d1ee56849cf558d6c0f40a365590d1c685db6522e841"
+    "sha256": "sha256:385f507423a4808aa996fd02a9abfb2398b5ffbffcdff15d9ac83a65e50e4d50"
   },
   "grids": {
     "benchmark/probability_accuracy_grid.csv": {
@@ -93,24 +97,14 @@
       "sha256": "sha256:ff73b0735b5dfbacb165dd3131cfb0143c9ab4381fd55fe69817c34c86a1fa38",
       "raw_sha256": "sha256:7170df8f0effc6eb696abb05d0743aff7114ba9316d7c031a58c12d1abb721ac",
       "row_count": 2088,
-      "exported_utc": "2026-09-16T20:08:37Z"
+      "exported_utc": "2026-11-06T10:20:26Z"
     },
     "benchmark/holdout/holdout_grid.csv": {
-      "exported": false,
-      "sha256": null,
-      "raw_sha256": null,
-      "row_count": null,
-      "exported_utc": null
+      "exported": true,
+      "sha256": "sha256:0de209295f98007fa0f997d41c42620451295c7a06fddd09166c641c67e35218",
+      "raw_sha256": "sha256:fb29a6003e490d20cb8e57571b6cf2f30d10fc5d68d9a182a22bc4963aa6490e",
+      "row_count": 559,
+      "exported_utc": "2026-11-06T10:20:26Z"
     }
-  },
-  "corrections": [
-    {
-      "issue": 47,
-      "date": "2026-10-12",
-      "field": "grids.benchmark/probability_accuracy_grid.csv.sha256",
-      "recorded": "sha256:7170df8f0effc6eb696abb05d0743aff7114ba9316d7c031a58c12d1abb721ac",
-      "corrected": "sha256:ff73b0735b5dfbacb165dd3131cfb0143c9ab4381fd55fe69817c34c86a1fa38",
-      "reason": "The finalizer hashed the CRLF bytes Excel exported, but Git stores this grid as LF (*.csv text eol=lf). The recorded digest is kept as raw_sha256 and equals the CRLF form of the committed grid exactly; sha256 now names the committed LF bytes. No export, run or observation was added or changed."
-    }
-  ]
+  }
 }

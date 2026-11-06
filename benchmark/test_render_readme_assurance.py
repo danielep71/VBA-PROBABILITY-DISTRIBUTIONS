@@ -301,8 +301,11 @@ expect_failure("verdict tally contradicts table",
 expect_failure("summary grid rows contradict grid",
                lambda r: edit(r, R.SUMMARY, "- total grid rows: 2,088", "- total grid rows: 2,089"),
                "grid rows")
+# The manifest's commit changes with every main-grid binding, so read it rather
+# than pin it here (#181).
 expect_failure("summary source commit contradicts manifest",
-               lambda r: edit(r, R.SUMMARY, "- source commit: `74041b3`",
+               lambda r: edit(r, R.SUMMARY, "- source commit: `%s`"
+                              % json.loads(read(r, R.MAIN_MANIFEST))["commit_sha"],
                               "- source commit: `0000000`"),
                "reports source commit")
 expect_failure("holdout tally contradicts table",
@@ -315,10 +318,15 @@ expect_failure("registry drops the silent-wrong blocker",
 expect_failure("registry claims certification with open blockers",
                lambda r: edit_json(r, R.READINESS, lambda d: d.update(certified=True)),
                "claims v1.0.0 is certified")
+# Which gates are incomplete changes with the evidence: a certified holdout
+# export satisfies holdout_export (#181). Drop the owner of whichever gate is
+# open in the committed registry.
+OPEN_GATE = next(b["gate"] for b in json.loads(read(REAL_ROOT, R.READINESS))["blockers"]
+                 if b["gate"] and b["status"] == "open")
 expect_failure("incomplete gate without an owner",
                lambda r: edit_json(r, R.READINESS, lambda d: d.update(
-                   blockers=[b for b in d["blockers"] if b["issue"] != 29])),
-               "holdout_export is incomplete")
+                   blockers=[b for b in d["blockers"] if b["gate"] != OPEN_GATE])),
+               f"{OPEN_GATE} is incomplete")
 
 
 def reopen_47(d):
@@ -334,11 +342,12 @@ expect_failure("satisfied gate still owned by an open blocker",
 
 def restore_pre_47_record(r):
     """The record as it was before #47: the raw CRLF export digest stored as
-    the grid digest, with no correction trail."""
+    the grid digest, with no correction trail. A record finalized from a later
+    export has no corrections to drop (#181)."""
     def change(d):
         entry = d["grids"][R.GRID]
         entry["sha256"] = entry["raw_sha256"]
-        del d["corrections"]
+        d.pop("corrections", None)
     edit_json(r, R.EXCEL_RECORD, change)
 
 

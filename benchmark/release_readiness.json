@@ -2,7 +2,7 @@
   "schema_version": "release-readiness/v1",
   "release": "v1.0.0",
   "tracker_issue": 31,
-  "reviewed": "2026-09-30",
+  "reviewed": "2026-11-06",
   "certified": false,
   "blockers": [
     {
@@ -58,8 +58,11 @@
       "issue": 29,
       "class": "assurance",
       "gate": "holdout_export",
-      "status": "open",
-      "summary": "Independent holdout grid has no certified Excel export"
+      "status": "resolved",
+      "summary": "Independent holdout grid has no certified Excel export",
+      "resolution": {
+        "evidence": "Excel VBA Regression run 42200065180 exported the holdout and the main grid unattended at f1dc6f6, in the same job as the 909/909 regression; both are bound in one evidence commit, and excel_regression_record.json certifies benchmark/holdout/holdout_grid.csv, validated by check_excel_certification.py --require-pass --require-grid in the Accuracy Gate"
+      }
     },
     {
       "issue": 34,
