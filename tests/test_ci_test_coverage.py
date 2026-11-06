@@ -574,7 +574,7 @@ class RepositoryLayoutTests(unittest.TestCase):
         self.assertEqual(report["status"], "pass", report["findings"])
 
     def test_new_study_test_is_reported_until_the_runner_lists_it(self) -> None:
-        new = "benchmark/normal_tail_study/test_vba_kernel_source.py"
+        new = "benchmark/normal_tail_study/test_future_study_check.py"
         self.repository.write({new: SCRIPT})
         report = guard.run_check(self.repository.root)
         self.assertEqual([item["path"] for item in report["findings"]], [new])
@@ -582,7 +582,7 @@ class RepositoryLayoutTests(unittest.TestCase):
         text = runner.read_text(encoding="utf-8").replace(
             '    ("normal_tail_study/test_kernel_model.py",),\n',
             '    ("normal_tail_study/test_kernel_model.py",),\n'
-            '    ("normal_tail_study/test_vba_kernel_source.py",),\n')
+            '    ("normal_tail_study/test_future_study_check.py",),\n')
         self.repository.write({"benchmark/test_evidence_tools.py": text})
         report = guard.run_check(self.repository.root)
         self.assertEqual(report["status"], "pass", report["findings"])

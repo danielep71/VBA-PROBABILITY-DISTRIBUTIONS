@@ -28,7 +28,7 @@ A green record binds:
 - import, execution-backed compile, regression, and cleanup outcomes;
 - the retained regression-log SHA-256.
 
-The policy currently requires 909 assertions. A run with 908 or 910 assertions
+The policy currently requires 931 assertions. A run with 930 or 932 assertions
 is incomplete even if every executed assertion passes.
 
 `compile = PASS` in an automated record means the complete imported project was
@@ -52,7 +52,7 @@ Its record therefore contains both policy-declared grids with:
 }
 ```
 
-A 909/909 regression PASS cannot be used to rebind an accuracy manifest. This
+A green regression PASS cannot be used to rebind an accuracy manifest. This
 separation is deliberate: regression execution and numerical observation export
 are different evidence events. A dispatched export run produces both events in
 one job, as two artifacts; see [Automated fresh export](#automated-fresh-export).
