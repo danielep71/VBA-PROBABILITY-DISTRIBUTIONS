@@ -18,7 +18,9 @@ against all issues and pull requests, open and closed. If one still carries a
 label, it stops with no change applied and names the labels. A name containing a
 comma cannot be passed to the API's label filter. For such a name it reads the
 labels of every issue and pull request instead, up to 10,000, and stops if a
-response is malformed or the limit is reached. When it stops:
+response is malformed or the limit is reached. Plan mode and
+`--dry-run` apply nothing, so they do not stop: they preview every planned
+deletion. When a run stops:
 - remove the label from its issues and pull requests, or add it to the
   manifest;
 - then rerun **Sync issue labels**.

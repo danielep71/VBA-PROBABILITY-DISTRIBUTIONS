@@ -128,12 +128,13 @@ def issue(number: int, *names: str, pull_request: bool = False, state: str = "cl
     return item
 
 
-def reconcile(fake: FakeGitHub) -> subprocess.CompletedProcess[str]:
+def reconcile(fake: FakeGitHub, *extra_args: str) -> subprocess.CompletedProcess[str]:
     node = shutil.which("node")
     assert node, "Node.js is required: the label synchronization script runs on it"
     env = {"PATH": str(Path(node).parent), "GITHUB_API_URL": fake.url,
            "GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": REPOSITORY}
-    return subprocess.run([node, str(SCRIPT), "--mode", "reconcile", "--repository", REPOSITORY],
+    return subprocess.run([node, str(SCRIPT), "--mode", "reconcile", "--repository", REPOSITORY,
+                           *extra_args],
                           cwd=ROOT, env=env, capture_output=True, text=True, timeout=60,
                           check=False)
 
@@ -179,6 +180,16 @@ class PruneGuardTests(unittest.TestCase):
                          ["/repos/owner/repo/issues?state=all&per_page=1&labels=stale"])
         self.assertLess(fake.requests.index(("GET", fake.issue_queries()[0])),
                         fake.requests.index(("DELETE", "/repos/owner/repo/labels/stale")))
+
+
+    def test_dry_run_previews_without_refusing_or_writing(self) -> None:
+        # A dry run applies nothing, so a label in use is no reason to stop:
+        # it still previews the planned deletion.
+        with FakeGitHub(catalogue() + [extra("legacy")], [issue(7, "legacy")]) as fake:
+            result = reconcile(fake, "--dry-run")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(fake.writes(), [])
+        self.assertIn("| delete | `legacy` |", result.stdout)
 
 
 class WorkflowPermissionTests(unittest.TestCase):
