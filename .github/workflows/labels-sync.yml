@@ -67,6 +67,10 @@ jobs:
     permissions:
       contents: read
       issues: write
+      # Pruning first checks that no issue or pull request, open or closed,
+      # still carries a label it would delete. Without this permission the
+      # issues API omits pull requests, and a label only they carry is missed.
+      pull-requests: read
 
     steps:
       - name: Check out the exact SHA to apply
