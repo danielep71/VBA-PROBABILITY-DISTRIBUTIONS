@@ -25,6 +25,10 @@ on:
         description: "Also export benchmark/survival_boundary/survival_boundary_grid.csv after a green regression"
         type: boolean
         default: false
+      export_tchi_large_df:
+        description: "Also export benchmark/tchi_large_df/tchi_large_df_grid.csv after a green regression"
+        type: boolean
+        default: false
       main_mode:
         description: "Main grid only: full re-export, or missing-only (fill blank observed_vba cells). The holdout exporters always fill every row."
         type: choice
@@ -74,7 +78,7 @@ jobs:
 
     # 20 minutes for the regression alone. A run that also exports gets 120,
     # more than the export adapter's own per-macro watchdog limits add up to.
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary) && 120 || 20 }}
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df) && 120 || 20 }}
 
     steps:
       - name: Check out repository
@@ -102,15 +106,16 @@ jobs:
       # starts. It never writes to the repository.
       - name: Export selected grids through Excel COM
         id: export
-        if: github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary)
+        if: github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df)
         shell: cmd
         env:
           EXPORT_MAIN: ${{ inputs.export_main }}
           EXPORT_HOLDOUT: ${{ inputs.export_holdout }}
           EXPORT_HOLDOUT_OLDER: ${{ inputs.export_holdout_older }}
           EXPORT_SURVIVAL_BOUNDARY: ${{ inputs.export_survival_boundary }}
+          EXPORT_TCHI_LARGE_DF: ${{ inputs.export_tchi_large_df }}
           EXPORT_MAIN_MODE: ${{ inputs.main_mode }}
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Export-ExcelGrids.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" -Main "%EXPORT_MAIN%" -Holdout "%EXPORT_HOLDOUT%" -HoldoutOlder "%EXPORT_HOLDOUT_OLDER%" -SurvivalBoundary "%EXPORT_SURVIVAL_BOUNDARY%" -MainMode "%EXPORT_MAIN_MODE%"
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Export-ExcelGrids.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" -Main "%EXPORT_MAIN%" -Holdout "%EXPORT_HOLDOUT%" -HoldoutOlder "%EXPORT_HOLDOUT_OLDER%" -SurvivalBoundary "%EXPORT_SURVIVAL_BOUNDARY%" -TChiLargeDf "%EXPORT_TCHI_LARGE_DF%" -MainMode "%EXPORT_MAIN_MODE%"
 
       - name: Upload exact-SHA grid export
         if: always() && steps.export.outcome != 'skipped'

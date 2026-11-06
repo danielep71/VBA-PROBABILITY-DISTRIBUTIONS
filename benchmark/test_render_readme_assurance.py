@@ -15,6 +15,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -308,8 +309,16 @@ expect_failure("summary source commit contradicts manifest",
                               % json.loads(read(r, R.MAIN_MANIFEST))["commit_sha"],
                               "- source commit: `0000000`"),
                "reports source commit")
-expect_failure("holdout tally contradicts table",
-               lambda r: edit(r, R.HOLDOUT_SUMMARY, "> 80 pass,", "> 81 pass,"),
+def bump_holdout_tally(root):
+    """Raise the holdout pass tally by one, whatever it is today."""
+    text = read(root, R.HOLDOUT_SUMMARY)
+    m = re.search(r"^> (\d+) pass,", text, re.M)
+    if not m:
+        raise AssertionError(f"fixture text not found in {R.HOLDOUT_SUMMARY}: '> N pass,'")
+    edit(root, R.HOLDOUT_SUMMARY, m.group(0), f"> {int(m.group(1)) + 1} pass,")
+
+
+expect_failure("holdout tally contradicts table", bump_holdout_tally,
                "contradicts its table")
 expect_failure("registry drops the silent-wrong blocker",
                lambda r: edit_json(r, R.READINESS, lambda d: d.update(

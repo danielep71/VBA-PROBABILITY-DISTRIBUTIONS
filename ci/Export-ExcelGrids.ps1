@@ -64,6 +64,9 @@ param(
     [string]$SurvivalBoundary = "false",
 
     [Parameter(Mandatory = $false)]
+    [string]$TChiLargeDf = "false",
+
+    [Parameter(Mandatory = $false)]
     [ValidateSet("full", "missing-only")]
     [string]$MainMode = "full",
 
@@ -455,11 +458,13 @@ try {
     $wantHoldout = ConvertTo-BooleanSwitch -Value $Holdout -Name "Holdout"
     $wantHoldoutOlder = ConvertTo-BooleanSwitch -Value $HoldoutOlder -Name "HoldoutOlder"
     $wantSurvivalBoundary = ConvertTo-BooleanSwitch -Value $SurvivalBoundary -Name "SurvivalBoundary"
+    $wantTChiLargeDf = ConvertTo-BooleanSwitch -Value $TChiLargeDf -Name "TChiLargeDf"
     if ($wantMain) { $selected += Get-ExportGridSpec -Name "main" -MainMode $MainMode }
     if ($wantHoldout) { $selected += Get-ExportGridSpec -Name "holdout" }
     if ($wantHoldoutOlder) { $selected += Get-ExportGridSpec -Name "holdout_older" }
     if ($wantSurvivalBoundary) { $selected += Get-ExportGridSpec -Name "survival_boundary" }
-    if ($selected.Count -eq 0) { Stop-Export "no grid selected; pass -Main, -Holdout, -HoldoutOlder or -SurvivalBoundary true" }
+    if ($wantTChiLargeDf) { $selected += Get-ExportGridSpec -Name "tchi_large_df" }
+    if ($selected.Count -eq 0) { Stop-Export "no grid selected; pass -Main, -Holdout, -HoldoutOlder, -SurvivalBoundary or -TChiLargeDf true" }
     Write-ExportLog ("Selected grids: " + (($selected | ForEach-Object { "$($_.Name) ($($_.Macro))" }) -join ", "))
     if (-not $wantMain -and $MainMode -ne "full") {
         Write-ExportLog "Main-grid mode $MainMode is ignored: the main grid is not selected"

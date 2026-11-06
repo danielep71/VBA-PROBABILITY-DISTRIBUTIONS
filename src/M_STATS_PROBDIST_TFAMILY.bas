@@ -181,6 +181,51 @@ Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy
 Private Const PROB_T_MAX_DF       As Double = 100000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
 Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29); above that the lower-tail series reaches PROB_GAMMA_MAX_ITER
 
+'Student t large-df upper tail (#34; benchmark/student_t_large_df_study,
+'PRODUCTION_PREREGISTRATION.md). For DegreesFreedom >= PROB_T_LDF_MIN_DF and
+'Abs(X) <= PROB_T_LDF_MAX_ABS_T the tail is the order-5 expansion
+'
+'    S(t; df) = Q(t) + phi(t) * Sum(k = 1..5) g_k(t) / df ^ k,
+'
+'with g_k(t) = t * P_k(t ^ 2). PROB_T_LDF_Gk_j is the coefficient of U ^ j in
+'P_k: the Double nearest the exact rational of coefficients.json, written as a
+'hi + lo pair of 15-digit literals whose Double sum is exactly that Double.
+'test_vba_large_df_source.py checks every pair. Do not retype or round them.
+Private Const PROB_T_LDF_MIN_DF   As Double = 100000#  'Smallest df the expansion serves
+Private Const PROB_T_LDF_MAX_ABS_T As Double = 8#      'Largest Abs(X) the expansion serves
+Private Const PROB_T_INV_SQRT_TWO_PI As Double = _
+    0.398942280401433 - 2.77555756156289E-16
+Private Const PROB_T_LDF_G1_0 As Double = 0.25
+Private Const PROB_T_LDF_G1_1 As Double = 0.25
+Private Const PROB_T_LDF_G2_0 As Double = -0.03125
+Private Const PROB_T_LDF_G2_1 As Double = -5.20833333333333E-02 - 3.46944695195361E-17
+Private Const PROB_T_LDF_G2_2 As Double = -7.29166666666667E-02 + 2.77555756156289E-17
+Private Const PROB_T_LDF_G2_3 As Double = 0.03125
+Private Const PROB_T_LDF_G3_0 As Double = -0.0390625
+Private Const PROB_T_LDF_G3_1 As Double = -0.0078125
+Private Const PROB_T_LDF_G3_2 As Double = 0.015625
+Private Const PROB_T_LDF_G3_3 As Double = 3.64583333333333E-02 + 3.46944695195361E-17
+Private Const PROB_T_LDF_G3_4 As Double = -2.86458333333333E-02 - 3.12250225675825E-17
+Private Const PROB_T_LDF_G3_5 As Double = 2.60416666666667E-03 - 3.46944695195361E-18
+Private Const PROB_T_LDF_G4_0 As Double = 1.025390625E-02
+Private Const PROB_T_LDF_G4_1 As Double = 9.92838541666667E-03 - 3.46944695195361E-18
+Private Const PROB_T_LDF_G4_2 As Double = -2.31119791666667E-03 + 3.46944695195361E-18
+Private Const PROB_T_LDF_G4_3 As Double = -1.01888020833333E-02 - 3.29597460435593E-17
+Private Const PROB_T_LDF_G4_4 As Double = -2.32313368055556E-02 + 4.5102810375397E-17
+Private Const PROB_T_LDF_G4_5 As Double = 2.41427951388889E-02 - 1.04083408558608E-17
+Private Const PROB_T_LDF_G4_6 As Double = -4.06901041666667E-03 + 3.46944695195361E-18
+Private Const PROB_T_LDF_G4_7 As Double = 1.62760416666667E-04 - 3.52365706057789E-19
+Private Const PROB_T_LDF_G5_0 As Double = 4.87060546875E-02
+Private Const PROB_T_LDF_G5_1 As Double = 1.45263671875E-02
+Private Const PROB_T_LDF_G5_2 As Double = 0.00048828125
+Private Const PROB_T_LDF_G5_3 As Double = 3.09244791666667E-03 - 3.46944695195361E-18
+Private Const PROB_T_LDF_G5_4 As Double = 6.75455729166667E-03 - 3.46944695195361E-18
+Private Const PROB_T_LDF_G5_5 As Double = 1.6259765625E-02
+Private Const PROB_T_LDF_G5_6 As Double = -2.03884548611111E-02 - 1.04083408558608E-17
+Private Const PROB_T_LDF_G5_7 As Double = 4.78515625E-03
+Private Const PROB_T_LDF_G5_8 As Double = -3.60785590277778E-04 + 2.16840434497101E-19
+Private Const PROB_T_LDF_G5_9 As Double = 8.13802083333333E-06 + 3.3881317890172E-21
+
 '==============================================================================
 ' PUBLIC - STUDENT T
 '==============================================================================
@@ -2344,6 +2389,14 @@ Private Function PROB_TryStudentTTail( _
 ' GENERAL INCOMPLETE-BETA BRANCH
 '------------------------------------------------------------------------------
     'Form DF / (DF + X squared) and its complement without squaring X
+    'Use the large-df expansion near the body, where the incomplete-beta
+    'continued fraction loses accuracy in binary64 (#34)
+        If DegreesFreedom >= PROB_T_LDF_MIN_DF And AbsX <= PROB_T_LDF_MAX_ABS_T Then
+            Result = PROB_TF_StudentTLargeDFTail(AbsX, DegreesFreedom)
+            PROB_TryStudentTTail = True
+            Exit Function
+        End If
+
         If Not PROB_TF_TrySquareRatioPair( _
             AbsX, DegreesFreedom, BetaX, BetaY) Then
             FailMsg = "Student t beta arguments could not be represented"
@@ -2369,6 +2422,121 @@ Private Function PROB_TryStudentTTail( _
 '------------------------------------------------------------------------------
     'Report a valid probability
         PROB_TryStudentTTail = True
+End Function
+
+
+
+Private Function PROB_TF_StudentTLargeDFTail( _
+    ByVal AbsX As Double, _
+    ByVal DegreesFreedom As Double) _
+    As Double
+'
+'==============================================================================
+' PROB_TF_StudentTLargeDFTail
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Student t upper tail at AbsX for large DegreesFreedom, from the
+'   order-5 large-df expansion, to full relative precision.
+'
+' WHY THIS EXISTS
+'   At DegreesFreedom of about 1E6 and above, the incomplete-beta continued
+'   fraction rounds faster than it converges in binary64, and the tail loses
+'   accuracy to about 1E-9 relative (#34). The expansion
+'
+'       S(t; df) = Q(t) + phi(t) * Sum(k = 1..5) g_k(t) / df ^ k
+'
+'   was derived symbolically and validated in
+'   benchmark/student_t_large_df_study. It needs Q(t) to full relative
+'   precision, which the repaired normal kernel PROB_NormalUpperTail gives (#72).
+'
+' METHOD
+'   g_k(t) = t * P_k(U) with U = t ^ 2. Each P_k is evaluated by Horner in U,
+'   the sum over k by Horner in W = 1 / DegreesFreedom, and the correction is
+'   added to Q(AbsX). Every statement follows the order of the binary64 model in
+'   production_route_model.py, which PRODUCTION_PREREGISTRATION.md froze before
+'   this code was written. Do not reassociate.
+'
+' ACCURACY
+'   Not stated here. The model's measurement and the predictions for every
+'   affected public function are in benchmark/student_t_large_df_study;
+'   contracts are in benchmark/accuracy_contracts.csv.
+'
+' PRECONDITION
+'   DegreesFreedom >= PROB_T_LDF_MIN_DF and 0 < AbsX <= PROB_T_LDF_MAX_ABS_T.
+'   The caller dispatches on that predicate.
+'
+' UPDATED
+'   2026-11-06 - New (#34).
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim U                   As Double          'AbsX squared
+    Dim W                   As Double          'Reciprocal degrees of freedom
+    Dim Horner              As Double          'P_k accumulator
+    Dim Series              As Double          'Sum of P_k(U) * W ^ k
+    Dim Correction          As Double          'phi(AbsX) * AbsX * Series
+
+'------------------------------------------------------------------------------
+' EVALUATE THE SERIES
+'------------------------------------------------------------------------------
+        U = AbsX * AbsX
+        W = 1# / DegreesFreedom
+
+    'Order 5: P5(U) by Horner in U
+        Horner = PROB_T_LDF_G5_9
+        Horner = Horner * U + PROB_T_LDF_G5_8
+        Horner = Horner * U + PROB_T_LDF_G5_7
+        Horner = Horner * U + PROB_T_LDF_G5_6
+        Horner = Horner * U + PROB_T_LDF_G5_5
+        Horner = Horner * U + PROB_T_LDF_G5_4
+        Horner = Horner * U + PROB_T_LDF_G5_3
+        Horner = Horner * U + PROB_T_LDF_G5_2
+        Horner = Horner * U + PROB_T_LDF_G5_1
+        Horner = Horner * U + PROB_T_LDF_G5_0
+        Series = Horner
+
+    'Order 4: P4(U) by Horner in U
+        Horner = PROB_T_LDF_G4_7
+        Horner = Horner * U + PROB_T_LDF_G4_6
+        Horner = Horner * U + PROB_T_LDF_G4_5
+        Horner = Horner * U + PROB_T_LDF_G4_4
+        Horner = Horner * U + PROB_T_LDF_G4_3
+        Horner = Horner * U + PROB_T_LDF_G4_2
+        Horner = Horner * U + PROB_T_LDF_G4_1
+        Horner = Horner * U + PROB_T_LDF_G4_0
+        Series = Series * W + Horner
+
+    'Order 3: P3(U) by Horner in U
+        Horner = PROB_T_LDF_G3_5
+        Horner = Horner * U + PROB_T_LDF_G3_4
+        Horner = Horner * U + PROB_T_LDF_G3_3
+        Horner = Horner * U + PROB_T_LDF_G3_2
+        Horner = Horner * U + PROB_T_LDF_G3_1
+        Horner = Horner * U + PROB_T_LDF_G3_0
+        Series = Series * W + Horner
+
+    'Order 2: P2(U) by Horner in U
+        Horner = PROB_T_LDF_G2_3
+        Horner = Horner * U + PROB_T_LDF_G2_2
+        Horner = Horner * U + PROB_T_LDF_G2_1
+        Horner = Horner * U + PROB_T_LDF_G2_0
+        Series = Series * W + Horner
+
+    'Order 1: P1(U) by Horner in U
+        Horner = PROB_T_LDF_G1_1
+        Horner = Horner * U + PROB_T_LDF_G1_0
+        Series = Series * W + Horner
+
+        Series = Series * W
+
+'------------------------------------------------------------------------------
+' ADD THE CORRECTION TO THE NORMAL TAIL
+'------------------------------------------------------------------------------
+        Correction = AbsX * Series
+        Correction = PROB_T_INV_SQRT_TWO_PI * PROB_ExpNegHalfSquare(AbsX) * Correction
+        PROB_TF_StudentTLargeDFTail = PROB_NormalUpperTail(AbsX) + Correction
 End Function
 
 

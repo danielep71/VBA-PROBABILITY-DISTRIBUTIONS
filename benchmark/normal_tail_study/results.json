@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-06T14:39:35Z",
+ "generated_utc": "2026-11-06T16:16:56Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -50,7 +50,7 @@
    },
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "c4691546db29eb7ed835b3c74a5022e3d6272c5c59a6c9d959e2cedd1f258051"
+    "sha256": "be5d48388a0a6d376484fb71e014579d86d4cf7112b368b131c263bed45b6a09"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 40.3,
+ "runtime_s": 36.7,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3677,6 +3677,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "accuracy_contracts.csv (input: the P4 contracts): recorded b42a6413b2df245f89c214a9679194cb66742ba96f330bf4f8e37dc0ab13c9b6, now 5b48e3c7b51d31597d4baab0bf5bbc6fdca71e8b4bcb513d02a4616c04a3b058"
+   ]
+  },
+  {
+   "utc": "2026-11-06T16:16:19Z",
+   "reason": "#34 Excel wave: the main grid's Student-t large-df observations changed with the new route; no normal-family row changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded c4691546db29eb7ed835b3c74a5022e3d6272c5c59a6c9d959e2cedd1f258051, now be5d48388a0a6d376484fb71e014579d86d4cf7112b368b131c263bed45b6a09"
    ]
   }
  ]
