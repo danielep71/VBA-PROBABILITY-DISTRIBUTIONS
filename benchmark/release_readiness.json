@@ -95,8 +95,11 @@
       "issue": 72,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Normal upper-tail kernel loses relative accuracy beyond z = 3 and through its exponential factor"
+      "status": "resolved",
+      "summary": "Normal upper-tail kernel loses relative accuracy beyond z = 3 and through its exponential factor",
+      "resolution": {
+        "evidence": "The repaired normal upper-tail kernel (PROB_NormalUpperTail, PROB_ExpNegHalfSquare) ships through #81, merged into release/1.0.0 as ba39243. Excel VBA Regression run 42210983927 exported the main grid, the holdout and holdout_older in the same job as a green regression, and run 42231334906 exported survival_boundary; 222 of 223 preregistered rows met their predictions (normal_tail_study/excel_wave_check.json and excel_wave_check_survival_boundary.json), and the NormalStandard, Normal and Lognormal survival contracts were set on that evidence. #72 was closed on 2026-11-06 with that Resolution; this entry had been left open."
+      }
     },
     {
       "issue": 213,
