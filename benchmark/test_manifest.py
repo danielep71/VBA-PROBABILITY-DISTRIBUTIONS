@@ -198,6 +198,36 @@ os.rmdir(hnested_dir)
 check(M.verify_holdout_binding(hd, hman, hgrid, hcontracts) == [],
       "holdout binding is clean again once the added modules are removed")
 
+# write_manifest resolves HEAD without git: in a plain repository, and in a
+# linked worktree, whose branch refs (loose or packed) live in the common
+# git dir named by `commondir`.
+import write_manifest as W
+
+wt = tempfile.mkdtemp()
+common = os.path.join(wt, "main", ".git")
+os.makedirs(os.path.join(common, "refs", "heads"))
+open(os.path.join(common, "HEAD"), "w").write("ref: refs/heads/main\n")
+open(os.path.join(common, "refs", "heads", "main"), "w").write("a" * 40 + "\n")
+check(W._read_commit_sha(os.path.join(wt, "main")) == "a" * 7,
+      "plain repository resolves its loose branch ref")
+
+linked = os.path.join(common, "worktrees", "feature")
+os.makedirs(linked)
+open(os.path.join(linked, "HEAD"), "w").write("ref: refs/heads/feature\n")
+open(os.path.join(linked, "commondir"), "w").write("../..\n")
+checkout = os.path.join(wt, "feature")
+os.makedirs(checkout)
+open(os.path.join(checkout, ".git"), "w").write("gitdir: " + linked + "\n")
+check(W._read_commit_sha(checkout) is None,
+      "linked worktree with an unknown branch stays unresolved, never guessed")
+open(os.path.join(common, "packed-refs"), "w").write(
+    "# pack-refs with: peeled fully-peeled sorted\n" + "b" * 40 + " refs/heads/feature\n")
+check(W._read_commit_sha(checkout) == "b" * 7,
+      "linked worktree resolves a packed branch ref through commondir")
+open(os.path.join(common, "refs", "heads", "feature"), "w").write("c" * 40 + "\n")
+check(W._read_commit_sha(checkout) == "c" * 7,
+      "linked worktree resolves a loose branch ref through commondir")
+
 if fails:
     print("FAIL: manifest verification")
     for f in fails:

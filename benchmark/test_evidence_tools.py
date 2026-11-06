@@ -37,6 +37,7 @@ commands = (
     ("normal_tail_study/test_ulps_apart.py",),
     ("beta_balanced_survival/test_beta_route_model.py",),
     ("test_excel_certification.py",),
+    ("test_apply_excel_export.py",),
     ("test_drift_guard_mutations.py",),
     ("test_public_api.py",),
     ("check_public_api.py",),

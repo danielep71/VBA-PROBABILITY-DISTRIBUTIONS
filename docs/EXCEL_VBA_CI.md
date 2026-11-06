@@ -3,7 +3,9 @@
 This repository executes the complete VBA regression harness through Microsoft
 Excel on a self-hosted Windows GitHub Actions runner. The workflow is
 `.github/workflows/excel-vba-regression.yml`; the host adapter is
-`ci/Run-ExcelVbaTests.ps1`.
+`ci/Run-ExcelVbaTests.ps1`. A manual dispatch of the same workflow can also
+export the accuracy grids unattended through `ci/Export-ExcelGrids.ps1`; see
+[Unattended grid export](#unattended-grid-export).
 
 For the exact-SHA evidence contract and fresh-export procedure, see
 [EXCEL_CERTIFICATION.md](EXCEL_CERTIFICATION.md).
@@ -49,7 +51,8 @@ separately clicked.
 
 ## Artifact contract
 
-The workflow uploads exactly these evidence files:
+Every run uploads exactly these evidence files as
+`excel-vba-regression-<run id>`:
 
 ```text
 artifacts/excel-vba-ci/test-result.txt
@@ -60,9 +63,105 @@ The JSON record binds the run to the exact candidate SHA and canonical source
 hashes. The log digest in the JSON binds the human-readable output to the same
 record.
 
-The normal regression job does not export numerical benchmark grids; both grid
+The regression itself does not export numerical benchmark grids; both grid
 entries therefore remain `exported: false`. A green regression artifact alone
-cannot refresh `observation_manifest.json` or `holdout_manifest.json`.
+cannot refresh `observation_manifest.json` or `holdout_manifest.json`. A run
+dispatched with export inputs uploads a second artifact,
+`excel-grid-export-<run id>`, described below.
+
+## Unattended grid export
+
+A `workflow_dispatch` run of the Excel VBA Regression workflow takes four
+inputs. They default to a regression-only run, so push and pull request runs,
+and a dispatch without inputs, behave as before.
+
+| Input | Values | Effect |
+| --- | --- | --- |
+| `export_main` | `true`/`false` | Export `benchmark/probability_accuracy_grid.csv` |
+| `export_holdout` | `true`/`false` | Export `benchmark/holdout/holdout_grid.csv` |
+| `export_holdout_older` | `true`/`false` | Export `benchmark/holdout_older/holdout_older_grid.csv` |
+| `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
+
+When any export input is set, the job runs the regression as usual and, only
+if that step succeeded, runs `ci/Export-ExcelGrids.ps1` on the same runner and
+checkout, with a job timeout of 120 minutes instead of 20. The job keeps
+`contents: read`, receives no secrets and never commits or pushes.
+
+### Why the inputs live in this workflow
+
+GitHub dispatches a workflow only if its file exists on the default branch,
+but a dispatched run uses the file as it exists at the dispatched ref. I put
+the export inputs in the existing workflow, which is already on `main`, rather
+than in a new workflow file. A dispatch on a branch therefore runs the
+branch's copy of the export, so a change to it can be tested on the runner
+before it merges.
+
+### What the export adapter does
+
+`ci/Export-ExcelGrids.ps1` keeps its pure checks in
+`ci/ExcelGridExport.psm1`, which touches neither Excel nor files. It:
+
+1. resolves the full checked-out SHA, rejects disagreement with `GITHUB_SHA`
+   and refuses a working tree that differs from it;
+2. refuses unless `artifacts/excel-vba-ci/excel-certification.json` names this
+   commit and this workflow run, every stage passed, every policy assertion
+   passed, and the retained log matches its digest;
+3. copies the selected grids, and always the main grid, into a private work
+   folder (`artifacts/excel-grid-export-work`) and saves a new macro-enabled
+   workbook there. The exporters look for their grid in the workbook's
+   folder, so they find it without a dialog and without a change to any
+   exporter module;
+4. starts its own Excel instance and refuses unless its version, build and
+   bitness equal the regression record's. It notes the process ID and checks
+   that no Excel process had that ID before it started;
+5. imports the `src/` modules, the exporter modules and a CI-only bridge
+   module, `M_CI_EXPORT_DIALOG_BRIDGE`, which is never committed. The bridge
+   defines a public `MsgBox`, which takes precedence over `VBA.MsgBox` for
+   unqualified calls in the project, so each exporter's closing message is
+   recorded instead of blocking. A "Could not locate" prompt makes the bridge
+   raise an error, so an exporter fails before it can open a file picker;
+6. runs `Export_ExcelEnvironment`, then each selected exporter, under a
+   watchdog. The watchdog polls for a visible dialog owned by that Excel
+   process and enforces a timeout (20 minutes per macro by default, so the
+   watchdog acts before the job timeout, which would leave Excel running). On
+   either, it records the dialog text or the timeout and kills that one
+   process, never another Excel process. Closing Excel runs under the same
+   watchdog, with a two-minute limit;
+7. requires exactly one exporter message per macro: the success message,
+   naming the staged file and, for the holdout exporters, the number of rows
+   in scope;
+8. checks each exported grid against the checked-out grid. The bytes must be
+   the CRLF lines VBA's `Print #` writes; every in-scope row (main grid:
+   `evidence_set` is `main grid`, and in missing-only mode `observed_vba` was
+   blank) must have a filled `observed_vba`; no other cell and no out-of-scope
+   row may change. `ERROR` tokens are counted, not rejected. A missing-only
+   run with no blank cell fails, because it would export nothing;
+9. completes `excel_environment.json`: the three fields Excel wrote, unchanged,
+   plus `commit_sha` and `commit_sha_recorded_by`
+   (`ci/Export-ExcelGrids.ps1`), because `Export_ExcelEnvironment` cannot know
+   the commit;
+10. writes the artifact and exits 0 only if every step passed.
+
+### Export artifact
+
+`excel-grid-export-<run id>` is uploaded whether the export passed or failed:
+
+```text
+export-manifest.json          status, candidate SHA, run, Excel, sources,
+                              per-grid row counts, ERROR counts, raw SHA-256,
+                              timings, and the failure reason if any
+export-log.txt                the adapter's log
+excel-certification.json      the regression record of the same run (exact bytes)
+test-result.txt               its retained log (exact bytes)
+excel_environment.json        the completed environment file
+excel_environment.excel.json  the bytes Export_ExcelEnvironment wrote
+grids/benchmark/...           each exported grid, exactly as Excel wrote it
+diagnostics/                  on failure only: what the exporters left behind
+```
+
+A failed export has `"status": "FAIL"`, and `benchmark/apply_excel_export.py`
+refuses it whatever files it holds. To apply a passing export, see
+[Automated fresh export](EXCEL_CERTIFICATION.md#automated-fresh-export).
 
 ## Runner setup
 
@@ -111,6 +210,12 @@ The adapter sets `AutomationSecurity = 1` only on the isolated Excel process it
 creates. It does not alter persistent Trust Center configuration; VBProject
 access must already be configured for the runner account.
 
+The export runs only on `workflow_dispatch`, which only accounts with write
+access can trigger, and the fork guard above still applies to the job. Export
+runs have the same `contents: read` token, no secrets and no step that writes
+to the repository; the evidence reaches the repository only through a commit
+a maintainer makes after applying the artifact.
+
 ## Local execution
 
 From a configured Windows/Excel machine:
@@ -122,6 +227,19 @@ Set-Location C:\path\to\VBA-PROBABILITY-DISTRIBUTIONS
 
 A local run records `execution = manual` and no GitHub workflow identity. It is
 still bound to the exact local `HEAD` and source hashes.
+
+The export adapter runs locally after a green local regression of the same
+commit:
+
+```powershell
+.\ci\Run-ExcelVbaTests.ps1
+.\ci\Export-ExcelGrids.ps1 -Main true -Holdout true
+```
+
+`-HoldoutOlder true` adds the older-families holdout, `-MainMode missing-only`
+selects the missing-only main export and `-MacroTimeoutMinutes` changes the
+watchdog's limit. The artifact lands in `artifacts\excel-grid-export`. Its
+manifest records no workflow run.
 
 ## Result contract
 
@@ -237,6 +355,25 @@ excel
 Check for modal Excel dialogs, first-run prompts, add-ins, Protected View
 prompts, or Office update dialogs. The adapter closes only its own temporary
 workbook and Excel instance; it never kills unrelated Excel processes.
+
+### Export stopped by the watchdog
+
+`export-log.txt` and the manifest's `failure` name the macro, the elapsed time
+and either the timeout or the dialog's class, title and text. A VBA compile
+error dialog means the imported project does not compile; any other dialog
+means something outside the exporters prompted (an add-in, an Office notice).
+Dismiss its cause on the runner under the runner account and dispatch again.
+The watchdog killed only the adapter's own Excel process.
+
+### Export refused or failed verification
+
+The first `EXPORT REFUSED` line in `export-log.txt` gives the reason. The usual
+ones are a regression that was not green, an Excel version or build that
+differs from the regression record's, a missing-only main export with no blank
+cell to fill, and an exporter message other than its success message (for
+example, `Accuracy export failed: ...`). A verification failure lists the
+first rows that changed outside `observed_vba` or were left blank;
+`diagnostics/` holds the files as the exporters left them.
 
 ## Operational controls
 

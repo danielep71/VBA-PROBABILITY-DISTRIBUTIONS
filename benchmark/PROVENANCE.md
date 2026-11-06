@@ -95,6 +95,8 @@ rules.
 
 Commands below run from the repository root. These steps describe the required evidence chain; the README assurance block shows which certifications currently pass.
 
+The self-hosted runner can perform steps 1 and 2 unattended in one dispatched run, and `apply_excel_export.py` performs steps 3 and 4 from its artifact after checking it against the checkout; see [Automated fresh export](../docs/EXCEL_CERTIFICATION.md#automated-fresh-export). The steps below remain the evidence chain either way, and the manual fallback when the runner is unavailable.
+
 ### 1. Certify the exact source candidate in Excel
 
 Check out and record the full candidate SHA. Import its exact production and test modules into a clean workbook, run the self-hosted regression workflow, and retain its green `excel-certification.json` and regression log. Validate the artifact as described in [EXCEL_CERTIFICATION.md](../docs/EXCEL_CERTIFICATION.md).
