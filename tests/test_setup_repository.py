@@ -278,6 +278,100 @@ class SetupRepositoryTests(unittest.TestCase):
         self.assertIn("vulnerability_alerts: observed null", output)
         self.assertIn("automated_security_fixes: observed null", output)
 
+    # Paused Dependabot security updates (#206).
+
+    def pause(self, enabled: bool = True, paused: bool = True) -> None:
+        self.api.set_status(API + "/automated-security-fixes", 200, {"enabled": enabled, "paused": paused})
+
+    def test_paused_security_updates_are_drift(self) -> None:
+        self.pause()
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "evidence.json"
+            code, output = self.run_tool(verify=True, evidence=target)
+            record = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(code, 1)
+        self.assertIn('DIFF security automated_security_fixes: observed "on (paused)", baseline true', output)
+        self.assertIn("answering or closing the open Dependabot pull requests resumes them", output)
+        row = next(r for r in record["security"] if r["feature"] == "automated_security_fixes")
+        self.assertEqual((row["observed"], row["paused"], row["matches"]), ("on (paused)", True, False))
+
+    def test_enabled_security_updates_that_are_not_paused_match(self) -> None:
+        self.pause(paused=False)
+        self.assertEqual(self.verify()[0], 0)
+
+    def test_apply_cannot_resume_paused_security_updates(self) -> None:
+        self.pause()
+        with self.assertRaisesRegex(setup.SetupError, "Read-back"):
+            self.run_tool(apply=True)
+        self.assertIn(("PUT", API + "/automated-security-fixes", None), self.api.writes)
+
+    def test_unreadable_endpoint_leaves_the_paused_state_unknown(self) -> None:
+        # The recording: the endpoint answered 403, security_and_analysis says enabled.
+        state = setup.security_states(self.api, API, self.api.repo)["automated_security_fixes"]
+        self.assertEqual(state["observed"], True)
+        self.assertIsNone(state["paused"])
+        self.assertIn("paused state unknown", state["source"])
+        self.assertIn("HTTP 403", state["source"])
+
+    def test_turning_paused_security_updates_off_deletes_them(self) -> None:
+        self.pause()
+        baseline = setup.load_baseline(setup.BASELINE)
+        baseline["security"]["automated_security_fixes"] = False
+        state = setup.observe(self.api, REPO)
+        steps = setup.plan(baseline, state, setup.assess(baseline, state), REPO)
+        self.assertIn(("DELETE", API + "/automated-security-fixes", None), steps)
+
+    # GitHub Actions settings: read and reported, never written (#208).
+
+    def actions(self, **changes: Any) -> None:
+        values = {"actions/permissions": {"enabled": True, "allowed_actions": "all",
+                                          "sha_pinning_required": True},
+                  "actions/permissions/workflow": {"default_workflow_permissions": "read",
+                                                   "can_approve_pull_request_reviews": False},
+                  "actions/permissions/fork-pr-contributor-approval": {
+                      "approval_policy": "all_external_contributors"},
+                  "actions/permissions/artifact-and-log-retention": {"days": 90,
+                                                                     "maximum_allowed_days": 400}}
+        for endpoint, fields in changes.items():
+            values[endpoint].update(fields)
+        for endpoint, body in values.items():
+            self.api.set_status(f"{API}/{endpoint}", 200, body)
+
+    def test_actions_settings_that_match_verify(self) -> None:
+        self.actions()
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "evidence.json"
+            code, output = self.run_tool(verify=True, evidence=target)
+            record = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(code, 0, output)
+        rows = {row["setting"]: row for row in record["actions"]}
+        self.assertEqual(rows["artifact_and_log_retention_days"]["observed"], 90)
+        self.assertEqual(rows["fork_pr_approval_policy"]["observed"], "all_external_contributors")
+        self.assertTrue(all(row["matches"] is True for row in rows.values()))
+
+    def test_actions_drift_is_reported_and_never_written(self) -> None:
+        self.actions(**{"actions/permissions/artifact-and-log-retention": {"days": 30},
+                        "actions/permissions/workflow": {"default_workflow_permissions": "write"}})
+        code, output = self.verify()
+        self.assertEqual(code, 1)
+        self.assertIn("DIFF actions artifact_and_log_retention_days: observed 30, baseline 90", output)
+        self.assertIn('DIFF actions default_workflow_permissions: observed "write", baseline "read"', output)
+        with self.assertRaisesRegex(setup.SetupError, "Read-back"):
+            self.run_tool(verify=False, apply=True)
+        self.assertEqual([w for w in self.api.writes if "/actions/" in w[1]], [])
+
+    def test_unreadable_actions_settings_are_reported_not_fatal(self) -> None:
+        # The recording holds no Actions response: every endpoint is unreadable.
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "evidence.json"
+            code, output = self.run_tool(verify=True, evidence=target)
+            record = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(code, 0, output)
+        self.assertIn("NOTE: actions sha_pinning_required not verified: GET actions/permissions "
+                      "unreadable (HTTP 404)", output)
+        self.assertTrue(record["actions"])
+        self.assertTrue(all(row["matches"] is None for row in record["actions"]))
+
     # Apply writes only with the flag, after its prerequisites, and reads back.
 
     def drift_everywhere(self) -> None:
@@ -375,7 +469,7 @@ class SetupRepositoryTests(unittest.TestCase):
                 bypass_actors=[{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}]),
             "unique name": lambda b: b["rulesets"].append(copy.deepcopy(b["rulesets"][0])),
             "repository settings": lambda b: b["settings"].update(has_pages=False),
-            "schema": lambda b: b.update(schema_version=2),
+            "schema": lambda b: b.update(schema_version=99),
             "active": lambda b: ruleset(b, "Protect main").update(enforcement="evaluate"),
             "repeats a rule": lambda b: ruleset(b, "Protect main")["rules"].append({"type": "deletion"}),
             "integration ID": lambda b: ruleset(b, "Protect main")["rules"][3]["parameters"][
@@ -385,6 +479,23 @@ class SetupRepositoryTests(unittest.TestCase):
             with self.subTest(message=message):
                 with self.assertRaisesRegex(setup.SetupError, message):
                     self.broken(change)
+
+    # Public-only security features on a private baseline (#207).
+
+    def test_private_baseline_with_public_only_features_is_rejected(self) -> None:
+        def private(b: Any) -> None:
+            b["visibility"] = "private"
+        with self.assertRaises(setup.SetupError) as raised:
+            self.broken(private)
+        for feature in ("private_vulnerability_reporting", "secret_scanning",
+                        "secret_scanning_push_protection"):
+            self.assertIn(feature, str(raised.exception))
+
+        def private_without_them(b: Any) -> None:
+            b["visibility"] = "private"
+            b["security"].update(private_vulnerability_reporting=False, secret_scanning=False,
+                                 secret_scanning_push_protection=False)
+        self.broken(private_without_them)
 
     def test_rule_order_is_not_drift_but_an_extra_rule_is(self) -> None:
         rule = copy.deepcopy(setup.load_baseline(setup.BASELINE)["rulesets"][0])

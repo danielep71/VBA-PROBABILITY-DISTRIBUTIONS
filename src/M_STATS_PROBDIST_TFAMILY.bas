@@ -225,6 +225,13 @@ Private Const PROB_T_LDF_G5_6 As Double = -2.03884548611111E-02 - 1.040834085586
 Private Const PROB_T_LDF_G5_7 As Double = 4.78515625E-03
 Private Const PROB_T_LDF_G5_8 As Double = -3.60785590277778E-04 + 2.16840434497101E-19
 Private Const PROB_T_LDF_G5_9 As Double = 8.13802083333333E-06 + 3.3881317890172E-21
+'Inverse polish (#34, INVERSE_PREREGISTRATION.md): after the Newton loop of
+'PROB_TryStudentTInvTail converges, up to PROB_T_LDF_POLISH_STEPS plain Newton
+'steps on the large-df route, for df >= PROB_T_LDF_MIN_DF and a target tail of
+'at most PROB_T_LDF_POLISH_MAX_TAIL. The loop stops on a 1E-15 relative step,
+'which can leave the quantile several Doubles from the root.
+Private Const PROB_T_LDF_POLISH_STEPS As Long = 3        'Newton steps at most
+Private Const PROB_T_LDF_POLISH_MAX_TAIL As Double = 0.4 'Largest target tail polished
 
 '==============================================================================
 ' PUBLIC - STUDENT T
@@ -2621,6 +2628,7 @@ Private Function PROB_TryStudentTInvTail( _
     Dim LogQuantile         As Double          'Logarithm of a closed-form quantile
     Dim Converged           As Boolean         'Iteration convergence flag
     Dim IterIdx             As Long            'Iteration counter
+    Dim PolishIdx           As Long            'Polish step counter
 
 '------------------------------------------------------------------------------
 ' INITIALIZE OUTPUTS
@@ -2845,6 +2853,23 @@ Private Function PROB_TryStudentTInvTail( _
                 " iterations for DegreesFreedom = " & _
                 DegreesFreedom
             Exit Function
+        End If
+
+'------------------------------------------------------------------------------
+' POLISH ON THE LARGE-DF ROUTE
+'------------------------------------------------------------------------------
+    'Remove the Doubles the loop's 1E-15 stopping step can leave, with plain
+    'Newton steps on the accurate large-df tail (#34)
+        If DegreesFreedom >= PROB_T_LDF_MIN_DF And Tail <= PROB_T_LDF_POLISH_MAX_TAIL Then
+            For PolishIdx = 1 To PROB_T_LDF_POLISH_STEPS
+                If X > PROB_T_LDF_MAX_ABS_T Then Exit For
+                If Not PROB_TryStudentTTail(X, DegreesFreedom, TailAtX, FailMsg) Then Exit Function
+                If Not PROB_TryStudentTPDF(X, DegreesFreedom, Density, FailMsg) Then Exit Function
+                If Density <= 0# Then Exit For
+                XNew = X + (TailAtX - Tail) / Density
+                If XNew = X Then Exit For
+                X = XNew
+            Next PolishIdx
         End If
 
 '------------------------------------------------------------------------------

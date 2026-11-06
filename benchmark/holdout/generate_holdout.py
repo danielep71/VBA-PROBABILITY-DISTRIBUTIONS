@@ -469,6 +469,87 @@ def student_t_large_df_rows():
     return out
 
 
+STUDENT_T_INVERSE_SEED = 3434
+
+
+def student_t_inverse_draws():
+    """The arguments of INVERSE_PREREGISTRATION.md section 6, in draw order:
+    (function, arg1, arg2) for 16 forward points (a survival and a cumulative
+    row each) and 24 inverse points, from random.Random(3434)."""
+    import math
+    import random
+    rng = random.Random(STUDENT_T_INVERSE_SEED)
+    draws = []
+    for i in range(16):
+        t = rng.uniform(0.25, 8.0)
+        if i >= 8:
+            t = -t
+        df = 10 ** rng.uniform(5.0, 8.0)
+        draws += [("StudentT_Survival", t, df), ("StudentT_Cumulative", t, df)]
+    for i in range(24):
+        tau = 10 ** rng.uniform(-14.0, math.log10(0.4))
+        p = 1 - tau if i < 12 else tau
+        df = 10 ** rng.uniform(5.0, 8.0)
+        draws.append(("StudentT_InverseCumulative", p, df))
+    return draws
+
+
+def student_t_inverse_rows():
+    """The untouched holdout of the Student-t inverse polish (#34), drawn
+    exactly as INVERSE_PREREGISTRATION.md section 6 fixes it:
+    random.Random(3434); 16 forward points (t = U(0.25, 8), negative for the
+    second 8, then df = 10^U(5, 8)), each a survival and a cumulative row; then
+    24 inverse points (tau = 10^U(-14, log10 0.4), p = 1 - tau for the first 12
+    and p = tau for the last 12, then df = 10^U(5, 8)). Arguments are the
+    Doubles themselves; references are the direct upper tail at those Doubles,
+    at 50 digits, and the quantile from the same oracle."""
+    out = []
+
+    def tail(t, df):
+        t, df = mp.mpf(t), mp.mpf(df)
+        return mp.betainc(df / 2, mp.mpf(1) / 2, 0, df / (df + t * t), regularized=True) / 2
+
+    def R(fn, a1, a2, ref):
+        out.append({"function": fn, "vba_kernel": "K_STATS_" + fn, "claim": "", "metric": "",
+                    "arg1": repr(a1), "arg2": repr(a2), "arg3": "", "arg4": "",
+                    "reference": mp.nstr(ref, 30), "observed_vba": "",
+                    "regime": "envelope_domain", "evidence_set": "holdout"})
+
+    with mp.workdps(50):
+        for fn, a, df in student_t_inverse_draws():
+            if fn == "StudentT_Survival":
+                s = tail(abs(a), df)
+                R(fn, a, df, s if a >= 0 else 1 - s)
+            elif fn == "StudentT_Cumulative":
+                s = tail(abs(a), df)
+                R(fn, a, df, 1 - s if a >= 0 else s)
+            else:
+                target = 1 - mp.mpf(a) if a > 0.5 else mp.mpf(a)
+                seed = mp.sqrt(2) * mp.erfinv(2 * abs(mp.mpf(a) - mp.mpf("0.5")))
+                q = mp.findroot(lambda x: tail(x, df) - target, seed)
+                R(fn, a, df, q if a > 0.5 else -q)
+    return out
+
+
+def append_rows(rows, path, what):
+    """Append rows to the committed grid once, with blank observations, changing
+    no existing byte; refuse if any of them is already there."""
+    with open(path, newline="", encoding="utf-8") as f:
+        text = f.read()
+    present = {(r["function"], r["arg1"], r["arg2"]) for r in csv.DictReader(io.StringIO(text))}
+    if any((r["function"], r["arg1"], r["arg2"]) in present for r in rows):
+        raise SystemExit(f"refusing: the holdout grid already holds the {what} rows")
+    fields = text.split("\n", 1)[0].split(",")
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=fields, lineterminator="\n")
+    for r in rows:
+        w.writerow({k: r.get(k, "") for k in fields})
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        f.write(text if text.endswith("\n") else text + "\n")
+        f.write(buf.getvalue())
+    print(f"appended {len(rows)} {what} rows to {path}")
+
+
 def append_student_t_large_df(path="holdout_grid.csv"):
     """Append the #34 rows to the committed grid once, with blank observations,
     changing no existing byte."""
@@ -493,7 +574,13 @@ def main():
     ap.add_argument("--append-student-t-large-df", action="store_true",
                     help="append the #34 holdout rows to the committed grid once (section 6 of "
                          "student_t_large_df_study/PRODUCTION_PREREGISTRATION.md)")
+    ap.add_argument("--append-student-t-inverse", action="store_true",
+                    help="append the #34 inverse-polish holdout rows to the committed grid once "
+                         "(section 6 of student_t_large_df_study/INVERSE_PREREGISTRATION.md)")
     a=ap.parse_args()
+    if a.append_student_t_inverse:
+        append_rows(student_t_inverse_rows(), a.out, "#34 inverse-polish holdout")
+        return
     if a.append_student_t_large_df:
         append_student_t_large_df(a.out)
         return

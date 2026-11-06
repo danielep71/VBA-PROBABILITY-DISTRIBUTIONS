@@ -174,7 +174,7 @@ python3 -m unittest discover -s tests
 with the baseline in
 [`docs/repo_governance/repository-settings.json`](../docs/repo_governance/repository-settings.json):
 visibility, merge methods and repository features, the five security features,
-and the five repository rulesets with their required checks and allowed merge
+six GitHub Actions settings, and the five repository rulesets with their required checks and allowed merge
 methods. [SETTINGS.md](../docs/repo_governance/SETTINGS.md) explains each
 value. It calls the REST API through an authenticated `gh` CLI and needs
 Python 3.10 or later.
@@ -204,6 +204,19 @@ python3 tools/setup_repository.py --apply          # writes the plan, then reads
 - When the `vulnerability-alerts` endpoint cannot be read, enabled Dependabot
   security updates count as proof that alerts are on, because GitHub allows
   them only with alerts; the record names that source.
+- Dependabot security updates are read from `automated-security-fixes`, the
+  only endpoint that reports a pause. Paused updates are recorded as
+  `"on (paused)"` and are drift, with a note on how to resume them; `--apply`
+  cannot resume them, so its read-back fails. When that endpoint cannot be
+  read, `security_and_analysis` gives the state and the record says the
+  paused state is unknown.
+- A private baseline that turns on private vulnerability reporting, secret
+  scanning or push protection is refused: GitHub offers them free only on
+  public repositories.
+- The Actions settings (enabled, full-SHA pinning, default token permissions,
+  approval of pull requests by Actions, the outside-contributor approval
+  policy and retention) are read and reported, never written. An endpoint that
+  cannot be read is a note, not drift.
 
 Change a setting by editing the baseline in a pull request, then apply it.
 A change made in the GitHub settings first shows up as drift. The fixtures in
@@ -623,3 +636,30 @@ layout; they are not verbatim copies.
 | `traffic_alert.py` | The alert part of `tools/traffic_history.py`: the views, stars, forks and new-referrer reasons without clones, and the triage-ready body with a target end date before the milestone's due date. It reads this repository's `traffic-history` CSV columns, and the snapshot collection stays in `daily-traffic.yml`. |
 | `tests/test_traffic_alert.py` | The alert cases of `tests/test_traffic_history.py`, rewritten for this repository's CSV files, plus a check that the generated issue passes `check_issues.py`. |
 | `.github/workflows/daily-traffic.yml` (alert job) | The `alert` job of `.github/workflows/traffic-history.yml`: no environment, milestone lookup and duplicate check, `gh issue create` with assignee, labels and milestone. |
+
+### Adapted from `danielep71/MyTemplate` at `6927f23`
+
+Label management, adapted from template revision
+`6927f233b8bd23479dc7f0cfb045e59139814b40` (#201, #202, #203). Both repositories
+are licensed under the Mozilla Public License 2.0.
+
+| File | Adaptation |
+| --- | --- |
+| `.github/scripts/labels-sync.mjs` | The template's safe pruning and summary escaping, applied to this repository's script. Before any change, every label pruning would delete is checked against all issues and pull requests, open and closed. A name containing a comma is checked by reading every issue page by page, at most 100 pages, failing on a malformed page. Unlike the template, the check runs only when changes are applied, so `--dry-run` still previews an in-use deletion. `inlineCode` and a `markdownEscape` that removes `\r` render every value. The self-test gains the template's pruning and escaping fixtures. |
+| `.github/scripts/labels-drift.mjs` | The same helpers, imported from the synchronization script, for every name, colour, repository and manifest path in the drift report. The self-test gains a backtick name, a pipe name and a hostile live label. |
+| `.github/workflows/labels-sync.yml` | `pull-requests: read` on the reconcile job, so the issues API includes pull requests in that check. |
+| `docs/repo_governance/ISSUE_LABELS.md` | The structure of the template's guide: the pruning paragraph, the usage tables, closing issues and the catalogue table. It is rewritten for this repository's 28 labels, with an Areas table for its 8 repository-specific labels, and keeps this repository's issue rules, `External condition:` example, milestone automation and self-test commands. |
+| `tests/test_issue_labels.py` | The catalogue, usage, label-count and Dependabot checks of the template's `tests/test_repository_consistency.py`. They are extended to the common/repository-specific split, a rule for each area label, the closing-issues section, the assignee of all four issue forms, and flow-style YAML lists. |
+
+### Adapted from `danielep71/MyTemplate` at `627bdb0`
+
+Repository settings, adapted from template revision `627bdb0` on its
+`release/1.0.0` branch (#206). Both repositories are licensed under the Mozilla
+Public License 2.0. The refusal of a private baseline with public-only features
+(#207) and the Actions settings checks (#208) are this repository's own: the
+template skips those features with a note, and does not read Actions settings.
+
+| File | Adaptation |
+| --- | --- |
+| `tools/setup_repository.py` | The template's handling of paused Dependabot security updates. `automated-security-fixes` is always read, and the feature counts as on only when it is enabled and not paused. Pause notes say how to resume the feature, the read-back fails while it stays paused, and turning it off still issues the DELETE. It is applied to this repository's observe, assess and plan steps and its JSON evidence (`"on (paused)"`, a `paused` field), with an unreadable endpoint falling back to `security_and_analysis` and stating that the paused state is unknown. |
+| `tests/test_setup_repository.py` | The template's paused-updates cases (paused is drift, enabled and not paused matches, an apply that does not resume fails), on this repository's recorded responses, plus the unreadable-endpoint and turn-off cases. |

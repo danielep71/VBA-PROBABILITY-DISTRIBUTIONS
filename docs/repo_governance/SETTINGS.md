@@ -50,10 +50,10 @@ from a default. I verify these features in the repository security settings.
 
 | Feature | Configured value | Availability / effect |
 | --- | --- | --- |
-| Private vulnerability reporting | **On** | Public repositories only. Adds **Security → Report a vulnerability**, the private channel that `SECURITY.md` names. |
+| Private vulnerability reporting | **On** | Public repositories only; a private baseline that turns it on is refused. Adds **Security → Report a vulnerability**, the private channel that `SECURITY.md` names. |
 | Dependabot alerts | **On** | Every repository. Alerts on vulnerable dependencies. |
-| Dependabot security updates | **On** | Every repository; requires Dependabot alerts. Opens pull requests that fix vulnerable dependencies, separately from the scheduled version updates in `.github/dependabot.yml`. |
-| Secret scanning | **On** | Public repositories; private repositories need a paid licence and are skipped with a note. |
+| Dependabot security updates | **On** | Every repository; requires Dependabot alerts. Opens pull requests that fix vulnerable dependencies, separately from the scheduled version updates in `.github/dependabot.yml`. GitHub pauses them when Dependabot pull requests go unanswered; paused updates open nothing, so they count as drift until the open Dependabot pull requests are answered or closed. |
+| Secret scanning | **On** | Free on public repositories; a private repository needs a paid licence, so a private baseline that turns it on is refused. |
 | Push protection | **On** | Same availability as secret scanning, which it requires. Blocks pushes that contain a detected secret. |
 
 Sources: [private vulnerability reporting][pvr], [Dependabot alerts][dependabot-alerts],
@@ -156,6 +156,11 @@ enabled. These protections are intentional additions.
 
 Actions require full commit SHA pinning, use read-only default token permissions,
 and cannot create or approve pull requests. Log and artifact retention is 90 days.
+The `actions` block of `repository-settings.json` records these values, with
+Actions enabled and the approval policy for all external contributors.
+`tools/setup_repository.py` reads them and reports drift, but never writes them:
+change one in the repository's Actions settings. An endpoint it cannot read is
+reported as not verified.
 CodeQL uses the versioned workflow with advanced setup.
 
 This document records configuration; copying it does not apply settings.

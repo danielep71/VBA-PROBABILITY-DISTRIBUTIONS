@@ -10,6 +10,8 @@ const DEFAULT_MANIFEST = ".github/labels.json";
 const API_VERSION = "2022-11-28";
 const LABELS_PER_PAGE = 100;
 const MAX_LABEL_PAGES = 100;
+const ISSUES_PER_PAGE = 100;
+const MAX_ISSUE_PAGES = 100;
 const MAX_RATE_LIMIT_RETRIES = 2;
 export const MAX_RETRY_DELAY_MS = 5000;
 
@@ -269,6 +271,57 @@ export async function listLiveLabels(repository, token) {
   throw new Error(`GitHub label pagination exceeded ${MAX_LABEL_PAGES} pages`);
 }
 
+// The issues endpoint covers pull requests; state=all adds closed items.
+export async function labelInUse(repository, token, name, request = githubRequest) {
+  if (!name.includes(",")) {
+    const batch = await request(
+      repository,
+      token,
+      "GET",
+      `/issues?state=all&per_page=1&labels=${encodeURIComponent(name)}`
+    );
+    if (!Array.isArray(batch)) throw new Error("GitHub issues response is not an array");
+    return batch.length > 0;
+  }
+  // The labels filter is a comma-separated list, so it cannot query this name:
+  // read the labels of every issue and pull request instead. A malformed page
+  // or more pages than the limit throws, so nothing is deleted on a guess.
+  const wanted = name.toLowerCase();
+  for (let page = 1; page <= MAX_ISSUE_PAGES; page += 1) {
+    const batch = await request(
+      repository,
+      token,
+      "GET",
+      `/issues?state=all&per_page=${ISSUES_PER_PAGE}&page=${page}`
+    );
+    if (!Array.isArray(batch)) throw new Error("GitHub issues response is not an array");
+    for (const item of batch) {
+      if (!Array.isArray(item?.labels) || item.labels.some(label => typeof label?.name !== "string")) {
+        throw new Error("GitHub issues response has malformed labels");
+      }
+      if (item.labels.some(label => label.name.toLowerCase() === wanted)) return true;
+    }
+    if (batch.length < ISSUES_PER_PAGE) return false;
+  }
+  throw new Error(`GitHub issue pagination exceeded ${MAX_ISSUE_PAGES} pages while checking ${JSON.stringify(name)}`);
+}
+
+// Deleting a label removes it from every issue and pull request, closed ones
+// included, and cannot be undone: refuse before any change is applied.
+export async function assertSafeDeletions(changes, isInUse) {
+  const inUse = [];
+  for (const change of changes) {
+    if (change.action !== "delete") continue;
+    if (await isInUse(change.currentName)) inUse.push(change.currentName);
+  }
+  if (inUse.length > 0) {
+    throw new Error(
+      `Refusing to prune labels still used by an issue or pull request: ${inUse.map(name => JSON.stringify(name)).join(", ")}. `
+      + "No change was applied. Remove each label from its issues and pull requests, or add it to the manifest."
+    );
+  }
+}
+
 async function applyChanges(repository, token, changes) {
   for (const change of changes) {
     if (change.action === "update") {
@@ -285,13 +338,29 @@ async function applyChanges(repository, token, changes) {
   }
 }
 
-function markdownEscape(value) {
-  return String(value).replaceAll("|", "\\|").replaceAll("\n", " ");
+function singleLine(value) {
+  return String(value).replace(/\r\n?|\n/g, " ");
+}
+
+// Plain text in a table cell: one line, with pipes escaped.
+export function markdownEscape(value) {
+  return singleLine(value).replaceAll("|", "\\|");
+}
+
+// A code span that the value cannot close: its delimiter is longer than any
+// run of backticks in the value. In a table cell, pipes are escaped as well.
+export function inlineCode(value, { table = false } = {}) {
+  let text = singleLine(value);
+  if (table) text = text.replaceAll("|", "\\|");
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map(run => run.length));
+  const fence = "`".repeat(longest + 1);
+  const padding = /^[` ]|[` ]$/.test(text) ? " " : "";
+  return `${fence}${padding}${text}${padding}${fence}`;
 }
 
 function renderLabelNames(labels) {
   if (labels.length === 0) return "none";
-  return labels.map(label => markdownEscape(JSON.stringify(label.name))).join(", ");
+  return labels.map(label => inlineCode(label.name)).join(", ");
 }
 
 function renderSummary({
@@ -314,8 +383,8 @@ function renderSummary({
   const lines = [
     "# Repository label synchronization",
     "",
-    `- Mode: \`${mode}\`${dryRun ? " (dry run)" : ""}`,
-    `- Label manifest: \`${manifestPath ?? "unavailable"}\``,
+    `- Mode: ${inlineCode(mode)}${dryRun ? " (dry run)" : ""}`,
+    `- Label manifest: ${inlineCode(manifestPath ?? "unavailable")}`,
     `- Schema: **${manifest?.schema_version ?? "unavailable"}**`,
     `- Labels: **${resolvedLabels.length}**`,
     `- Prune: **${manifest ? (manifest.prune ? "enabled" : "disabled") : "unavailable"}**`,
@@ -330,7 +399,7 @@ function renderSummary({
     `- Labels (${resolvedLabels.length}): ${renderLabelNames(resolvedLabels)}`
   );
   if (error) {
-    lines.push("", "## Failure", "", `\`${markdownEscape(error)}\``);
+    lines.push("", "## Failure", "", inlineCode(error));
     if (partial) {
       lines.push("", "The failure happened during or after reconciliation: some changes may already be applied. Compare the live labels with the manifest.");
     }
@@ -342,7 +411,7 @@ function renderSummary({
     lines.push("", "| Action | Label | Detail |", "|---|---|---|");
     for (const change of changes) {
       const detail = change.action === "update" ? change.fields.join(", ") : change.action === "delete" ? "outside the manifest" : "missing live label";
-      lines.push(`| ${change.action} | \`${markdownEscape(change.name)}\` | ${markdownEscape(detail)} |`);
+      lines.push(`| ${change.action} | ${inlineCode(change.name, { table: true })} | ${markdownEscape(detail)} |`);
     }
   }
   return `${lines.join("\n")}\n`;
@@ -463,9 +532,94 @@ async function runSelfTest(manifestPath) {
   assert.match(failureSummary, /Planned changes: \*\*1\*\*/);
   assert.match(failureSummary, /some changes may already be applied/);
   assert.match(summary, new RegExp(`Labels \\(${desired.length}\\):`));
-  for (const label of desired) assert.match(summary, new RegExp(`"${label.name}"`));
+  for (const label of desired) assert.ok(summary.includes(inlineCode(label.name)), label.name);
 
-  process.stdout.write("SELF-TEST PASS: retry delays, validation and reconciliation fixtures\n");
+  // Values are data: no backtick, pipe or line break may close the code span or split the row.
+  assert.equal(inlineCode("plain"), "`plain`");
+  assert.equal(inlineCode("wip `x`"), "`` wip `x` ``");
+  assert.equal(inlineCode("a ``b`` c"), "```a ``b`` c```");
+  assert.equal(inlineCode("`edge"), "`` `edge ``");
+  assert.equal(inlineCode("a|b"), "`a|b`");
+  assert.equal(inlineCode("a|b", { table: true }), "`a\\|b`");
+  assert.equal(inlineCode("one\r\ntwo\rthree\nfour"), "`one two three four`");
+  assert.equal(markdownEscape("x|y\r\nz"), "x\\|y z");
+  const special = [{ name: "wip `x`", color: "ABCDEF", description: "d" },
+    { name: "needs|triage", color: "ABCDEF", description: "d" }];
+  const specialSummary = renderSummary({
+    mode: "plan",
+    manifest,
+    manifestPath: "fixture-labels.json",
+    desiredLabels: desired,
+    changes: planChanges(desired, [...structuredClone(desired), ...special])
+  });
+  assert.ok(specialSummary.includes("| delete | `` wip `x` `` | outside the manifest |"), specialSummary);
+  assert.ok(specialSummary.includes("| delete | `needs\\|triage` | outside the manifest |"), specialSummary);
+  const errorSummary = renderSummary({
+    mode: "failed",
+    manifest,
+    manifestPath: "fixture-labels.json",
+    desiredLabels: desired,
+    changes: null,
+    error: "HTTP 422: {\"message\":\"`bad`\"}\r\nnext line"
+  });
+  assert.ok(errorSummary.includes("``HTTP 422: {\"message\":\"`bad`\"} next line``"), errorSummary);
+  assert.doesNotMatch(errorSummary, /\r/);
+
+  // Pruning refuses labels in use before any change; comma names are checked too.
+  const asked = [];
+  const usage = used => async name => {
+    asked.push(name);
+    return used.includes(name);
+  };
+  const pruned = planChanges(desired, [...structuredClone(desired),
+    { name: "unused", color: "ABCDEF", description: "d" },
+    { name: "in-use", color: "ABCDEF", description: "d" },
+    { name: "a,b", color: "ABCDEF", description: "d" }]);
+  await assert.rejects(assertSafeDeletions(pruned, usage(["in-use", "a,b"])),
+    error => /still used by an issue or pull request: "a,b", "in-use"\. No change was applied/.test(error.message));
+  assert.deepEqual(asked, ["a,b", "in-use", "unused"]);
+  asked.length = 0;
+  await assertSafeDeletions(pruned, usage([]));
+  assert.deepEqual(asked, ["a,b", "in-use", "unused"], "an unused comma name can be pruned");
+  asked.length = 0;
+
+  // A comma name is not passed to the labels filter: every issue and pull
+  // request, open and closed, is read page by page and its real labels compared.
+  const paths = [];
+  const pages = responses => {
+    let next = 0;
+    return async (_repository, _token, method, suffix) => {
+      assert.equal(method, "GET");
+      paths.push(suffix);
+      return responses[next++];
+    };
+  };
+  const full = Array.from({ length: 100 }, () => ({ labels: [{ name: "a" }, { name: "b" }] }));
+  assert.equal(await labelInUse("o/r", "t", "a,b", pages([full, [{ labels: [{ name: "A,B" }] }]])), true);
+  assert.deepEqual(paths, ["/issues?state=all&per_page=100&page=1", "/issues?state=all&per_page=100&page=2"]);
+  paths.length = 0;
+  assert.equal(await labelInUse("o/r", "t", "a,b", pages([full, [{ labels: [] }]])), false);
+  assert.equal(paths.length, 2);
+  paths.length = 0;
+  assert.equal(await labelInUse("o/r", "t", "plain", pages([[{ labels: [{ name: "plain" }] }]])), true);
+  assert.deepEqual(paths, ["/issues?state=all&per_page=1&labels=plain"]);
+  paths.length = 0;
+  // Anything it cannot read stops synchronization before a change.
+  await assert.rejects(labelInUse("o/r", "t", "a,b", pages([[{ labels: null }]])), /malformed labels/);
+  await assert.rejects(labelInUse("o/r", "t", "a,b", pages([[{ labels: [{ name: 1 }] }]])), /malformed labels/);
+  await assert.rejects(labelInUse("o/r", "t", "a,b", pages([{}])), /not an array/);
+  await assert.rejects(labelInUse("o/r", "t", "a,b", async () => full), /exceeded 100 pages while checking "a,b"/);
+  const failing = pages([[], [], {}]);
+  await assert.rejects(assertSafeDeletions(pruned, name => labelInUse("o/r", "t", name, failing)),
+    /not an array/);
+  await assertSafeDeletions(planChanges(desired, [...structuredClone(desired),
+    { name: "unused", color: "ABCDEF", description: "d" }]), usage([]));
+  assert.deepEqual(asked, ["unused"]);
+  asked.length = 0;
+  await assertSafeDeletions(planChanges(desired, desired.slice(1)), usage(["anything"]));
+  assert.deepEqual(asked, [], "a plan without deletions makes no query");
+
+  process.stdout.write("SELF-TEST PASS: retry delays, validation, reconciliation, safe pruning and summary fixtures\n");
 }
 
 // What the run knew before a failure, so that the failure summary reports it.
@@ -513,6 +667,9 @@ async function main() {
     return;
   }
 
+  // Only a run that applies changes can delete a label, so only it is refused;
+  // plan and dry-run modes preview every planned deletion.
+  await assertSafeDeletions(changes, name => labelInUse(options.repository, process.env.GITHUB_TOKEN, name));
   runState.applying = true;
   await applyChanges(options.repository, process.env.GITHUB_TOKEN, changes);
   const after = await listLiveLabels(options.repository, process.env.GITHUB_TOKEN);
