@@ -13,6 +13,7 @@ Proofs for the #23 study grid and its analyzer.
 
 Run: python3 test_gamma_series_small_shape.py   (exit 0 = pass)
 """
+from decimal import Decimal, localcontext
 import csv
 import io
 import os
@@ -23,6 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import analyze_gamma_series_small_shape as A  # noqa: E402
 import generate_gamma_series_small_shape as G  # noqa: E402
+import promote_representatives as P  # noqa: E402
 
 
 def token(x):
@@ -76,6 +78,48 @@ def main():
         check(c["reference"] == g["reference"], "paired routes have different references")
     check(sorted((float(r["arg1"]), float(r["arg2"])) for r in rows if r["regime"] == "scope_probe")
           == sorted(G.SCOPE_PROBES), "scope probes differ from HOLDOUT_DESIGN.md")
+
+    # Permanent coverage uses the original roles, never the observed holdout.
+    promoted = P.build_rows()
+    identities = {(r["function"], float(r["arg1"]), float(r["arg2"])) for r in promoted}
+    expected = {("Gamma_Cumulative", 0.5, 0.0001),
+                ("ChiSquare_Cumulative", 1.0, 0.0002),
+                ("Gamma_Cumulative", 0.5, 0.6),
+                ("Gamma_Cumulative", 1.0, 5.3),
+                ("Gamma_Cumulative", 10.8, 10.3)}
+    check(len(promoted) == 5 and identities == expected,
+          "promotion must contain exactly the counterexamples and scope probes")
+    check(all(not r["observed_vba"] and r["regime"] == "all"
+              and r["evidence_set"] == "main grid" for r in promoted),
+          "promotion must generate references without copying observations")
+    with open(os.path.join(A.ROOT, "benchmark/probability_accuracy_grid.csv"), newline="") as f:
+        main_rows = list(csv.DictReader(f))
+    for reference in promoted:
+        matches = [r for r in main_rows if all(r[k] == reference[k] for k in
+                   ("function", "arg1", "arg2", "arg3", "regime", "evidence_set"))]
+        check(len(matches) == 1 and all(matches[0][k] == reference[k] for k in
+              ("reference", "claim", "metric")),
+              f"permanent main-grid reference missing or changed: {reference['function']} "
+              f"{reference['arg1']}, {reference['arg2']}")
+
+    # The broad Chi-square all-regime contract is 2.6E-10. The study's
+    # tighter 3E-15 requirement must independently score the actual main row.
+    for reference in promoted:
+        matching = [r for r in main_rows if all(r[k] == reference[k] for k in
+                    ("function", "arg1", "arg2", "arg3", "regime", "evidence_set"))]
+        check(len(matching) == 1 and P.meets_frozen_bound(matching[0]),
+              f"promoted main observation violates frozen 3E-15: {reference['function']} "
+              f"{reference['arg1']}, {reference['arg2']}")
+        with localcontext() as context:
+            context.prec = 80
+            exact = dict(reference, observed_vba=reference["reference"])
+            degraded = dict(reference, observed_vba=str(
+                Decimal(reference["reference"]) * (1 + Decimal("1E-11"))))
+        check(P.meets_frozen_bound(exact), "exact representative must pass")
+        check(not P.meets_frozen_bound(degraded), "1E-11 representative must fail")
+        for invalid in ("", "ERROR", "NaN", "Infinity", "not numeric"):
+            check(not P.meets_frozen_bound(dict(reference, observed_vba=invalid)),
+                  f"unmeasured representative must fail: {invalid!r}")
 
     # 2. A correctly rounded export passes.
     path = write_grid(exported())

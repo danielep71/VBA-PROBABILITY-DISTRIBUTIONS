@@ -9,6 +9,7 @@ writing anything - never falling back to an earlier figure or to zero.
 
 Run: python3 test_render_readme_assurance.py   (exit 0 = pass, nonzero = fail)
 """
+import csv
 import contextlib
 import glob
 import io
@@ -111,7 +112,9 @@ try:
     model = R.build_model(root)
     check(R.render(model) == R.render(R.build_model(root)), "two renders are identical")
     rendered = R.render(model)
-    check("2,088" in rendered["assurance table"], "thousands use one comma format")
+    with open(path(root, "benchmark/probability_accuracy_grid.csv"), newline="") as grid:
+        row_count = sum(1 for _ in csv.DictReader(grid))
+    check(f"{row_count:,}" in rendered["assurance table"], "grid count uses comma formatting")
     for region in R.REGIONS:
         check(rendered[region] in before, f"{region} region is present verbatim")
 
@@ -299,9 +302,17 @@ with tempfile.TemporaryDirectory(prefix="invalid-candidate-refresh-") as invalid
 expect_failure("verdict tally contradicts table",
                lambda r: edit(r, R.SUMMARY, "FAIL: 0, KNOWN", "FAIL: 1, KNOWN"),
                "tally states FAIL")
-expect_failure("summary grid rows contradict grid",
-               lambda r: edit(r, R.SUMMARY, "- total grid rows: 2,088", "- total grid rows: 2,089"),
-               "grid rows")
+def bump_main_grid_count(root):
+    """Contradict the current total without pinning the live grid's size."""
+    text = read(root, R.SUMMARY)
+    match = re.search(r"^- total grid rows: ([\d,]+)$", text, re.M)
+    if match is None:
+        raise AssertionError("summary grid-row count is missing")
+    count = int(match.group(1).replace(",", ""))
+    edit(root, R.SUMMARY, match.group(0), f"- total grid rows: {count + 1:,}")
+
+
+expect_failure("summary grid rows contradict grid", bump_main_grid_count, "grid rows")
 # The manifest's commit changes with every main-grid binding, so read it rather
 # than pin it here (#181).
 expect_failure("summary source commit contradicts manifest",

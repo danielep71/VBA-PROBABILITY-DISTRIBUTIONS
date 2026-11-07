@@ -1,0 +1,37 @@
+{
+  "candidate": "f157e67ce92f1ac174d5b8a2ae32fabd10553a90",
+  "run_id": 42421734701,
+  "fitting": {
+    "gamma_probe": {
+      "sha256": "62d07afbb7d8d160e729417ac27372b8711c6c700075e95f22fbeb7f237744f5",
+      "rows": 1235,
+      "crossovers": {
+        "density": 48,
+        "cumulative": 40
+      }
+    },
+    "chisquare_probe": {
+      "sha256": "f0326edcc0af663bb02283d3c494e9d6497942db2bedb46b6d59734257c62d86",
+      "rows": 627,
+      "crossovers": {
+        "density": 48,
+        "cumulative": 48
+      }
+    }
+  },
+  "holdout": {
+    "gamma_holdout": {
+      "sha256": "7aa3874534f9496cd2d59c562d550623d53667be2825adabae1c418dd2329f3f",
+      "rows": 1197
+    },
+    "chisquare_holdout": {
+      "sha256": "7a0b3fdfefcd1abca910f8aff71dbc7b83f14b332164021203d41000c64ad006",
+      "rows": 609
+    }
+  },
+  "policy": "Retain 48/40/48/48-bit policies. No production wiring. Survival has no dispatch claim.",
+  "oracle": {
+    "mpmath": "1.3.0",
+    "precision": "existing analyzer policy"
+  }
+}
