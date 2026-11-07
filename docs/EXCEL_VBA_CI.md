@@ -71,7 +71,7 @@ dispatched with export inputs uploads a second artifact,
 
 ## Unattended grid export
 
-A `workflow_dispatch` run of the Excel VBA Regression workflow takes six
+A `workflow_dispatch` run of the Excel VBA Regression workflow takes seven
 inputs. They default to a regression-only run, so push and pull request runs,
 and a dispatch without inputs, behave as before.
 
@@ -82,7 +82,14 @@ and a dispatch without inputs, behave as before.
 | `export_holdout_older` | `true`/`false` | Export `benchmark/holdout_older/holdout_older_grid.csv` |
 | `export_survival_boundary` | `true`/`false` | Export `benchmark/survival_boundary/survival_boundary_grid.csv` |
 | `export_tchi_large_df` | `true`/`false` | Export `benchmark/tchi_large_df/tchi_large_df_grid.csv` |
+| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs) |
 | `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
+
+`export_studies` is one text input rather than one boolean per grid, so a new
+study grid needs only an export spec in `ci/ExcelGridExport.psm1` and
+`benchmark/apply_excel_export.py`. The workflow passes it to the adapter
+through the environment, never on the `cmd` command line, and the adapter
+refuses a name it does not know or a name given twice.
 
 When any export input is set, the job runs the regression as usual and, only
 if that step succeeded, runs `ci/Export-ExcelGrids.ps1` on the same runner and
@@ -137,7 +144,12 @@ before it merges.
    `evidence_set` is `main grid`, and in missing-only mode `observed_vba` was
    blank) must have a filled `observed_vba`; no other cell and no out-of-scope
    row may change. `ERROR` tokens are counted, not rejected. A missing-only
-   run with no blank cell fails, because it would export nothing;
+   run with no blank cell fails, because it would export nothing. A study
+   probe CSV is written whole by the probe's `Export_` entry point, so it is
+   checked as a *generated* grid instead: the same header and line count,
+   every row with the header's field count, and each row's leading key fields
+   (the point's identity and echoed arguments) unchanged. Only the
+   measurement fields after them may differ;
 9. completes `excel_environment.json`: the three fields Excel wrote, unchanged,
    plus `commit_sha` and `commit_sha_recorded_by`
    (`ci/Export-ExcelGrids.ps1`), because `Export_ExcelEnvironment` cannot know

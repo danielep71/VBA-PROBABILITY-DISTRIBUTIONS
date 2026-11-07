@@ -11,8 +11,9 @@ Covered: the happy path (with a post-commit validation of the evidence commit),
 a SHA mismatch, a red regression, a missing grid, a digest mismatch, a changed
 out-of-scope row, an environment file of another commit, the accepted
 pre-commit record failure of refresh_evidence.py and an open item, a
-holdout_older-only export, the finalizer's own commit_sha check, and the grid
-check itself.
+holdout_older-only export, the finalizer's own commit_sha check, the grid
+check itself, and a study probe CSV written whole (#225): accepted with new
+measurements, refused when a row's key fields change.
 
 Run: python3 test_apply_excel_export.py   (exit 0 = pass)
 """
@@ -32,8 +33,9 @@ import _manifest as M  # noqa: E402
 
 TOOLS = ("apply_excel_export.py", "excel_certification.py", "_manifest.py",
          "finalize_excel_certification.py", "check_excel_certification.py")
-MAIN, HOLDOUT, OLDER, BOUNDARY, TCHI = (A.GRIDS[n].path for n in (
-    "main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df"))
+MAIN, HOLDOUT, OLDER, BOUNDARY, TCHI, GQ = (A.GRIDS[n].path for n in (
+    "main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
+    "prs_gamma_q_complement"))
 HEADER13 = ("function,vba_kernel,claim,metric,arg1,arg2,arg3,arg4,reference,"
             "observed_vba,regime,evidence_set,expected_error")
 GRID_TEXT = {
@@ -55,6 +57,12 @@ GRID_TEXT = {
           "evidence_set\n"
           "StudentT_Survival,K,characterization,rel,2.0,100000000.0,,0.0227,2.27E-002;0E+000,"
           "meaningful,tchi_large_df\n",
+    GQ: "point_id,x,shape,series_p_status,series_p,cdf_status,cdf,survival_status,survival,"
+        "cand_p,cand_q,branch\n"
+        "x05_s0,5E-001;0E+000,1E-006;0E+000,OK,9.9E-001;0E+000,OK,9.9E-001;0E+000,OK,"
+        "5.5E-007;0E+000,9.9E-001;0E+000,1.1E-007;0E+000,series\n"
+        "x2_s0,2E+000;0E+000,1E-006;0E+000,ERROR,,OK,9.9E-001;0E+000,OK,"
+        "5.5E-007;0E+000,9.9E-001;0E+000,1.1E-007;0E+000,cf\n",
 }
 STUB = '''import json, os, sys
 with open(os.environ["REFRESH_STUB_LOG"], "w") as f:
@@ -94,6 +102,19 @@ def fill(spec, mode, baseline, value=b"2.5E+000;0E+000", error_first=False):
             cols[spec.observed] = b"ERROR" if (error_first and first) else value
             first = False
             lines[i] = b",".join(cols)
+    return A.printed(lines)
+
+
+def regenerate(spec, baseline, change_key=False):
+    """What a study probe writes: the whole CSV, CRLF, the same rows with a new
+    measurement in the last field (and, on request, a changed key field)."""
+    lines = A.grid_lines(baseline)
+    for i in range(1, len(lines)):
+        cols = lines[i].split(b",")
+        cols[-1] = b"remeasured"
+        if change_key and i == 1:
+            cols[0] += b"_moved"
+        lines[i] = b",".join(cols)
     return A.printed(lines)
 
 
@@ -180,7 +201,10 @@ class Fixture:
             spec = A.GRIDS[n]
             grid_mode = mode if n == "main" else "full"
             baseline = E.git_bytes(root, head, spec.path)
-            raw = fill(spec, grid_mode, baseline, error_first=(n == "main"))
+            if spec.kind == "generated":
+                raw = regenerate(spec, baseline)
+            else:
+                raw = fill(spec, grid_mode, baseline, error_first=(n == "main"))
             write(out, "grids/" + spec.path, raw)
             counts = A.verify_grid(spec, grid_mode, baseline, raw)
             assert not counts.pop("problems"), "fixture export must verify"
@@ -413,6 +437,31 @@ class ApplyExcelExportTests(unittest.TestCase):
         self.assertNotIn(A.RETAINED_RECORD, changed)
         self.assertIn("full export by Export_TChiLargeDf", output)
 
+    def test_study_grid_applies_without_binding(self):
+        fx = self.fx
+        out = fx.artifact(names=("prs_gamma_q_complement",))
+        code, output, refresh = fx.apply(out, "--grid", "prs_gamma_q_complement")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(refresh, [], "a study grid binds no manifest")
+        changed = fx.dirty()
+        self.assertIn(GQ, changed)
+        self.assertNotIn(A.RETAINED_RECORD, changed)
+        self.assertIn("written whole by Export_GammaQComplement; 2 rows with their committed "
+                      "key fields, 1 with an ERROR status, 2 row(s) changed", output)
+        with open(os.path.join(fx.root, *GQ.split("/")), "rb") as f:
+            self.assertNotIn(b"\r\n", f.read(), "the working tree gets the LF bytes Git stores")
+
+    def test_study_grid_with_changed_key_fields_is_refused(self):
+        fx = self.fx
+        out = fx.artifact(names=("prs_gamma_q_complement",))
+        spec = A.GRIDS["prs_gamma_q_complement"]
+        raw = regenerate(spec, E.git_bytes(fx.root, fx.head, GQ), change_key=True)
+        write(out, "grids/" + GQ, raw)
+        manifest = fx.load(out, A.MANIFEST)
+        manifest["grids"][0]["raw_sha256"] = E.sha256_bytes(raw)
+        fx.save_manifest(out, manifest)
+        self.refused(out, "line 2: the point's key fields changed")
+
     def test_missing_only_main_export(self):
         out = self.fx.artifact(names=("main",), mode="missing-only")
         manifest = self.fx.load(out, A.MANIFEST)
@@ -484,6 +533,39 @@ class GridCheckTests(unittest.TestCase):
         lines = A.grid_lines(fill(self.spec, "full", self.baseline))
         problems = A.verify_grid(self.spec, "full", self.baseline, A.printed(lines[:-1]))["problems"]
         self.assertIn("line count changed from 4 to 3", problems)
+
+
+class GeneratedGridCheckTests(unittest.TestCase):
+    spec = A.GRIDS["prs_gamma_q_complement"]
+    baseline = GRID_TEXT[GQ].encode()
+
+    def test_new_measurements_verify(self):
+        result = A.verify_grid(self.spec, "full", self.baseline, regenerate(self.spec, self.baseline))
+        self.assertEqual(result["problems"], [])
+        self.assertEqual((result["rows"], result["in_scope_rows"], result["filled_rows"],
+                          result["error_rows"], result["out_of_scope_rows"],
+                          result["changed_observations"]), (2, 2, 2, 1, 0, 2))
+
+    def test_unchanged_rewrite_changes_nothing(self):
+        result = A.verify_grid(self.spec, "full", self.baseline,
+                               A.printed(A.grid_lines(self.baseline)))
+        self.assertEqual((result["problems"], result["changed_observations"]), ([], 0))
+
+    def test_key_header_field_and_line_changes_are_reported(self):
+        lines = A.grid_lines(regenerate(self.spec, self.baseline))
+        cases = {
+            "line 2: the point's key fields changed":
+                regenerate(self.spec, self.baseline, change_key=True),
+            "the header line changed": A.printed([b"point_id,x"] + lines[1:]),
+            "line 3: 11 fields, not 12": A.printed(lines[:2] + [lines[2].rsplit(b",", 1)[0]]),
+            "line count changed from 3 to 2": A.printed(lines[:2]),
+            "the export is not CRLF-terminated lines as VBA Print # writes them":
+                regenerate(self.spec, self.baseline).replace(b"\r\n", b"\n"),
+        }
+        for problem, exported in cases.items():
+            with self.subTest(problem=problem):
+                self.assertIn(problem, A.verify_grid(self.spec, "full", self.baseline,
+                                                     exported)["problems"])
 
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **955** | of 955 deterministic VBA assertions passed in the retained Excel run on `9cbe5d9`; regression sources unchanged since |
+| **955** | of 955 deterministic VBA assertions passed in the retained Excel run on `63e2452`; regression sources unchanged since |
 | **166** | active accuracy contracts (167 registry rows; 1 characterization-only): 166 PASS, 0 FAIL, 0 PENDING |
 | **2,088** | observation rows; main grid 1,732: 1,705 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
 | **83** | of 83 contracts PASS on an **independent holdout** of 659 observations |
@@ -87,8 +87,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 955/955 assertions passed on `9cbe5d9` (Excel 16.0 build 20430, 64-bit; finished 2026-11-06). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,088 rows bound to the current source by `observation_manifest.json` (exported from `9cbe5d9`).
+- **Excel regression** — 955/955 assertions passed on `63e2452` (Excel 16.0 build 20430, 64-bit; finished 2026-11-07). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,088 rows bound to the current source by `observation_manifest.json` (exported from `63e2452`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — `transition` mode: 1,705 of 1,732 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
 - **Contract verdicts** — 166 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only.
@@ -926,8 +926,9 @@ The PowerShell runner:
 A manual dispatch of the workflow can also export the accuracy grids unattended
 after a green regression, in the same job. The inputs `export_main`,
 `export_holdout`, `export_holdout_older`, `export_survival_boundary` and
-`export_tchi_large_df` select the grids, and `main_mode` chooses a full or a
-missing-only main-grid export. `ci/Export-ExcelGrids.ps1` runs the exporters and
+`export_tchi_large_df` select the grids, `export_studies` names study grids
+such as the `positive_ratio_subnormal` probe CSVs, and `main_mode` chooses a
+full or a missing-only main-grid export. `ci/Export-ExcelGrids.ps1` runs the exporters and
 uploads the grids as an artifact; the runner never writes to the repository.
 `benchmark/apply_excel_export.py` then applies the downloaded artifact to the
 exported commit, finalizes the certification record and binds the manifests.

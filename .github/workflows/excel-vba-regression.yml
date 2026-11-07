@@ -29,6 +29,12 @@ on:
         description: "Also export benchmark/tchi_large_df/tchi_large_df_grid.csv after a green regression"
         type: boolean
         default: false
+      # One text input names any study grids, so a new study needs an export
+      # spec in ci/ExcelGridExport.psm1, not another input here (#225).
+      export_studies:
+        description: "Also export these study grids after a green regression, comma-separated: prs_gamma_probe, prs_chisquare_probe, prs_gamma_holdout, prs_chisquare_holdout, prs_gamma_q_complement"
+        type: string
+        default: ""
       main_mode:
         description: "Main grid only: full re-export, or missing-only (fill blank observed_vba cells). The holdout exporters always fill every row."
         type: choice
@@ -78,7 +84,7 @@ jobs:
 
     # 20 minutes for the regression alone. A run that also exports gets 120,
     # more than the export adapter's own per-macro watchdog limits add up to.
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df) && 120 || 20 }}
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '') && 120 || 20 }}
 
     steps:
       - name: Check out repository
@@ -106,7 +112,7 @@ jobs:
       # starts. It never writes to the repository.
       - name: Export selected grids through Excel COM
         id: export
-        if: github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df)
+        if: github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')
         shell: cmd
         env:
           EXPORT_MAIN: ${{ inputs.export_main }}
@@ -114,6 +120,8 @@ jobs:
           EXPORT_HOLDOUT_OLDER: ${{ inputs.export_holdout_older }}
           EXPORT_SURVIVAL_BOUNDARY: ${{ inputs.export_survival_boundary }}
           EXPORT_TCHI_LARGE_DF: ${{ inputs.export_tchi_large_df }}
+          # Read by the adapter from the environment, not expanded by cmd.
+          EXPORT_STUDIES: ${{ inputs.export_studies }}
           EXPORT_MAIN_MODE: ${{ inputs.main_mode }}
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Export-ExcelGrids.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" -Main "%EXPORT_MAIN%" -Holdout "%EXPORT_HOLDOUT%" -HoldoutOlder "%EXPORT_HOLDOUT_OLDER%" -SurvivalBoundary "%EXPORT_SURVIVAL_BOUNDARY%" -TChiLargeDf "%EXPORT_TCHI_LARGE_DF%" -MainMode "%EXPORT_MAIN_MODE%"
 
