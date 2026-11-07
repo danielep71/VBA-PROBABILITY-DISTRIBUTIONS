@@ -125,11 +125,28 @@ def main():
         return "".join(lines)
 
     for rule, pid, surface in (("B3", "xsub_s0", "cdf"), ("B4X", "x2_s3", "survival"),
-                               ("B1", "x05_s2", "cdf")):
+                               ("B1", "x05_s2", "cdf"), ("B1", "x05_s4", "series_p")):
         result = A.part_b(lose(after_text, pid, surface), before_text)
         check(not result["pass"] and any(p.startswith(f"{rule} {pid}: {surface} after")
                                          for p in result["problems"]),
               f"{rule}: a lost {surface} at {pid} is not refused ({result['problems'][:3]})")
+
+    # 3c. B1 scores the raw series P against 3E-15, not only its movement.
+    def skew(text, pid):
+        lines = text.splitlines(keepends=True)
+        header = lines[0].rstrip("\n").split(",")
+        i = header.index("series_p")
+        for k, line in enumerate(lines):
+            cols = line.rstrip("\n").split(",")
+            if cols[0] == pid:
+                hi, lo = cols[i].split(";")
+                cols[i] = token((float(hi) + float(lo)) * (1 - 1e-14))
+                lines[k] = ",".join(cols) + "\n"
+        return "".join(lines)
+
+    result = A.part_b(skew(after_text, "x05_s5"), before_text)
+    check(any(p.startswith("B1 x05_s5: series_p error") for p in result["problems"]),
+          f"B1: a series P 1E-14 off is not refused ({result['problems'][:3]})")
 
     # 4. The committed grid has no observations yet, or a full set.
     with open(G.GRID, encoding="utf-8") as f:

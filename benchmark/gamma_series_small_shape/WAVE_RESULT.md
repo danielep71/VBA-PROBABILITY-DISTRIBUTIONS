@@ -26,7 +26,7 @@ the fix; after it, the worst is 5.7E-16.
 
 | Rule of `MOVEMENT_MANIFEST.md` | Result |
 | --- | --- |
-| B1 `x05_s0`–`x05_s10`: series P and CDF move and meet `3E-15` | holds: all 11 moved; worst CDF error 2.04E-15, was up to 1.28E-14 |
+| B1 `x05_s0`–`x05_s10`: series P and CDF move and meet `3E-15` | holds: all 11 moved; worst CDF and raw series P error 2.04E-15, was up to 1.28E-14 |
 | B2 `x05_s11` (Shape = 0.5) stays on its path | holds: unchanged, 9.6E-17 |
 | B3 `xsub`: the CDF error envelope does not regress | holds: worst 6.36E-14 before, 5.39E-14 after |
 | B4 `x2_s0`–`x2_s11`: public CDF and survival do not move | **falsified**: the survival moved at 11 of 12 rows |

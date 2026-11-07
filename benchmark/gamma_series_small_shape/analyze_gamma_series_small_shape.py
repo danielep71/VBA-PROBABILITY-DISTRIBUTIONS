@@ -9,7 +9,7 @@ Part A, the study grid (gamma_series_small_shape_grid.csv; HOLDOUT_DESIGN.md):
 
 Part B, the fitting ladder (positive_ratio_subnormal/gamma_q_complement.csv)
   against its pre-fix export at BASELINE, rule by rule of MOVEMENT_MANIFEST.md:
-  B1  x05_s0..x05_s10: series_p and cdf move, and cdf meets 3E-15;
+  B1  x05_s0..x05_s10: series_p and cdf move, and both meet 3E-15;
   B2  x05_s11 (Shape = 0.5, a half-integer): reported; the post-selection
       explanation keeps exact half-integers on the unchanged table path;
   B3  xsub_s0..xsub_s10: the worst cdf error does not exceed the pre-fix worst;
@@ -148,13 +148,14 @@ def part_b(after_text=None, before_text=None):
         old = before[pid]
         shape, x = value(new["shape"]), value(new["x"])
         entry = {"shape": shape, "x": x, "branch": new["branch"],
-                 "status_before": {s: old[s + "_status"] for s in ("cdf", "survival")},
-                 "status_after": {s: new[s + "_status"] for s in ("cdf", "survival")}}
+                 "status_before": {s: old[s + "_status"] for s in ("series_p", "cdf", "survival")},
+                 "status_after": {s: new[s + "_status"] for s in ("series_p", "cdf", "survival")}}
         for surface in ("series_p", "cdf", "survival"):
             entry[surface + "_moved"] = new[surface] != old[surface]
         p_ref, q_ref = lower_p(shape, x), upper_q(shape, x)
         for when, row in (("before", old), ("after", new)):
-            cdf, surv = value(row["cdf"]), value(row["survival"])
+            series, cdf, surv = value(row["series_p"]), value(row["cdf"]), value(row["survival"])
+            entry[f"series_p_error_{when}"] = None if series is None else rel(series, p_ref)
             entry[f"cdf_error_{when}"] = None if cdf is None else rel(cdf, p_ref)
             entry[f"survival_error_{when}"] = None if surv is None else rel(surv, q_ref)
         rows[pid] = entry
@@ -178,9 +179,11 @@ def part_b(after_text=None, before_text=None):
         e = rows[pid]
         if not (e["series_p_moved"] and e["cdf_moved"]):
             problems.append(f"B1 {pid}: series_p or cdf did not move")
-        if e["cdf_error_after"] is None or e["cdf_error_after"] > THRESHOLD:
-            problems.append(f"B1 {pid}: cdf error {e['cdf_error_after']} exceeds {THRESHOLD:.0e}")
-    missing("B1", ids("x05", 10), ("cdf",))
+        for surface in ("series_p", "cdf"):
+            error = e[f"{surface}_error_after"]
+            if error is not None and error > THRESHOLD:
+                problems.append(f"B1 {pid}: {surface} error {error:.3e} exceeds {THRESHOLD:.0e}")
+    missing("B1", ids("x05", 10), ("series_p", "cdf"))
     b3 = ids("xsub", 10)
     missing("B3", b3, ("cdf",))
     worst_before = max(rows[p]["cdf_error_before"] or 0.0 for p in b3) if b3 else 0.0
@@ -206,6 +209,7 @@ def part_b(after_text=None, before_text=None):
     problems.extend(explanation)
     return {"baseline": BASELINE, "threshold": THRESHOLD,
             "B1_rows": len(b1), "B1_worst_cdf_error": max(rows[p]["cdf_error_after"] or 0 for p in b1),
+            "B1_worst_series_p_error": max(rows[p]["series_p_error_after"] or 0 for p in b1),
             "B2_x05_s11": rows.get("x05_s11"),
             "B3_rows": len(b3), "B3_worst_cdf_error_before": worst_before,
             "B3_worst_cdf_error_after": worst_after,
@@ -236,7 +240,8 @@ def summary(result):
     lines.append(f"  Gamma/Chi-square routes bit-identical at {a['route_pairs_bit_identical']} "
                  f"of {a['route_pairs']} pairs")
     lines.append(f"Part B, fitting ladder against {b['baseline'][:7]}:")
-    lines.append(f"  B1 x05 s0-s10: {b['B1_rows']} rows, worst cdf error {b['B1_worst_cdf_error']:.3e}")
+    lines.append(f"  B1 x05 s0-s10: {b['B1_rows']} rows, worst cdf error {b['B1_worst_cdf_error']:.3e}, "
+                 f"worst series_p error {b['B1_worst_series_p_error']:.3e}")
     s11 = b["B2_x05_s11"]
     if s11:
         lines.append(f"  B2 x05_s11: cdf moved {s11['cdf_moved']}, cdf error {s11['cdf_error_after']:.3e}")
