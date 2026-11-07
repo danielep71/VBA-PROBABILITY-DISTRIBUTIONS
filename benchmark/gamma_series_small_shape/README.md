@@ -123,6 +123,47 @@ The same source mirror predicts that ordinary non-half-integer shapes above
 stored Stirling table and remain clean. These points are preregistered in
 `HOLDOUT_DESIGN.md`. They do not widen #23 until real Excel confirms them.
 
+## The Excel wave (2026-11-07)
+
+The study grid holds exactly the frozen inputs of `HOLDOUT_DESIGN.md`:
+
+| Regime | Rows | Content |
+| --- | ---: | --- |
+| `holdout` | 44 | shapes `2E-6 ... 2E-1` (11) at standardized arguments `0.125` and `0.75`, on the Gamma route `Gamma_Cumulative(z, s, 1)` and the Chi-square route `ChiSquare_Cumulative(2z, 2s)` |
+| `scope_probe` | 3 | `Gamma_Cumulative` at `(0.5, 0.6, 1)`, `(1.0, 5.3, 1)`, `(10.8, 10.3, 1)` |
+| `counterexample` | 2 | `Gamma_Cumulative(0.5, 1E-4, 1)` and `ChiSquare_Cumulative(1, 2E-4)` |
+
+There are no seam rows: the design asks for them only if the fix uses a shape
+boundary, and the selected fix does not.
+
+Each reference is `P(a, x)` at the binary64 inputs, to 60 digits. The design's
+own 25-digit scope references are `P` at the decimal inputs; at `(1.0, 5.3)`
+they differ from the binary64 value by 3.2E-16, a tenth of the threshold, so
+the grid does not use them. `generate_gamma_series_small_shape.py --check`
+recomputes both readings. The exporter writes back the binary64 inputs it
+parsed (`echo_arg1`, `echo_arg2`), and the analyzer scores a row only when they
+equal the reference's inputs.
+
+The wave exports this grid and the fitting ladder
+(`../positive_ratio_subnormal/gamma_q_complement.csv`) on the self-hosted
+runner, `export_studies=gss_small_shape,prs_gamma_q_complement` (#225).
+`analyze_gamma_series_small_shape.py` scores the grid at `3E-15` relative
+(Part A) and checks the ladder against its pre-fix export at `5c884bc`, rule by
+rule of `MOVEMENT_MANIFEST.md` (Part B). Its results are in
+`wave_results.json`.
+
+## Files
+
+| File | Purpose |
+| --- | --- |
+| `HOLDOUT_DESIGN.md` | frozen holdout and scope-probe design |
+| `MOVEMENT_MANIFEST.md` | frozen movement predictions, and the post-selection explanation |
+| `generate_gamma_series_small_shape.py` | builds the grid from the design; `--check` verifies it |
+| `gamma_series_small_shape_grid.csv` | the study grid (13 columns; the last three are written by Excel) |
+| `M_STATS_PROBDIST_GSSS.bas` | `Export_GammaSeriesSmallShape`, the exporter |
+| `analyze_gamma_series_small_shape.py` | scores the wave; `--write` records `wave_results.json`, `--check` reproduces it |
+| `test_gamma_series_small_shape.py` | fixture proofs of the generator and the analyzer |
+
 ## Closure evidence still required
 
 - real-Excel pre-fix results for the preregistered scope probe;

@@ -44,7 +44,7 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 # listed, so a grid cannot be selected twice.
 $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
-    "prs_chisquare_holdout", "prs_gamma_q_complement"
+    "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape"
 )
 
 function Get-StudyGridNames {
@@ -52,9 +52,11 @@ function Get-StudyGridNames {
 }
 
 function New-GeneratedGridSpec {
-    # A positive_ratio_subnormal probe CSV: written whole by the probe's
+    # A study CSV whose identity columns come first and whose measurement
+    # follows: written whole, or filled after the key columns, by a
     # non-interactive Export_ entry point beside the export workbook.
     param(
+        [string]$Folder = "positive_ratio_subnormal",
         [Parameter(Mandatory = $true)][string]$Name,
         [Parameter(Mandatory = $true)][string]$FileName,
         [Parameter(Mandatory = $true)][string]$Exporter,
@@ -64,7 +66,7 @@ function New-GeneratedGridSpec {
         [Parameter(Mandatory = $true)][string]$SuccessPrefix
     )
 
-    $folder = "benchmark/positive_ratio_subnormal/"
+    $folder = "benchmark/$Folder/"
     return [pscustomobject][ordered]@{
         Name           = $Name
         Path           = $folder + $FileName
@@ -106,7 +108,7 @@ function Get-ExportGridSpec {
         [Parameter(Mandatory = $true)]
         [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
                      "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
-                     "prs_chisquare_holdout", "prs_gamma_q_complement")]
+                     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -212,6 +214,12 @@ function Get-ExportGridSpec {
             return New-GeneratedGridSpec -Name "prs_gamma_q_complement" -FileName "gamma_q_complement.csv" `
                 -Exporter "M_STATS_PROBDIST_GQPROBE.bas" -Macro "Export_GammaQComplement" `
                 -Columns 12 -KeyColumns 3 -SuccessPrefix "Gamma Q complement probe complete: "
+        }
+        "gss_small_shape" {
+            return New-GeneratedGridSpec -Folder "gamma_series_small_shape" -Name "gss_small_shape" `
+                -FileName "gamma_series_small_shape_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_GSSS.bas" -Macro "Export_GammaSeriesSmallShape" `
+                -Columns 13 -KeyColumns 10 -SuccessPrefix "Gamma small-shape study complete: "
         }
         "tchi_large_df" {
             return [pscustomobject][ordered]@{
