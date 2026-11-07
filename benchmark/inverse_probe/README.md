@@ -86,6 +86,11 @@ generator aborts before writing if the worst residual exceeds tolerance.
 
 ## Procedure
 
+The grid is committed with its Excel observations. `generate_inverse_probe.py`
+takes no arguments and always rewrites `inverse_probe_grid.csv` with empty
+`observed_vba`, so step 1 destroys the committed observations. Run it only to
+start a new measurement, followed by a fresh export.
+
 1. `python generate_inverse_probe.py`
 2. Import `M_STATS_PROBDIST_INVPROBE.bas`, run `Export_InverseProbe`
 3. `python analyze_inverse_probe.py`

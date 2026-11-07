@@ -71,7 +71,7 @@ dispatched with export inputs uploads a second artifact,
 
 ## Unattended grid export
 
-A `workflow_dispatch` run of the Excel VBA Regression workflow takes four
+A `workflow_dispatch` run of the Excel VBA Regression workflow takes six
 inputs. They default to a regression-only run, so push and pull request runs,
 and a dispatch without inputs, behave as before.
 
@@ -267,7 +267,7 @@ workbook under test instead, as a reproducible file bound to one commit
 unchanged, and they stay the path of record until a built workbook has been
 certified on the runner.
 
-Build and check it on any machine with Python 3.10+ and Git; no Excel is
+Build and check it on any machine with Python 3.11+ and Git; no Excel is
 needed:
 
 ```bash
@@ -385,5 +385,7 @@ first rows that changed outside `observed_vba` or were left blank;
 - Keep Windows and Office patched.
 - Do not store unrelated credentials in the account profile.
 - Review workflow and evidence-policy changes carefully.
-- Keep the Excel regression job as a required release check once the runner is
-  stable.
+- Keep the Excel regression job's pull request status non-required: a skipped
+  fork PR job would report success. The release workflow already requires a
+  green Excel run of the exact candidate commit; see
+  [Release certification](EXCEL_CERTIFICATION.md#exact-tag-certification).

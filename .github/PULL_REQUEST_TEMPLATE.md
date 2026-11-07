@@ -32,11 +32,17 @@
 ## 🔗 Related issues
 
 ```text
-Closes #
 Related to #
 ```
 
-Use a closing keyword only when this pull request satisfies the issue's complete acceptance criteria.
+Use `Related to #` by default. Task pull requests target the active release
+branch (`release/1.0.0`), where GitHub never closes an issue from a keyword; I
+close the issue by hand with its *Resolution* section after the merge.
+Integration and sync pull requests between `main` and the release branch use
+`Refs #` and never a closing keyword. Use `Closes #` only for a pull request
+into `main` while no release branch is active, and only when it satisfies the
+issue's complete acceptance criteria. See the
+[merge convention](../RELEASING.md#merge-convention).
 
 ## 🧭 Change classification
 
@@ -129,8 +135,10 @@ Evidence from another commit does not certify this candidate.
 
 ### Static and repository checks
 
-- GitHub `Accuracy Gate` workflow
+- GitHub `Static checks` workflow, required job `Repository integrity (static, no Excel)`
+- GitHub `Accuracy Gate` workflow, required job `Strict accuracy gate (pure Python, no Excel)`
 - GitHub `Excel VBA Regression` workflow when executable source changes
+- Locally: `python3 tools/run_static_checks.py --strict` (every static check; see `tools/README.md`)
 - `git diff --check`
 
 | Check | Result / evidence |
@@ -183,7 +191,7 @@ Record only tested environments. Source inspection does not constitute host exec
 - [ ] Existing tests cover the changed success path.
 - [ ] New or amended tests cover each corrected defect.
 - [ ] Boundary, invalid-input, failure, fallback, and cleanup paths are covered as applicable.
-- [ ] Test entry points and inventory/count metadata remain synchronized.
+- [ ] Test entry points and inventory/count metadata remain synchronized, including `expected_assertions` in `.github/excel-evidence-policy.json`.
 - [ ] Expected results come from the contract or an independent reference.
 - [ ] No regression change is needed — rationale recorded below.
 

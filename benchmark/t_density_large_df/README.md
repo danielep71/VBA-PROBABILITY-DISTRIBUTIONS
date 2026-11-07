@@ -31,8 +31,8 @@ the Gamma, Beta and F densities.
 difference by an asymptotic series in 1/Z above a cutoff instead of subtracting
 two large values, so the cancellation never forms. Measured against mpmath at 50
 digits, the density is machine-precise to df 1E20 across the body and into the
-tail — worst about 1E-14 at x = 10, where the `(df+1)/2 * Log1p(x*x/df)` term is
-largest.
+tail — worst 1.89E-13 relative, at x = 10 and df = 1E18, where the
+`(df+1)/2 * Log1p(x*x/df)` term is largest (`analyze_t_density_large_df.py`).
 
 This study therefore exists to **contract** that behaviour, not to repair it.
 Being able to say "measured, not merely believed" is the point.
@@ -59,3 +59,9 @@ reference rather than a restatement of it.
 2. Import `M_STATS_PROBDIST_TDENS.bas`, run `Export_TDensityLargeDf`
 3. `python analyze_t_density_large_df.py`
 4. Promote the points into the main grid and freeze a contract
+
+Step 4 is done: the points are in the main grid, and
+`StudentT_Density.large_df.output_rel` is validated and frozen at 5E-12
+relative over df 1E2..1E20, x 0..10 (`accuracy_contracts.csv`). The grid is
+committed with its observations, and step 1 rewrites it with empty
+`observed_vba`; do not rerun it except to start a new measurement.

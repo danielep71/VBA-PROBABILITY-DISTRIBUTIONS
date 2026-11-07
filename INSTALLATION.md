@@ -83,10 +83,8 @@ Optional material is not part of the normal runtime unless stated otherwise:
 | `tests/M_STATS_PROBDIST_TEST.bas` | Fast deterministic VBA regression and contract tests |
 | `benchmark/` | External high-precision evidence tooling; not required at runtime |
 
-> [!CAUTION]
-> A `.frm` and its `.frx` companion are one logical component. Keep them in
-> the same directory during import, never import the `.frx` separately, and
-> never process it as text.
+Every component is a standard module (`.bas`). The project has no class
+modules, user forms or Windows API declarations.
 
 ### Complete repository checkout
 
@@ -140,7 +138,7 @@ gives the same digests.
 
 1. Open the destination workbook or add-in and press `Alt+F11`.
 2. Select the intended project in Project Explorer.
-3. Use **File → Import File…** for exported modules, classes, and forms.
+3. Use **File → Import File…** for each exported `.bas` module.
 4. Confirm component names match the repository source.
 5. Run **Debug → Compile VBAProject**.
 6. Save in a macro-capable format such as `.xlsm`, `.xlsb`, or `.xlam`
@@ -148,8 +146,8 @@ gives the same digests.
 7. Close and reopen the host before the clean-session smoke test.
 
 Do not paste source into arbitrarily named modules when an exported component is
-available. VBE attributes, component identity, form resources, and line endings
-are part of a reproducible source installation.
+available. VBE attributes, component identity, and line endings are part of a
+reproducible source installation.
 
 ---
 
@@ -218,9 +216,8 @@ the local behavior survived.
 |---|---|
 | Compile error or missing procedure | Confirm every required component was imported from one version and optional dependencies are present. |
 | Ambiguous name | Remove duplicate/legacy modules; do not paste new source beside old components. |
-| Form missing controls or corrupt UI | Re-import the `.frm` with its exact adjacent `.frx`. |
 | Behavior differs by workbook | Check caller, active-object, settings namespace, references, locale, and date-system assumptions. |
-| 32/64-bit failure | Confirm the tested Office bitness and conditional WinAPI declarations. |
+| 32/64-bit failure | Confirm the tested Office bitness. The modules declare no Windows API calls, so there is no bitness-specific code path. |
 | Excel left altered after failure | Run the documented recovery/cleanup path; do not blindly force global state. |
 | Security warning | Verify source origin, signature/hash where provided, trusted location policy, and macro settings. |
 | Output differs from reference | Confirm exact version, inputs, parameterization, tolerance, environment, and reference independence. |

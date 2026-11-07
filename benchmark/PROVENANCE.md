@@ -43,9 +43,12 @@ A green regression record binds:
 - the exact policy assertion count and pass/fail totals; and
 - SHA-256 of the retained regression log.
 
-The normal regression workflow does **not** export numerical grids. Its main and
-holdout entries therefore remain `exported: false`. A green regression run by
-itself cannot authorize a provenance rebind.
+The normal regression workflow does **not** export numerical grids unless it is
+dispatched with its `export_*` inputs. Without them, its main and holdout
+entries remain `exported: false`, and a green regression run by itself cannot
+authorize a provenance rebind. A dispatched export run is applied with
+`benchmark/apply_excel_export.py --artifact <dir> --grid <name>`; see
+[Automated fresh export](../docs/EXCEL_CERTIFICATION.md#automated-fresh-export).
 
 See [`../docs/EXCEL_CERTIFICATION.md`](../docs/EXCEL_CERTIFICATION.md) for the
 record schema, validation command, and fresh-export finalization procedure.
@@ -112,6 +115,12 @@ From the same exact source candidate, run the appropriate exporter:
 
 Also run `Export_ExcelEnvironment` so `benchmark/excel_environment.json` records
 the Excel version/build/bitness used for the export.
+
+Unattended, dispatch `excel-vba-regression.yml` with the `export_*` inputs for
+the grids you mean to claim (for example `export_main` and `export_holdout`).
+The run exports them and the environment record in the same job as step 1, and
+`benchmark/apply_excel_export.py --artifact <dir> --grid main --grid holdout`
+then performs steps 3 and 4.
 
 Do not claim a grid that was not actually exported in this session.
 
@@ -181,7 +190,7 @@ conditions holds:
 | **B** | `benchmark/excel_regression_record.json` is also modified and the canonical validator proves a green exact-SHA run **plus an explicit fresh-export claim for that exact grid**, whose committed SHA-256 and row count match. |
 | **C** | The commit modifies only the manifest and restores bytes identical to an earlier committed version. This is the exact-restoration repair path. |
 
-B permits a genuinely fresh export that produces a byte-identical grid. It requires a valid canonical export record. The retained record's main-grid export claim validates against the committed grid (#47); it claims no holdout export (#29).
+B permits a genuinely fresh export that produces a byte-identical grid. It requires a valid canonical export record. The retained record claims fresh exports of both the main grid and the holdout, and each claim validates against the committed grid (#47, #29).
 
 
 ## Why binding is verified, not declared

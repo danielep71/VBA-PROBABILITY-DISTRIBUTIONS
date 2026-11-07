@@ -56,9 +56,13 @@ loggamma(Large)` stays accurate when the two large values nearly cancel).
   error ~4.75E-15. Points at ratio >= 0.1 use the identity, not the delta.
 - The stable difference beats the identity everywhere unbalanced; the catastrophic
   cancellation of the direct identity is removed.
-- Crossover: identity is better at ratio >= ~0.2, the stable difference is better
-  below; the provisional `PROB_LOGBETA_STABLE_RATIO = 0.1` sits safely inside the
-  overlap. The exact constant is confirmed here from measured data, not theory.
+- Crossover (worst relative error over Small at each ratio, from
+  `analyze_delta_seam.py` on the committed grid): the identity is better only at
+  ratio 0.5 (3.96E-15 vs 6.34E-15). At 0.2 the stable difference is slightly
+  better (3.36E-15 vs 3.87E-15), at 0.1 the two tie (4.19E-15 each), and below
+  0.1 the stable difference is better everywhere. Both routes stay within
+  5E-15 at 0.2 and 0.1, so `PROB_LOGBETA_STABLE_RATIO = 0.1` sits inside that
+  clean overlap. The constant is confirmed here from measured data, not theory.
 
 ## Status
 

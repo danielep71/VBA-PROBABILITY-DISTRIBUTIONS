@@ -70,10 +70,16 @@ validated domain stops. The upper-tail continued fraction is far cheaper (about
 | `cdf_large_shape_grid.csv` | the grid; `observed_vba` filled by the macro |
 | `M_STATS_PROBDIST_CDFLS.bas` | `Export_CdfLargeShape` writes `observed_vba` from Excel |
 | `analyze_cdf_large_shape.py` | reports worst relative error per family and shape |
+| `test_generate_cdf_large_shape.py` | checks that the generator drops a point whose series or continued fraction hit its cap (#167) |
 
 ## Procedure
 
-1. `python generate_cdf_large_shape.py`
+1. Re-reference the committed grid, keeping every observation:
+   `python generate_cdf_large_shape.py --merge-references` to report, then
+   `python generate_cdf_large_shape.py --merge-references --write` to patch.
+   **A bare `python generate_cdf_large_shape.py` rewrites
+   `cdf_large_shape_grid.csv` from scratch and drops every Excel observation.**
+   Use it only for a fresh design, which then needs a new Excel export.
 2. Import `M_STATS_PROBDIST_CDFLS.bas`, then run `Export_CdfLargeShape`
 3. `python analyze_cdf_large_shape.py`
 4. Promote the measured points into the main grid and freeze contracts

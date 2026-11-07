@@ -5,6 +5,17 @@ the measured behavior of the current implementation across the balanced-to-
 extremely-unbalanced argument range, the conclusion that a threshold change alone
 cannot fix it, and the remediation that would.
 
+**Status (2026-11-07): remediated.** The remediation proposed below shipped.
+`PROB_LogGammaDelta` now exists, and `PROB_LogBeta` has two regimes: below
+`PROB_LOGBETA_STABLE_RATIO` (0.1) it uses `LogGamma(Small) -
+PROB_LogGammaDelta(Large, Small)`, and above it the defining identity
+(`src/M_STATS_PROBDIST_SPECIALFUNCS.bas`). The one-term asymptotic branch is
+gone. The fix is validated in [`delta_seam_study`](../delta_seam_study/README.md),
+with the contracts `PROB_LogBeta.all.log_abs` (2E-13 absolute) and
+`LogGammaDelta.all.output` (5E-14 relative) in `accuracy_contracts.csv`. The
+expected-limitation test is gone. The observations in this study's grid predate
+the fix: they measure the old three-route implementation, not the current one.
+
 ## Purpose
 
 `PROB_LogBeta(A, B)` = `Log(Beta(A, B))` selects among three routes:
@@ -88,14 +99,17 @@ To regenerate the references from scratch: `python3 generate_logbeta_switch.py`
 (requires mpmath). This overwrites `logbeta_switch_grid.csv` with empty
 observations, so re-run the export afterwards.
 
-## Current production status
+## Production status at the time of the study
 
-The limitation is documented (this study, the `PROB_LogBeta` ACCURACY LIMITATION
+Superseded; see the status above. The limitation is documented (this study, the `PROB_LogBeta` ACCURACY LIMITATION
 note, the benchmark README caveat) and guarded by an expected-limitation test in
 `M_STATS_PROBDIST_TEST` that trips if the gap is ever closed. The switch itself is
 left unchanged, because widening it with the current one-term asymptotic is worse.
 
-## Proposed remediation (deferred, validated feature)
+## Proposed remediation (since shipped)
+
+This is the proposal as the study made it. The shipped version uses two regimes
+(see the status above).
 
 A stable log-gamma increment kernel `PROB_LogGammaDelta(Large, Increment)` =
 `LogGamma(Large + Increment) - LogGamma(Large)` computed without subtracting two
