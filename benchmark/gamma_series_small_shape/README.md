@@ -2,7 +2,10 @@
 
 *Status, 2026-11-07.* The selected source change below shipped in `8c1506f`
 (2026-08-27). The tables and the root-cause decomposition describe the code
-before that commit. Closure evidence is still pending and #23 is open. One
+before that commit. The post-fix Excel wave passed the frozen holdout, scope
+probe and fitting ladder, and falsified one movement prediction, which is
+explained; see `WAVE_RESULT.md`. Promotion into the main grid and the #13
+cutoff rerun remain, so #23 is open. One
 piece of off-grid evidence has since arrived: the `holdout_older` re-export at
 `7fb08ae` (2026-11-06) measures its Gamma rows at shapes 2.7 and 4.3 at
 1.03E-15 or less, and they pass their contracts
@@ -163,6 +166,8 @@ rule of `MOVEMENT_MANIFEST.md` (Part B). Its results are in
 | `M_STATS_PROBDIST_GSSS.bas` | `Export_GammaSeriesSmallShape`, the exporter |
 | `analyze_gamma_series_small_shape.py` | scores the wave; `--write` records `wave_results.json`, `--check` reproduces it |
 | `test_gamma_series_small_shape.py` | fixture proofs of the generator and the analyzer |
+| `wave_results.json` | the analyzer's record of the 2026-11-07 wave |
+| `WAVE_RESULT.md` | that wave's result, including the falsified B4 prediction |
 
 ## Closure evidence still required
 

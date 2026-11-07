@@ -34,6 +34,7 @@ commands = (
     ("student_t_large_df_study/test_inverse_polish.py",),
     ("tchi_large_df/test_tchi_merge.py",),
     ("gamma_series_small_shape/test_gamma_series_small_shape.py",),
+    ("gamma_series_small_shape/analyze_gamma_series_small_shape.py", "--check"),
     ("normal_tail_study/test_kernel_model.py",),
     ("normal_tail_study/test_vba_kernel_source.py",),
     ("normal_tail_study/test_holdout_record.py",),

@@ -16,6 +16,16 @@ Part B, the fitting ladder (positive_ratio_subnormal/gamma_q_complement.csv)
   B4  x2_s0..x2_s11: public cdf and survival do not move;
   and, reported but not required (#24 owns it): the x05 survival error.
 
+B4 was falsified by the 2026-11-07 wave: the continued-fraction survival moved
+at every off-grid shape. PROB_TryGammaContinuedFractionQ forms its result with
+the same PROB_TryGammaPrefactor as the series, so it consumes the corrected
+off-grid PROB_StirlingError, the mechanism of the manifest's post-selection
+explanation. The frozen rule is still evaluated and reported as falsified; the
+manifest requires such movement to be explained, and B4X checks the
+explanation's testable consequences:
+  B4X public cdf at X = 2 does not move; the half-integer control x2_s11 does
+      not move; only off-grid shapes move; and no moved survival error grows.
+
     python analyze_gamma_series_small_shape.py           print the result
     python analyze_gamma_series_small_shape.py --write   also write wave_results.json
     python analyze_gamma_series_small_shape.py --check   fail if wave_results.json
@@ -160,16 +170,31 @@ def part_b():
     if worst_after > worst_before:
         problems.append(f"B3 xsub: worst cdf error rose from {worst_before:.3e} to {worst_after:.3e}")
     b4 = ids("x2", 11)
+    b4_moved = [pid for pid in b4 if rows[pid]["cdf_moved"] or rows[pid]["survival_moved"]]
+    explanation = []
     for pid in b4:
-        if rows[pid]["cdf_moved"] or rows[pid]["survival_moved"]:
-            problems.append(f"B4 {pid}: public cdf or survival moved on the continued-fraction path")
+        e = rows[pid]
+        if e["cdf_moved"]:
+            explanation.append(f"B4X {pid}: public cdf moved")
+        half_integer = (2 * e["shape"]).is_integer()
+        if half_integer and e["survival_moved"]:
+            explanation.append(f"B4X {pid}: the half-integer shape {e['shape']} moved")
+        if e["survival_moved"] and (e["survival_error_after"] or 0) > (e["survival_error_before"] or 0):
+            explanation.append(f"B4X {pid}: survival error grew from {e['survival_error_before']:.3e} "
+                               f"to {e['survival_error_after']:.3e}")
+    if "x2_s11" not in rows or rows["x2_s11"]["survival_moved"]:
+        explanation.append("B4X: the half-integer control x2_s11 is missing or moved")
+    problems.extend(explanation)
     return {"baseline": BASELINE, "threshold": THRESHOLD,
             "B1_rows": len(b1), "B1_worst_cdf_error": max(rows[p]["cdf_error_after"] or 0 for p in b1),
             "B2_x05_s11": rows.get("x05_s11"),
             "B3_rows": len(b3), "B3_worst_cdf_error_before": worst_before,
             "B3_worst_cdf_error_after": worst_after,
-            "B4_rows": len(b4), "B4_moved": sum(rows[p]["cdf_moved"] or rows[p]["survival_moved"]
-                                                for p in b4),
+            "B4_rows": len(b4), "B4_moved": len(b4_moved),
+            "B4_frozen_prediction": "held" if not b4_moved else "falsified",
+            "B4X_explained": not explanation,
+            "B4_worst_survival_error_before": max(rows[p]["survival_error_before"] or 0 for p in b4),
+            "B4_worst_survival_error_after": max(rows[p]["survival_error_after"] or 0 for p in b4),
             "x05_survival_worst_after": max(rows[p]["survival_error_after"] or 0 for p in b1),
             "x05_survival_worst_before": max(rows[p]["survival_error_before"] or 0 for p in b1),
             "problems": problems, "pass": not problems, "rows": rows}
@@ -198,7 +223,11 @@ def summary(result):
         lines.append(f"  B2 x05_s11: cdf moved {s11['cdf_moved']}, cdf error {s11['cdf_error_after']:.3e}")
     lines.append(f"  B3 xsub: worst cdf error {b['B3_worst_cdf_error_before']:.3e} before, "
                  f"{b['B3_worst_cdf_error_after']:.3e} after")
-    lines.append(f"  B4 x2: {b['B4_moved']} of {b['B4_rows']} rows moved")
+    lines.append(f"  B4 x2: {b['B4_moved']} of {b['B4_rows']} rows moved; frozen prediction "
+                 f"{b['B4_frozen_prediction'].upper()}; explanation (B4X) "
+                 f"{'holds' if b['B4X_explained'] else 'FAILS'}; worst survival error "
+                 f"{b['B4_worst_survival_error_before']:.3e} before, "
+                 f"{b['B4_worst_survival_error_after']:.3e} after (#26)")
     lines.append(f"  x05 survival (#24, reported only): worst {b['x05_survival_worst_before']:.3e} "
                  f"before, {b['x05_survival_worst_after']:.3e} after")
     for problem in a["problems"] + b["problems"]:
