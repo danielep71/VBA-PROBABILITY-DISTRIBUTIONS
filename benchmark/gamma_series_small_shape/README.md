@@ -1,5 +1,13 @@
 # Gamma-series prefactor study (#23)
 
+*Status, 2026-11-07.* The selected source change below shipped in `8c1506f`
+(2026-08-27). The tables and the root-cause decomposition describe the code
+before that commit. Closure evidence is still pending and #23 is open. One
+piece of off-grid evidence has since arrived: the `holdout_older` re-export at
+`7fb08ae` (2026-11-06) measures its Gamma rows at shapes 2.7 and 4.3 at
+1.03E-15 or less, and they pass their contracts
+(`../holdout_older/holdout_older_summary.md`).
+
 This study isolates the accuracy floor reported in issue #23 before changing
 production source. The frozen release contracts remain constraints:
 

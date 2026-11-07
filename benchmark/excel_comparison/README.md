@@ -31,6 +31,8 @@ The grid uses direct right-tail Excel functions where listed and `1 - CDF` for s
 
 At the 2026-09-30 audit, rerunning the analyzer on the committed observations gives 15 cases with both sides at reference grade, 12 with an absent/unusable listed Excel formula and a usable library result, and 2 with both usable but at different grades (Beta survival and large-df Student t survival). This reproduces existing measurements; it is not a new Excel run.
 
+*Note, 2026-11-07.* The large-df Student t survival row, `K_STATS_StudentT_Survival(2,1E7)`, predates #34. That point now takes the large-df route, whose `StudentT_Survival.envelope_domain.output_rel` contract is 5E-15, so the recorded library observation, and this row's grade, will change at the next export of this grid.
+
 ## How the results are judged
 
 Two columns, because "which is more accurate" and "is this fit for use" are

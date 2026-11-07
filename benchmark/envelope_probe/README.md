@@ -3,9 +3,14 @@
 Measures whether the StudentT, ChiSquare and F degrees-of-freedom envelopes are
 still justified after the CR-P1-02 prefactor repair.
 
+**Outcome.** `0fc2367` (2026-07-29, #3) raised the caps from this study's
+measurements: `PROB_T_MAX_DF` and `PROB_CHI_MAX_DF` to 1E8, and `PROB_F_MAX_DF`
+to 1E10. The measured accuracy at each cap is recorded in
+`../numerical_limitations.csv`.
+
 ## The problem this solves
 
-Current caps:
+Caps at study time:
 
 | family | constant | cap |
 | --- | --- | --- |
@@ -54,11 +59,13 @@ was actually measured here.
 | `generate_envelope_probe.py` | builds the grid with self-checked references |
 | `envelope_probe_grid.csv` | the grid; `observed_vba` filled by the macro |
 | `M_STATS_PROBDIST_ENVPROBE.bas` | `Export_EnvelopeProbe` writes `observed_vba` |
-| `analyze_envelope_probe.py` | worst error per family and df, against current caps |
+| `analyze_envelope_probe.py` | worst error per family and df, against the caps at study time (hard-coded) |
 
 ## Procedure
 
-1. `python generate_envelope_probe.py`
+1. `python generate_envelope_probe.py` (fresh design only: it takes no flags
+   and **overwrites the committed `envelope_probe_grid.csv`, dropping its Excel
+   observations**)
 2. Import `M_STATS_PROBDIST_ENVPROBE.bas`, run `Export_EnvelopeProbe`
 3. `python analyze_envelope_probe.py`
 4. Raise each cap to the highest **measured** df, or reaffirm it, citing this study

@@ -50,10 +50,14 @@ from this study keep their old references until the main grid is re-exported;
 
 | File | Role |
 |---|---|
-| `generate_beta_f_unbalanced.py` | Writes `beta_f_unbalanced_grid.csv` (64 rows, 60-digit refs). |
+| `generate_beta_f_unbalanced.py` | Builds the forward references (64 rows, 60-digit refs). Re-reference the committed grid with `--merge-references` (report) and `--merge-references --write` (patch); a bare run overwrites `beta_f_unbalanced_grid.csv` and its observations. |
 | `beta_f_unbalanced_grid.csv` | The grid; `arg1 = X`, `arg2 = Alpha/df1`, `arg3 = Beta/df2`. |
 | `M_STATS_PROBDIST_BETAF_UNBAL.bas` | Standalone macro `Export_BetaF_Unbalanced` (calls the 5 public functions; handles CVErr). |
 | `analyze_beta_f_unbalanced.py` | Per-function worst-case relative error + suggested frozen thresholds. |
+| `generate_beta_f_inverse.py` | Builds the inverse references (52 rows: 36 `Beta_InverseCumulative`, 16 `F_InverseCumulative`), validated regime only. It has no merge mode: a bare run overwrites `beta_f_inverse_grid.csv` and its observations, so pass `--out <other file>` to compare. |
+| `beta_f_inverse_grid.csv` | The inverse grid; `arg1 = p`. |
+| `M_STATS_PROBDIST_BETAF_INV.bas` | Standalone macro `Export_BetaF_Inverse`. |
+| `analyze_beta_f_inverse.py` | Quantile error and forward-probability residual per point. |
 
 ## How to run
 
@@ -62,7 +66,16 @@ from this study keep their old references until the main grid is re-exported;
 3. Commit the filled CSV.
 4. Analysis (done for you): `python3 analyze_beta_f_unbalanced.py`.
 
+The inverse half runs the same way with `M_STATS_PROBDIST_BETAF_INV.bas`,
+`Export_BetaF_Inverse`, `beta_f_inverse_grid.csv` and
+`python3 analyze_beta_f_inverse.py`.
+
 ## Freezing the contracts (completion criteria 5-7)
+
+*Completed.* The balanced and unbalanced Beta/F contracts, including the
+inverse `quantile_rel` and `tail_rel` contracts, are frozen in
+`../accuracy_contracts.csv` and were confirmed on the independent holdout. The
+steps below are kept as the record of how.
 
 The analyzer prints, per function, the measured worst-case relative error and a
 suggested frozen threshold (worst measured, rounded up with headroom). Then:

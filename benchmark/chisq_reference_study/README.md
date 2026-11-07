@@ -51,13 +51,21 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 | `rmpfr_probe.R` | Bisects the shape at which MPFR's incomplete gamma aborts. |
 | `rmpfr_series.R` | Superseded. The mpfr-arithmetic route in R, ~1600x slower than gmpy2. Retained as the record of why gmpy2 was chosen. |
 | `chisq_reference.json` | The 69 frozen references. |
-| `chisq_crosscheck.json` | Primary-vs-independent comparison record. |
+| `chisq_gmpy2.json` | gmpy2 / MPFR-arithmetic leg record, all 69 points. |
+| `chisq_rmpfr_1e6.json`, `chisq_rmpfr_1e7.json` | Rmpfr `igamma` leg records, one per df (df 1E8 aborts in MPFR). |
+| `chisq_crosscheck.json` | Composite record: the quadrature leg, plus the comparison with every leg record above. |
 
 ## Reproducing
 
     python chisq_reference.py       # ~3.5 min, writes chisq_reference.json
+    python chisq_gmpy2.py           # ~20 s,   writes chisq_gmpy2.json
+    Rscript rmpfr_crosscheck.R chisq_reference.json chisq_rmpfr_1e6.json 1e6
+    Rscript rmpfr_crosscheck.R chisq_reference.json chisq_rmpfr_1e7.json 1e7
     python chisq_crosscheck.py      # ~1 min,  writes chisq_crosscheck.json
-    Rscript rmpfr_crosscheck.R chisq_reference.json chisq_rmpfr.json
+
+`chisq_crosscheck.py` reads the gmpy2 and both Rmpfr records, so run it last.
+The Rmpfr leg runs one df per process because MPFR aborts the process rather
+than returning an error; df 1E8 is not run there.
 
 `chisq_reference.py` can be run one df at a time if a runtime cap applies;
 `chisq_crosscheck.py` reads either the merged file or the chunks.
@@ -65,7 +73,8 @@ Holdout references are generated. VBA holdout observations remain uninspected.
 Running `chisq_reference.py` overwrites the committed `chisq_reference.json`.
 The new file has fresh timings and a different header, and it drops the dated
 `status_amendments` entry. Write to another path if you only want to compare:
-call `main(out_path=...)`.
+call `main(out_path=...)`. The other commands also overwrite the committed
+record they name.
 
 ## Results
 

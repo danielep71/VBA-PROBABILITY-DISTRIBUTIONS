@@ -3,9 +3,13 @@
 Establishes whether the `PROB_StirlingError` small-N recurrence is defective,
 and if so how. Two hypotheses were tested; one was rejected and one confirmed.
 
+**Status: adopted.** Candidate B shipped in `17ebb1c` (2026-08-13):
+`PROB_StirlingError` in `src/M_STATS_PROBDIST_SPECIALFUNCS.bas` now takes the
+log of the ratio as `PROB_Log1p(n) - Log(n)` and never forms `(N + 1) / N`.
+
 ## Background
 
-`PROB_StirlingError` handles `0 < N < 0.5` by recursing upward:
+Before the fix, `PROB_StirlingError` handled `0 < N < 0.5` by recursing upward:
 
 ```
 delta(N) = delta(N + 1) + (N + 0.5) * Log((N + 1) / N) - 1
@@ -100,9 +104,9 @@ C  LogGamma1p(N) - (N + 0.5) * Log(N) + N - HALF_LOG_TWO_PI
 `p2_1023_anchor` reproduces the frozen holdout worst of 3.57E-14 exactly, an
 independent check that the probe and the committed evidence agree.
 
-## Conclusion
+## Conclusion (adopted)
 
-Adopt B. It removes the reciprocal with a kernel that already exists
+Adopt B. *(Adopted in `17ebb1c`; see the status above.)* It removes the reciprocal with a kernel that already exists
 (`PROB_Log1p`, which returns `X` unchanged once `1 + X` rounds to one), needs no
 signature change, introduces no new branch, and does not disturb the recurrence
 structure. C is the superior direct formulation near the top of the branch and

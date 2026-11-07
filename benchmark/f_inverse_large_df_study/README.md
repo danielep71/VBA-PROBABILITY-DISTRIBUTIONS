@@ -7,6 +7,11 @@ faithfulness criterion (§6) fires. Both are defects in the preregistration,
 not in the hypothesis, and the design says such a result is recorded rather
 than tuned. Fix selection has not begun.
 
+*Status, 2026-11-07.* A separate prospective fix comparison is preregistered
+in `FIX_COMPARISON_PREREGISTRATION.md`, frozen at `9fba175` (2026-09-02). It
+has not been executed: no `fix_comparison/` directory exists, no candidate has
+been evaluated, and #35 is open.
+
 ## What was found
 
 `PROB_TryBetaInvRegularized` selects its solving variable by comparing `p`
@@ -61,6 +66,7 @@ stray copy of `PREREGISTRATION.md` in `t_density_large_df/`; removed in
 | File | Role |
 | --- | --- |
 | `PREREGISTRATION.md` | frozen design, with §0 disclosure |
+| `FIX_COMPARISON_PREREGISTRATION.md` | frozen protocol for the prospective fix comparison (not yet executed) |
 | `f_inverse_model.py` | seven-component swappable model |
 | `run_isolation.py` | applies §5–6 mechanically; writes `results.json` |
 | `results.json` | faithfulness, both sweeps, per-component verdicts, post-hoc |

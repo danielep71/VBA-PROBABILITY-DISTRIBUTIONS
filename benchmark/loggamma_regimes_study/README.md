@@ -2,7 +2,8 @@
 
 Evidence for replacing the single global `PROB_LogGamma` accuracy claim with
 regime-aware contracts, and for validating the Phase 1 small-positive reroute
-(ICR-P1-01 prerequisite chain, issue #12).
+(ICR-P1-01 prerequisite chain, issue #12). The regime-aware contracts are
+#15's (closed 2026-08-13), which this study's evidence closed.
 
 ## Why this study exists
 
@@ -59,7 +60,13 @@ a relative error against zero is not a number.
 in the grid, a parser that mis-reads one would make every other number in that
 row measure an argument nobody asked for.
 
-## Run it twice
+## Run it twice (completed history)
+
+**This procedure was carried out once, in August 2026, and is kept as
+history.** The grid, the baseline and the holdout are committed with their
+observations. Do not rerun it: `generate_loggamma_regimes.py` and
+`generate_loggamma_regimes_holdout.py` rewrite their CSVs with empty
+observations, and the pre-change baseline cannot be exported again.
 
 **No committed observation covers `Z` below 1E-8**, so the subnormal improvement
 has nothing to be measured against unless a pre-change baseline exists.
@@ -73,9 +80,9 @@ has nothing to be measured against unless a pre-change baseline exists.
 6. Still on Phase 1, run `Export_LogGammaRegimes` again and pick the **holdout**.
 7. `python3 analyze_loggamma_regimes.py --baseline loggamma_regimes_baseline.csv --holdout loggamma_regimes_holdout.csv`
 
-Steps 5-7 are needed only once, to freeze the contracts. The baseline export
-(step 3) is the half that cannot be reproduced later; the holdout can always be
-regenerated and re-exported.
+Steps 5-7 were needed only once, to freeze the contracts. The baseline export
+(steps 1-2) is the half that cannot be reproduced. Only step 7, the analysis,
+is safe to rerun.
 
 ## Files
 

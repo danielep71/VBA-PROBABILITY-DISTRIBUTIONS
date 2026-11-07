@@ -7,7 +7,8 @@ up to the `1E100` representational bound but are only asserted "validated to
 roughly `1E9`". That leaves a third state alongside *invalid input* and
 *accuracy-contracted input*: **valid, computed, but not accuracy-contracted** —
 where a worksheet user can receive a finite value the project makes no accuracy
-claim about, with no machine-readable signal.
+claim about, with no machine-readable signal. Both surfaces now reject df above
+1E8; see [Outcome](#outcome-2026-11-07).
 
 This study measures that regime so any enforced limit (or capability claim)
 rests on committed evidence rather than an assertion — the same discipline the
@@ -74,14 +75,33 @@ observation changed. The old values are in `../study_reference_rebase.csv`.
 
 ## Running it
 
+The grid is committed with its Excel observations. **Never run the bare
+`python generate_tchi_large_df.py`:** it rewrites the grid from scratch and
+drops every observation (and, before #218, the 130 seam rows). To re-reference
+the committed grid, keeping every observation:
+
 ```
-python generate_tchi_large_df.py      # -> tchi_large_df_grid.csv (observed_vba empty)
-# export the VBA values into observed_vba via the study export macro
-python analyze_tchi_large_df.py       # worst relative error per (function, df)
+python generate_tchi_large_df.py --merge-references          # report only
+python generate_tchi_large_df.py --merge-references --write  # patch reference cells
+python analyze_tchi_large_df.py                              # worst relative error per (function, df)
 ```
 
-Run with no observations, `analyze_tchi_large_df.py` prints the reference-side
-structure (which df are genuinely non-normal vs already at the normal limit).
+The generator builds the seam rows from
+`../student_t_large_df_study/seam_study.py`, which owns them, so
+`--merge-references` covers the whole grid (#218). `test_tchi_merge.py` checks
+this. Before #218 the generator did not produce the seam rows, and the merge
+refused the grid.
+
+**Observations.** The grid is exported unattended: the Excel VBA Regression
+workflow's `export_tchi_large_df` input runs `ci/Export-ExcelGrids.ps1` after a
+green regression, and `benchmark/apply_excel_export.py --grid tchi_large_df`
+applies the artifact. The study module `M_STATS_PROBDIST_TCHI.bas` is the
+exporter.
+
+**Seam rows.** 130 rows with regime `seam` (52 survival, 52 cumulative, 26
+inverse) measure the Student-t large-df seams of #210. They were appended by
+`seam_study.py --append`; see
+[`SEAM_STUDY.md`](../student_t_large_df_study/SEAM_STUDY.md).
 
 ## How to read the result
 
@@ -98,3 +118,14 @@ observed VBA value against the true reference:
 
 Either way the outcome replaces the asserted "~1E9" with a measured boundary,
 and no limit is introduced without evidence.
+
+## Outcome (2026-11-07)
+
+The `1E100` acceptance described above no longer holds. The measured envelope
+(`benchmark/envelope_probe`) set `PROB_T_MAX_DF = PROB_CHI_MAX_DF = 1E8` in
+`src/M_STATS_PROBDIST_TFAMILY.bas`, and the public surfaces reject larger df
+with `CVErr(xlErrNum)`. Every Student-t row and every Chi-square row above
+df 1E8 in this grid (146 rows) now observes `ERROR`. The rows at or below 1E8
+are the Student-t rows at df 1E5..1E8, including the seam rows.
+`numerical_limitations.csv` records the limit as
+`IncompleteBeta.StudentTLargeDF`.
