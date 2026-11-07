@@ -926,8 +926,9 @@ The PowerShell runner:
 A manual dispatch of the workflow can also export the accuracy grids unattended
 after a green regression, in the same job. The inputs `export_main`,
 `export_holdout`, `export_holdout_older`, `export_survival_boundary` and
-`export_tchi_large_df` select the grids, and `main_mode` chooses a full or a
-missing-only main-grid export. `ci/Export-ExcelGrids.ps1` runs the exporters and
+`export_tchi_large_df` select the grids, `export_studies` names study grids
+such as the `positive_ratio_subnormal` probe CSVs, and `main_mode` chooses a
+full or a missing-only main-grid export. `ci/Export-ExcelGrids.ps1` runs the exporters and
 uploads the grids as an artifact; the runner never writes to the repository.
 `benchmark/apply_excel_export.py` then applies the downloaded artifact to the
 exported commit, finalizes the certification record and binds the manifests.

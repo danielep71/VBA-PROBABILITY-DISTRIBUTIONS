@@ -65,6 +65,9 @@ Private Const PROBE_FIELDS As Long = 14
 ' USAGE
 '   Run Probe_ChiSquarePositiveRatio, then validate with
 '   analyze_positive_ratio_subnormal.py before committing the CSV.
+'   Export_ChiSquarePositiveRatio writes chisquare_probe.csv beside the
+'   workbook with no dialog; ci/Export-ExcelGrids.ps1 runs it on the self-
+'   hosted runner (#225).
 '
 ' DEPENDENCIES
 '   - K_STATS_ChiSquare_Density, _Cumulative, _Survival
@@ -83,13 +86,54 @@ Public Sub Probe_ChiSquarePositiveRatio()
 ' Probe_ChiSquarePositiveRatio
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Evaluates every constructed point on all three surfaces and writes the CSV.
+'   Asks for an output path, then writes the CSV there.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Path                As String          'Chosen output path
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        Path = ResolveOutputPath()
+        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
+
+        WriteChiSquarePositiveRatio Path
+End Sub
+
+
+Public Sub Export_ChiSquarePositiveRatio()
+'
+'==============================================================================
+' Export_ChiSquarePositiveRatio
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Writes chisquare_probe.csv beside this workbook, with no dialog: the entry
+'   point ci/Export-ExcelGrids.ps1 runs on the self-hosted runner (#225). The
+'   workbook there is a local file, so its path is usable by Open.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        WriteChiSquarePositiveRatio ThisWorkbook.Path & _
+            Application.PathSeparator & "chisquare_probe.csv"
+End Sub
+
+
+Private Sub WriteChiSquarePositiveRatio(ByVal Path As String)
+'
+'==============================================================================
+' WriteChiSquarePositiveRatio
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates every constructed point on all three surfaces and writes the CSV.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim OutNum              As Integer         'Output file handle
     Dim Ids()               As String          'Point identifiers
     Dim Cons()              As String          'Construction class
@@ -108,9 +152,6 @@ Public Sub Probe_ChiSquarePositiveRatio()
 ' INITIALIZE
 '------------------------------------------------------------------------------
     On Error GoTo Err_Handler
-
-        Path = ResolveOutputPath()
-        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
 
         BuildPoints Ids, Cons, Bits, Xs, Scales, Count
         Surfaces = Array("density", "cumulative", "survival")

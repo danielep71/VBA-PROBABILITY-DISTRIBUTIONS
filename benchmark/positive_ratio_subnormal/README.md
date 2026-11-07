@@ -352,3 +352,16 @@ answer is not the same as answering accurately.** It is now `None`, reported as
 | `M_STATS_PROBDIST_GQPROBE.bas` | probe of a Gamma survival defect outside #13 (ScaleParam = 1); run `Probe_GammaQComplement` |
 | `gamma_q_complement.csv` | that probe's observations |
 | `MOVEMENT_MANIFEST.md` | predicted grid movement of the planned source change |
+
+Each exporter module also has an `Export_` entry point with the same suffix
+(`Export_GammaPositiveRatio`, `Export_ChiSquarePositiveRatio`,
+`Export_GammaHoldout`, `Export_ChiSquareHoldout`, `Export_GammaQComplement`).
+It writes the CSV beside the workbook with no dialog, through the same writer
+as the `Probe_` macro. The self-hosted runner uses it: dispatch the Excel VBA
+Regression workflow with `export_studies` naming `prs_gamma_probe`,
+`prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout` or
+`prs_gamma_q_complement`, then apply the artifact with
+`benchmark/apply_excel_export.py` (#225;
+[EXCEL_CERTIFICATION.md](../../docs/EXCEL_CERTIFICATION.md#automated-fresh-export)).
+The holdouts and `gamma_q_complement.csv` are evidence for #13 and #23: export
+them only as those issues' procedures say.

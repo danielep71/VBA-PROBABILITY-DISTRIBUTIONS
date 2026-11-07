@@ -59,6 +59,9 @@ Private Const PROBE_FIELDS As Long = 15
 ' USAGE
 '   Run Probe_GammaPositiveRatio and choose an output path. Validate with
 '   analyze_positive_ratio_subnormal.py before committing the CSV.
+'   Export_GammaPositiveRatio writes gamma_probe.csv beside the workbook with
+'   no dialog; ci/Export-ExcelGrids.ps1 runs it on the self-hosted runner
+'   (#225).
 '
 ' DEPENDENCIES
 '   - K_STATS_Gamma_Density, _Cumulative, _Survival
@@ -78,13 +81,54 @@ Public Sub Probe_GammaPositiveRatio()
 ' Probe_GammaPositiveRatio
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Evaluates every constructed point on all three surfaces and writes the CSV.
+'   Asks for an output path, then writes the CSV there.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Path                As String          'Chosen output path
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        Path = ResolveOutputPath()
+        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
+
+        WriteGammaPositiveRatio Path
+End Sub
+
+
+Public Sub Export_GammaPositiveRatio()
+'
+'==============================================================================
+' Export_GammaPositiveRatio
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Writes gamma_probe.csv beside this workbook, with no dialog: the entry
+'   point ci/Export-ExcelGrids.ps1 runs on the self-hosted runner (#225). The
+'   workbook there is a local file, so its path is usable by Open.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        WriteGammaPositiveRatio ThisWorkbook.Path & _
+            Application.PathSeparator & "gamma_probe.csv"
+End Sub
+
+
+Private Sub WriteGammaPositiveRatio(ByVal Path As String)
+'
+'==============================================================================
+' WriteGammaPositiveRatio
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates every constructed point on all three surfaces and writes the CSV.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim OutNum              As Integer         'Output file handle
     Dim Ids()               As String          'Point identifiers
     Dim Cons()              As String          'Construction class
@@ -103,9 +147,6 @@ Public Sub Probe_GammaPositiveRatio()
 ' INITIALIZE
 '------------------------------------------------------------------------------
     On Error GoTo Err_Handler
-
-        Path = ResolveOutputPath()
-        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
 
         BuildPoints Ids, Cons, Bits, Xs, Scales, Count
         Surfaces = Array("density", "cumulative", "survival")

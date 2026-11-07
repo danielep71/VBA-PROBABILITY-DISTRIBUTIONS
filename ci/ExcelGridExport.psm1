@@ -12,6 +12,16 @@
 #   Excel. benchmark/apply_excel_export.py repeats the grid check in Python on
 #   the maintainer's machine, so a defect in either copy is caught by the other.
 #
+# TWO KINDS OF GRID
+#   observed   The exporter rewrites the observed_vba column of the rows it
+#              owns in a committed grid (the rules below).
+#   generated  A study probe writes its whole CSV afresh (#225): the
+#              positive_ratio_subnormal probes. The export must keep the
+#              committed header, line count and, row by row, the leading
+#              KeyColumns fields that identify each point; the remaining
+#              fields are the measurement and may change. Every row must have
+#              the header's field count.
+#
 # GRID RULES (mirrors the exporter modules, which are not changed)
 #   The exporters read the whole grid, normalize CRLF and CR to LF, split on
 #   LF, rewrite one column of the rows they own, and Print every line back
@@ -29,10 +39,74 @@ Set-StrictMode -Version Latest
 # are byte comparisons.
 $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 
+# The grids a dispatch selects by name through -Studies (the workflow input
+# export_studies). The five grids with their own boolean inputs are not
+# listed, so a grid cannot be selected twice.
+$script:StudyGridNames = @(
+    "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
+    "prs_chisquare_holdout", "prs_gamma_q_complement"
+)
+
+function Get-StudyGridNames {
+    return , ([string[]]$script:StudyGridNames)
+}
+
+function New-GeneratedGridSpec {
+    # A positive_ratio_subnormal probe CSV: written whole by the probe's
+    # non-interactive Export_ entry point beside the export workbook.
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$FileName,
+        [Parameter(Mandatory = $true)][string]$Exporter,
+        [Parameter(Mandatory = $true)][string]$Macro,
+        [Parameter(Mandatory = $true)][int]$Columns,
+        [Parameter(Mandatory = $true)][int]$KeyColumns,
+        [Parameter(Mandatory = $true)][string]$SuccessPrefix
+    )
+
+    $folder = "benchmark/positive_ratio_subnormal/"
+    return [pscustomobject][ordered]@{
+        Name           = $Name
+        Path           = $folder + $FileName
+        FileName       = $FileName
+        Exporter       = $folder + $Exporter
+        Macro          = $Macro
+        Mode           = "full"
+        ObservedIndex  = -1
+        MinimumColumns = $Columns
+        ScopeIndex     = -1
+        ScopeValue     = $null
+        SuccessPrefix  = $SuccessPrefix
+        ReportsCount   = $false
+        Kind           = "generated"
+        KeyColumns     = $KeyColumns
+    }
+}
+
+function ConvertTo-StudySelection {
+    # The study grids named in a comma- or space-separated list, in the order
+    # given. Empty selects none; an unknown or repeated name is refused.
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Value)
+
+    $names = New-Object System.Collections.Generic.List[string]
+    foreach ($item in ($Value -split '[,\s]+')) {
+        $name = $item.Trim()
+        if ($name.Length -eq 0) { continue }
+        if ($script:StudyGridNames -cnotcontains $name) {
+            throw "unknown study grid '$name'; known: $($script:StudyGridNames -join ', ')"
+        }
+        if ($names.Contains($name)) { throw "study grid '$name' is named twice" }
+        $names.Add($name)
+    }
+    return , ($names.ToArray())
+}
+
 function Get-ExportGridSpec {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df")]
+        [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
+                     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
+                     "prs_chisquare_holdout", "prs_gamma_q_complement")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -56,6 +130,8 @@ function Get-ExportGridSpec {
                 ScopeValue     = "main grid"
                 SuccessPrefix  = "Accuracy observations written to:"
                 ReportsCount   = $false
+                Kind           = "observed"
+                KeyColumns     = 0
             }
         }
         "holdout" {
@@ -72,6 +148,8 @@ function Get-ExportGridSpec {
                 ScopeValue     = $null
                 SuccessPrefix  = "Holdout complete: "
                 ReportsCount   = $true
+                Kind           = "observed"
+                KeyColumns     = 0
             }
         }
         "holdout_older" {
@@ -88,6 +166,8 @@ function Get-ExportGridSpec {
                 ScopeValue     = $null
                 SuccessPrefix  = "Older-families holdout export complete: "
                 ReportsCount   = $true
+                Kind           = "observed"
+                KeyColumns     = 0
             }
         }
         "survival_boundary" {
@@ -104,7 +184,34 @@ function Get-ExportGridSpec {
                 ScopeValue     = $null
                 SuccessPrefix  = "Survival-boundary export complete: "
                 ReportsCount   = $true
+                Kind           = "observed"
+                KeyColumns     = 0
             }
+        }
+        "prs_gamma_probe" {
+            return New-GeneratedGridSpec -Name "prs_gamma_probe" -FileName "gamma_probe.csv" `
+                -Exporter "M_STATS_PROBDIST_GAMMAPROBE.bas" -Macro "Export_GammaPositiveRatio" `
+                -Columns 15 -KeyColumns 9 -SuccessPrefix "Gamma positive-ratio probe complete: "
+        }
+        "prs_chisquare_probe" {
+            return New-GeneratedGridSpec -Name "prs_chisquare_probe" -FileName "chisquare_probe.csv" `
+                -Exporter "M_STATS_PROBDIST_CHISQPROBE.bas" -Macro "Export_ChiSquarePositiveRatio" `
+                -Columns 14 -KeyColumns 8 -SuccessPrefix "Chi-square positive-ratio probe complete: "
+        }
+        "prs_gamma_holdout" {
+            return New-GeneratedGridSpec -Name "prs_gamma_holdout" -FileName "gamma_holdout.csv" `
+                -Exporter "M_STATS_PROBDIST_GAMMAHOLD.bas" -Macro "Export_GammaHoldout" `
+                -Columns 15 -KeyColumns 9 -SuccessPrefix "Gamma positive-ratio HOLDOUT complete: "
+        }
+        "prs_chisquare_holdout" {
+            return New-GeneratedGridSpec -Name "prs_chisquare_holdout" -FileName "chisquare_holdout.csv" `
+                -Exporter "M_STATS_PROBDIST_CHISQHOLD.bas" -Macro "Export_ChiSquareHoldout" `
+                -Columns 14 -KeyColumns 8 -SuccessPrefix "Chi-square positive-ratio HOLDOUT complete: "
+        }
+        "prs_gamma_q_complement" {
+            return New-GeneratedGridSpec -Name "prs_gamma_q_complement" -FileName "gamma_q_complement.csv" `
+                -Exporter "M_STATS_PROBDIST_GQPROBE.bas" -Macro "Export_GammaQComplement" `
+                -Columns 12 -KeyColumns 3 -SuccessPrefix "Gamma Q complement probe complete: "
         }
         "tchi_large_df" {
             return [pscustomobject][ordered]@{
@@ -120,6 +227,8 @@ function Get-ExportGridSpec {
                 ScopeValue     = $null
                 SuccessPrefix  = "Large-df t / Chi-square study complete: "
                 ReportsCount   = $true
+                Kind           = "observed"
+                KeyColumns     = 0
             }
         }
     }
@@ -179,6 +288,84 @@ function Test-GridRowInScope {
     return $true
 }
 
+function Test-GeneratedGrid {
+    # A probe CSV written afresh, against the committed file it replaces: the
+    # bytes VBA's Print # writes, the same header and line count, every row
+    # with the header's field count, and the first KeyColumns fields of each
+    # row unchanged. Only the measurement fields after them may differ.
+    param(
+        [Parameter(Mandatory = $true)]$Spec,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][byte[]]$BaselineBytes,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][byte[]]$ExportedBytes,
+        [int]$MaxListed = 20
+    )
+
+    $problems = New-Object System.Collections.Generic.List[string]
+    $before = ConvertTo-GridLines -Bytes $BaselineBytes
+    $after = ConvertTo-GridLines -Bytes $ExportedBytes
+    $filled = 0
+    $errors = 0
+    $changed = 0
+    $listed = 0
+
+    if ($script:Latin1.GetString($ExportedBytes) -cne (ConvertTo-PrintedGridText -Lines $after)) {
+        $problems.Add("the export is not CRLF-terminated lines as VBA Print # writes them")
+    }
+    if ($before.Length -eq 0) {
+        $problems.Add("the checked-out grid is empty")
+    }
+    if ($before.Length -ne $after.Length) {
+        $problems.Add("line count changed from $($before.Length) to $($after.Length)")
+    }
+    elseif ($before.Length -gt 0) {
+        if ($before[0] -cne $after[0]) {
+            $problems.Add("the header line changed")
+        }
+        if ($before[0].Split([char[]]@([char]',')).Length -ne $Spec.MinimumColumns) {
+            $problems.Add("the committed header does not have $($Spec.MinimumColumns) fields")
+        }
+        for ($i = 1; $i -lt $before.Length; $i++) {
+            $oldCols = $before[$i].Split([char[]]@([char]','))
+            $newCols = $after[$i].Split([char[]]@([char]','))
+            $lineNumber = $i + 1
+            if ($newCols.Length -ne $Spec.MinimumColumns) {
+                if ($listed -lt $MaxListed) { $problems.Add("line ${lineNumber}: $($newCols.Length) fields, not $($Spec.MinimumColumns)") }
+                $listed += 1
+                continue
+            }
+            $keyChanged = $false
+            for ($j = 0; $j -lt $Spec.KeyColumns; $j++) {
+                if ($j -ge $oldCols.Length -or $oldCols[$j] -cne $newCols[$j]) { $keyChanged = $true }
+            }
+            if ($keyChanged) {
+                if ($listed -lt $MaxListed) { $problems.Add("line ${lineNumber}: the point's key fields changed") }
+                $listed += 1
+                continue
+            }
+            $filled += 1
+            $measured = $newCols[$Spec.KeyColumns..($newCols.Length - 1)]
+            if (@($measured -ceq "ERROR").Count -gt 0 -or @($measured -ceq "CVERR").Count -gt 0) { $errors += 1 }
+            if ($before[$i] -cne $after[$i]) { $changed += 1 }
+        }
+        if ($listed -gt $MaxListed) {
+            $problems.Add("... and $($listed - $MaxListed) more row problem(s)")
+        }
+        if ($before.Length -lt 2) {
+            $problems.Add("no row is in the exporter's scope")
+        }
+    }
+
+    return [pscustomobject][ordered]@{
+        rows                 = [Math]::Max($after.Length - 1, 0)
+        in_scope_rows        = [Math]::Max($before.Length - 1, 0)
+        filled_rows          = $filled
+        error_rows           = $errors
+        out_of_scope_rows    = 0
+        changed_observations = $changed
+        problems             = $problems.ToArray()
+    }
+}
+
 function Test-ExportedGrid {
     # Compare an exported grid with the checked-out grid it was made from.
     # Returns the counts and every problem found; an empty Problems array means
@@ -191,6 +378,9 @@ function Test-ExportedGrid {
         [int]$MaxListed = 20
     )
 
+    if ($Spec.Kind -eq "generated") {
+        return Test-GeneratedGrid -Spec $Spec -BaselineBytes $BaselineBytes -ExportedBytes $ExportedBytes -MaxListed $MaxListed
+    }
     $problems = New-Object System.Collections.Generic.List[string]
     $before = ConvertTo-GridLines -Bytes $BaselineBytes
     $after = ConvertTo-GridLines -Bytes $ExportedBytes
@@ -467,11 +657,14 @@ function Test-ExportDialogs {
 }
 
 Export-ModuleMember -Function @(
+    "Get-StudyGridNames",
+    "ConvertTo-StudySelection",
     "Get-ExportGridSpec",
     "ConvertTo-BooleanSwitch",
     "ConvertTo-GridLines",
     "ConvertTo-PrintedGridText",
     "Test-GridRowInScope",
+    "Test-GeneratedGrid",
     "Test-ExportedGrid",
     "Get-Sha256Text",
     "Test-GreenRegressionRecord",

@@ -29,8 +29,10 @@ WHAT IT REFUSES
     * every requested grid is in the artifact with the raw SHA-256 the manifest
       records, and, compared with the grid at HEAD, it changes only the
       observed_vba cells its exporter owns, fills every one of them, and holds
-      exactly the bytes VBA's Print # writes (CRLF lines). The manifest's
-      counts must agree with this recount;
+      exactly the bytes VBA's Print # writes (CRLF lines). A study probe CSV,
+      which its probe writes whole (#225), must instead keep the committed
+      header, line count and each row's key fields. The manifest's counts must
+      agree with this recount;
     * the imported modules the manifest lists hash to their blobs at HEAD;
     * a missing-only main export keeps the observations already in the grid,
       so it is accepted only while no .bas module differs from the source
@@ -41,8 +43,9 @@ WHAT IT DOES
     1. Copies each grid and excel_environment.json into place, byte for byte.
     2. Runs finalize_excel_certification.py --from-fresh-export with --main
        and/or --holdout, which records raw_sha256 from those bytes.
-       holdout_older, survival_boundary and tchi_large_df have no exporter in
-       the Excel evidence policy, so the record makes no claim for them.
+       holdout_older, survival_boundary, tchi_large_df and the study grids
+       have no exporter in the Excel evidence policy, so the record makes no
+       claim for them.
     3. Rewrites each grid with the LF bytes Git stores under `*.csv text
        eol=lf`, as a fresh checkout of the evidence commit would hold them.
     4. Runs refresh_evidence.py with --bind-exported-main and/or
@@ -108,6 +111,15 @@ class GridSpec:
     exporter: str            # the module that holds the entry points
     finalize_flag: str | None
     bind_flag: str | None
+    kind: str = "observed"   # "generated": the probe writes the whole CSV (#225)
+    key_columns: int = 0     # generated: leading fields that identify a row
+
+
+def _study(name: str, file_name: str, module: str, macro: str, columns: int,
+           key_columns: int) -> GridSpec:
+    folder = "benchmark/positive_ratio_subnormal/"
+    return GridSpec(name, folder + file_name, -1, columns, None, {"full": macro},
+                    folder + module, None, None, "generated", key_columns)
 
 
 # Mirrors the exporter modules and ci/ExcelGridExport.psm1.
@@ -137,6 +149,21 @@ GRIDS = {
                               None, {"full": "Export_TChiLargeDf"},
                               "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas",
                               None, None),
+    # Study grids, selected through the workflow's export_studies input.
+    "prs_gamma_probe": _study("prs_gamma_probe", "gamma_probe.csv",
+                              "M_STATS_PROBDIST_GAMMAPROBE.bas",
+                              "Export_GammaPositiveRatio", 15, 9),
+    "prs_chisquare_probe": _study("prs_chisquare_probe", "chisquare_probe.csv",
+                                  "M_STATS_PROBDIST_CHISQPROBE.bas",
+                                  "Export_ChiSquarePositiveRatio", 14, 8),
+    "prs_gamma_holdout": _study("prs_gamma_holdout", "gamma_holdout.csv",
+                                "M_STATS_PROBDIST_GAMMAHOLD.bas", "Export_GammaHoldout", 15, 9),
+    "prs_chisquare_holdout": _study("prs_chisquare_holdout", "chisquare_holdout.csv",
+                                    "M_STATS_PROBDIST_CHISQHOLD.bas",
+                                    "Export_ChiSquareHoldout", 14, 8),
+    "prs_gamma_q_complement": _study("prs_gamma_q_complement", "gamma_q_complement.csv",
+                                     "M_STATS_PROBDIST_GQPROBE.bas",
+                                     "Export_GammaQComplement", 12, 3),
 }
 
 
@@ -174,9 +201,58 @@ def row_in_scope(spec: GridSpec, mode: str, line: bytes) -> bool:
     return True
 
 
+def verify_generated(spec: GridSpec, baseline: bytes, exported: bytes,
+                     max_listed: int = 20) -> dict[str, object]:
+    """A probe CSV written whole, against the committed file it replaces (the
+    same rules as Test-GeneratedGrid): Print # bytes, the same header and line
+    count, every row with the header's field count, and each row's first
+    key_columns fields unchanged. Only the measurement after them may differ."""
+    problems: list[str] = []
+    before, after = grid_lines(baseline), grid_lines(exported)
+    counts = {"rows": max(len(after) - 1, 0), "in_scope_rows": max(len(before) - 1, 0),
+              "filled_rows": 0, "error_rows": 0, "out_of_scope_rows": 0,
+              "changed_observations": 0}
+    if exported != printed(after):
+        problems.append("the export is not CRLF-terminated lines as VBA Print # writes them")
+    if not before:
+        problems.append("the grid at HEAD is empty")
+    if len(before) != len(after):
+        problems.append(f"line count changed from {len(before)} to {len(after)}")
+        return {**counts, "problems": problems}
+    if not before:
+        return {**counts, "problems": problems}
+    if before[0] != after[0]:
+        problems.append("the header line changed")
+    if len(before[0].split(b",")) != spec.min_columns:
+        problems.append(f"the committed header does not have {spec.min_columns} fields")
+    rows: list[str] = []
+    for index in range(1, len(before)):
+        old_cols, new_cols, number = before[index].split(b","), after[index].split(b","), index + 1
+        if len(new_cols) != spec.min_columns:
+            rows.append(f"line {number}: {len(new_cols)} fields, not {spec.min_columns}")
+            continue
+        if old_cols[:spec.key_columns] != new_cols[:spec.key_columns]:
+            rows.append(f"line {number}: the point's key fields changed")
+            continue
+        counts["filled_rows"] += 1
+        measured = new_cols[spec.key_columns:]
+        if b"ERROR" in measured or b"CVERR" in measured:
+            counts["error_rows"] += 1
+        if before[index] != after[index]:
+            counts["changed_observations"] += 1
+    problems.extend(rows[:max_listed])
+    if len(rows) > max_listed:
+        problems.append(f"... and {len(rows) - max_listed} more row problem(s)")
+    if len(before) < 2:
+        problems.append("no row is in the exporter's scope")
+    return {**counts, "problems": problems}
+
+
 def verify_grid(spec: GridSpec, mode: str, baseline: bytes, exported: bytes,
                 max_listed: int = 20) -> dict[str, object]:
     """Counts and problems of an exported grid against the grid it came from."""
+    if spec.kind == "generated":
+        return verify_generated(spec, baseline, exported, max_listed)
     problems: list[str] = []
     before, after = grid_lines(baseline), grid_lines(exported)
     counts = {"rows": max(len(after) - 1, 0), "in_scope_rows": 0, "filled_rows": 0,
@@ -552,6 +628,13 @@ def commit_message(plan: Plan) -> str:
              f"{harness['passed']}/{harness['assertions']} assertions.",
              ""]
     for spec, mode, raw, counts in plan.grids:
+        if spec.kind == "generated":
+            lines.append(f"- {spec.path}: written whole by {spec.macros[mode]}; "
+                         f"{counts['rows']} rows with their committed key fields, "
+                         f"{counts['error_rows']} with an ERROR status, "
+                         f"{counts['changed_observations']} row(s) changed; "
+                         f"raw {sha256_bytes(raw)}")
+            continue
         lines.append(f"- {spec.path}: {mode} export by {spec.macros[mode]}; "
                      f"{counts['rows']} rows, {counts['in_scope_rows']} in scope and filled, "
                      f"{counts['error_rows']} ERROR, {counts['changed_observations']} "
