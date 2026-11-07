@@ -4,8 +4,9 @@
 (2026-08-27). The tables and the root-cause decomposition describe the code
 before that commit. The post-fix Excel wave passed the frozen holdout, scope
 probe and fitting ladder, and falsified one movement prediction, which is
-explained; see `WAVE_RESULT.md`. Promotion into the main grid and the #13
-cutoff rerun remain, so #23 is open. One
+explained; see `WAVE_RESULT.md`. The five representative main-grid rows and
+post-fix #13 cutoff replay are now exported and validated; see
+`COMPLETION_RESULT.md`. One
 piece of off-grid evidence has since arrived: the `holdout_older` re-export at
 `7fb08ae` (2026-11-06) measures its Gamma rows at shapes 2.7 and 4.3 at
 1.03E-15 or less, and they pass their contracts

@@ -16,9 +16,12 @@ separately and neither transfers to the other.
   the classifier `PROB_ClassifyPositiveRatio` exist in
   `src/M_STATS_PROBDIST_SPECIALFUNCS.bas`, but no public surface calls them
   yet; public behaviour is unchanged.
-- **Open.** #13 stays open. The cutoffs were measured on pre-#23 source, so
-  the fitting arm and holdout must be re-exported from post-#23 source before
-  any cutoff is wired.
+- **Post-#23 replay.** Run 42421734701 re-exported all four frozen arms from
+  `f157e67`, with 955/955 regression assertions passing. The fitting crossovers
+  remain 48/40/48/48 bits and all four holdout claims pass; see
+  `POST23_RESULT.md`. #13 stays open for production wiring, regressions and
+  contracts. These are replays of historically exposed holdouts, not new
+  untouched confirmation sets.
 
 The "Next" list near the end is the plan as Phase A left it.
 

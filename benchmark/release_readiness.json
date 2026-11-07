@@ -37,8 +37,11 @@
       "issue": 23,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Post-fix evidence for the off-grid Stirling prefactor repair is incomplete"
+      "status": "resolved",
+      "summary": "Post-fix evidence for the off-grid Stirling prefactor repair is incomplete",
+      "resolution": {
+        "evidence": "The frozen #23 wave is recorded in gamma_series_small_shape/WAVE_RESULT.md (run 42365758589, 955/955; 44 untouched holdout rows and 5 probes/counterexamples pass 3E-15; falsified B4 is retained and explained). Run 42421734701 at f157e67 revalidated all four frozen #13 cutoff claims (48/40/48/48 bits). Run 42422488108 at 2d7a775 passed 955/955 and freshly exported the main grid with five promoted representative rows plus the global holdout. All five new rows meet 3E-15; the 2088 existing main observations and global holdout are unchanged. See gamma_series_small_shape/COMPLETION_RESULT.md. No contract relaxed; 27-row coverage debt unchanged. #13 production wiring and #26 residual survival defect remain open."
+      }
     },
     {
       "issue": 24,
@@ -52,7 +55,7 @@
       "class": "numerical_defect",
       "gate": null,
       "status": "open",
-      "summary": "Continued-fraction Q survival breach not yet revalidated after the prefactor fix"
+      "summary": "Post-prefactor-fix continued-fraction Q survival still breaches 5E-15 (worst 4.53E-14); residual decomposition and repair remain"
     },
     {
       "issue": 29,
