@@ -134,17 +134,22 @@ def git_show(ref, path):
                           capture_output=True, text=True).stdout
 
 
-def part_b():
-    with open(os.path.join(ROOT, LADDER_PATH), encoding="utf-8") as f:
-        after = ladder(f.read())
-    before = ladder(git_show(BASELINE, LADDER_PATH))
+def part_b(after_text=None, before_text=None):
+    if after_text is None:
+        with open(os.path.join(ROOT, LADDER_PATH), encoding="utf-8") as f:
+            after_text = f.read()
+    if before_text is None:
+        before_text = git_show(BASELINE, LADDER_PATH)
+    after, before = ladder(after_text), ladder(before_text)
     if sorted(after) != sorted(before):
         return {"pass": False, "problems": ["the ladder's point set changed"]}
     problems, rows = [], {}
     for pid, new in after.items():
         old = before[pid]
         shape, x = value(new["shape"]), value(new["x"])
-        entry = {"shape": shape, "x": x, "branch": new["branch"]}
+        entry = {"shape": shape, "x": x, "branch": new["branch"],
+                 "status_before": {s: old[s + "_status"] for s in ("cdf", "survival")},
+                 "status_after": {s: new[s + "_status"] for s in ("cdf", "survival")}}
         for surface in ("series_p", "cdf", "survival"):
             entry[surface + "_moved"] = new[surface] != old[surface]
         p_ref, q_ref = lower_p(shape, x), upper_q(shape, x)
@@ -157,6 +162,17 @@ def part_b():
     def ids(prefix, last):
         return [f"{prefix}_s{i}" for i in range(last + 1) if f"{prefix}_s{i}" in rows]
 
+    def missing(rule, pids, surfaces):
+        """A rule compares numeric results, so an unsuccessful status or a
+        missing value on either side is a failure, never a zero error."""
+        for pid in pids:
+            for surface in surfaces:
+                for when in ("before", "after"):
+                    status = rows[pid][f"status_{when}"][surface]
+                    if status != "OK" or rows[pid][f"{surface}_error_{when}"] is None:
+                        problems.append(f"{rule} {pid}: {surface} {when} the fix has no "
+                                        f"numeric result (status {status})")
+
     b1 = ids("x05", 10)
     for pid in b1:
         e = rows[pid]
@@ -164,12 +180,15 @@ def part_b():
             problems.append(f"B1 {pid}: series_p or cdf did not move")
         if e["cdf_error_after"] is None or e["cdf_error_after"] > THRESHOLD:
             problems.append(f"B1 {pid}: cdf error {e['cdf_error_after']} exceeds {THRESHOLD:.0e}")
+    missing("B1", ids("x05", 10), ("cdf",))
     b3 = ids("xsub", 10)
+    missing("B3", b3, ("cdf",))
     worst_before = max(rows[p]["cdf_error_before"] or 0.0 for p in b3) if b3 else 0.0
     worst_after = max(rows[p]["cdf_error_after"] or 0.0 for p in b3) if b3 else 0.0
     if worst_after > worst_before:
         problems.append(f"B3 xsub: worst cdf error rose from {worst_before:.3e} to {worst_after:.3e}")
     b4 = ids("x2", 11)
+    missing("B4X", b4, ("cdf", "survival"))
     b4_moved = [pid for pid in b4 if rows[pid]["cdf_moved"] or rows[pid]["survival_moved"]]
     explanation = []
     for pid in b4:

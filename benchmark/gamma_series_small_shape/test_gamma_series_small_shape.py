@@ -7,7 +7,8 @@ Proofs for the #23 study grid and its analyzer.
   2. The analyzer passes an export whose every result is the correctly rounded
      reference, with echoes equal to the inputs, and both routes bit-identical.
   3. It fails a result 1E-14 off, an ERROR result and an echo that differs from
-     the reference input, and counts the routes that disagree.
+     the reference input, and counts the routes that disagree. The ladder rules
+     (B1, B3, B4X) refuse a result lost to ERROR instead of scoring it as zero.
   4. It reports "no observations" for the committed, unexported grid.
 
 Run: python3 test_gamma_series_small_shape.py   (exit 0 = pass)
@@ -107,6 +108,28 @@ def main():
               f"{name}: not caught ({result['problems']})")
         if name == "1E-14 off":
             check(result["route_pairs_bit_identical"] == 22, "a route disagreement is not counted")
+
+    # 3b. The ladder rules refuse a missing result instead of scoring it as zero.
+    after_text = open(os.path.join(A.ROOT, A.LADDER_PATH), encoding="utf-8").read()
+    before_text = A.git_show(A.BASELINE, A.LADDER_PATH)
+
+    def lose(text, pid, surface):
+        lines = text.splitlines(keepends=True)
+        header = lines[0].rstrip("\n").split(",")
+        i = header.index(surface)
+        for k, line in enumerate(lines):
+            cols = line.rstrip("\n").split(",")
+            if cols[0] == pid:
+                cols[i - 1], cols[i] = "ERROR", ""
+                lines[k] = ",".join(cols) + "\n"
+        return "".join(lines)
+
+    for rule, pid, surface in (("B3", "xsub_s0", "cdf"), ("B4X", "x2_s3", "survival"),
+                               ("B1", "x05_s2", "cdf")):
+        result = A.part_b(lose(after_text, pid, surface), before_text)
+        check(not result["pass"] and any(p.startswith(f"{rule} {pid}: {surface} after")
+                                         for p in result["problems"]),
+              f"{rule}: a lost {surface} at {pid} is not refused ({result['problems'][:3]})")
 
     # 4. The committed grid has no observations yet, or a full set.
     with open(G.GRID, encoding="utf-8") as f:
