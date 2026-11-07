@@ -44,7 +44,8 @@ error is 4.72E-15. These are fitting results, not a frozen new domain contract.
 
 Re-evaluating the same finite fraction backward avoids the accumulated Lentz
 product rounding in the explored small-shape fitting set. It is a candidate,
-not independently validated evidence. No untouched holdout has been evaluated.
+not production validation. At the time of the original diagnosis, no untouched
+holdout had been evaluated. The subsequent frozen model checkpoint is below.
 
 The broad exploratory tail probes also expose pre-existing prefactor-dominated
 errors (for example A=10000, X=12501.25, about 9.38E-12). Those are not removed by
@@ -61,3 +62,34 @@ python benchmark/gamma_cf_study/run_isolation.py
 `isolation.json` binds the report to the baseline source, model and exported
 ladder. Model mismatches, incomplete decomposition and iteration exhaustion
 fail explicitly. The old algorithm remains available as the comparator.
+
+## B1 independent model checkpoint
+
+`CANDIDATE_PREREGISTRATION.md` and `candidate_protocol.json` were published in
+commit `f95d3e04f9ce19749ab479e061966668c3d1901b` before evaluating the new
+coordinates. B1 is the existing machine-epsilon stop plus backward reevaluation
+at exactly that depth; no further tuning was performed.
+
+| Set | Points | B1 failures against 5E-15 | Maximum relative error |
+|---|---:|---:|---:|
+| Previously inspected fitting | 84 | 0 | 4.713E-15 |
+| New independent coordinates | 84 | 0 | 4.490E-15 |
+
+All 168 references pass 60/90-digit stability and independent direct-quadrature
+checks. The protocol and exact binary64 coordinates are immutable inputs to the
+replay. Missing, unstable, non-finite, nonpositive and unexpectedly subnormal
+references are rejected, as are mismatched frozen candidate bytes. The report
+records all comparator results, iteration counts and source/input hashes.
+
+Run `python benchmark/gamma_cf_study/check_candidate.py` to reproduce the result.
+The hosted tooling shim runs this check. Report reproducibility is distinct
+from numerical acceptance: a future honestly recorded rejection would not be
+silently converted into a successful candidate.
+
+**Status: model screen passed; Excel not run for B1.** The independent margin
+is narrow. No new production route, public-function accuracy claim or issue
+closure follows. The next stage requires its own production protocol covering
+the remaining domains and callers, permanent VBA regressions and a fresh
+exact-source Excel wave. The historical #23 ladder and global holdout remain
+unchanged. These revealed coordinates cannot be reused as an untouched set
+when tuning another candidate.
