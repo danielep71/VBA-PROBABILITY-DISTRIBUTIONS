@@ -324,6 +324,13 @@ expect_failure("registry drops the silent-wrong blocker",
                lambda r: edit_json(r, R.READINESS, lambda d: d.update(
                    blockers=[b for b in d["blockers"] if b["issue"] != 34])),
                "#34 must stay registered")
+# The balanced-Beta contract breaches are measured on holdout_older and by the
+# binary64 route model, neither of which the hosted gate scores (#163, #173).
+for _issue in (163, 173):
+    expect_failure(f"registry drops balanced-Beta blocker #{_issue}",
+                   lambda r, i=_issue: edit_json(r, R.READINESS, lambda d: d.update(
+                       blockers=[b for b in d["blockers"] if b["issue"] != i])),
+                   f"#{_issue} must stay registered")
 expect_failure("registry claims certification with open blockers",
                lambda r: edit_json(r, R.READINESS, lambda d: d.update(certified=True)),
                "claims v1.0.0 is certified")
