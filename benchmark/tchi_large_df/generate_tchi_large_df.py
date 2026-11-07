@@ -48,6 +48,9 @@ evaluation at its own working precision:
     The inverse rows keep the Wilson-Hilferty quantile; they are not survival
     references.
 
+The grid also holds the 130 seam rows of the #210 study (regime "seam"), which
+student_t_large_df_study/seam_study.py defines; build() takes them from there.
+
 The committed grid holds Excel observations. Re-reference it, changing
 reference cells only, with
 
@@ -252,7 +255,19 @@ def build():
         for ps in CHI_P:
             add("ChiSquare_InverseCumulative", ps, df, chi_inv_wh(ps, df), True, "inverse_normal_limit")
 
+    rows += seam_rows()
     return rows, dropped
+
+
+def seam_rows():
+    """The #210 seam rows (regime "seam"), from the study that owns them, so the
+    generator produces the grid's whole row set and --merge-references can
+    re-reference them with the rest."""
+    study = os.path.join(os.path.dirname(HERE), "student_t_large_df_study")
+    if study not in sys.path:
+        sys.path.insert(0, study)
+    import seam_study
+    return seam_study.rows()
 
 
 def main():
