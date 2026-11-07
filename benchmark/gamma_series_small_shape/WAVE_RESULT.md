@@ -69,7 +69,8 @@ falsified.
 - no series, main-grid or holdout result regressed;
 - the continued-fraction survival improved.
 
-**Not settled:**
+**Remaining at the end of this first wave** (the promotion and cutoff replay
+were subsequently completed in `COMPLETION_RESULT.md`):
 
 - **#26.** The `X = 2` continued-fraction survival still breaches
   `Gamma_Survival.all.output` (`5E-15`) at every shape, worst 4.53E-14.
