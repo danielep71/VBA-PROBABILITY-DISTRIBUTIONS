@@ -36,7 +36,11 @@ truthfully and updates the retained certification record atomically.
 | Gamma_Cumulative | 0.5, 0.0001, 1 | 1.18E-15 |
 | ChiSquare_Cumulative | 1, 0.0002 | 1.18E-15 |
 
-All five meet the existing 3E-15 relative CDF contracts. These errors use the
+All five meet the frozen study bound of 3E-15 relative. Gamma all is
+registered at 3E-15, while Chi-square all is broader (2.6E-10). The study
+fixture independently scores all five actual main observations at 3E-15,
+with exact, degraded 1E-11 and unavailable-observation controls; the row
+claim alone is not relied on for enforcement. No registry threshold changes. These errors use the
 main gate's hi/lo observation encoding. The 2088 previous main-grid observations
 and all 659 global holdout rows are unchanged. Main-grid total is 2093, of
 which 1737 belong to the main evidence set; coverage debt remains 27.

@@ -13,6 +13,7 @@ Proofs for the #23 study grid and its analyzer.
 
 Run: python3 test_gamma_series_small_shape.py   (exit 0 = pass)
 """
+from decimal import Decimal, localcontext
 import csv
 import io
 import os
@@ -100,6 +101,25 @@ def main():
               ("reference", "claim", "metric")),
               f"permanent main-grid reference missing or changed: {reference['function']} "
               f"{reference['arg1']}, {reference['arg2']}")
+
+    # The broad Chi-square all-regime contract is 2.6E-10. The study's
+    # tighter 3E-15 requirement must independently score the actual main row.
+    for reference in promoted:
+        matching = [r for r in main_rows if all(r[k] == reference[k] for k in
+                    ("function", "arg1", "arg2", "arg3", "regime", "evidence_set"))]
+        check(len(matching) == 1 and P.meets_frozen_bound(matching[0]),
+              f"promoted main observation violates frozen 3E-15: {reference['function']} "
+              f"{reference['arg1']}, {reference['arg2']}")
+        with localcontext() as context:
+            context.prec = 80
+            exact = dict(reference, observed_vba=reference["reference"])
+            degraded = dict(reference, observed_vba=str(
+                Decimal(reference["reference"]) * (1 + Decimal("1E-11"))))
+        check(P.meets_frozen_bound(exact), "exact representative must pass")
+        check(not P.meets_frozen_bound(degraded), "1E-11 representative must fail")
+        for invalid in ("", "ERROR", "NaN", "Infinity", "not numeric"):
+            check(not P.meets_frozen_bound(dict(reference, observed_vba=invalid)),
+                  f"unmeasured representative must fail: {invalid!r}")
 
     # 2. A correctly rounded export passes.
     path = write_grid(exported())

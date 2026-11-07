@@ -20,7 +20,10 @@ probes, selected by their frozen roles rather than their measured errors.
 Use promote_representatives.py with benchmark/promote_grid_rows.py.
 References are regenerated at the binary64 arguments; observations are blank.
 No holdout row is promoted or relabelled as fitting evidence.
-All five rows use the existing all-regime CDF contracts of 3E-15.
+All five rows retain the existing all-regime registry routing. An explicit
+main-observation check enforces the frozen study bound of 3E-15 on each:
+Gamma all is 3E-15, but the broader Chi-square all contract is 2.6E-10.
+This review correction does not change any threshold or selected row.
 Export the main grid and global holdout from the candidate and commit grids,
 bindings, certification and generated summaries together. The 27-row coverage
 debt must remain unchanged. No threshold is relaxed.
