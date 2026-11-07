@@ -6,11 +6,12 @@
     "benchmark/gamma_cf_study/candidate_protocol.json": "1098a65fb4b55e2ad5add81bf3dcce4552c786c7cdd7d8ebd34908d4e0bf77d8",
     "benchmark/gamma_cf_study/CANDIDATE_PREREGISTRATION.md": "5680f56deba2ef2e372308fd5de9046d7385b79f7d77dc77af9177eb634e5298",
     "benchmark/gamma_cf_study/model.py": "da36fe964b056f254572450db6963f057d1eb5d31a8fc476e8d327e1f7e134fb",
-    "benchmark/gamma_cf_study/check_candidate.py": "68f92a37aa768ff3d92f2a508b879ceeceddeb6404873c9e0a7949b914de0193",
+    "benchmark/gamma_cf_study/check_candidate.py": "66fdaaa5358c7f877b4d7705ba6fe95951f1de62263da70ad8fa4760c6a1c28a",
     "benchmark/gamma_cf_study/isolation.json": "d614a9426c4fdfe78a43292d99debfdd8fb95bf333eb398639eeb5dbbc497dd0",
     "benchmark/beta_balanced_survival/beta_route_model.py": "44aa4eae5cf55a41b00871a23c8e405a19b0726c15331155d9fbaabb761c5b10",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "aaa95c2d9a0f13b882e69faeccb55f433200333cbbf68d9881d903055f5214af",
-    "src/M_STATS_PROBDIST_CORE.bas": "906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5"
+    "src/M_STATS_PROBDIST_CORE.bas": "906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "98088a99e80dccbc5424ea2eb7d9a450f562bdcde5e65ef5a563f6099e4c84c2"
   },
   "fitting_count": 84,
   "independent_count": 84,

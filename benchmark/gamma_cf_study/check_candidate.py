@@ -7,6 +7,7 @@ import math
 import subprocess
 import time
 from pathlib import Path
+from unittest.mock import patch
 
 import mpmath as mp
 from model import HERE, ROOT, X, D, cf, pref, backward
@@ -32,6 +33,11 @@ def relative_error(value, reference):
     return mp.mpf(value) / reference - 1
 
 
+def require_frozen(path, commit):
+    if frozen_bytes(path, commit) != path.read_bytes().replace(b"\r\n", b"\n"):
+        raise ValueError(f"frozen input changed: {path.name}")
+
+
 def validate_oracles(reference, lower, quadrature, protocol):
     if any(not mp.isfinite(v) or v <= 0 for v in (reference, lower, quadrature)):
         raise ValueError("invalid reference")
@@ -47,6 +53,13 @@ def validate_oracles(reference, lower, quadrature, protocol):
 
 
 def check_guards(protocol):
+    with patch(__name__ + ".frozen_bytes", return_value=b"deliberately changed"):
+        try:
+            require_frozen(HERE / "model.py", protocol["model_commit"])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("frozen-input drift was accepted")
     # Missing/unstable independent evidence must not produce a favourable score.
     with mp.workdps(90):
         for args in [
@@ -103,17 +116,19 @@ def coordinates():
 def measure():
     protocol, fitting, holdout = coordinates()
     for path in (PROTOCOL, DOCUMENT):
-        if frozen_bytes(path, PROTOCOL_COMMIT) != path.read_bytes().replace(
-            b"\r\n", b"\n"
-        ):
-            raise ValueError("frozen preregistration was modified")
+        require_frozen(path, PROTOCOL_COMMIT)
     model = HERE / "model.py"
-    if frozen_bytes(model, protocol["model_commit"]) != model.read_bytes().replace(
-        b"\r\n", b"\n"
-    ):
-        raise ValueError(
-            "candidate model drifted from its preregistered implementation"
-        )
+    require_frozen(model, protocol["model_commit"])
+    # Freeze imported arithmetic too, not just the wrapper implementation.
+    dependencies = [
+        HERE / "isolation.json",
+        HERE.parent / "beta_balanced_survival/beta_route_model.py",
+        ROOT / "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+        ROOT / "src/M_STATS_PROBDIST_CORE.bas",
+        ROOT / "src/M_STATS_PROBDIST_CONTINUOUS.bas",
+    ]
+    for path in dependencies:
+        require_frozen(path, protocol["baseline_commit"])
     check_guards(protocol)
     rows = []
     with mp.workdps(protocol["reference_dps"][1]):
@@ -175,10 +190,7 @@ def measure():
         DOCUMENT,
         model,
         Path(__file__),
-        HERE / "isolation.json",
-        HERE.parent / "beta_balanced_survival/beta_route_model.py",
-        ROOT / "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
-        ROOT / "src/M_STATS_PROBDIST_CORE.bas",
+        *dependencies,
     ]
     return dict(
         protocol_commit=PROTOCOL_COMMIT,
