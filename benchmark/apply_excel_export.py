@@ -116,8 +116,8 @@ class GridSpec:
 
 
 def _study(name: str, file_name: str, module: str, macro: str, columns: int,
-           key_columns: int) -> GridSpec:
-    folder = "benchmark/positive_ratio_subnormal/"
+           key_columns: int, folder: str = "positive_ratio_subnormal") -> GridSpec:
+    folder = f"benchmark/{folder}/"
     return GridSpec(name, folder + file_name, -1, columns, None, {"full": macro},
                     folder + module, None, None, "generated", key_columns)
 
@@ -164,6 +164,9 @@ GRIDS = {
     "prs_gamma_q_complement": _study("prs_gamma_q_complement", "gamma_q_complement.csv",
                                      "M_STATS_PROBDIST_GQPROBE.bas",
                                      "Export_GammaQComplement", 12, 3),
+    "gss_small_shape": _study("gss_small_shape", "gamma_series_small_shape_grid.csv",
+                              "M_STATS_PROBDIST_GSSS.bas", "Export_GammaSeriesSmallShape",
+                              13, 10, folder="gamma_series_small_shape"),
 }
 
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-07T10:25:48Z",
-  "commit_sha": "63e2452",
+  "generated_utc": "2026-11-07T13:38:06Z",
+  "commit_sha": "d22486c",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -33,6 +33,7 @@
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:d332cad0a17d4bb78d8d2d1a682697d8f2e2cb379315de0ccd0f8ef3664161dd",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:460e230db92910215bd20af8e474e133d1be2ae23b42608b248b077e48f5d01c",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:5b4c2f9a27a5659a8ed38b7a4d95cf510bf92722b0512d736c796cc5d2f2926a",
+    "benchmark/gamma_series_small_shape/M_STATS_PROBDIST_GSSS.bas": "sha256:7ad6a52d5af85d43bfddce7eaf495406165c61cdd1e39f9e74991177cc79774e",
     "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:914a68538334c0fa127eb4f88cfa8301ce8862d53ee3b093f88d5cbd84f251f5",
     "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas": "sha256:33289286c2687caff72eede8d69242835dd35e63d5d9fcec524cd0c5a63bcc61",
     "benchmark/inverse_probe/M_STATS_PROBDIST_INVPROBE.bas": "sha256:42ce4d4037bc265cadfd60f38e14ba1187e7e9eaec1b2d06e9464f5a842b75b5",
