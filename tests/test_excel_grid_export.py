@@ -47,8 +47,8 @@ sys.path.insert(0, str(ROOT / "benchmark"))
 import apply_excel_export as A  # noqa: E402
 
 GENERATED_CALL = re.compile(
-    r'"(?P<name>\w+)" \{\s*return New-GeneratedGridSpec -Name "(?P=name)" '
-    r'-FileName "(?P<file>[^"]+)" `\s*-Exporter "(?P<exporter>[^"]+)" '
+    r'"(?P<name>\w+)" \{\s*return New-GeneratedGridSpec (?:-Folder "(?P<folder>\w+)" )?'
+    r'-Name "(?P=name)" `?\s*-FileName "(?P<file>[^"]+)" `\s*-Exporter "(?P<exporter>[^"]+)" '
     r'-Macro "(?P<macro>\w+)" `\s*-Columns (?P<columns>\d+) -KeyColumns (?P<keys>\d+) '
     r'-SuccessPrefix "(?P<prefix>[^"]+)"')
 
@@ -65,9 +65,10 @@ def study_names_in_module(text: str) -> list[str]:
 
 
 def generated_specs_in_module(text: str) -> dict[str, dict[str, object]]:
-    folder = "benchmark/positive_ratio_subnormal/"
-    return {m.group("name"): {"path": folder + m.group("file"),
-                              "exporter": folder + m.group("exporter"),
+    def folder(m):
+        return f"benchmark/{m.group('folder') or 'positive_ratio_subnormal'}/"
+    return {m.group("name"): {"path": folder(m) + m.group("file"),
+                              "exporter": folder(m) + m.group("exporter"),
                               "macro": m.group("macro"), "columns": int(m.group("columns")),
                               "keys": int(m.group("keys")), "prefix": m.group("prefix")}
             for m in GENERATED_CALL.finditer(text)}
@@ -140,8 +141,29 @@ class StudySpecParityTests(unittest.TestCase):
 
 
 class EntryPointTests(unittest.TestCase):
+    def test_the_small_shape_exporter_finds_its_grid_without_a_dialog(self):
+        spec = A.GRIDS["gss_small_shape"]
+        vba = (ROOT / spec.exporter).read_text(encoding="ascii").replace("\r\n", "\n")
+        entry = sub_body(vba, spec.macros["full"])
+        self.assertIsNotNone(entry)
+        assert entry is not None
+        self.assertTrue(entry.startswith(f"Public Sub {spec.macros['full']}()"))
+        resolve = sub_body(vba, "ResolveGridPath") or re.search(
+            r"^Private Function ResolveGridPath\(\).*?^End Function", vba, re.M | re.S).group(0)
+        # The grid beside the workbook is used first; the CI bridge turns the
+        # "Could not locate" prompt before the picker into an error.
+        self.assertIn('"gamma_series_small_shape_grid.csv"', resolve)
+        self.assertLess(resolve.index("ThisWorkbook.Path"), resolve.index("GetOpenFilename"))
+        self.assertLess(resolve.index('MsgBox "Could not locate'), resolve.index("GetOpenFilename"))
+        # It writes the echoes and the result, the three columns after the key.
+        for column in (10, 11, 12):
+            self.assertIn(f"Cols({column}) = ", entry)
+        self.assertEqual(spec.key_columns, 10)
+
     def test_each_entry_point_writes_beside_the_workbook_without_a_dialog(self):
         for name, spec in python_study_specs().items():
+            if not spec.path.startswith("benchmark/positive_ratio_subnormal/"):
+                continue
             with self.subTest(name=name):
                 vba = (ROOT / spec.exporter).read_text(encoding="ascii").replace("\r\n", "\n")
                 macro = spec.macros["full"]
@@ -177,7 +199,7 @@ class WorkflowWiringTests(unittest.TestCase):
                           r"        type: string\n        default: \"\"\n", self.text, re.M)
         self.assertIsNotNone(match, "workflow_dispatch needs the export_studies text input")
         assert match is not None
-        listed = re.findall(r"\b(prs_\w+)\b", match.group("d"))
+        listed = [name.strip() for name in match.group("d").split(":", 1)[1].split(",")]
         self.assertEqual(sorted(listed), sorted(study_names_in_module(module_text())))
 
     def test_studies_reach_the_adapter_only_through_the_environment(self):
