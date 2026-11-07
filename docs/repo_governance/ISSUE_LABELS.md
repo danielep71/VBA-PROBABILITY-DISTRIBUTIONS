@@ -40,14 +40,16 @@ deletion. When a run stops:
   value stays inside its table row.
 - `issue-triage.yml` audits all open issues on issue and milestone events or
   manual dispatch. It is read-only: a failed report identifies metadata for me
-  to resolve.
+  to resolve. On a pull request that changes its inputs (the issue forms, the
+  label catalogue, the triage script or its tests), it validates the forms and
+  catalogue and runs the triage fixtures instead.
 - `pr-milestones.yml` (*Keep milestones issue-only*) removes any milestone set
   on a pull request:
   - when the pull request is opened, reopened, edited or given a milestone;
   - in a daily, manual or post-change scan of every pull request.
 
-  It runs on `pull_request_target` from the default branch, checks out nothing
-  and runs no pull-request code. Its only write permission is
+  On `pull_request_target` it runs the workflow file from the pull request's
+  base branch, checks out nothing and runs no pull-request code. Its only write permission is
   `pull-requests: write`. The job summary lists each pull request and the
   milestone removed.
 
@@ -149,7 +151,9 @@ issue-only* removes it and records the removal in its job summary.
 
 Pull requests opened by Dependabot follow the same rule. During triage, link
 each one to an existing issue or a new tracking issue, and give that issue the
-milestone. Their workflow runs target `main` and so receive the write
+milestone. While a release branch is active, `.github/dependabot.yml` targets
+it (`target-branch: "release/1.0.0"`), so *Keep milestones issue-only* runs
+from that branch; as a `pull_request_target` run it still receives the write
 permission. If a run ever gets a read-only token, it warns instead of failing,
 and the next daily scan removes the milestone.
 

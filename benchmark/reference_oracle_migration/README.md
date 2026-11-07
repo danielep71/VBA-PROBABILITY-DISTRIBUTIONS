@@ -59,8 +59,10 @@ needed when a reference formula literally constructs `1 + x` for tiny `x`, as th
 
 ## Method
 
-`migrate_reference_oracle.py` loads the old and new generators side by side at
-the generator's own precision (50 dps) and calls `build_rows()` on each:
+`migrate_reference_oracle.py` loaded the old and new generators side by side at
+the generator's own precision (50 dps) and called `build_rows()` on each. That
+script was never committed, so the audit cannot be rerun from this folder; only
+its output, `reference_migration.csv`, is kept. The method was:
 
 1. **Structure is asserted unchanged** — `function`, `vba_kernel`, all four
    arguments and `regime` identical across all 1346 generated rows.
@@ -97,6 +99,9 @@ not its logarithm. Those are untouched.
 The generator is **not** re-run against `probability_accuracy_grid.csv`. It emits
 `observed_vba` empty by design, so a full regeneration would discard all 2030
 committed Excel observations — and separately, the committed generator no longer
-reproduces the committed grid (563 grid-only rows, 238 generator-only rows).
-That divergence is tracked as its own issue. Since all 112 references are
+reproduces the committed grid (563 grid-only rows, 238 generator-only rows, as
+counted then by decimal spelling; keyed on IEEE-754 bit patterns, as
+`benchmark/reconcile_grid.py` now does, the counts are 350 and 22). That
+divergence is tracked in #17 (closed: regeneration made non-destructive) and
+#32 (open: canonical grid reconstruction). Since all 112 references are
 identical, this migration requires no grid change at all.

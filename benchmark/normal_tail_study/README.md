@@ -4,11 +4,12 @@
 record is enforced (#80); Amendment 2 restates the P2 conditioning rule
 (#78); Amendment 3 defines fit convergence, which the fit meets, and binds
 the result to the files that produce it (#79).**
-Excel-free. This study
-designs and validates a replacement for `PROB_NormalUpperTailPositive` before
-any VBA is written. It is not evidence that the kernel is fixed. The fix lands
-only in a real-Excel wave, together with source, regression tests, exports
-and truthful provenance.
+This study designed and validated, Excel-free and before any VBA was written,
+a replacement for `PROB_NormalUpperTailPositive`.
+
+**Status (2026-11-07).** The repaired kernel shipped through #81 (merged as
+`ba39243`) after the Excel wave below, and #72 is closed. The sections up to
+the Excel wave record the study as it was done before the VBA existed.
 
 Design: `PREREGISTRATION.md`, frozen before the committed derivation. Its §0
 discloses the scratch exploration that chose the design. Amendment 1, written
@@ -30,9 +31,12 @@ The current kernel is accurate in absolute terms but not in relative terms:
   far tail.
 
 Because of this, the survival contracts of `Normal_Survival`,
-`Lognormal_Survival` and `NormalStandard_Survival` are limited to the central
-region (`SurvivalTailRel`). It also blocks the #34 Student-t route (finding
-F1).
+`Lognormal_Survival` and `NormalStandard_Survival` were limited to the central
+region (`SurvivalTailRel`), and the #34 Student-t route was blocked (finding
+F1). Both are resolved: `SurvivalTailRel` is marked resolved in
+`numerical_limitations.csv`, the survival contracts were widened to 5E-15 on
+`|Z| ≤ 6` (`NormalStandard_Survival`), `|z| ≤ 4` (`Normal_Survival`) and
+`|z| ≤ 3.5` (`Lognormal_Survival`), and the #34 route shipped.
 
 ## Candidate
 
@@ -117,7 +121,7 @@ record was regenerated only for the validator's new digest.
 `test_ulps_apart.py` checks the edge cases and agreement with the Student-t
 study's `model_fidelity.ulp_distance`.
 
-**VBA (pending the Excel wave).** The kernel is implemented as
+**VBA.** The kernel is implemented as
 `PROB_NormalUpperTail` (`M_STATS_PROBDIST_SPECIALFUNCS`) and
 `PROB_ExpNegHalfSquare` (`M_STATS_PROBDIST_CORE`). `test_vba_kernel_source.py`
 checks that every VBA constant evaluates exactly to the Double recorded here,
@@ -162,6 +166,13 @@ exponent alone exceeds the 8-ulp allowance whenever `|s|` is above about 8.
 The allowance did not account for this amplification. Neither the model nor
 the prediction was changed after the export.
 
+**Consequence.** With the survival_boundary rows below, 222 of the 223
+preregistered rows met their predictions. The one falsification is the ulp
+allowance, not the error: the row is within every error bound. The
+NormalStandard, Normal and Lognormal survival contracts were set on that
+evidence, and #72 was closed (see its Resolution and the #72 entry of
+`benchmark/release_readiness.json`).
+
 **Not checked.** The 19 `survival_boundary` rows (14 P1, 5 P2) were not
 re-exported: their exporter, `Export_SurvivalBoundary`, asks for the grid
 through a file picker, which the unattended export cannot answer.
@@ -169,7 +180,7 @@ through a file picker, which the unattended export cannot answer.
 *Later the same day.* The export learned to stage that grid beside the
 workbook, so the exporter finds it without the picker. Run 42231334906
 exported it on `bb52717` (evidence `68a6449`), and
-`check_excel_wave.py --no-holdout --out excel_wave_check_survival_boundary.json`
+`check_excel_wave.py --baseline bb52717 --no-holdout --out excel_wave_check_survival_boundary.json`
 found all 19 rows within their predictions:
 - P1: 14 rows, worst 2.63E-16, at most 2 ulps from the predicted value.
 - P2: 5 rows, worst 2.31E-16.

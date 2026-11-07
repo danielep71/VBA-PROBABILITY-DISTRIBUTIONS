@@ -2,7 +2,7 @@
   "schema_version": "release-readiness/v1",
   "release": "v1.0.0",
   "tracker_issue": 31,
-  "reviewed": "2026-11-06",
+  "reviewed": "2026-11-07",
   "certified": false,
   "blockers": [
     {
@@ -95,8 +95,25 @@
       "issue": 72,
       "class": "numerical_defect",
       "gate": null,
+      "status": "resolved",
+      "summary": "Normal upper-tail kernel loses relative accuracy beyond z = 3 and through its exponential factor",
+      "resolution": {
+        "evidence": "The repaired normal upper-tail kernel (PROB_NormalUpperTail, PROB_ExpNegHalfSquare) ships through #81, merged into release/1.0.0 as ba39243. Excel VBA Regression run 42210983927 exported the main grid, the holdout and holdout_older in the same job as a green regression, and run 42231334906 exported survival_boundary; 222 of 223 preregistered rows met their predictions (normal_tail_study/excel_wave_check.json and excel_wave_check_survival_boundary.json), and the NormalStandard, Normal and Lognormal survival contracts were set on that evidence. #72 was closed on 2026-11-06 with that Resolution; this entry had been left open."
+      }
+    },
+    {
+      "issue": 163,
+      "class": "silent_wrong",
+      "gate": null,
       "status": "open",
-      "summary": "Normal upper-tail kernel loses relative accuracy beyond z = 3 and through its exponential factor"
+      "summary": "Beta_Survival exceeds its balanced 5E-15 contract (5.45E-15 in Excel at 0.82, 2.7, 3.4; modelled up to 1.4E-13)"
+    },
+    {
+      "issue": 173,
+      "class": "silent_wrong",
+      "gate": null,
+      "status": "open",
+      "summary": "Modelled Beta_Cumulative error exceeds its balanced 2E-14 contract at 144 domain points (up to 1.3E-13)"
     },
     {
       "issue": 213,

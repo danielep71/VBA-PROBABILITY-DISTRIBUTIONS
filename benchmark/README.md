@@ -68,7 +68,7 @@ study folder.
 
 ## Running it
 
-Follow the complete [fresh-export procedure](PROVENANCE.md#fresh-export-operating-procedure): certify the exact candidate, export grids and environment, finalize the canonical record, bind the selected manifests, regenerate summaries, and validate committed evidence. Holdout export certification (#29) remains a release blocker.
+Follow the complete [fresh-export procedure](PROVENANCE.md#fresh-export-operating-procedure): certify the exact candidate, export grids and environment, finalize the canonical record, bind the selected manifests, regenerate summaries, and validate committed evidence. The current release blockers are listed in the [README assurance block](../README.md#assurance-at-a-glance), generated from `release_readiness.json`.
 
 The abbreviated commands below run from `benchmark/`; they do not replace certification and binding.
 
@@ -89,6 +89,11 @@ python generate_reference_values.py --out reference_rows.csv
 #   Import M_STATS_PROBDIST_ACCURACYEXPORT.bas into the workbook,
 #   put probability_accuracy_grid.csv beside the workbook,
 #   run Export_Accuracy_Observations. It fills the observed_vba column.
+#   Unattended alternative: dispatch excel-vba-regression.yml with the
+#   export_* inputs, then from the repository root run
+#   python benchmark/apply_excel_export.py --artifact <dir> --grid main ...
+#   which also finalizes certification and binds the exported grids
+#   (docs/EXCEL_CERTIFICATION.md, "Automated fresh export").
 
 # Before analysis: finalize certification and bind only the grids really
 # exported, following PROVENANCE.md (its commands use the repository root).
@@ -109,58 +114,26 @@ misleading green summary.
 
 ## Claims under test
 
-Taken verbatim from the `ACCURACY` comments in the source:
-
 The harness covers five modules: the special-function kernels
 (`SPECIALFUNCS`), the test-statistic families (`TFAMILY`), the normal and
 lognormal family (`NORMALFAMILY`), the continuous distributions
 (`CONTINUOUS`), and the discrete distributions (`DISCRETE`). The generated
-block below is the authoritative list: it names every family currently under
-contract and is derived from `accuracy_contracts.csv`, so it cannot drift from
-the evidence.
+block below is the authoritative list: it names every contract and every
+documented numerical limitation, and is derived from `accuracy_contracts.csv`
+and `numerical_limitations.csv`, so it cannot drift from the evidence.
 
-**Special functions**
+Where a contract comes from:
 
-| Function | Published claim |
-|---|---|
-| `PROB_LogGamma` | stated per regime; see the `LogGamma.*` contracts in the generated table below |
-| `PROB_TryLogGamma1p` | scaled absolute error <= 5E-16 on the series interior |
-| `PROB_LogGammaHalfDiff` | relative error <= 2E-14 for Z > 0 (tested range) |
-| `PROB_StirlingError` | absolute error <= 1E-13 for N >= 0 (the earlier 3E-17 was overfit to its grid) |
-| `PROB_LogChoose` | relative error <= 3.2E-16 for N in [2, 2^53], all K |
-
-**Test-statistic families**
-
-| Function | Published claim |
-|---|---|
-| Student t density | relative error <= 2E-14 (tested range) |
-| Student t cumulative / survival | relative error <= 1.3E-12 |
-| Student t quantile | relative error <= 3.0E-12 |
-| Chi-square cumulative / survival | relative error <= 2.6E-10 |
-| Chi-square quantile | relative error <= 4.7E-12 |
-| F cumulative / survival | relative error <= 1.1E-10 |
-| F quantile | relative error <= 5.9E-13 |
-
-**Normal and lognormal family**
-
-| Function | Published claim |
-|---|---|
-| Standard normal density / CDF / survival / inverse / inverse survival / interval | relative error <= 5E-15 |
-| Standard normal fast inverse (raw Acklam) | relative error <= 5E-9 |
-| General normal density / CDF / survival / inverse / inverse survival / z-score | relative error <= 5E-15 |
-| Lognormal density / CDF / survival / inverse / inverse survival | relative error <= 5E-15 |
-| Lognormal mean / variance / std dev / parameter conversion | relative error <= 5E-15 |
-
-The normal-family `~1E-15` source comments are interpreted as a hard bound of
-5E-15 for the harness. `NormalStandard_Survival` measures about 1.5E-14 at
-moderate tail values, above that bound; it is reported as *below harness
-precision* rather than a failure, and its claim is left as documented.
-
-**Continuous distributions**
-
-Bounds were set from the measured worst-case error over the tested grid, not
-from source comments (the module publishes none). Exponential is parameterized
-by rate (Lambda), not scale.
+- The special-function, test-statistic and normal-family claims started as the
+  `ACCURACY` comments in the source. Several functions now carry more than one
+  contract, one per regime (for example F quantile `validated` at 2E-10, and
+  Student t `envelope_domain` at 5E-15), so read the table, not the comments.
+- The normal-family `~1E-15` source comments are interpreted as a hard bound of
+  5E-15 for the harness.
+- The continuous and discrete bounds were set from the measured worst-case
+  error over the tested grid; the Beta source comment points back to this
+  registry rather than stating a number. Exponential is parameterized by rate
+  (Lambda), not scale.
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
@@ -363,11 +336,11 @@ error, since downstream code computes `exp(-LogBeta)`. Every unbalanced/inverse
 threshold was confirmed on an independent holdout (see `holdout/`) before being
 frozen.
 
-**Residual limitation.** The only accuracy limitation outside these contracts is
-the incomplete-beta convergence range: for F with a shape parameter beyond
-about 1E7, accuracy degrades (up to ~4E-7). This is a pre-existing convergence
-limit, *not* the LogBeta normalization, and is recorded in
-`numerical_limitations.csv` rather than as a contract it cannot meet.
+**Limitations outside the contracts.** Numerical boundaries that no contract
+claims, such as the degrees-of-freedom envelopes the public F, Student t and
+Chi-square functions reject with `#NUM!`, are recorded in
+`numerical_limitations.csv` and rendered in the *Numerical limitations* table
+above. That file, not this prose, is the list.
 
 ## Metric note
 
@@ -387,7 +360,15 @@ committed record covers `beta_f_unbalanced/beta_f_unbalanced_grid.csv`,
 they stood at commit `ce9a274` (2026-11-05), after the #159 re-reference of
 `beta_f_unbalanced`. It lists the
 SHA-256 of each grid and the SciPy, NumPy and mpmath versions it ran with.
-Each of the 675 reference rows in those grids is in exactly one class:
+
+**The record is dated.** Its two `beta_f_unbalanced` digests still match the
+committed grids; its holdout digest (`0de20929…`, 559 rows) does not. Since
+then the #81 wave re-based 15 holdout survival references and #34 added 100
+Student-t holdout rows, for which the script has no SciPy mapping. The record
+covers neither. Regenerating it is #154. The counts below describe the record
+as it stands.
+
+Each of the 675 reference rows in the record is in exactly one class:
 
 - **655 confirmed by SciPy.** The function has an exact SciPy equivalent and
   the point lies where SciPy is reliable (incomplete-beta shape parameter

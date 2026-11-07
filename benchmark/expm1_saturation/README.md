@@ -107,9 +107,10 @@ The defect survived a green harness and a green gate because nothing looked.
 frozen at 5E-15 relative, but the grid carries **three rows each**, the deepest
 Exponential row at `Lambda * X = 1.5` — about 500x short of the failing region.
 This is a coverage gap, not a missing threshold. Promoting far-tail rows into
-the two existing contracts is tracked separately; the permanent CH3 and public
-assertions in `tests/M_STATS_PROBDIST_TEST.bas` are what prevent recurrence in
-the meantime.
+the two existing contracts is not yet tracked by an issue: #21 closed without
+it, and the main grid still carries the same three rows each. The permanent
+CH3 and public assertions in `tests/M_STATS_PROBDIST_TEST.bas` are what prevent
+recurrence in the meantime.
 
 ## Scope
 

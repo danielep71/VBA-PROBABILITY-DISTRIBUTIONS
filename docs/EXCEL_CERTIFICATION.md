@@ -124,7 +124,10 @@ runner does. The steps below use the GitHub CLI.
    every requested grid is present with the raw SHA-256 the manifest records.
    It then checks each grid against `HEAD` again: only the `observed_vba` cells
    its exporter owns may change, every one of them must be filled, and the
-   bytes must be the CRLF lines Excel writes. Then it:
+   bytes must be the CRLF lines Excel writes. A missing-only main export keeps
+   the observations already in the grid, so it is accepted only while no `.bas`
+   module differs from the `source_binding` in `observation_manifest.json`;
+   otherwise run a full export. Then it:
 
    1. copies the grids and `excel_environment.json` into place;
    2. runs `finalize_excel_certification.py --from-fresh-export` with `--main`

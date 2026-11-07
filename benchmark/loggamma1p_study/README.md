@@ -8,9 +8,9 @@ Validates the `PROB_TryLogGamma1p` kernel and fixes the series/Lanczos seam
 
 `PROB_LogGamma(1# + X)` is unusable for small `X`. In binary64 `1# + X` rounds to
 exactly 1 for every `X` below `2^-53` (1.11E-16), so the leading term
-`-EulerGamma * X` is lost. The result does not merely lose precision — it
-returns a positive constant, the rounding residue of the addition, where the
-true value is negative and vanishing:
+`-EulerGamma * X` is lost. At and below `2^-53` the result does not merely
+lose precision: it returns a positive constant of about 3.77E-15, the rounding
+residue of the addition, where the true value is negative and vanishing.
 
 Measured in the workbook, as scaled absolute error:
 
@@ -24,10 +24,6 @@ Measured in the workbook, as scaled absolute error:
 | 1E-06 | 1.16E-16 | 3.89E-09 | 3.4E+07 |
 | 0.01 | 2.44E-18 | 4.97E-13 | 2.0E+05 |
 | 0.2 | 2.72E-17 | 2.85E-14 | 1.1E+03 |
-
-At and below `2^-53` the naive spelling does not merely lose precision: it
-returns the rounding residue of the addition, a positive constant of about
-3.77E-15, where the true value is negative and vanishing.
 
 This is not a subnormal-shape problem: absorption begins roughly 292 decimal
 orders of magnitude above the smallest normal Double, and degradation is gradual
@@ -62,15 +58,13 @@ Four quantities per point:
 
 ## Regimes
 
-Regimes name *branches*, not intervals of interest, so a contract is never
-averaged across two different algorithms.
-
-One evidence regime per contract bucket, so a contract is never averaged across
-two algorithms or two error mechanisms.
+Regimes name *branches*, not intervals of interest: one evidence regime per
+contract bucket, so a contract is never averaged across two algorithms or two
+error mechanisms.
 
 | regime | condition | contract |
 |---|---|---|
-| `small` | `3.855E-308 <= X <= 0.25`, series branch | `LogGamma1p.small.scaled_abs`, provisional 5E-16 |
+| `small` | `3.855E-308 <= X <= 0.25`, series branch | `LogGamma1p.small.scaled_abs`, 5E-16, validated and frozen |
 | `series_seam` | one-ulp neighbourhood of `0.25` | `LogGamma1p.series_seam`, characterization |
 | `lanczos_handover` | `X > 0.25` | `PROB_LogGamma`'s own contract |
 | `subnormal_result` | `X < 3.855E-308` | `LogGamma1p.subnormal_result`, limitation |
@@ -108,6 +102,9 @@ on this grid.
 | `loggamma1p_grid.csv` | The grid; `arg1 = X`. |
 | `M_STATS_PROBDIST_LOGGAMMA1P.bas` | Standalone export macro `Export_LogGamma1p` (deps: `PROB_TryLogGamma1p`, `PROB_LogGamma`). |
 | `analyze_loggamma1p.py` | Argument integrity, kernel validation by regime, head-to-head against the naive spelling, seam continuity, subnormal-result limitation, threshold recommendation. |
+| `generate_loggamma1p_holdout.py` | Writes `loggamma1p_holdout.csv`, the independent holdout for `LogGamma1p.small.scaled_abs`; it covers the contract's lower boundary, which the fitting grid does not reach. |
+| `loggamma1p_holdout.csv` | The holdout: 32 points x 2 quantities, with observations. |
+| `loggamma1p_registry_rows.md` | Draft registry rows, superseded by `accuracy_contracts.csv`; kept as pre-freeze history. |
 
 ## How to run
 
@@ -148,7 +145,13 @@ on this grid.
 Recommended contract: `LogGamma1p.small.scaled_abs <= 5E-16` (4.2x headroom).
 Provisional until the independent holdout is populated.
 
-## Open observation, out of scope here
+**Outcome.** The holdout is populated: 32 points in `loggamma1p_holdout.csv`.
+It found a worse point than the fitting grid, 1.917E-16 at `X = 1E-307`, near
+the contract's lower boundary. A strict 2E-16 would leave only 1.04x and was
+rejected; 5E-16 keeps 2.61x. `LogGamma1p.small.scaled_abs` is validated and
+frozen at 5E-16 in `accuracy_contracts.csv`.
+
+## Observation, out of scope here (resolved by #15)
 
 `PROB_LogGamma` publishes "relative error below 6.1E-14 across Z in
 [1E-8, 1E+50]". That does not hold near the zeros of `Log(Gamma)` at `Z = 1` and
@@ -156,3 +159,8 @@ Provisional until the independent holdout is populated.
 zeros themselves. Absolute error stays at or below 1.5E-14 throughout, which is
 the meaningful bound. The claim needs restating as absolute, or domain-excluding
 a neighbourhood of the zeros. Tracked separately from ICR-P1-01.
+
+**Resolved by #15.** The global 6.1E-14 relative claim was withdrawn and
+replaced by regime-aware contracts, among them `LogGamma.near_zero.log_abs`
+(5E-14 absolute near the zeros). See
+[`loggamma_regimes_study`](../loggamma_regimes_study/README.md).

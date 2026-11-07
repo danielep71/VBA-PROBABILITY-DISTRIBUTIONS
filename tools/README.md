@@ -25,6 +25,13 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
 | `traffic_alert.py` | Decides whether the daily traffic snapshot needs an alert issue and writes one that passes Issue triage; run by the alert job of `daily-traffic.yml` ([Traffic alerts](#traffic-alerts)) |
 | `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
+| `check_ci_test_coverage.py` | Fails when a tracked `test_*.py` file is executed on no pull request ([CI test coverage](#ci-test-coverage)) |
+| `select_accuracy_checks.py` | Lets the Accuracy Gate skip the expensive proofs only for a positively identified metadata-only change |
+| `check_issues.py` | Read-only audit of open-issue metadata and dependency status that issue forms cannot enforce; run by `issue-triage.yml` |
+| `setup_repository.py` | Previews, applies or verifies the repository settings baseline through the `gh` CLI ([Repository settings](#repository-settings)) |
+| `requirements-lint-ci.txt` | Hash-locked Ruff and mypy, with mypy's dependencies, for the Static checks workflow ([Dependency updates](#dependency-updates)) |
+| `vba_layout_baseline.json` | Modules still out of the VBA source layout, ratcheted by `format_vba.py` ([VBA source layout](#vba-source-layout)) |
+| `devbuild/` | Builds the Excel workbook under test from source and verifies its binding to a commit ([below](#building-the-workbook-under-test-devbuild)) |
 
 ## Running every static check
 
@@ -177,7 +184,7 @@ visibility, merge methods and repository features, the five security features,
 six GitHub Actions settings, and the five repository rulesets with their required checks and allowed merge
 methods. [SETTINGS.md](../docs/repo_governance/SETTINGS.md) explains each
 value. It calls the REST API through an authenticated `gh` CLI and needs
-Python 3.10 or later.
+the documented minimum, Python 3.11 (the script itself still accepts 3.10).
 
 ```bash
 python3 tools/setup_repository.py                  # preview: differences and the plan; read-only
@@ -189,7 +196,8 @@ python3 tools/setup_repository.py --apply          # writes the plan, then reads
 - **Preview** (the default) lists every difference and the writes that would
   remove it. **Verify** reads the same state and exits with status 1 on any
   difference, including a value GitHub does not report to the token in use.
-  Neither writes.
+  The exception is an Actions setting it cannot read: that is reported as a
+  `NOTE` (not verified) and does not fail the run. Neither writes.
 - **Apply** needs administrative access and refuses to run unless the
   repository's visibility already matches the baseline (the tool never
   changes visibility) and, before it writes a ruleset, every required check
@@ -469,8 +477,12 @@ modules still out of layout, and the `vba-layout` check ratchets it: a module
 out of layout that it does not list fails, a listed module that is in layout
 fails until its entry is removed, and a listed path that is not a tracked
 module fails. To reformat during an Excel wave, run `--write` on the listed
-modules, re-import them into the VBE, refresh their evidence, remove their
-entries, and delete the baseline file once it lists none. Exit codes: 0 pass,
+modules, remove their entries (delete the baseline file once it lists none)
+and commit; then refresh their evidence for that commit. The runner does this
+without a manual VBE re-import: dispatch a full export of the Excel VBA Regression
+workflow and apply its artifact with `benchmark/apply_excel_export.py`, as
+[Automated fresh export](../docs/EXCEL_CERTIFICATION.md#automated-fresh-export)
+describes. Exit codes: 0 pass,
 1 a module or baseline entry fails, 2 an unreadable or malformed baseline.
 
 ## Markdown links

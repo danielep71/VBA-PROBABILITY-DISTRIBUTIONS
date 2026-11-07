@@ -14,6 +14,21 @@ calibrate a threshold.
 | `check_holdout_older_summary.py` | Fails when the committed summary differs from a re-run on the committed grid and registry, or when a row is neither scored nor covered by a `characterization_only` contract. Runs in `../test_evidence_tools.py`. |
 | `test_analyze_holdout_older.py` | Fixture proof that a stale, hand-edited or missing summary fails the check, and so does a row with no disposition. |
 
+## Status, 2026-11-07
+
+The grid was re-exported from Excel at `7fb08ae` (Excel VBA Regression run
+42210983927; evidence commit `c6fd598`, 2026-11-06). That export renewed the
+Gamma, Chi-square, Beta density, `StirlingError` and normal-tail observations;
+the `LogGamma` and `Beta_Survival` observations did not change.
+`holdout_older_summary.md` now records 62 PASS and 1 FAIL across 63 contracts.
+The one failure is `Beta_Survival.balanced.output_rel` at
+`Beta_Survival(0.82, 2.7, 3.4)`, 5.45E-15 against 5E-15, tracked in #163. The
+off-grid Gamma rows at shapes 2.7 and 4.3 now measure at most 1.03E-15 and
+pass.
+
+The amendments below are the dated record. Their counts and the failing-rows
+table describe the grid before that export.
+
 ## Amendment, 2026-11-05 (#159)
 
 `gen_holdout_older.py` took every reference at the decimal argument token
@@ -46,7 +61,8 @@ contract registry.
 
 `holdout_older_summary.md` is regenerated with `python analyze_holdout_older.py`
 on the committed grid and registry. It records 59 PASS and 3 FAIL across 62
-contracts. No grid cell, reference, observation, contract or threshold changed,
+contracts (62 PASS and 1 FAIL since the 2026-11-06 re-export; see the status
+above). No grid cell, reference, observation, contract or threshold changed,
 so the grid's SHA-256, which `../normal_tail_study/results.json` binds, is the
 same.
 
@@ -71,6 +87,10 @@ machine epsilon, and `8c1506f` (2026-08-27, #23) replaced the off-grid
 re-exported for `416f877`; this grid was not.
 
 ### Failing rows
+
+*Pre-export history.* These were the failing rows on the 2026-07-21
+observations. After the 2026-11-06 re-export only the `Beta_Survival` row still
+fails.
 
 | Row | Regime and branch | Error vs 3E-15 or 5E-15 |
 |---|---|---:|
@@ -97,7 +117,8 @@ continued-fraction survival row. The cause is the absolute error of that `PROB_L
 in the prefactor: 1.37E-14 at 2.7 and 1.78E-14 at 4.3. With a correctly rounded
 prefactor, the same 3E-14 stop errs by at most 5.5E-16. The same replay of today's source gives 4.7E-16 or
 less on every Gamma row. That replay is a prediction, not a measurement: the
-current kernel has not been exported at these shapes. The main grid's
+current kernel has not been exported at these shapes. *(The 2026-11-06 re-export
+at `7fb08ae` has since measured them: every Gamma row is at most 1.03E-15.)* The main grid's
 `all`-regime Gamma rows, re-exported after `416f877`, measure at most 3.6E-16,
 but their shapes (1.5, 2, 3) are integers or half-integers. Those take `PROB_StirlingError`'s
 exact table, not the off-grid path that 2.7 and 4.3 take. The post-fix evidence
@@ -133,7 +154,8 @@ the main grid gives the same domain. I changed only those three `regime` cells:
 no argument, reference or observation changed. `gen_holdout_older.py` emits the
 same label, so `--merge-references` still matches every row and changes no
 reference. The summary is regenerated: 60 PASS and 3 FAIL across 63 contracts,
-and no row is left unscored.
+and no row is left unscored (62 PASS and 1 FAIL after the 2026-11-06
+re-export).
 
 ### Why the rows were unscored
 
@@ -171,7 +193,8 @@ of 38.5x. None of the three arguments is in the main grid or in either grid of
 
 ### The observations still represent today's `PROB_LogGamma`
 
-The observations were exported on 2026-07-21 (`9ee6d7c`). Unlike the Gamma rows,
+The observations were exported on 2026-07-21 (`9ee6d7c`); the 2026-11-06
+re-export at `7fb08ae` reproduced all three bit for bit. Unlike the Gamma rows,
 they still describe the current code:
 
 - Since `9ee6d7c`, the only commit that changed `PROB_LogGamma` is `f6c7d9f`

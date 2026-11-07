@@ -24,7 +24,7 @@ creating and activating that targeted ruleset is still a customization.
 Reference documentation checked: **2026-10-29**. I verified the repository settings on **2026-11-02**.
 Copying this file does not apply settings or verify another repository.
 
-[General differences](#general) · [Security features](#security) · [Custom protection](#rulesets) · [Reuse](#reuse) · [Sources](#sources)
+[General differences](#general) · [Security features](#security) · [Custom protection](#rulesets) · [Repository-specific](#repository-specific) · [Reuse](#reuse) · [Sources](#sources)
 
 <a id="general"></a>
 
@@ -72,10 +72,10 @@ as separate deviations from GitHub defaults.
 | Custom ruleset | Target | Added restrictions |
 | --- | --- | --- |
 | Protect main | `~DEFAULT_BRANCH` | Require PR, resolved conversations and strict up-to-date `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` from GitHub Actions; allow merge commits only; block deletion and force pushes. |
-| Protect release branches | `refs/heads/release/**` | Require PR, resolved conversations and the same strict required check; allow squash or merge commits; block deletion and force pushes. |
+| Protect release branches | `refs/heads/release/**` | Require PR, resolved conversations and strict up-to-date `Repository integrity (static, no Excel)` only, from GitHub Actions; allow squash or merge commits; block deletion and force pushes. |
 | Prevent release branch deletion | `refs/heads/release/**` | Independent deletion restriction. |
 | Protect release tags | `refs/tags/v*` | Block updates, deletion and force pushes. |
-| Protect traffic history | `refs/heads/traffic-history` | Block deletion and force pushes. Direct pushes stay allowed for the optional Traffic history workflow (the repository's daily traffic workflow). |
+| Protect traffic history | `refs/heads/traffic-history` | Block deletion and force pushes. Direct pushes stay allowed for the optional Daily traffic export workflow (`daily-traffic.yml`). |
 
 ### 🔬 Supporting parameters for the two PR rulesets
 
@@ -103,6 +103,27 @@ authorize publishing a release.
 The check name and branch patterns are reusable conventions, not built-in
 GitHub jobs or automatically existing branches. Confirm that the required job
 reports on every relevant PR before adopting these rules.
+
+<a id="repository-specific"></a>
+
+## 🔒 Repository-specific protections
+
+I retain the required numerical accuracy gate on the default branch. I also
+require workflow approval for all external contributors and keep malware alerts
+enabled. These protections are intentional additions. Malware alerts are not
+recorded in `repository-settings.json`, so `tools/setup_repository.py --verify`
+does not check them.
+
+Actions require full commit SHA pinning, use read-only default token permissions,
+and cannot create or approve pull requests. Log and artifact retention is 90 days.
+The `actions` block of `repository-settings.json` records these values, with
+Actions enabled and the approval policy for all external contributors.
+`tools/setup_repository.py` reads them and reports drift, but never writes them:
+change one in the repository's Actions settings. An endpoint it cannot read is
+reported as not verified.
+CodeQL uses the versioned workflow with advanced setup.
+
+This document records configuration; copying it does not apply settings.
 
 <a id="reuse"></a>
 
@@ -147,20 +168,3 @@ reports on every relevant PR before adopting these rules.
 ---
 
 [↑ Back to comparison basis](#scope)
-
-## Repository-specific protections
-
-I retain the required numerical accuracy gate on the default branch. I also
-require workflow approval for all external contributors and keep malware alerts
-enabled. These protections are intentional additions.
-
-Actions require full commit SHA pinning, use read-only default token permissions,
-and cannot create or approve pull requests. Log and artifact retention is 90 days.
-The `actions` block of `repository-settings.json` records these values, with
-Actions enabled and the approval policy for all external contributors.
-`tools/setup_repository.py` reads them and reports drift, but never writes them:
-change one in the repository's Actions settings. An endpoint it cannot read is
-reported as not verified.
-CodeQL uses the versioned workflow with advanced setup.
-
-This document records configuration; copying it does not apply settings.

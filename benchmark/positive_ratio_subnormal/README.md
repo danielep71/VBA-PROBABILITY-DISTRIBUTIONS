@@ -4,10 +4,28 @@ Measurement only for ICR-P1-01A (#13). **No cutoff is frozen, no contract is
 proposed and no source is changed.** The two family arms are reported
 separately and neither transfers to the other.
 
+**Status (2026-11-07).** Phase A, as reported below, is followed by:
+- **Holdouts.** `HOLDOUT_DESIGN.md` was frozen before any holdout output
+  existed. The Gamma and Chi-square holdouts (`gamma_holdout.csv`,
+  `chisquare_holdout.csv`) then ran, and both report `CLAIMS HOLD` against
+  the registered fitting claims. The hosted Accuracy Gate reruns
+  `analyze_positive_ratio_subnormal.py <holdout> --claims` on both.
+- **Movement prediction.** `MOVEMENT_MANIFEST.md` predicts the grid movement
+  of the planned source change, before that change.
+- **Source scaffolding.** `PROB_PRS_CUTOFF_48BIT`, `PROB_PRS_CUTOFF_40BIT` and
+  the classifier `PROB_ClassifyPositiveRatio` exist in
+  `src/M_STATS_PROBDIST_SPECIALFUNCS.bas`, but no public surface calls them
+  yet; public behaviour is unchanged.
+- **Open.** #13 stays open. The cutoffs were measured on pre-#23 source, so
+  the fitting arm and holdout must be re-exported from post-#23 source before
+  any cutoff is wired.
+
+The "Next" list near the end is the plan as Phase A left it.
+
 All reported results are produced by `analyze_positive_ratio_subnormal.py`
 from the committed family-specific evidence, `gamma_probe.csv` and
 `chisquare_probe.csv`. Nothing is computed by hand, and the analyzer's own
-24-test suite runs in the hosted Accuracy Gate.
+test suite (30 tests at 2026-11-07) runs in the hosted Accuracy Gate.
 
 ## Evidence integrity
 
@@ -23,8 +41,9 @@ from the committed family-specific evidence, `gamma_probe.csv` and
   catastrophic kernel defect at all fifteen buckets. It is now checked at
   startup on every run, and covered by a metamorphic test spanning two shapes
   and four scales.
-- **24/24 analyzer unit tests**, including eight negative cases that must abort
-  the run. The analyzer has produced five defects during development — a missing
+- **24/24 analyzer unit tests** at Phase A1, including eight negative cases
+  that must abort the run (30 tests at 2026-11-07, after the holdout claim
+  tests were added). The analyzer has produced five defects during development — a missing
   density Jacobian, a missing candidate recorded as zero error, an absent
   overflowed-output class, an ambiguous binding shape, and an oracle precision
   inconsistency — each caught by measurement rather than by review.
@@ -322,6 +341,14 @@ answer is not the same as answering accurately.** It is now `None`, reported as
 | `M_STATS_PROBDIST_CHISQPROBE.bas` | exporter; run `Probe_ChiSquarePositiveRatio` |
 | `chisquare_probe.csv` | 627 observations |
 | `analyze_positive_ratio_subnormal.py` | schema, oracle and envelopes |
-| `test_analyze_positive_ratio_subnormal.py` | 24 tests, including eight negative |
+| `test_analyze_positive_ratio_subnormal.py` | 30 tests, including negative cases that must abort the run |
 | `cross_validate_oracle.py` / `.R` | mpmath against MPFR |
 | `oracle_cross_validation.md` | the cross-validation record |
+| `HOLDOUT_DESIGN.md` | holdout specification, frozen before any holdout output |
+| `M_STATS_PROBDIST_GAMMAHOLD.bas` | Gamma holdout exporter; run `Probe_GammaHoldout` |
+| `gamma_holdout.csv` | Gamma holdout observations |
+| `M_STATS_PROBDIST_CHISQHOLD.bas` | Chi-square holdout exporter; run `Probe_ChiSquareHoldout` |
+| `chisquare_holdout.csv` | Chi-square holdout observations |
+| `M_STATS_PROBDIST_GQPROBE.bas` | probe of a Gamma survival defect outside #13 (ScaleParam = 1); run `Probe_GammaQComplement` |
+| `gamma_q_complement.csv` | that probe's observations |
+| `MOVEMENT_MANIFEST.md` | predicted grid movement of the planned source change |

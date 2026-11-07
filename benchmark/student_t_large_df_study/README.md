@@ -1,10 +1,15 @@
 # Student-t large-df tail study (#34)
 
-**Status: derivation and validation complete, Excel-free.** This study
-produces a validated series and a measured dispatch predicate. It is not
-evidence that the kernel is fixed: no VBA exists yet, and the fix lands only
-inside Phase 1's real-Excel wave, atomically with source, regressions,
-exports and truthful provenance.
+**Status (2026-11-07).** The route shipped in #198 (merged 2026-11-06). Its
+first Excel wave, run under `PRODUCTION_AMENDMENT_1.md`, falsified PT2
+(`EXCEL_WAVE_RESULT.md`). The inverse polish
+(`INVERSE_PREREGISTRATION.md`, #200 and #205) met every prediction and adopted
+the survival, cumulative and quantile `envelope_domain` contracts at 5E-15
+(`INVERSE_WAVE_RESULT.md`); #34 is closed. The seam study (`SEAM_STUDY.md`)
+closed #210. Open: #213, the inverse misses 5E-15 near `|q| = 8` at
+`df = 1E7` (1.29E-12). The Defect, Result and Corrections sections record the
+derivation as it was done, before any VBA existed; see
+[Outcomes](#outcomes-2026-11-07) for what followed.
 
 Design: `PREREGISTRATION.md`, frozen before any value was generated, with
 one disclosed amendment recorded after the first run.
@@ -15,7 +20,8 @@ one disclosed amendment recorded after the first run.
 Lentz continued fraction. In binary64 at `a = df/2 ≳ 5E4` the fraction is
 ill-conditioned — coefficients `1 − O(m/a)`, rounding accumulating faster
 than convergence — and reaches only ~1E-9 regardless of stopping rule. The
-measured onset is **df ≈ 1E5** (1.25E-12 at t = 2), a decade below #34's
+measured onset is **df ≈ 1E5** (1.25E-12 at t = 2 in the binary64 model;
+Excel measures 3.16E-12, `PRODUCTION_AMENDMENT_1.md`), a decade below #34's
 committed counterexamples at 1E6–1E8.
 
 ## Result
@@ -42,7 +48,11 @@ orders of magnitude. Seams — the CF route switch at every fitting df, and
 both edges of the adopted predicate — were probed below, at and above.
 
 **Dispatch:** `df ≥ 1E5 AND |t| ≤ 8` → order-5 expansion; otherwise the
-existing route. The CF is retained outside the region and is accurate there.
+existing route. The CF is retained outside the region, where it is not
+accurate to the bound: below df 1E5 it errs by up to 3.16E-12 (Excel), and
+above |t| = 8 by up to 4.7E-10 (model) and 8.1E-11 at df 1E7 (Excel). Both
+are recorded in `numerical_limitations.csv`
+(`IncompleteBeta.StudentTLargeDFFarTail`, `StudentT.LargeDFSeamMonotonicity`).
 
 ## Corrections made along the way
 
@@ -76,6 +86,21 @@ existing route. The CF is retained outside the region and is accurate there.
 | `predict_production.py` | measures the model against the oracle and records the predictions in `production_predictions.json` |
 | `production_predictions.json` | A1–A3 and the per-row PT1/PT2 predictions |
 | `test_production_route.py` | CI fixture: exact literals, reproducible predictions, A1 and A2 |
+| `PRODUCTION_AMENDMENT_1.md` | Amendment 1: the outside-df control at Excel's measured accuracy |
+| `check_excel_wave.py` | checks the first Excel wave against the PT1–PT4 predictions |
+| `excel_wave_check.json` | that check's output |
+| `EXCEL_WAVE_RESULT.md` | first wave result: PT2 falsified, no contract adopted |
+| `INVERSE_PREREGISTRATION.md` | the inverse polish and contract adoption, frozen before its VBA |
+| `predict_inverse.py` | records the inverse-wave predictions in `inverse_predictions.json` |
+| `inverse_predictions.json` | the polish model's validation and the PI, PU and PH predictions |
+| `test_inverse_polish.py` | CI fixture for the inverse polish model and its predictions |
+| `test_vba_large_df_source.py` | CI fixture: the shipped VBA constants, arithmetic and wiring match the preregistered route |
+| `check_inverse_wave.py` | checks the inverse wave against its predictions |
+| `inverse_wave_check.json` | that check's output |
+| `INVERSE_WAVE_RESULT.md` | inverse wave result: every prediction holds, contracts adopted |
+| `SEAM_STUDY.md` | Excel behaviour across the df = 1E5 and \|t\| = 8 seams (#210) |
+| `seam_study.py` | appends the 130 seam rows to `tchi_large_df` and checks them |
+| `seam_results.json` | every seam measurement |
 
 ## Production feasibility (finding F1)
 
@@ -120,9 +145,25 @@ VBA statement by statement on `PROB_NormalUpperTail` and
 - **Contracts.** These follow if the predictions hold: 5E-15 for survival,
   cumulative and inverse over `df 1E5..1E8`, `|t| ≤ 8`.
 
+## Outcomes (2026-11-07)
+
+- **First wave** (run 42245883623 at `c8bb0ae`). PT1, PT3 and PT4 held; PT2
+  failed at 7 of 18 inverse rows, through the inverse's stopping rule, not the
+  route. No contract was adopted; the route shipped in #198 without one.
+  See `EXCEL_WAVE_RESULT.md`.
+- **Inverse wave** (run 42260290029 at `9cbe5d9`). Regression 955/955; PI, PU
+  and PH hold. The three 5E-15 `envelope_domain` contracts were adopted (#200,
+  #205), and #34 closed. See `INVERSE_WAVE_RESULT.md`.
+- **Seams** (#210, closed). Survival and cumulative are not monotone across
+  the seams, where the continued fraction serves the outside. See
+  `SEAM_STUDY.md`.
+- **Open defect #213.** At `df = 1E7` near `q = −8` the inverse is 1.29E-12
+  off, inside its 5E-15 contract's domain.
+
 ## Oracle gap
 
 Rmpfr has no incomplete-beta primitive. The independent leg is tanh-sinh
 quadrature of the density. Recorded, not worked around.
 
-The 559-row `benchmark/holdout/holdout_grid.csv` was not read.
+The derivation did not read `benchmark/holdout/holdout_grid.csv` (559 rows
+then; the production waves later appended 100 Student-t rows).

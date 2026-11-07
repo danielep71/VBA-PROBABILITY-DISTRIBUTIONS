@@ -79,7 +79,7 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 - The working tree and exported VBA sources are reproducible.
 - Maintainers and required reviewers are available.
 
-Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, a green **Excel VBA Regression** run of the release commit itself must exist (see [exact-tag binding](#exact-tag-binding)), and #29 must be resolved.
+Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, a green **Excel VBA Regression** run of the release commit itself must exist (see [exact-tag binding](#exact-tag-binding)), and every blocker in [`benchmark/release_readiness.json`](benchmark/release_readiness.json) must be resolved.
 
 **Enforcement baseline:** the repository settings, security features and rulesets, including the required checks `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` on `main`, are recorded in [`docs/repo_governance/repository-settings.json`](docs/repo_governance/repository-settings.json) and explained in [SETTINGS.md](docs/repo_governance/SETTINGS.md). `python3 tools/setup_repository.py --verify` compares them with GitHub and fails on drift; a prose statement of enforcement is not evidence. Required approvals remain zero. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
 
@@ -143,10 +143,12 @@ Move relevant entries from **Unreleased** into a dated `[MAJOR.MINOR.PATCH] - YY
 - Validate the six-module production manifest and dependency order.
 - Require a green **Static checks** workflow
   ([`.github/workflows/static-checks.yml`](.github/workflows/static-checks.yml))
-  on the exact candidate SHA: committed whitespace, procedure-scoped VBA jumps,
-  release semantics, and workflow validation. The same checks run locally with
-  `python3 tools/run_static_checks.py --strict`; see
-  [`tools/README.md`](tools/README.md).
+  on the exact candidate SHA. It runs every static check of
+  `tools/run_static_checks.py`, listed in [`tools/README.md`](tools/README.md),
+  among them committed whitespace, VBA jumps, VBA source and layout rules,
+  release semantics, tracked binaries, Markdown links, the Python tests, Ruff,
+  mypy and actionlint. The same checks run locally with
+  `python3 tools/run_static_checks.py --strict`.
 - Scan for credentials or generated noise.
 - Confirm accuracy manifests, grids, tolerances, and provenance files are internally consistent.
 - Complete the [distribution review](docs/repo_governance/DISTRIBUTION.md) in

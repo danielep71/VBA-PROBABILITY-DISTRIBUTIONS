@@ -100,8 +100,8 @@ the other categories too:
 ```sh
 # Every reachable blob, with the path it was committed under.
 git rev-list --objects --all
-# Every binary file ever committed: inspect each one.
-git log --all --numstat --format= | awk '$1 == "-" {print $3}' | sort -u
+# Every binary file ever committed, under each path it had: inspect each one.
+git log --all --numstat --no-renames --format= | awk -F'\t' '$1 == "-" {print $3}' | sort -u
 # Search the text of every commit for a pattern.
 git rev-list --all | xargs git grep -n -I -i -E 'PATTERN'
 ```

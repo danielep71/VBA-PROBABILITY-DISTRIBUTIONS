@@ -22,19 +22,32 @@ can be frozen (`measured provisional` -> `validated and frozen`).
   exactly on a CDF step.
 - **Probabilities**: 0.0001, 0.005, 0.25, 0.75, 0.995, 0.9999 for the continuous
   families; non-tie probabilities for the discrete inverses.
+- **Later additions**: tiny-shape Beta/F (`tiny_unbalanced` and
+  `tiny_unbalanced_representable`); Chi-square and F densities;
+  `Normal_IntervalProbability`; `Lognormal_ParametersFromMeanStdDev`; and the
+  `split_boundary` and `deep_tail` regimes of the standard normal, normal and
+  lognormal inverses.
+- **Student t, large df (#34)**: 100 `envelope_domain` rows (survival,
+  cumulative and quantile) at df between 1E5 and 1E8, appended once by
+  `generate_holdout.py --append-student-t-large-df` and
+  `--append-student-t-inverse` under the two #34 preregistrations in
+  `../student_t_large_df_study/`.
 
-388 points; references are mpmath / continued-fraction incomplete beta /
+659 points; references are mpmath / continued-fraction incomplete beta /
 incomplete gamma at 50 digits.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `generate_holdout.py` | Writes `holdout_grid.csv` (references). |
-| `_ibeta.py` | Continued-fraction incomplete beta (shared with the inverse study). |
-| `holdout_grid.csv` | Fresh grid; 12-column `arg4` schema (Hypergeometric needs four parameters). |
-| `M_STATS_PROBDIST_HOLDOUT.bas` | Export macro `Export_Holdout` for all contracted public functions (Beta/F, `PROB_LogBeta`, and the six discrete families). |
-| `analyze_holdout.py` | Per-contract holdout worst vs frozen threshold + margin. |
+| `generate_holdout.py` | Builds the holdout references. **A bare run overwrites `holdout_grid.csv` and its Excel observations**; use `--out <other file>` to compare. The two `--append-student-t-*` flags append the #34 rows once and refuse a grid that already holds them. |
+| `../_ibeta.py` | Continued-fraction incomplete beta, shared by the whole benchmark (single copy). |
+| `holdout_grid.csv` | Fresh grid; `arg4` schema (Hypergeometric needs four parameters) plus the `expected_error` envelope marker. |
+| `holdout_manifest.json` | Binds the grid's bytes and row count to the production modules and the exporter, with the export commit and Excel environment. |
+| `M_STATS_PROBDIST_HOLDOUT.bas` | Export macro `Export_Holdout` for every function in the grid: Beta/F, Student t, `PROB_LogBeta`, the Chi-square and F densities, `Normal_IntervalProbability`, `Lognormal_ParametersFromMeanStdDev`, the normal and lognormal inverses, and the six discrete families. |
+| `analyze_holdout.py` | Per-contract holdout worst vs frozen threshold + margin; writes `holdout_summary.md`. |
+| `holdout_summary.md` | The generated verdict table. |
+| `test_analyze_holdout.py` | Fixtures for the analyzer's metric, envelope and tail-dispatch semantics. |
 
 **Survival references (#159, 2026-11-05).** `generate_holdout.py` now computes
 every Beta and F survival reference directly as an upper tail, at the exact
@@ -53,8 +66,15 @@ survival reference it emits for the committed rows meets the floor, the worst at
 
 1. Import `M_STATS_PROBDIST_HOLDOUT.bas`, `Debug > Compile`.
 2. Run `Export_Holdout`; select `holdout_grid.csv`.
-3. Commit the filled CSV.
+3. Finalize and bind the export as in
+   [`../PROVENANCE.md`](../PROVENANCE.md#fresh-export-operating-procedure), then
+   commit the filled CSV with its manifest.
 4. `python3 analyze_holdout.py` (reads `../accuracy_contracts.csv`).
+
+Steps 1 to 3 can also run unattended: dispatch the Excel VBA Regression
+workflow with `export_holdout`, then apply its artifact with
+`../apply_excel_export.py --grid holdout`
+([Automated fresh export](../../docs/EXCEL_CERTIFICATION.md#automated-fresh-export)).
 
 ## Freeze decision
 
@@ -63,8 +83,14 @@ survival reference it emits for the committed rows meets the floor, the worst at
 - **Any contract exceeds its threshold** -> do not freeze; adjust that single
   threshold to the honest holdout-inclusive worst and record why.
 
-## Known gap
+## Role in the gate
 
-`Export_Holdout` cannot compute F at the extreme validated-range df (200000,
-500000); those rows carry `ERROR` and are covered instead by the F study
-harnesses. They do not affect the strict gate, which runs on the main grid.
+The Accuracy Gate requires this holdout. `compute_errors.py` fails closed unless
+`holdout_manifest.json` binds the committed grid to the current source, and the
+gate then reruns `analyze_holdout.py` and fails when `holdout_summary.md`
+differs from the rerun (see [`../PROVENANCE.md`](../PROVENANCE.md#what-the-hosted-gate-enforces)).
+
+*Superseded, 2026-11-07.* An earlier version of this section said the F rows at
+df 200000 and 500000 carry `ERROR`. That was true while the F envelope was 1E5.
+Since `PROB_F_MAX_DF` rose to 1E10 they return values, and they are scored
+under `F_*.validated`; the grid has no `ERROR` row.
