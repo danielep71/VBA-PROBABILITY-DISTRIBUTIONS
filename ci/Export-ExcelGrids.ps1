@@ -25,7 +25,9 @@
 #      at the timeout.
 #   5. Checks every exported grid against the checked-out grid: the bytes are
 #      what VBA's Print # writes, every in-scope row is filled, nothing outside
-#      observed_vba of in-scope rows changed, and ERROR tokens are counted.
+#      observed_vba of in-scope rows changed, and ERROR tokens are counted. A
+#      study probe CSV, written whole (-Studies, #225), must keep the committed
+#      header, line count and each row's key fields.
 #   6. Writes the artifact: the grids exactly as Excel wrote them, the Excel
 #      environment file completed with the commit SHA, the regression record
 #      and log, the export log and export-manifest.json.
@@ -65,6 +67,13 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]$TChiLargeDf = "false",
+
+    # Study grids by name, comma- or space-separated (ExcelGridExport.psm1,
+    # Get-StudyGridNames). The workflow passes its export_studies input through
+    # the environment, never on the command line, so the text is not parsed
+    # by cmd.
+    [Parameter(Mandatory = $false)]
+    [string]$Studies = $env:EXPORT_STUDIES,
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("full", "missing-only")]
@@ -464,7 +473,11 @@ try {
     if ($wantHoldoutOlder) { $selected += Get-ExportGridSpec -Name "holdout_older" }
     if ($wantSurvivalBoundary) { $selected += Get-ExportGridSpec -Name "survival_boundary" }
     if ($wantTChiLargeDf) { $selected += Get-ExportGridSpec -Name "tchi_large_df" }
-    if ($selected.Count -eq 0) { Stop-Export "no grid selected; pass -Main, -Holdout, -HoldoutOlder, -SurvivalBoundary or -TChiLargeDf true" }
+    if ($null -eq $Studies) { $Studies = "" }
+    foreach ($study in (ConvertTo-StudySelection -Value $Studies)) {
+        $selected += Get-ExportGridSpec -Name $study
+    }
+    if ($selected.Count -eq 0) { Stop-Export "no grid selected; pass -Main, -Holdout, -HoldoutOlder, -SurvivalBoundary or -TChiLargeDf true, or name study grids with -Studies" }
     Write-ExportLog ("Selected grids: " + (($selected | ForEach-Object { "$($_.Name) ($($_.Macro))" }) -join ", "))
     if (-not $wantMain -and $MainMode -ne "full") {
         Write-ExportLog "Main-grid mode $MainMode is ignored: the main grid is not selected"

@@ -82,6 +82,12 @@ Private Const PROBE_FIELDS As Long = 12
 '   Characterization only. Promotes no grid row, claims no threshold, touches
 '   no registry, and changes no source.
 '
+' USAGE
+'   Run Probe_GammaQComplement and choose an output path.
+'   Export_GammaQComplement writes gamma_q_complement.csv beside the workbook
+'   with no dialog; ci/Export-ExcelGrids.ps1 runs it on the self-hosted runner
+'   (#225).
+'
 ' DEPENDENCIES
 '   - K_STATS_Gamma_Cumulative, K_STATS_Gamma_Survival (CONTINUOUS)
 '   - PROB_TryGammaSeriesP                             (SPECIALFUNCS)
@@ -98,13 +104,54 @@ Public Sub Probe_GammaQComplement()
 ' Probe_GammaQComplement
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Evaluates the shape ladder at each control argument and writes the CSV.
+'   Asks for an output path, then writes the CSV there.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Path                As String          'Chosen output path
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        Path = ResolveOutputPath()
+        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
+
+        WriteGammaQComplement Path
+End Sub
+
+
+Public Sub Export_GammaQComplement()
+'
+'==============================================================================
+' Export_GammaQComplement
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Writes gamma_q_complement.csv beside this workbook, with no dialog: the
+'   entry point ci/Export-ExcelGrids.ps1 runs on the self-hosted runner
+'   (#225). The workbook there is a local file, so its path is usable by Open.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        WriteGammaQComplement ThisWorkbook.Path & _
+            Application.PathSeparator & "gamma_q_complement.csv"
+End Sub
+
+
+Private Sub WriteGammaQComplement(ByVal Path As String)
+'
+'==============================================================================
+' WriteGammaQComplement
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates the shape ladder at each control argument and writes the CSV.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim OutNum              As Integer         'Output file handle
     Dim Shapes              As Variant         'Shape ladder
     Dim Args                As Variant         'Control arguments
@@ -118,9 +165,6 @@ Public Sub Probe_GammaQComplement()
 ' INITIALIZE
 '------------------------------------------------------------------------------
     On Error GoTo Err_Handler
-
-        Path = ResolveOutputPath()
-        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
 
     'Shape-major: the amplification is a function of shape, so this is the axis
     'the defect turns on. X is a control, not the regime

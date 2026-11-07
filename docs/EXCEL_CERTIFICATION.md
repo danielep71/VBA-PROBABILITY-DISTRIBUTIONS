@@ -94,6 +94,10 @@ runner does. The steps below use the GitHub CLI.
      -f export_holdout_older=false -f main_mode=full
    ```
 
+   Study grids are named in one input, for example
+   `-f export_studies=prs_gamma_probe,prs_chisquare_probe`, and applied with
+   `--grid prs_gamma_probe --grid prs_chisquare_probe`.
+
    The run exports from the head of `<branch>` when it starts. Note that SHA:
    the evidence commit must be its child.
 
@@ -124,7 +128,9 @@ runner does. The steps below use the GitHub CLI.
    every requested grid is present with the raw SHA-256 the manifest records.
    It then checks each grid against `HEAD` again: only the `observed_vba` cells
    its exporter owns may change, every one of them must be filled, and the
-   bytes must be the CRLF lines Excel writes. A missing-only main export keeps
+   bytes must be the CRLF lines Excel writes. A study grid (`export_studies`,
+   #225) is written whole by its probe, so it must instead keep the committed
+   header, line count and each row's key fields. A missing-only main export keeps
    the observations already in the grid, so it is accepted only while no `.bas`
    module differs from the `source_binding` in `observation_manifest.json`;
    otherwise run a full export. Then it:
@@ -151,8 +157,9 @@ runner does. The steps below use the GitHub CLI.
    entry with this evidence, run `python benchmark/refresh_evidence.py` again
    (no bind flags; the manifests are already bound), and continue.
 
-   `holdout_older`, `survival_boundary` and `tchi_large_df` have no exporter in
-   the evidence policy, so the record makes no claim for them and no manifest binds them.
+   `holdout_older`, `survival_boundary`, `tchi_large_df` and the study grids
+   have no exporter in the evidence policy, so the record makes no claim for
+   them and no manifest binds them.
    The tool copies the grid, and the plain refresh regenerates
    `holdout_older_summary.md`.
 

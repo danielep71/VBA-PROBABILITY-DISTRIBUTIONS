@@ -82,6 +82,9 @@ Private Const PROBE_FIELDS As Long = 14
 ' USAGE
 '   Run Probe_ChiSquareHoldout, then validate with
 '   analyze_positive_ratio_subnormal.py before committing the CSV.
+'   Export_ChiSquareHoldout writes chisquare_holdout.csv beside the workbook
+'   with no dialog; ci/Export-ExcelGrids.ps1 runs it on the self-hosted runner
+'   (#225).
 '
 ' DEPENDENCIES
 '   - K_STATS_ChiSquare_Density, _Cumulative, _Survival
@@ -100,13 +103,54 @@ Public Sub Probe_ChiSquareHoldout()
 ' Probe_ChiSquareHoldout
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Evaluates every constructed point on all three surfaces and writes the CSV.
+'   Asks for an output path, then writes the CSV there.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Path                As String          'Chosen output path
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        Path = ResolveOutputPath()
+        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
+
+        WriteChiSquareHoldout Path
+End Sub
+
+
+Public Sub Export_ChiSquareHoldout()
+'
+'==============================================================================
+' Export_ChiSquareHoldout
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Writes chisquare_holdout.csv beside this workbook, with no dialog: the
+'   entry point ci/Export-ExcelGrids.ps1 runs on the self-hosted runner
+'   (#225). The workbook there is a local file, so its path is usable by Open.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' RUN
+'------------------------------------------------------------------------------
+        WriteChiSquareHoldout ThisWorkbook.Path & _
+            Application.PathSeparator & "chisquare_holdout.csv"
+End Sub
+
+
+Private Sub WriteChiSquareHoldout(ByVal Path As String)
+'
+'==============================================================================
+' WriteChiSquareHoldout
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates every constructed point on all three surfaces and writes the CSV.
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim OutNum              As Integer         'Output file handle
     Dim Ids()               As String          'Point identifiers
     Dim Cons()              As String          'Construction class
@@ -125,9 +169,6 @@ Public Sub Probe_ChiSquareHoldout()
 ' INITIALIZE
 '------------------------------------------------------------------------------
     On Error GoTo Err_Handler
-
-        Path = ResolveOutputPath()
-        If Len(Path) = 0 Then Exit Sub          'User cancelled the picker
 
         BuildPoints Ids, Cons, Bits, Xs, Scales, Count
         Surfaces = Array("density", "cumulative", "survival")
