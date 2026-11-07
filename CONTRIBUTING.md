@@ -100,7 +100,7 @@ the review artifact.
 | `benchmark/` | High-precision external accuracy gate and evidence |
 | `docs/` and wiki | API, architecture, accuracy, and diagnostics |
 | `ci/` | Windows/Excel runner adapter |
-| `tools/` | Static repository checks: committed whitespace, VBA jumps and release semantics |
+| `tools/` | All static repository checks (see [tools/README.md](tools/README.md)) |
 | `benchmark/` Python tools | Manifests, error computation, source validation and negative controls |
 
 The README and current tree are authoritative if a listed optional directory is
@@ -112,7 +112,9 @@ not present.
 
 ## 🌿 Development workflow
 
-1. Fork or clone the repository and start from the current `main`.
+1. Fork or clone the repository and start from the active release branch
+   (currently `release/1.0.0`), or from `main` when no release branch is
+   active.
 2. Create a short, focused branch such as `fix/clear-description`,
    `feat/clear-description`, `docs/clear-description`, or
    `test/clear-description`.
@@ -233,13 +235,15 @@ changed and still owns. Cleanup must not conceal the original failure.
 Validation must be proportional to risk and reproducible from the exact source
 under review.
 
+- Run all static checks (see [tools/README.md](tools/README.md)) with
+  `python3 tools/run_static_checks.py --strict`.
 - Compile the complete VBA project.
 - Run the affected family suite and `Test_STATS_PROBDIST_RunAll`.
 - Run the external benchmark and its accuracy contracts for numerical changes.
 - Test central, boundary, tail, invalid-domain, underflow/overflow, inverse, and round-trip behavior as applicable.
 - Record exact commit, Excel/Office bitness, reference system/version/precision, tested points, tolerance, worst observed error, and failures.
 
-When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. Holdout export certification (#29) remains unresolved. Never rebind old measurements to new code.
+When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. The self-hosted runner can export the main and holdout grids unattended; the same document describes that path and the manual fallback. Never rebind old measurements to new code.
 
 ### Evidence principles
 
@@ -378,7 +382,7 @@ Reviewers evaluate correctness, safety, maintainability, compatibility,
 evidence, documentation, and fit with the project's direction. Approval of an
 idea does not guarantee acceptance of every implementation detail.
 
-The maintainer may edit, squash, defer, or decline a contribution to protect the
+The maintainer may edit, ask to restructure commits, defer, or decline a contribution to protect the
 coherence and supportability of the project. Contributors will be credited
 through Git history and release notes where appropriate.
 

@@ -67,7 +67,8 @@ If the project has not yet published a functional release, development code is
 pre-release and no production version is security-supported.
 
 Security fixes normally land on **main** and are included in a new tagged
-release. Older releases are not normally patched in place unless the maintainer
+release. While a release branch such as `release/1.0.0` is active, they land on
+that branch first and reach **main** through its integration pull request. Older releases are not normally patched in place unless the maintainer
 states otherwise.
 
 Reports must identify an exact release tag or full commit SHA. Descriptions such
