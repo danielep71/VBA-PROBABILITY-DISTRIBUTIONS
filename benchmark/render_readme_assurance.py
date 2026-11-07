@@ -90,7 +90,10 @@ GATES = ("main_grid_coverage", "main_grid_export", "holdout_export")
 # A blocker that the committed evidence cannot score must not disappear by
 # being deleted from the registry: it may only move to "resolved" with the
 # evidence that resolved it. Removing an entry here is a reviewed code change.
-REQUIRED_BLOCKERS = {34: "silent_wrong", 35: "numerical_uncertainty"}
+# #163 and #173 are measured on holdout_older and by the binary64 route model of
+# benchmark/beta_balanced_survival, which the hosted gate does not score.
+REQUIRED_BLOCKERS = {34: "silent_wrong", 35: "numerical_uncertainty",
+                     163: "silent_wrong", 173: "silent_wrong"}
 
 EXCEL_COLOR = "d97706"
 CONTRACTS_COLOR = "0f766e"

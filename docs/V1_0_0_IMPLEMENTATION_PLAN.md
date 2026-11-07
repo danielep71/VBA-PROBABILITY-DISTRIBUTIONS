@@ -20,15 +20,15 @@ full version at `a9812c7`).
 v1.0.0 is **not release-ready** (NO-GO).
 
 - **Registered release blockers.** `release_readiness.json` (reviewed
-  2026-11-06, `certified: false`) lists 9 open blockers: #11, #13, #14, #22,
-  #23, #24, #26, #35 and #213. #29, #34, #47 and #72 are recorded there as
+  2026-11-07, `certified: false`) lists 11 open blockers: #11, #13, #14, #22,
+  #23, #24, #26, #35, #163, #173 and #213. #29, #34, #47 and #72 are recorded there as
   resolved, with their evidence.
 - **Milestone.** 16 issues are open: #4, #11, #13, #14, #22, #23, #24, #26,
   #28, #31, #35, #154, #155, #163, #173, #213. Open P1: #11, #13, #14, #24,
   #35, #163. P2: #22, #23, #26, #28, #31, #173, #213. P3: #4, #154, #155.
-- **Gap between the two lists.** #163 (P1) and #173 change balanced-Beta
-  contracts but are not in the blocker registry. #28 owns giving them an
-  explicit readiness disposition.
+- **Balanced Beta.** #163 and #173 were added to the registry on 2026-11-07
+  as open silent-wrong blockers, and the README renderer now requires both
+  entries, as it does #34 and #35.
 - **Retained Excel evidence.** Candidate `9cbe5d9`, 955/955 assertions, Excel
   16.0 build 20430, 64-bit, run 42260290029
   ([`excel_regression_record.json`](../benchmark/excel_regression_record.json);
@@ -207,7 +207,8 @@ contracts to what the route delivers. The route repair moves to #175
 - **#28.**
   - Keep `release_readiness.json` in step with GitHub. The #34 and #72
     entries are now resolved, by PR #205 and PR #217.
-  - Record a disposition for #163/#173.
+  - #163 and #173 are registered as open silent-wrong blockers
+    (2026-11-07).
   - After the last numerical change, regenerate the README assurance block.
     The renderer (`benchmark/render_readme_assurance.py`, PRs #60/#62) and
     its Accuracy Gate drift check already exist.
@@ -282,10 +283,10 @@ GO requires every item. Items marked done describe lasting state; the
 others must hold on the exact release commit.
 
 - [ ] Every blocker in `release_readiness.json` is resolved with evidence
-  (9 open).
+  (11 open).
 - [ ] Every v1.0.0 milestone issue is closed or explicitly moved (16 open).
 - [ ] No accepted-domain wrong result is left documented as a limitation
-  instead of fixed (#11, #13, #14, #213).
+  instead of fixed (#11, #13, #14, #163, #173, #213).
 - [x] Exact-SHA Excel certification, unattended grid export and exact-tag
   certification exist (#38, #181, #76).
 - [x] Export records validate against committed grid bytes, and the holdout
