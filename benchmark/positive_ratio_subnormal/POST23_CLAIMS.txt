@@ -1,0 +1,32 @@
+gamma_holdout.csv: construction check passed, 1197 observations
+
+==============================================================================
+CLAIM TEST — GAMMA holdout
+==============================================================================
+Testing the registered fitting claims. No crossover is proposed: a
+disagreement is a rejection of the fitted cutoff, not a new answer.
+
+-- density: PASS — candidate dominates at all 12 tested buckets <= 48 bits
+   worst candidate error over the tested range: 1.49e-13
+-- cumulative: PASS — candidate dominates at all 10 tested buckets <= 40 bits
+   worst candidate error over the tested range: 1.49e-13
+-- survival: no registered claim; characterised only
+
+CLAIMS HOLD
+chisquare_holdout.csv: construction check passed, 609 observations
+
+==============================================================================
+CLAIM TEST — CHISQUARE holdout
+==============================================================================
+Testing the registered fitting claims. No crossover is proposed: a
+disagreement is a rejection of the fitted cutoff, not a new answer.
+
+-- density: PASS — candidate dominates at all 12 tested buckets <= 48 bits
+   worst candidate error over the tested range: 1.31e-13
+-- cumulative: PASS — candidate dominates at all 12 tested buckets <= 48 bits
+   worst candidate error over the tested range: 1.33e-13
+-- survival: no registered claim; characterised only
+
+CLAIMS HOLD
+
+Phase A is measurement only. No cutoff is proposed here and no source is changed.
