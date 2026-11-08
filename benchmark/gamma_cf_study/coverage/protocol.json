@@ -1,0 +1,478 @@
+{
+  "schema": 1,
+  "candidate": "2a3fd9e19df30c1e78c8a8ed50092f743dc6f48d",
+  "status": "PREREGISTERED BEFORE NEW EXCEL OBSERVATIONS",
+  "points": [
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.bff2ee48e0530p-333",
+      "x_hex": "0x1.fffffffffffffp-1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.bff2ee48e0530p-333",
+      "x_hex": "0x1.0000000000000p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.bff2ee48e0530p-333",
+      "x_hex": "0x1.0000000000001p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.bff2ee48e0530p-333",
+      "x_hex": "0x1.0000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.bff2ee48e0530p-333",
+      "x_hex": "0x1.0000000000000p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0c6f7a0b5ed8dp-20",
+      "x_hex": "0x1.000010c6f7a0ap+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0c6f7a0b5ed8dp-20",
+      "x_hex": "0x1.000010c6f7a0bp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0c6f7a0b5ed8dp-20",
+      "x_hex": "0x1.000010c6f7a0cp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0c6f7a0b5ed8dp-20",
+      "x_hex": "0x1.000010c6f7a0bp+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0c6f7a0b5ed8dp-20",
+      "x_hex": "0x1.000010c6f7a0bp+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.a36e2eb1c432dp-14",
+      "x_hex": "0x1.00068db8bac70p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.a36e2eb1c432dp-14",
+      "x_hex": "0x1.00068db8bac71p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.a36e2eb1c432dp-14",
+      "x_hex": "0x1.00068db8bac72p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.a36e2eb1c432dp-14",
+      "x_hex": "0x1.00068db8bac71p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.a36e2eb1c432dp-14",
+      "x_hex": "0x1.00068db8bac71p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.47ae147ae147bp-7",
+      "x_hex": "0x1.028f5c28f5c28p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.47ae147ae147bp-7",
+      "x_hex": "0x1.028f5c28f5c29p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.47ae147ae147bp-7",
+      "x_hex": "0x1.028f5c28f5c2ap+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.47ae147ae147bp-7",
+      "x_hex": "0x1.028f5c28f5c29p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.47ae147ae147bp-7",
+      "x_hex": "0x1.028f5c28f5c29p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-2",
+      "x_hex": "0x1.3ffffffffffffp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-2",
+      "x_hex": "0x1.4000000000000p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-2",
+      "x_hex": "0x1.4000000000001p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-2",
+      "x_hex": "0x1.4000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-2",
+      "x_hex": "0x1.4000000000000p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-1",
+      "x_hex": "0x1.7ffffffffffffp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-1",
+      "x_hex": "0x1.8000000000000p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-1",
+      "x_hex": "0x1.8000000000001p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-1",
+      "x_hex": "0x1.8000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p-1",
+      "x_hex": "0x1.8000000000000p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.8000000000000p-1",
+      "x_hex": "0x1.bffffffffffffp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.8000000000000p-1",
+      "x_hex": "0x1.c000000000000p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.8000000000000p-1",
+      "x_hex": "0x1.c000000000001p+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.8000000000000p-1",
+      "x_hex": "0x1.c000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.8000000000000p-1",
+      "x_hex": "0x1.c000000000000p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.fffffffffffffp-1",
+      "x_hex": "0x1.fffffffffffffp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.fffffffffffffp-1",
+      "x_hex": "0x1.0000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.fffffffffffffp-1",
+      "x_hex": "0x1.0000000000001p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.fffffffffffffp-1",
+      "x_hex": "0x1.0000000000000p+2"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.fffffffffffffp-1",
+      "x_hex": "0x1.0000000000000p+4"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+0",
+      "x_hex": "0x1.fffffffffffffp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+0",
+      "x_hex": "0x1.0000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+0",
+      "x_hex": "0x1.0000000000001p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+0",
+      "x_hex": "0x1.0000000000000p+2"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+0",
+      "x_hex": "0x1.0000000000000p+4"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000001p+0",
+      "x_hex": "0x1.fffffffffffffp+0"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000001p+0",
+      "x_hex": "0x1.0000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000001p+0",
+      "x_hex": "0x1.0000000000001p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000001p+0",
+      "x_hex": "0x1.0000000000000p+2"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000001p+0",
+      "x_hex": "0x1.0000000000000p+4"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+1",
+      "x_hex": "0x1.7ffffffffffffp+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+1",
+      "x_hex": "0x1.8000000000000p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+1",
+      "x_hex": "0x1.8000000000001p+1"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+1",
+      "x_hex": "0x1.8000000000000p+2"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.0000000000000p+1",
+      "x_hex": "0x1.8000000000000p+4"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.4000000000000p+3",
+      "x_hex": "0x1.5ffffffffffffp+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.4000000000000p+3",
+      "x_hex": "0x1.6000000000000p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.4000000000000p+3",
+      "x_hex": "0x1.6000000000001p+3"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.4000000000000p+3",
+      "x_hex": "0x1.6000000000000p+4"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.4000000000000p+3",
+      "x_hex": "0x1.6000000000000p+6"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.9000000000000p+6",
+      "x_hex": "0x1.93fffffffffffp+6"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.9000000000000p+6",
+      "x_hex": "0x1.9400000000000p+6"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.9000000000000p+6",
+      "x_hex": "0x1.9400000000001p+6"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.9000000000000p+6",
+      "x_hex": "0x1.9400000000000p+7"
+    },
+    {
+      "role": "boundary_and_caller",
+      "a_hex": "0x1.9000000000000p+6",
+      "x_hex": "0x1.9400000000000p+9"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.871c646e595a7p-298",
+      "x_hex": "0x1.6666666666666p+0"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.871c646e595a7p-298",
+      "x_hex": "0x1.a666666666666p+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.871c646e595a7p-298",
+      "x_hex": "0x1.7000000000000p+3"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.2ca5d05ea7ab3p-24",
+      "x_hex": "0x1.6666680b4e8a2p+0"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.2ca5d05ea7ab3p-24",
+      "x_hex": "0x1.a666685677fe3p+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.2ca5d05ea7ab3p-24",
+      "x_hex": "0x1.700001b02e5b9p+3"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.61e4f765fd8aep-9",
+      "x_hex": "0x1.675e2046c764ap+0"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.61e4f765fd8aep-9",
+      "x_hex": "0x1.a78a5ce5b4245p+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.61e4f765fd8aep-9",
+      "x_hex": "0x1.70fe5c91d14e3p+3"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.d2f1a9fbe76c9p-5",
+      "x_hex": "0x1.7ad42c3c9eecbp+0"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.d2f1a9fbe76c9p-5",
+      "x_hex": "0x1.be7a0f9096bb9p+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.d2f1a9fbe76c9p-5",
+      "x_hex": "0x1.84f9db22d0e56p+3"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.d70a3d70a3d71p-3",
+      "x_hex": "0x1.b8d4fdf3b645ap+0"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.d70a3d70a3d71p-3",
+      "x_hex": "0x1.03c6a7ef9db23p+2"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.d70a3d70a3d71p-3",
+      "x_hex": "0x1.c4a3d70a3d70ap+3"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.e147ae147ae14p-2",
+      "x_hex": "0x1.076c8b4395810p+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.e147ae147ae14p-2",
+      "x_hex": "0x1.3676c8b439581p+2"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.e147ae147ae14p-2",
+      "x_hex": "0x1.0e7ae147ae148p+4"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.851eb851eb852p-1",
+      "x_hex": "0x1.3b645a1cac083p+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.851eb851eb852p-1",
+      "x_hex": "0x1.73b645a1cac08p+2"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.851eb851eb852p-1",
+      "x_hex": "0x1.43d70a3d70a3dp+4"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.e147ae147ae14p-1",
+      "x_hex": "0x1.5ba5e353f7cedp+1"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.e147ae147ae14p-1",
+      "x_hex": "0x1.99ba5e353f7cep+2"
+    },
+    {
+      "role": "fresh_public_holdout",
+      "a_hex": "0x1.e147ae147ae14p-1",
+      "x_hex": "0x1.64f5c28f5c28fp+4"
+    }
+  ],
+  "surfaces": [
+    "Gamma_Survival",
+    "Gamma_Cumulative",
+    "ChiSquare_Survival",
+    "ChiSquare_Cumulative"
+  ],
+  "scales": [
+    0.5,
+    1.0,
+    2.0
+  ],
+  "reference_dps": [
+    90,
+    120
+  ],
+  "stability_limit": "1e-80",
+  "policy": "Use existing per-function/regime contracts without relaxing thresholds. Report every failure, including pre-existing lower-series/complement failures; no retuning using the public holdout. Binary64 arguments are authoritative. Relative assertions normalize by a positive normal reference; exact zero and subnormal results require separate absolute/ULP checks.",
+  "additional_required": [
+    "Gamma/ChiSquare inverse output-error references at p=.1,.5,.9 and shapes .01,.5,1,2",
+    "Poisson CDF/SF at k=0,1,10 around mean=k+2, plus inverse integer inequalities",
+    "P/Q consistency and monotonicity across A=1 and X=A+1",
+    "Arithmetic-built minimum subnormal and normal shapes; X=700,740,745; exact zeros",
+    "Invalid input worksheet errors, Try failure semantics and cap rejection",
+    "Permanent main-grid rows and exact-source Excel exports; hosted CI and completed review"
+  ],
+  "acceptance": "This protocol and generated reference cases alone do not complete #26. All listed layers must be executed and results retained."
+}
