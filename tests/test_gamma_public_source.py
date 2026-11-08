@@ -1,8 +1,10 @@
 """Bind the focused public port to the arithmetic and regressions tested in #242."""
+import base64
 import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +53,43 @@ class PublicGammaPortTests(unittest.TestCase):
         self.assertEqual(PROOF['baseline_assertions'] + PROOF['added_assertions'], 1947)
         self.assertEqual(policy['expected_assertions'], PROOF['expected_assertions'])
         self.assertEqual(policy['expected_assertions'], 1947)
+
+    def test_exact_source_focused_excel_evidence(self):
+        artifact = json.loads((ROOT / 'benchmark/gamma_public_integration/excel_artifact.json').read_text())
+        self.assertEqual(artifact['run_id'], 42524911524)
+        self.assertEqual(artifact['artifact_id'], 13634354530)
+        self.assertEqual(artifact['artifact_zip_sha256'],
+                         '719620d6c0ab75f74a75819824bbcaf6b2f0a06f29c25027b80c75fc9a33d790')
+        decoded = {}
+        for name, member in artifact['members'].items():
+            data = base64.b64decode(member['base64'], validate=True)
+            self.assertEqual(hashlib.sha256(data).hexdigest(), member['sha256'])
+            decoded[name] = data
+        record = json.loads(decoded['excel-certification.json'].decode('utf-8-sig'))
+        self.assertEqual(record['harness'], dict(entry_point='Test_STATS_PROBDIST_RunAll_CI',
+                                               assertions=1947, passed=1947, failed=0))
+        self.assertTrue(all(stage['status'] == 'PASS' for stage in record['stages'].values()))
+        self.assertTrue(all(not grid['exported'] for grid in record['grids'].values()))
+        self.assertEqual(record['log']['sha256'], 'sha256:' + hashlib.sha256(decoded['test-result.txt']).hexdigest())
+        merge = artifact['tested_merge']
+        raw = base64.b64decode(merge['commit_object_base64'], validate=True)
+        self.assertEqual(hashlib.sha1(b'commit ' + str(len(raw)).encode() + b'\0' + raw).hexdigest(), merge['sha'])
+        self.assertEqual(record['candidate_sha'], merge['sha'])
+        self.assertEqual(merge['sha'], 'f214de606b180e3b3781c5c9806aa051c7e636f4')
+        self.assertEqual(record['runner']['workflow']['sha'], merge['sha'])
+        self.assertEqual(record['runner']['workflow']['run_id'], artifact['run_id'])
+        head = 'fe4c90f47e7b58bd089d720046d50fdac9b4581e'
+        self.assertEqual(merge['head_sha'], head)
+        self.assertEqual(raw.decode().splitlines()[0], 'tree ' + merge['tree_sha'])
+        self.assertEqual(subprocess.check_output(['git', 'rev-parse', head + '^{tree}'], cwd=ROOT).decode().strip(),
+                         merge['tree_sha'])
+        policy = json.loads(subprocess.check_output(['git', 'show', head + ':.github/excel-evidence-policy.json'], cwd=ROOT))
+        self.assertEqual(policy['expected_assertions'], 1947)
+        self.assertEqual({s['path'] for s in record['sources']}, set(policy['regression_sources']))
+        for source in record['sources']:
+            blob = subprocess.check_output(['git', 'show', head + ':' + source['path']], cwd=ROOT)
+            self.assertEqual('sha256:' + hashlib.sha256(blob).hexdigest(), source['sha256'])
+            self.assertEqual((ROOT / source['path']).read_text(), blob.decode().replace('\r\n', '\n'))
 
 
 if __name__ == '__main__':
