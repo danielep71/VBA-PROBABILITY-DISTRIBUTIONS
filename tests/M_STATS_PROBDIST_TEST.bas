@@ -5036,6 +5036,211 @@ Private Sub Test_CN_GammaCumulative()
 End Sub
 
 
+Private Sub Test_GammaCF_CapAndXSeam()
+'==============================================================================
+' PURPOSE
+'   Verifies real iteration-cap failure propagation and adjacent-X monotonicity.
+' WHY
+'   A red accuracy probe must not hide a partial result reported as success.
+' BEHAVIOR
+'   Uses the unchanged 100000-iteration cap at A=1E14, X=A+1.
+'   Reuses the frozen boundary coordinates; this is not a fresh holdout.
+' ERROR POLICY
+'   Require False with a cap diagnostic in kernels and #NUM! in wrappers.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim A As Double
+    Dim X As Double
+    Dim V As Double
+    Dim Diag As String
+    Dim OK As Boolean
+    A = 1E+14
+    X = A + 1#
+    Diag = vbNullString
+    OK = PROB_TryGammaContinuedFractionQ(A, X, V, Diag)
+    AssertTrue "B6 natural cap ContinuedFractionQ", (Not OK)
+    AssertTrue "B6 cap diagnostic ContinuedFractionQ", _
+        (InStr(1, Diag, "continued fraction failed to converge in 100000 iterations", vbTextCompare) > 0)
+    Diag = vbNullString
+    OK = PROB_TryGammaRegularizedP(A, X, V, Diag)
+    AssertTrue "B6 natural cap RegularizedP", (Not OK)
+    AssertTrue "B6 cap diagnostic RegularizedP", _
+        (InStr(1, Diag, "continued fraction failed to converge in 100000 iterations", vbTextCompare) > 0)
+    Diag = vbNullString
+    OK = PROB_TryGammaRegularizedQ(A, X, V, Diag)
+    AssertTrue "B6 natural cap RegularizedQ", (Not OK)
+    AssertTrue "B6 cap diagnostic RegularizedQ", _
+        (InStr(1, Diag, "continued fraction failed to converge in 100000 iterations", vbTextCompare) > 0)
+    Diag = vbNullString
+    AssertErrorCode "B6 cap Gamma Cumulative", K_STATS_Gamma_Cumulative(X, A, 1#, Diag), xlErrNum
+    AssertTrue "B6 public cap diagnostic Cumulative", _
+        (InStr(1, Diag, "continued fraction failed to converge in 100000 iterations", vbTextCompare) > 0)
+    Diag = vbNullString
+    AssertErrorCode "B6 cap Gamma Survival", K_STATS_Gamma_Survival(X, A, 1#, Diag), xlErrNum
+    AssertTrue "B6 public cap diagnostic Survival", _
+        (InStr(1, Diag, "continued fraction failed to converge in 100000 iterations", vbTextCompare) > 0)
+    V = CDbl(K_STATS_Gamma_Survival(2#, 1#, 1#, Diag))
+    AssertClose "B6 recovery after cap", V, Exp(-2#), 1E-15
+    AssertTrue "B6 recovery clears cap diagnostic", (Len(Diag) = 0)
+    AssertTrue "B6 X seam 00 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 00 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 00 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 00 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 01 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 01 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 01 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 01 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 02 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 02 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 02 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 02 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 03 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 03 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 03 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 03 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 04 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 04 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 04 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 04 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 05 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 05 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 05 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 05 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 06 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 06 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 06 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 06 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 07 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
+    AssertTrue "B6 X seam 07 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
+    AssertTrue "B6 X seam 07 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
+    AssertTrue "B6 X seam 07 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
+    AssertTrue "B6 X seam 08 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 08 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 08 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 08 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 09 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
+    AssertTrue "B6 X seam 09 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
+    AssertTrue "B6 X seam 09 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
+    AssertTrue "B6 X seam 09 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
+    AssertTrue "B6 X seam 10 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 10 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 10 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 10 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 11 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 11 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 11 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 11 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 12 Cumulative 0", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 12 Cumulative 1", _
+        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 12 Survival 0", _
+        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "B6 X seam 12 Survival 1", _
+        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
+End Sub
+
 Private Sub Test_GammaCF_AdditionalCallers()
 '==============================================================================
 ' PURPOSE
@@ -5677,6 +5882,7 @@ Private Sub Test_CN_GammaSurvival()
     Debug.Print "-- Gamma survival"
     Test_GammaCF_Coverage
     Test_GammaCF_AdditionalCallers
+    Test_GammaCF_CapAndXSeam
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
