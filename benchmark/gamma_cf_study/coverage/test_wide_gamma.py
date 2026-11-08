@@ -1,6 +1,9 @@
 """Wide model identity, revealed replays, independent constants and private port."""
 from fractions import Fraction as F
 import hashlib
+import base64
+import re
+import sys
 import json
 import subprocess
 import unittest
@@ -30,6 +33,13 @@ class WideGammaTests(unittest.TestCase):
         for row in result['rows']:
             self.assertEqual([v.hex() for v in public(*[float.fromhex(row[k]) for k in ('a_hex','x_hex')])],row['values_hex'])
             self.assertEqual([m['dps'] for m in row['oracle_methods']],[160,320])
+            with mp.workdps(320):
+                for j,h in enumerate(row['values_hex']):
+                    value=float.fromhex(h);ref=mp.mpf(row['reference'][j])
+                    self.assertEqual(float(ref).hex(),row['reference_hex'][j])
+                    self.assertGreaterEqual(value,0.);self.assertLessEqual(value,1.)
+                    if float(ref)<sys.float_info.min:self.assertEqual(h,row['reference_hex'][j])
+                    else:self.assertLessEqual(abs(mp.mpf(value)/ref-1),mp.mpf(('3e-15','5e-15')[j]))
         # Retain all originally encountered oracle failures, even though completed.
         initial=json.loads((HERE/'wide_complete_screen.json').read_text())
         self.assertEqual(initial['status'],'REJECT')
@@ -38,6 +48,50 @@ class WideGammaTests(unittest.TestCase):
                              ('screen_wide_complete_v2.py','9cbb53b02c15a0dc2ab4b59d9ab6c59acec30631')]:
             blob=subprocess.check_output(['git','show',sha+':'+(HERE/filename).relative_to(ROOT).as_posix()],cwd=ROOT)
             self.assertEqual((HERE/filename).read_bytes(),blob)
+
+    def test_retained_exact_source_excel_evidence(self):
+        artifact=json.loads((HERE/'excel_wide_gamma_artifact.json').read_text())
+        self.assertEqual(artifact['run_id'],42521579897)
+        self.assertEqual(artifact['job_id'],128856020382)
+        self.assertEqual(artifact['artifact_id'],13632789471)
+        self.assertEqual(artifact['artifact_zip_sha256'],'aeb7dd577c2abcff43804fccdc7bc269c012670dea1fda06b287dbff89c389d5')
+        decoded={}
+        for name,entry in artifact['members'].items():
+            raw=base64.b64decode(entry['base64'],validate=True)
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),entry['sha256'])
+            decoded[name]=raw
+        record=json.loads(decoded['excel-certification.json'].decode('utf-8-sig'))
+        merge=artifact['tested_merge'];sha='d5b2a054676f643ddd1ae42099487cdeb50251c7'
+        head='b8efaf3c7810c48fadbfece38950ded190f79a56'
+        self.assertEqual(merge['sha'],sha);self.assertEqual(merge['head_sha'],head)
+        raw=base64.b64decode(merge['commit_object_base64'],validate=True)
+        self.assertEqual(hashlib.sha1(b'commit '+str(len(raw)).encode()+b'\0'+raw).hexdigest(),sha)
+        lines=raw.decode().splitlines()
+        self.assertEqual(lines[0],'tree '+merge['tree_sha'])
+        self.assertEqual({line.split()[1] for line in lines if line.startswith('parent ')},
+                         {head,'6dad2d6db2fba5ef1136723e98771eef8e59c03b'})
+        self.assertEqual(subprocess.check_output(['git','rev-parse',head+'^{tree}'],cwd=ROOT).decode().strip(),merge['tree_sha'])
+        self.assertEqual(record['candidate_sha'],sha)
+        self.assertEqual(record['runner']['workflow']['sha'],sha)
+        self.assertEqual(record['runner']['workflow']['run_id'],42521579897)
+        self.assertEqual(record['harness'],dict(entry_point='Test_STATS_PROBDIST_RunAll_CI',assertions=10848,passed=10807,failed=41))
+        for stage in ('import','compile','cleanup'):self.assertEqual(record['stages'][stage]['status'],'PASS')
+        self.assertEqual(record['stages']['regression']['status'],'FAIL')
+        self.assertTrue(all(not grid['exported'] for grid in record['grids'].values()))
+        self.assertEqual(record['log']['sha256'],'sha256:'+hashlib.sha256(decoded['test-result.txt']).hexdigest())
+        policy=json.loads(subprocess.check_output(['git','show',head+':.github/excel-evidence-policy.json'],cwd=ROOT))
+        self.assertEqual(policy['expected_assertions'],10848)
+        self.assertEqual({r['path'] for r in record['sources']},set(policy['regression_sources']))
+        for source in record['sources']:
+            blob=subprocess.check_output(['git','show',head+':'+source['path']],cwd=ROOT)
+            self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
+            self.assertEqual((ROOT/source['path']).read_text(),blob.decode().replace('\r\n','\n'))
+        def failures(raw):return re.findall(r'^\[[^\]]+\]   (.*)$',raw.decode('utf-8-sig').replace('\r\n','\n'),re.M)
+        old=json.loads((HERE/'excel_extended_gamma_artifact.json').read_text())
+        previous=failures(base64.b64decode(old['members']['test-result.txt']['base64']))
+        current=failures(decoded['test-result.txt'])
+        self.assertEqual(len(current),41);self.assertEqual(current,previous)
+        self.assertFalse(any(s.startswith('WG ') for s in current))
 
     def test_declared_shapes_are_disjoint(self):
         p=json.loads((HERE/'wide_protocol.json').read_text());old=set()
