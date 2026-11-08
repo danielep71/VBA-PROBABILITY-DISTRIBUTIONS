@@ -367,3 +367,30 @@ does not kill unrelated Excel processes.
 
 A cleanup failure makes the overall run non-green even when all regression
 assertions passed.
+
+### Certified candidates outside the integration ancestry
+
+The retained record can name an experimental Excel candidate that is not an
+ancestor of the integration commit. Even a non-shallow single-branch clone may
+lack that object. Run `python benchmark/check_excel_certification.py
+--record benchmark/excel_regression_record.json --require-pass --fetch-candidate`
+to fetch the exact recorded SHA from `origin` if absent. Accuracy and release
+workflows opt in to this retrieval. Offline validation remains the default and
+fails if the object is absent. Retrieval neither rewrites the record nor changes
+the source/grid checks; an unavailable candidate remains a blocking failure.
+
+### Mixed exports and isolated tooling fixtures
+
+A fresh export can change the main grid while reproducing the holdout bytes
+exactly. The manifest writer validates the complete recorded export against a
+snapshot of the pending tracked files before accepting the unchanged grid.
+It does not move the branch or the stash reference. A mismatched companion grid
+or source digest still fails validation; the export record and both manifests
+must be committed atomically with their corresponding grids.
+
+Positive tooling fixtures use the coherent historical evidence snapshot
+`2a3fd9e19df30c1e78c8a8ed50092f743dc6f48d` in throwaway clones, with the current
+writer, renderer and refresh tools. Their success does not certify the live
+checkout. CI separately checks live source identities, export records, grids,
+counts and summaries, and the negative controls continue to reject stale or
+contradictory evidence.

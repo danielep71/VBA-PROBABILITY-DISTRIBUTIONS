@@ -3,7 +3,8 @@ Fixture proof that `refresh_evidence.py --check` changes nothing (#88), and
 that the default refresh mode still rewrites the committed summaries.
 
 Every case runs the real refresh_evidence.main() in a private clone of this
-repository, never in the real checkout. The clone carries the working-tree
+repository, reset to the pinned valid evidence baseline, never in the real
+checkout. The clone carries the working-tree
 copy of the benchmark tooling and commits it, so it starts as a clean tree. Its
 accuracy and holdout summaries are committed stale on purpose: a verify step
 that writes to its committed path then changes their bytes, which an
@@ -85,10 +86,15 @@ def fixture(root):
     """A clean clone whose committed summaries are stale."""
     subprocess.run(["git", "clone", "--quiet", "--shared", ROOT, root],
                    check=True, capture_output=True)
+    # Start with real coherent historical evidence, then exercise CURRENT tools.
+    # An unexported live test module must not invalidate the positive fixture.
+    git(root, "checkout", "--quiet", "2a3fd9e19df30c1e78c8a8ed50092f743dc6f48d")
     for rel in filter(None, git(ROOT, "ls-files", "-z", "--", "benchmark").decode().split("\0")):
         source = os.path.join(ROOT, *rel.split("/"))
         if rel.endswith(".py") and os.path.isfile(source):
-            shutil.copyfile(source, os.path.join(root, *rel.split("/")))
+            target = os.path.join(root, *rel.split("/"))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copyfile(source, target)
     for rel in SUMMARIES:
         with open(os.path.join(root, *rel.split("/")), "a", encoding="utf-8", newline="\n") as f:
             f.write(STALE)

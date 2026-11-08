@@ -272,6 +272,46 @@ try:
 finally:
     shutil.rmtree(root, ignore_errors=True)
 
+# A full single-branch clone can lack a certified side-branch candidate.
+root, base_sha, policy = base_repo()
+clone_parent = tempfile.mkdtemp()
+try:
+    run(root, "git", "branch", "integration", base_sha)
+    run(root, "git", "checkout", "-qb", "certified")
+    write(root, "benchmark/candidate-note.md", "certified side branch\n")
+    candidate_sha = commit(root, "certified candidate outside integration ancestry")
+    record = good_record(root, candidate_sha, policy)
+    clone = os.path.join(clone_parent, "clone")
+    proc = run(root, "git", "clone", "--no-local", "--single-branch",
+               "--branch", "integration", root, clone)
+    check(proc.returncode == 0, "single-branch fixture clone succeeds")
+    check(E.git_text(clone, "rev-parse", "--is-shallow-repository").strip() == "false",
+          "missing-candidate fixture is a full clone")
+    check(run(clone, "git", "cat-file", "-e", candidate_sha).returncode != 0,
+          "certified candidate is genuinely absent before retrieval")
+    expect_fail(clone, record, "offline verification rejects absent candidate",
+                policy_ref=base_sha, evidence_ref=base_sha, require_pass=True)
+    for bad_sha in (None, "HEAD", "--upload-pack=bad", "f" * 40):
+        try:
+            E.fetch_candidate(clone, bad_sha)
+        except E.CertificationError:
+            pass
+        else:
+            FAILS.append("invalid or unavailable candidate must fail retrieval")
+    E.fetch_candidate(clone, candidate_sha)
+    E.validate_record(record, clone, policy_ref=base_sha, evidence_ref=base_sha,
+                      require_pass=True)
+    # Existing objects require no network and source drift still rejects.
+    run(clone, "git", "remote", "remove", "origin")
+    E.fetch_candidate(clone, candidate_sha)
+    drifted = copy.deepcopy(record)
+    drifted["sources"][0]["sha256"] = "sha256:" + "0" * 64
+    expect_fail(clone, drifted, "retrieval does not bypass source digest checks",
+                policy_ref=base_sha, evidence_ref=base_sha, require_pass=True)
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+    shutil.rmtree(clone_parent, ignore_errors=True)
+
 if FAILS:
     print("FAIL: Excel certification fixtures")
     for item in FAILS:
