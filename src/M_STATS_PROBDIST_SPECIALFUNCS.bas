@@ -321,6 +321,16 @@ Private Const PROB_NT_UNDERFLOW_Z  As Double = 38.5   'At approximately 38.49 th
 ' LOGARITHMIC GAMMA
 '==============================================================================
 
+' BEGIN public Gamma bit types
+Private Type PROB_DD_Number
+    Value As Double
+End Type
+Private Type PROB_DD_Words
+    Low As Long
+    High As Long
+End Type
+' END public Gamma bit types
+
 Public Function PROB_LogGamma( _
     ByVal Z As Double) _
     As Double
@@ -2048,57 +2058,37 @@ Public Function PROB_TryGammaRegularizedP( _
     As Boolean
 '
 '==============================================================================
-' PROB_TryGammaRegularizedP
-'------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the regularized lower incomplete gamma function P(A, X).
-'
+'   Computes the regularized Gamma P tail through the scaled two-Double pair.
 ' PRECONDITION
-'   A > 0 and X >= 0.
-'
-' RETURNS
-'   Boolean
-'     TRUE  => Result holds P(A, X).
-'     FALSE => an inner series or continued fraction failed to converge.
+'   Finite A > 0 and X >= 0. X = 0 is returned exactly.
+' METHOD
+'   Lower Q is reconstructed directly from log P, before binary64 rounding.
+'   The frozen wide kernel handles the region outside the extended interior.
+' ERROR POLICY
+'   False clears Result and reports invalid inputs, arithmetic failure or cap.
+'   Retains the established 100000-iteration cap diagnostic wording.
+' UPDATED
+'   2026-11-08 - #24/#26 public integration candidate; acceptance pending.
 '==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Value               As Double          'Working result
-
-'------------------------------------------------------------------------------
-' HANDLE BOUNDARY
-'------------------------------------------------------------------------------
-    'Return the boundary value exactly
-        If X <= 0# Then
-            Result = 0#
-            PROB_TryGammaRegularizedP = True
-            Exit Function
+    Dim P As Double, Q As Double
+    Result = 0#: FailMsg = ""
+    If Not PROB_DD_WG_Pair(A, X, P, Q, FailMsg) Then
+        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = "Incomplete gamma continued fraction failed to converge in 100000 iterations for A = " & A
+        ElseIf InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = "Incomplete gamma series failed to converge in 100000 iterations for A = " & A
+        ElseIf Len(FailMsg) = 0 Then
+            FailMsg = "Gamma kernel requires finite A > 0 and X >= 0"
         End If
-
-'------------------------------------------------------------------------------
-' COMPUTE
-'------------------------------------------------------------------------------
-    'Use the series expansion in the lower region and the continued fraction above
-        If X < A + 1# Then
-            If Not PROB_TryGammaSeriesP(A, X, Value, FailMsg) Then Exit Function
-        Else
-            If Not PROB_TryGammaContinuedFractionQ(A, X, Value, FailMsg) Then Exit Function
-            Value = 1# - Value
-        End If
-
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clamp small numerical overshoots
-        If Value < 0# Then Value = 0#
-        If Value > 1# Then Value = 1#
-
-    'Return the regularized value
-        Result = Value
-    'Return success
-        PROB_TryGammaRegularizedP = True
+        Exit Function
+    End If
+    If Not PROB_IsFinite(P) Or P < 0# Or P > 1# Then
+        FailMsg = "Gamma kernel produced an invalid probability"
+        Exit Function
+    End If
+    Result = P
+    PROB_TryGammaRegularizedP = True
 End Function
 
 
@@ -2110,60 +2100,37 @@ Public Function PROB_TryGammaRegularizedQ( _
     As Boolean
 '
 '==============================================================================
-' PROB_TryGammaRegularizedQ
-'------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the regularized upper incomplete gamma function Q(A, X) = 1 - P(A, X).
-'
+'   Computes the regularized Gamma Q tail through the scaled two-Double pair.
 ' PRECONDITION
-'   A > 0 and X >= 0.
-'
-' WHY THIS EXISTS SEPARATELY
-'   Q is not usefully recovered as 1 - P. For a chi-square with 10 degrees of
-'   freedom at x = 200, Q is 1.6E-37 while 1 - P evaluates to exactly zero. Any
-'   right-tail p-value has to come from here.
-'
-'   Note: below X = A + 1 this routine still forms Q as 1 - P from the series,
-'   which loses relative accuracy when Q is small there; tracked by #24.
+'   Finite A > 0 and X >= 0. X = 0 is returned exactly.
+' METHOD
+'   Lower Q is reconstructed directly from log P, before binary64 rounding.
+'   The frozen wide kernel handles the region outside the extended interior.
+' ERROR POLICY
+'   False clears Result and reports invalid inputs, arithmetic failure or cap.
+'   Retains the established 100000-iteration cap diagnostic wording.
+' UPDATED
+'   2026-11-08 - #24/#26 public integration candidate; acceptance pending.
 '==============================================================================
-'
-'------------------------------------------------------------------------------
-' DECLARE
-'------------------------------------------------------------------------------
-    Dim Value               As Double          'Working result
-
-'------------------------------------------------------------------------------
-' HANDLE BOUNDARY
-'------------------------------------------------------------------------------
-    'Return the boundary value exactly
-        If X <= 0# Then
-            Result = 1#
-            PROB_TryGammaRegularizedQ = True
-            Exit Function
+    Dim P As Double, Q As Double
+    Result = 0#: FailMsg = ""
+    If Not PROB_DD_WG_Pair(A, X, P, Q, FailMsg) Then
+        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = "Incomplete gamma continued fraction failed to converge in 100000 iterations for A = " & A
+        ElseIf InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = "Incomplete gamma series failed to converge in 100000 iterations for A = " & A
+        ElseIf Len(FailMsg) = 0 Then
+            FailMsg = "Gamma kernel requires finite A > 0 and X >= 0"
         End If
-
-'------------------------------------------------------------------------------
-' COMPUTE
-'------------------------------------------------------------------------------
-    'Use the series expansion in the lower region and the continued fraction above
-        If X < A + 1# Then
-            If Not PROB_TryGammaSeriesP(A, X, Value, FailMsg) Then Exit Function
-            Value = 1# - Value
-        Else
-            If Not PROB_TryGammaContinuedFractionQ(A, X, Value, FailMsg) Then Exit Function
-        End If
-
-'------------------------------------------------------------------------------
-' RETURN SUCCESS
-'------------------------------------------------------------------------------
-    'Clamp small numerical overshoots
-        If Value < 0# Then Value = 0#
-        If Value > 1# Then Value = 1#
-
-    'Return the regularized value
-        Result = Value
-    'Return success
-        PROB_TryGammaRegularizedQ = True
+        Exit Function
+    End If
+    If Not PROB_IsFinite(Q) Or Q < 0# Or Q > 1# Then
+        FailMsg = "Gamma kernel produced an invalid probability"
+        Exit Function
+    End If
+    Result = Q
+    PROB_TryGammaRegularizedQ = True
 End Function
 
 
@@ -2848,4 +2815,1767 @@ Public Function PROB_NormalUpperTail( _
         End If
 End Function
 
+
+' BEGIN generated public Gamma integration
+Private Function PROB_DD_SP_FromWords(ByVal HighWord As Long, ByVal LowWord As Long) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_FromWords: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Words As PROB_DD_Words, Number As PROB_DD_Number
+    Words.High = HighWord
+    Words.Low = LowWord
+    LSet Number = Words
+    PROB_DD_SP_FromWords = Number.Value
+End Function
+
+Private Function PROB_DD_SP_Negative(ByVal A As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_Negative: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Number As PROB_DD_Number, Words As PROB_DD_Words
+    Number.Value = A
+    LSet Words = Number
+    PROB_DD_SP_Negative = (Words.High < 0)
+End Function
+
+Private Function PROB_DD_SP_SignedZero(ByVal Negative As Boolean) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_SignedZero: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If Negative Then PROB_DD_SP_SignedZero = PROB_DD_SP_FromWords(&H80000000, 0)
+End Function
+
+Private Function PROB_DD_SP_Shift(ByVal X As Double, ByVal Exponent As Long) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_Shift: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim J As Long
+    If Exponent < -1074 Or Exponent > 1024 Then Err.Raise 5
+    If Exponent >= 0 Then
+        For J = 1 To Exponent
+            X = X * 2#
+        Next J
+    Else
+        For J = 1 To -Exponent
+            X = X * 0.5
+        Next J
+    End If
+    PROB_DD_SP_Shift = X
+End Function
+
+Private Sub PROB_DD_SP_Frexp(ByVal X As Double, ByRef Mantissa As Double, ByRef Exponent As Long)
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_Frexp: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Exponent = 0
+    Mantissa = X
+    If X = 0# Then Exit Sub
+    Do While Abs(Mantissa) >= 1#
+        Mantissa = Mantissa * 0.5
+        Exponent = Exponent + 1
+    Loop
+    Do While Abs(Mantissa) < 0.5
+        Mantissa = Mantissa * 2#
+        Exponent = Exponent - 1
+    Loop
+End Sub
+
+Private Function PROB_DD_SP_TwoSum(ByVal A As Double, ByVal B As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_TwoSum: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    PROB_DD_SP_TwoSum = Array(S, AR + BR)
+End Function
+
+Private Function PROB_DD_SP_Product(ByVal A As Double, ByVal B As Double, _
+    ByRef H As Double, ByRef L As Double, ByRef Exponent As Long) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SP_Product: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AM As Double, BM As Double, AE As Long, BE As Long, Shift As Long
+    Dim CA As Double, CB As Double, AH As Double, BH As Double
+    Dim AL As Double, BL As Double, P As Double, E As Double, T As Double
+    On Error GoTo Err_Handler
+    H = 0#: L = 0#: Exponent = 0
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(B) Then Exit Function
+    If A = 0# Or B = 0# Then
+        H = PROB_DD_SP_SignedZero(PROB_DD_SP_Negative(A) Xor PROB_DD_SP_Negative(B))
+        PROB_DD_SP_Product = True
+        Exit Function
+    End If
+    PROB_DD_SP_Frexp A, AM, AE
+    PROB_DD_SP_Frexp B, BM, BE
+    P = AM * BM
+    CA = 134217729# * AM
+    CB = 134217729# * BM
+    T = CA - AM
+    AH = CA - T
+    T = CB - BM
+    BH = CB - T
+    AL = AM - AH
+    BL = BM - BH
+    T = AH * BH
+    E = T - P
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    PROB_DD_SP_Frexp P, H, Shift
+    L = PROB_DD_SP_Shift(E, -Shift)
+    Exponent = AE + BE + Shift
+    PROB_DD_SP_Product = True
+    Exit Function
+Err_Handler:
+    H = 0#: L = 0#: Exponent = 0
+    PROB_DD_SP_Product = False
+End Function
+
+Private Function PROB_DD_SGD_Try(ByVal Operation As Long, _
+    ByVal AH As Double, ByVal AL As Double, ByVal AE As Long, _
+    ByVal BH As Double, ByVal BL As Double, ByVal BE As Long, _
+    ByRef H As Double, ByRef L As Double, ByRef E As Long, Optional ByRef Diagnostic As String = "") As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SGD_Try: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Pair As Variant, Gap As Long, Shift As Long, Factor As Double
+    Dim T As Double, TE As Long, RawH As Double, RawL As Double
+    On Error GoTo Err_Handler
+    H = 0#: L = 0#: E = 0
+    If Not PROB_DD_SGD_Valid(AH, AL, AE) Then
+        Diagnostic = "input A H=" & PROB_DD_SG_Bits(AH) & " L=" & PROB_DD_SG_Bits(AL) & " sum=" & PROB_DD_SG_Bits(AH + AL)
+        Exit Function
+    End If
+    If Not PROB_DD_SGD_Valid(BH, BL, BE) Then
+        Diagnostic = "input B H=" & PROB_DD_SG_Bits(BH) & " L=" & PROB_DD_SG_Bits(BL) & " sum=" & PROB_DD_SG_Bits(BH + BL)
+        Exit Function
+    End If
+    If Operation < 1 Or Operation > 4 Then Exit Function
+    If Operation = 2 Then
+        BH = -BH: BL = -BL
+        Operation = 1
+    End If
+    If Operation = 1 Then
+        If AH = 0# Then
+            If BH = 0# Then
+                H = PROB_DD_SP_SignedZero(PROB_DD_SP_Negative(AH) And PROB_DD_SP_Negative(BH))
+            Else
+                H = BH: L = BL: E = BE
+            End If
+            PROB_DD_SGD_Try = True
+            Exit Function
+        End If
+        If BH = 0# Then
+            H = AH: L = AL: E = AE
+            PROB_DD_SGD_Try = True
+            Exit Function
+        End If
+        If AE < BE Then
+            T = AH: AH = BH: BH = T
+            T = AL: AL = BL: BL = T
+            TE = AE: AE = BE: BE = TE
+        End If
+        Gap = AE - BE
+        If Gap > 120 Then
+            H = AH: L = AL: E = AE
+            PROB_DD_SGD_Try = True
+            Exit Function
+        End If
+        'One multiplication rounds a tiny aligned low component only once.
+        Factor = PROB_DD_SP_Shift(1#, -Gap)
+        BH = BH * Factor
+        BL = BL * Factor
+        Pair = PROB_DD_PV2_Add(Array(AH, AL), Array(BH, BL))
+        E = AE
+    Else
+        If Operation = 4 And BH = 0# Then Exit Function
+        If AH = 0# Or BH = 0# Then
+            H = PROB_DD_SP_SignedZero(PROB_DD_SP_Negative(AH) Xor PROB_DD_SP_Negative(BH))
+            PROB_DD_SGD_Try = True
+            Exit Function
+        End If
+        If Operation = 3 Then
+            Pair = PROB_DD_PV2_Mul(Array(AH, AL), Array(BH, BL))
+            E = AE + BE
+        Else
+            Pair = PROB_DD_PV2_Div(Array(AH, AL), Array(BH, BL))
+            E = AE - BE
+        End If
+    End If
+    Pair = PROB_DD_PV2_Sum(CDbl(Pair(0)), CDbl(Pair(1)))
+    RawH = Pair(0): RawL = Pair(1)
+    If RawH = 0# Then
+        H = RawH: L = 0#: E = 0
+    Else
+        PROB_DD_SP_Frexp RawH, H, Shift
+        'If RawH is subnormal, the nonoverlapping RawL must be zero.
+        If RawL <> 0# Then
+            Factor = PROB_DD_SP_Shift(1#, -Shift)
+            L = RawL * Factor
+        End If
+        E = E + Shift
+    End If
+    PROB_DD_SGD_Canonicalize H, L, E
+    If Not PROB_DD_SGD_Valid(H, L, E) Then
+        Diagnostic = "output H=" & PROB_DD_SG_Bits(H) & " L=" & PROB_DD_SG_Bits(L) & " E=" & CStr(E) & " sum=" & PROB_DD_SG_Bits(H + L)
+        GoTo Err_Handler
+    End If
+    PROB_DD_SGD_Try = True
+    Exit Function
+Err_Handler:
+    If Len(Diagnostic) = 0 Then Diagnostic = "runtime " & Err.Description
+    H = 0#: L = 0#: E = 0
+    PROB_DD_SGD_Try = False
+End Function
+
+Private Function PROB_DD_SGD_Round(ByVal H As Double, ByVal L As Double, _
+    ByVal Exponent As Long, ByRef Result As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SGD_Round: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Units As Double, LowUnits As Double, Nearest As Double
+    Dim SumValue As Double, R As Double, Residual As Double, SignValue As Double
+    Dim Pair As Variant, Odd As Boolean
+    On Error GoTo Err_Handler
+    Result = 0#
+    If Not PROB_IsFinite(H) Then Exit Function
+    If Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        If L <> 0# Then Exit Function
+        Result = H
+        PROB_DD_SGD_Round = True
+        Exit Function
+    End If
+    If Not PROB_DD_SGD_Valid(H, L, Exponent) Then Exit Function
+    If Exponent > 1024 Then Exit Function
+    If Exponent >= -1021 Then
+        Result = PROB_DD_SP_Shift(H, Exponent)
+        If Not PROB_IsFinite(Result) Then GoTo Err_Handler
+        PROB_DD_SGD_Round = True
+        Exit Function
+    End If
+    If Exponent < -1074 Then
+        Result = PROB_DD_SP_SignedZero(H < 0#)
+        PROB_DD_SGD_Round = True
+        Exit Function
+    End If
+    SignValue = 1#
+    If H < 0# Then SignValue = -1#
+    Units = PROB_DD_SP_Shift(Abs(H), Exponent + 1074)
+    LowUnits = PROB_DD_SP_Shift(SignValue * L, Exponent + 1074)
+    Nearest = VBA.Round(Units, 0)
+    R = Units - Nearest
+    Pair = PROB_DD_SP_TwoSum(R, LowUnits)
+    R = Pair(0)
+    Residual = Pair(1)
+    'Nearest can exceed Long: parity is evaluated with exact Double arithmetic.
+    Odd = (Nearest - 2# * Fix(Nearest * 0.5) <> 0#)
+    If R > 0.5 Or (R = 0.5 And (Residual > 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest + 1#
+    ElseIf R < -0.5 Or (R = -0.5 And (Residual < 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest - 1#
+    End If
+    If Nearest = 0# Then
+        Result = PROB_DD_SP_SignedZero(H < 0#)
+    Else
+        Result = PROB_DD_SP_Shift(Nearest, -1074)
+        Result = SignValue * Result
+    End If
+    PROB_DD_SGD_Round = True
+    Exit Function
+Err_Handler:
+    Result = 0#
+    PROB_DD_SGD_Round = False
+End Function
+
+Private Function PROB_DD_SGD_Half(ByVal H As Double, ByVal L As Double) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SGD_Half: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If Abs(H) = 0.5 And ((H > 0# And L < 0#) Or (H < 0# And L > 0#)) Then
+        PROB_DD_SGD_Half = PROB_DD_SP_FromWords(&H3C800000&, 0)
+    Else
+        PROB_DD_SGD_Half = PROB_DD_SP_FromWords(&H3C900000&, 0)
+    End If
+End Function
+
+Private Function PROB_DD_SGD_Even(ByVal H As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SGD_Even: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim N As PROB_DD_Number, W As PROB_DD_Words
+    N.Value = H
+    LSet W = N
+    PROB_DD_SGD_Even = ((W.Low And 1&) = 0)
+End Function
+
+Private Function PROB_DD_SGD_Valid(ByVal H As Double, ByVal L As Double, ByVal E As Long) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SGD_Valid: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Half As Double
+    If E < -32767 Or E > 32767 Then Exit Function
+    If Not PROB_IsFinite(H) Or Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        PROB_DD_SGD_Valid = (L = 0# And E = 0)
+        Exit Function
+    End If
+    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
+    Half = PROB_DD_SGD_Half(H, L)
+    PROB_DD_SGD_Valid = (Abs(L) < Half Or (Abs(L) = Half And PROB_DD_SGD_Even(H)))
+End Function
+
+Private Sub PROB_DD_SGD_Canonicalize(ByRef H As Double, ByRef L As Double, ByRef E As Long)
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SGD_Canonicalize: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Half As Double, N As PROB_DD_Number, W As PROB_DD_Words, OldH As Double, StepValue As Double
+    Dim IncreaseMagnitude As Boolean
+    If H = 0# Then Exit Sub
+    Half = PROB_DD_SGD_Half(H, L)
+    If Abs(L) < Half Or (Abs(L) = Half And PROB_DD_SGD_Even(H)) Then Exit Sub
+    If Abs(L) > 2# * Half Then Err.Raise 5, "PROB_DD_SGD_Canonicalize", "residual exceeds repair range"
+    OldH = H
+    IncreaseMagnitude = ((H > 0# And L > 0#) Or (H < 0# And L < 0#))
+    N.Value = H
+    LSet W = N
+    If IncreaseMagnitude Then
+        If W.Low = -1 Then
+            W.Low = 0: W.High = W.High + 1
+        ElseIf W.Low = &H7FFFFFFF Then
+            W.Low = &H80000000
+        Else
+            W.Low = W.Low + 1
+        End If
+    Else
+        If W.Low = 0 Then
+            W.Low = -1: W.High = W.High - 1
+        ElseIf W.Low = &H80000000 Then
+            W.Low = &H7FFFFFFF
+        Else
+            W.Low = W.Low - 1
+        End If
+    End If
+    LSet N = W
+    H = N.Value
+    StepValue = H - OldH
+    L = L - StepValue
+    If Abs(H) >= 1# Then
+        H = H * 0.5: L = L * 0.5: E = E + 1
+    ElseIf Abs(H) < 0.5 Then
+        H = H * 2#: L = L * 2#: E = E - 1
+    End If
+End Sub
+
+Private Function PROB_DD_SG_Bits(ByVal X As Double) As String
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Bits: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim N As PROB_DD_Number, W As PROB_DD_Words
+    N.Value = X
+    LSet W = N
+    PROB_DD_SG_Bits = Hex$(W.High) & ":" & Hex$(W.Low)
+End Function
+
+Private Function PROB_DD_SG_Coerce(ByVal V As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Coerce: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, E As Long
+    If IsArray(V) Then
+        PROB_DD_SG_Coerce = V
+    Else
+        If Not PROB_IsFinite(CDbl(V)) Then Err.Raise 5
+        PROB_DD_SP_Frexp CDbl(V), H, E
+        PROB_DD_SG_Coerce = Array(H, 0#, E)
+    End If
+End Function
+
+Private Function PROB_DD_SG_Op(ByVal Operation As Long, ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Op: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant, H As Double, L As Double, E As Long, Fault As String
+    U = PROB_DD_SG_Coerce(A): V = PROB_DD_SG_Coerce(B)
+    If Not PROB_DD_SGD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
+        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E, Fault) Then
+        Err.Raise 5, "PROB_DD_SG_Op", Fault & " operation " & CStr(Operation) & " A=" & CStr(U(0)) & ";" & CStr(U(1)) & ";" & CStr(U(2)) & _
+            " B=" & CStr(V(0)) & ";" & CStr(V(1)) & ";" & CStr(V(2))
+    End If
+    PROB_DD_SG_Op = Array(H, L, E)
+End Function
+
+Private Function PROB_DD_SG_Add(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Add: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Add = PROB_DD_SG_Op(1, A, B)
+End Function
+
+Private Function PROB_DD_SG_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Sub: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Sub = PROB_DD_SG_Op(2, A, B)
+End Function
+
+Private Function PROB_DD_SG_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Mul: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Mul = PROB_DD_SG_Op(3, A, B)
+End Function
+
+Private Function PROB_DD_SG_Div(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Div: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Div = PROB_DD_SG_Op(4, A, B)
+End Function
+
+Private Function PROB_DD_SG_Neg(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Neg: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Neg = Array(-CDbl(A(0)), -CDbl(A(1)), CLng(A(2)))
+End Function
+
+Private Function PROB_DD_SG_Value(ByVal A As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Value: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Result As Double
+    If Not PROB_DD_SGD_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5, "PROB_DD_SG_Value", "rounding refused"
+    PROB_DD_SG_Value = Result
+End Function
+
+Private Function PROB_DD_SG_Small(ByVal Term As Variant, ByVal Total As Variant) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Small: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Small = (CDbl(Term(0)) = 0# Or _
+        (CDbl(Total(0)) <> 0# And CLng(Term(2)) < CLng(Total(2)) - 108))
+End Function
+
+Private Function PROB_DD_SG_Ln2() As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Ln2: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_SG_Ln2 = Array(PROB_DD_SP_FromWords(&H3FE62E42&, &HFEFA39EF&), PROB_DD_SP_FromWords(&H3C7ABC9E&, &H3B39803F&), 0)
+End Function
+
+Private Function PROB_DD_SG_Log(ByVal X As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Log: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim F As Double, E As Long, Z As Variant, Square As Variant
+    Dim Term As Variant, Total As Variant, Delta As Variant, N As Long
+    If Not PROB_IsFinite(X) Then Err.Raise 5
+    If X <= 0# Then Err.Raise 5
+    PROB_DD_SP_Frexp X, F, E
+    Z = PROB_DD_SG_Div(PROB_DD_SG_Sub(F, 1#), PROB_DD_SG_Add(F, 1#))
+    Square = PROB_DD_SG_Mul(Z, Z)
+    Term = Z: Total = Z
+    For N = 3 To 1000 Step 2
+        Term = PROB_DD_SG_Mul(Term, Square)
+        Delta = PROB_DD_SG_Div(Term, N)
+        Total = PROB_DD_SG_Add(Total, Delta)
+        If PROB_DD_SG_Small(Delta, Total) Then
+            PROB_DD_SG_Log = PROB_DD_SG_Add(PROB_DD_SG_Mul(Total, 2#), PROB_DD_SG_Mul(PROB_DD_SG_Ln2(), E))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5
+End Function
+
+Private Function PROB_DD_SG_Exp(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Exp: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Value As Double, N As Long, R As Variant, Term As Variant, Total As Variant, K As Long
+    Value = PROB_DD_SG_Value(Z)
+    If Value < -1500# Or Value > 8# Then Err.Raise 5
+    N = CLng(Round(Value / PROB_DD_SP_FromWords(&H3FE62E42&, &HFEFA39EF&), 0))
+    R = PROB_DD_SG_Sub(Z, PROB_DD_SG_Mul(PROB_DD_SG_Ln2(), N))
+    Term = PROB_DD_SG_Coerce(1#): Total = Term
+    For K = 1 To 1000
+        Term = PROB_DD_SG_Div(PROB_DD_SG_Mul(Term, R), K)
+        Total = PROB_DD_SG_Add(Total, Term)
+        If PROB_DD_SG_Small(Term, Total) Then
+            PROB_DD_SG_Exp = Array(CDbl(Total(0)), CDbl(Total(1)), CLng(Total(2)) + N)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function PROB_DD_SG_Expm1(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Expm1: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Term As Variant, Total As Variant, K As Long
+    If Abs(PROB_DD_SG_Value(Z)) > 0.5 Then Err.Raise 5
+    Term = Z: Total = Z
+    For K = 2 To 1000
+        Term = PROB_DD_SG_Div(PROB_DD_SG_Mul(Term, Z), K)
+        Total = PROB_DD_SG_Add(Total, Term)
+        If PROB_DD_SG_Small(Term, Total) Then
+            PROB_DD_SG_Expm1 = Total
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function PROB_DD_SG_Log1p(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_Log1p: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Value As Double, T As Variant, Square As Variant, Term As Variant
+    Dim Total As Variant, Delta As Variant, K As Long
+    Value = PROB_DD_SG_Value(Z)
+    If Value < -0.8 Or Value > 0# Then Err.Raise 5
+    T = PROB_DD_SG_Div(Z, PROB_DD_SG_Add(Z, 2#))
+    Square = PROB_DD_SG_Mul(T, T)
+    Term = T: Total = T
+    For K = 3 To 2000 Step 2
+        Term = PROB_DD_SG_Mul(Term, Square)
+        Delta = PROB_DD_SG_Div(Term, K)
+        Total = PROB_DD_SG_Add(Total, Delta)
+        If PROB_DD_SG_Small(Delta, Total) Then
+            PROB_DD_SG_Log1p = PROB_DD_SG_Mul(Total, 2#)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function PROB_DD_SG_LogGamma(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_SG_LogGamma: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant
+    U = PROB_DD_SG_Sub(A, 0.5)
+    V = Array(PROB_DD_SP_FromWords(&H3FE96E5E&, &H1B3C5AF7&), PROB_DD_SP_FromWords(&HBC880518&, &HFEB901F7&), -49)
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE35572&, &HAE72C2EE&), PROB_DD_SP_FromWords(&H3C826A5E&, &HAF086A60&), -48))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FED66F3&, &H18AE5EA7&), PROB_DD_SP_FromWords(&H3C7FDC39&, &HB2705763&), -48))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE65C75&, &HB71D73A7&), PROB_DD_SP_FromWords(&HBC7C4960&, &H0B916A88&), -47))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE10279&, &H2689D188&), PROB_DD_SP_FromWords(&H3C8720CC&, &H2B7BE6FB&), -46))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE9E20D&, &H2BB58450&), PROB_DD_SP_FromWords(&HBC7BD20C&, &H6A387A6E&), -46))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE3B25E&, &H708B456B&), PROB_DD_SP_FromWords(&H3C8D35FF&, &H74EE2CC0&), -45))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEDFC0C&, &H83BBF352&), PROB_DD_SP_FromWords(&HBC5D534E&, &H18864249&), -45))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE6D3F4&, &HCE91C72E&), PROB_DD_SP_FromWords(&HBC713AEB&, &H4D8F0CF8&), -44))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE16227&, &HE2371AE4&), PROB_DD_SP_FromWords(&HBC8DB3F1&, &H0D7CC516&), -43))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEA7B27&, &HAB6726A4&), PROB_DD_SP_FromWords(&HBC83770C&, &HA96E43B7&), -43))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE42CC5&, &HCCB85BA1&), PROB_DD_SP_FromWords(&HBC750D12&, &H4F368B45&), -42))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEEBFA5&, &H2AE009C6&), PROB_DD_SP_FromWords(&HBC50F730&, &H98D885B0&), -42))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE77025&, &HFFB629FC&), PROB_DD_SP_FromWords(&H3C7A8C91&, &HFBD4CC51&), -41))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE1DED2&, &HD825BB6F&), PROB_DD_SP_FromWords(&HBC7E343D&, &HD497F856&), -40))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEB4216&, &HA140F01E&), PROB_DD_SP_FromWords(&HBC8C6D43&, &HF025D8FC&), -40))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE4CB70&, &HD3097185&), PROB_DD_SP_FromWords(&H3C846D36&, &H7A4A7A07&), -39))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEFBCAF&, &H3A802F65&), PROB_DD_SP_FromWords(&HBC71601D&, &H7CA4BACB&), -39))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE839E0&, &HDACB4830&), PROB_DD_SP_FromWords(&H3C62D497&, &HE7B31E9A&), -38))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE27FA0&, &H40C5DA37&), PROB_DD_SP_FromWords(&HBC8B28EB&, &H572E2B88&), -37))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEC426C&, &HA67FEF49&), PROB_DD_SP_FromWords(&H3C822C46&, &H74A1157A&), -37))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE597BF&, &HC48AC196&), PROB_DD_SP_FromWords(&H3C8BAEE5&, &HC54842E9&), -36))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE08130&, &H11D7D91A&), PROB_DD_SP_FromWords(&HBC8D550A&, &HF0099556&), -35))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE93D7E&, &HA20F6C7F&), PROB_DD_SP_FromWords(&HBC812DE8&, &HCBCD3D82&), -35))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE34E99&, &HD340CA87&), PROB_DD_SP_FromWords(&HBC8416AF&, &H310C8312&), -34))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFED8C80&, &H723BC225&), PROB_DD_SP_FromWords(&HBC8E0DF9&, &H422BE676&), -34))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE69F02&, &HF35C279F&), PROB_DD_SP_FromWords(&HBC8DBF3F&, &H0099800A&), -33))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE15338&, &HD62BEBF4&), PROB_DD_SP_FromWords(&HBC8451AE&, &H0489B4E2&), -32))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEA8CBF&, &H58F242AB&), PROB_DD_SP_FromWords(&HBC747A52&, &HCD3A6641&), -32))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE45A45&, &H41411B2D&), PROB_DD_SP_FromWords(&H3C809250&, &H85654C7D&), -31))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEF381E&, &H2C0150C7&), PROB_DD_SP_FromWords(&H3C8403A5&, &H76642969&), -31))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE7F4C1&, &H8C998D6B&), PROB_DD_SP_FromWords(&H3C16A630&, &HA93DF275&), -30))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE2647E&, &HB6C95516&), PROB_DD_SP_FromWords(&HBC8ADEDC&, &HBF885061&), -29))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEC4210&, &H32D6F34B&), PROB_DD_SP_FromWords(&H3C8704DC&, &HFCDFA893&), -29))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE5B86D&, &HB198417B&), PROB_DD_SP_FromWords(&H3C7E2380&, &H4C8C8260&), -28))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE0B4A4&, &H4934AF42&), PROB_DD_SP_FromWords(&HBC85F670&, &H3DFCD0A8&), -27))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE9B6CA&, &H551B03C7&), PROB_DD_SP_FromWords(&H3C759D8F&, &H95F83956&), -27))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE3CDBA&, &H9595A081&), PROB_DD_SP_FromWords(&H3C8E2DB5&, &H54614458&), -26))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEE8689&, &H4A5D3179&), PROB_DD_SP_FromWords(&HBC096647&, &H8B98A9FE&), -26))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE78B4D&, &HBB5132FE&), PROB_DD_SP_FromWords(&H3C71A3B4&, &HA3DE5DB3&), -25))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE22C93&, &H4E31CF80&), PROB_DD_SP_FromWords(&HBC56E213&, &HE5457B50&), -24))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEC14F1&, &H98682057&), PROB_DD_SP_FromWords(&HBC5C1779&, &H819E660D&), -24))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE5B70D&, &H8C2D3282&), PROB_DD_SP_FromWords(&H3C741106&, &HA2C5BF7F&), -23))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE0CED7&, &HC5B04032&), PROB_DD_SP_FromWords(&HBC55C891&, &H4F796ECC&), -22))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEA0BDC&, &H123131CA&), PROB_DD_SP_FromWords(&HBC730167&, &H4563F2DA&), -22))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE43410&, &H29DBA039&), PROB_DD_SP_FromWords(&HBC535ECE&, &H10F3741A&), -21))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEF610E&, &H9965B00C&), PROB_DD_SP_FromWords(&HBC7EFCD8&, &H596275EC&), -21))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE8662D&, &HE65ECA58&), PROB_DD_SP_FromWords(&H3C68815F&, &HE55CE225&), -20))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE2FF5A&, &H00ECFEF1&), PROB_DD_SP_FromWords(&H3C69D037&, &H362FA1FF&), -19))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEDA062&, &HB3773FE2&), PROB_DD_SP_FromWords(&HBC8405C6&, &H0165D191&), -19))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE72340&, &H755AF21F&), PROB_DD_SP_FromWords(&H3C66DDFF&, &HF394B316&), -18))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE219DC&, &HEA3F7CEE&), PROB_DD_SP_FromWords(&H3C86E68A&, &HB8EDD7FC&), -17))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEC5FD3&, &H12A5D28A&), PROB_DD_SP_FromWords(&HBC8E392F&, &H1C7FA64A&), -17))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE648D2&, &H1536C0B3&), PROB_DD_SP_FromWords(&H3C88C931&, &HEEBB3135&), -16))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE18A72&, &HD2D506DD&), PROB_DD_SP_FromWords(&HBC8B73BB&, &HC28C2A0D&), -15))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEBAE9D&, &H8AB69059&), PROB_DD_SP_FromWords(&HBC83EB8A&, &H48F2B0AA&), -15))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE5E735&, &H99737474&), PROB_DD_SP_FromWords(&HBC7A754B&, &H20F04961&), -14))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE1623A&, &H15904D43&), PROB_DD_SP_FromWords(&H3C86D799&, &H89C80AEC&), -13))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEBB048&, &H486FE2BA&), PROB_DD_SP_FromWords(&H3C81CC08&, &H9C09215D&), -13))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE62327&, &H34DCCB6A&), PROB_DD_SP_FromWords(&HBC6B6203&, &H0AECE0A0&), -12))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE1C746&, &H45C54A48&), PROB_DD_SP_FromWords(&HBC62A4CE&, &H93235B7C&), -11))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFECB456&, &HB864572F&), PROB_DD_SP_FromWords(&HBC879CE2&, &HBFA33CA4&), -11))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE750AE&, &H6A104859&), PROB_DD_SP_FromWords(&HBC87737F&, &HB30C7F3C&), -10))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE313E8&, &H85750BAC&), PROB_DD_SP_FromWords(&H3C716907&, &HB67084CE&), -9))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEF814B&, &H7BDFBBCC&), PROB_DD_SP_FromWords(&HBC57AB64&, &H7A72E512&), -9))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFEA5035&, &H23A4E3E4&), PROB_DD_SP_FromWords(&H3C8630EE&, &H57ED3E2C&), -8))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE64F06&, &H652465F7&), PROB_DD_SP_FromWords(&H3C8CAC2D&, &H53771289&), -7))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE34DBD&, &HA148F3D6&), PROB_DD_SP_FromWords(&H3C89911A&, &H6BE1F65D&), -6))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE13342&, &H35278FAD&), PROB_DD_SP_FromWords(&H3C8D9D86&, &H2155642B&), -5))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE007AA&, &H83CEE1DF&), PROB_DD_SP_FromWords(&H3C7125D1&, &HC90250D0&), -4))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FE01AF6&, &H2A2929E8&), PROB_DD_SP_FromWords(&HBC84F325&, &HBDDAFAE3&), -3))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&HBFE2AED0&, &H59BD608A&), PROB_DD_SP_FromWords(&HBC4CD3D2&, &HCA77B63A&), -2))
+    V = PROB_DD_SG_Add(PROB_DD_SG_Mul(V, U), Array(PROB_DD_SP_FromWords(&H3FEEEB95&, &HB094C191&), PROB_DD_SP_FromWords(&H3C834686&, &H3F58B075&), -1))
+    PROB_DD_SG_LogGamma = PROB_DD_SG_Mul(PROB_DD_SG_Mul(A, PROB_DD_SG_Sub(A, 1#)), V)
+End Function
+
+Private Function PROB_DD_WG_Stirling(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_WG_Stirling: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Numerators As Variant, Denominators As Variant, Inverse As Variant, Square As Variant, Term As Variant
+    Dim K As Long
+    Numerators = Array(1#, -1#, 1#, -1#, 1#, -691#, 1#, -3617#, 43867#, -174611#)
+    Denominators = Array(12#, 360#, 1260#, 1680#, 1188#, 360360#, 156#, 122400#, 244188#, 125400#)
+    Inverse = PROB_DD_SG_Div(1#, A): Square = PROB_DD_SG_Mul(Inverse, Inverse)
+    Term = PROB_DD_SG_Div(Numerators(9), Denominators(9))
+    For K = 8 To 0 Step -1
+        Term = PROB_DD_SG_Add(PROB_DD_SG_Mul(Term, Square), PROB_DD_SG_Div(Numerators(K), Denominators(K)))
+    Next K
+    PROB_DD_WG_Stirling = PROB_DD_SG_Mul(Term, Inverse)
+End Function
+
+Private Function PROB_DD_WG_Deviance(ByVal A As Double, ByVal X As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_WG_Deviance: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AA As Variant, XX As Variant, U As Variant, Term As Variant, Total As Variant, Delta As Variant, Value As Variant
+    Dim N As Long, Converged As Boolean
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    U = PROB_DD_SG_Div(PROB_DD_SG_Sub(XX, AA), AA)
+    If Abs(PROB_DD_SG_Value(U)) <= 0.5 Then
+        Term = PROB_DD_SG_Mul(U, U): Total = PROB_DD_SG_Div(Term, 2#)
+        For N = 3 To 1000
+            Term = PROB_DD_SG_Mul(Term, PROB_DD_SG_Neg(U))
+            Delta = PROB_DD_SG_Div(Term, N)
+            Total = PROB_DD_SG_Add(Total, Delta)
+            If PROB_DD_SG_Small(Delta, Total) Then
+                Value = PROB_DD_SG_Mul(AA, Total)
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "PROB_DD_WG_Deviance", "series cap"
+    Else
+        Value = PROB_DD_SG_Sub(PROB_DD_SG_Sub(XX, AA), PROB_DD_SG_Mul(AA, PROB_DD_SG_Sub(PROB_DD_SG_Log(X), PROB_DD_SG_Log(A))))
+    End If
+    If CDbl(Value(0)) < 0# Then Err.Raise 5, "PROB_DD_WG_Deviance", "negative deviance"
+    PROB_DD_WG_Deviance = Value
+End Function
+
+Private Sub PROB_DD_WG_Upper(ByVal A As Double, ByVal X As Double, ByVal LP As Variant, ByRef P As Double, ByRef Q As Double)
+'==============================================================================
+' PURPOSE
+'   PROB_DD_WG_Upper: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AA As Variant, XX As Variant, B As Variant, C As Variant, D As Variant, AN As Variant
+    Dim Delta As Variant, Tail As Variant, H As Variant, QQ As Variant
+    Dim N As Long, K As Long, Converged As Boolean
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    B = PROB_DD_SG_Sub(PROB_DD_SG_Add(XX, 1#), AA)
+    C = PROB_DD_SG_Coerce(1E+300): D = PROB_DD_SG_Div(1#, B)
+    For N = 1 To 100000
+        AN = PROB_DD_SG_Mul(-CDbl(N), PROB_DD_SG_Sub(N, AA))
+        B = PROB_DD_SG_Add(B, 2#)
+        D = PROB_DD_SG_Div(1#, PROB_DD_SG_Add(PROB_DD_SG_Mul(AN, D), B))
+        C = PROB_DD_SG_Add(B, PROB_DD_SG_Div(AN, C))
+        Delta = PROB_DD_SG_Sub(PROB_DD_SG_Mul(C, D), 1#)
+        If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+            Converged = True
+            Exit For
+        End If
+    Next N
+    If Not Converged Then Err.Raise 5, "PROB_DD_WG_Upper", "continued fraction cap 100000"
+    Tail = PROB_DD_SG_Coerce(0#)
+    For K = N To 1 Step -1
+        Tail = PROB_DD_SG_Div(PROB_DD_SG_Mul(-CDbl(K), PROB_DD_SG_Sub(K, AA)), _
+            PROB_DD_SG_Add(PROB_DD_SG_Add(PROB_DD_SG_Sub(PROB_DD_SG_Add(XX, 1#), AA), 2# * K), Tail))
+    Next K
+    H = PROB_DD_SG_Div(1#, PROB_DD_SG_Add(PROB_DD_SG_Sub(PROB_DD_SG_Add(XX, 1#), AA), Tail))
+    QQ = PROB_DD_SG_Mul(PROB_DD_SG_Mul(PROB_DD_SG_Exp(LP), AA), H)
+    P = PROB_DD_SG_Value(PROB_DD_SG_Sub(1#, QQ)): Q = PROB_DD_SG_Value(QQ)
+End Sub
+
+Private Function PROB_DD_WG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_WG_Pair: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AA As Variant, XX As Variant, Dev As Variant, LP As Variant, Constant As Variant
+    Dim Term As Variant, Total As Variant, Ratio As Variant, Gap As Variant, Remainder As Variant, Guarded As Variant
+    Dim PP As Variant, QQ As Variant, N As Long, Converged As Boolean, Underflow As Boolean, Stage As String
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = "": Stage = "inputs"
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or X < 0# Then Exit Function
+    If X = 0# Then
+        Q = 1#: PROB_DD_WG_Pair = True
+        Exit Function
+    End If
+    If A <= 128# And X <= 1024# Then
+        PROB_DD_WG_Pair = PROB_DD_EG_Pair(A, X, P, Q, Diagnostic)
+        Exit Function
+    End If
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    If A <= 128# Then
+        If X >= 1280# Then
+            P = 1#: PROB_DD_WG_Pair = True
+            Exit Function
+        End If
+        Stage = "small-shape upper"
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), PROB_DD_EG_LogGamma(AA)), XX)
+        PROB_DD_WG_Upper A, X, LP, P, Q
+        PROB_DD_WG_Pair = True
+        Exit Function
+    End If
+    Stage = "deviance"
+    Dev = PROB_DD_WG_Deviance(A, X)
+    Underflow = (CLng(Dev(2)) >= 11)
+    If Not Underflow Then Underflow = (PROB_DD_SG_Value(Dev) > 750#)
+    If Underflow Then
+        If X < A Then Q = 1# Else P = 1#
+        PROB_DD_WG_Pair = True
+        Exit Function
+    End If
+    Constant = PROB_DD_SG_Add(PROB_DD_SP_FromWords(&H3FED67F1&, &HC864BEB5&), PROB_DD_SP_FromWords(&HBC865B5A&, &H1B7FF5DF&))
+    LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Neg(Dev), PROB_DD_SG_Mul(PROB_DD_SG_Log(A), 0.5)), Constant), PROB_DD_WG_Stirling(AA))
+    If X >= A + 1# Then
+        Stage = "upper"
+        PROB_DD_WG_Upper A, X, LP, P, Q
+        PROB_DD_WG_Pair = True
+        Exit Function
+    End If
+    Stage = "lower geometric remainder"
+    Term = PROB_DD_SG_Coerce(1#): Total = Term
+    For N = 1 To 100000
+        Term = PROB_DD_SG_Div(PROB_DD_SG_Mul(Term, XX), PROB_DD_SG_Add(AA, N))
+        Total = PROB_DD_SG_Add(Total, Term)
+        Ratio = PROB_DD_SG_Div(XX, PROB_DD_SG_Add(PROB_DD_SG_Add(AA, N), 1#))
+        Gap = PROB_DD_SG_Sub(1#, Ratio)
+        If CDbl(Gap(0)) > 0# Then
+            Remainder = PROB_DD_SG_Div(PROB_DD_SG_Mul(Term, Ratio), Gap)
+            Guarded = PROB_DD_SG_Mul(Remainder, 4#)
+            If CDbl(Guarded(0)) = 0# Or CLng(Guarded(2)) < CLng(Total(2)) - 68 Then
+                Converged = True
+                Exit For
+            End If
+        End If
+    Next N
+    If Not Converged Then Err.Raise 5, "PROB_DD_WG_Pair", "lower series cap 100000"
+    Stage = "lower exponential"
+    PROB_DD_EG_LowerPair PROB_DD_SG_Add(LP, PROB_DD_EG_LogPair(Total)), PP, QQ
+    P = PROB_DD_SG_Value(PP): Q = PROB_DD_SG_Value(QQ)
+    PROB_DD_WG_Pair = True
+    Exit Function
+Err_Handler:
+    Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
+    P = 0#: Q = 0#: PROB_DD_WG_Pair = False
+End Function
+
+Private Function PROB_DD_EG_LogPair(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_EG_LogPair: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim F As Variant, Z As Variant, Square As Variant, Term As Variant, Total As Variant, Delta As Variant
+    Dim N As Long
+    If CDbl(A(0)) <= 0# Then Err.Raise 5
+    F = Array(CDbl(A(0)), CDbl(A(1)), 0&)
+    Z = PROB_DD_SG_Div(PROB_DD_SG_Sub(F, 1#), PROB_DD_SG_Add(F, 1#))
+    Square = PROB_DD_SG_Mul(Z, Z): Term = Z: Total = Z
+    For N = 3 To 1000 Step 2
+        Term = PROB_DD_SG_Mul(Term, Square)
+        Delta = PROB_DD_SG_Div(Term, N)
+        Total = PROB_DD_SG_Add(Total, Delta)
+        If PROB_DD_SG_Small(Delta, Total) Then
+            PROB_DD_EG_LogPair = PROB_DD_SG_Add(PROB_DD_SG_Mul(Total, 2#), PROB_DD_SG_Mul(PROB_DD_SG_Ln2(), CLng(A(2))))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, "PROB_DD_EG_LogPair", "iteration cap"
+End Function
+
+Private Function PROB_DD_EG_LogGamma(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_EG_LogGamma: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim N As Long, K As Long, B As Variant, LG As Variant
+    If PROB_DD_SG_Value(A) > 1# Then N = CLng(Fix(PROB_DD_SG_Value(A)))
+    B = PROB_DD_SG_Sub(A, N)
+    LG = PROB_DD_SG_LogGamma(B)
+    For K = 1 To N
+        LG = PROB_DD_SG_Add(LG, PROB_DD_EG_LogPair(PROB_DD_SG_Add(B, K)))
+    Next K
+    PROB_DD_EG_LogGamma = LG
+End Function
+
+Private Sub PROB_DD_EG_LowerPair(ByVal LP As Variant, ByRef PP As Variant, ByRef QQ As Variant)
+'==============================================================================
+' PURPOSE
+'   PROB_DD_EG_LowerPair: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Value As Double, Z As Variant, Halvings As Long, K As Long
+    Value = PROB_DD_SG_Value(LP)
+    If CDbl(LP(0)) > 0# Then Err.Raise 5, "PROB_DD_EG_LowerPair", "positive log probability"
+    If Value < -750# Then
+        PP = PROB_DD_SG_Coerce(0#): QQ = PROB_DD_SG_Coerce(1#)
+        Exit Sub
+    End If
+    Z = LP
+    Do While PROB_DD_SG_Value(Z) < -0.5
+        Z = PROB_DD_SG_Mul(Z, 0.5)
+        Halvings = Halvings + 1
+    Loop
+    QQ = PROB_DD_SG_Neg(PROB_DD_SG_Expm1(Z))
+    For K = 1 To Halvings
+        QQ = PROB_DD_SG_Mul(QQ, PROB_DD_SG_Sub(2#, QQ))
+    Next K
+    If Value >= -0.5 Then
+        PP = PROB_DD_SG_Sub(1#, QQ)
+    Else
+        PP = PROB_DD_SG_Exp(LP)
+    End If
+End Sub
+
+Private Function PROB_DD_EG1_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_EG1_Pair: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AA As Variant, XX As Variant, LG As Variant, Term As Variant, Total As Variant
+    Dim Delta As Variant, LP As Variant, PP As Variant, QQ As Variant
+    Dim B As Variant, C As Variant, D As Variant, AN As Variant, Tail As Variant, H As Variant
+    Dim N As Long, K As Long, Converged As Boolean, Stage As String
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = "": Stage = "inputs"
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or A > 128# Or X <= 0# Or X > 1024# Then Exit Function
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    Stage = "loggamma"
+    LG = PROB_DD_EG_LogGamma(AA)
+    If X < A + 1# Then
+        If A <= 1# Then
+            Stage = "alternating lower series"
+            Term = PROB_DD_SG_Neg(XX)
+            Total = PROB_DD_SG_Div(Term, PROB_DD_SG_Add(AA, 1#))
+            For N = 2 To 1000
+                Term = PROB_DD_SG_Div(PROB_DD_SG_Mul(Term, PROB_DD_SG_Neg(XX)), N)
+                Delta = PROB_DD_SG_Div(Term, PROB_DD_SG_Add(AA, N))
+                Total = PROB_DD_SG_Add(Total, Delta)
+                If PROB_DD_SG_Small(Delta, Total) Then
+                    Converged = True
+                    Exit For
+                End If
+            Next N
+            If Not Converged Then Err.Raise 5
+            LP = PROB_DD_SG_Add(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), LG), PROB_DD_SG_Log1p(PROB_DD_SG_Mul(Total, AA)))
+        Else
+            Stage = "positive lower series"
+            Term = PROB_DD_SG_Coerce(1#): Total = Term
+            For N = 1 To 10000
+                Term = PROB_DD_SG_Div(PROB_DD_SG_Mul(Term, XX), PROB_DD_SG_Add(AA, N))
+                Total = PROB_DD_SG_Add(Total, Term)
+                If PROB_DD_SG_Small(Term, Total) Then
+                    Converged = True
+                    Exit For
+                End If
+            Next N
+            If Not Converged Then Err.Raise 5
+            LP = PROB_DD_SG_Add(PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), XX), LG), PROB_DD_EG_LogPair(Total))
+        End If
+        Stage = "lower exponential"
+        PROB_DD_EG_LowerPair LP, PP, QQ
+    Else
+        Stage = "upper forward"
+        B = PROB_DD_SG_Sub(PROB_DD_SG_Add(XX, 1#), AA)
+        C = PROB_DD_SG_Coerce(1E+300): D = PROB_DD_SG_Div(1#, B)
+        For N = 1 To 100000
+            AN = PROB_DD_SG_Mul(-CDbl(N), PROB_DD_SG_Sub(N, AA))
+            B = PROB_DD_SG_Add(B, 2#)
+            D = PROB_DD_SG_Div(1#, PROB_DD_SG_Add(PROB_DD_SG_Mul(AN, D), B))
+            C = PROB_DD_SG_Add(B, PROB_DD_SG_Div(AN, C))
+            Delta = PROB_DD_SG_Sub(PROB_DD_SG_Mul(C, D), 1#)
+            If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        Stage = "upper backward"
+        Tail = PROB_DD_SG_Coerce(0#)
+        For K = N To 1 Step -1
+            Tail = PROB_DD_SG_Div(PROB_DD_SG_Mul(-CDbl(K), PROB_DD_SG_Sub(K, AA)), _
+                PROB_DD_SG_Add(PROB_DD_SG_Add(PROB_DD_SG_Sub(PROB_DD_SG_Add(XX, 1#), AA), 2# * K), Tail))
+        Next K
+        H = PROB_DD_SG_Div(1#, PROB_DD_SG_Add(PROB_DD_SG_Sub(PROB_DD_SG_Add(XX, 1#), AA), Tail))
+        Stage = "upper exponential"
+        QQ = PROB_DD_SG_Mul(PROB_DD_SG_Mul(PROB_DD_SG_Exp(PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), LG), XX)), AA), H)
+        PP = PROB_DD_SG_Sub(1#, QQ)
+    End If
+    Stage = "final rounding"
+    P = PROB_DD_SG_Value(PP): Q = PROB_DD_SG_Value(QQ)
+    PROB_DD_EG1_Pair = True
+    Exit Function
+Err_Handler:
+    Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
+    P = 0#: Q = 0#
+    PROB_DD_EG1_Pair = False
+End Function
+
+Private Function PROB_DD_EG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_EG_Pair: Gamma exponent-separated arithmetic.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Operation graph retained from frozen Excel port b8efaf3.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, L As Double, E As Long
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = ""
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A = 2# And X > 0# And X <= PROB_DD_SP_FromWords(&H1FF00000&, 0) Then
+        If Not PROB_DD_SP_Product(X, X, H, L, E) Then Err.Raise 5
+        E = E - 1
+        PROB_DD_SGD_Canonicalize H, L, E
+        If Not PROB_DD_SGD_Round(H, L, E, P) Then Err.Raise 5
+        Q = 1#
+        PROB_DD_EG_Pair = True
+    Else
+        PROB_DD_EG_Pair = PROB_DD_EG1_Pair(A, X, P, Q, Diagnostic)
+    End If
+    Exit Function
+Err_Handler:
+    P = 0#: Q = 0#: Diagnostic = "shape-two subnormal: " & Err.Description
+    PROB_DD_EG_Pair = False
+End Function
+
+Private Function PROB_DD_PV2_H(ByVal V As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_H: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If IsArray(V) Then
+        PROB_DD_PV2_H = CDbl(V(0))
+    Else
+        PROB_DD_PV2_H = CDbl(V)
+    End If
+End Function
+
+Private Function PROB_DD_PV2_L(ByVal V As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_L: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If IsArray(V) Then PROB_DD_PV2_L = CDbl(V(1))
+End Function
+
+Private Function PROB_DD_PV2_Value(ByVal V As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Value: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, L As Double
+    H = PROB_DD_PV2_H(V)
+    L = PROB_DD_PV2_L(V)
+    PROB_DD_PV2_Value = H + L
+End Function
+
+Private Function PROB_DD_PV2_Sum(ByVal A As Double, ByVal B As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Sum: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    PROB_DD_PV2_Sum = Array(S, AR + BR)
+End Function
+
+Private Function PROB_DD_PV2_Add(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Add: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant, S As Double, E As Double, F As Double
+    U = PROB_DD_PV2_Sum(PROB_DD_PV2_H(A), PROB_DD_PV2_H(B))
+    V = PROB_DD_PV2_Sum(PROB_DD_PV2_L(A), PROB_DD_PV2_L(B))
+    S = U(0)
+    E = U(1)
+    E = E + CDbl(V(0))
+    F = V(1)
+    U = PROB_DD_PV2_Sum(S, E)
+    S = U(0)
+    E = U(1)
+    E = E + F
+    PROB_DD_PV2_Add = PROB_DD_PV2_Sum(S, E)
+End Function
+
+Private Function PROB_DD_PV2_Neg(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Neg: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_PV2_Neg = Array(-PROB_DD_PV2_H(A), -PROB_DD_PV2_L(A))
+End Function
+
+Private Function PROB_DD_PV2_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Sub: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_PV2_Sub = PROB_DD_PV2_Add(A, PROB_DD_PV2_Neg(B))
+End Function
+
+Private Function PROB_DD_PV2_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Mul: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AH As Double, AL As Double, BH As Double, BL As Double
+    Dim CA As Double, CB As Double, HA As Double, HB As Double
+    Dim LA As Double, LB As Double, P As Double, E As Double, T As Double
+    AH = PROB_DD_PV2_H(A): AL = PROB_DD_PV2_L(A): BH = PROB_DD_PV2_H(B): BL = PROB_DD_PV2_L(B)
+    P = AH * BH
+    CA = 134217729# * AH
+    CB = 134217729# * BH
+    T = CA - AH
+    HA = CA - T
+    T = CB - BH
+    HB = CB - T
+    LA = AH - HA
+    LB = BH - HB
+    T = HA * HB
+    E = T - P
+    T = HA * LB
+    E = E + T
+    T = LA * HB
+    E = E + T
+    T = LA * LB
+    E = E + T
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    PROB_DD_PV2_Mul = PROB_DD_PV2_Sum(P, E)
+End Function
+
+Private Function PROB_DD_PV2_Div(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Div: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Q As Variant, R As Variant, T As Double, J As Long
+    T = PROB_DD_PV2_H(A) / PROB_DD_PV2_H(B)
+    Q = Array(T, 0#)
+    For J = 1 To 2
+        R = PROB_DD_PV2_Sub(A, PROB_DD_PV2_Mul(Q, B))
+        T = PROB_DD_PV2_H(R) / PROB_DD_PV2_H(B)
+        Q = PROB_DD_PV2_Add(Q, T)
+    Next J
+    PROB_DD_PV2_Div = Q
+End Function
+
+Private Function PROB_DD_PV2_Ln2() As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Ln2: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PROB_DD_PV2_Ln2 = Array((6.93147180559945E-01 + (3.33066907387547E-16)), (2.31904681384630E-17 + (-3.08148791101958E-33)))
+End Function
+
+Private Function PROB_DD_PV2_Log(ByVal X As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Log: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim F As Double, E As Long, N As Long
+    Dim Z As Variant, S As Variant, T As Variant, D As Variant, Z2 As Variant
+    If X = 1# Then
+        PROB_DD_PV2_Log = Array(0#, 0#)
+        Exit Function
+    End If
+    If X <= 0# Then Err.Raise 5, , "PV2 Log domain"
+    F = X
+    Do While F < 0.5
+        F = F * 2#
+        E = E - 1
+    Loop
+    Do While F >= 1#
+        F = F / 2#
+        E = E + 1
+    Loop
+    Z = PROB_DD_PV2_Div(PROB_DD_PV2_Sub(F, 1#), PROB_DD_PV2_Add(F, 1#))
+    Z2 = PROB_DD_PV2_Mul(Z, Z)
+    T = Z: S = Z
+    For N = 3 To 1000 Step 2
+        T = PROB_DD_PV2_Mul(T, Z2)
+        D = PROB_DD_PV2_Div(T, CDbl(N))
+        S = PROB_DD_PV2_Add(S, D)
+        If Abs(PROB_DD_PV2_H(D)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
+            PROB_DD_PV2_Log = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(S, 2#), PROB_DD_PV2_Mul(PROB_DD_PV2_Ln2(), CDbl(E)))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Log cap"
+End Function
+
+Private Function PROB_DD_PV2_Log1p(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Log1p: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim T As Variant, S As Variant, D As Variant, Z2 As Variant, N As Long
+    If PROB_DD_PV2_Value(Z) < -0.8 Or PROB_DD_PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Log1p domain"
+    T = PROB_DD_PV2_Div(Z, PROB_DD_PV2_Add(Z, 2#))
+    Z2 = PROB_DD_PV2_Mul(T, T)
+    S = T
+    For N = 3 To 2000 Step 2
+        T = PROB_DD_PV2_Mul(T, Z2)
+        D = PROB_DD_PV2_Div(T, CDbl(N))
+        S = PROB_DD_PV2_Add(S, D)
+        If Abs(PROB_DD_PV2_H(D)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
+            PROB_DD_PV2_Log1p = PROB_DD_PV2_Mul(S, 2#)
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Log1p cap"
+End Function
+
+Private Function PROB_DD_PV2_Expm1(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Expm1: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim T As Variant, S As Variant, N As Long
+    If PROB_DD_PV2_Value(Z) < -8# Or PROB_DD_PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Expm1 domain"
+    T = Z: S = Z
+    For N = 2 To 1000
+        T = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(T, Z), CDbl(N))
+        S = PROB_DD_PV2_Add(S, T)
+        If Abs(PROB_DD_PV2_H(T)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
+            PROB_DD_PV2_Expm1 = S
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Expm1 cap"
+End Function
+
+Private Function PROB_DD_PV2_Exp(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Exp: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim R As Variant, T As Variant, S As Variant, N As Long, K As Long
+    Dim Ratio As Double, ScaleFactor As Double, H As Double, L As Double
+    If PROB_DD_PV2_Value(Z) < -64# Or PROB_DD_PV2_Value(Z) > 8# Then Err.Raise 5, , "PV2 Exp domain"
+    Ratio = PROB_DD_PV2_H(Z) / PROB_DD_PV2_H(PROB_DD_PV2_Ln2())
+    N = CLng(Ratio)
+    R = PROB_DD_PV2_Sub(Z, PROB_DD_PV2_Mul(PROB_DD_PV2_Ln2(), CDbl(N)))
+    T = Array(1#, 0#): S = T
+    For K = 1 To 1000
+        T = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(T, R), CDbl(K))
+        S = PROB_DD_PV2_Add(S, T)
+        If Abs(PROB_DD_PV2_H(T)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
+            ScaleFactor = 2# ^ N
+            H = PROB_DD_PV2_H(S) * ScaleFactor
+            L = PROB_DD_PV2_L(S) * ScaleFactor
+            PROB_DD_PV2_Exp = Array(H, L)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5, , "PV2 Exp cap"
+End Function
+
+Private Function PROB_DD_PV2_LogGamma(ByVal A As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_LogGamma: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant
+    U = PROB_DD_PV2_Sub(A, 0.5)
+    V = Array((1.41171093978875E-15 + (-7.88860905221012E-31)), (-7.40170704349773E-32 + (1.09476442525376E-47)))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.14648089856621E-15 + (5.12759588393658E-30)), (1.13494325987459E-31 + (6.56858655152258E-47))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((3.26429404138876E-15 + (-2.36658271566304E-30)), (9.81769918162968E-32 + (2.18952885050753E-47))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.96517742317239E-15 + (-7.88860905221012E-31)), (-1.74329766137388E-31 + (2.40848173555828E-46))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((7.55380696239768E-15 + (1.57772181044202E-30)), (5.70152063703829E-31 + (0.00000000000000E+00))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.14943670002178E-14 + (3.62876016401665E-29)), (-3.42914161585886E-31 + (-2.62743462060903E-46))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.74942314273340E-14 + (2.52435489670724E-29)), (1.44021000372386E-30 + (4.90454462513686E-45))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.66316444074713E-14 + (-1.57772181044202E-29)), (-1.80731795250046E-31 + (-1.09476442525376E-46))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.05505925851729E-14 + (-2.52435489670724E-29)), (-8.49512127749938E-31 + (-1.75162308040602E-46))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-6.17583178419540E-14 + (-2.52435489670724E-29)), (-5.85786353840856E-30 + (-2.10194769648723E-45))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((9.40796740393935E-14 + (0.00000000000000E+00)), (-3.83880166798765E-30 + (3.50324616081204E-45))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.43351237964261E-13 + (1.00974195868290E-28)), (-4.15158968604589E-30 + (2.80259692864963E-45))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.18482043164793E-13 + (1.51461293802434E-28)), (-8.36467935207240E-31 + (-1.75162308040602E-46))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.33075147079755E-13 + (-5.04870979341448E-29)), (1.04717745291746E-29 + (3.50324616081204E-44))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((5.07907450613959E-13 + (1.00974195868290E-28)), (-2.38268087848993E-29 + (4.20389539297445E-44))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-7.74723440736884E-13 + (-5.04870979341448E-28)), (-4.48496106067019E-29 + (0.00000000000000E+00))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.18204129155139E-12 + (-3.43312265952184E-27)), (6.44550241526769E-29 + (4.48415508583941E-44))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.80404235692326E-12 + (-2.22143230910237E-27)), (-2.74136263274511E-29 + (1.68155815718978E-44))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.75418725094515E-12 + (-3.63507105125842E-27)), (2.97092004439325E-29 + (-1.12103877145985E-44))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.20608080662836E-12 + (-2.42338070083895E-27)), (-3.42805388259430E-28 + (2.69049305150365E-43))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((6.42545964487383E-12 + (1.61558713389263E-27)), (2.29374877444704E-28 + (-4.93257059442336E-43))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-9.81925490738286E-12 + (0.00000000000000E+00)), (6.98822051228334E-28 + (-1.79366203433577E-43))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.50108823940263E-11 + (4.20052654812084E-26)), (-1.48089756038230E-27 + (-2.69049305150365E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.29558404652975E-11 + (-3.87740912134232E-26)), (-8.67334689656528E-28 + (-3.58732406867153E-43))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((3.51192915084393E-11 + (-1.29246970711411E-26)), (-2.02843131271761E-27 + (-3.94605647553868E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-5.37490176317862E-11 + (0.00000000000000E+00)), (-3.03473751543268E-27 + (-4.66352128927299E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((8.22952234483210E-11 + (-2.58493941422821E-26)), (-6.00736993421394E-27 + (-1.43492962746861E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.26056591454892E-10 + (1.29246970711411E-25)), (-8.20680360314836E-27 + (-1.43492962746861E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.93175181123118E-10 + (-4.39439700418796E-25)), (-4.13546401752092E-27 + (3.58732406867153E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.96169589941651E-10 + (2.06795153138257E-25)), (1.33863843386909E-26 + (2.86985925493723E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.54299303042099E-10 + (1.03397576569128E-25)), (1.61673771521419E-26 + (1.43492962746861E-41))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-6.97213642028249E-10 + (2.06795153138257E-25)), (2.85872842316712E-28 + (3.58732406867153E-43))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.07058780863553E-09 + (-3.72231275648862E-24)), (-8.68234486230219E-26 + (2.29588740394978E-41))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.64483555539652E-09 + (-4.13590306276514E-24)), (7.43783907961386E-26 + (-3.44383110592467E-41))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.52859012613536E-09 + (-2.48154183765908E-24)), (9.73833157704985E-26 + (-2.29588740394978E-41))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.88958300575891E-09 + (-2.48154183765908E-24)), (-2.83860600444586E-25 + (-3.21424236552969E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((5.98701295630897E-09 + (-2.48154183765908E-24)), (1.39686715089691E-25 + (-4.59177480789956E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-9.22178304786582E-09 + (4.96308367531817E-24)), (7.80097185002356E-25 + (-4.59177480789956E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.42145587068719E-08 + (4.13590306276514E-23)), (-2.56469703585928E-27 + (-4.30478888240584E-42))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.19272029043474E-08 + (2.64697796016969E-23)), (4.55969744306379E-25 + (-4.59177480789956E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((3.38519414938090E-08 + (3.97046694025453E-23)), (-2.95757343411792E-25 + (4.59177480789956E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-5.23064498832708E-08 + (3.97046694025453E-23)), (-3.63076684141467E-25 + (4.59177480789956E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((8.08948668443836E-08 + (1.32348898008484E-23)), (2.07482824619517E-24 + (-7.34683969263930E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.25229209086299E-07 + (-2.11758236813575E-22)), (-1.12617886205366E-24 + (-7.34683969263930E-40))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.94060256838287E-07 + (-2.64697796016969E-23)), (-3.93024156918979E-24 + (-4.40810381558358E-39))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.01053697400556E-07 + (-5.29395592033938E-23)), (-2.00284536762141E-24 + (-2.20405190779179E-39))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.67585459593438E-07 + (1.05879118406788E-22)), (-1.28162025011814E-23 + (1.32243114467507E-38))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-7.27150972981638E-07 + (-3.17637355220363E-22)), (1.01351832794266E-23 + (4.70197740328915E-38))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.13233727790091E-06 + (-4.02340649945793E-21)), (2.13522964307009E-23 + (2.05711511393900E-38))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.76587736954239E-06 + (6.35274710440725E-22)), (-6.62490692106423E-23 + (-1.17549435082229E-38))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.75822905390482E-06 + (0.00000000000000E+00)), (3.78305871026079E-23 + (-1.17549435082229E-38))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.31562117239537E-06 + (2.54109884176290E-21)), (3.03086311685494E-22 + (1.88079096131566E-37))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((6.76496373796090E-06 + (-5.08219768352580E-21)), (-4.00003039013541E-22 + (0.00000000000000E+00))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.06260564852470E-05 + (-3.04931861011548E-20)), (6.56077790924962E-22 + (2.82118644197349E-37))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.67282243428494E-05 + (4.40457132572236E-20)), (-1.45330121238327E-21 + (-7.52316384526264E-37))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.63996995905211E-05 + (0.00000000000000E+00)), (-1.05456019154754E-21 + (2.25694915357879E-36))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.17769653553246E-05 + (-4.74338450462408E-20)), (-1.40068426065889E-21 + (-2.44502824971036E-36))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-6.63135482599680E-05 + (1.35525271560688E-20)), (4.83702115030649E-21 + (3.00926553810506E-36))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.05623637963857E-04 + (1.35525271560688E-20)), (3.76866268963272E-21 + (-4.51389830715758E-36))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.68894325207693E-04 + (1.89735380184963E-19)), (-2.89927296270812E-21 + (4.13774011489445E-36))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.71277099973908E-04 + (3.79470760369927E-19)), (-3.94797336214631E-21 + (-3.76158192263132E-36))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.37995120948431E-04 + (5.42101086242752E-20)), (-2.00008491458486E-20 + (2.10648587667354E-35))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((7.11522258031626E-04 + (-3.25260651745651E-19)), (-3.97278226896129E-20 + (-3.00926553810506E-35))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.16441447410474E-03 + (2.16840434497101E-19)), (2.94941512886342E-20 + (3.00926553810506E-35))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.92291614029804E-03 + (-3.68628738645072E-18)), (-1.00244239888136E-20 + (-2.25694915357879E-35))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.21207407719414E-03 + (3.03576608295941E-18)), (1.50372992274185E-19 + (1.68518870133883E-34))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((5.44645784455033E-03 + (-3.46944695195361E-18)), (3.88585737757394E-19 + (-1.92592994438724E-34))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-9.42562244846982E-03 + (-1.73472347597681E-18)), (6.92989757614234E-19 + (-9.62964972193618E-35))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.67970986311869E-02 + (-2.08166817117217E-17)), (1.60545014319234E-18 + (-4.81482486096809E-33))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.13084875010110E-02 + (0.00000000000000E+00)), (9.29580431618060E-19 + (3.85185988877447E-34))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((6.29114010745649E-02 + (4.16333634234434E-17)), (-4.54276257267888E-18 + (-3.08148791101958E-33))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.45959895914306E-01 + (-8.32667268468867E-17)), (-7.81369195792092E-19 + (-1.92592994438724E-34))))
+    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.83128950540981E-01 + (-1.11022302462516E-16)), (1.67188189971785E-17 + (6.16297582203915E-33))))
+    PROB_DD_PV2_LogGamma = PROB_DD_PV2_Mul(PROB_DD_PV2_Mul(A, PROB_DD_PV2_Sub(A, 1#)), V)
+End Function
+
+Private Function PROB_DD_PV2_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   PROB_DD_PV2_Pair: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim LG As Variant, T As Variant, S As Variant, D As Variant, LP As Variant
+    Dim B As Variant, C As Variant, H As Variant, AN As Variant, Delta As Variant
+    Dim Tail As Variant, E As Variant, V As Variant, N As Long, K As Long
+    On Error GoTo Err_Handler
+    If A < 2# ^ (-400) Or A > 1# Or X < 2# ^ (-400) Then GoTo Err_Handler
+    LG = PROB_DD_PV2_LogGamma(A)
+    If X < A + 1# Then
+        T = Array(-X, 0#)
+        S = PROB_DD_PV2_Div(T, PROB_DD_PV2_Add(A, 1#))
+        For N = 2 To 1000
+            T = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(T, -X), CDbl(N))
+            D = PROB_DD_PV2_Div(T, PROB_DD_PV2_Add(A, CDbl(N)))
+            S = PROB_DD_PV2_Add(S, D)
+            If Abs(PROB_DD_PV2_H(D)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then Exit For
+        Next N
+        If N > 1000 Then GoTo Err_Handler
+        LP = PROB_DD_PV2_Add(PROB_DD_PV2_Sub(PROB_DD_PV2_Mul(PROB_DD_PV2_Log(X), A), LG), PROB_DD_PV2_Log1p(PROB_DD_PV2_Mul(S, A)))
+        If PROB_DD_PV2_Value(LP) > 0# Then GoTo Err_Handler
+        If PROB_DD_PV2_Value(LP) >= -0.5 Then
+            V = PROB_DD_PV2_Expm1(LP)
+            P = PROB_DD_PV2_Value(PROB_DD_PV2_Add(V, 1#))
+            Q = PROB_DD_PV2_Value(PROB_DD_PV2_Neg(V))
+        Else
+            V = PROB_DD_PV2_Exp(LP)
+            P = PROB_DD_PV2_Value(V)
+            Q = PROB_DD_PV2_Value(PROB_DD_PV2_Sub(1#, V))
+        End If
+    Else
+        If X > 32# Then GoTo Err_Handler
+        B = PROB_DD_PV2_Sub(PROB_DD_PV2_Add(X, 1#), A)
+        C = Array(1E+300, 0#)
+        D = PROB_DD_PV2_Div(1#, B)
+        H = D
+        For N = 1 To 100000
+            AN = PROB_DD_PV2_Mul(CDbl(-N), PROB_DD_PV2_Sub(CDbl(N), A))
+            B = PROB_DD_PV2_Add(B, 2#)
+            D = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(AN, D), B)
+            C = PROB_DD_PV2_Add(B, PROB_DD_PV2_Div(AN, C))
+            If Abs(PROB_DD_PV2_H(D)) < 1E-300 Or Abs(PROB_DD_PV2_H(C)) < 1E-300 Then GoTo Err_Handler
+            D = PROB_DD_PV2_Div(1#, D)
+            Delta = PROB_DD_PV2_Mul(C, D)
+            H = PROB_DD_PV2_Mul(H, Delta)
+            If Abs(PROB_DD_PV2_Value(PROB_DD_PV2_Sub(Delta, 1#))) <= 2# ^ (-100) Then Exit For
+        Next N
+        If N > 100000 Then GoTo Err_Handler
+        Tail = Array(0#, 0#)
+        For K = N To 1 Step -1
+            B = PROB_DD_PV2_Add(PROB_DD_PV2_Add(PROB_DD_PV2_Sub(PROB_DD_PV2_Add(X, 1#), A), CDbl(2 * K)), Tail)
+            Tail = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(CDbl(-K), PROB_DD_PV2_Sub(CDbl(K), A)), B)
+        Next K
+        H = PROB_DD_PV2_Div(1#, PROB_DD_PV2_Add(PROB_DD_PV2_Sub(PROB_DD_PV2_Add(X, 1#), A), Tail))
+        E = PROB_DD_PV2_Sub(PROB_DD_PV2_Sub(PROB_DD_PV2_Mul(PROB_DD_PV2_Log(X), A), LG), X)
+        V = PROB_DD_PV2_Mul(PROB_DD_PV2_Mul(PROB_DD_PV2_Exp(E), A), H)
+        P = PROB_DD_PV2_Value(PROB_DD_PV2_Sub(1#, V))
+        Q = PROB_DD_PV2_Value(V)
+    End If
+    PROB_DD_PV2_Pair = True
+    Exit Function
+Err_Handler:
+    Err.Clear
+    PROB_DD_PV2_Pair = False
+End Function
+
+' END generated public Gamma integration
 

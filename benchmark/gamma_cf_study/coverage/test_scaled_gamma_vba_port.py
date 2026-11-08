@@ -7,6 +7,7 @@ from fractions import Fraction
 import math
 import subprocess
 import unittest
+from public_integration import restore,EXTRA
 from install_scaled_gamma_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
 from install_extended_gamma_fidelity import strip
 
@@ -79,7 +80,7 @@ class ScaledGammaVbaTests(unittest.TestCase):
         self.assertEqual(len(saved['seams']),8)
 
     def test_generated_source_and_policy(self):
-        text = (ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text = restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         self.assertEqual(text.count(BEGIN),1)
         block = BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block,render(dataset()))
@@ -89,7 +90,7 @@ class ScaledGammaVbaTests(unittest.TestCase):
         policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
         wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'],BASELINE+475+extended['additional_assertions']+wide['additional_assertions'])
+        self.assertEqual(policy['expected_assertions'],BASELINE+475+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
 
     def test_normalization_oracles_preserve_exact_dyadic_values(self):
         for row in dataset()['normalization']:
@@ -105,14 +106,14 @@ class ScaledGammaVbaTests(unittest.TestCase):
     def test_earlier_vba_suite_and_public_sources_are_unchanged(self):
         sha = 'd94b70e7a98c78de9c0dd6fcfa2be997b3bf96af'
         baseline = subprocess.check_output(['git','show',sha+':tests/M_STATS_PROBDIST_TEST.bas'],cwd=ROOT).decode()
-        text = (ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text = restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         before,rest = text.split(BEGIN)
         _,after = rest.split(END+'\n\n')
         restored = (before+after).replace('    Test_ScaledGamma_Fidelity\n','')
         self.assertEqual(strip(restored),baseline.replace('\r\n','\n'))
         for path in (ROOT/'src').glob('*.bas'):
             original = subprocess.check_output(['git','show',sha+':'+path.relative_to(ROOT).as_posix()],cwd=ROOT).decode()
-            self.assertEqual(path.read_text(),original.replace('\r\n','\n'))
+            self.assertEqual(restore(path.read_text()),original.replace('\r\n','\n'))
 
     def test_revealed_boundaries_are_present(self):
         rows = dataset()['rows']

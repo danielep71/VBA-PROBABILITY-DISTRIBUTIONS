@@ -7,6 +7,7 @@ import sys
 import json
 import subprocess
 import unittest
+from public_integration import restore,EXTRA
 import mpmath as mp
 import sympy as sy
 from install_wide_gamma_fidelity import HERE,ROOT,BEGIN,END,BASELINE,dataset,render,strip
@@ -85,7 +86,7 @@ class WideGammaTests(unittest.TestCase):
         for source in record['sources']:
             blob=subprocess.check_output(['git','show',head+':'+source['path']],cwd=ROOT)
             self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
-            self.assertEqual((ROOT/source['path']).read_text(),blob.decode().replace('\r\n','\n'))
+            self.assertEqual(restore((ROOT/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
         def failures(raw):return re.findall(r'^\[[^\]]+\]   (.*)$',raw.decode('utf-8-sig').replace('\r\n','\n'),re.M)
         old=json.loads((HERE/'excel_extended_gamma_artifact.json').read_text())
         previous=failures(base64.b64decode(old['members']['test-result.txt']['base64']))
@@ -158,12 +159,12 @@ class WideGammaTests(unittest.TestCase):
         saved=json.loads((HERE/'wide_gamma_fidelity.json').read_text())
         self.assertEqual(saved,dataset());self.assertEqual(len(saved['rows']),290)
         self.assertEqual(saved['additional_assertions'],886)
-        text=(ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text=restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         self.assertEqual(text.count(BEGIN),1);self.assertEqual(text.count(END),1)
         self.assertEqual(text.count('    Test_WideGamma_Fidelity\n'),1)
         block=BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block,render(saved))
-        self.assertEqual(json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())['expected_assertions'],BASELINE+886)
+        self.assertEqual(json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())['expected_assertions'],BASELINE+886+EXTRA)
         sha='924ff800077a3001bd1bcc246ad3a370f1c78fba'
         for path in [ROOT/'tests/M_STATS_PROBDIST_TEST.bas',*(ROOT/'src').glob('*.bas')]:
             original=subprocess.check_output(['git','show',sha+':'+path.relative_to(ROOT).as_posix()],cwd=ROOT).decode().replace('\r\n','\n')

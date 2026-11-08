@@ -8,6 +8,7 @@ import random
 import re
 import subprocess
 import unittest
+from public_integration import restore,EXTRA
 
 import extended_gamma as v1
 from extended_gamma_v2 import public
@@ -123,13 +124,13 @@ class ExtendedGammaTests(unittest.TestCase):
         self.assertEqual(saved,dataset())
         self.assertEqual(len(saved['rows']),587)
         self.assertEqual(saved['additional_assertions'],1772)
-        text=(ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text=restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         block=BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block,render(saved))
         self.assertEqual(text.count('    Test_ExtendedGamma_Fidelity\n'),1)
         policy=json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         wide=json.loads((HERE/'wide_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'],9962+wide['additional_assertions'])
+        self.assertEqual(policy['expected_assertions'],9962+wide['additional_assertions']+EXTRA)
 
     def test_frozen_vba_and_public_sources_are_unchanged(self):
         sha='ec8a5f98edc8d37e3e9e50c1344b2fc31c33289f'

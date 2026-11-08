@@ -7,6 +7,7 @@ import subprocess
 import math
 import struct
 import unittest
+from public_integration import restore,EXTRA
 from fractions import Fraction as F
 from install_scaled_fidelity import HERE, ROOT, BEGIN, END, TYPES, dataset, render, power, literal
 from scaled_product import product, rounded
@@ -31,7 +32,7 @@ class ScaledVbaPortTests(unittest.TestCase):
 
     def test_generated_block_and_policy_match(self):
         data = dataset()
-        text = (ROOT / 'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text = restore((ROOT / 'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         self.assertEqual(text.count(BEGIN), 1)
         self.assertEqual(text.count(END), 1)
         block = BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
@@ -43,7 +44,7 @@ class ScaledVbaPortTests(unittest.TestCase):
         gamma = json.loads((HERE / 'scaled_gamma_fidelity.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
         wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], 7104+extension['additional_assertions']+gamma['additional_assertions']+extended['additional_assertions']+wide['additional_assertions'])
+        self.assertEqual(policy['expected_assertions'], 7104+extension['additional_assertions']+gamma['additional_assertions']+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
 
     def test_retained_excel_identity_and_failure_details(self):
         artifact = json.loads((HERE / 'excel_scaled_product_artifact.json').read_text())

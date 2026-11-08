@@ -104,11 +104,11 @@ class ExecutionTests(unittest.TestCase):
     def test_single_list_full_and_live_modes(self):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
-        self.assertEqual(len(full), 74)
+        self.assertEqual(len(full), 75)
         for name in ('test_precision_probe.py', 'test_precision_v2.py',
                      'test_research_checks.py', 'test_precision_arithmetic_audit.py',
                      'test_cf_enclosure.py', 'test_scaled_product.py',
-                     'test_scaled_vba_port.py', 'test_scaled_dd.py', 'test_scaled_dd_vba_port.py', 'test_scaled_gamma_vba_port.py', 'test_extended_gamma.py', 'test_wide_gamma.py'):
+                     'test_scaled_vba_port.py', 'test_scaled_dd.py', 'test_scaled_dd_vba_port.py', 'test_scaled_gamma_vba_port.py', 'test_extended_gamma.py', 'test_wide_gamma.py', 'test_public_integration.py'):
             command = ['gamma_cf_study/coverage/' + name]
             self.assertIn(command, full)
             self.assertNotIn(command, live)

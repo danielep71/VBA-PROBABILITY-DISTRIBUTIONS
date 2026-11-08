@@ -6,6 +6,7 @@ import json
 import math
 import subprocess
 import unittest
+from public_integration import restore,EXTRA
 from fractions import Fraction as F
 from install_scaled_dd_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
 from install_scaled_fidelity import power
@@ -70,7 +71,7 @@ class ScaledDDVbaTests(unittest.TestCase):
             self.assertLessEqual(error, abs(reference)*F(1, 2**98), row)
 
     def test_generated_source_and_policy(self):
-        text = (ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text = restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         self.assertEqual(text.count(BEGIN), 1)
         block = BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block, render(dataset()))
@@ -79,12 +80,12 @@ class ScaledDDVbaTests(unittest.TestCase):
         extension = json.loads((HERE/'scaled_gamma_fidelity.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
         wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions']+extended['additional_assertions']+wide['additional_assertions'])
+        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions']+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
 
     def test_old_vba_suite_is_unchanged(self):
         baseline = subprocess.check_output(['git', 'show',
             '4c9f965f2bf8489828cb0367b400941dcbfcc82d:tests/M_STATS_PROBDIST_TEST.bas'], cwd=ROOT).decode()
-        text = (ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text()
+        text = restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         before, rest = text.split(BEGIN)
         _, after = rest.split(END+'\n\n')
         restored = (before+after).replace('    Test_ScaledDD_Fidelity\n', '')

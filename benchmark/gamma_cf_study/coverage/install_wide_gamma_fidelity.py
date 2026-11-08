@@ -11,6 +11,8 @@ BASELINE=9962
 
 
 def strip(text):
+    from public_integration import restore
+    text=restore(text)
     if BEGIN not in text:return text
     before,rest=text.split(BEGIN,1)
     _,after=rest.split(END+'\n\n',1)
