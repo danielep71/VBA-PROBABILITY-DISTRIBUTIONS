@@ -8,14 +8,14 @@ and links, not copies of publisher articles or third-party implementations.
 
 | Document | Purpose |
 | --- | --- |
-| [Bibliography](BIBLIOGRAPHY.md) | Seventeen source records (2020–2026), publication dates, access depth and transfer limitations |
+| [Bibliography](BIBLIOGRAPHY.md) | Twenty-six source records (2000–2026), publication dates, access depth and transfer limitations |
 | [Evaluation methodology](METHODOLOGY.md) | Reproducible comparison and adoption protocol |
 | [Issue map](ISSUE_MAP.md) | Existing implementation owners, roadmap links and feasibility work |
 | [Article note template](ARTICLE_NOTE_TEMPLATE.md) | Fields for future reviews and decisions |
 
 ## Scope and status
 
-The search covers publications and author preprints from 2020–2026 on incomplete
+The search covers publications and author preprints from 2000–2026 on incomplete
 beta/gamma functions, inverse distributions, extreme tails, discrete distributions,
 bivariate probabilities and compound frequency-severity models. Publication years
 and preprint revisions are recorded separately. This is a selected review, not an exhaustive systematic review.
@@ -27,9 +27,17 @@ safeguarded inverses. The papers suggest experiments; they do not establish that
 the current VBA implementation is defective or that a replacement is superior.
 The issue map records known defects separately from exploratory improvements.
 
-All seventeen records are **reviewed for relevance, not adopted or validated in VBA
+All twenty-six records are **reviewed for relevance, not adopted or validated in VBA
 by this review**. No benchmark, runtime measurement or new Excel run was performed
 for this documentation. No contract threshold or frozen preregistration changes.
+
+## Extension to 2000–2020
+
+R18–R26 add nine references without duplicating the 2020 records already listed.
+For Gamma P/Q precision work, prioritize R18 (formulas and dispatch regions) and
+R19 (two-Double primitive error analysis), with R20/R22 as arithmetic comparisons
+and R21 as an alternative integral representation. These are research inputs,
+not a claim that any current PR meets numerical acceptance.
 
 ## Maintaining the review
 
