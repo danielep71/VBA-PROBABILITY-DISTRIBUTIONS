@@ -46,7 +46,10 @@ def dataset():
 
 
 def render(data):
-    template = (HERE/'scaled_gamma_vba.template').read_text()
+    arithmetic = (HERE/'scaled_dd_vba.template').read_text().split('Private Sub SD_Case(')[0]
+    arithmetic = arithmetic.replace('SD_Valid', 'SGD_Valid').replace('SD_Try', 'SGD_Try')
+    arithmetic = arithmetic.replace('5.5511151231257827E-17', 'SP_FromWords(&H3C900000&, &H00000000&)')
+    template = arithmetic + (HERE/'scaled_gamma_vba.template').read_text()
     template = template.replace('@LN2@', scaled_literal(S._normalize(LN2, 0)))
     template = template.replace('@LN2HI@', literal(LN2.hi.hex()))
     coefficients = []

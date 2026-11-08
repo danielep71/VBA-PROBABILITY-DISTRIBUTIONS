@@ -9465,6 +9465,126 @@ End Sub
 ' END generated scaled-DD study
 
 ' BEGIN generated scaled-Gamma study
+Private Function SGD_Valid(ByVal H As Double, ByVal L As Double, ByVal E As Long) As Boolean
+'==============================================================================
+' PURPOSE
+'   SGD_Valid: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim T As Double
+    If E < -32767 Or E > 32767 Then Exit Function
+    If Not PROB_IsFinite(H) Then Exit Function
+    If Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        SGD_Valid = (L = 0# And E = 0)
+        Exit Function
+    End If
+    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
+    If Abs(L) > SP_FromWords(&H3C900000&, &H00000000&) Then Exit Function
+    T = H + L
+    SGD_Valid = (T = H)
+End Function
+
+Private Function SGD_Try(ByVal Operation As Long, _
+    ByVal AH As Double, ByVal AL As Double, ByVal AE As Long, _
+    ByVal BH As Double, ByVal BL As Double, ByVal BE As Long, _
+    ByRef H As Double, ByRef L As Double, ByRef E As Long) As Boolean
+'==============================================================================
+' PURPOSE
+'   SGD_Try: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Pair As Variant, Gap As Long, Shift As Long, Factor As Double
+    Dim T As Double, TE As Long, RawH As Double, RawL As Double
+    On Error GoTo Err_Handler
+    H = 0#: L = 0#: E = 0
+    If Not SGD_Valid(AH, AL, AE) Then Exit Function
+    If Not SGD_Valid(BH, BL, BE) Then Exit Function
+    If Operation < 1 Or Operation > 4 Then Exit Function
+    If Operation = 2 Then
+        BH = -BH: BL = -BL
+        Operation = 1
+    End If
+    If Operation = 1 Then
+        If AH = 0# Then
+            If BH = 0# Then
+                H = SP_SignedZero(SP_Negative(AH) And SP_Negative(BH))
+            Else
+                H = BH: L = BL: E = BE
+            End If
+            SGD_Try = True
+            Exit Function
+        End If
+        If BH = 0# Then
+            H = AH: L = AL: E = AE
+            SGD_Try = True
+            Exit Function
+        End If
+        If AE < BE Then
+            T = AH: AH = BH: BH = T
+            T = AL: AL = BL: BL = T
+            TE = AE: AE = BE: BE = TE
+        End If
+        Gap = AE - BE
+        If Gap > 120 Then
+            H = AH: L = AL: E = AE
+            SGD_Try = True
+            Exit Function
+        End If
+        'One multiplication rounds a tiny aligned low component only once.
+        Factor = SP_Shift(1#, -Gap)
+        BH = BH * Factor
+        BL = BL * Factor
+        Pair = PV2_Add(Array(AH, AL), Array(BH, BL))
+        E = AE
+    Else
+        If Operation = 4 And BH = 0# Then Exit Function
+        If AH = 0# Or BH = 0# Then
+            H = SP_SignedZero(SP_Negative(AH) Xor SP_Negative(BH))
+            SGD_Try = True
+            Exit Function
+        End If
+        If Operation = 3 Then
+            Pair = PV2_Mul(Array(AH, AL), Array(BH, BL))
+            E = AE + BE
+        Else
+            Pair = PV2_Div(Array(AH, AL), Array(BH, BL))
+            E = AE - BE
+        End If
+    End If
+    Pair = PV2_Sum(CDbl(Pair(0)), CDbl(Pair(1)))
+    RawH = Pair(0): RawL = Pair(1)
+    If RawH = 0# Then
+        H = RawH: L = 0#: E = 0
+    Else
+        SP_Frexp RawH, H, Shift
+        'If RawH is subnormal, the nonoverlapping RawL must be zero.
+        If RawL <> 0# Then
+            Factor = SP_Shift(1#, -Shift)
+            L = RawL * Factor
+        End If
+        E = E + Shift
+    End If
+    If Not SGD_Valid(H, L, E) Then GoTo Err_Handler
+    SGD_Try = True
+    Exit Function
+Err_Handler:
+    H = 0#: L = 0#: E = 0
+    SGD_Try = False
+End Function
+
 Private Function SG_Coerce(ByVal V As Variant) As Variant
 '==============================================================================
 ' PURPOSE
@@ -9501,7 +9621,7 @@ Private Function SG_Op(ByVal Operation As Long, ByVal A As Variant, ByVal B As V
 '==============================================================================
     Dim U As Variant, V As Variant, H As Double, L As Double, E As Long
     U = SG_Coerce(A): V = SG_Coerce(B)
-    If Not SD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
+    If Not SGD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
         CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E) Then
         Err.Raise 5, "SG_Op", "operation " & CStr(Operation) & " A=" & CStr(U(0)) & ";" & CStr(U(1)) & ";" & CStr(U(2)) & _
             " B=" & CStr(V(0)) & ";" & CStr(V(1)) & ";" & CStr(V(2))
