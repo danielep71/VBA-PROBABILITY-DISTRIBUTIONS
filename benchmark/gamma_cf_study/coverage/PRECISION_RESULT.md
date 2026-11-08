@@ -32,7 +32,7 @@ hashes in `precision_screen.json`, and exits 1 on rejection. The original
 `python benchmark/gamma_cf_study/coverage/test_precision_probe.py` currently
 reports **2 test methods passing, 1 failing**. The failing subcase requires the
 exact identity log(1)=0; the bounded atanh series and rounded ln(2) leave
--3.0814879110195774E-33. This is a known prototype defect, not silently exempted.
++3.0814879110195774E-33. This is a known prototype defect, not silently exempted.
 Nonzero logarithm, log1p and expm1 cases meet the fixture's 2^-96 relative bound;
 product/division residual and invalid-range fixtures pass. No change was made
 to the frozen prototype after discovering this failure. Its log(1) defect must
@@ -68,3 +68,9 @@ Next work must address upper-CF monotonicity as well as the lower-path precision
 strategy, correct the exact-zero primitive, and cover the public domain outside
 this deliberately restricted prototype. No contract, seam or cap is relaxed.
 #24 and #26 stay open; #241 and #242 remain draft and blocked.
+
+CI follow-up: the v1 fixture now asserts the known positive residual +2^-108
+as a negative regression case, while v2 separately requires exact log(1)=0.
+Both fixture modules are registered in benchmark/test_evidence_tools.py.
+The earlier written minus sign was incorrect; the measured magnitude and
+rejection were unchanged. The original frozen v1 numerical code is untouched.

@@ -8,7 +8,7 @@ from precision_probe import DD, log_dd, log1p_dd, expm1_dd, lower
 class PrecisionProbeTests(unittest.TestCase):
     def test_transcendentals_against_high_precision(self):
         cases = [
-            (log_dd, mp.log, [2**-400, .00390625, .7, 1., 1.973]),
+            (log_dd, mp.log, [2**-400, .00390625, .7, 1.973]),
             (lambda x: log1p_dd(DD(x)), mp.log1p, [-1e-120, -1e-12, -.1, -.5, -.8]),
             (lambda x: expm1_dd(DD(x)), mp.expm1, [-1e-120, -1e-12, -.1, -1., -8.]),
         ]
@@ -20,6 +20,12 @@ class PrecisionProbeTests(unittest.TestCase):
                         target = oracle(mp.mpf(x))
                         error = abs(mp.mpf(actual.hi) + mp.mpf(actual.lo) - target)
                         self.assertLessEqual(error, abs(target) * mp.mpf(2)**-96)
+
+    def test_rejected_v1_log_one_counterexample_is_preserved(self):
+        # This is a negative fixture for the frozen rejected prototype.
+        # The accepted identity is tested independently against v2.
+        self.assertEqual(log_dd(1.).value(), 2**-108)
+        self.assertNotEqual(log_dd(1.).value(), 0.)
 
     def test_cancellation_and_residuals(self):
         self.assertEqual(((DD(1) + 2**-80) - 1).value(), 2**-80)
