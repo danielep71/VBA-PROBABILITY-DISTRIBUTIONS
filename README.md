@@ -1143,6 +1143,7 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Excel certification](docs/EXCEL_CERTIFICATION.md) | Exact-source runtime and grid-export evidence |
 | [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
 | [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
+| [Numerical research](docs/research/README.md) | Annotated bibliography, evaluation methodology and research-to-issue map |
 | [Public API](docs/PUBLIC_API.md) | Compatibility manifest and drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
