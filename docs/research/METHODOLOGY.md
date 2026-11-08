@@ -159,3 +159,25 @@ negative proofs under [verification depth](../VERIFICATION_DEPTH.md).
   tilting and roundoff errors. Verify direct tails against independent methods.
   Normalization and matching moments are useful diagnostics, not VaR/ES or
   relative-tail certification. Document independence assumptions and resource caps.
+
+## Arithmetic and algorithm controls from the 2000–2020 extension
+
+For R18–R26, distinguish the mathematical representation, its arithmetic
+implementation and the public caller's transformation. Validate each layer.
+
+- Before transferring a two-Double bound, identify the exact primitive,
+  normalization invariant, rounding mode, operand-order assumptions and whether
+  FMA is required. State handling of overflow and subnormals explicitly; an
+  idealized unlimited-exponent proof does not cover those cases automatically.
+- Test the VBA port's exact output against the model on selected diagnostic
+  points, then use new independent cases. Retain exact-zero identities and
+  cancellation cases. Two-Double arithmetic is not IEEE binary128.
+- Compare smaller-tail selection and every formula-switch boundary with the
+  current Gamma paths. Approximation accuracy alone does not guarantee monotonic
+  adjacent outputs. Do not move a seam merely to avoid a revealed failure.
+- Account separately for accumulation, argument rounding, logGamma, prefactors,
+  truncation and final rounding. Accurate summation cannot recover errors already
+  present in its terms. Preserve rejected experiments and frozen datasets.
+- Match published parameter conventions and stated accuracy to the intended
+  public contract. A paper's own software can be a useful comparator but is not
+  algorithm-independent evidence when production adopts the same method.
