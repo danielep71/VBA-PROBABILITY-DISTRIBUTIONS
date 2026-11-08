@@ -103,6 +103,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Expand the scaled Gamma development screen to 69 in-domain B6 reference points and 24 adjacent routing-boundary points, with monotonicity checks and oracle precision stability at 160/320 digits (#24/#26). Twenty out-of-domain B6 points remain explicitly excluded; public VBA acceptance is unchanged.
+
 - Add a private scaled-arithmetic Gamma P/Q integration experiment for positive binary64 shapes up to one and arguments up to 32, including subnormal inputs (#24/#26). This revealed Python screen does not change public VBA or release acceptance.
 
 - Add a private VBA port of the exponent-separated two-Double operations and 611 model-fidelity assertions (#24/#26), with independent rational checks and preservation of the earlier test suite. All 611 assertions pass in exact-source Excel run 42494438289 (7,715 total, 7,674 PASS, the same 41 public failures); public Gamma acceptance remains blocked.
