@@ -479,7 +479,7 @@ def case_writer_subprocess(withdraw_export_claim):
             return None                      # git unavailable: skip, not fail
         # Real valid exported baseline, independent of a live pending export.
         # The writer/validator below still come from the current working tree.
-        subprocess.run(["git", "checkout", "--quiet", "2a3fd9e19df30c1e78c8a8ed50092f743dc6f48d"],
+        subprocess.run(["git", "checkout", "--quiet", "fdd57f84060ac0ed171edf8651fc1cc779b19674"],
                        cwd=clone, capture_output=True, check=True)
         bench = os.path.join(clone, "benchmark")
         for mod in ("write_manifest.py", "_manifest.py", "excel_certification.py"):

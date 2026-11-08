@@ -389,7 +389,7 @@ or source digest still fails validation; the export record and both manifests
 must be committed atomically with their corresponding grids.
 
 Positive tooling fixtures use the coherent historical evidence snapshot
-`2a3fd9e19df30c1e78c8a8ed50092f743dc6f48d` in throwaway clones, with the current
+`fdd57f84060ac0ed171edf8651fc1cc779b19674` (the release base, reachable from this change's ancestry) in throwaway clones, with the current
 writer, renderer and refresh tools. Their success does not certify the live
 checkout. CI separately checks live source identities, export records, grids,
 counts and summaries, and the negative controls continue to reject stale or
