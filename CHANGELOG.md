@@ -103,6 +103,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Add a private scaled-arithmetic Gamma P/Q integration experiment for positive binary64 shapes up to one and arguments up to 32, including subnormal inputs (#24/#26). This revealed Python screen does not change public VBA or release acceptance.
+
 - Add a private VBA port of the exponent-separated two-Double operations and 611 model-fidelity assertions (#24/#26), with independent rational checks and preservation of the earlier test suite. All 611 assertions pass in exact-source Excel run 42494438289 (7,715 total, 7,674 PASS, the same 41 public failures); public Gamma acceptance remains blocked.
 
 - Extend the private Gamma arithmetic study with exponent-separated two-Double addition, subtraction, multiplication and division (#24/#26). Exact-rational regression covers cancellation, alignment and accumulated operations. This Python study is not a new public kernel or Excel-certified candidate.
