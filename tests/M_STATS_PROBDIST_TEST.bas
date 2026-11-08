@@ -9502,7 +9502,10 @@ Private Function SG_Op(ByVal Operation As Long, ByVal A As Variant, ByVal B As V
     Dim U As Variant, V As Variant, H As Double, L As Double, E As Long
     U = SG_Coerce(A): V = SG_Coerce(B)
     If Not SD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
-        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E) Then Err.Raise 5
+        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E) Then
+        Err.Raise 5, "SG_Op", "operation " & CStr(Operation) & " A=" & CStr(U(0)) & ";" & CStr(U(1)) & ";" & CStr(U(2)) & _
+            " B=" & CStr(V(0)) & ";" & CStr(V(1)) & ";" & CStr(V(2))
+    End If
     SG_Op = Array(H, L, E)
 End Function
 
@@ -9594,7 +9597,7 @@ Private Function SG_Value(ByVal A As Variant) As Double
 '   2026-11-08
 '==============================================================================
     Dim Result As Double
-    If Not SP_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5
+    If Not SP_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5, "SG_Value", "rounding refused"
     SG_Value = Result
 End Function
 
@@ -9837,7 +9840,8 @@ Private Function SG_LogGamma(ByVal A As Variant) As Variant
     SG_LogGamma = SG_Mul(SG_Mul(A, SG_Sub(A, 1#)), V)
 End Function
 
-Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
 '==============================================================================
 ' PURPOSE
 '   SG_Pair: private exponent-separated arithmetic fixture.
@@ -9852,15 +9856,17 @@ Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double
     Dim AA As Variant, XX As Variant, LG As Variant, Term As Variant, Total As Variant
     Dim Delta As Variant, LP As Variant, PP As Variant, QQ As Variant
     Dim B As Variant, C As Variant, D As Variant, AN As Variant, Tail As Variant, H As Variant
-    Dim N As Long, K As Long, Converged As Boolean
+    Dim N As Long, K As Long, Converged As Boolean, Stage As String
     On Error GoTo Err_Handler
-    P = 0#: Q = 0#
+    P = 0#: Q = 0#: Diagnostic = "": Stage = "inputs"
     If Not PROB_IsFinite(A) Then Exit Function
     If Not PROB_IsFinite(X) Then Exit Function
     If A <= 0# Or A > 1# Or X <= 0# Or X > 32# Then Exit Function
     AA = SG_Coerce(A): XX = SG_Coerce(X)
+    Stage = "loggamma"
     LG = SG_LogGamma(AA)
     If X < A + 1# Then
+        Stage = "lower series"
         Term = SG_Neg(XX)
         Total = SG_Div(Term, SG_Add(AA, 1#))
         For N = 2 To 1000
@@ -9873,8 +9879,10 @@ Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double
             End If
         Next N
         If Not Converged Then Err.Raise 5
+        Stage = "lower log probability"
         LP = SG_Add(SG_Sub(SG_Mul(SG_Log(X), AA), LG), SG_Log1p(SG_Mul(Total, AA)))
         If CDbl(LP(0)) > 0# Then Err.Raise 5
+        Stage = "lower exponential"
         If SG_Value(LP) >= -0.5 Then
             QQ = SG_Neg(SG_Expm1(LP))
             PP = SG_Sub(1#, QQ)
@@ -9883,6 +9891,7 @@ Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double
             QQ = SG_Sub(1#, PP)
         End If
     Else
+        Stage = "upper forward"
         B = SG_Sub(SG_Add(XX, 1#), AA)
         C = SG_Coerce(1E+300): D = SG_Div(1#, B)
         For N = 1 To 100000
@@ -9897,19 +9906,23 @@ Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double
             End If
         Next N
         If Not Converged Then Err.Raise 5
+        Stage = "upper backward"
         Tail = SG_Coerce(0#)
         For K = N To 1 Step -1
             Tail = SG_Div(SG_Mul(-CDbl(K), SG_Sub(K, AA)), _
                 SG_Add(SG_Add(SG_Sub(SG_Add(XX, 1#), AA), 2# * K), Tail))
         Next K
         H = SG_Div(1#, SG_Add(SG_Sub(SG_Add(XX, 1#), AA), Tail))
+        Stage = "upper exponential"
         QQ = SG_Mul(SG_Mul(SG_Exp(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), LG), XX)), AA), H)
         PP = SG_Sub(1#, QQ)
     End If
+    Stage = "final rounding"
     P = SG_Value(PP): Q = SG_Value(QQ)
     SG_Pair = True
     Exit Function
 Err_Handler:
+    Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
     P = 0#: Q = 0#
     SG_Pair = False
 End Function
@@ -9927,9 +9940,9 @@ Private Sub SG_Case(ByVal Label As String, ByVal A As Double, ByVal X As Double,
 ' UPDATED
 '   2026-11-08
 '==============================================================================
-    Dim P As Double, Q As Double, OK As Boolean
-    OK = SG_Pair(A, X, P, Q)
-    AssertTrue Label & " returned", OK
+    Dim P As Double, Q As Double, OK As Boolean, Diagnostic As String
+    OK = SG_Pair(A, X, P, Q, Diagnostic)
+    AssertTrue Label & " returned " & Diagnostic, OK
     AssertTrue Label & " P bits", (OK And SP_SameBits(P, ExpectedP))
     AssertTrue Label & " Q bits", (OK And SP_SameBits(Q, ExpectedQ))
 End Sub
