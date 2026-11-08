@@ -1,0 +1,198 @@
+evaluated 1 / 198
+evaluated 2 / 198
+evaluated 3 / 198
+evaluated 4 / 198
+evaluated 5 / 198
+evaluated 6 / 198
+evaluated 7 / 198
+evaluated 8 / 198
+evaluated 9 / 198
+evaluated 10 / 198
+evaluated 11 / 198
+evaluated 12 / 198
+evaluated 13 / 198
+evaluated 14 / 198
+evaluated 15 / 198
+evaluated 16 / 198
+evaluated 17 / 198
+evaluated 18 / 198
+evaluated 19 / 198
+evaluated 20 / 198
+evaluated 21 / 198
+evaluated 22 / 198
+evaluated 23 / 198
+evaluated 24 / 198
+evaluated 25 / 198
+evaluated 26 / 198
+evaluated 27 / 198
+evaluated 28 / 198
+evaluated 29 / 198
+evaluated 30 / 198
+evaluated 31 / 198
+evaluated 32 / 198
+evaluated 33 / 198
+evaluated 34 / 198
+evaluated 35 / 198
+evaluated 36 / 198
+evaluated 37 / 198
+evaluated 38 / 198
+evaluated 39 / 198
+evaluated 40 / 198
+evaluated 41 / 198
+evaluated 42 / 198
+evaluated 43 / 198
+evaluated 44 / 198
+evaluated 45 / 198
+evaluated 46 / 198
+evaluated 47 / 198
+evaluated 48 / 198
+evaluated 49 / 198
+evaluated 50 / 198
+evaluated 51 / 198
+evaluated 52 / 198
+evaluated 53 / 198
+evaluated 54 / 198
+evaluated 55 / 198
+evaluated 56 / 198
+evaluated 57 / 198
+evaluated 58 / 198
+evaluated 59 / 198
+evaluated 60 / 198
+evaluated 61 / 198
+evaluated 62 / 198
+evaluated 63 / 198
+evaluated 64 / 198
+evaluated 65 / 198
+evaluated 66 / 198
+evaluated 67 / 198
+evaluated 68 / 198
+evaluated 69 / 198
+evaluated 70 / 198
+evaluated 71 / 198
+evaluated 72 / 198
+evaluated 73 / 198
+evaluated 74 / 198
+evaluated 75 / 198
+evaluated 76 / 198
+evaluated 77 / 198
+evaluated 78 / 198
+evaluated 79 / 198
+evaluated 80 / 198
+evaluated 81 / 198
+evaluated 82 / 198
+evaluated 83 / 198
+evaluated 84 / 198
+evaluated 85 / 198
+evaluated 86 / 198
+evaluated 87 / 198
+evaluated 88 / 198
+evaluated 89 / 198
+evaluated 90 / 198
+evaluated 91 / 198
+evaluated 92 / 198
+evaluated 93 / 198
+evaluated 94 / 198
+evaluated 95 / 198
+evaluated 96 / 198
+evaluated 97 / 198
+evaluated 98 / 198
+evaluated 99 / 198
+evaluated 100 / 198
+evaluated 101 / 198
+evaluated 102 / 198
+evaluated 103 / 198
+evaluated 104 / 198
+evaluated 105 / 198
+evaluated 106 / 198
+evaluated 107 / 198
+evaluated 108 / 198
+evaluated 109 / 198
+evaluated 110 / 198
+evaluated 111 / 198
+evaluated 112 / 198
+evaluated 113 / 198
+evaluated 114 / 198
+evaluated 115 / 198
+evaluated 116 / 198
+evaluated 117 / 198
+evaluated 118 / 198
+evaluated 119 / 198
+evaluated 120 / 198
+evaluated 121 / 198
+evaluated 122 / 198
+evaluated 123 / 198
+evaluated 124 / 198
+evaluated 125 / 198
+evaluated 126 / 198
+evaluated 127 / 198
+evaluated 128 / 198
+evaluated 129 / 198
+evaluated 130 / 198
+evaluated 131 / 198
+evaluated 132 / 198
+evaluated 133 / 198
+evaluated 134 / 198
+evaluated 135 / 198
+evaluated 136 / 198
+evaluated 137 / 198
+evaluated 138 / 198
+evaluated 139 / 198
+evaluated 140 / 198
+evaluated 141 / 198
+evaluated 142 / 198
+evaluated 143 / 198
+evaluated 144 / 198
+evaluated 145 / 198
+evaluated 146 / 198
+evaluated 147 / 198
+evaluated 148 / 198
+evaluated 149 / 198
+evaluated 150 / 198
+evaluated 151 / 198
+evaluated 152 / 198
+evaluated 153 / 198
+evaluated 154 / 198
+evaluated 155 / 198
+evaluated 156 / 198
+evaluated 157 / 198
+evaluated 158 / 198
+evaluated 159 / 198
+evaluated 160 / 198
+evaluated 161 / 198
+evaluated 162 / 198
+evaluated 163 / 198
+evaluated 164 / 198
+evaluated 165 / 198
+evaluated 166 / 198
+evaluated 167 / 198
+evaluated 168 / 198
+evaluated 169 / 198
+evaluated 170 / 198
+evaluated 171 / 198
+Traceback (most recent call last):
+  File "/workspace/scratch/564e70c4ffe6/VBA-PROBABILITY-DISTRIBUTIONS/benchmark/gamma_cf_study/coverage/screen_wide_gamma.py", line 82, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/scratch/564e70c4ffe6/VBA-PROBABILITY-DISTRIBUTIONS/benchmark/gamma_cf_study/coverage/screen_wide_gamma.py", line 46, in main
+    refs.append((mp.gammainc(aa,0,xx,regularized=True),mp.gammainc(aa,xx,mp.inf,regularized=True)))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.12/site-packages/mpmath/functions/expintegrals.py", line 172, in gammainc
+    return ctx._lower_gamma(z, b, regularized)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.12/site-packages/mpmath/functions/expintegrals.py", line 184, in _lower_gamma
+    return ctx.hypercomb(h, [z])
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.12/site-packages/mpmath/functions/hypergeometric.py", line 125, in hypercomb
+    v = ctx.fprod([ctx.hyper(a_s, b_s, z, **kwargs)] + \
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.12/site-packages/mpmath/functions/hypergeometric.py", line 222, in hyper
+    if   q == 1: return ctx._hyp1f1(a_s, b_s, z, **kwargs)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.12/site-packages/mpmath/functions/hypergeometric.py", line 342, in _hyp1f1
+    v = ctx.hypsum(1, 1, (atype, btype), [a, b], z, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.12/site-packages/mpmath/ctx_mp.py", line 714, in hypsum
+    zv, have_complex, magnitude = summator(coeffs, v, prec, wp, \
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 30, in hypsum_1_1_Z_Q_R
+mpmath.libmp.libhyper.NoConvergence: Hypergeometric series converges too slowly. Try increasing maxterms.
