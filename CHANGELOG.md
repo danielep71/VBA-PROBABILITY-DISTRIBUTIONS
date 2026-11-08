@@ -103,7 +103,7 @@ Use only the categories needed by a release.
 
 ### Added
 
-- Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. A generated private VBA port adds 4,657 planned arithmetic assertions; its Excel execution is not yet certified. Public VBA kernels and their retained failures are unchanged.
+- Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. The generated private VBA port passes all 4,657 new arithmetic assertions in exact-source Excel run 42476278844 (7,104 total, 7,063 PASS, 41 retained public failures). Public VBA kernels and their retained failures are unchanged.
 - Added a numerical research index under `docs/research/`, with twenty-six annotated source records covering 2000–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.
 
 - `tools/setup_repository.py` reads the GitHub Actions settings that `SETTINGS.md` documents, without writing them (#208): Actions enabled, full-SHA pinning, read-only default token permissions, no pull request approval by Actions, the outside-contributor approval policy and 90-day retention. The values live in a new `actions` block of `repository-settings.json` (schema 2). Drift is reported in the preview, `--verify` and the evidence (schema 2); an unreadable endpoint is a note, not drift.

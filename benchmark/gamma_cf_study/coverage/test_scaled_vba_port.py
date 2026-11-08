@@ -1,5 +1,9 @@
 """Reproducible primitive oracle and private VBA source/fixture binding."""
+import base64
+import hashlib
 import json
+import re
+import subprocess
 import math
 import struct
 import unittest
@@ -36,6 +40,42 @@ class ScaledVbaPortTests(unittest.TestCase):
         self.assertEqual(text.count('    Test_ScaledProduct_Fidelity\n'), 1)
         policy = json.loads((ROOT / '.github/excel-evidence-policy.json').read_text())
         self.assertEqual(policy['expected_assertions'], 7104)
+
+    def test_retained_excel_identity_and_failure_details(self):
+        artifact = json.loads((HERE / 'excel_scaled_product_artifact.json').read_text())
+        decoded = {}
+        for name, entry in artifact['members'].items():
+            raw = base64.b64decode(entry['base64'], validate=True)
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), entry['sha256'])
+            decoded[name] = raw
+        record = json.loads(decoded['excel-certification.json'].decode('utf-8-sig'))
+        sha = '86a7e47be621b32350fb343aa8afaa212eddddb9'
+        self.assertEqual(record['candidate_sha'], sha)
+        self.assertEqual(record['runner']['workflow']['sha'], sha)
+        self.assertEqual(record['runner']['workflow']['run_id'], 42476278844)
+        self.assertEqual(record['harness'], dict(entry_point='Test_STATS_PROBDIST_RunAll_CI',
+                                                assertions=7104, passed=7063, failed=41))
+        self.assertEqual(record['stages']['compile']['status'], 'PASS')
+        self.assertEqual(record['stages']['regression']['status'], 'FAIL')
+        self.assertEqual(record['stages']['cleanup']['status'], 'PASS')
+        self.assertTrue(all(not grid['exported'] for grid in record['grids'].values()))
+        self.assertEqual(record['log']['sha256'],
+                         'sha256:'+hashlib.sha256(decoded['test-result.txt']).hexdigest())
+        policy = json.loads(subprocess.check_output(
+            ['git', 'show', sha+':.github/excel-evidence-policy.json'], cwd=ROOT))
+        self.assertEqual({s['path'] for s in record['sources']}, set(policy['regression_sources']))
+        for source in record['sources']:
+            blob = subprocess.check_output(['git', 'show', sha+':'+source['path']], cwd=ROOT)
+            self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(), source['sha256'])
+        old = json.loads((HERE / 'excel_precision_v2_artifact.json').read_text())
+        old_log = base64.b64decode(old['members']['test-result.txt']['base64'])
+        def failures(raw):
+            text = raw.decode('utf-8-sig').replace('\r\n', '\n')
+            return re.findall(r'^\[[^\]]+\]   (.*)$', text, re.M)
+        previous, current = failures(old_log), failures(decoded['test-result.txt'])
+        self.assertEqual(len(current), 41)
+        self.assertEqual(current, previous)
+        self.assertFalse(any(label.startswith('SP ') for label in current))
 
     def test_bit_literals_roundtrip_including_negative_zero(self):
         for x in [0., -0., 1., -1., 2.**-1074, 2.**-1022,
