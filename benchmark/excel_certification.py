@@ -62,6 +62,20 @@ def git_text(root, *args):
     return proc.stdout.decode("utf-8", "strict")
 
 
+def fetch_candidate(root, candidate):
+    """Explicitly retrieve an absent certified object; never substitute HEAD.
+
+    This opt-in acquisition step does not validate the record. Validation still
+    checks every certified source blob and the evidence commit independently.
+    """
+    if not isinstance(candidate, str) or not SHA40.fullmatch(candidate):
+        raise CertificationError("candidate_sha must be a full lowercase Git SHA")
+    if _run_git(root, "cat-file", "-e", candidate + "^{commit}").returncode == 0:
+        return
+    git_text(root, "fetch", "--no-tags", "origin", candidate)
+    git_text(root, "cat-file", "-e", candidate + "^{commit}")
+
+
 def git_bytes(root, ref, path):
     proc = _run_git(root, "show", f"{ref}:{path}")
     if proc.returncode:

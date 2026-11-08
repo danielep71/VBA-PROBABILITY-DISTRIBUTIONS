@@ -133,7 +133,7 @@ jobs:
         env:
           CANDIDATE: ${{ steps.identity.outputs.candidate }}
         run: >-
-          python check_excel_certification.py --record excel_regression_record.json
+          python check_excel_certification.py --fetch-candidate --record excel_regression_record.json
           --evidence-ref "$CANDIDATE" --require-pass
 
       - name: Certify the exact candidate commit in Excel
