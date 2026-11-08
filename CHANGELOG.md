@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Distribution guide
+
+- Add a reproducible SVG/PNG map of the 17 current distribution API surfaces, with mathematical supports, illustrative use cases and an accessible companion linked from the README (issue #244).
+
 ### Added
 
 - `tools/setup_repository.py` reads the GitHub Actions settings that `SETTINGS.md` documents, without writing them (#208): Actions enabled, full-SHA pinning, read-only default token permissions, no pull request approval by Actions, the outside-contributor approval policy and 90-day retention. The values live in a new `actions` block of `repository-settings.json` (schema 2). Drift is reported in the preview, `--verify` and the evidence (schema 2); an unreadable endpoint is a note, not drift.
