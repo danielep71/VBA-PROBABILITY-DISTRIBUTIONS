@@ -49,6 +49,15 @@ def render(data):
     arithmetic = (HERE/'scaled_dd_vba.template').read_text().split('Private Sub SD_Case(')[0]
     arithmetic = arithmetic.replace('SD_Valid', 'SGD_Valid').replace('SD_Try', 'SGD_Try')
     arithmetic = arithmetic.replace('5.5511151231257827E-17', 'SP_FromWords(&H3C900000&, &H00000000&)')
+    arithmetic = arithmetic.replace('ByRef H As Double, ByRef L As Double, ByRef E As Long) As Boolean',
+        'ByRef H As Double, ByRef L As Double, ByRef E As Long, Optional ByRef Diagnostic As String = "") As Boolean')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(AH, AL, AE) Then Exit Function',
+        'If Not SGD_Valid(AH, AL, AE) Then\n        Diagnostic = "input A H=" & SG_Bits(AH) & " L=" & SG_Bits(AL) & " sum=" & SG_Bits(AH + AL)\n        Exit Function\n    End If')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(BH, BL, BE) Then Exit Function',
+        'If Not SGD_Valid(BH, BL, BE) Then\n        Diagnostic = "input B H=" & SG_Bits(BH) & " L=" & SG_Bits(BL) & " sum=" & SG_Bits(BH + BL)\n        Exit Function\n    End If')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(H, L, E) Then GoTo Err_Handler',
+        'If Not SGD_Valid(H, L, E) Then\n        Diagnostic = "output H=" & SG_Bits(H) & " L=" & SG_Bits(L) & " E=" & CStr(E) & " sum=" & SG_Bits(H + L)\n        GoTo Err_Handler\n    End If')
+    arithmetic = arithmetic.replace('Err_Handler:\n', 'Err_Handler:\n    If Len(Diagnostic) = 0 Then Diagnostic = "runtime " & Err.Description\n')
     template = arithmetic + (HERE/'scaled_gamma_vba.template').read_text()
     template = template.replace('@LN2@', scaled_literal(S._normalize(LN2, 0)))
     template = template.replace('@LN2HI@', literal(LN2.hi.hex()))

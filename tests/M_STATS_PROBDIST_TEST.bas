@@ -9494,7 +9494,7 @@ End Function
 Private Function SGD_Try(ByVal Operation As Long, _
     ByVal AH As Double, ByVal AL As Double, ByVal AE As Long, _
     ByVal BH As Double, ByVal BL As Double, ByVal BE As Long, _
-    ByRef H As Double, ByRef L As Double, ByRef E As Long) As Boolean
+    ByRef H As Double, ByRef L As Double, ByRef E As Long, Optional ByRef Diagnostic As String = "") As Boolean
 '==============================================================================
 ' PURPOSE
 '   SGD_Try: private exponent-separated arithmetic fixture.
@@ -9510,8 +9510,14 @@ Private Function SGD_Try(ByVal Operation As Long, _
     Dim T As Double, TE As Long, RawH As Double, RawL As Double
     On Error GoTo Err_Handler
     H = 0#: L = 0#: E = 0
-    If Not SGD_Valid(AH, AL, AE) Then Exit Function
-    If Not SGD_Valid(BH, BL, BE) Then Exit Function
+    If Not SGD_Valid(AH, AL, AE) Then
+        Diagnostic = "input A H=" & SG_Bits(AH) & " L=" & SG_Bits(AL) & " sum=" & SG_Bits(AH + AL)
+        Exit Function
+    End If
+    If Not SGD_Valid(BH, BL, BE) Then
+        Diagnostic = "input B H=" & SG_Bits(BH) & " L=" & SG_Bits(BL) & " sum=" & SG_Bits(BH + BL)
+        Exit Function
+    End If
     If Operation < 1 Or Operation > 4 Then Exit Function
     If Operation = 2 Then
         BH = -BH: BL = -BL
@@ -9577,12 +9583,34 @@ Private Function SGD_Try(ByVal Operation As Long, _
         End If
         E = E + Shift
     End If
-    If Not SGD_Valid(H, L, E) Then GoTo Err_Handler
+    If Not SGD_Valid(H, L, E) Then
+        Diagnostic = "output H=" & SG_Bits(H) & " L=" & SG_Bits(L) & " E=" & CStr(E) & " sum=" & SG_Bits(H + L)
+        GoTo Err_Handler
+    End If
     SGD_Try = True
     Exit Function
 Err_Handler:
+    If Len(Diagnostic) = 0 Then Diagnostic = "runtime " & Err.Description
     H = 0#: L = 0#: E = 0
     SGD_Try = False
+End Function
+
+Private Function SG_Bits(ByVal X As Double) As String
+'==============================================================================
+' PURPOSE
+'   SG_Bits: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim N As SP_Number, W As SP_Words
+    N.Value = X
+    LSet W = N
+    SG_Bits = Hex$(W.High) & ":" & Hex$(W.Low)
 End Function
 
 Private Function SG_Coerce(ByVal V As Variant) As Variant
@@ -9619,11 +9647,11 @@ Private Function SG_Op(ByVal Operation As Long, ByVal A As Variant, ByVal B As V
 ' UPDATED
 '   2026-11-08
 '==============================================================================
-    Dim U As Variant, V As Variant, H As Double, L As Double, E As Long
+    Dim U As Variant, V As Variant, H As Double, L As Double, E As Long, Fault As String
     U = SG_Coerce(A): V = SG_Coerce(B)
     If Not SGD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
-        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E) Then
-        Err.Raise 5, "SG_Op", "operation " & CStr(Operation) & " A=" & CStr(U(0)) & ";" & CStr(U(1)) & ";" & CStr(U(2)) & _
+        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E, Fault) Then
+        Err.Raise 5, "SG_Op", Fault & " operation " & CStr(Operation) & " A=" & CStr(U(0)) & ";" & CStr(U(1)) & ";" & CStr(U(2)) & _
             " B=" & CStr(V(0)) & ";" & CStr(V(1)) & ";" & CStr(V(2))
     End If
     SG_Op = Array(H, L, E)
