@@ -5036,6 +5036,30 @@ Private Sub Test_CN_GammaCumulative()
 End Sub
 
 
+Private Sub Test_GammaCF_PrecisionCounterexample()
+'==============================================================================
+' PURPOSE
+'   Check the revealed A=.39 adjacent-X counterexample within upper CF.
+' NOTES
+'   Coordinates were revealed by the frozen 220-point precision screen.
+'   Both points are above A+1; this is not independent holdout evidence.
+' ERROR POLICY
+'   A wrong-direction step fails and retains full-precision diagnostics.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    AssertTrue "Precision upper CF Cumulative" & _
+        " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
+        " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))), _
+        (CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+         CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)))
+    AssertTrue "Precision upper CF Survival" & _
+        " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
+        " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))), _
+        (CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+         CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)))
+End Sub
+
 Private Sub Test_GammaCF_CapAndXSeam()
 '==============================================================================
 ' PURPOSE
@@ -6065,6 +6089,7 @@ Private Sub Test_CN_GammaSurvival()
     Test_GammaCF_Coverage
     Test_GammaCF_AdditionalCallers
     Test_GammaCF_CapAndXSeam
+    Test_GammaCF_PrecisionCounterexample
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
