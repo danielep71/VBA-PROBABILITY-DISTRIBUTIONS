@@ -1,7 +1,7 @@
 """
 Negative and positive controls for render_readme_assurance.py (#28).
 
-Every case runs against a private copy of the committed inputs, so the real
+Every case runs against a private, pinned coherent evidence snapshot, so the real
 README and evidence are never touched. The cases prove that the block is
 current, that it cannot drift by hand, that stale evidence is rendered visibly
 and blocks, and that missing, malformed or contradictory inputs fail without
@@ -11,7 +11,6 @@ Run: python3 test_render_readme_assurance.py   (exit 0 = pass, nonzero = fail)
 """
 import csv
 import contextlib
-import glob
 import io
 import json
 import os
@@ -26,7 +25,6 @@ import render_readme_assurance as R
 
 fails = []
 REAL_ROOT = R.ROOT
-BAS_PATTERNS = ("src/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
 
 
 def check(cond, msg):
@@ -37,17 +35,14 @@ def check(cond, msg):
 def fixture():
     root = tempfile.mkdtemp(prefix="readme-assurance-")
     # Retain real candidate objects without copying/mutating the source repo.
-    # No checkout: the private working inputs are copied explicitly below.
+    # Check out only the private historical data fixture below.
     subprocess.run(["git", "clone", "--shared", "--no-checkout", REAL_ROOT, root],
                    check=True, capture_output=True)
-    paths = list(R.INPUTS)
-    for pattern in BAS_PATTERNS:
-        paths += [os.path.relpath(p, REAL_ROOT).replace(os.sep, "/")
-                  for p in glob.glob(os.path.join(REAL_ROOT, pattern), recursive=True)]
-    for rel in paths:
-        target = os.path.join(root, *rel.split("/"))
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copyfile(os.path.join(REAL_ROOT, *rel.split("/")), target)
+    # Unit controls need coherent evidence even while live source is unexported.
+    # Use a real, immutable evidence snapshot; R itself is imported from the
+    # current working tree. Live freshness is checked separately by CI.
+    subprocess.run(["git", "checkout", "--quiet", "2a3fd9e19df30c1e78c8a8ed50092f743dc6f48d"],
+                   cwd=root, check=True, capture_output=True)
     return root
 
 
