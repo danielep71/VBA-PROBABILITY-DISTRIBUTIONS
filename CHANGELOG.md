@@ -103,6 +103,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Extend the private Gamma arithmetic study with exponent-separated two-Double addition, subtraction, multiplication and division (#24/#26). Exact-rational regression covers cancellation, alignment and accumulated operations. This Python study is not a new public kernel or Excel-certified candidate.
+
 - Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. The generated private VBA port passes all 4,657 new arithmetic assertions in exact-source Excel run 42476278844 (7,104 total, 7,063 PASS, 41 retained public failures). Public VBA kernels and their retained failures are unchanged.
 - Added a numerical research index under `docs/research/`, with twenty-six annotated source records covering 2000–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.
 
