@@ -5036,6 +5036,271 @@ Private Sub Test_CN_GammaCumulative()
 End Sub
 
 
+Private Sub Test_GammaCF_AdditionalCallers()
+'==============================================================================
+' PURPOSE
+'   Checks inverse callers, Poisson, arithmetic underflow and routing seams.
+' NOTES
+'   References and design: benchmark/gamma_cf_study/coverage/.
+'   Frozen thresholds apply; subnormal outputs use a one-unit absolute bound.
+' ERROR POLICY
+'   Failures remain recorded; do not retune the kernel from these cases.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Small As Double
+    Dim A As Double
+    Dim V As Double
+    Dim L As Double
+    Dim R As Double
+    Dim N As Double
+    Dim Diag As String
+    Small = (2# ^ (-1022)) * (2# ^ (-52))
+    AssertClose "B6 Gamma inverse 0.01 0.1", _
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (5.66073814706194E-101 + (-6.34485459328912E-117)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 0.01 0.1", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E-02 + (0.00000000000000E+00)))) / (1.13214762941239E-100 + (-2.03035346985252E-115)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 0.01 0.5", _
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (4.46553501891035E-31 + (4.37905770101505E-46)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 0.01 0.5", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E-02 + (0.00000000000000E+00)))) / (8.93107003782071E-31 + (0.00000000000000E+00)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 0.01 0.9", _
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (1.50359362307029E-05 + (4.74338450462408E-20)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 0.01 0.9", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E-02 + (0.00000000000000E+00)))) / (3.00718724614059E-05 + (-3.38813178901720E-21)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 0.5 0.1", _
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (7.89538704671561E-03 + (1.73472347597681E-18)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 0.5 0.1", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)))) / (1.57907740934312E-02 + (2.42861286636753E-17)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 0.5 0.5", _
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (2.27468211559786E-01 + (3.88578058618805E-16)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 0.5 0.5", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)))) / (4.54936423119573E-01 + (-2.22044604925031E-16)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 0.5 0.9", _
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (1.35277172704771E+00 + (-2.44249065417534E-15)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 0.5 0.9", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)))) / (2.70554345409542E+00 + (-4.88498130835069E-15)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 1.0 0.1", _
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (1.05360515657826E-01 + (3.05311331771918E-16)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 1.0 0.1", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)))) / (2.10721031315653E-01 + (-3.88578058618805E-16)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 1.0 0.5", _
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (6.93147180559945E-01 + (3.33066907387547E-16)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 1.0 0.5", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)))) / (1.38629436111989E+00 + (6.66133814775094E-16)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 1.0 0.9", _
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (2.30258509299405E+00 + (-3.99680288865056E-15)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 1.0 0.9", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)))) / (4.60517018598809E+00 + (1.77635683940025E-15)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 2.0 0.1", _
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (5.31811608389612E-01 + (1.11022302462516E-16)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 2.0 0.1", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (4.00000000000000E+00 + (0.00000000000000E+00)))) / (1.06362321677922E+00 + (4.21884749357559E-15)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 2.0 0.5", _
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (1.67834699001666E+00 + (4.44089209850063E-16)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 2.0 0.5", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (4.00000000000000E+00 + (0.00000000000000E+00)))) / (3.35669398003332E+00 + (8.88178419700125E-16)), 1#, 4.7E-12
+    AssertClose "B6 Gamma inverse 2.0 0.9", _
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (3.88972016986743E+00 + (-4.44089209850063E-16)), 1#, 2E-14
+    AssertClose "B6 ChiSquare inverse 2.0 0.9", _
+        CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (4.00000000000000E+00 + (0.00000000000000E+00)))) / (7.77944033973486E+00 + (-8.88178419700125E-16)), 1#, 4.7E-12
+    AssertClose "B6 Poisson Cumulative 0 0x1.fffffffffffffp+0", _
+        CDbl(K_STATS_Poisson_Cumulative(0#, (2.00000000000000E+00 + (-2.22044604925031E-16)))) / (1.35335283236613E-01 + (-2.77555756156289E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 0 0x1.fffffffffffffp+0", _
+        CDbl(K_STATS_Poisson_Survival(0#, (2.00000000000000E+00 + (-2.22044604925031E-16)))) / (8.64664716763387E-01 + (3.33066907387547E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 0 0x1.0000000000000p+1", _
+        CDbl(K_STATS_Poisson_Cumulative(0#, (2.00000000000000E+00 + (0.00000000000000E+00)))) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 0 0x1.0000000000000p+1", _
+        CDbl(K_STATS_Poisson_Survival(0#, (2.00000000000000E+00 + (0.00000000000000E+00)))) / (8.64664716763387E-01 + (3.33066907387547E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 0 0x1.0000000000001p+1", _
+        CDbl(K_STATS_Poisson_Cumulative(0#, (2.00000000000000E+00 + (4.44089209850063E-16)))) / (1.35335283236613E-01 + (-3.88578058618805E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 0 0x1.0000000000001p+1", _
+        CDbl(K_STATS_Poisson_Survival(0#, (2.00000000000000E+00 + (4.44089209850063E-16)))) / (8.64664716763387E-01 + (4.44089209850063E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 1 0x1.7ffffffffffffp+1", _
+        CDbl(K_STATS_Poisson_Cumulative(1#, (3.00000000000000E+00 + (-4.44089209850063E-16)))) / (1.99148273471456E-01 + (-1.66533453693773E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 1 0x1.7ffffffffffffp+1", _
+        CDbl(K_STATS_Poisson_Survival(1#, (3.00000000000000E+00 + (-4.44089209850063E-16)))) / (8.00851726528544E-01 + (2.22044604925031E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 1 0x1.8000000000000p+1", _
+        CDbl(K_STATS_Poisson_Cumulative(1#, (3.00000000000000E+00 + (0.00000000000000E+00)))) / (1.99148273471456E-01 + (-2.22044604925031E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 1 0x1.8000000000000p+1", _
+        CDbl(K_STATS_Poisson_Survival(1#, (3.00000000000000E+00 + (0.00000000000000E+00)))) / (8.00851726528544E-01 + (2.22044604925031E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 1 0x1.8000000000001p+1", _
+        CDbl(K_STATS_Poisson_Cumulative(1#, (3.00000000000000E+00 + (4.44089209850063E-16)))) / (1.99148273471456E-01 + (-3.05311331771918E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 1 0x1.8000000000001p+1", _
+        CDbl(K_STATS_Poisson_Survival(1#, (3.00000000000000E+00 + (4.44089209850063E-16)))) / (8.00851726528544E-01 + (3.33066907387547E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 10 0x1.7ffffffffffffp+3", _
+        CDbl(K_STATS_Poisson_Cumulative(10#, (1.20000000000000E+01 + (-1.77635683940025E-15)))) / (3.47229417554172E-01 + (-1.66533453693773E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 10 0x1.7ffffffffffffp+3", _
+        CDbl(K_STATS_Poisson_Survival(10#, (1.20000000000000E+01 + (-1.77635683940025E-15)))) / (6.52770582445828E-01 + (2.22044604925031E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 10 0x1.8000000000000p+3", _
+        CDbl(K_STATS_Poisson_Cumulative(10#, (1.20000000000000E+01 + (0.00000000000000E+00)))) / (3.47229417554172E-01 + (-3.33066907387547E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 10 0x1.8000000000000p+3", _
+        CDbl(K_STATS_Poisson_Survival(10#, (1.20000000000000E+01 + (0.00000000000000E+00)))) / (6.52770582445828E-01 + (3.33066907387547E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Cumulative 10 0x1.8000000000001p+3", _
+        CDbl(K_STATS_Poisson_Cumulative(10#, (1.20000000000000E+01 + (1.77635683940025E-15)))) / (3.47229417554171E-01 + (4.44089209850063E-16)), 1#, 2E-13
+    AssertClose "B6 Poisson Survival 10 0x1.8000000000001p+3", _
+        CDbl(K_STATS_Poisson_Survival(10#, (1.20000000000000E+01 + (1.77635683940025E-15)))) / (6.52770582445829E-01 + (-4.44089209850063E-16)), 1#, 2E-13
+    N = CDbl(K_STATS_Poisson_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 0.5 0.1", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (5.00000000000000E-01 + (0.00000000000000E+00)))) >= (1.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 0.5 0.1", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 0.5 0.5", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (5.00000000000000E-01 + (0.00000000000000E+00)))) >= (5.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 0.5 0.5", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 0.5 0.9", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (5.00000000000000E-01 + (0.00000000000000E+00)))) >= (9.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 0.5 0.9", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 2.0 0.1", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (2.00000000000000E+00 + (0.00000000000000E+00)))) >= (1.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 2.0 0.1", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 2.0 0.5", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (2.00000000000000E+00 + (0.00000000000000E+00)))) >= (5.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 2.0 0.5", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 2.0 0.9", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (2.00000000000000E+00 + (0.00000000000000E+00)))) >= (9.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 2.0 0.9", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.20000000000000E+01 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 12.0 0.1", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (1.20000000000000E+01 + (0.00000000000000E+00)))) >= (1.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 12.0 0.1", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.20000000000000E+01 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 12.0 0.5", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (1.20000000000000E+01 + (0.00000000000000E+00)))) >= (5.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 12.0 0.5", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    N = CDbl(K_STATS_Poisson_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.20000000000000E+01 + (0.00000000000000E+00))))
+    AssertTrue "B6 Poisson inverse upper 12.0 0.9", _
+        (CDbl(K_STATS_Poisson_Cumulative(N, (1.20000000000000E+01 + (0.00000000000000E+00)))) >= (9.00000000000000E-01 + (0.00000000000000E+00)))
+    AssertTrue "B6 Poisson inverse lower 12.0 0.9", _
+        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    A = Small
+    AssertClose "B6 underflow Gamma 0x0.0000000000001p-1022 2.0", _
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x0.0000000000001p-1022 2.0", _
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x0.0000000000001p-1022 700.0", _
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x0.0000000000001p-1022 700.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x0.0000000000001p-1022 740.0", _
+        CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x0.0000000000001p-1022 740.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1480.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x0.0000000000001p-1022 745.0", _
+        CDbl(K_STATS_Gamma_Survival(745.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x0.0000000000001p-1022 745.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    A = 2# ^ (-1022)
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1022 2.0", _
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / Small, (2.20228321803051E+14 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1022 2.0", _
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / Small, (2.20228321803051E+14 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1022 700.0", _
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1022 700.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1022 740.0", _
+        CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1022 740.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1480.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1022 745.0", _
+        CDbl(K_STATS_Gamma_Survival(745.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1022 745.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    A = 1E-300
+    AssertClose "B6 underflow Gamma 0x1.56e1fc2f8f359p-997 2.0", _
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (4.89005107080611E-302 + (2.07226151461452E-317)), 1#, 5E-15
+    AssertClose "B6 underflow ChiSquare 0x1.56e1fc2f8f359p-997 2.0", _
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (4.89005107080611E-302 + (2.07226151461452E-317)), 1#, 5E-15
+    AssertClose "B6 underflow Gamma 0x1.56e1fc2f8f359p-997 700.0", _
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.56e1fc2f8f359p-997 700.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.56e1fc2f8f359p-997 740.0", _
+        CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.56e1fc2f8f359p-997 740.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1480.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.56e1fc2f8f359p-997 745.0", _
+        CDbl(K_STATS_Gamma_Survival(745.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.56e1fc2f8f359p-997 745.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    A = 0.5
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 2.0", _
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 2.0", _
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 700.0", _
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / (2.10101451626422E-306 + (-2.52961610670718E-321)), 1#, 5E-15
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 700.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / (2.10101451626422E-306 + (-2.52961610670718E-321)), 1#, 5E-15
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 740.0", _
+        CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (2.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 740.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1480.0#, 2# * A)) / Small, (2.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 745.0", _
+        CDbl(K_STATS_Gamma_Survival(745.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 745.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    A = 1#
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 2.0", _
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 2.0", _
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 700.0", _
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / (9.85967654375977E-305 + (0.00000000000000E+00)), 1#, 5E-15
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 700.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / (9.85967654375977E-305 + (0.00000000000000E+00)), 1#, 5E-15
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 740.0", _
+        CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (8.50000000000000E+01 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 740.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1480.0#, 2# * A)) / Small, (8.50000000000000E+01 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 745.0", _
+        CDbl(K_STATS_Gamma_Survival(745.0#, A, 1#)) / Small, (1.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 745.0", _
+        CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (1.00000000000000E+00 + (0.00000000000000E+00)), 1#
+    L = CDbl(K_STATS_Gamma_Survival((2.10000000000000E+00 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
+    V = CDbl(K_STATS_Gamma_Survival((2.10000000000000E+00 + (0.00000000000000E+00)), 1#, 1#))
+    R = CDbl(K_STATS_Gamma_Survival((2.10000000000000E+00 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
+    AssertTrue "B6 shape seam lower 2.1", (L <= V)
+    AssertTrue "B6 shape seam upper 2.1", (V <= R)
+    L = CDbl(K_STATS_Gamma_Survival((4.00000000000000E+00 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
+    V = CDbl(K_STATS_Gamma_Survival((4.00000000000000E+00 + (0.00000000000000E+00)), 1#, 1#))
+    R = CDbl(K_STATS_Gamma_Survival((4.00000000000000E+00 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
+    AssertTrue "B6 shape seam lower 4.0", (L <= V)
+    AssertTrue "B6 shape seam upper 4.0", (V <= R)
+    L = CDbl(K_STATS_Gamma_Survival((8.00000000000000E+00 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
+    V = CDbl(K_STATS_Gamma_Survival((8.00000000000000E+00 + (0.00000000000000E+00)), 1#, 1#))
+    R = CDbl(K_STATS_Gamma_Survival((8.00000000000000E+00 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
+    AssertTrue "B6 shape seam lower 8.0", (L <= V)
+    AssertTrue "B6 shape seam upper 8.0", (V <= R)
+    L = CDbl(K_STATS_Gamma_Survival((1.60000000000000E+01 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
+    V = CDbl(K_STATS_Gamma_Survival((1.60000000000000E+01 + (0.00000000000000E+00)), 1#, 1#))
+    R = CDbl(K_STATS_Gamma_Survival((1.60000000000000E+01 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
+    AssertTrue "B6 shape seam lower 16.0", (L <= V)
+    AssertTrue "B6 shape seam upper 16.0", (V <= R)
+    AssertErrorCode "B6 invalid Gamma_Survival", K_STATS_Gamma_Survival(2#, 0#, 1#), xlErrNum
+    AssertErrorCode "B6 invalid Gamma_Cumulative", K_STATS_Gamma_Cumulative(2#, 1#, 0#), xlErrNum
+    AssertErrorCode "B6 invalid ChiSquare_Survival", K_STATS_ChiSquare_Survival(4#, 0#), xlErrNum
+    AssertErrorCode "B6 invalid Poisson_Survival", K_STATS_Poisson_Survival(0#, -1#), xlErrNum
+    Diag = "stale"
+    AssertErrorCode "B6 status failure", K_STATS_Gamma_Survival(2#, 0#, 1#, Diag), xlErrNum
+    AssertTrue "B6 status populated", (Len(Diag) > 0 And Diag <> "stale")
+    V = CDbl(K_STATS_Gamma_Survival(2#, 1#, 1#, Diag))
+    AssertTrue "B6 status cleared", (Len(Diag) = 0)
+End Sub
+
 Private Sub Test_GammaCF_Coverage()
 '==============================================================================
 ' PURPOSE
@@ -5375,6 +5640,7 @@ Private Sub Test_CN_GammaSurvival()
 '
     Debug.Print "-- Gamma survival"
     Test_GammaCF_Coverage
+    Test_GammaCF_AdditionalCallers
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
