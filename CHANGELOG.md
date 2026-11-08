@@ -99,6 +99,8 @@ Use only the categories needed by a release.
 
 ### Distribution guide
 
+- Added calculated Standard Normal density, CDF, survival and quantile panels with shared parameters, probability areas, accessible explanations and worksheet mappings; editable SVG/PNG generation includes independent high-precision checks (#245).
+
 - Add a reproducible SVG/PNG map of the 17 current distribution API surfaces, with mathematical supports, illustrative use cases and an accessible companion linked from the README (issue #244).
 
 ### Added

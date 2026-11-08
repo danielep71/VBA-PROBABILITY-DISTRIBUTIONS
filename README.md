@@ -304,6 +304,13 @@ Save the workbook as `.xlsm` or `.xlsb`.
 
 ## 2. Use the functions from a worksheet
 
+### Read density, probability and quantiles visually
+
+![Standard Normal density, cumulative, survival and quantile at the same threshold z=1, with left and right probability areas.](assets/probability-functions.png)
+
+Density is a height; probability is an area under the density. The four panels use the same Standard Normal example and full-precision probability for inversion.
+[Accessible explanation and worksheet examples](docs/visuals/probability-functions.md) · [Editable SVG](assets/probability-functions.svg).
+
 ### Standard Normal cumulative probability
 
 ```excel
