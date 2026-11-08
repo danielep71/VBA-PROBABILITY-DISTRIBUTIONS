@@ -44,7 +44,25 @@ Two permanent assertions for the revealed A=.39 CDF/SF adjacent pair are added
 by `install_precision_counterexample.py`, with hi;lo diagnostics. The suite
 count becomes 1947. These assertions validate the existing B6 VBA path; they
 do not port the two-Double prototype or change a numerical source file.
-The corresponding real-Excel result is pending at the time of this record.
+[Excel run 42470937344](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/42470937344)
+ran merge checkout `e5a65792b49c8f8e3af0e2159b96990ebcd26a5d` for head `5fbbbe6`,
+Excel 16.0 build 20430, 64-bit: **1947 total / 1906 PASS / 41 FAIL**.
+The CDF assertion passes; the SF assertion fails, and its two hi;lo outputs
+reconstruct exactly the model's `...3c27` -> `...3c28` binary64 values above.
+The previous 40 failures remain. Complete failure excerpt:
+`precision_excel_42470937344.txt`. No export occurred.
+
+## Post-hoc upper-path decomposition
+
+`upper_rounding_diagnosis.py/json` retains the two-point source-bound experiment.
+Both Lentz runs stop at depth 62; both backward values round to
+`0x1.19f0d60282c4ep-1`. The prefactor incorrectly rises from
+`0x1.fd8d8c7d60b32p-4` to `0x1.fd8d8c7d60b33p-4`.
+Replacing only the prefactor with its high-precision value makes the pair
+monotone; replacing only the fraction also removes the rise in this pair.
+This isolates rounding interactions for this counterexample, not a universal
+root-cause or fix claim. The exact finite depth-62 fraction is still distinct
+from the converged oracle; it is not silently certified as exact Q.
 
 Next work must address upper-CF monotonicity as well as the lower-path precision
 strategy, correct the exact-zero primitive, and cover the public domain outside
