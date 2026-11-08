@@ -239,3 +239,93 @@ hypotheses as though they had always been established.
 - **Access depth:** Publisher abstract and selected article passages; Python implementation not audited.
 
 **Project hypothesis and limitations:** The Aggregate framework uses FFT-based methods for compound distributions. Feasibility #271 should distinguish discretization, truncation and aliasing, evaluate exponential tilting and document VBA cost. Matching the first three moments does not certify extreme tails, VaR or ES. This is a separate research direction, not an approved extension of the current dependence kernels.
+
+## R18 — Gamma ratios and inverses
+
+- **Authors:** Amparo Gil, Javier Segura and Nico M. Temme.
+- **Title:** Efficient and Accurate Algorithms for the Computation and Inversion of the Incomplete Gamma Function Ratios.
+- **Publication:** SIAM Journal on Scientific Computing 34(6), A2965–A2981 (2012); arXiv posting 2013.
+- **Primary sources:** [Publication](https://doi.org/10.1137/120872553); [Author or official supporting source](https://ir.cwi.nl/pub/20433/20433B.pdf).
+- **Access depth:** Selected manuscript sections on direct computation, region selection and inversion; no code audit.
+
+**Project hypothesis and limitations:** The paper computes regularized P and Q, selecting the smaller probability first and obtaining its complement, and provides inverse initialization methods and the Fortran IncgamFI module. Compare formulas, prefactors and dispatch regions with #24/#26 before changing algorithms. Test seams and direct tails independently; a published double-precision algorithm does not establish the repository contract or monotonicity at adjacent binary64 inputs. Also relevant to gamma inverse work #14.
+
+## R19 — Double-word arithmetic error bounds
+
+- **Authors:** Mioara Joldes, Jean-Michel Muller and Valentina Popescu.
+- **Title:** Tight and Rigorous Error Bounds for Basic Building Blocks of Double-Word Arithmetic.
+- **Publication:** ACM Transactions on Mathematical Software 44(2), 2017.
+- **Primary sources:** [Publication](https://doi.org/10.1145/3121432); [Author or official supporting source](https://jncf2017.lip6.fr/program/abs-popescu.pdf).
+- **Access depth:** Author conference abstract and institutional publication metadata; full-paper retrieval from HAL was blocked.
+
+**Project hypothesis and limitations:** Use this as a priority reference for auditing two-Double addition, multiplication, division and normalization in the precision work under #24/#26. Obtain the full algorithm and proof before adopting a bound. Check rounding assumptions, operand ordering, normalization, FMA requirements and exponent-range exclusions against actual VBA behavior. Primitive bounds do not automatically prove an entire Gamma evaluation or monotonicity.
+
+## R20 — Accurate sums and dot products
+
+- **Authors:** Takeshi Ogita, Siegfried M. Rump and Shin’ichi Oishi.
+- **Title:** Accurate Sum and Dot Product.
+- **Publication:** SIAM Journal on Scientific Computing 26(6), 1955–1988 (2005).
+- **Primary sources:** [Publication](https://doi.org/10.1137/030601818); [Author or official supporting source](https://www.tuhh.de/ti3/paper/rump/OgRuOi05.pdf).
+- **Access depth:** Publisher metadata and author-hosted abstract; no complete proof or code audit.
+
+**Project hypothesis and limitations:** Error-free transformations and accurate accumulation offer comparisons for series and polynomial evaluation under #24/#26 and numerical audit #7. Verify the preconditions of the selected algorithm. Improving summation alone does not remove errors already introduced by log arguments, logGamma, exponentiation or a prefactor; retain the rejected sum-only experiments as evidence.
+
+## R21 — Generalized incomplete gamma evaluation
+
+- **Authors:** Rémy Abergel and Lionel Moisan.
+- **Title:** Fast and Accurate Evaluation of a Generalized Incomplete Gamma Function.
+- **Publication:** ACM Transactions on Mathematical Software 46(1), 2020.
+- **Primary sources:** [Publication](https://doi.org/10.1145/3365983); [Author or official supporting source](https://helios2.mi.parisdescartes.fr/~moisan/research.php).
+- **Access depth:** Author-hosted abstract and publication/software listing; direct full PDF retrieval returned a service error.
+
+**Project hypothesis and limitations:** The generalized integral uses explicit normalization, continued fractions, integration by parts and Romberg integration for close endpoints. Assess the representation as a comparator for #24/#26, with stable conversion to regularized P/Q. Reported gains are against the paper’s comparator, not this VBA library. Interval probabilities are a possible future application, not a new approved API.
+
+## R22 — Floating-point expansions and QD
+
+- **Authors:** Yozo Hida, Xiaoye S. Li and David H. Bailey.
+- **Title:** Algorithms for Quad-Double Precision Floating Point Arithmetic.
+- **Publication:** Technical report 2000; ARITH-15 proceedings (2001), 155–162.
+- **Primary sources:** [Publication](https://doi.org/10.1109/ARITH.2001.930115); [Author or official supporting source](https://escholarship.org/uc/item/69q5t2mj).
+- **Access depth:** Institutional abstract and QD project documentation; implementation not audited.
+
+**Project hypothesis and limitations:** The work describes arithmetic with unevaluated floating-point expansions, including algebraic and transcendental operations. Use it for design comparison and primitive tests in #24/#26; QD offers double-double and quad-double implementations. It does not establish that four components are required or that two components equal IEEE binary128. Audit runtime arithmetic assumptions and licensing before any code reuse.
+
+## R23 — Bivariate and trivariate normal and t probabilities
+
+- **Authors:** Alan Genz.
+- **Title:** Numerical Computation of Rectangular Bivariate and Trivariate Normal and t Probabilities.
+- **Publication:** Statistics and Computing 14(3), 251–260 (2004).
+- **Primary sources:** [Publication](https://doi.org/10.1023/B:STCO.0000035304.20635.31); [Author or official supporting source](https://cran.r-project.org/web/packages/mvtnorm/refman/mvtnorm.html).
+- **Access depth:** Official mvtnorm references/documentation; publisher full text not retrieved.
+
+**Project hypothesis and limitations:** Make this a concrete baseline candidate in #196 alongside R14. Verify the actual algorithm, rectangle conventions, correlation limits and direct-tail handling before implementation. Two wrappers around the same Genz routine are not independent reference legs. Trivariate operations remain outside the current committed scope unless separately approved.
+
+## R24 — Poisson-binomial distribution computation
+
+- **Authors:** Yili Hong.
+- **Title:** On Computing the Distribution Function for the Poisson Binomial Distribution.
+- **Publication:** Computational Statistics & Data Analysis 59, 41–51 (2013); related institutional report 2011.
+- **Primary sources:** [Publication](https://doi.org/10.1016/j.csda.2012.10.006); [Author or official supporting source](https://vtechworks.lib.vt.edu/items/7f2c25bf-ad02-43c5-a200-a2ac65464b46).
+- **Access depth:** Publisher abstract, institutional report metadata and official poibin documentation; code not audited.
+
+**Project hypothesis and limitations:** Compare characteristic-function/DFT evaluation against recursion and the tilted convolution approach R13 under #270. The independent heterogeneous Bernoulli assumptions remain essential. Exact finite formulas do not guarantee tiny-tail relative accuracy after floating-point evaluation; test tail probabilities and deterministic and homogeneous limits explicitly.
+
+## R25 — Marcum Q and noncentral gamma
+
+- **Authors:** Amparo Gil, Javier Segura and Nico M. Temme.
+- **Title:** Algorithm 939: Computation of the Marcum Q-Function.
+- **Publication:** ACM Transactions on Mathematical Software 40(3), article 20 (2014); preprint 2013.
+- **Primary sources:** [Publication](https://doi.org/10.1145/2591004); [Author or official supporting source](https://arxiv.org/abs/1311.0681).
+- **Access depth:** Author preprint abstract and ACM algorithm catalogue; full implementation not audited.
+
+**Project hypothesis and limitations:** The algorithm combines series, integrals, asymptotics and recurrences for complementary Marcum P/Q, corresponding to noncentral gamma/chi-square probabilities. Under #197, map parameter conventions and tested domains first. Reported accuracy is about 1e-12 in the stated domain and degrades for larger parameters; it must not be presented as meeting tighter repository contracts. This is not a noncentral F algorithm by itself.
+
+## R26 — Central beta inverse using Schwarzian–Newton
+
+- **Authors:** Amparo Gil, Javier Segura and Nico M. Temme.
+- **Title:** Efficient Algorithms for the Inversion of the Cumulative Central Beta Distribution.
+- **Publication:** Author preprint and online publication 2016.
+- **Primary sources:** [Publication](https://doi.org/10.1007/s11075-016-0139-2); [Author or official supporting source](https://arxiv.org/abs/1605.03503).
+- **Access depth:** Author preprint abstract and publisher search metadata; proof and implementation not audited.
+
+**Project hypothesis and limitations:** Combines fourth-order Schwarzian–Newton iteration, asymptotic inversion and sharp tail bounds. Compare convergence conditions and total work with the safeguarded inverse and R12 under #35. An improved beta solver alone does not repair cancellation when reconstructing F from the beta pair. Preserve the frozen defect protocol and distinguish local convergence order from global reliability.

@@ -23,6 +23,13 @@ acceptance criteria. This map is not a duplicate completion or release tracker.
 | R14: bivariate normal series | [#196](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/196) | Alternative candidate; revised source and tail-specific validation |
 | R15, R16: gamma median bounds | [#14](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/14), [#7](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/7) | Median-only supplementary checks, including small-shape log scaling |
 | R17: compound frequency-severity | [#271](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/271) | Separate feasibility; discretization, aliasing and tail validation |
+| R18: Gamma P/Q and inverses | [#24](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/24), [#26](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/26), [#14](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/14) | Compare formulas, prefactors, dispatch and inverse seeds |
+| R19/R20/R22: floating-point expansions and accumulation | [#24](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/24), [#26](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/26), [#7](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/7) | Audit two-Double primitive assumptions and total error; informs PRs #241/#242 |
+| R21: generalized incomplete gamma | [#24](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/24), [#26](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/26) | Alternative representation and normalization comparison |
+| R23: bivariate normal and t | [#196](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/196) | Genz baseline alongside R14; no trivariate scope expansion |
+| R24: Poisson-binomial DFT | [#270](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/270) | Compare with recursion and R13; verify tiny-tail errors |
+| R25: Marcum Q | [#197](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/197) | Noncentral gamma/chi-square parameter and accuracy assessment |
+| R26: central beta inverse | [#35](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/35) | Compare convergence/cost; F reconstruction remains separate |
 | Research documentation | [#265](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/265) | Bibliography, methodology, template and discoverable navigation |
 
 ## Scope safeguards
