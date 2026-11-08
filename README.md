@@ -221,6 +221,12 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 
 # 🧩 Distribution catalogue
 
+![Distribution map: eleven continuous and six discrete API surfaces, with mathematical supports and illustrative use cases.](assets/distribution-map.png)
+
+*Implemented pre-release capabilities. Mathematical support is distinct from the validated numerical domain; examples do not establish model suitability.*
+
+[Open editable SVG](assets/distribution-map.svg) · [Read the accessible map and parameter conventions](docs/visuals/distribution-map.md)
+
 ## Normal and lognormal family
 
 | Distribution surface | Density | CDF | Survival | Inverse CDF | Inverse survival | Additional operations |

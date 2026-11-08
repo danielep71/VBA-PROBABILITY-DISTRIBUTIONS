@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Distribution guide
+
+- Add a reproducible SVG/PNG map of the 17 current distribution API surfaces, with mathematical supports, illustrative use cases and an accessible companion linked from the README (issue #244).
+
 ### Added
 
 - Added a numerical research index under `docs/research/`, with seventeen annotated source records covering 2020–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.
