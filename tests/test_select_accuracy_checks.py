@@ -105,12 +105,14 @@ class ExecutionTests(unittest.TestCase):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
         self.assertEqual(len(full), 61)
-        self.assertIn(["gamma_cf_study/run_isolation.py"], full)
-        self.assertIn(["gamma_cf_study/check_candidate.py"], full)
+        self.assertIn(["gamma_cf_study/replay_baseline.py", "isolation"], full)
+        self.assertIn(["gamma_cf_study/replay_baseline.py", "candidate"], full)
         self.assertIn(["positive_ratio_subnormal/check_post23_cutoffs.py"], full)
         expected = [c for c in full if Path(c[0]).name.startswith('check_')
-                    and '--self-test' not in c]
+                    and '--self-test' not in c
+                    or c == ['gamma_cf_study/replay_baseline.py', 'candidate']]
         self.assertEqual(live, expected)
+        self.assertIn(['gamma_cf_study/replay_baseline.py', 'candidate'], live)
         self.assertIn(['check_manifest_provenance.py'], live)
         self.assertIn(['check_verification_depth.py'], live)
         self.assertIn(['check_module_lists.py'], live)

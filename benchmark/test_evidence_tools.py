@@ -81,7 +81,7 @@ parser.add_argument('--checks-only', action='store_true',
                     help='Validate live evidence; omit regression fixtures only for metadata-only CI')
 args = parser.parse_args()
 for command in commands:
-    if args.checks_only and (not os.path.basename(command[0]).startswith('check_')
+    if args.checks_only and command != ('gamma_cf_study/replay_baseline.py', 'candidate') and (not os.path.basename(command[0]).startswith('check_')
                              or '--self-test' in command):
         continue
     started = time.monotonic()
