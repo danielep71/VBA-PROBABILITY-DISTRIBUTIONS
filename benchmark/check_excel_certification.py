@@ -4,7 +4,7 @@ import json
 import os
 import sys
 
-from excel_certification import CertificationError, git_head, validate_record
+from excel_certification import CertificationError, fetch_candidate, git_head, validate_record
 
 
 def main():
@@ -17,6 +17,8 @@ def main():
                     help="Git ref whose source/grid bytes must still match the record; defaults to HEAD")
     ap.add_argument("--policy-ref", default=None,
                     help="Git ref from which to read .github/excel-evidence-policy.json; defaults to evidence ref")
+    ap.add_argument("--fetch-candidate", action="store_true",
+                    help="explicitly fetch a missing certified SHA from origin before validation")
     ap.add_argument("--require-pass", action="store_true")
     ap.add_argument("--require-grid", default=None)
     ap.add_argument("--log-directory", default=None,
@@ -27,6 +29,8 @@ def main():
     try:
         with open(a.record, encoding="utf-8-sig") as f:
             record = json.load(f)
+        if a.fetch_candidate:
+            fetch_candidate(root, record.get("candidate_sha"))
         evidence_ref = a.evidence_ref or git_head(root)
         policy_ref = a.policy_ref or evidence_ref
         validate_record(record, root, policy_ref=policy_ref,

@@ -367,3 +367,17 @@ does not kill unrelated Excel processes.
 
 A cleanup failure makes the overall run non-green even when all regression
 assertions passed.
+
+### Certified candidates outside the integration ancestry
+
+The retained record can name an experimental Excel candidate that is not an
+ancestor of the integration commit. Even a non-shallow single-branch clone may
+lack that object. Run `python benchmark/check_excel_certification.py
+--record benchmark/excel_regression_record.json --require-pass --fetch-candidate`
+to fetch the exact recorded SHA from `origin` if absent. Accuracy and release
+workflows opt in to this retrieval. Offline validation remains the default and
+fails if the object is absent. Retrieval neither rewrites the record nor changes
+the source/grid checks; an unavailable candidate remains a blocking failure.
+The B6 run 447 candidate is also retained by branch
+`evidence/26-b6-export-447` at `21941f31886883e6e2e58f863b142dbe6c2f97e6`;
+keep this reference while its certification record is retained.
