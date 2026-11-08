@@ -448,8 +448,8 @@ check(with_repo(case_helper_record_missing_field)[0] is True,
 # observation_manifest.json as a side effect. A fixture must not assert on live
 # state, and must never mutate what it measures.
 #
-# The clone checks out HEAD, so the WORKING-TREE writer is copied in: otherwise
-# the fixture silently exercises the previous revision.
+# The clone checks out a pinned evidence snapshot, so the WORKING-TREE writer
+# is copied in: otherwise the fixture silently exercises a historical revision.
 #
 # The precondition is set explicitly rather than read from live state (#47): a
 # retained record that validly claims a fresh export of the grid is the
@@ -477,6 +477,10 @@ def case_writer_subprocess(withdraw_export_claim):
                            capture_output=True, text=True)
         if r.returncode != 0:
             return None                      # git unavailable: skip, not fail
+        # Real valid exported baseline, independent of a live pending export.
+        # The writer/validator below still come from the current working tree.
+        subprocess.run(["git", "checkout", "--quiet", "fdd57f84060ac0ed171edf8651fc1cc779b19674"],
+                       cwd=clone, capture_output=True, check=True)
         bench = os.path.join(clone, "benchmark")
         for mod in ("write_manifest.py", "_manifest.py", "excel_certification.py"):
             shutil.copy2(os.path.join(HERE, mod), os.path.join(bench, mod))

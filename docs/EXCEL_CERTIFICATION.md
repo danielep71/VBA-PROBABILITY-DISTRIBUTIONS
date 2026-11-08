@@ -381,3 +381,19 @@ the source/grid checks; an unavailable candidate remains a blocking failure.
 The B6 run 447 candidate is also retained by branch
 `evidence/26-b6-export-447` at `21941f31886883e6e2e58f863b142dbe6c2f97e6`;
 keep this reference while its certification record is retained.
+
+### Mixed exports and isolated tooling fixtures
+
+A fresh export can change the main grid while reproducing the holdout bytes
+exactly. The manifest writer validates the complete recorded export against a
+snapshot of the pending tracked files before accepting the unchanged grid.
+It does not move the branch or the stash reference. A mismatched companion grid
+or source digest still fails validation; the export record and both manifests
+must be committed atomically with their corresponding grids.
+
+Positive tooling fixtures use the coherent historical evidence snapshot
+`fdd57f84060ac0ed171edf8651fc1cc779b19674` (the release base, reachable from this change's ancestry) in throwaway clones, with the current
+writer, renderer and refresh tools. Their success does not certify the live
+checkout. CI separately checks live source identities, export records, grids,
+counts and summaries, and the negative controls continue to reject stale or
+contradictory evidence.
