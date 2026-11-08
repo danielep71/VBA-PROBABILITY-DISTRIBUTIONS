@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "implementation_commit": "1440b180036091c7c7635eb87e155a2762bb2a30",
+  "private_port_commit": "b8efaf3c7810c48fadbfece38950ded190f79a56",
+  "paired_excel_run": 42523118255,
+  "paired_assertions": 13182,
+  "paired_failures": 0,
+  "private_arithmetic_sha256": "4c772b9a3fe00f45336fe11ce66d35f6c17436380335238ba0ea3aaa41048431",
+  "private_types_sha256": "913c00bfc4ecf93cb30a15c3d94e01b217f4ffe37e14c2d3c1e1dfb803e8e1d8",
+  "adapter_sha256": {
+    "P": "2c3fdf9a3128044524311ae47f5e45302ffb639bf53217a1466deebf6c4eabb7",
+    "Q": "7bd5dbf525e461a9c63db73a34d2011050c742f5362ee66c38c514358515bdfc"
+  },
+  "regression_block_sha256": "cffef56a24f9875af6dd9dec255367c7335e2e861e7e5ac2e26db20fb5c7985a",
+  "regression_functions": {
+    "GammaCF_CoverageCase": "21c349dcf700208b6ef77f10f411280c5929382ffaa311d8e5e9fbd12ceec162",
+    "GammaCF_Fmt15": "fed3ccbf2e8ea2e2238fabb6a68a1af5a0cbd49277c06abb11132f65e580b61f",
+    "GammaCF_FullPrecision": "f2c377981b3703c3eb689eef54ac2c6c423f542e40c15ea8c391d6ef8d521970",
+    "Test_GammaCF_AdditionalCallers": "1e2c88befad454d28c312f0adfa72980fb389cbc9f8d5709a2e7fc59298d875d",
+    "Test_GammaCF_CapAndXSeam": "91afdcead4cf35682eb44479723d9473a0e0463b0e80f900db145825751ec53e",
+    "Test_GammaCF_Coverage": "d0f233a68d8fb268f89ab4647e3604ab6569c0b9a70e820f585685ef4f5f9f94",
+    "Test_GammaCF_PrecisionCounterexample": "0f6ccd8623557949c4e33269307d35d43a539f05f941b03e2f453ca4b4163660"
+  },
+  "entry_calls": [
+    "Test_GammaCF_Coverage",
+    "Test_GammaCF_AdditionalCallers",
+    "Test_GammaCF_CapAndXSeam",
+    "Test_GammaCF_PrecisionCounterexample"
+  ],
+  "baseline_assertions": 965,
+  "added_assertions": 982,
+  "expected_assertions": 1947
+}
