@@ -126,8 +126,26 @@ def _grid_unchanged_since_head(root, grid_path):
         try:
             with open(record, encoding="utf-8") as f:
                 rec = json.load(f)
+            # One export can change main while reproducing holdout exactly.
+            # Validate all claimed grids and sources against the pending tree,
+            # as apply_excel_export does, without moving any branch or stash ref.
+            pending = subprocess.run(
+                ["git", "diff", "--quiet", "HEAD", "--"], cwd=root,
+                capture_output=True, check=False,
+            )
+            if pending.returncode not in (0, 1):
+                raise CertificationError("cannot inspect pending export evidence")
+            evidence_ref = "HEAD"
+            if pending.returncode == 1:
+                snapshot = subprocess.run(
+                    ["git", "stash", "create"], cwd=root, capture_output=True,
+                    text=True, check=False,
+                )
+                if snapshot.returncode != 0 or not snapshot.stdout.strip():
+                    raise CertificationError("cannot snapshot pending export evidence")
+                evidence_ref = snapshot.stdout.strip()
             validate_record(
-                rec, root, policy_ref="HEAD", evidence_ref="HEAD",
+                rec, root, policy_ref="HEAD", evidence_ref=evidence_ref,
                 require_pass=True, require_grid=rel,
             )
             return False, ""

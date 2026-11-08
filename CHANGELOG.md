@@ -182,6 +182,8 @@ Use only the categories needed by a release.
 
 ### Fixed
 
+- Make Excel evidence tooling handle mixed exports and missing certified commit objects, while retaining source/grid validation; isolate positive tooling fixtures from pending live exports (extracted from #241/#242).
+
 - `benchmark/tchi_large_df/generate_tchi_large_df.py --merge-references` works again. The #210 seam rows that #214 appended to the grid were not produced by the generator, so the documented re-reference command refused the whole grid. The generator now takes those rows from `student_t_large_df_study/seam_study.py`, which owns them, and reports no reference change on the committed grid. `tchi_large_df/test_tchi_merge.py` runs the command in the evidence suite, and it failed before the fix.
 - `tools/setup_repository.py` no longer reports paused Dependabot security updates as on (#206). GitHub pauses them when Dependabot pull requests go unanswered, and only `GET automated-security-fixes` says so. The tool now always reads that endpoint, counts the feature as on only when it is enabled and not paused, reports a pause as drift with a note on resuming it, and records `"on (paused)"` in the evidence. `--apply` fails its read-back while the feature stays paused. When the endpoint is unreadable, the record keeps the `security_and_analysis` state and says the paused state is unknown.
 - `tools/setup_repository.py` refuses a private baseline that turns on private vulnerability reporting, secret scanning or push protection, which GitHub offers free only on public repositories, instead of planning writes GitHub would refuse (#207).
