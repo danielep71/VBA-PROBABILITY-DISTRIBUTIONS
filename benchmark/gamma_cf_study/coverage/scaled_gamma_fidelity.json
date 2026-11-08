@@ -1,5 +1,391 @@
 {
   "schema": 1,
+  "normalization": [
+    {
+      "h": "-0x1.0000000000000p-1",
+      "l": "0x1.fffffffffffffp-56",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "0x1.fffffffffffffp-56",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000000p-1",
+      "l": "-0x1.fffffffffffffp-56",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "-0x1.fffffffffffffp-56",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000000p-1",
+      "l": "0x1.0000000000000p-55",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "0x1.0000000000000p-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000000p-1",
+      "l": "-0x1.0000000000000p-55",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "-0x1.0000000000000p-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000000p-1",
+      "l": "0x1.0000000000001p-55",
+      "e": 0,
+      "expected_h": "-0x1.fffffffffffffp-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": -1
+    },
+    {
+      "h": "0x1.0000000000000p-1",
+      "l": "-0x1.0000000000001p-55",
+      "e": 0,
+      "expected_h": "0x1.fffffffffffffp-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": -1
+    },
+    {
+      "h": "-0x1.0000000000000p-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000000p-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000000p-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "-0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000000p-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000000p-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000001p-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000000p-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000001p-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000001p-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.0000000000001p-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000001p-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.0000000000001p-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000001p-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "-0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000001p-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000001p-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000001p-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000001p-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.0000000000001p-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000001p-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.0000000000001p-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000001p-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000002p-1",
+      "expected_l": "0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000001p-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000002p-1",
+      "expected_l": "-0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.0000000000001p-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000002p-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.0000000000001p-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000002p-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.1fffffffffffep-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.1fffffffffffep-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.1fffffffffffep-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.1fffffffffffep-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.1fffffffffffep-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.1fffffffffffep-1",
+      "expected_l": "0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.1fffffffffffep-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.1fffffffffffep-1",
+      "expected_l": "-0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.1fffffffffffep-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.1fffffffffffdp-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.1fffffffffffep-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.1fffffffffffdp-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.1fffffffffffep-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.1fffffffffffep-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.1fffffffffffep-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.1fffffffffffep-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.1fffffffffffep-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.1fffffffffffep-1",
+      "expected_l": "-0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.1fffffffffffep-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.1fffffffffffep-1",
+      "expected_l": "0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.1fffffffffffep-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.1ffffffffffffp-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.1fffffffffffep-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.1ffffffffffffp-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.fffffffffffffp-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.fffffffffffffp-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.fffffffffffffp-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.fffffffffffffp-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.fffffffffffffp-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.ffffffffffffep-1",
+      "expected_l": "-0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.fffffffffffffp-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.ffffffffffffep-1",
+      "expected_l": "0x1.0000000000000p-54",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.fffffffffffffp-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.ffffffffffffep-1",
+      "expected_l": "-0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.fffffffffffffp-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.ffffffffffffep-1",
+      "expected_l": "0x1.ffffffffffffep-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.fffffffffffffp-1",
+      "l": "-0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "-0x1.fffffffffffffp-1",
+      "expected_l": "-0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "0x1.fffffffffffffp-1",
+      "l": "0x1.fffffffffffffp-55",
+      "e": 0,
+      "expected_h": "0x1.fffffffffffffp-1",
+      "expected_l": "0x1.fffffffffffffp-55",
+      "expected_e": 0
+    },
+    {
+      "h": "-0x1.fffffffffffffp-1",
+      "l": "-0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "0x1.0000000000000p-55",
+      "expected_e": 1
+    },
+    {
+      "h": "0x1.fffffffffffffp-1",
+      "l": "0x1.0000000000000p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "-0x1.0000000000000p-55",
+      "expected_e": 1
+    },
+    {
+      "h": "-0x1.fffffffffffffp-1",
+      "l": "-0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "-0x1.0000000000000p-1",
+      "expected_l": "0x1.ffffffffffffep-56",
+      "expected_e": 1
+    },
+    {
+      "h": "0x1.fffffffffffffp-1",
+      "l": "0x1.0000000000001p-54",
+      "e": 0,
+      "expected_h": "0x1.0000000000000p-1",
+      "expected_l": "-0x1.ffffffffffffep-56",
+      "expected_e": 1
+    }
+  ],
   "scope": "revealed model fidelity, not independent Gamma acceptance",
   "rows": [
     {
@@ -862,5 +1248,5 @@
     ]
   ],
   "baseline_assertions": 7715,
-  "additional_assertions": 427
+  "additional_assertions": 475
 }

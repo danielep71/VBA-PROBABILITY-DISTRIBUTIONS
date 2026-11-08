@@ -1,3 +1,76 @@
+Private Function SGD_Half(ByVal H As Double, ByVal L As Double) As Double
+    If Abs(H) = 0.5 And ((H > 0# And L < 0#) Or (H < 0# And L > 0#)) Then
+        SGD_Half = SP_FromWords(&H3C800000&, 0)
+    Else
+        SGD_Half = SP_FromWords(&H3C900000&, 0)
+    End If
+End Function
+
+Private Function SGD_Even(ByVal H As Double) As Boolean
+    Dim N As SP_Number, W As SP_Words
+    N.Value = H
+    LSet W = N
+    SGD_Even = ((W.Low And 1&) = 0)
+End Function
+
+Private Function SGD_Valid(ByVal H As Double, ByVal L As Double, ByVal E As Long) As Boolean
+    Dim Half As Double
+    If E < -32767 Or E > 32767 Then Exit Function
+    If Not PROB_IsFinite(H) Or Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        SGD_Valid = (L = 0# And E = 0)
+        Exit Function
+    End If
+    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
+    Half = SGD_Half(H, L)
+    SGD_Valid = (Abs(L) < Half Or (Abs(L) = Half And SGD_Even(H)))
+End Function
+
+Private Sub SGD_Canonicalize(ByRef H As Double, ByRef L As Double, ByRef E As Long)
+    Dim Half As Double, N As SP_Number, W As SP_Words, OldH As Double, StepValue As Double
+    Dim IncreaseMagnitude As Boolean
+    If H = 0# Then Exit Sub
+    Half = SGD_Half(H, L)
+    If Abs(L) < Half Or (Abs(L) = Half And SGD_Even(H)) Then Exit Sub
+    If Abs(L) > 2# * Half Then Err.Raise 5, "SGD_Canonicalize", "residual exceeds repair range"
+    OldH = H
+    IncreaseMagnitude = ((H > 0# And L > 0#) Or (H < 0# And L < 0#))
+    N.Value = H
+    LSet W = N
+    If IncreaseMagnitude Then
+        If W.Low = -1 Then
+            W.Low = 0: W.High = W.High + 1
+        ElseIf W.Low = &H7FFFFFFF Then
+            W.Low = &H80000000
+        Else
+            W.Low = W.Low + 1
+        End If
+    Else
+        If W.Low = 0 Then
+            W.Low = -1: W.High = W.High - 1
+        ElseIf W.Low = &H80000000 Then
+            W.Low = &H7FFFFFFF
+        Else
+            W.Low = W.Low - 1
+        End If
+    End If
+    LSet N = W
+    H = N.Value
+    StepValue = H - OldH
+    L = L - StepValue
+    If Abs(H) >= 1# Then
+        H = H * 0.5: L = L * 0.5: E = E + 1
+    ElseIf Abs(H) < 0.5 Then
+        H = H * 2#: L = L * 2#: E = E - 1
+    End If
+End Sub
+
+Private Sub SG_NormalizeCase(ByVal H As Double, ByVal L As Double, ByVal E As Long, _
+    ByVal ExpectedH As Double, ByVal ExpectedL As Double, ByVal ExpectedE As Long)
+    SGD_Canonicalize H, L, E
+    AssertTrue "SG exact normalization", (SGD_Valid(H, L, E) And SP_SameBits(H, ExpectedH) And L = ExpectedL And E = ExpectedE)
+End Sub
+
 Private Function SG_Bits(ByVal X As Double) As String
     Dim N As SP_Number, W As SP_Words
     N.Value = X
@@ -49,7 +122,7 @@ End Function
 
 Private Function SG_Value(ByVal A As Variant) As Double
     Dim Result As Double
-    If Not SP_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5, "SG_Value", "rounding refused"
+    If Not SGD_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5, "SG_Value", "rounding refused"
     SG_Value = Result
 End Function
 

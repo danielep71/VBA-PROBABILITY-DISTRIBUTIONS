@@ -1,5 +1,7 @@
 """Private Gamma generation, model fidelity and preservation of earlier VBA."""
 import json
+from fractions import Fraction
+import math
 import subprocess
 import unittest
 from install_scaled_gamma_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
@@ -10,7 +12,8 @@ class ScaledGammaVbaTests(unittest.TestCase):
         saved = json.loads((HERE/'scaled_gamma_fidelity.json').read_text())
         self.assertEqual(saved, dataset())
         self.assertEqual(len(saved['rows']),129)
-        self.assertEqual(saved['additional_assertions'],427)
+        self.assertEqual(saved['additional_assertions'],475)
+        self.assertEqual(len(saved['normalization']),48)
         self.assertEqual(len(saved['invalid']),8)
         self.assertEqual(len(saved['seams']),8)
 
@@ -23,7 +26,18 @@ class ScaledGammaVbaTests(unittest.TestCase):
         self.assertNotIn('@LN2@',block)
         self.assertEqual(text.count('    Test_ScaledGamma_Fidelity\n'),1)
         policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
-        self.assertEqual(policy['expected_assertions'],BASELINE+427)
+        self.assertEqual(policy['expected_assertions'],BASELINE+475)
+
+    def test_normalization_oracles_preserve_exact_dyadic_values(self):
+        for row in dataset()['normalization']:
+            h,l,eh,el = [float.fromhex(row[k]) for k in ('h','l','expected_h','expected_l')]
+            exact = (Fraction(h)+Fraction(l))*2**row['e']
+            scale = Fraction(2)**row['expected_e']
+            self.assertEqual(exact,(Fraction(eh)+Fraction(el))*scale)
+            self.assertEqual(eh,math.ldexp(float(exact),-row['expected_e']))
+            self.assertGreaterEqual(abs(eh),.5)
+            self.assertLess(abs(eh),1.)
+            self.assertEqual(float(Fraction(eh)+Fraction(el)),eh)
 
     def test_earlier_vba_suite_and_public_sources_are_unchanged(self):
         sha = 'd94b70e7a98c78de9c0dd6fcfa2be997b3bf96af'

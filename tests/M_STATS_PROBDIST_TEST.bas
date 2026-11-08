@@ -9465,32 +9465,6 @@ End Sub
 ' END generated scaled-DD study
 
 ' BEGIN generated scaled-Gamma study
-Private Function SGD_Valid(ByVal H As Double, ByVal L As Double, ByVal E As Long) As Boolean
-'==============================================================================
-' PURPOSE
-'   SGD_Valid: private exponent-separated arithmetic fixture.
-' NOTES
-'   Explicit Double stores; Windows little-endian word fixtures.
-'   Study-only: no production routing or probability acceptance change.
-' ERROR POLICY
-'   Try functions return False; test failures remain visible.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim T As Double
-    If E < -32767 Or E > 32767 Then Exit Function
-    If Not PROB_IsFinite(H) Then Exit Function
-    If Not PROB_IsFinite(L) Then Exit Function
-    If H = 0# Then
-        SGD_Valid = (L = 0# And E = 0)
-        Exit Function
-    End If
-    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
-    If Abs(L) > SP_FromWords(&H3C900000&, &H00000000&) Then Exit Function
-    T = H + L
-    SGD_Valid = (T = H)
-End Function
-
 Private Function SGD_Try(ByVal Operation As Long, _
     ByVal AH As Double, ByVal AL As Double, ByVal AE As Long, _
     ByVal BH As Double, ByVal BL As Double, ByVal BE As Long, _
@@ -9583,6 +9557,7 @@ Private Function SGD_Try(ByVal Operation As Long, _
         End If
         E = E + Shift
     End If
+    SGD_Canonicalize H, L, E
     If Not SGD_Valid(H, L, E) Then
         Diagnostic = "output H=" & SG_Bits(H) & " L=" & SG_Bits(L) & " E=" & CStr(E) & " sum=" & SG_Bits(H + L)
         GoTo Err_Handler
@@ -9594,6 +9569,202 @@ Err_Handler:
     H = 0#: L = 0#: E = 0
     SGD_Try = False
 End Function
+
+Private Function SGD_Round(ByVal H As Double, ByVal L As Double, _
+    ByVal Exponent As Long, ByRef Result As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   SGD_Round: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Units As Double, LowUnits As Double, Nearest As Double
+    Dim SumValue As Double, R As Double, Residual As Double, SignValue As Double
+    Dim Pair As Variant, Odd As Boolean
+    On Error GoTo Err_Handler
+    Result = 0#
+    If Not PROB_IsFinite(H) Then Exit Function
+    If Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        If L <> 0# Then Exit Function
+        Result = H
+        SGD_Round = True
+        Exit Function
+    End If
+    If Not SGD_Valid(H, L, Exponent) Then Exit Function
+    If Exponent > 1024 Then Exit Function
+    If Exponent >= -1021 Then
+        Result = SP_Shift(H, Exponent)
+        If Not PROB_IsFinite(Result) Then GoTo Err_Handler
+        SGD_Round = True
+        Exit Function
+    End If
+    If Exponent < -1074 Then
+        Result = SP_SignedZero(H < 0#)
+        SGD_Round = True
+        Exit Function
+    End If
+    SignValue = 1#
+    If H < 0# Then SignValue = -1#
+    Units = SP_Shift(Abs(H), Exponent + 1074)
+    LowUnits = SP_Shift(SignValue * L, Exponent + 1074)
+    Nearest = VBA.Round(Units, 0)
+    R = Units - Nearest
+    Pair = SP_TwoSum(R, LowUnits)
+    R = Pair(0)
+    Residual = Pair(1)
+    'Nearest can exceed Long: parity is evaluated with exact Double arithmetic.
+    Odd = (Nearest - 2# * Fix(Nearest * 0.5) <> 0#)
+    If R > 0.5 Or (R = 0.5 And (Residual > 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest + 1#
+    ElseIf R < -0.5 Or (R = -0.5 And (Residual < 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest - 1#
+    End If
+    If Nearest = 0# Then
+        Result = SP_SignedZero(H < 0#)
+    Else
+        Result = SP_Shift(Nearest, -1074)
+        Result = SignValue * Result
+    End If
+    SGD_Round = True
+    Exit Function
+Err_Handler:
+    Result = 0#
+    SGD_Round = False
+End Function
+
+Private Function SGD_Half(ByVal H As Double, ByVal L As Double) As Double
+'==============================================================================
+' PURPOSE
+'   SGD_Half: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If Abs(H) = 0.5 And ((H > 0# And L < 0#) Or (H < 0# And L > 0#)) Then
+        SGD_Half = SP_FromWords(&H3C800000&, 0)
+    Else
+        SGD_Half = SP_FromWords(&H3C900000&, 0)
+    End If
+End Function
+
+Private Function SGD_Even(ByVal H As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   SGD_Even: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim N As SP_Number, W As SP_Words
+    N.Value = H
+    LSet W = N
+    SGD_Even = ((W.Low And 1&) = 0)
+End Function
+
+Private Function SGD_Valid(ByVal H As Double, ByVal L As Double, ByVal E As Long) As Boolean
+'==============================================================================
+' PURPOSE
+'   SGD_Valid: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Half As Double
+    If E < -32767 Or E > 32767 Then Exit Function
+    If Not PROB_IsFinite(H) Or Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        SGD_Valid = (L = 0# And E = 0)
+        Exit Function
+    End If
+    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
+    Half = SGD_Half(H, L)
+    SGD_Valid = (Abs(L) < Half Or (Abs(L) = Half And SGD_Even(H)))
+End Function
+
+Private Sub SGD_Canonicalize(ByRef H As Double, ByRef L As Double, ByRef E As Long)
+'==============================================================================
+' PURPOSE
+'   SGD_Canonicalize: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Half As Double, N As SP_Number, W As SP_Words, OldH As Double, StepValue As Double
+    Dim IncreaseMagnitude As Boolean
+    If H = 0# Then Exit Sub
+    Half = SGD_Half(H, L)
+    If Abs(L) < Half Or (Abs(L) = Half And SGD_Even(H)) Then Exit Sub
+    If Abs(L) > 2# * Half Then Err.Raise 5, "SGD_Canonicalize", "residual exceeds repair range"
+    OldH = H
+    IncreaseMagnitude = ((H > 0# And L > 0#) Or (H < 0# And L < 0#))
+    N.Value = H
+    LSet W = N
+    If IncreaseMagnitude Then
+        If W.Low = -1 Then
+            W.Low = 0: W.High = W.High + 1
+        ElseIf W.Low = &H7FFFFFFF Then
+            W.Low = &H80000000
+        Else
+            W.Low = W.Low + 1
+        End If
+    Else
+        If W.Low = 0 Then
+            W.Low = -1: W.High = W.High - 1
+        ElseIf W.Low = &H80000000 Then
+            W.Low = &H7FFFFFFF
+        Else
+            W.Low = W.Low - 1
+        End If
+    End If
+    LSet N = W
+    H = N.Value
+    StepValue = H - OldH
+    L = L - StepValue
+    If Abs(H) >= 1# Then
+        H = H * 0.5: L = L * 0.5: E = E + 1
+    ElseIf Abs(H) < 0.5 Then
+        H = H * 2#: L = L * 2#: E = E - 1
+    End If
+End Sub
+
+Private Sub SG_NormalizeCase(ByVal H As Double, ByVal L As Double, ByVal E As Long, _
+    ByVal ExpectedH As Double, ByVal ExpectedL As Double, ByVal ExpectedE As Long)
+'==============================================================================
+' PURPOSE
+'   SG_NormalizeCase: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SGD_Canonicalize H, L, E
+    AssertTrue "SG exact normalization", (SGD_Valid(H, L, E) And SP_SameBits(H, ExpectedH) And L = ExpectedL And E = ExpectedE)
+End Sub
 
 Private Function SG_Bits(ByVal X As Double) As String
 '==============================================================================
@@ -9745,7 +9916,7 @@ Private Function SG_Value(ByVal A As Variant) As Double
 '   2026-11-08
 '==============================================================================
     Dim Result As Double
-    If Not SP_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5, "SG_Value", "rounding refused"
+    If Not SGD_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5, "SG_Value", "rounding refused"
     SG_Value = Result
 End Function
 
@@ -10510,6 +10681,102 @@ Private Sub Test_ScaledGamma_Fidelity()
     Test_ScaledGamma_Chunk4
     Test_ScaledGamma_Chunk5
     Test_ScaledGamma_Chunk6
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C7FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C7FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC7FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC7FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C800000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C800000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC800000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC800000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C800000&, &H00000001&), 0, _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), -1
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC800000&, &H00000001&), 0, _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), -1
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000002&), SP_FromWords(&H3C900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000002&), SP_FromWords(&HBC900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000002&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000002&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFE1FFFF&, &HFFFFFFFD&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FE1FFFF&, &HFFFFFFFD&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFE1FFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFE1FFFF&, &HFFFFFFFF&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&H3FE1FFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FE1FFFF&, &HFFFFFFFF&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&HBC900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3C900000&, &H00000000&), 0
+    SG_NormalizeCase SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 0
+    SG_NormalizeCase SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0, _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFF&), 0
+    SG_NormalizeCase SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC900000&, &H00000000&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C800000&, &H00000000&), 1
+    SG_NormalizeCase SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C900000&, &H00000000&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC800000&, &H00000000&), 1
+    SG_NormalizeCase SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&HBC900000&, &H00000001&), 0, _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C7FFFFF&, &HFFFFFFFE&), 1
+    SG_NormalizeCase SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C900000&, &H00000001&), 0, _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC7FFFFF&, &HFFFFFFFE&), 1
     SG_Invalid SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
     SG_Invalid SP_FromWords(&HBFF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
     SG_Invalid SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)

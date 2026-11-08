@@ -1,5 +1,6 @@
 """Generate private Gamma fidelity checks from revealed development points."""
 import argparse
+from fractions import Fraction
 from functools import lru_cache
 import json
 import math
@@ -40,13 +41,26 @@ def dataset():
         rows.append(dict(a=a.hex(), x=x.hex(), p=p.hex(), q=q.hex()))
     invalid = [[float(a).hex(), float(x).hex()] for a,x in
                [(0,1),(-1,1),(2,1),(1,0),(1,33),(math.inf,1),(1,math.nan),(math.nan,1)]]
-    return dict(schema=1, scope='revealed model fidelity, not independent Gamma acceptance',
+    normalization = []
+    for h in [.5, math.nextafter(.5,1.), .5624999999999998, math.nextafter(1.,0.)]:
+        for direction in [-1., 1.]:
+            half = 2.**-55 if h == .5 and direction < 0 else 2.**-54
+            for l in [math.nextafter(half,0.), half, math.nextafter(half,1.)]:
+                for sign in [-1., 1.]:
+                    low = sign*direction*l
+                    exact = Fraction(sign*h)+Fraction(low)
+                    eh = float(exact)
+                    _, e = math.frexp(eh)
+                    el = float(exact-Fraction(eh))
+                    normalization.append(dict(h=(sign*h).hex(),l=low.hex(),e=0,
+                        expected_h=math.ldexp(eh,-e).hex(),expected_l=math.ldexp(el,-e).hex(),expected_e=e))
+    return dict(schema=1, normalization=normalization, scope='revealed model fidelity, not independent Gamma acceptance',
                 rows=rows, seams=seams, invalid=invalid, baseline_assertions=BASELINE,
-                additional_assertions=len(rows)*3+len(invalid)+len(seams)*4)
+                additional_assertions=len(rows)*3+len(invalid)+len(seams)*4+len(normalization))
 
 
 def render(data):
-    arithmetic = (HERE/'scaled_dd_vba.template').read_text().split('Private Sub SD_Case(')[0]
+    arithmetic = 'Private Function SD_Try('+ (HERE/'scaled_dd_vba.template').read_text().split('Private Function SD_Try(')[1].split('Private Sub SD_Case(')[0]
     arithmetic = arithmetic.replace('SD_Valid', 'SGD_Valid').replace('SD_Try', 'SGD_Try')
     arithmetic = arithmetic.replace('5.5511151231257827E-17', 'SP_FromWords(&H3C900000&, &H00000000&)')
     arithmetic = arithmetic.replace('ByRef H As Double, ByRef L As Double, ByRef E As Long) As Boolean',
@@ -58,7 +72,13 @@ def render(data):
     arithmetic = arithmetic.replace('If Not SGD_Valid(H, L, E) Then GoTo Err_Handler',
         'If Not SGD_Valid(H, L, E) Then\n        Diagnostic = "output H=" & SG_Bits(H) & " L=" & SG_Bits(L) & " E=" & CStr(E) & " sum=" & SG_Bits(H + L)\n        GoTo Err_Handler\n    End If')
     arithmetic = arithmetic.replace('Err_Handler:\n', 'Err_Handler:\n    If Len(Diagnostic) = 0 Then Diagnostic = "runtime " & Err.Description\n')
-    template = arithmetic + (HERE/'scaled_gamma_vba.template').read_text()
+    arithmetic = arithmetic.replace('If Not SGD_Valid(H, L, E) Then', 'SGD_Canonicalize H, L, E\n    If Not SGD_Valid(H, L, E) Then')
+    rounding = 'Private Function SP_Round('+(HERE/'scaled_product_vba.template').read_text().split('Private Function SP_Round(')[1].split('Private Sub SP_ProductCase(')[0]
+    rounding = rounding.replace('SP_Round', 'SGD_Round')
+    start = rounding.index('    If Abs(H) < 0.5')
+    end = rounding.index('    If Exponent > 1024',start)
+    rounding = rounding[:start]+'    If Not SGD_Valid(H, L, Exponent) Then Exit Function\n'+rounding[end:]
+    template = arithmetic + rounding + (HERE/'scaled_gamma_vba.template').read_text()
     template = template.replace('@LN2@', scaled_literal(S._normalize(LN2, 0)))
     template = template.replace('@LN2HI@', literal(LN2.hi.hex()))
     coefficients = []
@@ -78,6 +98,9 @@ def render(data):
         lines += ['End Sub', '']
     lines += ['Private Sub Test_ScaledGamma_Fidelity()']
     lines += ['    '+name for name in names]
+    for r in data['normalization']:
+        lines += [f'    SG_NormalizeCase {literal(r["h"])}, {literal(r["l"])}, {r["e"]}, _',
+                  f'        {literal(r["expected_h"])}, {literal(r["expected_l"])}, {r["expected_e"]}']
     for a,x in data['invalid']:
         lines.append(f'    SG_Invalid {literal(a)}, {literal(x)}')
     for a,l,c,r in data['seams']:
@@ -101,7 +124,7 @@ def install(data):
     policy = ROOT/'.github/excel-evidence-policy.json'
     current = json.loads(policy.read_text())
     total = BASELINE+data['additional_assertions']
-    assert current['expected_assertions'] in (BASELINE,total)
+    assert current['expected_assertions'] in (BASELINE,8142,total)
     current['expected_assertions'] = total
     target.write_bytes(text.replace('\n','\r\n').encode('ascii'))
     policy.write_text(json.dumps(current,indent=2)+'\n')

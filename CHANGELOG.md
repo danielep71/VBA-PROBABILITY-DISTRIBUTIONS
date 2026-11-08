@@ -103,7 +103,7 @@ Use only the categories needed by a release.
 
 ### Added
 
-- Add a private VBA port of the bounded scaled Gamma P/Q experiment with 427 model-fidelity, monotonicity and refusal assertions (#24/#26). Public kernels and prior Excel evidence are unchanged; host results are recorded separately.
+- Add a private VBA port of the bounded scaled Gamma P/Q experiment with 475 model-fidelity, monotonicity, refusal and exact-normalization assertions (#24/#26). Public kernels and prior Excel evidence are unchanged; host results and failed diagnostic attempts are recorded separately.
 
 - Expand the scaled Gamma development screen to 69 in-domain B6 reference points and 24 adjacent routing-boundary points, with monotonicity checks and oracle precision stability at 160/320 digits (#24/#26). Twenty out-of-domain B6 points remain explicitly excluded; public VBA acceptance is unchanged.
 
