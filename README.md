@@ -227,6 +227,8 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 
 [Open editable SVG](assets/distribution-map.svg) · [Read the accessible map and parameter conventions](docs/visuals/distribution-map.md)
 
+[Choosing a distribution](docs/visuals/choosing-distribution.md): candidate families by variable type, support and modelling assumptions.
+
 ## Normal and lognormal family
 
 | Distribution surface | Density | CDF | Survival | Inverse CDF | Inverse survival | Additional operations |
