@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1530" viewBox="0 0 1200 1530" role="img" aria-labelledby="title desc">
+<title id="title">Distribution map — VBA Probability Distributions</title>
+<desc id="desc">Seventeen current API surfaces: eleven continuous and six discrete. Each row gives mathematical support and an illustrative use case. Implemented pre-release capabilities are not release certification; numerical domains are narrower than mathematical support.</desc>
+<rect width="1200" height="1530" fill="white"/>
+<g font-family="DejaVu Sans, Arial, sans-serif">
+<text x="36" y="43" font-size="17" fill="#1F5AA6" font-weight="bold">VBA PROBABILITY DISTRIBUTIONS</text>
+<text x="36" y="94" font-size="40" fill="#0B2A5B" font-weight="bold">A map of the distributions</text>
+<text x="36" y="132" font-size="23" fill="#2B3A4E" font-weight="normal">17 API surfaces · mathematical support · illustrative applications</text>
+<rect x="36" y="156" width="1128" height="40" rx="8" fill="#EAF1FA"/>
+<text x="52" y="183" font-size="18" fill="#0B2A5B" font-weight="normal">IMPLEMENTED / PRE-RELEASE    •    Standard Normal is a dedicated API surface.</text>
+<rect x="36" y="220" width="552" height="51" rx="8" fill="#1F5AA6"/>
+<text x="54" y="254" font-size="23" fill="white" font-weight="bold">CONTINUOUS  /  11 surfaces</text>
+<rect x="36" y="285" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="52" y="310" font-size="23" fill="#0B2A5B" font-weight="bold">Standard Normal</text>
+<text x="52" y="334" font-size="19" fill="#2B3A4E" font-weight="normal">x ∈ ℝ  ·  mean 0, variance 1</text>
+<text x="52" y="355" font-size="17" fill="#465970" font-weight="normal">Standardized scores</text>
+<rect x="36" y="373" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="52" y="398" font-size="23" fill="#0B2A5B" font-weight="bold">Normal</text>
+<text x="52" y="422" font-size="19" fill="#2B3A4E" font-weight="normal">x ∈ ℝ</text>
+<text x="52" y="443" font-size="17" fill="#465970" font-weight="normal">Symmetric measurement variation</text>
+<rect x="36" y="461" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="52" y="486" font-size="23" fill="#0B2A5B" font-weight="bold">Lognormal</text>
+<text x="52" y="510" font-size="19" fill="#2B3A4E" font-weight="normal">x &gt; 0</text>
+<text x="52" y="531" font-size="17" fill="#465970" font-weight="normal">Positive multiplicative quantities</text>
+<rect x="36" y="549" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="52" y="574" font-size="23" fill="#0B2A5B" font-weight="bold">Student t</text>
+<text x="52" y="598" font-size="19" fill="#2B3A4E" font-weight="normal">x ∈ ℝ</text>
+<text x="52" y="619" font-size="17" fill="#465970" font-weight="normal">Studentized statistics; heavy tails</text>
+<rect x="36" y="637" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="52" y="662" font-size="23" fill="#0B2A5B" font-weight="bold">Chi-square</text>
+<text x="52" y="686" font-size="19" fill="#2B3A4E" font-weight="normal">x ≥ 0</text>
+<text x="52" y="707" font-size="17" fill="#465970" font-weight="normal">Sums of squared standard normals</text>
+<rect x="36" y="725" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="52" y="750" font-size="23" fill="#0B2A5B" font-weight="bold">F</text>
+<text x="52" y="774" font-size="19" fill="#2B3A4E" font-weight="normal">x ≥ 0</text>
+<text x="52" y="795" font-size="17" fill="#465970" font-weight="normal">Ratios of independent scaled chi-squares</text>
+<rect x="36" y="813" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="52" y="838" font-size="23" fill="#0B2A5B" font-weight="bold">Gamma</text>
+<text x="52" y="862" font-size="19" fill="#2B3A4E" font-weight="normal">x ≥ 0  ·  shape and scale</text>
+<text x="52" y="883" font-size="17" fill="#465970" font-weight="normal">Positive waiting times</text>
+<rect x="36" y="901" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="52" y="926" font-size="23" fill="#0B2A5B" font-weight="bold">Beta</text>
+<text x="52" y="950" font-size="19" fill="#2B3A4E" font-weight="normal">0 ≤ x ≤ 1</text>
+<text x="52" y="971" font-size="17" fill="#465970" font-weight="normal">Bounded proportions</text>
+<rect x="36" y="989" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="52" y="1014" font-size="23" fill="#0B2A5B" font-weight="bold">Exponential</text>
+<text x="52" y="1038" font-size="19" fill="#2B3A4E" font-weight="normal">x ≥ 0  ·  rate λ</text>
+<text x="52" y="1059" font-size="17" fill="#465970" font-weight="normal">Memoryless waiting times</text>
+<rect x="36" y="1077" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="52" y="1102" font-size="23" fill="#0B2A5B" font-weight="bold">Weibull</text>
+<text x="52" y="1126" font-size="19" fill="#2B3A4E" font-weight="normal">x ≥ 0  ·  shape and scale</text>
+<text x="52" y="1147" font-size="17" fill="#465970" font-weight="normal">Lifetimes with varying hazard</text>
+<rect x="36" y="1165" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="52" y="1190" font-size="23" fill="#0B2A5B" font-weight="bold">Uniform</text>
+<text x="52" y="1214" font-size="19" fill="#2B3A4E" font-weight="normal">a ≤ x ≤ b</text>
+<text x="52" y="1235" font-size="17" fill="#465970" font-weight="normal">Equal density on a finite interval</text>
+<rect x="612" y="220" width="552" height="51" rx="8" fill="#096D72"/>
+<text x="630" y="254" font-size="23" fill="white" font-weight="bold">DISCRETE  /  6 surfaces</text>
+<rect x="612" y="285" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="628" y="310" font-size="23" fill="#0B2A5B" font-weight="bold">Binomial</text>
+<text x="628" y="334" font-size="19" fill="#2B3A4E" font-weight="normal">k = 0, …, n</text>
+<text x="628" y="355" font-size="17" fill="#465970" font-weight="normal">Successes in n independent trials</text>
+<rect x="612" y="373" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="628" y="398" font-size="23" fill="#0B2A5B" font-weight="bold">Poisson</text>
+<text x="628" y="422" font-size="19" fill="#2B3A4E" font-weight="normal">k = 0, 1, 2, …</text>
+<text x="628" y="443" font-size="17" fill="#465970" font-weight="normal">Event counts over a fixed exposure</text>
+<rect x="612" y="461" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="628" y="486" font-size="23" fill="#0B2A5B" font-weight="bold">Geometric</text>
+<text x="628" y="510" font-size="19" fill="#2B3A4E" font-weight="normal">k = 0, 1, 2, …</text>
+<text x="628" y="531" font-size="17" fill="#465970" font-weight="normal">Failures before the first success</text>
+<rect x="612" y="549" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="628" y="574" font-size="23" fill="#0B2A5B" font-weight="bold">Negative Binomial</text>
+<text x="628" y="598" font-size="19" fill="#2B3A4E" font-weight="normal">k = 0, 1, 2, …</text>
+<text x="628" y="619" font-size="17" fill="#465970" font-weight="normal">Failures before the r-th success</text>
+<rect x="612" y="637" width="552" height="80" rx="8" fill="#F0F5FB"/>
+<text x="628" y="662" font-size="23" fill="#0B2A5B" font-weight="bold">Hypergeometric</text>
+<text x="628" y="686" font-size="19" fill="#2B3A4E" font-weight="normal">max(0, n − N + K) ≤ k ≤ min(n, K)</text>
+<text x="628" y="707" font-size="17" fill="#465970" font-weight="normal">Successes when sampling without replacement</text>
+<rect x="612" y="725" width="552" height="80" rx="8" fill="#F8FAFD"/>
+<text x="628" y="750" font-size="23" fill="#0B2A5B" font-weight="bold">Discrete Uniform</text>
+<text x="628" y="774" font-size="19" fill="#2B3A4E" font-weight="normal">k = a, a + 1, …, b</text>
+<text x="628" y="795" font-size="17" fill="#465970" font-weight="normal">Equal mass on consecutive integers</text>
+<rect x="612" y="840" width="552" height="176" rx="8" fill="#EAF1FA"/>
+<text x="630" y="871" font-size="22" fill="#0B2A5B" font-weight="bold">COMMON OPERATIONS</text>
+<text x="630" y="905" font-size="17" fill="#2B3A4E" font-weight="normal">Continuous: density · CDF · survival · inverse CDF</text>
+<text x="630" y="935" font-size="17" fill="#2B3A4E" font-weight="normal">Discrete: PMF · CDF · survival · inverse CDF</text>
+<text x="630" y="965" font-size="17" fill="#2B3A4E" font-weight="normal">CDF = P(X ≤ x)     Survival = P(X &gt; x)</text>
+<text x="630" y="995" font-size="17" fill="#2B3A4E" font-weight="normal">Inverse survival: all three Normal-family surfaces</text>
+<rect x="612" y="1034" width="552" height="209" rx="8" fill="#EDF7F6"/>
+<text x="630" y="1066" font-size="22" fill="#096D72" font-weight="bold">READ THE SUPPORT CORRECTLY</text>
+<text x="630" y="1100" font-size="17" fill="#2B3A4E" font-weight="normal">Discrete k is integer; n is the trial or sample size.</text>
+<text x="630" y="1128" font-size="17" fill="#2B3A4E" font-weight="normal">Hypergeometric: N population size, K successes.</text>
+<text x="630" y="1156" font-size="17" fill="#2B3A4E" font-weight="normal">Uniform: a and b are the lower and upper bounds.</text>
+<text x="630" y="1184" font-size="17" fill="#2B3A4E" font-weight="normal">Zero may be a boundary where a density is singular.</text>
+<text x="630" y="1212" font-size="17" fill="#2B3A4E" font-weight="normal">Degenerate parameter cases can collapse the support.</text>
+<rect x="36" y="1270" width="1128" height="114" rx="8" fill="#0B2A5B"/>
+<text x="56" y="1304" font-size="24" fill="white" font-weight="bold">CHOOSE A MODEL, THEN CHECK ITS ASSUMPTIONS</text>
+<text x="56" y="1336" font-size="20" fill="white" font-weight="normal">Use cases illustrate possible applications. They do not establish fit, independence or calibration.</text>
+<text x="56" y="1365" font-size="20" fill="white" font-weight="normal">Mathematical support is not a promise of numerical accuracy across the whole domain.</text>
+<text x="36" y="1421" font-size="22" fill="#0B2A5B" font-weight="bold">Before use: check parameters, validated domains, error behavior and known limitations.</text>
+<text x="36" y="1456" font-size="20" fill="#2B3A4E" font-weight="normal">Current API only. Planned noncentral distributions and dependence extensions are not shown.</text>
+<text x="36" y="1495" font-size="17" fill="#465970" font-weight="normal">Companion: docs/visuals/distribution-map.md  •  No release certification is implied.</text>
+</g>
+</svg>
