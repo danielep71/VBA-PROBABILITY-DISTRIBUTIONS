@@ -54,11 +54,21 @@ def main():
         for fn, op in [('Cumulative', '<='), ('Survival', '>=')]:
             for side in range(2):
                 lines += [f'    AssertTrue "B6 X seam {i:02d} {fn} {side}" & _',
-                          f'        " left=" & Format$(CDbl(K_STATS_Gamma_{fn}({xs[side]}, {a}, 1#)), "0.00000000000000000") & _',
-                          f'        " right=" & Format$(CDbl(K_STATS_Gamma_{fn}({xs[side+1]}, {a}, 1#)), "0.00000000000000000"), _',
+                          f'        " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_{fn}({xs[side]}, {a}, 1#))) & _',
+                          f'        " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_{fn}({xs[side+1]}, {a}, 1#))), _',
                           f'        (CDbl(K_STATS_Gamma_{fn}({xs[side]}, {a}, 1#)) {op} _',
                           f'         CDbl(K_STATS_Gamma_{fn}({xs[side+1]}, {a}, 1#)))']
     lines += ['End Sub', '', '']
+    # Reuse the established exporter encoding, including locale handling.
+    exporter = (ROOT / 'benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas').read_text()
+    for name in ['FormatFullPrecision', 'Fmt15']:
+        start = exporter.index(f'Private Function {name}(')
+        end = exporter.index('End Function', start) + len('End Function')
+        helper = exporter[start:end]
+        helper = helper.replace('FormatFullPrecision', 'GammaCF_FullPrecision')
+        helper = helper.replace('Fmt15', 'GammaCF_Fmt15')
+        helper = helper.replace("' COMPUTE", "' NOTES\n'   Test-only copy of the accuracy export encoding; generated, not a new oracle.\n' UPDATED\n'   2026-11-08\n' COMPUTE")
+        lines += [helper, '', '']
     path = ROOT / 'tests/M_STATS_PROBDIST_TEST.bas'
     source = path.read_text()
     assert 'Private Sub Test_GammaCF_CapAndXSeam()' not in source
