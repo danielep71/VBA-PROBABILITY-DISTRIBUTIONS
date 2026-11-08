@@ -3,7 +3,7 @@
   "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
   "workflow": ".github/workflows/excel-vba-regression.yml",
   "entry_point": "Test_STATS_PROBDIST_RunAll_CI",
-  "expected_assertions": 2447,
+  "expected_assertions": 7104,
   "regression_sources": [
     "src/M_STATS_PROBDIST_CORE.bas",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",

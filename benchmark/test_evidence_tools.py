@@ -40,6 +40,7 @@ commands = (
     ("gamma_cf_study/coverage/test_precision_arithmetic_audit.py",),
     ("gamma_cf_study/coverage/test_cf_enclosure.py",),
     ("gamma_cf_study/coverage/test_scaled_product.py",),
+    ("gamma_cf_study/coverage/test_scaled_vba_port.py",),
     ("gamma_cf_study/replay_baseline.py", "isolation"),
     ("gamma_cf_study/replay_baseline.py", "candidate"),
     ("gamma_series_small_shape/test_gamma_series_small_shape.py",),

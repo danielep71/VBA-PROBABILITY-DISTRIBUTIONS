@@ -211,6 +211,16 @@ Private mFailureLog         As String          'Accumulated failure lines for CI
 ' TEST TOLERANCES
 '==============================================================================
 
+' BEGIN scaled-product bit fixtures (little-endian Windows Excel)
+Private Type SP_Number
+    Value As Double
+End Type
+Private Type SP_Words
+    Low As Long
+    High As Long
+End Type
+' END scaled-product bit fixtures
+
 Private Const TOL_ABS_TIGHT     As Double = 0.0000000001  '1E-10 absolute
 Private Const TOL_ABS_LOOSE     As Double = 0.000001      '1E-6 absolute
 Private Const TOL_ABS_LARGE_DF  As Double = 0.000000001   '1E-9 absolute
@@ -5036,6 +5046,1425 @@ Private Sub Test_CN_GammaCumulative()
 End Sub
 
 
+' BEGIN generated scaled-product study
+Private Function SP_FromWords(ByVal HighWord As Long, ByVal LowWord As Long) As Double
+'==============================================================================
+' PURPOSE
+'   SP_FromWords: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Words As SP_Words, Number As SP_Number
+    Words.High = HighWord
+    Words.Low = LowWord
+    LSet Number = Words
+    SP_FromWords = Number.Value
+End Function
+
+Private Function SP_SameBits(ByVal A As Double, ByVal B As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   SP_SameBits: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim NA As SP_Number, NB As SP_Number, WA As SP_Words, WB As SP_Words
+    NA.Value = A
+    NB.Value = B
+    LSet WA = NA
+    LSet WB = NB
+    SP_SameBits = (WA.High = WB.High And WA.Low = WB.Low)
+End Function
+
+Private Function SP_Negative(ByVal A As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   SP_Negative: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Number As SP_Number, Words As SP_Words
+    Number.Value = A
+    LSet Words = Number
+    SP_Negative = (Words.High < 0)
+End Function
+
+Private Function SP_SignedZero(ByVal Negative As Boolean) As Double
+'==============================================================================
+' PURPOSE
+'   SP_SignedZero: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If Negative Then SP_SignedZero = SP_FromWords(&H80000000, 0)
+End Function
+
+Private Function SP_Shift(ByVal X As Double, ByVal Exponent As Long) As Double
+'==============================================================================
+' PURPOSE
+'   SP_Shift: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim J As Long
+    If Exponent < -1074 Or Exponent > 1024 Then Err.Raise 5
+    If Exponent >= 0 Then
+        For J = 1 To Exponent
+            X = X * 2#
+        Next J
+    Else
+        For J = 1 To -Exponent
+            X = X * 0.5
+        Next J
+    End If
+    SP_Shift = X
+End Function
+
+Private Sub SP_Frexp(ByVal X As Double, ByRef Mantissa As Double, ByRef Exponent As Long)
+'==============================================================================
+' PURPOSE
+'   SP_Frexp: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Exponent = 0
+    Mantissa = X
+    If X = 0# Then Exit Sub
+    Do While Abs(Mantissa) >= 1#
+        Mantissa = Mantissa * 0.5
+        Exponent = Exponent + 1
+    Loop
+    Do While Abs(Mantissa) < 0.5
+        Mantissa = Mantissa * 2#
+        Exponent = Exponent - 1
+    Loop
+End Sub
+
+Private Function SP_TwoSum(ByVal A As Double, ByVal B As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   SP_TwoSum: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    SP_TwoSum = Array(S, AR + BR)
+End Function
+
+Private Function SP_Product(ByVal A As Double, ByVal B As Double, _
+    ByRef H As Double, ByRef L As Double, ByRef Exponent As Long) As Boolean
+'==============================================================================
+' PURPOSE
+'   SP_Product: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AM As Double, BM As Double, AE As Long, BE As Long, Shift As Long
+    Dim CA As Double, CB As Double, AH As Double, BH As Double
+    Dim AL As Double, BL As Double, P As Double, E As Double, T As Double
+    On Error GoTo Err_Handler
+    H = 0#: L = 0#: Exponent = 0
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(B) Then Exit Function
+    If A = 0# Or B = 0# Then
+        H = SP_SignedZero(SP_Negative(A) Xor SP_Negative(B))
+        SP_Product = True
+        Exit Function
+    End If
+    SP_Frexp A, AM, AE
+    SP_Frexp B, BM, BE
+    P = AM * BM
+    CA = 134217729# * AM
+    CB = 134217729# * BM
+    T = CA - AM
+    AH = CA - T
+    T = CB - BM
+    BH = CB - T
+    AL = AM - AH
+    BL = BM - BH
+    T = AH * BH
+    E = T - P
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    SP_Frexp P, H, Shift
+    L = SP_Shift(E, -Shift)
+    Exponent = AE + BE + Shift
+    SP_Product = True
+    Exit Function
+Err_Handler:
+    H = 0#: L = 0#: Exponent = 0
+    SP_Product = False
+End Function
+
+Private Function SP_Round(ByVal H As Double, ByVal L As Double, _
+    ByVal Exponent As Long, ByRef Result As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   SP_Round: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Units As Double, LowUnits As Double, Nearest As Double
+    Dim SumValue As Double, R As Double, Residual As Double, SignValue As Double
+    Dim Pair As Variant, Odd As Boolean
+    On Error GoTo Err_Handler
+    Result = 0#
+    If Not PROB_IsFinite(H) Then Exit Function
+    If Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        If L <> 0# Then Exit Function
+        Result = H
+        SP_Round = True
+        Exit Function
+    End If
+    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
+    If Abs(L) > 2# ^ (-54) Then Exit Function
+    SumValue = H + L
+    If SumValue <> H Then Exit Function
+    If Exponent > 1024 Then Exit Function
+    If Exponent >= -1021 Then
+        Result = SP_Shift(H, Exponent)
+        If Not PROB_IsFinite(Result) Then GoTo Err_Handler
+        SP_Round = True
+        Exit Function
+    End If
+    If Exponent < -1074 Then
+        Result = SP_SignedZero(H < 0#)
+        SP_Round = True
+        Exit Function
+    End If
+    SignValue = 1#
+    If H < 0# Then SignValue = -1#
+    Units = SP_Shift(Abs(H), Exponent + 1074)
+    LowUnits = SP_Shift(SignValue * L, Exponent + 1074)
+    Nearest = VBA.Round(Units, 0)
+    R = Units - Nearest
+    Pair = SP_TwoSum(R, LowUnits)
+    R = Pair(0)
+    Residual = Pair(1)
+    'Nearest can exceed Long: parity is evaluated with exact Double arithmetic.
+    Odd = (Nearest - 2# * Fix(Nearest * 0.5) <> 0#)
+    If R > 0.5 Or (R = 0.5 And (Residual > 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest + 1#
+    ElseIf R < -0.5 Or (R = -0.5 And (Residual < 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest - 1#
+    End If
+    If Nearest = 0# Then
+        Result = SP_SignedZero(H < 0#)
+    Else
+        Result = SP_Shift(Nearest, -1074)
+        Result = SignValue * Result
+    End If
+    SP_Round = True
+    Exit Function
+Err_Handler:
+    Result = 0#
+    SP_Round = False
+End Function
+
+Private Sub SP_ProductCase(ByVal Label As String, ByVal A As Double, ByVal B As Double, _
+    ByVal ExpectedH As Double, ByVal ExpectedL As Double, ByVal ExpectedE As Long, _
+    ByVal ExpectedOK As Boolean, ByVal ExpectedValue As Double)
+'==============================================================================
+' PURPOSE
+'   SP_ProductCase: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, L As Double, Exponent As Long, Result As Double, OK As Boolean
+    OK = SP_Product(A, B, H, L, Exponent)
+    AssertTrue Label & " exact scaled pair", _
+        (OK And H = ExpectedH And L = ExpectedL And Exponent = ExpectedE)
+    OK = SP_Round(H, L, Exponent, Result)
+    If ExpectedOK Then
+        AssertTrue Label & " rounded bits", (OK And SP_SameBits(Result, ExpectedValue))
+    Else
+        AssertTrue Label & " overflow refused", Not OK
+    End If
+End Sub
+
+Private Sub SP_RoundCase(ByVal Label As String, ByVal H As Double, ByVal L As Double, _
+    ByVal Exponent As Long, ByVal ExpectedValue As Double)
+'==============================================================================
+' PURPOSE
+'   SP_RoundCase: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Result As Double, OK As Boolean
+    OK = SP_Round(H, L, Exponent, Result)
+    AssertTrue Label & " rounded bits", (OK And SP_SameBits(Result, ExpectedValue))
+End Sub
+
+Private Sub Test_ScaledProduct_Exponents()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Exponents: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim J As Long, X As Double, H As Double, L As Double, E As Long
+    Dim Result As Double, Expected As Double, OK As Boolean
+    X = SP_FromWords(0, 1)
+    For J = -1074 To 1023
+        OK = SP_Product(X, 1.5, H, L, E)
+        AssertTrue "SP exponent " & CStr(J) & " exact pair", _
+            (OK And H = 0.75 And L = 0# And E = J + 1)
+        OK = SP_Round(H, L, E, Result)
+        Expected = X * 1.5
+        AssertTrue "SP exponent " & CStr(J) & " hardware product", _
+            (OK And SP_SameBits(Result, Expected))
+        If J < 1023 Then X = X * 2#
+    Next J
+End Sub
+
+Private Sub Test_ScaledProduct_Invalid()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Invalid: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, L As Double, E As Long, Result As Double, OK As Boolean
+    Dim V As Double
+    V = SP_FromWords(&H7FF00000, 0)
+    OK = SP_Product(V, 0#, H, L, E)
+    AssertTrue "SP infinity left refused", Not OK
+    OK = SP_Product(0#, V, H, L, E)
+    AssertTrue "SP infinity right refused", Not OK
+    V = SP_FromWords(&H7FF80000, 0)
+    OK = SP_Product(V, 1#, H, L, E)
+    AssertTrue "SP NaN refused", Not OK
+    OK = SP_Round(V, 0#, 0, Result)
+    AssertTrue "SP NaN high refused", Not OK
+    OK = SP_Round(0.5, V, 0, Result)
+    AssertTrue "SP NaN low refused", Not OK
+    OK = SP_Round(0#, 1#, 0, Result)
+    AssertTrue "SP invalid zero refused", Not OK
+    OK = SP_Round(1#, 0#, 0, Result)
+    AssertTrue "SP invalid high refused", Not OK
+    OK = SP_Round(0.5, 0.1, 0, Result)
+    AssertTrue "SP invalid low refused", Not OK
+    AssertTrue "SP word layout one", (SP_FromWords(&H3FF00000, 0) = 1#)
+    AssertTrue "SP word layout minus one", (SP_FromWords(&HBFF00000, 0) = -1#)
+    AssertTrue "SP signed zeros distinct", Not SP_SameBits(0#, SP_FromWords(&H80000000, 0))
+End Sub
+
+
+Private Sub Test_ScaledProduct_Chunk0()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk0: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 000", _
+        SP_FromWords(&H7E700000&, &H00000000&), SP_FromWords(&H01700000&, &H00000000&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 1, _
+        True, SP_FromWords(&H3FF00000&, &H00000000&)
+    SP_ProductCase "SP rational 001", _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FE00000&, &H00000001&), _
+        SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&H00000000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H00080000&, &H00000000&)
+    SP_ProductCase "SP rational 002", _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), -2147, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 003", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H39500000&, &H00000000&), 2048, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 004", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H39500000&, &H00000000&), 1024, _
+        True, SP_FromWords(&H7FEFFFFF&, &HFFFFFFFE&)
+    SP_ProductCase "SP rational 005", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&HB9500000&, &H00000000&), 1024, _
+        True, SP_FromWords(&HFFEFFFFF&, &HFFFFFFFE&)
+    SP_ProductCase "SP rational 006", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H00000000&, &H00000000&), 1024, _
+        True, SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 007", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H80000000&, &H00000000&), 1024, _
+        True, SP_FromWords(&HFFEFFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 008", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C8FFFFF&, &HFFFFFFFE&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 009", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC8FFFFF&, &HFFFFFFFE&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 010", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H00000000&, &H00000000&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 011", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H80000000&, &H00000000&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 012", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFD&), SP_FromWords(&H39600000&, &H00000000&), 1024, _
+        True, SP_FromWords(&H7FEFFFFF&, &HFFFFFFFD&)
+    SP_ProductCase "SP rational 013", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFD&), SP_FromWords(&HB9600000&, &H00000000&), 1024, _
+        True, SP_FromWords(&HFFEFFFFF&, &HFFFFFFFD&)
+    SP_ProductCase "SP rational 014", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H00000000&, &H00000000&), 1024, _
+        True, SP_FromWords(&H7FEFFFFF&, &HFFFFFFFE&)
+    SP_ProductCase "SP rational 015", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H80000000&, &H00000000&), 1024, _
+        True, SP_FromWords(&HFFEFFFFF&, &HFFFFFFFE&)
+    SP_ProductCase "SP rational 016", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HB9600000&, &H00000000&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 017", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H39600000&, &H00000000&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 018", _
+        SP_FromWords(&H7FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H00000000&, &H00000000&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 019", _
+        SP_FromWords(&HFFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H80000000&, &H00000000&), 1025, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 020", _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H00000000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H00100000&, &H00000000&)
+    SP_ProductCase "SP rational 021", _
+        SP_FromWords(&H80100000&, &H00000000&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H80000000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H80100000&, &H00000000&)
+    SP_ProductCase "SP rational 022", _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H00100000&, &H00000000&)
+    SP_ProductCase "SP rational 023", _
+        SP_FromWords(&H80100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H80100000&, &H00000000&)
+    SP_ProductCase "SP rational 024", _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FE00000&, &H00000001&), SP_FromWords(&H00000000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H00100000&, &H00000001&)
+    SP_ProductCase "SP rational 025", _
+        SP_FromWords(&H80100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&HBFE00000&, &H00000001&), SP_FromWords(&H80000000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H80100000&, &H00000001&)
+    SP_ProductCase "SP rational 026", _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), -1020, _
+        True, SP_FromWords(&H00200000&, &H00000000&)
+    SP_ProductCase "SP rational 027", _
+        SP_FromWords(&H80100000&, &H00000000&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), -1020, _
+        True, SP_FromWords(&H80200000&, &H00000000&)
+    SP_ProductCase "SP rational 028", _
+        SP_FromWords(&H000FFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFD&), SP_FromWords(&H39600000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H000FFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 029", _
+        SP_FromWords(&H800FFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFD&), SP_FromWords(&HB9600000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H800FFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 030", _
+        SP_FromWords(&H000FFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H00000000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H000FFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 031", _
+        SP_FromWords(&H800FFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H80000000&, &H00000000&), -1022, _
+        True, SP_FromWords(&H800FFFFF&, &HFFFFFFFF&)
+End Sub
+
+Private Sub Test_ScaledProduct_Chunk1()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk1: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 032", _
+        SP_FromWords(&H000FFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HB9600000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H00100000&, &H00000000&)
+    SP_ProductCase "SP rational 033", _
+        SP_FromWords(&H800FFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H39600000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H80100000&, &H00000000&)
+    SP_ProductCase "SP rational 034", _
+        SP_FromWords(&H000FFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H00000000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H001FFFFF&, &HFFFFFFFE&)
+    SP_ProductCase "SP rational 035", _
+        SP_FromWords(&H800FFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H80000000&, &H00000000&), -1021, _
+        True, SP_FromWords(&H801FFFFF&, &HFFFFFFFE&)
+    SP_ProductCase "SP rational 036", _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 037", _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 038", _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 039", _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&HBFD00000&, &H00000000&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 040", _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 041", _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 042", _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 043", _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 044", _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&HBFD00000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 045", _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 046", _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H00000000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 047", _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H80000000&, &H00000000&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 048", _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), -1075, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 049", _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&HBFD00000&, &H00000000&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), -1075, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 050", _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H00000000&, &H00000000&), -50, _
+        True, SP_FromWords(&H3CCFFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 051", _
+        SP_FromWords(&H80000000&, &H00000001&), SP_FromWords(&H00000000&, &H00000000&), _
+        SP_FromWords(&H80000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 052", _
+        SP_FromWords(&H80000000&, &H00000001&), SP_FromWords(&H80000000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), 0, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 053", _
+        SP_FromWords(&H80000000&, &H00000001&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), -1075, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 054", _
+        SP_FromWords(&H80000000&, &H00000001&), SP_FromWords(&HBFD00000&, &H00000000&), _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), -1075, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 055", _
+        SP_FromWords(&H80000000&, &H00000001&), SP_FromWords(&H7FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&HBFEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H80000000&, &H00000000&), -50, _
+        True, SP_FromWords(&HBCCFFFFF&, &HFFFFFFFF&)
+    SP_ProductCase "SP rational 056", _
+        SP_FromWords(&HCAF156E5&, &H901089A1&), SP_FromWords(&H57C216C1&, &H3B0BCA17&), _
+        SP_FromWords(&HBFE39A6B&, &H25E7009D&), SP_FromWords(&H3C674E3F&, &HCFF98890&), 558, _
+        True, SP_FromWords(&HE2C39A6B&, &H25E7009D&)
+    SP_ProductCase "SP rational 057", _
+        SP_FromWords(&H7E813F75&, &H3A23F6EB&), SP_FromWords(&H91C2F643&, &HC528FB38&), _
+        SP_FromWords(&HBFE470DC&, &H9A0AC304&), SP_FromWords(&HBC702E43&, &H35736340&), 263, _
+        True, SP_FromWords(&HD05470DC&, &H9A0AC304&)
+    SP_ProductCase "SP rational 058", _
+        SP_FromWords(&HE56FAD27&, &H6F7415A9&), SP_FromWords(&H9CEC8D7A&, &H4714FD52&), _
+        SP_FromWords(&H3FEC438E&, &H81CBF9D8&), SP_FromWords(&HBC3066C0&, &HCD42B780&), 40, _
+        True, SP_FromWords(&H426C438E&, &H81CBF9D8&)
+    SP_ProductCase "SP rational 059", _
+        SP_FromWords(&H2BA7A2A6&, &HDA838030&), SP_FromWords(&H4353A45A&, &H4ECA2E85&), _
+        SP_FromWords(&H3FED03EE&, &HB90A10DA&), SP_FromWords(&H3C8F2693&, &HB4E8E3C0&), -270, _
+        True, SP_FromWords(&H2F0D03EE&, &HB90A10DA&)
+    SP_ProductCase "SP rational 060", _
+        SP_FromWords(&HF7B954C7&, &H6F71762D&), SP_FromWords(&HF03675F2&, &H900B138A&), _
+        SP_FromWords(&H3FE1C7A7&, &H18F7F8F3&), SP_FromWords(&HBC8336AA&, &H3A43E97C&), 1666, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 061", _
+        SP_FromWords(&H6DB51538&, &H1C0CA08F&), SP_FromWords(&H6DD2FA23&, &H0F708006&), _
+        SP_FromWords(&H3FE90178&, &HDF07591E&), SP_FromWords(&HBC5AC5AC&, &HFB9794C0&), 1467, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 062", _
+        SP_FromWords(&HE8758A1D&, &HCE454498&), SP_FromWords(&HB2C6605A&, &HC5B0A235&), _
+        SP_FromWords(&H3FEE1F9F&, &HE17EDED4&), SP_FromWords(&HBC8D41D1&, &H57027220&), 438, _
+        True, SP_FromWords(&H5B4E1F9F&, &HE17EDED4&)
+    SP_ProductCase "SP rational 063", _
+        SP_FromWords(&HB776E034&, &H23482267&), SP_FromWords(&H3498FF94&, &HED1989C4&), _
+        SP_FromWords(&HBFE1DEDC&, &H305F2797&), SP_FromWords(&HBC5453D5&, &H4B275DC0&), -316, _
+        True, SP_FromWords(&HAC21DEDC&, &H305F2797&)
+End Sub
+
+Private Sub Test_ScaledProduct_Chunk2()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk2: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 064", _
+        SP_FromWords(&H37D95449&, &HDE6BD1AE&), SP_FromWords(&H5416EC01&, &H673C1B95&), _
+        SP_FromWords(&H3FE224C1&, &H860BABE9&), SP_FromWords(&HBC71A8F0&, &H15666EE8&), 194, _
+        True, SP_FromWords(&H4C0224C1&, &H860BABE9&)
+    SP_ProductCase "SP rational 065", _
+        SP_FromWords(&HCB06CE64&, &HC1EC168C&), SP_FromWords(&H5A4C4925&, &HB9983E56&), _
+        SP_FromWords(&HBFE428B9&, &HE2732DD4&), SP_FromWords(&H3C7951EC&, &H786A13E0&), 600, _
+        True, SP_FromWords(&HE56428B9&, &HE2732DD4&)
+    SP_ProductCase "SP rational 066", _
+        SP_FromWords(&HD1B1ACAA&, &H903BF1B1&), SP_FromWords(&HCA288EC0&, &HADA48636&), _
+        SP_FromWords(&H3FEB20B1&, &H19E973A7&), SP_FromWords(&H3C883BD4&, &HFE2E8558&), 448, _
+        True, SP_FromWords(&H5BEB20B1&, &H19E973A7&)
+    SP_ProductCase "SP rational 067", _
+        SP_FromWords(&H9CB11B39&, &H7163A723&), SP_FromWords(&H5B33AF69&, &H9A833A72&), _
+        SP_FromWords(&HBFE50BDE&, &HE2C9D6D2&), SP_FromWords(&H3C734EB2&, &HC6C52350&), -127, _
+        True, SP_FromWords(&HB7F50BDE&, &HE2C9D6D2&)
+    SP_ProductCase "SP rational 068", _
+        SP_FromWords(&H2B209519&, &H4FA81ED7&), SP_FromWords(&H840817B6&, &HDDBBB942&), _
+        SP_FromWords(&HBFE8F839&, &HD1AC963C&), SP_FromWords(&H3C86D283&, &H5946B648&), -1291, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 069", _
+        SP_FromWords(&HE2D4C143&, &H54C07F45&), SP_FromWords(&H65761EAF&, &HBCED7492&), _
+        SP_FromWords(&HBFECB18A&, &HE9AAE3F7&), SP_FromWords(&H3C856D6B&, &HC6AC9A98&), 1159, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 070", _
+        SP_FromWords(&H3CC306F9&, &H1F0083CC&), SP_FromWords(&H7E25AC59&, &H41D7BE1B&), _
+        SP_FromWords(&H3FE9C61C&, &H13D492CC&), SP_FromWords(&HBC728F2E&, &HE6658BE0&), 945, _
+        True, SP_FromWords(&H7AF9C61C&, &H13D492CC&)
+    SP_ProductCase "SP rational 071", _
+        SP_FromWords(&H1C64BE53&, &H1C9A1E05&), SP_FromWords(&HEB750F20&, &H5C7FC82F&), _
+        SP_FromWords(&HBFEB4D69&, &H78075937&), SP_FromWords(&HBC67E795&, &H83A6AEB0&), 128, _
+        True, SP_FromWords(&HC7EB4D69&, &H78075937&)
+    SP_ProductCase "SP rational 072", _
+        SP_FromWords(&HA919D6CA&, &HFACF9E96&), SP_FromWords(&H8635729F&, &H50E26852&), _
+        SP_FromWords(&H3FE15183&, &H0C461E98&), SP_FromWords(&HBC709451&, &HC2990FD0&), -1288, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 073", _
+        SP_FromWords(&H12151F70&, &H393CEDEA&), SP_FromWords(&H56652D33&, &H857A6915&), _
+        SP_FromWords(&H3FEBF4EF&, &HBB2D9960&), SP_FromWords(&H3C21F0A3&, &H187E3200&), -374, _
+        True, SP_FromWords(&H288BF4EF&, &HBB2D9960&)
+    SP_ProductCase "SP rational 074", _
+        SP_FromWords(&H87360C9A&, &H11476616&), SP_FromWords(&HCD96BCF7&, &HE77360DB&), _
+        SP_FromWords(&H3FEF55BD&, &H8B8C8E72&), SP_FromWords(&H3C7B2D92&, &H21F4A690&), -689, _
+        True, SP_FromWords(&H14DF55BD&, &H8B8C8E72&)
+    SP_ProductCase "SP rational 075", _
+        SP_FromWords(&H04BAD289&, &H048AAD9A&), SP_FromWords(&H28982C07&, &H6A3A0543&), _
+        SP_FromWords(&H3FE442CE&, &H76E641C1&), SP_FromWords(&HBC41D140&, &H2D91D640&), -1320, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 076", _
+        SP_FromWords(&HB4D0EF3A&, &H2A37172E&), SP_FromWords(&HBFCD38FB&, &H33FF98AB&), _
+        SP_FromWords(&H3FEEEDE8&, &H980120C0&), SP_FromWords(&HBC5B4F9A&, &HD3C688C0&), -180, _
+        True, SP_FromWords(&H34AEEDE8&, &H980120C0&)
+    SP_ProductCase "SP rational 077", _
+        SP_FromWords(&H6C002B9B&, &HF376375F&), SP_FromWords(&H8E4B6D9A&, &H0A7B616D&), _
+        SP_FromWords(&HBFEBB85B&, &HEF970D49&), SP_FromWords(&H3C5FA7A7&, &H614DB1A0&), -89, _
+        True, SP_FromWords(&HBA5BB85B&, &HEF970D49&)
+    SP_ProductCase "SP rational 078", _
+        SP_FromWords(&H849B23E1&, &HC4D54411&), SP_FromWords(&H0502625E&, &HC8C7245A&), _
+        SP_FromWords(&HBFEF2F3A&, &H8BA63D47&), SP_FromWords(&H3C7C1DFC&, &HF1E57030&), -1892, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 079", _
+        SP_FromWords(&H242B1AD2&, &H1C7FF4B8&), SP_FromWords(&H29CDB5FA&, &H431971AB&), _
+        SP_FromWords(&H3FE92A72&, &H18A45D56&), SP_FromWords(&HBC4FBAED&, &HB14A2300&), -798, _
+        True, SP_FromWords(&H0E092A72&, &H18A45D56&)
+    SP_ProductCase "SP rational 080", _
+        SP_FromWords(&H8902ECE6&, &H5F6D1989&), SP_FromWords(&H7908EDC2&, &H36CEB366&), _
+        SP_FromWords(&HBFED7C94&, &H5CC6732E&), SP_FromWords(&H3C862DF4&, &HFDBC21A8&), 35, _
+        True, SP_FromWords(&HC21D7C94&, &H5CC6732E&)
+    SP_ProductCase "SP rational 081", _
+        SP_FromWords(&HDBA9A2A0&, &H3BAC1422&), SP_FromWords(&H3BE4E757&, &HC23E1D3C&), _
+        SP_FromWords(&HBFE0BEF8&, &H67B99EEE&), SP_FromWords(&HBC652668&, &HF6C48FC0&), 380, _
+        True, SP_FromWords(&HD7A0BEF8&, &H67B99EEE&)
+    SP_ProductCase "SP rational 082", _
+        SP_FromWords(&HBDB265F2&, &HAA7B68E2&), SP_FromWords(&H831A4DEB&, &HD57547A8&), _
+        SP_FromWords(&H3FEE3F44&, &H23AD2EAE&), SP_FromWords(&H3C787548&, &HA2EC1280&), -1009, _
+        True, SP_FromWords(&H00DE3F44&, &H23AD2EAE&)
+    SP_ProductCase "SP rational 083", _
+        SP_FromWords(&H47330C9A&, &H6CED0219&), SP_FromWords(&H17AA2075&, &HAA5B2C4F&), _
+        SP_FromWords(&H3FEF1B20&, &H3CD6AF26&), SP_FromWords(&H3C827DC6&, &HC98BC6DC&), -528, _
+        True, SP_FromWords(&H1EEF1B20&, &H3CD6AF26&)
+    SP_ProductCase "SP rational 084", _
+        SP_FromWords(&HA25FA16C&, &H7A870788&), SP_FromWords(&H4565C7CC&, &H42E76DD7&), _
+        SP_FromWords(&HBFE5876C&, &HF237D35B&), SP_FromWords(&HBC5DA6F4&, &H1543B380&), -385, _
+        True, SP_FromWords(&HA7D5876C&, &HF237D35B&)
+    SP_ProductCase "SP rational 085", _
+        SP_FromWords(&H997C42B5&, &H619237A8&), SP_FromWords(&H131B40D5&, &H2A98F410&), _
+        SP_FromWords(&HBFE8118A&, &HB6BC7753&), SP_FromWords(&H3C8171DF&, &HDC20CB00&), -1332, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 086", _
+        SP_FromWords(&H3426F893&, &H40FB6BEB&), SP_FromWords(&HF12ACDC4&, &H4E1BE55D&), _
+        SP_FromWords(&HBFE33DAC&, &HFEBC6DAF&), SP_FromWords(&H3C8F6A1D&, &H02AF2942&), 600, _
+        True, SP_FromWords(&HE5633DAC&, &HFEBC6DAF&)
+    SP_ProductCase "SP rational 087", _
+        SP_FromWords(&HC9A6E998&, &H05356550&), SP_FromWords(&H0300BDC1&, &H3C8A9EF8&), _
+        SP_FromWords(&HBFE7F954&, &H115F2759&), SP_FromWords(&HBC8B894D&, &H75861600&), -819, _
+        True, SP_FromWords(&H8CB7F954&, &H115F2759&)
+    SP_ProductCase "SP rational 088", _
+        SP_FromWords(&H9306D90C&, &H1C4C3FA8&), SP_FromWords(&H35FC3878&, &H460223E9&), _
+        SP_FromWords(&HBFE4263C&, &H4DDDF8F3&), SP_FromWords(&H3C8046B6&, &HC52C3030&), -877, _
+        True, SP_FromWords(&H8914263C&, &H4DDDF8F3&)
+    SP_ProductCase "SP rational 089", _
+        SP_FromWords(&H546D83E2&, &H79F0AC54&), SP_FromWords(&H946BC3F2&, &HDE65BF1E&), _
+        SP_FromWords(&HBFE99C02&, &HC57BA9E5&), SP_FromWords(&H3C81BB5C&, &HA02A4450&), -368, _
+        True, SP_FromWords(&HA8E99C02&, &HC57BA9E5&)
+    SP_ProductCase "SP rational 090", _
+        SP_FromWords(&HA7D6A8C9&, &H903DED47&), SP_FromWords(&H5649301B&, &HFD05DB61&), _
+        SP_FromWords(&HBFE1D5EE&, &H789D6F4B&), SP_FromWords(&HBC877BEC&, &HDDAB49CE&), -27, _
+        True, SP_FromWords(&HBE31D5EE&, &H789D6F4B&)
+    SP_ProductCase "SP rational 091", _
+        SP_FromWords(&HE675EEEB&, &H7428CDDF&), SP_FromWords(&H5DFE659D&, &H6AC91547&), _
+        SP_FromWords(&HBFE4D5A2&, &HB97152F0&), SP_FromWords(&HBC7BA77E&, &H292D8F64&), 1098, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 092", _
+        SP_FromWords(&HD59FF28D&, &HBC163CBC&), SP_FromWords(&H19C50933&, &H97985A2E&), _
+        SP_FromWords(&HBFE5005C&, &HBD3608D9&), SP_FromWords(&H3C7C57B5&, &HBC1BF8E0&), -263, _
+        True, SP_FromWords(&HAF75005C&, &HBD3608D9&)
+    SP_ProductCase "SP rational 093", _
+        SP_FromWords(&HD10B6AD0&, &H8EADDC58&), SP_FromWords(&HC06DEB3C&, &H7A3BC6A7&), _
+        SP_FromWords(&H3FE9A259&, &H3DE6DA44&), SP_FromWords(&H3C884C36&, &H883D9AD0&), 282, _
+        True, SP_FromWords(&H5189A259&, &H3DE6DA44&)
+    SP_ProductCase "SP rational 094", _
+        SP_FromWords(&HB095BE70&, &HEBB58112&), SP_FromWords(&HC2268987&, &H4C70BE6F&), _
+        SP_FromWords(&H3FEEA0C1&, &HC9B668A8&), SP_FromWords(&HBC7F4F0A&, &H350D6990&), -210, _
+        True, SP_FromWords(&H32CEA0C1&, &HC9B668A8&)
+    SP_ProductCase "SP rational 095", _
+        SP_FromWords(&HAF3A62BC&, &H25FC25EE&), SP_FromWords(&H1E897BD9&, &HF70AEF6B&), _
+        SP_FromWords(&HBFE50342&, &H3A1E00F3&), SP_FromWords(&HBC806294&, &HCA3218F4&), -801, _
+        True, SP_FromWords(&H8DD50342&, &H3A1E00F3&)
+End Sub
+
+Private Sub Test_ScaledProduct_Chunk3()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk3: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 096", _
+        SP_FromWords(&H413F40CF&, &H6889427A&), SP_FromWords(&H90063885&, &H4185A672&), _
+        SP_FromWords(&HBFE5B3C2&, &H2831859D&), SP_FromWords(&H3C88868F&, &HDCC69358&), -745, _
+        True, SP_FromWords(&H9155B3C2&, &H2831859D&)
+    SP_ProductCase "SP rational 097", _
+        SP_FromWords(&HDF1EDC8D&, &H47245EB7&), SP_FromWords(&H39877B54&, &H2AFE6039&), _
+        SP_FromWords(&HBFE6A576&, &H76953F7A&), SP_FromWords(&HBC8D499C&, &HF45F6D7E&), 397, _
+        True, SP_FromWords(&HD8B6A576&, &H76953F7A&)
+    SP_ProductCase "SP rational 098", _
+        SP_FromWords(&H96050BD9&, &HA4251122&), SP_FromWords(&HAA168C74&, &H766251B5&), _
+        SP_FromWords(&H3FEDA90C&, &H23B1DB1B&), SP_FromWords(&H3C6854F0&, &H3A4DF0A0&), -1020, _
+        True, SP_FromWords(&H002DA90C&, &H23B1DB1B&)
+    SP_ProductCase "SP rational 099", _
+        SP_FromWords(&H90DB27A6&, &H8617D28B&), SP_FromWords(&H7C84A5F6&, &H3C00916E&), _
+        SP_FromWords(&HBFE1859D&, &H7A2D48E8&), SP_FromWords(&HBC5D96BB&, &H07D32BA0&), 217, _
+        True, SP_FromWords(&HCD71859D&, &H7A2D48E8&)
+    SP_ProductCase "SP rational 100", _
+        SP_FromWords(&H06DCF62D&, &HE88145DE&), SP_FromWords(&HFD3682C4&, &H5EAE58E1&), _
+        SP_FromWords(&HBFE45F99&, &H63E38F31&), SP_FromWords(&HBC8FBF85&, &H950D703C&), 68, _
+        True, SP_FromWords(&HC4245F99&, &H63E38F31&)
+    SP_ProductCase "SP rational 101", _
+        SP_FromWords(&HDC011C41&, &HC6F25F27&), SP_FromWords(&H999E460B&, &H48A4C0E8&), _
+        SP_FromWords(&H3FE02FF1&, &H82F4B3BE&), SP_FromWords(&H3C869F0D&, &HFFFEF6B0&), -163, _
+        True, SP_FromWords(&H35B02FF1&, &H82F4B3BE&)
+    SP_ProductCase "SP rational 102", _
+        SP_FromWords(&HC251C79F&, &HC057F7FD&), SP_FromWords(&H8FE3330D&, &H903823E6&), _
+        SP_FromWords(&H3FE555C9&, &H14125B81&), SP_FromWords(&HBC720CBC&, &HD5BCDD90&), -730, _
+        True, SP_FromWords(&H124555C9&, &H14125B81&)
+    SP_ProductCase "SP rational 103", _
+        SP_FromWords(&H09992E25&, &H8A3EC0CD&), SP_FromWords(&HC854C8BE&, &HA2CEF29C&), _
+        SP_FromWords(&HBFE05ACD&, &HE3229B8F&), SP_FromWords(&H3C27E4C8&, &H455C8A00&), -734, _
+        True, SP_FromWords(&H92005ACD&, &HE3229B8F&)
+    SP_ProductCase "SP rational 104", _
+        SP_FromWords(&HEFC136E9&, &H1CD92772&), SP_FromWords(&H464517C4&, &H5F384E37&), _
+        SP_FromWords(&HBFE6B1A4&, &H2C10B9C5&), SP_FromWords(&H3C8F5AD2&, &HD18F2A08&), 867, _
+        True, SP_FromWords(&HF616B1A4&, &H2C10B9C5&)
+    SP_ProductCase "SP rational 105", _
+        SP_FromWords(&HD2E889AE&, &H382BADFC&), SP_FromWords(&H9FB7310C&, &H1315BF84&), _
+        SP_FromWords(&H3FE1C891&, &H4D6929A7&), SP_FromWords(&HBC8991E6&, &HF1FE8C20&), -211, _
+        True, SP_FromWords(&H32B1C891&, &H4D6929A7&)
+    SP_ProductCase "SP rational 106", _
+        SP_FromWords(&HEAC1E415&, &HF4CBEEE0&), SP_FromWords(&H33F18E89&, &H404EB049&), _
+        SP_FromWords(&HBFE3A1B9&, &H0FD994A5&), SP_FromWords(&H3C3ADB1A&, &HAF711000&), 494, _
+        True, SP_FromWords(&HDEC3A1B9&, &H0FD994A5&)
+    SP_ProductCase "SP rational 107", _
+        SP_FromWords(&H0853B31A&, &HD3F57EC5&), SP_FromWords(&HEFFD041A&, &H165254C5&), _
+        SP_FromWords(&HBFE1DCD6&, &HC2B49760&), SP_FromWords(&H3C80DA89&, &H9AC59CCE&), -120, _
+        True, SP_FromWords(&HB861DCD6&, &HC2B49760&)
+    SP_ProductCase "SP rational 108", _
+        SP_FromWords(&H7C2517DE&, &HFE01CCF3&), SP_FromWords(&HA1756282&, &H5B931423&), _
+        SP_FromWords(&HBFEC3132&, &HBDE3A1F6&), SP_FromWords(&HBC811E77&, &HBB2C04E4&), 476, _
+        True, SP_FromWords(&HDDAC3132&, &HBDE3A1F6&)
+    SP_ProductCase "SP rational 109", _
+        SP_FromWords(&H5CC695C0&, &H79DD9F67&), SP_FromWords(&HF31C92C0&, &H852CDB41&), _
+        SP_FromWords(&HBFE42A9B&, &H894EDA75&), SP_FromWords(&HBC50F477&, &H15696270&), 1281, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 110", _
+        SP_FromWords(&H9D65B5C8&, &H3C1F5857&), SP_FromWords(&H108156C3&, &H708624F7&), _
+        SP_FromWords(&HBFE786DF&, &H044B514F&), SP_FromWords(&HBC80FFE6&, &HE0D1DFC4&), -1311, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 111", _
+        SP_FromWords(&H12A2301D&, &HCBB727A9&), SP_FromWords(&HB3ECD6B8&, &H04259D8B&), _
+        SP_FromWords(&HBFE06424&, &H708953D1&), SP_FromWords(&HBC7DEEB1&, &H3CC8B70C&), -916, _
+        True, SP_FromWords(&H86A06424&, &H708953D1&)
+    SP_ProductCase "SP rational 112", _
+        SP_FromWords(&H112D04A0&, &H2697244E&), SP_FromWords(&H9F9981B2&, &H997E709D&), _
+        SP_FromWords(&HBFE72139&, &HB8AD425E&), SP_FromWords(&H3C847327&, &H72113854&), -1265, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 113", _
+        SP_FromWords(&H622F4FF8&, &H8DA3A473&), SP_FromWords(&H0610BEFE&, &HF5F6E205&), _
+        SP_FromWords(&H3FE062E0&, &H960D8D0A&), SP_FromWords(&HBC838EBD&, &H5E3C8782&), -377, _
+        True, SP_FromWords(&H285062E0&, &H960D8D0A&)
+    SP_ProductCase "SP rational 114", _
+        SP_FromWords(&H9B34D7F5&, &H821A40BE&), SP_FromWords(&H20194063&, &HD06E6AD3&), _
+        SP_FromWords(&HBFE072A8&, &HBC8BE956&), SP_FromWords(&H3C8D26D5&, &H67D3EECC&), -1096, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 115", _
+        SP_FromWords(&H89A99A53&, &HCDEEF909&), SP_FromWords(&H24E6A4A1&, &H642DEA12&), _
+        SP_FromWords(&HBFE21DD1&, &HABB05A3D&), SP_FromWords(&HBC718C4C&, &HD412F288&), -1300, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 116", _
+        SP_FromWords(&HB607527F&, &HF60B894C&), SP_FromWords(&H59F46C53&, &HFF53E9EA&), _
+        SP_FromWords(&HBFEDC507&, &H43702E29&), SP_FromWords(&HBC7DB85C&, &HF12D5BC0&), 258, _
+        True, SP_FromWords(&HD00DC507&, &H43702E29&)
+    SP_ProductCase "SP rational 117", _
+        SP_FromWords(&HD2071342&, &H44947AF1&), SP_FromWords(&H280BAB9B&, &H44AB8BA5&), _
+        SP_FromWords(&HBFE3F3FE&, &HCAC95DCA&), SP_FromWords(&HBC0F67EA&, &HDE30AA00&), -92, _
+        True, SP_FromWords(&HBA23F3FE&, &HCAC95DCA&)
+    SP_ProductCase "SP rational 118", _
+        SP_FromWords(&H2504D496&, &H8EDA6EF5&), SP_FromWords(&HFB87404B&, &H7A744A74&), _
+        SP_FromWords(&HBFEE454D&, &H0B83890F&), SP_FromWords(&H3C521B42&, &HFDDCDF80&), 523, _
+        True, SP_FromWords(&HE09E454D&, &H0B83890F&)
+    SP_ProductCase "SP rational 119", _
+        SP_FromWords(&HF93E43A3&, &H43CD14B0&), SP_FromWords(&HE3AB56E5&, &H292620A4&), _
+        SP_FromWords(&H3FE9DB40&, &H42EE562F&), SP_FromWords(&H3C791D09&, &H505D0300&), 1489, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 120", _
+        SP_FromWords(&H4765FD99&, &HC27A6663&), SP_FromWords(&H047AC978&, &H71D152B6&), _
+        SP_FromWords(&H3FE26880&, &HA108FD70&), SP_FromWords(&H3C8E2445&, &H834700C4&), -831, _
+        True, SP_FromWords(&H0BF26880&, &HA108FD70&)
+    SP_ProductCase "SP rational 121", _
+        SP_FromWords(&HB5EF982E&, &HF4755EFD&), SP_FromWords(&H0FE5C00E&, &HD314C0AE&), _
+        SP_FromWords(&HBFE5797E&, &H8D244479&), SP_FromWords(&HBC8CDF1C&, &H43909FEC&), -928, _
+        True, SP_FromWords(&H85E5797E&, &H8D244479&)
+    SP_ProductCase "SP rational 122", _
+        SP_FromWords(&HE63DE9FB&, &H3D2EF5BA&), SP_FromWords(&HFB5A69B7&, &HF5DEAD00&), _
+        SP_FromWords(&H3FE8B0EF&, &HDA034426&), SP_FromWords(&H3C857465&, &HAAB56400&), 1564, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 123", _
+        SP_FromWords(&H6D703A62&, &H723BD5EC&), SP_FromWords(&H0E3F364B&, &HA664BEF7&), _
+        SP_FromWords(&H3FEFA830&, &H8406DBDC&), SP_FromWords(&H3C417FCE&, &H2C23AD00&), -67, _
+        True, SP_FromWords(&H3BBFA830&, &H8406DBDC&)
+    SP_ProductCase "SP rational 124", _
+        SP_FromWords(&HA2CEBEC1&, &H07038C47&), SP_FromWords(&HD3C40D1D&, &H5E3D63D2&), _
+        SP_FromWords(&H3FE343D2&, &H5A375205&), SP_FromWords(&H3C598739&, &HF13873E0&), -148, _
+        True, SP_FromWords(&H36A343D2&, &H5A375205&)
+    SP_ProductCase "SP rational 125", _
+        SP_FromWords(&H82D7F775&, &HB0DD23BD&), SP_FromWords(&H17E1BA71&, &H3695F86B&), _
+        SP_FromWords(&HBFEA8E33&, &H5986039B&), SP_FromWords(&H3C6DFCC2&, &HDF1F8010&), -1618, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 126", _
+        SP_FromWords(&H40B85036&, &H915D429F&), SP_FromWords(&H09C7A636&, &HD415B903&), _
+        SP_FromWords(&H3FE1F7F0&, &HFC0D1BB2&), SP_FromWords(&H3C6D7861&, &HE23D76E8&), -853, _
+        True, SP_FromWords(&H0A91F7F0&, &HFC0D1BB2&)
+    SP_ProductCase "SP rational 127", _
+        SP_FromWords(&HCF53A28D&, &H59461965&), SP_FromWords(&HD1A771FF&, &H87F48664&), _
+        SP_FromWords(&H3FECC590&, &HCC1F9EDB&), SP_FromWords(&HBC8654FB&, &HE03CDA30&), 530, _
+        True, SP_FromWords(&H610CC590&, &HCC1F9EDB&)
+End Sub
+
+Private Sub Test_ScaledProduct_Chunk4()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk4: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 128", _
+        SP_FromWords(&H6A5192AF&, &HBDB8CAA1&), SP_FromWords(&H7E78CAE6&, &H486ECB74&), _
+        SP_FromWords(&H3FEB3AE0&, &H737C7AF3&), SP_FromWords(&HBC8E5F88&, &H99A21030&), 1679, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 129", _
+        SP_FromWords(&HB2D16197&, &H91630AEE&), SP_FromWords(&HCE3AC769&, &H847EC83E&), _
+        SP_FromWords(&H3FED1736&, &HB9C2B835&), SP_FromWords(&HBC5AB6AA&, &H0AAD4B80&), 19, _
+        True, SP_FromWords(&H411D1736&, &HB9C2B835&)
+    SP_ProductCase "SP rational 130", _
+        SP_FromWords(&H13375C48&, &HEFC95A90&), SP_FromWords(&HB9C99FD9&, &HCF8C5A1A&), _
+        SP_FromWords(&HBFE2B4CA&, &H870EC69D&), SP_FromWords(&H3C85ABC5&, &HC9EC5AC0&), -813, _
+        True, SP_FromWords(&H8D12B4CA&, &H870EC69D&)
+    SP_ProductCase "SP rational 131", _
+        SP_FromWords(&HE4E8BEE7&, &HA488BA53&), SP_FromWords(&H57C35926&, &HE7B8E151&), _
+        SP_FromWords(&HBFEDEC95&, &H27ADDCCD&), SP_FromWords(&H3C5B6BFE&, &H8A4317A0&), 973, _
+        True, SP_FromWords(&HFCBDEC95&, &H27ADDCCD&)
+    SP_ProductCase "SP rational 132", _
+        SP_FromWords(&H5772779B&, &HBB60540B&), SP_FromWords(&H89C58019&, &H6BBFBD34&), _
+        SP_FromWords(&HBFE8D0D6&, &H9B09F55E&), SP_FromWords(&HBC842829&, &HEB48C4F0&), -490, _
+        True, SP_FromWords(&HA148D0D6&, &H9B09F55E&)
+    SP_ProductCase "SP rational 133", _
+        SP_FromWords(&HCB2D0FD2&, &H72A09562&), SP_FromWords(&HD8F2F27A&, &HDC471773&), _
+        SP_FromWords(&H3FE1351D&, &H9C5CDEB0&), SP_FromWords(&HBC717231&, &HB90C5BE8&), 581, _
+        True, SP_FromWords(&H6431351D&, &H9C5CDEB0&)
+    SP_ProductCase "SP rational 134", _
+        SP_FromWords(&HF236AEA7&, &H50285EDA&), SP_FromWords(&HFEA14BA1&, &H24E23934&), _
+        SP_FromWords(&H3FE884C8&, &HE72FE522&), SP_FromWords(&H3C561D35&, &H38B9C900&), 1808, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 135", _
+        SP_FromWords(&H07D9A96B&, &H137C1ADE&), SP_FromWords(&HD68E9CF9&, &HE25E9940&), _
+        SP_FromWords(&HBFE88CB6&, &HB014E69A&), SP_FromWords(&HBC82F543&, &HC932CB00&), -535, _
+        True, SP_FromWords(&H9E788CB6&, &HB014E69A&)
+    SP_ProductCase "SP rational 136", _
+        SP_FromWords(&H5ED49F1F&, &HEBBFDBE9&), SP_FromWords(&H71AE015E&, &HB0AE6FC5&), _
+        SP_FromWords(&H3FE3560F&, &HEB4C9982&), SP_FromWords(&H3C16EE43&, &H5C414D00&), 1291, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 137", _
+        SP_FromWords(&H1E12CF1E&, &H425C8DFA&), SP_FromWords(&HE4F6BFA5&, &HE99E05C0&), _
+        SP_FromWords(&HBFEABE15&, &H1F016D25&), SP_FromWords(&H3C835E21&, &H060E8A00&), 51, _
+        True, SP_FromWords(&HC31ABE15&, &H1F016D25&)
+    SP_ProductCase "SP rational 138", _
+        SP_FromWords(&HA80AB149&, &H5359630E&), SP_FromWords(&HF2E8D41D&, &H50DF83F0&), _
+        SP_FromWords(&H3FE4B5E5&, &HF86B56D9&), SP_FromWords(&H3C60A664&, &H55783900&), 434, _
+        True, SP_FromWords(&H5B04B5E5&, &HF86B56D9&)
+    SP_ProductCase "SP rational 139", _
+        SP_FromWords(&H17589DF8&, &H66354B1F&), SP_FromWords(&H4C5949A0&, &H08F4B2E3&), _
+        SP_FromWords(&H3FE3740D&, &H8B40878B&), SP_FromWords(&HBC3589EF&, &HBDB560C0&), -450, _
+        True, SP_FromWords(&H23C3740D&, &H8B40878B&)
+    SP_ProductCase "SP rational 140", _
+        SP_FromWords(&H50C893A2&, &H2E52B5A6&), SP_FromWords(&H2B9C98C5&, &H6E383856&), _
+        SP_FromWords(&H3FE5F682&, &HCC69801D&), SP_FromWords(&HBC81D0FE&, &H90555478&), -55, _
+        True, SP_FromWords(&H3C75F682&, &HCC69801D&)
+    SP_ProductCase "SP rational 141", _
+        SP_FromWords(&HC81BA4A7&, &HC9E6DD9D&), SP_FromWords(&H6A726497&, &H2EA5E68D&), _
+        SP_FromWords(&HBFEFC707&, &H0E592066&), SP_FromWords(&H3C7737B2&, &HA45F1438&), 811, _
+        True, SP_FromWords(&HF29FC707&, &H0E592066&)
+    SP_ProductCase "SP rational 142", _
+        SP_FromWords(&H097DC2D7&, &H8219FB95&), SP_FromWords(&HCA3ED471&, &H36111A7C&), _
+        SP_FromWords(&HBFECAC3E&, &H2807FF3A&), SP_FromWords(&H3C74B358&, &HD3E00750&), -706, _
+        True, SP_FromWords(&H93CCAC3E&, &H2807FF3A&)
+    SP_ProductCase "SP rational 143", _
+        SP_FromWords(&H616672D0&, &H7DA29A5D&), SP_FromWords(&H7AA44CA4&, &H52463E5D&), _
+        SP_FromWords(&H3FEC7B0C&, &H87A80768&), SP_FromWords(&HBC8B7163&, &HEC7598DC&), 1475, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 144", _
+        SP_FromWords(&H4D2A571F&, &H11F001A9&), SP_FromWords(&HF0A33E9C&, &HD50DB9BC&), _
+        SP_FromWords(&HBFEFAE88&, &HADDFD910&), SP_FromWords(&HBC5F4AAA&, &H012B2380&), 991, _
+        True, SP_FromWords(&HFDDFAE88&, &HADDFD910&)
+    SP_ProductCase "SP rational 145", _
+        SP_FromWords(&HB80ACEB4&, &HE01F59DE&), SP_FromWords(&H16C38591&, &H9452F7B2&), _
+        SP_FromWords(&HBFE05AA0&, &H79BB3CF4&), SP_FromWords(&HBC6325F9&, &HB4ED72E0&), -784, _
+        True, SP_FromWords(&H8EE05AA0&, &H79BB3CF4&)
+    SP_ProductCase "SP rational 146", _
+        SP_FromWords(&H42137AB9&, &HFF16F011&), SP_FromWords(&H8DD46DC0&, &H1D168C92&), _
+        SP_FromWords(&HBFE8DF06&, &H7618526E&), SP_FromWords(&H3C85EE05&, &HACAF2938&), -767, _
+        True, SP_FromWords(&H8FF8DF06&, &H7618526E&)
+    SP_ProductCase "SP rational 147", _
+        SP_FromWords(&H6EF4E4C5&, &HF07C3187&), SP_FromWords(&H2BB1534D&, &HA3ACAC0D&), _
+        SP_FromWords(&H3FE69FDA&, &H75082AB4&), SP_FromWords(&H3C6ED35E&, &H34937DB0&), 429, _
+        True, SP_FromWords(&H5AB69FDA&, &H75082AB4&)
+    SP_ProductCase "SP rational 148", _
+        SP_FromWords(&HFCAE4471&, &H6E3022A4&), SP_FromWords(&HD635114B&, &H813F9ED6&), _
+        SP_FromWords(&H3FE3ED46&, &H373C10CF&), SP_FromWords(&HBC82BBA6&, &H080BA5D0&), 1329, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 149", _
+        SP_FromWords(&HCB117E97&, &H893272B7&), SP_FromWords(&HB52BE368&, &H7CCF5B94&), _
+        SP_FromWords(&H3FEE7E45&, &HFCC0696A&), SP_FromWords(&HBC759F62&, &HD0AD09A0&), 6, _
+        True, SP_FromWords(&H404E7E45&, &HFCC0696A&)
+    SP_ProductCase "SP rational 150", _
+        SP_FromWords(&H75D3BC96&, &H89965735&), SP_FromWords(&HC43F86A7&, &H56BDBE2F&), _
+        SP_FromWords(&HBFE371BE&, &HC15B43C9&), SP_FromWords(&H3C81DEC3&, &HF1174E8A&), 932, _
+        True, SP_FromWords(&HFA2371BE&, &HC15B43C9&)
+    SP_ProductCase "SP rational 151", _
+        SP_FromWords(&H4E723720&, &H0075B7E0&), SP_FromWords(&H53E94216&, &HF86E11BE&), _
+        SP_FromWords(&H3FECC15F&, &H8B5994BC&), SP_FromWords(&H3C874EF8&, &HAB516100&), 552, _
+        True, SP_FromWords(&H626CC15F&, &H8B5994BC&)
+    SP_ProductCase "SP rational 152", _
+        SP_FromWords(&HF72D1C6B&, &H50108DF4&), SP_FromWords(&HFB7B5EF1&, &HB75916D5&), _
+        SP_FromWords(&H3FE8E659&, &HEB9CECE5&), SP_FromWords(&H3C771067&, &H3F345010&), 1837, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 153", _
+        SP_FromWords(&H246D8DAF&, &H83AACF7C&), SP_FromWords(&H676B458C&, &H84D2828D&), _
+        SP_FromWords(&H3FE92FC7&, &H6016C5CC&), SP_FromWords(&H3C611B93&, &H3149FA60&), 192, _
+        True, SP_FromWords(&H4BE92FC7&, &H6016C5CC&)
+    SP_ProductCase "SP rational 154", _
+        SP_FromWords(&HCED26EA9&, &HF27FEBF0&), SP_FromWords(&HDB71D613&, &H0AD9BF69&), _
+        SP_FromWords(&H3FE48C32&, &HA29D2D35&), SP_FromWords(&H3C5C0308&, &HBDFAAE00&), 679, _
+        True, SP_FromWords(&H6A548C32&, &HA29D2D35&)
+    SP_ProductCase "SP rational 155", _
+        SP_FromWords(&HC91F721A&, &HFE60E2D5&), SP_FromWords(&HA908FD2F&, &HA44672C2&), _
+        SP_FromWords(&H3FE88E61&, &H35398277&), SP_FromWords(&H3C84874A&, &HC9597ED4&), -219, _
+        True, SP_FromWords(&H32388E61&, &H35398277&)
+    SP_ProductCase "SP rational 156", _
+        SP_FromWords(&H2701DD18&, &H39443DF6&), SP_FromWords(&H818A5295&, &H86EA6669&), _
+        SP_FromWords(&HBFED637B&, &H6AC75671&), SP_FromWords(&HBC890AF8&, &H5225B798&), -1397, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 157", _
+        SP_FromWords(&H4BF65DB3&, &H4BA99950&), SP_FromWords(&H59461169&, &H9484AC0F&), _
+        SP_FromWords(&H3FEED92D&, &HAD0E6791&), SP_FromWords(&H3C79B1E5&, &H798DDD80&), 598, _
+        True, SP_FromWords(&H654ED92D&, &HAD0E6791&)
+    SP_ProductCase "SP rational 158", _
+        SP_FromWords(&HE1D03554&, &H083EE3C4&), SP_FromWords(&H9FBA7C88&, &H0ED9258D&), _
+        SP_FromWords(&H3FEAD4CF&, &HACFB026F&), SP_FromWords(&H3C838975&, &HAACB1BD0&), 27, _
+        True, SP_FromWords(&H419AD4CF&, &HACFB026F&)
+    SP_ProductCase "SP rational 159", _
+        SP_FromWords(&H9C3DE237&, &H6E308010&), SP_FromWords(&H8DCD7C86&, &H31B20C9A&), _
+        SP_FromWords(&H3FEB894C&, &H2457B864&), SP_FromWords(&HBC8D45C2&, &HAB646CC0&), -1373, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+End Sub
+
+Private Sub Test_ScaledProduct_Chunk5()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk5: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 160", _
+        SP_FromWords(&H5BAAF8A1&, &H3D7BA26D&), SP_FromWords(&H5AC7B6B1&, &HE404DF47&), _
+        SP_FromWords(&H3FE3FCAF&, &HE8AA0019&), SP_FromWords(&HBC837189&, &H450A018A&), 874, _
+        True, SP_FromWords(&H7683FCAF&, &HE8AA0019&)
+    SP_ProductCase "SP rational 161", _
+        SP_FromWords(&HD4D0D554&, &H34EB845F&), SP_FromWords(&H36B618C2&, &HCE4A69F6&), _
+        SP_FromWords(&HBFE73F60&, &HBAB91F3A&), SP_FromWords(&HBC8A44D8&, &HA448A928&), 187, _
+        True, SP_FromWords(&HCB973F60&, &HBAB91F3A&)
+    SP_ProductCase "SP rational 162", _
+        SP_FromWords(&H90CFB1B7&, &HA06CC9F0&), SP_FromWords(&H165F3C6A&, &HDBF06002&), _
+        SP_FromWords(&HBFEEF000&, &HF23CC7AE&), SP_FromWords(&H3C80D894&, &HA4D8D840&), -1419, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 163", _
+        SP_FromWords(&H4356F606&, &H697802C2&), SP_FromWords(&H34BB02A7&, &HB5F69988&), _
+        SP_FromWords(&H3FE3617D&, &H1FE5D5FE&), SP_FromWords(&HBC679DDB&, &H7164B780&), -124, _
+        True, SP_FromWords(&H3823617D&, &H1FE5D5FE&)
+    SP_ProductCase "SP rational 164", _
+        SP_FromWords(&HCDF52AD8&, &H5E361227&), SP_FromWords(&H591C0377&, &HC2827394&), _
+        SP_FromWords(&HBFE287C8&, &H8EB6CD8B&), SP_FromWords(&H3C6291FB&, &HC63FE3A0&), 628, _
+        True, SP_FromWords(&HE72287C8&, &H8EB6CD8B&)
+    SP_ProductCase "SP rational 165", _
+        SP_FromWords(&H3E09A602&, &H76B7954B&), SP_FromWords(&HC7F7EBB5&, &H1D65C5AA&), _
+        SP_FromWords(&HBFE32C3E&, &H11F9BB9E&), SP_FromWords(&HBC8258B9&, &H02C5B59C&), 99, _
+        True, SP_FromWords(&HC6132C3E&, &H11F9BB9E&)
+    SP_ProductCase "SP rational 166", _
+        SP_FromWords(&H08B19947&, &H2DF56AE2&), SP_FromWords(&HEB63D99E&, &H93173384&), _
+        SP_FromWords(&HBFE5D561&, &HC75B6834&), SP_FromWords(&H3C7991E0&, &H46DEEBC0&), -188, _
+        True, SP_FromWords(&HB425D561&, &HC75B6834&)
+    SP_ProductCase "SP rational 167", _
+        SP_FromWords(&H9700260F&, &H93B516E3&), SP_FromWords(&H8344A38C&, &HD485C025&), _
+        SP_FromWords(&H3FE4D4A5&, &H5ADABA9A&), SP_FromWords(&H3C6F0350&, &HA458ECF0&), -1625, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 168", _
+        SP_FromWords(&H8E663BA9&, &HFDF9D5A7&), SP_FromWords(&H1FF64182&, &HA24A6D1A&), _
+        SP_FromWords(&HBFEEED11&, &HA6180100&), SP_FromWords(&H3C7932FB&, &H23119050&), -1304, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 169", _
+        SP_FromWords(&H4C00BF96&, &HBC66237E&), SP_FromWords(&HDDF42942&, &HAC9D765F&), _
+        SP_FromWords(&HBFE51AAD&, &H28C0A387&), SP_FromWords(&H3C8BB502&, &H55DB00F8&), 674, _
+        True, SP_FromWords(&HEA051AAD&, &H28C0A387&)
+    SP_ProductCase "SP rational 170", _
+        SP_FromWords(&H1F01AEE3&, &H6CE9BFA0&), SP_FromWords(&H5E097C0E&, &HCA74D6E3&), _
+        SP_FromWords(&H3FEC2A5F&, &H158166F1&), SP_FromWords(&H3C8FDA50&, &H37D2AB80&), -45, _
+        True, SP_FromWords(&H3D1C2A5F&, &H158166F1&)
+    SP_ProductCase "SP rational 171", _
+        SP_FromWords(&HF2858000&, &H6F397EAA&), SP_FromWords(&H697039AF&, &H8714EA2C&), _
+        SP_FromWords(&HBFE5CD84&, &H4E4E9A58&), SP_FromWords(&HBC7EC1E9&, &HB78949C0&), 1474, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 172", _
+        SP_FromWords(&H01B516FC&, &H23F876FB&), SP_FromWords(&HD198A6F2&, &H6DAA995D&), _
+        SP_FromWords(&HBFE03F44&, &H1D0E7C36&), SP_FromWords(&H3C8417F3&, &H1BE587A2&), -712, _
+        True, SP_FromWords(&H93603F44&, &H1D0E7C36&)
+    SP_ProductCase "SP rational 173", _
+        SP_FromWords(&HE5FB5602&, &HFF5F6241&), SP_FromWords(&H512DDDEE&, &H50F0D590&), _
+        SP_FromWords(&HBFE98388&, &H50FD2A23&), SP_FromWords(&HBC851B70&, &HDEAEB320&), 885, _
+        True, SP_FromWords(&HF7398388&, &H50FD2A23&)
+    SP_ProductCase "SP rational 174", _
+        SP_FromWords(&H75438D00&, &H44FBB356&), SP_FromWords(&H26C59079&, &HB7CB2921&), _
+        SP_FromWords(&H3FEA599A&, &H17DE30A8&), SP_FromWords(&H3C8BF213&, &H8D739058&), 451, _
+        True, SP_FromWords(&H5C1A599A&, &H17DE30A8&)
+    SP_ProductCase "SP rational 175", _
+        SP_FromWords(&HE68C0ACB&, &HF1040F68&), SP_FromWords(&H76BB684F&, &HF036F9A2&), _
+        SP_FromWords(&HBFE80485&, &H37535BBE&), SP_FromWords(&H3C8A4E3F&, &H91043060&), 1495, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 176", _
+        SP_FromWords(&H7C66A7E1&, &HEF41F255&), SP_FromWords(&H320EF615&, &HE37237FD&), _
+        SP_FromWords(&H3FE5EB9D&, &HE8612B9C&), SP_FromWords(&HBC83EE2E&, &H2FD27DFE&), 746, _
+        True, SP_FromWords(&H6E85EB9D&, &HE8612B9C&)
+    SP_ProductCase "SP rational 177", _
+        SP_FromWords(&HB84588C3&, &H9AA66515&), SP_FromWords(&HD5854DEF&, &H9F7281E4&), _
+        SP_FromWords(&H3FECAC65&, &H69D5B09C&), SP_FromWords(&HBC8AE981&, &H72119130&), 223, _
+        True, SP_FromWords(&H4DDCAC65&, &H69D5B09C&)
+    SP_ProductCase "SP rational 178", _
+        SP_FromWords(&H7B3C87E9&, &HE6DF49D4&), SP_FromWords(&HDA8E17C9&, &HDF0FAEF6&), _
+        SP_FromWords(&HBFEAD4A0&, &HF5259993&), SP_FromWords(&HBC7E8622&, &H78AC26E0&), 1375, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 179", _
+        SP_FromWords(&H5CC112D9&, &H7FCA3512&), SP_FromWords(&H6D9E3BE8&, &H8046D6C8&), _
+        SP_FromWords(&H3FE021A2&, &HB5EB3EE0&), SP_FromWords(&H3C8BA9C4&, &HC2850420&), 1193, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 180", _
+        SP_FromWords(&H4B873135&, &HE3FE9797&), SP_FromWords(&HB6F276EB&, &H0701D9B5&), _
+        SP_FromWords(&HBFEAC3BC&, &H3ADF9B0C&), SP_FromWords(&HBC6151DB&, &HA172CC30&), 42, _
+        True, SP_FromWords(&HC28AC3BC&, &H3ADF9B0C&)
+    SP_ProductCase "SP rational 181", _
+        SP_FromWords(&HF9B0EACD&, &H3927DDE8&), SP_FromWords(&H46CAA083&, &HF2035C7D&), _
+        SP_FromWords(&HBFEC2745&, &H036F890C&), SP_FromWords(&H3C82C12F&, &H684516E0&), 1034, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 182", _
+        SP_FromWords(&H47633732&, &HB939B245&), SP_FromWords(&H74BD3E17&, &H5959D907&), _
+        SP_FromWords(&H3FE18F4E&, &HEF771764&), SP_FromWords(&H3C72BE83&, &HBEB5738C&), 965, _
+        True, SP_FromWords(&H7C318F4E&, &HEF771764&)
+    SP_ProductCase "SP rational 183", _
+        SP_FromWords(&HBD84FC79&, &HB9BF24CD&), SP_FromWords(&H02B07749&, &H3EAF173F&), _
+        SP_FromWords(&HBFE598EF&, &H95380188&), SP_FromWords(&H3C8F8149&, &H3E121A34&), -1018, _
+        True, SP_FromWords(&H804598EF&, &H95380188&)
+    SP_ProductCase "SP rational 184", _
+        SP_FromWords(&H4D4792EF&, &H67C4AD05&), SP_FromWords(&H7EE8D3CB&, &H3AAEA7D9&), _
+        SP_FromWords(&H3FE24A3A&, &H1FC17169&), SP_FromWords(&HBC7B7620&, &H08144F0C&), 1222, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 185", _
+        SP_FromWords(&HAB6950B0&, &HF46F7E3E&), SP_FromWords(&HECA3CC9B&, &H7144EB55&), _
+        SP_FromWords(&H3FEF538C&, &HE35A2071&), SP_FromWords(&H3C84DC11&, &HA17F5258&), 387, _
+        True, SP_FromWords(&H581F538C&, &HE35A2071&)
+    SP_ProductCase "SP rational 186", _
+        SP_FromWords(&H868B0C05&, &H7D6B69EA&), SP_FromWords(&HF1834F54&, &H7AD8F65E&), _
+        SP_FromWords(&H3FE05230&, &H57690799&), SP_FromWords(&H3C8D54D8&, &H4D4F7FD8&), -124, _
+        True, SP_FromWords(&H38205230&, &H57690799&)
+    SP_ProductCase "SP rational 187", _
+        SP_FromWords(&H91522D57&, &H34CC85E7&), SP_FromWords(&HFA3C0773&, &H8854588D&), _
+        SP_FromWords(&H3FEFD7CF&, &HB3510731&), SP_FromWords(&H3C494C82&, &H9E4A0EC0&), 187, _
+        True, SP_FromWords(&H4B9FD7CF&, &HB3510731&)
+    SP_ProductCase "SP rational 188", _
+        SP_FromWords(&H5D8CB6D0&, &H7C28981E&), SP_FromWords(&HE3DCE2A6&, &HC755B5E8&), _
+        SP_FromWords(&HBFE9EB57&, &H3447B137&), SP_FromWords(&HBC81F7CE&, &H189A2260&), 1049, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 189", _
+        SP_FromWords(&H17356C59&, &H9D63D4CA&), SP_FromWords(&HDBD58029&, &H208ACDAC&), _
+        SP_FromWords(&HBFECC9CF&, &H7CB65661&), SP_FromWords(&HBC8FD80A&, &H9572E6E0&), -205, _
+        True, SP_FromWords(&HB31CC9CF&, &H7CB65661&)
+    SP_ProductCase "SP rational 190", _
+        SP_FromWords(&H55FB6D93&, &H1CC86EC1&), SP_FromWords(&HB648176D&, &HE5248B74&), _
+        SP_FromWords(&HBFE4A643&, &H48F794BE&), SP_FromWords(&H3C5A246E&, &H8E7058C0&), 199, _
+        True, SP_FromWords(&HCC54A643&, &H48F794BE&)
+    SP_ProductCase "SP rational 191", _
+        SP_FromWords(&H306CB6CA&, &H5E68CAD0&), SP_FromWords(&HB8B86E78&, &HF594D1A0&), _
+        SP_FromWords(&HBFE5EC38&, &HA8470942&), SP_FromWords(&HBC858B79&, &HBEA52400&), -363, _
+        True, SP_FromWords(&HA935EC38&, &HA8470942&)
+End Sub
+
+Private Sub Test_ScaledProduct_Chunk6()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Chunk6: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SP_ProductCase "SP rational 192", _
+        SP_FromWords(&HA5856ED7&, &H14482179&), SP_FromWords(&H76F34B94&, &H1DE40771&), _
+        SP_FromWords(&HBFE9D8DD&, &H619490BD&), SP_FromWords(&HBC835DE9&, &HC61455A4&), 458, _
+        True, SP_FromWords(&HDC89D8DD&, &H619490BD&)
+    SP_ProductCase "SP rational 193", _
+        SP_FromWords(&HA2BCA994&, &H6FE4B0E0&), SP_FromWords(&H1FC4D596&, &H601E71C3&), _
+        SP_FromWords(&HBFE2A94C&, &H3AF78776&), SP_FromWords(&H3C86D854&, &H30F4CAC0&), -981, _
+        True, SP_FromWords(&H8292A94C&, &H3AF78776&)
+    SP_ProductCase "SP rational 194", _
+        SP_FromWords(&HD6F8238E&, &H71EAAC6A&), SP_FromWords(&HA43D4F0C&, &HA6AFD2D1&), _
+        SP_FromWords(&H3FE61BDA&, &H69F866BB&), SP_FromWords(&HBC869223&, &HCB0892EC&), -74, _
+        True, SP_FromWords(&H3B461BDA&, &H69F866BB&)
+    SP_ProductCase "SP rational 195", _
+        SP_FromWords(&H9E5D3BE5&, &H8401FAEA&), SP_FromWords(&H0974C97D&, &H86F9D39F&), _
+        SP_FromWords(&HBFE2FD82&, &H596E0169&), SP_FromWords(&H3C5F31FD&, &H75C4AAA0&), -1408, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 196", _
+        SP_FromWords(&HF45F41AD&, &H1E5963D8&), SP_FromWords(&H3EF4C4CF&, &H947F5B9C&), _
+        SP_FromWords(&HBFE44949&, &H3935C50B&), SP_FromWords(&HBC86CE03&, &H5A3D3F40&), 824, _
+        True, SP_FromWords(&HF3644949&, &H3935C50B&)
+    SP_ProductCase "SP rational 197", _
+        SP_FromWords(&H18E8074A&, &H4C89D14A&), SP_FromWords(&H47E1C69F&, &H5AED9CBF&), _
+        SP_FromWords(&H3FEAB208&, &H79C5C9C7&), SP_FromWords(&H3C71F99E&, &HDEF1F1B0&), -497, _
+        True, SP_FromWords(&H20DAB208&, &H79C5C9C7&)
+    SP_ProductCase "SP rational 198", _
+        SP_FromWords(&H66114EFB&, &HDE54B13E&), SP_FromWords(&HEACE6BFA&, &H9E9E3BA0&), _
+        SP_FromWords(&HBFE07473&, &HC97A1C26&), SP_FromWords(&H3C51821D&, &HDF3EF400&), 1297, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 199", _
+        SP_FromWords(&H8BAA63F2&, &H90E3C7F3&), SP_FromWords(&H981C15E7&, &H61856F85&), _
+        SP_FromWords(&H3FE72984&, &HA7E26D04&), SP_FromWords(&HBC6FAE48&, &H0DBE0E08&), -1473, _
+        True, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 200", _
+        SP_FromWords(&H7E4A7819&, &H3D35B2E5&), SP_FromWords(&HC48ECEE3&, &H68D8ED41&), _
+        SP_FromWords(&HBFE97BB8&, &HE6892C8C&), SP_FromWords(&H3C7B1B87&, &H161E4B6C&), 1072, _
+        False, SP_FromWords(&H00000000&, &H00000000&)
+    SP_ProductCase "SP rational 201", _
+        SP_FromWords(&H1C073710&, &H665FF7CE&), SP_FromWords(&H2CC1D8D0&, &HD70DE358&), _
+        SP_FromWords(&H3FE9E517&, &HCE094CB6&), SP_FromWords(&HBC8250E0&, &H7B449CC0&), -881, _
+        True, SP_FromWords(&H08D9E517&, &HCE094CB6&)
+    SP_ProductCase "SP rational 202", _
+        SP_FromWords(&H6E39D49C&, &HCAF2DCAB&), SP_FromWords(&H8D073410&, &H8B754D0B&), _
+        SP_FromWords(&HBFE2BAD7&, &H8B88F75A&), SP_FromWords(&HBC7DC51D&, &HDFD7A964&), -73, _
+        True, SP_FromWords(&HBB52BAD7&, &H8B88F75A&)
+    SP_ProductCase "SP rational 203", _
+        SP_FromWords(&HA5CE48D8&, &H7596A307&), SP_FromWords(&H55529799&, &H16E7A75B&), _
+        SP_FromWords(&HBFE19872&, &H6187DDCB&), SP_FromWords(&HBC72DB17&, &H18DA11F4&), -75, _
+        True, SP_FromWords(&HBB319872&, &H6187DDCB&)
+    SP_ProductCase "SP rational 204", _
+        SP_FromWords(&HD9440455&, &H78ACD5B1&), SP_FromWords(&HCDFD29B7&, &H3AB2A1EF&), _
+        SP_FromWords(&H3FE23E05&, &HA05FA188&), SP_FromWords(&H3C5F7CE0&, &HAD1D13F0&), 631, _
+        True, SP_FromWords(&H67523E05&, &HA05FA188&)
+    SP_ProductCase "SP rational 205", _
+        SP_FromWords(&H17EE6689&, &HCFB5C550&), SP_FromWords(&HB045B6EE&, &HAEF1A89A&), _
+        SP_FromWords(&HBFE4A114&, &H60F0BDEB&), SP_FromWords(&H3C8AF45D&, &H45B59BC0&), -890, _
+        True, SP_FromWords(&H8844A114&, &H60F0BDEB&)
+    SP_ProductCase "SP rational 206", _
+        SP_FromWords(&H98A88D82&, &H945A4F89&), SP_FromWords(&H177E12DA&, &H0577D8A7&), _
+        SP_FromWords(&HBFE71321&, &H4CC3C0E5&), SP_FromWords(&H3C8ED8E4&, &HC0970B42&), -1275, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 207", _
+        SP_FromWords(&HF296D583&, &HF790B0DE&), SP_FromWords(&H2C8B76D5&, &H4A42E1E6&), _
+        SP_FromWords(&HBFE398F2&, &HE1B6DD61&), SP_FromWords(&H3C84176B&, &H46A3F518&), 501, _
+        True, SP_FromWords(&HDF3398F2&, &HE1B6DD61&)
+    SP_ProductCase "SP rational 208", _
+        SP_FromWords(&H4EC4B5F1&, &H50442778&), SP_FromWords(&H614E0750&, &H9D1EFE33&), _
+        SP_FromWords(&H3FE36F4E&, &H3495739D&), SP_FromWords(&HBC810330&, &H56662630&), 772, _
+        True, SP_FromWords(&H70236F4E&, &H3495739D&)
+    SP_ProductCase "SP rational 209", _
+        SP_FromWords(&H2FECF74D&, &H69ABB41B&), SP_FromWords(&H864D7592&, &HEDC87C9B&), _
+        SP_FromWords(&HBFEAAA8B&, &H5A5C38E7&), SP_FromWords(&HBC8B9AAB&, &HB49640B2&), -1178, _
+        True, SP_FromWords(&H80000000&, &H00000000&)
+    SP_ProductCase "SP rational 210", _
+        SP_FromWords(&H1738A864&, &H3B72F222&), SP_FromWords(&HE3A8987D&, &H804F4C4A&), _
+        SP_FromWords(&HBFE2F3CB&, &HBD56CB3F&), SP_FromWords(&H3C7554F3&, &HE197A8B0&), -79, _
+        True, SP_FromWords(&HBAF2F3CB&, &HBD56CB3F&)
+    SP_ProductCase "SP rational 211", _
+        SP_FromWords(&H37F41A6B&, &H37CB973B&), SP_FromWords(&HF15690AC&, &HAF6BEDEB&), _
+        SP_FromWords(&HBFEC5A1A&, &H2A17405D&), SP_FromWords(&H3C84CB3B&, &H09C6375C&), 663, _
+        True, SP_FromWords(&HE95C5A1A&, &H2A17405D&)
+    SP_ProductCase "SP rational 212", _
+        SP_FromWords(&H35B7FA3B&, &HB2759628&), SP_FromWords(&H4197FB46&, &H4A6C4369&), _
+        SP_FromWords(&H3FE1F822&, &H57AAADB9&), SP_FromWords(&HBC8E5FB8&, &H3D31E330&), -136, _
+        True, SP_FromWords(&H3761F822&, &H57AAADB9&)
+    SP_ProductCase "SP rational 213", _
+        SP_FromWords(&HE41CA887&, &H4B8725CF&), SP_FromWords(&H87CE0E1F&, &H1B734BE5&), _
+        SP_FromWords(&H3FEAEAA4&, &H6DD84384&), SP_FromWords(&HBC8D0E2A&, &H0E1511AA&), -319, _
+        True, SP_FromWords(&H2BFAEAA4&, &H6DD84384&)
+    SP_ProductCase "SP rational 214", _
+        SP_FromWords(&H0374CB17&, &HBB9D99F6&), SP_FromWords(&HEAF4BA94&, &H35F8E5B9&), _
+        SP_FromWords(&HBFEAF057&, &H3B29C51C&), SP_FromWords(&H3C878501&, &H704ABCE8&), -279, _
+        True, SP_FromWords(&HAE7AF057&, &H3B29C51C&)
+    SP_ProductCase "SP rational 215", _
+        SP_FromWords(&H2CB67A09&, &HF5CA9DD3&), SP_FromWords(&HFA9010DF&, &H5FE30E14&), _
+        SP_FromWords(&HBFE691BD&, &HCB5ECC80&), SP_FromWords(&HBC878902&, &H1E3B79F0&), 631, _
+        True, SP_FromWords(&HE75691BD&, &HCB5ECC80&)
+End Sub
+
+Private Sub Test_ScaledProduct_Fidelity()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledProduct_Fidelity: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Test_ScaledProduct_Exponents
+    Test_ScaledProduct_Invalid
+    Test_ScaledProduct_Chunk0
+    Test_ScaledProduct_Chunk1
+    Test_ScaledProduct_Chunk2
+    Test_ScaledProduct_Chunk3
+    Test_ScaledProduct_Chunk4
+    Test_ScaledProduct_Chunk5
+    Test_ScaledProduct_Chunk6
+    SP_RoundCase "SP halfway 00", _
+        SP_FromWords(&HBFE40000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), _
+        -1072, SP_FromWords(&H80000000&, &H00000002&)
+    SP_RoundCase "SP halfway 01", _
+        SP_FromWords(&H3FE40000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), _
+        -1072, SP_FromWords(&H00000000&, &H00000002&)
+    SP_RoundCase "SP halfway 02", _
+        SP_FromWords(&HBFE40000&, &H00000000&), SP_FromWords(&HBC700000&, &H00000000&), _
+        -1072, SP_FromWords(&H80000000&, &H00000003&)
+    SP_RoundCase "SP halfway 03", _
+        SP_FromWords(&H3FE40000&, &H00000000&), SP_FromWords(&H3C700000&, &H00000000&), _
+        -1072, SP_FromWords(&H00000000&, &H00000003&)
+    SP_RoundCase "SP halfway 04", _
+        SP_FromWords(&HBFE40000&, &H00000000&), SP_FromWords(&H3C700000&, &H00000000&), _
+        -1072, SP_FromWords(&H80000000&, &H00000002&)
+    SP_RoundCase "SP halfway 05", _
+        SP_FromWords(&H3FE40000&, &H00000000&), SP_FromWords(&HBC700000&, &H00000000&), _
+        -1072, SP_FromWords(&H00000000&, &H00000002&)
+    SP_RoundCase "SP halfway 06", _
+        SP_FromWords(&HBFEC0000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), _
+        -1072, SP_FromWords(&H80000000&, &H00000004&)
+    SP_RoundCase "SP halfway 07", _
+        SP_FromWords(&H3FEC0000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), _
+        -1072, SP_FromWords(&H00000000&, &H00000004&)
+    SP_RoundCase "SP halfway 08", _
+        SP_FromWords(&HBFEC0000&, &H00000000&), SP_FromWords(&HBC700000&, &H00000000&), _
+        -1072, SP_FromWords(&H80000000&, &H00000004&)
+    SP_RoundCase "SP halfway 09", _
+        SP_FromWords(&H3FEC0000&, &H00000000&), SP_FromWords(&H3C700000&, &H00000000&), _
+        -1072, SP_FromWords(&H00000000&, &H00000004&)
+    SP_RoundCase "SP halfway 10", _
+        SP_FromWords(&HBFEC0000&, &H00000000&), SP_FromWords(&H3C700000&, &H00000000&), _
+        -1072, SP_FromWords(&H80000000&, &H00000003&)
+    SP_RoundCase "SP halfway 11", _
+        SP_FromWords(&H3FEC0000&, &H00000000&), SP_FromWords(&HBC700000&, &H00000000&), _
+        -1072, SP_FromWords(&H00000000&, &H00000003&)
+    SP_RoundCase "SP halfway 12", _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H80000000&, &H00000000&), _
+        -1074, SP_FromWords(&H80000000&, &H00000000&)
+    SP_RoundCase "SP halfway 13", _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&), _
+        -1074, SP_FromWords(&H00000000&, &H00000000&)
+    SP_RoundCase "SP halfway 14", _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&HBC700000&, &H00000000&), _
+        -1074, SP_FromWords(&H80000000&, &H00000001&)
+    SP_RoundCase "SP halfway 15", _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3C700000&, &H00000000&), _
+        -1074, SP_FromWords(&H00000000&, &H00000001&)
+    SP_RoundCase "SP halfway 16", _
+        SP_FromWords(&HBFE00000&, &H00000000&), SP_FromWords(&H3C700000&, &H00000000&), _
+        -1074, SP_FromWords(&H80000000&, &H00000000&)
+    SP_RoundCase "SP halfway 17", _
+        SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&HBC700000&, &H00000000&), _
+        -1074, SP_FromWords(&H00000000&, &H00000000&)
+End Sub
+' END generated scaled-product study
+
 Private Function PV2_H(ByVal V As Variant) As Double
 '==============================================================================
 ' PURPOSE
@@ -8357,6 +9786,7 @@ Private Sub Test_CN_GammaSurvival()
     Test_GammaCF_CapAndXSeam
     Test_GammaCF_PrecisionCounterexample
     Test_PrecisionV2_Fidelity
+    Test_ScaledProduct_Fidelity
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
