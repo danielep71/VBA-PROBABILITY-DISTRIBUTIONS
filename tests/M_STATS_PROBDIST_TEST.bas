@@ -5143,48 +5143,84 @@ Private Sub Test_GammaCF_AdditionalCallers()
     N = CDbl(K_STATS_Poisson_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 0.5 0.1", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (5.00000000000000E-01 + (0.00000000000000E+00)))) >= (1.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 0.5 0.1", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 0.5 0.1", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 0.5 0.5", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (5.00000000000000E-01 + (0.00000000000000E+00)))) >= (5.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 0.5 0.5", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 0.5 0.5", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 0.5 0.9", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (5.00000000000000E-01 + (0.00000000000000E+00)))) >= (9.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 0.5 0.9", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 0.5 0.9", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (5.00000000000000E-01 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 2.0 0.1", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (2.00000000000000E+00 + (0.00000000000000E+00)))) >= (1.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 2.0 0.1", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 2.0 0.1", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 2.0 0.5", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (2.00000000000000E+00 + (0.00000000000000E+00)))) >= (5.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 2.0 0.5", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 2.0 0.5", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 2.0 0.9", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (2.00000000000000E+00 + (0.00000000000000E+00)))) >= (9.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 2.0 0.9", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 2.0 0.9", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (2.00000000000000E+00 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.20000000000000E+01 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 12.0 0.1", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (1.20000000000000E+01 + (0.00000000000000E+00)))) >= (1.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 12.0 0.1", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 12.0 0.1", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (1.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.20000000000000E+01 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 12.0 0.5", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (1.20000000000000E+01 + (0.00000000000000E+00)))) >= (5.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 12.0 0.5", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 12.0 0.5", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (5.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     N = CDbl(K_STATS_Poisson_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.20000000000000E+01 + (0.00000000000000E+00))))
     AssertTrue "B6 Poisson inverse upper 12.0 0.9", _
         (CDbl(K_STATS_Poisson_Cumulative(N, (1.20000000000000E+01 + (0.00000000000000E+00)))) >= (9.00000000000000E-01 + (0.00000000000000E+00)))
-    AssertTrue "B6 Poisson inverse lower 12.0 0.9", _
-        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    If N = 0# Then
+        AssertTrue "B6 Poisson lower support bound", True
+    Else
+        AssertTrue "B6 Poisson inverse lower 12.0 0.9", _
+            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, (1.20000000000000E+01 + (0.00000000000000E+00)))) < (9.00000000000000E-01 + (0.00000000000000E+00)))
+    End If
     A = Small
     AssertClose "B6 underflow Gamma 0x0.0000000000001p-1022 2.0", _
         CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#

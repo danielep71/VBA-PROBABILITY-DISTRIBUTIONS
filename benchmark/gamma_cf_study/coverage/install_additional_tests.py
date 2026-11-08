@@ -37,7 +37,7 @@ for mean in [.5,2.,12.]:
  for p in [.1,.5,.9]:
   lines += [f'    N = CDbl(K_STATS_Poisson_InverseCumulative({lit(p)}, {lit(mean)}))']
   assertion([f'    AssertTrue "B6 Poisson inverse upper {mean} {p}", _',f'        (CDbl(K_STATS_Poisson_Cumulative(N, {lit(mean)})) >= {lit(p)})'])
-  assertion([f'    AssertTrue "B6 Poisson inverse lower {mean} {p}", _',f'        (CDbl(K_STATS_Poisson_Cumulative(N - 1#, {lit(mean)})) < {lit(p)})'])
+  assertion(['    If N = 0# Then', '        AssertTrue "B6 Poisson lower support bound", True', '    Else', f'        AssertTrue "B6 Poisson inverse lower {mean} {p}", _',f'            (CDbl(K_STATS_Poisson_Cumulative(N - 1#, {lit(mean)})) < {lit(p)})', '    End If'])
 for a,expr in [(2.**-1074,'Small'),(2.**-1022,'2# ^ (-1022)'),(1e-300,'1E-300'),(.5,'0.5'),(1.,'1#')]:
  lines += ['    A = '+expr]
  for x in [2.,700.,740.,745.]:
