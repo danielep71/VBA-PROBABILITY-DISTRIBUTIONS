@@ -221,6 +221,12 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 
 # 🧩 Distribution catalogue
 
+![Distribution map: eleven continuous and six discrete API surfaces, with mathematical supports and illustrative use cases.](assets/distribution-map.png)
+
+*Implemented pre-release capabilities. Mathematical support is distinct from the validated numerical domain; examples do not establish model suitability.*
+
+[Open editable SVG](assets/distribution-map.svg) · [Read the accessible map and parameter conventions](docs/visuals/distribution-map.md)
+
 ## Normal and lognormal family
 
 | Distribution surface | Density | CDF | Survival | Inverse CDF | Inverse survival | Additional operations |
@@ -1137,6 +1143,7 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Excel certification](docs/EXCEL_CERTIFICATION.md) | Exact-source runtime and grid-export evidence |
 | [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
 | [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
+| [Numerical research](docs/research/README.md) | Annotated bibliography, evaluation methodology and research-to-issue map |
 | [Public API](docs/PUBLIC_API.md) | Compatibility manifest and drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
