@@ -1,11 +1,14 @@
 """Bind the focused public port to the arithmetic and regressions tested in #242."""
 import base64
+import csv
 import hashlib
+import io
 import json
 from pathlib import Path
 import re
 import subprocess
 import unittest
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PROOF = json.loads((ROOT / 'benchmark/gamma_public_integration/provenance.json').read_text())
@@ -32,6 +35,59 @@ def block(text, name):
 
 
 class PublicGammaPortTests(unittest.TestCase):
+    def test_fresh_export_bytes_and_declared_caller_movement(self):
+        folder = ROOT / 'benchmark/gamma_public_integration'
+        artifact = json.loads((folder / 'excel_export_artifact.json').read_text())
+        raw = base64.b64decode(artifact['artifact_zip_base64'], validate=True)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), artifact['artifact_zip_sha256'])
+        self.assertEqual(artifact['artifact_zip_sha256'],
+                         'fefda02d53adcd4484f14db19d20e3e5796c114eb8dc20b822690b538071043c')
+        self.assertEqual(artifact['run_id'], 42527060472)
+        self.assertEqual(artifact['artifact_id'], 13636002652)
+        head = '35e7381967d86c2f5597de456c668e640b653b55'
+        self.assertEqual(artifact['candidate_sha'], head)
+        movement = json.loads((folder / 'export_movement.json').read_text())
+        self.assertEqual(movement['candidate_sha'], head)
+        self.assertEqual(movement['run_id'], artifact['run_id'])
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            manifest = json.loads(archive.read('export-manifest.json').decode('utf-8-sig'))
+            self.assertEqual(manifest['candidate_sha'], head)
+            self.assertEqual(manifest['status'], 'PASS')
+            self.assertEqual(manifest['requested'], ['main', 'holdout'])
+            self.assertEqual(manifest['main_mode'], 'full')
+            self.assertEqual(manifest['regression']['assertions'], 1947)
+            self.assertEqual(manifest['regression']['failed'], 0)
+            self.assertEqual(manifest['workflow']['run_id'], artifact['run_id'])
+            for grid in manifest['grids']:
+                data = archive.read(grid['artifact_path'])
+                self.assertEqual('sha256:' + hashlib.sha256(data).hexdigest(), grid['raw_sha256'])
+                self.assertEqual((ROOT / grid['path']).read_bytes(), data.replace(b'\r\n', b'\n'))
+                baseline = subprocess.check_output(['git', 'show', head + ':' + grid['path']], cwd=ROOT)
+                old_rows = list(csv.DictReader(io.StringIO(baseline.decode())))
+                new_rows = list(csv.DictReader(io.StringIO(data.decode())))
+                self.assertEqual(len(old_rows), len(new_rows))
+                result = movement['grids'][grid['name']]
+                expected = {row['line']: row for row in result['changed_observations']}
+                seen = {}
+                for line, (old, new) in enumerate(zip(old_rows, new_rows), start=2):
+                    self.assertEqual({k: v for k, v in old.items() if k != 'observed_vba'},
+                                     {k: v for k, v in new.items() if k != 'observed_vba'})
+                    if old['observed_vba'] == new['observed_vba']:
+                        self.assertNotIn(line, expected)
+                        continue
+                    row = expected[line]
+                    self.assertEqual(row['before'], old['observed_vba'])
+                    self.assertEqual(row['after'], new['observed_vba'])
+                    self.assertEqual(row['reference'], new['reference'])
+                    self.assertEqual(row['function'], new['function'])
+                    self.assertEqual(row['arguments'], {k: new[k] for k in ('arg1', 'arg2', 'arg3', 'arg4')})
+                    self.assertTrue(new['function'].startswith(('Gamma_', 'ChiSquare_', 'Poisson_')))
+                    seen[new['function']] = seen.get(new['function'], 0) + 1
+                self.assertEqual(seen, result['changed_by_function'])
+                self.assertEqual(sum(seen.values()), grid['changed_observations'])
+                self.assertEqual(sum(seen.values()), result['changed_rows'])
+                self.assertEqual(result['unchanged_rows'] + result['changed_rows'], len(new_rows))
+
     def test_arithmetic_and_adapters_match_tested_port(self):
         source = (ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas').read_text()
         self.assertEqual(digest(block(source, 'generated public Gamma integration')),

@@ -1,5 +1,10 @@
 # Public Gamma integration (#26; PRs #241 and #242)
 
+**Latest evidence:** [the fresh main/holdout export](EXPORT_RESULT.md) at
+`35e7381` passes 1,947/1,947 Excel assertions, all 166 active main contracts
+and all 83 independent-holdout contracts. It supersedes the stale-grid
+limitation of the regression-only checkpoints below for this focused branch.
+
 The regularized incomplete-Gamma P/Q entry points now use the scaled
 double-double kernel developed and measured in #242. Gamma and chi-square
 CDF/SF and inverse callers use it through their existing public routes.
@@ -46,8 +51,9 @@ source tree, all seven imported source hashes, policy counts, stages and
 original log digest without rewriting the artifact's candidate SHA.
 All 61 local tooling commands and all 18 strict static checks pass on the
 focused port; the retained-evidence fixture also passes. Hosted static checks
-and CodeQL pass on that tested source. The live accuracy gate remains blocked
-by stale grid bindings and the older canonical export record.
+and CodeQL pass on that tested source. At that regression-only checkpoint,
+the live accuracy gate was blocked by stale grid bindings and the older
+canonical export record; the subsequent export resolves those stale bindings.
 
 The independent fresh cohort and full private arithmetic history are retained
 in [PR #242](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/pull/242),
@@ -62,7 +68,7 @@ modules are the same as this focused port; the larger test module is specific
 to #242. See its
 [result and limitations](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/blob/e91c535a8f7ef2ba3830d9c690b39966b74cc6b3/benchmark/gamma_cf_study/coverage/PUBLIC_GAMMA_RESULT.md).
 
-Both PRs remain draft. This regression integration does not rebind the main
-or holdout accuracy grids: fresh exact-source Excel exports and the release
-accuracy gates remain required. A green regression alone is not release
-certification. No claim is made for untested Office environments or shapes.
+Both PRs remain draft. The regression-only checkpoints above exported no
+grids; the subsequent export and atomic evidence update are documented in
+EXPORT_RESULT.md. Release coverage, other blockers and final review remain
+required. No claim is made for untested Office environments or shapes.
