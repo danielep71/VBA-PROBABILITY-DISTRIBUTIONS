@@ -32,7 +32,7 @@ than overwrite it. Isolation fixtures prove the previous VBA suite and public
 sources unchanged after removing the new SG block/call. Prior Excel artifacts
 remain bound to their original sources and assertion totals.
 
-Run the five generation/source tests with:
+Run the six generation/source/evidence tests with:
 
 ```bash
 python benchmark/gamma_cf_study/coverage/test_scaled_gamma_vba_port.py
@@ -68,5 +68,6 @@ step. `SGD_Valid` uses those exact dyadic boundaries and parity instead of
 relying on a repeated host sum. `SGD_Round` preserves the frozen SP conversion
 graph with this private validation. No tolerance is widened. The 48 expected
 pairs are independently generated with Python Fraction exact arithmetic.
-Actual Excel results for this correction must be recorded before fidelity is
-claimed.
+Exact-source Excel run 42512900145 on `f0e8ef0` passes all 475 new private
+assertions; all 41 public failure details remain identical to the earlier
+7,715-assertion run. See [the result](SCALED_GAMMA_VBA_RESULT.md).
