@@ -77,7 +77,8 @@ class ScaledDDVbaTests(unittest.TestCase):
         self.assertEqual(text.count('    Test_ScaledDD_Fidelity\n'), 1)
         policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         extension = json.loads((HERE/'scaled_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions'])
+        extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions']+extended['additional_assertions'])
 
     def test_old_vba_suite_is_unchanged(self):
         baseline = subprocess.check_output(['git', 'show',
@@ -90,7 +91,8 @@ class ScaledDDVbaTests(unittest.TestCase):
         prefix, remainder = restored.split(GB)
         _, suffix = remainder.split(GE+'\n\n')
         restored = (prefix+suffix).replace('    Test_ScaledGamma_Fidelity\n', '')
-        self.assertEqual(restored, baseline.replace('\r\n', '\n'))
+        from install_extended_gamma_fidelity import strip
+        self.assertEqual(strip(restored), baseline.replace('\r\n', '\n'))
 
     def test_rejection_and_cancellation_coverage(self):
         data = dataset()['rows']

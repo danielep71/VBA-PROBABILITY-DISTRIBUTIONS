@@ -8,6 +8,7 @@ import math
 import subprocess
 import unittest
 from install_scaled_gamma_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
+from install_extended_gamma_fidelity import strip
 
 
 class ScaledGammaVbaTests(unittest.TestCase):
@@ -62,7 +63,7 @@ class ScaledGammaVbaTests(unittest.TestCase):
                     blob = subprocess.check_output(['git','show',sha+':'+source['path']],cwd=ROOT)
                     self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
                     if not label:
-                        self.assertEqual((ROOT/source['path']).read_text(),blob.decode().replace('\r\n','\n'))
+                        self.assertEqual(strip((ROOT/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
                 details = failures(decoded['test-result.txt'])
                 self.assertEqual(len(details), failed)
                 self.assertEqual([s for s in details if not s.startswith('SG ')], baseline)
@@ -86,7 +87,8 @@ class ScaledGammaVbaTests(unittest.TestCase):
         self.assertNotIn('@LN2@',block)
         self.assertEqual(text.count('    Test_ScaledGamma_Fidelity\n'),1)
         policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
-        self.assertEqual(policy['expected_assertions'],BASELINE+475)
+        extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'],BASELINE+475+extended['additional_assertions'])
 
     def test_normalization_oracles_preserve_exact_dyadic_values(self):
         for row in dataset()['normalization']:
@@ -106,7 +108,7 @@ class ScaledGammaVbaTests(unittest.TestCase):
         before,rest = text.split(BEGIN)
         _,after = rest.split(END+'\n\n')
         restored = (before+after).replace('    Test_ScaledGamma_Fidelity\n','')
-        self.assertEqual(restored,baseline.replace('\r\n','\n'))
+        self.assertEqual(strip(restored),baseline.replace('\r\n','\n'))
         for path in (ROOT/'src').glob('*.bas'):
             original = subprocess.check_output(['git','show',sha+':'+path.relative_to(ROOT).as_posix()],cwd=ROOT).decode()
             self.assertEqual(path.read_text(),original.replace('\r\n','\n'))

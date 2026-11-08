@@ -10804,6 +10804,1935 @@ Private Sub Test_ScaledGamma_Fidelity()
 End Sub
 ' END generated scaled-Gamma study
 
+' BEGIN generated extended-Gamma study
+Private Function EG_LogPair(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   EG_LogPair: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim F As Variant, Z As Variant, Square As Variant, Term As Variant, Total As Variant, Delta As Variant
+    Dim N As Long
+    If CDbl(A(0)) <= 0# Then Err.Raise 5
+    F = Array(CDbl(A(0)), CDbl(A(1)), 0&)
+    Z = SG_Div(SG_Sub(F, 1#), SG_Add(F, 1#))
+    Square = SG_Mul(Z, Z): Term = Z: Total = Z
+    For N = 3 To 1000 Step 2
+        Term = SG_Mul(Term, Square)
+        Delta = SG_Div(Term, N)
+        Total = SG_Add(Total, Delta)
+        If SG_Small(Delta, Total) Then
+            EG_LogPair = SG_Add(SG_Mul(Total, 2#), SG_Mul(SG_Ln2(), CLng(A(2))))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, "EG_LogPair", "iteration cap"
+End Function
+
+Private Function EG_LogGamma(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   EG_LogGamma: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim N As Long, K As Long, B As Variant, LG As Variant
+    If SG_Value(A) > 1# Then N = CLng(Fix(SG_Value(A)))
+    B = SG_Sub(A, N)
+    LG = SG_LogGamma(B)
+    For K = 1 To N
+        LG = SG_Add(LG, EG_LogPair(SG_Add(B, K)))
+    Next K
+    EG_LogGamma = LG
+End Function
+
+Private Sub EG_LowerPair(ByVal LP As Variant, ByRef PP As Variant, ByRef QQ As Variant)
+'==============================================================================
+' PURPOSE
+'   EG_LowerPair: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Value As Double, Z As Variant, Halvings As Long, K As Long
+    Value = SG_Value(LP)
+    If CDbl(LP(0)) > 0# Then Err.Raise 5, "EG_LowerPair", "positive log probability"
+    If Value < -750# Then
+        PP = SG_Coerce(0#): QQ = SG_Coerce(1#)
+        Exit Sub
+    End If
+    Z = LP
+    Do While SG_Value(Z) < -0.5
+        Z = SG_Mul(Z, 0.5)
+        Halvings = Halvings + 1
+    Loop
+    QQ = SG_Neg(SG_Expm1(Z))
+    For K = 1 To Halvings
+        QQ = SG_Mul(QQ, SG_Sub(2#, QQ))
+    Next K
+    If Value >= -0.5 Then
+        PP = SG_Sub(1#, QQ)
+    Else
+        PP = SG_Exp(LP)
+    End If
+End Sub
+
+Private Function EG1_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+'==============================================================================
+' PURPOSE
+'   EG1_Pair: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AA As Variant, XX As Variant, LG As Variant, Term As Variant, Total As Variant
+    Dim Delta As Variant, LP As Variant, PP As Variant, QQ As Variant
+    Dim B As Variant, C As Variant, D As Variant, AN As Variant, Tail As Variant, H As Variant
+    Dim N As Long, K As Long, Converged As Boolean, Stage As String
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = "": Stage = "inputs"
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or A > 128# Or X <= 0# Or X > 1024# Then Exit Function
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    Stage = "loggamma"
+    LG = EG_LogGamma(AA)
+    If X < A + 1# Then
+        If A <= 1# Then
+            Stage = "alternating lower series"
+            Term = SG_Neg(XX)
+            Total = SG_Div(Term, SG_Add(AA, 1#))
+            For N = 2 To 1000
+                Term = SG_Div(SG_Mul(Term, SG_Neg(XX)), N)
+                Delta = SG_Div(Term, SG_Add(AA, N))
+                Total = SG_Add(Total, Delta)
+                If SG_Small(Delta, Total) Then
+                    Converged = True
+                    Exit For
+                End If
+            Next N
+            If Not Converged Then Err.Raise 5
+            LP = SG_Add(SG_Sub(SG_Mul(SG_Log(X), AA), LG), SG_Log1p(SG_Mul(Total, AA)))
+        Else
+            Stage = "positive lower series"
+            Term = SG_Coerce(1#): Total = Term
+            For N = 1 To 10000
+                Term = SG_Div(SG_Mul(Term, XX), SG_Add(AA, N))
+                Total = SG_Add(Total, Term)
+                If SG_Small(Term, Total) Then
+                    Converged = True
+                    Exit For
+                End If
+            Next N
+            If Not Converged Then Err.Raise 5
+            LP = SG_Add(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), XX), LG), EG_LogPair(Total))
+        End If
+        Stage = "lower exponential"
+        EG_LowerPair LP, PP, QQ
+    Else
+        Stage = "upper forward"
+        B = SG_Sub(SG_Add(XX, 1#), AA)
+        C = SG_Coerce(1E+300): D = SG_Div(1#, B)
+        For N = 1 To 100000
+            AN = SG_Mul(-CDbl(N), SG_Sub(N, AA))
+            B = SG_Add(B, 2#)
+            D = SG_Div(1#, SG_Add(SG_Mul(AN, D), B))
+            C = SG_Add(B, SG_Div(AN, C))
+            Delta = SG_Sub(SG_Mul(C, D), 1#)
+            If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        Stage = "upper backward"
+        Tail = SG_Coerce(0#)
+        For K = N To 1 Step -1
+            Tail = SG_Div(SG_Mul(-CDbl(K), SG_Sub(K, AA)), _
+                SG_Add(SG_Add(SG_Sub(SG_Add(XX, 1#), AA), 2# * K), Tail))
+        Next K
+        H = SG_Div(1#, SG_Add(SG_Sub(SG_Add(XX, 1#), AA), Tail))
+        Stage = "upper exponential"
+        QQ = SG_Mul(SG_Mul(SG_Exp(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), LG), XX)), AA), H)
+        PP = SG_Sub(1#, QQ)
+    End If
+    Stage = "final rounding"
+    P = SG_Value(PP): Q = SG_Value(QQ)
+    EG1_Pair = True
+    Exit Function
+Err_Handler:
+    Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
+    P = 0#: Q = 0#
+    EG1_Pair = False
+End Function
+
+Private Function EG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+'==============================================================================
+' PURPOSE
+'   EG_Pair: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, L As Double, E As Long
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = ""
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A = 2# And X > 0# And X <= SP_FromWords(&H1FF00000&, 0) Then
+        If Not SP_Product(X, X, H, L, E) Then Err.Raise 5
+        E = E - 1
+        SGD_Canonicalize H, L, E
+        If Not SGD_Round(H, L, E, P) Then Err.Raise 5
+        Q = 1#
+        EG_Pair = True
+    Else
+        EG_Pair = EG1_Pair(A, X, P, Q, Diagnostic)
+    End If
+    Exit Function
+Err_Handler:
+    P = 0#: Q = 0#: Diagnostic = "shape-two subnormal: " & Err.Description
+    EG_Pair = False
+End Function
+
+Private Sub EG_Case(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+'==============================================================================
+' PURPOSE
+'   EG_Case: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim P As Double, Q As Double, OK As Boolean, Diagnostic As String
+    OK = EG_Pair(A, X, P, Q, Diagnostic)
+    AssertTrue Label & " returned " & Diagnostic, OK
+    AssertTrue Label & " P bits " & SG_Bits(P), (OK And SP_SameBits(P, ExpectedP))
+    AssertTrue Label & " Q bits " & SG_Bits(Q), (OK And SP_SameBits(Q, ExpectedQ))
+End Sub
+
+Private Sub EG_Invalid(ByVal A As Double, ByVal X As Double)
+'==============================================================================
+' PURPOSE
+'   EG_Invalid: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim P As Double, Q As Double, OK As Boolean
+    P = 9#: Q = 9#
+    OK = EG_Pair(A, X, P, Q)
+    AssertTrue "EG invalid and cleared", (Not OK And P = 0# And Q = 0#)
+End Sub
+
+Private Sub EG_RoutingControl()
+'==============================================================================
+' PURPOSE
+'   EG_RoutingControl: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim A As Double, X As Double, P As Double, Q As Double, LP As Double, LQ As Double
+    Dim OK As Boolean, Diag As String
+    A = SP_FromWords(&H3FF00000&, &H00000001&)
+    X = SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&)
+    OK = SG_Pair(1#, X, LP, LQ)
+    OK = OK And PROB_TryGammaRegularizedP(A, X, P, Diag)
+    OK = OK And PROB_TryGammaRegularizedQ(A, X, Q, Diag)
+    AssertTrue "EG rejected bounded switch control", (OK And LQ > Q)
+    OK = EG_Pair(1#, X, LP, LQ)
+    OK = OK And EG_Pair(A, X, P, Q)
+    AssertTrue "EG repaired shape seam P", (OK And LP >= P)
+    AssertTrue "EG repaired shape seam Q", (OK And LQ <= Q)
+End Sub
+
+
+Private Sub Test_ExtendedGamma_Chunk0()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk0: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 000", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860249&)
+    EG_Case "EG 001", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860248&)
+    EG_Case "EG 002", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860245&)
+    EG_Case "EG 003", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2AE5E7A9&, &HA57EC97C&)
+    EG_Case "EG 004", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H40200000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2A4146F7&, &H49025E8C&)
+    EG_Case "EG 005", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0A&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA54&)
+    EG_Case "EG 006", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA51&)
+    EG_Case "EG 007", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0C&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA4D&)
+    EG_Case "EG 008", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H40000001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &HE5BF2C4F&), SP_FromWords(&H3E6A40D3&, &HB0A403B2&)
+    EG_Case "EG 009", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H40200001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFAD2C4&), SP_FromWords(&H3DC4B4EE&, &HBCFAE187&)
+    EG_Case "EG 010", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC70&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F5&)
+    EG_Case "EG 011", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F3&)
+    EG_Case "EG 012", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC72&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F1&)
+    EG_Case "EG 013", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H40000068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFF5&, &HBEFD829E&), SP_FromWords(&H3ED48204&, &HFAC3CE45&)
+    EG_Case "EG 014", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H40200068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFFF&, &HFDFAA54F&), SP_FromWords(&H3E302AD5&, &H87784470&)
+    EG_Case "EG 015", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C28&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026437&)
+    EG_Case "EG 016", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026435&)
+    EG_Case "EG 017", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C2A&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026433&)
+    EG_Case "EG 018", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H400028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFFC0A&, &HBC81958E&), SP_FromWords(&H3F3FAA1B&, &HF3539228&)
+    EG_Case "EG 019", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H402028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFFFFF&, &H41D49D51&), SP_FromWords(&H3E97C56C&, &H55ED6EA2&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk1()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk1: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 020", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF3FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H3883926E&)
+    EG_Case "EG 021", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000000&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H3883926C&)
+    EG_Case "EG 022", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000001&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H38839269&)
+    EG_Case "EG 023", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H40040000&, &H00000000&), _
+        SP_FromWords(&H3FEFB485&, &H5E736AF4&), SP_FromWords(&H3F82DEA8&, &H632542FC&)
+    EG_Case "EG 024", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H40240000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFB&, &HA1AE7B08&), SP_FromWords(&H3EC17946&, &H13E18F57&)
+    EG_Case "EG 025", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF7FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E2&)
+    EG_Case "EG 026", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000000&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E1&)
+    EG_Case "EG 027", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000001&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8DF&)
+    EG_Case "EG 028", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40080000&, &H00000000&), _
+        SP_FromWords(&H3FEF8ACE&, &H65FF563F&), SP_FromWords(&H3F8D4C66&, &H802A7045&)
+    EG_Case "EG 029", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40280000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFD&, &HFACD388E&), SP_FromWords(&H3EB02996&, &H3B926591&)
+    EG_Case "EG 030", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H3FFBFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEC6B6D&, &H0485904A&), SP_FromWords(&H3FBCA497&, &HDBD37DB0&)
+    EG_Case "EG 031", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H3FFC0000&, &H00000000&), _
+        SP_FromWords(&H3FEC6B6D&, &H0485904A&), SP_FromWords(&H3FBCA497&, &HDBD37DAE&)
+    EG_Case "EG 032", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H3FFC0000&, &H00000001&), _
+        SP_FromWords(&H3FEC6B6D&, &H0485904B&), SP_FromWords(&H3FBCA497&, &HDBD37DAC&)
+    EG_Case "EG 033", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H400C0000&, &H00000000&), _
+        SP_FromWords(&H3FEF7486&, &H188CDD16&), SP_FromWords(&H3F916F3C&, &HEE645D3B&)
+    EG_Case "EG 034", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H402C0000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &H46C46CDE&), SP_FromWords(&H3E972772&, &H643653F4&)
+    EG_Case "EG 035", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CC&)
+    EG_Case "EG 036", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CB&)
+    EG_Case "EG 037", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000001&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8E&), SP_FromWords(&H3FC152AA&, &HA3BF81C9&)
+    EG_Case "EG 038", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40100000&, &H00000000&), _
+        SP_FromWords(&H3FEF69F5&, &H523EF618&), SP_FromWords(&H3F92C155&, &HB8213CF3&)
+    EG_Case "EG 039", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40300000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HC395488A&), SP_FromWords(&H3E7E355B&, &HBAEE85C8&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk2()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk2: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 040", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CD&)
+    EG_Case "EG 041", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CC&)
+    EG_Case "EG 042", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000001&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8E&), SP_FromWords(&H3FC152AA&, &HA3BF81C9&)
+    EG_Case "EG 043", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40100000&, &H00000000&), _
+        SP_FromWords(&H3FEF69F5&, &H523EF618&), SP_FromWords(&H3F92C155&, &HB8213CF4&)
+    EG_Case "EG 044", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40300000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HC395488A&), SP_FromWords(&H3E7E355B&, &HBAEE85CB&)
+    EG_Case "EG 045", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8C&), SP_FromWords(&H3FC152AA&, &HA3BF81CE&)
+    EG_Case "EG 046", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CD&)
+    EG_Case "EG 047", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H40000000&, &H00000001&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CB&)
+    EG_Case "EG 048", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H40100000&, &H00000000&), _
+        SP_FromWords(&H3FEF69F5&, &H523EF618&), SP_FromWords(&H3F92C155&, &HB8213CF7&)
+    EG_Case "EG 049", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H40300000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HC395488A&), SP_FromWords(&H3E7E355B&, &HBAEE85D1&)
+    EG_Case "EG 050", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H4007FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FE9A093&, &HCCCC53D4&), SP_FromWords(&H3FC97DB0&, &HCCCEB0B1&)
+    EG_Case "EG 051", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H40080000&, &H00000000&), _
+        SP_FromWords(&H3FE9A093&, &HCCCC53D4&), SP_FromWords(&H3FC97DB0&, &HCCCEB0AF&)
+    EG_Case "EG 052", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H40080000&, &H00000001&), _
+        SP_FromWords(&H3FE9A093&, &HCCCC53D5&), SP_FromWords(&H3FC97DB0&, &HCCCEB0AC&)
+    EG_Case "EG 053", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H40180000&, &H00000000&), _
+        SP_FromWords(&H3FEF71DB&, &HC268752E&), SP_FromWords(&H3F91C487&, &HB2F15A3B&)
+    EG_Case "EG 054", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H40380000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFF7E4991&), SP_FromWords(&H3E1036CD&, &HE86E22FC&)
+    EG_Case "EG 055", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H4025FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FE51A89&, &H6CD570F0&), SP_FromWords(&H3FD5CAED&, &H26551E21&)
+    EG_Case "EG 056", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H40260000&, &H00000000&), _
+        SP_FromWords(&H3FE51A89&, &H6CD570F1&), SP_FromWords(&H3FD5CAED&, &H26551E1D&)
+    EG_Case "EG 057", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H40260000&, &H00000001&), _
+        SP_FromWords(&H3FE51A89&, &H6CD570F3&), SP_FromWords(&H3FD5CAED&, &H26551E1A&)
+    EG_Case "EG 058", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H40360000&, &H00000000&), _
+        SP_FromWords(&H3FEFF3AB&, &HEDAF54F6&), SP_FromWords(&H3F58A824&, &HA15613ED&)
+    EG_Case "EG 059", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H40560000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3A7D15D3&, &H1F938799&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk3()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk3: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 060", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H40593FFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FE1B153&, &H914C2FDD&), SP_FromWords(&H3FDC9D58&, &HDD67A045&)
+    EG_Case "EG 061", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H40594000&, &H00000000&), _
+        SP_FromWords(&H3FE1B153&, &H914C2FE3&), SP_FromWords(&H3FDC9D58&, &HDD67A03B&)
+    EG_Case "EG 062", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H40594000&, &H00000001&), _
+        SP_FromWords(&H3FE1B153&, &H914C2FE8&), SP_FromWords(&H3FDC9D58&, &HDD67A031&)
+    EG_Case "EG 063", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H40694000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFA&), SP_FromWords(&H3CC7DABB&, &HE86BC8CD&)
+    EG_Case "EG 064", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H40894000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H12772490&, &H3AF83B88&)
+    EG_Case "EG 065", SP_FromWords(&H2D5871C6&, &H46E595A7&), SP_FromWords(&H3FF66666&, &H66666666&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2D26BA31&, &HAB7BB4E5&)
+    EG_Case "EG 066", SP_FromWords(&H2D5871C6&, &H46E595A7&), SP_FromWords(&H400A6666&, &H66666666&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2CEBF821&, &H2EB1B8A1&)
+    EG_Case "EG 067", SP_FromWords(&H2D5871C6&, &H46E595A7&), SP_FromWords(&H40270000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2C14E3B7&, &H35DD3DF0&)
+    EG_Case "EG 068", SP_FromWords(&H3E72CA5D&, &H05EA7AB3&), SP_FromWords(&H3FF66666&, &H80B4E8A2&), _
+        SP_FromWords(&H3FEFFFFF&, &HFBA1E2C5&), SP_FromWords(&H3E417874&, &HEC484E17&)
+    EG_Case "EG 069", SP_FromWords(&H3E72CA5D&, &H05EA7AB3&), SP_FromWords(&H400A6666&, &H85677FE3&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFA9FFFB&), SP_FromWords(&H3E058001&, &H30F1A15C&)
+    EG_Case "EG 070", SP_FromWords(&H3E72CA5D&, &H05EA7AB3&), SP_FromWords(&H40270000&, &H1B02E5B9&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFDFE&), SP_FromWords(&H3D300ECB&, &HF38CA6B8&)
+    EG_Case "EG 071", SP_FromWords(&H3F661E4F&, &H765FD8AE&), SP_FromWords(&H3FF675E2&, &H046C764A&), _
+        SP_FromWords(&H3FEFFD6F&, &H6C691714&), SP_FromWords(&H3F34849C&, &HB7475C6D&)
+    EG_Case "EG 072", SP_FromWords(&H3F661E4F&, &H765FD8AE&), SP_FromWords(&H400A78A5&, &HCE5B4245&), _
+        SP_FromWords(&H3FEFFFCD&, &HAD5391D4&), SP_FromWords(&H3EF92956&, &H3716149B&)
+    EG_Case "EG 073", SP_FromWords(&H3F661E4F&, &H765FD8AE&), SP_FromWords(&H40270FE5&, &HC91D14E3&), _
+        SP_FromWords(&H3FEFFFFF&, &HFED9191F&), SP_FromWords(&H3E226E6E&, &H12A48AC5&)
+    EG_Case "EG 074", SP_FromWords(&H3FAD2F1A&, &H9FBE76C9&), SP_FromWords(&H3FF7AD42&, &HC3C9EECB&), _
+        SP_FromWords(&H3FEFCC3A&, &H503D0D6F&), SP_FromWords(&H3F79E2D7&, &HE179488C&)
+    EG_Case "EG 075", SP_FromWords(&H3FAD2F1A&, &H9FBE76C9&), SP_FromWords(&H400BE7A0&, &HF9096BB9&), _
+        SP_FromWords(&H3FEFFC4D&, &H70AB0124&), SP_FromWords(&H3F3D947A&, &HA7F6DC6E&)
+    EG_Case "EG 076", SP_FromWords(&H3FAD2F1A&, &H9FBE76C9&), SP_FromWords(&H40284F9D&, &HB22D0E56&), _
+        SP_FromWords(&H3FEFFFFF&, &HF1536307&), SP_FromWords(&H3E5D5939&, &HF26012C9&)
+    EG_Case "EG 077", SP_FromWords(&H3FCD70A3&, &HD70A3D71&), SP_FromWords(&H3FFB8D4F&, &HDF3B645A&), _
+        SP_FromWords(&H3FEF4912&, &H496108E6&), SP_FromWords(&H3F96DDB6&, &HD3DEE33B&)
+    EG_Case "EG 078", SP_FromWords(&H3FCD70A3&, &HD70A3D71&), SP_FromWords(&H40103C6A&, &H7EF9DB23&), _
+        SP_FromWords(&H3FEFF587&, &H799CC073&), SP_FromWords(&H3F54F10C&, &HC67F1A0B&)
+    EG_Case "EG 079", SP_FromWords(&H3FCD70A3&, &HD70A3D71&), SP_FromWords(&H402C4A3D&, &H70A3D70A&), _
+        SP_FromWords(&H3FEFFFFF&, &HF3EFD8AF&), SP_FromWords(&H3E58204E&, &HA2A63C3A&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk4()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk4: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 080", SP_FromWords(&H3FDE147A&, &HE147AE14&), SP_FromWords(&H400076C8&, &HB4395810&), _
+        SP_FromWords(&H3FEEC2B4&, &HCDEBC67E&), SP_FromWords(&H3FA3D4B3&, &H2143981A&)
+    EG_Case "EG 081", SP_FromWords(&H3FDE147A&, &HE147AE14&), SP_FromWords(&H4013676C&, &H8B439581&), _
+        SP_FromWords(&H3FEFF289&, &HF6BD1AAC&), SP_FromWords(&H3F5AEC12&, &H85CAA788&)
+    EG_Case "EG 082", SP_FromWords(&H3FDE147A&, &HE147AE14&), SP_FromWords(&H4030E7AE&, &H147AE148&), _
+        SP_FromWords(&H3FEFFFFF&, &HFD2F7F41&), SP_FromWords(&H3E368405&, &HFA97399D&)
+    EG_Case "EG 083", SP_FromWords(&H3FE851EB&, &H851EB852&), SP_FromWords(&H4003B645&, &HA1CAC083&), _
+        SP_FromWords(&H3FEE510E&, &HB558B867&), SP_FromWords(&H3FAAEF14&, &HAA74798F&)
+    EG_Case "EG 084", SP_FromWords(&H3FE851EB&, &H851EB852&), SP_FromWords(&H40173B64&, &H5A1CAC08&), _
+        SP_FromWords(&H3FEFF328&, &H4C16E8D9&), SP_FromWords(&H3F59AF67&, &HD22E4E5B&)
+    EG_Case "EG 085", SP_FromWords(&H3FE851EB&, &H851EB852&), SP_FromWords(&H40343D70&, &HA3D70A3D&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFA7B1F9&), SP_FromWords(&H3E061381&, &HB80A1611&)
+    EG_Case "EG 086", SP_FromWords(&H3FEE147A&, &HE147AE14&), SP_FromWords(&H4005BA5E&, &H353F7CED&), _
+        SP_FromWords(&H3FEE1CD9&, &H02021328&), SP_FromWords(&H3FAE326F&, &HDFDECD83&)
+    EG_Case "EG 087", SP_FromWords(&H3FEE147A&, &HE147AE14&), SP_FromWords(&H40199BA5&, &HE353F7CE&), _
+        SP_FromWords(&H3FEFF464&, &H8AC38D6E&), SP_FromWords(&H3F5736EA&, &H78E524DD&)
+    EG_Case "EG 088", SP_FromWords(&H3FEE147A&, &HE147AE14&), SP_FromWords(&H40364F5C&, &H28F5C28F&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFE994E1&), SP_FromWords(&H3DE66B1F&, &H6C210884&)
+    EG_Case "EG 089", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H000002E8&)
+    EG_Case "EG 090", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H000002C4&)
+    EG_Case "EG 091", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&)
+    EG_Case "EG 092", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 093", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 094", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00A73EE7&, &H212E55D6&)
+    EG_Case "EG 095", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00A61E8D&, &HBA3BA0E5&)
+    EG_Case "EG 096", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0010B561&, &HB52B771B&)
+    EG_Case "EG 097", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00038298&, &HBA77F1F2&)
+    EG_Case "EG 098", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000002&)
+    EG_Case "EG 099", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27873EE7&, &H212E55D6&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk5()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk5: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 100", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27861E8D&, &HBA3BA0E5&)
+    EG_Case "EG 101", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26F0B561&, &HB52B771B&)
+    EG_Case "EG 102", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26CC14C5&, &HD3BF8F94&)
+    EG_Case "EG 103", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H23BBAD52&, &HED5D8E1B&)
+    EG_Case "EG 104", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3F4344DC&, &HD169D6C3&), SP_FromWords(&H3FEFFB2E&, &HC8CBA58A&)
+    EG_Case "EG 105", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3F4BA181&, &H11525FF2&), SP_FromWords(&H3FEFF917&, &H9FBBAB68&)
+    EG_Case "EG 106", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FEFAA68&, &H142D71AD&), SP_FromWords(&H3F8565FA&, &HF4A394A5&)
+    EG_Case "EG 107", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEFEDD8&, &H3818BC32&), SP_FromWords(&H3F6227C7&, &HE743CE56&)
+    EG_Case "EG 108", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3C5272B3&, &HA48E8689&)
+    EG_Case "EG 109", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H1E620DD7&, &H50429B6D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 110", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H20020DD7&, &H50429B6D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 111", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FE0A7EF&, &H5C18EDD2&), SP_FromWords(&H3FDEB021&, &H47CE245C&)
+    EG_Case "EG 112", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEAF767&, &HA741088B&), SP_FromWords(&H3FC42261&, &H62FBDDD5&)
+    EG_Case "EG 113", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFF5&), SP_FromWords(&H3CD669D2&, &HC90D55CE&)
+    EG_Case "EG 114", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 115", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 116", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FCC5041&, &H854DF7D4&), SP_FromWords(&H3FE8EBEF&, &H9EAC820B&)
+    EG_Case "EG 117", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FE43A54&, &HE4E98864&), SP_FromWords(&H3FD78B56&, &H362CEF38&)
+    EG_Case "EG 118", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF7616468&)
+    EG_Case "EG 119", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk6()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk6: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 120", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 121", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H33583D0C&, &HA88487C1&)
+    EG_Case "EG 122", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H33571062&, &HB8180D07&)
+    EG_Case "EG 123", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H333DEFB0&, &HEA90F5FC&)
+    EG_Case "EG 124", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H32CB1589&, &H0DDD02CD&)
+    EG_Case "EG 125", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H329D47C9&, &H0D342F8B&)
+    EG_Case "EG 126", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H329D47C9&, &H0D342F89&)
+    EG_Case "EG 127", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H329D47C9&, &H0D342F86&)
+    EG_Case "EG 128", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2F8CDBEB&, &H23E8014D&)
+    EG_Case "EG 129", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 130", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 131", SP_FromWords(&H32C0AEED&, &HC7A4C59C&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 132", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2EF6C9E2&, &H050FDFA4&)
+    EG_Case "EG 133", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2EF5AF34&, &H2E33BFCF&)
+    EG_Case "EG 134", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2EDC2545&, &HEE189C02&)
+    EG_Case "EG 135", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2E6976CB&, &H06D202B4&)
+    EG_Case "EG 136", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2E3B8769&, &H399DB1E8&)
+    EG_Case "EG 137", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2E3B8769&, &H399DB1E6&)
+    EG_Case "EG 138", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2E3B8769&, &H399DB1E3&)
+    EG_Case "EG 139", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B2B21FF&, &H17548BBB&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk7()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk7: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 140", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 141", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 142", SP_FromWords(&H2E5F5EE9&, &H1B7B3F4C&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 143", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26C61805&, &H236E671C&)
+    EG_Case "EG 144", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26C505F5&, &H94D1D9F5&)
+    EG_Case "EG 145", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26AB4999&, &H7B9037FC&)
+    EG_Case "EG 146", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2638B00C&, &H7D1EBEB3&)
+    EG_Case "EG 147", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H260AB08C&, &HE043F58B&)
+    EG_Case "EG 148", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H260AB08C&, &HE043F589&)
+    EG_Case "EG 149", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H260AB08C&, &HE043F587&)
+    EG_Case "EG 150", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H22FA4E3A&, &H45E0C504&)
+    EG_Case "EG 151", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 152", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 153", SP_FromWords(&H262E6A10&, &HA42AD342&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 154", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26001F85&, &H3727039A&)
+    EG_Case "EG 155", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H25FEAF0B&, &H92609DC7&)
+    EG_Case "EG 156", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H25E3E9CA&, &H5304A919&)
+    EG_Case "EG 157", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H25720419&, &H98E88241&)
+    EG_Case "EG 158", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H25437A1A&, &H005C9822&)
+    EG_Case "EG 159", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H25437A1A&, &H005C9821&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk8()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk8: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 160", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H25437A1A&, &H005C981E&)
+    EG_Case "EG 161", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H22333259&, &H93B84FE1&)
+    EG_Case "EG 162", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 163", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 164", SP_FromWords(&H256631EF&, &H8500E8E6&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 165", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1A1A6874&, &HB01EB50B&)
+    EG_Case "EG 166", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1A1920E1&, &H4392A434&)
+    EG_Case "EG 167", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1A004ED4&, &H4F42D81B&)
+    EG_Case "EG 168", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H198D8225&, &HCA1BF0BA&)
+    EG_Case "EG 169", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H195FE6B9&, &H524EF73F&)
+    EG_Case "EG 170", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H195FE6B9&, &H524EF73D&)
+    EG_Case "EG 171", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H195FE6B9&, &H524EF73A&)
+    EG_Case "EG 172", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H164F7133&, &HB90D8683&)
+    EG_Case "EG 173", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 174", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 175", SP_FromWords(&H19822D36&, &HE4D1D07E&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 176", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1E630AF9&, &H97107EB7&)
+    EG_Case "EG 177", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1E621EC2&, &H6E96901C&)
+    EG_Case "EG 178", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1E4784F3&, &H9934E5DF&)
+    EG_Case "EG 179", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1DD5474E&, &HACF53229&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk9()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk9: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 180", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1DA70109&, &H7A7F7468&)
+    EG_Case "EG 181", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1DA70109&, &H7A7F7467&)
+    EG_Case "EG 182", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1DA70109&, &H7A7F7464&)
+    EG_Case "EG 183", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1A96AC4A&, &HB524B1FD&)
+    EG_Case "EG 184", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 185", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 186", SP_FromWords(&H1DCA36E1&, &H474A8E10&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 187", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H039E7BA5&, &H75C25CC9&)
+    EG_Case "EG 188", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H039D0185&, &HE12A2AB4&)
+    EG_Case "EG 189", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0382D309&, &HA86C8142&)
+    EG_Case "EG 190", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H031107E7&, &HCBA80895&)
+    EG_Case "EG 191", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H02E26974&, &HCB2F1552&)
+    EG_Case "EG 192", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H02E26974&, &HCB2F1551&)
+    EG_Case "EG 193", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H02E26974&, &HCB2F154F&)
+    EG_Case "EG 194", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0001225A&, &H0C63912B&)
+    EG_Case "EG 195", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 196", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 197", SP_FromWords(&H0304FB3D&, &HC8089199&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 198", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0A097CE8&, &H47248F98&)
+    EG_Case "EG 199", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0A0840BE&, &HB13BCF44&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk10()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk10: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 200", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H09EF7ABD&, &H30E54369&)
+    EG_Case "EG 201", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H3FC00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H097C7AF1&, &HFBDB52BC&)
+    EG_Case "EG 202", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H094ECA2D&, &H98131FD3&)
+    EG_Case "EG 203", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H094ECA2D&, &H98131FD1&)
+    EG_Case "EG 204", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H094ECA2D&, &H98131FCE&)
+    EG_Case "EG 205", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H063E58C0&, &H3DA6734A&)
+    EG_Case "EG 206", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 207", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 208", SP_FromWords(&H09718B16&, &H2FCED398&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 209", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 210", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H051686EE&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 211", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2AA5FBF8&, &H1A6881E3&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 212", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H3FD0335F&, &HFD880DBC&), _
+        SP_FromWords(&H3FCB50AD&, &HCCAFA378&), SP_FromWords(&H3FE92BD4&, &H8CD41722&)
+    EG_Case "EG 213", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H4000335F&, &HFD880DBB&), _
+        SP_FromWords(&H3FEB99EB&, &H0E45B01C&), SP_FromWords(&H3FC19853&, &HC6E93F91&)
+    EG_Case "EG 214", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H4000335F&, &HFD880DBC&), _
+        SP_FromWords(&H3FEB99EB&, &H0E45B01C&), SP_FromWords(&H3FC19853&, &HC6E93F8F&)
+    EG_Case "EG 215", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H4000335F&, &HFD880DBD&), _
+        SP_FromWords(&H3FEB99EB&, &H0E45B01D&), SP_FromWords(&H3FC19853&, &HC6E93F8C&)
+    EG_Case "EG 216", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF82&), SP_FromWords(&H3D0F91A8&, &HFE8ED441&)
+    EG_Case "EG 217", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00D4B046&, &HD94D4F47&)
+    EG_Case "EG 218", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000065&)
+    EG_Case "EG 219", SP_FromWords(&H3FF066BF&, &HFB101B77&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk11()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk11: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 220", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 221", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H0000ED86&, &H46646BAE&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 222", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2B162A57&, &HC555667D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 223", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H3FD0083A&, &H2F8DFB90&), _
+        SP_FromWords(&H3FCC26AD&, &H2AC9A5DB&), SP_FromWords(&H3FE8F654&, &HB54D9689&)
+    EG_Case "EG 224", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H4000083A&, &H2F8DFB8F&), _
+        SP_FromWords(&H3FEBA886&, &H1EDC04AD&), SP_FromWords(&H3FC15DE7&, &H848FED4C&)
+    EG_Case "EG 225", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H4000083A&, &H2F8DFB90&), _
+        SP_FromWords(&H3FEBA886&, &H1EDC04AD&), SP_FromWords(&H3FC15DE7&, &H848FED4A&)
+    EG_Case "EG 226", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H4000083A&, &H2F8DFB91&), _
+        SP_FromWords(&H3FEBA886&, &H1EDC04AE&), SP_FromWords(&H3FC15DE7&, &H848FED48&)
+    EG_Case "EG 227", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8C&), SP_FromWords(&H3D0CFCBC&, &HCB2C90AF&)
+    EG_Case "EG 228", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00D1CFDB&, &HF452C377&)
+    EG_Case "EG 229", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000057&)
+    EG_Case "EG 230", SP_FromWords(&H3FF01074&, &H5F1BF721&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 231", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 232", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H0000068B&, &HBFBFBF15&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 233", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2AFB8CC9&, &H4E6501E4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 234", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H3FD0129A&, &H9F8C735E&), _
+        SP_FromWords(&H3FCBF297&, &H511C318B&), SP_FromWords(&H3FE9035A&, &H2BB8F39D&)
+    EG_Case "EG 235", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H4000129A&, &H9F8C735D&), _
+        SP_FromWords(&H3FEBA4FD&, &HE1489799&), SP_FromWords(&H3FC16C08&, &H7ADDA19B&)
+    EG_Case "EG 236", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H4000129A&, &H9F8C735E&), _
+        SP_FromWords(&H3FEBA4FD&, &HE148979A&), SP_FromWords(&H3FC16C08&, &H7ADDA199&)
+    EG_Case "EG 237", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H4000129A&, &H9F8C735F&), _
+        SP_FromWords(&H3FEBA4FD&, &HE148979A&), SP_FromWords(&H3FC16C08&, &H7ADDA197&)
+    EG_Case "EG 238", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8A&), SP_FromWords(&H3D0D9711&, &HA6D955CB&)
+    EG_Case "EG 239", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00D27756&, &H2C7CABE3&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk12()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk12: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 240", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H0000005A&)
+    EG_Case "EG 241", SP_FromWords(&H3FF02535&, &H3F18E6BB&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 242", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 243", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000007&, &HD29E8F41&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 244", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2AD33695&, &H1CC63409&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 245", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H3FD0221C&, &H56F8132C&), _
+        SP_FromWords(&H3FCBA57D&, &HDB3F6B58&), SP_FromWords(&H3FE916A0&, &H8930252A&)
+    EG_Case "EG 246", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H4000221C&, &H56F8132B&), _
+        SP_FromWords(&H3FEB9FBC&, &H8D2993FA&), SP_FromWords(&H3FC1810D&, &HCB59B019&)
+    EG_Case "EG 247", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H4000221C&, &H56F8132C&), _
+        SP_FromWords(&H3FEB9FBC&, &H8D2993FA&), SP_FromWords(&H3FC1810D&, &HCB59B016&)
+    EG_Case "EG 248", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H4000221C&, &H56F8132D&), _
+        SP_FromWords(&H3FEB9FBC&, &H8D2993FB&), SP_FromWords(&H3FC1810D&, &HCB59B014&)
+    EG_Case "EG 249", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF86&), SP_FromWords(&H3D0E8318&, &H573A525E&)
+    EG_Case "EG 250", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00D37CC1&, &HE054439B&)
+    EG_Case "EG 251", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000060&)
+    EG_Case "EG 252", SP_FromWords(&H3FF04438&, &HADF02658&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 253", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 254", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000055&, &HD09BDA40&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 255", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2AE4F243&, &H7E80E5DC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 256", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H3FD01B30&, &HC057AB5C&), _
+        SP_FromWords(&H3FCBC7CA&, &H770B1F34&), SP_FromWords(&H3FE90E0D&, &H623D3833&)
+    EG_Case "EG 257", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H40001B30&, &HC057AB5B&), _
+        SP_FromWords(&H3FEBA214&, &H0FCFC0D4&), SP_FromWords(&H3FC177AF&, &HC0C0FCAF&)
+    EG_Case "EG 258", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H40001B30&, &HC057AB5C&), _
+        SP_FromWords(&H3FEBA214&, &H0FCFC0D5&), SP_FromWords(&H3FC177AF&, &HC0C0FCAD&)
+    EG_Case "EG 259", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H40001B30&, &HC057AB5D&), _
+        SP_FromWords(&H3FEBA214&, &H0FCFC0D5&), SP_FromWords(&H3FC177AF&, &HC0C0FCAB&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk13()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk13: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 260", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF88&), SP_FromWords(&H3D0E18F4&, &H82D58637&)
+    EG_Case "EG 261", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00D30668&, &H3AE195D6&)
+    EG_Case "EG 262", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H0000005D&)
+    EG_Case "EG 263", SP_FromWords(&H3FF03661&, &H80AF56B7&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 264", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 265", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00010EC3&, &H1FD63FBA&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 266", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2B17216F&, &H00C9CDB7&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 267", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H3FD007D9&, &H4FED986F&), _
+        SP_FromWords(&H3FCC2895&, &H57788CC3&), SP_FromWords(&H3FE8F5DA&, &HAA21DCCF&)
+    EG_Case "EG 268", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H400007D9&, &H4FED986E&), _
+        SP_FromWords(&H3FEBA8A7&, &H2810B84D&), SP_FromWords(&H3FC15D63&, &H5FBD1ECD&)
+    EG_Case "EG 269", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H400007D9&, &H4FED986F&), _
+        SP_FromWords(&H3FEBA8A7&, &H2810B84D&), SP_FromWords(&H3FC15D63&, &H5FBD1ECB&)
+    EG_Case "EG 270", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H400007D9&, &H4FED9870&), _
+        SP_FromWords(&H3FEBA8A7&, &H2810B84E&), SP_FromWords(&H3FC15D63&, &H5FBD1EC9&)
+    EG_Case "EG 271", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8C&), SP_FromWords(&H3D0CF729&, &HD1195F09&)
+    EG_Case "EG 272", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00D1C9DC&, &H8E3B617A&)
+    EG_Case "EG 273", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000057&)
+    EG_Case "EG 274", SP_FromWords(&H3FF00FB2&, &H9FDB30DE&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 275", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 276", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 277", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 278", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H400F85D1&, &H92F7B7F6&), _
+        SP_FromWords(&H3C783701&, &H58CEC931&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 279", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H403F85D1&, &H92F7B7F5&), _
+        SP_FromWords(&H3FE3069C&, &H85474165&), SP_FromWords(&H3FD9F2C6&, &HF5717D36&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk14()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk14: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 280", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H403F85D1&, &H92F7B7F6&), _
+        SP_FromWords(&H3FE3069C&, &H85474167&), SP_FromWords(&H3FD9F2C6&, &HF5717D32&)
+    EG_Case "EG 281", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H403F85D1&, &H92F7B7F7&), _
+        SP_FromWords(&H3FE3069C&, &H85474169&), SP_FromWords(&H3FD9F2C6&, &HF5717D2E&)
+    EG_Case "EG 282", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FE40E96&, &H36D9D6EF&), SP_FromWords(&H3FD7E2D3&, &H924C5222&)
+    EG_Case "EG 283", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0BACA3B6&, &H6576B013&)
+    EG_Case "EG 284", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H08368ED2&, &H9E313381&)
+    EG_Case "EG 285", SP_FromWords(&H403E85D1&, &H92F7B7F6&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 286", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 287", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 288", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 289", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H4007B51E&, &HB32DAD1B&), _
+        SP_FromWords(&H3D54D942&, &H13E05B48&), SP_FromWords(&H3FEFFFFF&, &HFFFFF593&)
+    EG_Case "EG 290", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H4037B51E&, &HB32DAD1A&), _
+        SP_FromWords(&H3FE37CA2&, &HECA2B130&), SP_FromWords(&H3FD906BA&, &H26BA9D9F&)
+    EG_Case "EG 291", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H4037B51E&, &HB32DAD1B&), _
+        SP_FromWords(&H3FE37CA2&, &HECA2B133&), SP_FromWords(&H3FD906BA&, &H26BA9D9A&)
+    EG_Case "EG 292", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H4037B51E&, &HB32DAD1C&), _
+        SP_FromWords(&H3FE37CA2&, &HECA2B135&), SP_FromWords(&H3FD906BA&, &H26BA9D95&)
+    EG_Case "EG 293", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEEDAB6&, &H647355C6&), SP_FromWords(&H3FA25499&, &HB8CAA39B&)
+    EG_Case "EG 294", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H095A0BF4&, &HD182B4A6&)
+    EG_Case "EG 295", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H05DA981C&, &H7B13F77C&)
+    EG_Case "EG 296", SP_FromWords(&H4036B51E&, &HB32DAD1B&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 297", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 298", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 299", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk15()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk15: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 300", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40068D38&, &H82D06BC6&), _
+        SP_FromWords(&H3D757F52&, &H4982784D&), SP_FromWords(&H3FEFFFFF&, &HFFFFD501&)
+    EG_Case "EG 301", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40368D38&, &H82D06BC5&), _
+        SP_FromWords(&H3FE3931A&, &HD23CBA30&), SP_FromWords(&H3FD8D9CA&, &H5B868BA0&)
+    EG_Case "EG 302", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40368D38&, &H82D06BC6&), _
+        SP_FromWords(&H3FE3931A&, &HD23CBA32&), SP_FromWords(&H3FD8D9CA&, &H5B868B9B&)
+    EG_Case "EG 303", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40368D38&, &H82D06BC7&), _
+        SP_FromWords(&H3FE3931A&, &HD23CBA35&), SP_FromWords(&H3FD8D9CA&, &H5B868B96&)
+    EG_Case "EG 304", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEF540B&, &H48D4D1D5&), SP_FromWords(&H3F957E96&, &HE565C550&)
+    EG_Case "EG 305", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H08FDE84B&, &HA9B5363A&)
+    EG_Case "EG 306", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H057CA398&, &HA5E44ECC&)
+    EG_Case "EG 307", SP_FromWords(&H40358D38&, &H82D06BC6&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 308", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 309", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 310", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 311", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40071F9C&, &HEEB9A14A&), _
+        SP_FromWords(&H3D655362&, &H18D597FB&), SP_FromWords(&H3FEFFFFF&, &HFFFFEAAD&)
+    EG_Case "EG 312", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40371F9C&, &HEEB9A149&), _
+        SP_FromWords(&H3FE387C7&, &H87323CA0&), SP_FromWords(&H3FD8F070&, &HF19B86BF&)
+    EG_Case "EG 313", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40371F9C&, &HEEB9A14A&), _
+        SP_FromWords(&H3FE387C7&, &H87323CA3&), SP_FromWords(&H3FD8F070&, &HF19B86BA&)
+    EG_Case "EG 314", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40371F9C&, &HEEB9A14B&), _
+        SP_FromWords(&H3FE387C7&, &H87323CA5&), SP_FromWords(&H3FD8F070&, &HF19B86B5&)
+    EG_Case "EG 315", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEF1E77&, &HD947E2FD&), SP_FromWords(&H3F9C3104&, &HD703A062&)
+    EG_Case "EG 316", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H092B89AA&, &H2B5007B8&)
+    EG_Case "EG 317", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H05AB3854&, &HAEC1B15F&)
+    EG_Case "EG 318", SP_FromWords(&H40361F9C&, &HEEB9A14A&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 319", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk16()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk16: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 320", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 321", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 322", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H401E83EA&, &HF6E4101A&), _
+        SP_FromWords(&H393CD3EA&, &H5174F345&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 323", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3EDA5709&, &H13D11059&), SP_FromWords(&H3FEFFFF2&, &HD47B7617&)
+    EG_Case "EG 324", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H404E83EA&, &HF6E41019&), _
+        SP_FromWords(&H3FE22D39&, &H535A49E9&), SP_FromWords(&H3FDBA58D&, &H594B6C2D&)
+    EG_Case "EG 325", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H404E83EA&, &HF6E4101A&), _
+        SP_FromWords(&H3FE22D39&, &H535A49ED&), SP_FromWords(&H3FDBA58D&, &H594B6C27&)
+    EG_Case "EG 326", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H404E83EA&, &HF6E4101B&), _
+        SP_FromWords(&H3FE22D39&, &H535A49F0&), SP_FromWords(&H3FDBA58D&, &H594B6C20&)
+    EG_Case "EG 327", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H130ACEFE&, &H8F8707CB&)
+    EG_Case "EG 328", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0FBB230C&, &HA11D35F4&)
+    EG_Case "EG 329", SP_FromWords(&H404E03EA&, &HF6E4101A&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 330", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 331", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 332", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 333", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H402EBB9C&, &H9F95BCC8&), _
+        SP_FromWords(&H327B8D02&, &HDAE2F6E8&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 334", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3910C238&, &H55F6B292&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 335", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H405EBB9C&, &H9F95BCC7&), _
+        SP_FromWords(&H3FE188D1&, &H643E2E8A&), SP_FromWords(&H3FDCEE5D&, &H3783A2EC&)
+    EG_Case "EG 336", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H405EBB9C&, &H9F95BCC8&), _
+        SP_FromWords(&H3FE188D1&, &H643E2E8F&), SP_FromWords(&H3FDCEE5D&, &H3783A2E3&)
+    EG_Case "EG 337", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H405EBB9C&, &H9F95BCC9&), _
+        SP_FromWords(&H3FE188D1&, &H643E2E93&), SP_FromWords(&H3FDCEE5D&, &H3783A2DA&)
+    EG_Case "EG 338", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H4085E000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1E953847&, &HC5E8D5E4&)
+    EG_Case "EG 339", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H40872000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H1B94CCDA&, &H36F58616&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk17()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk17: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 340", SP_FromWords(&H405E7B9C&, &H9F95BCC8&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H05830023&, &H8A5D1648&)
+    EG_Case "EG 341", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 342", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 343", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000002&)
+    EG_Case "EG 344", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000002&)
+    EG_Case "EG 345", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27F836F3&, &HB3EF6B33&)
+    EG_Case "EG 346", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27F836F3&, &HB3EF6B1A&)
+    EG_Case "EG 347", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27F836F3&, &HB3EF6AE8&)
+    EG_Case "EG 348", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3B7D0587&, &HE826284E&)
+    EG_Case "EG 349", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3B7D0587&, &HE8262830&)
+    EG_Case "EG 350", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3B7D0587&, &HE82627F4&)
+    EG_Case "EG 351", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3BE6AEA9&, &H5C35E18C&)
+    EG_Case "EG 352", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3BE6AEA9&, &H5C35E175&)
+    EG_Case "EG 353", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3BE6AEA9&, &H5C35E146&)
+    EG_Case "EG 354", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3C5272B3&, &HA48E869C&)
+    EG_Case "EG 355", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3C5272B3&, &HA48E8663&)
+    EG_Case "EG 356", SP_FromWords(&H3FB99999&, &H9999999A&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C90817B&, &H733155EB&)
+    EG_Case "EG 357", SP_FromWords(&H3FB99999&, &H9999999A&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C90817B&, &H733155DA&)
+    EG_Case "EG 358", SP_FromWords(&H3FB99999&, &H9999999A&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3C90817B&, &H733155B9&)
+    EG_Case "EG 359", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3CB24A81&, &HFF149D0D&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk18()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk18: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 360", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3CB24A81&, &HFF149CFA&)
+    EG_Case "EG 361", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFFE&), SP_FromWords(&H3CB24A81&, &HFF149CD5&)
+    EG_Case "EG 362", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFF5&), SP_FromWords(&H3CD669D2&, &HC90D55E5&)
+    EG_Case "EG 363", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFF5&), SP_FromWords(&H3CD669D2&, &HC90D55A1&)
+    EG_Case "EG 364", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFD9&), SP_FromWords(&H3CF36BEA&, &H87B0B798&)
+    EG_Case "EG 365", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFD9&), SP_FromWords(&H3CF36BEA&, &H87B0B784&)
+    EG_Case "EG 366", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFD9&), SP_FromWords(&H3CF36BEA&, &H87B0B75D&)
+    EG_Case "EG 367", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF7616481&)
+    EG_Case "EG 368", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF7616464&)
+    EG_Case "EG 369", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF761642B&)
+    EG_Case "EG 370", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H403FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF7616485&)
+    EG_Case "EG 371", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000001&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF761642F&)
+    EG_Case "EG 372", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 373", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 374", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00100000&, &H00000162&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 375", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H000FFFFF&, &HFFFFFD3B&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 376", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2B2BFF2E&, &HE48E05FA&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 377", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 378", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H2B2BFF2E&, &HE48E039C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 379", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), _
+        SP_FromWords(&H3EB0C6F7&, &H13F9249E&), SP_FromWords(&H3FEFFFFD&, &HE7211D81&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk19()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk19: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 380", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), _
+        SP_FromWords(&H3EB0C6F7&, &H13F92497&), SP_FromWords(&H3FEFFFFD&, &HE7211D81&)
+    EG_Case "EG 381", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), _
+        SP_FromWords(&H3EB0C6F7&, &H13F92488&), SP_FromWords(&H3FEFFFFD&, &HE7211D81&)
+    EG_Case "EG 382", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3F847AE1&, &H47AE147B&), _
+        SP_FromWords(&H3F8460C0&, &HB518C0A2&), SP_FromWords(&H3FEFAE7C&, &HFD2B9CFD&)
+    EG_Case "EG 383", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3F847AE1&, &H47AE147B&), _
+        SP_FromWords(&H3F8460C0&, &HB518C09F&), SP_FromWords(&H3FEFAE7C&, &HFD2B9CFE&)
+    EG_Case "EG 384", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H3F847AE1&, &H47AE147B&), _
+        SP_FromWords(&H3F8460C0&, &HB518C098&), SP_FromWords(&H3FEFAE7C&, &HFD2B9CFE&)
+    EG_Case "EG 385", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FCC5041&, &H854DF7D6&), SP_FromWords(&H3FE8EBEF&, &H9EAC820A&)
+    EG_Case "EG 386", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FCC5041&, &H854DF7D1&), SP_FromWords(&H3FE8EBEF&, &H9EAC820C&)
+    EG_Case "EG 387", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FE00000&, &H00000000&), _
+        SP_FromWords(&H3FD92E9A&, &H0720D3ED&), SP_FromWords(&H3FE368B2&, &HFC6F960A&)
+    EG_Case "EG 388", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FE00000&, &H00000000&), _
+        SP_FromWords(&H3FD92E9A&, &H0720D3EC&), SP_FromWords(&H3FE368B2&, &HFC6F960A&)
+    EG_Case "EG 389", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H3FE00000&, &H00000000&), _
+        SP_FromWords(&H3FD92E9A&, &H0720D3EA&), SP_FromWords(&H3FE368B2&, &HFC6F960B&)
+    EG_Case "EG 390", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FE43A54&, &HE4E98865&), SP_FromWords(&H3FD78B56&, &H362CEF37&)
+    EG_Case "EG 391", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FE43A54&, &HE4E98863&), SP_FromWords(&H3FD78B56&, &H362CEF3A&)
+    EG_Case "EG 392", SP_FromWords(&H3FF00000&, &H00000001&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF761646F&)
+    EG_Case "EG 393", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 394", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 395", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 396", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H16587E92&, &H154EF7AC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 397", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 398", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 399", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk20()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk20: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 400", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 401", SP_FromWords(&H40240000&, &H00000000&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Case "EG 402", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 403", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 404", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 405", SP_FromWords(&H40590000&, &H00000000&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H011A1826&, &H9A92F3C7&)
+    EG_Case "EG 406", SP_FromWords(&H40600000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 407", SP_FromWords(&H40600000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 408", SP_FromWords(&H40600000&, &H00000000&), SP_FromWords(&H2B2BFF2E&, &HE48E0530&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 409", SP_FromWords(&H40600000&, &H00000000&), SP_FromWords(&H40602000&, &H00000000&), _
+        SP_FromWords(&H3FE17F79&, &HD58237A0&), SP_FromWords(&H3FDD010C&, &H54FB90C0&)
+    EG_Case "EG 410", SP_FromWords(&H40600000&, &H00000000&), SP_FromWords(&H40900000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H06AA294D&, &HD60D4810&)
+    EG_Case "EG 411", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E5FFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 412", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E600000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 413", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E600000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 414", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FEBEA92&, &HF670548C&), _
+        SP_FromWords(&H000185A8&, &HF87D4A9B&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 415", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F34DBC2&, &H3F4C8A37&), _
+        SP_FromWords(&H00000000&, &H03662600&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 416", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EF33BC6&, &H75691FA4&), _
+        SP_FromWords(&H00000000&, &H0002E3DB&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 417", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1ED88771&, &H2D21C0E2&), _
+        SP_FromWords(&H00000000&, &H00004B36&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 418", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FC5CEE0&, &H2AE14418&), _
+        SP_FromWords(&H00000EDC&, &HBFA49216&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 419", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E533A28&, &H237C9C3F&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk21()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk21: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 420", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F07EF8E&, &HC8FCA588&), _
+        SP_FromWords(&H00000000&, &H0011E75F&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 421", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EFC2ABC&, &HA1FCC316&), _
+        SP_FromWords(&H00000000&, &H000632C1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 422", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F8FEACE&, &HDB4F3778&), _
+        SP_FromWords(&H0000001F&, &HD5ABBF6A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 423", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EE83FF9&, &HD364A8BC&), _
+        SP_FromWords(&H00000000&, &H00012607&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 424", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1ED701E4&, &H2944953C&), _
+        SP_FromWords(&H00000000&, &H0000422B&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 425", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EE2B802&, &HEC42E0B0&), _
+        SP_FromWords(&H00000000&, &H0000AF32&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 426", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2CF3C9&, &H567DF55E&), _
+        SP_FromWords(&H00000000&, &H01A31E19&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 427", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EDC7A56&, &H101A56F3&), _
+        SP_FromWords(&H00000000&, &H00006560&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 428", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F1BFB84&, &HB3B35758&), _
+        SP_FromWords(&H00000000&, &H0061E0A3&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 429", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F1257D1&, &H14C19CFC&), _
+        SP_FromWords(&H00000000&, &H002A0EF1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 430", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F3D4271&, &HE9787762&), _
+        SP_FromWords(&H00000000&, &H06B03E1C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 431", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F440B52&, &H8EF7EDBA&), _
+        SP_FromWords(&H00000000&, &H0C8E2B34&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 432", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EFD08D1&, &HA7406C00&), _
+        SP_FromWords(&H00000000&, &H00069600&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 433", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAB4764&, &H54B62445&), _
+        SP_FromWords(&H00000000&, &H00000174&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 434", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE24018&, &HEBB74C2E&), _
+        SP_FromWords(&H0000A689&, &HC6CF07B4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 435", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F538476&, &H51040488&), _
+        SP_FromWords(&H00000000&, &H2F9DC348&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 436", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F96D104&, &H22A0DE7A&), _
+        SP_FromWords(&H00000041&, &H12EBB688&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 437", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F91CBF9&, &H005B4C44&), _
+        SP_FromWords(&H00000027&, &H9732DC9C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 438", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FD50BFB&, &H45B088E9&), _
+        SP_FromWords(&H0000375E&, &HF91FB2AC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 439", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E7B79A3&, &HBF9C82B3&), _
+        SP_FromWords(&H00000000&, &H00000006&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk22()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk22: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 440", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E8ADBAC&, &H0A7F95A8&), _
+        SP_FromWords(&H00000000&, &H00000017&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 441", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E5C3D09&, &HB1BB763A&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 442", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EFF1E75&, &H58954AF0&), _
+        SP_FromWords(&H00000000&, &H000790C8&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 443", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F218E71&, &H0DF31BD0&), _
+        SP_FromWords(&H00000000&, &H009A1D23&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 444", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F3A689E&, &H406A189E&), _
+        SP_FromWords(&H00000000&, &H0572D5CC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 445", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA1341C&, &HFC2C00DE&), _
+        SP_FromWords(&H00000000&, &H00000094&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 446", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F70F513&, &H4515CF92&), _
+        SP_FromWords(&H00000002&, &H3F1A0D0D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 447", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA1BA84&, &HBE260433&), _
+        SP_FromWords(&H00000000&, &H0000009D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 448", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F3691DA&, &HE3EF10D8&), _
+        SP_FromWords(&H00000000&, &H03FAC972&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 449", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FC10EEC&, &HBE1C4CF9&), _
+        SP_FromWords(&H00000917&, &HE27FFBE3&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 450", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FAF79E2&, &HEC8DBFBA&), _
+        SP_FromWords(&H000001EF&, &H5F7ECB8C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 451", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E567B3B&, &H9DC26BD6&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 452", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FB8B18D&, &H02B79C14&), _
+        SP_FromWords(&H000004C3&, &H8B299BB6&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 453", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F8086BF&, &H4F519168&), _
+        SP_FromWords(&H00000008&, &H88F6B602&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 454", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE9E0BA&, &HE5E94CA0&), _
+        SP_FromWords(&H00014ED4&, &HE4412E11&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 455", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F4C4D7C&, &H96E0121E&), _
+        SP_FromWords(&H00000000&, &H190855AA&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 456", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE329B4&, &HA18B4182&), _
+        SP_FromWords(&H0000B79B&, &HCDAAEEF3&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 457", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1ECC51CF&, &H610A1A4F&), _
+        SP_FromWords(&H00000000&, &H00001910&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 458", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2204DA&, &HAEBD5AC4&), _
+        SP_FromWords(&H00000000&, &H00A2576C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 459", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F1C4583&, &HDF1220A8&), _
+        SP_FromWords(&H00000000&, &H0063E8F7&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk23()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk23: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 460", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E7607D4&, &H61C67764&), _
+        SP_FromWords(&H00000000&, &H00000004&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 461", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FAF0213&, &H4DEE8989&), _
+        SP_FromWords(&H000001E0&, &HC0589739&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 462", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE8D9A7&, &H0EC0639C&), _
+        SP_FromWords(&H000134C4&, &H2FB40C8B&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 463", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EE4374E&, &H21C678C5&), _
+        SP_FromWords(&H00000000&, &H0000CC58&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 464", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EF30B38&, &H7F5579EE&), _
+        SP_FromWords(&H00000000&, &H0002D556&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 465", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FA52AB6&, &H9CDFC678&), _
+        SP_FromWords(&H000000E0&, &H048B153A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 466", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E969BD4&, &H06EDA40B&), _
+        SP_FromWords(&H00000000&, &H00000040&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 467", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F116484&, &HD43D9395&), _
+        SP_FromWords(&H00000000&, &H0025D024&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 468", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F9BA10D&, &HA56982B8&), _
+        SP_FromWords(&H0000005F&, &H6BC661E1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 469", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2C4CCE&, &H184A7B86&), _
+        SP_FromWords(&H00000000&, &H01907210&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 470", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E93B231&, &H26612AB1&), _
+        SP_FromWords(&H00000000&, &H00000030&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 471", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F4522A4&, &H64785670&), _
+        SP_FromWords(&H00000000&, &H0DF59D44&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 472", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FEF0DCE&, &H482A1524&), _
+        SP_FromWords(&H0001E22C&, &H5A09DECE&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 473", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F36B6E8&, &HF90C320F&), _
+        SP_FromWords(&H00000000&, &H0407E576&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 474", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E5F4063&, &H9A619F80&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 475", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F721E4C&, &H14B27886&), _
+        SP_FromWords(&H00000002&, &H908C91A9&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 476", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F5FB33A&, &H46875ADF&), _
+        SP_FromWords(&H00000000&, &H7D9CB2F4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 477", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FADE818&, &HE0B75D6E&), _
+        SP_FromWords(&H000001BF&, &H340801A1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 478", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F37E405&, &HA08AA35A&), _
+        SP_FromWords(&H00000000&, &H0475883A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 479", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E77B8D1&, &H72F99DFA&), _
+        SP_FromWords(&H00000000&, &H00000004&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk24()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk24: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 480", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE6DC18&, &H6ECE7843&), _
+        SP_FromWords(&H00010548&, &HB6862240&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 481", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EFDDF0F&, &HAD826E55&), _
+        SP_FromWords(&H00000000&, &H0006F898&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 482", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F634D1A&, &HC8CD8B94&), _
+        SP_FromWords(&H00000000&, &HBA449977&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 483", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E65F7BB&, &H9C5B8ADB&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 484", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2A288F&, &HE9216662&), _
+        SP_FromWords(&H00000000&, &H015621D4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 485", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E558010&, &HFE98C924&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 486", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E7E4872&, &HBF1DDC34&), _
+        SP_FromWords(&H00000000&, &H00000007&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 487", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F55BC68&, &H44663585&), _
+        SP_FromWords(&H00000000&, &H3B0E7891&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 488", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EE94796&, &H53117741&), _
+        SP_FromWords(&H00000000&, &H00013F88&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 489", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F554CF9&, &H775E8A0A&), _
+        SP_FromWords(&H00000000&, &H38B70255&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 490", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F8EB02C&, &HCC1ECF20&), _
+        SP_FromWords(&H0000001D&, &H6E1DEBBE&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 491", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EF2FFBD&, &HC20A900E&), _
+        SP_FromWords(&H00000000&, &H0002D1EC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 492", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E70E90F&, &H829050B9&), _
+        SP_FromWords(&H00000000&, &H00000002&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 493", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F113570&, &H46A51D39&), _
+        SP_FromWords(&H00000000&, &H00250482&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 494", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E5A3B89&, &H0ED07D8E&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 495", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE84AAA&, &H55ECD008&), _
+        SP_FromWords(&H0001270A&, &HDB83B513&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 496", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F8A46C3&, &H44494F42&), _
+        SP_FromWords(&H00000015&, &H9399C9E9&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 497", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FDEC4F1&, &H01FB1FB6&), _
+        SP_FromWords(&H00007657&, &HFFCC9916&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 498", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EBA1050&, &HBD4FAFA6&), _
+        SP_FromWords(&H00000000&, &H0000054F&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 499", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E60E81E&, &HE01C53F6&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk25()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk25: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 500", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EE9A7A6&, &H1A36B1DC&), _
+        SP_FromWords(&H00000000&, &H00014916&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 501", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FB90D03&, &H9A51B6B0&), _
+        SP_FromWords(&H000004E7&, &H16BB035E&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 502", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2A2B04&, &HD819939D&), _
+        SP_FromWords(&H00000000&, &H0156621B&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 503", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F4D7579&, &HC05B04A1&), _
+        SP_FromWords(&H00000000&, &H1B1E9BF1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 504", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EDDB54D&, &HE38181FF&), _
+        SP_FromWords(&H00000000&, &H00006E53&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 505", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FDE835E&, &H431BACB9&), _
+        SP_FromWords(&H00007461&, &HB02ABC05&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 506", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E8B22A4&, &HCDDF1BA0&), _
+        SP_FromWords(&H00000000&, &H00000017&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 507", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FEB5756&, &HEB621342&), _
+        SP_FromWords(&H000175C5&, &H10EC17DC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 508", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E6048E3&, &H85C076CC&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 509", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F4B5CEA&, &H3CF2A074&), _
+        SP_FromWords(&H00000000&, &H1765D910&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 510", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E7FA8AD&, &H4578D660&), _
+        SP_FromWords(&H00000000&, &H00000008&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 511", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FC4226D&, &H3C38575A&), _
+        SP_FromWords(&H00000CAB&, &H2D94DB48&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 512", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F8CA2F5&, &H6D8EDAFF&), _
+        SP_FromWords(&H00000019&, &HA06B5C0A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 513", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2843C0&, &HDB20900B&), _
+        SP_FromWords(&H00000000&, &H0126630C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 514", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EFD799E&, &HB271B1D6&), _
+        SP_FromWords(&H00000000&, &H0006C98F&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 515", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E5FA536&, &H3F1E3B80&), _
+        SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 516", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F5F1F18&, &HB4547C0E&), _
+        SP_FromWords(&H00000000&, &H79117855&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 517", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F10657F&, &HE557C2F0&), _
+        SP_FromWords(&H00000000&, &H00219B07&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 518", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FDB600D&, &H34B1AC82&), _
+        SP_FromWords(&H00005DAC&, &HDA60B5C1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 519", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1ECFE50D&, &H7E427F4B&), _
+        SP_FromWords(&H00000000&, &H00001FCA&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk26()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk26: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 520", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F7A9C6B&, &H1D583220&), _
+        SP_FromWords(&H00000005&, &H884AA95D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 521", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FB3D1AC&, &HB513F1C9&), _
+        SP_FromWords(&H00000311&, &H96BCAA49&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 522", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F2D18C9&, &H273CB632&), _
+        SP_FromWords(&H00000000&, &H01A74FFD&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 523", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F370969&, &H905BA3F4&), _
+        SP_FromWords(&H00000000&, &H042562A1&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 524", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F70E853&, &H2933CE0A&), _
+        SP_FromWords(&H00000002&, &H3BBA77F8&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 525", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F7FBC2B&, &H26362820&), _
+        SP_FromWords(&H00000007&, &HDE398551&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 526", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1ED2A96A&, &H23B1A164&), _
+        SP_FromWords(&H00000000&, &H00002B88&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 527", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FB04CC3&, &H780EF586&), _
+        SP_FromWords(&H00000213&, &H5EE74CCF&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 528", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F93AA1B&, &H73365304&), _
+        SP_FromWords(&H00000030&, &H56237241&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 529", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EFE7552&, &H5D905C52&), _
+        SP_FromWords(&H00000000&, &H00073F6A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 530", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FB0FACF&, &HE17BD690&), _
+        SP_FromWords(&H00000240&, &H9F6DB95E&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 531", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EEA92AA&, &H86CFEF1B&), _
+        SP_FromWords(&H00000000&, &H0001610F&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 532", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FE593B9&, &HEA678BF6&), _
+        SP_FromWords(&H0000E8C8&, &HDFBF9A41&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 533", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FD712EA&, &HB3EF3E84&), _
+        SP_FromWords(&H0000428C&, &HF245AF0A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 534", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FB97DD2&, &H76597BC8&), _
+        SP_FromWords(&H00000513&, &HA1E4A428&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 535", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E6A92D2&, &H931BB1AC&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 536", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FAB0A30&, &H24D12002&), _
+        SP_FromWords(&H0000016D&, &H9347C805&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 537", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F7D9FD4&, &H560EB796&), _
+        SP_FromWords(&H00000006&, &HDB33C9E5&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 538", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FA511CE&, &H4B8DF5C8&), _
+        SP_FromWords(&H000000DD&, &HF68AB8C8&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 539", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1FA93B39&, &H7FD4931C&), _
+        SP_FromWords(&H0000013E&, &H4F7742AD&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk27()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk27: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 540", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F47BC70&, &H1EBC380E&), _
+        SP_FromWords(&H00000000&, &H119B36D3&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 541", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1F36EAFF&, &H63D1BE96&), _
+        SP_FromWords(&H00000000&, &H041A773A&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 542", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E77FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000004&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 543", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E780000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000004&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 544", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E780000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000005&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 545", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E83FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H0000000C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 546", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E840000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H0000000C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 547", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E840000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H0000000D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 548", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E8BFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000018&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 549", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E8C0000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000018&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 550", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E8C0000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000019&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 551", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E91FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000028&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 552", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E920000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000028&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 553", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E920000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000029&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 554", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E95FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H0000003C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 555", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E960000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H0000003C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 556", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E960000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H0000003D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 557", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E99FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000054&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 558", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E9A0000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000054&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 559", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E9A0000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000055&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk28()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk28: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 560", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E9DFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000070&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 561", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E9E0000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000070&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 562", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1E9E0000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000071&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 563", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA0FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000090&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 564", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA10000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000090&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 565", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA10000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000091&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 566", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA2FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H000000B4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 567", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA30000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H000000B4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 568", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA30000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H000000B5&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 569", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA4FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H000000DC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 570", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA50000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H000000DC&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 571", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA50000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H000000DD&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 572", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA6FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000108&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 573", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA70000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000108&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 574", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA70000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000109&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 575", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA8FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H00000138&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 576", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA90000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H00000138&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 577", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EA90000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000139&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 578", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAAFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H0000016C&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 579", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAB0000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H0000016C&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Chunk29()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Chunk29: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    EG_Case "EG 580", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAB0000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H0000016D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 581", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EACFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H000001A4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 582", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAD0000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H000001A4&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 583", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAD0000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H000001A5&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 584", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAEFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H00000000&, &H000001E0&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 585", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAF0000&, &H00000000&), _
+        SP_FromWords(&H00000000&, &H000001E0&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Case "EG 586", SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H1EAF0000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H000001E1&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ExtendedGamma_Fidelity()
+'==============================================================================
+' PURPOSE
+'   Test_ExtendedGamma_Fidelity: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Test_ExtendedGamma_Chunk0
+    Test_ExtendedGamma_Chunk1
+    Test_ExtendedGamma_Chunk2
+    Test_ExtendedGamma_Chunk3
+    Test_ExtendedGamma_Chunk4
+    Test_ExtendedGamma_Chunk5
+    Test_ExtendedGamma_Chunk6
+    Test_ExtendedGamma_Chunk7
+    Test_ExtendedGamma_Chunk8
+    Test_ExtendedGamma_Chunk9
+    Test_ExtendedGamma_Chunk10
+    Test_ExtendedGamma_Chunk11
+    Test_ExtendedGamma_Chunk12
+    Test_ExtendedGamma_Chunk13
+    Test_ExtendedGamma_Chunk14
+    Test_ExtendedGamma_Chunk15
+    Test_ExtendedGamma_Chunk16
+    Test_ExtendedGamma_Chunk17
+    Test_ExtendedGamma_Chunk18
+    Test_ExtendedGamma_Chunk19
+    Test_ExtendedGamma_Chunk20
+    Test_ExtendedGamma_Chunk21
+    Test_ExtendedGamma_Chunk22
+    Test_ExtendedGamma_Chunk23
+    Test_ExtendedGamma_Chunk24
+    Test_ExtendedGamma_Chunk25
+    Test_ExtendedGamma_Chunk26
+    Test_ExtendedGamma_Chunk27
+    Test_ExtendedGamma_Chunk28
+    Test_ExtendedGamma_Chunk29
+    EG_Invalid SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Invalid SP_FromWords(&HBFF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Invalid SP_FromWords(&H40600000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    EG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40900000&, &H00000001&)
+    EG_Invalid SP_FromWords(&H7FF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H7FF80000&, &H00000000&)
+    EG_Invalid SP_FromWords(&H7FF80000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    EG_RoutingControl
+End Sub
+' END generated extended-Gamma study
+
 Private Function PV2_H(ByVal V As Variant) As Double
 '==============================================================================
 ' PURPOSE
@@ -14128,6 +16057,7 @@ Private Sub Test_CN_GammaSurvival()
     Test_ScaledProduct_Fidelity
     Test_ScaledDD_Fidelity
     Test_ScaledGamma_Fidelity
+    Test_ExtendedGamma_Fidelity
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
