@@ -53,7 +53,9 @@ def main():
         xs = [literal(float.fromhex(p['x_hex'])) for p in triple]
         for fn, op in [('Cumulative', '<='), ('Survival', '>=')]:
             for side in range(2):
-                lines += [f'    AssertTrue "B6 X seam {i:02d} {fn} {side}", _',
+                lines += [f'    AssertTrue "B6 X seam {i:02d} {fn} {side}" & _',
+                          f'        " left=" & Format$(CDbl(K_STATS_Gamma_{fn}({xs[side]}, {a}, 1#)), "0.00000000000000000") & _',
+                          f'        " right=" & Format$(CDbl(K_STATS_Gamma_{fn}({xs[side+1]}, {a}, 1#)), "0.00000000000000000"), _',
                           f'        (CDbl(K_STATS_Gamma_{fn}({xs[side]}, {a}, 1#)) {op} _',
                           f'         CDbl(K_STATS_Gamma_{fn}({xs[side+1]}, {a}, 1#)))']
     lines += ['End Sub', '', '']
