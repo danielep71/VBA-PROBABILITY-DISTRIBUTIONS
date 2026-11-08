@@ -383,6 +383,25 @@ def case_helper_record_missing_field(tmp):
     return helper(tmp)
 
 
+def case_helper_mixed_export(tmp, corrupt_grid=False, drift_source=False):
+    """A genuine export changes main but reproduces the holdout exactly."""
+    write(tmp, MAIN_G, "function,arg1\nA,1\nB,4\n")
+    write(tmp, G.EXPORT_RECORD, export_record(tmp, [MAIN_G, HOLD_G]))
+    if corrupt_grid:
+        write(tmp, MAIN_G, "function,arg1\nA,1\nB,999\n")
+    if drift_source:
+        write(tmp, "src/A.bas", "changed after export\n")
+    return W._grid_unchanged_since_head(tmp, os.path.join(tmp, HOLD_G))
+
+
+check(with_repo(case_helper_mixed_export)[0] is False,
+      "an unchanged holdout must accept a validated mixed-grid export snapshot")
+check(with_repo(lambda tmp: case_helper_mixed_export(tmp, corrupt_grid=True))[0] is True,
+      "a changed companion grid must still match the export record")
+check(with_repo(lambda tmp: case_helper_mixed_export(tmp, drift_source=True))[0] is True,
+      "source drift after a mixed-grid export must be rejected")
+
+
 def case_helper_crlf_only(tmp):
     """Line endings changed, content identical.
 

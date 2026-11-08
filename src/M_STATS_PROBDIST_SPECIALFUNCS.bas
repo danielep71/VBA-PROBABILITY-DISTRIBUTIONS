@@ -2309,6 +2309,104 @@ Public Function PROB_TryGammaSeriesP( _
 End Function
 
 
+Private Function PROB_GammaSmallLogGamma1p(ByVal A As Double) As Double
+'
+'==============================================================================
+' PROB_GammaSmallLogGamma1p
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Evaluates Log(Gamma(1+A)) with exact endpoint zeros for the small-shape Q path.
+' PRECONDITION
+'   0 <= A <= 1. The caller establishes this interval.
+' METHOD
+'   Degree-32 Taylor polynomial at 0.5 for Log(Gamma(1+A))/(A*(A-1)).
+'   Exact-arithmetic truncation is bounded by 1/(8*3^32); this is not a
+'   bound on the full rounded survival computation. Coefficients were generated
+'   by independent 100/140-digit constructions; see issue #26, candidate B6.
+' ERROR POLICY
+'   No independent failure channel; finite polynomial on the stated interval.
+' CALLED FROM
+'   PROB_TryGammaContinuedFractionQ
+' UPDATED
+'   2026-11-08 - #26: B6 candidate, pending exact-source Excel validation.
+'==============================================================================
+    Dim Acc As Double
+    Dim U As Double
+    Dim Product As Double
+
+    'Each coefficient is a two-part literal preserving the frozen binary64 value.
+    Const C0 As Double = 4.83128950540981E-01 + (-1.11022302462516E-16)
+    Const C1 As Double = -1.45959895914306E-01 + (-8.32667268468867E-17)
+    Const C2 As Double = 6.29114010745649E-02 + (4.16333634234434E-17)
+    Const C3 As Double = -3.13084875010110E-02 + (0.00000000000000E+00)
+    Const C4 As Double = 1.67970986311869E-02 + (-2.08166817117217E-17)
+    Const C5 As Double = -9.42562244846982E-03 + (-1.73472347597681E-18)
+    Const C6 As Double = 5.44645784455033E-03 + (-3.46944695195361E-18)
+    Const C7 As Double = -3.21207407719414E-03 + (3.03576608295941E-18)
+    Const C8 As Double = 1.92291614029804E-03 + (-3.68628738645072E-18)
+    Const C9 As Double = -1.16441447410474E-03 + (2.16840434497101E-19)
+    Const C10 As Double = 7.11522258031626E-04 + (-3.25260651745651E-19)
+    Const C11 As Double = -4.37995120948431E-04 + (5.42101086242752E-20)
+    Const C12 As Double = 2.71277099973908E-04 + (3.79470760369927E-19)
+    Const C13 As Double = -1.68894325207693E-04 + (1.89735380184963E-19)
+    Const C14 As Double = 1.05623637963857E-04 + (1.35525271560688E-20)
+    Const C15 As Double = -6.63135482599680E-05 + (1.35525271560688E-20)
+    Const C16 As Double = 4.17769653553246E-05 + (-4.74338450462408E-20)
+    Const C17 As Double = -2.63996995905211E-05 + (0.00000000000000E+00)
+    Const C18 As Double = 1.67282243428494E-05 + (4.40457132572236E-20)
+    Const C19 As Double = -1.06260564852470E-05 + (-3.04931861011548E-20)
+    Const C20 As Double = 6.76496373796090E-06 + (-5.08219768352580E-21)
+    Const C21 As Double = -4.31562117239537E-06 + (2.54109884176290E-21)
+    Const C22 As Double = 2.75822905390482E-06 + (0.00000000000000E+00)
+    Const C23 As Double = -1.76587736954239E-06 + (6.35274710440725E-22)
+    Const C24 As Double = 1.13233727790091E-06 + (-4.02340649945793E-21)
+    Const C25 As Double = -7.27150972981638E-07 + (-3.17637355220363E-22)
+    Const C26 As Double = 4.67585459593438E-07 + (1.05879118406788E-22)
+    Const C27 As Double = -3.01053697400556E-07 + (-5.29395592033938E-23)
+    Const C28 As Double = 1.94060256838287E-07 + (-2.64697796016969E-23)
+    Const C29 As Double = -1.25229209086299E-07 + (-2.11758236813575E-22)
+    Const C30 As Double = 8.08948668443836E-08 + (1.32348898008484E-23)
+    Const C31 As Double = -5.23064498832708E-08 + (3.97046694025453E-23)
+    Const C32 As Double = 3.38519414938090E-08 + (3.97046694025453E-23)
+
+    U = A - 0.5
+    Acc = C32
+    Acc = Acc * U + C31
+    Acc = Acc * U + C30
+    Acc = Acc * U + C29
+    Acc = Acc * U + C28
+    Acc = Acc * U + C27
+    Acc = Acc * U + C26
+    Acc = Acc * U + C25
+    Acc = Acc * U + C24
+    Acc = Acc * U + C23
+    Acc = Acc * U + C22
+    Acc = Acc * U + C21
+    Acc = Acc * U + C20
+    Acc = Acc * U + C19
+    Acc = Acc * U + C18
+    Acc = Acc * U + C17
+    Acc = Acc * U + C16
+    Acc = Acc * U + C15
+    Acc = Acc * U + C14
+    Acc = Acc * U + C13
+    Acc = Acc * U + C12
+    Acc = Acc * U + C11
+    Acc = Acc * U + C10
+    Acc = Acc * U + C9
+    Acc = Acc * U + C8
+    Acc = Acc * U + C7
+    Acc = Acc * U + C6
+    Acc = Acc * U + C5
+    Acc = Acc * U + C4
+    Acc = Acc * U + C3
+    Acc = Acc * U + C2
+    Acc = Acc * U + C1
+    Acc = Acc * U + C0
+    Product = A * (A - 1#)
+    PROB_GammaSmallLogGamma1p = Product * Acc
+End Function
+
 Public Function PROB_TryGammaContinuedFractionQ( _
     ByVal A As Double, _
     ByVal X As Double, _
@@ -2329,7 +2427,11 @@ Public Function PROB_TryGammaContinuedFractionQ( _
 ' RETURNS
 '   Boolean
 '     TRUE  => Result holds Q(A, X).
-'     FALSE => PROB_GAMMA_MAX_ITER was exhausted without meeting PROB_NUM_EPS.
+'     FALSE => Iteration cap or exponential failure; Result is not contractual.
+' BEHAVIOR
+'   For 0 < A <= 1, stop at exact 2^-52 and evaluate the same finite fraction
+'   backward with the B6 split prefactor. For A > 1, retain PROB_NUM_EPS and
+'   the existing forward recurrence and prefactor.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2343,11 +2445,19 @@ Public Function PROB_TryGammaContinuedFractionQ( _
     Dim Del                 As Double          'Multiplicative increment
     Dim Factor              As Double          'Exp(-X + A*Log(X) - LogGamma(A))
     Dim IterIdx             As Long            'Iteration index
+    Dim BackIdx             As Long            'Backward finite-fraction index
+    Dim Tail                As Double          'Backward accumulator
+    Dim Epsilon             As Double          'Route-specific stop
+    Dim LogGamma1p          As Double          'Small-shape log gamma
+    Dim Exponent            As Double          'Unscaled exponential argument
+    Dim Correction          As Double          'Positive correction factor
 
 '------------------------------------------------------------------------------
 ' INITIALIZE
 '------------------------------------------------------------------------------
     'Initialize the continued fraction
+        Epsilon = PROB_NUM_EPS
+        If A <= 1# Then Epsilon = 2# ^ (-52)
         B = X + 1# - A
 
         If Abs(B) < PROB_FPMIN Then B = PROB_FPMIN
@@ -2375,7 +2485,40 @@ Public Function PROB_TryGammaContinuedFractionQ( _
             h = h * Del
 
             'Return on convergence
-                If Abs(Del - 1#) <= PROB_NUM_EPS Then
+                If Abs(Del - 1#) <= Epsilon Then
+                    'B6 re-evaluates exactly this finite fraction, without extra terms.
+                    If A <= 1# Then
+                        Tail = 0#
+                        For BackIdx = IterIdx To 1 Step -1
+                            Tail = (-CDbl(BackIdx) * (CDbl(BackIdx) - A)) / _
+                                (X + 1# - A + 2# * CDbl(BackIdx) + Tail)
+                        Next BackIdx
+                        h = 1# / (X + 1# - A + Tail)
+
+                        'Q(A,X) <= Exp(-X) for A<=1; exponential underflow is safe.
+                        If Not PROB_TryExp(-X, Factor) Then
+                            FailMsg = "Small-shape gamma exponential failed"
+                            Exit Function
+                        End If
+                        If Factor = 0# Then
+                            Result = 0#
+                            PROB_TryGammaContinuedFractionQ = True
+                            Exit Function
+                        End If
+
+                        'Preserve the tested Double stores and split exponential.
+                        LogGamma1p = PROB_GammaSmallLogGamma1p(A)
+                        Exponent = A * Log(X) - LogGamma1p
+                        If Not PROB_TryExp(Exponent, Correction) Then
+                            FailMsg = "Small-shape gamma correction overflowed"
+                            Exit Function
+                        End If
+                        Factor = A * Factor
+                        Factor = Factor * Correction
+                        Result = Factor * h
+                        PROB_TryGammaContinuedFractionQ = True
+                        Exit Function
+                    End If
                     'Cancellation-free prefactor (CR-P1-02)
                     If Not PROB_TryGammaPrefactor(A, X, Factor, FailMsg) Then
                         Exit Function

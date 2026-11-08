@@ -5061,6 +5061,47 @@ Private Sub Test_CN_GammaSurvival()
 '==============================================================================
 '
     Debug.Print "-- Gamma survival"
+
+    'Normalize before asserting: this must test relative, not tiny absolute error.
+    AssertClose "gamma B6 normalized shape 1e-100", _
+        CDbl(K_STATS_Gamma_Survival(2#, 1.00000000000000E-100, 1#)) / _
+        (4.89005107080611E-102 + (1.58621364832228E-117)), 1#, 5E-15
+    AssertClose "chisquare B6 normalized shape 1e-100", _
+        CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 1.00000000000000E-100)) / _
+        (4.89005107080611E-102 + (1.58621364832228E-117)), 1#, 5E-15
+
+    'Normalize before asserting: this must test relative, not tiny absolute error.
+    AssertClose "gamma B6 normalized shape 1e-06", _
+        CDbl(K_STATS_Gamma_Survival(2#, 1.00000000000000E-06, 1#)) / _
+        (4.89005870943097E-08 + (3.97046694025453E-23)), 1#, 5E-15
+    AssertClose "chisquare B6 normalized shape 1e-06", _
+        CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 1.00000000000000E-06)) / _
+        (4.89005870943097E-08 + (3.97046694025453E-23)), 1#, 5E-15
+
+    'Normalize before asserting: this must test relative, not tiny absolute error.
+    AssertClose "gamma B6 normalized shape 0.25", _
+        CDbl(K_STATS_Gamma_Survival(2#, 2.50000000000000E-01, 1#)) / _
+        (1.72860118595168E-02 + (-2.42861286636753E-17)), 1#, 5E-15
+    AssertClose "chisquare B6 normalized shape 0.25", _
+        CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 2.50000000000000E-01)) / _
+        (1.72860118595168E-02 + (-2.42861286636753E-17)), 1#, 5E-15
+
+    'Normalize before asserting: this must test relative, not tiny absolute error.
+    AssertClose "gamma B6 normalized shape 0.5", _
+        CDbl(K_STATS_Gamma_Survival(2#, 5.00000000000000E-01, 1#)) / _
+        (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+    AssertClose "chisquare B6 normalized shape 0.5", _
+        CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 5.00000000000000E-01)) / _
+        (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+
+    'Normalize before asserting: this must test relative, not tiny absolute error.
+    AssertClose "gamma B6 normalized shape 1.0", _
+        CDbl(K_STATS_Gamma_Survival(2#, 1.00000000000000E+00, 1#)) / _
+        (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+    AssertClose "chisquare B6 normalized shape 1.0", _
+        CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 1.00000000000000E+00)) / _
+        (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+
     AssertClose "gamma sf(3,2.5,1.5)", K_STATS_Gamma_Survival(3#, 2.5, 1.5), _
         0.54941595135278, TOL_ABS_TIGHT
     AssertClose "gamma sf(0,2.5,1.5)=1", K_STATS_Gamma_Survival(0#, 2.5, 1.5), 1#, 0#
