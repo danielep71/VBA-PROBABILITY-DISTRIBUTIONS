@@ -36,6 +36,7 @@ commands = (
     ("tchi_large_df/test_tchi_merge.py",),
     ("gamma_cf_study/coverage/test_precision_probe.py",),
     ("gamma_cf_study/coverage/test_precision_v2.py",),
+    ("gamma_cf_study/coverage/test_research_checks.py",),
     ("gamma_cf_study/replay_baseline.py", "isolation"),
     ("gamma_cf_study/replay_baseline.py", "candidate"),
     ("gamma_series_small_shape/test_gamma_series_small_shape.py",),

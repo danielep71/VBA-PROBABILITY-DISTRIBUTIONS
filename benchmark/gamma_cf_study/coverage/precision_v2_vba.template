@@ -1,0 +1,256 @@
+Private Function PV2_H(ByVal V As Variant) As Double
+    If IsArray(V) Then
+        PV2_H = CDbl(V(0))
+    Else
+        PV2_H = CDbl(V)
+    End If
+End Function
+
+Private Function PV2_L(ByVal V As Variant) As Double
+    If IsArray(V) Then PV2_L = CDbl(V(1))
+End Function
+
+Private Function PV2_Value(ByVal V As Variant) As Double
+    Dim H As Double, L As Double
+    H = PV2_H(V)
+    L = PV2_L(V)
+    PV2_Value = H + L
+End Function
+
+Private Function PV2_Sum(ByVal A As Double, ByVal B As Double) As Variant
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    PV2_Sum = Array(S, AR + BR)
+End Function
+
+Private Function PV2_Add(ByVal A As Variant, ByVal B As Variant) As Variant
+    Dim U As Variant, V As Variant, S As Double, E As Double, F As Double
+    U = PV2_Sum(PV2_H(A), PV2_H(B))
+    V = PV2_Sum(PV2_L(A), PV2_L(B))
+    S = U(0)
+    E = U(1)
+    E = E + CDbl(V(0))
+    F = V(1)
+    U = PV2_Sum(S, E)
+    S = U(0)
+    E = U(1)
+    E = E + F
+    PV2_Add = PV2_Sum(S, E)
+End Function
+
+Private Function PV2_Neg(ByVal A As Variant) As Variant
+    PV2_Neg = Array(-PV2_H(A), -PV2_L(A))
+End Function
+
+Private Function PV2_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
+    PV2_Sub = PV2_Add(A, PV2_Neg(B))
+End Function
+
+Private Function PV2_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
+    Dim AH As Double, AL As Double, BH As Double, BL As Double
+    Dim CA As Double, CB As Double, HA As Double, HB As Double
+    Dim LA As Double, LB As Double, P As Double, E As Double, T As Double
+    AH = PV2_H(A): AL = PV2_L(A): BH = PV2_H(B): BL = PV2_L(B)
+    P = AH * BH
+    CA = 134217729# * AH
+    CB = 134217729# * BH
+    T = CA - AH
+    HA = CA - T
+    T = CB - BH
+    HB = CB - T
+    LA = AH - HA
+    LB = BH - HB
+    T = HA * HB
+    E = T - P
+    T = HA * LB
+    E = E + T
+    T = LA * HB
+    E = E + T
+    T = LA * LB
+    E = E + T
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    PV2_Mul = PV2_Sum(P, E)
+End Function
+
+Private Function PV2_Div(ByVal A As Variant, ByVal B As Variant) As Variant
+    Dim Q As Variant, R As Variant, T As Double, J As Long
+    T = PV2_H(A) / PV2_H(B)
+    Q = Array(T, 0#)
+    For J = 1 To 2
+        R = PV2_Sub(A, PV2_Mul(Q, B))
+        T = PV2_H(R) / PV2_H(B)
+        Q = PV2_Add(Q, T)
+    Next J
+    PV2_Div = Q
+End Function
+
+Private Function PV2_Ln2() As Variant
+    PV2_Ln2 = Array(@LN2HI@, @LN2LO@)
+End Function
+
+Private Function PV2_Log(ByVal X As Double) As Variant
+    Dim F As Double, E As Long, N As Long
+    Dim Z As Variant, S As Variant, T As Variant, D As Variant, Z2 As Variant
+    If X = 1# Then
+        PV2_Log = Array(0#, 0#)
+        Exit Function
+    End If
+    If X <= 0# Then Err.Raise 5, , "PV2 Log domain"
+    F = X
+    Do While F < 0.5
+        F = F * 2#
+        E = E - 1
+    Loop
+    Do While F >= 1#
+        F = F / 2#
+        E = E + 1
+    Loop
+    Z = PV2_Div(PV2_Sub(F, 1#), PV2_Add(F, 1#))
+    Z2 = PV2_Mul(Z, Z)
+    T = Z: S = Z
+    For N = 3 To 1000 Step 2
+        T = PV2_Mul(T, Z2)
+        D = PV2_Div(T, CDbl(N))
+        S = PV2_Add(S, D)
+        If Abs(PV2_H(D)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            PV2_Log = PV2_Add(PV2_Mul(S, 2#), PV2_Mul(PV2_Ln2(), CDbl(E)))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Log cap"
+End Function
+
+Private Function PV2_Log1p(ByVal Z As Variant) As Variant
+    Dim T As Variant, S As Variant, D As Variant, Z2 As Variant, N As Long
+    If PV2_Value(Z) < -0.8 Or PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Log1p domain"
+    T = PV2_Div(Z, PV2_Add(Z, 2#))
+    Z2 = PV2_Mul(T, T)
+    S = T
+    For N = 3 To 2000 Step 2
+        T = PV2_Mul(T, Z2)
+        D = PV2_Div(T, CDbl(N))
+        S = PV2_Add(S, D)
+        If Abs(PV2_H(D)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            PV2_Log1p = PV2_Mul(S, 2#)
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Log1p cap"
+End Function
+
+Private Function PV2_Expm1(ByVal Z As Variant) As Variant
+    Dim T As Variant, S As Variant, N As Long
+    If PV2_Value(Z) < -8# Or PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Expm1 domain"
+    T = Z: S = Z
+    For N = 2 To 1000
+        T = PV2_Div(PV2_Mul(T, Z), CDbl(N))
+        S = PV2_Add(S, T)
+        If Abs(PV2_H(T)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            PV2_Expm1 = S
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Expm1 cap"
+End Function
+
+Private Function PV2_Exp(ByVal Z As Variant) As Variant
+    Dim R As Variant, T As Variant, S As Variant, N As Long, K As Long
+    Dim Ratio As Double, Scale As Double, H As Double, L As Double
+    If PV2_Value(Z) < -64# Or PV2_Value(Z) > 8# Then Err.Raise 5, , "PV2 Exp domain"
+    Ratio = PV2_H(Z) / PV2_H(PV2_Ln2())
+    N = CLng(Ratio)
+    R = PV2_Sub(Z, PV2_Mul(PV2_Ln2(), CDbl(N)))
+    T = Array(1#, 0#): S = T
+    For K = 1 To 1000
+        T = PV2_Div(PV2_Mul(T, R), CDbl(K))
+        S = PV2_Add(S, T)
+        If Abs(PV2_H(T)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            Scale = 2# ^ N
+            H = PV2_H(S) * Scale
+            L = PV2_L(S) * Scale
+            PV2_Exp = Array(H, L)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5, , "PV2 Exp cap"
+End Function
+
+Private Function PV2_LogGamma(ByVal A As Double) As Variant
+    Dim U As Variant, V As Variant
+    U = PV2_Sub(A, 0.5)
+@COEFFICIENTS@
+    PV2_LogGamma = PV2_Mul(PV2_Mul(A, PV2_Sub(A, 1#)), V)
+End Function
+
+Private Function PV2_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    Dim LG As Variant, T As Variant, S As Variant, D As Variant, LP As Variant
+    Dim B As Variant, C As Variant, H As Variant, AN As Variant, Delta As Variant
+    Dim Tail As Variant, E As Variant, V As Variant, N As Long, K As Long
+    On Error GoTo Failed
+    If A < 2# ^ (-400) Or A > 1# Or X < 2# ^ (-400) Then GoTo Failed
+    LG = PV2_LogGamma(A)
+    If X < A + 1# Then
+        T = Array(-X, 0#)
+        S = PV2_Div(T, PV2_Add(A, 1#))
+        For N = 2 To 1000
+            T = PV2_Div(PV2_Mul(T, -X), CDbl(N))
+            D = PV2_Div(T, PV2_Add(A, CDbl(N)))
+            S = PV2_Add(S, D)
+            If Abs(PV2_H(D)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then Exit For
+        Next N
+        If N > 1000 Then GoTo Failed
+        LP = PV2_Add(PV2_Sub(PV2_Mul(PV2_Log(X), A), LG), PV2_Log1p(PV2_Mul(S, A)))
+        If PV2_Value(LP) > 0# Then GoTo Failed
+        If PV2_Value(LP) >= -0.5 Then
+            V = PV2_Expm1(LP)
+            P = PV2_Value(PV2_Add(V, 1#))
+            Q = PV2_Value(PV2_Neg(V))
+        Else
+            V = PV2_Exp(LP)
+            P = PV2_Value(V)
+            Q = PV2_Value(PV2_Sub(1#, V))
+        End If
+    Else
+        If X > 32# Then GoTo Failed
+        B = PV2_Sub(PV2_Add(X, 1#), A)
+        C = Array(1E+300, 0#)
+        D = PV2_Div(1#, B)
+        H = D
+        For N = 1 To 100000
+            AN = PV2_Mul(CDbl(-N), PV2_Sub(CDbl(N), A))
+            B = PV2_Add(B, 2#)
+            D = PV2_Add(PV2_Mul(AN, D), B)
+            C = PV2_Add(B, PV2_Div(AN, C))
+            If Abs(PV2_H(D)) < 1E-300 Or Abs(PV2_H(C)) < 1E-300 Then GoTo Failed
+            D = PV2_Div(1#, D)
+            Delta = PV2_Mul(C, D)
+            H = PV2_Mul(H, Delta)
+            If Abs(PV2_Value(PV2_Sub(Delta, 1#))) <= 2# ^ (-100) Then Exit For
+        Next N
+        If N > 100000 Then GoTo Failed
+        Tail = Array(0#, 0#)
+        For K = N To 1 Step -1
+            B = PV2_Add(PV2_Add(PV2_Sub(PV2_Add(X, 1#), A), CDbl(2 * K)), Tail)
+            Tail = PV2_Div(PV2_Mul(CDbl(-K), PV2_Sub(CDbl(K), A)), B)
+        Next K
+        H = PV2_Div(1#, PV2_Add(PV2_Sub(PV2_Add(X, 1#), A), Tail))
+        E = PV2_Sub(PV2_Sub(PV2_Mul(PV2_Log(X), A), LG), X)
+        V = PV2_Mul(PV2_Mul(PV2_Exp(E), A), H)
+        P = PV2_Value(PV2_Sub(1#, V))
+        Q = PV2_Value(V)
+    End If
+    PV2_Pair = True
+    Exit Function
+Failed:
+    Err.Clear
+    PV2_Pair = False
+End Function

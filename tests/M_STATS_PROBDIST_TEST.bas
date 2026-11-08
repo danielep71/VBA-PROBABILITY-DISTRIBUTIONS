@@ -5036,6 +5036,2272 @@ Private Sub Test_CN_GammaCumulative()
 End Sub
 
 
+Private Function PV2_H(ByVal V As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PV2_H: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If IsArray(V) Then
+        PV2_H = CDbl(V(0))
+    Else
+        PV2_H = CDbl(V)
+    End If
+End Function
+
+Private Function PV2_L(ByVal V As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PV2_L: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    If IsArray(V) Then PV2_L = CDbl(V(1))
+End Function
+
+Private Function PV2_Value(ByVal V As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   PV2_Value: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, L As Double
+    H = PV2_H(V)
+    L = PV2_L(V)
+    PV2_Value = H + L
+End Function
+
+Private Function PV2_Sum(ByVal A As Double, ByVal B As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Sum: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    PV2_Sum = Array(S, AR + BR)
+End Function
+
+Private Function PV2_Add(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Add: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant, S As Double, E As Double, F As Double
+    U = PV2_Sum(PV2_H(A), PV2_H(B))
+    V = PV2_Sum(PV2_L(A), PV2_L(B))
+    S = U(0)
+    E = U(1)
+    E = E + CDbl(V(0))
+    F = V(1)
+    U = PV2_Sum(S, E)
+    S = U(0)
+    E = U(1)
+    E = E + F
+    PV2_Add = PV2_Sum(S, E)
+End Function
+
+Private Function PV2_Neg(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Neg: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PV2_Neg = Array(-PV2_H(A), -PV2_L(A))
+End Function
+
+Private Function PV2_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Sub: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PV2_Sub = PV2_Add(A, PV2_Neg(B))
+End Function
+
+Private Function PV2_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Mul: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AH As Double, AL As Double, BH As Double, BL As Double
+    Dim CA As Double, CB As Double, HA As Double, HB As Double
+    Dim LA As Double, LB As Double, P As Double, E As Double, T As Double
+    AH = PV2_H(A): AL = PV2_L(A): BH = PV2_H(B): BL = PV2_L(B)
+    P = AH * BH
+    CA = 134217729# * AH
+    CB = 134217729# * BH
+    T = CA - AH
+    HA = CA - T
+    T = CB - BH
+    HB = CB - T
+    LA = AH - HA
+    LB = BH - HB
+    T = HA * HB
+    E = T - P
+    T = HA * LB
+    E = E + T
+    T = LA * HB
+    E = E + T
+    T = LA * LB
+    E = E + T
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    PV2_Mul = PV2_Sum(P, E)
+End Function
+
+Private Function PV2_Div(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Div: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Q As Variant, R As Variant, T As Double, J As Long
+    T = PV2_H(A) / PV2_H(B)
+    Q = Array(T, 0#)
+    For J = 1 To 2
+        R = PV2_Sub(A, PV2_Mul(Q, B))
+        T = PV2_H(R) / PV2_H(B)
+        Q = PV2_Add(Q, T)
+    Next J
+    PV2_Div = Q
+End Function
+
+Private Function PV2_Ln2() As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Ln2: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PV2_Ln2 = Array((6.93147180559945E-01 + (3.33066907387547E-16)), (2.31904681384630E-17 + (-3.08148791101958E-33)))
+End Function
+
+Private Function PV2_Log(ByVal X As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Log: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim F As Double, E As Long, N As Long
+    Dim Z As Variant, S As Variant, T As Variant, D As Variant, Z2 As Variant
+    If X = 1# Then
+        PV2_Log = Array(0#, 0#)
+        Exit Function
+    End If
+    If X <= 0# Then Err.Raise 5, , "PV2 Log domain"
+    F = X
+    Do While F < 0.5
+        F = F * 2#
+        E = E - 1
+    Loop
+    Do While F >= 1#
+        F = F / 2#
+        E = E + 1
+    Loop
+    Z = PV2_Div(PV2_Sub(F, 1#), PV2_Add(F, 1#))
+    Z2 = PV2_Mul(Z, Z)
+    T = Z: S = Z
+    For N = 3 To 1000 Step 2
+        T = PV2_Mul(T, Z2)
+        D = PV2_Div(T, CDbl(N))
+        S = PV2_Add(S, D)
+        If Abs(PV2_H(D)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            PV2_Log = PV2_Add(PV2_Mul(S, 2#), PV2_Mul(PV2_Ln2(), CDbl(E)))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Log cap"
+End Function
+
+Private Function PV2_Log1p(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Log1p: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim T As Variant, S As Variant, D As Variant, Z2 As Variant, N As Long
+    If PV2_Value(Z) < -0.8 Or PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Log1p domain"
+    T = PV2_Div(Z, PV2_Add(Z, 2#))
+    Z2 = PV2_Mul(T, T)
+    S = T
+    For N = 3 To 2000 Step 2
+        T = PV2_Mul(T, Z2)
+        D = PV2_Div(T, CDbl(N))
+        S = PV2_Add(S, D)
+        If Abs(PV2_H(D)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            PV2_Log1p = PV2_Mul(S, 2#)
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Log1p cap"
+End Function
+
+Private Function PV2_Expm1(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Expm1: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim T As Variant, S As Variant, N As Long
+    If PV2_Value(Z) < -8# Or PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Expm1 domain"
+    T = Z: S = Z
+    For N = 2 To 1000
+        T = PV2_Div(PV2_Mul(T, Z), CDbl(N))
+        S = PV2_Add(S, T)
+        If Abs(PV2_H(T)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            PV2_Expm1 = S
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, , "PV2 Expm1 cap"
+End Function
+
+Private Function PV2_Exp(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_Exp: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim R As Variant, T As Variant, S As Variant, N As Long, K As Long
+    Dim Ratio As Double, Scale As Double, H As Double, L As Double
+    If PV2_Value(Z) < -64# Or PV2_Value(Z) > 8# Then Err.Raise 5, , "PV2 Exp domain"
+    Ratio = PV2_H(Z) / PV2_H(PV2_Ln2())
+    N = CLng(Ratio)
+    R = PV2_Sub(Z, PV2_Mul(PV2_Ln2(), CDbl(N)))
+    T = Array(1#, 0#): S = T
+    For K = 1 To 1000
+        T = PV2_Div(PV2_Mul(T, R), CDbl(K))
+        S = PV2_Add(S, T)
+        If Abs(PV2_H(T)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
+            Scale = 2# ^ N
+            H = PV2_H(S) * Scale
+            L = PV2_L(S) * Scale
+            PV2_Exp = Array(H, L)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5, , "PV2 Exp cap"
+End Function
+
+Private Function PV2_LogGamma(ByVal A As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   PV2_LogGamma: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant
+    U = PV2_Sub(A, 0.5)
+    V = Array((1.41171093978875E-15 + (-7.88860905221012E-31)), (-7.40170704349773E-32 + (1.09476442525376E-47)))
+    V = PV2_Add(PV2_Mul(V, U), Array((-2.14648089856621E-15 + (5.12759588393658E-30)), (1.13494325987459E-31 + (6.56858655152258E-47))))
+    V = PV2_Add(PV2_Mul(V, U), Array((3.26429404138876E-15 + (-2.36658271566304E-30)), (9.81769918162968E-32 + (2.18952885050753E-47))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-4.96517742317239E-15 + (-7.88860905221012E-31)), (-1.74329766137388E-31 + (2.40848173555828E-46))))
+    V = PV2_Add(PV2_Mul(V, U), Array((7.55380696239768E-15 + (1.57772181044202E-30)), (5.70152063703829E-31 + (0.00000000000000E+00))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.14943670002178E-14 + (3.62876016401665E-29)), (-3.42914161585886E-31 + (-2.62743462060903E-46))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.74942314273340E-14 + (2.52435489670724E-29)), (1.44021000372386E-30 + (4.90454462513686E-45))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-2.66316444074713E-14 + (-1.57772181044202E-29)), (-1.80731795250046E-31 + (-1.09476442525376E-46))))
+    V = PV2_Add(PV2_Mul(V, U), Array((4.05505925851729E-14 + (-2.52435489670724E-29)), (-8.49512127749938E-31 + (-1.75162308040602E-46))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-6.17583178419540E-14 + (-2.52435489670724E-29)), (-5.85786353840856E-30 + (-2.10194769648723E-45))))
+    V = PV2_Add(PV2_Mul(V, U), Array((9.40796740393935E-14 + (0.00000000000000E+00)), (-3.83880166798765E-30 + (3.50324616081204E-45))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.43351237964261E-13 + (1.00974195868290E-28)), (-4.15158968604589E-30 + (2.80259692864963E-45))))
+    V = PV2_Add(PV2_Mul(V, U), Array((2.18482043164793E-13 + (1.51461293802434E-28)), (-8.36467935207240E-31 + (-1.75162308040602E-46))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-3.33075147079755E-13 + (-5.04870979341448E-29)), (1.04717745291746E-29 + (3.50324616081204E-44))))
+    V = PV2_Add(PV2_Mul(V, U), Array((5.07907450613959E-13 + (1.00974195868290E-28)), (-2.38268087848993E-29 + (4.20389539297445E-44))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-7.74723440736884E-13 + (-5.04870979341448E-28)), (-4.48496106067019E-29 + (0.00000000000000E+00))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.18204129155139E-12 + (-3.43312265952184E-27)), (6.44550241526769E-29 + (4.48415508583941E-44))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.80404235692326E-12 + (-2.22143230910237E-27)), (-2.74136263274511E-29 + (1.68155815718978E-44))))
+    V = PV2_Add(PV2_Mul(V, U), Array((2.75418725094515E-12 + (-3.63507105125842E-27)), (2.97092004439325E-29 + (-1.12103877145985E-44))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-4.20608080662836E-12 + (-2.42338070083895E-27)), (-3.42805388259430E-28 + (2.69049305150365E-43))))
+    V = PV2_Add(PV2_Mul(V, U), Array((6.42545964487383E-12 + (1.61558713389263E-27)), (2.29374877444704E-28 + (-4.93257059442336E-43))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-9.81925490738286E-12 + (0.00000000000000E+00)), (6.98822051228334E-28 + (-1.79366203433577E-43))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.50108823940263E-11 + (4.20052654812084E-26)), (-1.48089756038230E-27 + (-2.69049305150365E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-2.29558404652975E-11 + (-3.87740912134232E-26)), (-8.67334689656528E-28 + (-3.58732406867153E-43))))
+    V = PV2_Add(PV2_Mul(V, U), Array((3.51192915084393E-11 + (-1.29246970711411E-26)), (-2.02843131271761E-27 + (-3.94605647553868E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-5.37490176317862E-11 + (0.00000000000000E+00)), (-3.03473751543268E-27 + (-4.66352128927299E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((8.22952234483210E-11 + (-2.58493941422821E-26)), (-6.00736993421394E-27 + (-1.43492962746861E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.26056591454892E-10 + (1.29246970711411E-25)), (-8.20680360314836E-27 + (-1.43492962746861E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.93175181123118E-10 + (-4.39439700418796E-25)), (-4.13546401752092E-27 + (3.58732406867153E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-2.96169589941651E-10 + (2.06795153138257E-25)), (1.33863843386909E-26 + (2.86985925493723E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((4.54299303042099E-10 + (1.03397576569128E-25)), (1.61673771521419E-26 + (1.43492962746861E-41))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-6.97213642028249E-10 + (2.06795153138257E-25)), (2.85872842316712E-28 + (3.58732406867153E-43))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.07058780863553E-09 + (-3.72231275648862E-24)), (-8.68234486230219E-26 + (2.29588740394978E-41))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.64483555539652E-09 + (-4.13590306276514E-24)), (7.43783907961386E-26 + (-3.44383110592467E-41))))
+    V = PV2_Add(PV2_Mul(V, U), Array((2.52859012613536E-09 + (-2.48154183765908E-24)), (9.73833157704985E-26 + (-2.29588740394978E-41))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-3.88958300575891E-09 + (-2.48154183765908E-24)), (-2.83860600444586E-25 + (-3.21424236552969E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((5.98701295630897E-09 + (-2.48154183765908E-24)), (1.39686715089691E-25 + (-4.59177480789956E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-9.22178304786582E-09 + (4.96308367531817E-24)), (7.80097185002356E-25 + (-4.59177480789956E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.42145587068719E-08 + (4.13590306276514E-23)), (-2.56469703585928E-27 + (-4.30478888240584E-42))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-2.19272029043474E-08 + (2.64697796016969E-23)), (4.55969744306379E-25 + (-4.59177480789956E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((3.38519414938090E-08 + (3.97046694025453E-23)), (-2.95757343411792E-25 + (4.59177480789956E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-5.23064498832708E-08 + (3.97046694025453E-23)), (-3.63076684141467E-25 + (4.59177480789956E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((8.08948668443836E-08 + (1.32348898008484E-23)), (2.07482824619517E-24 + (-7.34683969263930E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.25229209086299E-07 + (-2.11758236813575E-22)), (-1.12617886205366E-24 + (-7.34683969263930E-40))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.94060256838287E-07 + (-2.64697796016969E-23)), (-3.93024156918979E-24 + (-4.40810381558358E-39))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-3.01053697400556E-07 + (-5.29395592033938E-23)), (-2.00284536762141E-24 + (-2.20405190779179E-39))))
+    V = PV2_Add(PV2_Mul(V, U), Array((4.67585459593438E-07 + (1.05879118406788E-22)), (-1.28162025011814E-23 + (1.32243114467507E-38))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-7.27150972981638E-07 + (-3.17637355220363E-22)), (1.01351832794266E-23 + (4.70197740328915E-38))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.13233727790091E-06 + (-4.02340649945793E-21)), (2.13522964307009E-23 + (2.05711511393900E-38))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.76587736954239E-06 + (6.35274710440725E-22)), (-6.62490692106423E-23 + (-1.17549435082229E-38))))
+    V = PV2_Add(PV2_Mul(V, U), Array((2.75822905390482E-06 + (0.00000000000000E+00)), (3.78305871026079E-23 + (-1.17549435082229E-38))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-4.31562117239537E-06 + (2.54109884176290E-21)), (3.03086311685494E-22 + (1.88079096131566E-37))))
+    V = PV2_Add(PV2_Mul(V, U), Array((6.76496373796090E-06 + (-5.08219768352580E-21)), (-4.00003039013541E-22 + (0.00000000000000E+00))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.06260564852470E-05 + (-3.04931861011548E-20)), (6.56077790924962E-22 + (2.82118644197349E-37))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.67282243428494E-05 + (4.40457132572236E-20)), (-1.45330121238327E-21 + (-7.52316384526264E-37))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-2.63996995905211E-05 + (0.00000000000000E+00)), (-1.05456019154754E-21 + (2.25694915357879E-36))))
+    V = PV2_Add(PV2_Mul(V, U), Array((4.17769653553246E-05 + (-4.74338450462408E-20)), (-1.40068426065889E-21 + (-2.44502824971036E-36))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-6.63135482599680E-05 + (1.35525271560688E-20)), (4.83702115030649E-21 + (3.00926553810506E-36))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.05623637963857E-04 + (1.35525271560688E-20)), (3.76866268963272E-21 + (-4.51389830715758E-36))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.68894325207693E-04 + (1.89735380184963E-19)), (-2.89927296270812E-21 + (4.13774011489445E-36))))
+    V = PV2_Add(PV2_Mul(V, U), Array((2.71277099973908E-04 + (3.79470760369927E-19)), (-3.94797336214631E-21 + (-3.76158192263132E-36))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-4.37995120948431E-04 + (5.42101086242752E-20)), (-2.00008491458486E-20 + (2.10648587667354E-35))))
+    V = PV2_Add(PV2_Mul(V, U), Array((7.11522258031626E-04 + (-3.25260651745651E-19)), (-3.97278226896129E-20 + (-3.00926553810506E-35))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.16441447410474E-03 + (2.16840434497101E-19)), (2.94941512886342E-20 + (3.00926553810506E-35))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.92291614029804E-03 + (-3.68628738645072E-18)), (-1.00244239888136E-20 + (-2.25694915357879E-35))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-3.21207407719414E-03 + (3.03576608295941E-18)), (1.50372992274185E-19 + (1.68518870133883E-34))))
+    V = PV2_Add(PV2_Mul(V, U), Array((5.44645784455033E-03 + (-3.46944695195361E-18)), (3.88585737757394E-19 + (-1.92592994438724E-34))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-9.42562244846982E-03 + (-1.73472347597681E-18)), (6.92989757614234E-19 + (-9.62964972193618E-35))))
+    V = PV2_Add(PV2_Mul(V, U), Array((1.67970986311869E-02 + (-2.08166817117217E-17)), (1.60545014319234E-18 + (-4.81482486096809E-33))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-3.13084875010110E-02 + (0.00000000000000E+00)), (9.29580431618060E-19 + (3.85185988877447E-34))))
+    V = PV2_Add(PV2_Mul(V, U), Array((6.29114010745649E-02 + (4.16333634234434E-17)), (-4.54276257267888E-18 + (-3.08148791101958E-33))))
+    V = PV2_Add(PV2_Mul(V, U), Array((-1.45959895914306E-01 + (-8.32667268468867E-17)), (-7.81369195792092E-19 + (-1.92592994438724E-34))))
+    V = PV2_Add(PV2_Mul(V, U), Array((4.83128950540981E-01 + (-1.11022302462516E-16)), (1.67188189971785E-17 + (6.16297582203915E-33))))
+    PV2_LogGamma = PV2_Mul(PV2_Mul(A, PV2_Sub(A, 1#)), V)
+End Function
+
+Private Function PV2_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   PV2_Pair: test-only arithmetic port of the frozen Precision v2 model.
+' NOTES
+'   Explicit Double stores preserve the operation boundaries under test.
+'   This restricted diagnostic implementation is not a public kernel.
+' ERROR POLICY
+'   Errors propagate to PV2_Pair, which returns False without acceptance.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim LG As Variant, T As Variant, S As Variant, D As Variant, LP As Variant
+    Dim B As Variant, C As Variant, H As Variant, AN As Variant, Delta As Variant
+    Dim Tail As Variant, E As Variant, V As Variant, N As Long, K As Long
+    On Error GoTo Err_Handler
+    If A < 2# ^ (-400) Or A > 1# Or X < 2# ^ (-400) Then GoTo Err_Handler
+    LG = PV2_LogGamma(A)
+    If X < A + 1# Then
+        T = Array(-X, 0#)
+        S = PV2_Div(T, PV2_Add(A, 1#))
+        For N = 2 To 1000
+            T = PV2_Div(PV2_Mul(T, -X), CDbl(N))
+            D = PV2_Div(T, PV2_Add(A, CDbl(N)))
+            S = PV2_Add(S, D)
+            If Abs(PV2_H(D)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then Exit For
+        Next N
+        If N > 1000 Then GoTo Err_Handler
+        LP = PV2_Add(PV2_Sub(PV2_Mul(PV2_Log(X), A), LG), PV2_Log1p(PV2_Mul(S, A)))
+        If PV2_Value(LP) > 0# Then GoTo Err_Handler
+        If PV2_Value(LP) >= -0.5 Then
+            V = PV2_Expm1(LP)
+            P = PV2_Value(PV2_Add(V, 1#))
+            Q = PV2_Value(PV2_Neg(V))
+        Else
+            V = PV2_Exp(LP)
+            P = PV2_Value(V)
+            Q = PV2_Value(PV2_Sub(1#, V))
+        End If
+    Else
+        If X > 32# Then GoTo Err_Handler
+        B = PV2_Sub(PV2_Add(X, 1#), A)
+        C = Array(1E+300, 0#)
+        D = PV2_Div(1#, B)
+        H = D
+        For N = 1 To 100000
+            AN = PV2_Mul(CDbl(-N), PV2_Sub(CDbl(N), A))
+            B = PV2_Add(B, 2#)
+            D = PV2_Add(PV2_Mul(AN, D), B)
+            C = PV2_Add(B, PV2_Div(AN, C))
+            If Abs(PV2_H(D)) < 1E-300 Or Abs(PV2_H(C)) < 1E-300 Then GoTo Err_Handler
+            D = PV2_Div(1#, D)
+            Delta = PV2_Mul(C, D)
+            H = PV2_Mul(H, Delta)
+            If Abs(PV2_Value(PV2_Sub(Delta, 1#))) <= 2# ^ (-100) Then Exit For
+        Next N
+        If N > 100000 Then GoTo Err_Handler
+        Tail = Array(0#, 0#)
+        For K = N To 1 Step -1
+            B = PV2_Add(PV2_Add(PV2_Sub(PV2_Add(X, 1#), A), CDbl(2 * K)), Tail)
+            Tail = PV2_Div(PV2_Mul(CDbl(-K), PV2_Sub(CDbl(K), A)), B)
+        Next K
+        H = PV2_Div(1#, PV2_Add(PV2_Sub(PV2_Add(X, 1#), A), Tail))
+        E = PV2_Sub(PV2_Sub(PV2_Mul(PV2_Log(X), A), LG), X)
+        V = PV2_Mul(PV2_Mul(PV2_Exp(E), A), H)
+        P = PV2_Value(PV2_Sub(1#, V))
+        Q = PV2_Value(V)
+    End If
+    PV2_Pair = True
+    Exit Function
+Err_Handler:
+    Err.Clear
+    PV2_Pair = False
+End Function
+Private Sub Test_PrecisionV2_Fidelity()
+'==============================================================================
+' PURPOSE
+'   Compare the VBA port with all 250 revealed Python pairs bit for bit.
+' NOTES
+'   This is arithmetic fidelity evidence, not a fresh independent holdout.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim P As Double, Q As Double, OK As Boolean
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (2.44140625000000E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 000 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 000 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.41855623927972E-109 + (0.00000000000000E+00)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (3.12500000000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 001 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 001 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.04366944796668E-109 + (4.01819229446035E-124)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (2.18750000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 002 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 002 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.04968980160936E-110 + (-3.54546378922972E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (5.93750000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 003 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 003 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.22101011381758E-110 + (-2.95455315769144E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (9.06250000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 004 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 004 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.80165343025999E-110 + (-3.84091910499887E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (9.99999999999999E-01 + (1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 005 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 005 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (4.13637442076801E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (9.99999999999999E-01 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 006 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 006 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (3.84091910499887E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (9.99999999999999E-01 + (3.33066907387547E-16)), P, Q)
+    AssertTrue "PV2 fidelity 007 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 007 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (3.54546378922972E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (9.99999999999999E-01 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 008 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 008 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (3.25000847346058E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 009 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 009 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (2.95455315769144E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-3.33066907387547E-16)), P, Q)
+    AssertTrue "PV2 fidelity 010 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 010 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (2.65909784192229E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 011 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 011 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (2.36364252615315E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 012 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 012 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (2.06818721038400E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 013 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 013 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (1.77273189461486E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 014 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 014 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (1.18182126307657E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 015 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 015 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (5.90910631538287E-126)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 016 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 016 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (0.00000000000000E+00)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 017 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 017 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (-5.90910631538287E-126)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 018 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 018 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (-1.18182126307657E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 019 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 019 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (-1.77273189461486E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 020 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 020 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (-2.36364252615315E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 021 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 021 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.53568754076864E-110 + (-2.95455315769144E-125)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (2.25000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 022 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 022 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.43334511836112E-111 + (1.47727657884572E-126)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (7.25000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 023 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 023 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (6.10038160315925E-114 + (-1.44265290902902E-129)))
+    OK = PV2_Pair((7.00000000000000E-110 + (0.00000000000000E+00)), (1.52500000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 024 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 024 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.02976268141308E-117 + (-3.34599673724993E-132)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (2.44140625000000E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 025 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 025 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.09631785101698E-59 + (3.09520281014585E-74)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (3.12500000000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 026 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 026 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.16781111312382E-59 + (-4.42171830020836E-75)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (2.18750000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 027 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 027 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (4.59982274377678E-60 + (-4.97443308773440E-75)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (5.93750000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 028 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 028 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.84057720789576E-60 + (-1.65814436257813E-75)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (9.06250000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 029 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 029 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.02951624586285E-60 + (-6.90893484407556E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (9.99999999999999E-01 + (1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 030 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 030 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582082E-61 + (4.14536090644533E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (9.99999999999999E-01 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 031 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 031 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582082E-61 + (1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (9.99999999999999E-01 + (3.33066907387547E-16)), P, Q)
+    AssertTrue "PV2 fidelity 032 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 032 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582082E-61 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (9.99999999999999E-01 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 033 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 033 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582082E-61 + (-1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 034 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 034 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582082E-61 + (-2.76357393763022E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-3.33066907387547E-16)), P, Q)
+    AssertTrue "PV2 fidelity 035 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 035 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582082E-61 + (-4.14536090644533E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 036 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 036 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582081E-61 + (4.14536090644533E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 037 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 037 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582081E-61 + (1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 038 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 038 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582081E-61 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 039 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 039 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582081E-61 + (-2.76357393763022E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 040 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 040 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582080E-61 + (4.14536090644533E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 041 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 041 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582080E-61 + (1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 042 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 042 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582080E-61 + (-1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 043 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 043 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582079E-61 + (4.14536090644533E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 044 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 044 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582079E-61 + (1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 045 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 045 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582079E-61 + (-1.38178696881511E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.00000000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 046 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 046 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.77535737582078E-61 + (4.14536090644533E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (2.25000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 047 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 047 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.39048292477778E-61 + (3.79991416424156E-76)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (7.25000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 048 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 048 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.48593234466243E-64 + (-2.02410200510026E-79)))
+    OK = PV2_Pair((4.00000000000000E-60 + (0.00000000000000E+00)), (1.52500000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 049 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 049 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.88435817950330E-68 + (-4.11804607157442E-83)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (2.44140625000020E-04 + (-4.87890977618477E-19)), P, Q)
+    AssertTrue "PV2 fidelity 050 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999381E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 050 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (6.19263570203204E-13 + (-3.02922587604869E-28)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (3.12500000000025E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 051 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999766E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 051 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.33562222624736E-13 + (-5.04870979341448E-28)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (2.18750000000017E-01 + (4.99600361081320E-16)), P, Q)
+    AssertTrue "PV2 fidelity 052 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999908E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 052 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.19964548755302E-14 + (-2.52435489670724E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (5.93750000000048E-01 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 053 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999963E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 053 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.68115441579135E-14 + (3.15544362088405E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (9.06250000000072E-01 + (3.33066907387547E-16)), P, Q)
+    AssertTrue "PV2 fidelity 054 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999979E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 054 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.05903249172560E-14 + (-3.15544362088405E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 055 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 055 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516408E-14 + (-4.10207670714926E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 056 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 056 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516408E-14 + (-4.73316543132607E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 057 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 057 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (4.73316543132607E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 058 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 058 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (4.10207670714926E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 059 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 059 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (3.47098798297245E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 060 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 060 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (2.52435489670724E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 061 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 061 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (1.89326617253043E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 062 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 062 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (1.26217744835362E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 063 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 063 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (6.31088724176809E-30)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 064 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 064 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (0.00000000000000E+00)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 065 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 065 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-6.31088724176809E-30)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 066 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 066 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-1.26217744835362E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 067 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 067 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-1.89326617253043E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 068 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 068 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-2.52435489670724E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 069 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 069 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-3.15544362088405E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 070 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 070 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-3.78653234506086E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.00000000000008E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 071 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999982E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 071 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.75507147516407E-14 + (-4.41762106923767E-29)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (2.25000000000018E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 072 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999997E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 072 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.78096584955526E-15 + (2.76101316827354E-30)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (7.25000000000058E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 073 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 073 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (6.97186468932181E-18 + (-3.08148791101958E-33)))
+    OK = PV2_Pair((8.00000000000000E-14 + (0.00000000000000E+00)), (1.52500000000012E+01 + (1.77635683940025E-14)), P, Q)
+    AssertTrue "PV2 fidelity 074 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.00000000000000E+00 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 074 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.17687163589945E-21 + (2.63310734584192E-36)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (2.45776367187500E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 075 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.49466164634470E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 075 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.05338353655301E-02 + (2.08166817117217E-17)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (3.14593750000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 076 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.80637016393559E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 076 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.93629836064405E-02 + (1.73472347597681E-17)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (2.20215625000000E-01 + (-2.77555756156289E-17)), P, Q)
+    AssertTrue "PV2 fidelity 077 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.92332558058951E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 077 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.66744194104853E-03 + (-5.20417042793042E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (5.97728125000000E-01 + (-1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 078 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.96928462047232E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 078 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.07153795276796E-03 + (4.33680868994202E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (9.12321875000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 079 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98282687481534E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 079 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.71731251846568E-03 + (-4.33680868994202E-19)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 080 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 080 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (8.67361737988404E-19)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 081 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 081 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (4.33680868994202E-19)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 082 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 082 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-2.16840434497101E-19)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 083 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 083 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-6.50521303491303E-19)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 084 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 084 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-1.30104260698261E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 085 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 085 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-1.73472347597681E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 086 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 086 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-2.38524477946811E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 087 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 087 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-2.81892564846231E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 088 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 088 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-3.46944695195361E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 089 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 089 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-3.90312782094782E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 090 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 090 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581065E-03 + (-4.55364912443912E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 091 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 091 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581064E-03 + (4.98732999343332E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 092 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 092 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581064E-03 + (4.33680868994202E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 093 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 093 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581064E-03 + (3.90312782094782E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 094 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 094 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581064E-03 + (3.25260651745651E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 095 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 095 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581064E-03 + (2.81892564846231E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.00670000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 096 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98536534024189E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 096 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.46346597581064E-03 + (2.16840434497101E-18)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (2.26507500000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 097 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99769225122649E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 097 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.30774877350879E-04 + (2.71050543121376E-19)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (7.29857500000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 098 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999437140986E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 098 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.62859013878291E-07 + (-4.23516473627150E-22)))
+    OK = PV2_Pair((6.70000000000000E-03 + (0.00000000000000E+00)), (1.53521750000000E+01 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 099 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999909556E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 099 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.04440881912591E-11 + (-5.16987882845642E-26)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (2.56103515625000E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 100 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (6.84625014824211E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 100 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.15374985175789E-01 + (2.77555756156289E-16)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (3.27812500000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 101 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.67064233555479E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 101 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.32935766444521E-01 + (-1.94289029309402E-16)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (2.29468750000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 102 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.45591440054222E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 102 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.44085599457775E-02 + (-6.93889390390723E-18)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (6.22843750000000E-01 + (-1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 103 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.78047354605625E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 103 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.19526453943745E-02 + (3.46944695195361E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (9.50656250000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 104 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.87758533175264E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 104 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.22414668247365E-02 + (-5.03069808033274E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 105 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 105 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (4.16333634234434E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 106 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 106 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (3.81639164714898E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 107 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 107 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (3.29597460435593E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 108 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 108 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (2.94902990916057E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 109 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 109 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (2.60208521396521E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 110 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 110 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (2.25514051876985E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 111 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 111 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (1.90819582357449E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 112 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 112 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (1.56125112837913E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 113 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 113 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (1.21430643318376E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 114 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 114 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (6.93889390390723E-18)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 115 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 115 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (3.46944695195361E-18)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 116 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 116 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 117 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 117 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (-3.46944695195361E-18)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 118 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 118 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (-6.93889390390723E-18)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 119 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 119 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (-1.04083408558608E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 120 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 120 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (-1.56125112837913E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.04900000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 121 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89582734752778E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 121 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.04172652472217E-02 + (-1.90819582357449E-17)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (2.36025000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 122 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.98406272163077E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 122 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.59372783692326E-03 + (-1.95156391047391E-18)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (7.60525000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 123 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99996731415159E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 123 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.26858484110365E-06 + (-2.54109884176290E-21)))
+    OK = PV2_Pair((4.90000000000000E-02 + (0.00000000000000E+00)), (1.59972500000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 124 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999615144E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 124 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.84856378666611E-10 + (-4.13590306276514E-25)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (2.85644531250000E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 125 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (2.69484258045244E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 125 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.30515741954756E-01 + (4.44089209850063E-16)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (3.65625000000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 126 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (6.11626723670971E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 126 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.88373276329029E-01 + (1.11022302462516E-16)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (2.55937500000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 127 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.26184538448270E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 127 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.73815461551730E-01 + (2.77555756156289E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (6.94687500000000E-01 + (-1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 128 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.28411194604795E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 128 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.15888053952049E-02 + (-4.16333634234434E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.06031250000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 129 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.60359705283912E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 129 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.96402947160879E-02 + (2.77555756156289E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 130 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 130 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992773E-02 + (-4.85722573273506E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 131 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 131 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (4.85722573273506E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 132 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 132 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (3.46944695195361E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 133 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 133 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (2.77555756156289E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 134 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 134 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (1.38777878078145E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 135 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 135 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (0.00000000000000E+00)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 136 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 136 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (-6.93889390390723E-18)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 137 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 137 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (-2.08166817117217E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 138 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 138 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (-2.77555756156289E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 139 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 139 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992772E-02 + (-4.16333634234434E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 140 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 140 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (4.16333634234434E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 141 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 141 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (3.46944695195361E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 142 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 142 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (2.08166817117217E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 143 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 143 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (1.38777878078145E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 144 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 144 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (0.00000000000000E+00)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 145 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 145 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (-1.38777878078145E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.17000000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 146 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.66397527400723E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 146 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.36024725992771E-02 + (-2.08166817117217E-17)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (2.63250000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 147 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.95277849290589E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 147 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (4.72215070941145E-03 + (-2.60208521396521E-18)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (8.48250000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 148 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99994085541351E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 148 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.91445864913296E-06 + (1.69406589450860E-21)))
+    OK = PV2_Pair((1.70000000000000E-01 + (0.00000000000000E+00)), (1.78425000000000E+01 + (-3.55271367880050E-15)), P, Q)
+    AssertTrue "PV2 fidelity 149 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999713518E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 149 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.86482412672499E-10 + (4.13590306276514E-25)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (3.49121093750000E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 150 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (3.68114262824892E-02 + (2.77555756156289E-17)))
+    AssertTrue "PV2 fidelity 150 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.63188573717511E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (4.46875000000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 151 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (2.92637571565075E-01 + (-5.55111512312578E-17)))
+    AssertTrue "PV2 fidelity 151 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.07362428434925E-01 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (3.12812500000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 152 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (6.25839948716756E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 152 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.74160051283244E-01 + (4.44089209850063E-16)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (8.49062500000000E-01 + (-1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 153 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.38950981058151E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 153 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.61049018941849E-01 + (4.44089209850063E-16)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.29593750000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 154 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.11970037786521E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 154 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.80299622134792E-02 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 155 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 155 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343612E-02 + (1.38777878078145E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 156 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 156 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343612E-02 + (-1.38777878078145E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 157 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 157 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343612E-02 + (-2.77555756156289E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 158 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 158 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343611E-02 + (4.16333634234434E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 159 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 159 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343611E-02 + (2.77555756156289E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 160 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 160 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343611E-02 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 161 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 161 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343611E-02 + (-2.77555756156289E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 162 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 162 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343611E-02 + (-4.16333634234434E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 163 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 163 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343610E-02 + (2.77555756156289E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 164 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 164 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343610E-02 + (1.38777878078145E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 165 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 165 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343610E-02 + (-1.38777878078145E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 166 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 166 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343610E-02 + (-2.77555756156289E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 167 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 167 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343609E-02 + (4.16333634234434E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 168 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 168 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343609E-02 + (2.77555756156289E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 169 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 169 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343609E-02 + (0.00000000000000E+00)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 170 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 170 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343609E-02 + (-1.38777878078145E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.43000000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 171 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.25949537565639E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 171 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.40504624343609E-02 + (-4.16333634234434E-17)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (3.21750000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 172 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.91270403302501E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 172 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.72959669749945E-03 + (-1.73472347597681E-18)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (1.03675000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 173 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99996171103471E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 173 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.82889652897697E-06 + (4.23516473627150E-21)))
+    OK = PV2_Pair((4.30000000000000E-01 + (0.00000000000000E+00)), (2.18075000000000E+01 + (-3.55271367880050E-15)), P, Q)
+    AssertTrue "PV2 fidelity 174 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999972370E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 174 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.76302811998104E-11 + (9.69352280335579E-27)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (4.00390625000000E-04 + (5.42101086242752E-20)), P, Q)
+    AssertTrue "PV2 fidelity 175 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (7.44620714559819E-03 + (-3.46944695195361E-18)))
+    AssertTrue "PV2 fidelity 175 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.92553792854402E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (5.12500000000000E-02 + (6.93889390390723E-18)), P, Q)
+    AssertTrue "PV2 fidelity 176 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.62923135985679E-01 + (-2.49800180540660E-16)))
+    AssertTrue "PV2 fidelity 176 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (8.37076864014321E-01 + (2.22044604925031E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (3.58750000000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 177 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (5.04846051261779E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 177 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (4.95153948738221E-01 + (4.99600361081320E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (9.73750000000000E-01 + (1.11022302462516E-16)), P, Q)
+    AssertTrue "PV2 fidelity 178 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (7.79278398281073E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 178 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.20721601718927E-01 + (5.55111512312578E-17)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.48625000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 179 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.80400994514610E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 179 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.19599005485390E-01 + (3.46944695195361E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 180 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167525E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 180 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832475E-01 + (-4.85722573273506E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 181 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167525E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 181 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (4.85722573273506E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 182 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167525E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 182 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (4.57966997657877E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 183 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 183 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (4.44089209850063E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 184 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 184 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (4.16333634234434E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 185 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 185 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (3.88578058618805E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 186 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 186 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (3.60822483003176E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 187 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 187 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (3.33066907387547E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 188 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 188 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (3.05311331771918E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 189 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 189 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (2.77555756156289E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 190 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 190 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (2.63677968348475E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 191 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 191 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (2.35922392732846E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 192 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 192 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (2.08166817117217E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 193 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 193 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (1.80411241501588E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 194 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 194 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (1.52655665885959E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 195 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 195 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (1.24900090270330E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.64000000000000E+00 + (1.99840144432528E-15)), P, Q)
+    AssertTrue "PV2 fidelity 196 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.99963507167526E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 196 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.00036492832474E-01 + (1.11022302462516E-16)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (3.69000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 197 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.89711651351533E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 197 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.02883486484674E-02 + (-5.20417042793042E-18)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (1.18900000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 198 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99998051413597E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 198 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.94858640261481E-06 + (-3.38813178901720E-21)))
+    OK = PV2_Pair((6.40000000000000E-01 + (0.00000000000000E+00)), (2.50100000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 199 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999996969E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 199 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.03100420921475E-12 + (2.01948391736579E-27)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (4.61425781250000E-04 + (5.42101086242752E-20)), P, Q)
+    AssertTrue "PV2 fidelity 200 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (1.12051806320642E-03 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 200 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.98879481936794E-01 + (-4.44089209850063E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (5.90625000000000E-02 + (6.93889390390723E-18)), P, Q)
+    AssertTrue "PV2 fidelity 201 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.18307527018034E-02 + (2.77555756156289E-17)))
+    AssertTrue "PV2 fidelity 201 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.18169247298197E-01 + (-4.44089209850063E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (4.13437500000000E-01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 202 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (3.94182818404689E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 202 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (6.05817181595311E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.12218750000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 203 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (7.18767731712976E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 203 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (2.81232268287024E-01 + (3.33066907387547E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.71281250000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 204 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.48950741443763E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 204 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.51049258556237E-01 + (3.60822483003176E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 205 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 205 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (1.66533453693773E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 206 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 206 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (1.38777878078145E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 207 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 207 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (1.11022302462516E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 208 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 208 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (8.32667268468867E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 209 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 209 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (5.55111512312578E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 210 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 210 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (2.77555756156289E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 211 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 211 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (0.00000000000000E+00)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 212 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 212 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-2.77555756156289E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 213 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 213 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-5.55111512312578E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 214 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 214 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-8.32667268468867E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 215 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 215 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-1.11022302462516E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 216 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 216 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-1.38777878078145E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 217 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 217 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-1.66533453693773E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 218 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 218 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-1.94289029309402E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 219 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 219 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 220 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 220 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-2.49800180540660E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.89000000000000E+00 + (1.99840144432528E-15)), P, Q)
+    AssertTrue "PV2 fidelity 221 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.74447580568029E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 221 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.25552419431971E-01 + (-2.77555756156289E-16)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (4.25250000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 222 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.88969881794187E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 222 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.10301182058128E-02 + (-2.08166817117217E-17)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (1.37025000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 223 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999226193212E-01 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 223 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (7.73806788004425E-07 + (-1.05879118406788E-22)))
+    OK = PV2_Pair((8.90000000000000E-01 + (0.00000000000000E+00)), (2.88225000000000E+01 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 224 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999806E-01 + (-2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 224 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.94190767708558E-13 + (-7.57306469012171E-29)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (4.86083984375000E-04 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 225 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (5.22476776033079E-04 + (0.00000000000000E+00)))
+    AssertTrue "PV2 fidelity 225 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.99477523223967E-01 + (-1.11022302462516E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (6.22187500000000E-02 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 226 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (6.20923131321724E-02 + (-2.77555756156289E-17)))
+    AssertTrue "PV2 fidelity 226 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (9.37907686867828E-01 + (-3.33066907387547E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (4.35531250000000E-01 + (5.55111512312578E-17)), P, Q)
+    AssertTrue "PV2 fidelity 227 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (3.57436243354807E-01 + (-1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 227 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (6.42563756645193E-01 + (1.11022302462516E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.18215625000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 228 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (6.96902734075569E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 228 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (3.03097265924431E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.80434375000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 229 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.37719784420486E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 229 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.62280215579514E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 230 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 230 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-1.11022302462516E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 231 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 231 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-1.38777878078145E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 232 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 232 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-1.66533453693773E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 233 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 233 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-1.94289029309402E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 234 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (2.22044604925031E-16)))
+    AssertTrue "PV2 fidelity 234 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-2.22044604925031E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 235 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 235 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-2.77555756156289E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 236 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 236 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-3.05311331771918E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (-2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 237 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 237 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-3.33066907387547E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 238 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 238 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-3.60822483003176E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (2.22044604925031E-16)), P, Q)
+    AssertTrue "PV2 fidelity 239 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 239 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-3.88578058618805E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (4.44089209850063E-16)), P, Q)
+    AssertTrue "PV2 fidelity 240 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 240 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-4.16333634234434E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (6.66133814775094E-16)), P, Q)
+    AssertTrue "PV2 fidelity 241 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658028E-01 + (4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 241 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-4.44089209850063E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (8.88178419700125E-16)), P, Q)
+    AssertTrue "PV2 fidelity 242 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658029E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 242 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341972E-01 + (-4.71844785465692E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (1.11022302462516E-15)), P, Q)
+    AssertTrue "PV2 fidelity 243 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658029E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 243 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341971E-01 + (4.99600361081320E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (1.33226762955019E-15)), P, Q)
+    AssertTrue "PV2 fidelity 244 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658029E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 244 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341971E-01 + (4.71844785465692E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (1.55431223447522E-15)), P, Q)
+    AssertTrue "PV2 fidelity 245 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658029E-01 + (-4.44089209850063E-16)))
+    AssertTrue "PV2 fidelity 245 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341971E-01 + (4.44089209850063E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.99100000000000E+00 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 246 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (8.65436564658029E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 246 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.34563435341971E-01 + (4.16333634234434E-16)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (4.47975000000000E+00 + (0.00000000000000E+00)), P, Q)
+    AssertTrue "PV2 fidelity 247 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.88893149311316E-01 + (3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 247 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (1.11068506886836E-02 + (3.12250225675825E-17)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (1.44347500000000E+01 + (1.77635683940025E-15)), P, Q)
+    AssertTrue "PV2 fidelity 248 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999477491064E-01 + (-3.33066907387547E-16)))
+    AssertTrue "PV2 fidelity 248 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (5.22508936354487E-07 + (0.00000000000000E+00)))
+    OK = PV2_Pair((9.91000000000000E-01 + (0.00000000000000E+00)), (3.03627500000000E+01 + (3.55271367880050E-15)), P, Q)
+    AssertTrue "PV2 fidelity 249 P" & _
+        " observed=" & GammaCF_FullPrecision(P), _
+        (OK And P = (9.99999999999937E-01 + (1.11022302462516E-16)))
+    AssertTrue "PV2 fidelity 249 Q" & _
+        " observed=" & GammaCF_FullPrecision(Q), _
+        (OK And Q = (6.27876495051946E-14 + (-1.26217744835362E-29)))
+End Sub
+
 Private Sub Test_GammaCF_PrecisionCounterexample()
 '==============================================================================
 ' PURPOSE
@@ -6090,6 +8356,7 @@ Private Sub Test_CN_GammaSurvival()
     Test_GammaCF_AdditionalCallers
     Test_GammaCF_CapAndXSeam
     Test_GammaCF_PrecisionCounterexample
+    Test_PrecisionV2_Fidelity
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
