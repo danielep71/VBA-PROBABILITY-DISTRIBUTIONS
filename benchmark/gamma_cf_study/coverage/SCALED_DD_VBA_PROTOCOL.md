@@ -27,9 +27,10 @@ once. Repeated halving of that word could double-round subnormals and would not
 match `math.ldexp`. Normalization similarly uses a single exact scale factor;
 when the TwoSum high word is subnormal, its nonoverlapping low word is zero.
 All exponents and gaps fit VBA Long within the explicit +/-32767 study range.
-Try failures clear all output fields. Actual host fidelity still requires an
+Try failures clear all output fields. Host fidelity requires an
 Excel run on the exact source commit; Python tests and static checks alone do
 not establish this. The previous 7,104-assertion evidence is not rebound.
+The completed host run is retained in [SCALED_DD_VBA_RESULT.md](SCALED_DD_VBA_RESULT.md).
 
 Local commands:
 

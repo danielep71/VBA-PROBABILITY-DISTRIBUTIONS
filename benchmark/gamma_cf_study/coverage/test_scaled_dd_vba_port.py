@@ -1,4 +1,7 @@
 """Scaled arithmetic fixture identity, independent error screen and source isolation."""
+import base64
+import hashlib
+import re
 import json
 import math
 import subprocess
@@ -13,6 +16,42 @@ def exact(words):
 
 
 class ScaledDDVbaTests(unittest.TestCase):
+    def test_retained_excel_identity_and_failure_details(self):
+        artifact = json.loads((HERE / 'excel_scaled_dd_artifact.json').read_text())
+        decoded = {}
+        for name, entry in artifact['members'].items():
+            raw = base64.b64decode(entry['base64'], validate=True)
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), entry['sha256'])
+            decoded[name] = raw
+        record = json.loads(decoded['excel-certification.json'].decode('utf-8-sig'))
+        sha = '86a365f5f7caa57ba0deff166549dfd357a244d5'
+        self.assertEqual(record['candidate_sha'], sha)
+        self.assertEqual(record['runner']['workflow']['sha'], sha)
+        self.assertEqual(record['runner']['workflow']['run_id'], 42494438289)
+        self.assertEqual(record['harness'], dict(entry_point='Test_STATS_PROBDIST_RunAll_CI',
+                                                assertions=7715, passed=7674, failed=41))
+        self.assertEqual(record['stages']['compile']['status'], 'PASS')
+        self.assertEqual(record['stages']['regression']['status'], 'FAIL')
+        self.assertEqual(record['stages']['cleanup']['status'], 'PASS')
+        self.assertTrue(all(not grid['exported'] for grid in record['grids'].values()))
+        self.assertEqual(record['log']['sha256'],
+                         'sha256:'+hashlib.sha256(decoded['test-result.txt']).hexdigest())
+        policy = json.loads(subprocess.check_output(
+            ['git', 'show', sha+':.github/excel-evidence-policy.json'], cwd=ROOT))
+        self.assertEqual({s['path'] for s in record['sources']}, set(policy['regression_sources']))
+        for source in record['sources']:
+            blob = subprocess.check_output(['git', 'show', sha+':'+source['path']], cwd=ROOT)
+            self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(), source['sha256'])
+        old = json.loads((HERE / 'excel_scaled_product_artifact.json').read_text())
+        old_log = base64.b64decode(old['members']['test-result.txt']['base64'])
+        def failures(raw):
+            text = raw.decode('utf-8-sig').replace('\r\n', '\n')
+            return re.findall(r'^\[[^\]]+\]   (.*)$', text, re.M)
+        previous, current = failures(old_log), failures(decoded['test-result.txt'])
+        self.assertEqual(len(current), 41)
+        self.assertEqual(current, previous)
+        self.assertFalse(any(label.startswith('SD ') for label in current))
+
     def test_dataset_reproduces(self):
         saved = json.loads((HERE/'scaled_dd_fidelity.json').read_text())
         self.assertEqual(saved, dataset())
