@@ -40,7 +40,8 @@ class ScaledVbaPortTests(unittest.TestCase):
         self.assertEqual(text.count('    Test_ScaledProduct_Fidelity\n'), 1)
         policy = json.loads((ROOT / '.github/excel-evidence-policy.json').read_text())
         extension = json.loads((HERE / 'scaled_dd_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], 7104+extension['additional_assertions'])
+        gamma = json.loads((HERE / 'scaled_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'], 7104+extension['additional_assertions']+gamma['additional_assertions'])
 
     def test_retained_excel_identity_and_failure_details(self):
         artifact = json.loads((HERE / 'excel_scaled_product_artifact.json').read_text())

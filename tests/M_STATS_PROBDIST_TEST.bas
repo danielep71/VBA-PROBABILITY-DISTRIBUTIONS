@@ -9464,6 +9464,918 @@ Private Sub Test_ScaledDD_Fidelity()
 End Sub
 ' END generated scaled-DD study
 
+' BEGIN generated scaled-Gamma study
+Private Function SG_Coerce(ByVal V As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Coerce: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim H As Double, E As Long
+    If IsArray(V) Then
+        SG_Coerce = V
+    Else
+        If Not PROB_IsFinite(CDbl(V)) Then Err.Raise 5
+        SP_Frexp CDbl(V), H, E
+        SG_Coerce = Array(H, 0#, E)
+    End If
+End Function
+
+Private Function SG_Op(ByVal Operation As Long, ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Op: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant, H As Double, L As Double, E As Long
+    U = SG_Coerce(A): V = SG_Coerce(B)
+    If Not SD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
+        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E) Then Err.Raise 5
+    SG_Op = Array(H, L, E)
+End Function
+
+Private Function SG_Add(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Add: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Add = SG_Op(1, A, B)
+End Function
+
+Private Function SG_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Sub: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Sub = SG_Op(2, A, B)
+End Function
+
+Private Function SG_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Mul: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Mul = SG_Op(3, A, B)
+End Function
+
+Private Function SG_Div(ByVal A As Variant, ByVal B As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Div: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Div = SG_Op(4, A, B)
+End Function
+
+Private Function SG_Neg(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Neg: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Neg = Array(-CDbl(A(0)), -CDbl(A(1)), CLng(A(2)))
+End Function
+
+Private Function SG_Value(ByVal A As Variant) As Double
+'==============================================================================
+' PURPOSE
+'   SG_Value: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Result As Double
+    If Not SP_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5
+    SG_Value = Result
+End Function
+
+Private Function SG_Small(ByVal Term As Variant, ByVal Total As Variant) As Boolean
+'==============================================================================
+' PURPOSE
+'   SG_Small: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Small = (CDbl(Term(0)) = 0# Or _
+        (CDbl(Total(0)) <> 0# And CLng(Term(2)) < CLng(Total(2)) - 108))
+End Function
+
+Private Function SG_Ln2() As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Ln2: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Ln2 = Array(SP_FromWords(&H3FE62E42&, &HFEFA39EF&), SP_FromWords(&H3C7ABC9E&, &H3B39803F&), 0)
+End Function
+
+Private Function SG_Log(ByVal X As Double) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Log: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim F As Double, E As Long, Z As Variant, Square As Variant
+    Dim Term As Variant, Total As Variant, Delta As Variant, N As Long
+    If Not PROB_IsFinite(X) Then Err.Raise 5
+    If X <= 0# Then Err.Raise 5
+    SP_Frexp X, F, E
+    Z = SG_Div(SG_Sub(F, 1#), SG_Add(F, 1#))
+    Square = SG_Mul(Z, Z)
+    Term = Z: Total = Z
+    For N = 3 To 1000 Step 2
+        Term = SG_Mul(Term, Square)
+        Delta = SG_Div(Term, N)
+        Total = SG_Add(Total, Delta)
+        If SG_Small(Delta, Total) Then
+            SG_Log = SG_Add(SG_Mul(Total, 2#), SG_Mul(SG_Ln2(), E))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5
+End Function
+
+Private Function SG_Exp(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Exp: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Value As Double, N As Long, R As Variant, Term As Variant, Total As Variant, K As Long
+    Value = SG_Value(Z)
+    If Value < -1500# Or Value > 8# Then Err.Raise 5
+    N = CLng(Round(Value / SP_FromWords(&H3FE62E42&, &HFEFA39EF&), 0))
+    R = SG_Sub(Z, SG_Mul(SG_Ln2(), N))
+    Term = SG_Coerce(1#): Total = Term
+    For K = 1 To 1000
+        Term = SG_Div(SG_Mul(Term, R), K)
+        Total = SG_Add(Total, Term)
+        If SG_Small(Term, Total) Then
+            SG_Exp = Array(CDbl(Total(0)), CDbl(Total(1)), CLng(Total(2)) + N)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function SG_Expm1(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Expm1: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Term As Variant, Total As Variant, K As Long
+    If Abs(SG_Value(Z)) > 0.5 Then Err.Raise 5
+    Term = Z: Total = Z
+    For K = 2 To 1000
+        Term = SG_Div(SG_Mul(Term, Z), K)
+        Total = SG_Add(Total, Term)
+        If SG_Small(Term, Total) Then
+            SG_Expm1 = Total
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function SG_Log1p(ByVal Z As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_Log1p: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim Value As Double, T As Variant, Square As Variant, Term As Variant
+    Dim Total As Variant, Delta As Variant, K As Long
+    Value = SG_Value(Z)
+    If Value < -0.8 Or Value > 0# Then Err.Raise 5
+    T = SG_Div(Z, SG_Add(Z, 2#))
+    Square = SG_Mul(T, T)
+    Term = T: Total = T
+    For K = 3 To 2000 Step 2
+        Term = SG_Mul(Term, Square)
+        Delta = SG_Div(Term, K)
+        Total = SG_Add(Total, Delta)
+        If SG_Small(Delta, Total) Then
+            SG_Log1p = SG_Mul(Total, 2#)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function SG_LogGamma(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   SG_LogGamma: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim U As Variant, V As Variant
+    U = SG_Sub(A, 0.5)
+    V = Array(SP_FromWords(&H3FE96E5E&, &H1B3C5AF7&), SP_FromWords(&HBC880518&, &HFEB901F7&), -49)
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE35572&, &HAE72C2EE&), SP_FromWords(&H3C826A5E&, &HAF086A60&), -48))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FED66F3&, &H18AE5EA7&), SP_FromWords(&H3C7FDC39&, &HB2705763&), -48))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE65C75&, &HB71D73A7&), SP_FromWords(&HBC7C4960&, &H0B916A88&), -47))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE10279&, &H2689D188&), SP_FromWords(&H3C8720CC&, &H2B7BE6FB&), -46))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE9E20D&, &H2BB58450&), SP_FromWords(&HBC7BD20C&, &H6A387A6E&), -46))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE3B25E&, &H708B456B&), SP_FromWords(&H3C8D35FF&, &H74EE2CC0&), -45))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEDFC0C&, &H83BBF352&), SP_FromWords(&HBC5D534E&, &H18864249&), -45))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE6D3F4&, &HCE91C72E&), SP_FromWords(&HBC713AEB&, &H4D8F0CF8&), -44))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE16227&, &HE2371AE4&), SP_FromWords(&HBC8DB3F1&, &H0D7CC516&), -43))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEA7B27&, &HAB6726A4&), SP_FromWords(&HBC83770C&, &HA96E43B7&), -43))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE42CC5&, &HCCB85BA1&), SP_FromWords(&HBC750D12&, &H4F368B45&), -42))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEEBFA5&, &H2AE009C6&), SP_FromWords(&HBC50F730&, &H98D885B0&), -42))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE77025&, &HFFB629FC&), SP_FromWords(&H3C7A8C91&, &HFBD4CC51&), -41))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE1DED2&, &HD825BB6F&), SP_FromWords(&HBC7E343D&, &HD497F856&), -40))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEB4216&, &HA140F01E&), SP_FromWords(&HBC8C6D43&, &HF025D8FC&), -40))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE4CB70&, &HD3097185&), SP_FromWords(&H3C846D36&, &H7A4A7A07&), -39))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEFBCAF&, &H3A802F65&), SP_FromWords(&HBC71601D&, &H7CA4BACB&), -39))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE839E0&, &HDACB4830&), SP_FromWords(&H3C62D497&, &HE7B31E9A&), -38))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE27FA0&, &H40C5DA37&), SP_FromWords(&HBC8B28EB&, &H572E2B88&), -37))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEC426C&, &HA67FEF49&), SP_FromWords(&H3C822C46&, &H74A1157A&), -37))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE597BF&, &HC48AC196&), SP_FromWords(&H3C8BAEE5&, &HC54842E9&), -36))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE08130&, &H11D7D91A&), SP_FromWords(&HBC8D550A&, &HF0099556&), -35))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE93D7E&, &HA20F6C7F&), SP_FromWords(&HBC812DE8&, &HCBCD3D82&), -35))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE34E99&, &HD340CA87&), SP_FromWords(&HBC8416AF&, &H310C8312&), -34))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFED8C80&, &H723BC225&), SP_FromWords(&HBC8E0DF9&, &H422BE676&), -34))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE69F02&, &HF35C279F&), SP_FromWords(&HBC8DBF3F&, &H0099800A&), -33))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE15338&, &HD62BEBF4&), SP_FromWords(&HBC8451AE&, &H0489B4E2&), -32))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEA8CBF&, &H58F242AB&), SP_FromWords(&HBC747A52&, &HCD3A6641&), -32))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE45A45&, &H41411B2D&), SP_FromWords(&H3C809250&, &H85654C7D&), -31))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEF381E&, &H2C0150C7&), SP_FromWords(&H3C8403A5&, &H76642969&), -31))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE7F4C1&, &H8C998D6B&), SP_FromWords(&H3C16A630&, &HA93DF275&), -30))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE2647E&, &HB6C95516&), SP_FromWords(&HBC8ADEDC&, &HBF885061&), -29))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEC4210&, &H32D6F34B&), SP_FromWords(&H3C8704DC&, &HFCDFA893&), -29))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE5B86D&, &HB198417B&), SP_FromWords(&H3C7E2380&, &H4C8C8260&), -28))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE0B4A4&, &H4934AF42&), SP_FromWords(&HBC85F670&, &H3DFCD0A8&), -27))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE9B6CA&, &H551B03C7&), SP_FromWords(&H3C759D8F&, &H95F83956&), -27))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE3CDBA&, &H9595A081&), SP_FromWords(&H3C8E2DB5&, &H54614458&), -26))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEE8689&, &H4A5D3179&), SP_FromWords(&HBC096647&, &H8B98A9FE&), -26))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE78B4D&, &HBB5132FE&), SP_FromWords(&H3C71A3B4&, &HA3DE5DB3&), -25))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE22C93&, &H4E31CF80&), SP_FromWords(&HBC56E213&, &HE5457B50&), -24))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEC14F1&, &H98682057&), SP_FromWords(&HBC5C1779&, &H819E660D&), -24))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE5B70D&, &H8C2D3282&), SP_FromWords(&H3C741106&, &HA2C5BF7F&), -23))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE0CED7&, &HC5B04032&), SP_FromWords(&HBC55C891&, &H4F796ECC&), -22))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEA0BDC&, &H123131CA&), SP_FromWords(&HBC730167&, &H4563F2DA&), -22))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE43410&, &H29DBA039&), SP_FromWords(&HBC535ECE&, &H10F3741A&), -21))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEF610E&, &H9965B00C&), SP_FromWords(&HBC7EFCD8&, &H596275EC&), -21))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE8662D&, &HE65ECA58&), SP_FromWords(&H3C68815F&, &HE55CE225&), -20))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE2FF5A&, &H00ECFEF1&), SP_FromWords(&H3C69D037&, &H362FA1FF&), -19))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEDA062&, &HB3773FE2&), SP_FromWords(&HBC8405C6&, &H0165D191&), -19))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE72340&, &H755AF21F&), SP_FromWords(&H3C66DDFF&, &HF394B316&), -18))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE219DC&, &HEA3F7CEE&), SP_FromWords(&H3C86E68A&, &HB8EDD7FC&), -17))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEC5FD3&, &H12A5D28A&), SP_FromWords(&HBC8E392F&, &H1C7FA64A&), -17))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE648D2&, &H1536C0B3&), SP_FromWords(&H3C88C931&, &HEEBB3135&), -16))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE18A72&, &HD2D506DD&), SP_FromWords(&HBC8B73BB&, &HC28C2A0D&), -15))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEBAE9D&, &H8AB69059&), SP_FromWords(&HBC83EB8A&, &H48F2B0AA&), -15))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE5E735&, &H99737474&), SP_FromWords(&HBC7A754B&, &H20F04961&), -14))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE1623A&, &H15904D43&), SP_FromWords(&H3C86D799&, &H89C80AEC&), -13))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEBB048&, &H486FE2BA&), SP_FromWords(&H3C81CC08&, &H9C09215D&), -13))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE62327&, &H34DCCB6A&), SP_FromWords(&HBC6B6203&, &H0AECE0A0&), -12))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE1C746&, &H45C54A48&), SP_FromWords(&HBC62A4CE&, &H93235B7C&), -11))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFECB456&, &HB864572F&), SP_FromWords(&HBC879CE2&, &HBFA33CA4&), -11))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE750AE&, &H6A104859&), SP_FromWords(&HBC87737F&, &HB30C7F3C&), -10))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE313E8&, &H85750BAC&), SP_FromWords(&H3C716907&, &HB67084CE&), -9))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEF814B&, &H7BDFBBCC&), SP_FromWords(&HBC57AB64&, &H7A72E512&), -9))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFEA5035&, &H23A4E3E4&), SP_FromWords(&H3C8630EE&, &H57ED3E2C&), -8))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE64F06&, &H652465F7&), SP_FromWords(&H3C8CAC2D&, &H53771289&), -7))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE34DBD&, &HA148F3D6&), SP_FromWords(&H3C89911A&, &H6BE1F65D&), -6))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE13342&, &H35278FAD&), SP_FromWords(&H3C8D9D86&, &H2155642B&), -5))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE007AA&, &H83CEE1DF&), SP_FromWords(&H3C7125D1&, &HC90250D0&), -4))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FE01AF6&, &H2A2929E8&), SP_FromWords(&HBC84F325&, &HBDDAFAE3&), -3))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&HBFE2AED0&, &H59BD608A&), SP_FromWords(&HBC4CD3D2&, &HCA77B63A&), -2))
+    V = SG_Add(SG_Mul(V, U), Array(SP_FromWords(&H3FEEEB95&, &HB094C191&), SP_FromWords(&H3C834686&, &H3F58B075&), -1))
+    SG_LogGamma = SG_Mul(SG_Mul(A, SG_Sub(A, 1#)), V)
+End Function
+
+Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+'==============================================================================
+' PURPOSE
+'   SG_Pair: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim AA As Variant, XX As Variant, LG As Variant, Term As Variant, Total As Variant
+    Dim Delta As Variant, LP As Variant, PP As Variant, QQ As Variant
+    Dim B As Variant, C As Variant, D As Variant, AN As Variant, Tail As Variant, H As Variant
+    Dim N As Long, K As Long, Converged As Boolean
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or A > 1# Or X <= 0# Or X > 32# Then Exit Function
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    LG = SG_LogGamma(AA)
+    If X < A + 1# Then
+        Term = SG_Neg(XX)
+        Total = SG_Div(Term, SG_Add(AA, 1#))
+        For N = 2 To 1000
+            Term = SG_Div(SG_Mul(Term, SG_Neg(XX)), N)
+            Delta = SG_Div(Term, SG_Add(AA, N))
+            Total = SG_Add(Total, Delta)
+            If SG_Small(Delta, Total) Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        LP = SG_Add(SG_Sub(SG_Mul(SG_Log(X), AA), LG), SG_Log1p(SG_Mul(Total, AA)))
+        If CDbl(LP(0)) > 0# Then Err.Raise 5
+        If SG_Value(LP) >= -0.5 Then
+            QQ = SG_Neg(SG_Expm1(LP))
+            PP = SG_Sub(1#, QQ)
+        Else
+            PP = SG_Exp(LP)
+            QQ = SG_Sub(1#, PP)
+        End If
+    Else
+        B = SG_Sub(SG_Add(XX, 1#), AA)
+        C = SG_Coerce(1E+300): D = SG_Div(1#, B)
+        For N = 1 To 100000
+            AN = SG_Mul(-CDbl(N), SG_Sub(N, AA))
+            B = SG_Add(B, 2#)
+            D = SG_Div(1#, SG_Add(SG_Mul(AN, D), B))
+            C = SG_Add(B, SG_Div(AN, C))
+            Delta = SG_Sub(SG_Mul(C, D), 1#)
+            If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        Tail = SG_Coerce(0#)
+        For K = N To 1 Step -1
+            Tail = SG_Div(SG_Mul(-CDbl(K), SG_Sub(K, AA)), _
+                SG_Add(SG_Add(SG_Sub(SG_Add(XX, 1#), AA), 2# * K), Tail))
+        Next K
+        H = SG_Div(1#, SG_Add(SG_Sub(SG_Add(XX, 1#), AA), Tail))
+        QQ = SG_Mul(SG_Mul(SG_Exp(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), LG), XX)), AA), H)
+        PP = SG_Sub(1#, QQ)
+    End If
+    P = SG_Value(PP): Q = SG_Value(QQ)
+    SG_Pair = True
+    Exit Function
+Err_Handler:
+    P = 0#: Q = 0#
+    SG_Pair = False
+End Function
+
+Private Sub SG_Case(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+'==============================================================================
+' PURPOSE
+'   SG_Case: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim P As Double, Q As Double, OK As Boolean
+    OK = SG_Pair(A, X, P, Q)
+    AssertTrue Label & " returned", OK
+    AssertTrue Label & " P bits", (OK And SP_SameBits(P, ExpectedP))
+    AssertTrue Label & " Q bits", (OK And SP_SameBits(Q, ExpectedQ))
+End Sub
+
+Private Sub SG_Invalid(ByVal A As Double, ByVal X As Double)
+'==============================================================================
+' PURPOSE
+'   SG_Invalid: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim P As Double, Q As Double, OK As Boolean
+    P = 9#: Q = 9#
+    OK = SG_Pair(A, X, P, Q)
+    AssertTrue "SG invalid and cleared", (Not OK And P = 0# And Q = 0#)
+End Sub
+
+Private Sub SG_Seam(ByVal A As Double, ByVal XL As Double, ByVal XC As Double, ByVal XR As Double)
+'==============================================================================
+' PURPOSE
+'   SG_Seam: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim PL As Double, QL As Double, PC As Double, QC As Double, PR As Double, QR As Double
+    Dim OL As Boolean, OC As Boolean, ORight As Boolean
+    OL = SG_Pair(A, XL, PL, QL): OC = SG_Pair(A, XC, PC, QC): ORight = SG_Pair(A, XR, PR, QR)
+    AssertTrue "SG seam P left", (OL And OC And PL <= PC)
+    AssertTrue "SG seam P right", (OC And ORight And PC <= PR)
+    AssertTrue "SG seam Q left", (OL And OC And QL >= QC)
+    AssertTrue "SG seam Q right", (OC And ORight And QC >= QR)
+End Sub
+
+
+Private Sub Test_ScaledGamma_Chunk0()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk0: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 000", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860249&)
+    SG_Case "SG 001", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860248&)
+    SG_Case "SG 002", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860245&)
+    SG_Case "SG 003", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2AE5E7A9&, &HA57EC97C&)
+    SG_Case "SG 004", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H40200000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2A4146F7&, &H49025E8C&)
+    SG_Case "SG 005", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0A&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA54&)
+    SG_Case "SG 006", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA51&)
+    SG_Case "SG 007", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0C&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA4D&)
+    SG_Case "SG 008", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H40000001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &HE5BF2C4F&), SP_FromWords(&H3E6A40D3&, &HB0A403B2&)
+    SG_Case "SG 009", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H40200001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFAD2C4&), SP_FromWords(&H3DC4B4EE&, &HBCFAE187&)
+    SG_Case "SG 010", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC70&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F5&)
+    SG_Case "SG 011", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F3&)
+    SG_Case "SG 012", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC72&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F1&)
+    SG_Case "SG 013", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H40000068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFF5&, &HBEFD829E&), SP_FromWords(&H3ED48204&, &HFAC3CE45&)
+    SG_Case "SG 014", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H40200068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFFF&, &HFDFAA54F&), SP_FromWords(&H3E302AD5&, &H87784470&)
+    SG_Case "SG 015", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C28&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026437&)
+    SG_Case "SG 016", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026435&)
+    SG_Case "SG 017", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C2A&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026433&)
+    SG_Case "SG 018", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H400028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFFC0A&, &HBC81958E&), SP_FromWords(&H3F3FAA1B&, &HF3539228&)
+    SG_Case "SG 019", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H402028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFFFFF&, &H41D49D51&), SP_FromWords(&H3E97C56C&, &H55ED6EA2&)
+End Sub
+
+Private Sub Test_ScaledGamma_Chunk1()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk1: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 020", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF3FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H3883926E&)
+    SG_Case "SG 021", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000000&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H3883926C&)
+    SG_Case "SG 022", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000001&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H38839269&)
+    SG_Case "SG 023", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H40040000&, &H00000000&), _
+        SP_FromWords(&H3FEFB485&, &H5E736AF4&), SP_FromWords(&H3F82DEA8&, &H632542FC&)
+    SG_Case "SG 024", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H40240000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFB&, &HA1AE7B08&), SP_FromWords(&H3EC17946&, &H13E18F57&)
+    SG_Case "SG 025", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF7FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E2&)
+    SG_Case "SG 026", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000000&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E1&)
+    SG_Case "SG 027", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000001&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8DF&)
+    SG_Case "SG 028", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40080000&, &H00000000&), _
+        SP_FromWords(&H3FEF8ACE&, &H65FF563F&), SP_FromWords(&H3F8D4C66&, &H802A7045&)
+    SG_Case "SG 029", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40280000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFD&, &HFACD388E&), SP_FromWords(&H3EB02996&, &H3B926591&)
+    SG_Case "SG 030", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H3FFBFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEC6B6D&, &H0485904A&), SP_FromWords(&H3FBCA497&, &HDBD37DB0&)
+    SG_Case "SG 031", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H3FFC0000&, &H00000000&), _
+        SP_FromWords(&H3FEC6B6D&, &H0485904A&), SP_FromWords(&H3FBCA497&, &HDBD37DAE&)
+    SG_Case "SG 032", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H3FFC0000&, &H00000001&), _
+        SP_FromWords(&H3FEC6B6D&, &H0485904B&), SP_FromWords(&H3FBCA497&, &HDBD37DAC&)
+    SG_Case "SG 033", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H400C0000&, &H00000000&), _
+        SP_FromWords(&H3FEF7486&, &H188CDD16&), SP_FromWords(&H3F916F3C&, &HEE645D3B&)
+    SG_Case "SG 034", SP_FromWords(&H3FE80000&, &H00000000&), SP_FromWords(&H402C0000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &H46C46CDE&), SP_FromWords(&H3E972772&, &H643653F4&)
+    SG_Case "SG 035", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CC&)
+    SG_Case "SG 036", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CB&)
+    SG_Case "SG 037", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40000000&, &H00000001&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8E&), SP_FromWords(&H3FC152AA&, &HA3BF81C9&)
+    SG_Case "SG 038", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40100000&, &H00000000&), _
+        SP_FromWords(&H3FEF69F5&, &H523EF618&), SP_FromWords(&H3F92C155&, &HB8213CF3&)
+    SG_Case "SG 039", SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), SP_FromWords(&H40300000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HC395488A&), SP_FromWords(&H3E7E355B&, &HBAEE85C8&)
+End Sub
+
+Private Sub Test_ScaledGamma_Chunk2()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk2: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 040", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CD&)
+    SG_Case "SG 041", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CC&)
+    SG_Case "SG 042", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000001&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8E&), SP_FromWords(&H3FC152AA&, &HA3BF81C9&)
+    SG_Case "SG 043", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40100000&, &H00000000&), _
+        SP_FromWords(&H3FEF69F5&, &H523EF618&), SP_FromWords(&H3F92C155&, &HB8213CF4&)
+    SG_Case "SG 044", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40300000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HC395488A&), SP_FromWords(&H3E7E355B&, &HBAEE85CB&)
+    SG_Case "SG 045", SP_FromWords(&H2D5871C6&, &H46E595A7&), SP_FromWords(&H3FF66666&, &H66666666&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2D26BA31&, &HAB7BB4E5&)
+    SG_Case "SG 046", SP_FromWords(&H2D5871C6&, &H46E595A7&), SP_FromWords(&H400A6666&, &H66666666&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2CEBF821&, &H2EB1B8A1&)
+    SG_Case "SG 047", SP_FromWords(&H2D5871C6&, &H46E595A7&), SP_FromWords(&H40270000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2C14E3B7&, &H35DD3DF0&)
+    SG_Case "SG 048", SP_FromWords(&H3E72CA5D&, &H05EA7AB3&), SP_FromWords(&H3FF66666&, &H80B4E8A2&), _
+        SP_FromWords(&H3FEFFFFF&, &HFBA1E2C5&), SP_FromWords(&H3E417874&, &HEC484E17&)
+    SG_Case "SG 049", SP_FromWords(&H3E72CA5D&, &H05EA7AB3&), SP_FromWords(&H400A6666&, &H85677FE3&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFA9FFFB&), SP_FromWords(&H3E058001&, &H30F1A15C&)
+    SG_Case "SG 050", SP_FromWords(&H3E72CA5D&, &H05EA7AB3&), SP_FromWords(&H40270000&, &H1B02E5B9&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFDFE&), SP_FromWords(&H3D300ECB&, &HF38CA6B8&)
+    SG_Case "SG 051", SP_FromWords(&H3F661E4F&, &H765FD8AE&), SP_FromWords(&H3FF675E2&, &H046C764A&), _
+        SP_FromWords(&H3FEFFD6F&, &H6C691714&), SP_FromWords(&H3F34849C&, &HB7475C6D&)
+    SG_Case "SG 052", SP_FromWords(&H3F661E4F&, &H765FD8AE&), SP_FromWords(&H400A78A5&, &HCE5B4245&), _
+        SP_FromWords(&H3FEFFFCD&, &HAD5391D4&), SP_FromWords(&H3EF92956&, &H3716149B&)
+    SG_Case "SG 053", SP_FromWords(&H3F661E4F&, &H765FD8AE&), SP_FromWords(&H40270FE5&, &HC91D14E3&), _
+        SP_FromWords(&H3FEFFFFF&, &HFED9191F&), SP_FromWords(&H3E226E6E&, &H12A48AC5&)
+    SG_Case "SG 054", SP_FromWords(&H3FAD2F1A&, &H9FBE76C9&), SP_FromWords(&H3FF7AD42&, &HC3C9EECB&), _
+        SP_FromWords(&H3FEFCC3A&, &H503D0D6F&), SP_FromWords(&H3F79E2D7&, &HE179488C&)
+    SG_Case "SG 055", SP_FromWords(&H3FAD2F1A&, &H9FBE76C9&), SP_FromWords(&H400BE7A0&, &HF9096BB9&), _
+        SP_FromWords(&H3FEFFC4D&, &H70AB0124&), SP_FromWords(&H3F3D947A&, &HA7F6DC6E&)
+    SG_Case "SG 056", SP_FromWords(&H3FAD2F1A&, &H9FBE76C9&), SP_FromWords(&H40284F9D&, &HB22D0E56&), _
+        SP_FromWords(&H3FEFFFFF&, &HF1536307&), SP_FromWords(&H3E5D5939&, &HF26012C9&)
+    SG_Case "SG 057", SP_FromWords(&H3FCD70A3&, &HD70A3D71&), SP_FromWords(&H3FFB8D4F&, &HDF3B645A&), _
+        SP_FromWords(&H3FEF4912&, &H496108E6&), SP_FromWords(&H3F96DDB6&, &HD3DEE33B&)
+    SG_Case "SG 058", SP_FromWords(&H3FCD70A3&, &HD70A3D71&), SP_FromWords(&H40103C6A&, &H7EF9DB23&), _
+        SP_FromWords(&H3FEFF587&, &H799CC073&), SP_FromWords(&H3F54F10C&, &HC67F1A0B&)
+    SG_Case "SG 059", SP_FromWords(&H3FCD70A3&, &HD70A3D71&), SP_FromWords(&H402C4A3D&, &H70A3D70A&), _
+        SP_FromWords(&H3FEFFFFF&, &HF3EFD8AF&), SP_FromWords(&H3E58204E&, &HA2A63C3A&)
+End Sub
+
+Private Sub Test_ScaledGamma_Chunk3()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk3: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 060", SP_FromWords(&H3FDE147A&, &HE147AE14&), SP_FromWords(&H400076C8&, &HB4395810&), _
+        SP_FromWords(&H3FEEC2B4&, &HCDEBC67E&), SP_FromWords(&H3FA3D4B3&, &H2143981A&)
+    SG_Case "SG 061", SP_FromWords(&H3FDE147A&, &HE147AE14&), SP_FromWords(&H4013676C&, &H8B439581&), _
+        SP_FromWords(&H3FEFF289&, &HF6BD1AAC&), SP_FromWords(&H3F5AEC12&, &H85CAA788&)
+    SG_Case "SG 062", SP_FromWords(&H3FDE147A&, &HE147AE14&), SP_FromWords(&H4030E7AE&, &H147AE148&), _
+        SP_FromWords(&H3FEFFFFF&, &HFD2F7F41&), SP_FromWords(&H3E368405&, &HFA97399D&)
+    SG_Case "SG 063", SP_FromWords(&H3FE851EB&, &H851EB852&), SP_FromWords(&H4003B645&, &HA1CAC083&), _
+        SP_FromWords(&H3FEE510E&, &HB558B867&), SP_FromWords(&H3FAAEF14&, &HAA74798F&)
+    SG_Case "SG 064", SP_FromWords(&H3FE851EB&, &H851EB852&), SP_FromWords(&H40173B64&, &H5A1CAC08&), _
+        SP_FromWords(&H3FEFF328&, &H4C16E8D9&), SP_FromWords(&H3F59AF67&, &HD22E4E5B&)
+    SG_Case "SG 065", SP_FromWords(&H3FE851EB&, &H851EB852&), SP_FromWords(&H40343D70&, &HA3D70A3D&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFA7B1F9&), SP_FromWords(&H3E061381&, &HB80A1611&)
+    SG_Case "SG 066", SP_FromWords(&H3FEE147A&, &HE147AE14&), SP_FromWords(&H4005BA5E&, &H353F7CED&), _
+        SP_FromWords(&H3FEE1CD9&, &H02021328&), SP_FromWords(&H3FAE326F&, &HDFDECD83&)
+    SG_Case "SG 067", SP_FromWords(&H3FEE147A&, &HE147AE14&), SP_FromWords(&H40199BA5&, &HE353F7CE&), _
+        SP_FromWords(&H3FEFF464&, &H8AC38D6E&), SP_FromWords(&H3F5736EA&, &H78E524DD&)
+    SG_Case "SG 068", SP_FromWords(&H3FEE147A&, &HE147AE14&), SP_FromWords(&H40364F5C&, &H28F5C28F&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFE994E1&), SP_FromWords(&H3DE66B1F&, &H6C210884&)
+    SG_Case "SG 069", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H000002E8&)
+    SG_Case "SG 070", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H000002C4&)
+    SG_Case "SG 071", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&)
+    SG_Case "SG 072", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Case "SG 073", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Case "SG 074", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Case "SG 075", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00A73EE7&, &H212E55D6&)
+    SG_Case "SG 076", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00A61E8D&, &HBA3BA0E5&)
+    SG_Case "SG 077", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H0010B561&, &HB52B771B&)
+    SG_Case "SG 078", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00038298&, &HBA77F1F2&)
+    SG_Case "SG 079", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00038298&, &HBA77F1F2&)
+End Sub
+
+Private Sub Test_ScaledGamma_Chunk4()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk4: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 080", SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000002&)
+    SG_Case "SG 081", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27873EE7&, &H212E55D6&)
+    SG_Case "SG 082", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H27861E8D&, &HBA3BA0E5&)
+    SG_Case "SG 083", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26F0B561&, &HB52B771B&)
+    SG_Case "SG 084", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26CC14C5&, &HD3BF8F94&)
+    SG_Case "SG 085", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H26CC14C5&, &HD3BF8F94&)
+    SG_Case "SG 086", SP_FromWords(&H26F00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H23BBAD52&, &HED5D8E1B&)
+    SG_Case "SG 087", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H3F4344DC&, &HD169D6C3&), SP_FromWords(&H3FEFFB2E&, &HC8CBA58A&)
+    SG_Case "SG 088", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H3F4BA181&, &H11525FF2&), SP_FromWords(&H3FEFF917&, &H9FBBAB68&)
+    SG_Case "SG 089", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FEFAA68&, &H142D71AD&), SP_FromWords(&H3F8565FA&, &HF4A394A5&)
+    SG_Case "SG 090", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEFEDD8&, &H3818BC32&), SP_FromWords(&H3F6227C7&, &HE743CE56&)
+    SG_Case "SG 091", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026435&)
+    SG_Case "SG 092", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3C5272B3&, &HA48E8689&)
+    SG_Case "SG 093", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H1E620DD7&, &H50429B6D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Case "SG 094", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H20020DD7&, &H50429B6D&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Case "SG 095", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FE0A7EF&, &H5C18EDD2&), SP_FromWords(&H3FDEB021&, &H47CE245C&)
+    SG_Case "SG 096", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FEAF767&, &HA741088B&), SP_FromWords(&H3FC42261&, &H62FBDDD5&)
+    SG_Case "SG 097", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000000&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E1&)
+    SG_Case "SG 098", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFFF5&), SP_FromWords(&H3CD669D2&, &HC90D55CE&)
+    SG_Case "SG 099", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000001&), _
+        SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&)
+End Sub
+
+Private Sub Test_ScaledGamma_Chunk5()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk5: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 100", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00100000&, &H00000000&), _
+        SP_FromWords(&H00100000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Case "SG 101", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FD00000&, &H00000000&), _
+        SP_FromWords(&H3FCC5041&, &H854DF7D4&), SP_FromWords(&H3FE8EBEF&, &H9EAC820B&)
+    SG_Case "SG 102", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FE43A54&, &HE4E98864&), SP_FromWords(&H3FD78B56&, &H362CEF38&)
+    SG_Case "SG 103", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CC&)
+    SG_Case "SG 104", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40400000&, &H00000000&), _
+        SP_FromWords(&H3FEFFFFF&, &HFFFFFF8E&), SP_FromWords(&H3D0C8464&, &HF7616468&)
+    SG_Case "SG 105", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Case "SG 106", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Case "SG 107", SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Case "SG 108", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860249&)
+    SG_Case "SG 109", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000000&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860248&)
+    SG_Case "SG 110", SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FF00000&, &H00000001&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H2B089175&, &H99860245&)
+    SG_Case "SG 111", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0A&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA54&)
+    SG_Case "SG 112", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0B&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA51&)
+    SG_Case "SG 113", SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0C&), _
+        SP_FromWords(&H3FEFFFFF&, &H8A381F11&), SP_FromWords(&H3E8D71F8&, &H3BADFA4D&)
+    SG_Case "SG 114", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC70&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F5&)
+    SG_Case "SG 115", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC71&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F3&)
+    SG_Case "SG 116", SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC72&), _
+        SP_FromWords(&H3FEFFFD1&, &HFEAF3E7B&), SP_FromWords(&H3EF700A8&, &H60C287F1&)
+    SG_Case "SG 117", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C28&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026437&)
+    SG_Case "SG 118", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C29&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026435&)
+    SG_Case "SG 119", SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C2A&), _
+        SP_FromWords(&H3FEFEE25&, &H0B2AFD9C&), SP_FromWords(&H3F61DAF4&, &HD5026433&)
+End Sub
+
+Private Sub Test_ScaledGamma_Chunk6()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Chunk6: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    SG_Case "SG 120", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF3FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H3883926E&)
+    SG_Case "SG 121", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000000&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H3883926C&)
+    SG_Case "SG 122", SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000001&), _
+        SP_FromWords(&H3FEE7CF4&, &H7C77C6D9&), SP_FromWords(&H3FA830B8&, &H38839269&)
+    SG_Case "SG 123", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF7FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E2&)
+    SG_Case "SG 124", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000000&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8E1&)
+    SG_Case "SG 125", SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000001&), _
+        SP_FromWords(&H3FED55E5&, &HA70068E4&), SP_FromWords(&H3FB550D2&, &HC7FCB8DF&)
+    SG_Case "SG 126", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CD&)
+    SG_Case "SG 127", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000000&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8D&), SP_FromWords(&H3FC152AA&, &HA3BF81CC&)
+    SG_Case "SG 128", SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40000000&, &H00000001&), _
+        SP_FromWords(&H3FEBAB55&, &H57101F8E&), SP_FromWords(&H3FC152AA&, &HA3BF81C9&)
+End Sub
+
+Private Sub Test_ScaledGamma_Fidelity()
+'==============================================================================
+' PURPOSE
+'   Test_ScaledGamma_Fidelity: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Test_ScaledGamma_Chunk0
+    Test_ScaledGamma_Chunk1
+    Test_ScaledGamma_Chunk2
+    Test_ScaledGamma_Chunk3
+    Test_ScaledGamma_Chunk4
+    Test_ScaledGamma_Chunk5
+    Test_ScaledGamma_Chunk6
+    SG_Invalid SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Invalid SP_FromWords(&HBFF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Invalid SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H00000000&, &H00000000&)
+    SG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H40408000&, &H00000000&)
+    SG_Invalid SP_FromWords(&H7FF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H7FF80000&, &H00000000&)
+    SG_Invalid SP_FromWords(&H7FF80000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
+    SG_Seam SP_FromWords(&H00000000&, &H00000001&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000001&)
+    SG_Seam SP_FromWords(&H2B2BFF2E&, &HE48E0530&), SP_FromWords(&H3FEFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000001&)
+    SG_Seam SP_FromWords(&H3EB0C6F7&, &HA0B5ED8D&), SP_FromWords(&H3FF00001&, &H0C6F7A0A&), _
+        SP_FromWords(&H3FF00001&, &H0C6F7A0B&), SP_FromWords(&H3FF00001&, &H0C6F7A0C&)
+    SG_Seam SP_FromWords(&H3F1A36E2&, &HEB1C432D&), SP_FromWords(&H3FF00068&, &HDB8BAC70&), _
+        SP_FromWords(&H3FF00068&, &HDB8BAC71&), SP_FromWords(&H3FF00068&, &HDB8BAC72&)
+    SG_Seam SP_FromWords(&H3F847AE1&, &H47AE147B&), SP_FromWords(&H3FF028F5&, &HC28F5C28&), _
+        SP_FromWords(&H3FF028F5&, &HC28F5C29&), SP_FromWords(&H3FF028F5&, &HC28F5C2A&)
+    SG_Seam SP_FromWords(&H3FD00000&, &H00000000&), SP_FromWords(&H3FF3FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF40000&, &H00000000&), SP_FromWords(&H3FF40000&, &H00000001&)
+    SG_Seam SP_FromWords(&H3FE00000&, &H00000000&), SP_FromWords(&H3FF7FFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H3FF80000&, &H00000000&), SP_FromWords(&H3FF80000&, &H00000001&)
+    SG_Seam SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&), _
+        SP_FromWords(&H40000000&, &H00000000&), SP_FromWords(&H40000000&, &H00000001&)
+End Sub
+' END generated scaled-Gamma study
+
 Private Function PV2_H(ByVal V As Variant) As Double
 '==============================================================================
 ' PURPOSE
@@ -12787,6 +13699,7 @@ Private Sub Test_CN_GammaSurvival()
     Test_PrecisionV2_Fidelity
     Test_ScaledProduct_Fidelity
     Test_ScaledDD_Fidelity
+    Test_ScaledGamma_Fidelity
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _

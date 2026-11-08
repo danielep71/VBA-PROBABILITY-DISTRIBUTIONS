@@ -1,0 +1,226 @@
+Private Function SG_Coerce(ByVal V As Variant) As Variant
+    Dim H As Double, E As Long
+    If IsArray(V) Then
+        SG_Coerce = V
+    Else
+        If Not PROB_IsFinite(CDbl(V)) Then Err.Raise 5
+        SP_Frexp CDbl(V), H, E
+        SG_Coerce = Array(H, 0#, E)
+    End If
+End Function
+
+Private Function SG_Op(ByVal Operation As Long, ByVal A As Variant, ByVal B As Variant) As Variant
+    Dim U As Variant, V As Variant, H As Double, L As Double, E As Long
+    U = SG_Coerce(A): V = SG_Coerce(B)
+    If Not SD_Try(Operation, CDbl(U(0)), CDbl(U(1)), CLng(U(2)), _
+        CDbl(V(0)), CDbl(V(1)), CLng(V(2)), H, L, E) Then Err.Raise 5
+    SG_Op = Array(H, L, E)
+End Function
+
+Private Function SG_Add(ByVal A As Variant, ByVal B As Variant) As Variant
+    SG_Add = SG_Op(1, A, B)
+End Function
+
+Private Function SG_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
+    SG_Sub = SG_Op(2, A, B)
+End Function
+
+Private Function SG_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
+    SG_Mul = SG_Op(3, A, B)
+End Function
+
+Private Function SG_Div(ByVal A As Variant, ByVal B As Variant) As Variant
+    SG_Div = SG_Op(4, A, B)
+End Function
+
+Private Function SG_Neg(ByVal A As Variant) As Variant
+    SG_Neg = Array(-CDbl(A(0)), -CDbl(A(1)), CLng(A(2)))
+End Function
+
+Private Function SG_Value(ByVal A As Variant) As Double
+    Dim Result As Double
+    If Not SP_Round(CDbl(A(0)), CDbl(A(1)), CLng(A(2)), Result) Then Err.Raise 5
+    SG_Value = Result
+End Function
+
+Private Function SG_Small(ByVal Term As Variant, ByVal Total As Variant) As Boolean
+    SG_Small = (CDbl(Term(0)) = 0# Or _
+        (CDbl(Total(0)) <> 0# And CLng(Term(2)) < CLng(Total(2)) - 108))
+End Function
+
+Private Function SG_Ln2() As Variant
+    SG_Ln2 = @LN2@
+End Function
+
+Private Function SG_Log(ByVal X As Double) As Variant
+    Dim F As Double, E As Long, Z As Variant, Square As Variant
+    Dim Term As Variant, Total As Variant, Delta As Variant, N As Long
+    If Not PROB_IsFinite(X) Then Err.Raise 5
+    If X <= 0# Then Err.Raise 5
+    SP_Frexp X, F, E
+    Z = SG_Div(SG_Sub(F, 1#), SG_Add(F, 1#))
+    Square = SG_Mul(Z, Z)
+    Term = Z: Total = Z
+    For N = 3 To 1000 Step 2
+        Term = SG_Mul(Term, Square)
+        Delta = SG_Div(Term, N)
+        Total = SG_Add(Total, Delta)
+        If SG_Small(Delta, Total) Then
+            SG_Log = SG_Add(SG_Mul(Total, 2#), SG_Mul(SG_Ln2(), E))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5
+End Function
+
+Private Function SG_Exp(ByVal Z As Variant) As Variant
+    Dim Value As Double, N As Long, R As Variant, Term As Variant, Total As Variant, K As Long
+    Value = SG_Value(Z)
+    If Value < -1500# Or Value > 8# Then Err.Raise 5
+    N = CLng(Round(Value / @LN2HI@, 0))
+    R = SG_Sub(Z, SG_Mul(SG_Ln2(), N))
+    Term = SG_Coerce(1#): Total = Term
+    For K = 1 To 1000
+        Term = SG_Div(SG_Mul(Term, R), K)
+        Total = SG_Add(Total, Term)
+        If SG_Small(Term, Total) Then
+            SG_Exp = Array(CDbl(Total(0)), CDbl(Total(1)), CLng(Total(2)) + N)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function SG_Expm1(ByVal Z As Variant) As Variant
+    Dim Term As Variant, Total As Variant, K As Long
+    If Abs(SG_Value(Z)) > 0.5 Then Err.Raise 5
+    Term = Z: Total = Z
+    For K = 2 To 1000
+        Term = SG_Div(SG_Mul(Term, Z), K)
+        Total = SG_Add(Total, Term)
+        If SG_Small(Term, Total) Then
+            SG_Expm1 = Total
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function SG_Log1p(ByVal Z As Variant) As Variant
+    Dim Value As Double, T As Variant, Square As Variant, Term As Variant
+    Dim Total As Variant, Delta As Variant, K As Long
+    Value = SG_Value(Z)
+    If Value < -0.8 Or Value > 0# Then Err.Raise 5
+    T = SG_Div(Z, SG_Add(Z, 2#))
+    Square = SG_Mul(T, T)
+    Term = T: Total = T
+    For K = 3 To 2000 Step 2
+        Term = SG_Mul(Term, Square)
+        Delta = SG_Div(Term, K)
+        Total = SG_Add(Total, Delta)
+        If SG_Small(Delta, Total) Then
+            SG_Log1p = SG_Mul(Total, 2#)
+            Exit Function
+        End If
+    Next K
+    Err.Raise 5
+End Function
+
+Private Function SG_LogGamma(ByVal A As Variant) As Variant
+    Dim U As Variant, V As Variant
+    U = SG_Sub(A, 0.5)
+@COEFFICIENTS@
+    SG_LogGamma = SG_Mul(SG_Mul(A, SG_Sub(A, 1#)), V)
+End Function
+
+Private Function SG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    Dim AA As Variant, XX As Variant, LG As Variant, Term As Variant, Total As Variant
+    Dim Delta As Variant, LP As Variant, PP As Variant, QQ As Variant
+    Dim B As Variant, C As Variant, D As Variant, AN As Variant, Tail As Variant, H As Variant
+    Dim N As Long, K As Long, Converged As Boolean
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or A > 1# Or X <= 0# Or X > 32# Then Exit Function
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    LG = SG_LogGamma(AA)
+    If X < A + 1# Then
+        Term = SG_Neg(XX)
+        Total = SG_Div(Term, SG_Add(AA, 1#))
+        For N = 2 To 1000
+            Term = SG_Div(SG_Mul(Term, SG_Neg(XX)), N)
+            Delta = SG_Div(Term, SG_Add(AA, N))
+            Total = SG_Add(Total, Delta)
+            If SG_Small(Delta, Total) Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        LP = SG_Add(SG_Sub(SG_Mul(SG_Log(X), AA), LG), SG_Log1p(SG_Mul(Total, AA)))
+        If CDbl(LP(0)) > 0# Then Err.Raise 5
+        If SG_Value(LP) >= -0.5 Then
+            QQ = SG_Neg(SG_Expm1(LP))
+            PP = SG_Sub(1#, QQ)
+        Else
+            PP = SG_Exp(LP)
+            QQ = SG_Sub(1#, PP)
+        End If
+    Else
+        B = SG_Sub(SG_Add(XX, 1#), AA)
+        C = SG_Coerce(1E+300): D = SG_Div(1#, B)
+        For N = 1 To 100000
+            AN = SG_Mul(-CDbl(N), SG_Sub(N, AA))
+            B = SG_Add(B, 2#)
+            D = SG_Div(1#, SG_Add(SG_Mul(AN, D), B))
+            C = SG_Add(B, SG_Div(AN, C))
+            Delta = SG_Sub(SG_Mul(C, D), 1#)
+            If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        Tail = SG_Coerce(0#)
+        For K = N To 1 Step -1
+            Tail = SG_Div(SG_Mul(-CDbl(K), SG_Sub(K, AA)), _
+                SG_Add(SG_Add(SG_Sub(SG_Add(XX, 1#), AA), 2# * K), Tail))
+        Next K
+        H = SG_Div(1#, SG_Add(SG_Sub(SG_Add(XX, 1#), AA), Tail))
+        QQ = SG_Mul(SG_Mul(SG_Exp(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), LG), XX)), AA), H)
+        PP = SG_Sub(1#, QQ)
+    End If
+    P = SG_Value(PP): Q = SG_Value(QQ)
+    SG_Pair = True
+    Exit Function
+Err_Handler:
+    P = 0#: Q = 0#
+    SG_Pair = False
+End Function
+
+Private Sub SG_Case(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+    Dim P As Double, Q As Double, OK As Boolean
+    OK = SG_Pair(A, X, P, Q)
+    AssertTrue Label & " returned", OK
+    AssertTrue Label & " P bits", (OK And SP_SameBits(P, ExpectedP))
+    AssertTrue Label & " Q bits", (OK And SP_SameBits(Q, ExpectedQ))
+End Sub
+
+Private Sub SG_Invalid(ByVal A As Double, ByVal X As Double)
+    Dim P As Double, Q As Double, OK As Boolean
+    P = 9#: Q = 9#
+    OK = SG_Pair(A, X, P, Q)
+    AssertTrue "SG invalid and cleared", (Not OK And P = 0# And Q = 0#)
+End Sub
+
+Private Sub SG_Seam(ByVal A As Double, ByVal XL As Double, ByVal XC As Double, ByVal XR As Double)
+    Dim PL As Double, QL As Double, PC As Double, QC As Double, PR As Double, QR As Double
+    Dim OL As Boolean, OC As Boolean, ORight As Boolean
+    OL = SG_Pair(A, XL, PL, QL): OC = SG_Pair(A, XC, PC, QC): ORight = SG_Pair(A, XR, PR, QR)
+    AssertTrue "SG seam P left", (OL And OC And PL <= PC)
+    AssertTrue "SG seam P right", (OC And ORight And PC <= PR)
+    AssertTrue "SG seam Q left", (OL And OC And QL >= QC)
+    AssertTrue "SG seam Q right", (OC And ORight And QC >= QR)
+End Sub
