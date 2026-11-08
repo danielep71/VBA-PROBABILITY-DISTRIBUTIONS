@@ -12,6 +12,7 @@ import unittest
 import extended_gamma as v1
 from extended_gamma_v2 import public
 from install_extended_gamma_fidelity import HERE,ROOT,BEGIN,END,dataset,render,strip
+from install_wide_gamma_fidelity import strip as strip_wide
 
 
 class ExtendedGammaTests(unittest.TestCase):
@@ -42,7 +43,7 @@ class ExtendedGammaTests(unittest.TestCase):
         for source in record['sources']:
             blob=subprocess.check_output(['git','show',sha+':'+source['path']],cwd=ROOT)
             self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
-            self.assertEqual((ROOT/source['path']).read_text(),blob.decode().replace('\r\n','\n'))
+            self.assertEqual(strip_wide((ROOT/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
         old=json.loads((HERE/'excel_scaled_gamma_artifact.json').read_text())
         def failures(raw):
             return re.findall(r'^\[[^\]]+\]   (.*)$',raw.decode('utf-8-sig').replace('\r\n','\n'),re.M)
@@ -127,7 +128,8 @@ class ExtendedGammaTests(unittest.TestCase):
         self.assertEqual(block,render(saved))
         self.assertEqual(text.count('    Test_ExtendedGamma_Fidelity\n'),1)
         policy=json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
-        self.assertEqual(policy['expected_assertions'],9962)
+        wide=json.loads((HERE/'wide_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'],9962+wide['additional_assertions'])
 
     def test_frozen_vba_and_public_sources_are_unchanged(self):
         sha='ec8a5f98edc8d37e3e9e50c1344b2fc31c33289f'

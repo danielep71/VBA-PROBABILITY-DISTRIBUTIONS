@@ -88,7 +88,8 @@ class ScaledGammaVbaTests(unittest.TestCase):
         self.assertEqual(text.count('    Test_ScaledGamma_Fidelity\n'),1)
         policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'],BASELINE+475+extended['additional_assertions'])
+        wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'],BASELINE+475+extended['additional_assertions']+wide['additional_assertions'])
 
     def test_normalization_oracles_preserve_exact_dyadic_values(self):
         for row in dataset()['normalization']:

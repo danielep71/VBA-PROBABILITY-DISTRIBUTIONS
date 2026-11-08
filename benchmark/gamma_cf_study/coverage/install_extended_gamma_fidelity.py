@@ -13,6 +13,8 @@ BASELINE=8190
 
 
 def strip(text):
+    from install_wide_gamma_fidelity import strip as strip_wide
+    text=strip_wide(text)
     if BEGIN not in text:
         return text
     before,rest=text.split(BEGIN,1)

@@ -42,7 +42,8 @@ class ScaledVbaPortTests(unittest.TestCase):
         extension = json.loads((HERE / 'scaled_dd_fidelity.json').read_text())
         gamma = json.loads((HERE / 'scaled_gamma_fidelity.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], 7104+extension['additional_assertions']+gamma['additional_assertions']+extended['additional_assertions'])
+        wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'], 7104+extension['additional_assertions']+gamma['additional_assertions']+extended['additional_assertions']+wide['additional_assertions'])
 
     def test_retained_excel_identity_and_failure_details(self):
         artifact = json.loads((HERE / 'excel_scaled_product_artifact.json').read_text())

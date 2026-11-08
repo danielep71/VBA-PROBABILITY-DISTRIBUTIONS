@@ -78,7 +78,8 @@ class ScaledDDVbaTests(unittest.TestCase):
         policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         extension = json.loads((HERE/'scaled_gamma_fidelity.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions']+extended['additional_assertions'])
+        wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
+        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions']+extended['additional_assertions']+wide['additional_assertions'])
 
     def test_old_vba_suite_is_unchanged(self):
         baseline = subprocess.check_output(['git', 'show',
