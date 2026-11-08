@@ -227,6 +227,8 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 
 [Open editable SVG](assets/distribution-map.svg) · [Read the accessible map and parameter conventions](docs/visuals/distribution-map.md)
 
+[Choosing a distribution](docs/visuals/choosing-distribution.md): candidate families by variable type, support and modelling assumptions.
+
 ## Normal and lognormal family
 
 | Distribution surface | Density | CDF | Survival | Inverse CDF | Inverse survival | Additional operations |
@@ -303,6 +305,13 @@ VBA Editor → Debug → Compile VBAProject
 Save the workbook as `.xlsm` or `.xlsb`.
 
 ## 2. Use the functions from a worksheet
+
+### Read density, probability and quantiles visually
+
+![Standard Normal density, cumulative, survival and quantile at the same threshold z=1, with left and right probability areas.](assets/probability-functions.png)
+
+Density is a height; probability is an area under the density. The four panels use the same Standard Normal example and full-precision probability for inversion.
+[Accessible explanation and worksheet examples](docs/visuals/probability-functions.md) · [Editable SVG](assets/probability-functions.svg).
 
 ### Standard Normal cumulative probability
 

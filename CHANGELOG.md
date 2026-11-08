@@ -99,6 +99,8 @@ Use only the categories needed by a release.
 
 ### Distribution guide
 
+- Added calculated Standard Normal density, CDF, survival and quantile panels with shared parameters, probability areas, accessible explanations and worksheet mappings; editable SVG/PNG generation includes independent high-precision checks (#245).
+
 - Add a reproducible SVG/PNG map of the 17 current distribution API surfaces, with mathematical supports, illustrative use cases and an accessible companion linked from the README (issue #244).
 
 ### Added
@@ -115,6 +117,8 @@ Use only the categories needed by a release.
 - Extend the private Gamma arithmetic study with exponent-separated two-Double addition, subtraction, multiplication and division (#24/#26). Exact-rational regression covers cancellation, alignment and accumulated operations. This Python study is not a new public kernel or Excel-certified candidate.
 
 - Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. The generated private VBA port passes all 4,657 new arithmetic assertions in exact-source Excel run 42476278844 (7,104 total, 7,063 PASS, 41 retained public failures). Public VBA kernels and their retained failures are unchanged.
+- Distribution decision guide: editable SVG, matching PNG, reproducible generator and accessible modelling assumptions for all 17 current API surfaces (#246).
+
 - Added a numerical research index under `docs/research/`, with twenty-six annotated source records covering 2000–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.
 
 - `tools/setup_repository.py` reads the GitHub Actions settings that `SETTINGS.md` documents, without writing them (#208): Actions enabled, full-SHA pinning, read-only default token permissions, no pull request approval by Actions, the outside-contributor approval policy and 90-day retention. The values live in a new `actions` block of `repository-settings.json` (schema 2). Drift is reported in the preview, `--verify` and the evidence (schema 2); an unreadable endpoint is a note, not drift.
@@ -189,6 +193,8 @@ Use only the categories needed by a release.
   observable behavior, compatibility, evidence, and known limitations.
 
 ### Fixed
+
+- Make Excel evidence tooling handle mixed exports and missing certified commit objects, while retaining source/grid validation; isolate positive tooling fixtures from pending live exports (extracted from #241/#242).
 
 - `benchmark/tchi_large_df/generate_tchi_large_df.py --merge-references` works again. The #210 seam rows that #214 appended to the grid were not produced by the generator, so the documented re-reference command refused the whole grid. The generator now takes those rows from `student_t_large_df_study/seam_study.py`, which owns them, and reports no reference change on the committed grid. `tchi_large_df/test_tchi_merge.py` runs the command in the evidence suite, and it failed before the fix.
 - `tools/setup_repository.py` no longer reports paused Dependabot security updates as on (#206). GitHub pauses them when Dependabot pull requests go unanswered, and only `GET automated-security-fixes` says so. The tool now always reads that endpoint, counts the feature as on only when it is enabled and not paused, reports a pause as drift with a note on resuming it, and records `"on (paused)"` in the evidence. `--apply` fails its read-back while the feature stays paused. When the endpoint is unreadable, the record keeps the `security_and_analysis` state and says the paused state is unknown.
