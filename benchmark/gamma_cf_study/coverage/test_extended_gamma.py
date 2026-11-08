@@ -1,9 +1,11 @@
 """Extended Gamma frozen evidence, rational underflow control and port isolation."""
 from fractions import Fraction as F
+import base64
 import hashlib
 import json
 import math
 import random
+import re
 import subprocess
 import unittest
 
@@ -13,6 +15,43 @@ from install_extended_gamma_fidelity import HERE,ROOT,BEGIN,END,dataset,render,s
 
 
 class ExtendedGammaTests(unittest.TestCase):
+    def test_exact_source_excel_evidence_and_unchanged_public_failures(self):
+        artifact=json.loads((HERE/'excel_extended_gamma_artifact.json').read_text())
+        self.assertEqual(artifact['run_id'],42515382823)
+        self.assertEqual(artifact['artifact_id'],13631475342)
+        self.assertEqual(artifact['artifact_zip_sha256'],'9f6facd9a70831c3b2e4230664da513fd352156e0260f853c4fef86a22b9fc2d')
+        decoded={}
+        for name,entry in artifact['members'].items():
+            raw=base64.b64decode(entry['base64'],validate=True)
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),entry['sha256'])
+            decoded[name]=raw
+        record=json.loads(decoded['excel-certification.json'].decode('utf-8-sig'))
+        sha='924ff800077a3001bd1bcc246ad3a370f1c78fba'
+        self.assertEqual(record['candidate_sha'],sha)
+        self.assertEqual(record['runner']['workflow']['sha'],sha)
+        self.assertEqual(record['runner']['workflow']['run_id'],42515382823)
+        self.assertEqual(record['harness'],dict(entry_point='Test_STATS_PROBDIST_RunAll_CI',assertions=9962,passed=9921,failed=41))
+        for stage in ('import','compile','cleanup'):
+            self.assertEqual(record['stages'][stage]['status'],'PASS')
+        self.assertEqual(record['stages']['regression']['status'],'FAIL')
+        self.assertTrue(all(not grid['exported'] for grid in record['grids'].values()))
+        self.assertEqual(record['log']['sha256'],'sha256:'+hashlib.sha256(decoded['test-result.txt']).hexdigest())
+        policy=json.loads(subprocess.check_output(['git','show',sha+':.github/excel-evidence-policy.json'],cwd=ROOT))
+        self.assertEqual(policy['expected_assertions'],9962)
+        self.assertEqual({s['path'] for s in record['sources']},set(policy['regression_sources']))
+        for source in record['sources']:
+            blob=subprocess.check_output(['git','show',sha+':'+source['path']],cwd=ROOT)
+            self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
+            self.assertEqual((ROOT/source['path']).read_text(),blob.decode().replace('\r\n','\n'))
+        old=json.loads((HERE/'excel_scaled_gamma_artifact.json').read_text())
+        def failures(raw):
+            return re.findall(r'^\[[^\]]+\]   (.*)$',raw.decode('utf-8-sig').replace('\r\n','\n'),re.M)
+        previous=failures(base64.b64decode(old['members']['test-result.txt']['base64']))
+        current=failures(decoded['test-result.txt'])
+        self.assertEqual(len(current),41)
+        self.assertEqual(current,previous)
+        self.assertFalse(any(s.startswith('EG ') for s in current))
+
     def test_frozen_candidate_and_complete_model_screen(self):
         protocol=json.loads((HERE/'extended_protocol.json').read_text())
         result=json.loads((HERE/'extended_screen.json').read_text())

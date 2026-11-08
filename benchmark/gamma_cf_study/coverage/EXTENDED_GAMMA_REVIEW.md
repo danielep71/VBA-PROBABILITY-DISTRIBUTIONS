@@ -68,8 +68,10 @@ The separate EG block covers 587 distinct pairs: prior B6/scaled cases, the
 newly revealed 220 points, the routing preflight, domain edges and rational
 shape-two probes. It adds 1,772 assertions: 1,761 success/P/Q-bit comparisons,
 eight invalid/cleared-output checks and three routing-control assertions.
-Aggregate policy: 9,962 assertions. Actual host results must be retained before
-claiming Excel fidelity for this extension.
+Aggregate policy: 9,962 assertions. Exact-source Excel run 42515382823 on
+`924ff800077a3001bd1bcc246ad3a370f1c78fba` passes all 1,772 added checks:
+9,962 total / 9,921 PASS / 41 FAIL. All 41 previous public failure details are
+identical. See [the retained result](EXTENDED_GAMMA_VBA_RESULT.md).
 
 Generation/source/evidence fixtures preserve the complete preceding 8,190-test
 module after removing only the new EG block/call, and every public source byte.

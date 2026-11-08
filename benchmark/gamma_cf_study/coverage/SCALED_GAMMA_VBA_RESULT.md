@@ -20,7 +20,8 @@ successful private model-fidelity checkpoint; the public regression is red.
   log bytes are preserved in `excel_scaled_gamma_artifact.json`.
 - The evidence fixture verifies all seven source blobs against the tested
   commit, the original log digest, assertion totals and complete failure
-  details. The current imported sources still match that commit exactly.
+  details. The imported sources at this checkpoint match that commit exactly;
+  subsequent suite extensions retain their own source identities and counts.
 
 ## Verified scope
 
