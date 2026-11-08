@@ -5356,7 +5356,7 @@ Private Function PV2_Exp(ByVal Z As Variant) As Variant
 '   2026-11-08
 '==============================================================================
     Dim R As Variant, T As Variant, S As Variant, N As Long, K As Long
-    Dim Ratio As Double, Scale As Double, H As Double, L As Double
+    Dim Ratio As Double, ScaleFactor As Double, H As Double, L As Double
     If PV2_Value(Z) < -64# Or PV2_Value(Z) > 8# Then Err.Raise 5, , "PV2 Exp domain"
     Ratio = PV2_H(Z) / PV2_H(PV2_Ln2())
     N = CLng(Ratio)
@@ -5366,9 +5366,9 @@ Private Function PV2_Exp(ByVal Z As Variant) As Variant
         T = PV2_Div(PV2_Mul(T, R), CDbl(K))
         S = PV2_Add(S, T)
         If Abs(PV2_H(T)) <= Abs(PV2_H(S)) * 2# ^ (-105) Then
-            Scale = 2# ^ N
-            H = PV2_H(S) * Scale
-            L = PV2_L(S) * Scale
+            ScaleFactor = 2# ^ N
+            H = PV2_H(S) * ScaleFactor
+            L = PV2_L(S) * ScaleFactor
             PV2_Exp = Array(H, L)
             Exit Function
         End If
