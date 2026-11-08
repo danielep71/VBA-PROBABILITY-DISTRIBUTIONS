@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-08T09:47:23Z",
+ "generated_utc": "2026-11-08T22:44:12Z",
  "versions": {
   "python": "3.12.14",
   "mpmath": "1.3.0"
@@ -50,7 +50,7 @@
    },
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "89c428f08e0d5eb87894312769d0b78531e6377e18aab19abbf416587c7ceab8"
+    "sha256": "3a777bcf9943e524cff8ee508a6396d71962b93b3e91f083e69634e2656f8aa5"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 36.4,
+ "runtime_s": 36.9,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3710,6 +3710,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded 1111a98396133784ffd20c619a17ec6cb14772bdbc42514f981bdfaba495feb9, now 89c428f08e0d5eb87894312769d0b78531e6377e18aab19abbf416587c7ceab8"
+   ]
+  },
+  {
+   "utc": "2026-11-08T22:43:35Z",
+   "reason": "PR #242 public Gamma integration: exact-source Excel run 42529642623 exported main and holdout from e91c535a8f7ef2ba3830d9c690b39966b74cc6b3 with 14878 passing assertions. Main has 112 changed Gamma, Chi-square and Poisson observations; all normal observations and contracts are unchanged. Recompute the dependent report without refitting or re-evaluating holdout H; preserve A6 and its original exposure.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded 89c428f08e0d5eb87894312769d0b78531e6377e18aab19abbf416587c7ceab8, now 3a777bcf9943e524cff8ee508a6396d71962b93b3e91f083e69634e2656f8aa5"
    ]
   }
  ]

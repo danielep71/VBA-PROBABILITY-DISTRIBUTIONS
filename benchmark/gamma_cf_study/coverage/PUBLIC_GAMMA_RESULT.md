@@ -1,5 +1,16 @@
 # Public Gamma P/Q integration and fresh validation
 
+## Fresh grid export completed
+
+[Run 42529642623](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/42529642623)
+executed the exact candidate `e91c535a8f7ef2ba3830d9c690b39966b74cc6b3`:
+**14,878 / 14,878 assertions PASS**, followed by full main and holdout exports.
+The main grid passes **166 / 166 active contracts**, and the holdout passes
+**83 / 83 contracts**. See [the export result](PUBLIC_EXPORT_RESULT.md) for the
+original artifact, row movement, source identity and acceptance limits.
+This current evidence supersedes the stale-grid status of the historical
+regression-only checkpoints below; those original records are preserved.
+
 ## Public repair
 
 Implementation `1440b180036091c7c7635eb87e155a2762bb2a30` routes the public
@@ -93,13 +104,13 @@ All 76 local tooling commands pass on the fresh host-test tree; all 18 strict
 static checks pass. The focused #241 port carries the same production kernel
 and the four original public regression groups, with 1,947 expected assertions.
 
-Both #241 and #242 remain open and draft. These results do not refresh or
-rebind the main/holdout grids, supply a global accumulated-error bound, prove
-performance over the full input domain, or certify another Office environment.
-Fresh exact-source Excel exports, assessment of their numerical contracts,
-current CI and review remain required before integration/release acceptance.
-On the tested host-test commit, hosted static checks, CodeQL, test selection,
-all evaluation-tooling proofs and positive-ratio study proofs pass. The live
-Accuracy Gate fails on stale main evidence and on the older 965-assertion
-canonical export record versus the new policy; its README assurance validation
-also fails on that obsolete record. These are not reported as green CI.
+Both #241 and #242 remain open and draft. The fresh export documented above
+resolves this branch's main/holdout binding and canonical-record mismatch.
+The earlier regression-only runs did not export grids; their records retain
+`exported: false`. Their then-red Accuracy Gate was caused by stale grid
+bindings and the old 965-assertion canonical record, not waived numerical
+failures. Current-commit hosted checks are recorded on the PR.
+
+The finite cohorts do not prove a global accumulated-error bound, full-domain
+performance, another Office environment or release acceptance. Review and
+registered release coverage/dependencies remain outstanding.

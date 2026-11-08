@@ -1,5 +1,8 @@
 """Fresh fixed-candidate references, exact conversion and retained public evidence."""
 import base64
+import csv
+import io
+import zipfile
 from fractions import Fraction as F
 import hashlib
 import json
@@ -165,6 +168,74 @@ class PublicFreshTests(unittest.TestCase):
             self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),s['sha256'])
             if s['path'].startswith('src/'):
                 self.assertEqual((ROOT/s['path']).read_text(),blob.decode().replace('\r\n','\n'))
+
+    def test_fresh_export_bytes_and_declared_caller_movement(self):
+        folder = HERE
+        artifact = json.loads((folder / 'excel_public_export_artifact.json').read_text())
+        raw = base64.b64decode(artifact['artifact_zip_base64'], validate=True)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), artifact['artifact_zip_sha256'])
+        self.assertEqual(artifact['artifact_zip_sha256'],
+                         '582cd4efbca45e6e8fff287d815a9370aca39e93b35fbb9024a5e4c71386d15b')
+        self.assertEqual(artifact['run_id'], 42529642623)
+        self.assertEqual(artifact['artifact_id'], 13637073116)
+        head = 'e91c535a8f7ef2ba3830d9c690b39966b74cc6b3'
+        self.assertEqual(artifact['candidate_sha'], head)
+        movement = json.loads((folder / 'public_export_movement.json').read_text())
+        self.assertEqual(movement['candidate_sha'], head)
+        self.assertEqual(movement['run_id'], artifact['run_id'])
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            manifest = json.loads(archive.read('export-manifest.json').decode('utf-8-sig'))
+            self.assertEqual(manifest['candidate_sha'], head)
+            self.assertEqual(manifest['status'], 'PASS')
+            self.assertEqual(manifest['requested'], ['main', 'holdout'])
+            self.assertEqual(manifest['main_mode'], 'full')
+            self.assertEqual(manifest['regression']['assertions'], 14878)
+            self.assertEqual(manifest['regression']['failed'], 0)
+            self.assertEqual(manifest['workflow']['run_id'], artifact['run_id'])
+            record_bytes = archive.read('excel-certification.json')
+            self.assertEqual('sha256:' + hashlib.sha256(record_bytes).hexdigest(),
+                             manifest['regression']['record_sha256'])
+            record = json.loads(record_bytes.decode('utf-8-sig'))
+            self.assertEqual(record['candidate_sha'], head)
+            self.assertEqual(record['harness']['assertions'], 14878)
+            self.assertEqual(record['harness']['passed'], 14878)
+            self.assertEqual(record['harness']['failed'], 0)
+            self.assertTrue(all(stage['status'] == 'PASS' for stage in record['stages'].values()))
+            self.assertEqual(record['log']['sha256'],
+                             'sha256:' + hashlib.sha256(archive.read('test-result.txt')).hexdigest())
+            for source in record['sources']:
+                blob = subprocess.check_output(['git', 'show', head + ':' + source['path']], cwd=ROOT)
+                self.assertEqual('sha256:' + hashlib.sha256(blob).hexdigest(), source['sha256'])
+                self.assertEqual((ROOT / source['path']).read_text(), blob.decode().replace('\r\n', '\n'))
+            for grid in manifest['grids']:
+                data = archive.read(grid['artifact_path'])
+                self.assertEqual('sha256:' + hashlib.sha256(data).hexdigest(), grid['raw_sha256'])
+                self.assertEqual((ROOT / grid['path']).read_bytes(), data.replace(b'\r\n', b'\n'))
+                baseline = subprocess.check_output(['git', 'show', head + ':' + grid['path']], cwd=ROOT)
+                old_rows = list(csv.DictReader(io.StringIO(baseline.decode())))
+                new_rows = list(csv.DictReader(io.StringIO(data.decode())))
+                self.assertEqual(len(old_rows), len(new_rows))
+                result = movement['grids'][grid['name']]
+                expected = {row['line']: row for row in result['changed_observations']}
+                seen = {}
+                for line, (old, new) in enumerate(zip(old_rows, new_rows), start=2):
+                    self.assertEqual({k: v for k, v in old.items() if k != 'observed_vba'},
+                                     {k: v for k, v in new.items() if k != 'observed_vba'})
+                    if old['observed_vba'] == new['observed_vba']:
+                        self.assertNotIn(line, expected)
+                        continue
+                    row = expected[line]
+                    self.assertEqual(row['before'], old['observed_vba'])
+                    self.assertEqual(row['after'], new['observed_vba'])
+                    self.assertEqual(row['reference'], new['reference'])
+                    self.assertEqual(row['function'], new['function'])
+                    self.assertEqual(row['arguments'], {k: new[k] for k in ('arg1', 'arg2', 'arg3', 'arg4')})
+                    self.assertTrue(new['function'].startswith(('Gamma_', 'ChiSquare_', 'Poisson_')))
+                    seen[new['function']] = seen.get(new['function'], 0) + 1
+                self.assertEqual(seen, result['changed_by_function'])
+                self.assertEqual(sum(seen.values()), grid['changed_observations'])
+                self.assertEqual(sum(seen.values()), result['changed_rows'])
+                self.assertEqual(result['unchanged_rows'] + result['changed_rows'], len(new_rows))
 
 
 if __name__=='__main__':unittest.main()
