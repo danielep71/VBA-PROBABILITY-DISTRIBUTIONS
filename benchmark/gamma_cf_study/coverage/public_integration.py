@@ -9,7 +9,7 @@ from functools import lru_cache
 import json
 import re
 import subprocess
-from install_scaled_fidelity import ROOT,literal,documented
+from install_scaled_fidelity import HERE,ROOT,literal,documented
 
 PORT='b8efaf3c7810c48fadbfece38950ded190f79a56'
 SRC='src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
@@ -18,7 +18,7 @@ BEGIN="' BEGIN generated public Gamma integration"
 END="' END generated public Gamma integration"
 TBEGIN="' BEGIN public Gamma bit types"
 TEND="' END public Gamma bit types"
-EXTRA=2334
+EXTRA=4030
 
 
 @lru_cache(maxsize=None)
@@ -153,6 +153,34 @@ End Sub
             lines += [f'    PG_Case "PG {i:03d}", {literal(r["a"])}, {literal(r["x"])}, _',
                       f'        {literal(r["values_hex"][0])}, {literal(r["values_hex"][1])}']
         lines+=['End Sub','']
+    fresh=json.loads((HERE/'public_fresh_fidelity.json').read_text())
+    for start in range(0,len(fresh['rows']),20):
+        name=f'Test_PublicFresh_Chunk{start//20}';names.append(name);lines.append(f'Private Sub {name}()')
+        for i,r in enumerate(fresh['rows'][start:start+20],start):
+            lines += [f'    PG_Case "PF {i:03d}", {literal(r["a"])}, {literal(r["x"])}, _',
+                      f'        {literal(r["values_hex"][0])}, {literal(r["values_hex"][1])}']
+        lines+=['End Sub','']
+    lines.append('Private Sub Test_PublicFresh_Inverses()');names.append('Test_PublicFresh_Inverses')
+    for i,r in enumerate(fresh['inverses']):
+        lines += [f'    PF_Inverse "PF inverse {i:02d}", {literal(r["a"])}, {literal(r["p"])}, {literal(r["reference_hex"])}']
+    lines+=['End Sub','']
+    lines.append("""Private Sub PF_Inverse(ByVal Label As String, ByVal A As Double, ByVal Probability As Double, ByVal ExpectedUnit As Double)
+    Dim Value As Variant, Diag As String
+    Value = K_STATS_Gamma_InverseCumulative(Probability, A, 2#, Diag)
+    PF_InverseValue Label & " Gamma", Value, 2# * ExpectedUnit, Diag
+    Value = K_STATS_ChiSquare_InverseCumulative(Probability, 2# * A, Diag)
+    PF_InverseValue Label & " Chi-square", Value, 2# * ExpectedUnit, Diag
+End Sub
+
+Private Sub PF_InverseValue(ByVal Label As String, ByVal Value As Variant, ByVal Expected As Double, ByVal Diag As String)
+    If IsError(Value) Then
+        AssertTrue Label & " returned error " & Diag, False
+    Else
+        AssertTrue Label & " bits " & SG_Bits(CDbl(Value)) & " normalized " & CStr(CDbl(Value) / Expected) & " " & Diag, _
+            (Diag = "" And Abs(CDbl(Value) / Expected - 1#) <= 0.00000000000002)
+    End If
+End Sub
+""")
     lines+=['Private Sub Test_PublicGamma_Integration()']+['    '+n for n in names]
     for a,x in data['invalid']:lines.append(f'    PG_Invalid {literal(a)}, {literal(x)}')
     lines+=['End Sub','']
@@ -202,7 +230,7 @@ def install():
     text=text.replace('    Test_WideGamma_Fidelity\n','    Test_WideGamma_Fidelity\n    Test_PublicGamma_Integration\n',1)
     (ROOT/TEST).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     p=ROOT/'.github/excel-evidence-policy.json';policy=json.loads(p.read_text())
-    assert policy['expected_assertions'] in (10848,10848+EXTRA)
+    assert policy['expected_assertions'] in (10848,13182,10848+EXTRA)
     policy['expected_assertions']=10848+EXTRA;p.write_text(json.dumps(policy,indent=2)+'\n')
     print(len(names),'arithmetic procedures;',EXTRA,'new assertions;',policy['expected_assertions'],'total')
 

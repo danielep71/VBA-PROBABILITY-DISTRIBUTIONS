@@ -39,7 +39,7 @@ class PublicIntegrationTests(unittest.TestCase):
             self.assertIn(documented(old.replace('Public Function','Private Function',1).replace('PROB_TryGammaRegularized'+tail,'PG_B6_'+tail)),test_block())
         policy=json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         self.assertEqual(policy['expected_assertions'],10848+EXTRA)
-        self.assertEqual(EXTRA,290*8+7*2)
+        self.assertEqual(EXTRA,290*8+7*2+206*8+24*2)
 
     def test_reversal_refuses_arithmetic_or_adapter_mutations(self):
         source=(ROOT/SRC).read_text()

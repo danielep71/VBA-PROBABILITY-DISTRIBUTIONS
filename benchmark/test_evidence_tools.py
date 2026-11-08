@@ -46,6 +46,7 @@ commands = (
     ("gamma_cf_study/coverage/test_extended_gamma.py",),
     ("gamma_cf_study/coverage/test_wide_gamma.py",),
     ("gamma_cf_study/coverage/test_public_integration.py",),
+    ("gamma_cf_study/coverage/test_public_fresh.py",),
     ("gamma_cf_study/coverage/test_scaled_dd_vba_port.py",),
     ("gamma_cf_study/coverage/test_scaled_vba_port.py",),
     ("gamma_cf_study/replay_baseline.py", "isolation"),
