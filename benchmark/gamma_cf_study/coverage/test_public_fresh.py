@@ -111,6 +111,34 @@ class PublicFreshTests(unittest.TestCase):
         self.assertEqual(len(old),99)
         self.assertFalse(old&{row['a_hex'] for row in p['points']})
 
+    def test_fresh_public_excel_run(self):
+        a=json.loads((HERE/'excel_public_fresh_artifact.json').read_text());decoded={}
+        self.assertEqual(a['run_id'],42524515131)
+        self.assertEqual(a['artifact_id'],13635460900)
+        self.assertEqual(a['artifact_zip_sha256'],'c77ad4c66cf7f03c1cd4110c359615660b807f526a10efc86fa78c62a19ebe9b')
+        for n,v in a['members'].items():
+            b=base64.b64decode(v['base64'],validate=True);self.assertEqual(hashlib.sha256(b).hexdigest(),v['sha256']);decoded[n]=b
+        record=json.loads(decoded['excel-certification.json'].decode('utf-8-sig'))
+        self.assertEqual(record['harness'],dict(entry_point='Test_STATS_PROBDIST_RunAll_CI',assertions=14878,passed=14878,failed=0))
+        self.assertTrue(all(s['status']=='PASS' for s in record['stages'].values()))
+        self.assertTrue(all(not g['exported'] for g in record['grids'].values()))
+        self.assertEqual(record['log']['sha256'],'sha256:'+hashlib.sha256(decoded['test-result.txt']).hexdigest())
+        merge=a['tested_merge'];raw=base64.b64decode(merge['commit_object_base64'],validate=True)
+        self.assertEqual(hashlib.sha1(b'commit '+str(len(raw)).encode()+b'\0'+raw).hexdigest(),merge['sha'])
+        self.assertEqual(record['candidate_sha'],merge['sha']);self.assertEqual(record['runner']['workflow']['sha'],merge['sha'])
+        self.assertEqual(merge['sha'],'a0202380a6b6b07e102585db455ebb769b6fa0b0')
+        self.assertEqual(record['runner']['workflow']['run_id'],a['run_id'])
+        head='b005341702f5fb70323453bded9b2109250ee541';self.assertEqual(merge['head_sha'],head)
+        self.assertEqual(raw.decode().splitlines()[0],'tree '+merge['tree_sha'])
+        self.assertEqual(subprocess.check_output(['git','rev-parse',head+'^{tree}'],cwd=ROOT).decode().strip(),merge['tree_sha'])
+        policy=json.loads(subprocess.check_output(['git','show',head+':.github/excel-evidence-policy.json'],cwd=ROOT))
+        self.assertEqual(policy['expected_assertions'],14878)
+        self.assertEqual({s['path'] for s in record['sources']},set(policy['regression_sources']))
+        for s in record['sources']:
+            blob=subprocess.check_output(['git','show',head+':'+s['path']],cwd=ROOT)
+            self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),s['sha256'])
+            self.assertEqual((ROOT/s['path']).read_text(),blob.decode().replace('\r\n','\n'))
+
     def test_first_public_excel_run_resolves_all_old_failures(self):
         a=json.loads((HERE/'excel_public_gamma_artifact.json').read_text());decoded={}
         self.assertEqual(a['run_id'],42523118255);self.assertEqual(a['artifact_id'],13634552161)

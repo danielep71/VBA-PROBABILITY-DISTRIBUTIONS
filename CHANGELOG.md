@@ -97,6 +97,17 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Public Gamma candidate (#24/#26)
+
+- Route regularized Gamma P/Q and their Gamma/chi-square callers through the
+  measured scaled double-double kernel. The first public Excel run passed
+  all 13,182 assertions, resolving the 41 prior public failures without
+  changing their tolerances. Public signatures and error contracts remain
+  unchanged; the iteration cap still fails explicitly and recovery is tested.
+- Retain the private experimental records below as historical evidence. PRs
+  #241 and #242 remain draft; fresh exact-source accuracy-grid exports and
+  release gates are still required before acceptance.
+
 ### Distribution guide
 
 - Added calculated Standard Normal density, CDF, survival and quantile panels with shared parameters, probability areas, accessible explanations and worksheet mappings; editable SVG/PNG generation includes independent high-precision checks (#245).
