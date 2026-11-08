@@ -137,3 +137,25 @@ negative proofs under [verification depth](../VERIFICATION_DEPTH.md).
   from optimizer convergence and statistical estimation. Include boundary
   optima, all-zero/underdispersed samples and real-shape parameter compatibility.
   A fitting feasibility study does not change an evaluation-only API.
+
+## Additional controls from the 2020–2026 review
+
+- **Bounds and rigorous references (R10/R11/R15/R16):** distinguish a theorem's
+  exact-real bound from its floating-point evaluation. Check hypotheses, stable
+  normalization and enclosure width; use outward rounding or interval arithmetic
+  when claiming certified inclusion. Wide bounds only detect some failures.
+  Gamma median results apply at p=0.5; do not generalize to all quantiles.
+- **Discrete inverses (R08/R13):** approximate continuous seeds require a final
+  integer search satisfying F(k-1) < p <= F(k) for interior probabilities. Define
+  endpoint semantics separately and use independent references when rounding
+  makes comparisons ambiguous. Measure seed cost plus all correction calls.
+- **Higher-order and asymptotic inverses (R09/R12):** compare total cost and
+  actual convergence domains, preserve brackets/fallbacks, and test every dispatch
+  seam. Faster local convergence is not a global convergence guarantee.
+- **Bivariate normal (R14):** separate absolute error from relative small-tail
+  error. Test independence, both correlation limits and extreme thresholds.
+  Record the source revision; an empirical maximum is not a domain-wide bound.
+- **FFT distributions (R13/R17):** isolate discretization, truncation, aliasing,
+  tilting and roundoff errors. Verify direct tails against independent methods.
+  Normalization and matching moments are useful diagnostics, not VaR/ES or
+  relative-tail certification. Document independence assumptions and resource caps.
