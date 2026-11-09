@@ -34,8 +34,23 @@ commands = (
     ("student_t_large_df_study/test_vba_large_df_source.py",),
     ("student_t_large_df_study/test_inverse_polish.py",),
     ("tchi_large_df/test_tchi_merge.py",),
-    ("gamma_cf_study/run_isolation.py",),
-    ("gamma_cf_study/check_candidate.py",),
+    ("gamma_cf_study/coverage/test_precision_probe.py",),
+    ("gamma_cf_study/coverage/test_precision_v2.py",),
+    ("gamma_cf_study/coverage/test_research_checks.py",),
+    ("gamma_cf_study/coverage/test_precision_arithmetic_audit.py",),
+    ("gamma_cf_study/coverage/test_cf_enclosure.py",),
+    ("gamma_cf_study/coverage/test_scaled_product.py",),
+    ("gamma_cf_study/coverage/test_scaled_dd.py",),
+    ("gamma_cf_study/coverage/test_scaled_gamma.py",),
+    ("gamma_cf_study/coverage/test_scaled_gamma_vba_port.py",),
+    ("gamma_cf_study/coverage/test_extended_gamma.py",),
+    ("gamma_cf_study/coverage/test_wide_gamma.py",),
+    ("gamma_cf_study/coverage/test_public_integration.py",),
+    ("gamma_cf_study/coverage/test_public_fresh.py",),
+    ("gamma_cf_study/coverage/test_scaled_dd_vba_port.py",),
+    ("gamma_cf_study/coverage/test_scaled_vba_port.py",),
+    ("gamma_cf_study/replay_baseline.py", "isolation"),
+    ("gamma_cf_study/replay_baseline.py", "candidate"),
     ("gamma_series_small_shape/test_gamma_series_small_shape.py",),
     ("gamma_series_small_shape/analyze_gamma_series_small_shape.py", "--check"),
     ("normal_tail_study/test_kernel_model.py",),
@@ -81,7 +96,7 @@ parser.add_argument('--checks-only', action='store_true',
                     help='Validate live evidence; omit regression fixtures only for metadata-only CI')
 args = parser.parse_args()
 for command in commands:
-    if args.checks_only and (not os.path.basename(command[0]).startswith('check_')
+    if args.checks_only and command != ('gamma_cf_study/replay_baseline.py', 'candidate') and (not os.path.basename(command[0]).startswith('check_')
                              or '--self-test' in command):
         continue
     started = time.monotonic()

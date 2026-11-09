@@ -1,0 +1,35 @@
+{
+  "status": "POST-HOC MODEL DIAGNOSIS ONLY",
+  "rows": [
+    {
+      "a_hex": "0x1.8f5c28f5c28f6p-2",
+      "x_hex": "0x1.63d70a3d70a41p+0",
+      "depth": 62,
+      "prefactor_hex": "0x1.fd8d8c7d60b32p-4",
+      "backward_hex": "0x1.19f0d60282c4ep-1",
+      "q_hex": "0x1.1897def153c27p-4",
+      "exact_prefactor_only_hex": "0x1.1897def153c28p-4",
+      "exact_fraction_only_hex": "0x1.1897def153c27p-4",
+      "both_exact_hex": "0x1.1897def153c28p-4",
+      "reference_q": "0.06850421034799645846055292174318277394710646888946200179342417660129677898538678837936408819689883565"
+    },
+    {
+      "a_hex": "0x1.8f5c28f5c28f6p-2",
+      "x_hex": "0x1.63d70a3d70a42p+0",
+      "depth": 62,
+      "prefactor_hex": "0x1.fd8d8c7d60b33p-4",
+      "backward_hex": "0x1.19f0d60282c4ep-1",
+      "q_hex": "0x1.1897def153c28p-4",
+      "exact_prefactor_only_hex": "0x1.1897def153c27p-4",
+      "exact_fraction_only_hex": "0x1.1897def153c27p-4",
+      "both_exact_hex": "0x1.1897def153c27p-4",
+      "reference_q": "0.06850421034799643858794902854185300992134247725132604408703969105258748357089703607251111728043962578"
+    }
+  ],
+  "sha256_lf": {
+    "benchmark/gamma_cf_study/coverage/upper_rounding_diagnosis.py": "e60fdbcbdf27e5a0a033fe72fd106a752674586f5870a7fb72ec36dead85cd63",
+    "benchmark/gamma_cf_study/coverage/seam_diagnosis.py": "cdf623d86abe80807d9fa9c5b6bae92c6050d71e4dedf0681c267a0c20773f54",
+    "benchmark/gamma_cf_study/model.py": "da36fe964b056f254572450db6963f057d1eb5d31a8fc476e8d327e1f7e134fb",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "de6650b17dc92b01d00536ffb68f0cfae1887133ddff06693ba870af8a834b7e"
+  }
+}

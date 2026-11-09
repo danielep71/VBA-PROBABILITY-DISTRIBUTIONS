@@ -97,6 +97,36 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Public Gamma P/Q (#26)
+
+- Regularized Gamma P and Q, and through them the Gamma, Chi-square and
+  Poisson CDF, survival and inverse, use the scaled double-double kernel
+  (#242). Lower Q comes from log P before rounding. The 41 public failures
+  the study retained are resolved without changing a tolerance. The
+  14,878-assertion suite passed in Excel (run 42529642623), and the fresh
+  main and holdout exports pass 166/166 and 83/83 contracts.
+- Where the double-double pair reaches its 100,000-iteration cap, the binary64
+  series or continued fraction answers instead. The pair's tighter stopping
+  rules would otherwise have returned `#NUM!` near `X = A` for shapes from
+  about 1.07E8 to 1.9E8, and just above `X = A + 1` from about 3.3E11 to
+  1.7E12, inside the `extreme_shape` domain, where the previous kernel
+  answered. Found in review; `Test_PublicGamma_Reach` checks both regions
+  against quadrature references. Excel run 42670065251 passed all 14,886
+  assertions, and its exports changed no main or holdout observation.
+- An unexpected runtime error inside the new kernel propagates again, so the
+  public function returns `#VALUE!` as documented. The kernel's own domain
+  and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.
+- About 500 lines of unreachable Precision v2 code are no longer generated
+  into production: a name in a comment had pulled them into the extraction.
+  The remaining Precision v2 arithmetic is labelled as the production core
+  it is.
+- Each Gamma P/Q call now runs double-double arithmetic. The Excel regression
+  suite takes about 8 minutes, up from about 10 seconds, mostly because it
+  grew from 955 to 14,878 assertions; per-call cost is not yet measured.
+- The private-experiment entries below record the study's stages. Their
+  statements that public routing is unchanged describe each stage at the
+  time.
+
 ### Distribution guide
 
 - Added calculated Standard Normal density, CDF, survival and quantile panels with shared parameters, probability areas, accessible explanations and worksheet mappings; editable SVG/PNG generation includes independent high-precision checks (#245).
@@ -105,6 +135,18 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Add a private VBA port of the bounded scaled Gamma P/Q experiment with 475 model-fidelity, monotonicity, refusal and exact-normalization assertions (#24/#26). Public kernels and prior Excel evidence are unchanged; host results and failed diagnostic attempts are recorded separately.
+- Extend the private Gamma candidate to shapes through 128 and arguments through 1024, retaining the 220-point model screen and an additional subnormal counterexample. A separate shape-two product correction passes exact rational checks and all 1,772 new assertions pass in exact-source Excel execution (#24/#26). Public routing and its 41 failures remain unchanged.
+
+- Expand the scaled Gamma development screen to 69 in-domain B6 reference points and 24 adjacent routing-boundary points, with monotonicity checks and oracle precision stability at 160/320 digits (#24/#26). Twenty out-of-domain B6 points remain explicitly excluded; public VBA acceptance is unchanged.
+
+- Add a private scaled-arithmetic Gamma P/Q integration experiment for positive binary64 shapes up to one and arguments up to 32, including subnormal inputs (#24/#26). This revealed Python screen does not change public VBA or release acceptance.
+
+- Add a private VBA port of the exponent-separated two-Double operations and 611 model-fidelity assertions (#24/#26), with independent rational checks and preservation of the earlier test suite. All 611 assertions pass in exact-source Excel run 42494438289 (7,715 total, 7,674 PASS, the same 41 public failures); public Gamma acceptance remains blocked.
+
+- Extend the private Gamma arithmetic study with exponent-separated two-Double addition, subtraction, multiplication and division (#24/#26). Exact-rational regression covers cancellation, alignment and accumulated operations. This Python study is not a new public kernel or Excel-certified candidate.
+
+- Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. The generated private VBA port passes all 4,657 new arithmetic assertions in exact-source Excel run 42476278844 (7,104 total, 7,063 PASS, 41 retained public failures). Public VBA kernels and their retained failures are unchanged.
 - Distribution decision guide: editable SVG, matching PNG, reproducible generator and accessible modelling assumptions for all 17 current API surfaces (#246).
 
 - Added a numerical research index under `docs/research/`, with twenty-six annotated source records covering 2000–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.

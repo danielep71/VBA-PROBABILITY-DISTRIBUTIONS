@@ -1,0 +1,73 @@
+{
+  "scope": "revealed Python resource probe, no accuracy or VBA performance certification",
+  "rows": [
+    {
+      "a_hex": "0x1.7d78400000000p+25",
+      "x_hex": "0x1.7d78400000000p+25",
+      "values_hex": [
+        "0x1.000277090dd48p-1",
+        "0x1.fffb11ede4571p-2"
+      ],
+      "trace": {
+        "route": "positive lower with geometric remainder",
+        "iterations": 67920,
+        "remainder_exponent": -57,
+        "total_exponent": 14
+      },
+      "elapsed_seconds": 3.3909038700003293
+    },
+    {
+      "a_hex": "0x1.7d78400000000p+25",
+      "x_hex": "0x1.7d78408000000p+25",
+      "values_hex": [
+        "0x1.0009dc243571fp-1",
+        "0x1.ffec47b7951c1p-2"
+      ],
+      "trace": {
+        "route": "upper",
+        "iterations": 5223
+      },
+      "elapsed_seconds": 0.3611537760007195
+    },
+    {
+      "a_hex": "0x1.7d78400000000p+26",
+      "x_hex": "0x1.7d78400000000p+26",
+      "values_hex": [
+        "0x1.0001be359a68cp-1",
+        "0x1.fffc8394cb2e8p-2"
+      ],
+      "trace": {
+        "route": "positive lower with geometric remainder",
+        "iterations": 96404,
+        "remainder_exponent": -57,
+        "total_exponent": 14
+      },
+      "elapsed_seconds": 4.424575623997953
+    },
+    {
+      "a_hex": "0x1.6bcc41e900000p+46",
+      "x_hex": "0x1.6bcc41e900000p+46",
+      "error": "lower series failed to converge in 100000 iterations",
+      "elapsed_seconds": 4.9189494289967115
+    },
+    {
+      "a_hex": "0x1.6bcc41e900000p+46",
+      "x_hex": "0x1.6bcc41e900040p+46",
+      "error": "continued fraction failed to converge in 100000 iterations",
+      "elapsed_seconds": 3.7466123069971218
+    },
+    {
+      "a_hex": "0x1.0200000000000p+7",
+      "x_hex": "0x1.0400000000000p+7",
+      "values_hex": [
+        "0x1.17dffe2a8f4f3p-1",
+        "0x1.d04003aae161ap-2"
+      ],
+      "trace": {
+        "route": "upper",
+        "iterations": 65
+      },
+      "elapsed_seconds": 0.005111724996822886
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+Private Function WG_Stirling(ByVal A As Variant) As Variant
+    Dim Numerators As Variant, Denominators As Variant, Inverse As Variant, Square As Variant, Term As Variant
+    Dim K As Long
+    Numerators = Array(1#, -1#, 1#, -1#, 1#, -691#, 1#, -3617#, 43867#, -174611#)
+    Denominators = Array(12#, 360#, 1260#, 1680#, 1188#, 360360#, 156#, 122400#, 244188#, 125400#)
+    Inverse = SG_Div(1#, A): Square = SG_Mul(Inverse, Inverse)
+    Term = SG_Div(Numerators(9), Denominators(9))
+    For K = 8 To 0 Step -1
+        Term = SG_Add(SG_Mul(Term, Square), SG_Div(Numerators(K), Denominators(K)))
+    Next K
+    WG_Stirling = SG_Mul(Term, Inverse)
+End Function
+
+Private Function WG_Deviance(ByVal A As Double, ByVal X As Double) As Variant
+    Dim AA As Variant, XX As Variant, U As Variant, Term As Variant, Total As Variant, Delta As Variant, Value As Variant
+    Dim N As Long, Converged As Boolean
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    U = SG_Div(SG_Sub(XX, AA), AA)
+    If Abs(SG_Value(U)) <= 0.5 Then
+        Term = SG_Mul(U, U): Total = SG_Div(Term, 2#)
+        For N = 3 To 1000
+            Term = SG_Mul(Term, SG_Neg(U))
+            Delta = SG_Div(Term, N)
+            Total = SG_Add(Total, Delta)
+            If SG_Small(Delta, Total) Then
+                Value = SG_Mul(AA, Total)
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "WG_Deviance", "series cap"
+    Else
+        Value = SG_Sub(SG_Sub(XX, AA), SG_Mul(AA, SG_Sub(SG_Log(X), SG_Log(A))))
+    End If
+    If CDbl(Value(0)) < 0# Then Err.Raise 5, "WG_Deviance", "negative deviance"
+    WG_Deviance = Value
+End Function
+
+Private Sub WG_Upper(ByVal A As Double, ByVal X As Double, ByVal LP As Variant, ByRef P As Double, ByRef Q As Double)
+    Dim AA As Variant, XX As Variant, B As Variant, C As Variant, D As Variant, AN As Variant
+    Dim Delta As Variant, Tail As Variant, H As Variant, QQ As Variant
+    Dim N As Long, K As Long, Converged As Boolean
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    B = SG_Sub(SG_Add(XX, 1#), AA)
+    C = SG_Coerce(1E+300): D = SG_Div(1#, B)
+    For N = 1 To 100000
+        AN = SG_Mul(-CDbl(N), SG_Sub(N, AA))
+        B = SG_Add(B, 2#)
+        D = SG_Div(1#, SG_Add(SG_Mul(AN, D), B))
+        C = SG_Add(B, SG_Div(AN, C))
+        Delta = SG_Sub(SG_Mul(C, D), 1#)
+        If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+            Converged = True
+            Exit For
+        End If
+    Next N
+    If Not Converged Then Err.Raise 5, "WG_Upper", "continued fraction cap 100000"
+    Tail = SG_Coerce(0#)
+    For K = N To 1 Step -1
+        Tail = SG_Div(SG_Mul(-CDbl(K), SG_Sub(K, AA)), _
+            SG_Add(SG_Add(SG_Sub(SG_Add(XX, 1#), AA), 2# * K), Tail))
+    Next K
+    H = SG_Div(1#, SG_Add(SG_Sub(SG_Add(XX, 1#), AA), Tail))
+    QQ = SG_Mul(SG_Mul(SG_Exp(LP), AA), H)
+    P = SG_Value(SG_Sub(1#, QQ)): Q = SG_Value(QQ)
+End Sub
+
+Private Function WG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+    Dim AA As Variant, XX As Variant, Dev As Variant, LP As Variant, Constant As Variant
+    Dim Term As Variant, Total As Variant, Ratio As Variant, Gap As Variant, Remainder As Variant, Guarded As Variant
+    Dim PP As Variant, QQ As Variant, N As Long, Converged As Boolean, Underflow As Boolean, Stage As String
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = "": Stage = "inputs"
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or X < 0# Then Exit Function
+    If X = 0# Then
+        Q = 1#: WG_Pair = True
+        Exit Function
+    End If
+    If A <= 128# And X <= 1024# Then
+        WG_Pair = EG_Pair(A, X, P, Q, Diagnostic)
+        Exit Function
+    End If
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    If A <= 128# Then
+        If X >= 1280# Then
+            P = 1#: WG_Pair = True
+            Exit Function
+        End If
+        Stage = "small-shape upper"
+        LP = SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), EG_LogGamma(AA)), XX)
+        WG_Upper A, X, LP, P, Q
+        WG_Pair = True
+        Exit Function
+    End If
+    Stage = "deviance"
+    Dev = WG_Deviance(A, X)
+    Underflow = (CLng(Dev(2)) >= 11)
+    If Not Underflow Then Underflow = (SG_Value(Dev) > 750#)
+    If Underflow Then
+        If X < A Then Q = 1# Else P = 1#
+        WG_Pair = True
+        Exit Function
+    End If
+    Constant = SG_Add(SP_FromWords(&H3FED67F1&, &HC864BEB5&), SP_FromWords(&HBC865B5A&, &H1B7FF5DF&))
+    LP = SG_Sub(SG_Sub(SG_Sub(SG_Neg(Dev), SG_Mul(SG_Log(A), 0.5)), Constant), WG_Stirling(AA))
+    If X >= A + 1# Then
+        Stage = "upper"
+        WG_Upper A, X, LP, P, Q
+        WG_Pair = True
+        Exit Function
+    End If
+    Stage = "lower geometric remainder"
+    Term = SG_Coerce(1#): Total = Term
+    For N = 1 To 100000
+        Term = SG_Div(SG_Mul(Term, XX), SG_Add(AA, N))
+        Total = SG_Add(Total, Term)
+        Ratio = SG_Div(XX, SG_Add(SG_Add(AA, N), 1#))
+        Gap = SG_Sub(1#, Ratio)
+        If CDbl(Gap(0)) > 0# Then
+            Remainder = SG_Div(SG_Mul(Term, Ratio), Gap)
+            Guarded = SG_Mul(Remainder, 4#)
+            If CDbl(Guarded(0)) = 0# Or CLng(Guarded(2)) < CLng(Total(2)) - 68 Then
+                Converged = True
+                Exit For
+            End If
+        End If
+    Next N
+    If Not Converged Then Err.Raise 5, "WG_Pair", "lower series cap 100000"
+    Stage = "lower exponential"
+    EG_LowerPair SG_Add(LP, EG_LogPair(Total)), PP, QQ
+    P = SG_Value(PP): Q = SG_Value(QQ)
+    WG_Pair = True
+    Exit Function
+Err_Handler:
+    Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
+    P = 0#: Q = 0#: WG_Pair = False
+End Function
+
+Private Sub WG_Case(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+    Dim P As Double, Q As Double, OK As Boolean, Diagnostic As String
+    OK = WG_Pair(A, X, P, Q, Diagnostic)
+    AssertTrue Label & " returned " & Diagnostic, OK
+    AssertTrue Label & " P bits " & SG_Bits(P), (OK And SP_SameBits(P, ExpectedP))
+    AssertTrue Label & " Q bits " & SG_Bits(Q), (OK And SP_SameBits(Q, ExpectedQ))
+End Sub
+
+Private Sub WG_Invalid(ByVal A As Double, ByVal X As Double)
+    Dim P As Double, Q As Double, OK As Boolean
+    P = 9#: Q = 9#
+    OK = WG_Pair(A, X, P, Q)
+    AssertTrue "WG invalid and cleared", (Not OK And P = 0# And Q = 0#)
+End Sub
+
+Private Sub WG_RoutingControl()
+    Dim A As Double, P As Double, Q As Double, LP As Double, LQ As Double, OK As Boolean, Diag As String
+    A = SP_FromWords(&H40600000&, &H00000001&)
+    OK = PROB_TryGammaRegularizedQ(128#, 1024#, LQ, Diag)
+    OK = PROB_TryGammaRegularizedQ(A, 1024#, Q, Diag) And OK
+    AssertTrue "WG outer B6 control monotone", (OK And LQ <= Q)
+    OK = EG_Pair(128#, 1024#, LP, LQ)
+    AssertTrue "WG rejected outer switch control", (OK And LQ > Q)
+    OK = WG_Pair(128#, 1024#, LP, LQ)
+    OK = WG_Pair(A, 1024#, P, Q) And OK
+    AssertTrue "WG repaired outer shape seam P", (OK And LP >= P)
+    AssertTrue "WG repaired outer shape seam Q", (OK And LQ <= Q)
+End Sub
+
+Private Sub WG_CapControls()
+    Dim P As Double, Q As Double, OK As Boolean, Diag As String
+    P = 9#: Q = 9#
+    OK = WG_Pair(1E+14, 1E+14 + 1#, P, Q, Diag)
+    AssertTrue "WG natural upper cap cleared " & Diag, (Not OK And P = 0# And Q = 0#)
+    AssertTrue "WG natural upper cap diagnostic", (InStr(1, Diag, "continued fraction cap 100000", vbBinaryCompare) > 0)
+    P = 9#: Q = 9#
+    OK = WG_Pair(1E+14, 1E+14, P, Q, Diag)
+    AssertTrue "WG natural lower cap cleared " & Diag, (Not OK And P = 0# And Q = 0#)
+    AssertTrue "WG natural lower cap diagnostic", (InStr(1, Diag, "lower series cap 100000", vbBinaryCompare) > 0)
+    OK = WG_Pair(129#, 130#, P, Q, Diag)
+    AssertTrue "WG recovery after caps", (OK And Diag = "" And P > 0# And Q > 0# And P < 1# And Q < 1#)
+End Sub

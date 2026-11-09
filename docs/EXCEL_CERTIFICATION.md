@@ -378,6 +378,9 @@ to fetch the exact recorded SHA from `origin` if absent. Accuracy and release
 workflows opt in to this retrieval. Offline validation remains the default and
 fails if the object is absent. Retrieval neither rewrites the record nor changes
 the source/grid checks; an unavailable candidate remains a blocking failure.
+The B6 run 447 candidate is also retained by branch
+`evidence/26-b6-export-447` at `21941f31886883e6e2e58f863b142dbe6c2f97e6`;
+keep this reference while its certification record is retained.
 
 ### Mixed exports and isolated tooling fixtures
 
