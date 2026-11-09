@@ -103,9 +103,15 @@ Option Private Module
 '   - PROB_TryBetaContinuedFraction:
 '       Continued fraction evaluated by the modified Lentz method, in the
 '       arrangement of Numerical Recipes (betacf).
+'   - PROB_TryGammaRegularizedP / PROB_TryGammaRegularizedQ:
+'       A scaled double-double pair (#26; frozen Excel port b8efaf3,
+'       benchmark/gamma_cf_study): lower series below x = a + 1, with Q taken
+'       from log P before rounding, and the continued fraction above. Where the
+'       pair reaches its 100000-iteration cap, PROB_TryGammaSeriesP or
+'       PROB_TryGammaContinuedFractionQ answers instead.
 '   - PROB_TryGammaSeriesP / PROB_TryGammaContinuedFractionQ:
 '       Series expansion for x < a + 1, continued fraction for the upper tail,
-'       in the arrangement of Numerical Recipes (gser / gcf).
+'       in the arrangement of Numerical Recipes (gser / gcf), in binary64.
 '   - PROB_TryBetaInvRegularized:
 '       Seed from the Carter / AS 109 normal approximation for a, b > 1, from
 '       the leading series term otherwise; refined by Newton's method safeguarded
@@ -147,7 +153,11 @@ Option Private Module
 '
 '     Typical degrees of freedom below 100 converge in a few dozen iterations.
 '     The gamma series is therefore the binding kernel: it exhausts a 100000
-'     budget while the beta CF is still in the low thousands.
+'     budget while the beta CF is still in the low thousands. The scaled
+'     double-double pair behind the public P and Q (#26) stops more tightly and
+'     needs about 1.32 times the series' terms, so it reaches its own 100000 cap
+'     first (near x = a from a of about 1.07E8, where the series still converges
+'     to about 1.9E8); the public P and Q then fall back to the series.
 '
 '     THE REACHABLE RANGES ARE NOT RESTATED HERE. They follow from the budgets
 '     above and the Sqr(df) growth rule, they differ between the two kernels, and
@@ -172,6 +182,8 @@ Option Private Module
 '   2026-08-11 - Surface list completed with the stable log-density kernels;
 '                LogGammaDelta accuracy figure re-measured and contracted.
 '   2026-10-13 - Standard normal upper tail added (#72).
+'   2026-11-09 - Regularized gamma P/Q through the scaled double-double pair,
+'                with the binary64 kernels as the fallback at its cap (#26).
 '==============================================================================
 
 '==============================================================================
@@ -187,6 +199,9 @@ Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterat
 'terms at 3E-14 and 45946 here, both far inside PROB_GAMMA_MAX_ITER. The two
 'continued fractions gain nothing from the same change (the beta CF is limited
 'elsewhere and is unchanged above A = 1E6), so they keep PROB_NUM_EPS.
+'Since #26 the public P and Q try the scaled double-double pair first. Its
+'series stops at 2^-68 and needs about 1.32 times these terms (67921 at df 1E8),
+'still inside its own 100000 cap; this binary64 series answers where it is not.
 Private Const PROB_GAMMA_SERIES_EPS    As Double = PROB_MACH_EPS 'Stop for the ascending gamma series only; see the note above
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
@@ -2237,7 +2252,9 @@ Public Function PROB_TryGammaSeriesP( _
 ' PROB_TryGammaSeriesP
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Evaluates P(A, X) by the lower incomplete gamma series expansion.
+'   Evaluates P(A, X) by the lower incomplete gamma series expansion. Since #26
+'   it is the binary64 route behind PROB_TryGammaRegularizedP and
+'   PROB_TryGammaRegularizedQ where the scaled pair reaches its iteration cap.
 '
 ' PRECONDITION
 '   A > 0 and 0 < X < A + 1.
@@ -2414,7 +2431,9 @@ Public Function PROB_TryGammaContinuedFractionQ( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Evaluates Q(A, X), the regularized upper incomplete gamma function, by the
-'   modified Lentz continued fraction.
+'   modified Lentz continued fraction. Since #26 it is the binary64 route behind
+'   PROB_TryGammaRegularizedP and PROB_TryGammaRegularizedQ where the scaled
+'   pair reaches its iteration cap.
 '
 ' PRECONDITION
 '   A > 0 and X >= A + 1.

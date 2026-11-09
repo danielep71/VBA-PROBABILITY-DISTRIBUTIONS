@@ -42,3 +42,16 @@ Both are computed by quadrature of the normalized density over +-60 standard
 deviations, split at each standard deviation, at 40 and 60 digits. The two
 precisions agree to 7E-29, and P + Q - 1 is below 4E-49. The same method
 matches `wide_gamma.public` at `(1E8, 1E8)` to 2.9E-17.
+
+## Addendum, before any wave output (2026-11-09)
+
+The first wave dispatched on `fa891a2` was cancelled before it finished, and
+none of its output was read. The modules then received comment-only amendments
+that describe the integrated kernel: the module method notes, the
+`PROB_TryGammaSeriesP` and `PROB_TryGammaContinuedFractionQ` headers, the
+`PROB_CHI_MAX_DF` note and a `CONTINUOUS` note. They are applied and reversed
+by `public_integration.py`. `test_public_integration.py` checks that each one
+leaves the code part of every line unchanged.
+
+Comments cannot change behaviour, so R1 to R4 stand unchanged for the wave on
+the amended source.

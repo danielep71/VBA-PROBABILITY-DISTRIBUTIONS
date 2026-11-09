@@ -37,6 +37,103 @@ RERAISE_LINES=("    'Error 5 is this kernel's own domain or cap signal; any othe
                "    If Err.Number <> 5 Then Err.Raise Err.Number, Err.Source, Err.Description\n")
 
 
+# Comment-only amendments outside the generated block, so the modules describe
+# the integrated kernel (#242 review). install() applies them and restore()
+# reverses them exactly; test_public_integration.py checks that every old and
+# new text is comment lines only.
+AMENDMENTS={
+'src/M_STATS_PROBDIST_SPECIALFUNCS.bas':[
+("""'   - PROB_TryGammaSeriesP / PROB_TryGammaContinuedFractionQ:
+'       Series expansion for x < a + 1, continued fraction for the upper tail,
+'       in the arrangement of Numerical Recipes (gser / gcf).
+""","""'   - PROB_TryGammaRegularizedP / PROB_TryGammaRegularizedQ:
+'       A scaled double-double pair (#26; frozen Excel port b8efaf3,
+'       benchmark/gamma_cf_study): lower series below x = a + 1, with Q taken
+'       from log P before rounding, and the continued fraction above. Where the
+'       pair reaches its 100000-iteration cap, PROB_TryGammaSeriesP or
+'       PROB_TryGammaContinuedFractionQ answers instead.
+'   - PROB_TryGammaSeriesP / PROB_TryGammaContinuedFractionQ:
+'       Series expansion for x < a + 1, continued fraction for the upper tail,
+'       in the arrangement of Numerical Recipes (gser / gcf), in binary64.
+"""),
+("""'   2026-10-13 - Standard normal upper tail added (#72).
+""","""'   2026-10-13 - Standard normal upper tail added (#72).
+'   2026-11-09 - Regularized gamma P/Q through the scaled double-double pair,
+'                with the binary64 kernels as the fallback at its cap (#26).
+"""),
+("""'terms at 3E-14 and 45946 here, both far inside PROB_GAMMA_MAX_ITER. The two
+'continued fractions gain nothing from the same change (the beta CF is limited
+'elsewhere and is unchanged above A = 1E6), so they keep PROB_NUM_EPS.
+""","""'terms at 3E-14 and 45946 here, both far inside PROB_GAMMA_MAX_ITER. The two
+'continued fractions gain nothing from the same change (the beta CF is limited
+'elsewhere and is unchanged above A = 1E6), so they keep PROB_NUM_EPS.
+'Since #26 the public P and Q try the scaled double-double pair first. Its
+'series stops at 2^-68 and needs about 1.32 times these terms (67921 at df 1E8),
+'still inside its own 100000 cap; this binary64 series answers where it is not.
+"""),
+("""'     The gamma series is therefore the binding kernel: it exhausts a 100000
+'     budget while the beta CF is still in the low thousands.
+""","""'     The gamma series is therefore the binding kernel: it exhausts a 100000
+'     budget while the beta CF is still in the low thousands. The scaled
+'     double-double pair behind the public P and Q (#26) stops more tightly and
+'     needs about 1.32 times the series' terms, so it reaches its own 100000 cap
+'     first (near x = a from a of about 1.07E8, where the series still converges
+'     to about 1.9E8); the public P and Q then fall back to the series.
+"""),
+("""' PURPOSE
+'   Evaluates P(A, X) by the lower incomplete gamma series expansion.
+""","""' PURPOSE
+'   Evaluates P(A, X) by the lower incomplete gamma series expansion. Since #26
+'   it is the binary64 route behind PROB_TryGammaRegularizedP and
+'   PROB_TryGammaRegularizedQ where the scaled pair reaches its iteration cap.
+"""),
+("""' PURPOSE
+'   Evaluates Q(A, X), the regularized upper incomplete gamma function, by the
+'   modified Lentz continued fraction.
+""","""' PURPOSE
+'   Evaluates Q(A, X), the regularized upper incomplete gamma function, by the
+'   modified Lentz continued fraction. Since #26 it is the binary64 route behind
+'   PROB_TryGammaRegularizedP and PROB_TryGammaRegularizedQ where the scaled
+'   pair reaches its iteration cap.
+"""),
+],
+'src/M_STATS_PROBDIST_TFAMILY.bas':[
+("""Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29); above that the lower-tail series reaches PROB_GAMMA_MAX_ITER
+""","""Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29). The incomplete-gamma iteration caps lie above it: near X = df the scaled pair (#26) caps from df of about 2.1E8 and its binary64 fallback from about 3.8E8
+"""),
+],
+'src/M_STATS_PROBDIST_CONTINUOUS.bas':[
+("""'     benchmark/cdf_large_shape rather than restated here (the gamma series is
+'     bounded by PROB_GAMMA_MAX_ITER, and the beta range moved substantially
+""","""'     benchmark/cdf_large_shape rather than restated here (the incomplete-gamma
+'     kernels stop at 100000-iteration caps, and the beta range moved substantially
+"""),
+],
+}
+
+
+def module_path(text):
+    """The src path of a VBA module's text, from its VB_Name attribute."""
+    match=re.match(r'Attribute VB_Name = "(\w+)"',text)
+    return f'src/{match[1]}.bas' if match else None
+
+
+def amended(path,text):
+    """True when every amendment of the module is present, False when none is."""
+    present=[text.count(new)==1 for _,new in AMENDMENTS.get(path,())]
+    if any(present) and not all(present):raise ValueError(f'comment amendment drift in {path}')
+    return bool(present) and all(present)
+
+
+def amend(path,text,reverse=False):
+    """Apply (or exactly reverse) the comment amendments of one module."""
+    for old,new in AMENDMENTS.get(path,()):
+        a,b=(new,old) if reverse else (old,new)
+        if text.count(a)!=1:raise ValueError(f'comment amendment drift in {path}')
+        text=text.replace(a,b,1)
+    return text
+
+
 def code_only(text):
     """VBA source without comments: a name in a comment is not a dependency."""
     out=[]
@@ -278,8 +375,12 @@ def change_controls(text,reverse=False):
 
 def restore(text):
     """Exact inverse of this generator; only for historical replay fixtures."""
+    path=module_path(text)
+    if path in AMENDMENTS and path!=SRC:
+        return amend(path,text,reverse=True) if amended(path,text) else text
     if BEGIN not in text:return text
     if 'Attribute VB_Name = "M_STATS_PROBDIST_SPECIALFUNCS"' in text:
+        text=amend(SRC,text,reverse=True)
         block,types,_=arithmetic()
         if text.count(block)!=1 or text.count(types)!=1:raise ValueError('public Gamma block drift')
         text=text.replace(block,'',1).replace(types,'',1)
@@ -300,7 +401,13 @@ def install():
     for tail in ('P','Q'):text=text.replace(old['PROB_TryGammaRegularized'+tail],adapter(tail),1)
     text=text.replace('Public Function PROB_LogGamma(',types+'Public Function PROB_LogGamma(',1)
     text+=block
+    text=amend(SRC,text)
     (ROOT/SRC).write_bytes(text.replace('\n','\r\n').encode('ascii'))
+    for path in AMENDMENTS:
+        if path==SRC:continue
+        other=(ROOT/path).read_text()
+        if other==original(path):other=amend(path,other)
+        (ROOT/path).write_bytes(other.replace('\n','\r\n').encode('ascii'))
     text=restore((ROOT/TEST).read_text());text=change_controls(text)
     text=text.replace("' BEGIN generated wide-Gamma study",test_block()+"' BEGIN generated wide-Gamma study",1)
     text=text.replace('    Test_WideGamma_Fidelity\n','    Test_WideGamma_Fidelity\n    Test_PublicGamma_Integration\n',1)

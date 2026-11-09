@@ -14,6 +14,16 @@ import unittest
 import mpmath as mp
 from install_scaled_fidelity import HERE,ROOT
 from reference_binary64 import rounded
+
+# The last commit before the #242 review fixes (fa891a2 onward). These are
+# historical proofs about the source the earlier Excel runs executed, so they
+# read that commit, not the working tree. test_public_integration.py proves the
+# current source is the generator's output, and a later run certifies it.
+PRE_REVIEW='89f0097133ed806a9135e524f20a3b9ff1a2b7f4'
+
+
+def pre_review(path):
+    return subprocess.check_output(['git','show',PRE_REVIEW+':'+path],cwd=ROOT)
 from wide_gamma import public
 
 
@@ -58,7 +68,7 @@ class PublicFreshTests(unittest.TestCase):
         r=json.loads((HERE/'public_fresh_complete_screen.json').read_text())
         self.assertEqual(r['status'],'FORWARD MODEL PASS; INVERSE REFERENCES READY; VBA PUBLIC ACCEPTANCE PENDING')
         self.assertEqual(r['failures'],[]);self.assertEqual(r['monotonicity_failures'],[])
-        for path,sha in p['sha256_lf'].items():self.assertEqual(hashlib.sha256((ROOT/path).read_bytes().replace(b'\r\n',b'\n')).hexdigest(),sha)
+        for path,sha in p['sha256_lf'].items():self.assertEqual(hashlib.sha256(pre_review(path).replace(b'\r\n',b'\n')).hexdigest(),sha)
         for field,name in [('protocol_sha256','public_fresh_protocol.json'),('original_screen_sha256','public_fresh_screen.json'),
                            ('conversion_sha256','reference_binary64.py'),('completion_sha256','screen_public_fresh_complete.py')]:
             self.assertEqual(r[field],hashlib.sha256((HERE/name).read_bytes()).hexdigest())
@@ -140,7 +150,7 @@ class PublicFreshTests(unittest.TestCase):
         for s in record['sources']:
             blob=subprocess.check_output(['git','show',head+':'+s['path']],cwd=ROOT)
             self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),s['sha256'])
-            self.assertEqual((ROOT/s['path']).read_text(),blob.decode().replace('\r\n','\n'))
+            self.assertEqual(pre_review(s['path']).decode().replace('\r\n','\n'),blob.decode().replace('\r\n','\n'))
 
     def test_first_public_excel_run_resolves_all_old_failures(self):
         a=json.loads((HERE/'excel_public_gamma_artifact.json').read_text());decoded={}
@@ -167,7 +177,7 @@ class PublicFreshTests(unittest.TestCase):
             blob=subprocess.check_output(['git','show',head+':'+s['path']],cwd=ROOT)
             self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),s['sha256'])
             if s['path'].startswith('src/'):
-                self.assertEqual((ROOT/s['path']).read_text(),blob.decode().replace('\r\n','\n'))
+                self.assertEqual(pre_review(s['path']).decode().replace('\r\n','\n'),blob.decode().replace('\r\n','\n'))
 
     def test_fresh_export_bytes_and_declared_caller_movement(self):
         folder = HERE
@@ -206,7 +216,7 @@ class PublicFreshTests(unittest.TestCase):
             for source in record['sources']:
                 blob = subprocess.check_output(['git', 'show', head + ':' + source['path']], cwd=ROOT)
                 self.assertEqual('sha256:' + hashlib.sha256(blob).hexdigest(), source['sha256'])
-                self.assertEqual((ROOT / source['path']).read_text(), blob.decode().replace('\r\n', '\n'))
+                self.assertEqual(pre_review(source['path']).decode().replace('\r\n', '\n'), blob.decode().replace('\r\n', '\n'))
             for grid in manifest['grids']:
                 data = archive.read(grid['artifact_path'])
                 self.assertEqual('sha256:' + hashlib.sha256(data).hexdigest(), grid['raw_sha256'])

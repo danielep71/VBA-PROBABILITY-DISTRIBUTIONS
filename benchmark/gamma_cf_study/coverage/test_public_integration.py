@@ -3,7 +3,7 @@ import json
 import re
 import unittest
 from install_scaled_fidelity import documented
-from public_integration import ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,original,procedures,arithmetic,adapter,test_block,restore
+from public_integration import ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore
 
 
 class PublicIntegrationTests(unittest.TestCase):
@@ -22,8 +22,9 @@ class PublicIntegrationTests(unittest.TestCase):
         self.assertEqual(re.findall(r'^Public (?:Function|Sub|Const) (\w+)',current,re.M),
                          re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M))
         for path in (ROOT/'src').glob('*.bas'):
-            if path.relative_to(ROOT).as_posix()!=SRC:
-                self.assertEqual(path.read_text(),original(path.relative_to(ROOT).as_posix()))
+            rel=path.relative_to(ROOT).as_posix()
+            if rel!=SRC:
+                self.assertEqual(amend(rel,path.read_text(),reverse=True),original(rel))
 
     def test_old_regressions_and_rejected_controls_preserved(self):
         text=(ROOT/TEST).read_text()
@@ -60,6 +61,19 @@ class PublicIntegrationTests(unittest.TestCase):
         tests=procedures((ROOT/TEST).read_text())
         self.assertIn('    Test_PublicGamma_Reach\n',tests['Test_PublicGamma_Integration'])
         self.assertEqual(tests['Test_PublicGamma_Reach'].count('PG_Reach "PG reach'),2)
+
+    def test_amendments_change_comments_only(self):
+        """The amendments outside the generated block touch comments, never code."""
+        self.assertEqual(set(AMENDMENTS),{SRC,'src/M_STATS_PROBDIST_TFAMILY.bas',
+                                          'src/M_STATS_PROBDIST_CONTINUOUS.bas'})
+        for path,pairs in AMENDMENTS.items():
+            current=(ROOT/path).read_text()
+            for old,new in pairs:
+                self.assertEqual(code_only(old).rstrip(),code_only(new).rstrip(),(path,old[:60]))
+                self.assertEqual(current.count(new),1,(path,new[:60]))
+                self.assertNotEqual(old,new)
+        with self.assertRaises(ValueError):
+            amend('src/M_STATS_PROBDIST_TFAMILY.bas','no amendment here')
 
     def test_reversal_refuses_arithmetic_or_adapter_mutations(self):
         source=(ROOT/SRC).read_text()
