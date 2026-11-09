@@ -51,6 +51,7 @@ commands = (
     ("gamma_cf_study/coverage/test_scaled_vba_port.py",),
     ("gamma_cf_study/replay_baseline.py", "isolation"),
     ("gamma_cf_study/replay_baseline.py", "candidate"),
+    ("gamma_cf_study/test_promote_x2_ladder.py",),
     ("gamma_series_small_shape/test_gamma_series_small_shape.py",),
     ("gamma_series_small_shape/analyze_gamma_series_small_shape.py", "--check"),
     ("normal_tail_study/test_kernel_model.py",),
