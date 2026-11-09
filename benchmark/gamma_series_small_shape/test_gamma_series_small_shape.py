@@ -154,7 +154,7 @@ def main():
             check(result["route_pairs_bit_identical"] == 22, "a route disagreement is not counted")
 
     # 3b. The ladder rules refuse a missing result instead of scoring it as zero.
-    after_text = open(os.path.join(A.ROOT, A.LADDER_PATH), encoding="utf-8").read()
+    after_text = A.git_show(A.AFTER, A.LADDER_PATH)
     before_text = A.git_show(A.BASELINE, A.LADDER_PATH)
 
     def lose(text, pid, surface):

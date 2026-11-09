@@ -50,6 +50,9 @@ ROOT = os.path.dirname(BENCH)
 GRID = os.path.join(HERE, "gamma_series_small_shape_grid.csv")
 LADDER_PATH = "benchmark/positive_ratio_subnormal/gamma_q_complement.csv"
 BASELINE = "5c884bc48e748e323b39dbee418f3aecb5d14a29"   # the pre-fix export (2026-08-14)
+# The post-fix export this analysis scored: the #23 wave (run 42365758589).
+# Later re-exports, such as #24's, are not the #23 observations.
+AFTER = "e278318"
 OUT = os.path.join(HERE, "wave_results.json")
 THRESHOLD = 3e-15
 
@@ -136,8 +139,7 @@ def git_show(ref, path):
 
 def part_b(after_text=None, before_text=None):
     if after_text is None:
-        with open(os.path.join(ROOT, LADDER_PATH), encoding="utf-8") as f:
-            after_text = f.read()
+        after_text = git_show(AFTER, LADDER_PATH)
     if before_text is None:
         before_text = git_show(BASELINE, LADDER_PATH)
     after, before = ladder(after_text), ladder(before_text)

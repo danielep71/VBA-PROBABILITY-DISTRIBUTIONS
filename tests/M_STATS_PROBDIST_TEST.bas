@@ -12493,6 +12493,15 @@ Private Sub PG_Reach(ByVal Label As String, ByVal A As Double, ByVal X As Double
     AssertTrue Label & " Q returned " & Diag, (OK And Diag = "")
     AssertTrue Label & " Q relative " & CStr(Q / ExpectedQ - 1#), _
         (OK And Abs(Q / ExpectedQ - 1#) <= 0.0000000000005)
+    'The fallback forms the complemented tail as 1 - other (#24): its relative
+    'error may not exceed the other tail's by more than rounding.
+    If X < A + 1# Then
+        AssertTrue Label & " complement Q amplification", _
+            (Abs(Q / ExpectedQ - 1#) <= 1.001 * Abs(P / ExpectedP - 1#) + 0.000000000000001)
+    Else
+        AssertTrue Label & " complement P amplification", _
+            (Abs(P / ExpectedP - 1#) <= 1.001 * Abs(Q / ExpectedQ - 1#) + 0.000000000000001)
+    End If
 End Sub
 
 Private Sub Test_PublicGamma_Integration()

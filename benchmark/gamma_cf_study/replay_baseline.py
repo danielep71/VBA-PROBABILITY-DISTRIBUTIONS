@@ -15,6 +15,11 @@ import tempfile
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 BASELINE = "23a56f2ea60ab9391a93367431dabeefc51e5d37"
+# The ladder export the isolation decomposes: the #23 wave (run 42365758589).
+# Later re-exports, such as #24's, record the repaired kernel and are not
+# this study's observations.
+LADDER_EXPORT = "e278318"
+LADDER = "benchmark/positive_ratio_subnormal/gamma_q_complement.csv"
 
 
 def main():
@@ -34,7 +39,8 @@ def main():
         shutil.copy2(ROOT / "benchmark/beta_balanced_survival/beta_route_model.py", helper)
         grid = bench / "positive_ratio_subnormal"
         grid.mkdir()
-        shutil.copy2(ROOT / "benchmark/positive_ratio_subnormal/gamma_q_complement.csv", grid)
+        (grid / "gamma_q_complement.csv").write_bytes(subprocess.check_output(
+            ["git", "show", f"{LADDER_EXPORT}:{LADDER}"], cwd=ROOT))
         (root / "src").mkdir()
         for name in ("CORE", "SPECIALFUNCS", "CONTINUOUS"):
             path = f"src/M_STATS_PROBDIST_{name}.bas"
