@@ -58,6 +58,7 @@ GRIDS = (
     "survival_boundary/survival_boundary_grid.csv",
     "tchi_large_df/tchi_large_df_grid.csv",
     "excel_comparison/excel_comparison_grid.csv",
+    "gamma_lower_q/gamma_lower_q_grid.csv",
 )
 
 

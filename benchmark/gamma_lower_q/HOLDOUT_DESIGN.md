@@ -25,7 +25,7 @@ the amplification was largest, and the seam.
 - **Routes, for every (A, X):**
   - `Gamma_Cumulative(X, A, 1)` and `Gamma_Survival(X, A, 1)`;
   - `ChiSquare_Cumulative(2X, 2A)` and `ChiSquare_Survival(2X, 2A)`.
-  
+
   The doubling is exact in binary64, so both routes reach the same kernel inputs.
 
 That is 7 shapes, 6 arguments and 4 routes: 168 rows.
