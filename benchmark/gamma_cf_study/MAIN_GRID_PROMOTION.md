@@ -65,3 +65,25 @@ The pre-fix observations in the ladder breached `5E-15` at every shape, from
 
 Any failure of M1 to M4 stops the closure of #26, and the cause is explained
 before anything else changes.
+
+## Result (2026-11-09)
+
+Excel VBA Regression run 42679149964 executed candidate `2c47bf8` on Excel 16.0
+build 20430, 64-bit, then exported the main grid and the holdout. The evidence
+commit is `03aeeb7`.
+
+| Id | Result |
+| --- | --- |
+| M1 | **Holds.** All 24 rows return a number. Every one equals the model value in the table bit for bit, so each Gamma row and its Chi-square doubling agree. The worst relative error is 7.2E-17. |
+| M2 | **Holds.** The export changed 24 main-grid observations, the 24 promoted rows that were blank, and no other; the holdout export changed none of 659. |
+| M3 | **Holds.** 14,886 / 14,886 assertions pass, 0 fail. |
+| M4 | **Holds.** 166/166 main contracts pass, with no FAIL, KNOWN LIMITATION or PENDING; 83/83 holdout contracts pass, and the coverage debt is still 27 rows. |
+
+No prediction failed, and nothing was revised after the output was read.
+
+The normal-tail study binds the whole main grid. Its report was regenerated
+with `validate_kernel.py --regenerate`, without refitting or evaluating its
+holdout; only the timestamp, versions, runtime, provenance and regeneration
+history change. `test_public_fresh.py` now compares #242's export artifact with
+the main grid as committed before this promotion, not with the growing live
+grid.

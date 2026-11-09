@@ -220,7 +220,8 @@ class PublicFreshTests(unittest.TestCase):
             for grid in manifest['grids']:
                 data = archive.read(grid['artifact_path'])
                 self.assertEqual('sha256:' + hashlib.sha256(data).hexdigest(), grid['raw_sha256'])
-                self.assertEqual((ROOT / grid['path']).read_bytes(), data.replace(b'\r\n', b'\n'))
+                # The export as committed before later grid promotions (#26 X = 2 ladder).
+                self.assertEqual(pre_review(grid['path']), data.replace(b'\r\n', b'\n'))
                 baseline = subprocess.check_output(['git', 'show', head + ':' + grid['path']], cwd=ROOT)
                 old_rows = list(csv.DictReader(io.StringIO(baseline.decode())))
                 new_rows = list(csv.DictReader(io.StringIO(data.decode())))

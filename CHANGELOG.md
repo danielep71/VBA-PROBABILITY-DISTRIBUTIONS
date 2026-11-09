@@ -113,10 +113,16 @@ Use only the categories needed by a release.
   answered. Found in review; `Test_PublicGamma_Reach` checks both regions
   against quadrature references. Excel run 42670065251 passed all 14,886
   assertions, and its exports changed no main or holdout observation.
+- The main grid now covers the repaired path: the twelve shapes of the frozen
+  `X = 2` survival ladder, from 1E-6 to 0.5, each as `Gamma_Survival(2, A, 1)`
+  and the exact doubling `ChiSquare_Survival(4, 2A)`, claim `5E-15`. Before
+  #26 these points were off by 3.5E-14 to 4.5E-14. Excel run 42679149964
+  returned the predicted model value at all 24, worst 7.2E-17, and changed no
+  other main or holdout observation.
 - An unexpected runtime error inside the new kernel propagates again, so the
   public function returns `#VALUE!` as documented. The kernel's own domain
   and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.
-- About 500 lines of unreachable Precision v2 code are no longer generated
+- About 370 lines of unreachable Precision v2 code are no longer generated
   into production: a name in a comment had pulled them into the extraction.
   The remaining Precision v2 arithmetic is labelled as the production core
   it is.
