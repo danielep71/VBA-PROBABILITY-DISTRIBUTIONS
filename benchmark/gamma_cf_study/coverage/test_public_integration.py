@@ -40,7 +40,7 @@ class PublicIntegrationTests(unittest.TestCase):
             self.assertIn(documented(old.replace('Public Function','Private Function',1).replace('PROB_TryGammaRegularized'+tail,'PG_B6_'+tail)),test_block())
         policy=json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         self.assertEqual(policy['expected_assertions'],10848+EXTRA)
-        self.assertEqual(EXTRA,290*8+7*2+206*8+24*2+2*4)
+        self.assertEqual(EXTRA,290*8+7*2+206*8+24*2+2*5)
 
     def test_review_fixes_in_production(self):
         """#242 review: no comment-reached dead code, unexpected runtime errors

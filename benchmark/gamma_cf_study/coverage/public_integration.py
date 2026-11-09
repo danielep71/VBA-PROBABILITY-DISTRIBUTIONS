@@ -19,7 +19,7 @@ END="' END generated public Gamma integration"
 TBEGIN="' BEGIN public Gamma bit types"
 TEND="' END public Gamma bit types"
 # 4030 integration assertions, plus 8 reach assertions (#242 review).
-EXTRA=4038
+EXTRA=4040
 # The scaled pair's tighter stopping rules (2^-68 series, 2^-101 continued
 # fraction) cap at arguments the binary64 route answered: X = A = 1.2E8 and
 # A = 5E11, X = A + 2 (wide_gamma.public raises its cap at both). References
@@ -221,13 +221,17 @@ def adapter(tail):
 '   Where the pair reaches its 100000-iteration cap, the binary64 series or
 '   continued fraction answers instead: the pair stops at 2^-68 and 2^-101, so
 '   near X = A it caps from A of about 1.07E8, and just above X = A + 1 from
-'   about 3.3E11, where the binary64 route still converges.
+'   about 3.3E11, where the binary64 route still converges. That fallback
+'   forms the complement, Q = 1 - P below X = A + 1 and P = 1 - Q above it.
+'   It is the one place the lower branch forms 1 - P (#24), and it adds no
+'   amplification: the pair caps only for A above about 1.07E8, where
+'   P(A, A + 1) is about 0.5, so the complemented tail is at least about 0.5.
 ' ERROR POLICY
 '   False clears Result and reports invalid inputs, arithmetic failure or cap.
 '   The cap diagnostic keeps the established 100000-iteration wording.
 '   An unexpected runtime error propagates to the caller.
 ' UPDATED
-'   2026-11-09 - #26: binary64 fallback at the pair's iteration cap.
+'   2026-11-09 - #24: the fallback's complement is bounded and documented.
 '==============================================================================
     Dim P As Double, Q As Double, Value As Double
     Result = 0#: FailMsg = ""
@@ -352,6 +356,15 @@ End Sub
     AssertTrue Label & " Q returned " & Diag, (OK And Diag = "")
     AssertTrue Label & " Q relative " & CStr(Q / ExpectedQ - 1#), _
         (OK And Abs(Q / ExpectedQ - 1#) <= {REACH_LIMITS[1]})
+    'The fallback forms the complemented tail as 1 - other (#24): its relative
+    'error may not exceed the other tail's by more than rounding.
+    If X < A + 1# Then
+        AssertTrue Label & " complement Q amplification", _
+            (Abs(Q / ExpectedQ - 1#) <= 1.001 * Abs(P / ExpectedP - 1#) + 0.000000000000001)
+    Else
+        AssertTrue Label & " complement P amplification", _
+            (Abs(P / ExpectedP - 1#) <= 1.001 * Abs(Q / ExpectedQ - 1#) + 0.000000000000001)
+    End If
 End Sub
 """)
     lines+=['Private Sub Test_PublicGamma_Integration()']+['    '+n for n in names]
@@ -413,7 +426,7 @@ def install():
     text=text.replace('    Test_WideGamma_Fidelity\n','    Test_WideGamma_Fidelity\n    Test_PublicGamma_Integration\n',1)
     (ROOT/TEST).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     p=ROOT/'.github/excel-evidence-policy.json';policy=json.loads(p.read_text())
-    assert policy['expected_assertions'] in (10848,13182,10848+4030,10848+EXTRA)
+    assert policy['expected_assertions'] in (10848,13182,10848+4030,10848+4038,10848+EXTRA)
     policy['expected_assertions']=10848+EXTRA;p.write_text(json.dumps(policy,indent=2)+'\n')
     print(len(names),'arithmetic procedures;',EXTRA,'new assertions;',policy['expected_assertions'],'total')
 

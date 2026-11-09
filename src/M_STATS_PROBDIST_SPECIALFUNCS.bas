@@ -2083,13 +2083,17 @@ Public Function PROB_TryGammaRegularizedP( _
 '   Where the pair reaches its 100000-iteration cap, the binary64 series or
 '   continued fraction answers instead: the pair stops at 2^-68 and 2^-101, so
 '   near X = A it caps from A of about 1.07E8, and just above X = A + 1 from
-'   about 3.3E11, where the binary64 route still converges.
+'   about 3.3E11, where the binary64 route still converges. That fallback
+'   forms the complement, Q = 1 - P below X = A + 1 and P = 1 - Q above it.
+'   It is the one place the lower branch forms 1 - P (#24), and it adds no
+'   amplification: the pair caps only for A above about 1.07E8, where
+'   P(A, A + 1) is about 0.5, so the complemented tail is at least about 0.5.
 ' ERROR POLICY
 '   False clears Result and reports invalid inputs, arithmetic failure or cap.
 '   The cap diagnostic keeps the established 100000-iteration wording.
 '   An unexpected runtime error propagates to the caller.
 ' UPDATED
-'   2026-11-09 - #26: binary64 fallback at the pair's iteration cap.
+'   2026-11-09 - #24: the fallback's complement is bounded and documented.
 '==============================================================================
     Dim P As Double, Q As Double, Value As Double
     Result = 0#: FailMsg = ""
@@ -2139,13 +2143,17 @@ Public Function PROB_TryGammaRegularizedQ( _
 '   Where the pair reaches its 100000-iteration cap, the binary64 series or
 '   continued fraction answers instead: the pair stops at 2^-68 and 2^-101, so
 '   near X = A it caps from A of about 1.07E8, and just above X = A + 1 from
-'   about 3.3E11, where the binary64 route still converges.
+'   about 3.3E11, where the binary64 route still converges. That fallback
+'   forms the complement, Q = 1 - P below X = A + 1 and P = 1 - Q above it.
+'   It is the one place the lower branch forms 1 - P (#24), and it adds no
+'   amplification: the pair caps only for A above about 1.07E8, where
+'   P(A, A + 1) is about 0.5, so the complemented tail is at least about 0.5.
 ' ERROR POLICY
 '   False clears Result and reports invalid inputs, arithmetic failure or cap.
 '   The cap diagnostic keeps the established 100000-iteration wording.
 '   An unexpected runtime error propagates to the caller.
 ' UPDATED
-'   2026-11-09 - #26: binary64 fallback at the pair's iteration cap.
+'   2026-11-09 - #24: the fallback's complement is bounded and documented.
 '==============================================================================
     Dim P As Double, Q As Double, Value As Double
     Result = 0#: FailMsg = ""
