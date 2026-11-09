@@ -55,3 +55,18 @@ leaves the code part of every line unchanged.
 
 Comments cannot change behaviour, so R1 to R4 stand unchanged for the wave on
 the amended source.
+
+## Result (2026-11-09)
+
+Excel VBA Regression run 42670065251 executed candidate `c856ddd` on Excel 16.0
+build 20430, 64-bit, then exported the main grid and the holdout. The evidence
+commit is `e73fe7a`.
+
+| Id | Result |
+| --- | --- |
+| R1 | **Holds.** 14,886 / 14,886 assertions pass, 0 fail. |
+| R2 | **Holds.** `Test_PublicGamma_Reach` is part of the passing count: both reach points return success, within 2E-12 (P) and 5E-13 (Q). |
+| R3 | **Holds.** The main export changes 0 of 1,737 in-scope observations, and the holdout export 0 of 659. |
+| R4 | **Holds.** The main grid has no FAIL, KNOWN LIMITATION or PENDING contract, and the holdout passes 83 of 83. |
+
+No prediction failed, and nothing was revised after the output was read.

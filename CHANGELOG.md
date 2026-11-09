@@ -111,7 +111,8 @@ Use only the categories needed by a release.
   about 1.07E8 to 1.9E8, and just above `X = A + 1` from about 3.3E11 to
   1.7E12, inside the `extreme_shape` domain, where the previous kernel
   answered. Found in review; `Test_PublicGamma_Reach` checks both regions
-  against quadrature references.
+  against quadrature references. Excel run 42670065251 passed all 14,886
+  assertions, and its exports changed no main or holdout observation.
 - An unexpected runtime error inside the new kernel propagates again, so the
   public function returns `#VALUE!` as documented. The kernel's own domain
   and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.
