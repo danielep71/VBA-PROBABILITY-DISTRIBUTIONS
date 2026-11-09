@@ -166,6 +166,33 @@ This is not an attempt to replace general-purpose scientific-computing ecosystem
 
 ---
 
+## 🏦 Why pure VBA
+
+In banking, insurance and consulting, the machine that runs a risk or valuation workbook often cannot run anything else. IT security policy commonly blocks add-ins, DLLs, Python and R, and analysts rarely have administrator rights. A model that depends on any of them cannot be shared, reviewed or reproduced where it is used.
+
+This library is written entirely in VBA. Its modules travel inside the workbook, so the model, its numerical code and what a reviewer inspects are the same file. Nothing is installed, and the code behind every probability can be read in the VBA editor.
+
+### Where the numerical work goes
+
+Binary64 (IEEE 754 `Double`) arithmetic is easy to get right in the centre of a distribution and hard in its tails, which is where risk figures come from. Three examples of defects found, studied and repaired here, each with a frozen design and Excel evidence:
+
+- **Normal upper tail beyond `z = 3`.** The former Hart/West kernel was accurate only in absolute terms: up to 2.9E-9 relative error between `z = 3` and 7.07. It was replaced by a rational approximation below 3, a continued fraction above, and an exactly split exponential. The standard normal survival now holds 5E-15 for `|z| <= 6` ([#72](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/72), [`benchmark/normal_tail_study/`](benchmark/normal_tail_study/)).
+- **Student t at large degrees of freedom.** The tails lost accuracy from `df = 1E5`. A large-df expansion and a polished inverse now hold 5E-15 for `df` from `1E5` to `1E8` and `|t| <= 8` ([#34](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/34), [`benchmark/student_t_large_df_study/`](benchmark/student_t_large_df_study/)). One defect of the inverse just inside `|q| = 8` is still open ([#213](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/213)).
+- **Gamma and Chi-square at small, off-grid shapes.** The incomplete-gamma prefactor inherited about 1E-14 from its Stirling-error term, three times the 3E-15 contract. After the fix, the preregistered holdout measures at most 2.3E-15 ([#23](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/23), [`benchmark/gamma_series_small_shape/`](benchmark/gamma_series_small_shape/)).
+
+The [assurance block](#assurance-at-a-glance) at the top shows which contracts hold today and which release blockers are open.
+
+### Trade-offs
+
+| Strength | Cost |
+|---|---|
+| Runs in desktop Excel with VBA enabled, with no installation and no administrator rights. The retained evidence covers 64-bit Office on Windows. | VBA is interpreted. Monte Carlo runs over millions of scenarios are much slower than in C++, C# or Python. |
+| Upper tails are computed directly, not as `1 - CDF`, so small probabilities keep their relative accuracy. | Accuracy is claimed only inside documented, tested domains. Outside them a function returns an error or is less accurate. |
+| Each accuracy contract is measured in real Excel, on observations bound to the exact source. | The VBA editor has no package manager, refactoring or test runner. The repository's Python tooling and CI make up for part of that, at the cost of a second toolchain. |
+| A second, readable implementation for model validation, to reconcile against a core risk system. | The audience is narrow: work that has to live in Excel, mostly quantitative finance, risk and actuarial. |
+
+---
+
 ## 🧭 At a glance
 
 <table>
