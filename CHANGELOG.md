@@ -119,6 +119,8 @@ Use only the categories needed by a release.
   #26 these points were off by 3.5E-14 to 4.5E-14. Excel run 42679149964
   returned the predicted model value at all 24, worst 7.2E-17, and changed no
   other main or holdout observation.
+- #26 is marked resolved in `benchmark/release_readiness.json`, so the README
+  lists 9 open release blockers instead of 10.
 - An unexpected runtime error inside the new kernel propagates again, so the
   public function returns `#VALUE!` as documented. The kernel's own domain
   and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.

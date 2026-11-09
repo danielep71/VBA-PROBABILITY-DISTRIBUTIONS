@@ -54,8 +54,11 @@
       "issue": 26,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Post-prefactor-fix continued-fraction Q survival still breaches 5E-15 (worst 4.53E-14); residual decomposition and repair remain"
+      "status": "resolved",
+      "summary": "Post-prefactor-fix continued-fraction Q survival still breaches 5E-15 (worst 4.53E-14); residual decomposition and repair remain",
+      "resolution": {
+        "evidence": "PR #242 routes public Gamma P/Q through the scaled double-double kernel: the 41 retained public failures are resolved without changing a tolerance, the frozen fresh validation (protocol 5c23f63, 206 forward points and 24 inverse references) passes, and run 42670065251 passed 14,886/14,886 with no main or holdout observation changed (166/166 main, 83/83 holdout contracts; review fixes in gamma_cf_study/coverage/REVIEW_FIX_PREDICTIONS.md). PR #289 promotes the frozen X = 2 survival ladder into the main grid as 24 Gamma and Chi-square rows claiming 5E-15; run 42679149964 returned the predicted model value at all 24, worst 7.2E-17, and changed no other observation (gamma_cf_study/MAIN_GRID_PROMOTION.md). The cause is identified by the #235 decomposition: finite-fraction truncation at the Lentz stop. No contract relaxed; 27-row coverage debt unchanged. #24 remains open."
+      }
     },
     {
       "issue": 29,
