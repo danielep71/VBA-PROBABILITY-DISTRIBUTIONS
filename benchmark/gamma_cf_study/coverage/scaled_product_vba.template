@@ -1,0 +1,233 @@
+Private Function SP_FromWords(ByVal HighWord As Long, ByVal LowWord As Long) As Double
+    Dim Words As SP_Words, Number As SP_Number
+    Words.High = HighWord
+    Words.Low = LowWord
+    LSet Number = Words
+    SP_FromWords = Number.Value
+End Function
+
+Private Function SP_SameBits(ByVal A As Double, ByVal B As Double) As Boolean
+    Dim NA As SP_Number, NB As SP_Number, WA As SP_Words, WB As SP_Words
+    NA.Value = A
+    NB.Value = B
+    LSet WA = NA
+    LSet WB = NB
+    SP_SameBits = (WA.High = WB.High And WA.Low = WB.Low)
+End Function
+
+Private Function SP_Negative(ByVal A As Double) As Boolean
+    Dim Number As SP_Number, Words As SP_Words
+    Number.Value = A
+    LSet Words = Number
+    SP_Negative = (Words.High < 0)
+End Function
+
+Private Function SP_SignedZero(ByVal Negative As Boolean) As Double
+    If Negative Then SP_SignedZero = SP_FromWords(&H80000000, 0)
+End Function
+
+Private Function SP_Shift(ByVal X As Double, ByVal Exponent As Long) As Double
+    Dim J As Long
+    If Exponent < -1074 Or Exponent > 1024 Then Err.Raise 5
+    If Exponent >= 0 Then
+        For J = 1 To Exponent
+            X = X * 2#
+        Next J
+    Else
+        For J = 1 To -Exponent
+            X = X * 0.5
+        Next J
+    End If
+    SP_Shift = X
+End Function
+
+Private Sub SP_Frexp(ByVal X As Double, ByRef Mantissa As Double, ByRef Exponent As Long)
+    Exponent = 0
+    Mantissa = X
+    If X = 0# Then Exit Sub
+    Do While Abs(Mantissa) >= 1#
+        Mantissa = Mantissa * 0.5
+        Exponent = Exponent + 1
+    Loop
+    Do While Abs(Mantissa) < 0.5
+        Mantissa = Mantissa * 2#
+        Exponent = Exponent - 1
+    Loop
+End Sub
+
+Private Function SP_TwoSum(ByVal A As Double, ByVal B As Double) As Variant
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    SP_TwoSum = Array(S, AR + BR)
+End Function
+
+Private Function SP_Product(ByVal A As Double, ByVal B As Double, _
+    ByRef H As Double, ByRef L As Double, ByRef Exponent As Long) As Boolean
+    Dim AM As Double, BM As Double, AE As Long, BE As Long, Shift As Long
+    Dim CA As Double, CB As Double, AH As Double, BH As Double
+    Dim AL As Double, BL As Double, P As Double, E As Double, T As Double
+    On Error GoTo Err_Handler
+    H = 0#: L = 0#: Exponent = 0
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(B) Then Exit Function
+    If A = 0# Or B = 0# Then
+        H = SP_SignedZero(SP_Negative(A) Xor SP_Negative(B))
+        SP_Product = True
+        Exit Function
+    End If
+    SP_Frexp A, AM, AE
+    SP_Frexp B, BM, BE
+    P = AM * BM
+    CA = 134217729# * AM
+    CB = 134217729# * BM
+    T = CA - AM
+    AH = CA - T
+    T = CB - BM
+    BH = CB - T
+    AL = AM - AH
+    BL = BM - BH
+    T = AH * BH
+    E = T - P
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    SP_Frexp P, H, Shift
+    L = SP_Shift(E, -Shift)
+    Exponent = AE + BE + Shift
+    SP_Product = True
+    Exit Function
+Err_Handler:
+    H = 0#: L = 0#: Exponent = 0
+    SP_Product = False
+End Function
+
+Private Function SP_Round(ByVal H As Double, ByVal L As Double, _
+    ByVal Exponent As Long, ByRef Result As Double) As Boolean
+    Dim Units As Double, LowUnits As Double, Nearest As Double
+    Dim SumValue As Double, R As Double, Residual As Double, SignValue As Double
+    Dim Pair As Variant, Odd As Boolean
+    On Error GoTo Err_Handler
+    Result = 0#
+    If Not PROB_IsFinite(H) Then Exit Function
+    If Not PROB_IsFinite(L) Then Exit Function
+    If H = 0# Then
+        If L <> 0# Then Exit Function
+        Result = H
+        SP_Round = True
+        Exit Function
+    End If
+    If Abs(H) < 0.5 Or Abs(H) >= 1# Then Exit Function
+    If Abs(L) > 2# ^ (-54) Then Exit Function
+    SumValue = H + L
+    If SumValue <> H Then Exit Function
+    If Exponent > 1024 Then Exit Function
+    If Exponent >= -1021 Then
+        Result = SP_Shift(H, Exponent)
+        If Not PROB_IsFinite(Result) Then GoTo Err_Handler
+        SP_Round = True
+        Exit Function
+    End If
+    If Exponent < -1074 Then
+        Result = SP_SignedZero(H < 0#)
+        SP_Round = True
+        Exit Function
+    End If
+    SignValue = 1#
+    If H < 0# Then SignValue = -1#
+    Units = SP_Shift(Abs(H), Exponent + 1074)
+    LowUnits = SP_Shift(SignValue * L, Exponent + 1074)
+    Nearest = VBA.Round(Units, 0)
+    R = Units - Nearest
+    Pair = SP_TwoSum(R, LowUnits)
+    R = Pair(0)
+    Residual = Pair(1)
+    'Nearest can exceed Long: parity is evaluated with exact Double arithmetic.
+    Odd = (Nearest - 2# * Fix(Nearest * 0.5) <> 0#)
+    If R > 0.5 Or (R = 0.5 And (Residual > 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest + 1#
+    ElseIf R < -0.5 Or (R = -0.5 And (Residual < 0# Or (Residual = 0# And Odd))) Then
+        Nearest = Nearest - 1#
+    End If
+    If Nearest = 0# Then
+        Result = SP_SignedZero(H < 0#)
+    Else
+        Result = SP_Shift(Nearest, -1074)
+        Result = SignValue * Result
+    End If
+    SP_Round = True
+    Exit Function
+Err_Handler:
+    Result = 0#
+    SP_Round = False
+End Function
+
+Private Sub SP_ProductCase(ByVal Label As String, ByVal A As Double, ByVal B As Double, _
+    ByVal ExpectedH As Double, ByVal ExpectedL As Double, ByVal ExpectedE As Long, _
+    ByVal ExpectedOK As Boolean, ByVal ExpectedValue As Double)
+    Dim H As Double, L As Double, Exponent As Long, Result As Double, OK As Boolean
+    OK = SP_Product(A, B, H, L, Exponent)
+    AssertTrue Label & " exact scaled pair", _
+        (OK And H = ExpectedH And L = ExpectedL And Exponent = ExpectedE)
+    OK = SP_Round(H, L, Exponent, Result)
+    If ExpectedOK Then
+        AssertTrue Label & " rounded bits", (OK And SP_SameBits(Result, ExpectedValue))
+    Else
+        AssertTrue Label & " overflow refused", Not OK
+    End If
+End Sub
+
+Private Sub SP_RoundCase(ByVal Label As String, ByVal H As Double, ByVal L As Double, _
+    ByVal Exponent As Long, ByVal ExpectedValue As Double)
+    Dim Result As Double, OK As Boolean
+    OK = SP_Round(H, L, Exponent, Result)
+    AssertTrue Label & " rounded bits", (OK And SP_SameBits(Result, ExpectedValue))
+End Sub
+
+Private Sub Test_ScaledProduct_Exponents()
+    Dim J As Long, X As Double, H As Double, L As Double, E As Long
+    Dim Result As Double, Expected As Double, OK As Boolean
+    X = SP_FromWords(0, 1)
+    For J = -1074 To 1023
+        OK = SP_Product(X, 1.5, H, L, E)
+        AssertTrue "SP exponent " & CStr(J) & " exact pair", _
+            (OK And H = 0.75 And L = 0# And E = J + 1)
+        OK = SP_Round(H, L, E, Result)
+        Expected = X * 1.5
+        AssertTrue "SP exponent " & CStr(J) & " hardware product", _
+            (OK And SP_SameBits(Result, Expected))
+        If J < 1023 Then X = X * 2#
+    Next J
+End Sub
+
+Private Sub Test_ScaledProduct_Invalid()
+    Dim H As Double, L As Double, E As Long, Result As Double, OK As Boolean
+    Dim V As Double
+    V = SP_FromWords(&H7FF00000, 0)
+    OK = SP_Product(V, 0#, H, L, E)
+    AssertTrue "SP infinity left refused", Not OK
+    OK = SP_Product(0#, V, H, L, E)
+    AssertTrue "SP infinity right refused", Not OK
+    V = SP_FromWords(&H7FF80000, 0)
+    OK = SP_Product(V, 1#, H, L, E)
+    AssertTrue "SP NaN refused", Not OK
+    OK = SP_Round(V, 0#, 0, Result)
+    AssertTrue "SP NaN high refused", Not OK
+    OK = SP_Round(0.5, V, 0, Result)
+    AssertTrue "SP NaN low refused", Not OK
+    OK = SP_Round(0#, 1#, 0, Result)
+    AssertTrue "SP invalid zero refused", Not OK
+    OK = SP_Round(1#, 0#, 0, Result)
+    AssertTrue "SP invalid high refused", Not OK
+    OK = SP_Round(0.5, 0.1, 0, Result)
+    AssertTrue "SP invalid low refused", Not OK
+    AssertTrue "SP word layout one", (SP_FromWords(&H3FF00000, 0) = 1#)
+    AssertTrue "SP word layout minus one", (SP_FromWords(&HBFF00000, 0) = -1#)
+    AssertTrue "SP signed zeros distinct", Not SP_SameBits(0#, SP_FromWords(&H80000000, 0))
+End Sub

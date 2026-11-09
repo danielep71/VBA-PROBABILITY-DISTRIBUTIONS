@@ -47,15 +47,21 @@
       "issue": 24,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Incomplete-gamma Q amplifies lower-series error by forming 1 - P"
+      "status": "resolved",
+      "summary": "Incomplete-gamma Q amplifies lower-series error by forming 1 - P",
+      "resolution": {
+        "evidence": "Since #242 the lower-region Gamma Q is computed from log P before rounding; the #24 evidence in gamma_lower_q/ proves it in Excel. Run 42702557548 at 7e0a82c passed 14,888/14,888 and exported: the untouched 168-row holdout of gamma_lower_q/HOLDOUT_DESIGN.md (7 new shapes, seam at A + 1, Gamma and Chi-square, P and Q) passes H1 to H4, worst survival 8.0E-17, cumulative 7.8E-17, 84/84 routes bit-identical; the re-exported fitting ladder passes L1 and L2, worst survival 8.9E-17 (was 1.6E-9); 22 promoted X = 0.5 main-grid rows match the model, worst 7.8E-17. The binary64 fallback at the pair's cap still forms the complement only above A of about 1.07E8, where it cannot amplify; documented and asserted. No contract relaxed; 166/166 main, 83/83 holdout; 27-row coverage debt unchanged. Results in gamma_lower_q/PREDICTIONS.md."
+      }
     },
     {
       "issue": 26,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Post-prefactor-fix continued-fraction Q survival still breaches 5E-15 (worst 4.53E-14); residual decomposition and repair remain"
+      "status": "resolved",
+      "summary": "Post-prefactor-fix continued-fraction Q survival still breaches 5E-15 (worst 4.53E-14); residual decomposition and repair remain",
+      "resolution": {
+        "evidence": "PR #242 routes public Gamma P/Q through the scaled double-double kernel: the 41 retained public failures are resolved without changing a tolerance, the frozen fresh validation (protocol 5c23f63, 206 forward points and 24 inverse references) passes, and run 42670065251 passed 14,886/14,886 with no main or holdout observation changed (166/166 main, 83/83 holdout contracts; review fixes in gamma_cf_study/coverage/REVIEW_FIX_PREDICTIONS.md). PR #289 promotes the frozen X = 2 survival ladder into the main grid as 24 Gamma and Chi-square rows claiming 5E-15; run 42679149964 returned the predicted model value at all 24, worst 7.2E-17, and changed no other observation (gamma_cf_study/MAIN_GRID_PROMOTION.md). The cause is identified by the #235 decomposition: finite-fraction truncation at the Lentz stop. No contract relaxed; 27-row coverage debt unchanged. #24 remains open."
+      }
     },
     {
       "issue": 29,

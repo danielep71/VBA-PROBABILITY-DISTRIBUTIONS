@@ -44,7 +44,8 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 # listed, so a grid cannot be selected twice.
 $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
-    "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape"
+    "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
+    "glq_lower_q"
 )
 
 function Get-StudyGridNames {
@@ -108,7 +109,8 @@ function Get-ExportGridSpec {
         [Parameter(Mandatory = $true)]
         [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
                      "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
-                     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape")]
+                     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
+                     "glq_lower_q")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -220,6 +222,12 @@ function Get-ExportGridSpec {
                 -FileName "gamma_series_small_shape_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_GSSS.bas" -Macro "Export_GammaSeriesSmallShape" `
                 -Columns 13 -KeyColumns 10 -SuccessPrefix "Gamma small-shape study complete: "
+        }
+        "glq_lower_q" {
+            return New-GeneratedGridSpec -Folder "gamma_lower_q" -Name "glq_lower_q" `
+                -FileName "gamma_lower_q_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_GLQ.bas" -Macro "Export_GammaLowerQ" `
+                -Columns 13 -KeyColumns 10 -SuccessPrefix "Gamma lower-Q holdout complete: "
         }
         "tchi_large_df" {
             return [pscustomobject][ordered]@{

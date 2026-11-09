@@ -104,13 +104,25 @@ class ExecutionTests(unittest.TestCase):
     def test_single_list_full_and_live_modes(self):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
-        self.assertEqual(len(full), 61)
-        self.assertIn(["gamma_cf_study/run_isolation.py"], full)
-        self.assertIn(["gamma_cf_study/check_candidate.py"], full)
+        self.assertEqual(len(full), 80)
+        self.assertIn(['gamma_lower_q/test_promote_x05_ladder.py'], full)
+        self.assertIn(['gamma_lower_q/test_gamma_lower_q.py'], full)
+        self.assertIn(['gamma_cf_study/test_promote_x2_ladder.py'], full)
+        for name in ('test_precision_probe.py', 'test_precision_v2.py',
+                     'test_research_checks.py', 'test_precision_arithmetic_audit.py',
+                     'test_cf_enclosure.py', 'test_scaled_product.py',
+                     'test_scaled_vba_port.py', 'test_scaled_dd.py', 'test_scaled_dd_vba_port.py', 'test_scaled_gamma_vba_port.py', 'test_extended_gamma.py', 'test_wide_gamma.py', 'test_public_integration.py', 'test_public_fresh.py'):
+            command = ['gamma_cf_study/coverage/' + name]
+            self.assertIn(command, full)
+            self.assertNotIn(command, live)
+        self.assertIn(["gamma_cf_study/replay_baseline.py", "isolation"], full)
+        self.assertIn(["gamma_cf_study/replay_baseline.py", "candidate"], full)
         self.assertIn(["positive_ratio_subnormal/check_post23_cutoffs.py"], full)
         expected = [c for c in full if Path(c[0]).name.startswith('check_')
-                    and '--self-test' not in c]
+                    and '--self-test' not in c
+                    or c == ['gamma_cf_study/replay_baseline.py', 'candidate']]
         self.assertEqual(live, expected)
+        self.assertIn(['gamma_cf_study/replay_baseline.py', 'candidate'], live)
         self.assertIn(['check_manifest_provenance.py'], live)
         self.assertIn(['check_verification_depth.py'], live)
         self.assertIn(['check_module_lists.py'], live)

@@ -158,8 +158,8 @@ Option Explicit
 '     by PROB_IsPositiveWithinSupportedMagnitude. That 1E100 bound is
 '     representational, not a convergence guarantee: the incomplete-gamma and
 '     incomplete-beta kernels converge over a smaller range, measured in
-'     benchmark/cdf_large_shape rather than restated here (the gamma series is
-'     bounded by PROB_GAMMA_MAX_ITER, and the beta range moved substantially
+'     benchmark/cdf_large_shape rather than restated here (the incomplete-gamma
+'     kernels stop at 100000-iteration caps, and the beta range moved substantially
 '     after CR-P1-02). A shape between that range and the representational bound is
 '     accepted and attempted. The incomplete-gamma series then returns a clean
 '     non-convergence error. The incomplete-beta continued fraction can instead

@@ -1,0 +1,139 @@
+"""Generate private Gamma fidelity checks from revealed development points."""
+import argparse
+from fractions import Fraction
+from functools import lru_cache
+import json
+import math
+from install_scaled_fidelity import HERE, ROOT, documented, literal
+from precision_probe import LN2
+from precision_v2 import COEFFICIENTS
+from scaled_dd import ScaledDD as S
+from scaled_gamma import public
+
+BEGIN = "' BEGIN generated scaled-Gamma study"
+END = "' END generated scaled-Gamma study"
+BASELINE = 7715
+
+
+def scaled_literal(value):
+    return f'Array({literal(value.hi.hex())}, {literal(value.lo.hex())}, {value.exponent})'
+
+
+@lru_cache(maxsize=1)
+def dataset():
+    pairs = []
+    for r in json.loads((HERE/'references.json').read_text()):
+        a, x = float.fromhex(r['a_hex']), float.fromhex(r['x_hex'])
+        if 0 < a <= 1 and 0 < x <= 32:
+            pairs.append((a, x))
+    for a in [2.**-1074, 2.**-1022, 2.**-400, .01, .5, 1.]:
+        for x in [2.**-1074, 2.**-1022, .25, 1., a+1, 32.]:
+            pairs.append((a, x))
+    seams = []
+    for a in [2.**-1074, 1e-100, 1e-6, .0001, .01, .25, .5, 1.]:
+        c = a+1
+        xs = [math.nextafter(c, 0.), c, math.nextafter(c, math.inf)]
+        seams.append([a.hex()]+[x.hex() for x in xs])
+        pairs.extend((a,x) for x in xs)
+    rows = []
+    for a,x in pairs:
+        p,q = public(a,x)
+        rows.append(dict(a=a.hex(), x=x.hex(), p=p.hex(), q=q.hex()))
+    invalid = [[float(a).hex(), float(x).hex()] for a,x in
+               [(0,1),(-1,1),(2,1),(1,0),(1,33),(math.inf,1),(1,math.nan),(math.nan,1)]]
+    normalization = []
+    for h in [.5, math.nextafter(.5,1.), .5624999999999998, math.nextafter(1.,0.)]:
+        for direction in [-1., 1.]:
+            half = 2.**-55 if h == .5 and direction < 0 else 2.**-54
+            for l in [math.nextafter(half,0.), half, math.nextafter(half,1.)]:
+                for sign in [-1., 1.]:
+                    low = sign*direction*l
+                    exact = Fraction(sign*h)+Fraction(low)
+                    eh = float(exact)
+                    _, e = math.frexp(eh)
+                    el = float(exact-Fraction(eh))
+                    normalization.append(dict(h=(sign*h).hex(),l=low.hex(),e=0,
+                        expected_h=math.ldexp(eh,-e).hex(),expected_l=math.ldexp(el,-e).hex(),expected_e=e))
+    return dict(schema=1, normalization=normalization, scope='revealed model fidelity, not independent Gamma acceptance',
+                rows=rows, seams=seams, invalid=invalid, baseline_assertions=BASELINE,
+                additional_assertions=len(rows)*3+len(invalid)+len(seams)*4+len(normalization))
+
+
+def render(data):
+    arithmetic = 'Private Function SD_Try('+ (HERE/'scaled_dd_vba.template').read_text().split('Private Function SD_Try(')[1].split('Private Sub SD_Case(')[0]
+    arithmetic = arithmetic.replace('SD_Valid', 'SGD_Valid').replace('SD_Try', 'SGD_Try')
+    arithmetic = arithmetic.replace('5.5511151231257827E-17', 'SP_FromWords(&H3C900000&, &H00000000&)')
+    arithmetic = arithmetic.replace('ByRef H As Double, ByRef L As Double, ByRef E As Long) As Boolean',
+        'ByRef H As Double, ByRef L As Double, ByRef E As Long, Optional ByRef Diagnostic As String = "") As Boolean')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(AH, AL, AE) Then Exit Function',
+        'If Not SGD_Valid(AH, AL, AE) Then\n        Diagnostic = "input A H=" & SG_Bits(AH) & " L=" & SG_Bits(AL) & " sum=" & SG_Bits(AH + AL)\n        Exit Function\n    End If')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(BH, BL, BE) Then Exit Function',
+        'If Not SGD_Valid(BH, BL, BE) Then\n        Diagnostic = "input B H=" & SG_Bits(BH) & " L=" & SG_Bits(BL) & " sum=" & SG_Bits(BH + BL)\n        Exit Function\n    End If')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(H, L, E) Then GoTo Err_Handler',
+        'If Not SGD_Valid(H, L, E) Then\n        Diagnostic = "output H=" & SG_Bits(H) & " L=" & SG_Bits(L) & " E=" & CStr(E) & " sum=" & SG_Bits(H + L)\n        GoTo Err_Handler\n    End If')
+    arithmetic = arithmetic.replace('Err_Handler:\n', 'Err_Handler:\n    If Len(Diagnostic) = 0 Then Diagnostic = "runtime " & Err.Description\n')
+    arithmetic = arithmetic.replace('If Not SGD_Valid(H, L, E) Then', 'SGD_Canonicalize H, L, E\n    If Not SGD_Valid(H, L, E) Then')
+    rounding = 'Private Function SP_Round('+(HERE/'scaled_product_vba.template').read_text().split('Private Function SP_Round(')[1].split('Private Sub SP_ProductCase(')[0]
+    rounding = rounding.replace('SP_Round', 'SGD_Round')
+    start = rounding.index('    If Abs(H) < 0.5')
+    end = rounding.index('    If Exponent > 1024',start)
+    rounding = rounding[:start]+'    If Not SGD_Valid(H, L, Exponent) Then Exit Function\n'+rounding[end:]
+    template = arithmetic + rounding + (HERE/'scaled_gamma_vba.template').read_text()
+    template = template.replace('@LN2@', scaled_literal(S._normalize(LN2, 0)))
+    template = template.replace('@LN2HI@', literal(LN2.hi.hex()))
+    coefficients = []
+    for i,c in enumerate(reversed(COEFFICIENTS)):
+        value = scaled_literal(S._normalize(c, 0))
+        coefficients.append('    V = '+(value if i == 0 else f'SG_Add(SG_Mul(V, U), {value})'))
+    template = template.replace('@COEFFICIENTS@', '\n'.join(coefficients))
+    lines = [template, '']
+    names = []
+    for start in range(0, len(data['rows']), 20):
+        name = f'Test_ScaledGamma_Chunk{start//20}'
+        names.append(name)
+        lines.append(f'Private Sub {name}()')
+        for i,r in enumerate(data['rows'][start:start+20], start):
+            lines += [f'    SG_Case "SG {i:03d}", {literal(r["a"])}, {literal(r["x"])}, _',
+                      f'        {literal(r["p"])}, {literal(r["q"])}']
+        lines += ['End Sub', '']
+    lines += ['Private Sub Test_ScaledGamma_Fidelity()']
+    lines += ['    '+name for name in names]
+    for r in data['normalization']:
+        lines += [f'    SG_NormalizeCase {literal(r["h"])}, {literal(r["l"])}, {r["e"]}, _',
+                  f'        {literal(r["expected_h"])}, {literal(r["expected_l"])}, {r["expected_e"]}']
+    for a,x in data['invalid']:
+        lines.append(f'    SG_Invalid {literal(a)}, {literal(x)}')
+    for a,l,c,r in data['seams']:
+        lines += [f'    SG_Seam {literal(a)}, {literal(l)}, _',
+                  f'        {literal(c)}, {literal(r)}']
+    lines += ['End Sub', '']
+    return BEGIN+'\n'+documented('\n'.join(lines))+'\n'+END+'\n\n'
+
+
+def install(data):
+    target = ROOT/'tests/M_STATS_PROBDIST_TEST.bas'
+    text = target.read_text()
+    if BEGIN in text:
+        before,rest = text.split(BEGIN,1)
+        _,after = rest.split(END+'\n\n',1)
+        text = before+render(data)+after
+    else:
+        text = text.replace('Private Function PV2_H(',render(data)+'Private Function PV2_H(',1)
+        text = text.replace('    Test_ScaledDD_Fidelity\n',
+                            '    Test_ScaledDD_Fidelity\n    Test_ScaledGamma_Fidelity\n',1)
+    policy = ROOT/'.github/excel-evidence-policy.json'
+    current = json.loads(policy.read_text())
+    total = BASELINE+data['additional_assertions']
+    assert current['expected_assertions'] in (BASELINE,8142,total)
+    current['expected_assertions'] = total
+    target.write_bytes(text.replace('\n','\r\n').encode('ascii'))
+    policy.write_text(json.dumps(current,indent=2)+'\n')
+    (HERE/'scaled_gamma_fidelity.json').write_text(json.dumps(data,indent=2)+'\n')
+    print(f'{len(data["rows"])} pairs; {data["additional_assertions"]} new assertions; {total} total')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--write',action='store_true',required=True)
+    parser.parse_args()
+    install(dataset())

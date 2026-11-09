@@ -167,6 +167,9 @@ GRIDS = {
     "gss_small_shape": _study("gss_small_shape", "gamma_series_small_shape_grid.csv",
                               "M_STATS_PROBDIST_GSSS.bas", "Export_GammaSeriesSmallShape",
                               13, 10, folder="gamma_series_small_shape"),
+    "glq_lower_q": _study("glq_lower_q", "gamma_lower_q_grid.csv",
+                          "M_STATS_PROBDIST_GLQ.bas", "Export_GammaLowerQ",
+                          13, 10, folder="gamma_lower_q"),
 }
 
 

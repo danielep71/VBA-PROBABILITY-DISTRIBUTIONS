@@ -179,7 +179,7 @@ Option Explicit
 Private Const PROB_T_INV_MAX_ITER As Long = 500
 Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy envelope; both df must be <= this. Applies to the cumulative, survival AND inverse: benchmark/inverse_probe found no inverse refusals to df 2E10, including the unbalanced ratios that had been assumed to fail, but unbalanced and large-df inverse rows still lose relative accuracy (open #35) (measured, benchmark/envelope_probe + benchmark/inverse_probe)
 Private Const PROB_T_MAX_DF       As Double = 100000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
-Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29); above that the lower-tail series reaches PROB_GAMMA_MAX_ITER
+Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29). The incomplete-gamma iteration caps lie above it: near X = df the scaled pair (#26) caps from df of about 2.1E8 and its binary64 fallback from about 3.8E8
 
 'Student t large-df upper tail (#34; benchmark/student_t_large_df_study,
 'PRODUCTION_PREREGISTRATION.md). For DegreesFreedom >= PROB_T_LDF_MIN_DF and
