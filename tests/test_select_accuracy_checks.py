@@ -104,7 +104,8 @@ class ExecutionTests(unittest.TestCase):
     def test_single_list_full_and_live_modes(self):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
-        self.assertEqual(len(full), 76)
+        self.assertEqual(len(full), 77)
+        self.assertIn(['gamma_cf_study/test_promote_x2_ladder.py'], full)
         for name in ('test_precision_probe.py', 'test_precision_v2.py',
                      'test_research_checks.py', 'test_precision_arithmetic_audit.py',
                      'test_cf_enclosure.py', 'test_scaled_product.py',

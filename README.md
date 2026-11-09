@@ -73,9 +73,9 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **14,886** | of 14,886 deterministic VBA assertions passed in the retained Excel run on `c856ddd`; regression sources unchanged since |
+| **14,886** | of 14,886 deterministic VBA assertions passed in the retained Excel run on `2c47bf8`; regression sources unchanged since |
 | **166** | active accuracy contracts (167 registry rows; 1 characterization-only): 166 PASS, 0 FAIL, 0 PENDING |
-| **2,093** | observation rows; main grid 1,737: 1,710 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
+| **2,117** | observation rows; main grid 1,761: 1,734 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
 | **83** | of 83 contracts PASS on an **independent holdout** of 659 observations |
 | **Not certified** | v1.0.0 release: 10 registered open blockers, including [#35](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/35), [#163](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/163), [#173](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/173), [#213](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/213); tracker [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) |
 
@@ -87,10 +87,10 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 14,886/14,886 assertions passed on `c856ddd` (Excel 16.0 build 20430, 64-bit; finished 2026-11-09). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,093 rows bound to the current source by `observation_manifest.json` (exported from `c856ddd`).
+- **Excel regression** — 14,886/14,886 assertions passed on `2c47bf8` (Excel 16.0 build 20430, 64-bit; finished 2026-11-09). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,117 rows bound to the current source by `observation_manifest.json` (exported from `2c47bf8`).
 - **Main-grid export certification** — certified by the retained Excel record.
-- **Main-grid coverage** — `transition` mode: 1,710 of 1,737 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
+- **Main-grid coverage** — `transition` mode: 1,734 of 1,761 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
 - **Contract verdicts** — 166 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only.
 - **Independent holdout** — 83 PASS, 0 FAIL of 83 contracts on 659 observations bound to the current source.
 - **Holdout export certification** — certified by the retained Excel record.
