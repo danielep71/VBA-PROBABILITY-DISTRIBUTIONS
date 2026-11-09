@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-09T19:44:42Z",
+ "generated_utc": "2026-11-09T21:58:03Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -50,7 +50,7 @@
    },
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "bf129af3dd9d561576bc9f08a0f641b5219c38fae2f2af2dac1df29cd3325c3a"
+    "sha256": "d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 41.3,
+ "runtime_s": 41.8,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3726,6 +3726,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded 3a777bcf9943e524cff8ee508a6396d71962b93b3e91f083e69634e2656f8aa5, now bf129af3dd9d561576bc9f08a0f641b5219c38fae2f2af2dac1df29cd3325c3a"
+   ]
+  },
+  {
+   "utc": "2026-11-09T21:57:21Z",
+   "reason": "Issue #24 adds 22 freshly exported Gamma/Chi-square X = 0.5 survival representatives to the main grid (Excel run 42702557548). All preceding 2117 observations are unchanged; regenerate the dependent normal-tail report against the new grid digest without refitting or reevaluating its holdout.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded bf129af3dd9d561576bc9f08a0f641b5219c38fae2f2af2dac1df29cd3325c3a, now d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561"
    ]
   }
  ]

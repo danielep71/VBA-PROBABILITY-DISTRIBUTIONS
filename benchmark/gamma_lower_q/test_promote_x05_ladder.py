@@ -17,6 +17,8 @@ Run: python3 test_promote_x05_ladder.py   (exit 0 = pass)
 from decimal import Decimal, localcontext
 from pathlib import Path
 import csv
+import io
+import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
@@ -77,8 +79,11 @@ def main():
             check(all(m[k] == r[k] for k in ("reference", "claim", "metric")),
                   f"{r['function']} {r['arg2']}: main-grid reference, claim or metric changed")
             promoted.append(m)
-    with open(P.LADDER, newline="", encoding="utf-8") as f:
-        study_obs = {r["survival"] for r in csv.DictReader(f)}
+    # The pre-#24 ladder export (#23 wave, e278318). A later re-export of the
+    # ladder legitimately returns the same Doubles as the promoted rows.
+    pre = subprocess.check_output(["git", "show", "e278318:benchmark/positive_ratio_subnormal/"
+                                   "gamma_q_complement.csv"], cwd=HERE, text=True)
+    study_obs = {r["survival"] for r in csv.DictReader(io.StringIO(pre))}
     check(not any(m["observed_vba"] in study_obs for m in promoted),
           "a study observation was copied into the main grid")
 

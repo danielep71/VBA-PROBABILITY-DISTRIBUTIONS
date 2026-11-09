@@ -121,6 +121,20 @@ Use only the categories needed by a release.
   other main or holdout observation.
 - #26 is marked resolved in `benchmark/release_readiness.json`, so the README
   lists 9 open release blockers instead of 10.
+- #24: below `X = A + 1`, Gamma Q is no longer `1 - P`. Since #242 it comes
+  from log P before rounding, and #24 proves it in Excel. An untouched holdout
+  of 168 rows (`benchmark/gamma_lower_q/`, 7 new shapes from 1.7E-7 to 0.465,
+  the seam at `A + 1`, Gamma and Chi-square, P and Q) passes every frozen
+  rule, worst survival 8.0E-17. The re-exported fitting ladder, which reached
+  1.6E-9, now peaks at 8.9E-17. 22 main-grid rows cover `X = 0.5` from shape
+  1E-6 to 0.1, including the issue's `Gamma_Survival(0.5, 0.0001, 1)`. Excel
+  run 42702557548 passed 14,888 assertions.
+- The binary64 fallback at the double-double pair's iteration cap still forms
+  the complement. It runs only for shapes above about 1.07E8, where both tails
+  are near 0.5, so it adds no amplification; the headers document why, and
+  two assertions check it.
+- #24 is marked resolved in `benchmark/release_readiness.json`: 8 open release
+  blockers remain.
 - An unexpected runtime error inside the new kernel propagates again, so the
   public function returns `#VALUE!` as documented. The kernel's own domain
   and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.

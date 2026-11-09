@@ -80,3 +80,35 @@ survival errors reach 1.6E-9 at `x05_s0`.
 Any failure of N1 to N6 stops the closure of #24, and the cause is explained
 before anything else changes. A failure of N3 rejects the candidate for #24, as
 the design states.
+
+## Result (2026-11-09)
+
+Excel VBA Regression run 42702557548 executed candidate `7e0a82c` on Excel 16.0
+build 20430, 64-bit, then exported the main grid, the holdout, the fitting
+ladder (`prs_gamma_q_complement`) and the #24 holdout (`glq_lower_q`). The
+evidence commit is `36975bc`.
+
+| Id | Result |
+| --- | --- |
+| N1 | **Holds.** 14,888 / 14,888 assertions pass, 0 fail, including both fallback complement assertions. |
+| N2 | **Holds.** All 34 ladder points return the model values above, bit for bit, for the CDF and the survival. L1: worst CDF 6.7E-17, worst survival 8.9E-17 (previously up to 1.6E-9). L2: the raw series P is unchanged at every point. |
+| N3 | **Holds.** The untouched holdout passes H1 to H4: all 168 rows numeric at the echoed design inputs, worst survival 8.0E-17 and worst cumulative 7.8E-17, 84 of 84 route pairs bit-identical, no monotonicity reversal, and every P + Q within the H4 bound. |
+| N4 | **Holds.** The 22 promoted rows equal the model values, worst 7.8E-17. |
+| N5 | **Holds.** The main export changed 22 observations, the promoted rows that were blank, and no other; the holdout export changed none of 659. |
+| N6 | **Holds.** 166/166 main contracts pass, with no FAIL, KNOWN LIMITATION or PENDING; 83/83 holdout contracts pass; the coverage debt is still 27 rows. |
+
+No prediction failed, and nothing was revised after the output was read.
+
+### Readers of the re-exported ladder
+
+The ladder file now holds the #24 export. Five readers expected the export of
+the #23 wave (`e278318`) and now read it from Git instead of the live file:
+
+- `gamma_cf_study/replay_baseline.py` (the #235 isolation);
+- `analyze_gamma_series_small_shape.py` and its test (the #23 movement rules);
+- `test_promote_x2_ladder.py` (#26);
+- this directory's two tests.
+
+No rule, threshold or recorded result changes. The normal-tail report, which
+binds the whole main grid, was regenerated without refitting or evaluating its
+holdout. #302 tracks removing this kind of coupling.

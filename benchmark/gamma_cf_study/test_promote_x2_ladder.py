@@ -18,6 +18,8 @@ Run: python3 test_promote_x2_ladder.py   (exit 0 = pass)
 from decimal import Decimal, localcontext
 from pathlib import Path
 import csv
+import io
+import subprocess
 import json
 import sys
 
@@ -59,8 +61,10 @@ def main():
     # 2. The references reproduce the #235 study's recorded pre-fix errors.
     study = {r["point_id"]: r for r in
              json.loads((HERE / "isolation.json").read_text())["rows"]}
-    with open(P.LADDER, newline="", encoding="utf-8") as f:
-        ladder = [r for r in csv.DictReader(f) if r["point_id"].startswith("x2_")]
+    # The pre-#24 ladder export the #235 study scored (#23 wave, e278318).
+    pre = subprocess.check_output(["git", "show", "e278318:benchmark/positive_ratio_subnormal/"
+                                   "gamma_q_complement.csv"], cwd=HERE, text=True)
+    ladder = [r for r in csv.DictReader(io.StringIO(pre)) if r["point_id"].startswith("x2_")]
     with mp.workdps(60):
         for r, g in zip(ladder, rows[0::2]):
             hi, lo = r["survival"].split(";")

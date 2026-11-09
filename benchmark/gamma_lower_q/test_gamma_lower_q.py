@@ -133,9 +133,9 @@ def main():
               and any(needle in p for p in result["problems"]),
               f"{name}: not caught ({result and result['problems'][:3]})")
 
-    # 4. Part B: the committed pre-#24 ladder breaches L1, and L2 sees a moved series.
-    committed = open(os.path.join(A.ROOT, A.LADDER_PATH), encoding="utf-8").read()
+    # 4. Part B: the pre-#24 ladder breaches L1, and L2 sees a moved series.
     baseline = A.git_show(A.LADDER_BASELINE, A.LADDER_PATH)
+    committed = baseline
     before = A.part_b(committed, baseline)
     check(not before["pass"] and before["worst_survival"] > 1e-9
           and all(p.startswith("L1") for p in before["problems"]),
