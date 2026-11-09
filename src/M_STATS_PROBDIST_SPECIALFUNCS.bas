@@ -2065,19 +2065,33 @@ Public Function PROB_TryGammaRegularizedP( _
 ' METHOD
 '   Lower Q is reconstructed directly from log P, before binary64 rounding.
 '   The frozen wide kernel handles the region outside the extended interior.
+'   Where the pair reaches its 100000-iteration cap, the binary64 series or
+'   continued fraction answers instead: the pair stops at 2^-68 and 2^-101, so
+'   near X = A it caps from A of about 1.07E8, and just above X = A + 1 from
+'   about 3.3E11, where the binary64 route still converges.
 ' ERROR POLICY
 '   False clears Result and reports invalid inputs, arithmetic failure or cap.
-'   Retains the established 100000-iteration cap diagnostic wording.
+'   The cap diagnostic keeps the established 100000-iteration wording.
+'   An unexpected runtime error propagates to the caller.
 ' UPDATED
-'   2026-11-08 - #24/#26 public integration candidate; acceptance pending.
+'   2026-11-09 - #26: binary64 fallback at the pair's iteration cap.
 '==============================================================================
-    Dim P As Double, Q As Double
+    Dim P As Double, Q As Double, Value As Double
     Result = 0#: FailMsg = ""
     If Not PROB_DD_WG_Pair(A, X, P, Q, FailMsg) Then
-        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 Then
-            FailMsg = "Incomplete gamma continued fraction failed to converge in 100000 iterations for A = " & A
-        ElseIf InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
-            FailMsg = "Incomplete gamma series failed to converge in 100000 iterations for A = " & A
+        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 _
+            Or InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = ""
+            If X < A + 1# Then
+                If Not PROB_TryGammaSeriesP(A, X, Value, FailMsg) Then Exit Function
+            Else
+                If Not PROB_TryGammaContinuedFractionQ(A, X, Value, FailMsg) Then Exit Function
+                Value = 1# - Value
+            End If
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            Result = Value
+            PROB_TryGammaRegularizedP = True
         ElseIf Len(FailMsg) = 0 Then
             FailMsg = "Gamma kernel requires finite A > 0 and X >= 0"
         End If
@@ -2107,19 +2121,33 @@ Public Function PROB_TryGammaRegularizedQ( _
 ' METHOD
 '   Lower Q is reconstructed directly from log P, before binary64 rounding.
 '   The frozen wide kernel handles the region outside the extended interior.
+'   Where the pair reaches its 100000-iteration cap, the binary64 series or
+'   continued fraction answers instead: the pair stops at 2^-68 and 2^-101, so
+'   near X = A it caps from A of about 1.07E8, and just above X = A + 1 from
+'   about 3.3E11, where the binary64 route still converges.
 ' ERROR POLICY
 '   False clears Result and reports invalid inputs, arithmetic failure or cap.
-'   Retains the established 100000-iteration cap diagnostic wording.
+'   The cap diagnostic keeps the established 100000-iteration wording.
+'   An unexpected runtime error propagates to the caller.
 ' UPDATED
-'   2026-11-08 - #24/#26 public integration candidate; acceptance pending.
+'   2026-11-09 - #26: binary64 fallback at the pair's iteration cap.
 '==============================================================================
-    Dim P As Double, Q As Double
+    Dim P As Double, Q As Double, Value As Double
     Result = 0#: FailMsg = ""
     If Not PROB_DD_WG_Pair(A, X, P, Q, FailMsg) Then
-        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 Then
-            FailMsg = "Incomplete gamma continued fraction failed to converge in 100000 iterations for A = " & A
-        ElseIf InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
-            FailMsg = "Incomplete gamma series failed to converge in 100000 iterations for A = " & A
+        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 _
+            Or InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = ""
+            If X < A + 1# Then
+                If Not PROB_TryGammaSeriesP(A, X, Value, FailMsg) Then Exit Function
+                Value = 1# - Value
+            Else
+                If Not PROB_TryGammaContinuedFractionQ(A, X, Value, FailMsg) Then Exit Function
+            End If
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            Result = Value
+            PROB_TryGammaRegularizedQ = True
         ElseIf Len(FailMsg) = 0 Then
             FailMsg = "Gamma kernel requires finite A > 0 and X >= 0"
         End If
@@ -3853,6 +3881,9 @@ Private Function PROB_DD_WG_Pair(ByVal A As Double, ByVal X As Double, ByRef P A
     PROB_DD_WG_Pair = True
     Exit Function
 Err_Handler:
+    'Error 5 is this kernel's own domain or cap signal; any other runtime error
+    'is unexpected and propagates, so the public function reports #VALUE!.
+    If Err.Number <> 5 Then Err.Raise Err.Number, Err.Source, Err.Description
     Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
     P = 0#: Q = 0#: PROB_DD_WG_Pair = False
 End Function
@@ -4033,6 +4064,9 @@ Private Function PROB_DD_EG1_Pair(ByVal A As Double, ByVal X As Double, ByRef P 
     PROB_DD_EG1_Pair = True
     Exit Function
 Err_Handler:
+    'Error 5 is this kernel's own domain or cap signal; any other runtime error
+    'is unexpected and propagates, so the public function reports #VALUE!.
+    If Err.Number <> 5 Then Err.Raise Err.Number, Err.Source, Err.Description
     Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
     P = 0#: Q = 0#
     PROB_DD_EG1_Pair = False
@@ -4068,6 +4102,9 @@ Private Function PROB_DD_EG_Pair(ByVal A As Double, ByVal X As Double, ByRef P A
     End If
     Exit Function
 Err_Handler:
+    'Error 5 is this kernel's own domain or cap signal; any other runtime error
+    'is unexpected and propagates, so the public function reports #VALUE!.
+    If Err.Number <> 5 Then Err.Raise Err.Number, Err.Source, Err.Description
     P = 0#: Q = 0#: Diagnostic = "shape-two subnormal: " & Err.Description
     PROB_DD_EG_Pair = False
 End Function
@@ -4075,12 +4112,12 @@ End Function
 Private Function PROB_DD_PV2_H(ByVal V As Variant) As Double
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_H: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_H: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4094,45 +4131,27 @@ End Function
 Private Function PROB_DD_PV2_L(ByVal V As Variant) As Double
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_L: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_L: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
     If IsArray(V) Then PROB_DD_PV2_L = CDbl(V(1))
 End Function
 
-Private Function PROB_DD_PV2_Value(ByVal V As Variant) As Double
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Value: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim H As Double, L As Double
-    H = PROB_DD_PV2_H(V)
-    L = PROB_DD_PV2_L(V)
-    PROB_DD_PV2_Value = H + L
-End Function
-
 Private Function PROB_DD_PV2_Sum(ByVal A As Double, ByVal B As Double) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_Sum: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_Sum: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4148,12 +4167,12 @@ End Function
 Private Function PROB_DD_PV2_Add(ByVal A As Variant, ByVal B As Variant) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_Add: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_Add: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4174,12 +4193,12 @@ End Function
 Private Function PROB_DD_PV2_Neg(ByVal A As Variant) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_Neg: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_Neg: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4189,12 +4208,12 @@ End Function
 Private Function PROB_DD_PV2_Sub(ByVal A As Variant, ByVal B As Variant) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_Sub: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_Sub: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4204,12 +4223,12 @@ End Function
 Private Function PROB_DD_PV2_Mul(ByVal A As Variant, ByVal B As Variant) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_Mul: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_Mul: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4246,12 +4265,12 @@ End Function
 Private Function PROB_DD_PV2_Div(ByVal A As Variant, ByVal B As Variant) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_PV2_Div: test-only arithmetic port of the frozen Precision v2 model.
+'   PROB_DD_PV2_Div: double-double arithmetic of the frozen Precision v2 model.
 ' NOTES
 '   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
+'   Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.
 ' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
+'   Errors propagate to the calling Gamma kernel.
 ' UPDATED
 '   2026-11-08
 '==============================================================================
@@ -4264,317 +4283,6 @@ Private Function PROB_DD_PV2_Div(ByVal A As Variant, ByVal B As Variant) As Vari
         Q = PROB_DD_PV2_Add(Q, T)
     Next J
     PROB_DD_PV2_Div = Q
-End Function
-
-Private Function PROB_DD_PV2_Ln2() As Variant
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Ln2: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    PROB_DD_PV2_Ln2 = Array((6.93147180559945E-01 + (3.33066907387547E-16)), (2.31904681384630E-17 + (-3.08148791101958E-33)))
-End Function
-
-Private Function PROB_DD_PV2_Log(ByVal X As Double) As Variant
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Log: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim F As Double, E As Long, N As Long
-    Dim Z As Variant, S As Variant, T As Variant, D As Variant, Z2 As Variant
-    If X = 1# Then
-        PROB_DD_PV2_Log = Array(0#, 0#)
-        Exit Function
-    End If
-    If X <= 0# Then Err.Raise 5, , "PV2 Log domain"
-    F = X
-    Do While F < 0.5
-        F = F * 2#
-        E = E - 1
-    Loop
-    Do While F >= 1#
-        F = F / 2#
-        E = E + 1
-    Loop
-    Z = PROB_DD_PV2_Div(PROB_DD_PV2_Sub(F, 1#), PROB_DD_PV2_Add(F, 1#))
-    Z2 = PROB_DD_PV2_Mul(Z, Z)
-    T = Z: S = Z
-    For N = 3 To 1000 Step 2
-        T = PROB_DD_PV2_Mul(T, Z2)
-        D = PROB_DD_PV2_Div(T, CDbl(N))
-        S = PROB_DD_PV2_Add(S, D)
-        If Abs(PROB_DD_PV2_H(D)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
-            PROB_DD_PV2_Log = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(S, 2#), PROB_DD_PV2_Mul(PROB_DD_PV2_Ln2(), CDbl(E)))
-            Exit Function
-        End If
-    Next N
-    Err.Raise 5, , "PV2 Log cap"
-End Function
-
-Private Function PROB_DD_PV2_Log1p(ByVal Z As Variant) As Variant
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Log1p: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim T As Variant, S As Variant, D As Variant, Z2 As Variant, N As Long
-    If PROB_DD_PV2_Value(Z) < -0.8 Or PROB_DD_PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Log1p domain"
-    T = PROB_DD_PV2_Div(Z, PROB_DD_PV2_Add(Z, 2#))
-    Z2 = PROB_DD_PV2_Mul(T, T)
-    S = T
-    For N = 3 To 2000 Step 2
-        T = PROB_DD_PV2_Mul(T, Z2)
-        D = PROB_DD_PV2_Div(T, CDbl(N))
-        S = PROB_DD_PV2_Add(S, D)
-        If Abs(PROB_DD_PV2_H(D)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
-            PROB_DD_PV2_Log1p = PROB_DD_PV2_Mul(S, 2#)
-            Exit Function
-        End If
-    Next N
-    Err.Raise 5, , "PV2 Log1p cap"
-End Function
-
-Private Function PROB_DD_PV2_Expm1(ByVal Z As Variant) As Variant
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Expm1: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim T As Variant, S As Variant, N As Long
-    If PROB_DD_PV2_Value(Z) < -8# Or PROB_DD_PV2_Value(Z) > 0# Then Err.Raise 5, , "PV2 Expm1 domain"
-    T = Z: S = Z
-    For N = 2 To 1000
-        T = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(T, Z), CDbl(N))
-        S = PROB_DD_PV2_Add(S, T)
-        If Abs(PROB_DD_PV2_H(T)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
-            PROB_DD_PV2_Expm1 = S
-            Exit Function
-        End If
-    Next N
-    Err.Raise 5, , "PV2 Expm1 cap"
-End Function
-
-Private Function PROB_DD_PV2_Exp(ByVal Z As Variant) As Variant
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Exp: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim R As Variant, T As Variant, S As Variant, N As Long, K As Long
-    Dim Ratio As Double, ScaleFactor As Double, H As Double, L As Double
-    If PROB_DD_PV2_Value(Z) < -64# Or PROB_DD_PV2_Value(Z) > 8# Then Err.Raise 5, , "PV2 Exp domain"
-    Ratio = PROB_DD_PV2_H(Z) / PROB_DD_PV2_H(PROB_DD_PV2_Ln2())
-    N = CLng(Ratio)
-    R = PROB_DD_PV2_Sub(Z, PROB_DD_PV2_Mul(PROB_DD_PV2_Ln2(), CDbl(N)))
-    T = Array(1#, 0#): S = T
-    For K = 1 To 1000
-        T = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(T, R), CDbl(K))
-        S = PROB_DD_PV2_Add(S, T)
-        If Abs(PROB_DD_PV2_H(T)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then
-            ScaleFactor = 2# ^ N
-            H = PROB_DD_PV2_H(S) * ScaleFactor
-            L = PROB_DD_PV2_L(S) * ScaleFactor
-            PROB_DD_PV2_Exp = Array(H, L)
-            Exit Function
-        End If
-    Next K
-    Err.Raise 5, , "PV2 Exp cap"
-End Function
-
-Private Function PROB_DD_PV2_LogGamma(ByVal A As Double) As Variant
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_LogGamma: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim U As Variant, V As Variant
-    U = PROB_DD_PV2_Sub(A, 0.5)
-    V = Array((1.41171093978875E-15 + (-7.88860905221012E-31)), (-7.40170704349773E-32 + (1.09476442525376E-47)))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.14648089856621E-15 + (5.12759588393658E-30)), (1.13494325987459E-31 + (6.56858655152258E-47))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((3.26429404138876E-15 + (-2.36658271566304E-30)), (9.81769918162968E-32 + (2.18952885050753E-47))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.96517742317239E-15 + (-7.88860905221012E-31)), (-1.74329766137388E-31 + (2.40848173555828E-46))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((7.55380696239768E-15 + (1.57772181044202E-30)), (5.70152063703829E-31 + (0.00000000000000E+00))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.14943670002178E-14 + (3.62876016401665E-29)), (-3.42914161585886E-31 + (-2.62743462060903E-46))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.74942314273340E-14 + (2.52435489670724E-29)), (1.44021000372386E-30 + (4.90454462513686E-45))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.66316444074713E-14 + (-1.57772181044202E-29)), (-1.80731795250046E-31 + (-1.09476442525376E-46))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.05505925851729E-14 + (-2.52435489670724E-29)), (-8.49512127749938E-31 + (-1.75162308040602E-46))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-6.17583178419540E-14 + (-2.52435489670724E-29)), (-5.85786353840856E-30 + (-2.10194769648723E-45))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((9.40796740393935E-14 + (0.00000000000000E+00)), (-3.83880166798765E-30 + (3.50324616081204E-45))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.43351237964261E-13 + (1.00974195868290E-28)), (-4.15158968604589E-30 + (2.80259692864963E-45))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.18482043164793E-13 + (1.51461293802434E-28)), (-8.36467935207240E-31 + (-1.75162308040602E-46))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.33075147079755E-13 + (-5.04870979341448E-29)), (1.04717745291746E-29 + (3.50324616081204E-44))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((5.07907450613959E-13 + (1.00974195868290E-28)), (-2.38268087848993E-29 + (4.20389539297445E-44))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-7.74723440736884E-13 + (-5.04870979341448E-28)), (-4.48496106067019E-29 + (0.00000000000000E+00))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.18204129155139E-12 + (-3.43312265952184E-27)), (6.44550241526769E-29 + (4.48415508583941E-44))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.80404235692326E-12 + (-2.22143230910237E-27)), (-2.74136263274511E-29 + (1.68155815718978E-44))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.75418725094515E-12 + (-3.63507105125842E-27)), (2.97092004439325E-29 + (-1.12103877145985E-44))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.20608080662836E-12 + (-2.42338070083895E-27)), (-3.42805388259430E-28 + (2.69049305150365E-43))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((6.42545964487383E-12 + (1.61558713389263E-27)), (2.29374877444704E-28 + (-4.93257059442336E-43))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-9.81925490738286E-12 + (0.00000000000000E+00)), (6.98822051228334E-28 + (-1.79366203433577E-43))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.50108823940263E-11 + (4.20052654812084E-26)), (-1.48089756038230E-27 + (-2.69049305150365E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.29558404652975E-11 + (-3.87740912134232E-26)), (-8.67334689656528E-28 + (-3.58732406867153E-43))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((3.51192915084393E-11 + (-1.29246970711411E-26)), (-2.02843131271761E-27 + (-3.94605647553868E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-5.37490176317862E-11 + (0.00000000000000E+00)), (-3.03473751543268E-27 + (-4.66352128927299E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((8.22952234483210E-11 + (-2.58493941422821E-26)), (-6.00736993421394E-27 + (-1.43492962746861E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.26056591454892E-10 + (1.29246970711411E-25)), (-8.20680360314836E-27 + (-1.43492962746861E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.93175181123118E-10 + (-4.39439700418796E-25)), (-4.13546401752092E-27 + (3.58732406867153E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.96169589941651E-10 + (2.06795153138257E-25)), (1.33863843386909E-26 + (2.86985925493723E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.54299303042099E-10 + (1.03397576569128E-25)), (1.61673771521419E-26 + (1.43492962746861E-41))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-6.97213642028249E-10 + (2.06795153138257E-25)), (2.85872842316712E-28 + (3.58732406867153E-43))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.07058780863553E-09 + (-3.72231275648862E-24)), (-8.68234486230219E-26 + (2.29588740394978E-41))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.64483555539652E-09 + (-4.13590306276514E-24)), (7.43783907961386E-26 + (-3.44383110592467E-41))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.52859012613536E-09 + (-2.48154183765908E-24)), (9.73833157704985E-26 + (-2.29588740394978E-41))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.88958300575891E-09 + (-2.48154183765908E-24)), (-2.83860600444586E-25 + (-3.21424236552969E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((5.98701295630897E-09 + (-2.48154183765908E-24)), (1.39686715089691E-25 + (-4.59177480789956E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-9.22178304786582E-09 + (4.96308367531817E-24)), (7.80097185002356E-25 + (-4.59177480789956E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.42145587068719E-08 + (4.13590306276514E-23)), (-2.56469703585928E-27 + (-4.30478888240584E-42))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.19272029043474E-08 + (2.64697796016969E-23)), (4.55969744306379E-25 + (-4.59177480789956E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((3.38519414938090E-08 + (3.97046694025453E-23)), (-2.95757343411792E-25 + (4.59177480789956E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-5.23064498832708E-08 + (3.97046694025453E-23)), (-3.63076684141467E-25 + (4.59177480789956E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((8.08948668443836E-08 + (1.32348898008484E-23)), (2.07482824619517E-24 + (-7.34683969263930E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.25229209086299E-07 + (-2.11758236813575E-22)), (-1.12617886205366E-24 + (-7.34683969263930E-40))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.94060256838287E-07 + (-2.64697796016969E-23)), (-3.93024156918979E-24 + (-4.40810381558358E-39))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.01053697400556E-07 + (-5.29395592033938E-23)), (-2.00284536762141E-24 + (-2.20405190779179E-39))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.67585459593438E-07 + (1.05879118406788E-22)), (-1.28162025011814E-23 + (1.32243114467507E-38))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-7.27150972981638E-07 + (-3.17637355220363E-22)), (1.01351832794266E-23 + (4.70197740328915E-38))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.13233727790091E-06 + (-4.02340649945793E-21)), (2.13522964307009E-23 + (2.05711511393900E-38))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.76587736954239E-06 + (6.35274710440725E-22)), (-6.62490692106423E-23 + (-1.17549435082229E-38))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.75822905390482E-06 + (0.00000000000000E+00)), (3.78305871026079E-23 + (-1.17549435082229E-38))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.31562117239537E-06 + (2.54109884176290E-21)), (3.03086311685494E-22 + (1.88079096131566E-37))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((6.76496373796090E-06 + (-5.08219768352580E-21)), (-4.00003039013541E-22 + (0.00000000000000E+00))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.06260564852470E-05 + (-3.04931861011548E-20)), (6.56077790924962E-22 + (2.82118644197349E-37))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.67282243428494E-05 + (4.40457132572236E-20)), (-1.45330121238327E-21 + (-7.52316384526264E-37))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-2.63996995905211E-05 + (0.00000000000000E+00)), (-1.05456019154754E-21 + (2.25694915357879E-36))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.17769653553246E-05 + (-4.74338450462408E-20)), (-1.40068426065889E-21 + (-2.44502824971036E-36))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-6.63135482599680E-05 + (1.35525271560688E-20)), (4.83702115030649E-21 + (3.00926553810506E-36))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.05623637963857E-04 + (1.35525271560688E-20)), (3.76866268963272E-21 + (-4.51389830715758E-36))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.68894325207693E-04 + (1.89735380184963E-19)), (-2.89927296270812E-21 + (4.13774011489445E-36))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((2.71277099973908E-04 + (3.79470760369927E-19)), (-3.94797336214631E-21 + (-3.76158192263132E-36))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-4.37995120948431E-04 + (5.42101086242752E-20)), (-2.00008491458486E-20 + (2.10648587667354E-35))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((7.11522258031626E-04 + (-3.25260651745651E-19)), (-3.97278226896129E-20 + (-3.00926553810506E-35))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.16441447410474E-03 + (2.16840434497101E-19)), (2.94941512886342E-20 + (3.00926553810506E-35))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.92291614029804E-03 + (-3.68628738645072E-18)), (-1.00244239888136E-20 + (-2.25694915357879E-35))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.21207407719414E-03 + (3.03576608295941E-18)), (1.50372992274185E-19 + (1.68518870133883E-34))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((5.44645784455033E-03 + (-3.46944695195361E-18)), (3.88585737757394E-19 + (-1.92592994438724E-34))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-9.42562244846982E-03 + (-1.73472347597681E-18)), (6.92989757614234E-19 + (-9.62964972193618E-35))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((1.67970986311869E-02 + (-2.08166817117217E-17)), (1.60545014319234E-18 + (-4.81482486096809E-33))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-3.13084875010110E-02 + (0.00000000000000E+00)), (9.29580431618060E-19 + (3.85185988877447E-34))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((6.29114010745649E-02 + (4.16333634234434E-17)), (-4.54276257267888E-18 + (-3.08148791101958E-33))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((-1.45959895914306E-01 + (-8.32667268468867E-17)), (-7.81369195792092E-19 + (-1.92592994438724E-34))))
-    V = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(V, U), Array((4.83128950540981E-01 + (-1.11022302462516E-16)), (1.67188189971785E-17 + (6.16297582203915E-33))))
-    PROB_DD_PV2_LogGamma = PROB_DD_PV2_Mul(PROB_DD_PV2_Mul(A, PROB_DD_PV2_Sub(A, 1#)), V)
-End Function
-
-Private Function PROB_DD_PV2_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
-'==============================================================================
-' PURPOSE
-'   PROB_DD_PV2_Pair: test-only arithmetic port of the frozen Precision v2 model.
-' NOTES
-'   Explicit Double stores preserve the operation boundaries under test.
-'   This restricted diagnostic implementation is not a public kernel.
-' ERROR POLICY
-'   Errors propagate to PROB_DD_PV2_Pair, which returns False without acceptance.
-' UPDATED
-'   2026-11-08
-'==============================================================================
-    Dim LG As Variant, T As Variant, S As Variant, D As Variant, LP As Variant
-    Dim B As Variant, C As Variant, H As Variant, AN As Variant, Delta As Variant
-    Dim Tail As Variant, E As Variant, V As Variant, N As Long, K As Long
-    On Error GoTo Err_Handler
-    If A < 2# ^ (-400) Or A > 1# Or X < 2# ^ (-400) Then GoTo Err_Handler
-    LG = PROB_DD_PV2_LogGamma(A)
-    If X < A + 1# Then
-        T = Array(-X, 0#)
-        S = PROB_DD_PV2_Div(T, PROB_DD_PV2_Add(A, 1#))
-        For N = 2 To 1000
-            T = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(T, -X), CDbl(N))
-            D = PROB_DD_PV2_Div(T, PROB_DD_PV2_Add(A, CDbl(N)))
-            S = PROB_DD_PV2_Add(S, D)
-            If Abs(PROB_DD_PV2_H(D)) <= Abs(PROB_DD_PV2_H(S)) * 2# ^ (-105) Then Exit For
-        Next N
-        If N > 1000 Then GoTo Err_Handler
-        LP = PROB_DD_PV2_Add(PROB_DD_PV2_Sub(PROB_DD_PV2_Mul(PROB_DD_PV2_Log(X), A), LG), PROB_DD_PV2_Log1p(PROB_DD_PV2_Mul(S, A)))
-        If PROB_DD_PV2_Value(LP) > 0# Then GoTo Err_Handler
-        If PROB_DD_PV2_Value(LP) >= -0.5 Then
-            V = PROB_DD_PV2_Expm1(LP)
-            P = PROB_DD_PV2_Value(PROB_DD_PV2_Add(V, 1#))
-            Q = PROB_DD_PV2_Value(PROB_DD_PV2_Neg(V))
-        Else
-            V = PROB_DD_PV2_Exp(LP)
-            P = PROB_DD_PV2_Value(V)
-            Q = PROB_DD_PV2_Value(PROB_DD_PV2_Sub(1#, V))
-        End If
-    Else
-        If X > 32# Then GoTo Err_Handler
-        B = PROB_DD_PV2_Sub(PROB_DD_PV2_Add(X, 1#), A)
-        C = Array(1E+300, 0#)
-        D = PROB_DD_PV2_Div(1#, B)
-        H = D
-        For N = 1 To 100000
-            AN = PROB_DD_PV2_Mul(CDbl(-N), PROB_DD_PV2_Sub(CDbl(N), A))
-            B = PROB_DD_PV2_Add(B, 2#)
-            D = PROB_DD_PV2_Add(PROB_DD_PV2_Mul(AN, D), B)
-            C = PROB_DD_PV2_Add(B, PROB_DD_PV2_Div(AN, C))
-            If Abs(PROB_DD_PV2_H(D)) < 1E-300 Or Abs(PROB_DD_PV2_H(C)) < 1E-300 Then GoTo Err_Handler
-            D = PROB_DD_PV2_Div(1#, D)
-            Delta = PROB_DD_PV2_Mul(C, D)
-            H = PROB_DD_PV2_Mul(H, Delta)
-            If Abs(PROB_DD_PV2_Value(PROB_DD_PV2_Sub(Delta, 1#))) <= 2# ^ (-100) Then Exit For
-        Next N
-        If N > 100000 Then GoTo Err_Handler
-        Tail = Array(0#, 0#)
-        For K = N To 1 Step -1
-            B = PROB_DD_PV2_Add(PROB_DD_PV2_Add(PROB_DD_PV2_Sub(PROB_DD_PV2_Add(X, 1#), A), CDbl(2 * K)), Tail)
-            Tail = PROB_DD_PV2_Div(PROB_DD_PV2_Mul(CDbl(-K), PROB_DD_PV2_Sub(CDbl(K), A)), B)
-        Next K
-        H = PROB_DD_PV2_Div(1#, PROB_DD_PV2_Add(PROB_DD_PV2_Sub(PROB_DD_PV2_Add(X, 1#), A), Tail))
-        E = PROB_DD_PV2_Sub(PROB_DD_PV2_Sub(PROB_DD_PV2_Mul(PROB_DD_PV2_Log(X), A), LG), X)
-        V = PROB_DD_PV2_Mul(PROB_DD_PV2_Mul(PROB_DD_PV2_Exp(E), A), H)
-        P = PROB_DD_PV2_Value(PROB_DD_PV2_Sub(1#, V))
-        Q = PROB_DD_PV2_Value(V)
-    End If
-    PROB_DD_PV2_Pair = True
-    Exit Function
-Err_Handler:
-    Err.Clear
-    PROB_DD_PV2_Pair = False
 End Function
 
 ' END generated public Gamma integration

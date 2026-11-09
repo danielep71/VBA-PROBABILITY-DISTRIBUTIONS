@@ -18,7 +18,36 @@ BEGIN="' BEGIN generated public Gamma integration"
 END="' END generated public Gamma integration"
 TBEGIN="' BEGIN public Gamma bit types"
 TEND="' END public Gamma bit types"
-EXTRA=4030
+# 4030 integration assertions, plus 8 reach assertions (#242 review).
+EXTRA=4038
+# The scaled pair's tighter stopping rules (2^-68 series, 2^-101 continued
+# fraction) cap at arguments the binary64 route answered: X = A = 1.2E8 and
+# A = 5E11, X = A + 2 (wide_gamma.public raises its cap at both). References
+# by quadrature around the peak at 40 and 60 digits; they agree to 7E-29 and
+# match wide_gamma.public at (1E8, 1E8) to 2.9E-17.
+REACH=(('1.2E+08','1.2E+08','0x1.00019754e24c4p-1','0x1.fffcd1563b679p-2'),
+       ('500000000000#','500000000002#','0x1.00002c2c275e2p-1','0x1.ffffa7a7b143bp-2'))
+# The extreme_shape contracts: Gamma_Cumulative 2E-12, Gamma_Survival 5E-13.
+REACH_LIMITS=('0.000000000002','0.0000000000005')
+# Kernels whose handlers keep only error 5, the kernel's own domain and cap
+# signal; any other runtime error propagates to the public function (#VALUE!).
+RERAISE=('WG_Pair','EG1_Pair','EG_Pair')
+RERAISE_LINES=("    'Error 5 is this kernel's own domain or cap signal; any other runtime error\n"
+               "    'is unexpected and propagates, so the public function reports #VALUE!.\n"
+               "    If Err.Number <> 5 Then Err.Raise Err.Number, Err.Source, Err.Description\n")
+
+
+def code_only(text):
+    """VBA source without comments: a name in a comment is not a dependency."""
+    out=[]
+    for line in text.split('\n'):
+        quoted=False
+        for i,ch in enumerate(line):
+            if ch=='"':quoted=not quoted
+            elif ch=="'" and not quoted:
+                line=line[:i];break
+        out.append(line)
+    return '\n'.join(out)
 
 
 @lru_cache(maxsize=None)
@@ -36,17 +65,32 @@ def arithmetic():
     procs=procedures(original(TEST));needed={'WG_Pair'};pending=['WG_Pair']
     while pending:
         name=pending.pop()
-        for token in re.findall(r'\b\w+\b',procs[name]):
+        for token in re.findall(r'\b\w+\b',code_only(procs[name])):
             if token in procs and token not in needed:
                 needed.add(token);pending.append(token)
     assert not any('Case' in n or n.startswith('Test_') for n in needed)
     mapping={n:'PROB_DD_'+n for n in needed}
     mapping.update(SP_Number='PROB_DD_Number',SP_Words='PROB_DD_Words')
-    text='\n'.join(procs[n] for n in procs if n in needed)
+    chosen=[]
+    for n in procs:
+        if n not in needed:continue
+        proc=procs[n]
+        if n in RERAISE:
+            assert proc.count('Err_Handler:\n')==1,n
+            proc=proc.replace('Err_Handler:\n','Err_Handler:\n'+RERAISE_LINES,1)
+        chosen.append(proc)
+    text='\n'.join(chosen)
     text=re.sub(r'\b\w+\b',lambda m:mapping.get(m[0],m[0]),text)
     text=text.replace('private exponent-separated arithmetic fixture.','Gamma exponent-separated arithmetic.')
     text=text.replace('Study-only: no production routing or probability acceptance change.',
                       'Operation graph retained from frozen Excel port b8efaf3.')
+    # The Precision v2 arithmetic is the production core under SGD_Try.
+    text=text.replace('test-only arithmetic port of the frozen Precision v2 model.',
+                      'double-double arithmetic of the frozen Precision v2 model.')
+    text=text.replace('This restricted diagnostic implementation is not a public kernel.',
+                      'Production arithmetic core under PROB_DD_SGD_Try; not a public entry point.')
+    text=text.replace('Errors propagate to PV2_Pair, which returns False without acceptance.',
+                      'Errors propagate to the calling Gamma kernel.')
     types="""Private Type PROB_DD_Number
     Value As Double
 End Type
@@ -60,6 +104,8 @@ End Type
 
 def adapter(tail):
     name='PROB_TryGammaRegularized'+tail
+    series='\n                Value = 1# - Value' if tail=='Q' else ''
+    fraction='\n                Value = 1# - Value' if tail=='P' else ''
     return f'''Public Function {name}( _
     ByVal A As Double, _
     ByVal X As Double, _
@@ -75,19 +121,32 @@ def adapter(tail):
 ' METHOD
 '   Lower Q is reconstructed directly from log P, before binary64 rounding.
 '   The frozen wide kernel handles the region outside the extended interior.
+'   Where the pair reaches its 100000-iteration cap, the binary64 series or
+'   continued fraction answers instead: the pair stops at 2^-68 and 2^-101, so
+'   near X = A it caps from A of about 1.07E8, and just above X = A + 1 from
+'   about 3.3E11, where the binary64 route still converges.
 ' ERROR POLICY
 '   False clears Result and reports invalid inputs, arithmetic failure or cap.
-'   Retains the established 100000-iteration cap diagnostic wording.
+'   The cap diagnostic keeps the established 100000-iteration wording.
+'   An unexpected runtime error propagates to the caller.
 ' UPDATED
-'   2026-11-08 - #24/#26 public integration candidate; acceptance pending.
+'   2026-11-09 - #26: binary64 fallback at the pair's iteration cap.
 '==============================================================================
-    Dim P As Double, Q As Double
+    Dim P As Double, Q As Double, Value As Double
     Result = 0#: FailMsg = ""
     If Not PROB_DD_WG_Pair(A, X, P, Q, FailMsg) Then
-        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 Then
-            FailMsg = "Incomplete gamma continued fraction failed to converge in 100000 iterations for A = " & A
-        ElseIf InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
-            FailMsg = "Incomplete gamma series failed to converge in 100000 iterations for A = " & A
+        If InStr(1, FailMsg, "continued fraction cap 100000", vbBinaryCompare) > 0 _
+            Or InStr(1, FailMsg, "lower series cap 100000", vbBinaryCompare) > 0 Then
+            FailMsg = ""
+            If X < A + 1# Then
+                If Not PROB_TryGammaSeriesP(A, X, Value, FailMsg) Then Exit Function{series}
+            Else
+                If Not PROB_TryGammaContinuedFractionQ(A, X, Value, FailMsg) Then Exit Function{fraction}
+            End If
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            Result = Value
+            {name} = True
         ElseIf Len(FailMsg) = 0 Then
             FailMsg = "Gamma kernel requires finite A > 0 and X >= 0"
         End If
@@ -181,6 +240,23 @@ Private Sub PF_InverseValue(ByVal Label As String, ByVal Value As Variant, ByVal
     End If
 End Sub
 """)
+    lines.append('Private Sub Test_PublicGamma_Reach()');names.append('Test_PublicGamma_Reach')
+    for i,(a,x,p,q) in enumerate(REACH):
+        lines += [f'    PG_Reach "PG reach {i}", {a}, {x}, {literal(p)}, {literal(q)}']
+    lines+=['End Sub','']
+    lines.append(f"""Private Sub PG_Reach(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+    Dim P As Double, Q As Double, OK As Boolean, Diag As String
+    OK = PROB_TryGammaRegularizedP(A, X, P, Diag)
+    AssertTrue Label & " P returned " & Diag, (OK And Diag = "")
+    AssertTrue Label & " P relative " & CStr(P / ExpectedP - 1#), _
+        (OK And Abs(P / ExpectedP - 1#) <= {REACH_LIMITS[0]})
+    OK = PROB_TryGammaRegularizedQ(A, X, Q, Diag)
+    AssertTrue Label & " Q returned " & Diag, (OK And Diag = "")
+    AssertTrue Label & " Q relative " & CStr(Q / ExpectedQ - 1#), _
+        (OK And Abs(Q / ExpectedQ - 1#) <= {REACH_LIMITS[1]})
+End Sub
+""")
     lines+=['Private Sub Test_PublicGamma_Integration()']+['    '+n for n in names]
     for a,x in data['invalid']:lines.append(f'    PG_Invalid {literal(a)}, {literal(x)}')
     lines+=['End Sub','']
@@ -230,7 +306,7 @@ def install():
     text=text.replace('    Test_WideGamma_Fidelity\n','    Test_WideGamma_Fidelity\n    Test_PublicGamma_Integration\n',1)
     (ROOT/TEST).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     p=ROOT/'.github/excel-evidence-policy.json';policy=json.loads(p.read_text())
-    assert policy['expected_assertions'] in (10848,13182,10848+EXTRA)
+    assert policy['expected_assertions'] in (10848,13182,10848+4030,10848+EXTRA)
     policy['expected_assertions']=10848+EXTRA;p.write_text(json.dumps(policy,indent=2)+'\n')
     print(len(names),'arithmetic procedures;',EXTRA,'new assertions;',policy['expected_assertions'],'total')
 

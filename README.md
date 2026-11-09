@@ -734,7 +734,7 @@ The implementation uses established numerical ideas adapted carefully to VBA.
 | Large-parameter Gamma ratios | Stable log-gamma difference paths |
 | Beta normalization | Log-beta with balanced and unbalanced branches |
 | Incomplete beta | Paired arguments and modified-Lentz continued fractions |
-| Incomplete gamma | Lower series and upper continued fraction |
+| Incomplete gamma | Scaled double-double lower series and upper continued fraction, with Q below `X = A + 1` taken from log P (#26); the binary64 series or continued fraction where the pair reaches its iteration cap |
 | Inverse beta/gamma | Safeguarded Newton iteration with bisection fallback |
 | Student t tails | Closed forms where available; order-5 large-df expansion for `df >= 1E5` and `\|t\| <= 8`; incomplete-beta transformation otherwise |
 | Student t inverse | Cornish-Fisher seed, safeguarded Newton with bisection, then up to three Newton polish steps on the large-df route |
@@ -1360,6 +1360,7 @@ The library is particularly suited to:
 ## Current boundaries
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
+- Gamma, Chi-square and Poisson probabilities are evaluated in double-double arithmetic, which is markedly slower per call than a binary64 kernel;
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
 - a self-hosted Excel runner must be online and correctly configured for CI execution;

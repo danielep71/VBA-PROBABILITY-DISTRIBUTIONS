@@ -12455,6 +12455,46 @@ Private Sub PF_InverseValue(ByVal Label As String, ByVal Value As Variant, ByVal
     End If
 End Sub
 
+Private Sub Test_PublicGamma_Reach()
+'==============================================================================
+' PURPOSE
+'   Test_PublicGamma_Reach: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    PG_Reach "PG reach 0", 1.2E+08, 1.2E+08, SP_FromWords(&H3FE00019&, &H754E24C4&), SP_FromWords(&H3FDFFFCD&, &H1563B679&)
+    PG_Reach "PG reach 1", 500000000000#, 500000000002#, SP_FromWords(&H3FE00002&, &HC2C275E2&), SP_FromWords(&H3FDFFFFA&, &H7A7B143B&)
+End Sub
+
+Private Sub PG_Reach(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+'==============================================================================
+' PURPOSE
+'   PG_Reach: private exponent-separated arithmetic fixture.
+' NOTES
+'   Explicit Double stores; Windows little-endian word fixtures.
+'   Study-only: no production routing or probability acceptance change.
+' ERROR POLICY
+'   Try functions return False; test failures remain visible.
+' UPDATED
+'   2026-11-08
+'==============================================================================
+    Dim P As Double, Q As Double, OK As Boolean, Diag As String
+    OK = PROB_TryGammaRegularizedP(A, X, P, Diag)
+    AssertTrue Label & " P returned " & Diag, (OK And Diag = "")
+    AssertTrue Label & " P relative " & CStr(P / ExpectedP - 1#), _
+        (OK And Abs(P / ExpectedP - 1#) <= 0.000000000002)
+    OK = PROB_TryGammaRegularizedQ(A, X, Q, Diag)
+    AssertTrue Label & " Q returned " & Diag, (OK And Diag = "")
+    AssertTrue Label & " Q relative " & CStr(Q / ExpectedQ - 1#), _
+        (OK And Abs(Q / ExpectedQ - 1#) <= 0.0000000000005)
+End Sub
+
 Private Sub Test_PublicGamma_Integration()
 '==============================================================================
 ' PURPOSE
@@ -12494,6 +12534,7 @@ Private Sub Test_PublicGamma_Integration()
     Test_PublicFresh_Chunk9
     Test_PublicFresh_Chunk10
     Test_PublicFresh_Inverses
+    Test_PublicGamma_Reach
     PG_Invalid SP_FromWords(&H00000000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
     PG_Invalid SP_FromWords(&HBFF00000&, &H00000000&), SP_FromWords(&H3FF00000&, &H00000000&)
     PG_Invalid SP_FromWords(&H3FF00000&, &H00000000&), SP_FromWords(&HBFF00000&, &H00000000&)
