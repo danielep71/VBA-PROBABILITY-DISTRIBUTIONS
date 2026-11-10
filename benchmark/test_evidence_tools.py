@@ -59,6 +59,8 @@ commands = (
     ("gamma_lower_q/test_gamma_lower_q.py",),
     ("gamma_lower_q/test_promote_x05_ladder.py",),
     ("gamma_lower_q/analyze_gamma_lower_q.py", "--check"),
+    ("gamma_route_study/test_binary64_map.py",),
+    ("gamma_route_study/analyze_binary64_map.py", "--check"),
     ("normal_tail_study/test_kernel_model.py",),
     ("normal_tail_study/test_vba_kernel_source.py",),
     ("normal_tail_study/test_holdout_record.py",),

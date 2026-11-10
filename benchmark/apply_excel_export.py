@@ -170,6 +170,9 @@ GRIDS = {
     "glq_lower_q": _study("glq_lower_q", "gamma_lower_q_grid.csv",
                           "M_STATS_PROBDIST_GLQ.bas", "Export_GammaLowerQ",
                           13, 10, folder="gamma_lower_q"),
+    "gbr_binary64_map": _study("gbr_binary64_map", "binary64_map_grid.csv",
+                               "M_STATS_PROBDIST_GBR.bas", "Export_GammaBinary64Map",
+                               13, 5, folder="gamma_route_study"),
 }
 
 
