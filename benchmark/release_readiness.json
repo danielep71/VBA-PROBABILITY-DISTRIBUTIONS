@@ -130,6 +130,13 @@
       "gate": null,
       "status": "open",
       "summary": "Student-t inverse misses its 5E-15 contract at quantiles just inside 8 in magnitude (1.3E-12 at df = 1E7)"
+    },
+    {
+      "issue": 307,
+      "class": "performance",
+      "gate": null,
+      "status": "open",
+      "summary": "A double-double Gamma P/Q call takes 5 ms to 170 ms in Excel, up to 30,000 times the binary64 routine it replaced"
     }
   ]
 }
