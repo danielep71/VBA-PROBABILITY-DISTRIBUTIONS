@@ -41,7 +41,7 @@ import re
 import sys
 
 import mpmath as mp
-from mpmath.libmp import from_float, mpf_add, mpf_div, mpf_lt, mpf_mul, mpf_sqrt, mpf_sub, to_float
+from mpmath.libmp import from_float, mpf_add, mpf_div, mpf_mul, mpf_sqrt, mpf_sub, to_float
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "beta_balanced_survival"))
@@ -374,8 +374,11 @@ def cf_q(a, x):
 
 
 def below_seam(a, x):
-    """VBA's X < A + 1#: A + 1 is an intermediate at 64 bits, never rounded."""
-    return mpf_lt(_f(x), mpf_add(_f(a), _f(1.0), PREC, "n"))
+    """VBA's X < A + 1#, as Excel evaluates it: A + 1 is rounded to a Double
+    before the comparison. The fit wave (run 42798193976) showed it at
+    X = fl(A + 1) for A = 1E-6, 1E-4 and 1E-3, where the exact A + 1 lies
+    above X and a 64-bit intermediate would have chosen the series."""
+    return x < a + 1.0
 
 
 def route(a, x):

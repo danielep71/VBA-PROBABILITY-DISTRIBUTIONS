@@ -29,3 +29,4 @@ derived from it will be preregistered and validated on untouched points.
 | `M_STATS_PROBDIST_GBF.bas` | `Export_GammaB64Fit`: calls and times both repaired routines at every point; study grid `gbf_b64_fit` |
 | `analyze_b64_fit.py` | Fidelity bit for bit, routed accuracy, cost fit and A2 |
 | `test_b64_fit.py` | Proves the grid is the design and the analyzer's fidelity, cost and ceiling logic |
+| [`FIT_RESULT.md`](FIT_RESULT.md), `fit_results.json` | The fit's result (run 42798193976): 392/392 bit for bit, every routed tail within contract, A2 = 10,000 |
