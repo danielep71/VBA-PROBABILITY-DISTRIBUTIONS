@@ -104,7 +104,8 @@ class ExecutionTests(unittest.TestCase):
     def test_single_list_full_and_live_modes(self):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
-        self.assertEqual(len(full), 82)
+        self.assertEqual(len(full), 84)
+        self.assertIn(['gamma_route_study/test_binary64_map.py'], full)
         self.assertIn(['test_harness_studies.py'], full)
         self.assertIn(['test_harness_timing.py'], full)
         self.assertIn(['gamma_lower_q/test_promote_x05_ladder.py'], full)
