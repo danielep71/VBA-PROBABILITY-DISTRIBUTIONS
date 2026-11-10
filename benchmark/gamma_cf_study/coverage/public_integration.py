@@ -13,6 +13,7 @@ import sys
 from install_scaled_fidelity import HERE,ROOT,literal,documented
 sys.path.insert(0,str(ROOT/'benchmark'))
 import _harness_timing as harness  # noqa: E402
+import _harness_studies as studies  # noqa: E402
 
 PORT='b8efaf3c7810c48fadbfece38950ded190f79a56'
 SRC='src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
@@ -151,6 +152,11 @@ def code_only(text):
 
 
 @lru_cache(maxsize=None)
+def live_total():
+    """Regression plus study assertions of the committed policies (#300)."""
+    return studies.live_total(ROOT)
+
+
 def original(path):
     return subprocess.check_output(['git','show',PORT+':'+path],cwd=ROOT).decode().replace('\r\n','\n')
 
@@ -391,8 +397,9 @@ def change_controls(text,reverse=False):
 
 def restore(text):
     """Exact inverse of this generator; only for historical replay fixtures.
-    The harness timing of #298 is not part of any frozen study: it goes first."""
-    text=harness.strip(text)
+    The harness timing of #298 and the study split of #300 are not part of any
+    frozen study: they go first."""
+    text=studies.strip(harness.strip(text))
     path=module_path(text)
     if path in AMENDMENTS and path!=SRC:
         return amend(path,text,reverse=True) if amended(path,text) else text
@@ -429,11 +436,11 @@ def install():
     text=restore((ROOT/TEST).read_text());text=change_controls(text)
     text=text.replace("' BEGIN generated wide-Gamma study",test_block()+"' BEGIN generated wide-Gamma study",1)
     text=text.replace('    Test_WideGamma_Fidelity\n','    Test_WideGamma_Fidelity\n    Test_PublicGamma_Integration\n',1)
-    text=harness.apply(text)
+    text=harness.apply(studies.apply(text))
     (ROOT/TEST).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     p=ROOT/'.github/excel-evidence-policy.json';policy=json.loads(p.read_text())
-    assert policy['expected_assertions'] in (10848,13182,10848+4030,10848+4038,10848+EXTRA)
-    policy['expected_assertions']=10848+EXTRA;p.write_text(json.dumps(policy,indent=2)+'\n')
+    assert policy['expected_assertions'] in (10848,13182,10848+4030,10848+4038,10848+EXTRA,10848+EXTRA-studies.STUDY_ASSERTIONS)
+    policy['expected_assertions']=10848+EXTRA-studies.STUDY_ASSERTIONS;p.write_text(json.dumps(policy,indent=2)+'\n')
     print(len(names),'arithmetic procedures;',EXTRA,'new assertions;',policy['expected_assertions'],'total')
 
 

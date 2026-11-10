@@ -3,7 +3,12 @@ param(
     [string]$RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path,
 
     [Parameter(Mandatory = $false)]
-    [string]$ArtifactDirectory = (Join-Path $RepositoryRoot "artifacts\excel-vba-ci")
+    [string]$ArtifactDirectory = (Join-Path $RepositoryRoot "artifacts\excel-vba-ci"),
+
+    # Also run the study batteries (#300) after a complete green regression,
+    # against .github/excel-study-policy.json.
+    [Parameter(Mandatory = $false)]
+    [switch]$RunStudies
 )
 
 Set-StrictMode -Version Latest
@@ -287,6 +292,27 @@ Public Function Test_STATS_PROBDIST_GetFailureLog_CI() As String
     Test_STATS_PROBDIST_GetFailureLog_CI = mFailureLog
 End Function
 
+Public Function Test_STATS_PROBDIST_RunStudies_CI() As String
+    'Runs the study batteries kept apart from the regression (#300) and
+    'returns machine-readable counters, as Test_STATS_PROBDIST_RunAll_CI does.
+    On Error GoTo Err_Handler
+
+    HarnessTiming "reset"
+    BeginRun "STUDY BATTERIES - GITHUB ACTIONS"
+    RunStudyBatteries
+    EndRun
+
+    Test_STATS_PROBDIST_RunStudies_CI = _
+        "TOTAL=" & CStr(mTestCount) & _
+        ";PASS=" & CStr(mPassCount) & _
+        ";FAIL=" & CStr(mFailCount)
+    Exit Function
+
+Err_Handler:
+    Test_STATS_PROBDIST_RunStudies_CI = _
+        "ERROR=" & CStr(Err.Number) & ";DESCRIPTION=" & Err.Description
+End Function
+
 Public Function Test_STATS_PROBDIST_GetTiming_CI() As String
     'Seconds per test procedure, one "label seconds" line each (#298).
     Test_STATS_PROBDIST_GetTiming_CI = HarnessTiming("read")
@@ -426,6 +452,43 @@ End Function
         $stages.regression.status = "PASS"
         $stages.regression.detail = "Complete policy-declared regression: $passed/$total assertions passed"
         $exitCode = 0
+
+        # The study batteries (#300): private arithmetic ports of the #26
+        # studies, run only when requested, against their own policy. A
+        # failure fails the job; the regression stage stays as measured.
+        if ($RunStudies) {
+            $studyPolicyPath = Join-Path $RepositoryRoot ".github\excel-study-policy.json"
+            $studyPolicy = Get-Content -LiteralPath $studyPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            $studyMacro = "'" + $workbook.Name + "'!" + [string]$studyPolicy.entry_point
+            Write-CiLog "Executing $($studyPolicy.entry_point)"
+            $studyResult = [string]$excel.Run($studyMacro)
+            Write-CiLog "STUDIES result: $studyResult"
+            $timing = [string]$excel.Run($timingMacro)
+            foreach ($line in ($timing -split "`r?`n")) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    Write-CiLog "TIMING $line"
+                }
+            }
+            $studyExpected = [int]$studyPolicy.expected_assertions
+            if ($studyResult -match '^TOTAL=(\d+);PASS=(\d+);FAIL=(\d+)$' -and
+                [int]$Matches[1] -eq $studyExpected -and [int]$Matches[3] -eq 0) {
+                Write-CiLog "STUDIES: PASS ($($Matches[2])/$studyExpected study assertions)"
+            }
+            else {
+                Write-CiLog "STUDIES: FAIL (expected $studyExpected passing study assertions)"
+                $studyLog = [string]$excel.Run("'" + $workbook.Name + "'!Test_STATS_PROBDIST_GetFailureLog_CI")
+                foreach ($line in ($studyLog -split "`r?`n")) {
+                    if (-not [string]::IsNullOrWhiteSpace($line)) {
+                        Write-CiLog "  $line"
+                    }
+                }
+                $stages.regression.detail += "; study batteries failed (see STUDIES lines)"
+                $exitCode = 1
+            }
+        }
+        else {
+            Write-CiLog "STUDIES: not requested"
+        }
 
         # Per-call cost of the Gamma P/Q kernel (#298), after a complete green
         # regression and outside the assertion count.

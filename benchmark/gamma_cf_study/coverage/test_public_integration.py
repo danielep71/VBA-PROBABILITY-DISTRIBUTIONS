@@ -1,9 +1,8 @@
 """Source-level public wiring, exact private-port extraction and historical isolation."""
-import json
 import re
 import unittest
 from install_scaled_fidelity import documented
-from public_integration import ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore
+from public_integration import ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore,live_total
 
 
 class PublicIntegrationTests(unittest.TestCase):
@@ -38,8 +37,7 @@ class PublicIntegrationTests(unittest.TestCase):
         for tail in ('P','Q'):
             old=procedures(original(SRC))['PROB_TryGammaRegularized'+tail]
             self.assertIn(documented(old.replace('Public Function','Private Function',1).replace('PROB_TryGammaRegularized'+tail,'PG_B6_'+tail)),test_block())
-        policy=json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
-        self.assertEqual(policy['expected_assertions'],10848+EXTRA)
+        self.assertEqual(live_total(),10848+EXTRA)
         self.assertEqual(EXTRA,290*8+7*2+206*8+24*2+2*5)
 
     def test_review_fixes_in_production(self):

@@ -7,7 +7,7 @@ import sys
 import json
 import subprocess
 import unittest
-from public_integration import restore,EXTRA
+from public_integration import restore,EXTRA,live_total
 import mpmath as mp
 import sympy as sy
 from install_wide_gamma_fidelity import HERE,ROOT,BEGIN,END,BASELINE,dataset,render,strip
@@ -164,7 +164,7 @@ class WideGammaTests(unittest.TestCase):
         self.assertEqual(text.count('    Test_WideGamma_Fidelity\n'),1)
         block=BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block,render(saved))
-        self.assertEqual(json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())['expected_assertions'],BASELINE+886+EXTRA)
+        self.assertEqual(live_total(),BASELINE+886+EXTRA)
         sha='924ff800077a3001bd1bcc246ad3a370f1c78fba'
         for path in [ROOT/'tests/M_STATS_PROBDIST_TEST.bas',*(ROOT/'src').glob('*.bas')]:
             original=subprocess.check_output(['git','show',sha+':'+path.relative_to(ROOT).as_posix()],cwd=ROOT).decode().replace('\r\n','\n')
