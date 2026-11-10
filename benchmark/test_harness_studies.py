@@ -130,6 +130,21 @@ def main():
     except S.StudiesError:
         pass
 
+    # 6. The retained log of run 42775390763 is the certified one and shows
+    #    both parts passing with the declared counts.
+    import hashlib
+    log = os.path.join(HERE, "harness_timing", "run_42775390763_log.txt")
+    with open(log, "rb") as f:
+        raw = f.read()
+    crlf = raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    check(hashlib.sha256(crlf).hexdigest()
+          == "16ce9124b779fa507f54ac5823489196357e319974980c6e4bffab290b08b3a7",
+          "the retained log is not the one run 42775390763's record binds")
+    text = raw.decode("utf-8-sig")
+    check("VBA result: TOTAL=5987;PASS=5987;FAIL=0" in text
+          and "STUDIES: PASS (8901/8901 study assertions)" in text,
+          "the retained log does not show both parts passing")
+
     if fails:
         print("FAIL: #300 study batteries")
         for f in fails:
