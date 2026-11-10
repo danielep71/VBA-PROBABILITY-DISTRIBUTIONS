@@ -5,14 +5,17 @@ The binary64 prefactor is x^A e^-x / Gamma(A+1) = exp(-stirlerr(A) - D) /
 sqrt(2 pi A), with Loader's deviance D = A log(A/X) + X - A. An absolute error
 in D becomes a relative error of the prefactor. This replays the map's points
 from shape 0.25 in Python binary64:
-  - the lower series below X = A + 1, the continued fraction from it (the
-    same recurrences and stopping rule as the production binary64 routines);
+  - the lower series below X = A + 1, the continued fraction from it, with
+    the recurrences, stopping rules and small-shape backward re-evaluation of
+    PROB_TryGammaSeriesP and PROB_TryGammaContinuedFractionQ;
   - the prefactor assembled in binary64 from D and stirlerr(A), each exact and
     rounded once ("exact D"), or D evaluated directly in binary64 ("direct D");
   - the far tail formed as 1 - other, as the pre-#242 adapter did.
 It scores both tails against the governing contract, using the map's own
-references. Exploratory: a diagnosis for the design of a routing rule, not a
-model of production and not a validation.
+references. A third replay stops the continued fraction at machine epsilon
+above shape 1 instead of PROB_NUM_EPS (3E-14): a second, separate change.
+Exploratory: a diagnosis for the design of a routing rule, not a model of
+production and not a validation.
 
 Run: python3 analyze_exact_deviance.py
 """
@@ -28,40 +31,58 @@ sys.path.insert(0, HERE)
 import analyze_binary64_map as M  # noqa: E402
 
 BOUNDS = {"all": (3e-15, 5e-15), "large_shape": (2e-13, 2e-13), "extreme_shape": (2e-12, 5e-13)}
-EPS = 2.0 ** -52
+MACH_EPS = 2.0 ** -52
+NUM_EPS = 3e-14          # PROB_NUM_EPS: the continued fraction's stop above shape 1
+FPMIN = 1e-300           # PROB_FPMIN
 
 
 def series(a, x):
-    term = total = 1.0
-    for n in range(1, 200001):
-        term *= x / (a + n)
+    """PROB_TryGammaSeriesP's recurrence: the sum starts at 1/A; stop at MACH_EPS."""
+    ap, total = a, 1.0 / a
+    term = total
+    for _ in range(100000):
+        ap += 1.0
+        term = term * x / ap
         total += term
-        if term < total * EPS:
+        if abs(term) <= abs(total) * MACH_EPS:
             return total
     return None
 
 
-def continued_fraction(a, x):
-    tiny = 1e-300
+def continued_fraction(a, x, eps):
+    """PROB_TryGammaContinuedFractionQ's Lentz recurrence. Above shape 1 it stops
+    at eps (production: NUM_EPS); at shape 1 or below at MACH_EPS and then
+    re-evaluates the same finite fraction backwards, as production does."""
+    if a <= 1.0:
+        eps = MACH_EPS
     b = x + 1.0 - a
-    c, d = 1.0 / tiny, 1.0 / b
+    if abs(b) < FPMIN:
+        b = FPMIN
+    c, d = 1.0 / FPMIN, 1.0 / b
     h = d
-    for i in range(1, 200001):
-        an = -i * (i - a)
+    for i in range(1, 100001):
+        an = -float(i) * (float(i) - a)
         b += 2.0
         d = an * d + b
-        d = tiny if abs(d) < tiny else d
+        if abs(d) < FPMIN:
+            d = FPMIN
         c = b + an / c
-        c = tiny if abs(c) < tiny else c
+        if abs(c) < FPMIN:
+            c = FPMIN
         d = 1.0 / d
         delta = d * c
-        h *= delta
-        if abs(delta - 1.0) < EPS:
+        h = h * delta
+        if abs(delta - 1.0) <= eps:
+            if a <= 1.0:
+                tail = 0.0
+                for k in range(i, 0, -1):
+                    tail = (-float(k) * (float(k) - a)) / (x + 1.0 - a + 2.0 * float(k) + tail)
+                h = 1.0 / (x + 1.0 - a + tail)
             return h
     return None
 
 
-def replay(exact_d):
+def replay(exact_d, cf_eps=NUM_EPS):
     with mp.workdps(60):
         refs = {r["point_id"]: (mp.mpf(r["ref_p"]), mp.mpf(r["ref_q"]))
                 for r in csv.DictReader(open(M.GRID, encoding="utf-8"))}
@@ -73,15 +94,16 @@ def replay(exact_d):
             A, X = mp.mpf(a), mp.mpf(x)
             d = float(A * mp.log(A / X) + X - A) if exact_d else a * math.log(a / x) + x - a
             stir = float(mp.loggamma(A + 1) - ((A + mp.mpf(0.5)) * mp.log(A) - A + mp.log(2 * mp.pi) / 2))
-            base = math.exp(-stir - d) / math.sqrt(2 * math.pi * a)
+            # x^A e^-x / Gamma(A): the factor of both production routines
+            base = a * math.exp(-stir - d) / math.sqrt(2 * math.pi * a)
             ref_p, ref_q = refs[r["point_id"]]
             if x < a + 1.0:
                 s = series(a, x)
                 p = None if s is None else base * s
                 q = None if p is None else 1.0 - p
             else:
-                s = continued_fraction(a, x)
-                q = None if s is None else a * base * s
+                s = continued_fraction(a, x, cf_eps)
+                q = None if s is None else base * s
                 p = None if q is None else 1.0 - q
             if p is None:
                 continue
@@ -93,8 +115,10 @@ def replay(exact_d):
 
 
 def main():
-    for label, exact in (("exact D", True), ("direct D", False)):
-        rows = replay(exact)
+    for label, exact, eps in (("exact D, production stops", True, NUM_EPS),
+                              ("direct D, production stops", False, NUM_EPS),
+                              ("exact D, continued fraction to machine epsilon", True, MACH_EPS)):
+        rows = replay(exact, eps)
         meets = sum(r[5] for r in rows)
         worst = max(max(r[3], r[4]) for r in rows)
         print(f"{label}: {meets} of {len(rows)} points from shape 0.25 meet their governing "

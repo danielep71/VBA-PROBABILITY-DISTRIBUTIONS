@@ -56,24 +56,31 @@ Three regions:
 ## Where the error comes from
 
 `analyze_exact_deviance.py` replays the map from shape 0.25 in Python
-binary64. It uses the same series and continued-fraction recurrences and the
-same stopping rule as production, with the prefactor
-`x^A e^-x / Gamma(A+1) = exp(-stirlerr(A) - D) / sqrt(2 pi A)`, where Loader's
+binary64, with the recurrences, stopping rules and small-shape backward
+re-evaluation of `PROB_TryGammaSeriesP` and `PROB_TryGammaContinuedFractionQ`.
+The prefactor is computed as
+`x^A e^-x / Gamma(A) = A exp(-stirlerr(A) - D) / sqrt(2 pi A)`, where Loader's
 deviance is `D = A log(A/X) + X - A`.
 
-| Deviance | Points meeting their contract | Worst error |
+| Replay | Points meeting their contract | Worst error |
 | --- | ---: | ---: |
-| `D` exact, rounded once to binary64 | 190 of 205 | 1.0E-13 |
-| `D` evaluated directly in binary64 | 137 of 205 | 1.4E-9 |
+| `D` exact, production stopping rules | 179 of 205 | 8.9E-14 |
+| `D` direct in binary64, production stopping rules | 134 of 205 | 1.4E-9 |
+| `D` exact, continued fraction stopped at machine epsilon | 190 of 205 | 8.9E-14 |
 
-The binary64 sums are accurate. The error at moderate and large shapes is in
-the prefactor: an absolute error of D becomes a relative error of the result,
-and D reaches 20 to 50 in the tails.
+The binary64 route has two separate sources of error:
 
-With an exact D, the remaining 15 failures are:
+- **The prefactor's deviance.** This is the dominant source. An absolute error of D becomes a relative error of the result, and D reaches 20 to 50 in the tails.
+- **The continued fraction's stop at `PROB_NUM_EPS` (3E-14) above shape 1.** It costs up to 2.3E-14 in Q, for example at `A = 1.5`, `X = 2.5`. At shape 1 and below, production already stops at machine epsilon and re-evaluates backwards (#26).
 
-- far points of shapes from 1,000, under the general `3E-15`, where the lower series sums many terms (1.1E-14 at shape 1E5, 1.0E-13 at 1E7);
-- one point at `A = 100`, `X = 300`, where Q is 5.26E-15 against 5E-15.
+With both corrected, the remaining 15 failures are:
+
+- far points of shapes from 1,000, under the general `3E-15`, where the lower series sums many terms (1.0E-14 at shape 1E5, 8.9E-14 at 1E7);
+- one point at `A = 100`, `X = 300`, where Q is 5.08E-15 against 5E-15.
+
+An earlier version of this replay stopped the continued fraction at machine
+epsilon everywhere, which mixed the two sources. The review of #311 found
+this. The table separates them.
 
 ## What this means for #307
 
@@ -88,7 +95,8 @@ would stay where it is needed:
 
 The next step is a deviance accurate to about double-double precision, built
 from a few error-free binary64 transformations rather than the double-double
-library. Its accuracy has to be measured first, then the routing rule
+library, together with a machine-epsilon stop for the continued fraction above
+shape 1. Its accuracy has to be measured first, then the routing rule
 preregistered with the frozen holdout of `HOLDOUT_DESIGN.md` (branch
 `study/307-routing-holdout`). No contract, threshold or production source
 changed here.
