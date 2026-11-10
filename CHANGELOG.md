@@ -97,6 +97,58 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Public Gamma P/Q (#26)
+
+- Regularized Gamma P and Q, and through them the Gamma, Chi-square and
+  Poisson CDF, survival and inverse, use the scaled double-double kernel
+  (#242). Lower Q comes from log P before rounding. The 41 public failures
+  the study retained are resolved without changing a tolerance. The
+  14,878-assertion suite passed in Excel (run 42529642623), and the fresh
+  main and holdout exports pass 166/166 and 83/83 contracts.
+- Where the double-double pair reaches its 100,000-iteration cap, the binary64
+  series or continued fraction answers instead. The pair's tighter stopping
+  rules would otherwise have returned `#NUM!` near `X = A` for shapes from
+  about 1.07E8 to 1.9E8, and just above `X = A + 1` from about 3.3E11 to
+  1.7E12, inside the `extreme_shape` domain, where the previous kernel
+  answered. Found in review; `Test_PublicGamma_Reach` checks both regions
+  against quadrature references. Excel run 42670065251 passed all 14,886
+  assertions, and its exports changed no main or holdout observation.
+- The main grid now covers the repaired path: the twelve shapes of the frozen
+  `X = 2` survival ladder, from 1E-6 to 0.5, each as `Gamma_Survival(2, A, 1)`
+  and the exact doubling `ChiSquare_Survival(4, 2A)`, claim `5E-15`. Before
+  #26 these points were off by 3.5E-14 to 4.5E-14. Excel run 42679149964
+  returned the predicted model value at all 24, worst 7.2E-17, and changed no
+  other main or holdout observation.
+- #26 is marked resolved in `benchmark/release_readiness.json`, so the README
+  lists 9 open release blockers instead of 10.
+- #24: below `X = A + 1`, Gamma Q is no longer `1 - P`. Since #242 it comes
+  from log P before rounding, and #24 proves it in Excel. An untouched holdout
+  of 168 rows (`benchmark/gamma_lower_q/`, 7 new shapes from 1.7E-7 to 0.465,
+  the seam at `A + 1`, Gamma and Chi-square, P and Q) passes every frozen
+  rule, worst survival 8.0E-17. The re-exported fitting ladder, which reached
+  1.6E-9, now peaks at 8.9E-17. 22 main-grid rows cover `X = 0.5` from shape
+  1E-6 to 0.1, including the issue's `Gamma_Survival(0.5, 0.0001, 1)`. Excel
+  run 42702557548 passed 14,888 assertions.
+- The binary64 fallback at the double-double pair's iteration cap still forms
+  the complement. It runs only for shapes above about 1.07E8, where both tails
+  are near 0.5, so it adds no amplification; the headers document why, and
+  two assertions check it.
+- #24 is marked resolved in `benchmark/release_readiness.json`: 8 open release
+  blockers remain.
+- An unexpected runtime error inside the new kernel propagates again, so the
+  public function returns `#VALUE!` as documented. The kernel's own domain
+  and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.
+- About 370 lines of unreachable Precision v2 code are no longer generated
+  into production: a name in a comment had pulled them into the extraction.
+  The remaining Precision v2 arithmetic is labelled as the production core
+  it is.
+- Each Gamma P/Q call now runs double-double arithmetic. The Excel regression
+  suite takes about 8 minutes, up from about 10 seconds, mostly because it
+  grew from 955 to 14,878 assertions; per-call cost is not yet measured.
+- The private-experiment entries below record the study's stages. Their
+  statements that public routing is unchanged describe each stage at the
+  time.
+
 ### Distribution guide
 
 - Added calculated Standard Normal density, CDF, survival and quantile panels with shared parameters, probability areas, accessible explanations and worksheet mappings; editable SVG/PNG generation includes independent high-precision checks (#245).
@@ -105,6 +157,18 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Add a private VBA port of the bounded scaled Gamma P/Q experiment with 475 model-fidelity, monotonicity, refusal and exact-normalization assertions (#24/#26). Public kernels and prior Excel evidence are unchanged; host results and failed diagnostic attempts are recorded separately.
+- Extend the private Gamma candidate to shapes through 128 and arguments through 1024, retaining the 220-point model screen and an additional subnormal counterexample. A separate shape-two product correction passes exact rational checks and all 1,772 new assertions pass in exact-source Excel execution (#24/#26). Public routing and its 41 failures remain unchanged.
+
+- Expand the scaled Gamma development screen to 69 in-domain B6 reference points and 24 adjacent routing-boundary points, with monotonicity checks and oracle precision stability at 160/320 digits (#24/#26). Twenty out-of-domain B6 points remain explicitly excluded; public VBA acceptance is unchanged.
+
+- Add a private scaled-arithmetic Gamma P/Q integration experiment for positive binary64 shapes up to one and arguments up to 32, including subnormal inputs (#24/#26). This revealed Python screen does not change public VBA or release acceptance.
+
+- Add a private VBA port of the exponent-separated two-Double operations and 611 model-fidelity assertions (#24/#26), with independent rational checks and preservation of the earlier test suite. All 611 assertions pass in exact-source Excel run 42494438289 (7,715 total, 7,674 PASS, the same 41 public failures); public Gamma acceptance remains blocked.
+
+- Extend the private Gamma arithmetic study with exponent-separated two-Double addition, subtraction, multiplication and division (#24/#26). Exact-rational regression covers cancellation, alignment and accumulated operations. This Python study is not a new public kernel or Excel-certified candidate.
+
+- Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. The generated private VBA port passes all 4,657 new arithmetic assertions in exact-source Excel run 42476278844 (7,104 total, 7,063 PASS, 41 retained public failures). Public VBA kernels and their retained failures are unchanged.
 - Distribution decision guide: editable SVG, matching PNG, reproducible generator and accessible modelling assumptions for all 17 current API surfaces (#246).
 
 - Added a numerical research index under `docs/research/`, with twenty-six annotated source records covering 2000–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.
@@ -234,6 +298,7 @@ Use only the categories needed by a release.
 
 ### Documentation
 
+- The README gains a "Why pure VBA" section. It explains why a dependency-free library matters where IT policy blocks add-ins, Python and R, and shows where the numerical work goes through three repaired defects with their evidence: the normal upper tail (#72), Student t at large degrees of freedom (#34) and small-shape Gamma (#23). It also gives the trade-offs plainly: interpreted performance, accuracy claimed only in tested domains, the VBA tooling, and a narrow audience.
 - `docs/repo_governance/ISSUE_LABELS.md` now has the label catalogue with colours, usage tables for priorities, types, status and the 8 repository-specific area labels, and a closing-issues section (#203). `tests/test_issue_labels.py` fails when the guide drifts from `.github/labels.json`, or when the issue forms and Dependabot name different assignees. The label-management changes adapt the template solution recorded in `tools/README.md`.
 - Reconciled stale study statuses and unsupported claims in committed outputs and printed messages (#87). `chisq_reference.json` kept the `PROVISIONAL - INCOMPLETE` status it was generated with on 2026-08-29, after every leg had run. Those fields are unchanged; a dated `status_amendments` entry after them records the checkpoint as complete and cites `chisq_crosscheck.json`, its leg records (Rmpfr at df 1E6 and 1E7 only) and the plan's decision. No other byte changed. `chisq_reference.py` no longer writes or prints a checkpoint status. `cross_check_scipy.md` no longer says its 8 points beyond SciPy's range are covered by 50-vs-80-digit self-consistency, which no committed tool records. It now states that they are not independently confirmed and lists its three input grids with their SHA-256. It was regenerated from the grids it was first run on (commit `0e1cfe7`), so every count and difference is unchanged, and two runs are byte-identical. The LogGamma1p analyzer no longer cites the retired 6.1E-14 `PROB_LogGamma` claim as a contract. The large-shape density analyzer no longer calls the gap between the exported kernel and its own Loader-in-Double the CR-P1-01 defect. The large-shape CDF generator no longer calls its self-checks independent routes. No reference value, observation or contract changed.
 - Recorded a model-study PASS for #72 under Amendment 1 (`benchmark/normal_tail_study/PREREGISTRATION.md`), disclosed as written after the first run reported failure of A2 only. A2′ replaces strict positivity with a Horner cancellation-factor bound of 1 + 2^-20; the recorded factor is 1 + 1.5E-7. The coefficients were not refitted. The retained record reports one holdout evaluation on 15,000 points: worst relative error 5.5E-16 for Q, 3.9E-16 for 1 − Q and 3.3E-16 for the density, all within 2^-50. **Audit qualification (2026-10-29):** #78–#80 still require conditioning-rule reconciliation, fit-convergence/result-provenance controls and enforcement of the one-shot holdout record. Those gaps do not establish that a repeat evaluation occurred or that the coefficients are wrong, but the recorded PASS does not complete study acceptance or establish readiness for release. Production implementation remains proposed in draft #81; exact-source Excel validation remains outstanding under #72.

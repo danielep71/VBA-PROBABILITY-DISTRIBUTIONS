@@ -1,0 +1,190 @@
+Private Function EG_LogPair(ByVal A As Variant) As Variant
+    Dim F As Variant, Z As Variant, Square As Variant, Term As Variant, Total As Variant, Delta As Variant
+    Dim N As Long
+    If CDbl(A(0)) <= 0# Then Err.Raise 5
+    F = Array(CDbl(A(0)), CDbl(A(1)), 0&)
+    Z = SG_Div(SG_Sub(F, 1#), SG_Add(F, 1#))
+    Square = SG_Mul(Z, Z): Term = Z: Total = Z
+    For N = 3 To 1000 Step 2
+        Term = SG_Mul(Term, Square)
+        Delta = SG_Div(Term, N)
+        Total = SG_Add(Total, Delta)
+        If SG_Small(Delta, Total) Then
+            EG_LogPair = SG_Add(SG_Mul(Total, 2#), SG_Mul(SG_Ln2(), CLng(A(2))))
+            Exit Function
+        End If
+    Next N
+    Err.Raise 5, "EG_LogPair", "iteration cap"
+End Function
+
+Private Function EG_LogGamma(ByVal A As Variant) As Variant
+    Dim N As Long, K As Long, B As Variant, LG As Variant
+    If SG_Value(A) > 1# Then N = CLng(Fix(SG_Value(A)))
+    B = SG_Sub(A, N)
+    LG = SG_LogGamma(B)
+    For K = 1 To N
+        LG = SG_Add(LG, EG_LogPair(SG_Add(B, K)))
+    Next K
+    EG_LogGamma = LG
+End Function
+
+Private Sub EG_LowerPair(ByVal LP As Variant, ByRef PP As Variant, ByRef QQ As Variant)
+    Dim Value As Double, Z As Variant, Halvings As Long, K As Long
+    Value = SG_Value(LP)
+    If CDbl(LP(0)) > 0# Then Err.Raise 5, "EG_LowerPair", "positive log probability"
+    If Value < -750# Then
+        PP = SG_Coerce(0#): QQ = SG_Coerce(1#)
+        Exit Sub
+    End If
+    Z = LP
+    Do While SG_Value(Z) < -0.5
+        Z = SG_Mul(Z, 0.5)
+        Halvings = Halvings + 1
+    Loop
+    QQ = SG_Neg(SG_Expm1(Z))
+    For K = 1 To Halvings
+        QQ = SG_Mul(QQ, SG_Sub(2#, QQ))
+    Next K
+    If Value >= -0.5 Then
+        PP = SG_Sub(1#, QQ)
+    Else
+        PP = SG_Exp(LP)
+    End If
+End Sub
+
+Private Function EG1_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+    Dim AA As Variant, XX As Variant, LG As Variant, Term As Variant, Total As Variant
+    Dim Delta As Variant, LP As Variant, PP As Variant, QQ As Variant
+    Dim B As Variant, C As Variant, D As Variant, AN As Variant, Tail As Variant, H As Variant
+    Dim N As Long, K As Long, Converged As Boolean, Stage As String
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = "": Stage = "inputs"
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A <= 0# Or A > 128# Or X <= 0# Or X > 1024# Then Exit Function
+    AA = SG_Coerce(A): XX = SG_Coerce(X)
+    Stage = "loggamma"
+    LG = EG_LogGamma(AA)
+    If X < A + 1# Then
+        If A <= 1# Then
+            Stage = "alternating lower series"
+            Term = SG_Neg(XX)
+            Total = SG_Div(Term, SG_Add(AA, 1#))
+            For N = 2 To 1000
+                Term = SG_Div(SG_Mul(Term, SG_Neg(XX)), N)
+                Delta = SG_Div(Term, SG_Add(AA, N))
+                Total = SG_Add(Total, Delta)
+                If SG_Small(Delta, Total) Then
+                    Converged = True
+                    Exit For
+                End If
+            Next N
+            If Not Converged Then Err.Raise 5
+            LP = SG_Add(SG_Sub(SG_Mul(SG_Log(X), AA), LG), SG_Log1p(SG_Mul(Total, AA)))
+        Else
+            Stage = "positive lower series"
+            Term = SG_Coerce(1#): Total = Term
+            For N = 1 To 10000
+                Term = SG_Div(SG_Mul(Term, XX), SG_Add(AA, N))
+                Total = SG_Add(Total, Term)
+                If SG_Small(Term, Total) Then
+                    Converged = True
+                    Exit For
+                End If
+            Next N
+            If Not Converged Then Err.Raise 5
+            LP = SG_Add(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), XX), LG), EG_LogPair(Total))
+        End If
+        Stage = "lower exponential"
+        EG_LowerPair LP, PP, QQ
+    Else
+        Stage = "upper forward"
+        B = SG_Sub(SG_Add(XX, 1#), AA)
+        C = SG_Coerce(1E+300): D = SG_Div(1#, B)
+        For N = 1 To 100000
+            AN = SG_Mul(-CDbl(N), SG_Sub(N, AA))
+            B = SG_Add(B, 2#)
+            D = SG_Div(1#, SG_Add(SG_Mul(AN, D), B))
+            C = SG_Add(B, SG_Div(AN, C))
+            Delta = SG_Sub(SG_Mul(C, D), 1#)
+            If CDbl(Delta(0)) = 0# Or CLng(Delta(2)) < -100 Then
+                Converged = True
+                Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5
+        Stage = "upper backward"
+        Tail = SG_Coerce(0#)
+        For K = N To 1 Step -1
+            Tail = SG_Div(SG_Mul(-CDbl(K), SG_Sub(K, AA)), _
+                SG_Add(SG_Add(SG_Sub(SG_Add(XX, 1#), AA), 2# * K), Tail))
+        Next K
+        H = SG_Div(1#, SG_Add(SG_Sub(SG_Add(XX, 1#), AA), Tail))
+        Stage = "upper exponential"
+        QQ = SG_Mul(SG_Mul(SG_Exp(SG_Sub(SG_Sub(SG_Mul(SG_Log(X), AA), LG), XX)), AA), H)
+        PP = SG_Sub(1#, QQ)
+    End If
+    Stage = "final rounding"
+    P = SG_Value(PP): Q = SG_Value(QQ)
+    EG1_Pair = True
+    Exit Function
+Err_Handler:
+    Diagnostic = Stage & ": " & Err.Source & ": " & Err.Description
+    P = 0#: Q = 0#
+    EG1_Pair = False
+End Function
+
+Private Function EG_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double, _
+    Optional ByRef Diagnostic As String = "") As Boolean
+    Dim H As Double, L As Double, E As Long
+    On Error GoTo Err_Handler
+    P = 0#: Q = 0#: Diagnostic = ""
+    If Not PROB_IsFinite(A) Then Exit Function
+    If Not PROB_IsFinite(X) Then Exit Function
+    If A = 2# And X > 0# And X <= SP_FromWords(&H1FF00000&, 0) Then
+        If Not SP_Product(X, X, H, L, E) Then Err.Raise 5
+        E = E - 1
+        SGD_Canonicalize H, L, E
+        If Not SGD_Round(H, L, E, P) Then Err.Raise 5
+        Q = 1#
+        EG_Pair = True
+    Else
+        EG_Pair = EG1_Pair(A, X, P, Q, Diagnostic)
+    End If
+    Exit Function
+Err_Handler:
+    P = 0#: Q = 0#: Diagnostic = "shape-two subnormal: " & Err.Description
+    EG_Pair = False
+End Function
+
+Private Sub EG_Case(ByVal Label As String, ByVal A As Double, ByVal X As Double, _
+    ByVal ExpectedP As Double, ByVal ExpectedQ As Double)
+    Dim P As Double, Q As Double, OK As Boolean, Diagnostic As String
+    OK = EG_Pair(A, X, P, Q, Diagnostic)
+    AssertTrue Label & " returned " & Diagnostic, OK
+    AssertTrue Label & " P bits " & SG_Bits(P), (OK And SP_SameBits(P, ExpectedP))
+    AssertTrue Label & " Q bits " & SG_Bits(Q), (OK And SP_SameBits(Q, ExpectedQ))
+End Sub
+
+Private Sub EG_Invalid(ByVal A As Double, ByVal X As Double)
+    Dim P As Double, Q As Double, OK As Boolean
+    P = 9#: Q = 9#
+    OK = EG_Pair(A, X, P, Q)
+    AssertTrue "EG invalid and cleared", (Not OK And P = 0# And Q = 0#)
+End Sub
+
+Private Sub EG_RoutingControl()
+    Dim A As Double, X As Double, P As Double, Q As Double, LP As Double, LQ As Double
+    Dim OK As Boolean, Diag As String
+    A = SP_FromWords(&H3FF00000&, &H00000001&)
+    X = SP_FromWords(&H3FFFFFFF&, &HFFFFFFFF&)
+    OK = SG_Pair(1#, X, LP, LQ)
+    OK = OK And PROB_TryGammaRegularizedP(A, X, P, Diag)
+    OK = OK And PROB_TryGammaRegularizedQ(A, X, Q, Diag)
+    AssertTrue "EG rejected bounded switch control", (OK And LQ > Q)
+    OK = EG_Pair(1#, X, LP, LQ)
+    OK = OK And EG_Pair(A, X, P, Q)
+    AssertTrue "EG repaired shape seam P", (OK And LP >= P)
+    AssertTrue "EG repaired shape seam Q", (OK And LQ <= Q)
+End Sub

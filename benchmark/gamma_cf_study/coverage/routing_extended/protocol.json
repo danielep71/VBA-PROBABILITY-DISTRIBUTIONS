@@ -1,0 +1,599 @@
+{
+  "schema": 1,
+  "classification": "revealed outer-routing development preflight",
+  "domain": "extended v2 inside a<=128,x<=1024; B6 outside",
+  "thresholds": {
+    "P_relative": "3e-15",
+    "Q_relative": "5e-15",
+    "subnormal": "correctly rounded bits"
+  },
+  "oracle_dps": [
+    160,
+    320
+  ],
+  "sha256_lf": {
+    "src/M_STATS_PROBDIST_CORE.bas": "906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "8e4dda5287bcdd71e2466ade4018dd0b9b5f4c4831c701d5ea76f04b051f4b28",
+    "src/M_STATS_PROBDIST_DISCRETE.bas": "7ecf915a51ea83828ea6e079a871aeca5dba6282e520ee70995f33ac812db9c4",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "caa97abac7a9a10e3f019aeb55cabfea08e0620db106260faca71851ac8ab1ae",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "de6650b17dc92b01d00536ffb68f0cfae1887133ddff06693ba870af8a834b7e",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "98088a99e80dccbc5424ea2eb7d9a450f562bdcde5e65ef5a563f6099e4c84c2",
+    "benchmark/gamma_cf_study/coverage/scaled_gamma.py": "c8f92edc05cf6da3f2cd1ca0719ec4d55663fa425c2c6dfe41c5f07eb67073fc",
+    "benchmark/gamma_cf_study/coverage/scaled_dd.py": "af347a8e71178c4e1f859e1055cc4b0d5734149a35d55cbb6dfb74a3f216c48a",
+    "benchmark/gamma_cf_study/coverage/scaled_product.py": "c29982c98ff361d1bd7b1ead6b9d928f4f83adff3156e8f578ad0e7606323470",
+    "benchmark/gamma_cf_study/coverage/precision_probe.py": "053823b620aa86ba491e8f919faee73c888fa599af6fd6feb227a27c8c2020c3",
+    "benchmark/gamma_cf_study/coverage/precision_v2.py": "f42135e079c234a2044df6a2390f42dc5e6dcfff0f93eba5252b9dfb59dda875",
+    "benchmark/gamma_cf_study/coverage/precision_coefficients.json": "79f2397be0dbca388cba51f0bd2b581154464d5a5f538a24bacb2a977a611b63",
+    "benchmark/gamma_cf_study/coverage/seam_diagnosis.py": "cdf623d86abe80807d9fa9c5b6bae92c6050d71e4dedf0681c267a0c20773f54",
+    "benchmark/gamma_cf_study/model.py": "da36fe964b056f254572450db6963f057d1eb5d31a8fc476e8d327e1f7e134fb",
+    "benchmark/beta_balanced_survival/beta_route_model.py": "44aa4eae5cf55a41b00871a23c8e405a19b0726c15331155d9fbaabb761c5b10",
+    "benchmark/gamma_cf_study/coverage/scaled_gamma_vba.template": "ab9e92b99f4605f71e504b256eeacb4d52e1f4c723313ad0b1899a1ca675c443",
+    "benchmark/gamma_cf_study/coverage/scaled_dd_vba.template": "26caf628ea3b5fcaf8b6f0a8da8cd56b4c32b47647568c6a97f7374484fcbe3d",
+    "benchmark/gamma_cf_study/coverage/scaled_product_vba.template": "3f4e8956af129c2f83c919cf0b019f8729cab7591941ff6d5a86ec1995fdd869",
+    "benchmark/gamma_cf_study/coverage/precision_v2_vba.template": "465c4afe8a80c993f03fd961319c50c9ea74275b24b91ebb28becc008ecbbc87",
+    "benchmark/gamma_cf_study/coverage/extended_gamma.py": "048ad42a9b212a313716c0ce886110cd09e897412a05ba435dff4e74df127bfa",
+    "benchmark/gamma_cf_study/coverage/extended_gamma_v2.py": "5876f3e3dacb15e1f739094632109665db245bfb2df81a3e5f82ed27538ae15a",
+    "benchmark/gamma_cf_study/coverage/routing_extended/candidate.py": "50c5be85d532d6303e476898ba0f9a0ad8019031ee5ab81879c94116e5513114",
+    "benchmark/gamma_cf_study/coverage/routing_extended/evaluate.py": "dd5da1226c76096742796807d6f2100b78ee89a381ac0f1f1bb599156a533b48"
+  },
+  "groups": [
+    {
+      "name": "a-edge-00",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x0.0000000000001p-1022"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x0.0000000000001p-1022"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x0.0000000000001p-1022"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-01",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p-1022"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p-1022"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p-1022"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-02",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.bff2ee48e0530p-333"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.bff2ee48e0530p-333"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.bff2ee48e0530p-333"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-03",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p-1"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p-1"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p-1"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-04",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p+0"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p+0"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p+0"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-05",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p+5"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p+5"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p+5"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-06",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.9000000000000p+6"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.9000000000000p+6"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.9000000000000p+6"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-07",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.fc00000000000p+6"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.fc00000000000p+6"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.fc00000000000p+6"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-08",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p+7"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p+7"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p+7"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-09",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0200000000000p+7"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0200000000000p+7"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0200000000000p+7"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-10",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0400000000000p+7"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0400000000000p+7"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0400000000000p+7"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-11",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p+8"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p+8"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p+8"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-12",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.5e00000000000p+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.5e00000000000p+9"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.5e00000000000p+9"
+        }
+      ]
+    },
+    {
+      "name": "a-edge-13",
+      "axis": "a",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-14",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x0.0000000000001p-1022",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x0.0000000000001p-1022",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x0.0000000000001p-1022",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-15",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p-1022",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p-1022",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p-1022",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-16",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.bff2ee48e0530p-333",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.bff2ee48e0530p-333",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.bff2ee48e0530p-333",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-17",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.a36e2eb1c432dp-14",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.a36e2eb1c432dp-14",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.a36e2eb1c432dp-14",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-18",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.47ae147ae147bp-7",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.47ae147ae147bp-7",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.47ae147ae147bp-7",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-19",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.8f5c28f5c28f6p-2",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.8f5c28f5c28f6p-2",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.8f5c28f5c28f6p-2",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-20",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p-1",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p-1",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p-1",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-21",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p+0",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+0",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+0",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-22",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000001p+0",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+0",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+0",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-23",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p+1",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+1",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+1",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-24",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p+3",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+3",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+3",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-25",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p+5",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+5",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+5",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-26",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p+6",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+6",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+6",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-27",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.9000000000000p+6",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.9000000000000p+6",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.9000000000000p+6",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-28",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.fffffffffffffp+6",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-29",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000000p+7",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    },
+    {
+      "name": "x-edge-30",
+      "axis": "x",
+      "points": [
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.fffffffffffffp+9"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000000p+10"
+        },
+        {
+          "a_hex": "0x1.0000000000001p+7",
+          "x_hex": "0x1.0000000000001p+10"
+        }
+      ]
+    }
+  ]
+}
