@@ -18,3 +18,14 @@ derived from it will be preregistered and validated on untouched points.
 | `test_binary64_map.py` | Proves the grid is the design and the analyzer forms the pre-#242 complement; it runs in the evidence-tool suite |
 | [`MAP_RESULT.md`](MAP_RESULT.md), `map_results.json` | The map's result (run 42783017314) |
 | `analyze_exact_deviance.py` | Diagnosis: the binary64 route with an exact deviance |
+| [`HOLDOUT_DESIGN.md`](HOLDOUT_DESIGN.md), `holdout_design.py` | The routing holdout, frozen before the map was read: inputs, references, rules H1 to H6 |
+| `check_disjoint.py` | Proves no holdout shape, or its doubling, occurs in any tracked file |
+| `accurate_deviance.py` | Prototype: Loader's deviance as a pair from error-free transformations |
+| `route_model.py` | The repaired binary64 route, statement by statement, with VBA's 64-bit intermediates |
+| `b64_route_vba.py` | Generates the route into `M_STATS_PROBDIST_SPECIALFUNCS.bas` (`PROB_TryGammaB64SeriesP`, `PROB_TryGammaB64ContinuedFractionQ`); `--check` proves the module carries it |
+| `test_route_model.py` | Pins the production procedures the model ports, the generated block and its constants, the deviance's accuracy and the routed tails on the map |
+| [`FIT_DESIGN.md`](FIT_DESIGN.md), `fit_design.py` | The fit set: fidelity, accuracy and cost of the repaired route, and the frozen rule for the shape ceiling A2 |
+| `generate_b64_fit.py` | Builds `b64_fit_grid.csv` with references; `--check` proves the committed grid is the design |
+| `M_STATS_PROBDIST_GBF.bas` | `Export_GammaB64Fit`: calls and times both repaired routines at every point; study grid `gbf_b64_fit` |
+| `analyze_b64_fit.py` | Fidelity bit for bit, routed accuracy, cost fit and A2 |
+| `test_b64_fit.py` | Proves the grid is the design and the analyzer's fidelity, cost and ceiling logic |

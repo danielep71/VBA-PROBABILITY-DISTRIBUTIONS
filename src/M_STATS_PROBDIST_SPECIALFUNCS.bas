@@ -4314,3 +4314,676 @@ End Function
 
 ' END generated public Gamma integration
 
+' BEGIN generated binary64 Gamma route (#307)
+Private Function PROB_B64_Pow2(ByVal Biased As Long) As Double
+'==============================================================================
+' PROB_B64_Pow2
+'------------------------------------------------------------------------------
+' PURPOSE
+'   2 ^ (Biased - 1023), exactly, for a biased exponent in 1 .. 2046.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    PROB_B64_Pow2 = PROB_DD_SP_FromWords(Biased * &H100000, 0)
+End Function
+
+Private Function PROB_B64_Field(ByVal Y As Double) As Long
+'==============================================================================
+' PROB_B64_Field
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The biased exponent field of a Double: 0 for zero or a subnormal.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim N As PROB_DD_Number, W As PROB_DD_Words
+    N.Value = Y
+    LSet W = N
+    PROB_B64_Field = (W.High And &H7FF00000) \ &H100000
+End Function
+
+Private Sub PROB_B64_TwoSum(ByVal A As Double, ByVal B As Double, ByRef S As Double, ByRef E As Double)
+'==============================================================================
+' PROB_B64_TwoSum
+'------------------------------------------------------------------------------
+' PURPOSE
+'   S + E = A + B exactly, S the rounded sum (Knuth).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim BB As Double, T As Double, U As Double
+    S = A + B
+    BB = S - A
+    T = S - BB
+    T = A - T
+    U = B - BB
+    E = T + U
+End Sub
+
+Private Sub PROB_B64_FastTwoSum(ByVal A As Double, ByVal B As Double, ByRef S As Double, ByRef E As Double)
+'==============================================================================
+' PROB_B64_FastTwoSum
+'------------------------------------------------------------------------------
+' PURPOSE
+'   S + E = A + B exactly for |A| >= |B| (Dekker).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim T As Double
+    S = A + B
+    T = S - A
+    E = B - T
+End Sub
+
+Private Sub PROB_B64_Split(ByVal A As Double, ByRef Hi As Double, ByRef Lo As Double)
+'==============================================================================
+' PROB_B64_Split
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Hi + Lo = A, each with at most 26 significant bits (Veltkamp).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Const SPLITTER As Double = 134217729#
+    Dim C As Double, T As Double
+    C = SPLITTER * A
+    T = C - A
+    Hi = C - T
+    Lo = A - Hi
+End Sub
+
+Private Sub PROB_B64_TwoProd(ByVal A As Double, ByVal B As Double, ByRef P As Double, ByRef E As Double)
+'==============================================================================
+' PROB_B64_TwoProd
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P + E = A * B exactly, P the rounded product (Dekker).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim AH As Double, AL As Double, BH As Double, BL As Double, T As Double
+    P = A * B
+    PROB_B64_Split A, AH, AL
+    PROB_B64_Split B, BH, BL
+    E = AH * BH
+    E = E - P
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+End Sub
+
+Private Sub PROB_B64_PairAdd(ByVal AH As Double, ByVal AL As Double, ByVal BH As Double, ByVal BL As Double, _
+    ByRef SH As Double, ByRef SL As Double)
+'==============================================================================
+' PROB_B64_PairAdd
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The sum of two unevaluated pairs, as a pair.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim S As Double, E As Double, T As Double
+    PROB_B64_TwoSum AH, BH, S, E
+    T = AL + BL
+    E = E + T
+    PROB_B64_FastTwoSum S, E, SH, SL
+End Sub
+
+Private Sub PROB_B64_PairMul(ByVal AH As Double, ByVal AL As Double, ByVal B As Double, _
+    ByRef PH As Double, ByRef PL As Double)
+'==============================================================================
+' PROB_B64_PairMul
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The product of a pair and a Double, as a pair.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim P As Double, E As Double, T As Double
+    PROB_B64_TwoProd AH, B, P, E
+    T = AL * B
+    E = E + T
+    PROB_B64_FastTwoSum P, E, PH, PL
+End Sub
+
+Private Sub PROB_B64_PairDiv(ByVal AH As Double, ByVal AL As Double, ByVal B As Double, _
+    ByRef QH As Double, ByRef QL As Double)
+'==============================================================================
+' PROB_B64_PairDiv
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The quotient of a pair by a Double, as a pair.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim Q As Double, P As Double, E As Double, R As Double
+    Q = AH / B
+    PROB_B64_TwoProd Q, B, P, E
+    R = AH - P
+    R = R - E
+    R = R + AL
+    R = R / B
+    PROB_B64_FastTwoSum Q, R, QH, QL
+End Sub
+
+Private Sub PROB_B64_PairLog(ByVal YH As Double, ByVal YL As Double, ByRef LH As Double, ByRef LL As Double)
+'==============================================================================
+' PROB_B64_PairLog
+'------------------------------------------------------------------------------
+' PURPOSE
+'   log(YH + YL) as a pair, for a positive pair whose high part is normal.
+'   Y = M 2^E with 0.5 <= M < 1; C = K / 256 nearest to M; then
+'   log Y = E log 2 + log C + log(1 + U), U = (M - C) / C, |U| <= 2^-8,
+'   log(1 + U) = U - U^2 / 2 + U^3 S(U), S(U) = sum (-U)^J / (J + 3), J = 0 .. 7.
+' NOTES
+'   log(K / 256) and log 2 are exact pairs; the table loads on the first call.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Static TableHi(128 To 256) As Double, TableLo(128 To 256) As Double, S(0 To 7) As Double
+    Static Ln2Hi As Double, Ln2Lo As Double, Ready As Boolean
+    Dim Field As Long, E As Long, K As Long, J As Long
+    Dim Scale2 As Double, M As Double, C As Double, VH As Double, VL As Double, WH As Double, WL As Double
+    Dim UH As Double, UL As Double, SH As Double, SL As Double, T As Double, Poly As Double, Cube As Double
+    Dim AH As Double, AL As Double, EH As Double, EL As Double, Sign As Double
+    If Not Ready Then
+        TableHi(128) = PROB_DD_SP_FromWords(&HBFE62E42&, &HFEFA39EF&)
+        TableLo(128) = PROB_DD_SP_FromWords(&HBC7ABC9E&, &H3B39803F&)
+        TableHi(129) = PROB_DD_SP_FromWords(&HBFE5EE82&, &HAA241920&)
+        TableLo(129) = PROB_DD_SP_FromWords(&HBC71C066&, &HD235EE63&)
+        TableHi(130) = PROB_DD_SP_FromWords(&HBFE5AF40&, &H5C3649E0&)
+        TableLo(130) = PROB_DD_SP_FromWords(&H3C86714F&, &HBCD8135B&)
+        TableHi(131) = PROB_DD_SP_FromWords(&HBFE5707A&, &H26BB8C66&)
+        TableLo(131) = PROB_DD_SP_FromWords(&HBC880BFF&, &H3303DD48&)
+        TableHi(132) = PROB_DD_SP_FromWords(&HBFE5322E&, &H26867857&)
+        TableLo(132) = PROB_DD_SP_FromWords(&HBC7988BA&, &H4AEA614D&)
+        TableHi(133) = PROB_DD_SP_FromWords(&HBFE4F45A&, &H835A4E19&)
+        TableLo(133) = PROB_DD_SP_FromWords(&HBC7D7493&, &H62382A77&)
+        TableHi(134) = PROB_DD_SP_FromWords(&HBFE4B6FD&, &H6F970C1F&)
+        TableLo(134) = PROB_DD_SP_FromWords(&HBC8C457B&, &H531506F6&)
+        TableHi(135) = PROB_DD_SP_FromWords(&HBFE47A15&, &H27E8A2D3&)
+        TableLo(135) = PROB_DD_SP_FromWords(&HBC82541A&, &HCA7D5844&)
+        TableHi(136) = PROB_DD_SP_FromWords(&HBFE43D9F&, &HF2F923C5&)
+        TableLo(136) = PROB_DD_SP_FromWords(&H3C784F48&, &H1051F71A&)
+        TableHi(137) = PROB_DD_SP_FromWords(&HBFE4019C&, &H2125CA93&)
+        TableLo(137) = PROB_DD_SP_FromWords(&HBC686CF0&, &HF38B461A&)
+        TableHi(138) = PROB_DD_SP_FromWords(&HBFE3C608&, &H0C36BFB5&)
+        TableLo(138) = PROB_DD_SP_FromWords(&HBC719306&, &H03D87B6E&)
+        TableHi(139) = PROB_DD_SP_FromWords(&HBFE38AE2&, &H171976E7&)
+        TableLo(139) = PROB_DD_SP_FromWords(&HBC821512&, &HAA596EA3&)
+        TableHi(140) = PROB_DD_SP_FromWords(&HBFE35028&, &HAD9D8C86&)
+        TableLo(140) = PROB_DD_SP_FromWords(&H3C7F01AB&, &H6065515C&)
+        TableHi(141) = PROB_DD_SP_FromWords(&HBFE315DA&, &H4434068B&)
+        TableLo(141) = PROB_DD_SP_FromWords(&HBC66C3A5&, &HF12642C9&)
+        TableHi(142) = PROB_DD_SP_FromWords(&HBFE2DBF5&, &H57B0DF43&)
+        TableLo(142) = PROB_DD_SP_FromWords(&H3C7B941E&, &HE770436B&)
+        TableHi(143) = PROB_DD_SP_FromWords(&HBFE2A278&, &H6D0EC107&)
+        TableLo(143) = PROB_DD_SP_FromWords(&H3C76A0C3&, &H43BE95DC&)
+        TableHi(144) = PROB_DD_SP_FromWords(&HBFE26962&, &H1134DB92&)
+        TableLo(144) = PROB_DD_SP_FromWords(&HBC8E0EFA&, &HDD9DB02B&)
+        TableHi(145) = PROB_DD_SP_FromWords(&HBFE230B0&, &HD8BEBC98&)
+        TableLo(145) = PROB_DD_SP_FromWords(&H3C6FCC8D&, &HBCCC25CB&)
+        TableHi(146) = PROB_DD_SP_FromWords(&HBFE1F863&, &H5FC61659&)
+        TableLo(146) = PROB_DD_SP_FromWords(&H3C72164F&, &HF40E9817&)
+        TableHi(147) = PROB_DD_SP_FromWords(&HBFE1C078&, &H49AE6007&)
+        TableLo(147) = PROB_DD_SP_FromWords(&HBC759BDD&, &HAE1CCCE2&)
+        TableHi(148) = PROB_DD_SP_FromWords(&HBFE188EE&, &H40F23CA6&)
+        TableLo(148) = PROB_DD_SP_FromWords(&HBC889DF1&, &H568CA0B0&)
+        TableHi(149) = PROB_DD_SP_FromWords(&HBFE151C3&, &HF6F29612&)
+        TableLo(149) = PROB_DD_SP_FromWords(&HBC7342EB&, &H628DBA17&)
+        TableHi(150) = PROB_DD_SP_FromWords(&HBFE11AF8&, &H23C75AA8&)
+        TableLo(150) = PROB_DD_SP_FromWords(&H3C891EEE&, &H7772C7C2&)
+        TableHi(151) = PROB_DD_SP_FromWords(&HBFE0E489&, &H8611CCE1&)
+        TableLo(151) = PROB_DD_SP_FromWords(&HBC83300F&, &H002E836E&)
+        TableHi(152) = PROB_DD_SP_FromWords(&HBFE0AE76&, &HE2D054FA&)
+        TableLo(152) = PROB_DD_SP_FromWords(&HBC80D710&, &HFCFC4E0D&)
+        TableHi(153) = PROB_DD_SP_FromWords(&HBFE078BF&, &H0533C568&)
+        TableLo(153) = PROB_DD_SP_FromWords(&HBC62241E&, &HDF5FD1F7&)
+        TableHi(154) = PROB_DD_SP_FromWords(&HBFE04360&, &HBE7603AD&)
+        TableLo(154) = PROB_DD_SP_FromWords(&H3C617F9E&, &H54E78104&)
+        TableHi(155) = PROB_DD_SP_FromWords(&HBFE00E5A&, &HE5B207AB&)
+        TableLo(155) = PROB_DD_SP_FromWords(&HBC61713A&, &H36138E19&)
+        TableHi(156) = PROB_DD_SP_FromWords(&HBFDFB358&, &HAF7A4884&)
+        TableLo(156) = PROB_DD_SP_FromWords(&HBC67E8F0&, &H5924D259&)
+        TableHi(157) = PROB_DD_SP_FromWords(&HBFDF4AA7&, &HEE03192D&)
+        TableLo(157) = PROB_DD_SP_FromWords(&H3C60D487&, &HF5ABA5E5&)
+        TableHi(158) = PROB_DD_SP_FromWords(&HBFDEE2A1&, &H56B413E5&)
+        TableLo(158) = PROB_DD_SP_FromWords(&H3C174B71&, &HFB5E57E3&)
+        TableHi(159) = PROB_DD_SP_FromWords(&HBFDE7B42&, &HC3DDAD73&)
+        TableLo(159) = PROB_DD_SP_FromWords(&HBC757D64&, &H6A17BC6A&)
+        TableHi(160) = PROB_DD_SP_FromWords(&HBFDE148A&, &H1A2726CE&)
+        TableLo(160) = PROB_DD_SP_FromWords(&H3C7AC81C&, &HC8A4DFB8&)
+        TableHi(161) = PROB_DD_SP_FromWords(&HBFDDAE75&, &H484C9616&)
+        TableLo(161) = PROB_DD_SP_FromWords(&H3C70B583&, &H7185A661&)
+        TableHi(162) = PROB_DD_SP_FromWords(&HBFDD4902&, &H46DEFA6B&)
+        TableLo(162) = PROB_DD_SP_FromWords(&HBC7D7F4D&, &H3B3D406B&)
+        TableHi(163) = PROB_DD_SP_FromWords(&HBFDCE42F&, &H18064743&)
+        TableLo(163) = PROB_DD_SP_FromWords(&HBC707982&, &H70B29F39&)
+        TableHi(164) = PROB_DD_SP_FromWords(&HBFDC7FF9&, &HC74554C9&)
+        TableLo(164) = PROB_DD_SP_FromWords(&HBC6223EA&, &HDB651B4A&)
+        TableHi(165) = PROB_DD_SP_FromWords(&HBFDC1C60&, &H693FA39E&)
+        TableLo(165) = PROB_DD_SP_FromWords(&H3C7BFC00&, &HB8F3FEAA&)
+        TableHi(166) = PROB_DD_SP_FromWords(&HBFDBB961&, &H1B80E2FB&)
+        TableLo(166) = PROB_DD_SP_FromWords(&HBC46FD02&, &H999B21E1&)
+        TableHi(167) = PROB_DD_SP_FromWords(&HBFDB56FA&, &H04462909&)
+        TableLo(167) = PROB_DD_SP_FromWords(&HBC7494B6&, &H10665378&)
+        TableHi(168) = PROB_DD_SP_FromWords(&HBFDAF529&, &H5248CDD0&)
+        TableLo(168) = PROB_DD_SP_FromWords(&HBC79D56C&, &H45DD3E86&)
+        TableHi(169) = PROB_DD_SP_FromWords(&HBFDA93ED&, &H3C8AD9E3&)
+        TableLo(169) = PROB_DD_SP_FromWords(&HBC7BCAFA&, &H9DE97203&)
+        TableHi(170) = PROB_DD_SP_FromWords(&HBFDA3344&, &H0224FA79&)
+        TableLo(170) = PROB_DD_SP_FromWords(&H3C6BA806&, &H2860AE23&)
+        TableHi(171) = PROB_DD_SP_FromWords(&HBFD9D32B&, &HEA15ED3B&)
+        TableLo(171) = PROB_DD_SP_FromWords(&HBC487BCB&, &HCFD3E187&)
+        TableHi(172) = PROB_DD_SP_FromWords(&HBFD973A3&, &H431356AE&)
+        TableLo(172) = PROB_DD_SP_FromWords(&H3C689D28&, &H16CF838F&)
+        TableHi(173) = PROB_DD_SP_FromWords(&HBFD914A8&, &H635BF68A&)
+        TableLo(173) = PROB_DD_SP_FromWords(&H3C7AD4BB&, &H98C1F2C5&)
+        TableHi(174) = PROB_DD_SP_FromWords(&HBFD8B639&, &HA88B2DF5&)
+        TableLo(174) = PROB_DD_SP_FromWords(&H3C770F2F&, &H38238303&)
+        TableHi(175) = PROB_DD_SP_FromWords(&HBFD85855&, &H776DCBFB&)
+        TableLo(175) = PROB_DD_SP_FromWords(&H3C748666&, &H6443B153&)
+        TableHi(176) = PROB_DD_SP_FromWords(&HBFD7FAFA&, &H3BD8151C&)
+        TableLo(176) = PROB_DD_SP_FromWords(&H3C521902&, &H4ACD3B77&)
+        TableHi(177) = PROB_DD_SP_FromWords(&HBFD79E26&, &H687CFB3E&)
+        TableLo(177) = PROB_DD_SP_FromWords(&H3C7C1688&, &H17443F22&)
+        TableHi(178) = PROB_DD_SP_FromWords(&HBFD741D8&, &H76C67BB1&)
+        TableLo(178) = PROB_DD_SP_FromWords(&HBC784A4E&, &HE3059583&)
+        TableHi(179) = PROB_DD_SP_FromWords(&HBFD6E60E&, &HE6AF1972&)
+        TableLo(179) = PROB_DD_SP_FromWords(&HBC5657C2&, &H22D868CD&)
+        TableHi(180) = PROB_DD_SP_FromWords(&HBFD68AC8&, &H3E9C6A14&)
+        TableLo(180) = PROB_DD_SP_FromWords(&HBC5A64EA&, &HDD740178&)
+        TableHi(181) = PROB_DD_SP_FromWords(&HBFD63003&, &H0B3AAC49&)
+        TableLo(181) = PROB_DD_SP_FromWords(&HBC6DC18C&, &HE51FFF99&)
+        TableHi(182) = PROB_DD_SP_FromWords(&HBFD5D5BD&, &HDF595F30&)
+        TableLo(182) = PROB_DD_SP_FromWords(&H3C765411&, &H48CBB8A2&)
+        TableHi(183) = PROB_DD_SP_FromWords(&HBFD57BF7&, &H53C8D1FB&)
+        TableLo(183) = PROB_DD_SP_FromWords(&H3C60908D&, &H15F88B63&)
+        TableHi(184) = PROB_DD_SP_FromWords(&HBFD522AE&, &H0738A3D8&)
+        TableLo(184) = PROB_DD_SP_FromWords(&H3C68F7E9&, &HB38A6979&)
+        TableHi(185) = PROB_DD_SP_FromWords(&HBFD4C9E0&, &H9E172C3C&)
+        TableLo(185) = PROB_DD_SP_FromWords(&H3C512361&, &H5B147A5D&)
+        TableHi(186) = PROB_DD_SP_FromWords(&HBFD4718D&, &HC271C41B&)
+        TableLo(186) = PROB_DD_SP_FromWords(&HBC38FB4C&, &H14C56EEF&)
+        TableHi(187) = PROB_DD_SP_FromWords(&HBFD419B4&, &H23D5E8C7&)
+        TableLo(187) = PROB_DD_SP_FromWords(&HBC60DBB2&, &H43827392&)
+        TableHi(188) = PROB_DD_SP_FromWords(&HBFD3C252&, &H77333184&)
+        TableLo(188) = PROB_DD_SP_FromWords(&H3C72AD27&, &HE50A8EC6&)
+        TableHi(189) = PROB_DD_SP_FromWords(&HBFD36B67&, &H76BE1117&)
+        TableLo(189) = PROB_DD_SP_FromWords(&H3C5324F0&, &HE883858E&)
+        TableHi(190) = PROB_DD_SP_FromWords(&HBFD314F1&, &HE1D35CE4&)
+        TableLo(190) = PROB_DD_SP_FromWords(&H3C73D699&, &H09E5C3DC&)
+        TableHi(191) = PROB_DD_SP_FromWords(&HBFD2BEF0&, &H7CDC9354&)
+        TableLo(191) = PROB_DD_SP_FromWords(&H3C782DAD&, &H7FD86088&)
+        TableHi(192) = PROB_DD_SP_FromWords(&HBFD26962&, &H1134DB92&)
+        TableLo(192) = PROB_DD_SP_FromWords(&HBC7E0EFA&, &HDD9DB02B&)
+        TableHi(193) = PROB_DD_SP_FromWords(&HBFD21445&, &H6D0EB8D4&)
+        TableLo(193) = PROB_DD_SP_FromWords(&HBC6F7AE9&, &H1AEBA60A&)
+        TableHi(194) = PROB_DD_SP_FromWords(&HBFD1BF99&, &H635A6B95&)
+        TableLo(194) = PROB_DD_SP_FromWords(&H3C612AEB&, &H84249223&)
+        TableHi(195) = PROB_DD_SP_FromWords(&HBFD16B5C&, &HCBACFB73&)
+        TableLo(195) = PROB_DD_SP_FromWords(&HBC766FBD&, &H28B40935&)
+        TableHi(196) = PROB_DD_SP_FromWords(&HBFD1178E&, &H8227E47C&)
+        TableLo(196) = PROB_DD_SP_FromWords(&H3C60E63A&, &H5F01C691&)
+        TableHi(197) = PROB_DD_SP_FromWords(&HBFD0C42D&, &H676162E3&)
+        TableLo(197) = PROB_DD_SP_FromWords(&HBC5162C7&, &H9D5D11EE&)
+        TableHi(198) = PROB_DD_SP_FromWords(&HBFD07138&, &H604D5862&)
+        TableLo(198) = PROB_DD_SP_FromWords(&HBC7CDB16&, &HED4E9138&)
+        TableHi(199) = PROB_DD_SP_FromWords(&HBFD01EAE&, &H5626C691&)
+        TableLo(199) = PROB_DD_SP_FromWords(&H3C418290&, &HBD2932E2&)
+        TableHi(200) = PROB_DD_SP_FromWords(&HBFCF991C&, &H6CB3B379&)
+        TableLo(200) = PROB_DD_SP_FromWords(&HBC6F6650&, &H66F980A2&)
+        TableHi(201) = PROB_DD_SP_FromWords(&HBFCEF5AD&, &HE4DCFFE6&)
+        TableLo(201) = PROB_DD_SP_FromWords(&H3C508AB2&, &HDDC708A0&)
+        TableHi(202) = PROB_DD_SP_FromWords(&HBFCE530E&, &HFFE71012&)
+        TableLo(202) = PROB_DD_SP_FromWords(&HBC422760&, &H41F43042&)
+        TableHi(203) = PROB_DD_SP_FromWords(&HBFCDB13D&, &HB0D48940&)
+        TableLo(203) = PROB_DD_SP_FromWords(&HBC5AA11D&, &H49F96CB9&)
+        TableHi(204) = PROB_DD_SP_FromWords(&HBFCD1037&, &HF2655E7B&)
+        TableLo(204) = PROB_DD_SP_FromWords(&HBC660629&, &H242471A2&)
+        TableHi(205) = PROB_DD_SP_FromWords(&HBFCC6FFB&, &HC6F00F71&)
+        TableLo(205) = PROB_DD_SP_FromWords(&H3C68E58B&, &H2C57A4A5&)
+        TableHi(206) = PROB_DD_SP_FromWords(&HBFCBD087&, &H383BD8AD&)
+        TableLo(206) = PROB_DD_SP_FromWords(&HBC3DD355&, &HF6A516D7&)
+        TableHi(207) = PROB_DD_SP_FromWords(&HBFCB31D8&, &H575BCE3D&)
+        TableLo(207) = PROB_DD_SP_FromWords(&H3C66353A&, &HB386A94D&)
+        TableHi(208) = PROB_DD_SP_FromWords(&HBFCA93ED&, &H3C8AD9E3&)
+        TableLo(208) = PROB_DD_SP_FromWords(&HBC6BCAFA&, &H9DE97203&)
+        TableHi(209) = PROB_DD_SP_FromWords(&HBFC9F6C4&, &H07089664&)
+        TableLo(209) = PROB_DD_SP_FromWords(&HBC435A19&, &H605E67EF&)
+        TableHi(210) = PROB_DD_SP_FromWords(&HBFC95A5A&, &HDCF7017F&)
+        TableLo(210) = PROB_DD_SP_FromWords(&HBC5142C5&, &H07FB7A3D&)
+        TableHi(211) = PROB_DD_SP_FromWords(&HBFC8BEAF&, &HEB38FE8C&)
+        TableLo(211) = PROB_DD_SP_FromWords(&HBC555AA8&, &HB6997A40&)
+        TableHi(212) = PROB_DD_SP_FromWords(&HBFC823C1&, &H6551A3C2&)
+        TableLo(212) = PROB_DD_SP_FromWords(&H3C61232C&, &HE70BE781&)
+        TableHi(213) = PROB_DD_SP_FromWords(&HBFC7898D&, &H85444C73&)
+        TableLo(213) = PROB_DD_SP_FromWords(&HBC5EF8F6&, &HEBCFB201&)
+        TableHi(214) = PROB_DD_SP_FromWords(&HBFC6F012&, &H8B756ABC&)
+        TableLo(214) = PROB_DD_SP_FromWords(&H3C68DE59&, &HC21E166C&)
+        TableHi(215) = PROB_DD_SP_FromWords(&HBFC6574E&, &HBE8C133A&)
+        TableLo(215) = PROB_DD_SP_FromWords(&H3C3D34F0&, &HF4621BED&)
+        TableHi(216) = PROB_DD_SP_FromWords(&HBFC5BF40&, &H6B543DB2&)
+        TableLo(216) = PROB_DD_SP_FromWords(&H3C21F5B4&, &H4C0DF7E7&)
+        TableHi(217) = PROB_DD_SP_FromWords(&HBFC527E5&, &HE4A1B58D&)
+        TableLo(217) = PROB_DD_SP_FromWords(&H3C271A96&, &H82395BFD&)
+        TableHi(218) = PROB_DD_SP_FromWords(&HBFC4913D&, &H8333B561&)
+        TableLo(218) = PROB_DD_SP_FromWords(&H3C50D560&, &H4930F135&)
+        TableHi(219) = PROB_DD_SP_FromWords(&HBFC3FB45&, &HA59928CC&)
+        TableLo(219) = PROB_DD_SP_FromWords(&H3C6D87E6&, &HA354D056&)
+        TableHi(220) = PROB_DD_SP_FromWords(&HBFC365FC&, &HB0159016&)
+        TableLo(220) = PROB_DD_SP_FromWords(&HBC57D411&, &HA5B944AD&)
+        TableHi(221) = PROB_DD_SP_FromWords(&HBFC2D161&, &H0C86813A&)
+        TableLo(221) = PROB_DD_SP_FromWords(&H3C5499A3&, &HF25AF95F&)
+        TableHi(222) = PROB_DD_SP_FromWords(&HBFC23D71&, &H2A49C202&)
+        TableLo(222) = PROB_DD_SP_FromWords(&H3C66E381&, &H61051D69&)
+        TableHi(223) = PROB_DD_SP_FromWords(&HBFC1AA2B&, &H7E23F72A&)
+        TableLo(223) = PROB_DD_SP_FromWords(&H3C4C6EF1&, &HD9B2EF7E&)
+        TableHi(224) = PROB_DD_SP_FromWords(&HBFC1178E&, &H8227E47C&)
+        TableLo(224) = PROB_DD_SP_FromWords(&H3C50E63A&, &H5F01C691&)
+        TableHi(225) = PROB_DD_SP_FromWords(&HBFC08598&, &HB59E3A07&)
+        TableLo(225) = PROB_DD_SP_FromWords(&H3C6DD700&, &H9902BF32&)
+        TableHi(226) = PROB_DD_SP_FromWords(&HBFBFE891&, &H39DBD566&)
+        TableLo(226) = PROB_DD_SP_FromWords(&H3C5AC9F4&, &H215F9393&)
+        TableHi(227) = PROB_DD_SP_FromWords(&HBFBEC739&, &H830A1120&)
+        TableLo(227) = PROB_DD_SP_FromWords(&H3C4A2BF9&, &H91780D3F&)
+        TableHi(228) = PROB_DD_SP_FromWords(&HBFBDA727&, &H638446A2&)
+        TableLo(228) = PROB_DD_SP_FromWords(&HBC5401FA&, &H71733019&)
+        TableHi(229) = PROB_DD_SP_FromWords(&HBFBC8858&, &H01BC4B23&)
+        TableLo(229) = PROB_DD_SP_FromWords(&HBC5A38CB&, &H559A6706&)
+        TableHi(230) = PROB_DD_SP_FromWords(&HBFBB6AC8&, &H8DAD5B1C&)
+        TableLo(230) = PROB_DD_SP_FromWords(&H3C40057E&, &HED1CA59F&)
+        TableHi(231) = PROB_DD_SP_FromWords(&HBFBA4E76&, &H40B1BC38&)
+        TableLo(231) = PROB_DD_SP_FromWords(&H3C55B5CA&, &H203E4259&)
+        TableHi(232) = PROB_DD_SP_FromWords(&HBFB9335E&, &H5D594989&)
+        TableLo(232) = PROB_DD_SP_FromWords(&H3C5478A8&, &H5704CCB7&)
+        TableHi(233) = PROB_DD_SP_FromWords(&HBFB8197E&, &H2F40E3F0&)
+        TableLo(233) = PROB_DD_SP_FromWords(&HBC3B9F2D&, &HFFBEED43&)
+        TableHi(234) = PROB_DD_SP_FromWords(&HBFB700D3&, &H0AEAC0E1&)
+        TableLo(234) = PROB_DD_SP_FromWords(&H3C272566&, &H212CDD05&)
+        TableHi(235) = PROB_DD_SP_FromWords(&HBFB5E95A&, &H4D9791CB&)
+        TableLo(235) = PROB_DD_SP_FromWords(&HBC5F3874&, &H5C5C450A&)
+        TableHi(236) = PROB_DD_SP_FromWords(&HBFB4D311&, &H5D207EAC&)
+        TableLo(236) = PROB_DD_SP_FromWords(&HBC5769F4&, &H2C7842CC&)
+        TableHi(237) = PROB_DD_SP_FromWords(&HBFB3BDF5&, &HA7D1EE64&)
+        TableLo(237) = PROB_DD_SP_FromWords(&HBC47A976&, &HD3B5B45F&)
+        TableHi(238) = PROB_DD_SP_FromWords(&HBFB2AA04&, &HA44717A5&)
+        TableLo(238) = PROB_DD_SP_FromWords(&H3C5D15D3&, &H8D2FA3F7&)
+        TableHi(239) = PROB_DD_SP_FromWords(&HBFB1973B&, &HD1465567&)
+        TableLo(239) = PROB_DD_SP_FromWords(&H3C475583&, &H67A6ACF6&)
+        TableHi(240) = PROB_DD_SP_FromWords(&HBFB08598&, &HB59E3A07&)
+        TableLo(240) = PROB_DD_SP_FromWords(&H3C5DD700&, &H9902BF32&)
+        TableHi(241) = PROB_DD_SP_FromWords(&HBFAEEA31&, &HC006B87C&)
+        TableLo(241) = PROB_DD_SP_FromWords(&H3C43E4FC&, &H93B7B66C&)
+        TableHi(242) = PROB_DD_SP_FromWords(&HBFACCB73&, &HCDDDB2CC&)
+        TableLo(242) = PROB_DD_SP_FromWords(&H3C4E48FB&, &H0500EFD4&)
+        TableHi(243) = PROB_DD_SP_FromWords(&HBFAAAEF2&, &HD0FB10FC&)
+        TableLo(243) = PROB_DD_SP_FromWords(&HBC2A353B&, &HB42E0ADD&)
+        TableHi(244) = PROB_DD_SP_FromWords(&HBFA894AA&, &H149FB343&)
+        TableLo(244) = PROB_DD_SP_FromWords(&HBC3A8BE9&, &H7660A23D&)
+        TableHi(245) = PROB_DD_SP_FromWords(&HBFA67C94&, &HF2D4BB58&)
+        TableLo(245) = PROB_DD_SP_FromWords(&HBC40413E&, &H6505E603&)
+        TableHi(246) = PROB_DD_SP_FromWords(&HBFA466AE&, &HD42DE3EA&)
+        TableLo(246) = PROB_DD_SP_FromWords(&H3C4CDD6F&, &H7F4A137E&)
+        TableHi(247) = PROB_DD_SP_FromWords(&HBFA252F3&, &H2F8D183F&)
+        TableLo(247) = PROB_DD_SP_FromWords(&H3C4947F7&, &H92615916&)
+        TableHi(248) = PROB_DD_SP_FromWords(&HBFA0415D&, &H89E74444&)
+        TableLo(248) = PROB_DD_SP_FromWords(&HBC4C05CF&, &H1D753622&)
+        TableHi(249) = PROB_DD_SP_FromWords(&HBF9C63D2&, &HEC14AAF2&)
+        TableLo(249) = PROB_DD_SP_FromWords(&H3C3CE030&, &HA686BD86&)
+        TableHi(250) = PROB_DD_SP_FromWords(&HBF984925&, &H28C8CABF&)
+        TableLo(250) = PROB_DD_SP_FromWords(&H3C3D192D&, &H0619FA67&)
+        TableHi(251) = PROB_DD_SP_FromWords(&HBF9432A9&, &H25980CC1&)
+        TableLo(251) = PROB_DD_SP_FromWords(&H3C38CDAF&, &H39004192&)
+        TableHi(252) = PROB_DD_SP_FromWords(&HBF902056&, &H58935847&)
+        TableLo(252) = PROB_DD_SP_FromWords(&HBC327C8E&, &H8416E71F&)
+        TableHi(253) = PROB_DD_SP_FromWords(&HBF882448&, &HA388A2AA&)
+        TableLo(253) = PROB_DD_SP_FromWords(&HBC104B16&, &H137F09A0&)
+        TableHi(254) = PROB_DD_SP_FromWords(&HBF801015&, &H7588DE71&)
+        TableLo(254) = PROB_DD_SP_FromWords(&HBC146662&, &HD417CED0&)
+        TableHi(255) = PROB_DD_SP_FromWords(&HBF700805&, &H59588B35&)
+        TableLo(255) = PROB_DD_SP_FromWords(&HBC1F9663&, &H8CF63677&)
+        TableHi(256) = PROB_DD_SP_FromWords(&H00000000&, &H00000000&)
+        TableLo(256) = PROB_DD_SP_FromWords(&H00000000&, &H00000000&)
+        Ln2Hi = PROB_DD_SP_FromWords(&H3FE62E42&, &HFEFA39EF&)
+        Ln2Lo = PROB_DD_SP_FromWords(&H3C7ABC9E&, &H3B39803F&)
+        Sign = 1#
+        For J = 0 To 7
+            S(J) = Sign / CDbl(J + 3)
+            Sign = -Sign
+        Next J
+        Ready = True
+    End If
+    Field = PROB_B64_Field(YH)
+    E = Field - 1022
+    Scale2 = PROB_B64_Pow2(2045 - Field)
+    M = YH * Scale2
+    K = CLng(Int(M * 256# + 0.5))
+    C = CDbl(K) / 256#
+    VH = M - C
+    VL = YL * Scale2
+    PROB_B64_TwoSum VH, VL, WH, WL
+    PROB_B64_PairDiv WH, WL, C, UH, UL
+    PROB_B64_TwoProd UH, UH, SH, SL
+    T = 2# * UH
+    T = T * UL
+    SL = SL + T
+    SH = SH * 0.5
+    SL = SL * 0.5
+    Poly = S(7)
+    For J = 6 To 0 Step -1
+        Poly = Poly * UH
+        Poly = Poly + S(J)
+    Next J
+    Cube = UH * UH
+    Cube = Cube * UH
+    Cube = Cube * Poly
+    PROB_B64_PairAdd UH, UL, -SH, -SL, AH, AL
+    PROB_B64_PairAdd AH, AL, Cube, 0#, AH, AL
+    PROB_B64_PairAdd AH, AL, TableHi(K), TableLo(K), AH, AL
+    PROB_B64_PairMul Ln2Hi, Ln2Lo, CDbl(E), EH, EL
+    PROB_B64_PairAdd AH, AL, EH, EL, LH, LL
+End Sub
+
+Private Sub PROB_B64_Deviance(ByVal A As Double, ByVal X As Double, ByRef DH As Double, ByRef DL As Double)
+'==============================================================================
+' PROB_B64_Deviance
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Loader's deviance D = A log(A/X) + X - A = A (T - log(1 + T)),
+'   T = X/A - 1, as a pair accurate to about 1E-17 absolute.
+' NOTES
+'   Raises error 5 when X / A has a biased exponent field outside
+'   1 .. {RM.EXPONENT_FIELD[1]}; the calling route then declines.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim Q As Double, YH As Double, YL As Double, TH As Double, TL As Double
+    Dim LH As Double, LL As Double, GH As Double, GL As Double, Field As Long
+    Q = X / A
+    Field = PROB_B64_Field(Q)
+    If Field < 1 Or Field > 2000 Then Err.Raise 5
+    PROB_B64_PairDiv X, 0#, A, YH, YL
+    PROB_B64_PairAdd YH, YL, -1#, 0#, TH, TL
+    PROB_B64_PairLog YH, YL, LH, LL
+    PROB_B64_PairAdd TH, TL, -LH, -LL, GH, GL
+    PROB_B64_PairMul GH, GL, A, DH, DL
+End Sub
+
+Private Function PROB_B64_Factor(ByVal A As Double, ByVal X As Double) As Double
+'==============================================================================
+' PROB_B64_Factor
+'------------------------------------------------------------------------------
+' PURPOSE
+'   x^A e^-x / Gamma(A) for A > 0 and X > 0.
+'   A > 1: sqrt(A / (2 pi)) exp(-(D + stirlerr(A))), with the exponent
+'   kept as a pair, exp(EH) (1 + EL).
+'   A <= 1: A e^-X exp(A log X - log Gamma(1 + A)), as the small-shape
+'   factor of PROB_TryGammaContinuedFractionQ.
+' NOTES
+'   Returns 0 where the factor is below about 1E-307 (X >= 708 at A <= 1,
+'   EH < -708 above): every probability it scales is then below 1E-300.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim F As Double, LX As Double, EX As Double, Corr As Double
+    Dim DH As Double, DL As Double, Stir As Double, EH As Double, EL As Double
+    Dim Root As Double, T As Double
+    If A <= 1# Then
+        If X >= 708# Then
+            PROB_B64_Factor = 0#
+            Exit Function
+        End If
+        F = Exp(-X)
+        LX = Log(X)
+        EX = A * LX - PROB_GammaSmallLogGamma1p(A)
+        Corr = Exp(EX)
+        F = A * F
+        PROB_B64_Factor = F * Corr
+        Exit Function
+    End If
+    PROB_B64_Deviance A, X, DH, DL
+    Stir = PROB_StirlingError(A)
+    PROB_B64_TwoSum -DH, -Stir, EH, EL
+    If EH < -708# Then
+        PROB_B64_Factor = 0#
+        Exit Function
+    End If
+    EL = EL - DL
+    Root = A / PROB_DD_SP_FromWords(&H401921FB&, &H54442D18&)
+    Root = Sqr(Root)
+    F = Exp(EH)
+    F = Root * F
+    T = F * EL
+    PROB_B64_Factor = F + T
+End Function
+
+Public Function PROB_TryGammaB64SeriesP( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'==============================================================================
+' PROB_TryGammaB64SeriesP
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(A, X) for 0 < X < A + 1 by the lower series in binary64 (#307): the
+'   recurrence of PROB_TryGammaSeriesP with a compensated (Kahan) sum, times
+'   PROB_B64_Factor. It stops once the term is below an ulp of the sum and the
+'   remaining terms, which fall at least geometrically by X / (Ap + 1), sum to
+'   at most half an ulp.
+' NOTES
+'   False (declined) clears Result: invalid arguments, the 100000-iteration
+'   cap, a deviance outside its range or any runtime error. The caller then
+'   answers with the double-double kernel.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim Ap As Double, SumValue As Double, Del As Double, Carry As Double
+    Dim S As Double, T As Double, Room As Double, Bound As Double, Limit As Double
+    Dim Eps As Double, HalfEps As Double, IterIdx As Long
+    Result = 0#: FailMsg = ""
+    On Error GoTo Declined
+    If Not (A > 0# And X > 0# And X < A + 1#) Then GoTo Declined
+    Eps = PROB_B64_Pow2(971)
+    HalfEps = PROB_B64_Pow2(970)
+    Ap = A
+    SumValue = 1# / A
+    Del = SumValue
+    Carry = 0#
+    For IterIdx = 1 To PROB_GAMMA_MAX_ITER
+        Ap = Ap + 1#
+        Del = Del * X / Ap
+        S = SumValue + Del
+        T = S - SumValue
+        T = Del - T
+        Carry = Carry + T
+        SumValue = S
+        If Abs(Del) <= Abs(SumValue) * Eps Then
+            Room = Ap + 1#
+            Room = Room - X
+            If Room > 0# Then
+                Bound = Del * X
+                Limit = SumValue * HalfEps
+                Limit = Limit * Room
+                If Bound <= Limit Then
+                    SumValue = SumValue + Carry
+                    Result = SumValue * PROB_B64_Factor(A, X)
+                    PROB_TryGammaB64SeriesP = True
+                    Exit Function
+                End If
+            End If
+        End If
+    Next IterIdx
+Declined:
+    Result = 0#
+    FailMsg = "binary64 Gamma series declined"
+End Function
+
+Public Function PROB_TryGammaB64ContinuedFractionQ( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'==============================================================================
+' PROB_TryGammaB64ContinuedFractionQ
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Q(A, X) for X >= A + 1 by the continued fraction in binary64 (#307): the
+'   modified Lentz recurrence of PROB_TryGammaContinuedFractionQ stopped at
+'   machine epsilon at every shape, with its backward re-evaluation at shape 1
+'   and below, times PROB_B64_Factor.
+' NOTES
+'   False (declined) clears Result: invalid arguments, the 100000-iteration
+'   cap, a deviance outside its range or any runtime error. The caller then
+'   answers with the double-double kernel.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim B As Double, C As Double, D As Double, H As Double, An As Double, Del As Double
+    Dim Eps As Double, Base As Double, Tail As Double, IterIdx As Long, BackIdx As Long
+    Result = 0#: FailMsg = ""
+    On Error GoTo Declined
+    If Not (A > 0# And X >= A + 1#) Then GoTo Declined
+    Eps = PROB_B64_Pow2(971)
+    B = X + 1# - A
+    If Abs(B) < PROB_FPMIN Then B = PROB_FPMIN
+    C = 1# / PROB_FPMIN
+    D = 1# / B
+    H = D
+    For IterIdx = 1 To PROB_GAMMA_MAX_ITER
+        An = -CDbl(IterIdx) * (CDbl(IterIdx) - A)
+        B = B + 2#
+        D = An * D + B
+        If Abs(D) < PROB_FPMIN Then D = PROB_FPMIN
+        C = B + An / C
+        If Abs(C) < PROB_FPMIN Then C = PROB_FPMIN
+        D = 1# / D
+        Del = D * C
+        H = H * Del
+        If Abs(Del - 1#) <= Eps Then
+            If A <= 1# Then
+                Base = X + 1# - A
+                Tail = 0#
+                For BackIdx = IterIdx To 1 Step -1
+                    Tail = (-CDbl(BackIdx) * (CDbl(BackIdx) - A)) / (Base + 2# * CDbl(BackIdx) + Tail)
+                Next BackIdx
+                Tail = Base + Tail
+                H = 1# / Tail
+            End If
+            Result = PROB_B64_Factor(A, X) * H
+            PROB_TryGammaB64ContinuedFractionQ = True
+            Exit Function
+        End If
+    Next IterIdx
+Declined:
+    Result = 0#
+    FailMsg = "binary64 Gamma continued fraction declined"
+End Function
+' END generated binary64 Gamma route (#307)
+

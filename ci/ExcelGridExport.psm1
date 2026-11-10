@@ -45,7 +45,7 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
-    "glq_lower_q", "gbr_binary64_map"
+    "glq_lower_q", "gbr_binary64_map", "gbf_b64_fit"
 )
 
 function Get-StudyGridNames {
@@ -110,7 +110,7 @@ function Get-ExportGridSpec {
         [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
                      "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
                      "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
-                     "glq_lower_q", "gbr_binary64_map")]
+                     "glq_lower_q", "gbr_binary64_map", "gbf_b64_fit")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -234,6 +234,12 @@ function Get-ExportGridSpec {
                 -FileName "binary64_map_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_GBR.bas" -Macro "Export_GammaBinary64Map" `
                 -Columns 13 -KeyColumns 5 -SuccessPrefix "Gamma binary64 route map complete: "
+        }
+        "gbf_b64_fit" {
+            return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "gbf_b64_fit" `
+                -FileName "b64_fit_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_GBF.bas" -Macro "Export_GammaB64Fit" `
+                -Columns 14 -KeyColumns 5 -SuccessPrefix "Gamma binary64 route fit complete: "
         }
         "tchi_large_df" {
             return [pscustomobject][ordered]@{

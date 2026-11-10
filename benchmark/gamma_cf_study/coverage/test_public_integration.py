@@ -2,7 +2,7 @@
 import re
 import unittest
 from install_scaled_fidelity import documented
-from public_integration import ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore,live_total
+from public_integration import b64,ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore,live_total
 
 
 class PublicIntegrationTests(unittest.TestCase):
@@ -17,9 +17,10 @@ class PublicIntegrationTests(unittest.TestCase):
         source=procedures(current)
         for tail in ('P','Q'):
             self.assertEqual(source['PROB_TryGammaRegularized'+tail],adapter(tail))
-        # No unreviewed public/API/module expansion.
+        # No unreviewed public/API/module expansion: only the two internal
+        # binary64 routines of #307 (b64_route_vba.py), in the private layer.
         self.assertEqual(re.findall(r'^Public (?:Function|Sub|Const) (\w+)',current,re.M),
-                         re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M))
+                         re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M)+list(b64.PUBLIC))
         for path in (ROOT/'src').glob('*.bas'):
             rel=path.relative_to(ROOT).as_posix()
             if rel!=SRC:
