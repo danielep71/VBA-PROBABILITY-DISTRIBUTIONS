@@ -1360,7 +1360,7 @@ The library is particularly suited to:
 ## Current boundaries
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
-- Gamma, Chi-square and Poisson probabilities are evaluated in double-double arithmetic, which is markedly slower per call than a binary64 kernel;
+- Gamma, Chi-square and Poisson probabilities are evaluated in double-double arithmetic: in Excel 16.0, 64-bit, one Gamma P or Q call takes from about 5 ms to 170 ms, against 2 to 39 microseconds for the binary64 routine it replaced ([measurement](benchmark/harness_timing/RESULT.md)), so large worksheets recalculate slowly;
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
 - a self-hosted Excel runner must be online and correctly configured for CI execution;

@@ -87,6 +87,23 @@ def main():
           'Write-CiLog "COST $line"' in bridge,
           "the cost benchmark does not run after a green regression")
 
+    # 5. The retained log is the certified one and holds the full record.
+    import hashlib
+    sys.path.insert(0, os.path.join(HERE, "harness_timing"))
+    import summarize_timing as S
+    log = os.path.join(HERE, "harness_timing", "run_42766552574_log.txt")
+    # Git stores *.txt with LF; the runner wrote CRLF. The certified bytes are
+    # the stored text with CRLF line ends.
+    with open(log, "rb") as f:
+        crlf = f.read().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    digest = hashlib.sha256(crlf).hexdigest()
+    check(digest == "b0a77d84f8c7818d0e1f7939afbc5328477266159c8ec98c7fb7a30afb7f34dd",
+          "the retained log is not the one run 42766552574's record binds")
+    suites, procs, cost = S.parse(log)
+    check(len(suites) == 5 and len(procs) == calls and len(cost) == 24
+          and all(ok for _, _, ok in cost.values()),
+          "the retained log does not hold 5 suites, every lap and 24 successful costs")
+
     if fails:
         print("FAIL: #298 harness timing")
         for f in fails:
