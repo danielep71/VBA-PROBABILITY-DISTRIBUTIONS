@@ -143,6 +143,14 @@ Use only the categories needed by a release.
   `benchmark/harness_timing/`.
 - #307, the per-call cost of the double-double Gamma kernel, is registered as
   a v1.0.0 release blocker under a new `performance` class: 9 open blockers.
+- #307: a repaired binary64 Gamma route, `PROB_TryGammaB64SeriesP` and
+  `PROB_TryGammaB64ContinuedFractionQ`, is added to the internal layer. It has an
+  accurate deviance, an exponent kept as a pair, a compensated and properly stopped lower
+  series, and a continued fraction stopped at machine epsilon. No public function
+  calls it yet. Its fit set (`benchmark/gamma_route_study/FIT_DESIGN.md`) measures in
+  Excel its bit-for-bit agreement with the Python model, and its cost per call. That cost
+  fixes the shape ceiling of the routing rule, which is then preregistered against the
+  frozen holdout.
 - #300: the six study batteries that compare private ports of the #26
   arithmetic with their Python models (Precision v2, scaled product, scaled
   double-double, scaled, extended and wide Gamma; 8,901 assertions) leave the

@@ -109,6 +109,10 @@
 *.toml          text eol=lf
 *.cfg           text eol=lf
 *.svg           text eol=lf
+# Excel wrote this study grid's diagnostic column verbatim, with a trailing
+# space where a routine returned no diagnostic (run 42798193976). The export
+# is evidence and is never edited, so whitespace is not checked in it (#307).
+benchmark/gamma_route_study/b64_fit_grid.csv text eol=lf -whitespace
 
 .editorconfig   text eol=lf
 .gitattributes  text eol=lf
