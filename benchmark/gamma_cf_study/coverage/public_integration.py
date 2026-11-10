@@ -9,7 +9,10 @@ from functools import lru_cache
 import json
 import re
 import subprocess
+import sys
 from install_scaled_fidelity import HERE,ROOT,literal,documented
+sys.path.insert(0,str(ROOT/'benchmark'))
+import _harness_timing as harness  # noqa: E402
 
 PORT='b8efaf3c7810c48fadbfece38950ded190f79a56'
 SRC='src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
@@ -387,7 +390,9 @@ def change_controls(text,reverse=False):
 
 
 def restore(text):
-    """Exact inverse of this generator; only for historical replay fixtures."""
+    """Exact inverse of this generator; only for historical replay fixtures.
+    The harness timing of #298 is not part of any frozen study: it goes first."""
+    text=harness.strip(text)
     path=module_path(text)
     if path in AMENDMENTS and path!=SRC:
         return amend(path,text,reverse=True) if amended(path,text) else text
@@ -424,6 +429,7 @@ def install():
     text=restore((ROOT/TEST).read_text());text=change_controls(text)
     text=text.replace("' BEGIN generated wide-Gamma study",test_block()+"' BEGIN generated wide-Gamma study",1)
     text=text.replace('    Test_WideGamma_Fidelity\n','    Test_WideGamma_Fidelity\n    Test_PublicGamma_Integration\n',1)
+    text=harness.apply(text)
     (ROOT/TEST).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     p=ROOT/'.github/excel-evidence-policy.json';policy=json.loads(p.read_text())
     assert policy['expected_assertions'] in (10848,13182,10848+4030,10848+4038,10848+EXTRA)

@@ -262,6 +262,7 @@ Public Function Test_STATS_PROBDIST_RunAll_CI() As String
 '
     On Error GoTo Err_Handler
 
+    HarnessTiming "reset"
     BeginRun "ALL SUITES - GITHUB ACTIONS"
     RunCoreSuite
     RunNormalFamilySuite
@@ -284,6 +285,58 @@ End Function
 
 Public Function Test_STATS_PROBDIST_GetFailureLog_CI() As String
     Test_STATS_PROBDIST_GetFailureLog_CI = mFailureLog
+End Function
+
+Public Function Test_STATS_PROBDIST_GetTiming_CI() As String
+    'Seconds per test procedure, one "label seconds" line each (#298).
+    Test_STATS_PROBDIST_GetTiming_CI = HarnessTiming("read")
+End Function
+
+Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
+    'Microseconds per call of the Gamma P/Q kernel (#298), outside the
+    'assertion count: the public double-double route against the binary64
+    'routine that answered the same region before #242 (the lower series below
+    'X = A + 1, the continued fraction above it). Each timing repeats the call
+    'until at least 0.5 s has elapsed.
+    Dim Points As Variant, I As Long, A As Double, X As Double
+    Dim Out As String
+    Points = Array(0.0001, 0.5, 0.5, 0.25, 2.5, 1#, 2.5, 6#, 100#, 90#, 100#, 110#, _
+                   10000#, 9900#, 10000#, 10100#)
+    For I = 0 To UBound(Points) Step 2
+        A = Points(I): X = Points(I + 1)
+        Out = Out & GammaCostLine(A, X, "dd_p") & GammaCostLine(A, X, "dd_q") & _
+              GammaCostLine(A, X, "binary64")
+    Next I
+    Test_STATS_PROBDIST_GammaCost_CI = Out
+End Function
+
+Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String) As String
+    Dim N As Long, K As Long, T0 As Double, Elapsed As Double
+    Dim V As Double, M As String, OK As Boolean
+    N = 16
+    Do
+        T0 = Timer
+        For K = 1 To N
+            Select Case Route
+                Case "dd_p": OK = PROB_TryGammaRegularizedP(A, X, V, M)
+                Case "dd_q": OK = PROB_TryGammaRegularizedQ(A, X, V, M)
+                Case Else
+                    If X < A + 1# Then
+                        OK = PROB_TryGammaSeriesP(A, X, V, M)
+                    Else
+                        OK = PROB_TryGammaContinuedFractionQ(A, X, V, M)
+                    End If
+            End Select
+        Next K
+        Elapsed = Timer - T0
+        If Elapsed < 0# Then Elapsed = Elapsed + 86400#
+        If Elapsed >= 0.5 Or N >= 536870912 Then Exit Do
+        N = N * 2
+    Loop
+    GammaCostLine = Route & " A=" & Replace(CStr(A), ",", ".") & " X=" & Replace(CStr(X), ",", ".") & _
+        " ok=" & IIf(OK, "1", "0") & _
+        " calls=" & CStr(N) & " us_per_call=" & _
+        Replace(Format$(Elapsed / N * 1000000#, "0.000"), ",", ".") & vbLf
 End Function
 '@
 
@@ -324,6 +377,16 @@ End Function
     Write-CiLog "Assertions passed: $passed"
     Write-CiLog "Assertions failed: $failed"
 
+    # Seconds per test procedure (#298). The log is bound to the certification
+    # record by its SHA-256, so the timings are part of the certified evidence.
+    $timingMacro = "'" + $workbook.Name + "'!Test_STATS_PROBDIST_GetTiming_CI"
+    $timing = [string]$excel.Run($timingMacro)
+    foreach ($line in ($timing -split "`r?`n")) {
+        if (-not [string]::IsNullOrWhiteSpace($line)) {
+            Write-CiLog "TIMING $line"
+        }
+    }
+
     if ($failed -gt 0) {
         $logMacro = "'" + $workbook.Name + "'!Test_STATS_PROBDIST_GetFailureLog_CI"
         $failureLog = [string]$excel.Run($logMacro)
@@ -363,6 +426,16 @@ End Function
         $stages.regression.status = "PASS"
         $stages.regression.detail = "Complete policy-declared regression: $passed/$total assertions passed"
         $exitCode = 0
+
+        # Per-call cost of the Gamma P/Q kernel (#298), after a complete green
+        # regression and outside the assertion count.
+        $costMacro = "'" + $workbook.Name + "'!Test_STATS_PROBDIST_GammaCost_CI"
+        $cost = [string]$excel.Run($costMacro)
+        foreach ($line in ($cost -split "`r?`n")) {
+            if (-not [string]::IsNullOrWhiteSpace($line)) {
+                Write-CiLog "COST $line"
+            }
+        }
     }
 }
 catch {
