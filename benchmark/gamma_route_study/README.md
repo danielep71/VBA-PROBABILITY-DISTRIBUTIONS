@@ -16,3 +16,5 @@ derived from it will be preregistered and validated on untouched points.
 | `M_STATS_PROBDIST_GBR.bas` | `Export_GammaBinary64Map`: calls the binary64 series and continued fraction at every point. The runner exports it as the study grid `gbr_binary64_map` |
 | `analyze_binary64_map.py` | Scores the pre-#242 route against the governing contract at every point |
 | `test_binary64_map.py` | Proves the grid is the design and the analyzer forms the pre-#242 complement; it runs in the evidence-tool suite |
+| [`MAP_RESULT.md`](MAP_RESULT.md), `map_results.json` | The map's result (run 42783017314) |
+| `analyze_exact_deviance.py` | Diagnosis: the binary64 route with an exact deviance |
