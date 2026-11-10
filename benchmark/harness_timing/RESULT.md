@@ -56,6 +56,43 @@ with `Gamma_Cumulative` at shape 100 recalculates for about 2.5 minutes.
 
 - **#300.** The study batteries are the whole runtime of the suite. Moving
   them to a study export, and keeping regression cases in the suite, would
-  cut it from about 10 minutes to well under one.
+  cut it from about 10 minutes to well under one. *Corrected by the #300
+  result below: this run timed `Test_CN_GammaSurvival` as one block, and the
+  attribution to the study batteries was wrong.*
 - **The kernel's cost.** This is a usability defect of #242's kernel, not of
   the harness. It is recorded as its own issue.
+
+## #300 result: the study batteries split off (2026-11-10)
+
+Excel VBA Regression run 42775390763, candidate `5c1d66d`, evidence commit
+`2130def`, same runner and Excel build. The six private-port batteries now run
+apart, in `RunStudyBatteries`. The certified log is kept as
+[`run_42775390763_log.txt`](run_42775390763_log.txt). Stored with LF line
+ends, it hashes with CRLF line ends to the SHA-256 its record binds,
+`16ce9124b779fa507f54ac5823489196357e319974980c6e4bffab290b08b3a7`.
+
+| Part | Assertions | Elapsed in the log |
+| --- | ---: | ---: |
+| Regression (`Test_STATS_PROBDIST_RunAll_CI`) | 5,987 / 5,987 | 7 min 35 s |
+| Study batteries (`Test_STATS_PROBDIST_RunStudies_CI`) | 8,901 / 8,901 | 1 min 10 s |
+
+| Procedure | Seconds |
+| --- | ---: |
+| `Test_CN_GammaSurvival` (now without the six batteries) | 419.0 |
+| `Test_WideGamma_Fidelity` (study) | 51.9 |
+| `Test_TF_ChiSquareLargeDF` | 28.7 |
+| `Test_ExtendedGamma_Fidelity` (study) | 10.2 |
+| every other procedure | under 4.3 each |
+
+The prediction above was wrong. The six batteries took 70 s, not the bulk of
+the 580 s. Most of the time is in what `Test_CN_GammaSurvival` still runs:
+- the four `Test_GammaCF_*` batteries;
+- `Test_PublicGamma_Integration`;
+- its own assertions.
+
+All of these call the production kernel at 5 ms to 170 ms per call (#307).
+The study batteries' private ports are far cheaper.
+
+The regression a pull request runs falls from about 10 minutes to about 7.5.
+The rest of the suite's runtime is the kernel's cost, so #307 is what can
+shorten it further.

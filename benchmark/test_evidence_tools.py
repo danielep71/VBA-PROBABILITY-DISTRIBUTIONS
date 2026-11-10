@@ -16,6 +16,7 @@ failures = []
 commands = (
     ("test_contract_eval.py",),
     ("test_harness_timing.py",),
+    ("test_harness_studies.py",),
     ("positive_ratio_subnormal/check_post23_cutoffs.py",),
     ("test_grid_coverage.py",),
     ("test_cross_check_scipy.py",),

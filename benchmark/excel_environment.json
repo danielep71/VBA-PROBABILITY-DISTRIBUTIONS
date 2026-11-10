@@ -2,6 +2,6 @@
   "excel_version": "16.0",
   "excel_build": "20430",
   "office_bitness": "64",
-  "commit_sha": "cdddfbef55460005ab853974e989bae3c8a84b50",
+  "commit_sha": "5c1d66da786900587fa419747a8bef0eb971d8a5",
   "commit_sha_recorded_by": "ci/Export-ExcelGrids.ps1"
 }

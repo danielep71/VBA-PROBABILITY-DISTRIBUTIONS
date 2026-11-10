@@ -2,7 +2,7 @@
 Timing instrumentation of the VBA regression harness (#298).
 
 tests/M_STATS_PROBDIST_TEST.bas records how long each test procedure takes:
-the five suite drivers call TimingStart once and TimingLap after every test
+the suite drivers, and the study driver of #300, call TimingStart once and TimingLap after every test
 procedure, and one marked block holds the three procedures that keep the
 record. The CI bridge (ci/Run-ExcelVbaTests.ps1) reads it after the run and
 writes it to the Excel log, which the certification record binds by SHA-256.
@@ -21,7 +21,7 @@ import re
 BEGIN = "' BEGIN harness timing (#298)"
 END = "' END harness timing (#298)"
 DRIVERS = ("RunCoreSuite", "RunNormalFamilySuite", "RunTFamilySuite",
-           "RunContinuousSuite", "RunDiscreteSuite")
+           "RunContinuousSuite", "RunDiscreteSuite", "RunStudyBatteries")
 ANCHOR = "Private Sub BeginRun("
 CALL = re.compile(r"^    (Test_\w+)$")
 INSTRUMENT = re.compile(r'^    Timing(?:Start|Lap) "\w+"\n', re.M)

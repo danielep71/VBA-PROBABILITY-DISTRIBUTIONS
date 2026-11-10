@@ -845,6 +845,59 @@ End Sub
 ' RUN HARNESS
 '==============================================================================
 
+' BEGIN study batteries (#300)
+Public Sub Test_STATS_PROBDIST_RunStudies()
+'
+'==============================================================================
+' Test_STATS_PROBDIST_RunStudies
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the study batteries: the bit-for-bit fidelity checks of the private
+'   arithmetic ports of the #26 studies, kept apart from the regression (#300).
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs RunStudyBatteries.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' GENERATED
+'   By benchmark/_harness_studies.py. Do not edit by hand.
+'==============================================================================
+'
+    BeginRun "STUDY BATTERIES"
+    RunStudyBatteries
+    EndRun
+End Sub
+
+
+Private Sub RunStudyBatteries()
+'
+'==============================================================================
+' RunStudyBatteries
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls the six study batteries that compare private ports of the #26 study
+'   arithmetic with their frozen Python models (#300).
+'==============================================================================
+'
+    Debug.Print "== STUDY BATTERIES: private arithmetic ports of the #26 studies"
+    TimingStart "RunStudyBatteries"
+    Test_PrecisionV2_Fidelity
+    TimingLap "Test_PrecisionV2_Fidelity"
+    Test_ScaledProduct_Fidelity
+    TimingLap "Test_ScaledProduct_Fidelity"
+    Test_ScaledDD_Fidelity
+    TimingLap "Test_ScaledDD_Fidelity"
+    Test_ScaledGamma_Fidelity
+    TimingLap "Test_ScaledGamma_Fidelity"
+    Test_ExtendedGamma_Fidelity
+    TimingLap "Test_ExtendedGamma_Fidelity"
+    Test_WideGamma_Fidelity
+    TimingLap "Test_WideGamma_Fidelity"
+End Sub
+' END study batteries (#300)
+
+
 ' BEGIN harness timing (#298)
 Private Function HarnessTiming( _
     ByVal Action As String, _
@@ -19090,12 +19143,6 @@ Private Sub Test_CN_GammaSurvival()
     Test_GammaCF_AdditionalCallers
     Test_GammaCF_CapAndXSeam
     Test_GammaCF_PrecisionCounterexample
-    Test_PrecisionV2_Fidelity
-    Test_ScaledProduct_Fidelity
-    Test_ScaledDD_Fidelity
-    Test_ScaledGamma_Fidelity
-    Test_ExtendedGamma_Fidelity
-    Test_WideGamma_Fidelity
     Test_PublicGamma_Integration
 
     'Normalize before asserting: this must test relative, not tiny absolute error.

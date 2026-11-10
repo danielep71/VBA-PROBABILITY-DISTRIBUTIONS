@@ -1,8 +1,8 @@
 """
 Proofs for the harness timing of #298 (_harness_timing.py).
 
-  1. The committed test module is exactly apply(strip(module)): five
-     TimingStart lines, one TimingLap after every test procedure the five
+  1. The committed test module is exactly apply(strip(module)): one
+     TimingStart line per driver, one TimingLap after every test procedure the
      suite drivers call, and the generated block before BeginRun.
   2. strip() removes everything apply() adds, and nothing else.
   3. A hand-edited timing block, a driver call without its lap, and a
@@ -39,7 +39,7 @@ def main():
 
     # 1. The committed module is the generator's output.
     check(H.apply(bare) == module, "the committed module is not apply(strip(module))")
-    check(module.count('    TimingStart "') == 5, "expected one TimingStart per suite driver")
+    check(module.count('    TimingStart "') == len(H.DRIVERS), "expected one TimingStart per driver")
     calls = laps = 0
     for name in H.DRIVERS:
         start, end = H._driver_span(module, name)
@@ -58,7 +58,7 @@ def main():
     # 2. strip() removes exactly the instrumentation.
     check(not H.instrumented(bare), "strip() left instrumentation behind")
     added = len(module.splitlines()) - len(bare.splitlines())
-    check(added == 5 + calls + len(H.BLOCK.splitlines()),
+    check(added == len(H.DRIVERS) + calls + len(H.BLOCK.splitlines()),
           f"strip() removed {added} lines, not the instrumentation alone")
 
     # 3. Drift is refused or detected.
@@ -100,7 +100,8 @@ def main():
     check(digest == "b0a77d84f8c7818d0e1f7939afbc5328477266159c8ec98c7fb7a30afb7f34dd",
           "the retained log is not the one run 42766552574's record binds")
     suites, procs, cost = S.parse(log)
-    check(len(suites) == 5 and len(procs) == calls and len(cost) == 24
+    # Run 42766552574 predates #300: five drivers and 103 procedures.
+    check(len(suites) == 5 and len(procs) == 103 and len(cost) == 24
           and all(ok for _, _, ok in cost.values()),
           "the retained log does not hold 5 suites, every lap and 24 successful costs")
 
@@ -109,7 +110,7 @@ def main():
         for f in fails:
             print("  - " + f)
         return 1
-    print(f"PASS: #298 harness timing: {calls} test procedures timed in 5 drivers; "
+    print(f"PASS: #298 harness timing: {calls} test procedures timed in {len(H.DRIVERS)} drivers; "
           "the module is the generator's output and the CI bridge logs it")
     return 0
 

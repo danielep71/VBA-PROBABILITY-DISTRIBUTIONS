@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "entry_point": "Test_STATS_PROBDIST_RunStudies_CI",
+  "expected_assertions": 8901,
+  "batteries": {
+    "Test_PrecisionV2_Fidelity": 500,
+    "Test_ScaledProduct_Fidelity": 4657,
+    "Test_ScaledDD_Fidelity": 611,
+    "Test_ScaledGamma_Fidelity": 475,
+    "Test_ExtendedGamma_Fidelity": 1772,
+    "Test_WideGamma_Fidelity": 886
+  }
+}
