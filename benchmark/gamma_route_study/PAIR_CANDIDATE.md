@@ -72,3 +72,22 @@ preservation. Missing/failed checks invalidate the report. Probe error handlers
 return explicit ERROR diagnostics to fail the harness, and the current input
 ID is retained if a runtime error interrupts a call. No numerical tolerance,
 model output or domain boundary is changed; full fidelity/cost must be rerun.
+
+## Second host attempt: exact-input transport correction
+
+Run 43062050989 at ed44d02807d061fbe3bd062c7c13154384ec0dc2 passed
+all 11 normalization checks and the first eight fidelity inputs. The ninth
+input echo differed: requested X bits 3FF0000002AF31D2, observed
+3FF0000002AF31D1 (the immediately preceding Double). Its output therefore
+repeats the preceding row, and is not a same-input numerical counterexample.
+The report retains nine rows, zero timings, `Input echo mismatch`, and no
+cleanup error. Artifact 13875295233 ZIP SHA-256 verified before extraction:
+3e326af5d0ebfecb7c1f0f0d90dd912051ae169fd2bfe86b558612d94a767465.
+
+The fidelity loop previously passed decimal values parsed by Windows
+PowerShell ConvertFrom-Json. It now reconstructs A and X from the existing
+16-hex-digit IEEE words in each case ID, using UInt64/BitConverter, avoiding
+decimal parsing of neighboring inputs. The unchanged Excel echo check still
+rejects any transport discrepancy. Model predictions, tolerances, kernel,
+normalization check and input matrix are unchanged. Repeat the complete wave;
+partial runs are not combined and no timing claim is available.

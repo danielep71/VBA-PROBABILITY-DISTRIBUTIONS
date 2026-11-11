@@ -6,6 +6,11 @@ $excel = $null
 $book = $null
 $report = [ordered]@{status='FAIL'; candidate_sha=''; excel_version=''; excel_build=''; rows=@(); timings=@(); error=''; cleanup_error=''; normalization_check=''; current_case=''}
 $inv = [Globalization.CultureInfo]::InvariantCulture
+function ConvertFrom-DoubleBits([string]$Hex) {
+    if ($Hex -cnotmatch '^[0-9A-F]{16}$') { throw 'Invalid IEEE Double token' }
+    $word = [Convert]::ToUInt64($Hex, 16)
+    return [BitConverter]::ToDouble([BitConverter]::GetBytes([UInt64]$word), 0)
+}
 try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
     & git -C $RepositoryRoot diff --exit-code HEAD -- src benchmark/gamma_route_study
@@ -30,7 +35,11 @@ try {
     if ($report.normalization_check -ne "PASS checks=11") { throw "Normalization check failed" }
     foreach ($case in $inputData.cases) {
         $report.current_case = $case.id
-        $raw = [string]$excel.Run($macro, [double]$case.a, [double]$case.x, $false, 0)
+        $words = $case.id -split ':'
+        if ($words.Count -ne 2) { throw 'Invalid exact-input ID' }
+        $caseA = ConvertFrom-DoubleBits $words[0]
+        $caseX = ConvertFrom-DoubleBits $words[1]
+        $raw = [string]$excel.Run($macro, [double]$caseA, [double]$caseX, $false, 0)
         $report.rows += [ordered]@{id=$case.id; raw=$raw}
         $fields = $raw -split ','
         if ($fields[0] -eq 'DECLINED') {
