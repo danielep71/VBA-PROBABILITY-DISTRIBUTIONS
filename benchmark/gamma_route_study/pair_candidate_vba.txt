@@ -1,0 +1,112 @@
+Private Function B4_Check(ByVal V As Variant) As Variant
+    Dim H As Double, L As Double
+    H = PROB_DD_PV2_H(V): L = PROB_DD_PV2_L(V)
+    If Not PROB_IsFinite(H) Or Not PROB_IsFinite(L) Then Err.Raise 5, "B4", "nonfinite pair"
+    If H <> 0# Then
+        If Abs(H) < 2# ^ (-450) Or Abs(H) > 2# ^ 450 Then Err.Raise 5, "B4", "pair range"
+    End If
+    B4_Check = V
+End Function
+Private Function B4_Scaled(ByVal V As Variant) As Variant
+    Dim H As Double, L As Double, E As Long, T As Variant, RawH As Double
+    T = PROB_DD_PV2_Sum(PROB_DD_PV2_H(V), PROB_DD_PV2_L(V))
+    RawH = T(0): L = T(1)
+    If RawH = 0# Then
+        B4_Scaled = Array(RawH, 0#, 0&): Exit Function
+    End If
+    PROB_DD_SP_Frexp RawH, H, E
+    L = PROB_DD_SP_Shift(L, -E)
+    PROB_DD_SGD_Canonicalize H, L, E
+    If Not PROB_DD_SGD_Valid(H, L, E) Then Err.Raise 5, "B4_Scaled", "invalid normalized pair"
+    B4_Scaled = Array(H, L, E)
+End Function
+Public Function B4_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    Dim AA As Variant, XX As Variant, LP As Variant, Dev As Variant, Constant As Variant
+    Dim Term As Variant, Total As Variant, Ratio As Variant, Gap As Variant, Remainder As Variant
+    Dim BaseB As Variant, B As Variant, C As Variant, D As Variant, AN As Variant, Delta As Variant
+    Dim Tail As Variant, H As Variant, PP As Variant, QQ As Variant, N As Long, K As Long
+    Dim Converged As Boolean, Bound As Double, Limit As Double, Seam As Double
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(A) Or Not PROB_IsFinite(X) Then Exit Function
+    If A < 0.00000001 Or A > 10000# Or X < 0.000000000001 Or X > 20000# Then Exit Function
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    If A <= 128# Then
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), PROB_DD_EG_LogGamma(AA)), XX)
+    Else
+        Dev = PROB_DD_WG_Deviance(A, X)
+        Constant = PROB_DD_SG_Add(PROB_DD_SP_FromWords(&H3FED67F1&, &HC864BEB5&), PROB_DD_SP_FromWords(&HBC865B5A&, &H1B7FF5DF&))
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Neg(Dev), PROB_DD_SG_Mul(PROB_DD_SG_Log(A), 0.5)), Constant), PROB_DD_WG_Stirling(AA))
+    End If
+    AA = Array(A, 0#): XX = Array(X, 0#)
+    Seam = A + 1#
+    If X < Seam Then
+        Term = Array(1#, 0#): Total = Term
+        For N = 1 To 100000
+            Term = B4_Check(PROB_DD_PV2_Div(B4_Check(PROB_DD_PV2_Mul(Term, XX)), PROB_DD_PV2_Add(AA, N)))
+            Total = B4_Check(PROB_DD_PV2_Add(Total, Term))
+            Ratio = B4_Check(PROB_DD_PV2_Div(XX, PROB_DD_PV2_Add(PROB_DD_PV2_Add(AA, N), 1#)))
+            Gap = PROB_DD_PV2_Sub(1#, Ratio)
+            If PROB_DD_PV2_H(Gap) > 0# Then
+                Remainder = B4_Check(PROB_DD_PV2_Div(B4_Check(PROB_DD_PV2_Mul(Term, Ratio)), Gap))
+                Bound = Abs(PROB_DD_PV2_H(Remainder)) * 4#
+                Limit = Abs(PROB_DD_PV2_H(Total)) * 2# ^ (-100)
+                If Bound < Limit Then
+                    Converged = True: Exit For
+                End If
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "B4", "lower cap"
+        PROB_DD_EG_LowerPair PROB_DD_SG_Add(LP, PROB_DD_EG_LogPair(B4_Scaled(Total))), PP, QQ
+    Else
+        BaseB = PROB_DD_PV2_Sub(PROB_DD_PV2_Add(XX, 1#), AA)
+        B = BaseB: C = Array(2# ^ 400, 0#): D = B4_Check(PROB_DD_PV2_Div(1#, B))
+        For N = 1 To 100000
+            AN = PROB_DD_PV2_Mul(-N, PROB_DD_PV2_Sub(N, AA))
+            B = B4_Check(PROB_DD_PV2_Add(B, 2#))
+            D = B4_Check(PROB_DD_PV2_Div(1#, B4_Check(PROB_DD_PV2_Add(PROB_DD_PV2_Mul(AN, D), B))))
+            C = B4_Check(PROB_DD_PV2_Add(B, B4_Check(PROB_DD_PV2_Div(AN, C))))
+            Delta = PROB_DD_PV2_Sub(B4_Check(PROB_DD_PV2_Mul(C, D)), 1#)
+            If Abs(PROB_DD_PV2_H(Delta)) < 2# ^ (-100) Then
+                Converged = True: Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "B4", "upper cap"
+        Tail = Array(0#, 0#)
+        For K = N To 1 Step -1
+            Tail = B4_Check(PROB_DD_PV2_Div(PROB_DD_PV2_Mul(-K, PROB_DD_PV2_Sub(K, AA)), B4_Check(PROB_DD_PV2_Add(PROB_DD_PV2_Add(BaseB, 2# * K), Tail))))
+        Next K
+        H = B4_Check(PROB_DD_PV2_Div(1#, B4_Check(PROB_DD_PV2_Add(BaseB, Tail))))
+        QQ = PROB_DD_SG_Mul(PROB_DD_SG_Mul(PROB_DD_SG_Exp(LP), A), B4_Scaled(H))
+        PP = PROB_DD_SG_Sub(1#, QQ)
+    End If
+    P = PROB_DD_SG_Value(PP): Q = PROB_DD_SG_Value(QQ)
+    If Not PROB_IsFinite(P) Or Not PROB_IsFinite(Q) Then Err.Raise 5, "B4", "nonfinite result"
+    If P < 0# Or P > 1# Or Q < 0# Or Q > 1# Then Err.Raise 5, "B4", "invalid probability"
+    B4_Pair = True
+End Function
+Public Function B4_Baseline(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    B4_Baseline = PROB_DD_WG_Pair(A, X, P, Q)
+End Function
+
+Public Function B4_NormalizationSelfTest() As String
+    Dim Exponents As Variant, Exponent As Variant, Sign As Variant, H As Double, L As Double, V As Variant, Count As Long
+    On Error GoTo Failed
+    Exponents = Array(-400&, -1&, 0&, 1&, 400&)
+    For Each Exponent In Exponents
+        For Each Sign In Array(-1#, 1#)
+            H = CDbl(Sign) * 2# ^ CLng(Exponent)
+            L = H * 2# ^ (-54)
+            V = B4_Scaled(Array(H, L))
+            If Not PROB_DD_SGD_Valid(CDbl(V(0)), CDbl(V(1)), CLng(V(2))) Then Err.Raise 5, "B4", "normalization validity"
+            If PROB_DD_SP_Shift(CDbl(V(0)), CLng(V(2))) <> H Then Err.Raise 5, "B4", "normalization high"
+            If PROB_DD_SP_Shift(CDbl(V(1)), CLng(V(2))) <> L Then Err.Raise 5, "B4", "normalization low"
+            Count = Count + 1
+        Next Sign
+    Next Exponent
+    V = B4_Scaled(Array(0#, 0#))
+    If CDbl(V(0)) <> 0# Or CDbl(V(1)) <> 0# Or CLng(V(2)) <> 0 Then Err.Raise 5, "B4", "normalization zero"
+    B4_NormalizationSelfTest = "PASS checks=" & CStr(Count + 1)
+    Exit Function
+Failed:
+    B4_NormalizationSelfTest = "ERROR " & CStr(Err.Number) & " " & Err.Source & " " & Err.Description
+End Function

@@ -1,0 +1,10 @@
+{
+  "status": "FAIL",
+  "candidate_sha": "c27e2f0b417cf84d3925d1d6757da7a421a08f29",
+  "excel_version": "16.0",
+  "excel_build": "20430",
+  "rows": [],
+  "timings": [],
+  "error": "Exception calling \"Run\" with \"5\" argument(s): \"The remote procedure call failed. (Exception from HRESULT: 0x800706BE)\"",
+  "cleanup_error": "The RPC server is unavailable. (Exception from HRESULT: 0x800706BA)Exception calling \"Quit\" with \"0\" argument(s): \"The RPC server is unavailable. (Exception from HRESULT: 0x800706BA)\""
+}

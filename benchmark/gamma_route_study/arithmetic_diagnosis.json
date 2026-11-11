@@ -1,0 +1,1049 @@
+{
+  "kind": "oracle attribution on revealed failures only; not a routing candidate",
+  "status": "DIAGNOSIS ONLY",
+  "points": 34,
+  "pairs": 17,
+  "remaining_failures": {
+    "B1": {
+      "original": 4,
+      "reference_factor": 2,
+      "reference_recurrence": 2,
+      "reference_pair": 0
+    },
+    "B3": {
+      "original": 13,
+      "reference_factor": 4,
+      "reference_recurrence": 8,
+      "reference_pair": 0
+    }
+  },
+  "rows": [
+    {
+      "rule": "B1",
+      "a": "0x1.5798ee2308c3ap-27",
+      "left": "0x1.0000002af31dbp+0",
+      "right": "0x1.0000002af31dcp+0",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffed27b25p-1",
+              "0x1.2d84dbf987bf2p-29"
+            ],
+            [
+              "0x1.ffffffed27b24p-1",
+              "0x1.2d84dbf987bebp-29"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffed27b25p-1",
+              "0x1.2d84dbf987bf2p-29"
+            ],
+            [
+              "0x1.ffffffed27b24p-1",
+              "0x1.2d84dbf987beap-29"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffed27b25p-1",
+              "0x1.2d84dbf987bf2p-29"
+            ],
+            [
+              "0x1.ffffffed27b24p-1",
+              "0x1.2d84dbf987bf1p-29"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffed27b24p-1",
+              "0x1.2d84dbf987bf2p-29"
+            ],
+            [
+              "0x1.ffffffed27b24p-1",
+              "0x1.2d84dbf987bf0p-29"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B1",
+      "a": "0x1.a36e2eb1c432dp-14",
+      "left": "0x1.00068db8bac70p+0",
+      "right": "0x1.00068db8bac71p+0",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.fffd1feaf3e7cp-1",
+              "0x1.700a860c287f5p-16"
+            ],
+            [
+              "0x1.fffd1feaf3e7bp-1",
+              "0x1.700a860c287e7p-16"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.fffd1feaf3e7cp-1",
+              "0x1.700a860c287f5p-16"
+            ],
+            [
+              "0x1.fffd1feaf3e7bp-1",
+              "0x1.700a860c287e7p-16"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.fffd1feaf3e7bp-1",
+              "0x1.700a860c287f5p-16"
+            ],
+            [
+              "0x1.fffd1feaf3e7bp-1",
+              "0x1.700a860c287f3p-16"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.fffd1feaf3e7bp-1",
+              "0x1.700a860c287f5p-16"
+            ],
+            [
+              "0x1.fffd1feaf3e7bp-1",
+              "0x1.700a860c287f3p-16"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B1",
+      "a": "0x1.999999999999ap-4",
+      "left": "0x1.1999999999999p+0",
+      "right": "0x1.199999999999ap+0",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.f573d096a3314p-1",
+              "0x1.5185ed2b99dcdp-6"
+            ],
+            [
+              "0x1.f573d096a3312p-1",
+              "0x1.5185ed2b99dc3p-6"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.f573d096a3312p-1",
+              "0x1.5185ed2b99dcdp-6"
+            ],
+            [
+              "0x1.f573d096a3312p-1",
+              "0x1.5185ed2b99dc2p-6"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.f573d096a3314p-1",
+              "0x1.5185ed2b99dcdp-6"
+            ],
+            [
+              "0x1.f573d096a3312p-1",
+              "0x1.5185ed2b99dccp-6"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.f573d096a3312p-1",
+              "0x1.5185ed2b99dcdp-6"
+            ],
+            [
+              "0x1.f573d096a3312p-1",
+              "0x1.5185ed2b99dcbp-6"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B1",
+      "a": "0x1.4000000000000p+3",
+      "left": "0x1.5ffffffffffffp+3",
+      "right": "0x1.6000000000000p+3",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.51a896cd570f1p-1",
+              "0x1.5caed26551e21p-2"
+            ],
+            [
+              "0x1.51a896cd570f0p-1",
+              "0x1.5caed26551e20p-2"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.51a896cd570f0p-1",
+              "0x1.5caed26551e21p-2"
+            ],
+            [
+              "0x1.51a896cd570f0p-1",
+              "0x1.5caed26551e1fp-2"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.51a896cd570f0p-1",
+              "0x1.5caed26551e21p-2"
+            ],
+            [
+              "0x1.51a896cd570f1p-1",
+              "0x1.5caed26551e1ep-2"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.51a896cd570f0p-1",
+              "0x1.5caed26551e21p-2"
+            ],
+            [
+              "0x1.51a896cd570f1p-1",
+              "0x1.5caed26551e1dp-2"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.0000000000000p-2",
+      "left": "0x1.65c69a19859b1p-5",
+      "right": "0x1.65c69a19859b2p-5",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.0000000000001p-1",
+              "0x1.ffffffffffffep-2"
+            ],
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.0000000000001p-1",
+              "0x1.ffffffffffffep-2"
+            ],
+            [
+              "0x1.0000000000001p-1",
+              "0x1.ffffffffffffep-2"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.0000000000001p-1",
+              "0x1.ffffffffffffep-2"
+            ],
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.0000000000001p-1",
+              "0x1.ffffffffffffep-2"
+            ],
+            [
+              "0x1.0000000000001p-1",
+              "0x1.ffffffffffffep-2"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.0000000000000p-1",
+      "left": "0x1.d1dada8c3b2adp-3",
+      "right": "0x1.d1dada8c3b2aep-3",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffff9p-2",
+              "0x1.0000000000004p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffff9p-2",
+              "0x1.0000000000004p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000003p-1"
+            ],
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.0000000000000p-1",
+      "left": "0x1.d1dada8c3b2b7p-3",
+      "right": "0x1.d1dada8c3b2b8p-3",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.fffffffffffffp-2",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.fffffffffffffp-2",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.fffffffffffffp-2",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.fffffffffffffp-2",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.8000000000000p-1",
+      "left": "0x1.c000000000003p+0",
+      "right": "0x1.c000000000004p+0",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.c6b6d0485904cp-1",
+              "0x1.ca497dbd37da2p-4"
+            ],
+            [
+              "0x1.c6b6d0485904cp-1",
+              "0x1.ca497dbd37da3p-4"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.c6b6d0485904cp-1",
+              "0x1.ca497dbd37da3p-4"
+            ],
+            [
+              "0x1.c6b6d0485904cp-1",
+              "0x1.ca497dbd37da2p-4"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.c6b6d0485904bp-1",
+              "0x1.ca497dbd37da7p-4"
+            ],
+            [
+              "0x1.c6b6d0485904bp-1",
+              "0x1.ca497dbd37da8p-4"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.c6b6d0485904bp-1",
+              "0x1.ca497dbd37da8p-4"
+            ],
+            [
+              "0x1.c6b6d0485904bp-1",
+              "0x1.ca497dbd37da6p-4"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.8000000000000p-1",
+      "left": "0x1.d11125fb4be12p-2",
+      "right": "0x1.d11125fb4be13p-2",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffffcp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffffap-2",
+              "0x1.0000000000003p-1"
+            ],
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffffdp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffffbp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffffcp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.8000000000000p-1",
+      "left": "0x1.d11125fb4be19p-2",
+      "right": "0x1.d11125fb4be1ap-2",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.ffffffffffffep-2",
+              "0x1.0000000000001p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.fffffffffffffp-2",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ],
+            [
+              "0x1.0000000000000p-1",
+              "0x1.0000000000000p-1"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.0000000000000p+0",
+      "left": "0x1.62e42fefa39e2p-1",
+      "right": "0x1.62e42fefa39e3p-1",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffff4p-2",
+              "0x1.0000000000006p-1"
+            ],
+            [
+              "0x1.ffffffffffff3p-2",
+              "0x1.0000000000006p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffff3p-2",
+              "0x1.0000000000006p-1"
+            ],
+            [
+              "0x1.ffffffffffff3p-2",
+              "0x1.0000000000006p-1"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffff4p-2",
+              "0x1.0000000000006p-1"
+            ],
+            [
+              "0x1.ffffffffffff3p-2",
+              "0x1.0000000000006p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffff3p-2",
+              "0x1.0000000000007p-1"
+            ],
+            [
+              "0x1.ffffffffffff4p-2",
+              "0x1.0000000000006p-1"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.0000000000000p+0",
+      "left": "0x1.62e42fefa39ecp-1",
+      "right": "0x1.62e42fefa39edp-1",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffffep-2",
+              "0x1.0000000000001p-1"
+            ],
+            [
+              "0x1.ffffffffffffdp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffffdp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffffep-2",
+              "0x1.0000000000001p-1"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.ffffffffffffep-2",
+              "0x1.0000000000001p-1"
+            ],
+            [
+              "0x1.ffffffffffffdp-2",
+              "0x1.0000000000002p-1"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.ffffffffffffdp-2",
+              "0x1.0000000000002p-1"
+            ],
+            [
+              "0x1.ffffffffffffep-2",
+              "0x1.0000000000001p-1"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.8000000000000p+0",
+      "left": "0x1.4000000000005p+1",
+      "right": "0x1.4000000000006p+1",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.a80a3467660fdp-1",
+              "0x1.5fd72e6267c0bp-3"
+            ],
+            [
+              "0x1.a80a3467660fcp-1",
+              "0x1.5fd72e6267c0ep-3"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.a80a3467660fdp-1",
+              "0x1.5fd72e6267c0bp-3"
+            ],
+            [
+              "0x1.a80a3467660fcp-1",
+              "0x1.5fd72e6267c0ep-3"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.a80a3467660fep-1",
+              "0x1.5fd72e6267c0ap-3"
+            ],
+            [
+              "0x1.a80a3467660fep-1",
+              "0x1.5fd72e6267c08p-3"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.a80a3467660fep-1",
+              "0x1.5fd72e6267c0ap-3"
+            ],
+            [
+              "0x1.a80a3467660fep-1",
+              "0x1.5fd72e6267c07p-3"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.8000000000000p+0",
+      "left": "0x1.400000000000dp+1",
+      "right": "0x1.400000000000ep+1",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.a80a346766100p-1",
+              "0x1.5fd72e6267bfep-3"
+            ],
+            [
+              "0x1.a80a346766100p-1",
+              "0x1.5fd72e6267c00p-3"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.a80a346766100p-1",
+              "0x1.5fd72e6267bffp-3"
+            ],
+            [
+              "0x1.a80a346766100p-1",
+              "0x1.5fd72e6267c01p-3"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.a80a346766102p-1",
+              "0x1.5fd72e6267bf6p-3"
+            ],
+            [
+              "0x1.a80a346766103p-1",
+              "0x1.5fd72e6267bf4p-3"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.a80a346766102p-1",
+              "0x1.5fd72e6267bf7p-3"
+            ],
+            [
+              "0x1.a80a346766103p-1",
+              "0x1.5fd72e6267bf5p-3"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.4000000000000p+2",
+      "left": "0x1.8000000000004p+2",
+      "right": "0x1.8000000000005p+2",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.6e0d130b41769p-1",
+              "0x1.23e5d9e97d12ep-2"
+            ],
+            [
+              "0x1.6e0d130b41768p-1",
+              "0x1.23e5d9e97d12fp-2"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.6e0d130b4176ap-1",
+              "0x1.23e5d9e97d12dp-2"
+            ],
+            [
+              "0x1.6e0d130b41769p-1",
+              "0x1.23e5d9e97d12ep-2"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.6e0d130b41768p-1",
+              "0x1.23e5d9e97d130p-2"
+            ],
+            [
+              "0x1.6e0d130b41769p-1",
+              "0x1.23e5d9e97d12ep-2"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.6e0d130b41768p-1",
+              "0x1.23e5d9e97d130p-2"
+            ],
+            [
+              "0x1.6e0d130b41769p-1",
+              "0x1.23e5d9e97d12dp-2"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.9000000000000p+5",
+      "left": "0x1.9800000000006p+5",
+      "right": "0x1.9800000000007p+5",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.261715413b1aap-1",
+              "0x1.b3d1d57d89cacp-2"
+            ],
+            [
+              "0x1.261715413b1a9p-1",
+              "0x1.b3d1d57d89caep-2"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.261715413b1aap-1",
+              "0x1.b3d1d57d89cacp-2"
+            ],
+            [
+              "0x1.261715413b1a9p-1",
+              "0x1.b3d1d57d89caep-2"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.261715413b1a8p-1",
+              "0x1.b3d1d57d89cb0p-2"
+            ],
+            [
+              "0x1.261715413b1acp-1",
+              "0x1.b3d1d57d89ca8p-2"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.261715413b1a8p-1",
+              "0x1.b3d1d57d89cb0p-2"
+            ],
+            [
+              "0x1.261715413b1abp-1",
+              "0x1.b3d1d57d89ca9p-2"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "rule": "B3",
+      "a": "0x1.9000000000000p+5",
+      "left": "0x1.980000000000ap+5",
+      "right": "0x1.980000000000bp+5",
+      "results": {
+        "original": {
+          "monotone": false,
+          "values": [
+            [
+              "0x1.261715413b1b8p-1",
+              "0x1.b3d1d57d89c91p-2"
+            ],
+            [
+              "0x1.261715413b1b7p-1",
+              "0x1.b3d1d57d89c92p-2"
+            ]
+          ]
+        },
+        "reference_factor": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.261715413b1b7p-1",
+              "0x1.b3d1d57d89c92p-2"
+            ],
+            [
+              "0x1.261715413b1b7p-1",
+              "0x1.b3d1d57d89c92p-2"
+            ]
+          ]
+        },
+        "reference_recurrence": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.261715413b1b6p-1",
+              "0x1.b3d1d57d89c94p-2"
+            ],
+            [
+              "0x1.261715413b1bap-1",
+              "0x1.b3d1d57d89c8dp-2"
+            ]
+          ]
+        },
+        "reference_pair": {
+          "monotone": true,
+          "values": [
+            [
+              "0x1.261715413b1b6p-1",
+              "0x1.b3d1d57d89c94p-2"
+            ],
+            [
+              "0x1.261715413b1b9p-1",
+              "0x1.b3d1d57d89c8dp-2"
+            ]
+          ]
+        }
+      }
+    }
+  ],
+  "sha256": {
+    "phase_b_preflight.json": "c4639ad20c2aaad8ab80009ca42a8ad84d6cb0beb3afe4e689fe2c67890ca0eb",
+    "smaller_tail_development.json": "68a306db2f53184e374ea5643d7f3f3fb2072a82961366c690b32876ddb32183",
+    "route_model.py": "56ac938907fa6583004948fc5e9dc7cb53590a60c6f90786c4e139bc4d97f9e6",
+    "preflight_phase_b.py": "8ede13fec669c709e22ac964fc59328fe1d1a51f3034440d835d8fda4fc27615",
+    "arithmetic_diagnosis.py": "e2a696f88509c576ab006ad33c58be22094d2f76eab536563605ee188d474d0e"
+  }
+}

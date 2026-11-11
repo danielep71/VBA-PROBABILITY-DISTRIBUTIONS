@@ -54,6 +54,10 @@ def exported(committed, mutate=None, line=LINE):
 
 def main():
     fails = []
+    import arithmetic_diagnosis as diagnosis
+    with open(os.path.join(HERE, "arithmetic_diagnosis.json")) as stream:
+        if diagnosis.evaluate() != json.load(stream):
+            fails.append("arithmetic attribution evidence does not reproduce")
     import band_development as band
     import smaller_tail_development as smaller
     smaller_result = smaller.result()
