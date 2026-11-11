@@ -53,9 +53,6 @@ jobs:
       - name: Compare uncached/cached paths with alternating execution order
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File benchmark\gamma_cache_study\Run-CacheStudy.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%"
-      - name: Run full production regression and private study batteries
-        shell: cmd
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" -RunStudies
       - name: Upload measurements and exact instrumentation
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -64,7 +61,5 @@ jobs:
           path: |
             artifacts/gamma-cache/*.json
             artifacts/gamma-cache/*.txt
-            artifacts/excel-vba-ci/test-result.txt
-            artifacts/excel-vba-ci/excel-certification.json
           retention-days: 30
           if-no-files-found: error

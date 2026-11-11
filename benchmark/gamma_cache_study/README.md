@@ -27,8 +27,10 @@ forward sample and one per inverse sample give 216 samples. Every measured
 value and warmup must retain the same binary64 bits. No routing boundary,
 convergence tolerance or #307 holdout is changed or evaluated.
 
-The workflow then runs the full production regression and all existing private
-study batteries, without exporting or evaluating the untouched routing holdout.
+The policy-authorized `Excel VBA Regression` workflow separately runs the full
+regression and private study batteries on this branch, then exports the main
+and previously revealed historical holdout grids. The untouched #307 routing
+holdout is never exported or evaluated.
 The source change is a candidate until those results are collected. Historical
 manifest bindings remain historical; no release/merge readiness is inferred.
 
