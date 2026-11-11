@@ -1,6 +1,6 @@
 # v1.0.0 implementation and release-readiness plan
 
-Status date: 2026-11-07
+Status date: 2026-11-11
 Repository: danielep71/VBA-PROBABILITY-DISTRIBUTIONS
 Base: `release/1.0.0` at `a9812c7`
 Milestone: v1.0.0 (due 2026-12-18)
@@ -20,21 +20,21 @@ full version at `a9812c7`).
 v1.0.0 is **not release-ready** (NO-GO).
 
 - **Registered release blockers.** `release_readiness.json` (reviewed
-  2026-11-07, `certified: false`) lists 11 open blockers: #11, #13, #14, #22,
-  #23, #24, #26, #35, #163, #173 and #213. #29, #34, #47 and #72 are recorded there as
-  resolved, with their evidence.
-- **Milestone.** 16 issues are open: #4, #11, #13, #14, #22, #23, #24, #26,
-  #28, #31, #35, #154, #155, #163, #173, #213. Open P1: #11, #13, #14, #24,
-  #35, #163. P2: #22, #23, #26, #28, #31, #173, #213. P3: #4, #154, #155.
+  2026-11-11, `certified: false`) lists 8 open blockers: #11, #13, #14, #22,
+  #35, #163, #173 and #213. #23, #24, #26, #29, #34, #47, #72 and #307 are
+  recorded there as resolved, with their evidence.
+- **Milestone.** The P3 issues of v1.0.0 moved to v1.0.2 on 2026-11-11; the
+  [milestone](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/milestone/1)
+  lists what remains.
 - **Balanced Beta.** #163 and #173 were added to the registry on 2026-11-07
   as open silent-wrong blockers, and the README renderer now requires both
   entries, as it does #34 and #35.
-- **Retained Excel evidence.** Candidate `9cbe5d9`, 955/955 assertions, Excel
-  16.0 build 20430, 64-bit, run 42260290029
+- **Retained Excel evidence.** Candidate `d6d952a`, 5,987/5,987 regression
+  assertions, Excel 16.0 build 20430, 64-bit
   ([`excel_regression_record.json`](../benchmark/excel_regression_record.json);
   expected count in
   [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json)).
-  It exported and certifies the 2,088-row main grid and the 659-row holdout.
+  It exported and certifies the 2,139-row main grid and the 659-row holdout.
   It does not certify the release commit.
 - **Coverage debt.** 27 main-grid rows have no disposition:
   `F_InverseCumulative` 18 and `ChiSquare_InverseCumulative` 9, both
@@ -48,48 +48,13 @@ the source edit, then an Excel wave: regression plus fresh exports from the
 same candidate, applied in one evidence commit (see
 [Process](#process-that-remains-valid)).
 
-### A. Gamma-family defects: #11, #13, #14, #24, with #23 and #26
+### A. Gamma-family defects: #11, #13, #14
 
-These six issues share the incomplete-gamma kernels and the
-`PROB_TryGammaPrefactor` → `PROB_StirlingError` prefactor. #11 is the parent
-and closes only after #13 and #14.
+These issues share the incomplete-gamma kernels. #11 is the parent and closes
+only after #13 and #14. #23, #24 and #26, which came first in this order, are
+resolved (see [Completed](#completed-since-the-original-plan)); the remaining
+order is #13 → #14 → #11.
 
-Order: #23 evidence wave → (#24, #26 and #13's cutoff rerun) → #13 →
-#14 → #11.
-
-- **#23: off-grid Stirling prefactor (evidence only).** The fix (`bde92dd`,
-  PR #27) and its seven assertions are in the retained 955/955 run. Still
-  missing:
-  - export the preregistered fitting grid and untouched holdout in
-    `benchmark/gamma_series_small_shape/`, which so far holds only
-    `README.md`, `HOLDOUT_DESIGN.md` and `MOVEMENT_MANIFEST.md`;
-  - compare the movement with `MOVEMENT_MANIFEST.md`;
-  - promote representative rows under the unchanged contracts
-    (`Gamma_Cumulative.all.output` 3E-15, `Gamma_Survival.all.output`
-    5E-15).
-
-  The same wave should also:
-  - rerun the frozen `benchmark/positive_ratio_subnormal` arms (#13);
-  - remeasure the X = 2 continued-fraction ladder (#26).
-
-  The unattended exporter covers only the main, holdout, `holdout_older`,
-  `survival_boundary` and `tchi_large_df` grids (`ci/ExcelGridExport.psm1`).
-  These study grids need either an exporter specification added there or the
-  manual fallback in
-  [EXCEL_CERTIFICATION.md](EXCEL_CERTIFICATION.md#manual-fresh-export-fallback).
-- **#24: direct lower-region Q.** `PROB_TryGammaRegularizedQ` still forms
-  `Q = 1 - P` below X = A + 1. Required:
-  - study the lower-series log P;
-  - make Q equal `-PROB_Expm1(LogP)`, taken from the pre-exponentiation log P
-    and never from `Log` of a rounded P;
-  - add VBA regressions for the kernel and for the Gamma and Chi-square
-    routes;
-  - keep the 5E-15 Gamma survival contract.
-- **#26: continued-fraction Q after #23.** First remeasure the X = 2 ladder:
-  - if it passes, close with no change to the continued fraction, plus
-    regressions and row promotions;
-  - if it fails, decompose the error into prefactor, recurrence, termination
-    and final multiply, and preregister the smallest fix.
 - **#13: positive standardized argument.** `PROB_MIN_NORMAL`, the 48-bit and
   40-bit cutoffs and `PROB_ClassifyPositiveRatio` exist but have no
   production callers.
@@ -97,13 +62,13 @@ Order: #23 evidence wave → (#24, #26 and #13's cutoff rerun) → #13 →
     post-#23 rerun before wiring.
   - Then dispatch at the six Gamma/Chi-square density, cumulative and
     survival call sites.
-  - Survival hard-underflow recovery needs #24 first.
+  - Survival hard-underflow recovery needed #24, now resolved.
 - **#14: log-domain inverse reconstruction.**
   - Add a log-quantile kernel, conceptually `PROB_TryGammaInvPLog`.
   - Reconstruct the final scale with `Log(ScaleParam)` for Gamma and
     `Log(2#)` for Chi-square, exponentiating once.
   - Add quantile-relative and tail-residual contracts.
-  - It needs the corrected forward paths from #13 and #24.
+  - It needs the corrected forward path from #13 (#24 is resolved).
 - **#11: parent.** Closes on forward/inverse round-trip evidence for its
   counterexamples on the final source.
 
@@ -234,6 +199,11 @@ contracts to what the route delivers. The route repair moves to #175
 | #34 Student-t large-df route, inverse polish and 5E-15 `envelope_domain` contracts | PRs #189, #198, #200, #205, integrated by PRs #199, #211 | 2026-11-06 |
 | #210 Student-t seam study (milestone v1.0.1) | PR #214, integrated by PR #215; found #213 | 2026-11-06 |
 | Stale #72 blocker entry (#28) | PR #217 | 2026-11-06 |
+| #23 off-grid Stirling prefactor evidence | fitting, holdout and promoted rows (`benchmark/gamma_series_small_shape/COMPLETION_RESULT.md`) | closed 2026-11-07 |
+| #26 continued-fraction Q survival; public Gamma P/Q through the scaled double-double kernel | PRs #242, #289, #290 | closed 2026-11-09 |
+| #24 direct lower-region Q | PR #304, integrated by PR #305 | closed 2026-11-09 |
+| #298 per-procedure timing; #300 study batteries apart from the regression | PRs #308, #310 | closed 2026-11-10 |
+| #307 Gamma kernel cost: exact LogGamma reuse; routing studies retained, no routing rule | PRs #311–#313, #317–#319, integrated by PRs #315, #320 | closed 2026-11-11 by maintainer decision |
 
 Other closed v1.0.0 milestone issues, mostly CI, repository and evidence
 hardening, are listed in the milestone: #38, #40, #42, #49, #52, #77–#80,

@@ -28,8 +28,10 @@ A green record binds:
 - import, execution-backed compile, regression, and cleanup outcomes;
 - the retained regression-log SHA-256.
 
-The policy currently requires 955 assertions. A run with 954 or 956 assertions
-is incomplete even if every executed assertion passes.
+The policy currently requires 5,987 assertions. A run with 5,986 or 5,988
+assertions is incomplete even if every executed assertion passes. The study
+batteries, run apart since #300, are held to their own count of 8,901 in
+`.github/excel-study-policy.json`.
 
 `compile = PASS` in an automated record means the complete imported project was
 accepted for execution by Excel and the full harness ran through
