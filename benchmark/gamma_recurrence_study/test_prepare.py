@@ -8,6 +8,24 @@ import summarize as S
 
 
 class RecurrenceStudyTests(unittest.TestCase):
+    def test_retained_host_failure_is_never_accepted(self):
+        path = Path(__file__).with_name('results') / 'run_43030484382_incomplete.json'
+        data = json.loads(path.read_text())
+        self.assertEqual(data['status'], 'FAIL')
+        self.assertEqual(len(data['samples']), 193)
+        self.assertIn('0x800706BE', data['error'])
+        self.assertIn('0x800706BA', data['error'])
+        self.assertEqual(data['evidence']['inputs']['source_sha256_lf'], P.BASELINE)
+        with self.assertRaises(AssertionError):
+            S.summarize(path, emit=False)
+        path = path.with_name('run_43036251207_startup_failure.json')
+        data = json.loads(path.read_text())
+        self.assertEqual(data['status'], 'FAIL')
+        self.assertEqual(data['samples'], [])
+        self.assertIn('0x80080005', data['error'])
+        with self.assertRaises(AssertionError):
+            S.summarize(path, emit=False)
+
     def test_reversible_pinned_candidates(self):
         source = P.SOURCE.read_text()
         self.assertEqual(P.digest(source), P.BASELINE)

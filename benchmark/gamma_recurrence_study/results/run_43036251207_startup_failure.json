@@ -1,0 +1,22 @@
+{
+  "status": "FAIL",
+  "candidate_sha": "ab54518473bd14930bf277b532ac047d115de717",
+  "excel_version": "",
+  "excel_build": "",
+  "samples": [],
+  "error": "Retrieving the COM class factory for component with CLSID {00024500-0000-0000-C000-000000000046} failed due to the following error: 80080005 Server execution failed (Exception from HRESULT: 0x80080005 (CO_E_SERVER_EXEC_FAILURE)).",
+  "evidence": {
+    "run_id": 43036251207,
+    "artifact_id": 13861899998,
+    "artifact_sha256": "582d61caa8d6cfcbcd9260d7c1047e0e9850f671d29c117c0b2fc46001032f44",
+    "inputs": {
+      "source_sha256_lf": "f568e3a3d3e3517d5c66294d980f411e711188a2df40f2b608ace267b041fb6e",
+      "generated_source_sha256": {
+        "baseline": "176a69dd7afc5f2648e1d78787b4a715bc18e5c8530cc6386ee775d1cdafa352",
+        "lower": "a1fcd1c17f4465c468fde1fcef1297469f57ad9240b5634af40384f7afbd8162",
+        "upper": "5e1b578b3a8eafcf0e4ea110519dee9f904b32f5c8f44bda51f26dffa136bf76",
+        "combined": "94d3dc464e5606c460ff6c0e9f12c3bc409b08969f6c6c6aee782ad316a01d33"
+      }
+    }
+  }
+}
