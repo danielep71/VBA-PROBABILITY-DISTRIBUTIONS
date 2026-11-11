@@ -6,7 +6,7 @@ import json
 import math
 import subprocess
 import unittest
-from public_integration import restore,EXTRA
+from public_integration import restore,EXTRA,live_total
 from fractions import Fraction as F
 from install_scaled_dd_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
 from install_scaled_fidelity import power
@@ -76,11 +76,10 @@ class ScaledDDVbaTests(unittest.TestCase):
         block = BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block, render(dataset()))
         self.assertEqual(text.count('    Test_ScaledDD_Fidelity\n'), 1)
-        policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         extension = json.loads((HERE/'scaled_gamma_fidelity.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
         wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'], BASELINE+611+extension['additional_assertions']+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
+        self.assertEqual(live_total(), BASELINE+611+extension['additional_assertions']+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
 
     def test_old_vba_suite_is_unchanged(self):
         baseline = subprocess.check_output(['git', 'show',

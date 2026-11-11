@@ -518,17 +518,29 @@ Private Sub RunCoreSuite()
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
+    TimingStart "RunCoreSuite"
     Test_Core_Constants
+    TimingLap "Test_Core_Constants"
     Test_Core_Log1p
+    TimingLap "Test_Core_Log1p"
     Test_Core_TryExp
+    TimingLap "Test_Core_TryExp"
     Test_Core_AffineAndStandardize
+    TimingLap "Test_Core_AffineAndStandardize"
     Test_Core_LogGamma
+    TimingLap "Test_Core_LogGamma"
     Test_Core_LogBetaTinyUnbalanced
+    TimingLap "Test_Core_LogBetaTinyUnbalanced"
     Test_Core_SpecialFunctionKernels
+    TimingLap "Test_Core_SpecialFunctionKernels"
     Test_Core_GammaSeriesPrefactorAccuracy
+    TimingLap "Test_Core_GammaSeriesPrefactorAccuracy"
     Test_Core_NormalInvRaw
+    TimingLap "Test_Core_NormalInvRaw"
     Test_Core_ExpNegHalfSquare
+    TimingLap "Test_Core_ExpNegHalfSquare"
     Test_Core_Characterization
+    TimingLap "Test_Core_Characterization"
 End Sub
 
 
@@ -556,26 +568,47 @@ Private Sub RunNormalFamilySuite()
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_NORMALFAMILY"
+    TimingStart "RunNormalFamilySuite"
     Test_NF_StandardNormalDensity
+    TimingLap "Test_NF_StandardNormalDensity"
     Test_NF_StandardNormalCumulative
+    TimingLap "Test_NF_StandardNormalCumulative"
     Test_NF_StandardNormalInverse
+    TimingLap "Test_NF_StandardNormalInverse"
     Test_NF_InverseTails
+    TimingLap "Test_NF_InverseTails"
     Test_NF_TailRelativeAccuracy
+    TimingLap "Test_NF_TailRelativeAccuracy"
     Test_NF_InverseRoundTrips
+    TimingLap "Test_NF_InverseRoundTrips"
     Test_NF_Symmetry
+    TimingLap "Test_NF_Symmetry"
     Test_NF_GeneralNormal
+    TimingLap "Test_NF_GeneralNormal"
     Test_NF_ZScore
+    TimingLap "Test_NF_ZScore"
     Test_NF_IntervalProbability
+    TimingLap "Test_NF_IntervalProbability"
     Test_NF_Survival
+    TimingLap "Test_NF_Survival"
     Test_NF_MagnitudePolicy
+    TimingLap "Test_NF_MagnitudePolicy"
     Test_NF_InverseSurvival
+    TimingLap "Test_NF_InverseSurvival"
     Test_NF_FastInverse
+    TimingLap "Test_NF_FastInverse"
     Test_NF_LognormalCore
+    TimingLap "Test_NF_LognormalCore"
     Test_NF_LognormalMoments
+    TimingLap "Test_NF_LognormalMoments"
     Test_NF_LognormalUnderflow
+    TimingLap "Test_NF_LognormalUnderflow"
     Test_NF_ParameterRoundTrip
+    TimingLap "Test_NF_ParameterRoundTrip"
     Test_NF_ErrorContract
+    TimingLap "Test_NF_ErrorContract"
     Test_NF_OverflowContract
+    TimingLap "Test_NF_OverflowContract"
 End Sub
 
 
@@ -603,26 +636,47 @@ Private Sub RunTFamilySuite()
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_TFAMILY"
+    TimingStart "RunTFamilySuite"
     Test_TF_StudentTDensity
+    TimingLap "Test_TF_StudentTDensity"
     Test_TF_StudentTCumulative
+    TimingLap "Test_TF_StudentTCumulative"
     Test_TF_StudentTCentralRegion
+    TimingLap "Test_TF_StudentTCentralRegion"
     Test_TF_StudentTSurvival
+    TimingLap "Test_TF_StudentTSurvival"
     Test_TF_StudentTInverse
+    TimingLap "Test_TF_StudentTInverse"
     Test_TF_StudentTRoundTrips
+    TimingLap "Test_TF_StudentTRoundTrips"
     Test_TF_StudentTSymmetry
+    TimingLap "Test_TF_StudentTSymmetry"
     Test_TF_StudentTLargeDFTail
+    TimingLap "Test_TF_StudentTLargeDFTail"
     Test_TF_StudentTLargeDFQuantile
+    TimingLap "Test_TF_StudentTLargeDFQuantile"
     Test_TF_ChiSquareDensity
+    TimingLap "Test_TF_ChiSquareDensity"
     Test_TF_ChiSquareCumulative
+    TimingLap "Test_TF_ChiSquareCumulative"
     Test_TF_ChiSquareLargeDF
+    TimingLap "Test_TF_ChiSquareLargeDF"
     Test_TF_ChiSquareSurvival
+    TimingLap "Test_TF_ChiSquareSurvival"
     Test_TF_ChiSquareInverse
+    TimingLap "Test_TF_ChiSquareInverse"
     Test_TF_FDensity
+    TimingLap "Test_TF_FDensity"
     Test_TF_FCumulative
+    TimingLap "Test_TF_FCumulative"
     Test_TF_FSurvival
+    TimingLap "Test_TF_FSurvival"
     Test_TF_FInverse
+    TimingLap "Test_TF_FInverse"
     Test_TF_ErrorContract
+    TimingLap "Test_TF_ErrorContract"
     Test_TF_SupportEdges
+    TimingLap "Test_TF_SupportEdges"
 End Sub
 
 
@@ -650,33 +704,61 @@ Private Sub RunContinuousSuite()
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_CONTINUOUS"
+    TimingStart "RunContinuousSuite"
     Test_CN_GammaDensity
+    TimingLap "Test_CN_GammaDensity"
     Test_CN_GammaCumulative
+    TimingLap "Test_CN_GammaCumulative"
     Test_CN_GammaSurvival
+    TimingLap "Test_CN_GammaSurvival"
     Test_CN_GammaInverse
+    TimingLap "Test_CN_GammaInverse"
     Test_CN_GammaMoments
+    TimingLap "Test_CN_GammaMoments"
     Test_CN_BetaDensity
+    TimingLap "Test_CN_BetaDensity"
     Test_CN_BetaCumulative
+    TimingLap "Test_CN_BetaCumulative"
     Test_CN_BetaSurvival
+    TimingLap "Test_CN_BetaSurvival"
     Test_CN_BetaInverse
+    TimingLap "Test_CN_BetaInverse"
     Test_CN_BetaMoments
+    TimingLap "Test_CN_BetaMoments"
     Test_CN_ExponentialDensity
+    TimingLap "Test_CN_ExponentialDensity"
     Test_CN_ExponentialCumulative
+    TimingLap "Test_CN_ExponentialCumulative"
     Test_CN_ExponentialSurvival
+    TimingLap "Test_CN_ExponentialSurvival"
     Test_CN_ExponentialInverse
+    TimingLap "Test_CN_ExponentialInverse"
     Test_CN_WeibullDensity
+    TimingLap "Test_CN_WeibullDensity"
     Test_CN_WeibullCumulative
+    TimingLap "Test_CN_WeibullCumulative"
     Test_CN_WeibullSurvival
+    TimingLap "Test_CN_WeibullSurvival"
     Test_CN_WeibullInverse
+    TimingLap "Test_CN_WeibullInverse"
     Test_CN_WeibullMoments
+    TimingLap "Test_CN_WeibullMoments"
     Test_CN_UniformDensity
+    TimingLap "Test_CN_UniformDensity"
     Test_CN_UniformCumulative
+    TimingLap "Test_CN_UniformCumulative"
     Test_CN_UniformSurvival
+    TimingLap "Test_CN_UniformSurvival"
     Test_CN_UniformInverse
+    TimingLap "Test_CN_UniformInverse"
     Test_CN_CrossFamilyIdentities
+    TimingLap "Test_CN_CrossFamilyIdentities"
     Test_CN_RoundTrips
+    TimingLap "Test_CN_RoundTrips"
     Test_CN_ErrorContract
+    TimingLap "Test_CN_ErrorContract"
     Test_CN_SupportEdges
+    TimingLap "Test_CN_SupportEdges"
 End Sub
 
 
@@ -705,37 +787,191 @@ Private Sub RunDiscreteSuite()
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_DISCRETE"
+    TimingStart "RunDiscreteSuite"
     Test_DS_BinomialPMF
+    TimingLap "Test_DS_BinomialPMF"
     Test_DS_BinomialCumulative
+    TimingLap "Test_DS_BinomialCumulative"
     Test_DS_BinomialSurvival
+    TimingLap "Test_DS_BinomialSurvival"
     Test_DS_BinomialInverse
+    TimingLap "Test_DS_BinomialInverse"
     Test_DS_BinomialMoments
+    TimingLap "Test_DS_BinomialMoments"
     Test_DS_PoissonPMF
+    TimingLap "Test_DS_PoissonPMF"
     Test_DS_PoissonCumulative
+    TimingLap "Test_DS_PoissonCumulative"
     Test_DS_PoissonSurvival
+    TimingLap "Test_DS_PoissonSurvival"
     Test_DS_PoissonInverse
+    TimingLap "Test_DS_PoissonInverse"
     Test_DS_PoissonMoments
+    TimingLap "Test_DS_PoissonMoments"
     Test_DS_GeometricPMF
+    TimingLap "Test_DS_GeometricPMF"
     Test_DS_GeometricCumulative
+    TimingLap "Test_DS_GeometricCumulative"
     Test_DS_GeometricSurvival
+    TimingLap "Test_DS_GeometricSurvival"
     Test_DS_GeometricInverse
+    TimingLap "Test_DS_GeometricInverse"
     Test_DS_GeometricMoments
+    TimingLap "Test_DS_GeometricMoments"
     Test_DS_NegativeBinomial
+    TimingLap "Test_DS_NegativeBinomial"
     Test_DS_Hypergeometric
+    TimingLap "Test_DS_Hypergeometric"
     Test_DS_DiscreteUniformPMF
+    TimingLap "Test_DS_DiscreteUniformPMF"
     Test_DS_DiscreteUniformCumulative
+    TimingLap "Test_DS_DiscreteUniformCumulative"
     Test_DS_DiscreteUniformSurvival
+    TimingLap "Test_DS_DiscreteUniformSurvival"
     Test_DS_DiscreteUniformInverse
+    TimingLap "Test_DS_DiscreteUniformInverse"
     Test_DS_DiscreteUniformMoments
+    TimingLap "Test_DS_DiscreteUniformMoments"
     Test_DS_LogPMF
+    TimingLap "Test_DS_LogPMF"
     Test_DS_ErrorContract
+    TimingLap "Test_DS_ErrorContract"
     Test_DS_SupportEdges
+    TimingLap "Test_DS_SupportEdges"
 End Sub
 
 
 '==============================================================================
 ' RUN HARNESS
 '==============================================================================
+
+' BEGIN study batteries (#300)
+Public Sub Test_STATS_PROBDIST_RunStudies()
+'
+'==============================================================================
+' Test_STATS_PROBDIST_RunStudies
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Runs the study batteries: the bit-for-bit fidelity checks of the private
+'   arithmetic ports of the #26 studies, kept apart from the regression (#300).
+'
+' BEHAVIOR
+'   - Resets the shared counters.
+'   - Runs RunStudyBatteries.
+'   - Prints one consolidated PASS/FAIL summary.
+'
+' GENERATED
+'   By benchmark/_harness_studies.py. Do not edit by hand.
+'==============================================================================
+'
+    BeginRun "STUDY BATTERIES"
+    RunStudyBatteries
+    EndRun
+End Sub
+
+
+Private Sub RunStudyBatteries()
+'
+'==============================================================================
+' RunStudyBatteries
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls the six study batteries that compare private ports of the #26 study
+'   arithmetic with their frozen Python models (#300).
+'==============================================================================
+'
+    Debug.Print "== STUDY BATTERIES: private arithmetic ports of the #26 studies"
+    TimingStart "RunStudyBatteries"
+    Test_PrecisionV2_Fidelity
+    TimingLap "Test_PrecisionV2_Fidelity"
+    Test_ScaledProduct_Fidelity
+    TimingLap "Test_ScaledProduct_Fidelity"
+    Test_ScaledDD_Fidelity
+    TimingLap "Test_ScaledDD_Fidelity"
+    Test_ScaledGamma_Fidelity
+    TimingLap "Test_ScaledGamma_Fidelity"
+    Test_ExtendedGamma_Fidelity
+    TimingLap "Test_ExtendedGamma_Fidelity"
+    Test_WideGamma_Fidelity
+    TimingLap "Test_WideGamma_Fidelity"
+End Sub
+' END study batteries (#300)
+
+
+' BEGIN harness timing (#298)
+Private Function HarnessTiming( _
+    ByVal Action As String, _
+    Optional ByVal Label As String = "") _
+    As String
+'
+'==============================================================================
+' HarnessTiming
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Records the elapsed time of each test procedure the suite drivers call, so
+'   the CI log shows where the suite spends its time (#298).
+'
+' BEHAVIOR
+'   "start" marks a suite, "lap" records the seconds since the previous mark,
+'   "read" returns the record, "reset" clears it. The state is Static, so the
+'   module needs no module-level declaration. Timer restarts at midnight; a
+'   negative interval is corrected by one day.
+'
+' GENERATED
+'   By benchmark/_harness_timing.py, with the TimingStart and TimingLap calls
+'   of the suite drivers. Do not edit by hand.
+'==============================================================================
+'
+    Static LapStart         As Double          'Timer at the previous mark
+    Static Record           As String          'One line per mark
+    Dim Clock               As Double          'Timer now
+    Dim Elapsed             As Double          'Seconds since the previous mark
+
+    Clock = Timer
+    Select Case Action
+        Case "start"
+            Record = Record & "suite " & Label & vbLf
+            LapStart = Clock
+        Case "lap"
+            Elapsed = Clock - LapStart
+            If Elapsed < 0# Then Elapsed = Elapsed + 86400#
+            Record = Record & Label & " " & Replace(Format$(Elapsed, "0.000"), ",", ".") & vbLf
+            LapStart = Clock
+        Case "read"
+            HarnessTiming = Record
+        Case "reset"
+            Record = vbNullString
+            LapStart = Clock
+    End Select
+End Function
+
+
+Private Sub TimingStart(ByVal Label As String)
+'
+'==============================================================================
+' TimingStart
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Marks the start of a suite driver in the timing record (#298).
+'==============================================================================
+'
+    HarnessTiming "start", Label
+End Sub
+
+
+Private Sub TimingLap(ByVal Label As String)
+'
+'==============================================================================
+' TimingLap
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Records the seconds the named test procedure took (#298).
+'==============================================================================
+'
+    HarnessTiming "lap", Label
+End Sub
+' END harness timing (#298)
+
 
 Private Sub BeginRun( _
     ByVal Title As String)
@@ -18907,12 +19143,6 @@ Private Sub Test_CN_GammaSurvival()
     Test_GammaCF_AdditionalCallers
     Test_GammaCF_CapAndXSeam
     Test_GammaCF_PrecisionCounterexample
-    Test_PrecisionV2_Fidelity
-    Test_ScaledProduct_Fidelity
-    Test_ScaledDD_Fidelity
-    Test_ScaledGamma_Fidelity
-    Test_ExtendedGamma_Fidelity
-    Test_WideGamma_Fidelity
     Test_PublicGamma_Integration
 
     'Normalize before asserting: this must test relative, not tiny absolute error.

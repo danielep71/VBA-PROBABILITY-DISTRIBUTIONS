@@ -82,7 +82,8 @@ and a dispatch without inputs, behave as before.
 | `export_holdout_older` | `true`/`false` | Export `benchmark/holdout_older/holdout_older_grid.csv` |
 | `export_survival_boundary` | `true`/`false` | Export `benchmark/survival_boundary/survival_boundary_grid.csv` |
 | `export_tchi_large_df` | `true`/`false` | Export `benchmark/tchi_large_df/tchi_large_df_grid.csv` |
-| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid) and `glq_lower_q` (the #24 holdout) |
+| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid), `glq_lower_q` (the #24 holdout), `gbr_binary64_map` (the #307 binary64 route map) and `gbf_b64_fit` (the #307 repaired route's fit set) |
+| `run_studies` | boolean, default `true` | Also run the study batteries of #300 (`Test_STATS_PROBDIST_RunStudies`, against `.github/excel-study-policy.json`) after a green regression. Always on when any grid is exported; pull-request runs never run them |
 | `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
 
 `export_studies` is one text input rather than one boolean per grid, so a new

@@ -7,7 +7,7 @@ from fractions import Fraction
 import math
 import subprocess
 import unittest
-from public_integration import restore,EXTRA
+from public_integration import restore,EXTRA,live_total
 from install_scaled_gamma_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
 from install_extended_gamma_fidelity import strip
 
@@ -87,10 +87,9 @@ class ScaledGammaVbaTests(unittest.TestCase):
         self.assertNotIn('@COEFFICIENTS@',block)
         self.assertNotIn('@LN2@',block)
         self.assertEqual(text.count('    Test_ScaledGamma_Fidelity\n'),1)
-        policy = json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
         extended = json.loads((HERE/'extended_gamma_fidelity.json').read_text())
         wide = json.loads((HERE/'wide_gamma_fidelity.json').read_text())
-        self.assertEqual(policy['expected_assertions'],BASELINE+475+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
+        self.assertEqual(live_total(),BASELINE+475+extended['additional_assertions']+wide['additional_assertions']+EXTRA)
 
     def test_normalization_oracles_preserve_exact_dyadic_values(self):
         for row in dataset()['normalization']:

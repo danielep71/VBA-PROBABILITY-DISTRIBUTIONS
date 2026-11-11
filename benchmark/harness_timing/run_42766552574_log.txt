@@ -1,0 +1,152 @@
+﻿
+[2026-11-10 07:11:16] Repository root: C:\Users\dpenza\actions-runner\_work\VBA-PROBABILITY-DISTRIBUTIONS\VBA-PROBABILITY-DISTRIBUTIONS
+[2026-11-10 07:11:17] Candidate SHA: cdddfbef55460005ab853974e989bae3c8a84b50
+[2026-11-10 07:11:17] Creating isolated Excel workbook for VBA regression execution.
+[2026-11-10 07:11:20] Excel version: 16.0
+[2026-11-10 07:11:20] Excel build: 20430
+[2026-11-10 07:11:20] Office bitness: 64-bit
+[2026-11-10 07:11:21] Importing src/M_STATS_PROBDIST_CORE.bas
+[2026-11-10 07:11:22] Importing src/M_STATS_PROBDIST_SPECIALFUNCS.bas
+[2026-11-10 07:11:22] Importing src/M_STATS_PROBDIST_NORMALFAMILY.bas
+[2026-11-10 07:11:22] Importing src/M_STATS_PROBDIST_TFAMILY.bas
+[2026-11-10 07:11:22] Importing src/M_STATS_PROBDIST_CONTINUOUS.bas
+[2026-11-10 07:11:22] Importing src/M_STATS_PROBDIST_DISCRETE.bas
+[2026-11-10 07:11:22] Importing tests/M_STATS_PROBDIST_TEST.bas
+[2026-11-10 07:11:24] Executing Test_STATS_PROBDIST_RunAll_CI
+[2026-11-10 07:21:38] VBA result: TOTAL=14888;PASS=14888;FAIL=0
+[2026-11-10 07:21:38] Assertions executed: 14888
+[2026-11-10 07:21:38] Assertions passed: 14888
+[2026-11-10 07:21:38] Assertions failed: 0
+[2026-11-10 07:21:38] TIMING suite RunCoreSuite
+[2026-11-10 07:21:38] TIMING Test_Core_Constants 0.000
+[2026-11-10 07:21:38] TIMING Test_Core_Log1p 0.000
+[2026-11-10 07:21:38] TIMING Test_Core_TryExp 0.002
+[2026-11-10 07:21:38] TIMING Test_Core_AffineAndStandardize 0.000
+[2026-11-10 07:21:38] TIMING Test_Core_LogGamma 0.002
+[2026-11-10 07:21:38] TIMING Test_Core_LogBetaTinyUnbalanced 0.002
+[2026-11-10 07:21:38] TIMING Test_Core_SpecialFunctionKernels 0.158
+[2026-11-10 07:21:38] TIMING Test_Core_GammaSeriesPrefactorAccuracy 0.064
+[2026-11-10 07:21:38] TIMING Test_Core_NormalInvRaw 0.000
+[2026-11-10 07:21:38] TIMING Test_Core_ExpNegHalfSquare 0.000
+[2026-11-10 07:21:38] TIMING Test_Core_Characterization 0.002
+[2026-11-10 07:21:38] TIMING suite RunNormalFamilySuite
+[2026-11-10 07:21:38] TIMING Test_NF_StandardNormalDensity 0.000
+[2026-11-10 07:21:38] TIMING Test_NF_StandardNormalCumulative 0.000
+[2026-11-10 07:21:38] TIMING Test_NF_StandardNormalInverse 0.000
+[2026-11-10 07:21:38] TIMING Test_NF_InverseTails 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_TailRelativeAccuracy 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_InverseRoundTrips 0.002
+[2026-11-10 07:21:39] TIMING Test_NF_Symmetry 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_GeneralNormal 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_ZScore 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_IntervalProbability 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_Survival 0.002
+[2026-11-10 07:21:39] TIMING Test_NF_MagnitudePolicy 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_InverseSurvival 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_FastInverse 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_LognormalCore 0.002
+[2026-11-10 07:21:39] TIMING Test_NF_LognormalMoments 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_LognormalUnderflow 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_ParameterRoundTrip 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_ErrorContract 0.000
+[2026-11-10 07:21:39] TIMING Test_NF_OverflowContract 0.000
+[2026-11-10 07:21:39] TIMING suite RunTFamilySuite
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTDensity 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTCumulative 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTCentralRegion 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTSurvival 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTInverse 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTRoundTrips 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTSymmetry 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTLargeDFTail 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_StudentTLargeDFQuantile 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_ChiSquareDensity 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_ChiSquareCumulative 0.113
+[2026-11-10 07:21:39] TIMING Test_TF_ChiSquareLargeDF 27.791
+[2026-11-10 07:21:39] TIMING Test_TF_ChiSquareSurvival 0.080
+[2026-11-10 07:21:39] TIMING Test_TF_ChiSquareInverse 3.084
+[2026-11-10 07:21:39] TIMING Test_TF_FDensity 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_FCumulative 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_FSurvival 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_FInverse 0.000
+[2026-11-10 07:21:39] TIMING Test_TF_ErrorContract 0.002
+[2026-11-10 07:21:39] TIMING Test_TF_SupportEdges 0.018
+[2026-11-10 07:21:39] TIMING suite RunContinuousSuite
+[2026-11-10 07:21:39] TIMING Test_CN_GammaDensity 0.000
+[2026-11-10 07:21:39] TIMING Test_CN_GammaCumulative 1.518
+[2026-11-10 07:21:39] TIMING Test_CN_GammaSurvival 579.939
+[2026-11-10 07:21:39] TIMING Test_CN_GammaInverse 0.619
+[2026-11-10 07:21:39] TIMING Test_CN_GammaMoments 0.000
+[2026-11-10 07:21:39] TIMING Test_CN_BetaDensity 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_BetaCumulative 0.002
+[2026-11-10 07:21:40] TIMING Test_CN_BetaSurvival 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_BetaInverse 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_BetaMoments 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_ExponentialDensity 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_ExponentialCumulative 0.002
+[2026-11-10 07:21:40] TIMING Test_CN_ExponentialSurvival 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_ExponentialInverse 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_WeibullDensity 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_WeibullCumulative 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_WeibullSurvival 0.002
+[2026-11-10 07:21:40] TIMING Test_CN_WeibullInverse 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_WeibullMoments 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_UniformDensity 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_UniformCumulative 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_UniformSurvival 0.000
+[2026-11-10 07:21:40] TIMING Test_CN_UniformInverse 0.002
+[2026-11-10 07:21:40] TIMING Test_CN_CrossFamilyIdentities 0.033
+[2026-11-10 07:21:40] TIMING Test_CN_RoundTrips 0.057
+[2026-11-10 07:21:40] TIMING Test_CN_ErrorContract 0.164
+[2026-11-10 07:21:40] TIMING Test_CN_SupportEdges 0.012
+[2026-11-10 07:21:40] TIMING suite RunDiscreteSuite
+[2026-11-10 07:21:40] TIMING Test_DS_BinomialPMF 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_BinomialCumulative 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_BinomialSurvival 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_BinomialInverse 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_BinomialMoments 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_PoissonPMF 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_PoissonCumulative 0.061
+[2026-11-10 07:21:40] TIMING Test_DS_PoissonSurvival 0.053
+[2026-11-10 07:21:40] TIMING Test_DS_PoissonInverse 0.346
+[2026-11-10 07:21:40] TIMING Test_DS_PoissonMoments 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_GeometricPMF 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_GeometricCumulative 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_GeometricSurvival 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_GeometricInverse 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_GeometricMoments 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_NegativeBinomial 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_Hypergeometric 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_DiscreteUniformPMF 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_DiscreteUniformCumulative 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_DiscreteUniformSurvival 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_DiscreteUniformInverse 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_DiscreteUniformMoments 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_LogPMF 0.000
+[2026-11-10 07:21:40] TIMING Test_DS_ErrorContract 0.002
+[2026-11-10 07:21:40] TIMING Test_DS_SupportEdges 0.000
+[2026-11-10 07:22:20] COST dd_p A=0.0001 X=0.5 ok=1 calls=128 us_per_call=5065.918
+[2026-11-10 07:22:20] COST dd_q A=0.0001 X=0.5 ok=1 calls=128 us_per_call=6423.950
+[2026-11-10 07:22:20] COST binary64 A=0.0001 X=0.5 ok=1 calls=131072 us_per_call=6.273
+[2026-11-10 07:22:20] COST dd_p A=0.5 X=0.25 ok=1 calls=128 us_per_call=7064.819
+[2026-11-10 07:22:20] COST dd_q A=0.5 X=0.25 ok=1 calls=128 us_per_call=7766.724
+[2026-11-10 07:22:20] COST binary64 A=0.5 X=0.25 ok=1 calls=524288 us_per_call=1.784
+[2026-11-10 07:22:20] COST dd_p A=2.5 X=1 ok=1 calls=64 us_per_call=11138.916
+[2026-11-10 07:22:20] COST dd_q A=2.5 X=1 ok=1 calls=64 us_per_call=10101.318
+[2026-11-10 07:22:20] COST binary64 A=2.5 X=1 ok=1 calls=262144 us_per_call=1.974
+[2026-11-10 07:22:20] COST dd_p A=2.5 X=6 ok=1 calls=32 us_per_call=19042.969
+[2026-11-10 07:22:20] COST dd_q A=2.5 X=6 ok=1 calls=32 us_per_call=18005.371
+[2026-11-10 07:22:20] COST binary64 A=2.5 X=6 ok=1 calls=262144 us_per_call=2.958
+[2026-11-10 07:22:20] COST dd_p A=100 X=90 ok=1 calls=16 us_per_call=150512.695
+[2026-11-10 07:22:21] COST dd_q A=100 X=90 ok=1 calls=16 us_per_call=140625.000
+[2026-11-10 07:22:21] COST binary64 A=100 X=90 ok=1 calls=131072 us_per_call=6.139
+[2026-11-10 07:22:21] COST dd_p A=100 X=110 ok=1 calls=16 us_per_call=156250.000
+[2026-11-10 07:22:21] COST dd_q A=100 X=110 ok=1 calls=16 us_per_call=154052.734
+[2026-11-10 07:22:21] COST binary64 A=100 X=110 ok=1 calls=131072 us_per_call=5.245
+[2026-11-10 07:22:21] COST dd_p A=10000 X=9900 ok=1 calls=16 us_per_call=164916.992
+[2026-11-10 07:22:21] COST dd_q A=10000 X=9900 ok=1 calls=16 us_per_call=170288.086
+[2026-11-10 07:22:21] COST binary64 A=10000 X=9900 ok=1 calls=16384 us_per_call=38.743
+[2026-11-10 07:22:21] COST dd_p A=10000 X=10100 ok=1 calls=16 us_per_call=56152.344
+[2026-11-10 07:22:21] COST dd_q A=10000 X=10100 ok=1 calls=16 us_per_call=63476.563
+[2026-11-10 07:22:21] COST binary64 A=10000 X=10100 ok=1 calls=65536 us_per_call=13.143
+[2026-11-10 07:22:21] RESULT: ALL TESTS PASSED

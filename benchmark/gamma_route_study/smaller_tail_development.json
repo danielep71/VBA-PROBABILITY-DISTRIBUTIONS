@@ -1,0 +1,313 @@
+{
+  "kind": "development only; no holdout",
+  "candidate": "B3: fast only when the directly computed tail is <=0.5; otherwise existing DD; A2=10000",
+  "narrow": {
+    "status": "DEVELOPMENT PASS ONLY",
+    "failures": [],
+    "triples": 48,
+    "evaluations": 144,
+    "rows_sha256": "a0682d58e30e70c5e482ce54d27f6dd41f26ebbafc0d394de07233cdb71e12a5",
+    "radius": 1
+  },
+  "wide": {
+    "status": "REJECT",
+    "failures": [
+      {
+        "a": 0.25,
+        "label": "half",
+        "left": "0x1.65c69a19859b1p-5",
+        "right": "0x1.65c69a19859b2p-5",
+        "left_v": [
+          "0x1.0000000000001p-1",
+          "0x1.ffffffffffffep-2"
+        ],
+        "right_v": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p-1"
+        ],
+        "baseline_left": [
+          "0x1.0000000000001p-1",
+          "0x1.ffffffffffffep-2"
+        ],
+        "baseline_right": [
+          "0x1.0000000000001p-1",
+          "0x1.ffffffffffffep-2"
+        ]
+      },
+      {
+        "a": 0.5,
+        "label": "half",
+        "left": "0x1.d1dada8c3b2adp-3",
+        "right": "0x1.d1dada8c3b2aep-3",
+        "left_v": [
+          "0x1.ffffffffffffbp-2",
+          "0x1.0000000000002p-1"
+        ],
+        "right_v": [
+          "0x1.ffffffffffff9p-2",
+          "0x1.0000000000004p-1"
+        ],
+        "baseline_left": [
+          "0x1.ffffffffffffbp-2",
+          "0x1.0000000000003p-1"
+        ],
+        "baseline_right": [
+          "0x1.ffffffffffffbp-2",
+          "0x1.0000000000002p-1"
+        ]
+      },
+      {
+        "a": 0.5,
+        "label": "half",
+        "left": "0x1.d1dada8c3b2b7p-3",
+        "right": "0x1.d1dada8c3b2b8p-3",
+        "left_v": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p-1"
+        ],
+        "right_v": [
+          "0x1.fffffffffffffp-2",
+          "0x1.0000000000000p-1"
+        ],
+        "baseline_left": [
+          "0x1.fffffffffffffp-2",
+          "0x1.0000000000000p-1"
+        ],
+        "baseline_right": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p-1"
+        ]
+      },
+      {
+        "a": 0.75,
+        "label": "seam",
+        "left": "0x1.c000000000003p+0",
+        "right": "0x1.c000000000004p+0",
+        "left_v": [
+          "0x1.c6b6d0485904cp-1",
+          "0x1.ca497dbd37da2p-4"
+        ],
+        "right_v": [
+          "0x1.c6b6d0485904cp-1",
+          "0x1.ca497dbd37da3p-4"
+        ],
+        "baseline_left": [
+          "0x1.c6b6d0485904bp-1",
+          "0x1.ca497dbd37da8p-4"
+        ],
+        "baseline_right": [
+          "0x1.c6b6d0485904bp-1",
+          "0x1.ca497dbd37da6p-4"
+        ]
+      },
+      {
+        "a": 0.75,
+        "label": "half",
+        "left": "0x1.d11125fb4be12p-2",
+        "right": "0x1.d11125fb4be13p-2",
+        "left_v": [
+          "0x1.ffffffffffffcp-2",
+          "0x1.0000000000002p-1"
+        ],
+        "right_v": [
+          "0x1.ffffffffffffbp-2",
+          "0x1.0000000000002p-1"
+        ],
+        "baseline_left": [
+          "0x1.ffffffffffffbp-2",
+          "0x1.0000000000002p-1"
+        ],
+        "baseline_right": [
+          "0x1.ffffffffffffcp-2",
+          "0x1.0000000000002p-1"
+        ]
+      },
+      {
+        "a": 0.75,
+        "label": "half",
+        "left": "0x1.d11125fb4be19p-2",
+        "right": "0x1.d11125fb4be1ap-2",
+        "left_v": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p-1"
+        ],
+        "right_v": [
+          "0x1.ffffffffffffep-2",
+          "0x1.0000000000001p-1"
+        ],
+        "baseline_left": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p-1"
+        ],
+        "baseline_right": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p-1"
+        ]
+      },
+      {
+        "a": 1.0,
+        "label": "half",
+        "left": "0x1.62e42fefa39e2p-1",
+        "right": "0x1.62e42fefa39e3p-1",
+        "left_v": [
+          "0x1.ffffffffffff4p-2",
+          "0x1.0000000000006p-1"
+        ],
+        "right_v": [
+          "0x1.ffffffffffff3p-2",
+          "0x1.0000000000006p-1"
+        ],
+        "baseline_left": [
+          "0x1.ffffffffffff3p-2",
+          "0x1.0000000000007p-1"
+        ],
+        "baseline_right": [
+          "0x1.ffffffffffff4p-2",
+          "0x1.0000000000006p-1"
+        ]
+      },
+      {
+        "a": 1.0,
+        "label": "half",
+        "left": "0x1.62e42fefa39ecp-1",
+        "right": "0x1.62e42fefa39edp-1",
+        "left_v": [
+          "0x1.ffffffffffffep-2",
+          "0x1.0000000000001p-1"
+        ],
+        "right_v": [
+          "0x1.ffffffffffffdp-2",
+          "0x1.0000000000002p-1"
+        ],
+        "baseline_left": [
+          "0x1.ffffffffffffdp-2",
+          "0x1.0000000000002p-1"
+        ],
+        "baseline_right": [
+          "0x1.ffffffffffffep-2",
+          "0x1.0000000000001p-1"
+        ]
+      },
+      {
+        "a": 1.5,
+        "label": "seam",
+        "left": "0x1.4000000000005p+1",
+        "right": "0x1.4000000000006p+1",
+        "left_v": [
+          "0x1.a80a3467660fdp-1",
+          "0x1.5fd72e6267c0bp-3"
+        ],
+        "right_v": [
+          "0x1.a80a3467660fcp-1",
+          "0x1.5fd72e6267c0ep-3"
+        ],
+        "baseline_left": [
+          "0x1.a80a3467660fep-1",
+          "0x1.5fd72e6267c0ap-3"
+        ],
+        "baseline_right": [
+          "0x1.a80a3467660fep-1",
+          "0x1.5fd72e6267c07p-3"
+        ]
+      },
+      {
+        "a": 1.5,
+        "label": "seam",
+        "left": "0x1.400000000000dp+1",
+        "right": "0x1.400000000000ep+1",
+        "left_v": [
+          "0x1.a80a346766100p-1",
+          "0x1.5fd72e6267bfep-3"
+        ],
+        "right_v": [
+          "0x1.a80a346766100p-1",
+          "0x1.5fd72e6267c00p-3"
+        ],
+        "baseline_left": [
+          "0x1.a80a346766102p-1",
+          "0x1.5fd72e6267bf7p-3"
+        ],
+        "baseline_right": [
+          "0x1.a80a346766103p-1",
+          "0x1.5fd72e6267bf5p-3"
+        ]
+      },
+      {
+        "a": 5.0,
+        "label": "seam",
+        "left": "0x1.8000000000004p+2",
+        "right": "0x1.8000000000005p+2",
+        "left_v": [
+          "0x1.6e0d130b41769p-1",
+          "0x1.23e5d9e97d12ep-2"
+        ],
+        "right_v": [
+          "0x1.6e0d130b41768p-1",
+          "0x1.23e5d9e97d12fp-2"
+        ],
+        "baseline_left": [
+          "0x1.6e0d130b41768p-1",
+          "0x1.23e5d9e97d130p-2"
+        ],
+        "baseline_right": [
+          "0x1.6e0d130b41769p-1",
+          "0x1.23e5d9e97d12dp-2"
+        ]
+      },
+      {
+        "a": 50.0,
+        "label": "seam",
+        "left": "0x1.9800000000006p+5",
+        "right": "0x1.9800000000007p+5",
+        "left_v": [
+          "0x1.261715413b1aap-1",
+          "0x1.b3d1d57d89cacp-2"
+        ],
+        "right_v": [
+          "0x1.261715413b1a9p-1",
+          "0x1.b3d1d57d89caep-2"
+        ],
+        "baseline_left": [
+          "0x1.261715413b1a8p-1",
+          "0x1.b3d1d57d89cb0p-2"
+        ],
+        "baseline_right": [
+          "0x1.261715413b1abp-1",
+          "0x1.b3d1d57d89ca9p-2"
+        ]
+      },
+      {
+        "a": 50.0,
+        "label": "seam",
+        "left": "0x1.980000000000ap+5",
+        "right": "0x1.980000000000bp+5",
+        "left_v": [
+          "0x1.261715413b1b8p-1",
+          "0x1.b3d1d57d89c91p-2"
+        ],
+        "right_v": [
+          "0x1.261715413b1b7p-1",
+          "0x1.b3d1d57d89c92p-2"
+        ],
+        "baseline_left": [
+          "0x1.261715413b1b6p-1",
+          "0x1.b3d1d57d89c94p-2"
+        ],
+        "baseline_right": [
+          "0x1.261715413b1b9p-1",
+          "0x1.b3d1d57d89c8dp-2"
+        ]
+      }
+    ],
+    "triples": 48,
+    "evaluations": 1584,
+    "rows_sha256": "1d7090e8aa9910365e42d0ce727d96eaaf96ca33313c5488716fcf4e3d9f9b2c",
+    "radius": 16
+  },
+  "sha256": {
+    "smaller_tail_development.py": "f38a9099cff6462624d6ce90b466f708ad06ffd55c22e770a8e2f3ba9ee7fabf",
+    "preflight_phase_b.py": "8ede13fec669c709e22ac964fc59328fe1d1a51f3034440d835d8fda4fc27615",
+    "route_model.py": "56ac938907fa6583004948fc5e9dc7cb53590a60c6f90786c4e139bc4d97f9e6",
+    "b64_fit_grid.csv": "0db56c3261d94637db70ef9d9c9a8f3fd0b60e100bfce8c38cfd4c70ed022df9"
+  }
+}

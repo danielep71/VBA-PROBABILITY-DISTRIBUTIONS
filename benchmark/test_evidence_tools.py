@@ -15,6 +15,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 failures = []
 commands = (
     ("test_contract_eval.py",),
+    ("test_harness_timing.py",),
+    ("test_harness_studies.py",),
     ("positive_ratio_subnormal/check_post23_cutoffs.py",),
     ("test_grid_coverage.py",),
     ("test_cross_check_scipy.py",),
@@ -57,6 +59,13 @@ commands = (
     ("gamma_lower_q/test_gamma_lower_q.py",),
     ("gamma_lower_q/test_promote_x05_ladder.py",),
     ("gamma_lower_q/analyze_gamma_lower_q.py", "--check"),
+    ("gamma_route_study/test_binary64_map.py",),
+    ("gamma_route_study/analyze_binary64_map.py", "--check"),
+    ("gamma_route_study/check_disjoint.py",),
+    ("gamma_route_study/test_route_model.py",),
+    ("gamma_route_study/test_b64_fit.py",),
+    ("gamma_cache_study/test_cache_vba.py",),
+    ("gamma_route_study/analyze_b64_fit.py", "--check"),
     ("normal_tail_study/test_kernel_model.py",),
     ("normal_tail_study/test_vba_kernel_source.py",),
     ("normal_tail_study/test_holdout_record.py",),

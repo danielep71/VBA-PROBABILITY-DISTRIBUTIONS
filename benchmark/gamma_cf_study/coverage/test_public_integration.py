@@ -1,9 +1,8 @@
 """Source-level public wiring, exact private-port extraction and historical isolation."""
-import json
 import re
 import unittest
 from install_scaled_fidelity import documented
-from public_integration import ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore
+from public_integration import cache,b64,ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore,live_total
 
 
 class PublicIntegrationTests(unittest.TestCase):
@@ -13,14 +12,15 @@ class PublicIntegrationTests(unittest.TestCase):
         self.assertEqual(restore(current),original(SRC))
         block,types,names=arithmetic()
         self.assertEqual(len(names),46)
-        self.assertEqual(current.count(block),1);self.assertEqual(current.count(types),1)
+        self.assertEqual(cache.strip(current).count(block),1);self.assertEqual(current.count(types),1)
         self.assertNotIn('AssertTrue',block)
         source=procedures(current)
         for tail in ('P','Q'):
             self.assertEqual(source['PROB_TryGammaRegularized'+tail],adapter(tail))
-        # No unreviewed public/API/module expansion.
+        # No unreviewed public/API/module expansion: only the two internal
+        # binary64 routines of #307 (b64_route_vba.py), in the private layer.
         self.assertEqual(re.findall(r'^Public (?:Function|Sub|Const) (\w+)',current,re.M),
-                         re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M))
+                         re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M)+list(b64.PUBLIC))
         for path in (ROOT/'src').glob('*.bas'):
             rel=path.relative_to(ROOT).as_posix()
             if rel!=SRC:
@@ -38,8 +38,7 @@ class PublicIntegrationTests(unittest.TestCase):
         for tail in ('P','Q'):
             old=procedures(original(SRC))['PROB_TryGammaRegularized'+tail]
             self.assertIn(documented(old.replace('Public Function','Private Function',1).replace('PROB_TryGammaRegularized'+tail,'PG_B6_'+tail)),test_block())
-        policy=json.loads((ROOT/'.github/excel-evidence-policy.json').read_text())
-        self.assertEqual(policy['expected_assertions'],10848+EXTRA)
+        self.assertEqual(live_total(),10848+EXTRA)
         self.assertEqual(EXTRA,290*8+7*2+206*8+24*2+2*5)
 
     def test_review_fixes_in_production(self):

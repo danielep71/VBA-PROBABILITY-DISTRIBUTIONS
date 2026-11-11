@@ -85,6 +85,7 @@ BLOCKER_CLASSES = {
     "numerical_uncertainty": "unresolved numerical degradation",
     "numerical_defect": "numerical defects",
     "assurance": "assurance gates",
+    "performance": "performance",
 }
 GATES = ("main_grid_coverage", "main_grid_export", "holdout_export")
 # A blocker that the committed evidence cannot score must not disappear by
