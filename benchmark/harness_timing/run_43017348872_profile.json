@@ -1,0 +1,8908 @@
+{
+  "status": "PASS",
+  "candidate_sha": "e7cf3c8f7be6ac408f2e61f13474b1a4f96cdfed",
+  "excel_version": "16.0",
+  "excel_build": "20430",
+  "calibration_us_per_enter_leave": "2.851548",
+  "samples": [
+    {
+      "mode": "baseline",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 33060.2,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 38854.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 36233.1,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 1,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 41619.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 2,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 50279.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 3,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 38824.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 40437.1,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 42739.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 44883.9,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 31463.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 42919.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 31313.4,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 55626,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 42518.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 55249.2,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 53749.9,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 46048.8,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 58495.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 97864.2,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 98415.7,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 83047,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 96995.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 75965.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 80686.1,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 578468.1,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 752947.9,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 668925.4,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 518331.2,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 499288.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 497785.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 525206.8,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 482167.7,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 477528.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 473324.8,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 480386.9,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 477829,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 521739.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 553807.9,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 527722.4,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 527311.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 514434.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 513217.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 176622.5,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 183896.9,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 183507.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 184732.1,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 177219.3,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 179182,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 57710.6,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 57736.4,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 58019.8,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 341923.4,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 336395.8,
+      "scopes": []
+    },
+    {
+      "mode": "baseline",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 340534.9,
+      "scopes": []
+    },
+    {
+      "mode": "coarse",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 45816.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 45756.1,
+          "exclusive_us": 27.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 45729,
+          "exclusive_us": 61.3
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 45667.7,
+          "exclusive_us": 17763.7
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 11835.8,
+          "exclusive_us": 83.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 2444.8,
+          "exclusive_us": 125.4
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 11751.9,
+          "exclusive_us": 11751.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 11898.6,
+          "exclusive_us": 11898.6
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 1724.8,
+          "exclusive_us": 1724.8
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 2319.4,
+          "exclusive_us": 2319.4
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 18945.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 18918.3,
+          "exclusive_us": 9.6
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 18908.7,
+          "exclusive_us": 25.3
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 18883.4,
+          "exclusive_us": 6914.9
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 4083.8,
+          "exclusive_us": 30.7
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 1128.1,
+          "exclusive_us": 61.7
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4053.1,
+          "exclusive_us": 4053.1
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5943.5,
+          "exclusive_us": 5943.5
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 813.1,
+          "exclusive_us": 813.1
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 1066.4,
+          "exclusive_us": 1066.4
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 19946.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 19922.1,
+          "exclusive_us": 9.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 19913,
+          "exclusive_us": 18.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 19894.2,
+          "exclusive_us": 7483.6
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 4559.2,
+          "exclusive_us": 31.7
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 1239.1,
+          "exclusive_us": 71.5
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4527.5,
+          "exclusive_us": 4527.5
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5761.7,
+          "exclusive_us": 5761.7
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 850.6,
+          "exclusive_us": 850.6
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 1167.6,
+          "exclusive_us": 1167.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 1,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 18601,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 18576.2,
+          "exclusive_us": 9.6
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 18566.6,
+          "exclusive_us": 21.9
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 18544.7,
+          "exclusive_us": 6911.9
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 4370.9,
+          "exclusive_us": 30.7
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 1156.3,
+          "exclusive_us": 62.9
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4340.2,
+          "exclusive_us": 4340.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5259.4,
+          "exclusive_us": 5259.4
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 846.2,
+          "exclusive_us": 846.2
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 1093.4,
+          "exclusive_us": 1093.4
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 2,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 20078.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 20056.7,
+          "exclusive_us": 9.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 20047.6,
+          "exclusive_us": 21.7
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 20025.9,
+          "exclusive_us": 7624.1
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 4683.2,
+          "exclusive_us": 31.1
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 1243.7,
+          "exclusive_us": 64.5
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4652.1,
+          "exclusive_us": 4652.1
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5631.3,
+          "exclusive_us": 5631.3
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 843.6,
+          "exclusive_us": 843.6
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 1179.2,
+          "exclusive_us": 1179.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 3,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 19502.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 19474,
+          "exclusive_us": 9.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 19464.1,
+          "exclusive_us": 26.6
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 19437.5,
+          "exclusive_us": 7336.3
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 4435.9,
+          "exclusive_us": 30.8
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 1211.4,
+          "exclusive_us": 65.2
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4405.1,
+          "exclusive_us": 4405.1
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5617.5,
+          "exclusive_us": 5617.5
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 836.4,
+          "exclusive_us": 836.4
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 1146.2,
+          "exclusive_us": 1146.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 22296,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 22258.6,
+          "exclusive_us": 10.4
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 22248.2,
+          "exclusive_us": 44.7
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 22203.5,
+          "exclusive_us": 6041.6
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 1897,
+          "exclusive_us": 30.4
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 6263.6,
+          "exclusive_us": 155.2
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1866.6,
+          "exclusive_us": 1866.6
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5812.3,
+          "exclusive_us": 5812.3
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 2189,
+          "exclusive_us": 2189
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2501.1,
+          "exclusive_us": 2501.1
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3607.3,
+          "exclusive_us": 3607.3
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 22109.4,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 22087.5,
+          "exclusive_us": 9.2
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 22078.3,
+          "exclusive_us": 21
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 22057.3,
+          "exclusive_us": 6172.2
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 1876.5,
+          "exclusive_us": 29.5
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 6233.3,
+          "exclusive_us": 134.3
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1847,
+          "exclusive_us": 1847
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5620.6,
+          "exclusive_us": 5620.6
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 2154.7,
+          "exclusive_us": 2154.7
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2526.4,
+          "exclusive_us": 2526.4
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3572.6,
+          "exclusive_us": 3572.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 22839.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 22816.3,
+          "exclusive_us": 9.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 22806.4,
+          "exclusive_us": 21.9
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 22784.5,
+          "exclusive_us": 6347.1
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 1934.1,
+          "exclusive_us": 30.3
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 6366,
+          "exclusive_us": 138.4
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1903.8,
+          "exclusive_us": 1903.8
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5911.4,
+          "exclusive_us": 5911.4
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 2225.9,
+          "exclusive_us": 2225.9
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2553,
+          "exclusive_us": 2553
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3674.6,
+          "exclusive_us": 3674.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 22252.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 22231.5,
+          "exclusive_us": 9.3
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 22222.2,
+          "exclusive_us": 18.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 22203.4,
+          "exclusive_us": 6152.4
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 1898.7,
+          "exclusive_us": 29.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 6388,
+          "exclusive_us": 134
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1868.8,
+          "exclusive_us": 1868.8
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5610.3,
+          "exclusive_us": 5610.3
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 2154,
+          "exclusive_us": 2154
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2688.5,
+          "exclusive_us": 2688.5
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3565.5,
+          "exclusive_us": 3565.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 23146.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 23121.5,
+          "exclusive_us": 10
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 23111.5,
+          "exclusive_us": 23.7
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 23087.8,
+          "exclusive_us": 6620.8
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 1980.9,
+          "exclusive_us": 31
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 6391.9,
+          "exclusive_us": 140.3
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1949.9,
+          "exclusive_us": 1949.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5847.3,
+          "exclusive_us": 5847.3
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 2246.9,
+          "exclusive_us": 2246.9
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2583.1,
+          "exclusive_us": 2583.1
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3668.5,
+          "exclusive_us": 3668.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 22813.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 22780,
+          "exclusive_us": 9.7
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 22770.3,
+          "exclusive_us": 34.2
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 22736.1,
+          "exclusive_us": 6602
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 1881.6,
+          "exclusive_us": 29.8
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 6567.8,
+          "exclusive_us": 134
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1851.8,
+          "exclusive_us": 1851.8
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5469.3,
+          "exclusive_us": 5469.3
+        },
+        {
+          "id": 12,
+          "calls": 4,
+          "inclusive_us": 2215.4,
+          "exclusive_us": 2215.4
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2782.1,
+          "exclusive_us": 2782.1
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3651.7,
+          "exclusive_us": 3651.7
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 34070.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 34047.1,
+          "exclusive_us": 10.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 34037,
+          "exclusive_us": 21.3
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 34015.7,
+          "exclusive_us": 5899.5
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 10295.4,
+          "exclusive_us": 227.6
+        },
+        {
+          "id": 8,
+          "calls": 12,
+          "inclusive_us": 12143.9,
+          "exclusive_us": 12143.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7796.6,
+          "exclusive_us": 240.7
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1982.8,
+          "exclusive_us": 1982.8
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5965.3,
+          "exclusive_us": 5965.3
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3490.1,
+          "exclusive_us": 3490.1
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4065.8,
+          "exclusive_us": 4065.8
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 34091.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 34066,
+          "exclusive_us": 9.8
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 34056.2,
+          "exclusive_us": 29
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 34027.2,
+          "exclusive_us": 5704.4
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 9933.9,
+          "exclusive_us": 216.9
+        },
+        {
+          "id": 8,
+          "calls": 12,
+          "inclusive_us": 12892.5,
+          "exclusive_us": 12892.5
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7532.8,
+          "exclusive_us": 241.3
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1896.2,
+          "exclusive_us": 1896.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5784.4,
+          "exclusive_us": 5784.4
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3328.3,
+          "exclusive_us": 3328.3
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3963.2,
+          "exclusive_us": 3963.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 33893.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 33869.5,
+          "exclusive_us": 10
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 33859.5,
+          "exclusive_us": 25.5
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 33834,
+          "exclusive_us": 5805.2
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 10380.8,
+          "exclusive_us": 221.8
+        },
+        {
+          "id": 8,
+          "calls": 12,
+          "inclusive_us": 12179.2,
+          "exclusive_us": 12179.2
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7767,
+          "exclusive_us": 235.9
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1959.7,
+          "exclusive_us": 1959.7
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5901.1,
+          "exclusive_us": 5901.1
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3498.5,
+          "exclusive_us": 3498.5
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4032.6,
+          "exclusive_us": 4032.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 32928.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 32906.5,
+          "exclusive_us": 9.3
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 32897.2,
+          "exclusive_us": 19.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 32877.4,
+          "exclusive_us": 5663.7
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 9963.9,
+          "exclusive_us": 215.4
+        },
+        {
+          "id": 8,
+          "calls": 12,
+          "inclusive_us": 11860.9,
+          "exclusive_us": 11860.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7504.6,
+          "exclusive_us": 235.5
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1894.4,
+          "exclusive_us": 1894.4
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5738.4,
+          "exclusive_us": 5738.4
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3324.4,
+          "exclusive_us": 3324.4
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3944.7,
+          "exclusive_us": 3944.7
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 33006.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 32972.4,
+          "exclusive_us": 9.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 32962.5,
+          "exclusive_us": 33.2
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 32929.3,
+          "exclusive_us": 5578.2
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 10659.5,
+          "exclusive_us": 226.9
+        },
+        {
+          "id": 8,
+          "calls": 12,
+          "inclusive_us": 12301.2,
+          "exclusive_us": 12301.2
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7341.5,
+          "exclusive_us": 231.6
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1900.9,
+          "exclusive_us": 1900.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5580.6,
+          "exclusive_us": 5580.6
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3226.7,
+          "exclusive_us": 3226.7
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3883.2,
+          "exclusive_us": 3883.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 32231.4,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 32201.8,
+          "exclusive_us": 10.3
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 32191.5,
+          "exclusive_us": 26.4
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 32165.1,
+          "exclusive_us": 5531.9
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 9610.2,
+          "exclusive_us": 211
+        },
+        {
+          "id": 8,
+          "calls": 12,
+          "inclusive_us": 11435.1,
+          "exclusive_us": 11435.1
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7432.9,
+          "exclusive_us": 229.9
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1941.9,
+          "exclusive_us": 1941.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5612.3,
+          "exclusive_us": 5612.3
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3265.5,
+          "exclusive_us": 3265.5
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3937.5,
+          "exclusive_us": 3937.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 61608.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 61575,
+          "exclusive_us": 10.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 61564.1,
+          "exclusive_us": 32.1
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 61532,
+          "exclusive_us": 45269.4
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 9810.3,
+          "exclusive_us": 222.2
+        },
+        {
+          "id": 8,
+          "calls": 8,
+          "inclusive_us": 7676,
+          "exclusive_us": 7676
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1912.1,
+          "exclusive_us": 1912.1
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3380,
+          "exclusive_us": 3380
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3072.3,
+          "exclusive_us": 3072.3
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 59163.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 59125.1,
+          "exclusive_us": 11.6
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 59113.5,
+          "exclusive_us": 39.3
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 59074.2,
+          "exclusive_us": 41179.9
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 11828.1,
+          "exclusive_us": 261.1
+        },
+        {
+          "id": 8,
+          "calls": 8,
+          "inclusive_us": 9688,
+          "exclusive_us": 9688
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1879,
+          "exclusive_us": 1879
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3371.6,
+          "exclusive_us": 3371.6
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2694.6,
+          "exclusive_us": 2694.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 57806,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 57781.2,
+          "exclusive_us": 9.3
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 57771.9,
+          "exclusive_us": 26.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 57745.1,
+          "exclusive_us": 42113.6
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 9659.9,
+          "exclusive_us": 210.7
+        },
+        {
+          "id": 8,
+          "calls": 8,
+          "inclusive_us": 7610.2,
+          "exclusive_us": 7610.2
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1839,
+          "exclusive_us": 1839
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3360.5,
+          "exclusive_us": 3360.5
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2611.1,
+          "exclusive_us": 2611.1
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 59807.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 59779.3,
+          "exclusive_us": 10.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 59769.2,
+          "exclusive_us": 28.7
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 59740.5,
+          "exclusive_us": 43456.8
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 10052.8,
+          "exclusive_us": 217.6
+        },
+        {
+          "id": 8,
+          "calls": 8,
+          "inclusive_us": 7896,
+          "exclusive_us": 7896
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1939.2,
+          "exclusive_us": 1939.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3460.7,
+          "exclusive_us": 3460.7
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2770.2,
+          "exclusive_us": 2770.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 82820,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 82759.5,
+          "exclusive_us": 19.8
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 82739.7,
+          "exclusive_us": 65.2
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 82674.5,
+          "exclusive_us": 59965.6
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 14110.6,
+          "exclusive_us": 316.1
+        },
+        {
+          "id": 8,
+          "calls": 8,
+          "inclusive_us": 10937.6,
+          "exclusive_us": 10937.6
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 2856.9,
+          "exclusive_us": 2856.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4779.9,
+          "exclusive_us": 4779.9
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3818.4,
+          "exclusive_us": 3818.4
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 62525.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 62493.1,
+          "exclusive_us": 10.5
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 62482.6,
+          "exclusive_us": 31.9
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 62450.7,
+          "exclusive_us": 46046.1
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 10294.5,
+          "exclusive_us": 225.7
+        },
+        {
+          "id": 8,
+          "calls": 8,
+          "inclusive_us": 8089.8,
+          "exclusive_us": 8089.8
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 1979,
+          "exclusive_us": 1979
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3393.5,
+          "exclusive_us": 3393.5
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 2716.6,
+          "exclusive_us": 2716.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 445188.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 445131.9,
+          "exclusive_us": 12.4
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 445119.5,
+          "exclusive_us": 63.5
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 445056,
+          "exclusive_us": 26671.7
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 400588.5,
+          "exclusive_us": 5707.9
+        },
+        {
+          "id": 8,
+          "calls": 404,
+          "inclusive_us": 394038.7,
+          "exclusive_us": 394038.7
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 9121,
+          "exclusive_us": 318.2
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4440.4,
+          "exclusive_us": 4440.4
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5076.3,
+          "exclusive_us": 5076.3
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 4736.3,
+          "exclusive_us": 4736.3
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4066.5,
+          "exclusive_us": 4066.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 440701.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 440651.3,
+          "exclusive_us": 11.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 440639.4,
+          "exclusive_us": 51.6
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 440587.8,
+          "exclusive_us": 24229.5
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 402161.4,
+          "exclusive_us": 5712.3
+        },
+        {
+          "id": 8,
+          "calls": 404,
+          "inclusive_us": 394446.9,
+          "exclusive_us": 394446.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7884.6,
+          "exclusive_us": 255.7
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4688.4,
+          "exclusive_us": 4688.4
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3626.1,
+          "exclusive_us": 3626.1
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3451.7,
+          "exclusive_us": 3451.7
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4177.2,
+          "exclusive_us": 4177.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 437795.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 437745.7,
+          "exclusive_us": 11.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 437734.6,
+          "exclusive_us": 54.3
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 437680.3,
+          "exclusive_us": 25102
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 399151,
+          "exclusive_us": 5883.4
+        },
+        {
+          "id": 8,
+          "calls": 404,
+          "inclusive_us": 391367.3,
+          "exclusive_us": 391367.3
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7294.4,
+          "exclusive_us": 230.3
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4497.9,
+          "exclusive_us": 4497.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3535.3,
+          "exclusive_us": 3535.3
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3319.9,
+          "exclusive_us": 3319.9
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3744.2,
+          "exclusive_us": 3744.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 478725.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 478669.6,
+          "exclusive_us": 11.5
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 478658.1,
+          "exclusive_us": 53.3
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 478604.8,
+          "exclusive_us": 26604.9
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 436807.7,
+          "exclusive_us": 6350.1
+        },
+        {
+          "id": 8,
+          "calls": 404,
+          "inclusive_us": 428471,
+          "exclusive_us": 428471
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7947.8,
+          "exclusive_us": 251.6
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4804.9,
+          "exclusive_us": 4804.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4426.1,
+          "exclusive_us": 4426.1
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3650,
+          "exclusive_us": 3650
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4046.2,
+          "exclusive_us": 4046.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 760599.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 760527.3,
+          "exclusive_us": 19.3
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 760508,
+          "exclusive_us": 82.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 760425.2,
+          "exclusive_us": 37520
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 702295.5,
+          "exclusive_us": 9928.3
+        },
+        {
+          "id": 8,
+          "calls": 404,
+          "inclusive_us": 689746.9,
+          "exclusive_us": 689746.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 11194.3,
+          "exclusive_us": 341.3
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 6608.9,
+          "exclusive_us": 6608.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5426.8,
+          "exclusive_us": 5426.8
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 5164.5,
+          "exclusive_us": 5164.5
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 5688.5,
+          "exclusive_us": 5688.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 447278.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 447227.7,
+          "exclusive_us": 11.2
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 447216.5,
+          "exclusive_us": 50.2
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 447166.3,
+          "exclusive_us": 26384.1
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 406850,
+          "exclusive_us": 5826
+        },
+        {
+          "id": 8,
+          "calls": 404,
+          "inclusive_us": 399148.2,
+          "exclusive_us": 399148.2
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7604.4,
+          "exclusive_us": 232
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4487.4,
+          "exclusive_us": 4487.4
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 3716.2,
+          "exclusive_us": 3716.2
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3632.9,
+          "exclusive_us": 3632.9
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3739.5,
+          "exclusive_us": 3739.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 457650.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 457595.2,
+          "exclusive_us": 12.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 457582.3,
+          "exclusive_us": 52.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 457529.5,
+          "exclusive_us": 44873.4
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 405988,
+          "exclusive_us": 5773.1
+        },
+        {
+          "id": 8,
+          "calls": 400,
+          "inclusive_us": 395564.4,
+          "exclusive_us": 395564.4
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4650.5,
+          "exclusive_us": 4650.5
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 2840.6,
+          "exclusive_us": 2840.6
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3827.5,
+          "exclusive_us": 3827.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 452745.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 452693.5,
+          "exclusive_us": 12.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 452680.6,
+          "exclusive_us": 59.9
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 452620.7,
+          "exclusive_us": 39189.1
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 407163.3,
+          "exclusive_us": 5850.9
+        },
+        {
+          "id": 8,
+          "calls": 400,
+          "inclusive_us": 396647.1,
+          "exclusive_us": 396647.1
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4665.3,
+          "exclusive_us": 4665.3
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 2727.2,
+          "exclusive_us": 2727.2
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3541.1,
+          "exclusive_us": 3541.1
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 445355.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 445304.3,
+          "exclusive_us": 12.9
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 445291.4,
+          "exclusive_us": 62.8
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 445228.6,
+          "exclusive_us": 38206.5
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 400884.6,
+          "exclusive_us": 5789.7
+        },
+        {
+          "id": 8,
+          "calls": 400,
+          "inclusive_us": 390825.2,
+          "exclusive_us": 390825.2
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4269.7,
+          "exclusive_us": 4269.7
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 2553.4,
+          "exclusive_us": 2553.4
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3584.1,
+          "exclusive_us": 3584.1
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 460042.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 459991.8,
+          "exclusive_us": 12.1
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 459979.7,
+          "exclusive_us": 58.6
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 459921.1,
+          "exclusive_us": 39353.2
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 414772.4,
+          "exclusive_us": 5878.6
+        },
+        {
+          "id": 8,
+          "calls": 400,
+          "inclusive_us": 404544.8,
+          "exclusive_us": 404544.8
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4349,
+          "exclusive_us": 4349
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 2442.4,
+          "exclusive_us": 2442.4
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3353.1,
+          "exclusive_us": 3353.1
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 445507.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 445453.6,
+          "exclusive_us": 12.2
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 445441.4,
+          "exclusive_us": 51.1
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 445390.3,
+          "exclusive_us": 37571.4
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 401820.9,
+          "exclusive_us": 5988.2
+        },
+        {
+          "id": 8,
+          "calls": 400,
+          "inclusive_us": 391334.6,
+          "exclusive_us": 391334.6
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4498.1,
+          "exclusive_us": 4498.1
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 2523.9,
+          "exclusive_us": 2523.9
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3474.1,
+          "exclusive_us": 3474.1
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 445015.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 444969.7,
+          "exclusive_us": 12.4
+        },
+        {
+          "id": 5,
+          "calls": 4,
+          "inclusive_us": 444957.3,
+          "exclusive_us": 50.2
+        },
+        {
+          "id": 6,
+          "calls": 4,
+          "inclusive_us": 444907.1,
+          "exclusive_us": 38782
+        },
+        {
+          "id": 7,
+          "calls": 4,
+          "inclusive_us": 400276.6,
+          "exclusive_us": 6050.5
+        },
+        {
+          "id": 8,
+          "calls": 400,
+          "inclusive_us": 389955.9,
+          "exclusive_us": 389955.9
+        },
+        {
+          "id": 10,
+          "calls": 4,
+          "inclusive_us": 4270.2,
+          "exclusive_us": 4270.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 2423.3,
+          "exclusive_us": 2423.3
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3425.2,
+          "exclusive_us": 3425.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 513889,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 513798,
+          "exclusive_us": 491630.2
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 3069.4,
+          "exclusive_us": 3069.4
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1743.4,
+          "exclusive_us": 1743.4
+        },
+        {
+          "id": 8,
+          "calls": 4,
+          "inclusive_us": 5187.9,
+          "exclusive_us": 5187.9
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7472,
+          "exclusive_us": 242.8
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4695.1,
+          "exclusive_us": 4695.1
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3411.4,
+          "exclusive_us": 3411.4
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3817.8,
+          "exclusive_us": 3817.8
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 516259.4,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 516175.8,
+          "exclusive_us": 494216.9
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 2731.3,
+          "exclusive_us": 2731.3
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1600.9,
+          "exclusive_us": 1600.9
+        },
+        {
+          "id": 8,
+          "calls": 4,
+          "inclusive_us": 5299.1,
+          "exclusive_us": 5299.1
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 8044.4,
+          "exclusive_us": 243.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4283.2,
+          "exclusive_us": 4283.2
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3457.2,
+          "exclusive_us": 3457.2
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4343.3,
+          "exclusive_us": 4343.3
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 525763.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 525661.8,
+          "exclusive_us": 501694
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 3453.7,
+          "exclusive_us": 3453.7
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1771.2,
+          "exclusive_us": 1771.2
+        },
+        {
+          "id": 8,
+          "calls": 4,
+          "inclusive_us": 5561.2,
+          "exclusive_us": 5561.2
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7875.2,
+          "exclusive_us": 247.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 5306.5,
+          "exclusive_us": 5306.5
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3624.1,
+          "exclusive_us": 3624.1
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4003.9,
+          "exclusive_us": 4003.9
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 504561.4,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 504453.4,
+          "exclusive_us": 481445.7
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 3031.2,
+          "exclusive_us": 3031.2
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1708.8,
+          "exclusive_us": 1708.8
+        },
+        {
+          "id": 8,
+          "calls": 4,
+          "inclusive_us": 5642.3,
+          "exclusive_us": 5642.3
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7692.2,
+          "exclusive_us": 254.5
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4933.2,
+          "exclusive_us": 4933.2
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3498.8,
+          "exclusive_us": 3498.8
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3938.9,
+          "exclusive_us": 3938.9
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 504715.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 504596.6,
+          "exclusive_us": 482020.2
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 3052.6,
+          "exclusive_us": 3052.6
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1725.3,
+          "exclusive_us": 1725.3
+        },
+        {
+          "id": 8,
+          "calls": 4,
+          "inclusive_us": 5557.5,
+          "exclusive_us": 5557.5
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7607.7,
+          "exclusive_us": 243.1
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4633.3,
+          "exclusive_us": 4633.3
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3542,
+          "exclusive_us": 3542
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 3822.6,
+          "exclusive_us": 3822.6
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 507198.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 507093.8,
+          "exclusive_us": 483993.9
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 3139,
+          "exclusive_us": 3139
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1683,
+          "exclusive_us": 1683
+        },
+        {
+          "id": 8,
+          "calls": 4,
+          "inclusive_us": 5458.7,
+          "exclusive_us": 5458.7
+        },
+        {
+          "id": 9,
+          "calls": 4,
+          "inclusive_us": 7942,
+          "exclusive_us": 245.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4877.2,
+          "exclusive_us": 4877.2
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3628.3,
+          "exclusive_us": 3628.3
+        },
+        {
+          "id": 14,
+          "calls": 4,
+          "inclusive_us": 4068.5,
+          "exclusive_us": 4068.5
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 301811.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 301697.1,
+          "exclusive_us": 477.7
+        },
+        {
+          "id": 2,
+          "calls": 4,
+          "inclusive_us": 285200.5,
+          "exclusive_us": 280070.5
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 4367.9,
+          "exclusive_us": 4367.9
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 3783.9,
+          "exclusive_us": 3783.9
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 7867.1,
+          "exclusive_us": 7867.1
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 5130,
+          "exclusive_us": 5130
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 179010.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 178926.6,
+          "exclusive_us": 236.5
+        },
+        {
+          "id": 2,
+          "calls": 4,
+          "inclusive_us": 169692.3,
+          "exclusive_us": 166351.1
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 2810.4,
+          "exclusive_us": 2810.4
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1675.7,
+          "exclusive_us": 1675.7
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4511.7,
+          "exclusive_us": 4511.7
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3341.2,
+          "exclusive_us": 3341.2
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 184610.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 184520.4,
+          "exclusive_us": 246
+        },
+        {
+          "id": 2,
+          "calls": 4,
+          "inclusive_us": 174964.9,
+          "exclusive_us": 171326.5
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 2986.4,
+          "exclusive_us": 2986.4
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1691.2,
+          "exclusive_us": 1691.2
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4631.9,
+          "exclusive_us": 4631.9
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3638.4,
+          "exclusive_us": 3638.4
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 176552.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 176503.4,
+          "exclusive_us": 248.6
+        },
+        {
+          "id": 2,
+          "calls": 4,
+          "inclusive_us": 166339.4,
+          "exclusive_us": 162717.3
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 3175.4,
+          "exclusive_us": 3175.4
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1822.5,
+          "exclusive_us": 1822.5
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4917.5,
+          "exclusive_us": 4917.5
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3622.1,
+          "exclusive_us": 3622.1
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 180855.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 180758.4,
+          "exclusive_us": 239.5
+        },
+        {
+          "id": 2,
+          "calls": 4,
+          "inclusive_us": 171625.2,
+          "exclusive_us": 167859.4
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 2800.4,
+          "exclusive_us": 2800.4
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1678.5,
+          "exclusive_us": 1678.5
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4414.8,
+          "exclusive_us": 4414.8
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3765.8,
+          "exclusive_us": 3765.8
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 176534.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4,
+          "inclusive_us": 176463.9,
+          "exclusive_us": 235.9
+        },
+        {
+          "id": 2,
+          "calls": 4,
+          "inclusive_us": 167258.9,
+          "exclusive_us": 163695.2
+        },
+        {
+          "id": 3,
+          "calls": 4,
+          "inclusive_us": 2902.4,
+          "exclusive_us": 2902.4
+        },
+        {
+          "id": 4,
+          "calls": 4,
+          "inclusive_us": 1663.3,
+          "exclusive_us": 1663.3
+        },
+        {
+          "id": 11,
+          "calls": 4,
+          "inclusive_us": 4403.4,
+          "exclusive_us": 4403.4
+        },
+        {
+          "id": 13,
+          "calls": 4,
+          "inclusive_us": 3563.7,
+          "exclusive_us": 3563.7
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 58688,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 7,
+          "inclusive_us": 58617.6,
+          "exclusive_us": 16.8
+        },
+        {
+          "id": 5,
+          "calls": 7,
+          "inclusive_us": 58600.8,
+          "exclusive_us": 42.7
+        },
+        {
+          "id": 6,
+          "calls": 7,
+          "inclusive_us": 58558.1,
+          "exclusive_us": 11772.9
+        },
+        {
+          "id": 7,
+          "calls": 7,
+          "inclusive_us": 29633.5,
+          "exclusive_us": 276.3
+        },
+        {
+          "id": 8,
+          "calls": 21,
+          "inclusive_us": 23761.2,
+          "exclusive_us": 23761.2
+        },
+        {
+          "id": 9,
+          "calls": 7,
+          "inclusive_us": 8629.5,
+          "exclusive_us": 248.7
+        },
+        {
+          "id": 10,
+          "calls": 7,
+          "inclusive_us": 9370.3,
+          "exclusive_us": 9370.3
+        },
+        {
+          "id": 11,
+          "calls": 7,
+          "inclusive_us": 4747.9,
+          "exclusive_us": 4747.9
+        },
+        {
+          "id": 13,
+          "calls": 7,
+          "inclusive_us": 1443.1,
+          "exclusive_us": 1443.1
+        },
+        {
+          "id": 14,
+          "calls": 7,
+          "inclusive_us": 6937.7,
+          "exclusive_us": 6937.7
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 58461.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 7,
+          "inclusive_us": 58387.6,
+          "exclusive_us": 17.2
+        },
+        {
+          "id": 5,
+          "calls": 7,
+          "inclusive_us": 58370.4,
+          "exclusive_us": 58.4
+        },
+        {
+          "id": 6,
+          "calls": 7,
+          "inclusive_us": 58312,
+          "exclusive_us": 12374.9
+        },
+        {
+          "id": 7,
+          "calls": 7,
+          "inclusive_us": 28190.3,
+          "exclusive_us": 272.3
+        },
+        {
+          "id": 8,
+          "calls": 21,
+          "inclusive_us": 23844.5,
+          "exclusive_us": 23844.5
+        },
+        {
+          "id": 9,
+          "calls": 7,
+          "inclusive_us": 8862.2,
+          "exclusive_us": 255.2
+        },
+        {
+          "id": 10,
+          "calls": 7,
+          "inclusive_us": 7789.1,
+          "exclusive_us": 7789.1
+        },
+        {
+          "id": 11,
+          "calls": 7,
+          "inclusive_us": 5169,
+          "exclusive_us": 5169
+        },
+        {
+          "id": 13,
+          "calls": 7,
+          "inclusive_us": 1647.3,
+          "exclusive_us": 1647.3
+        },
+        {
+          "id": 14,
+          "calls": 7,
+          "inclusive_us": 6959.7,
+          "exclusive_us": 6959.7
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 60237,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 7,
+          "inclusive_us": 60037.4,
+          "exclusive_us": 19.1
+        },
+        {
+          "id": 5,
+          "calls": 7,
+          "inclusive_us": 60018.3,
+          "exclusive_us": 56.4
+        },
+        {
+          "id": 6,
+          "calls": 7,
+          "inclusive_us": 59961.9,
+          "exclusive_us": 12787.1
+        },
+        {
+          "id": 7,
+          "calls": 7,
+          "inclusive_us": 29804.5,
+          "exclusive_us": 301.3
+        },
+        {
+          "id": 8,
+          "calls": 21,
+          "inclusive_us": 24995.2,
+          "exclusive_us": 24995.2
+        },
+        {
+          "id": 9,
+          "calls": 7,
+          "inclusive_us": 8516.8,
+          "exclusive_us": 250.1
+        },
+        {
+          "id": 10,
+          "calls": 7,
+          "inclusive_us": 8039.8,
+          "exclusive_us": 8039.8
+        },
+        {
+          "id": 11,
+          "calls": 7,
+          "inclusive_us": 5321.7,
+          "exclusive_us": 5321.7
+        },
+        {
+          "id": 13,
+          "calls": 7,
+          "inclusive_us": 1464.3,
+          "exclusive_us": 1464.3
+        },
+        {
+          "id": 14,
+          "calls": 7,
+          "inclusive_us": 6802.4,
+          "exclusive_us": 6802.4
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 344266.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 3,
+          "inclusive_us": 344193.2,
+          "exclusive_us": 9.5
+        },
+        {
+          "id": 5,
+          "calls": 3,
+          "inclusive_us": 344183.7,
+          "exclusive_us": 46.3
+        },
+        {
+          "id": 6,
+          "calls": 3,
+          "inclusive_us": 344137.4,
+          "exclusive_us": 30278.2
+        },
+        {
+          "id": 7,
+          "calls": 3,
+          "inclusive_us": 309299.9,
+          "exclusive_us": 4406.1
+        },
+        {
+          "id": 8,
+          "calls": 300,
+          "inclusive_us": 301477.6,
+          "exclusive_us": 301477.6
+        },
+        {
+          "id": 10,
+          "calls": 3,
+          "inclusive_us": 3416.2,
+          "exclusive_us": 3416.2
+        },
+        {
+          "id": 11,
+          "calls": 3,
+          "inclusive_us": 1962,
+          "exclusive_us": 1962
+        },
+        {
+          "id": 13,
+          "calls": 3,
+          "inclusive_us": 2597.3,
+          "exclusive_us": 2597.3
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 332789.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 3,
+          "inclusive_us": 332712,
+          "exclusive_us": 9.8
+        },
+        {
+          "id": 5,
+          "calls": 3,
+          "inclusive_us": 332702.2,
+          "exclusive_us": 56.4
+        },
+        {
+          "id": 6,
+          "calls": 3,
+          "inclusive_us": 332645.8,
+          "exclusive_us": 30587.9
+        },
+        {
+          "id": 7,
+          "calls": 3,
+          "inclusive_us": 297401.6,
+          "exclusive_us": 4224.1
+        },
+        {
+          "id": 8,
+          "calls": 300,
+          "inclusive_us": 289956.8,
+          "exclusive_us": 289956.8
+        },
+        {
+          "id": 10,
+          "calls": 3,
+          "inclusive_us": 3220.7,
+          "exclusive_us": 3220.7
+        },
+        {
+          "id": 11,
+          "calls": 3,
+          "inclusive_us": 1998,
+          "exclusive_us": 1998
+        },
+        {
+          "id": 13,
+          "calls": 3,
+          "inclusive_us": 2658.3,
+          "exclusive_us": 2658.3
+        }
+      ]
+    },
+    {
+      "mode": "coarse",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 329038,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 3,
+          "inclusive_us": 328977.3,
+          "exclusive_us": 9.6
+        },
+        {
+          "id": 5,
+          "calls": 3,
+          "inclusive_us": 328967.7,
+          "exclusive_us": 38.9
+        },
+        {
+          "id": 6,
+          "calls": 3,
+          "inclusive_us": 328928.8,
+          "exclusive_us": 27971.4
+        },
+        {
+          "id": 7,
+          "calls": 3,
+          "inclusive_us": 296439.8,
+          "exclusive_us": 4208.8
+        },
+        {
+          "id": 8,
+          "calls": 300,
+          "inclusive_us": 288709.2,
+          "exclusive_us": 288709.2
+        },
+        {
+          "id": 10,
+          "calls": 3,
+          "inclusive_us": 3521.8,
+          "exclusive_us": 3521.8
+        },
+        {
+          "id": 11,
+          "calls": 3,
+          "inclusive_us": 1955.6,
+          "exclusive_us": 1955.6
+        },
+        {
+          "id": 13,
+          "calls": 3,
+          "inclusive_us": 2562,
+          "exclusive_us": 2562
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 116467.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 1676,
+          "inclusive_us": 110415.6,
+          "exclusive_us": 11575.9
+        },
+        {
+          "id": 2,
+          "calls": 3360,
+          "inclusive_us": 5856,
+          "exclusive_us": 5314.2
+        },
+        {
+          "id": 3,
+          "calls": 1676,
+          "inclusive_us": 93024.8,
+          "exclusive_us": 24452.2
+        },
+        {
+          "id": 4,
+          "calls": 5040,
+          "inclusive_us": 8197.9,
+          "exclusive_us": 8197.9
+        },
+        {
+          "id": 5,
+          "calls": 1660,
+          "inclusive_us": 2404.5,
+          "exclusive_us": 2404.5
+        },
+        {
+          "id": 6,
+          "calls": 2092,
+          "inclusive_us": 2486.3,
+          "exclusive_us": 2486.3
+        },
+        {
+          "id": 7,
+          "calls": 2356,
+          "inclusive_us": 2812.7,
+          "exclusive_us": 2812.7
+        },
+        {
+          "id": 8,
+          "calls": 2208,
+          "inclusive_us": 34255.6,
+          "exclusive_us": 19492.7
+        },
+        {
+          "id": 9,
+          "calls": 1352,
+          "inclusive_us": 8027.8,
+          "exclusive_us": 5741.4
+        },
+        {
+          "id": 10,
+          "calls": 380,
+          "inclusive_us": 36294.9,
+          "exclusive_us": 8273.7
+        },
+        {
+          "id": 11,
+          "calls": 11844,
+          "inclusive_us": 19791.7,
+          "exclusive_us": 19791.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 75441.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 1676,
+          "inclusive_us": 71399.9,
+          "exclusive_us": 7280.8
+        },
+        {
+          "id": 2,
+          "calls": 3360,
+          "inclusive_us": 3790.3,
+          "exclusive_us": 3409.7
+        },
+        {
+          "id": 3,
+          "calls": 1676,
+          "inclusive_us": 60353.1,
+          "exclusive_us": 16135.7
+        },
+        {
+          "id": 4,
+          "calls": 5040,
+          "inclusive_us": 5427,
+          "exclusive_us": 5427
+        },
+        {
+          "id": 5,
+          "calls": 1660,
+          "inclusive_us": 1613.2,
+          "exclusive_us": 1613.2
+        },
+        {
+          "id": 6,
+          "calls": 2092,
+          "inclusive_us": 1694.4,
+          "exclusive_us": 1694.4
+        },
+        {
+          "id": 7,
+          "calls": 2356,
+          "inclusive_us": 2062.2,
+          "exclusive_us": 2062.2
+        },
+        {
+          "id": 8,
+          "calls": 2208,
+          "inclusive_us": 21450.6,
+          "exclusive_us": 12525
+        },
+        {
+          "id": 9,
+          "calls": 1352,
+          "inclusive_us": 5324.7,
+          "exclusive_us": 3979.4
+        },
+        {
+          "id": 10,
+          "calls": 380,
+          "inclusive_us": 23130.1,
+          "exclusive_us": 5340.1
+        },
+        {
+          "id": 11,
+          "calls": 11844,
+          "inclusive_us": 12027.6,
+          "exclusive_us": 12027.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 78211.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 1676,
+          "inclusive_us": 74117.1,
+          "exclusive_us": 7801.4
+        },
+        {
+          "id": 2,
+          "calls": 3360,
+          "inclusive_us": 4192.7,
+          "exclusive_us": 3795.1
+        },
+        {
+          "id": 3,
+          "calls": 1676,
+          "inclusive_us": 62149.6,
+          "exclusive_us": 16585.6
+        },
+        {
+          "id": 4,
+          "calls": 5040,
+          "inclusive_us": 5766.3,
+          "exclusive_us": 5766.3
+        },
+        {
+          "id": 5,
+          "calls": 1660,
+          "inclusive_us": 1702.2,
+          "exclusive_us": 1702.2
+        },
+        {
+          "id": 6,
+          "calls": 2092,
+          "inclusive_us": 1772.2,
+          "exclusive_us": 1772.2
+        },
+        {
+          "id": 7,
+          "calls": 2356,
+          "inclusive_us": 2161.9,
+          "exclusive_us": 2161.9
+        },
+        {
+          "id": 8,
+          "calls": 2208,
+          "inclusive_us": 21794.6,
+          "exclusive_us": 12797.3
+        },
+        {
+          "id": 9,
+          "calls": 1352,
+          "inclusive_us": 5565.6,
+          "exclusive_us": 4142.6
+        },
+        {
+          "id": 10,
+          "calls": 380,
+          "inclusive_us": 23591.2,
+          "exclusive_us": 5576.4
+        },
+        {
+          "id": 11,
+          "calls": 11844,
+          "inclusive_us": 12104.4,
+          "exclusive_us": 12104.4
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 1,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 76586.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 1676,
+          "inclusive_us": 72586.2,
+          "exclusive_us": 7503.8
+        },
+        {
+          "id": 2,
+          "calls": 3360,
+          "inclusive_us": 3892.6,
+          "exclusive_us": 3501.9
+        },
+        {
+          "id": 3,
+          "calls": 1676,
+          "inclusive_us": 61214.9,
+          "exclusive_us": 16395.6
+        },
+        {
+          "id": 4,
+          "calls": 5040,
+          "inclusive_us": 5697.2,
+          "exclusive_us": 5697.2
+        },
+        {
+          "id": 5,
+          "calls": 1660,
+          "inclusive_us": 1645.3,
+          "exclusive_us": 1645.3
+        },
+        {
+          "id": 6,
+          "calls": 2092,
+          "inclusive_us": 1805.5,
+          "exclusive_us": 1805.5
+        },
+        {
+          "id": 7,
+          "calls": 2356,
+          "inclusive_us": 2147.7,
+          "exclusive_us": 2147.7
+        },
+        {
+          "id": 8,
+          "calls": 2208,
+          "inclusive_us": 21552,
+          "exclusive_us": 12622.8
+        },
+        {
+          "id": 9,
+          "calls": 1352,
+          "inclusive_us": 5485,
+          "exclusive_us": 4113.1
+        },
+        {
+          "id": 10,
+          "calls": 380,
+          "inclusive_us": 23007.8,
+          "exclusive_us": 5270.3
+        },
+        {
+          "id": 11,
+          "calls": 11844,
+          "inclusive_us": 11967.1,
+          "exclusive_us": 11967.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 2,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 74719.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 1676,
+          "inclusive_us": 70844.6,
+          "exclusive_us": 7264.3
+        },
+        {
+          "id": 2,
+          "calls": 3360,
+          "inclusive_us": 3899.2,
+          "exclusive_us": 3499.2
+        },
+        {
+          "id": 3,
+          "calls": 1676,
+          "inclusive_us": 59706.1,
+          "exclusive_us": 16000.6
+        },
+        {
+          "id": 4,
+          "calls": 5040,
+          "inclusive_us": 5492.1,
+          "exclusive_us": 5492.1
+        },
+        {
+          "id": 5,
+          "calls": 1660,
+          "inclusive_us": 1605.4,
+          "exclusive_us": 1605.4
+        },
+        {
+          "id": 6,
+          "calls": 2092,
+          "inclusive_us": 1735.1,
+          "exclusive_us": 1735.1
+        },
+        {
+          "id": 7,
+          "calls": 2356,
+          "inclusive_us": 2088.4,
+          "exclusive_us": 2088.4
+        },
+        {
+          "id": 8,
+          "calls": 2208,
+          "inclusive_us": 20969.2,
+          "exclusive_us": 12312.6
+        },
+        {
+          "id": 9,
+          "calls": 1352,
+          "inclusive_us": 5387.2,
+          "exclusive_us": 3974.4
+        },
+        {
+          "id": 10,
+          "calls": 380,
+          "inclusive_us": 22508.6,
+          "exclusive_us": 5250.9
+        },
+        {
+          "id": 11,
+          "calls": 11844,
+          "inclusive_us": 11705.8,
+          "exclusive_us": 11705.8
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 3,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 76758.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 1676,
+          "inclusive_us": 72693.3,
+          "exclusive_us": 7430.2
+        },
+        {
+          "id": 2,
+          "calls": 3360,
+          "inclusive_us": 3901.8,
+          "exclusive_us": 3504.3
+        },
+        {
+          "id": 3,
+          "calls": 1676,
+          "inclusive_us": 61386,
+          "exclusive_us": 16331.3
+        },
+        {
+          "id": 4,
+          "calls": 5040,
+          "inclusive_us": 5698.5,
+          "exclusive_us": 5698.5
+        },
+        {
+          "id": 5,
+          "calls": 1660,
+          "inclusive_us": 1625.5,
+          "exclusive_us": 1625.5
+        },
+        {
+          "id": 6,
+          "calls": 2092,
+          "inclusive_us": 1737.2,
+          "exclusive_us": 1737.2
+        },
+        {
+          "id": 7,
+          "calls": 2356,
+          "inclusive_us": 2126.6,
+          "exclusive_us": 2126.6
+        },
+        {
+          "id": 8,
+          "calls": 2208,
+          "inclusive_us": 21840,
+          "exclusive_us": 12767.6
+        },
+        {
+          "id": 9,
+          "calls": 1352,
+          "inclusive_us": 5458.8,
+          "exclusive_us": 4061.2
+        },
+        {
+          "id": 10,
+          "calls": 380,
+          "inclusive_us": 23356.2,
+          "exclusive_us": 5364.2
+        },
+        {
+          "id": 11,
+          "calls": 11844,
+          "inclusive_us": 12132.4,
+          "exclusive_us": 12132.4
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 84720.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2068,
+          "inclusive_us": 79855.4,
+          "exclusive_us": 9111.1
+        },
+        {
+          "id": 2,
+          "calls": 4148,
+          "inclusive_us": 4971.3,
+          "exclusive_us": 4334.8
+        },
+        {
+          "id": 3,
+          "calls": 2068,
+          "inclusive_us": 65808.4,
+          "exclusive_us": 16084.2
+        },
+        {
+          "id": 4,
+          "calls": 5660,
+          "inclusive_us": 6120.3,
+          "exclusive_us": 6120.3
+        },
+        {
+          "id": 5,
+          "calls": 1488,
+          "inclusive_us": 1466.7,
+          "exclusive_us": 1466.7
+        },
+        {
+          "id": 6,
+          "calls": 2048,
+          "inclusive_us": 1859.7,
+          "exclusive_us": 1859.7
+        },
+        {
+          "id": 7,
+          "calls": 1940,
+          "inclusive_us": 1838.1,
+          "exclusive_us": 1838.1
+        },
+        {
+          "id": 8,
+          "calls": 2532,
+          "inclusive_us": 24682.9,
+          "exclusive_us": 14505.7
+        },
+        {
+          "id": 9,
+          "calls": 1456,
+          "inclusive_us": 5856.7,
+          "exclusive_us": 4372.5
+        },
+        {
+          "id": 10,
+          "calls": 500,
+          "inclusive_us": 30287.6,
+          "exclusive_us": 6959.8
+        },
+        {
+          "id": 11,
+          "calls": 13072,
+          "inclusive_us": 13309.4,
+          "exclusive_us": 13309.4
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 84661.8,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2068,
+          "inclusive_us": 79869.4,
+          "exclusive_us": 8964.8
+        },
+        {
+          "id": 2,
+          "calls": 4148,
+          "inclusive_us": 4868.1,
+          "exclusive_us": 4358.8
+        },
+        {
+          "id": 3,
+          "calls": 2068,
+          "inclusive_us": 66071.4,
+          "exclusive_us": 15868.4
+        },
+        {
+          "id": 4,
+          "calls": 5660,
+          "inclusive_us": 6147.7,
+          "exclusive_us": 6147.7
+        },
+        {
+          "id": 5,
+          "calls": 1488,
+          "inclusive_us": 1631.3,
+          "exclusive_us": 1631.3
+        },
+        {
+          "id": 6,
+          "calls": 2048,
+          "inclusive_us": 1716.2,
+          "exclusive_us": 1716.2
+        },
+        {
+          "id": 7,
+          "calls": 1940,
+          "inclusive_us": 1903.3,
+          "exclusive_us": 1903.3
+        },
+        {
+          "id": 8,
+          "calls": 2532,
+          "inclusive_us": 25032.9,
+          "exclusive_us": 14692.6
+        },
+        {
+          "id": 9,
+          "calls": 1456,
+          "inclusive_us": 5778.6,
+          "exclusive_us": 4314.9
+        },
+        {
+          "id": 10,
+          "calls": 500,
+          "inclusive_us": 30840.5,
+          "exclusive_us": 7101.1
+        },
+        {
+          "id": 11,
+          "calls": 13072,
+          "inclusive_us": 13283.9,
+          "exclusive_us": 13283.9
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 82759.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2068,
+          "inclusive_us": 78000,
+          "exclusive_us": 8965.3
+        },
+        {
+          "id": 2,
+          "calls": 4148,
+          "inclusive_us": 4767.9,
+          "exclusive_us": 4266.7
+        },
+        {
+          "id": 3,
+          "calls": 2068,
+          "inclusive_us": 64302.7,
+          "exclusive_us": 15627.2
+        },
+        {
+          "id": 4,
+          "calls": 5660,
+          "inclusive_us": 6046.1,
+          "exclusive_us": 6046.1
+        },
+        {
+          "id": 5,
+          "calls": 1488,
+          "inclusive_us": 1443.3,
+          "exclusive_us": 1443.3
+        },
+        {
+          "id": 6,
+          "calls": 2048,
+          "inclusive_us": 1685.9,
+          "exclusive_us": 1685.9
+        },
+        {
+          "id": 7,
+          "calls": 1940,
+          "inclusive_us": 1854.1,
+          "exclusive_us": 1854.1
+        },
+        {
+          "id": 8,
+          "calls": 2532,
+          "inclusive_us": 24208.2,
+          "exclusive_us": 14113.7
+        },
+        {
+          "id": 9,
+          "calls": 1456,
+          "inclusive_us": 5694,
+          "exclusive_us": 4255.8
+        },
+        {
+          "id": 10,
+          "calls": 500,
+          "inclusive_us": 29788.6,
+          "exclusive_us": 6850.2
+        },
+        {
+          "id": 11,
+          "calls": 13072,
+          "inclusive_us": 12998.8,
+          "exclusive_us": 12998.8
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 86449.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2068,
+          "inclusive_us": 81142.8,
+          "exclusive_us": 9321.9
+        },
+        {
+          "id": 2,
+          "calls": 4148,
+          "inclusive_us": 4849.4,
+          "exclusive_us": 4342
+        },
+        {
+          "id": 3,
+          "calls": 2068,
+          "inclusive_us": 67008.9,
+          "exclusive_us": 16339.6
+        },
+        {
+          "id": 4,
+          "calls": 5660,
+          "inclusive_us": 6159,
+          "exclusive_us": 6159
+        },
+        {
+          "id": 5,
+          "calls": 1488,
+          "inclusive_us": 1466.9,
+          "exclusive_us": 1466.9
+        },
+        {
+          "id": 6,
+          "calls": 2048,
+          "inclusive_us": 1721.5,
+          "exclusive_us": 1721.5
+        },
+        {
+          "id": 7,
+          "calls": 1940,
+          "inclusive_us": 1857.9,
+          "exclusive_us": 1857.9
+        },
+        {
+          "id": 8,
+          "calls": 2532,
+          "inclusive_us": 24989,
+          "exclusive_us": 14647.9
+        },
+        {
+          "id": 9,
+          "calls": 1456,
+          "inclusive_us": 5962.8,
+          "exclusive_us": 4482.2
+        },
+        {
+          "id": 10,
+          "calls": 500,
+          "inclusive_us": 31176.9,
+          "exclusive_us": 7498.9
+        },
+        {
+          "id": 11,
+          "calls": 13072,
+          "inclusive_us": 13416.1,
+          "exclusive_us": 13416.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 82597,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2068,
+          "inclusive_us": 77863,
+          "exclusive_us": 8831.8
+        },
+        {
+          "id": 2,
+          "calls": 4148,
+          "inclusive_us": 4837.2,
+          "exclusive_us": 4337.9
+        },
+        {
+          "id": 3,
+          "calls": 2068,
+          "inclusive_us": 64229.5,
+          "exclusive_us": 15649.8
+        },
+        {
+          "id": 4,
+          "calls": 5660,
+          "inclusive_us": 6081.1,
+          "exclusive_us": 6081.1
+        },
+        {
+          "id": 5,
+          "calls": 1488,
+          "inclusive_us": 1504,
+          "exclusive_us": 1504
+        },
+        {
+          "id": 6,
+          "calls": 2048,
+          "inclusive_us": 1682.3,
+          "exclusive_us": 1682.3
+        },
+        {
+          "id": 7,
+          "calls": 1940,
+          "inclusive_us": 1812.2,
+          "exclusive_us": 1812.2
+        },
+        {
+          "id": 8,
+          "calls": 2532,
+          "inclusive_us": 24062.8,
+          "exclusive_us": 14127.3
+        },
+        {
+          "id": 9,
+          "calls": 1456,
+          "inclusive_us": 5697.8,
+          "exclusive_us": 4275.8
+        },
+        {
+          "id": 10,
+          "calls": 500,
+          "inclusive_us": 29712,
+          "exclusive_us": 6859.6
+        },
+        {
+          "id": 11,
+          "calls": 13072,
+          "inclusive_us": 12805.6,
+          "exclusive_us": 12805.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 84019,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2068,
+          "inclusive_us": 79125.4,
+          "exclusive_us": 9074.5
+        },
+        {
+          "id": 2,
+          "calls": 4148,
+          "inclusive_us": 4781.2,
+          "exclusive_us": 4278.8
+        },
+        {
+          "id": 3,
+          "calls": 2068,
+          "inclusive_us": 65305.4,
+          "exclusive_us": 15933.5
+        },
+        {
+          "id": 4,
+          "calls": 5660,
+          "inclusive_us": 6290.8,
+          "exclusive_us": 6290.8
+        },
+        {
+          "id": 5,
+          "calls": 1488,
+          "inclusive_us": 1447.6,
+          "exclusive_us": 1447.6
+        },
+        {
+          "id": 6,
+          "calls": 2048,
+          "inclusive_us": 1860.8,
+          "exclusive_us": 1860.8
+        },
+        {
+          "id": 7,
+          "calls": 1940,
+          "inclusive_us": 1932.4,
+          "exclusive_us": 1932.4
+        },
+        {
+          "id": 8,
+          "calls": 2532,
+          "inclusive_us": 24218.7,
+          "exclusive_us": 14188.6
+        },
+        {
+          "id": 9,
+          "calls": 1456,
+          "inclusive_us": 5764.7,
+          "exclusive_us": 4310.7
+        },
+        {
+          "id": 10,
+          "calls": 500,
+          "inclusive_us": 29884.6,
+          "exclusive_us": 6960.8
+        },
+        {
+          "id": 11,
+          "calls": 13072,
+          "inclusive_us": 12953.7,
+          "exclusive_us": 12953.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 131227.4,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2936,
+          "inclusive_us": 123934.2,
+          "exclusive_us": 13858.9
+        },
+        {
+          "id": 2,
+          "calls": 5888,
+          "inclusive_us": 7303.5,
+          "exclusive_us": 6530
+        },
+        {
+          "id": 3,
+          "calls": 2936,
+          "inclusive_us": 102820.2,
+          "exclusive_us": 25869.5
+        },
+        {
+          "id": 4,
+          "calls": 8272,
+          "inclusive_us": 9473.6,
+          "exclusive_us": 9473.6
+        },
+        {
+          "id": 5,
+          "calls": 2360,
+          "inclusive_us": 2447.6,
+          "exclusive_us": 2447.6
+        },
+        {
+          "id": 6,
+          "calls": 3172,
+          "inclusive_us": 2778.9,
+          "exclusive_us": 2778.9
+        },
+        {
+          "id": 7,
+          "calls": 3124,
+          "inclusive_us": 3133.9,
+          "exclusive_us": 3133.9
+        },
+        {
+          "id": 8,
+          "calls": 3696,
+          "inclusive_us": 37664.1,
+          "exclusive_us": 22124.8
+        },
+        {
+          "id": 9,
+          "calls": 2164,
+          "inclusive_us": 9177,
+          "exclusive_us": 6873.7
+        },
+        {
+          "id": 10,
+          "calls": 700,
+          "inclusive_us": 44929.5,
+          "exclusive_us": 10642.2
+        },
+        {
+          "id": 11,
+          "calls": 19308,
+          "inclusive_us": 20331.1,
+          "exclusive_us": 20331.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 123392.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2936,
+          "inclusive_us": 116732.9,
+          "exclusive_us": 12795
+        },
+        {
+          "id": 2,
+          "calls": 5888,
+          "inclusive_us": 6826.2,
+          "exclusive_us": 6089.1
+        },
+        {
+          "id": 3,
+          "calls": 2936,
+          "inclusive_us": 97160,
+          "exclusive_us": 24257.9
+        },
+        {
+          "id": 4,
+          "calls": 8272,
+          "inclusive_us": 9010.4,
+          "exclusive_us": 9010.4
+        },
+        {
+          "id": 5,
+          "calls": 2360,
+          "inclusive_us": 2318.2,
+          "exclusive_us": 2318.2
+        },
+        {
+          "id": 6,
+          "calls": 3172,
+          "inclusive_us": 2652.2,
+          "exclusive_us": 2652.2
+        },
+        {
+          "id": 7,
+          "calls": 3124,
+          "inclusive_us": 3041.8,
+          "exclusive_us": 3041.8
+        },
+        {
+          "id": 8,
+          "calls": 3696,
+          "inclusive_us": 35887.6,
+          "exclusive_us": 21020.5
+        },
+        {
+          "id": 9,
+          "calls": 2164,
+          "inclusive_us": 8574.2,
+          "exclusive_us": 6371.7
+        },
+        {
+          "id": 10,
+          "calls": 700,
+          "inclusive_us": 42449.7,
+          "exclusive_us": 9838
+        },
+        {
+          "id": 11,
+          "calls": 19308,
+          "inclusive_us": 19466.4,
+          "exclusive_us": 19466.4
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 125902.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2936,
+          "inclusive_us": 119093.5,
+          "exclusive_us": 13110.5
+        },
+        {
+          "id": 2,
+          "calls": 5888,
+          "inclusive_us": 7004.2,
+          "exclusive_us": 6249.3
+        },
+        {
+          "id": 3,
+          "calls": 2936,
+          "inclusive_us": 99026.6,
+          "exclusive_us": 24846.9
+        },
+        {
+          "id": 4,
+          "calls": 8272,
+          "inclusive_us": 9195.8,
+          "exclusive_us": 9195.8
+        },
+        {
+          "id": 5,
+          "calls": 2360,
+          "inclusive_us": 2384.6,
+          "exclusive_us": 2384.6
+        },
+        {
+          "id": 6,
+          "calls": 3172,
+          "inclusive_us": 2702.2,
+          "exclusive_us": 2702.2
+        },
+        {
+          "id": 7,
+          "calls": 3124,
+          "inclusive_us": 3067.3,
+          "exclusive_us": 3067.3
+        },
+        {
+          "id": 8,
+          "calls": 3696,
+          "inclusive_us": 36572.9,
+          "exclusive_us": 21532.3
+        },
+        {
+          "id": 9,
+          "calls": 2164,
+          "inclusive_us": 8740.7,
+          "exclusive_us": 6530
+        },
+        {
+          "id": 10,
+          "calls": 700,
+          "inclusive_us": 43011.9,
+          "exclusive_us": 9926.7
+        },
+        {
+          "id": 11,
+          "calls": 19308,
+          "inclusive_us": 19680.5,
+          "exclusive_us": 19680.5
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 125471.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2936,
+          "inclusive_us": 118667.7,
+          "exclusive_us": 13049.3
+        },
+        {
+          "id": 2,
+          "calls": 5888,
+          "inclusive_us": 6973.9,
+          "exclusive_us": 6220.8
+        },
+        {
+          "id": 3,
+          "calls": 2936,
+          "inclusive_us": 98692.5,
+          "exclusive_us": 24791.4
+        },
+        {
+          "id": 4,
+          "calls": 8272,
+          "inclusive_us": 9199.6,
+          "exclusive_us": 9199.6
+        },
+        {
+          "id": 5,
+          "calls": 2360,
+          "inclusive_us": 2357.3,
+          "exclusive_us": 2357.3
+        },
+        {
+          "id": 6,
+          "calls": 3172,
+          "inclusive_us": 2760.8,
+          "exclusive_us": 2760.8
+        },
+        {
+          "id": 7,
+          "calls": 3124,
+          "inclusive_us": 3064.1,
+          "exclusive_us": 3064.1
+        },
+        {
+          "id": 8,
+          "calls": 3696,
+          "inclusive_us": 36203.6,
+          "exclusive_us": 21216.8
+        },
+        {
+          "id": 9,
+          "calls": 2164,
+          "inclusive_us": 8782.4,
+          "exclusive_us": 6560.2
+        },
+        {
+          "id": 10,
+          "calls": 700,
+          "inclusive_us": 42744.9,
+          "exclusive_us": 9897.4
+        },
+        {
+          "id": 11,
+          "calls": 19308,
+          "inclusive_us": 19681.3,
+          "exclusive_us": 19681.3
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 122811.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2936,
+          "inclusive_us": 116150.3,
+          "exclusive_us": 13038.3
+        },
+        {
+          "id": 2,
+          "calls": 5888,
+          "inclusive_us": 6880.6,
+          "exclusive_us": 6146.3
+        },
+        {
+          "id": 3,
+          "calls": 2936,
+          "inclusive_us": 96281,
+          "exclusive_us": 24421.8
+        },
+        {
+          "id": 4,
+          "calls": 8272,
+          "inclusive_us": 8975.9,
+          "exclusive_us": 8975.9
+        },
+        {
+          "id": 5,
+          "calls": 2360,
+          "inclusive_us": 2304.8,
+          "exclusive_us": 2304.8
+        },
+        {
+          "id": 6,
+          "calls": 3172,
+          "inclusive_us": 2639.3,
+          "exclusive_us": 2639.3
+        },
+        {
+          "id": 7,
+          "calls": 3124,
+          "inclusive_us": 3021.6,
+          "exclusive_us": 3021.6
+        },
+        {
+          "id": 8,
+          "calls": 3696,
+          "inclusive_us": 35300.4,
+          "exclusive_us": 20689.6
+        },
+        {
+          "id": 9,
+          "calls": 2164,
+          "inclusive_us": 8449,
+          "exclusive_us": 6315.4
+        },
+        {
+          "id": 10,
+          "calls": 700,
+          "inclusive_us": 41583.3,
+          "exclusive_us": 9580.4
+        },
+        {
+          "id": 11,
+          "calls": 19308,
+          "inclusive_us": 19145.6,
+          "exclusive_us": 19145.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 128307.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 2936,
+          "inclusive_us": 121232,
+          "exclusive_us": 13717.8
+        },
+        {
+          "id": 2,
+          "calls": 5888,
+          "inclusive_us": 7426.9,
+          "exclusive_us": 6678.3
+        },
+        {
+          "id": 3,
+          "calls": 2936,
+          "inclusive_us": 100134.2,
+          "exclusive_us": 25206.4
+        },
+        {
+          "id": 4,
+          "calls": 8272,
+          "inclusive_us": 9435.6,
+          "exclusive_us": 9435.6
+        },
+        {
+          "id": 5,
+          "calls": 2360,
+          "inclusive_us": 2375.3,
+          "exclusive_us": 2375.3
+        },
+        {
+          "id": 6,
+          "calls": 3172,
+          "inclusive_us": 2696.9,
+          "exclusive_us": 2696.9
+        },
+        {
+          "id": 7,
+          "calls": 3124,
+          "inclusive_us": 3028.1,
+          "exclusive_us": 3028.1
+        },
+        {
+          "id": 8,
+          "calls": 3696,
+          "inclusive_us": 36653.2,
+          "exclusive_us": 21492.7
+        },
+        {
+          "id": 9,
+          "calls": 2164,
+          "inclusive_us": 8936.8,
+          "exclusive_us": 6706.7
+        },
+        {
+          "id": 10,
+          "calls": 700,
+          "inclusive_us": 43475,
+          "exclusive_us": 10219.9
+        },
+        {
+          "id": 11,
+          "calls": 19308,
+          "inclusive_us": 19800.4,
+          "exclusive_us": 19800.4
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 229611,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 5580,
+          "inclusive_us": 218043.6,
+          "exclusive_us": 24290.3
+        },
+        {
+          "id": 2,
+          "calls": 11180,
+          "inclusive_us": 15248.7,
+          "exclusive_us": 12974.4
+        },
+        {
+          "id": 3,
+          "calls": 5580,
+          "inclusive_us": 178644.7,
+          "exclusive_us": 48934.3
+        },
+        {
+          "id": 4,
+          "calls": 16176,
+          "inclusive_us": 17812.6,
+          "exclusive_us": 17812.6
+        },
+        {
+          "id": 5,
+          "calls": 4996,
+          "inclusive_us": 4963.3,
+          "exclusive_us": 4963.3
+        },
+        {
+          "id": 6,
+          "calls": 7484,
+          "inclusive_us": 6617.2,
+          "exclusive_us": 6617.2
+        },
+        {
+          "id": 7,
+          "calls": 5656,
+          "inclusive_us": 4914.6,
+          "exclusive_us": 4914.6
+        },
+        {
+          "id": 8,
+          "calls": 6768,
+          "inclusive_us": 65288.9,
+          "exclusive_us": 38337.4
+        },
+        {
+          "id": 9,
+          "calls": 3328,
+          "inclusive_us": 13259.1,
+          "exclusive_us": 9902.2
+        },
+        {
+          "id": 10,
+          "calls": 1020,
+          "inclusive_us": 61074,
+          "exclusive_us": 14183.7
+        },
+        {
+          "id": 11,
+          "calls": 35396,
+          "inclusive_us": 35296.9,
+          "exclusive_us": 35296.9
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 226607.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 5580,
+          "inclusive_us": 215354.4,
+          "exclusive_us": 23925.4
+        },
+        {
+          "id": 2,
+          "calls": 11180,
+          "inclusive_us": 14841.8,
+          "exclusive_us": 12579.6
+        },
+        {
+          "id": 3,
+          "calls": 5580,
+          "inclusive_us": 176729.3,
+          "exclusive_us": 48502.7
+        },
+        {
+          "id": 4,
+          "calls": 16176,
+          "inclusive_us": 17498.1,
+          "exclusive_us": 17498.1
+        },
+        {
+          "id": 5,
+          "calls": 4996,
+          "inclusive_us": 4856.1,
+          "exclusive_us": 4856.1
+        },
+        {
+          "id": 6,
+          "calls": 7484,
+          "inclusive_us": 6579.2,
+          "exclusive_us": 6579.2
+        },
+        {
+          "id": 7,
+          "calls": 5656,
+          "inclusive_us": 4872,
+          "exclusive_us": 4872
+        },
+        {
+          "id": 8,
+          "calls": 6768,
+          "inclusive_us": 64425,
+          "exclusive_us": 37848.8
+        },
+        {
+          "id": 9,
+          "calls": 3328,
+          "inclusive_us": 13084.9,
+          "exclusive_us": 9770.2
+        },
+        {
+          "id": 10,
+          "calls": 1020,
+          "inclusive_us": 60133.9,
+          "exclusive_us": 13994
+        },
+        {
+          "id": 11,
+          "calls": 35396,
+          "inclusive_us": 35112.1,
+          "exclusive_us": 35112.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 234299.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 5580,
+          "inclusive_us": 222713.1,
+          "exclusive_us": 25033
+        },
+        {
+          "id": 2,
+          "calls": 11180,
+          "inclusive_us": 15156.1,
+          "exclusive_us": 12849.9
+        },
+        {
+          "id": 3,
+          "calls": 5580,
+          "inclusive_us": 182679.1,
+          "exclusive_us": 50792.1
+        },
+        {
+          "id": 4,
+          "calls": 16176,
+          "inclusive_us": 17879,
+          "exclusive_us": 17879
+        },
+        {
+          "id": 5,
+          "calls": 4996,
+          "inclusive_us": 5021.8,
+          "exclusive_us": 5021.8
+        },
+        {
+          "id": 6,
+          "calls": 7484,
+          "inclusive_us": 6722.8,
+          "exclusive_us": 6722.8
+        },
+        {
+          "id": 7,
+          "calls": 5656,
+          "inclusive_us": 4988,
+          "exclusive_us": 4988
+        },
+        {
+          "id": 8,
+          "calls": 6768,
+          "inclusive_us": 66634.6,
+          "exclusive_us": 38895.5
+        },
+        {
+          "id": 9,
+          "calls": 3328,
+          "inclusive_us": 13474.5,
+          "exclusive_us": 10095.7
+        },
+        {
+          "id": 10,
+          "calls": 1020,
+          "inclusive_us": 62235.9,
+          "exclusive_us": 14486.6
+        },
+        {
+          "id": 11,
+          "calls": 35396,
+          "inclusive_us": 36144.3,
+          "exclusive_us": 36144.3
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 227806.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 5580,
+          "inclusive_us": 216385.7,
+          "exclusive_us": 24023.1
+        },
+        {
+          "id": 2,
+          "calls": 11180,
+          "inclusive_us": 14931.3,
+          "exclusive_us": 12604.5
+        },
+        {
+          "id": 3,
+          "calls": 5580,
+          "inclusive_us": 177578.9,
+          "exclusive_us": 48606.2
+        },
+        {
+          "id": 4,
+          "calls": 16176,
+          "inclusive_us": 17689.6,
+          "exclusive_us": 17689.6
+        },
+        {
+          "id": 5,
+          "calls": 4996,
+          "inclusive_us": 4855.5,
+          "exclusive_us": 4855.5
+        },
+        {
+          "id": 6,
+          "calls": 7484,
+          "inclusive_us": 6647.8,
+          "exclusive_us": 6647.8
+        },
+        {
+          "id": 7,
+          "calls": 5656,
+          "inclusive_us": 4861.6,
+          "exclusive_us": 4861.6
+        },
+        {
+          "id": 8,
+          "calls": 6768,
+          "inclusive_us": 64930.5,
+          "exclusive_us": 38089.1
+        },
+        {
+          "id": 9,
+          "calls": 3328,
+          "inclusive_us": 13349,
+          "exclusive_us": 10000.5
+        },
+        {
+          "id": 10,
+          "calls": 1020,
+          "inclusive_us": 60707.3,
+          "exclusive_us": 14072.4
+        },
+        {
+          "id": 11,
+          "calls": 35396,
+          "inclusive_us": 35127,
+          "exclusive_us": 35127
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 232057.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 5580,
+          "inclusive_us": 220480,
+          "exclusive_us": 24646.4
+        },
+        {
+          "id": 2,
+          "calls": 11180,
+          "inclusive_us": 15006.6,
+          "exclusive_us": 12726.4
+        },
+        {
+          "id": 3,
+          "calls": 5580,
+          "inclusive_us": 180969.8,
+          "exclusive_us": 49424.2
+        },
+        {
+          "id": 4,
+          "calls": 16176,
+          "inclusive_us": 17707.9,
+          "exclusive_us": 17707.9
+        },
+        {
+          "id": 5,
+          "calls": 4996,
+          "inclusive_us": 4911.4,
+          "exclusive_us": 4911.4
+        },
+        {
+          "id": 6,
+          "calls": 7484,
+          "inclusive_us": 6628.2,
+          "exclusive_us": 6628.2
+        },
+        {
+          "id": 7,
+          "calls": 5656,
+          "inclusive_us": 4897.2,
+          "exclusive_us": 4897.2
+        },
+        {
+          "id": 8,
+          "calls": 6768,
+          "inclusive_us": 66532.4,
+          "exclusive_us": 39254.9
+        },
+        {
+          "id": 9,
+          "calls": 3328,
+          "inclusive_us": 13715.2,
+          "exclusive_us": 10257.1
+        },
+        {
+          "id": 10,
+          "calls": 1020,
+          "inclusive_us": 62959.5,
+          "exclusive_us": 14423.6
+        },
+        {
+          "id": 11,
+          "calls": 35396,
+          "inclusive_us": 35787.5,
+          "exclusive_us": 35787.5
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 229367.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 5580,
+          "inclusive_us": 217874.9,
+          "exclusive_us": 24184.7
+        },
+        {
+          "id": 2,
+          "calls": 11180,
+          "inclusive_us": 15071.9,
+          "exclusive_us": 12782.3
+        },
+        {
+          "id": 3,
+          "calls": 5580,
+          "inclusive_us": 178762.4,
+          "exclusive_us": 48991.3
+        },
+        {
+          "id": 4,
+          "calls": 16176,
+          "inclusive_us": 17796.8,
+          "exclusive_us": 17796.8
+        },
+        {
+          "id": 5,
+          "calls": 4996,
+          "inclusive_us": 4903.1,
+          "exclusive_us": 4903.1
+        },
+        {
+          "id": 6,
+          "calls": 7484,
+          "inclusive_us": 6647.2,
+          "exclusive_us": 6647.2
+        },
+        {
+          "id": 7,
+          "calls": 5656,
+          "inclusive_us": 4911.4,
+          "exclusive_us": 4911.4
+        },
+        {
+          "id": 8,
+          "calls": 6768,
+          "inclusive_us": 65405.5,
+          "exclusive_us": 38456.6
+        },
+        {
+          "id": 9,
+          "calls": 3328,
+          "inclusive_us": 13254.3,
+          "exclusive_us": 9908.4
+        },
+        {
+          "id": 10,
+          "calls": 1020,
+          "inclusive_us": 61275.7,
+          "exclusive_us": 14196.9
+        },
+        {
+          "id": 11,
+          "calls": 35396,
+          "inclusive_us": 35283.3,
+          "exclusive_us": 35283.3
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 1643956.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 33672,
+          "inclusive_us": 1570705.9,
+          "exclusive_us": 148519.8
+        },
+        {
+          "id": 2,
+          "calls": 67360,
+          "inclusive_us": 85552.5,
+          "exclusive_us": 74863.5
+        },
+        {
+          "id": 3,
+          "calls": 33672,
+          "inclusive_us": 1336683.6,
+          "exclusive_us": 322382.7
+        },
+        {
+          "id": 4,
+          "calls": 100636,
+          "inclusive_us": 112357.2,
+          "exclusive_us": 112357.2
+        },
+        {
+          "id": 5,
+          "calls": 33252,
+          "inclusive_us": 33056,
+          "exclusive_us": 33056
+        },
+        {
+          "id": 6,
+          "calls": 44960,
+          "inclusive_us": 37602.8,
+          "exclusive_us": 37602.8
+        },
+        {
+          "id": 7,
+          "calls": 44028,
+          "inclusive_us": 42528.6,
+          "exclusive_us": 42528.6
+        },
+        {
+          "id": 8,
+          "calls": 52180,
+          "inclusive_us": 500840.3,
+          "exclusive_us": 293391.8
+        },
+        {
+          "id": 9,
+          "calls": 31212,
+          "inclusive_us": 124804.3,
+          "exclusive_us": 93465.8
+        },
+        {
+          "id": 10,
+          "calls": 10028,
+          "inclusive_us": 602187.7,
+          "exclusive_us": 140137.1
+        },
+        {
+          "id": 11,
+          "calls": 273184,
+          "inclusive_us": 272531.1,
+          "exclusive_us": 272531.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 1641910.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 33672,
+          "inclusive_us": 1569751.7,
+          "exclusive_us": 147766.5
+        },
+        {
+          "id": 2,
+          "calls": 67360,
+          "inclusive_us": 84916.7,
+          "exclusive_us": 73693
+        },
+        {
+          "id": 3,
+          "calls": 33672,
+          "inclusive_us": 1337116.9,
+          "exclusive_us": 322501.4
+        },
+        {
+          "id": 4,
+          "calls": 100636,
+          "inclusive_us": 112141.5,
+          "exclusive_us": 112141.5
+        },
+        {
+          "id": 5,
+          "calls": 33252,
+          "inclusive_us": 32648.2,
+          "exclusive_us": 32648.2
+        },
+        {
+          "id": 6,
+          "calls": 44960,
+          "inclusive_us": 38324.7,
+          "exclusive_us": 38324.7
+        },
+        {
+          "id": 7,
+          "calls": 44028,
+          "inclusive_us": 42453.7,
+          "exclusive_us": 42453.7
+        },
+        {
+          "id": 8,
+          "calls": 52180,
+          "inclusive_us": 503887.2,
+          "exclusive_us": 295890.7
+        },
+        {
+          "id": 9,
+          "calls": 31212,
+          "inclusive_us": 123838.1,
+          "exclusive_us": 92388
+        },
+        {
+          "id": 10,
+          "calls": 10028,
+          "inclusive_us": 602757.2,
+          "exclusive_us": 139434.7
+        },
+        {
+          "id": 11,
+          "calls": 273184,
+          "inclusive_us": 272636.9,
+          "exclusive_us": 272636.9
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 1664703,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 33672,
+          "inclusive_us": 1590508.8,
+          "exclusive_us": 150012.4
+        },
+        {
+          "id": 2,
+          "calls": 67360,
+          "inclusive_us": 84957.8,
+          "exclusive_us": 74130.7
+        },
+        {
+          "id": 3,
+          "calls": 33672,
+          "inclusive_us": 1355587.2,
+          "exclusive_us": 327483.6
+        },
+        {
+          "id": 4,
+          "calls": 100636,
+          "inclusive_us": 113046.9,
+          "exclusive_us": 113046.9
+        },
+        {
+          "id": 5,
+          "calls": 33252,
+          "inclusive_us": 32967,
+          "exclusive_us": 32967
+        },
+        {
+          "id": 6,
+          "calls": 44960,
+          "inclusive_us": 38068.5,
+          "exclusive_us": 38068.5
+        },
+        {
+          "id": 7,
+          "calls": 44028,
+          "inclusive_us": 43428.6,
+          "exclusive_us": 43428.6
+        },
+        {
+          "id": 8,
+          "calls": 52180,
+          "inclusive_us": 509476.9,
+          "exclusive_us": 298427.9
+        },
+        {
+          "id": 9,
+          "calls": 31212,
+          "inclusive_us": 126135.1,
+          "exclusive_us": 94148.2
+        },
+        {
+          "id": 10,
+          "calls": 10028,
+          "inclusive_us": 611797.3,
+          "exclusive_us": 142196.8
+        },
+        {
+          "id": 11,
+          "calls": 273184,
+          "inclusive_us": 276728.1,
+          "exclusive_us": 276728.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 1655738.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 33672,
+          "inclusive_us": 1582044,
+          "exclusive_us": 149980.3
+        },
+        {
+          "id": 2,
+          "calls": 67360,
+          "inclusive_us": 85216.2,
+          "exclusive_us": 73952.6
+        },
+        {
+          "id": 3,
+          "calls": 33672,
+          "inclusive_us": 1346903.7,
+          "exclusive_us": 325872.2
+        },
+        {
+          "id": 4,
+          "calls": 100636,
+          "inclusive_us": 113259,
+          "exclusive_us": 113259
+        },
+        {
+          "id": 5,
+          "calls": 33252,
+          "inclusive_us": 32844.1,
+          "exclusive_us": 32844.1
+        },
+        {
+          "id": 6,
+          "calls": 44960,
+          "inclusive_us": 38248.5,
+          "exclusive_us": 38248.5
+        },
+        {
+          "id": 7,
+          "calls": 44028,
+          "inclusive_us": 42290.7,
+          "exclusive_us": 42290.7
+        },
+        {
+          "id": 8,
+          "calls": 52180,
+          "inclusive_us": 506283.1,
+          "exclusive_us": 296681.7
+        },
+        {
+          "id": 9,
+          "calls": 31212,
+          "inclusive_us": 125034.2,
+          "exclusive_us": 93379.5
+        },
+        {
+          "id": 10,
+          "calls": 10028,
+          "inclusive_us": 606648.9,
+          "exclusive_us": 141171.3
+        },
+        {
+          "id": 11,
+          "calls": 273184,
+          "inclusive_us": 274529.6,
+          "exclusive_us": 274529.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 1711342.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 33672,
+          "inclusive_us": 1635307.8,
+          "exclusive_us": 154542.1
+        },
+        {
+          "id": 2,
+          "calls": 67360,
+          "inclusive_us": 87513.3,
+          "exclusive_us": 76321.7
+        },
+        {
+          "id": 3,
+          "calls": 33672,
+          "inclusive_us": 1393302.7,
+          "exclusive_us": 335692.5
+        },
+        {
+          "id": 4,
+          "calls": 100636,
+          "inclusive_us": 116629.4,
+          "exclusive_us": 116629.4
+        },
+        {
+          "id": 5,
+          "calls": 33252,
+          "inclusive_us": 34065.2,
+          "exclusive_us": 34065.2
+        },
+        {
+          "id": 6,
+          "calls": 44960,
+          "inclusive_us": 39118.2,
+          "exclusive_us": 39118.2
+        },
+        {
+          "id": 7,
+          "calls": 44028,
+          "inclusive_us": 44274.6,
+          "exclusive_us": 44274.6
+        },
+        {
+          "id": 8,
+          "calls": 52180,
+          "inclusive_us": 525084.2,
+          "exclusive_us": 308543.5
+        },
+        {
+          "id": 9,
+          "calls": 31212,
+          "inclusive_us": 129713.4,
+          "exclusive_us": 96420.8
+        },
+        {
+          "id": 10,
+          "calls": 10028,
+          "inclusive_us": 629286,
+          "exclusive_us": 145276.8
+        },
+        {
+          "id": 11,
+          "calls": 273184,
+          "inclusive_us": 284554.9,
+          "exclusive_us": 284554.9
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 1808860,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 33672,
+          "inclusive_us": 1728119.3,
+          "exclusive_us": 164368.1
+        },
+        {
+          "id": 2,
+          "calls": 67360,
+          "inclusive_us": 92292.7,
+          "exclusive_us": 80511.2
+        },
+        {
+          "id": 3,
+          "calls": 33672,
+          "inclusive_us": 1471521.3,
+          "exclusive_us": 355534.1
+        },
+        {
+          "id": 4,
+          "calls": 100636,
+          "inclusive_us": 123628.9,
+          "exclusive_us": 123628.9
+        },
+        {
+          "id": 5,
+          "calls": 33252,
+          "inclusive_us": 36590.5,
+          "exclusive_us": 36590.5
+        },
+        {
+          "id": 6,
+          "calls": 44960,
+          "inclusive_us": 41410.6,
+          "exclusive_us": 41410.6
+        },
+        {
+          "id": 7,
+          "calls": 44028,
+          "inclusive_us": 46874.9,
+          "exclusive_us": 46874.9
+        },
+        {
+          "id": 8,
+          "calls": 52180,
+          "inclusive_us": 552194.3,
+          "exclusive_us": 323833.8
+        },
+        {
+          "id": 9,
+          "calls": 31212,
+          "inclusive_us": 136182.4,
+          "exclusive_us": 101633.8
+        },
+        {
+          "id": 10,
+          "calls": 10028,
+          "inclusive_us": 662106.9,
+          "exclusive_us": 154300.3
+        },
+        {
+          "id": 11,
+          "calls": 273184,
+          "inclusive_us": 299591.4,
+          "exclusive_us": 299591.4
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 1700284,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 34660,
+          "inclusive_us": 1625106.6,
+          "exclusive_us": 154651
+        },
+        {
+          "id": 2,
+          "calls": 69340,
+          "inclusive_us": 89201.1,
+          "exclusive_us": 77214.3
+        },
+        {
+          "id": 3,
+          "calls": 34660,
+          "inclusive_us": 1381397.4,
+          "exclusive_us": 337627
+        },
+        {
+          "id": 4,
+          "calls": 103572,
+          "inclusive_us": 117692.2,
+          "exclusive_us": 117692.2
+        },
+        {
+          "id": 5,
+          "calls": 34232,
+          "inclusive_us": 34308.3,
+          "exclusive_us": 34308.3
+        },
+        {
+          "id": 6,
+          "calls": 47144,
+          "inclusive_us": 40297,
+          "exclusive_us": 40297
+        },
+        {
+          "id": 7,
+          "calls": 44600,
+          "inclusive_us": 43524,
+          "exclusive_us": 43524
+        },
+        {
+          "id": 8,
+          "calls": 52860,
+          "inclusive_us": 517819,
+          "exclusive_us": 303708.1
+        },
+        {
+          "id": 9,
+          "calls": 31232,
+          "inclusive_us": 125442.8,
+          "exclusive_us": 93778.5
+        },
+        {
+          "id": 10,
+          "calls": 9972,
+          "inclusive_us": 608531.1,
+          "exclusive_us": 141723.1
+        },
+        {
+          "id": 11,
+          "calls": 276904,
+          "inclusive_us": 280767.5,
+          "exclusive_us": 280767.5
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 1687169.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 34660,
+          "inclusive_us": 1612434.9,
+          "exclusive_us": 153741.3
+        },
+        {
+          "id": 2,
+          "calls": 69340,
+          "inclusive_us": 88765,
+          "exclusive_us": 76723.2
+        },
+        {
+          "id": 3,
+          "calls": 34660,
+          "inclusive_us": 1370076.8,
+          "exclusive_us": 334365.2
+        },
+        {
+          "id": 4,
+          "calls": 103572,
+          "inclusive_us": 116384.2,
+          "exclusive_us": 116384.2
+        },
+        {
+          "id": 5,
+          "calls": 34232,
+          "inclusive_us": 33738.1,
+          "exclusive_us": 33738.1
+        },
+        {
+          "id": 6,
+          "calls": 47144,
+          "inclusive_us": 40518.8,
+          "exclusive_us": 40518.8
+        },
+        {
+          "id": 7,
+          "calls": 44600,
+          "inclusive_us": 42773.6,
+          "exclusive_us": 42773.6
+        },
+        {
+          "id": 8,
+          "calls": 52860,
+          "inclusive_us": 515628.4,
+          "exclusive_us": 302454.6
+        },
+        {
+          "id": 9,
+          "calls": 31232,
+          "inclusive_us": 125183.6,
+          "exclusive_us": 93384.6
+        },
+        {
+          "id": 10,
+          "calls": 9972,
+          "inclusive_us": 604261,
+          "exclusive_us": 138996.5
+        },
+        {
+          "id": 11,
+          "calls": 276904,
+          "inclusive_us": 279550,
+          "exclusive_us": 279550
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 1780030.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 34660,
+          "inclusive_us": 1700023.6,
+          "exclusive_us": 162461.5
+        },
+        {
+          "id": 2,
+          "calls": 69340,
+          "inclusive_us": 94340.8,
+          "exclusive_us": 81735.3
+        },
+        {
+          "id": 3,
+          "calls": 34660,
+          "inclusive_us": 1443365.8,
+          "exclusive_us": 351744.7
+        },
+        {
+          "id": 4,
+          "calls": 103572,
+          "inclusive_us": 122307.5,
+          "exclusive_us": 122307.5
+        },
+        {
+          "id": 5,
+          "calls": 34232,
+          "inclusive_us": 36400,
+          "exclusive_us": 36400
+        },
+        {
+          "id": 6,
+          "calls": 47144,
+          "inclusive_us": 42405.6,
+          "exclusive_us": 42405.6
+        },
+        {
+          "id": 7,
+          "calls": 44600,
+          "inclusive_us": 45389.9,
+          "exclusive_us": 45389.9
+        },
+        {
+          "id": 8,
+          "calls": 52860,
+          "inclusive_us": 541411.9,
+          "exclusive_us": 317130.3
+        },
+        {
+          "id": 9,
+          "calls": 31232,
+          "inclusive_us": 131631.2,
+          "exclusive_us": 98371
+        },
+        {
+          "id": 10,
+          "calls": 9972,
+          "inclusive_us": 637942,
+          "exclusive_us": 148669.4
+        },
+        {
+          "id": 11,
+          "calls": 276904,
+          "inclusive_us": 293597.1,
+          "exclusive_us": 293597.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 1695502.1,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 34660,
+          "inclusive_us": 1619872.9,
+          "exclusive_us": 153590.5
+        },
+        {
+          "id": 2,
+          "calls": 69340,
+          "inclusive_us": 89485.1,
+          "exclusive_us": 77527.9
+        },
+        {
+          "id": 3,
+          "calls": 34660,
+          "inclusive_us": 1376940.9,
+          "exclusive_us": 335224.1
+        },
+        {
+          "id": 4,
+          "calls": 103572,
+          "inclusive_us": 116542.4,
+          "exclusive_us": 116542.4
+        },
+        {
+          "id": 5,
+          "calls": 34232,
+          "inclusive_us": 34306.7,
+          "exclusive_us": 34306.7
+        },
+        {
+          "id": 6,
+          "calls": 47144,
+          "inclusive_us": 40219.2,
+          "exclusive_us": 40219.2
+        },
+        {
+          "id": 7,
+          "calls": 44600,
+          "inclusive_us": 43372.2,
+          "exclusive_us": 43372.2
+        },
+        {
+          "id": 8,
+          "calls": 52860,
+          "inclusive_us": 518011.5,
+          "exclusive_us": 303067.1
+        },
+        {
+          "id": 9,
+          "calls": 31232,
+          "inclusive_us": 125840,
+          "exclusive_us": 93822.2
+        },
+        {
+          "id": 10,
+          "calls": 9972,
+          "inclusive_us": 609537.2,
+          "exclusive_us": 140739.7
+        },
+        {
+          "id": 11,
+          "calls": 276904,
+          "inclusive_us": 281645.8,
+          "exclusive_us": 281645.8
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 1678037,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 34660,
+          "inclusive_us": 1603573.6,
+          "exclusive_us": 152883.7
+        },
+        {
+          "id": 2,
+          "calls": 69340,
+          "inclusive_us": 88853,
+          "exclusive_us": 76875
+        },
+        {
+          "id": 3,
+          "calls": 34660,
+          "inclusive_us": 1361983.6,
+          "exclusive_us": 331152.4
+        },
+        {
+          "id": 4,
+          "calls": 103572,
+          "inclusive_us": 115275.8,
+          "exclusive_us": 115275.8
+        },
+        {
+          "id": 5,
+          "calls": 34232,
+          "inclusive_us": 33929.9,
+          "exclusive_us": 33929.9
+        },
+        {
+          "id": 6,
+          "calls": 47144,
+          "inclusive_us": 40363,
+          "exclusive_us": 40363
+        },
+        {
+          "id": 7,
+          "calls": 44600,
+          "inclusive_us": 42969.2,
+          "exclusive_us": 42969.2
+        },
+        {
+          "id": 8,
+          "calls": 52860,
+          "inclusive_us": 512744.5,
+          "exclusive_us": 300025.4
+        },
+        {
+          "id": 9,
+          "calls": 31232,
+          "inclusive_us": 123809.3,
+          "exclusive_us": 92516.1
+        },
+        {
+          "id": 10,
+          "calls": 9972,
+          "inclusive_us": 602502.4,
+          "exclusive_us": 139186
+        },
+        {
+          "id": 11,
+          "calls": 276904,
+          "inclusive_us": 278585.7,
+          "exclusive_us": 278585.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 1701237.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 34660,
+          "inclusive_us": 1625255.3,
+          "exclusive_us": 154153.5
+        },
+        {
+          "id": 2,
+          "calls": 69340,
+          "inclusive_us": 89793.9,
+          "exclusive_us": 77782.3
+        },
+        {
+          "id": 3,
+          "calls": 34660,
+          "inclusive_us": 1381450.2,
+          "exclusive_us": 336411
+        },
+        {
+          "id": 4,
+          "calls": 103572,
+          "inclusive_us": 116694.5,
+          "exclusive_us": 116694.5
+        },
+        {
+          "id": 5,
+          "calls": 34232,
+          "inclusive_us": 34091.1,
+          "exclusive_us": 34091.1
+        },
+        {
+          "id": 6,
+          "calls": 47144,
+          "inclusive_us": 40457.6,
+          "exclusive_us": 40457.6
+        },
+        {
+          "id": 7,
+          "calls": 44600,
+          "inclusive_us": 43406.2,
+          "exclusive_us": 43406.2
+        },
+        {
+          "id": 8,
+          "calls": 52860,
+          "inclusive_us": 520451.9,
+          "exclusive_us": 304425.5
+        },
+        {
+          "id": 9,
+          "calls": 31232,
+          "inclusive_us": 126162.4,
+          "exclusive_us": 94295.1
+        },
+        {
+          "id": 10,
+          "calls": 9972,
+          "inclusive_us": 611191.2,
+          "exclusive_us": 140678.4
+        },
+        {
+          "id": 11,
+          "calls": 276904,
+          "inclusive_us": 283047.2,
+          "exclusive_us": 283047.2
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 1931083.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 40492,
+          "inclusive_us": 1850910.7,
+          "exclusive_us": 177037.7
+        },
+        {
+          "id": 2,
+          "calls": 81008,
+          "inclusive_us": 109366.9,
+          "exclusive_us": 92817.8
+        },
+        {
+          "id": 3,
+          "calls": 40492,
+          "inclusive_us": 1564579.5,
+          "exclusive_us": 382932
+        },
+        {
+          "id": 4,
+          "calls": 121516,
+          "inclusive_us": 133618.3,
+          "exclusive_us": 133618.3
+        },
+        {
+          "id": 5,
+          "calls": 40492,
+          "inclusive_us": 39826.7,
+          "exclusive_us": 39826.7
+        },
+        {
+          "id": 6,
+          "calls": 58796,
+          "inclusive_us": 49242.7,
+          "exclusive_us": 49242.7
+        },
+        {
+          "id": 7,
+          "calls": 48128,
+          "inclusive_us": 42764.1,
+          "exclusive_us": 42764.1
+        },
+        {
+          "id": 8,
+          "calls": 62692,
+          "inclusive_us": 604641.5,
+          "exclusive_us": 355128.5
+        },
+        {
+          "id": 9,
+          "calls": 33400,
+          "inclusive_us": 133653.5,
+          "exclusive_us": 99506.2
+        },
+        {
+          "id": 10,
+          "calls": 11120,
+          "inclusive_us": 668090.8,
+          "exclusive_us": 154558.9
+        },
+        {
+          "id": 11,
+          "calls": 324660,
+          "inclusive_us": 323632.9,
+          "exclusive_us": 323632.9
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 1939689.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 40492,
+          "inclusive_us": 1859305,
+          "exclusive_us": 176549.4
+        },
+        {
+          "id": 2,
+          "calls": 81008,
+          "inclusive_us": 110029.4,
+          "exclusive_us": 93200.9
+        },
+        {
+          "id": 3,
+          "calls": 40492,
+          "inclusive_us": 1572808.5,
+          "exclusive_us": 386356.5
+        },
+        {
+          "id": 4,
+          "calls": 121516,
+          "inclusive_us": 134396.5,
+          "exclusive_us": 134396.5
+        },
+        {
+          "id": 5,
+          "calls": 40492,
+          "inclusive_us": 39531.9,
+          "exclusive_us": 39531.9
+        },
+        {
+          "id": 6,
+          "calls": 58796,
+          "inclusive_us": 49897.5,
+          "exclusive_us": 49897.5
+        },
+        {
+          "id": 7,
+          "calls": 48128,
+          "inclusive_us": 42542.1,
+          "exclusive_us": 42542.1
+        },
+        {
+          "id": 8,
+          "calls": 62692,
+          "inclusive_us": 605794.5,
+          "exclusive_us": 354846.5
+        },
+        {
+          "id": 9,
+          "calls": 33400,
+          "inclusive_us": 135090.5,
+          "exclusive_us": 100041.9
+        },
+        {
+          "id": 10,
+          "calls": 11120,
+          "inclusive_us": 672183.4,
+          "exclusive_us": 155490
+        },
+        {
+          "id": 11,
+          "calls": 324660,
+          "inclusive_us": 326614.9,
+          "exclusive_us": 326614.9
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 1957091.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 40492,
+          "inclusive_us": 1876688.8,
+          "exclusive_us": 178672.2
+        },
+        {
+          "id": 2,
+          "calls": 81008,
+          "inclusive_us": 111306.9,
+          "exclusive_us": 94168.1
+        },
+        {
+          "id": 3,
+          "calls": 40492,
+          "inclusive_us": 1586781.7,
+          "exclusive_us": 389678.2
+        },
+        {
+          "id": 4,
+          "calls": 121516,
+          "inclusive_us": 134669.8,
+          "exclusive_us": 134669.8
+        },
+        {
+          "id": 5,
+          "calls": 40492,
+          "inclusive_us": 40119.3,
+          "exclusive_us": 40119.3
+        },
+        {
+          "id": 6,
+          "calls": 58796,
+          "inclusive_us": 50645.6,
+          "exclusive_us": 50645.6
+        },
+        {
+          "id": 7,
+          "calls": 48128,
+          "inclusive_us": 42869.2,
+          "exclusive_us": 42869.2
+        },
+        {
+          "id": 8,
+          "calls": 62692,
+          "inclusive_us": 613486.8,
+          "exclusive_us": 359401.8
+        },
+        {
+          "id": 9,
+          "calls": 33400,
+          "inclusive_us": 135366.6,
+          "exclusive_us": 101194.3
+        },
+        {
+          "id": 10,
+          "calls": 11120,
+          "inclusive_us": 676674.3,
+          "exclusive_us": 156009.1
+        },
+        {
+          "id": 11,
+          "calls": 324660,
+          "inclusive_us": 329412.7,
+          "exclusive_us": 329412.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 1947707.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 40492,
+          "inclusive_us": 1866952.8,
+          "exclusive_us": 177554.5
+        },
+        {
+          "id": 2,
+          "calls": 81008,
+          "inclusive_us": 110632.8,
+          "exclusive_us": 93610.8
+        },
+        {
+          "id": 3,
+          "calls": 40492,
+          "inclusive_us": 1578843.9,
+          "exclusive_us": 387042.7
+        },
+        {
+          "id": 4,
+          "calls": 121516,
+          "inclusive_us": 134701.7,
+          "exclusive_us": 134701.7
+        },
+        {
+          "id": 5,
+          "calls": 40492,
+          "inclusive_us": 40093,
+          "exclusive_us": 40093
+        },
+        {
+          "id": 6,
+          "calls": 58796,
+          "inclusive_us": 50209.7,
+          "exclusive_us": 50209.7
+        },
+        {
+          "id": 7,
+          "calls": 48128,
+          "inclusive_us": 42691.3,
+          "exclusive_us": 42691.3
+        },
+        {
+          "id": 8,
+          "calls": 62692,
+          "inclusive_us": 610506.1,
+          "exclusive_us": 357847.2
+        },
+        {
+          "id": 9,
+          "calls": 33400,
+          "inclusive_us": 134326.3,
+          "exclusive_us": 100342.9
+        },
+        {
+          "id": 10,
+          "calls": 11120,
+          "inclusive_us": 672445,
+          "exclusive_us": 155327.8
+        },
+        {
+          "id": 11,
+          "calls": 324660,
+          "inclusive_us": 327692.8,
+          "exclusive_us": 327692.8
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 1952079.6,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 40492,
+          "inclusive_us": 1871404.1,
+          "exclusive_us": 179854.5
+        },
+        {
+          "id": 2,
+          "calls": 81008,
+          "inclusive_us": 110552.1,
+          "exclusive_us": 93770.6
+        },
+        {
+          "id": 3,
+          "calls": 40492,
+          "inclusive_us": 1581074.8,
+          "exclusive_us": 389055.2
+        },
+        {
+          "id": 4,
+          "calls": 121516,
+          "inclusive_us": 134594.1,
+          "exclusive_us": 134594.1
+        },
+        {
+          "id": 5,
+          "calls": 40492,
+          "inclusive_us": 40106.3,
+          "exclusive_us": 40106.3
+        },
+        {
+          "id": 6,
+          "calls": 58796,
+          "inclusive_us": 50427.2,
+          "exclusive_us": 50427.2
+        },
+        {
+          "id": 7,
+          "calls": 48128,
+          "inclusive_us": 42576.4,
+          "exclusive_us": 42576.4
+        },
+        {
+          "id": 8,
+          "calls": 62692,
+          "inclusive_us": 609302.3,
+          "exclusive_us": 357331.2
+        },
+        {
+          "id": 9,
+          "calls": 33400,
+          "inclusive_us": 134324.5,
+          "exclusive_us": 100100.7
+        },
+        {
+          "id": 10,
+          "calls": 11120,
+          "inclusive_us": 673943.7,
+          "exclusive_us": 156465.1
+        },
+        {
+          "id": 11,
+          "calls": 324660,
+          "inclusive_us": 327282.6,
+          "exclusive_us": 327282.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 1929410.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 40492,
+          "inclusive_us": 1850202.3,
+          "exclusive_us": 179144.4
+        },
+        {
+          "id": 2,
+          "calls": 81008,
+          "inclusive_us": 109750.8,
+          "exclusive_us": 93159.8
+        },
+        {
+          "id": 3,
+          "calls": 40492,
+          "inclusive_us": 1561378.5,
+          "exclusive_us": 386224.4
+        },
+        {
+          "id": 4,
+          "calls": 121516,
+          "inclusive_us": 133890.3,
+          "exclusive_us": 133890.3
+        },
+        {
+          "id": 5,
+          "calls": 40492,
+          "inclusive_us": 39493.8,
+          "exclusive_us": 39493.8
+        },
+        {
+          "id": 6,
+          "calls": 58796,
+          "inclusive_us": 49450.3,
+          "exclusive_us": 49450.3
+        },
+        {
+          "id": 7,
+          "calls": 48128,
+          "inclusive_us": 42266.4,
+          "exclusive_us": 42266.4
+        },
+        {
+          "id": 8,
+          "calls": 62692,
+          "inclusive_us": 602629,
+          "exclusive_us": 352555.6
+        },
+        {
+          "id": 9,
+          "calls": 33400,
+          "inclusive_us": 131719.6,
+          "exclusive_us": 98171.6
+        },
+        {
+          "id": 10,
+          "calls": 11120,
+          "inclusive_us": 661544.1,
+          "exclusive_us": 151768.5
+        },
+        {
+          "id": 11,
+          "calls": 324660,
+          "inclusive_us": 324227.7,
+          "exclusive_us": 324227.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 689946.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 15752,
+          "inclusive_us": 658788.2,
+          "exclusive_us": 69822.2
+        },
+        {
+          "id": 2,
+          "calls": 31540,
+          "inclusive_us": 45765.7,
+          "exclusive_us": 38152.9
+        },
+        {
+          "id": 3,
+          "calls": 15752,
+          "inclusive_us": 543398.6,
+          "exclusive_us": 150324.5
+        },
+        {
+          "id": 4,
+          "calls": 47268,
+          "inclusive_us": 52365.7,
+          "exclusive_us": 52365.7
+        },
+        {
+          "id": 5,
+          "calls": 15744,
+          "inclusive_us": 15495.4,
+          "exclusive_us": 15495.4
+        },
+        {
+          "id": 6,
+          "calls": 23996,
+          "inclusive_us": 21608.1,
+          "exclusive_us": 21608.1
+        },
+        {
+          "id": 7,
+          "calls": 17400,
+          "inclusive_us": 14989.3,
+          "exclusive_us": 14989.3
+        },
+        {
+          "id": 8,
+          "calls": 20700,
+          "inclusive_us": 201686.9,
+          "exclusive_us": 118325
+        },
+        {
+          "id": 9,
+          "calls": 9644,
+          "inclusive_us": 38349.1,
+          "exclusive_us": 28671
+        },
+        {
+          "id": 10,
+          "calls": 2920,
+          "inclusive_us": 176012.4,
+          "exclusive_us": 40391.8
+        },
+        {
+          "id": 11,
+          "calls": 108188,
+          "inclusive_us": 108883.7,
+          "exclusive_us": 108883.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 710077.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 15752,
+          "inclusive_us": 677817,
+          "exclusive_us": 71949.2
+        },
+        {
+          "id": 2,
+          "calls": 31540,
+          "inclusive_us": 46656,
+          "exclusive_us": 38847.9
+        },
+        {
+          "id": 3,
+          "calls": 15752,
+          "inclusive_us": 559408.1,
+          "exclusive_us": 154753.2
+        },
+        {
+          "id": 4,
+          "calls": 47268,
+          "inclusive_us": 53701.8,
+          "exclusive_us": 53701.8
+        },
+        {
+          "id": 5,
+          "calls": 15744,
+          "inclusive_us": 16459.7,
+          "exclusive_us": 16459.7
+        },
+        {
+          "id": 6,
+          "calls": 23996,
+          "inclusive_us": 22086.6,
+          "exclusive_us": 22086.6
+        },
+        {
+          "id": 7,
+          "calls": 17400,
+          "inclusive_us": 15507.5,
+          "exclusive_us": 15507.5
+        },
+        {
+          "id": 8,
+          "calls": 20700,
+          "inclusive_us": 206640.5,
+          "exclusive_us": 121301.4
+        },
+        {
+          "id": 9,
+          "calls": 9644,
+          "inclusive_us": 39455.1,
+          "exclusive_us": 29355.4
+        },
+        {
+          "id": 10,
+          "calls": 2920,
+          "inclusive_us": 181008.1,
+          "exclusive_us": 41968.3
+        },
+        {
+          "id": 11,
+          "calls": 108188,
+          "inclusive_us": 112126.6,
+          "exclusive_us": 112126.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 729109.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 15752,
+          "inclusive_us": 696298.4,
+          "exclusive_us": 74183.4
+        },
+        {
+          "id": 2,
+          "calls": 31540,
+          "inclusive_us": 48950.3,
+          "exclusive_us": 40964.3
+        },
+        {
+          "id": 3,
+          "calls": 15752,
+          "inclusive_us": 573359.1,
+          "exclusive_us": 158723.6
+        },
+        {
+          "id": 4,
+          "calls": 47268,
+          "inclusive_us": 55668.3,
+          "exclusive_us": 55668.3
+        },
+        {
+          "id": 5,
+          "calls": 15744,
+          "inclusive_us": 16649.8,
+          "exclusive_us": 16649.8
+        },
+        {
+          "id": 6,
+          "calls": 23996,
+          "inclusive_us": 22632.3,
+          "exclusive_us": 22632.3
+        },
+        {
+          "id": 7,
+          "calls": 17400,
+          "inclusive_us": 15620.4,
+          "exclusive_us": 15620.4
+        },
+        {
+          "id": 8,
+          "calls": 20700,
+          "inclusive_us": 212930.4,
+          "exclusive_us": 124674.8
+        },
+        {
+          "id": 9,
+          "calls": 9644,
+          "inclusive_us": 39953.9,
+          "exclusive_us": 29803
+        },
+        {
+          "id": 10,
+          "calls": 2920,
+          "inclusive_us": 184648.2,
+          "exclusive_us": 42213.9
+        },
+        {
+          "id": 11,
+          "calls": 108188,
+          "inclusive_us": 115404.7,
+          "exclusive_us": 115404.7
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 715720.2,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 15752,
+          "inclusive_us": 683695,
+          "exclusive_us": 72024.1
+        },
+        {
+          "id": 2,
+          "calls": 31540,
+          "inclusive_us": 47397.1,
+          "exclusive_us": 39144.2
+        },
+        {
+          "id": 3,
+          "calls": 15752,
+          "inclusive_us": 564482.5,
+          "exclusive_us": 155308.3
+        },
+        {
+          "id": 4,
+          "calls": 47268,
+          "inclusive_us": 54564.3,
+          "exclusive_us": 54564.3
+        },
+        {
+          "id": 5,
+          "calls": 15744,
+          "inclusive_us": 16180.9,
+          "exclusive_us": 16180.9
+        },
+        {
+          "id": 6,
+          "calls": 23996,
+          "inclusive_us": 22588.3,
+          "exclusive_us": 22588.3
+        },
+        {
+          "id": 7,
+          "calls": 17400,
+          "inclusive_us": 15559.6,
+          "exclusive_us": 15559.6
+        },
+        {
+          "id": 8,
+          "calls": 20700,
+          "inclusive_us": 210122.8,
+          "exclusive_us": 123100.3
+        },
+        {
+          "id": 9,
+          "calls": 9644,
+          "inclusive_us": 39488.6,
+          "exclusive_us": 29518.7
+        },
+        {
+          "id": 10,
+          "calls": 2920,
+          "inclusive_us": 182387.6,
+          "exclusive_us": 42282.2
+        },
+        {
+          "id": 11,
+          "calls": 108188,
+          "inclusive_us": 113679.1,
+          "exclusive_us": 113679.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 700895.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 15752,
+          "inclusive_us": 669600.8,
+          "exclusive_us": 71025.9
+        },
+        {
+          "id": 2,
+          "calls": 31540,
+          "inclusive_us": 46308.3,
+          "exclusive_us": 38552.3
+        },
+        {
+          "id": 3,
+          "calls": 15752,
+          "inclusive_us": 552469.8,
+          "exclusive_us": 153046.9
+        },
+        {
+          "id": 4,
+          "calls": 47268,
+          "inclusive_us": 53201.7,
+          "exclusive_us": 53201.7
+        },
+        {
+          "id": 5,
+          "calls": 15744,
+          "inclusive_us": 15703.8,
+          "exclusive_us": 15703.8
+        },
+        {
+          "id": 6,
+          "calls": 23996,
+          "inclusive_us": 21895.9,
+          "exclusive_us": 21895.9
+        },
+        {
+          "id": 7,
+          "calls": 17400,
+          "inclusive_us": 15189.9,
+          "exclusive_us": 15189.9
+        },
+        {
+          "id": 8,
+          "calls": 20700,
+          "inclusive_us": 204330.6,
+          "exclusive_us": 119994.4
+        },
+        {
+          "id": 9,
+          "calls": 9644,
+          "inclusive_us": 39187.1,
+          "exclusive_us": 29290.8
+        },
+        {
+          "id": 10,
+          "calls": 2920,
+          "inclusive_us": 178795.4,
+          "exclusive_us": 41494.3
+        },
+        {
+          "id": 11,
+          "calls": 108188,
+          "inclusive_us": 110450.1,
+          "exclusive_us": 110450.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 690300.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 15752,
+          "inclusive_us": 659439.7,
+          "exclusive_us": 69814.8
+        },
+        {
+          "id": 2,
+          "calls": 31540,
+          "inclusive_us": 45956.2,
+          "exclusive_us": 38380.6
+        },
+        {
+          "id": 3,
+          "calls": 15752,
+          "inclusive_us": 543864,
+          "exclusive_us": 149227.7
+        },
+        {
+          "id": 4,
+          "calls": 47268,
+          "inclusive_us": 52307.7,
+          "exclusive_us": 52307.7
+        },
+        {
+          "id": 5,
+          "calls": 15744,
+          "inclusive_us": 15580.5,
+          "exclusive_us": 15580.5
+        },
+        {
+          "id": 6,
+          "calls": 23996,
+          "inclusive_us": 21402.8,
+          "exclusive_us": 21402.8
+        },
+        {
+          "id": 7,
+          "calls": 17400,
+          "inclusive_us": 14959.6,
+          "exclusive_us": 14959.6
+        },
+        {
+          "id": 8,
+          "calls": 20700,
+          "inclusive_us": 202861.4,
+          "exclusive_us": 119590.7
+        },
+        {
+          "id": 9,
+          "calls": 9644,
+          "inclusive_us": 38483.1,
+          "exclusive_us": 28793
+        },
+        {
+          "id": 10,
+          "calls": 2920,
+          "inclusive_us": 177168.2,
+          "exclusive_us": 40784.2
+        },
+        {
+          "id": 11,
+          "calls": 108188,
+          "inclusive_us": 108837.3,
+          "exclusive_us": 108837.3
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 216801.9,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4769,
+          "inclusive_us": 205741.4,
+          "exclusive_us": 21363.9
+        },
+        {
+          "id": 2,
+          "calls": 9566,
+          "inclusive_us": 11477.8,
+          "exclusive_us": 10168.5
+        },
+        {
+          "id": 3,
+          "calls": 4769,
+          "inclusive_us": 172986.3,
+          "exclusive_us": 45648.5
+        },
+        {
+          "id": 4,
+          "calls": 14320,
+          "inclusive_us": 16121.2,
+          "exclusive_us": 16121.2
+        },
+        {
+          "id": 5,
+          "calls": 4719,
+          "inclusive_us": 4609.8,
+          "exclusive_us": 4609.8
+        },
+        {
+          "id": 6,
+          "calls": 5996,
+          "inclusive_us": 5137.2,
+          "exclusive_us": 5137.2
+        },
+        {
+          "id": 7,
+          "calls": 6425,
+          "inclusive_us": 5957.6,
+          "exclusive_us": 5957.6
+        },
+        {
+          "id": 8,
+          "calls": 6321,
+          "inclusive_us": 61644.6,
+          "exclusive_us": 36300.7
+        },
+        {
+          "id": 9,
+          "calls": 3873,
+          "inclusive_us": 15302.6,
+          "exclusive_us": 11406.9
+        },
+        {
+          "id": 10,
+          "calls": 1095,
+          "inclusive_us": 66500.5,
+          "exclusive_us": 15293.9
+        },
+        {
+          "id": 11,
+          "calls": 33876,
+          "inclusive_us": 33949.6,
+          "exclusive_us": 33949.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 218353.4,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4769,
+          "inclusive_us": 206839.7,
+          "exclusive_us": 21356.9
+        },
+        {
+          "id": 2,
+          "calls": 9566,
+          "inclusive_us": 11107.7,
+          "exclusive_us": 9952.9
+        },
+        {
+          "id": 3,
+          "calls": 4769,
+          "inclusive_us": 174460.8,
+          "exclusive_us": 46118.2
+        },
+        {
+          "id": 4,
+          "calls": 14320,
+          "inclusive_us": 16079.7,
+          "exclusive_us": 16079.7
+        },
+        {
+          "id": 5,
+          "calls": 4719,
+          "inclusive_us": 4651.1,
+          "exclusive_us": 4651.1
+        },
+        {
+          "id": 6,
+          "calls": 5996,
+          "inclusive_us": 5123.5,
+          "exclusive_us": 5123.5
+        },
+        {
+          "id": 7,
+          "calls": 6425,
+          "inclusive_us": 6153.8,
+          "exclusive_us": 6153.8
+        },
+        {
+          "id": 8,
+          "calls": 6321,
+          "inclusive_us": 61609.9,
+          "exclusive_us": 36095.8
+        },
+        {
+          "id": 9,
+          "calls": 3873,
+          "inclusive_us": 15577.5,
+          "exclusive_us": 11695.6
+        },
+        {
+          "id": 10,
+          "calls": 1095,
+          "inclusive_us": 66878.9,
+          "exclusive_us": 15691.7
+        },
+        {
+          "id": 11,
+          "calls": 33876,
+          "inclusive_us": 34132.5,
+          "exclusive_us": 34132.5
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 221922.7,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 4769,
+          "inclusive_us": 210371.2,
+          "exclusive_us": 21941.6
+        },
+        {
+          "id": 2,
+          "calls": 9566,
+          "inclusive_us": 11257.1,
+          "exclusive_us": 10077.6
+        },
+        {
+          "id": 3,
+          "calls": 4769,
+          "inclusive_us": 177265.7,
+          "exclusive_us": 47074.2
+        },
+        {
+          "id": 4,
+          "calls": 14320,
+          "inclusive_us": 16334,
+          "exclusive_us": 16334
+        },
+        {
+          "id": 5,
+          "calls": 4719,
+          "inclusive_us": 4709.2,
+          "exclusive_us": 4709.2
+        },
+        {
+          "id": 6,
+          "calls": 5996,
+          "inclusive_us": 5157.3,
+          "exclusive_us": 5157.3
+        },
+        {
+          "id": 7,
+          "calls": 6425,
+          "inclusive_us": 6167.1,
+          "exclusive_us": 6167.1
+        },
+        {
+          "id": 8,
+          "calls": 6321,
+          "inclusive_us": 62673.2,
+          "exclusive_us": 36834.7
+        },
+        {
+          "id": 9,
+          "calls": 3873,
+          "inclusive_us": 15974.5,
+          "exclusive_us": 11894.1
+        },
+        {
+          "id": 10,
+          "calls": 1095,
+          "inclusive_us": 67818.3,
+          "exclusive_us": 15642.3
+        },
+        {
+          "id": 11,
+          "calls": 33876,
+          "inclusive_us": 34762.1,
+          "exclusive_us": 34762.1
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 1259872,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 25884,
+          "inclusive_us": 1203981,
+          "exclusive_us": 115365.8
+        },
+        {
+          "id": 2,
+          "calls": 51783,
+          "inclusive_us": 67028.3,
+          "exclusive_us": 58017.9
+        },
+        {
+          "id": 3,
+          "calls": 25884,
+          "inclusive_us": 1021698.4,
+          "exclusive_us": 249889.6
+        },
+        {
+          "id": 4,
+          "calls": 77346,
+          "inclusive_us": 85862.1,
+          "exclusive_us": 85862.1
+        },
+        {
+          "id": 5,
+          "calls": 25563,
+          "inclusive_us": 25663.5,
+          "exclusive_us": 25663.5
+        },
+        {
+          "id": 6,
+          "calls": 35190,
+          "inclusive_us": 30048,
+          "exclusive_us": 30048
+        },
+        {
+          "id": 7,
+          "calls": 33334,
+          "inclusive_us": 32483.2,
+          "exclusive_us": 32483.2
+        },
+        {
+          "id": 8,
+          "calls": 39498,
+          "inclusive_us": 382630.2,
+          "exclusive_us": 224460.6
+        },
+        {
+          "id": 9,
+          "calls": 23355,
+          "inclusive_us": 93963.7,
+          "exclusive_us": 69570.3
+        },
+        {
+          "id": 10,
+          "calls": 7458,
+          "inclusive_us": 450967,
+          "exclusive_us": 104320.8
+        },
+        {
+          "id": 11,
+          "calls": 206910,
+          "inclusive_us": 208442.6,
+          "exclusive_us": 208442.6
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 1244249.3,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 25884,
+          "inclusive_us": 1189795.9,
+          "exclusive_us": 113279.9
+        },
+        {
+          "id": 2,
+          "calls": 51783,
+          "inclusive_us": 65807.4,
+          "exclusive_us": 56786.2
+        },
+        {
+          "id": 3,
+          "calls": 25884,
+          "inclusive_us": 1010813.5,
+          "exclusive_us": 246686.9
+        },
+        {
+          "id": 4,
+          "calls": 77346,
+          "inclusive_us": 85253.1,
+          "exclusive_us": 85253.1
+        },
+        {
+          "id": 5,
+          "calls": 25563,
+          "inclusive_us": 25274,
+          "exclusive_us": 25274
+        },
+        {
+          "id": 6,
+          "calls": 35190,
+          "inclusive_us": 29755.5,
+          "exclusive_us": 29755.5
+        },
+        {
+          "id": 7,
+          "calls": 33334,
+          "inclusive_us": 32153.7,
+          "exclusive_us": 32153.7
+        },
+        {
+          "id": 8,
+          "calls": 39498,
+          "inclusive_us": 379727.6,
+          "exclusive_us": 222114.3
+        },
+        {
+          "id": 9,
+          "calls": 23355,
+          "inclusive_us": 92832.3,
+          "exclusive_us": 69328.1
+        },
+        {
+          "id": 10,
+          "calls": 7458,
+          "inclusive_us": 446901.9,
+          "exclusive_us": 102788.8
+        },
+        {
+          "id": 11,
+          "calls": 206910,
+          "inclusive_us": 206513,
+          "exclusive_us": 206513
+        }
+      ]
+    },
+    {
+      "mode": "arithmetic",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 1237034.5,
+      "scopes": [
+        {
+          "id": 1,
+          "calls": 25884,
+          "inclusive_us": 1181876.8,
+          "exclusive_us": 112309.2
+        },
+        {
+          "id": 2,
+          "calls": 51783,
+          "inclusive_us": 65001.5,
+          "exclusive_us": 56249.9
+        },
+        {
+          "id": 3,
+          "calls": 25884,
+          "inclusive_us": 1004672.5,
+          "exclusive_us": 246667
+        },
+        {
+          "id": 4,
+          "calls": 77346,
+          "inclusive_us": 84127.3,
+          "exclusive_us": 84127.3
+        },
+        {
+          "id": 5,
+          "calls": 25563,
+          "inclusive_us": 24708.4,
+          "exclusive_us": 24708.4
+        },
+        {
+          "id": 6,
+          "calls": 35190,
+          "inclusive_us": 29453.7,
+          "exclusive_us": 29453.7
+        },
+        {
+          "id": 7,
+          "calls": 33334,
+          "inclusive_us": 31736.9,
+          "exclusive_us": 31736.9
+        },
+        {
+          "id": 8,
+          "calls": 39498,
+          "inclusive_us": 377643.6,
+          "exclusive_us": 220507.7
+        },
+        {
+          "id": 9,
+          "calls": 23355,
+          "inclusive_us": 91650,
+          "exclusive_us": 68493.3
+        },
+        {
+          "id": 10,
+          "calls": 7458,
+          "inclusive_us": 443054.6,
+          "exclusive_us": 102227.2
+        },
+        {
+          "id": 11,
+          "calls": 206910,
+          "inclusive_us": 205534.2,
+          "exclusive_us": 205534.2
+        }
+      ]
+    },
+    {
+      "mode": "restored",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 40307.2,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 18900.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEFFF8A99CF1EF2",
+      "calls": 4,
+      "elapsed_us": 19755.4,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 1,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 19854.5,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 2,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 20324.8,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.0001,
+      "x": 0.5,
+      "route": "q",
+      "sample": 3,
+      "bits": "3F0D598C384385D5",
+      "calls": 4,
+      "elapsed_us": 18952.2,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 22988.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 24389.2,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FE0A7EF5C18EDD2",
+      "calls": 4,
+      "elapsed_us": 23549.5,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 23185.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 22757.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 0.5,
+      "x": 0.25,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FDEB02147CE245C",
+      "calls": 4,
+      "elapsed_us": 22187.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 33368.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 35064.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 1,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC34F37283A59AD",
+      "calls": 4,
+      "elapsed_us": 35638.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 34913.6,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 33979.4,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 1,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEB2C3235F16995",
+      "calls": 4,
+      "elapsed_us": 33801.2,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 59404.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 59326.8,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 6,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEEE304BC8D9BC5",
+      "calls": 4,
+      "elapsed_us": 60276.5,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 63013.2,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 58945.4,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2.5,
+      "x": 6,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FA1CFB4372643AD",
+      "calls": 4,
+      "elapsed_us": 62550.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 464127.2,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 459422.8,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 90,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44095DB0C59B1",
+      "calls": 4,
+      "elapsed_us": 451625.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 454144.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 452982.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 90,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEFDA893CE994",
+      "calls": 4,
+      "elapsed_us": 450225.6,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 457243.5,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 457992.4,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 110,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEF61920E006C",
+      "calls": 4,
+      "elapsed_us": 446174.3,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 459713.1,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 443966.3,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 110,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44279B7C7FE4F",
+      "calls": 4,
+      "elapsed_us": 472180.1,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 508624.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 528039.8,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 9900,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FC44EAEA8F8ACB6",
+      "calls": 4,
+      "elapsed_us": 512933.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 519663.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 525122.8,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 9900,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FEAEC5455C1D4D3",
+      "calls": 4,
+      "elapsed_us": 521429.3,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 1,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 178198,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 2,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 173174.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 10100,
+      "route": "p",
+      "sample": 3,
+      "bits": "3FEAEC5436F66F6D",
+      "calls": 4,
+      "elapsed_us": 178698.5,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 1,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 179389.4,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 2,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 174573.4,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 10000,
+      "x": 10100,
+      "route": "q",
+      "sample": 3,
+      "bits": "3FC44EAF2426424B",
+      "calls": 4,
+      "elapsed_us": 178017.6,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 119257.7,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 57579.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 2,
+      "x": 0.5,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "3FFADA825F9762B2",
+      "calls": 1,
+      "elapsed_us": 58912.9,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 1,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 340233.8,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 2,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 340665,
+      "scopes": []
+    },
+    {
+      "mode": "restored",
+      "a": 100,
+      "x": 0.9,
+      "route": "inverse",
+      "sample": 3,
+      "bits": "405C40AC6C447706",
+      "calls": 1,
+      "elapsed_us": 340173.2,
+      "scopes": []
+    }
+  ],
+  "error": "",
+  "instrumentation": {
+    "coarse": {
+      "1": "PROB_DD_WG_Pair",
+      "2": "PROB_DD_WG_Upper",
+      "3": "PROB_DD_WG_Deviance",
+      "4": "PROB_DD_WG_Stirling",
+      "5": "PROB_DD_EG_Pair",
+      "6": "PROB_DD_EG1_Pair",
+      "7": "PROB_DD_EG_LogGamma",
+      "8": "PROB_DD_EG_LogPair",
+      "9": "PROB_DD_EG_LowerPair",
+      "10": "PROB_DD_SG_LogGamma",
+      "11": "PROB_DD_SG_Log",
+      "12": "PROB_DD_SG_Log1p",
+      "13": "PROB_DD_SG_Exp",
+      "14": "PROB_DD_SG_Expm1"
+    },
+    "arithmetic": {
+      "1": "PROB_DD_SG_Op",
+      "2": "PROB_DD_SG_Coerce",
+      "3": "PROB_DD_SGD_Try",
+      "4": "PROB_DD_SGD_Valid",
+      "5": "PROB_DD_SGD_Canonicalize",
+      "6": "PROB_DD_SP_Frexp",
+      "7": "PROB_DD_SP_Shift",
+      "8": "PROB_DD_PV2_Add",
+      "9": "PROB_DD_PV2_Mul",
+      "10": "PROB_DD_PV2_Div",
+      "11": "PROB_DD_PV2_Sum"
+    },
+    "source_sha256_lf": "4a887636b2cfba85d0660497412b89f50c95270b74d5191978a52b688635e28e"
+  },
+  "evidence": {
+    "run_url": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/43017348872",
+    "run_id": 43017348872,
+    "artifact_id": 13852819769,
+    "artifact_sha256": "396b07b40f315f5dfe9497b9815beaca344bb1ec50783bb91e4803bad4bebc1a",
+    "generated_source_sha256": {
+      "coarse": "917bbdd278a542bbdd6ffa3f48a53f8355276ed112cbc3c26d088ee4ad7f8ed7",
+      "arithmetic": "147ea14af6cbe5557af28d0bc7b13967846290cd876ffad7ed28e08e50abaad1"
+    }
+  }
+}

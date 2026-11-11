@@ -3,7 +3,7 @@ name: Gamma DD Kernel Profile
 on:
   workflow_dispatch:
   push:
-    branches: [study/307-phase-b, study/307-kernel-profile]
+    branches: [study/307-kernel-profile]
     paths:
       - benchmark/kernel_profile/**
       - .github/workflows/gamma-kernel-profile.yml
