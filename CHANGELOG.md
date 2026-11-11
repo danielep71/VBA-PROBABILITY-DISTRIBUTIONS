@@ -158,13 +158,15 @@ Use only the categories needed by a release.
 - #307 was initially registered as a v1.0.0 release blocker under the
   `performance` class. Its accepted scope and closure are documented above.
 - #307: a repaired binary64 Gamma route, `PROB_TryGammaB64SeriesP` and
-  `PROB_TryGammaB64ContinuedFractionQ`, is added to the internal layer. It has an
-  accurate deviance, an exponent kept as a pair, a compensated and properly stopped lower
-  series, and a continued fraction stopped at machine epsilon. No public function
-  calls it yet. Its fit set (`benchmark/gamma_route_study/FIT_DESIGN.md`) measures in
-  Excel its bit-for-bit agreement with the Python model, and its cost per call. That cost
-  fixes the shape ceiling of the routing rule, which is then preregistered against the
-  frozen holdout.
+  `PROB_TryGammaB64ContinuedFractionQ`, was generated into the internal layer for its
+  fit set (`benchmark/gamma_route_study/FIT_DESIGN.md`, #312). It has an accurate
+  deviance, an exponent kept as a pair, a compensated and properly stopped lower series,
+  and a continued fraction stopped at machine epsilon. Excel matched the Python model
+  bit for bit at all 392 fit points and fixed the shape ceiling A2 = 10,000. The routing
+  rule frozen at that ceiling was rejected by its seam preflight, and no public function
+  ever called the routines. After #307 closed they left production again (about 670
+  lines); `b64_route_vba.py` still reproduces them as the fit candidate `88ff6ba`
+  carried them, and the fit grid is no longer registered for export.
 - #300: the six study batteries that compare private ports of the #26
   arithmetic with their Python models (Precision v2, scaled product, scaled
   double-double, scaled, extended and wide Gamma; 8,901 assertions) leave the
@@ -188,6 +190,9 @@ Use only the categories needed by a release.
   30,000 times the binary64 routine it replaced (2 to 39 microseconds). The
   Excel regression suite takes about 10 minutes, up from about 10 seconds;
   94% of that is `Test_CN_GammaSurvival`, mostly its calls to the kernel.
+  Exact LogGamma reuse (#313) later cut repeated shape-100 calls to about
+  10–14 ms; cold calls and large shapes remain slow (see the #307 closure
+  above).
 - The private-experiment entries below record the study's stages. Their
   statements that public routing is unchanged describe each stage at the
   time.

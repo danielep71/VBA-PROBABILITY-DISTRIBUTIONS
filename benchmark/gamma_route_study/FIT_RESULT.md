@@ -73,6 +73,9 @@ to cost under 0.2 ms. They remain slow after #307.
 
 ## Next
 
-The routing rule is preregistered with A2 = 10,000 and its predictions for
-the holdout, then implemented in the public P and Q, before the holdout is
-evaluated.
+At the time, the next step was to preregister the routing rule with A2 =
+10,000 and implement it in the public P and Q. The rule was frozen
+([`ROUTING_RULE.md`](ROUTING_RULE.md)) and then rejected by its seam
+preflight ([`PHASE_B_PREFLIGHT.md`](PHASE_B_PREFLIGHT.md)). #307 closed on
+2026-11-11 without a routing rule; the repaired routines measured here left
+production, and `b64_route_vba.py` still reproduces them.

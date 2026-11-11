@@ -17,10 +17,11 @@ class PublicIntegrationTests(unittest.TestCase):
         source=procedures(current)
         for tail in ('P','Q'):
             self.assertEqual(source['PROB_TryGammaRegularized'+tail],adapter(tail))
-        # No unreviewed public/API/module expansion: only the two internal
-        # binary64 routines of #307 (b64_route_vba.py), in the private layer.
+        # No unreviewed public/API/module expansion. The binary64 routines that
+        # #312 appended left production after #307 closed (b64_route_vba.py).
         self.assertEqual(re.findall(r'^Public (?:Function|Sub|Const) (\w+)',current,re.M),
-                         re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M)+list(b64.PUBLIC))
+                         re.findall(r'^Public (?:Function|Sub|Const) (\w+)',original(SRC),re.M))
+        for name in b64.PUBLIC:self.assertNotIn(name,current)
         for path in (ROOT/'src').glob('*.bas'):
             rel=path.relative_to(ROOT).as_posix()
             if rel!=SRC:

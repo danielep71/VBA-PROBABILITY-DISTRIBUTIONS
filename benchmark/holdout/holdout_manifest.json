@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-11T12:52:08Z",
-  "commit_sha": "d6d952a",
+  "generated_utc": "2026-11-11T19:33:38Z",
+  "commit_sha": "b98feb5",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -27,7 +27,7 @@
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:7ecf915a51ea83828ea6e079a871aeca5dba6282e520ee70995f33ac812db9c4",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:8e4dda5287bcdd71e2466ade4018dd0b9b5f4c4831c701d5ea76f04b051f4b28",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:f568e3a3d3e3517d5c66294d980f411e711188a2df40f2b608ace267b041fb6e",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:fa2d2114a894be66385b582b05768fb66edd6356dbac33180ac43d9f1d7aa359",
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:d488c86205815d8326d26e900dcecbf837953a811c954a15d453b3a52dbcdfa6"
   },
   "contract_registry_sha256": "sha256:a253fd89c53eadc0563ee0e305be76c748a3da783c0d5842fbad93af3d57177d",

@@ -27,7 +27,7 @@ class RecurrenceStudyTests(unittest.TestCase):
             S.summarize(path, emit=False)
 
     def test_reversible_pinned_candidates(self):
-        source = P.SOURCE.read_text()
+        source = P.measured_source()
         self.assertEqual(P.digest(source), P.BASELINE)
         for mode in S.MODES:
             candidate = P.transform(source, mode)
