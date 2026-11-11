@@ -9,11 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _route_block():
-    """b64_route_vba.py, loaded by path: the measured module carried its block."""
-    path = ROOT / 'benchmark/gamma_route_study/b64_route_vba.py'
-    import sys
-    sys.path.insert(0, str(path.parent))
-    spec = importlib.util.spec_from_file_location('b64_route_vba', path)
+    """historical_block.py, loaded by path: standard library only."""
+    path = ROOT / 'benchmark/gamma_route_study/historical_block.py'
+    spec = importlib.util.spec_from_file_location('historical_block', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

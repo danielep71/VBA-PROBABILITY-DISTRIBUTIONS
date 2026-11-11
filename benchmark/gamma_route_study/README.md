@@ -31,6 +31,7 @@ of the binary64 route, used as a fitting set.
 | `accurate_deviance.py` | Prototype: Loader's deviance as a pair from error-free transformations |
 | `route_model.py` | The repaired binary64 route, statement by statement, with VBA's 64-bit intermediates |
 | `b64_route_vba.py` | Generates the route's VBA (`PROB_TryGammaB64SeriesP`, `PROB_TryGammaB64ContinuedFractionQ`) as the fit candidate `88ff6ba` carried it; `--check` proves that, and that production no longer carries it |
+| `b64_route_block.txt`, `historical_block.py` | The same block as frozen text, and a standard-library reader: the cache and recurrence studies compare the current module with it restored, as they measured it |
 | `test_route_model.py` | Pins the production procedures the model ports, the generated block and its constants, the deviance's accuracy and the routed tails on the map |
 | [`FIT_DESIGN.md`](FIT_DESIGN.md), `fit_design.py` | The fit set: fidelity, accuracy and cost of the repaired route, and the frozen rule for the shape ceiling A2 |
 | `generate_b64_fit.py` | Builds `b64_fit_grid.csv` with references; `--check` proves the committed grid is the design |
