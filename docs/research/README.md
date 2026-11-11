@@ -10,6 +10,7 @@ and links, not copies of publisher articles or third-party implementations.
 | --- | --- |
 | [Bibliography](BIBLIOGRAPHY.md) | Twenty-six source records (2000–2026), publication dates, access depth and transfer limitations |
 | [Evaluation methodology](METHODOLOGY.md) | Reproducible comparison and adoption protocol |
+| [Gamma performance status](GAMMA_PERFORMANCE_STATUS.md) | Accepted #307 scope, production/cache distinction, B4/B5 results and deferred routing work |
 | [Issue map](ISSUE_MAP.md) | Existing implementation owners, roadmap links and feasibility work |
 | [Article note template](ARTICLE_NOTE_TEMPLATE.md) | Fields for future reviews and decisions |
 
@@ -49,8 +50,9 @@ not a claim that any current PR meets numerical acceptance.
 
 Full text and implementation code require their own redistribution/license
 assessment before being copied. Open access alone is not a blanket code license.
-Numerical experiment assets belong in `benchmark/`, with source binding and
-provenance; this directory is the research and decision index.
+Executable numerical experiments belong in `benchmark/`, with source binding
+and provenance. This directory is the research and decision index and also
+retains the immutable B5 run snapshot linked by the Gamma performance status.
 
 Repository rules remain authoritative: [contributing](../../CONTRIBUTING.md),
 [benchmark provenance](../../benchmark/PROVENANCE.md),
