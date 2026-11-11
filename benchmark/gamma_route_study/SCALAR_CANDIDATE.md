@@ -70,3 +70,13 @@ python benchmark/gamma_route_study/validate_scalar_host.py artifacts/gamma-scala
 
 The temporary workbook is not committed. The uploaded JSON/text evidence and its
 exact source SHA are retained; no timing is inferred from local Python tests.
+
+## Preflight correction
+
+Run 43070274841 at `963e05317de745aace4764964445e9127f5fae2c` stopped in
+Ubuntu preparation, before Excel. Lint-only import cleanup changed two Python
+source fingerprints in B4's retained replay. The complete B4 screening was
+rerun and every non-fingerprint field was asserted unchanged before retaining
+the freshly generated report. The inherited B4 workflow's extra EOF blank
+line was also removed after the full PR-range whitespace check flagged it.
+No B5 numerical result or performance sample was produced by that attempt.

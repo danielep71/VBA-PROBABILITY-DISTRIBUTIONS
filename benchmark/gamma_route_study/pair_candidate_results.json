@@ -3588,8 +3588,8 @@
   ],
   "windows_sha256": "283c3e35867d1ed5f1581528ff31c266c0e24462de92d00de45b2edf36e1dfa6",
   "sha256": {
-    "pair_candidate.py": "8772ed2a462ea710698e40084a28d4760ccafd8277ee2dd87b221206b9d1a361",
-    "screen_pair_candidate.py": "a477beaf48ebc13f3386e0e138fba3366f9e9fe12ad967de69c5e4043c524238",
+    "pair_candidate.py": "4a30fc775598c884c484f3e90bc04e194b1c1c7ca4ee0e51fb5a00f8819ff8c6",
+    "screen_pair_candidate.py": "4d03478f3fc6a00e9e38886be0ee28cd7bc3801d2dd7d2714c6eec48e2d2c947",
     "b64_fit_grid.csv": "0db56c3261d94637db70ef9d9c9a8f3fd0b60e100bfce8c38cfd4c70ed022df9",
     "arithmetic_diagnosis.json": "c95a86cbee58cfc6a5fc1be81531ef0c4801d47654a4f9a1d28fbde65baaac6e"
   }

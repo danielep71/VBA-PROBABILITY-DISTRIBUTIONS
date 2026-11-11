@@ -83,4 +83,3 @@ jobs:
           name: gamma-pair-study-${{ github.run_id }}
           path: artifacts/gamma-pair/
       - run: python benchmark/gamma_route_study/validate_pair_host.py artifacts/gamma-pair >> "$GITHUB_STEP_SUMMARY"
-
