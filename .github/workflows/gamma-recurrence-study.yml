@@ -1,0 +1,83 @@
+name: Gamma DD Recurrence Reuse
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [study/307-recurrence-reuse]
+    paths:
+      - benchmark/gamma_recurrence_study/**
+      - .github/workflows/gamma-recurrence-study.yml
+
+env:
+  PYTHON_VERSION: "3.12.16"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gamma-recurrence-study-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Generate reversible instrumentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: python benchmark/gamma_recurrence_study/prepare.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gamma-recurrence-inputs-${{ github.run_id }}
+          path: artifacts/gamma-recurrence/
+          if-no-files-found: error
+          retention-days: 30
+  profile:
+    name: Compare exact recurrence reuse candidates
+    needs: prepare
+    runs-on: [self-hosted, Windows, X64, excel]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: gamma-recurrence-inputs-${{ github.run_id }}
+          path: artifacts/gamma-recurrence/
+      - name: Compare four candidates with alternating execution order
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File benchmark\gamma_recurrence_study\Run-RecurrenceStudy.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%"
+      - name: Upload measurements and exact instrumentation
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gamma-recurrence-study-${{ github.run_id }}
+          path: |
+            artifacts/gamma-recurrence/*.json
+            artifacts/gamma-recurrence/*.txt
+          retention-days: 30
+          if-no-files-found: error
+  analyze:
+    name: Validate completeness and bit identity
+    needs: profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: gamma-recurrence-study-${{ github.run_id }}
+          path: artifacts/gamma-recurrence/
+      - run: python benchmark/gamma_recurrence_study/test_prepare.py
+      - run: python benchmark/gamma_recurrence_study/summarize.py artifacts/gamma-recurrence/recurrence-results.json >> "$GITHUB_STEP_SUMMARY"
