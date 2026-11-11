@@ -10,6 +10,7 @@ def validate(report, design):
     assert report['status']=='PASS' and not report['error'] and not report['cleanup_error']
     assert len(report['candidate_sha'])==40
     int(report['candidate_sha'],16)
+    assert report['normalization_check']=='PASS checks=11'
     expected = {r['id']:r['expected'] for r in design['cases']}
     assert len(expected)==len(design['cases'])==len(report['rows'])
     seen=set()

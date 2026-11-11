@@ -50,3 +50,25 @@ A2 remains 10000 as the maximum permitted study ceiling; the cost wave may
 show this candidate is too expensive even there. Only after arithmetic,
 Excel fidelity, costs and new boundary probes are satisfactory can a revised
 routing rule be frozen and the untouched 117-point holdout evaluated.
+
+## First host attempt and normalization correction
+
+Run 43055630408 at c27e2f0b417cf84d3925d1d6757da7a421a08f29 failed
+before recording any completed input or timing. The saved report records RPC
+failure and cleanup errors; it is retained in results/run_43055630408_failure.json.
+Artifact 13873093355 ZIP SHA-256 was verified before extraction:
+4efebe22fe02517f718bf054897a15e55074a1741fb429a05a4f5f0eba303155.
+
+The debugger screenshot showed the scaled arithmetic input guard. Code review
+found that B4_Scaled called Canonicalize on an unscaled pair: Canonicalize only
+repairs an already normalized mantissa, and does not perform frexp range
+normalization. This is a VBA port defect; Python S._normalize already performs
+that step. The corrected port splits the high part with Frexp, shifts the low
+part by the inverse power of two, then canonicalizes and validates.
+
+The next host wave first checks 11 conversion cases (positive/negative pairs
+at exponents -400,-1,0,1,400 plus zero), including separate high/low roundtrip
+preservation. Missing/failed checks invalidate the report. Probe error handlers
+return explicit ERROR diagnostics to fail the harness, and the current input
+ID is retained if a runtime error interrupts a call. No numerical tolerance,
+model output or domain boundary is changed; full fidelity/cost must be rerun.

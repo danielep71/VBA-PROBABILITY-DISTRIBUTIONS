@@ -21,6 +21,7 @@ End Function
 Public Function B4_Sample(ByVal A As Double, ByVal X As Double, ByVal Baseline As Boolean, ByVal Calls As Long) As String
     Dim P As Double, Q As Double, OK As Boolean, I As Long, Expected As String
     Dim T0 As Currency, T1 As Currency, Freq As Currency, Elapsed As Currency
+    On Error GoTo Failed
     If Baseline Then OK = B4_Baseline(A, X, P, Q) Else OK = B4_Pair(A, X, P, Q)
     If Not OK Then
         B4_Sample = "DECLINED," & GC_Bits(A) & "," & GC_Bits(X): Exit Function
@@ -36,4 +37,8 @@ Public Function B4_Sample(ByVal A As Double, ByVal X As Double, ByVal Baseline A
         If GC_Bits(P) & "," & GC_Bits(Q) <> Expected Then Err.Raise 5, "B4", "unstable bits"
     Next I
     B4_Sample = Expected & "," & Replace(Format$(Elapsed / Freq * 1000000#, "0.000000"), ",", ".") & "," & GC_Bits(A) & "," & GC_Bits(X)
+    Exit Function
+Failed:
+    B4_Sample = "ERROR " & CStr(Err.Number) & " " & Err.Source & " " & Err.Description
+
 End Function

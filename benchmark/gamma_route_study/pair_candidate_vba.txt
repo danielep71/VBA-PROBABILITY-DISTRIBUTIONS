@@ -8,10 +8,16 @@ Private Function B4_Check(ByVal V As Variant) As Variant
     B4_Check = V
 End Function
 Private Function B4_Scaled(ByVal V As Variant) As Variant
-    Dim H As Double, L As Double, E As Long, T As Variant
+    Dim H As Double, L As Double, E As Long, T As Variant, RawH As Double
     T = PROB_DD_PV2_Sum(PROB_DD_PV2_H(V), PROB_DD_PV2_L(V))
-    H = T(0): L = T(1)
+    RawH = T(0): L = T(1)
+    If RawH = 0# Then
+        B4_Scaled = Array(RawH, 0#, 0&): Exit Function
+    End If
+    PROB_DD_SP_Frexp RawH, H, E
+    L = PROB_DD_SP_Shift(L, -E)
     PROB_DD_SGD_Canonicalize H, L, E
+    If Not PROB_DD_SGD_Valid(H, L, E) Then Err.Raise 5, "B4_Scaled", "invalid normalized pair"
     B4_Scaled = Array(H, L, E)
 End Function
 Public Function B4_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
@@ -80,4 +86,27 @@ Public Function B4_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double,
 End Function
 Public Function B4_Baseline(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
     B4_Baseline = PROB_DD_WG_Pair(A, X, P, Q)
+End Function
+
+Public Function B4_NormalizationSelfTest() As String
+    Dim Exponents As Variant, Exponent As Variant, Sign As Variant, H As Double, L As Double, V As Variant, Count As Long
+    On Error GoTo Failed
+    Exponents = Array(-400&, -1&, 0&, 1&, 400&)
+    For Each Exponent In Exponents
+        For Each Sign In Array(-1#, 1#)
+            H = CDbl(Sign) * 2# ^ CLng(Exponent)
+            L = H * 2# ^ (-54)
+            V = B4_Scaled(Array(H, L))
+            If Not PROB_DD_SGD_Valid(CDbl(V(0)), CDbl(V(1)), CLng(V(2))) Then Err.Raise 5, "B4", "normalization validity"
+            If PROB_DD_SP_Shift(CDbl(V(0)), CLng(V(2))) <> H Then Err.Raise 5, "B4", "normalization high"
+            If PROB_DD_SP_Shift(CDbl(V(1)), CLng(V(2))) <> L Then Err.Raise 5, "B4", "normalization low"
+            Count = Count + 1
+        Next Sign
+    Next Exponent
+    V = B4_Scaled(Array(0#, 0#))
+    If CDbl(V(0)) <> 0# Or CDbl(V(1)) <> 0# Or CLng(V(2)) <> 0 Then Err.Raise 5, "B4", "normalization zero"
+    B4_NormalizationSelfTest = "PASS checks=" & CStr(Count + 1)
+    Exit Function
+Failed:
+    B4_NormalizationSelfTest = "ERROR " & CStr(Err.Number) & " " & Err.Source & " " & Err.Description
 End Function

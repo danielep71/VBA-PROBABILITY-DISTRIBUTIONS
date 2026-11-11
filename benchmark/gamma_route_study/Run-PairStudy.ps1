@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $out = Join-Path $RepositoryRoot 'artifacts\gamma-pair'
 $excel = $null
 $book = $null
-$report = [ordered]@{status='FAIL'; candidate_sha=''; excel_version=''; excel_build=''; rows=@(); timings=@(); error=''; cleanup_error=''}
+$report = [ordered]@{status='FAIL'; candidate_sha=''; excel_version=''; excel_build=''; rows=@(); timings=@(); error=''; cleanup_error=''; normalization_check=''; current_case=''}
 $inv = [Globalization.CultureInfo]::InvariantCulture
 try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
@@ -26,7 +26,10 @@ try {
     $module.AddFromString([IO.File]::ReadAllText((Join-Path $out 'candidate.txt')))
     [void]$book.VBProject.VBComponents.Import((Join-Path $out 'M_STATS_PROBDIST_B4.bas'))
     $macro = "'" + $book.Name + "'!B4_Sample"
+    $report.normalization_check = [string]$excel.Run("'" + $book.Name + "'!B4_NormalizationSelfTest")
+    if ($report.normalization_check -ne "PASS checks=11") { throw "Normalization check failed" }
     foreach ($case in $inputData.cases) {
+        $report.current_case = $case.id
         $raw = [string]$excel.Run($macro, [double]$case.a, [double]$case.x, $false, 0)
         $report.rows += [ordered]@{id=$case.id; raw=$raw}
         $fields = $raw -split ','

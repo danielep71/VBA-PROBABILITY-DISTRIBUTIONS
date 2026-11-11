@@ -37,9 +37,10 @@ class PairEvidence(unittest.TestCase):
             for n in (1,2,3):
                 for b in (True,False):
                     timings.append(dict(a=a,x=x,round=n,baseline=b,calls=4,p=hex_bits(p),q=hex_bits(q),elapsed_us=1.))
-        good=dict(status='PASS',candidate_sha='0'*40,error='',cleanup_error='',rows=rows,timings=timings)
+        good=dict(normalization_check='PASS checks=11',status='PASS',candidate_sha='0'*40,error='',cleanup_error='',rows=rows,timings=timings)
         validate(good,design)  # synthetic validator control, never measurement evidence
         variants=[]
+        bad=copy.deepcopy(good);bad["normalization_check"]="";variants.append(bad)
         bad=copy.deepcopy(good);bad['rows'].pop();variants.append(bad)
         bad=copy.deepcopy(good);bad['rows'][1]=bad['rows'][0];variants.append(bad)
         bad=copy.deepcopy(good);bad['rows'][0]['raw']='0000000000000000,0000000000000000,0,0000000000000000,0000000000000000';variants.append(bad)
