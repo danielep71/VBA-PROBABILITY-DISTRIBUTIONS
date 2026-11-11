@@ -1,0 +1,44 @@
+Attribute VB_Name = "M_STATS_PROBDIST_B5"
+Option Explicit
+Private Declare PtrSafe Function QueryPerformanceCounter Lib "kernel32" (ByRef Value As Currency) As Long
+Private Declare PtrSafe Function QueryPerformanceFrequency Lib "kernel32" (ByRef Value As Currency) As Long
+Private Type GC_Number
+    Value As Double
+End Type
+Private Type GC_Words
+    Low As Long
+    High As Long
+End Type
+
+Private Function GC_Bits(ByVal Value As Double) As String
+    Dim N As GC_Number, W As GC_Words
+    N.Value = Value
+    LSet W = N
+    GC_Bits = Right$("00000000" & Hex$(W.High), 8) & Right$("00000000" & Hex$(W.Low), 8)
+End Function
+
+
+Public Function B5_Sample(ByVal A As Double, ByVal X As Double, ByVal Baseline As Boolean, ByVal Calls As Long) As String
+    Dim P As Double, Q As Double, OK As Boolean, I As Long, Expected As String
+    Dim T0 As Currency, T1 As Currency, Freq As Currency, Elapsed As Currency
+    On Error GoTo Failed
+    If Baseline Then OK = B4_Pair(A, X, P, Q) Else OK = B5_Pair(A, X, P, Q)
+    If Not OK Then
+        B5_Sample = "DECLINED," & GC_Bits(A) & "," & GC_Bits(X): Exit Function
+    End If
+    Expected = GC_Bits(P) & "," & GC_Bits(Q)
+    QueryPerformanceFrequency Freq
+    For I = 1 To Calls
+        QueryPerformanceCounter T0
+        If Baseline Then OK = B4_Pair(A, X, P, Q) Else OK = B5_Pair(A, X, P, Q)
+        QueryPerformanceCounter T1
+        Elapsed = Elapsed + T1 - T0
+        If Not OK Then Err.Raise 5, "B5", "unstable status"
+        If GC_Bits(P) & "," & GC_Bits(Q) <> Expected Then Err.Raise 5, "B5", "unstable bits"
+    Next I
+    B5_Sample = Expected & "," & Replace(Format$(Elapsed / Freq * 1000000#, "0.000000"), ",", ".") & "," & GC_Bits(A) & "," & GC_Bits(X)
+    Exit Function
+Failed:
+    B5_Sample = "ERROR " & CStr(Err.Number) & " " & Err.Source & " " & Err.Description
+
+End Function
