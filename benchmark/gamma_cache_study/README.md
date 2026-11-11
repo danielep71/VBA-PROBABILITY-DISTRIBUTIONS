@@ -31,7 +31,7 @@ The policy-authorized `Excel VBA Regression` workflow separately runs the full
 regression and private study batteries on this branch, then exports the main
 and previously revealed historical holdout grids. The untouched #307 routing
 holdout is never exported or evaluated.
-The source change is a candidate until those results are collected. Historical
+The measured results and validation are retained in [RESULT.md](RESULT.md). Historical
 manifest bindings remain historical; no release/merge readiness is inferred.
 
 Reproduce source guards:
@@ -43,3 +43,5 @@ python benchmark/gamma_cache_study/prepare.py
 
 Actual Excel measurement: `Gamma DD LogGamma Cache` on the study branch, or
 `powershell -File benchmark/gamma_cache_study/Run-CacheStudy.ps1` after preparation.
+
+Reproduce retained timing tables with `python benchmark/gamma_cache_study/summarize.py benchmark/gamma_cache_study/results/run_43021836369.json`.
