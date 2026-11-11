@@ -2,7 +2,6 @@
 import csv
 import hashlib
 import json
-import math
 import struct
 from fractions import Fraction
 from pathlib import Path

@@ -7,7 +7,8 @@ a development envelope; they are NOT a frozen public routing rule.
 import math
 from functools import lru_cache
 
-import preflight_phase_b as old  # noqa: F401; establishes the audited model import paths
+# Establish the audited model import paths before loading arithmetic modules.
+import preflight_phase_b as old  # noqa: F401
 from precision_probe import DD
 from scaled_dd import ScaledDD as S
 from scaled_gamma import ONE, log_scaled, exp_scaled

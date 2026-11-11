@@ -64,6 +64,8 @@ commands = (
     ("gamma_route_study/check_disjoint.py",),
     ("gamma_route_study/test_route_model.py",),
     ("gamma_route_study/test_b64_fit.py",),
+    ("gamma_route_study/test_pair_candidate.py",),
+    ("gamma_route_study/test_scalar_candidate.py",),
     ("gamma_cache_study/test_cache_vba.py",),
     ("gamma_route_study/analyze_b64_fit.py", "--check"),
     ("normal_tail_study/test_kernel_model.py",),
