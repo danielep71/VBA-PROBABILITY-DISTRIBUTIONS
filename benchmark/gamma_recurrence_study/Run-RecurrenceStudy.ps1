@@ -10,21 +10,6 @@ try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
     & git -C $RepositoryRoot diff --exit-code HEAD -- src benchmark/gamma_cache_study benchmark/gamma_recurrence_study
     if ($LASTEXITCODE -ne 0) { throw 'Dirty study inputs' }
-    $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $false
-    $excel.DisplayAlerts = $false
-    $excel.AutomationSecurity = 1
-    $report.excel_version = [string]$excel.Version
-    $report.excel_build = [string]$excel.Build
-    $workbook = $excel.Workbooks.Add()
-    $workbook.SaveAs((Join-Path $out 'recurrence-study.xlsm'), 52)
-    $project = $workbook.VBProject
-    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\*.bas') | Sort-Object Name)) {
-        [void]$project.VBComponents.Import($file.FullName)
-    }
-    [void]$project.VBComponents.Import((Join-Path $RepositoryRoot 'benchmark\gamma_cache_study\M_STATS_PROBDIST_GCACHE.bas'))
-    $special = $project.VBComponents.Item('M_STATS_PROBDIST_SPECIALFUNCS').CodeModule
-    $macro = "'" + $workbook.Name + "'!GC_Sample"
     $points = @(@(0.0001, 0.5), @(0.5, 0.25), @(2.5, 1.0), @(2.5, 6.0),
                 @(100.0, 90.0), @(100.0, 110.0), @(10000.0, 9900.0), @(10000.0, 10100.0))
     $cases = @()
@@ -35,6 +20,22 @@ try {
     $cases += [pscustomobject]@{ a = 100.0; x = 0.9; route = 'inverse' }
     $bitsByCase = @{}
     for ($sample = 1; $sample -le 3; $sample++) {
+        $excel = New-Object -ComObject Excel.Application
+        $excel.Visible = $false
+        $excel.DisplayAlerts = $false
+        $excel.AutomationSecurity = 1
+        $report.excel_version = [string]$excel.Version
+        $report.excel_build = [string]$excel.Build
+        $workbook = $excel.Workbooks.Add()
+        $workbook.SaveAs((Join-Path $out "recurrence-study-$sample.xlsm"), 52)
+        $project = $workbook.VBProject
+        foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\*.bas') | Sort-Object Name)) {
+            [void]$project.VBComponents.Import($file.FullName)
+        }
+        [void]$project.VBComponents.Import((Join-Path $RepositoryRoot 'benchmark\gamma_cache_study\M_STATS_PROBDIST_GCACHE.bas'))
+        $special = $project.VBComponents.Item('M_STATS_PROBDIST_SPECIALFUNCS').CodeModule
+        $macro = "'" + $workbook.Name + "'!GC_Sample"
+
         foreach ($case in $cases) {
             $key = $case.route + ':' + $case.a.ToString($invariant) + ':' + $case.x.ToString($invariant)
             $modes = @('baseline', 'lower', 'upper', 'combined')
@@ -58,6 +59,12 @@ try {
                 }
             }
         }
+        # Bound live VBA editing to one round; retain the same case/mode order.
+        $workbook.Close($false)
+        $workbook = $null
+        $excel.Quit()
+        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel)
+        $excel = $null
     }
     $report.status = 'PASS'
 }

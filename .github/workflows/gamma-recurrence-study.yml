@@ -3,7 +3,7 @@ name: Gamma DD Recurrence Reuse
 on:
   workflow_dispatch:
   push:
-    branches: [study/307-recurrence-reuse]
+    branches: [study/307-recurrence-measure]
     paths:
       - benchmark/gamma_recurrence_study/**
       - .github/workflows/gamma-recurrence-study.yml
