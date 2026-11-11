@@ -30,7 +30,8 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: python -m pip install --only-binary=:all: --require-hashes -r benchmark/requirements-ci.txt
+      - run: >-
+          python -m pip install --only-binary=:all: --require-hashes -r benchmark/requirements-ci.txt
       - run: python benchmark/gamma_route_study/test_pair_candidate.py
       - run: python benchmark/gamma_route_study/prepare_pair_host.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -82,3 +83,4 @@ jobs:
           name: gamma-pair-study-${{ github.run_id }}
           path: artifacts/gamma-pair/
       - run: python benchmark/gamma_route_study/validate_pair_host.py artifacts/gamma-pair >> "$GITHUB_STEP_SUMMARY"
+
