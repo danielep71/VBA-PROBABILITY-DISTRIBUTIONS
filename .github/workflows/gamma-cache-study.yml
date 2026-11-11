@@ -1,0 +1,70 @@
+name: Gamma DD LogGamma Cache
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [study/307-loggamma-cache]
+    paths:
+      - benchmark/gamma_cache_study/**
+      - .github/workflows/gamma-cache-study.yml
+
+env:
+  PYTHON_VERSION: "3.12.16"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gamma-cache-study-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Generate reversible instrumentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: python benchmark/gamma_cache_study/prepare.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gamma-cache-inputs-${{ github.run_id }}
+          path: artifacts/gamma-cache/
+          if-no-files-found: error
+          retention-days: 30
+  profile:
+    name: Validate exact DD cache and measure cold/warm cost
+    needs: prepare
+    runs-on: [self-hosted, Windows, X64, excel]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: gamma-cache-inputs-${{ github.run_id }}
+          path: artifacts/gamma-cache/
+      - name: Compare uncached/cached paths with alternating execution order
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File benchmark\gamma_cache_study\Run-CacheStudy.ps1
+      - name: Run full production regression and private study batteries
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RunStudies
+      - name: Upload measurements and exact instrumentation
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gamma-cache-study-${{ github.run_id }}
+          path: |
+            artifacts/gamma-cache/*.json
+            artifacts/gamma-cache/*.txt
+            artifacts/excel-vba-ci/test-result.txt
+            artifacts/excel-vba-ci/excel-certification.json
+          retention-days: 30
+          if-no-files-found: error

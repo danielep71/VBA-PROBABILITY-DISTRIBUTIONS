@@ -2,7 +2,7 @@
 import re
 import unittest
 from install_scaled_fidelity import documented
-from public_integration import b64,ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore,live_total
+from public_integration import cache,b64,ROOT,PORT,SRC,TEST,BEGIN,END,EXTRA,RERAISE,RERAISE_LINES,AMENDMENTS,amend,code_only,original,procedures,arithmetic,adapter,test_block,restore,live_total
 
 
 class PublicIntegrationTests(unittest.TestCase):
@@ -12,7 +12,7 @@ class PublicIntegrationTests(unittest.TestCase):
         self.assertEqual(restore(current),original(SRC))
         block,types,names=arithmetic()
         self.assertEqual(len(names),46)
-        self.assertEqual(current.count(block),1);self.assertEqual(current.count(types),1)
+        self.assertEqual(cache.strip(current).count(block),1);self.assertEqual(current.count(types),1)
         self.assertNotIn('AssertTrue',block)
         source=procedures(current)
         for tail in ('P','Q'):
