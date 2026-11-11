@@ -6,13 +6,26 @@ import cache_vba as C
 from summarize import summarize
 
 
+def route_block():
+    """historical_block.py, loaded by path: standard library only."""
+    import importlib.util
+    path = C.ROOT / 'benchmark/gamma_route_study/historical_block.py'
+    spec = importlib.util.spec_from_file_location('historical_block', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class CacheSourceTests(unittest.TestCase):
     def test_exact_reference_and_round_trip(self):
         source = C.SRC.read_text()
         original = C.strip(source)
         self.assertEqual(C.apply(original), source)
         prior = json.loads((C.ROOT / 'benchmark/harness_timing/run_43017348872_profile.json').read_text())
-        self.assertEqual(hashlib.sha256(original.encode()).hexdigest(), prior['instrumentation']['source_sha256_lf'])
+        # The profile measured the module with the binary64 route block of #312,
+        # which left production after #307 closed; restore it for the comparison.
+        measured = route_block().as_measured(original)
+        self.assertEqual(hashlib.sha256(measured.encode()).hexdigest(), prior['instrumentation']['source_sha256_lf'])
 
     def test_retained_measurements_are_complete_and_identical(self):
         results = C.ROOT / 'benchmark/gamma_cache_study/results'

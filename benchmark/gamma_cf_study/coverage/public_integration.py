@@ -402,8 +402,8 @@ def change_controls(text,reverse=False):
 def restore(text):
     """Exact inverse of this generator; only for historical replay fixtures.
     The harness timing of #298 and the study split of #300 are not part of any
-    frozen study: they go first, and so does the binary64 Gamma route of #307
-    (b64_route_vba.py)."""
+    frozen study: they go first, and so does the binary64 Gamma route that #312
+    appended and that left production after #307 closed (b64_route_vba.py)."""
     text=cache.strip(b64.strip(studies.strip(harness.strip(text))))
     path=module_path(text)
     if path in AMENDMENTS and path!=SRC:
@@ -431,7 +431,7 @@ def install():
     for tail in ('P','Q'):text=text.replace(old['PROB_TryGammaRegularized'+tail],adapter(tail),1)
     text=text.replace('Public Function PROB_LogGamma(',types+'Public Function PROB_LogGamma(',1)
     text+=block
-    text=cache.apply(b64.apply(amend(SRC,text)))
+    text=cache.apply(amend(SRC,text))
     (ROOT/SRC).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     for path in AMENDMENTS:
         if path==SRC:continue

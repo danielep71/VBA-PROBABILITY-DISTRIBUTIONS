@@ -2,7 +2,7 @@
 
 [Research index](README.md) · [Bibliography](BIBLIOGRAPHY.md)
 
-Planning snapshot: 2026-11-08. Live issues own status, dependencies, dates and
+Planning snapshot: 2026-11-08, with the #307 row added on 2026-11-11. Live issues own status, dependencies, dates and
 acceptance criteria. This map is not a duplicate completion or release tracker.
 
 | Research | Owning work | Intended use |
@@ -25,6 +25,7 @@ acceptance criteria. This map is not a duplicate completion or release tracker.
 | R17: compound frequency-severity | [#271](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/271) | Separate feasibility; discretization, aliasing and tail validation |
 | R18: Gamma P/Q and inverses | [#24](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/24), [#26](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/26), [#14](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/14) | Compare formulas, prefactors, dispatch and inverse seeds |
 | R19/R20/R22: floating-point expansions and accumulation | [#24](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/24), [#26](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/26), [#7](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/7) | Audit two-Double primitive assumptions and total error; informs PRs #241/#242 |
+| R19/R20/R22 applied to kernel cost | [#307](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/307) (closed), [#314](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/314) | Error-free pair arithmetic in the binary64 route, B4 and B5 studies; any new routing study is preregistered under #314 |
 | R21: generalized incomplete gamma | [#24](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/24), [#26](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/26) | Alternative representation and normalization comparison |
 | R23: bivariate normal and t | [#196](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/196) | Genz baseline alongside R14; no trivariate scope expansion |
 | R24: Poisson-binomial DFT | [#270](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/270) | Compare with recursion and R13; verify tiny-tail errors |

@@ -10,6 +10,12 @@ Option Explicit
 '   repaired binary64 lower series and continued fraction, records each
 '   routine's status and value, and times the routine that answered.
 '
+' HISTORICAL
+'   The routines it calls were generated into production only at the fit
+'   candidate 88ff6ba (#312) and left production after #307 closed. The study
+'   grid gbf_b64_fit is no longer registered for export; this module compiles
+'   only against that candidate's source.
+'
 ' USAGE
 '   Run Export_GammaB64Fit. It finds the grid beside the workbook, or asks
 '   for it. ci/Export-ExcelGrids.ps1 runs it on the self-hosted runner with

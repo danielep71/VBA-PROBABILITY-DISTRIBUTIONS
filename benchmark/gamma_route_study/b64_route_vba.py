@@ -1,5 +1,6 @@
 """
-Generate the #307 binary64 Gamma route into src/M_STATS_PROBDIST_SPECIALFUNCS.bas.
+The #307 binary64 Gamma route as it was generated into
+src/M_STATS_PROBDIST_SPECIALFUNCS.bas, for the fit wave of FIT_DESIGN.md.
 
 The VBA is written here, one arithmetic statement per line where the rounding
 matters, so that route_model.py can mirror it statement by statement. The
@@ -8,18 +9,24 @@ pair, 2 pi) are written as their IEEE words, through PROB_DD_SP_FromWords of
 the generated public Gamma block: a VBA decimal literal keeps only 15
 significant digits.
 
-The block is appended after the generated public Gamma integration and is
-never edited by hand: apply() appends it, strip() removes it and refuses any
-drift. public_integration.py strips it before restoring the frozen port, so
-the source-isolation proofs of #242 still hold.
+History. #312 appended the block to the module at candidate 88ff6ba, where
+Excel run 42798193976 measured it (FIT_RESULT.md). No public function ever
+called it, and #307 closed without a routing rule, so the block was removed
+from production again. It stays reproducible: --check proves that the block
+generated here is byte for byte the one the fit candidate carried, and that
+the current module no longer carries it, and that b64_route_block.txt, the
+frozen copy that historical_block.py serves to the studies without mpmath, is
+the same block. apply() and strip() remain for
+historical replays; public_integration.py strips it before restoring the
+frozen port.
 
 Run:
-    python3 b64_route_vba.py --check    (the module carries the current block)
-    python3 b64_route_vba.py --write    (install or refresh it)
+    python3 b64_route_vba.py --check    (the historical block, absent from the module)
 """
 import argparse
 import os
 import struct
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +35,8 @@ sys.path.insert(0, HERE)
 import route_model as RM  # noqa: E402
 
 SRC = "src/M_STATS_PROBDIST_SPECIALFUNCS.bas"
+# The fit candidate of #312 (FIT_DESIGN.md), the only source that carried the block.
+FIT_CANDIDATE = "88ff6bae3cbcfb393eb9b6153c7c7cfbf3bf2fbc"
 BEGIN = "' BEGIN generated binary64 Gamma route (#307)"
 END = "' END generated binary64 Gamma route (#307)"
 ANCHOR = "' END generated public Gamma integration\n\n"
@@ -406,27 +415,36 @@ def strip(text):
     return text[: -len(current)]
 
 
-def read(path):
-    with open(os.path.join(ROOT, path), "rb") as f:
-        return f.read().decode("ascii").replace("\r\n", "\n")
+def as_measured(text):
+    """See historical_block.as_measured (standard library only)."""
+    import historical_block
+    return historical_block.as_measured(text)
+
+
+def read(path, revision=None):
+    if revision:
+        raw = subprocess.check_output(["git", "show", f"{revision}:{path}"], cwd=ROOT)
+    else:
+        with open(os.path.join(ROOT, path), "rb") as f:
+            raw = f.read()
+    return raw.decode("ascii").replace("\r\n", "\n")
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    group = ap.add_mutually_exclusive_group(required=True)
-    group.add_argument("--check", action="store_true")
-    group.add_argument("--write", action="store_true")
-    args = ap.parse_args(argv)
-    text = read(SRC)
-    if args.check:
-        ok = BEGIN in text and strip(text) + block() == text
-        print("binary64 Gamma route block: " + ("current" if ok else "MISSING OR STALE"))
-        return 0 if ok else 1
-    text = apply(strip(text))
-    with open(os.path.join(ROOT, SRC), "wb") as f:
-        f.write(text.replace("\n", "\r\n").encode("ascii"))
-    print("binary64 Gamma route block installed")
-    return 0
+    ap.add_argument("--check", action="store_true", required=True)
+    ap.parse_args(argv)
+    historical = read(SRC, FIT_CANDIDATE)
+    current = read(SRC)
+    carried = historical.endswith(block()) and historical.count(BEGIN) == 1
+    import historical_block
+    frozen = historical_block.block() == block()
+    absent = BEGIN not in current and END not in current
+    print("binary64 Gamma route block: "
+          + ("generated as at the fit candidate" if carried else "DIFFERS FROM THE FIT CANDIDATE")
+          + "; " + ("frozen copy current" if frozen else "FROZEN COPY DIFFERS")
+          + "; " + ("absent from the module" if absent else "STILL IN THE MODULE"))
+    return 0 if carried and frozen and absent else 1
 
 
 if __name__ == "__main__":

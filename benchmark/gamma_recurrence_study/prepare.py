@@ -1,10 +1,27 @@
 """Generate isolated recurrence candidates without changing production source."""
 import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _route_block():
+    """historical_block.py, loaded by path: standard library only."""
+    path = ROOT / 'benchmark/gamma_route_study/historical_block.py'
+    spec = importlib.util.spec_from_file_location('historical_block', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def measured_source():
+    """The module as this study measured it (BASELINE): the current source with
+    the binary64 route block of #312, which left production after #307 closed."""
+    return _route_block().as_measured(SOURCE.read_text())
+
 SOURCE = ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
 BASELINE = 'f568e3a3d3e3517d5c66294d980f411e711188a2df40f2b608ace267b041fb6e'
 LOWER = [
@@ -56,7 +73,7 @@ def digest(code):
 
 
 def main():
-    source = SOURCE.read_text()
+    source = measured_source()
     if digest(source) != BASELINE:
         raise ValueError('baseline source drift')
     out = ROOT / 'artifacts/gamma-recurrence'
