@@ -8,12 +8,15 @@ on:
       - benchmark/kernel_profile/**
       - .github/workflows/gamma-kernel-profile.yml
 
+env:
+  PYTHON_VERSION: "3.12.16"
+
 permissions:
   contents: read
 
 concurrency:
   group: gamma-kernel-profile-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   profile:
@@ -26,7 +29,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: '3.12'
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Generate reversible instrumentation
         shell: cmd
         run: python benchmark\kernel_profile\prepare.py
