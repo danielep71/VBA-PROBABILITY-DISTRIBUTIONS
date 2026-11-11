@@ -1,0 +1,319 @@
+Private Function B4_Check(ByVal V As Variant) As Variant
+    Dim H As Double, L As Double
+    H = PROB_DD_PV2_H(V): L = PROB_DD_PV2_L(V)
+    If Not PROB_IsFinite(H) Or Not PROB_IsFinite(L) Then Err.Raise 5, "B4", "nonfinite pair"
+    If H <> 0# Then
+        If Abs(H) < 2# ^ (-450) Or Abs(H) > 2# ^ 450 Then Err.Raise 5, "B4", "pair range"
+    End If
+    B4_Check = V
+End Function
+Private Function B4_Scaled(ByVal V As Variant) As Variant
+    Dim H As Double, L As Double, E As Long, T As Variant, RawH As Double
+    T = PROB_DD_PV2_Sum(PROB_DD_PV2_H(V), PROB_DD_PV2_L(V))
+    RawH = T(0): L = T(1)
+    If RawH = 0# Then
+        B4_Scaled = Array(RawH, 0#, 0&): Exit Function
+    End If
+    PROB_DD_SP_Frexp RawH, H, E
+    L = PROB_DD_SP_Shift(L, -E)
+    PROB_DD_SGD_Canonicalize H, L, E
+    If Not PROB_DD_SGD_Valid(H, L, E) Then Err.Raise 5, "B4_Scaled", "invalid normalized pair"
+    B4_Scaled = Array(H, L, E)
+End Function
+Public Function B4_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    Dim AA As Variant, XX As Variant, LP As Variant, Dev As Variant, Constant As Variant
+    Dim Term As Variant, Total As Variant, Ratio As Variant, Gap As Variant, Remainder As Variant
+    Dim BaseB As Variant, B As Variant, C As Variant, D As Variant, AN As Variant, Delta As Variant
+    Dim Tail As Variant, H As Variant, PP As Variant, QQ As Variant, N As Long, K As Long
+    Dim Converged As Boolean, Bound As Double, Limit As Double, Seam As Double
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(A) Or Not PROB_IsFinite(X) Then Exit Function
+    If A < 0.00000001 Or A > 10000# Or X < 0.000000000001 Or X > 20000# Then Exit Function
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    If A <= 128# Then
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), PROB_DD_EG_LogGamma(AA)), XX)
+    Else
+        Dev = PROB_DD_WG_Deviance(A, X)
+        Constant = PROB_DD_SG_Add(PROB_DD_SP_FromWords(&H3FED67F1&, &HC864BEB5&), PROB_DD_SP_FromWords(&HBC865B5A&, &H1B7FF5DF&))
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Neg(Dev), PROB_DD_SG_Mul(PROB_DD_SG_Log(A), 0.5)), Constant), PROB_DD_WG_Stirling(AA))
+    End If
+    AA = Array(A, 0#): XX = Array(X, 0#)
+    Seam = A + 1#
+    If X < Seam Then
+        Term = Array(1#, 0#): Total = Term
+        For N = 1 To 100000
+            Term = B4_Check(PROB_DD_PV2_Div(B4_Check(PROB_DD_PV2_Mul(Term, XX)), PROB_DD_PV2_Add(AA, N)))
+            Total = B4_Check(PROB_DD_PV2_Add(Total, Term))
+            Ratio = B4_Check(PROB_DD_PV2_Div(XX, PROB_DD_PV2_Add(PROB_DD_PV2_Add(AA, N), 1#)))
+            Gap = PROB_DD_PV2_Sub(1#, Ratio)
+            If PROB_DD_PV2_H(Gap) > 0# Then
+                Remainder = B4_Check(PROB_DD_PV2_Div(B4_Check(PROB_DD_PV2_Mul(Term, Ratio)), Gap))
+                Bound = Abs(PROB_DD_PV2_H(Remainder)) * 4#
+                Limit = Abs(PROB_DD_PV2_H(Total)) * 2# ^ (-100)
+                If Bound < Limit Then
+                    Converged = True: Exit For
+                End If
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "B4", "lower cap"
+        PROB_DD_EG_LowerPair PROB_DD_SG_Add(LP, PROB_DD_EG_LogPair(B4_Scaled(Total))), PP, QQ
+    Else
+        BaseB = PROB_DD_PV2_Sub(PROB_DD_PV2_Add(XX, 1#), AA)
+        B = BaseB: C = Array(2# ^ 400, 0#): D = B4_Check(PROB_DD_PV2_Div(1#, B))
+        For N = 1 To 100000
+            AN = PROB_DD_PV2_Mul(-N, PROB_DD_PV2_Sub(N, AA))
+            B = B4_Check(PROB_DD_PV2_Add(B, 2#))
+            D = B4_Check(PROB_DD_PV2_Div(1#, B4_Check(PROB_DD_PV2_Add(PROB_DD_PV2_Mul(AN, D), B))))
+            C = B4_Check(PROB_DD_PV2_Add(B, B4_Check(PROB_DD_PV2_Div(AN, C))))
+            Delta = PROB_DD_PV2_Sub(B4_Check(PROB_DD_PV2_Mul(C, D)), 1#)
+            If Abs(PROB_DD_PV2_H(Delta)) < 2# ^ (-100) Then
+                Converged = True: Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "B4", "upper cap"
+        Tail = Array(0#, 0#)
+        For K = N To 1 Step -1
+            Tail = B4_Check(PROB_DD_PV2_Div(PROB_DD_PV2_Mul(-K, PROB_DD_PV2_Sub(K, AA)), B4_Check(PROB_DD_PV2_Add(PROB_DD_PV2_Add(BaseB, 2# * K), Tail))))
+        Next K
+        H = B4_Check(PROB_DD_PV2_Div(1#, B4_Check(PROB_DD_PV2_Add(BaseB, Tail))))
+        QQ = PROB_DD_SG_Mul(PROB_DD_SG_Mul(PROB_DD_SG_Exp(LP), A), B4_Scaled(H))
+        PP = PROB_DD_SG_Sub(1#, QQ)
+    End If
+    P = PROB_DD_SG_Value(PP): Q = PROB_DD_SG_Value(QQ)
+    If Not PROB_IsFinite(P) Or Not PROB_IsFinite(Q) Then Err.Raise 5, "B4", "nonfinite result"
+    If P < 0# Or P > 1# Or Q < 0# Or Q > 1# Then Err.Raise 5, "B4", "invalid probability"
+    B4_Pair = True
+End Function
+Public Function B4_Baseline(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    B4_Baseline = PROB_DD_WG_Pair(A, X, P, Q)
+End Function
+
+Public Function B4_NormalizationSelfTest() As String
+    Dim Exponents As Variant, Exponent As Variant, Sign As Variant, H As Double, L As Double, V As Variant, Count As Long
+    On Error GoTo Failed
+    Exponents = Array(-400&, -1&, 0&, 1&, 400&)
+    For Each Exponent In Exponents
+        For Each Sign In Array(-1#, 1#)
+            H = CDbl(Sign) * 2# ^ CLng(Exponent)
+            L = H * 2# ^ (-54)
+            V = B4_Scaled(Array(H, L))
+            If Not PROB_DD_SGD_Valid(CDbl(V(0)), CDbl(V(1)), CLng(V(2))) Then Err.Raise 5, "B4", "normalization validity"
+            If PROB_DD_SP_Shift(CDbl(V(0)), CLng(V(2))) <> H Then Err.Raise 5, "B4", "normalization high"
+            If PROB_DD_SP_Shift(CDbl(V(1)), CLng(V(2))) <> L Then Err.Raise 5, "B4", "normalization low"
+            Count = Count + 1
+        Next Sign
+    Next Exponent
+    V = B4_Scaled(Array(0#, 0#))
+    If CDbl(V(0)) <> 0# Or CDbl(V(1)) <> 0# Or CLng(V(2)) <> 0 Then Err.Raise 5, "B4", "normalization zero"
+    B4_NormalizationSelfTest = "PASS checks=" & CStr(Count + 1)
+    Exit Function
+Failed:
+    B4_NormalizationSelfTest = "ERROR " & CStr(Err.Number) & " " & Err.Source & " " & Err.Description
+End Function
+
+' B5: B4 operation graph with scalar hi/lo storage in the recurrence only.
+' Inputs are ByVal snapshots so output arguments can alias an input safely.
+Private Sub B5_Sum(ByVal A As Double, ByVal B As Double, ByRef RH As Double, ByRef RL As Double)
+    Dim S As Double, V As Double, AV As Double, AR As Double, BR As Double
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    RH = S
+    RL = AR + BR
+End Sub
+Private Sub B5_Add(ByVal AH As Double, ByVal AL As Double, ByVal BH As Double, ByVal BL As Double, ByRef RH As Double, ByRef RL As Double)
+    Dim S As Double, E As Double, T As Double, F As Double
+    B5_Sum AH, BH, S, E
+    B5_Sum AL, BL, T, F
+    E = E + T
+    B5_Sum S, E, S, E
+    E = E + F
+    B5_Sum S, E, RH, RL
+End Sub
+Private Sub B5_Subtract(ByVal AH As Double, ByVal AL As Double, ByVal BH As Double, ByVal BL As Double, ByRef RH As Double, ByRef RL As Double)
+    B5_Add AH, AL, -BH, -BL, RH, RL
+End Sub
+Private Sub B5_Multiply(ByVal AH As Double, ByVal AL As Double, ByVal BH As Double, ByVal BL As Double, ByRef RH As Double, ByRef RL As Double)
+    Dim CA As Double, CB As Double, HA As Double, HB As Double
+    Dim LA As Double, LB As Double, P As Double, E As Double, T As Double
+    P = AH * BH
+    CA = 134217729# * AH
+    CB = 134217729# * BH
+    T = CA - AH
+    HA = CA - T
+    T = CB - BH
+    HB = CB - T
+    LA = AH - HA
+    LB = BH - HB
+    T = HA * HB
+    E = T - P
+    T = HA * LB
+    E = E + T
+    T = LA * HB
+    E = E + T
+    T = LA * LB
+    E = E + T
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    B5_Sum P, E, RH, RL
+End Sub
+Private Sub B5_Divide(ByVal AH As Double, ByVal AL As Double, ByVal BH As Double, ByVal BL As Double, ByRef RH As Double, ByRef RL As Double)
+    Dim QH As Double, QL As Double, PH As Double, PL As Double, SH As Double, SL As Double, T As Double, J As Long
+    QH = AH / BH
+    QL = 0#
+    For J = 1 To 2
+        B5_Multiply QH, QL, BH, BL, PH, PL
+        B5_Subtract AH, AL, PH, PL, SH, SL
+        T = SH / BH
+        B5_Add QH, QL, T, 0#, QH, QL
+    Next J
+    RH = QH: RL = QL
+End Sub
+Private Sub B5_Check(ByVal H As Double, ByVal L As Double)
+    If Not PROB_IsFinite(H) Or Not PROB_IsFinite(L) Then Err.Raise 5, "B5", "nonfinite pair"
+    If H <> 0# Then
+        If Abs(H) < 2# ^ (-450) Or Abs(H) > 2# ^ 450 Then Err.Raise 5, "B5", "pair range"
+    End If
+End Sub
+
+Public Function B5_Pair(ByVal A As Double, ByVal X As Double, ByRef P As Double, ByRef Q As Double) As Boolean
+    Dim AA As Variant, XX As Variant, LP As Variant, Dev As Variant, Constant As Variant, PP As Variant, QQ As Variant
+    Dim TermH As Double, TermL As Double, TotalH As Double, TotalL As Double
+    Dim RatioH As Double, RatioL As Double, GapH As Double, GapL As Double, RemH As Double, RemL As Double
+    Dim BaseH As Double, BaseL As Double, BH As Double, BL As Double, CH As Double, CL As Double, DH As Double, DL As Double
+    Dim ANH As Double, ANL As Double, DeltaH As Double, DeltaL As Double, TailH As Double, TailL As Double, HH As Double, HL As Double
+    Dim U1H As Double, U1L As Double, U2H As Double, U2L As Double, U3H As Double, U3L As Double
+    Dim N As Long, K As Long, Converged As Boolean, Bound As Double, Limit As Double, Seam As Double
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(A) Or Not PROB_IsFinite(X) Then Exit Function
+    If A < 0.00000001 Or A > 10000# Or X < 0.000000000001 Or X > 20000# Then Exit Function
+    AA = PROB_DD_SG_Coerce(A): XX = PROB_DD_SG_Coerce(X)
+    If A <= 128# Then
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Mul(PROB_DD_SG_Log(X), AA), PROB_DD_EG_LogGamma(AA)), XX)
+    Else
+        Dev = PROB_DD_WG_Deviance(A, X)
+        Constant = PROB_DD_SG_Add(PROB_DD_SP_FromWords(&H3FED67F1&, &HC864BEB5&), PROB_DD_SP_FromWords(&HBC865B5A&, &H1B7FF5DF&))
+        LP = PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Sub(PROB_DD_SG_Neg(Dev), PROB_DD_SG_Mul(PROB_DD_SG_Log(A), 0.5)), Constant), PROB_DD_WG_Stirling(AA))
+    End If
+    Seam = A + 1#
+    If X < Seam Then
+        TermH = 1#: TermL = 0#: TotalH = 1#: TotalL = 0#
+        For N = 1 To 100000
+            B5_Multiply TermH, TermL, X, 0#, U1H, U1L
+            B5_Check U1H, U1L
+            B5_Add A, 0#, CDbl(N), 0#, U2H, U2L
+            B5_Divide U1H, U1L, U2H, U2L, TermH, TermL
+            B5_Check TermH, TermL
+            B5_Add TotalH, TotalL, TermH, TermL, TotalH, TotalL
+            B5_Check TotalH, TotalL
+            B5_Add A, 0#, CDbl(N), 0#, U1H, U1L
+            B5_Add U1H, U1L, 1#, 0#, U2H, U2L
+            B5_Divide X, 0#, U2H, U2L, RatioH, RatioL
+            B5_Check RatioH, RatioL
+            B5_Subtract 1#, 0#, RatioH, RatioL, GapH, GapL
+            If GapH > 0# Then
+                B5_Multiply TermH, TermL, RatioH, RatioL, U1H, U1L
+                B5_Check U1H, U1L
+                B5_Divide U1H, U1L, GapH, GapL, RemH, RemL
+                B5_Check RemH, RemL
+                Bound = Abs(RemH) * 4#
+                Limit = Abs(TotalH) * 2# ^ (-100)
+                If Bound < Limit Then
+                    Converged = True: Exit For
+                End If
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "B5", "lower cap"
+        PROB_DD_EG_LowerPair PROB_DD_SG_Add(LP, PROB_DD_EG_LogPair(B4_Scaled(Array(TotalH, TotalL)))), PP, QQ
+    Else
+        B5_Add X, 0#, 1#, 0#, U1H, U1L
+        B5_Subtract U1H, U1L, A, 0#, BaseH, BaseL
+        BH = BaseH: BL = BaseL: CH = 2# ^ 400: CL = 0#
+        B5_Divide 1#, 0#, BH, BL, DH, DL
+        B5_Check DH, DL
+        For N = 1 To 100000
+            B5_Subtract CDbl(N), 0#, A, 0#, U1H, U1L
+            B5_Multiply CDbl(-N), 0#, U1H, U1L, ANH, ANL
+            B5_Add BH, BL, 2#, 0#, BH, BL
+            B5_Check BH, BL
+            B5_Multiply ANH, ANL, DH, DL, U1H, U1L
+            B5_Add U1H, U1L, BH, BL, U2H, U2L
+            B5_Check U2H, U2L
+            B5_Divide 1#, 0#, U2H, U2L, DH, DL
+            B5_Check DH, DL
+            B5_Divide ANH, ANL, CH, CL, U1H, U1L
+            B5_Check U1H, U1L
+            B5_Add BH, BL, U1H, U1L, CH, CL
+            B5_Check CH, CL
+            B5_Multiply CH, CL, DH, DL, U1H, U1L
+            B5_Check U1H, U1L
+            B5_Subtract U1H, U1L, 1#, 0#, DeltaH, DeltaL
+            If Abs(DeltaH) < 2# ^ (-100) Then
+                Converged = True: Exit For
+            End If
+        Next N
+        If Not Converged Then Err.Raise 5, "B5", "upper cap"
+        TailH = 0#: TailL = 0#
+        For K = N To 1 Step -1
+            B5_Subtract CDbl(K), 0#, A, 0#, U1H, U1L
+            B5_Multiply CDbl(-K), 0#, U1H, U1L, U2H, U2L
+            B5_Add BaseH, BaseL, 2# * K, 0#, U1H, U1L
+            B5_Add U1H, U1L, TailH, TailL, U3H, U3L
+            B5_Check U3H, U3L
+            B5_Divide U2H, U2L, U3H, U3L, TailH, TailL
+            B5_Check TailH, TailL
+        Next K
+        B5_Add BaseH, BaseL, TailH, TailL, U1H, U1L
+        B5_Check U1H, U1L
+        B5_Divide 1#, 0#, U1H, U1L, HH, HL
+        B5_Check HH, HL
+        QQ = PROB_DD_SG_Mul(PROB_DD_SG_Mul(PROB_DD_SG_Exp(LP), A), B4_Scaled(Array(HH, HL)))
+        PP = PROB_DD_SG_Sub(1#, QQ)
+    End If
+    P = PROB_DD_SG_Value(PP): Q = PROB_DD_SG_Value(QQ)
+    If Not PROB_IsFinite(P) Or Not PROB_IsFinite(Q) Then Err.Raise 5, "B5", "nonfinite result"
+    If P < 0# Or P > 1# Or Q < 0# Or Q > 1# Then Err.Raise 5, "B5", "invalid probability"
+    B5_Pair = True
+End Function
+
+Public Function B5_ArithmeticSelfTest() As String
+    Dim Values As Variant, A As Variant, B As Variant, V As Variant, Op As Long, Count As Long
+    Dim AH As Double, AL As Double, BH As Double, BL As Double, RH As Double, RL As Double
+    On Error GoTo Failed
+    Values = Array(-2# ^ 100, -2# ^ 53, -2#, -1#, -0.5, -2# ^ (-100), 2# ^ (-100), 0.5, 1#, 2#, 2# ^ 53, 2# ^ 100)
+    For Each A In Values
+        For Each B In Values
+            AH = CDbl(A): AL = AH * 2# ^ (-54)
+            BH = CDbl(B): BL = -BH * 2# ^ (-54)
+            For Op = 1 To 4
+                Select Case Op
+                    Case 1
+                        B5_Add AH, AL, BH, BL, RH, RL
+                        V = PROB_DD_PV2_Add(Array(AH, AL), Array(BH, BL))
+                    Case 2
+                        B5_Subtract AH, AL, BH, BL, RH, RL
+                        V = PROB_DD_PV2_Sub(Array(AH, AL), Array(BH, BL))
+                    Case 3
+                        B5_Multiply AH, AL, BH, BL, RH, RL
+                        V = PROB_DD_PV2_Mul(Array(AH, AL), Array(BH, BL))
+                    Case 4
+                        B5_Divide AH, AL, BH, BL, RH, RL
+                        V = PROB_DD_PV2_Div(Array(AH, AL), Array(BH, BL))
+                End Select
+                If PROB_DD_SG_Bits(RH) <> PROB_DD_SG_Bits(CDbl(V(0))) Then Err.Raise 5, "B5", "arithmetic high " & CStr(Count)
+                If PROB_DD_SG_Bits(RL) <> PROB_DD_SG_Bits(CDbl(V(1))) Then Err.Raise 5, "B5", "arithmetic low " & CStr(Count)
+                Count = Count + 1
+            Next Op
+        Next B
+    Next A
+    B5_ArithmeticSelfTest = "PASS checks=" & CStr(Count)
+    Exit Function
+Failed:
+    B5_ArithmeticSelfTest = "ERROR " & CStr(Err.Number) & " " & Err.Source & " " & Err.Description
+End Function

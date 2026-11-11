@@ -1,0 +1,15 @@
+{
+  "run_id": 43070672334,
+  "source_sha": "e498658f3e94ef259187ce1d4da8a34992357c2d",
+  "artifact_id": 13877592731,
+  "zip_sha256": "7a429ab0b1f06a602c01cc73e34cff1a7dda6bdeb60de9cf74c933de7d3e4cb1",
+  "original_report_sha256": "1d5f68c9b0255b5f11a63b72655a3256c4dc314f3f74d475b54dc7d7b68a691d",
+  "report_normalization": "Parsed and reserialized as UTF-8/LF JSON; values unchanged, including every echoed word and timing.",
+  "retained_sha256": {
+    "candidate.txt": "2c53540b07bec6a2d1a7d457c39ad586f745031a0abcf52b156e22ae8a3af4fc",
+    "inputs.json": "ed006250f8016df8ea5d173ad719216575bd4db124f5de910e8dcdd782ea8050",
+    "probe.txt": "21f2542f36c3491808a372271ac4b4fc922f8d6a725b15a542c107d02c37117a",
+    "scalar-results.json": "de16c64d1c6d8599b40d375e24b7c977f4ef2a48fa37bdac8a41956b7b588cad",
+    "scalar-summary.json": "349ea7341911c84bfa1e050a4445769368f9b4f9736354c880806a490ab18c53"
+  }
+}
