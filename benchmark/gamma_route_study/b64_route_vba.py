@@ -14,7 +14,9 @@ Excel run 42798193976 measured it (FIT_RESULT.md). No public function ever
 called it, and #307 closed without a routing rule, so the block was removed
 from production again. It stays reproducible: --check proves that the block
 generated here is byte for byte the one the fit candidate carried, and that
-the current module no longer carries it. apply() and strip() remain for
+the current module no longer carries it, and that b64_route_block.txt, the
+frozen copy that historical_block.py serves to the studies without mpmath, is
+the same block. apply() and strip() remain for
 historical replays; public_integration.py strips it before restoring the
 frozen port.
 
@@ -414,11 +416,9 @@ def strip(text):
 
 
 def as_measured(text):
-    """The module text as the #307 studies measured it, from #312 until the
-    block left production: the current text with the historical block
-    appended. Studies that bind a hash of the whole module compare this, so
-    any other drift is still detected."""
-    return text if BEGIN in text else apply(text)
+    """See historical_block.as_measured (standard library only)."""
+    import historical_block
+    return historical_block.as_measured(text)
 
 
 def read(path, revision=None):
@@ -437,11 +437,14 @@ def main(argv=None):
     historical = read(SRC, FIT_CANDIDATE)
     current = read(SRC)
     carried = historical.endswith(block()) and historical.count(BEGIN) == 1
+    with open(os.path.join(HERE, "b64_route_block.txt"), encoding="ascii") as f:
+        frozen = f.read() == block()
     absent = BEGIN not in current and END not in current
     print("binary64 Gamma route block: "
           + ("generated as at the fit candidate" if carried else "DIFFERS FROM THE FIT CANDIDATE")
+          + "; " + ("frozen copy current" if frozen else "FROZEN COPY DIFFERS")
           + "; " + ("absent from the module" if absent else "STILL IN THE MODULE"))
-    return 0 if carried and absent else 1
+    return 0 if carried and frozen and absent else 1
 
 
 if __name__ == "__main__":

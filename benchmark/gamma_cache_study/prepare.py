@@ -1,5 +1,6 @@
 """Generate uncached reference and test-only cache diagnostics for Excel."""
 import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -15,7 +16,14 @@ def main():
     original = C.strip(source)
     assert C.apply(original) == source
     prior = json.loads((ROOT / 'benchmark/harness_timing/run_43017348872_profile.json').read_text())
-    assert hashlib.sha256(original.encode()).hexdigest() == prior['instrumentation']['source_sha256_lf']
+    # The profile measured the module with the binary64 route block of #312,
+    # which left production after #307 closed; restore it for the comparison.
+    spec = importlib.util.spec_from_file_location(
+        'historical_block', ROOT / 'benchmark/gamma_route_study/historical_block.py')
+    historical = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(historical)
+    measured = historical.as_measured(original)
+    assert hashlib.sha256(measured.encode()).hexdigest() == prior['instrumentation']['source_sha256_lf']
     reference = original + '\n' + C.procedure(source, C.SLOW)
     # Reference contains the same slow function under both names so the private
     # diagnostic macro can compile in either pass. Original public calls stay

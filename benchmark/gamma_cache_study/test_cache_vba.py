@@ -7,12 +7,10 @@ from summarize import summarize
 
 
 def route_block():
-    """b64_route_vba.py, loaded by path."""
+    """historical_block.py, loaded by path: standard library only."""
     import importlib.util
-    import sys
-    path = C.ROOT / 'benchmark/gamma_route_study/b64_route_vba.py'
-    sys.path.insert(0, str(path.parent))
-    spec = importlib.util.spec_from_file_location('b64_route_vba', path)
+    path = C.ROOT / 'benchmark/gamma_route_study/historical_block.py'
+    spec = importlib.util.spec_from_file_location('historical_block', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
