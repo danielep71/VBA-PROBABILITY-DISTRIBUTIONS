@@ -1,0 +1,65 @@
+name: Gamma DD Kernel Profile
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [study/307-kernel-profile]
+    paths:
+      - benchmark/kernel_profile/**
+      - .github/workflows/gamma-kernel-profile.yml
+
+env:
+  PYTHON_VERSION: "3.12.16"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gamma-kernel-profile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Generate reversible instrumentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: python benchmark/kernel_profile/prepare.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gamma-profile-inputs-${{ github.run_id }}
+          path: artifacts/kernel-profile/
+          if-no-files-found: error
+          retention-days: 30
+  profile:
+    name: Measure validated DD kernel in Excel
+    needs: prepare
+    runs-on: [self-hosted, Windows, X64, excel]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: gamma-profile-inputs-${{ github.run_id }}
+          path: artifacts/kernel-profile/
+      - name: Measure baseline, two profiles and restored baseline
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File benchmark\kernel_profile\Run-KernelProfile.ps1
+      - name: Upload measurements and exact instrumentation
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gamma-kernel-profile-${{ github.run_id }}
+          path: |
+            artifacts/kernel-profile/*.json
+            artifacts/kernel-profile/*.txt
+          retention-days: 30
+          if-no-files-found: error

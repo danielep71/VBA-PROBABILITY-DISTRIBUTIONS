@@ -73,7 +73,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **5,987** | of 5,987 deterministic VBA assertions passed in the retained Excel run on `88ff6ba`; regression sources unchanged since |
+| **5,987** | of 5,987 deterministic VBA assertions passed in the retained Excel run on `d6d952a`; regression sources unchanged since |
 | **166** | active accuracy contracts (167 registry rows; 1 characterization-only): 166 PASS, 0 FAIL, 0 PENDING |
 | **2,139** | observation rows; main grid 1,783: 1,756 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
 | **83** | of 83 contracts PASS on an **independent holdout** of 659 observations |
@@ -87,8 +87,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 5,987/5,987 assertions passed on `88ff6ba` (Excel 16.0 build 20430, 64-bit; finished 2026-11-10). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,139 rows bound to the current source by `observation_manifest.json` (exported from `88ff6ba`).
+- **Excel regression** — 5,987/5,987 assertions passed on `d6d952a` (Excel 16.0 build 20430, 64-bit; finished 2026-11-11). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,139 rows bound to the current source by `observation_manifest.json` (exported from `d6d952a`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — `transition` mode: 1,756 of 1,783 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
 - **Contract verdicts** — 166 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only.
@@ -1361,7 +1361,7 @@ The library is particularly suited to:
 ## Current boundaries
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
-- Gamma, Chi-square and Poisson probabilities are evaluated in double-double arithmetic: in Excel 16.0, 64-bit, one Gamma P or Q call takes from about 5 ms to 170 ms, against 2 to 39 microseconds for the binary64 routine it replaced ([measurement](benchmark/harness_timing/RESULT.md)), so large worksheets recalculate slowly;
+- Gamma, Chi-square and Poisson probabilities use double-double arithmetic. Exact LogGamma reuse reduces repeated shape-100 P/Q calls from about 115–121 ms to 10–14 ms in the measured Excel runs, but cold calls and large-shape recurrences remain slow. Timing is host-dependent; see the [cache study and limitations](benchmark/gamma_cache_study/RESULT.md) and the [original uncached measurements](benchmark/harness_timing/RESULT.md);
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
 - a self-hosted Excel runner must be online and correctly configured for CI execution;

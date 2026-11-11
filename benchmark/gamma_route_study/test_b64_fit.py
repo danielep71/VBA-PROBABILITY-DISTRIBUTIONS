@@ -14,6 +14,7 @@ Proofs for the #307 binary64 route fit set and its analyzer.
 Run: python3 test_b64_fit.py   (exit 0 = pass)
 """
 import csv
+import json
 import math
 import os
 import sys
@@ -53,6 +54,34 @@ def exported(committed, mutate=None, line=LINE):
 
 def main():
     fails = []
+    import band_development as band
+    import smaller_tail_development as smaller
+    smaller_result = smaller.result()
+    for name, report in [('band_development.json', band.evaluate()), ('smaller_tail_development.json', smaller_result)]:
+        with open(os.path.join(HERE, name)) as stream:
+            if report != json.load(stream):
+                fails.append('development evidence does not reproduce: ' + name)
+    narrow, wide = smaller_result['narrow'], smaller_result['wide']
+    if narrow['failures'] or len(wide['failures']) != 13:
+        fails.append('B3 narrow/wide controls changed')
+    for failure in wide['failures']:
+        left = [float.fromhex(v) for v in failure['baseline_left']]
+        right = [float.fromhex(v) for v in failure['baseline_right']]
+        if right[0] < left[0] or right[1] > left[1]:
+            fails.append('B3 baseline is not monotone at retained failure')
+    import preflight_phase_b as preflight
+    report = preflight.evaluate()
+    with open(os.path.join(HERE, 'phase_b_preflight.json')) as stream:
+        retained = json.load(stream)
+    if report != retained or report['status'] != 'REJECT':
+        fails.append('frozen phase-B rejection does not reproduce')
+    if [float.fromhex(f['a_hex']) for f in report['failures']] != [1e-8, 1e-4, .1, 10.]:
+        fails.append('phase-B counterexample set changed')
+    for row in report['rows']:
+        values = [[float.fromhex(v) for v in pair] for pair in row['baseline_hex']]
+        if any(values[i+1][0] < values[i][0] or values[i+1][1] > values[i][1] for i in range(2)):
+            fails.append('baseline monotonicity failed in the phase-B preflight')
+
 
     def check(condition, message):
         if not condition:

@@ -16,6 +16,8 @@ import _harness_timing as harness  # noqa: E402
 import _harness_studies as studies  # noqa: E402
 sys.path.insert(0,str(ROOT/'benchmark'/'gamma_route_study'))
 import b64_route_vba as b64  # noqa: E402
+sys.path.insert(0,str(ROOT/'benchmark'/'gamma_cache_study'))
+import cache_vba as cache  # noqa: E402
 
 PORT='b8efaf3c7810c48fadbfece38950ded190f79a56'
 SRC='src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
@@ -402,7 +404,7 @@ def restore(text):
     The harness timing of #298 and the study split of #300 are not part of any
     frozen study: they go first, and so does the binary64 Gamma route of #307
     (b64_route_vba.py)."""
-    text=b64.strip(studies.strip(harness.strip(text)))
+    text=cache.strip(b64.strip(studies.strip(harness.strip(text))))
     path=module_path(text)
     if path in AMENDMENTS and path!=SRC:
         return amend(path,text,reverse=True) if amended(path,text) else text
@@ -429,7 +431,7 @@ def install():
     for tail in ('P','Q'):text=text.replace(old['PROB_TryGammaRegularized'+tail],adapter(tail),1)
     text=text.replace('Public Function PROB_LogGamma(',types+'Public Function PROB_LogGamma(',1)
     text+=block
-    text=b64.apply(amend(SRC,text))
+    text=cache.apply(b64.apply(amend(SRC,text)))
     (ROOT/SRC).write_bytes(text.replace('\n','\r\n').encode('ascii'))
     for path in AMENDMENTS:
         if path==SRC:continue

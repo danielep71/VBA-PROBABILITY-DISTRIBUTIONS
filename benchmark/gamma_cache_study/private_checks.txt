@@ -1,0 +1,55 @@
+
+Public Function GC_PrivateChecks() As String
+    Dim Shapes As Variant, A As Variant, Expected As Variant, Actual As Variant
+    Dim I As Long, J As Long, Count As Long, Before As String
+    Dim Bad As Variant, OriginalError As Long, CachedError As Long
+    Shapes = Array(0.0001, 0.5, 2#, 2.5, 100#, 128#, 100# + 2# ^ -46, 100# - 2# ^ -46, 100#, 0.5, 100#)
+    For I = 0 To UBound(Shapes)
+        A = PROB_DD_SG_Coerce(CDbl(Shapes(I)))
+        For J = 1 To 2
+            Expected = PROB_DD_EG_LogGammaUncached(A)
+            Actual = PROB_DD_EG_LogGamma(A)
+            GC_AssertTuple Expected, Actual
+            Count = Count + 1
+        Next J
+        'Mutating a returned Variant array must not mutate the cache.
+        Actual(0) = 0#: Actual(1) = 0#: Actual(2) = 0&
+        Actual = PROB_DD_EG_LogGamma(A)
+        GC_AssertTuple Expected, Actual
+        Count = Count + 1
+    Next I
+    'Same high component, distinct low bits or exponent; signed-zero key too.
+    Shapes = Array(Array(0.78125, 0#, 7&), Array(0.78125, 2# ^ -58, 7&), _
+                   Array(0.78125, 0#, 6&), Array(0.78125, PROB_DD_SP_FromWords(&H80000000, 0&), 7&), _
+                   Array(0.78125, 0#, 7&))
+    For I = 0 To UBound(Shapes)
+        A = Shapes(I)
+        Expected = PROB_DD_EG_LogGammaUncached(A)
+        Actual = PROB_DD_EG_LogGamma(A)
+        GC_AssertTuple Expected, Actual
+        Count = Count + 1
+    Next I
+    'A failed miss must preserve both the original error and the valid entry.
+    A = PROB_DD_SG_Coerce(100#)
+    Expected = PROB_DD_EG_LogGamma(A)
+    Bad = Array(0.5, 0#, 40000&)
+    On Error Resume Next
+    Actual = PROB_DD_EG_LogGammaUncached(Bad)
+    OriginalError = Err.Number
+    Err.Clear
+    Actual = PROB_DD_EG_LogGamma(Bad)
+    CachedError = Err.Number
+    Err.Clear
+    On Error GoTo 0
+    If OriginalError = 0 Or OriginalError <> CachedError Then Err.Raise 5, "GC", "error mismatch"
+    Actual = PROB_DD_EG_LogGamma(A)
+    GC_AssertTuple Expected, Actual
+    Count = Count + 2
+    GC_PrivateChecks = "PASS checks=" & CStr(Count) & " preserved_error=" & CStr(OriginalError)
+End Function
+
+Private Sub GC_AssertTuple(ByVal Expected As Variant, ByVal Actual As Variant)
+    If PROB_DD_SG_Bits(CDbl(Expected(0))) <> PROB_DD_SG_Bits(CDbl(Actual(0))) Then Err.Raise 5, "GC", "high bits differ"
+    If PROB_DD_SG_Bits(CDbl(Expected(1))) <> PROB_DD_SG_Bits(CDbl(Actual(1))) Then Err.Raise 5, "GC", "low bits differ"
+    If CLng(Expected(2)) <> CLng(Actual(2)) Then Err.Raise 5, "GC", "exponent differs"
+End Sub

@@ -3948,7 +3948,36 @@ End Function
 Private Function PROB_DD_EG_LogGamma(ByVal A As Variant) As Variant
 '==============================================================================
 ' PURPOSE
-'   PROB_DD_EG_LogGamma: Gamma exponent-separated arithmetic.
+'   Reuse one successfully computed DD LogGamma tuple for an identical input.
+' NOTES
+'   Key uses both IEEE bit patterns and the integer exponent, not rounded A.
+'   Scalar cached components are copied into a fresh array on every hit.
+'   A failed miss leaves the previous successful entry intact.
+' GENERATED
+'   benchmark/gamma_cache_study/cache_vba.py (#307).
+'==============================================================================
+    Static Ready As Boolean, PreviousKey As String
+    Static CachedH As Double, CachedL As Double, CachedE As Long
+    Dim Key As String, Value As Variant
+    Key = PROB_DD_SG_Bits(CDbl(A(0))) & PROB_DD_SG_Bits(CDbl(A(1))) & ":" & CStr(CLng(A(2)))
+    If Ready Then
+        If Key = PreviousKey Then
+            PROB_DD_EG_LogGamma = Array(CachedH, CachedL, CachedE)
+            Exit Function
+        End If
+    End If
+    Value = PROB_DD_EG_LogGammaUncached(A)
+    Ready = False
+    CachedH = CDbl(Value(0)): CachedL = CDbl(Value(1)): CachedE = CLng(Value(2))
+    PreviousKey = Key
+    Ready = True
+    PROB_DD_EG_LogGamma = Value
+End Function
+
+Private Function PROB_DD_EG_LogGammaUncached(ByVal A As Variant) As Variant
+'==============================================================================
+' PURPOSE
+'   PROB_DD_EG_LogGammaUncached: Gamma exponent-separated arithmetic.
 ' NOTES
 '   Explicit Double stores; Windows little-endian word fixtures.
 '   Operation graph retained from frozen Excel port b8efaf3.
@@ -3964,7 +3993,7 @@ Private Function PROB_DD_EG_LogGamma(ByVal A As Variant) As Variant
     For K = 1 To N
         LG = PROB_DD_SG_Add(LG, PROB_DD_EG_LogPair(PROB_DD_SG_Add(B, K)))
     Next K
-    PROB_DD_EG_LogGamma = LG
+    PROB_DD_EG_LogGammaUncached = LG
 End Function
 
 Private Sub PROB_DD_EG_LowerPair(ByVal LP As Variant, ByRef PP As Variant, ByRef QQ As Variant)

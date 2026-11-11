@@ -30,3 +30,15 @@ derived from it will be preregistered and validated on untouched points.
 | `analyze_b64_fit.py` | Fidelity bit for bit, routed accuracy, cost fit and A2 |
 | `test_b64_fit.py` | Proves the grid is the design and the analyzer's fidelity, cost and ceiling logic |
 | [`FIT_RESULT.md`](FIT_RESULT.md), `fit_results.json` | The fit's result (run 42798193976): 392/392 bit for bit, every routed tail within contract, A2 = 10,000 |
+
+## Phase B checkpoint
+
+The [frozen A2=10000 rule](ROUTING_RULE.md) is rejected by a
+[development seam preflight](PHASE_B_PREFLIGHT.md): four CDF monotonicity
+regressions in the source-derived model. The holdout remains untouched and
+public routing remains unchanged.
+
+[Transition development](TRANSITION_DEVELOPMENT.md) records the independent
+error diagnosis, a rejected one-sigma DD band, and the smaller-tail candidate
+that passes 48 triples but fails the wider neighboring-input replay. The
+holdout remains untouched; further fast-kernel arithmetic work is required.

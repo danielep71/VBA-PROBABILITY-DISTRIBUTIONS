@@ -46,10 +46,13 @@ on:
           - full
           - missing-only
         default: full
+  # The dedicated cache-study branch always refreshes the already revealed
+  # main/holdout grids after green regression; the new #307 holdout is excluded.
   push:
     branches:
       - main
       - "release/**"
+      - "study/307-loggamma-cache"
     paths:
       - "src/**"
       - "tests/**"
@@ -88,7 +91,7 @@ jobs:
 
     # 20 minutes for the regression alone. A run that also exports gets 120,
     # more than the export adapter's own per-macro watchdog limits add up to.
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '') && 120 || 20 }}
+    timeout-minutes: ${{ ((github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')) || (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache')) && 120 || 20 }}
 
     steps:
       - name: Check out repository
@@ -98,7 +101,7 @@ jobs:
 
       - name: Run complete VBA regression suite through Excel COM
         shell: cmd
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" ${{ (github.event_name == 'workflow_dispatch' && (inputs.run_studies || inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')) && '-RunStudies' || '' }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" ${{ ((github.event_name == 'workflow_dispatch' && (inputs.run_studies || inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')) || (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache')) && '-RunStudies' || '' }}
 
       - name: Upload exact-SHA VBA certification evidence
         if: always()
@@ -116,17 +119,17 @@ jobs:
       # starts. It never writes to the repository.
       - name: Export selected grids through Excel COM
         id: export
-        if: github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')
+        if: (github.event_name == 'workflow_dispatch' && (inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')) || (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache')
         shell: cmd
         env:
-          EXPORT_MAIN: ${{ inputs.export_main }}
-          EXPORT_HOLDOUT: ${{ inputs.export_holdout }}
-          EXPORT_HOLDOUT_OLDER: ${{ inputs.export_holdout_older }}
-          EXPORT_SURVIVAL_BOUNDARY: ${{ inputs.export_survival_boundary }}
-          EXPORT_TCHI_LARGE_DF: ${{ inputs.export_tchi_large_df }}
+          EXPORT_MAIN: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache') || inputs.export_main }}
+          EXPORT_HOLDOUT: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache') || inputs.export_holdout }}
+          EXPORT_HOLDOUT_OLDER: ${{ inputs.export_holdout_older || false }}
+          EXPORT_SURVIVAL_BOUNDARY: ${{ inputs.export_survival_boundary || false }}
+          EXPORT_TCHI_LARGE_DF: ${{ inputs.export_tchi_large_df || false }}
           # Read by the adapter from the environment, not expanded by cmd.
           EXPORT_STUDIES: ${{ inputs.export_studies }}
-          EXPORT_MAIN_MODE: ${{ inputs.main_mode }}
+          EXPORT_MAIN_MODE: ${{ inputs.main_mode || 'full' }}
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Export-ExcelGrids.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" -Main "%EXPORT_MAIN%" -Holdout "%EXPORT_HOLDOUT%" -HoldoutOlder "%EXPORT_HOLDOUT_OLDER%" -SurvivalBoundary "%EXPORT_SURVIVAL_BOUNDARY%" -TChiLargeDf "%EXPORT_TCHI_LARGE_DF%" -MainMode "%EXPORT_MAIN_MODE%"
 
       - name: Upload exact-SHA grid export
