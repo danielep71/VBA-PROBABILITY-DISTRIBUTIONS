@@ -670,4 +670,3 @@ Declined:
     FailMsg = "binary64 Gamma continued fraction declined"
 End Function
 ' END generated binary64 Gamma route (#307)
-

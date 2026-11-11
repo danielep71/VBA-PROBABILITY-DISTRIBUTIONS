@@ -16,7 +16,9 @@ ANCHOR = "' END generated public Gamma integration\n\n"
 
 
 def block():
-    return BLOCK_FILE.read_text(encoding="ascii")
+    """The block as appended: the file stores it without its final blank line,
+    which Git's whitespace check refuses at the end of a file."""
+    return BLOCK_FILE.read_text(encoding="ascii") + "\n"
 
 
 def as_measured(text):

@@ -437,8 +437,8 @@ def main(argv=None):
     historical = read(SRC, FIT_CANDIDATE)
     current = read(SRC)
     carried = historical.endswith(block()) and historical.count(BEGIN) == 1
-    with open(os.path.join(HERE, "b64_route_block.txt"), encoding="ascii") as f:
-        frozen = f.read() == block()
+    import historical_block
+    frozen = historical_block.block() == block()
     absent = BEGIN not in current and END not in current
     print("binary64 Gamma route block: "
           + ("generated as at the fit candidate" if carried else "DIFFERS FROM THE FIT CANDIDATE")
