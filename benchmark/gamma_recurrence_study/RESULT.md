@@ -1,26 +1,22 @@
-# Recurrence reuse: measurement blocked (#307)
+# Recurrence reuse: confirmation below target (#307)
 
-No performance conclusion or production promotion is supported yet.
+Do not promote upper-only recurrence reuse to production. The independent confirmation failed the frozen requirement of at least 5% lower median time on BOTH P and Q at shape=10000, x=10100. Do not pool runs or switch candidates using confirmation results.
 
-| Run | Candidate | Completed samples | Outcome |
-|---|---|---:|---|
-| [43030484382](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/43030484382) | 2c82328753b413f9da8c5a6a6a281914051c464c | 193 / 216 | Excel RPC failure during round 3; cleanup also failed |
-| [43036251207](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/43036251207) | ab54518473bd14930bf277b532ac047d115de717 | 0 / 216 | Excel COM activation failed before any measurement |
+Both complete runs passed all 216 samples, bit identity and 1008 evaluations. ZIP digests were verified before extraction and summarize.py passed locally.
 
-All 193 completed samples in the first attempt preserve baseline output bits.
-Its four generated source files match the artifact metadata and local
-regeneration byte for byte. Both downloaded artifact ZIP digests were verified.
-These checks preserve traceability; they do not make an incomplete run valid.
-All partial samples and both errors are retained in `results/`.
+| Run | Upper P speedup | Upper Q speedup | Decision |
+|---|---:|---:|---|
+| 43043166533 attempt 2 | 1.094x | 1.097x | Screening target met |
+| 43048952341 | 1.125x | 1.034x | Confirmation target NOT met |
 
-The [frozen design](DESIGN.md) and the [host recovery record](HOST_RECOVERY.md)
-describe the candidate operations, full sample matrix and repeat procedure.
-The repeat keeps numerical transformations, cases, ordering, counts and the
-5% target unchanged, but bounds each Excel instance to one round. It failed
-before this mitigation could be exercised. The original host failure's root
-cause remains undetermined.
+Confirmation reductions are approximately 11.1% for P and 3.3% for Q. A green workflow certifies measurement completeness and bit identity, not performance acceptance. Timing controls and other cases also vary. Raw results retain every case.
 
-Production source, routing, thresholds and accuracy manifests are unchanged.
-The untouched routing holdout was not read or evaluated. Restore Excel COM
-startup on the runner, repeat the entire study, then assess bit identity and
-cost. Do not splice partial measurements or select candidates from this report.
+Screening source: e2951b6a2c6e4714f86399f0f21a6c6361a62839; artifact 13868695234 SHA-256: 01ba65cd303d2d58980330280de16a41d3b5ad366df8beaa3c1e3d2fc082538c.
+
+Confirmation source: 7f5fbeb488113e7c62be8f4371afdcc641e287a4; artifact 13868318641 SHA-256: 5ef0b0453a77c6529ca123c202fe64df3b7347da5ab47ee1cf1987f5a49e8967.
+
+The [confirmation plan](CONFIRMATION.md) was committed before that run. Both complete reports are retained in results/.
+
+Earlier runs 43030484382 (193/216, RPC failure), 43036251207 (0/216, COM activation failure), and 43043166533 attempt 1 (COM activation failure) remain historical failed attempts. Their samples were not pooled with complete runs. Earlier retained reports and HOST_RECOVERY.md document the host failures; the later complete runs supersede that blocker. Root cause remains undetermined.
+
+Production source, routing, thresholds and accuracy manifests are unchanged. The untouched routing holdout was not read or evaluated. #307 remains open for its remaining work; this recurrence optimization is not accepted.
