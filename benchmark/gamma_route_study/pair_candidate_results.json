@@ -1,0 +1,3596 @@
+{
+  "kind": "B4 development only; no host fidelity, timing, or holdout acceptance",
+  "status": "DEVELOPMENT PASS ONLY",
+  "fit_answered": 286,
+  "fit_declined": 106,
+  "worst_relative": {
+    "P": 1.0688027054947094e-16,
+    "Q": 9.96484992291647e-17
+  },
+  "retained_pairs": 17,
+  "retained_failures": 0,
+  "windows": 43,
+  "window_evaluations": 1419,
+  "failures": [],
+  "declined": [
+    {
+      "point_id": "m22_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m22_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m23_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "m24_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c03_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c04_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c05_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c06_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x01",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x02",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x03",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x04",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x05",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x06",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x07",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x08",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x09",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x10",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x11",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "c07_x12",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "e00",
+      "reason": "outside development envelope"
+    },
+    {
+      "point_id": "e04",
+      "reason": "outside development envelope"
+    }
+  ],
+  "fit_rows": [
+    {
+      "point_id": "m00_x00",
+      "values": [
+        "0x1.fffe43cca6599p-1",
+        "0x1.bc3359a6688d5p-17"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m00_x01",
+      "values": [
+        "0x1.ffff2b8ca7f75p-1",
+        "0x1.a8e6b0116cdffp-18"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m00_x02",
+      "values": [
+        "0x1.ffffad30eed37p-1",
+        "0x1.4b3c44b22ff9ep-19"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m00_x03",
+      "values": [
+        "0x1.ffffed379433cp-1",
+        "0x1.2c86bcc43809cp-21"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m00_x04",
+      "values": [
+        "0x1.fffff8a381f11p-1",
+        "0x1.d71f83badfa54p-23"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m00_x05",
+      "values": [
+        "0x1.fffff8a381f11p-1",
+        "0x1.d71f83badfa51p-23"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 310
+      }
+    },
+    {
+      "point_id": "m00_x06",
+      "values": [
+        "0x1.fffff8a381f11p-1",
+        "0x1.d71f83badfa4dp-23"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 310
+      }
+    },
+    {
+      "point_id": "m00_x07",
+      "values": [
+        "0x1.fffffe5bf278cp-1",
+        "0x1.a40d873a1dc08p-25"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m00_x08",
+      "values": [
+        "0x1.fffffff622dd9p-1",
+        "0x1.3ba44ebafcf94p-30"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m00_x09",
+      "values": [
+        "0x1.fffffffff6dbdp-1",
+        "0x1.248584539dbb9p-38"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m00_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.c89b19b4db889p-69"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m01_x00",
+      "values": [
+        "0x1.ffeea6419a32fp-1",
+        "0x1.159be65cd1688p-13"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m01_x01",
+      "values": [
+        "0x1.fff7b38d6bfd7p-1",
+        "0x1.098e528051a68p-14"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m01_x02",
+      "values": [
+        "0x1.fffcc3eb15c53p-1",
+        "0x1.9e0a751d6b4a0p-16"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m01_x03",
+      "values": [
+        "0x1.ffff442b8ff55p-1",
+        "0x1.77a8e015625e1p-18"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m01_x04",
+      "values": [
+        "0x1.ffffb6632fcc6p-1",
+        "0x1.267340ce68347p-19"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m01_x05",
+      "values": [
+        "0x1.ffffb6632fcc6p-1",
+        "0x1.267340ce68345p-19"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 310
+      }
+    },
+    {
+      "point_id": "m01_x06",
+      "values": [
+        "0x1.ffffb6632fcc6p-1",
+        "0x1.267340ce68344p-19"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 310
+      }
+    },
+    {
+      "point_id": "m01_x07",
+      "values": [
+        "0x1.ffffef9769999p-1",
+        "0x1.06896666d8be2p-21"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m01_x08",
+      "values": [
+        "0x1.ffffff9d5c1f7p-1",
+        "0x1.8a8f82454ca5dp-27"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m01_x09",
+      "values": [
+        "0x1.ffffffffa495ap-1",
+        "0x1.6da964ce05eeap-35"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m01_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.1d639302cd37cp-65"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m02_x00",
+      "values": [
+        "0x1.ff5298c394aacp-1",
+        "0x1.5ace78d6aa832p-10"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m02_x01",
+      "values": [
+        "0x1.ffad095401090p-1",
+        "0x1.4bdaaffbdbff4p-11"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m02_x02",
+      "values": [
+        "0x1.ffdfa7de70415p-1",
+        "0x1.02c10c7df583ap-12"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m02_x03",
+      "values": [
+        "0x1.fff8a99cf1ef2p-1",
+        "0x1.d598c384385d5p-15"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m02_x04",
+      "values": [
+        "0x1.fffd1feaf3e7bp-1",
+        "0x1.700a860c287f5p-16"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m02_x05",
+      "values": [
+        "0x1.fffd1feaf3e7bp-1",
+        "0x1.700a860c287f3p-16"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 310
+      }
+    },
+    {
+      "point_id": "m02_x06",
+      "values": [
+        "0x1.fffd1feaf3e7bp-1",
+        "0x1.700a860c287f1p-16"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 310
+      }
+    },
+    {
+      "point_id": "m02_x07",
+      "values": [
+        "0x1.ffff5be4382d7p-1",
+        "0x1.48378fa514299p-18"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m02_x08",
+      "values": [
+        "0x1.fffffc25641ccp-1",
+        "0x1.ed4df19c89854p-24"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m02_x09",
+      "values": [
+        "0x1.fffffffc6d9a1p-1",
+        "0x1.c932f76a9cb35p-32"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m02_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.64dd6e127700dp-62"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m03_x00",
+      "values": [
+        "0x1.f9442898ab5d2p-1",
+        "0x1.aef5d9d528b75p-7"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m03_x01",
+      "values": [
+        "0x1.fcc4a0921b861p-1",
+        "0x1.9dafb6f23cfb9p-8"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m03_x02",
+      "values": [
+        "0x1.febcd34554c61p-1",
+        "0x1.432cbaab39f5bp-9"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m03_x03",
+      "values": [
+        "0x1.ffb697480dc2fp-1",
+        "0x1.25a2dfc8f4278p-11"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m03_x04",
+      "values": [
+        "0x1.ffe343814c0fap-1",
+        "0x1.cbc7eb3f061c3p-13"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m03_x05",
+      "values": [
+        "0x1.ffe343814c0fap-1",
+        "0x1.cbc7eb3f061c0p-13"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 309
+      }
+    },
+    {
+      "point_id": "m03_x06",
+      "values": [
+        "0x1.ffe343814c0fap-1",
+        "0x1.cbc7eb3f061bdp-13"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 309
+      }
+    },
+    {
+      "point_id": "m03_x07",
+      "values": [
+        "0x1.fff9949b7ab45p-1",
+        "0x1.9ad92152eae8ap-15"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m03_x08",
+      "values": [
+        "0x1.ffffd96125447p-1",
+        "0x1.34f6d5dcb8e8ap-20"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m03_x09",
+      "values": [
+        "0x1.ffffffdc2f986p-1",
+        "0x1.1e833d21c39b2p-28"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m03_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.bfb18c95ef675p-59"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m04_x00",
+      "values": [
+        "0x1.c07a63c7e2720p-1",
+        "0x1.fc2ce1c0ec702p-4"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m04_x01",
+      "values": [
+        "0x1.e08c55232b92cp-1",
+        "0x1.f73aadcd46d47p-5"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m04_x02",
+      "values": [
+        "0x1.f37b0322dd324p-1",
+        "0x1.909f9ba459b89p-6"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m04_x03",
+      "values": [
+        "0x1.fd1e7d6454252p-1",
+        "0x1.70c14dd5ed73ep-8"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m04_x04",
+      "values": [
+        "0x1.fee250b2afd9cp-1",
+        "0x1.1daf4d5026437p-9"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m04_x05",
+      "values": [
+        "0x1.fee250b2afd9cp-1",
+        "0x1.1daf4d5026435p-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 307
+      }
+    },
+    {
+      "point_id": "m04_x06",
+      "values": [
+        "0x1.fee250b2afd9cp-1",
+        "0x1.1daf4d5026433p-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 307
+      }
+    },
+    {
+      "point_id": "m04_x07",
+      "values": [
+        "0x1.ffbee6b41c72dp-1",
+        "0x1.04652f8e34bfap-11"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m04_x08",
+      "values": [
+        "0x1.fffe759e097a1p-1",
+        "0x1.8a61f685f1cfdp-17"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m04_x09",
+      "values": [
+        "0x1.fffffe90344fdp-1",
+        "0x1.6fcbb02d0c309p-25"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m04_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.22112a00d81a7p-55"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m05_x00",
+      "values": [
+        "0x1.0797879781226p-1",
+        "0x1.f0d0f0d0fdbb4p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m05_x01",
+      "values": [
+        "0x1.7450d5fe39c06p-1",
+        "0x1.175e54038c7f4p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m05_x02",
+      "values": [
+        "0x1.c3b56dabfda92p-1",
+        "0x1.e25492a012b6fp-4"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m05_x03",
+      "values": [
+        "0x1.f15082af0f8d5p-1",
+        "0x1.d5efaa1e0e558p-6"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m05_x04",
+      "values": [
+        "0x1.fa8f9949dd4e1p-1",
+        "0x1.5c19ad88ac7a5p-7"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m05_x05",
+      "values": [
+        "0x1.fa8f9949dd4e1p-1",
+        "0x1.5c19ad88ac7a3p-7"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 296
+      }
+    },
+    {
+      "point_id": "m05_x06",
+      "values": [
+        "0x1.fa8f9949dd4e1p-1",
+        "0x1.5c19ad88ac7a1p-7"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 296
+      }
+    },
+    {
+      "point_id": "m05_x07",
+      "values": [
+        "0x1.fea62932b696ep-1",
+        "0x1.59d6cd496926dp-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m05_x08",
+      "values": [
+        "0x1.fff78efb4bad1p-1",
+        "0x1.0e20968a5e269p-14"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m05_x09",
+      "values": [
+        "0x1.fffff7ed745a9p-1",
+        "0x1.025174aea1401p-22"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m05_x10",
+      "values": [
+        "0x1.ffffffffffffep-1",
+        "0x1.a8d7ef79e72a1p-53"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m06_x00",
+      "values": [
+        "0x1.0e5ed69986f55p-2",
+        "0x1.78d094b33c855p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m06_x01",
+      "values": [
+        "0x1.0db49c1b9cd23p-1",
+        "0x1.e496c7c8c65bap-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m06_x02",
+      "values": [
+        "0x1.8d13666817e18p-1",
+        "0x1.cbb2665fa079ep-3"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m06_x03",
+      "values": [
+        "0x1.e1ff805af1efep-1",
+        "0x1.e007fa50e1025p-5"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m06_x04",
+      "values": [
+        "0x1.f573d096a3312p-1",
+        "0x1.5185ed2b99dcdp-6"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 29
+      }
+    },
+    {
+      "point_id": "m06_x05",
+      "values": [
+        "0x1.f573d096a3312p-1",
+        "0x1.5185ed2b99dcbp-6"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 283
+      }
+    },
+    {
+      "point_id": "m06_x06",
+      "values": [
+        "0x1.f573d096a3312p-1",
+        "0x1.5185ed2b99dc9p-6"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 283
+      }
+    },
+    {
+      "point_id": "m06_x07",
+      "values": [
+        "0x1.fd18520f207c6p-1",
+        "0x1.73d6f86fc1cfbp-8"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m06_x08",
+      "values": [
+        "0x1.ffed2235b2b91p-1",
+        "0x1.2ddca4d46ee44p-13"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 73
+      }
+    },
+    {
+      "point_id": "m06_x09",
+      "values": [
+        "0x1.ffffed625109ep-1",
+        "0x1.29daef625c272p-21"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m06_x10",
+      "values": [
+        "0x1.ffffffffffffcp-1",
+        "0x1.021169f5927a5p-51"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m07_x00",
+      "values": [
+        "0x1.1dcde73ab314fp-5",
+        "0x1.ee23218c54cebp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m07_x01",
+      "values": [
+        "0x1.91b7fb4cde8c9p-3",
+        "0x1.9b92012cc85cep-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m07_x02",
+      "values": [
+        "0x1.0879f06315518p-1",
+        "0x1.ef0c1f39d55d0p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m07_x03",
+      "values": [
+        "0x1.b166aa7d0616cp-1",
+        "0x1.3a65560be7a50p-3"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m07_x04",
+      "values": [
+        "0x1.e7cf47c77c6d9p-1",
+        "0x1.830b83883926ep-5"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 30
+      }
+    },
+    {
+      "point_id": "m07_x05",
+      "values": [
+        "0x1.e7cf47c77c6d9p-1",
+        "0x1.830b83883926cp-5"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 250
+      }
+    },
+    {
+      "point_id": "m07_x06",
+      "values": [
+        "0x1.e7cf47c77c6d9p-1",
+        "0x1.830b838839269p-5"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 250
+      }
+    },
+    {
+      "point_id": "m07_x07",
+      "values": [
+        "0x1.f72649b0c52cdp-1",
+        "0x1.1b36c9e75a66ep-6"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 162
+      }
+    },
+    {
+      "point_id": "m07_x08",
+      "values": [
+        "0x1.ffbf82605d06dp-1",
+        "0x1.01f67e8be4bacp-11"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 73
+      }
+    },
+    {
+      "point_id": "m07_x09",
+      "values": [
+        "0x1.ffffba1ae7b08p-1",
+        "0x1.1794613e18f57p-19"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m07_x10",
+      "values": [
+        "0x1.fffffffffffeep-1",
+        "0x1.1b4e093d6ba26p-49"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m08_x00",
+      "values": [
+        "0x1.27cc3804d374bp-10",
+        "0x1.ff6c19e3fd964p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m08_x01",
+      "values": [
+        "0x1.2436a71d0ddeep-5",
+        "0x1.edbc958e2f221p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m08_x02",
+      "values": [
+        "0x1.fc40beace01c7p-3",
+        "0x1.80efd054c7f8ep-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m08_x03",
+      "values": [
+        "0x1.5d897a241a6fap-1",
+        "0x1.44ed0bb7cb20bp-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m08_x04",
+      "values": [
+        "0x1.d55e5a70068e4p-1",
+        "0x1.550d2c7fcb8e2p-4"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 31
+      }
+    },
+    {
+      "point_id": "m08_x05",
+      "values": [
+        "0x1.d55e5a70068e4p-1",
+        "0x1.550d2c7fcb8e1p-4"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 208
+      }
+    },
+    {
+      "point_id": "m08_x06",
+      "values": [
+        "0x1.d55e5a70068e4p-1",
+        "0x1.550d2c7fcb8dfp-4"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 208
+      }
+    },
+    {
+      "point_id": "m08_x07",
+      "values": [
+        "0x1.e8b4307d3627ap-1",
+        "0x1.74bcf82c9d860p-5"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 160
+      }
+    },
+    {
+      "point_id": "m08_x08",
+      "values": [
+        "0x1.ff32d1d0fe5bep-1",
+        "0x1.9a5c5e03484ddp-10"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 71
+      }
+    },
+    {
+      "point_id": "m08_x09",
+      "values": [
+        "0x1.fffefc25aff8ep-1",
+        "0x1.03da5007240d3p-17"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 41
+      }
+    },
+    {
+      "point_id": "m08_x10",
+      "values": [
+        "0x1.fffffffffffabp-1",
+        "0x1.55c27c95e13efp-47"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m09_x00",
+      "values": [
+        "0x1.20a1d27135e37p-15",
+        "0x1.fffb7d78b63b3p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 4
+      }
+    },
+    {
+      "point_id": "m09_x01",
+      "values": [
+        "0x1.90d1c61748487p-8",
+        "0x1.fcde5c73d16f7p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 8
+      }
+    },
+    {
+      "point_id": "m09_x02",
+      "values": [
+        "0x1.cd4d0c1b49d59p-4",
+        "0x1.c6565e7c96c55p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m09_x03",
+      "values": [
+        "0x1.0e4dc5da2b5a9p-1",
+        "0x1.e364744ba94aep-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m09_x04",
+      "values": [
+        "0x1.c6b6d0485904ap-1",
+        "0x1.ca497dbd37db0p-4"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 33
+      }
+    },
+    {
+      "point_id": "m09_x05",
+      "values": [
+        "0x1.c6b6d0485904ap-1",
+        "0x1.ca497dbd37daep-4"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 176
+      }
+    },
+    {
+      "point_id": "m09_x06",
+      "values": [
+        "0x1.c6b6d0485904bp-1",
+        "0x1.ca497dbd37dacp-4"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 176
+      }
+    },
+    {
+      "point_id": "m09_x07",
+      "values": [
+        "0x1.d4739a82a636dp-1",
+        "0x1.5c632beace49ap-4"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 156
+      }
+    },
+    {
+      "point_id": "m09_x08",
+      "values": [
+        "0x1.fe31d3dbd251dp-1",
+        "0x1.ce2c242dae2d0p-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 69
+      }
+    },
+    {
+      "point_id": "m09_x09",
+      "values": [
+        "0x1.fffd5499339a3p-1",
+        "0x1.55b36632e5282p-16"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 40
+      }
+    },
+    {
+      "point_id": "m09_x10",
+      "values": [
+        "0x1.ffffffffffedcp-1",
+        "0x1.238a53130c812p-45"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 19
+      }
+    },
+    {
+      "point_id": "m10_x00",
+      "values": [
+        "0x1.43a54e4e98864p-1",
+        "0x1.78b56362cef38p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 27
+      }
+    },
+    {
+      "point_id": "m10_x01",
+      "values": [
+        "0x1.bab5557101f8dp-1",
+        "0x1.152aaa3bf81cdp-3"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 34
+      }
+    },
+    {
+      "point_id": "m10_x02",
+      "values": [
+        "0x1.bab5557101f8dp-1",
+        "0x1.152aaa3bf81ccp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 1
+      }
+    },
+    {
+      "point_id": "m10_x03",
+      "values": [
+        "0x1.bab5557101f8ep-1",
+        "0x1.152aaa3bf81c9p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 1
+      }
+    },
+    {
+      "point_id": "m10_x04",
+      "values": [
+        "0x1.f69f5523ef618p-1",
+        "0x1.2c155b8213cf4p-6"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 1
+      }
+    },
+    {
+      "point_id": "m10_x05",
+      "values": [
+        "0x1.ff887a518f6d6p-1",
+        "0x1.de16b9c24a98fp-11"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 1
+      }
+    },
+    {
+      "point_id": "m10_x06",
+      "values": [
+        "0x1.fffdcf957b8e1p-1",
+        "0x1.18354238f6764p-16"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 1
+      }
+    },
+    {
+      "point_id": "m10_x07",
+      "values": [
+        "0x1.fffffff97c93dp-1",
+        "0x1.a0db0d0ddb3ecp-31"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 1
+      }
+    },
+    {
+      "point_id": "m11_x00",
+      "values": [
+        "0x1.7a3706b302074p-4",
+        "0x1.d0b91f299fbf2p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 19
+      }
+    },
+    {
+      "point_id": "m11_x01",
+      "values": [
+        "0x1.377ce7a740396p-1",
+        "0x1.910630b17f8d4p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 30
+      }
+    },
+    {
+      "point_id": "m11_x02",
+      "values": [
+        "0x1.a80a3467660fap-1",
+        "0x1.5fd72e6267c18p-3"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 36
+      }
+    },
+    {
+      "point_id": "m11_x03",
+      "values": [
+        "0x1.a80a3467660fbp-1",
+        "0x1.5fd72e6267c15p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 125
+      }
+    },
+    {
+      "point_id": "m11_x04",
+      "values": [
+        "0x1.a80a3467660fbp-1",
+        "0x1.5fd72e6267c13p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 125
+      }
+    },
+    {
+      "point_id": "m11_x05",
+      "values": [
+        "0x1.b77443b7bf957p-1",
+        "0x1.222ef12101aa4p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 115
+      }
+    },
+    {
+      "point_id": "m11_x06",
+      "values": [
+        "0x1.f7e5ce29aa06ep-1",
+        "0x1.03463acabf240p-6"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 65
+      }
+    },
+    {
+      "point_id": "m11_x07",
+      "values": [
+        "0x1.ffbd6d881e3bcp-1",
+        "0x1.0a49df8710fcap-11"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m11_x08",
+      "values": [
+        "0x1.ffff6471a7314p-1",
+        "0x1.371cb19d87a83p-18"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 30
+      }
+    },
+    {
+      "point_id": "m11_x09",
+      "values": [
+        "0x1.ffffffffbdce9p-1",
+        "0x1.08c5cfb344ee1p-35"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m12_x00",
+      "values": [
+        "0x1.e03acf73ea0cfp-4",
+        "0x1.c3f8a61182be6p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m12_x01",
+      "values": [
+        "0x1.3020005305ea7p-1",
+        "0x1.9fbfff59f42b1p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 33
+      }
+    },
+    {
+      "point_id": "m12_x02",
+      "values": [
+        "0x1.9a093cccc53d4p-1",
+        "0x1.97db0ccceb0b1p-3"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 38
+      }
+    },
+    {
+      "point_id": "m12_x03",
+      "values": [
+        "0x1.9a093cccc53d4p-1",
+        "0x1.97db0ccceb0afp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m12_x04",
+      "values": [
+        "0x1.9a093cccc53d5p-1",
+        "0x1.97db0ccceb0acp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m12_x05",
+      "values": [
+        "0x1.b5a368f463234p-1",
+        "0x1.29725c2e7372fp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m12_x06",
+      "values": [
+        "0x1.f8c9de8525550p-1",
+        "0x1.cd885eb6aabe6p-7"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m12_x07",
+      "values": [
+        "0x1.ffd5ee987393fp-1",
+        "0x1.508b3c63605a3p-12"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m12_x08",
+      "values": [
+        "0x1.ffffc7d8c8e5dp-1",
+        "0x1.c139b8d144e93p-20"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m12_x09",
+      "values": [
+        "0x1.fffffffffb27cp-1",
+        "0x1.360f082cdfc8bp-39"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "m13_x00",
+      "values": [
+        "0x1.15a6716beefdfp-3",
+        "0x1.ba9663a504408p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "m13_x01",
+      "values": [
+        "0x1.2753a13323223p-1",
+        "0x1.b158bd99b9bbap-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 37
+      }
+    },
+    {
+      "point_id": "m13_x02",
+      "values": [
+        "0x1.861752d327f3cp-1",
+        "0x1.e7a2b4b360310p-3"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m13_x03",
+      "values": [
+        "0x1.861752d327f3dp-1",
+        "0x1.e7a2b4b36030dp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m13_x04",
+      "values": [
+        "0x1.861752d327f3ep-1",
+        "0x1.e7a2b4b360309p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m13_x05",
+      "values": [
+        "0x1.b3a7d46ba2bcfp-1",
+        "0x1.3160ae51750c3p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m13_x06",
+      "values": [
+        "0x1.f9f5d7ae407c7p-1",
+        "0x1.828a146fe0e23p-7"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m13_x07",
+      "values": [
+        "0x1.ffeb2c454a6a0p-1",
+        "0x1.4d3bab59606eep-13"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m13_x08",
+      "values": [
+        "0x1.fffff490fc6d3p-1",
+        "0x1.6de0725aac945p-22"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m13_x09",
+      "values": [
+        "0x1.ffffffffffed2p-1",
+        "0x1.2e74b37eb0ef0p-45"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 3
+      }
+    },
+    {
+      "point_id": "m14_x00",
+      "values": [
+        "0x1.2c8b90d21cc7fp-3",
+        "0x1.b4dd1bcb78ce0p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 35
+      }
+    },
+    {
+      "point_id": "m14_x01",
+      "values": [
+        "0x1.1e77aa051319fp-1",
+        "0x1.c310abf5d9cc1p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 44
+      }
+    },
+    {
+      "point_id": "m14_x02",
+      "values": [
+        "0x1.6e0d130b41763p-1",
+        "0x1.23e5d9e97d13ap-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 47
+      }
+    },
+    {
+      "point_id": "m14_x03",
+      "values": [
+        "0x1.6e0d130b41764p-1",
+        "0x1.23e5d9e97d138p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m14_x04",
+      "values": [
+        "0x1.6e0d130b41765p-1",
+        "0x1.23e5d9e97d136p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m14_x05",
+      "values": [
+        "0x1.b1e84fdc71aa4p-1",
+        "0x1.385ec08e39570p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m14_x06",
+      "values": [
+        "0x1.fb3bc481a76b6p-1",
+        "0x1.310edf962527ap-7"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m14_x07",
+      "values": [
+        "0x1.fff812595a4a5p-1",
+        "0x1.fb69a96d6bd96p-15"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m14_x08",
+      "values": [
+        "0x1.fffffece33283p-1",
+        "0x1.31ccd7ceef7fap-25"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m14_x09",
+      "values": [
+        "0x1.fffffffffffffp-1",
+        "0x1.44e44f024c8e2p-54"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 5
+      }
+    },
+    {
+      "point_id": "m15_x00",
+      "values": [
+        "0x1.e1c8779c478c8p-33",
+        "0x1.fffffffe1e379p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 19
+      }
+    },
+    {
+      "point_id": "m15_x01",
+      "values": [
+        "0x1.3a3d283f860ccp-3",
+        "0x1.b170b5f01e7cdp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 46
+      }
+    },
+    {
+      "point_id": "m15_x02",
+      "values": [
+        "0x1.158a3c88f41c2p-1",
+        "0x1.d4eb86ee17c7dp-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 55
+      }
+    },
+    {
+      "point_id": "m15_x03",
+      "values": [
+        "0x1.51a896cd570f0p-1",
+        "0x1.5caed26551e21p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 58
+      }
+    },
+    {
+      "point_id": "m15_x04",
+      "values": [
+        "0x1.51a896cd570f1p-1",
+        "0x1.5caed26551e1dp-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m15_x05",
+      "values": [
+        "0x1.51a896cd570f3p-1",
+        "0x1.5caed26551e1ap-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m15_x06",
+      "values": [
+        "0x1.b074dd02ba2b0p-1",
+        "0x1.3e2c8bf517541p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m15_x07",
+      "values": [
+        "0x1.fc8f7aea24bfap-1",
+        "0x1.b8428aeda02d0p-8"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m15_x08",
+      "values": [
+        "0x1.fffe11cf4ea47p-1",
+        "0x1.ee30b15b902e8p-17"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m15_x09",
+      "values": [
+        "0x1.fffffff694606p-1",
+        "0x1.2d73f3365c33bp-30"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m15_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.bd1add39cc393p-69"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 10
+      }
+    },
+    {
+      "point_id": "m16_x00",
+      "values": [
+        "0x1.4249628c2852fp-16",
+        "0x1.fffd7b6d3ae7bp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 39
+      }
+    },
+    {
+      "point_id": "m16_x01",
+      "values": [
+        "0x1.40023dd0b3f4bp-3",
+        "0x1.afff708bd302dp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 61
+      }
+    },
+    {
+      "point_id": "m16_x02",
+      "values": [
+        "0x1.0f3a708470306p-1",
+        "0x1.e18b1ef71f9f4p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 72
+      }
+    },
+    {
+      "point_id": "m16_x03",
+      "values": [
+        "0x1.3b41e8f01bd43p-1",
+        "0x1.897c2e1fc857ap-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 74
+      }
+    },
+    {
+      "point_id": "m16_x04",
+      "values": [
+        "0x1.3b41e8f01bd46p-1",
+        "0x1.897c2e1fc8574p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m16_x05",
+      "values": [
+        "0x1.3b41e8f01bd48p-1",
+        "0x1.897c2e1fc856fp-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m16_x06",
+      "values": [
+        "0x1.afa8f55ea61c6p-1",
+        "0x1.415c2a85678e8p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m16_x07",
+      "values": [
+        "0x1.fd7ab18d1bf62p-1",
+        "0x1.42a7397204ec0p-8"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m16_x08",
+      "values": [
+        "0x1.ffff8d9c6570dp-1",
+        "0x1.c98e6a3cdb7f8p-19"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 20
+      }
+    },
+    {
+      "point_id": "m16_x09",
+      "values": [
+        "0x1.ffffffffcd2b4p-1",
+        "0x1.96a5f0faba693p-36"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 18
+      }
+    },
+    {
+      "point_id": "m16_x10",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.41e9a44b42edfp-86"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 14
+      }
+    },
+    {
+      "point_id": "m17_x00",
+      "values": [
+        "0x1.1b288bc78c559p-79",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 32
+      }
+    },
+    {
+      "point_id": "m17_x01",
+      "values": [
+        "0x1.b9b571db0e53fp-13",
+        "0x1.ffe464a8e24f2p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 67
+      }
+    },
+    {
+      "point_id": "m17_x02",
+      "values": [
+        "0x1.4316a6148efcfp-3",
+        "0x1.af3a567adc40cp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 90
+      }
+    },
+    {
+      "point_id": "m17_x03",
+      "values": [
+        "0x1.09a13e57b0c82p-1",
+        "0x1.ecbd83509e6fdp-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 103
+      }
+    },
+    {
+      "point_id": "m17_x04",
+      "values": [
+        "0x1.261715413b18fp-1",
+        "0x1.b3d1d57d89ce1p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 104
+      }
+    },
+    {
+      "point_id": "m17_x05",
+      "values": [
+        "0x1.261715413b193p-1",
+        "0x1.b3d1d57d89cdap-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 43
+      }
+    },
+    {
+      "point_id": "m17_x06",
+      "values": [
+        "0x1.261715413b196p-1",
+        "0x1.b3d1d57d89cd3p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 43
+      }
+    },
+    {
+      "point_id": "m17_x07",
+      "values": [
+        "0x1.af24d50e6613ap-1",
+        "0x1.436cabc667b19p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 39
+      }
+    },
+    {
+      "point_id": "m17_x08",
+      "values": [
+        "0x1.fe3d8b8864a69p-1",
+        "0x1.c274779b59738p-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 33
+      }
+    },
+    {
+      "point_id": "m17_x09",
+      "values": [
+        "0x1.ffffee7e773f6p-1",
+        "0x1.18188c0a51924p-21"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 27
+      }
+    },
+    {
+      "point_id": "m17_x10",
+      "values": [
+        "0x1.ffffffffffc52p-1",
+        "0x1.d73ad1ff5946ep-44"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 21
+      }
+    },
+    {
+      "point_id": "m17_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.1b4544790b03ep-113"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 16
+      }
+    },
+    {
+      "point_id": "m18_x00",
+      "values": [
+        "0x1.5badd9b743f27p-50",
+        "0x1.ffffffffffff5p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 60
+      }
+    },
+    {
+      "point_id": "m18_x01",
+      "values": [
+        "0x1.c34743874de8fp-12",
+        "0x1.ffc797178f164p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 95
+      }
+    },
+    {
+      "point_id": "m18_x02",
+      "values": [
+        "0x1.44095db0c59b1p-3",
+        "0x1.aefda893ce994p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 123
+      }
+    },
+    {
+      "point_id": "m18_x03",
+      "values": [
+        "0x1.06cf199f5ebe3p-1",
+        "0x1.f261ccc14283bp-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 137
+      }
+    },
+    {
+      "point_id": "m18_x04",
+      "values": [
+        "0x1.1b153914c2fddp-1",
+        "0x1.c9d58dd67a045p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 139
+      }
+    },
+    {
+      "point_id": "m18_x05",
+      "values": [
+        "0x1.1b153914c2fe3p-1",
+        "0x1.c9d58dd67a03bp-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 58
+      }
+    },
+    {
+      "point_id": "m18_x06",
+      "values": [
+        "0x1.1b153914c2fe8p-1",
+        "0x1.c9d58dd67a031p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 58
+      }
+    },
+    {
+      "point_id": "m18_x07",
+      "values": [
+        "0x1.aef61920e006cp-1",
+        "0x1.44279b7c7fe4fp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 52
+      }
+    },
+    {
+      "point_id": "m18_x08",
+      "values": [
+        "0x1.fe977f9c06073p-1",
+        "0x1.688063f9f8cbbp-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 41
+      }
+    },
+    {
+      "point_id": "m18_x09",
+      "values": [
+        "0x1.fffffb294fe8ep-1",
+        "0x1.35ac05c8b6626p-23"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 31
+      }
+    },
+    {
+      "point_id": "m18_x10",
+      "values": [
+        "0x1.fffffffffffefp-1",
+        "0x1.09bbab2385013p-49"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "m18_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.3aab16798e46ep-136"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 16
+      }
+    },
+    {
+      "point_id": "m19_x00",
+      "values": [
+        "0x1.67216797ae9c0p-128",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 72
+      }
+    },
+    {
+      "point_id": "m19_x01",
+      "values": [
+        "0x1.e7ec56e43d127p-39",
+        "0x1.fffffffff8605p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 117
+      }
+    },
+    {
+      "point_id": "m19_x02",
+      "values": [
+        "0x1.8ab1cc585bf6bp-11",
+        "0x1.ff9d538ce9e90p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 164
+      }
+    },
+    {
+      "point_id": "m19_x03",
+      "values": [
+        "0x1.44a38b1f50517p-3",
+        "0x1.aed71d382bebap-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 202
+      }
+    },
+    {
+      "point_id": "m19_x04",
+      "values": [
+        "0x1.03ee57d8581cbp-1",
+        "0x1.f823504f4fc69p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 223
+      }
+    },
+    {
+      "point_id": "m19_x05",
+      "values": [
+        "0x1.0fb1ca636984dp-1",
+        "0x1.e09c6b392cf65p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 225
+      }
+    },
+    {
+      "point_id": "m19_x06",
+      "values": [
+        "0x1.0fb1ca6369859p-1",
+        "0x1.e09c6b392cf4ep-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 89
+      }
+    },
+    {
+      "point_id": "m19_x07",
+      "values": [
+        "0x1.0fb1ca6369865p-1",
+        "0x1.e09c6b392cf37p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 89
+      }
+    },
+    {
+      "point_id": "m19_x08",
+      "values": [
+        "0x1.aed5aa24993eep-1",
+        "0x1.44a9576d9b047p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 76
+      }
+    },
+    {
+      "point_id": "m19_x09",
+      "values": [
+        "0x1.feeb99179f4cap-1",
+        "0x1.1466e860b3606p-9"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 55
+      }
+    },
+    {
+      "point_id": "m19_x10",
+      "values": [
+        "0x1.ffffff1a157b9p-1",
+        "0x1.cbd508d555af9p-26"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 37
+      }
+    },
+    {
+      "point_id": "m19_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.9f7f27b8e1fcbp-58"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 26
+      }
+    },
+    {
+      "point_id": "m19_x12",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.c5e5c8740768dp-174"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 17
+      }
+    },
+    {
+      "point_id": "m20_x00",
+      "values": [
+        "0x1.1c2648b36bb47p-97",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 155
+      }
+    },
+    {
+      "point_id": "m20_x01",
+      "values": [
+        "0x1.3127f309a4e40p-34",
+        "0x1.ffffffff676c0p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 222
+      }
+    },
+    {
+      "point_id": "m20_x02",
+      "values": [
+        "0x1.067802f506145p-10",
+        "0x1.ff7cc3fe857cfp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 295
+      }
+    },
+    {
+      "point_id": "m20_x03",
+      "values": [
+        "0x1.44d76a4746a4fp-3",
+        "0x1.aeca256e2e56cp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 357
+      }
+    },
+    {
+      "point_id": "m20_x04",
+      "values": [
+        "0x1.0227309473919p-1",
+        "0x1.fbb19ed718dcep-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 391
+      }
+    },
+    {
+      "point_id": "m20_x05",
+      "values": [
+        "0x1.089b82c11036fp-1",
+        "0x1.eec8fa7ddf922p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 392
+      }
+    },
+    {
+      "point_id": "m20_x06",
+      "values": [
+        "0x1.089b82c11037cp-1",
+        "0x1.eec8fa7ddf909p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 137
+      }
+    },
+    {
+      "point_id": "m20_x07",
+      "values": [
+        "0x1.089b82c110389p-1",
+        "0x1.eec8fa7ddf8efp-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 137
+      }
+    },
+    {
+      "point_id": "m20_x08",
+      "values": [
+        "0x1.aec9e8895880dp-1",
+        "0x1.44d85dda9dfccp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 111
+      }
+    },
+    {
+      "point_id": "m20_x09",
+      "values": [
+        "0x1.ff1afc2b6d1eap-1",
+        "0x1.ca07a925c2ca3p-10"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 72
+      }
+    },
+    {
+      "point_id": "m20_x10",
+      "values": [
+        "0x1.ffffffc1f8cfep-1",
+        "0x1.f03980d211909p-28"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 42
+      }
+    },
+    {
+      "point_id": "m20_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.6fc665fb9b054p-65"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 27
+      }
+    },
+    {
+      "point_id": "m20_x12",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.ee6c0f09bd03dp-212"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 17
+      }
+    },
+    {
+      "point_id": "m21_x00",
+      "values": [
+        "0x1.00a979763d7c6p-82",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 534
+      }
+    },
+    {
+      "point_id": "m21_x01",
+      "values": [
+        "0x1.ff1c55e8a2a9fp-32",
+        "0x1.fffffffc01c75p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 720
+      }
+    },
+    {
+      "point_id": "m21_x02",
+      "values": [
+        "0x1.43881f175c842p-10",
+        "0x1.ff5e3bf07451cp-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 922
+      }
+    },
+    {
+      "point_id": "m21_x03",
+      "values": [
+        "0x1.44eaea8f8acb6p-3",
+        "0x1.aec5455c1d4d3p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 1093
+      }
+    },
+    {
+      "point_id": "m21_x04",
+      "values": [
+        "0x1.00ae4cf6a8fd1p-1",
+        "0x1.fea36612ae05ep-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 1189
+      }
+    },
+    {
+      "point_id": "m21_x05",
+      "values": [
+        "0x1.02b929bda79a0p-1",
+        "0x1.fa8dac84b0cc0p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 1190
+      }
+    },
+    {
+      "point_id": "m21_x06",
+      "values": [
+        "0x1.02b929bda79e1p-1",
+        "0x1.fa8dac84b0c3ep-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 301
+      }
+    },
+    {
+      "point_id": "m21_x07",
+      "values": [
+        "0x1.02b929bda7a22p-1",
+        "0x1.fa8dac84b0bbbp-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 302
+      }
+    },
+    {
+      "point_id": "m21_x08",
+      "values": [
+        "0x1.aec5436f66f6dp-1",
+        "0x1.44eaf2426424bp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 216
+      }
+    },
+    {
+      "point_id": "m21_x09",
+      "values": [
+        "0x1.ff3f426105ad6p-1",
+        "0x1.817b3df4a5315p-10"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 106
+      }
+    },
+    {
+      "point_id": "m21_x10",
+      "values": [
+        "0x1.ffffffef2517dp-1",
+        "0x1.0dae82a9a87cbp-29"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 49
+      }
+    },
+    {
+      "point_id": "m21_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.994e88e3fe82fp-73"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 29
+      }
+    },
+    {
+      "point_id": "m21_x12",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.3b9ba8e5635f5p-261"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 17
+      }
+    },
+    {
+      "point_id": "c00_x00",
+      "values": [
+        "0x1.310d86c043e9fp-90",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 228
+      }
+    },
+    {
+      "point_id": "c00_x01",
+      "values": [
+        "0x1.6ae05f0d9ba04p-33",
+        "0x1.fffffffe951fap-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 318
+      }
+    },
+    {
+      "point_id": "c00_x02",
+      "values": [
+        "0x1.1fda376a5e362p-10",
+        "0x1.ff7012e44ad0ep-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 416
+      }
+    },
+    {
+      "point_id": "c00_x03",
+      "values": [
+        "0x1.44e24d8f7b838p-3",
+        "0x1.aec76c9c211f2p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 498
+      }
+    },
+    {
+      "point_id": "c00_x04",
+      "values": [
+        "0x1.0185bfbaa44fdp-1",
+        "0x1.fcf4808ab7605p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 544
+      }
+    },
+    {
+      "point_id": "c00_x05",
+      "values": [
+        "0x1.06168de299f1ap-1",
+        "0x1.f3d2e43acc1cdp-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 545
+      }
+    },
+    {
+      "point_id": "c00_x06",
+      "values": [
+        "0x1.06168de299f2cp-1",
+        "0x1.f3d2e43acc1a8p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 174
+      }
+    },
+    {
+      "point_id": "c00_x07",
+      "values": [
+        "0x1.06168de299f3ep-1",
+        "0x1.f3d2e43acc184p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 174
+      }
+    },
+    {
+      "point_id": "c00_x08",
+      "values": [
+        "0x1.aec75716326b9p-1",
+        "0x1.44e2a3a73651bp-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 137
+      }
+    },
+    {
+      "point_id": "c00_x09",
+      "values": [
+        "0x1.ff2add9b8f126p-1",
+        "0x1.aa44c8e1db3f0p-10"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 82
+      }
+    },
+    {
+      "point_id": "c00_x10",
+      "values": [
+        "0x1.ffffffdb8024dp-1",
+        "0x1.23fed97b02930p-28"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 45
+      }
+    },
+    {
+      "point_id": "c00_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.570e78d7f5f86p-68"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "c00_x12",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.6e5dda4b5de1cp-230"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 17
+      }
+    },
+    {
+      "point_id": "c01_x00",
+      "values": [
+        "0x1.02f146d237cbbp-87",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 284
+      }
+    },
+    {
+      "point_id": "c01_x01",
+      "values": [
+        "0x1.0389e6373e411p-32",
+        "0x1.fffffffdf8ec3p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 391
+      }
+    },
+    {
+      "point_id": "c01_x02",
+      "values": [
+        "0x1.2b7861cae5226p-10",
+        "0x1.ff6a43cf1a8d7p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 508
+      }
+    },
+    {
+      "point_id": "c01_x03",
+      "values": [
+        "0x1.44e5e7b4eb347p-3",
+        "0x1.aec68612c532ep-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 606
+      }
+    },
+    {
+      "point_id": "c01_x04",
+      "values": [
+        "0x1.013e3a7762f1fp-1",
+        "0x1.fd838b113a1c1p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 661
+      }
+    },
+    {
+      "point_id": "c01_x05",
+      "values": [
+        "0x1.04f8ac5495b4dp-1",
+        "0x1.f60ea756d4965p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 662
+      }
+    },
+    {
+      "point_id": "c01_x06",
+      "values": [
+        "0x1.04f8ac5495b6bp-1",
+        "0x1.f60ea756d492ap-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 200
+      }
+    },
+    {
+      "point_id": "c01_x07",
+      "values": [
+        "0x1.04f8ac5495b89p-1",
+        "0x1.f60ea756d48eep-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 200
+      }
+    },
+    {
+      "point_id": "c01_x08",
+      "values": [
+        "0x1.aec67a5bd31f5p-1",
+        "0x1.44e61690b382ep-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 154
+      }
+    },
+    {
+      "point_id": "c01_x09",
+      "values": [
+        "0x1.ff31bd08c156bp-1",
+        "0x1.9c85ee7d52af6p-10"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 88
+      }
+    },
+    {
+      "point_id": "c01_x10",
+      "values": [
+        "0x1.ffffffe382ca4p-1",
+        "0x1.c7d35b9c8432cp-29"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 46
+      }
+    },
+    {
+      "point_id": "c01_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.e82195a18187ep-70"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 28
+      }
+    },
+    {
+      "point_id": "c01_x12",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.17a4845e975f4p-239"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 17
+      }
+    },
+    {
+      "point_id": "c02_x00",
+      "values": [
+        "0x1.818091b28eb36p-85",
+        "0x1.0000000000000p+0"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 372
+      }
+    },
+    {
+      "point_id": "c02_x01",
+      "values": [
+        "0x1.6e4ef533b2929p-32",
+        "0x1.fffffffd23621p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 507
+      }
+    },
+    {
+      "point_id": "c02_x02",
+      "values": [
+        "0x1.375948dd35395p-10",
+        "0x1.ff64535b91656p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 654
+      }
+    },
+    {
+      "point_id": "c02_x03",
+      "values": [
+        "0x1.44e8c6282709bp-3",
+        "0x1.aec5ce75f63d9p-1"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 778
+      }
+    },
+    {
+      "point_id": "c02_x04",
+      "values": [
+        "0x1.00f67f9b578c0p-1",
+        "0x1.fe1300c950e80p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 847
+      }
+    },
+    {
+      "point_id": "c02_x05",
+      "values": [
+        "0x1.03d9e1d33a95fp-1",
+        "0x1.f84c3c598ad42p-2"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 848
+      }
+    },
+    {
+      "point_id": "c02_x06",
+      "values": [
+        "0x1.03d9e1d33a98dp-1",
+        "0x1.f84c3c598ace6p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 238
+      }
+    },
+    {
+      "point_id": "c02_x07",
+      "values": [
+        "0x1.03d9e1d33a9bbp-1",
+        "0x1.f84c3c598ac89p-2"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 238
+      }
+    },
+    {
+      "point_id": "c02_x08",
+      "values": [
+        "0x1.aec5c904485acp-1",
+        "0x1.44e8dbeede950p-3"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 178
+      }
+    },
+    {
+      "point_id": "c02_x09",
+      "values": [
+        "0x1.ff38877191e9cp-1",
+        "0x1.8ef11cdc2c7a9p-10"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 96
+      }
+    },
+    {
+      "point_id": "c02_x10",
+      "values": [
+        "0x1.ffffffe9f7e02p-1",
+        "0x1.6081fdf3c9083p-29"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 47
+      }
+    },
+    {
+      "point_id": "c02_x11",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.47385b68287f0p-71"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 29
+      }
+    },
+    {
+      "point_id": "c02_x12",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.babb0c1f27f48p-250"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 17
+      }
+    },
+    {
+      "point_id": "e01",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x0.0p+0"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 2
+      }
+    },
+    {
+      "point_id": "e02",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x0.0p+0"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 7
+      }
+    },
+    {
+      "point_id": "e03",
+      "values": [
+        "0x1.ffffffcfea72dp-1",
+        "0x1.80ac69a91c0a7p-28"
+      ],
+      "trace": {
+        "route": "pair lower",
+        "iterations": 23
+      }
+    },
+    {
+      "point_id": "e05",
+      "values": [
+        "0x1.0000000000000p+0",
+        "0x1.5f60dfc06d7c4p-1013"
+      ],
+      "trace": {
+        "route": "pair upper",
+        "iterations": 7
+      }
+    }
+  ],
+  "windows_sha256": "283c3e35867d1ed5f1581528ff31c266c0e24462de92d00de45b2edf36e1dfa6",
+  "sha256": {
+    "pair_candidate.py": "8772ed2a462ea710698e40084a28d4760ccafd8277ee2dd87b221206b9d1a361",
+    "screen_pair_candidate.py": "a477beaf48ebc13f3386e0e138fba3366f9e9fe12ad967de69c5e4043c524238",
+    "b64_fit_grid.csv": "0db56c3261d94637db70ef9d9c9a8f3fd0b60e100bfce8c38cfd4c70ed022df9",
+    "arithmetic_diagnosis.json": "c95a86cbee58cfc6a5fc1be81531ef0c4801d47654a4f9a1d28fbde65baaac6e"
+  }
+}
