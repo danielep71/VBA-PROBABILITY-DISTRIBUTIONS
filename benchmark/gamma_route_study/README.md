@@ -37,3 +37,8 @@ The [frozen A2=10000 rule](ROUTING_RULE.md) is rejected by a
 [development seam preflight](PHASE_B_PREFLIGHT.md): four CDF monotonicity
 regressions in the source-derived model. The holdout remains untouched and
 public routing remains unchanged.
+
+[Transition development](TRANSITION_DEVELOPMENT.md) records the independent
+error diagnosis, a rejected one-sigma DD band, and the smaller-tail candidate
+that passes 48 triples but fails the wider neighboring-input replay. The
+holdout remains untouched; further fast-kernel arithmetic work is required.

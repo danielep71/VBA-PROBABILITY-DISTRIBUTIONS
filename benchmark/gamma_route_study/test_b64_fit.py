@@ -54,6 +54,21 @@ def exported(committed, mutate=None, line=LINE):
 
 def main():
     fails = []
+    import band_development as band
+    import smaller_tail_development as smaller
+    smaller_result = smaller.result()
+    for name, report in [('band_development.json', band.evaluate()), ('smaller_tail_development.json', smaller_result)]:
+        with open(os.path.join(HERE, name)) as stream:
+            if report != json.load(stream):
+                fails.append('development evidence does not reproduce: ' + name)
+    narrow, wide = smaller_result['narrow'], smaller_result['wide']
+    if narrow['failures'] or len(wide['failures']) != 13:
+        fails.append('B3 narrow/wide controls changed')
+    for failure in wide['failures']:
+        left = [float.fromhex(v) for v in failure['baseline_left']]
+        right = [float.fromhex(v) for v in failure['baseline_right']]
+        if right[0] < left[0] or right[1] > left[1]:
+            fails.append('B3 baseline is not monotone at retained failure')
     import preflight_phase_b as preflight
     report = preflight.evaluate()
     with open(os.path.join(HERE, 'phase_b_preflight.json')) as stream:
