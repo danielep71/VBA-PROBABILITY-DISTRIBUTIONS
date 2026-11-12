@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import patch
 import run_tight_cf as tight
+import run_extended_fit as extended
 import mpmath as mp
 import pair_cf_screen as candidate
 import vba_order_model as model
@@ -48,6 +49,19 @@ class TightCFTests(unittest.TestCase):
         retained={(p,a,b) for p,a,b,_ in tight.baseline.AFFECTED+tight.baseline.CONTROLS}
         self.assertEqual(len(rows),8)
         self.assertFalse(rows & retained)
+
+
+class CheckedOracleTests(unittest.TestCase):
+    def test_uniform_beta_fraction_has_analytic_value(self):
+        with mp.workdps(80):
+            x = mp.mpf('.25')
+            actual = extended.checked_betacf(mp.mpf(1), mp.mpf(1), x)
+            self.assertLess(abs(actual - 1/(1-x)), mp.mpf('1e-70'))
+
+    def test_exhaustion_does_not_return_partial_fraction(self):
+        with patch.object(extended, 'range', return_value=range(1, 2), create=True):
+            with mp.workdps(80), self.assertRaisesRegex(ArithmeticError, 'exhausted'):
+                extended.checked_betacf(mp.mpf('2.5'), mp.mpf('3.5'), mp.mpf('.25'))
 
 
 if __name__=='__main__':
