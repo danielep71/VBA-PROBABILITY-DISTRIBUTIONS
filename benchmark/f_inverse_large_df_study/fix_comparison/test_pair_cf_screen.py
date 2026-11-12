@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import patch
 import run_tight_cf as tight
 import run_extended_fit as extended
+import stagnation_model as guarded
+import run_stagnation as screen
 import mpmath as mp
 import pair_cf_screen as candidate
 import vba_order_model as model
@@ -62,6 +64,42 @@ class CheckedOracleTests(unittest.TestCase):
         with patch.object(extended, 'range', return_value=range(1, 2), create=True):
             with mp.workdps(80), self.assertRaisesRegex(ArithmeticError, 'exhausted'):
                 extended.checked_betacf(mp.mpf('2.5'), mp.mpf('3.5'), mp.mpf('.25'))
+
+
+class GuardedStagnationTests(unittest.TestCase):
+    def test_accepts_only_bracketed_nearest_interior_iterate(self):
+        with patch.object(guarded.forward, 'beta_regularized', side_effect=[.49, .51]):
+            self.assertTrue(guarded.guarded_stagnation(.5, .5, 0., 1., 2., 2., .5))
+        for neighbors in ([.51, .52], [.52, .48], [.5, .51], [float('nan'), .51]):
+            with patch.object(guarded.forward, 'beta_regularized', side_effect=neighbors):
+                self.assertFalse(guarded.guarded_stagnation(.5, .5, .001, 1., 2., 2., .5))
+
+    def test_rejects_bad_density_endpoint_and_moving_step(self):
+        for u, proposal, density in [(0.,0.,1.), (1.,1.,1.), (.5,.5,0.),
+                                     (.5,.5,float('inf')), (.5,.6,1.)]:
+            with patch.object(guarded.forward, 'beta_regularized') as forward:
+                self.assertFalse(guarded.guarded_stagnation(u,proposal,0.,density,2.,2.,.5))
+                forward.assert_not_called()
+
+    def test_exception_restores_isolated_state(self):
+        old_model = candidate.model
+        old_forward = guarded.forward.beta_regularized
+        old_eps = guarded.forward.C['PROB_NUM_EPS']
+        with patch.object(guarded, 'f_inverse', side_effect=ValueError('injected')):
+            with self.assertRaises(ValueError):
+                guarded.evaluate(.5, 10., 10.)
+        self.assertIs(candidate.model, old_model)
+        self.assertIs(guarded.forward.beta_regularized, old_forward)
+        self.assertEqual(guarded.forward.C['PROB_NUM_EPS'], old_eps)
+
+    def test_new_identities_are_disjoint(self):
+        new = {(p,*dfs) for p,dfs in screen.NEW_ROWS}
+        revealed = {(p,*dfs) for p,dfs in extended.POINTS+tight.NEW_ROWS}
+        revealed |= {(p,a,b) for p,a,b,_ in tight.baseline.AFFECTED+tight.baseline.CONTROLS}
+        original_holdout = {(p,a,b) for p in (.1,.4,.6,.98)
+                            for a,b in ((3e5,7.),(7.,3e5),(50.,1e8),(1e8,50.))}
+        self.assertEqual(len(new), 8)
+        self.assertFalse(new & (revealed | original_holdout))
 
 
 if __name__=='__main__':
