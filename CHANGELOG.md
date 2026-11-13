@@ -97,6 +97,14 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Positive-ratio study: Amendment 1 (#13)
+
+- The cumulative's precision recovery was registered again for the current
+  incomplete-gamma kernel: recover only where the standardized argument was
+  rounded, at 40 retained bits or fewer. A second holdout, with points never
+  used before, confirmed all four registered claims. No production source
+  changes yet; see `benchmark/positive_ratio_subnormal/AMENDMENT_1_RESULT.md`.
+
 ### Gamma and Chi-square: positive arguments that underflow (#13)
 
 - `K_STATS_Gamma_Density`, `K_STATS_Gamma_Cumulative`,

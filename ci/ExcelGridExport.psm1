@@ -45,7 +45,7 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
-    "glq_lower_q", "gbr_binary64_map"
+    "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2"
 )
 
 function Get-StudyGridNames {
@@ -110,7 +110,8 @@ function Get-ExportGridSpec {
         [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
                      "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
                      "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
-                     "glq_lower_q", "gbr_binary64_map")]
+                     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2",
+                     "prs_chisquare_holdout2")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -211,6 +212,19 @@ function Get-ExportGridSpec {
             return New-GeneratedGridSpec -Name "prs_chisquare_holdout" -FileName "chisquare_holdout.csv" `
                 -Exporter "M_STATS_PROBDIST_CHISQHOLD.bas" -Macro "Export_ChiSquareHoldout" `
                 -Columns 14 -KeyColumns 8 -SuccessPrefix "Chi-square positive-ratio HOLDOUT complete: "
+        }
+        # The second holdouts (#13, Amendment 1) key on the six text fields
+        # only: their echoed operands are measurements, checked by
+        # analyze_amendment1.py against the exact construction.
+        "prs_gamma_holdout2" {
+            return New-GeneratedGridSpec -Name "prs_gamma_holdout2" -FileName "gamma_holdout2.csv" `
+                -Exporter "M_STATS_PROBDIST_GAMMAHOLD2.bas" -Macro "Export_GammaHoldout2" `
+                -Columns 15 -KeyColumns 6 -SuccessPrefix "Gamma positive-ratio HOLDOUT 2 complete: "
+        }
+        "prs_chisquare_holdout2" {
+            return New-GeneratedGridSpec -Name "prs_chisquare_holdout2" -FileName "chisquare_holdout2.csv" `
+                -Exporter "M_STATS_PROBDIST_CHISQHOLD2.bas" -Macro "Export_ChiSquareHoldout2" `
+                -Columns 14 -KeyColumns 6 -SuccessPrefix "Chi-square positive-ratio HOLDOUT 2 complete: "
         }
         "prs_gamma_q_complement" {
             return New-GeneratedGridSpec -Name "prs_gamma_q_complement" -FileName "gamma_q_complement.csv" `
