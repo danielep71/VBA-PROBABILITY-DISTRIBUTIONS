@@ -14,6 +14,7 @@ A finding is either:
   * a current count from its record, written as a standalone number:
       - expected_assertions in .github/excel-evidence-policy.json;
       - expected_assertions in .github/excel-study-policy.json;
+      - expected_assertions in .github/excel-fast-policy.json;
       - the data rows of the main grid and of the holdout grid;
   * a restating phrase whatever its value, which also catches a stale copy:
     "currently <number>", "<number> open blockers", "(<number> open)",
@@ -42,6 +43,7 @@ GRIDS = {
 POLICIES = {
     "regression assertions": ".github/excel-evidence-policy.json",
     "study assertions": ".github/excel-study-policy.json",
+    "fast-level assertions": ".github/excel-fast-policy.json",
 }
 PHRASES = (
     re.compile(r"\bcurrently\s+\d[\d,]*(?![\d.Ee])"),

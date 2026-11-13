@@ -107,6 +107,14 @@ Use only the categories needed by a release.
   fast run is never certification evidence.
 - The runner retries a log write that another process blocks for an instant;
   one such collision failed a run whose assertions were all green.
+### Studies bound to their rows (#302)
+
+- The normal-tail study record binds the grid rows its predictions read, not
+  the three grid files (preregistration Amendment 4). Promoting rows for
+  another function no longer forces a metadata-only regeneration of that
+  record; a change to a row it reads still makes it stale.
+- A check in the Accuracy Gate fails when a study file hashes or compares a
+  whole live grid without a declared reason.
 
 ### Proportionate evidence (#328)
 

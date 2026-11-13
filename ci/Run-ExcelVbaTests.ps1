@@ -397,10 +397,13 @@ End Function
     if ($Fast) {
         $fastPolicyPath = Join-Path $RepositoryRoot ".github\excel-fast-policy.json"
         $fastPolicy = Get-Content -LiteralPath $fastPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        # One COM read of the whole module: a line-by-line read costs about 30 s
+        # per name. ReplaceLine keeps the line count, so the numbers stay valid.
+        $moduleLines = $codeModule.Lines(1, $codeModule.CountOfLines) -split "`r?`n"
         foreach ($testName in @($fastPolicy.skip_tests | ForEach-Object { [string]$_ })) {
             $hits = @()
-            for ($lineNumber = 1; $lineNumber -le $codeModule.CountOfLines; $lineNumber++) {
-                if ($codeModule.Lines($lineNumber, 1).Trim() -ceq $testName) { $hits += $lineNumber }
+            for ($lineNumber = 1; $lineNumber -le $moduleLines.Count; $lineNumber++) {
+                if ($moduleLines[$lineNumber - 1].Trim() -ceq $testName) { $hits += $lineNumber }
             }
             if ($hits.Count -ne 1) {
                 throw "Fast level: expected exactly one call of $testName, found $($hits.Count)."
