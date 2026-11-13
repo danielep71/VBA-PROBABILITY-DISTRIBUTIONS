@@ -44,9 +44,10 @@ ASSERTIONS = {"Test_PrecisionV2_Fidelity": 500, "Test_ScaledProduct_Fidelity": 4
               "Test_ExtendedGamma_Fidelity": 1772, "Test_WideGamma_Fidelity": 886}
 STUDY_ASSERTIONS = sum(ASSERTIONS.values())
 # The slow production batteries and their assertions. The cap-and-seam battery
-# is 64 flat assertions; the public integration is 496 cases of 8, 7 invalid
-# inputs of 2, 24 inverses of 2 and 2 reach cases of 4 (public_integration.py).
-SLOW = {"Test_GammaCF_CapAndXSeam": 64, "Test_PublicGamma_Integration": 4038}
+# is 64 flat assertions; the public integration is the EXTRA of
+# public_integration.py, 4,040. Both are confirmed by Excel: run 43518162467
+# counted 1,922 regression assertions once the two had left the 6,026.
+SLOW = {"Test_GammaCF_CapAndXSeam": 64, "Test_PublicGamma_Integration": 4040}
 SLOW_ASSERTIONS = sum(SLOW.values())
 HOST = "Private Sub Test_CN_GammaSurvival()\n"
 CALLS = "".join(f"    {name}\n" for name in BATTERIES)
