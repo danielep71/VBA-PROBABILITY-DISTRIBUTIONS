@@ -473,18 +473,21 @@ Public Function K_STATS_Gamma_Cumulative( _
             GoTo Return_Success
         End If
 
-    'A positive ratio stored as zero, or as a subnormal below the measured
-    'cutoff, is evaluated from Log(X) - Log(ScaleParam); every other argument
-    'goes to the regularized lower incomplete gamma function (#13)
-        If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT) _
-            = PROB_PRC_DIRECT Then
-            If Not PROB_TryGammaRegularizedP( _
-                Shape, StandardX, Value, FailMsg) Then
+    'A positive ratio stored as zero is evaluated from
+    'Log(X) - Log(ScaleParam); the kernel would read it as the support origin.
+    'A stored positive argument goes to the regularized lower incomplete gamma
+    'function, which is exact for it. The precision dispatch of the cumulative
+    'is not applied: its registered cutoff was measured on the earlier kernel
+    '(#13; benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                Shape, Log(X) - Log(ScaleParam), Value, Complement, FailMsg) Then
                 GoTo Fail_Num
             End If
         Else
-            If Not PROB_TryPositiveRatioTails( _
-                Shape, Log(X) - Log(ScaleParam), Value, Complement, FailMsg) Then
+            If Not PROB_TryGammaRegularizedP( _
+                Shape, StandardX, Value, FailMsg) Then
                 GoTo Fail_Num
             End If
         End If

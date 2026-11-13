@@ -105,10 +105,14 @@ Use only the categories needed by a release.
   is too small for a Double. Example: `K_STATS_Gamma_Cumulative(1E-300, 1E-4,
   1E+100)` returned 0 and now returns 0.912063476068496; the density at the
   same point returned `#VALUE!` and now returns 9.12063476068505E+295.
-- The densities and cumulatives also recover precision where the standardized
-  argument is a subnormal with few significant bits: below 2^-1026, or below
-  2^-1034 for the Gamma cumulative. The cutoffs are those measured and
-  preregistered in `benchmark/positive_ratio_subnormal`.
+- The two densities also recover precision where the standardized argument
+  is a subnormal below 2^-1026, the cutoff measured and preregistered in
+  `benchmark/positive_ratio_subnormal`.
+- Known limit: the cumulatives do not have that precision recovery yet. Its
+  registered cutoffs were measured on the earlier incomplete-gamma kernel and
+  one was rejected on the current kernel; see `POST_INTEGRATION_RESULT.md` in
+  that directory. A cumulative whose standardized argument is a rounded
+  subnormal carries the rounding of the ratio.
 - Results that binary64 cannot hold keep the documented policy: zero for an
   underflow, `#NUM!` for a density overflow. Arguments above the cutoffs take
   the same path as before.

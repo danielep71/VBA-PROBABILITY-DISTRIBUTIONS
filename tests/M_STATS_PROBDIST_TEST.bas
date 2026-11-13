@@ -19221,9 +19221,10 @@ Private Sub Test_CN_PositiveRatioRecovery()
 '     operands, not at the rounded standardized argument.
 '   - Subnormal arguments are built from their words, never written as
 '     literals: a VBA source literal cannot be relied on to denote one.
-'   - The cutoffs are 2 ^ -1026 for both densities and the Chi-square
-'     cumulative, and 2 ^ -1034 for the Gamma cumulative. A value at the
-'     cutoff stays on the direct path; one unit below it is recovered.
+'   - The density cutoff is 2 ^ -1026: a value at the cutoff stays on the
+'     direct path, one unit below it is recovered. The cumulatives and the
+'     survivals recover a stored zero only, so their stored positive
+'     arguments stay on the direct path at every size.
 '
 ' DEPENDENCIES
 '   - Production functions under test
@@ -19291,14 +19292,15 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_Gamma_Density(1E-200, 0.5, 1E+110), _
         5.64189583547756E+44, TOL_PRS
 
-    'Both sides of each cutoff meet the same tolerance, so the seam is closed
+    'Both sides of the density cutoff meet the same tolerance, so the seam is
+    'closed; the cumulatives are checked at the same arguments
     AssertRelClose "PRS gamma pdf at 2^-1026 (direct)", _
         K_STATS_Gamma_Density(At48, 0.5, 1#), 1.51290911445652E+154, TOL_PRS
     AssertRelClose "PRS gamma pdf one unit below 2^-1026 (recovered)", _
         K_STATS_Gamma_Density(Below48, 0.5, 1#), 1.51290911445653E+154, TOL_PRS
     AssertRelClose "PRS gamma cdf at 2^-1034 (direct)", _
         K_STATS_Gamma_Cumulative(At40, 0.5, 1#), 2.6299488444332E-156, TOL_PRS
-    AssertRelClose "PRS gamma cdf one unit below 2^-1034 (recovered)", _
+    AssertRelClose "PRS gamma cdf one unit below 2^-1034 (direct)", _
         K_STATS_Gamma_Cumulative(Below40, 0.5, 1#), 2.629948844432E-156, TOL_PRS
     AssertRelClose "PRS chi pdf at 2^-1025 (direct)", _
         K_STATS_ChiSquare_Density(ChiAt, 1#), 7.56454557228262E+153, TOL_PRS
@@ -19306,7 +19308,7 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_ChiSquare_Density(ChiBelow, 1#), 7.56454557228263E+153, TOL_PRS
     AssertRelClose "PRS chi cdf at 2^-1025 (direct)", _
         K_STATS_ChiSquare_Cumulative(ChiAt, 1#), 4.20791815109311E-155, TOL_PRS
-    AssertRelClose "PRS chi cdf two units below 2^-1025 (recovered)", _
+    AssertRelClose "PRS chi cdf two units below 2^-1025 (direct)", _
         K_STATS_ChiSquare_Cumulative(ChiBelow, 1#), 4.20791815109311E-155, TOL_PRS
 
     'The smallest positive argument

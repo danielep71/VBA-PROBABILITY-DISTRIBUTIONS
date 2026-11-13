@@ -220,8 +220,14 @@ Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y
 'the 40-bit Gamma cumulative boundary the same way. Both boundaries were
 'confirmed on an independent, preregistered holdout - see
 'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
-Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density, ChiSquare cumulative
-Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Gamma cumulative
+'
+'IN PRODUCTION the two densities use the 48-bit cutoff. The cumulative cutoffs
+'were measured on the kernel that preceded the public Gamma integration; on
+'the current one the cumulative recovers a stored zero only, and
+'PROB_PRS_CUTOFF_40BIT has no caller until the policy is registered again.
+'See benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md.
+Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density
+Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Registered for the Gamma cumulative; not applied
 Private Const PROB_PRS_LOG_RATIO_MAX As Double = -700#   'Recovery kernels refuse a log ratio at or above this; every dispatched ratio is below 2 ^ -1026, whose logarithm is about -711.2
 Private Const PROB_PRS_TAIL_SHAPE_MAX As Double = 4#     'Above this shape the recovered lower tail is exactly zero: Shape * LogRatio < -2800 and LogGamma(1 + Shape) > 0
 

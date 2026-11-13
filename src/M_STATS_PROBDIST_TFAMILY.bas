@@ -1091,22 +1091,25 @@ Public Function K_STATS_ChiSquare_Cumulative( _
     'Store the standardized argument X / 2
         StandardX = 0.5 * X
 
-    'A positive X whose half is stored as zero, or as a subnormal below the
-    'measured cutoff, is evaluated from Log(X) - Log(2); every other argument
-    'goes to the regularized lower incomplete gamma function (#13)
-        If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
-            = PROB_PRC_DIRECT Then
-            If Not PROB_TryGammaRegularizedP( _
-                0.5 * DegreesFreedom, _
-                StandardX, _
-                Value, _
-                FailMsg) Then GoTo Fail_Num
-        Else
+    'A positive X whose half is stored as zero is evaluated from
+    'Log(X) - Log(2); the kernel would read it as the support origin. A stored
+    'positive argument goes to the regularized lower incomplete gamma function.
+    'The precision dispatch of the cumulative is not applied: its registered
+    'cutoff was rejected on the current kernel
+    '(#13; benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
             If Not PROB_TryPositiveRatioTails( _
                 0.5 * DegreesFreedom, _
                 Log(X) - Log(2#), _
                 Value, _
                 Complement, _
+                FailMsg) Then GoTo Fail_Num
+        Else
+            If Not PROB_TryGammaRegularizedP( _
+                0.5 * DegreesFreedom, _
+                StandardX, _
+                Value, _
                 FailMsg) Then GoTo Fail_Num
         End If
 
