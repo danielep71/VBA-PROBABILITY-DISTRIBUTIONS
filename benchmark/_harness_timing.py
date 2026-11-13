@@ -26,7 +26,8 @@ import re
 BEGIN = "' BEGIN harness timing (#298)"
 END = "' END harness timing (#298)"
 DRIVERS = ("RunCoreSuite", "RunNormalFamilySuite", "RunTFamilySuite",
-           "RunContinuousSuite", "RunDiscreteSuite", "RunStudyBatteries")
+           "RunContinuousSuite", "RunDiscreteSuite", "RunStudyBatteries",
+           "RunSlowProductionBatteries")
 NESTED = ("Test_CN_GammaSurvival",)
 ANCHOR = "Private Sub BeginRun("
 CALL = re.compile(r"^    (Test_\w+)$")

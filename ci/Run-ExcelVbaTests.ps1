@@ -316,13 +316,15 @@ Public Function Test_STATS_PROBDIST_GetFailureLog_CI() As String
 End Function
 
 Public Function Test_STATS_PROBDIST_RunStudies_CI() As String
-    'Runs the study batteries kept apart from the regression (#300) and
-    'returns machine-readable counters, as Test_STATS_PROBDIST_RunAll_CI does.
+    'Runs the batteries kept apart from the pull-request regression: the
+    'study batteries (#300) and the slow production batteries (#13). Returns
+    'machine-readable counters, as Test_STATS_PROBDIST_RunAll_CI does.
     On Error GoTo Err_Handler
 
     HarnessTiming "reset"
     BeginRun "STUDY BATTERIES - GITHUB ACTIONS"
     RunStudyBatteries
+    RunSlowProductionBatteries
     EndRun
 
     Test_STATS_PROBDIST_RunStudies_CI = _
@@ -506,8 +508,11 @@ End Function
         $exitCode = 0
 
         # The study batteries (#300): private arithmetic ports of the #26
-        # studies, run only when requested, against their own policy. A
-        # failure fails the job; the regression stage stays as measured.
+        # studies, and the slow production batteries (#13): the cap and seams
+        # of the Gamma kernel and the bit-level regression of its public
+        # surfaces. Run only when requested,
+        # against their own policy. A failure fails the job, so no grid is
+        # exported after it; the regression stage stays as measured.
         if ($RunStudies) {
             $studyPolicyPath = Join-Path $RepositoryRoot ".github\excel-study-policy.json"
             $studyPolicy = Get-Content -LiteralPath $studyPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json

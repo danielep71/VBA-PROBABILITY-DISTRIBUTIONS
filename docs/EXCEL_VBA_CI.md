@@ -39,7 +39,8 @@ For each run, the PowerShell adapter:
    counters;
 8. requires the exact policy count (`expected_assertions` in
    [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json);
-   the study batteries, run apart since #300, have their own count in
+   the study batteries, run apart since #300, and the slow production
+   batteries, run apart since #13, have their own count in
    [`.github/excel-study-policy.json`](../.github/excel-study-policy.json)),
    zero failures, and
    consistent TOTAL/PASS/FAIL counters;
@@ -79,7 +80,8 @@ the workflow and not the selection tool. Anything else is full, and so is any
 event, base or path the tool cannot classify; if the selection job itself
 fails, the regression job runs the full suite. A pull request that changes
 VBA or the runner therefore runs the full suite on every push, its final head
-included. The study batteries never run at the fast level.
+included. The study batteries and the slow production batteries never run at
+the fast level, nor on any pull-request run.
 
 A dispatch can ask for the fast level with `suite: fast`; the input is ignored
 when the dispatch also exports a grid.
@@ -118,7 +120,7 @@ and a dispatch without inputs, behave as before.
 | `export_survival_boundary` | `true`/`false` | Export `benchmark/survival_boundary/survival_boundary_grid.csv` |
 | `export_tchi_large_df` | `true`/`false` | Export `benchmark/tchi_large_df/tchi_large_df_grid.csv` |
 | `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid), `glq_lower_q` (the #24 holdout) and `gbr_binary64_map`, `prs_gamma_holdout2`, `prs_chisquare_holdout2` (the #307 binary64 route map). The #307 fit set `gbf_b64_fit` is no longer exportable: the routines it calls left production after #307 closed |
-| `run_studies` | boolean, default `true` | Also run the study batteries of #300 (`Test_STATS_PROBDIST_RunStudies`, against `.github/excel-study-policy.json`) after a green regression. Always on when any grid is exported; pull-request runs never run them |
+| `run_studies` | boolean, default `true` | Also run the study batteries of #300 and the slow production batteries of #13 (`Test_STATS_PROBDIST_RunStudies`, against `.github/excel-study-policy.json`) after a green regression. Always on when any grid is exported, and a failure stops the job before the export; pull-request runs never run them |
 | `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
 
 `export_studies` is one text input rather than one boolean per grid, so a new

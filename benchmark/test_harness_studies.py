@@ -16,6 +16,9 @@ Proofs for the separated study batteries of #300 (_harness_studies.py).
      regression, against the study policy, and fails the job on a mismatch;
      the workflow requests it on dispatch and on every export.
   5. A hand-edited block and a second separation are refused.
+  6. The slow production batteries (#13) are a class of their own: each is
+     called once, from RunSlowProductionBatteries; each calls production
+     code, and the policy declares them apart from the six studies.
 
 Run: python3 test_harness_studies.py   (exit 0 = pass)
 """
@@ -90,7 +93,11 @@ def main():
     check(regression["expected_assertions"] == 5987, "the pinned regression policy is not 5,987")
     check(regression["expected_assertions"] + frozen_study["expected_assertions"] == 14888,
           "pinned regression plus studies is not run 42766552574's 14,888")
-    check(study == frozen_study, "the study policy changed since the separation")
+    check(study["batteries"] == frozen_study["batteries"],
+          "the six study batteries changed since the separation")
+    check(study.get("production_batteries") == dict(S.SLOW)
+          and study["expected_assertions"] == S.STUDY_ASSERTIONS + S.SLOW_ASSERTIONS,
+          "the study policy does not declare the slow production batteries apart")
     try:
         S.live_total(ROOT)
     except S.StudiesError as exc:
@@ -123,6 +130,24 @@ def main():
                             bridge, re.S)
     check(run_studies is not None and "RunStudyBatteries" in run_studies.group(0),
           "the study entry point does not run RunStudyBatteries")
+    check(run_studies is not None and "RunSlowProductionBatteries" in run_studies.group(0),
+          "the study entry point does not run RunSlowProductionBatteries")
+
+    # 6. The slow production batteries.
+    slow_driver = procs["RunSlowProductionBatteries"]
+    for name in S.SLOW:
+        check(f"    {name}\n" not in host, f"Test_CN_GammaSurvival still calls {name}")
+        check(f"    {name}\n" in slow_driver and f"    {name}\n" not in driver,
+              f"{name} is not called from RunSlowProductionBatteries alone")
+        check(len(re.findall(rf"^    {name}$", module, re.M)) == 1, f"{name} is not called once")
+        used = set()
+        for proc in closure(name, set()):
+            used |= set(re.findall(r"\b(PROB_\w+|K_STATS_\w+)\b", procs[proc])) & production
+        check(any(u.startswith("K_STATS_") for u in used),
+              f"{name} no longer tests the public surfaces; it is not a production battery")
+    legacy = frozen_text("tests/M_STATS_PROBDIST_TEST.bas")
+    check(S.legacy(T.strip(legacy)) and S.BEGIN not in S.strip(T.strip(legacy)),
+          "strip() no longer restores the #300 layout of the pinned test module")
     workflow = read(".github/workflows/excel-vba-regression.yml")
     check("run_studies:" in workflow and "'-RunStudies'" in workflow
           and "github.event_name == 'workflow_dispatch'" in workflow
@@ -131,7 +156,10 @@ def main():
 
     # 5. Drift is refused.
     try:
-        S.strip(untimed.replace("RunStudyBatteries\n    EndRun", "RunStudyBatteries\n\n    EndRun", 1))
+        edited = untimed.replace("RunSlowProductionBatteries\n    EndRun",
+                                 "RunSlowProductionBatteries\n\n    EndRun", 1)
+        check(edited != untimed, "the drift fixture no longer edits the block")
+        S.strip(edited)
         check(False, "a hand-edited study block was accepted")
     except S.StudiesError:
         pass
