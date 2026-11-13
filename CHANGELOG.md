@@ -97,6 +97,16 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Excel runner watch (#295)
+
+- A failed Excel run is re-run once, automatically, when the failure is
+  infrastructure: job set-up, checkout, or a lost runner. A failure of the
+  regression or export step is never re-run automatically.
+- A scheduled check opens one issue when a run sits queued with no job, or a
+  job waits too long for the self-hosted runner, and closes it on recovery.
+- `docs/EXCEL_VBA_CI.md` describes a hardened runner set-up: automatic logon,
+  a self-restarting runner task, no standby, update hours and runner updates.
+
 ### Carried certification (#301)
 
 - A VBA change that alters only comments and whitespace keeps the Excel
