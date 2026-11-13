@@ -41,7 +41,7 @@ class RecurrenceStudyTests(unittest.TestCase):
             self.assertIn(block, combined)
 
     def test_source_drift_is_rejected(self):
-        source = P.SOURCE.read_text()
+        source = P.frozen_source()
         with self.assertRaises(ValueError):
             P.transform(P.transform(source, 'lower'), 'lower')
         with self.assertRaises(ValueError):

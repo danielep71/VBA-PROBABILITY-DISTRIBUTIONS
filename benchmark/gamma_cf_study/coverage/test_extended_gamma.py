@@ -9,6 +9,7 @@ import re
 import subprocess
 import unittest
 from public_integration import restore,EXTRA,live_total
+from frozen_tree import FROZEN
 
 import extended_gamma as v1
 from extended_gamma_v2 import public
@@ -44,7 +45,7 @@ class ExtendedGammaTests(unittest.TestCase):
         for source in record['sources']:
             blob=subprocess.check_output(['git','show',sha+':'+source['path']],cwd=ROOT)
             self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
-            self.assertEqual(strip_wide((ROOT/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
+            self.assertEqual(strip_wide((FROZEN/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
         old=json.loads((HERE/'excel_scaled_gamma_artifact.json').read_text())
         def failures(raw):
             return re.findall(r'^\[[^\]]+\]   (.*)$',raw.decode('utf-8-sig').replace('\r\n','\n'),re.M)
@@ -124,7 +125,7 @@ class ExtendedGammaTests(unittest.TestCase):
         self.assertEqual(saved,dataset())
         self.assertEqual(len(saved['rows']),587)
         self.assertEqual(saved['additional_assertions'],1772)
-        text=restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
+        text=restore((FROZEN/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         block=BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block,render(saved))
         self.assertEqual(text.count('    Test_ExtendedGamma_Fidelity\n'),1)
@@ -133,8 +134,8 @@ class ExtendedGammaTests(unittest.TestCase):
 
     def test_frozen_vba_and_public_sources_are_unchanged(self):
         sha='ec8a5f98edc8d37e3e9e50c1344b2fc31c33289f'
-        for path in [ROOT/'tests/M_STATS_PROBDIST_TEST.bas',*(ROOT/'src').glob('*.bas')]:
-            blob=subprocess.check_output(['git','show',sha+':'+path.relative_to(ROOT).as_posix()],cwd=ROOT).decode()
+        for path in [FROZEN/'tests/M_STATS_PROBDIST_TEST.bas',*(FROZEN/'src').glob('*.bas')]:
+            blob=subprocess.check_output(['git','show',sha+':'+path.relative_to(FROZEN).as_posix()],cwd=ROOT).decode()
             self.assertEqual(strip(path.read_text()),blob.replace('\r\n','\n'))
 
     def test_invalid_inputs_remain_rejected(self):

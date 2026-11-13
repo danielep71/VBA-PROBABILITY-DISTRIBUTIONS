@@ -18,7 +18,7 @@ def route_block():
 
 class CacheSourceTests(unittest.TestCase):
     def test_exact_reference_and_round_trip(self):
-        source = C.SRC.read_text()
+        source = C.frozen_source()
         original = C.strip(source)
         self.assertEqual(C.apply(original), source)
         prior = json.loads((C.ROOT / 'benchmark/harness_timing/run_43017348872_profile.json').read_text())
@@ -39,14 +39,14 @@ class CacheSourceTests(unittest.TestCase):
                          final['evidence']['generated_source_sha256'])
 
     def test_wrapper_drift_and_double_install_are_refused(self):
-        source = C.SRC.read_text()
+        source = C.frozen_source()
         with self.assertRaises(ValueError):
             C.strip(source.replace('If Key = PreviousKey Then', 'If True Then', 1))
         with self.assertRaises(ValueError):
             C.apply(source)
 
     def test_stripping_does_not_hide_arithmetic_changes(self):
-        source = C.SRC.read_text()
+        source = C.frozen_source()
         changed = source.replace('For K = 1 To N\n', 'For K = 2 To N\n', 1)
         self.assertNotEqual(changed, source)
         self.assertNotEqual(C.strip(changed), C.strip(source))

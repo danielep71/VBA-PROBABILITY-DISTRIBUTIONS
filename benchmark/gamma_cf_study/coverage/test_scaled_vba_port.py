@@ -8,6 +8,7 @@ import math
 import struct
 import unittest
 from public_integration import restore,EXTRA,live_total
+from frozen_tree import FROZEN
 from fractions import Fraction as F
 from install_scaled_fidelity import HERE, ROOT, BEGIN, END, TYPES, dataset, render, power, literal
 from scaled_product import product, rounded
@@ -32,7 +33,7 @@ class ScaledVbaPortTests(unittest.TestCase):
 
     def test_generated_block_and_policy_match(self):
         data = dataset()
-        text = restore((ROOT / 'tests/M_STATS_PROBDIST_TEST.bas').read_text())
+        text = restore((FROZEN/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         self.assertEqual(text.count(BEGIN), 1)
         self.assertEqual(text.count(END), 1)
         block = BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
