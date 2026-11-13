@@ -856,8 +856,8 @@ Public Sub Test_STATS_PROBDIST_RunStudies()
 ' PURPOSE
 '   Runs the batteries kept apart from the pull-request regression: the
 '   bit-for-bit fidelity checks of the private arithmetic ports of the #26
-'   studies (#300), and the slow production battery of the public Gamma
-'   integration (#13).
+'   studies (#300), and the slow production batteries of the Gamma kernel
+'   (#13).
 '
 ' BEHAVIOR
 '   - Resets the shared counters.
@@ -908,13 +908,16 @@ Private Sub RunSlowProductionBatteries()
 ' RunSlowProductionBatteries
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Calls the slow production battery: the bit-level regression of the public
-'   Gamma and Chi-square surfaces. It tests production code, and it runs on
+'   Calls the slow production batteries: the iteration cap and seams of the
+'   incomplete-gamma kernel, and the bit-level regression of the public Gamma
+'   and Chi-square surfaces. They test production code, and they run on
 '   dispatched and export waves, not on a pull-request run (#13).
 '==============================================================================
 '
-    Debug.Print "== SLOW PRODUCTION BATTERIES: public Gamma integration"
+    Debug.Print "== SLOW PRODUCTION BATTERIES: Gamma cap, seams and public integration"
     TimingStart "RunSlowProductionBatteries"
+    Test_GammaCF_CapAndXSeam
+    TimingLap "Test_GammaCF_CapAndXSeam"
     Test_PublicGamma_Integration
     TimingLap "Test_PublicGamma_Integration"
 End Sub
@@ -19166,8 +19169,6 @@ Private Sub Test_CN_GammaSurvival()
     TimingLap "Test_GammaCF_Coverage"
     Test_GammaCF_AdditionalCallers
     TimingLap "Test_GammaCF_AdditionalCallers"
-    Test_GammaCF_CapAndXSeam
-    TimingLap "Test_GammaCF_CapAndXSeam"
     Test_GammaCF_PrecisionCounterexample
     TimingLap "Test_GammaCF_PrecisionCounterexample"
 

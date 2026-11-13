@@ -317,7 +317,7 @@ End Function
 
 Public Function Test_STATS_PROBDIST_RunStudies_CI() As String
     'Runs the batteries kept apart from the pull-request regression: the
-    'study batteries (#300) and the slow production battery (#13). Returns
+    'study batteries (#300) and the slow production batteries (#13). Returns
     'machine-readable counters, as Test_STATS_PROBDIST_RunAll_CI does.
     On Error GoTo Err_Handler
 
@@ -508,8 +508,9 @@ End Function
         $exitCode = 0
 
         # The study batteries (#300): private arithmetic ports of the #26
-        # studies, and the slow production battery (#13): the bit-level
-        # regression of the public Gamma surfaces. Run only when requested,
+        # studies, and the slow production batteries (#13): the cap and seams
+        # of the Gamma kernel and the bit-level regression of its public
+        # surfaces. Run only when requested,
         # against their own policy. A failure fails the job, so no grid is
         # exported after it; the regression stage stays as measured.
         if ($RunStudies) {

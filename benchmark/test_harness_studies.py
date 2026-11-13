@@ -16,9 +16,9 @@ Proofs for the separated study batteries of #300 (_harness_studies.py).
      regression, against the study policy, and fails the job on a mismatch;
      the workflow requests it on dispatch and on every export.
   5. A hand-edited block and a second separation are refused.
-  6. The slow production battery (#13) is a class of its own: called once,
-     from RunSlowProductionBatteries; it does call production code, and the
-     policy declares it apart from the six studies.
+  6. The slow production batteries (#13) are a class of their own: each is
+     called once, from RunSlowProductionBatteries; each calls production
+     code, and the policy declares them apart from the six studies.
 
 Run: python3 test_harness_studies.py   (exit 0 = pass)
 """
@@ -97,7 +97,7 @@ def main():
           "the six study batteries changed since the separation")
     check(study.get("production_batteries") == dict(S.SLOW)
           and study["expected_assertions"] == S.STUDY_ASSERTIONS + S.SLOW_ASSERTIONS,
-          "the study policy does not declare the slow production battery apart")
+          "the study policy does not declare the slow production batteries apart")
     try:
         S.live_total(ROOT)
     except S.StudiesError as exc:
@@ -133,7 +133,7 @@ def main():
     check(run_studies is not None and "RunSlowProductionBatteries" in run_studies.group(0),
           "the study entry point does not run RunSlowProductionBatteries")
 
-    # 6. The slow production battery.
+    # 6. The slow production batteries.
     slow_driver = procs["RunSlowProductionBatteries"]
     for name in S.SLOW:
         check(f"    {name}\n" not in host, f"Test_CN_GammaSurvival still calls {name}")

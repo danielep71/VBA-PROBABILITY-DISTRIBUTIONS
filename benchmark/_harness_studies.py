@@ -12,15 +12,16 @@ minutes (#298), so they leave the regression that every pull request runs:
     RunStudyBatteries. CI runs it on dispatched and export waves, against
     .github/excel-study-policy.json.
 
-One more battery leaves the pull-request regression, in a class of its own
-(SLOW): Test_PublicGamma_Integration. Unlike the six, it DOES exercise
-production code: it is the bit-level regression of the public Gamma and
-Chi-square surfaces, and it took about three quarters of the regression's time
-(#13 timing). RunSlowProductionBatteries runs it, with the studies: on every
-dispatched run and on every export wave, where a failure fails the job before
-any grid is exported. No VBA change reaches a release branch without it,
-because a VBA change needs an export wave; a pull-request run alone does not
-execute it.
+Two more batteries leave the pull-request regression, in a class of their own
+(SLOW): Test_GammaCF_CapAndXSeam and Test_PublicGamma_Integration. Unlike the
+six, they DO exercise production code: the iteration cap and the monotonic
+seams of the incomplete-gamma kernel, and the bit-level regression of the
+public Gamma and Chi-square surfaces. Together they took 349 of the
+regression's 383 seconds (#13 timing). RunSlowProductionBatteries runs them,
+with the studies: on every dispatched run and on every export wave, where a
+failure fails the job before any grid is exported. No VBA change reaches a
+release branch without them, because a VBA change needs an export wave; a
+pull-request run alone does not execute them.
 
 The separation is generated, never edited by hand: apply() moves the calls
 deterministically and strip() restores the original layout exactly. strip()
@@ -42,14 +43,16 @@ ASSERTIONS = {"Test_PrecisionV2_Fidelity": 500, "Test_ScaledProduct_Fidelity": 4
               "Test_ScaledDD_Fidelity": 611, "Test_ScaledGamma_Fidelity": 475,
               "Test_ExtendedGamma_Fidelity": 1772, "Test_WideGamma_Fidelity": 886}
 STUDY_ASSERTIONS = sum(ASSERTIONS.values())
-# The slow production battery and its assertions: 496 cases of 8, 7 invalid
+# The slow production batteries and their assertions. The cap-and-seam battery
+# is 64 flat assertions; the public integration is 496 cases of 8, 7 invalid
 # inputs of 2, 24 inverses of 2 and 2 reach cases of 4 (public_integration.py).
-SLOW = {"Test_PublicGamma_Integration": 4038}
+SLOW = {"Test_GammaCF_CapAndXSeam": 64, "Test_PublicGamma_Integration": 4038}
 SLOW_ASSERTIONS = sum(SLOW.values())
 HOST = "Private Sub Test_CN_GammaSurvival()\n"
 CALLS = "".join(f"    {name}\n" for name in BATTERIES)
 FOLLOWER = "    Test_PublicGamma_Integration\n"
 PRECEDER = "    Test_GammaCF_PrecisionCounterexample\n"
+SEAM = "    Test_GammaCF_CapAndXSeam\n"
 ANCHOR = "Private Sub BeginRun("
 
 LEGACY_BLOCK = '''' BEGIN study batteries (#300)
@@ -104,8 +107,8 @@ Public Sub Test_STATS_PROBDIST_RunStudies()
 ' PURPOSE
 '   Runs the batteries kept apart from the pull-request regression: the
 '   bit-for-bit fidelity checks of the private arithmetic ports of the #26
-'   studies (#300), and the slow production battery of the public Gamma
-'   integration (#13).
+'   studies (#300), and the slow production batteries of the Gamma kernel
+'   (#13).
 '
 ' BEHAVIOR
 '   - Resets the shared counters.
@@ -143,13 +146,14 @@ Private Sub RunSlowProductionBatteries()
 ' RunSlowProductionBatteries
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Calls the slow production battery: the bit-level regression of the public
-'   Gamma and Chi-square surfaces. It tests production code, and it runs on
+'   Calls the slow production batteries: the iteration cap and seams of the
+'   incomplete-gamma kernel, and the bit-level regression of the public Gamma
+'   and Chi-square surfaces. They test production code, and they run on
 '   dispatched and export waves, not on a pull-request run (#13).
 '==============================================================================
 '
-    Debug.Print "== SLOW PRODUCTION BATTERIES: public Gamma integration"
-''' + FOLLOWER + '''End Sub
+    Debug.Print "== SLOW PRODUCTION BATTERIES: Gamma cap, seams and public integration"
+''' + SEAM + FOLLOWER + '''End Sub
 ' END study batteries (#300)
 
 
@@ -177,15 +181,15 @@ def _host_span(text):
 
 
 def apply(text):
-    """Move the six study calls and the slow battery out of Test_CN_GammaSurvival."""
+    """Move the six study calls and the slow batteries out of Test_CN_GammaSurvival."""
     if separated(text):
         raise StudiesError("the study batteries are already separated")
     start, end = _host_span(text)
     body = text[start:end + 1]
-    if body.count(PRECEDER + CALLS + FOLLOWER) != 1:
-        raise StudiesError("the six battery calls are not contiguous between the precision "
-                           "counterexample and the public integration")
-    text = text[:start] + body.replace(CALLS + FOLLOWER, "", 1) + text[end + 1:]
+    if body.count(SEAM + PRECEDER + CALLS + FOLLOWER) != 1:
+        raise StudiesError("the layout is not cap-and-seam, precision counterexample, the six "
+                           "battery calls, public integration")
+    text = text[:start] + body.replace(SEAM + PRECEDER + CALLS + FOLLOWER, PRECEDER, 1) + text[end + 1:]
     if text.count(ANCHOR) != 1:
         raise StudiesError("BeginRun anchor not found exactly once")
     return text.replace(ANCHOR, BLOCK + ANCHOR, 1)
@@ -209,9 +213,10 @@ def strip(text):
     text = text.replace(BLOCK, "", 1)
     start, end = _host_span(text)
     body = text[start:end + 1]
-    if FOLLOWER in body or CALLS in body or body.count(PRECEDER) != 1:
+    if FOLLOWER in body or CALLS in body or SEAM in body or body.count(PRECEDER) != 1:
         raise StudiesError("Test_CN_GammaSurvival does not have the separated layout")
-    return text[:start] + body.replace(PRECEDER, PRECEDER + CALLS + FOLLOWER, 1) + text[end + 1:]
+    return (text[:start] + body.replace(PRECEDER, SEAM + PRECEDER + CALLS + FOLLOWER, 1)
+            + text[end + 1:])
 
 
 STUDY_POLICY = ".github/excel-study-policy.json"
