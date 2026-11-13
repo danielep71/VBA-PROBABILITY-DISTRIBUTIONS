@@ -262,6 +262,29 @@ or an exact 0 or 1 where the reference differs), a monotonicity reversal, a
 `P + Q` mismatch or a wrong worksheet error always fails. Design a numerical
 change against the guarantee; spend effort on the target only when it is cheap.
 
+### Evidence by kind of change
+
+The evidence a change needs depends on what it can break (#328):
+
+<!-- BEGIN evidence rules -->
+| Change | Evidence required |
+| --- | --- |
+| New numerical claim: a new kernel or route, a new or tighter guarantee | A preregistration with predictions, frozen before evaluation, and an untouched holdout |
+| Defect fix inside existing guarantees | A regression test for the defect, and the main-grid export of the batch wave that certifies it |
+| VBA change with identical code: comments, layout, a refactor proven equivalent | The existing certification, reused under #301; no wave |
+| Python, CI or documentation only | The static checks and the evidence-tool suite |
+<!-- END evidence rules -->
+
+- **Batched Excel waves.** One Excel wave certifies a batch of merged changes
+  on `release/*`, not each pull request. A pull request runs the VBA suites it
+  selects (#299).
+- **One home per number.** Assertion counts, row counts, blocker lists and
+  timings live in their records and are generated into the README assurance
+  block, or linked. Never copy them into prose:
+  `tools/check_restated_counts.py` fails on a count restated in `docs/*.md`.
+- **Frozen means frozen, and only that.** Preregistrations, designs and
+  retained evidence are never rewritten. Everything else is edited normally.
+
 ### Evidence principles
 
 - Test the behavior, not only the implementation path.

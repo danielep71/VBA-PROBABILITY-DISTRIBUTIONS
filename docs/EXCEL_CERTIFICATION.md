@@ -16,6 +16,25 @@ a new module cannot escape the evidence binding. The comparison ignores order.
 
 **Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 
+## When a change needs an Excel wave
+
+The evidence a change needs depends on what it can break (#328). The same
+table is in [CONTRIBUTING.md](../CONTRIBUTING.md#evidence-by-kind-of-change);
+`tools/check_restated_counts.py` fails if the two differ.
+
+<!-- BEGIN evidence rules -->
+| Change | Evidence required |
+| --- | --- |
+| New numerical claim: a new kernel or route, a new or tighter guarantee | A preregistration with predictions, frozen before evaluation, and an untouched holdout |
+| Defect fix inside existing guarantees | A regression test for the defect, and the main-grid export of the batch wave that certifies it |
+| VBA change with identical code: comments, layout, a refactor proven equivalent | The existing certification, reused under #301; no wave |
+| Python, CI or documentation only | The static checks and the evidence-tool suite |
+<!-- END evidence rules -->
+
+Excel waves are batched: one wave, dispatched on `release/*` with the
+automated export below, certifies every change merged since the last one. The
+evidence commit is the direct child of the wave's candidate, as always.
+
 ## What a regression record proves
 
 A green record binds:
@@ -28,9 +47,9 @@ A green record binds:
 - import, execution-backed compile, regression, and cleanup outcomes;
 - the retained regression-log SHA-256.
 
-The policy currently requires 5,987 assertions. A run with 5,986 or 5,988
-assertions is incomplete even if every executed assertion passes. The study
-batteries, run apart since #300, are held to their own count of 8,901 in
+The policy's `expected_assertions` is exact: a run with one assertion more or
+one fewer is incomplete even if every executed assertion passes. The study
+batteries, run apart since #300, are held to their own count in
 `.github/excel-study-policy.json`.
 
 `compile = PASS` in an automated record means the complete imported project was

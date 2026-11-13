@@ -151,6 +151,7 @@ def checks(context: Context) -> list[Check]:
               [python, ".github/scripts/build_release_bundle.py", "--self-test"]),
         # Relative links and anchors only; external links: .github/workflows/link-check.yml.
         Check("markdown-links", [python, "tools/check_links.py", "--root", "."]),
+        Check("restated-counts", [python, "tools/check_restated_counts.py", "--root", "."]),
         Check("python-tests", [python, "-m", "unittest", "discover", "-s", "tests", "-v"]),
         # Rules come from ruff.toml: syntax errors and pyflakes only.
         Check("ruff",

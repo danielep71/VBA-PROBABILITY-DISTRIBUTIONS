@@ -19,10 +19,9 @@ full version at `a9812c7`).
 
 v1.0.0 is **not release-ready** (NO-GO).
 
-- **Registered release blockers.** `release_readiness.json` (reviewed
-  2026-11-13, `certified: false`) lists 6 open blockers: #11, #13, #14, #22,
-  #35 and #213. #23, #24, #26, #29, #34, #47, #72, #163, #173 and #307 are
-  recorded there as resolved, with their evidence.
+- **Registered release blockers.** [`release_readiness.json`](../benchmark/release_readiness.json)
+  holds the open and resolved blockers with their evidence; the
+  [README assurance block](../README.md#assurance-at-a-glance) lists the open ones.
 - **Accuracy tiers (#327).** Each contract is gated by its guarantee
   (1E-13 forward, 1E-12 inverse, 2E-13 balanced Beta, or a looser contract
   bound) and reports its measured target, the registry threshold.
@@ -32,13 +31,12 @@ v1.0.0 is **not release-ready** (NO-GO).
 - **Balanced Beta.** #163 and #173 are resolved by the 2E-13 balanced Beta
   guarantee of #327, confirmed in Excel (run 43423207780) at the six modelled
   worst points, now main-grid rows. Their targets move to v1.0.2.
-- **Retained Excel evidence.** Candidate `f2c1c7b`, 5,987/5,987 regression
-  assertions, Excel 16.0 build 20430, 64-bit
-  ([`excel_regression_record.json`](../benchmark/excel_regression_record.json);
-  expected count in
-  [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json)).
-  It exported and certifies the 2,151-row main grid and the 659-row holdout.
-  It does not certify the release commit.
+- **Retained Excel evidence.** The candidate, assertion counts, Excel build
+  and certified grids are in
+  [`excel_regression_record.json`](../benchmark/excel_regression_record.json)
+  and the [README assurance block](../README.md#assurance-at-a-glance); the expected count is in
+  [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json).
+  The retained record does not certify the release commit.
 - **Coverage debt.** 27 main-grid rows have no disposition:
   `F_InverseCumulative` 18 and `ChiSquare_InverseCumulative` 9, both
   `envelope_domain` ([`coverage_summary.md`](../benchmark/coverage_summary.md)).
@@ -98,7 +96,7 @@ worksheet error.
 - **#22: zero coverage debt.** Its remaining scope, checked against the
   current grids and registry:
   - give the 18 F and 9 Chi-square `envelope_domain` inverse rows real
-    contracts. The Student-t rows of the original 36-row debt were settled
+    contracts. The Student-t rows of the original debt were settled
     by #34;
   - remove the false "enforced by `PROB_F_ValidateEnvelope`" wording from the
     four F `validated` contracts in `accuracy_contracts.csv`. The runtime cap
@@ -154,7 +152,7 @@ gate now holds the worst points on every change.
 ### E. Documentation and test records: #154, #155, #4
 
 - **#154.** Regenerate `benchmark/cross_check_scipy.md` from the current
-  grids (the holdout is now 659 rows). Record the environment and the grid
+  grids (the holdout has grown since). Record the environment and the grid
   SHA-256 values, and reconcile the README coverage statement. The mapping
   fix (PR #160) is done.
 - **#155.** Make `benchmark/README.md` describe the survival-reference route
@@ -253,9 +251,8 @@ hardening, are listed in the milestone: #38, #40, #42, #49, #52, #77–#80,
 GO requires every item. Items marked done describe lasting state; the
 others must hold on the exact release commit.
 
-- [ ] Every blocker in `release_readiness.json` is resolved with evidence
-  (6 open).
-- [ ] Every v1.0.0 milestone issue is closed or explicitly moved (16 open).
+- [ ] Every blocker in `release_readiness.json` is resolved with evidence.
+- [ ] Every v1.0.0 milestone issue is closed or explicitly moved.
 - [ ] No accepted-domain wrong result is left documented as a limitation
   instead of fixed (#11, #13, #14, #213).
 - [x] Exact-SHA Excel certification, unattended grid export and exact-tag
