@@ -27,6 +27,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `traffic_alert.py` | Decides whether the daily traffic snapshot needs an alert issue and writes one that passes Issue triage; run by the alert job of `daily-traffic.yml` ([Traffic alerts](#traffic-alerts)) |
 | `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
 | `check_ci_test_coverage.py` | Fails when a tracked `test_*.py` file is executed on no pull request ([CI test coverage](#ci-test-coverage)) |
+| `select_excel_suite.py` | Chooses the fast or full Excel suite level for a pull request, failing closed to full ([Excel/VBA CI](../docs/EXCEL_VBA_CI.md#suite-levels)); tested by `tests/test_select_excel_suite.py` |
 | `select_accuracy_checks.py` | Lets the Accuracy Gate skip the expensive proofs only for a positively identified metadata-only change |
 | `check_issues.py` | Read-only audit of open-issue metadata and dependency status that issue forms cannot enforce; run by `issue-triage.yml` |
 | `setup_repository.py` | Previews, applies or verifies the repository settings baseline through the `gh` CLI ([Repository settings](#repository-settings)) |
