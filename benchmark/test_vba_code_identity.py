@@ -12,7 +12,8 @@ path of _manifest.verify_source_binding / verify_holdout_binding.
      like a comment (an apostrophe inside a string, "Remainder = 1"); a
      changed statement inside #If; a changed #If or #Const directive; a
      statement commented out; a comment uncommented; a changed [...]
-     expression; `a=1` against `a = 1`; a reordered pair of statements.
+     expression, including one that holds a name Rem after a colon; `a=1`
+     against `a = 1`; a reordered pair of statements.
   3. NEGATIVE: the comparison fails closed on a non-ASCII byte.
   4. carried() on a real repository: a comment-only edit of a committed
      module is carried from the commit; a code edit, a recorded digest that is
@@ -104,6 +105,8 @@ DIFFERENT = {
     "a statement turned into Rem": BASE.replace("    Total = X * 2#", "    Rem Total = X * 2#"),
     "a comment uncommented": BASE.replace("' Module comment", "Dim Leak As Long"),
     "a [...] expression": BASE.replace("[A1 : B2]", "[A1:B2]"),
+    "a name Rem inside [...]": (BASE.replace("[A1 : B2]", "[A1:Rem + 2]"),
+                                BASE.replace("[A1 : B2]", "[A1:Rem + 1]")),
     "whitespace removed between tokens": BASE.replace("Total = X + X", "Total=X+X"),
     "two statements swapped": BASE.replace(
         "    Total = X * 2#\n#Else\n    Total = X + X\n",
@@ -115,7 +118,8 @@ DIFFERENT = {
         "    Dim Total As Double   ' locals _\n    Dim Remainder As Double\n"),
 }
 for label, text in DIFFERENT.items():
-    check(text != BASE and not same(text), f"2: {label} must be a code change")
+    text, old = text if isinstance(text, tuple) else (text, BASE)
+    check(text != old and not same(text, old), f"2: {label} must be a code change")
 
 # 3. Fail closed.
 try:

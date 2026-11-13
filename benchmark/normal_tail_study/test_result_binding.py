@@ -16,6 +16,13 @@ PREREGISTRATION.md Amendment 3).
      P4 contract threshold, the #34 route points), as well as a changed
      candidate, a deleted file, a missing provenance block, and a missing or
      unknown entry.
+  2b. Rows, not files (Amendment 4, #302). The three grids are bound by the
+     rows the study reads. Appending or inserting a row of another function,
+     or adding a trailing newline, leaves the record current. Changing the
+     observation of a row the study reads, adding a row of a function it
+     reads, removing one or reordering them makes it stale: the validator
+     replays and records its rows in file order. STUDY_FUNCTIONS equals the
+     functions validate_kernel.predictions() reads.
   3. The modes fail closed on a stale record: on a synthetic study, --verify
      reports STALE without computing, evaluating or writing; --regenerate
      records the identities that changed and keeps the exposure record and
@@ -49,8 +56,12 @@ class Committed(unittest.TestCase):
     def test_committed_record_is_current(self):
         self.assertEqual(rb.stale(RESULT), [])
         files = RESULT["provenance"]["files"]
-        self.assertEqual(list(files), [name for name, _ in rb.BOUND])
-        self.assertEqual({k: v["role"] for k, v in files.items()}, dict(rb.BOUND))
+        self.assertEqual(list(files), [name for name, _ in rb.BOUND + rb.ROW_BOUND])
+        self.assertEqual({k: v["role"] for k, v in files.items()}, dict(rb.BOUND + rb.ROW_BOUND))
+        for name, _ in rb.ROW_BOUND:
+            self.assertEqual(set(files[name]), {"role", "rows", "rows_sha256"},
+                             "a grid is bound by its rows, never by its file bytes")
+            self.assertGreater(files[name]["rows"], 0)
         self.assertEqual(RESULT["coefficients_sha256"], rb.file_sha256(os.path.join(rb.BENCH, rb.CANDIDATE)))
         self.assertEqual(RESULT["holdout_exposure"]["candidate"]["coefficients_sha256"],
                          RESULT["coefficients_sha256"])
@@ -59,8 +70,10 @@ class Committed(unittest.TestCase):
     def test_validator_inputs_are_bound(self):
         import validate_kernel as vk
         bound = {name for name, _ in rb.BOUND}
-        for grid in vk.GRIDS:
-            self.assertIn(grid, bound)
+        self.assertEqual(tuple(vk.GRIDS), tuple(name for name, _ in rb.ROW_BOUND))
+        self.assertEqual(set(rb.STUDY_FUNCTIONS),
+                         set(vk.DIRECT + vk.STANDARDISED + vk.INTERVALS + vk.INVERSES + vk.UNCHANGED))
+        self.assertEqual(len(rb.STUDY_FUNCTIONS), len(set(rb.STUDY_FUNCTIONS)))
         for path in (vk.PREREGISTRATION, vk.dk.CONVERGENCE_OUT, vk.km.__file__, vk.rm.__file__, vk.hr.__file__,
                      vk.__file__, vk.dk.__file__, rb.__file__):
             self.assertIn(os.path.relpath(os.path.abspath(path), rb.BENCH).replace(os.sep, "/"), bound)
@@ -72,7 +85,7 @@ class Committed(unittest.TestCase):
 class Mutations(unittest.TestCase):
     def setUp(self):
         self.root = tempfile.mkdtemp()
-        for name in [n for n, _ in rb.BOUND] + [rb.CANDIDATE]:
+        for name in [n for n, _ in rb.BOUND + rb.ROW_BOUND] + [rb.CANDIDATE]:
             target = os.path.join(self.root, name)
             os.makedirs(os.path.dirname(target), exist_ok=True)
             shutil.copyfile(os.path.join(rb.BENCH, name), target)
@@ -140,6 +153,52 @@ class Mutations(unittest.TestCase):
         with open(path, "w", encoding="utf-8", newline="\n") as f:
             f.write("\n".join(lines))
         self.assert_stale("probability_accuracy_grid.csv")
+
+    def grid_lines(self, name="probability_accuracy_grid.csv"):
+        path = os.path.join(self.root, name)
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().rstrip("\n").split("\n")
+        return path, lines
+
+    def write_lines(self, path, lines):
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write("\n".join(lines) + "\n")
+
+    def test_unrelated_grid_changes_leave_the_record_current(self):
+        path, lines = self.grid_lines()
+        header = lines[0].split(",")
+        other = next(line for line in lines[1:] if line.startswith("Beta_Survival,"))
+        cells = other.split(",")
+        cells[header.index("arg1")] = "0.123456789"
+        self.write_lines(path, lines + [",".join(cells)])
+        self.assertEqual(rb.stale(RESULT, self.root), [], "an appended row of another function")
+        self.write_lines(path, [lines[0], ",".join(cells)] + lines[1:])
+        self.assertEqual(rb.stale(RESULT, self.root), [], "an unrelated row inserted first")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\n")
+        self.assertEqual(rb.stale(RESULT, self.root), [], "a trailing blank line")
+
+    def test_changes_to_bound_rows_make_the_record_stale(self):
+        name = "probability_accuracy_grid.csv"
+        path, lines = self.grid_lines()
+        header = lines[0].split(",")
+        row = next(i for i, line in enumerate(lines) if line.startswith("NormalStandard_Survival,"))
+        cells = lines[row].split(",")
+        observed = cells[header.index("observed_vba")]
+        self.assertTrue(observed)
+        cells[header.index("observed_vba")] = "1.0;0E+000" if observed != "1.0;0E+000" else "0.5;0E+000"
+        self.write_lines(path, lines[:row] + [",".join(cells)] + lines[row + 1:])
+        self.assert_stale(name)
+        extra = lines[row].split(",")
+        extra[header.index("arg1")] = "0.123456789"
+        self.write_lines(path, lines + [",".join(extra)])
+        self.assert_stale(name)
+        self.write_lines(path, lines[:row] + lines[row + 1:])
+        self.assert_stale(name)
+        self.write_lines(path, lines + [lines[row]])
+        self.assertIn("unreadable", self.assert_stale(name), "a duplicate canonical key")
+        self.write_lines(path, [lines[0]] + lines[:0:-1])
+        self.assert_stale(name)   # the bound rows in another order
 
     def test_contract_and_route_inputs(self):
         with open(os.path.join(self.root, "accuracy_contracts.csv"), "a", encoding="utf-8") as f:
