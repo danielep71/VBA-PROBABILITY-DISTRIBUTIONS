@@ -73,6 +73,10 @@ Limits:
   carried, changed or not. Inside one, an apostrophe, a colon, `Rem` and a
   quote do not mean what they mean in a statement. No tracked module uses the
   construct.
+- `check_excel_certification.py` accepts a carried source only with
+  `--allow-carried`, which the Accuracy Gate and `refresh_evidence.py` pass.
+  Release certification, a fresh export and `--candidate-sha` validation do
+  not pass it and still require the exact bytes.
 - A missing-only export still requires the exact bytes of the bound source.
 - Study records that hash a VBA procedure or module keep their own rules.
 

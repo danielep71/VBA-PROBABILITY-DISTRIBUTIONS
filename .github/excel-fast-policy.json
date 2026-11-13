@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "skip_tests": [
+    "Test_TF_ChiSquareLargeDF",
+    "Test_CN_GammaSurvival"
+  ],
+  "expected_assertions": 939
+}

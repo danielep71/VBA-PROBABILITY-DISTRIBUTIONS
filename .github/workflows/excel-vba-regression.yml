@@ -39,6 +39,13 @@ on:
         description: "Also export these study grids after a green regression, comma-separated: prs_gamma_probe, prs_chisquare_probe, prs_gamma_holdout, prs_chisquare_holdout, prs_gamma_q_complement, gss_small_shape, glq_lower_q, gbr_binary64_map"
         type: string
         default: ""
+      suite:
+        description: "Suite level (#299): full, or fast (skips the tests in .github/excel-fast-policy.json; never with an export, never certification evidence)"
+        type: choice
+        options:
+          - full
+          - fast
+        default: full
       main_mode:
         description: "Main grid only: full re-export, or missing-only (fill blank observed_vba cells). The holdout exporters always fill every row."
         type: choice
@@ -76,12 +83,37 @@ permissions:
   contents: read
 
 jobs:
+  # Suite level (#299). A pull request whose diff cannot change what Excel
+  # executes runs the fast level; everything else runs the full suite. The
+  # selection fails closed: tools/select_excel_suite.py answers "full" for any
+  # event, base or path it cannot classify, and a failed or skipped selection
+  # leaves the output empty, which the regression job reads as full.
+  select:
+    name: Select the Excel suite level
+    runs-on: ubuntu-latest
+    outputs:
+      suite: ${{ steps.select.outputs.suite }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Select the suite level from the complete change
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 tools/select_excel_suite.py --event "$EVENT_NAME" --base "$BASE_SHA"
+
   regression:
     name: Run Excel/VBA regression harness
+    needs: select
 
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      !cancelled() &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
 
     runs-on:
       - self-hosted
@@ -99,9 +131,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Fast level (#299) only for a pull request the selection classified as
+      # fast, or a dispatch that asks for it and exports nothing. A fast run
+      # writes a record the evidence policy rejects.
       - name: Run complete VBA regression suite through Excel COM
         shell: cmd
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" ${{ ((github.event_name == 'workflow_dispatch' && (inputs.run_studies || inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')) || (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache')) && '-RunStudies' || '' }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Run-ExcelVbaTests.ps1 -RepositoryRoot "%GITHUB_WORKSPACE%" ${{ ((github.event_name == 'workflow_dispatch' && (inputs.run_studies || inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != '')) || (github.event_name == 'push' && github.ref == 'refs/heads/study/307-loggamma-cache')) && '-RunStudies' || '' }} ${{ ((github.event_name == 'pull_request' && needs.select.outputs.suite == 'fast') || (github.event_name == 'workflow_dispatch' && inputs.suite == 'fast' && !(inputs.export_main || inputs.export_holdout || inputs.export_holdout_older || inputs.export_survival_boundary || inputs.export_tchi_large_df || inputs.export_studies != ''))) && '-Fast' || '' }}
 
       - name: Upload exact-SHA VBA certification evidence
         if: always()

@@ -23,6 +23,8 @@ def build(root: Path, docs: dict[str, str], tables: tuple[str, str] = (TABLE, TA
         json.dumps({"expected_assertions": 5987}), encoding="utf-8")
     (root / ".github/excel-study-policy.json").write_text(
         json.dumps({"expected_assertions": 8901}), encoding="utf-8")
+    (root / ".github/excel-fast-policy.json").write_text(
+        json.dumps({"expected_assertions": 939}), encoding="utf-8")
     (root / "benchmark/holdout").mkdir(parents=True)
     (root / "benchmark/probability_accuracy_grid.csv").write_text(
         "h\n" + "r\n" * 2151, encoding="utf-8")
