@@ -241,6 +241,86 @@ Microsoft does not recommend unattended Office automation from a
 non-interactive Windows service. An interactive dedicated session is materially
 more reliable for Excel COM execution.
 
+## Hardened runner set-up
+
+One machine runs every Excel regression and every export. It has failed in
+four ways: the runner lost communication with GitHub, an action download timed
+out, the checkout could not resolve `github.com`, and the machine went to
+standby (#295). The set-up below removes the causes that are on the machine.
+It keeps the interactive session that Excel COM needs.
+
+**Status: written on 2026-11-13, not yet applied or tested on the runner
+machine.** Apply it there once and record the date here.
+
+Run the commands in an elevated PowerShell on the runner machine.
+
+1. **Sign in automatically.** Use Sysinternals Autologon (it stores the
+   password as an LSA secret, not in clear text) for the dedicated runner
+   account. The account should have no rights beyond the runner's needs.
+2. **Start the runner at logon and restart it when it exits.** Replace the
+   path with the runner directory:
+
+   ```powershell
+   $action = New-ScheduledTaskAction -Execute "cmd.exe" `
+       -Argument "/c run.cmd" -WorkingDirectory "C:\actions-runner"
+   $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+   $settings = New-ScheduledTaskSettingsSet -RestartCount 999 `
+       -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) `
+       -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+   Register-ScheduledTask -TaskName "GitHub Actions runner (Excel)" -Action $action `
+       -Trigger $trigger -Settings $settings -RunLevel Limited
+   ```
+
+   The task must run in the interactive session: leave "Run only when user is
+   logged on" selected. Do not install the runner as a Windows service.
+3. **Never sleep.**
+
+   ```powershell
+   powercfg /change standby-timeout-ac 0
+   powercfg /change hibernate-timeout-ac 0
+   powercfg /hibernate off
+   ```
+
+   Keep the machine on mains power, and do not close a laptop lid unless the
+   lid action is "Do nothing".
+4. **Keep Windows Update out of the waves.** Set active hours to the hours
+   when waves run (**Settings > Windows Update > Advanced options > Active
+   hours**), and restart the machine deliberately after updates.
+5. **Let the runner update itself.** Do not pass `--disableupdate` to
+   `config.cmd`. After a GitHub runner release, the first job updates the
+   runner and restarts it; the scheduled task of step 2 brings it back.
+
+To test the set-up: restart the machine, do not sign in by hand, and dispatch
+the Excel workflow with `suite: fast`. It must start within a few minutes.
+
+### What the repository does about the rest
+
+Network failures cannot be fixed on the machine. The workflow
+`.github/workflows/excel-runner-watch.yml` handles them, with the rules in
+`tools/excel_runner_watch.py`:
+
+- **One automatic re-run of an infrastructure failure.** When an Excel run
+  fails in job set-up or checkout, or GitHub reports a lost runner and no step
+  failed, its failed jobs are re-run once. A failure of the regression or
+  export step is never re-run automatically, and no run is re-run twice.
+- **An alert issue.** Twice an hour a check reads the queue. It opens or
+  updates one issue, "[CI]: The Excel runner needs attention", when:
+  - a run of a workflow that uses this runner has been queued for more than
+    30 minutes with no job created;
+  - a job has waited for the runner for more than 60 minutes while nothing
+    runs on it, which means the runner is probably offline, or for more than
+    180 minutes while another job holds it.
+
+  It closes the issue when nothing is waiting any more. Runs older than 48
+  hours are left out.
+- **A run queued with no job** cannot be cancelled through the API. Close and
+  reopen its pull request, or push a new commit to the branch; cancel the old
+  run from the Actions page if it remains listed.
+
+Both jobs run from the default branch, so they act only once this file is on
+`main`. The workflow token cannot list runners, so "offline" is inferred from
+a job that waits while nothing runs.
+
 ## Security model
 
 Self-hosted runners execute repository code with the runner account's
