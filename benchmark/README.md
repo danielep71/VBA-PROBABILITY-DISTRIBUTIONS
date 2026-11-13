@@ -46,6 +46,7 @@ required, and they answer different questions.
 | `promote_grid_rows.py` | The sanctioned way to add, patch, re-reference or retire grid rows. Report-only unless `--write`; preserves every observation. |
 | `migrate_references.py` | Audited, reference-only replacement driven by the reference audit. Report-only unless `--write`. |
 | `_grid_safety.py`, `check_grid_keys.py` | Shared canonical-key and write-target safeguards, and the duplicate-key guard run on the committed grids. |
+| `_row_binding.py`, `check_study_grid_binding.py` | Bind a study to the grid rows it reads (`row_digest`), and fail when a study file hashes or compares a whole live grid without a declared reason (#302). |
 | `M_STATS_PROBDIST_ACCURACYEXPORT.bas` | Excel macro that fills `observed_vba` by calling the library. Phase 2. |
 | `compute_errors.py` | Joins observed vs reference, finds max-error locations, checks each claim, writes the summary. Phase 3. |
 | `accuracy_summary.md` | The generated verdict table. |
