@@ -45,7 +45,7 @@ Utilities, exploratory studies and report generators that cannot affect a releas
 
 ## Excel exact-SHA certification
 
-`excel-exact-sha-certification` is active and mandatory. Its portable negative proof is `benchmark/test_excel_certification.py`. Since #47 its live command also validates the retained `excel_regression_record.json` against each commit in the Accuracy Gate, so a mismatched retained record cannot coexist with a green gate. The runtime record must bind the candidate SHA, imported-source hashes, the exact regression assertion count in `.github/excel-evidence-policy.json` (`expected_assertions`, currently 955), Excel/build/bitness, and cleanup status. Fresh-grid export claims separately require matching committed grid digests and row counts.
+`excel-exact-sha-certification` is active and mandatory. Its portable negative proof is `benchmark/test_excel_certification.py`. Since #47 its live command also validates the retained `excel_regression_record.json` against each commit in the Accuracy Gate, so a mismatched retained record cannot coexist with a green gate. The runtime record must bind the candidate SHA, imported-source hashes, the exact regression assertion count in `.github/excel-evidence-policy.json` (`expected_assertions`), Excel/build/bitness, and cleanup status. Fresh-grid export claims separately require matching committed grid digests and row counts.
 
 **Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 

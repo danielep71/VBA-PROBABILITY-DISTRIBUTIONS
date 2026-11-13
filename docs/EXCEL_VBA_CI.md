@@ -37,8 +37,11 @@ For each run, the PowerShell adapter:
 6. injects a CI-only bridge into `M_STATS_PROBDIST_TEST`;
 7. executes all suites in dependency order and reads the private assertion
    counters;
-8. requires the exact policy count (currently 5,987; the study batteries, run
-   apart since #300, have their own policy of 8,901), zero failures, and
+8. requires the exact policy count (`expected_assertions` in
+   [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json);
+   the study batteries, run apart since #300, have their own count in
+   [`.github/excel-study-policy.json`](../.github/excel-study-policy.json)),
+   zero failures, and
    consistent TOTAL/PASS/FAIL counters;
 9. closes its workbook and Excel instance and records cleanup separately;
 10. writes `test-result.txt` and `excel-certification.json`.

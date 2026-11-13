@@ -97,6 +97,20 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Proportionate evidence (#328)
+
+- `CONTRIBUTING.md` and `docs/EXCEL_CERTIFICATION.md` state what evidence each
+  kind of change needs: a preregistration and untouched holdout only for a new
+  numerical claim; a regression test and the next batch Excel wave for a
+  defect fix; reused certification for VBA changes with identical code; static
+  checks and the evidence-tool suite for Python, CI and documentation. Excel
+  waves certify batches of merged changes. The pull request template asks
+  which row applies.
+- Counts held by a record are no longer copied into `docs/*.md`; the guides
+  link the record or the README assurance block. The new static check
+  `restated-counts` fails on a copy, and found a stale assertion count in
+  `docs/VERIFICATION_DEPTH.md`.
+
 ### Accuracy tiers (#327)
 
 - Every accuracy contract now has a **guarantee**, which gates the release,

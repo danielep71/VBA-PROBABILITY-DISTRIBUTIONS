@@ -286,7 +286,7 @@ class CheckListTest(unittest.TestCase):
             "whitespace-self-test", "whitespace", "vba-jumps-self-test", "vba-jumps",
             "vba-source", "vba-conditionals", "vba-visibility", "vba-layout",
             "release-semantics-self-test", "release-semantics", "binaries",
-            "release-bundle-self-test", "markdown-links", "python-tests", "ruff", "mypy",
+            "release-bundle-self-test", "markdown-links", "restated-counts", "python-tests", "ruff", "mypy",
             "actionlint", "actionlint-probe"])
         for check in checks.values():
             script = next((part for part in check.command if part.endswith(".py")), None)

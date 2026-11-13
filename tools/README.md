@@ -23,6 +23,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
 | `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
+| `check_restated_counts.py` | Fails when `docs/*.md` restates a count held by a record, or when the evidence-rules tables of `CONTRIBUTING.md` and `docs/EXCEL_CERTIFICATION.md` differ (#328); tested by `tests/test_check_restated_counts.py` |
 | `traffic_alert.py` | Decides whether the daily traffic snapshot needs an alert issue and writes one that passes Issue triage; run by the alert job of `daily-traffic.yml` ([Traffic alerts](#traffic-alerts)) |
 | `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
 | `check_ci_test_coverage.py` | Fails when a tracked `test_*.py` file is executed on no pull request ([CI test coverage](#ci-test-coverage)) |
@@ -57,6 +58,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `markdown-links` | `check_links.py`: relative links and anchors in every tracked Markdown file |
+| `restated-counts` | `check_restated_counts.py`: no record-held count copied into `docs/*.md` |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
 | `ruff` | `python -m ruff check .`, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes rules |
 | `mypy` | `python -m mypy`: strict type checking of `tools/` and `.github/scripts/`, configured in [`mypy.ini`](../mypy.ini) |
