@@ -97,6 +97,25 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Accuracy tiers (#327)
+
+- Every accuracy contract now has a **guarantee**, which gates the release,
+  and a **measured target**, the registry threshold, reported beside it. The
+  guarantee is the target or a floor, whichever is looser: 1E-13 relative
+  error for densities, CDFs and survivals; 1E-12 for inverses; 2E-13 for the
+  balanced Beta CDF and survival. Absolute and residual metrics keep their
+  thresholds. A result inside its guarantee but above its target is reported
+  as "PASS · target missed" and does not block a release. No production code
+  and no registry threshold changed.
+- Silent wrong values, monotonicity reversals and `P + Q` mismatches fail the
+  gate whatever the tier, on every row of each grid; wrong worksheet errors
+  already did.
+- Excel confirmed the balanced Beta guarantee at the six points where the
+  route model is worst, now twelve main-grid rows: every value equals the
+  model bit for bit, worst 1.38E-13 (run 43423207780, 5,987/5,987
+  assertions, no other observation changed). #163 and #173 are no longer
+  release blockers; meeting their targets is v1.0.2 work.
+
 ### Gamma performance study closure (#307)
 
 - Retain the recurrence-reuse experiment, residual-preserving B4 and scalar-pair

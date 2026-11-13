@@ -245,6 +245,23 @@ under review.
 
 When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. The self-hosted runner can export the main and holdout grids unattended; the same document describes that path and the manual fallback. Never rebind old measurements to new code.
 
+### Accuracy tiers
+
+Each accuracy contract carries a **guarantee** and a **measured target** (#327).
+The guarantee gates the release: `max(target, 1E-13)` for forward relative
+errors, `max(target, 1E-12)` for inverses, `max(target, 2E-13)` for the
+balanced Beta CDF and survival, and the target itself for absolute and residual
+metrics. The target is the threshold in `benchmark/accuracy_contracts.csv`; a
+change that keeps every result inside its guarantee but misses a target is
+reported as "PASS · target missed" and does not block. Never edit
+`benchmark/accuracy_guarantees.csv`: change the registry and run
+`python benchmark/accuracy_tiers.py --write`.
+
+Independently of the tiers, a silent wrong value (relative error above 1E-6,
+or an exact 0 or 1 where the reference differs), a monotonicity reversal, a
+`P + Q` mismatch or a wrong worksheet error always fails. Design a numerical
+change against the guarantee; spend effort on the target only when it is cheap.
+
 ### Evidence principles
 
 - Test the behavior, not only the implementation path.

@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-09T21:58:03Z",
+ "generated_utc": "2026-11-13T12:29:33Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -50,7 +50,7 @@
    },
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
-    "sha256": "d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561"
+    "sha256": "7b5900acb35b3ba7793261f0787b5d635c297023271c120c14805cecf63c7cd3"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
@@ -3559,7 +3559,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 41.8,
+ "runtime_s": 40.9,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3734,6 +3734,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded bf129af3dd9d561576bc9f08a0f641b5219c38fae2f2af2dac1df29cd3325c3a, now d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561"
+   ]
+  },
+  {
+   "utc": "2026-11-13T12:28:52Z",
+   "reason": "#327: twelve balanced Beta rows promoted to the main grid and exported (run 43423207780); no normal-tail row, rule or threshold changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561, now 7b5900acb35b3ba7793261f0787b5d635c297023271c120c14805cecf63c7cd3"
    ]
   }
  ]

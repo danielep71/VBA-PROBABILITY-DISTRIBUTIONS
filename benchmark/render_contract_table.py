@@ -4,10 +4,14 @@ Single source of truth: edit accuracy_contracts.csv, then regenerate the table
 with `python3 render_contract_table.py --write` (without --write it prints to
 stdout). Do not hand-edit it in README.md.
 Also lists numerical_limitations.csv (limitations that are not accuracy contracts).
+Each contract shows its guarantee, derived by accuracy_tiers.py (#327), beside
+its threshold, the measured target.
 """
-import csv, os
+import csv, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from accuracy_tiers import derive as derive_guarantee  # noqa: E402
 
 
 def render(contracts_path=None, limitations_path=None):
@@ -41,12 +45,18 @@ def render(contracts_path=None, limitations_path=None):
     if kernels:
         summary += " Kernel-level contracts: " + ", ".join(sorted(kernels)) + "."
 
+    # Two tiers (#327): the guarantee gates the release; the registry
+    # threshold is the measured target, reported but never gating on its own.
     lines = [summary, "",
-             "| Contract | Function | Regime | Measure | Metric | Threshold | Provenance |",
-             "|---|---|---|---|---|---|---|"]
+             "The **guarantee** gates the release; the **measured target** is the registry "
+             "threshold, reported beside it ([accuracy_tiers.py](accuracy_tiers.py)).", "",
+             "| Contract | Function | Regime | Measure | Metric | Guarantee | Measured target "
+             "| Provenance |",
+             "|---|---|---|---|---|---|---|---|"]
     for r in sorted(contracts, key=lambda r: r["contract_id"]):
         lines.append(f"| {r['contract_id']} | {r['function']} | {r['regime']} | "
-                     f"{r['measure']} | {r['metric']} | {r['threshold']} | {r['provenance']} |")
+                     f"{r['measure']} | {r['metric']} | {derive_guarantee(r)[0]} | "
+                     f"{r['threshold']} | {r['provenance']} |")
     out = "\n".join(lines)
 
     if os.path.exists(limitations_path):

@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 failures = []
 commands = (
     ("test_contract_eval.py",),
+    ("test_accuracy_tiers.py",),
     ("test_harness_timing.py",),
     ("test_harness_studies.py",),
     ("positive_ratio_subnormal/check_post23_cutoffs.py",),
@@ -77,6 +78,7 @@ commands = (
     ("normal_tail_study/test_result_binding.py",),
     ("normal_tail_study/test_ulps_apart.py",),
     ("beta_balanced_survival/test_beta_route_model.py",),
+    ("beta_balanced_survival/test_promote_worst_points.py",),
     ("test_excel_certification.py",),
     ("test_apply_excel_export.py",),
     ("test_drift_guard_mutations.py",),

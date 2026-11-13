@@ -17,9 +17,9 @@
  "fidelity": {
   "by_function": {
    "Beta_Cumulative": {
-    "exact": 58,
+    "exact": 64,
     "max_ulps": 0,
-    "observations": 58
+    "observations": 64
    },
    "Beta_Density": {
     "exact": 134,
@@ -27,9 +27,9 @@
     "observations": 134
    },
    "Beta_Survival": {
-    "exact": 58,
+    "exact": 64,
     "max_ulps": 0,
-    "observations": 58
+    "observations": 64
    },
    "LogBeta": {
     "exact": 1,
@@ -57,10 +57,10 @@
     "observations": 14
    }
   },
-  "exact": 371,
+  "exact": 383,
   "limit_ulps": 2,
   "max_ulps": 0,
-  "observations": 371,
+  "observations": 383,
   "predates_source": {
    "beta_f_unbalanced": {
     "exact": 0,
@@ -74,7 +74,7 @@
  "issue": 163,
  "observations": {
   "excluded": {
-   "a shape at or above 100 (large_shape and extreme_shape contracts)": 84,
+   "a shape at or above 100 (large_shape and extreme_shape contracts)": 90,
    "both shapes below 0.5 (tiny_unbalanced contract)": 12,
    "ratio below 0.1": 114
   },
@@ -208,6 +208,84 @@
     "regime": "unbalanced",
     "value": 0.4195729,
     "x": "0.13564668769716088"
+   },
+   {
+    "a": "14.0",
+    "b": "19.0",
+    "binary64_error": 3.068e-30,
+    "branch": "reflected",
+    "contract_threshold": 2e-14,
+    "function": "Beta_Cumulative",
+    "gate_error": 3e-30,
+    "grid": "probability_accuracy_grid.csv",
+    "regime": "balanced",
+    "value": 1.0,
+    "x": "0.99"
+   },
+   {
+    "a": "14.0",
+    "b": "19.0",
+    "binary64_error": 6.698e-14,
+    "branch": "direct",
+    "contract_threshold": 5e-15,
+    "function": "Beta_Survival",
+    "gate_error": 6.701e-14,
+    "grid": "probability_accuracy_grid.csv",
+    "regime": "balanced",
+    "value": 3.068406e-30,
+    "x": "0.99"
+   },
+   {
+    "a": "19.0",
+    "b": "14.0",
+    "binary64_error": 4.248e-15,
+    "branch": "reflected",
+    "contract_threshold": 2e-14,
+    "function": "Beta_Cumulative",
+    "gate_error": 4.298e-15,
+    "grid": "probability_accuracy_grid.csv",
+    "regime": "balanced",
+    "value": 0.9305579,
+    "x": "0.7"
+   },
+   {
+    "a": "19.0",
+    "b": "14.0",
+    "binary64_error": 5.713e-14,
+    "branch": "direct",
+    "contract_threshold": 5e-15,
+    "function": "Beta_Survival",
+    "gate_error": 5.708e-14,
+    "grid": "probability_accuracy_grid.csv",
+    "regime": "balanced",
+    "value": 0.06944214,
+    "x": "0.7"
+   },
+   {
+    "a": "14.0",
+    "b": "19.0",
+    "binary64_error": 5.936e-14,
+    "branch": "direct",
+    "contract_threshold": 2e-14,
+    "function": "Beta_Cumulative",
+    "gate_error": 5.943e-14,
+    "grid": "probability_accuracy_grid.csv",
+    "regime": "balanced",
+    "value": 0.06944214,
+    "x": "0.3"
+   },
+   {
+    "a": "14.0",
+    "b": "19.0",
+    "binary64_error": 4.385e-15,
+    "branch": "reflected",
+    "contract_threshold": 5e-15,
+    "function": "Beta_Survival",
+    "gate_error": 4.435e-15,
+    "grid": "probability_accuracy_grid.csv",
+    "regime": "balanced",
+    "value": 0.9305579,
+    "x": "0.3"
    },
    {
     "a": "2.7",

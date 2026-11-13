@@ -393,8 +393,12 @@ It does not move the branch or the stash reference. A mismatched companion grid
 or source digest still fails validation; the export record and both manifests
 must be committed atomically with their corresponding grids.
 
-Positive tooling fixtures use the coherent historical evidence snapshot
-`fdd57f84060ac0ed171edf8651fc1cc779b19674` (the release base, reachable from this change's ancestry) in throwaway clones, with the current
+Positive tooling fixtures use a coherent historical evidence snapshot in
+throwaway clones: `test_manifest_provenance.py` uses
+`fdd57f84060ac0ed171edf8651fc1cc779b19674` (the release base), and
+`test_render_readme_assurance.py` and `test_refresh_evidence.py` use
+`8fd0af5b8fa3754d112c06f4845e2a896933c7b6`, the first commit whose summaries carry the guarantee and measured-target
+columns (#327). Both are reachable from this change's ancestry. They run with the current
 writer, renderer and refresh tools. Their success does not certify the live
 checkout. CI separately checks live source identities, export records, grids,
 counts and summaries, and the negative controls continue to reject stale or

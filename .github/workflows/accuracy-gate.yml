@@ -120,6 +120,13 @@ jobs:
             python test_evidence_tools.py --checks-only
           fi
 
+      - name: "Verify the accuracy guarantees are generated from the registry (#327)"
+        working-directory: benchmark
+        # The guarantee gates and the registry threshold is the measured target.
+        # accuracy_guarantees.csv is derived by a fixed rule; a hand edit, a stale
+        # copy or a guarantee stricter than its target fails here.
+        run: python accuracy_tiers.py
+
       - name: Run strict accuracy gate on the committed grid
         working-directory: benchmark
         # No --allow-known-limitations: strict mode. Non-zero exit (blocking

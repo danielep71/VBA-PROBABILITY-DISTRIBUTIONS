@@ -25,7 +25,10 @@ Proves:
      covered by a characterization_only contract - the state 1fac483 left the
      three LogGamma rows in - and the row is named;
  11. NEGATIVE (#171): a contract without a threshold whose status is not
-     characterization_only does not count as a disposition.
+     characterization_only does not count as a disposition;
+ 12. NEGATIVE (#327): a relative miss of the measured target inside the
+     guarantee passes as "PASS · target missed" and is listed as reported only;
+ 13. NEGATIVE (#327): a relative error above the guarantee fails.
 Run: python3 test_analyze_holdout_older.py   (exit 0 = pass, nonzero = fail)
 """
 import csv
@@ -98,8 +101,11 @@ def read(path):
 
 
 with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
-    # 1-4. A current summary that records a failure.
-    tight = [dict(CONTRACTS[0]), dict(CONTRACTS[1], threshold="2E-15"), dict(CONTRACTS[2])]
+    # 1-4. A current summary that records a failure. Since #327 a relative
+    # contract is scored against max(threshold, 1E-13), so the breach uses an
+    # absolute contract, whose guarantee is its threshold.
+    tight = [dict(CONTRACTS[0]), dict(CONTRACTS[1], metric="absolute", threshold="5E-16"),
+             dict(CONTRACTS[2])]
     code, grid, regs, out = analyze(d, tight)
     text = read(out)
     ok, msg = C.check(out, grid, regs)
@@ -158,6 +164,37 @@ with tempfile.TemporaryDirectory(prefix="holdout-older-") as d:
     ok, msg = C.check(out, grid, regs)
     check(not ok and "neither scored" in msg,
           "11: an active contract without a threshold must not count as a disposition\n" + msg)
+
+with tempfile.TemporaryDirectory(prefix="holdout-older-tiers-") as d:
+    # 12 (#327). NEGATIVE: a relative miss of the measured target inside the
+    # 1E-13 guarantee passes, says so, and lists the row as reported only.
+    missed = [dict(CONTRACTS[0]), dict(CONTRACTS[1], threshold="2E-15"), dict(CONTRACTS[2])]
+    code, grid, regs, out = analyze(d, missed)
+    text = read(out)
+    check(code == 0, f"12: a target-only miss must not fail the run (got {code})")
+    check("| 1E-13 | 2E-15 |" in text and "| PASS · target missed |" in text,
+          "12: the verdict names the target miss beside the guarantee\n" + text)
+    check("Bar_Survival(0.82, 2.7, 3.4)" in text.split("## Rows above the measured target")[1]
+          .split("## Rows no contract scores")[0]
+          and "Bar_Survival(0.82" not in text.split("## Failing rows")[1]
+          .split("## Rows above")[0],
+          "12: the row is listed above the target, not as failing\n" + text)
+    check(C.check(out, grid, regs)[0], "12: the summary is current")
+
+    # 13 (#327). NEGATIVE: a relative error above the 1E-13 guarantee fails.
+    breach = [dict(CONTRACTS[0], threshold="5E-15"),
+              dict(CONTRACTS[1], threshold="1E-14"), dict(CONTRACTS[2])]
+    grid_rows = [dict(r) for r in GRID]
+    grid_rows[1]["observed_vba"] = "2.50000000001000E-001;0E+000"
+    gp, rp, op = (os.path.join(d, n) for n in ("g2.csv", "c2.csv", "s2.md"))
+    write_csv(gp, GRID_FIELDS, grid_rows)
+    write_csv(rp, CONTRACT_FIELDS, breach)
+    proc = subprocess.run([sys.executable, os.path.join(HERE, "analyze_holdout_older.py"),
+                           "--grid", gp, "--contracts", rp, "--out", op],
+                          capture_output=True, text=True)
+    check(proc.returncode == 1 and "| 1E-13 | 1E-14 |" in read(op)
+          and "| FAIL |" in read(op),
+          f"13: a guarantee breach must fail (got {proc.returncode})\n" + read(op))
 
 # 9. The real record before #164, as committed in ecf3e45. Pinned by digest so
 # the case cannot silently test some other file. Nothing about its rows or

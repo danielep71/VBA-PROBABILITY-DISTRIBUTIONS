@@ -2,7 +2,7 @@
   "schema_version": "release-readiness/v1",
   "release": "v1.0.0",
   "tracker_issue": 31,
-  "reviewed": "2026-11-11",
+  "reviewed": "2026-11-13",
   "certified": false,
   "blockers": [
     {
@@ -114,15 +114,21 @@
       "issue": 163,
       "class": "silent_wrong",
       "gate": null,
-      "status": "open",
-      "summary": "Beta_Survival exceeds its balanced 5E-15 contract (5.45E-15 in Excel at 0.82, 2.7, 3.4; modelled up to 1.4E-13)"
+      "status": "resolved",
+      "summary": "Beta_Survival exceeds its balanced 5E-15 contract (5.45E-15 in Excel at 0.82, 2.7, 3.4; modelled up to 1.4E-13)",
+      "resolution": {
+        "evidence": "Resolved by the two-tier policy (#327): Beta_Survival balanced is gated by a 2E-13 guarantee; 5E-15 is its measured target. Excel run 43423207780 at f2c1c7b measured the six points where beta_route_model.py is worst, promoted to the main grid by beta_balanced_survival/promote_worst_points.py: all twelve CDF and survival values equal the model bit for bit (383 of 383 Excel observations now reproduced), worst 1.38E-13 at (0.410058, 50, 100). The 5.45E-15 holdout row at (0.82, 2.7, 3.4) is a reported target miss. Meeting the 5E-15 target is v1.0.2 work under #175 and #7."
+      }
     },
     {
       "issue": 173,
       "class": "silent_wrong",
       "gate": null,
-      "status": "open",
-      "summary": "Modelled Beta_Cumulative error exceeds its balanced 2E-14 contract at 144 domain points (up to 1.3E-13)"
+      "status": "resolved",
+      "summary": "Modelled Beta_Cumulative error exceeds its balanced 2E-14 contract at 144 domain points (up to 1.3E-13)",
+      "resolution": {
+        "evidence": "Resolved by the two-tier policy (#327): Beta_Cumulative balanced is gated by a 2E-13 guarantee; 2E-14 is its measured target. Excel run 43423207780 at f2c1c7b confirmed the modelled worst points: the twelve promoted main-grid rows equal the model bit for bit, worst CDF error 1.34E-13 at (0.666667, 100, 50). Meeting the 2E-14 target is v1.0.2 work under #175 and #7."
+      }
     },
     {
       "issue": 213,
@@ -138,7 +144,7 @@
       "status": "resolved",
       "summary": "A double-double Gamma P/Q call takes 5 ms to 170 ms in Excel, up to 30,000 times the binary64 routine it replaced",
       "resolution": {
-        "evidence": "Maintainer explicitly accepted the results reached and closed #307 on 2026-11-11 with further optimization/ultrafast routing deferred. Exact LogGamma reuse is integrated via #313/#315 (8.5\u201312x repeated shape-100 P/Q and 2.2\u20132.5x cold inverse gains; cold forward mixed). B5 is retained as an unpromoted prototype: run 43070672334 at e498658 passed 576 arithmetic checks, 11 normalization checks, 1371 exact inputs and 48 timing rows, reducing warm pair cost versus B4 by 21.5\u201382.9%. It is not deployed in public functions and does not meet the 100-us target. Ordinary regression 43070683108 attempt 2 passed. The 100-us binary64 fit target is not a universal DD release gate; no frozen protocol, accuracy threshold or recorded result is changed. B5 promotion and the untouched 117-point routing holdout remain deferred. See docs/research/GAMMA_PERFORMANCE_STATUS.md and retained evidence docs/research/gamma_scalar_evidence/run_43070672334/. Other release blockers remain open."
+        "evidence": "Maintainer explicitly accepted the results reached and closed #307 on 2026-11-11 with further optimization/ultrafast routing deferred. Exact LogGamma reuse is integrated via #313/#315 (8.5–12x repeated shape-100 P/Q and 2.2–2.5x cold inverse gains; cold forward mixed). B5 is retained as an unpromoted prototype: run 43070672334 at e498658 passed 576 arithmetic checks, 11 normalization checks, 1371 exact inputs and 48 timing rows, reducing warm pair cost versus B4 by 21.5–82.9%. It is not deployed in public functions and does not meet the 100-us target. Ordinary regression 43070683108 attempt 2 passed. The 100-us binary64 fit target is not a universal DD release gate; no frozen protocol, accuracy threshold or recorded result is changed. B5 promotion and the untouched 117-point routing holdout remain deferred. See docs/research/GAMMA_PERFORMANCE_STATUS.md and retained evidence docs/research/gamma_scalar_evidence/run_43070672334/. Other release blockers remain open."
       }
     }
   ]

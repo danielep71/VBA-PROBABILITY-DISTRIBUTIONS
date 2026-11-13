@@ -162,6 +162,13 @@
       "proof_command": "test_survival_references.py",
       "negative_claim": "a survival reference taken at the decimal token instead of the binary64 argument, one formed as 1 - CDF at 53 bits, one below the 25-digit floor, stale or orphaned debt, an undefined blocker, an unknown survival function, an unlisted or empty grid and an uncertified oracle are rejected",
       "current_state": "green_with_registered_transition_debt"
+    },
+    {
+      "id": "accuracy-tiers",
+      "live_command": "accuracy_tiers.py",
+      "proof_command": "test_accuracy_tiers.py",
+      "negative_claim": "a hand-edited, stale or too-strict guarantee is refused; a guarantee breach fails the gate and the holdout while a target-only miss passes; silent wrong, monotonicity and P + Q violations fail independently of the tiers",
+      "current_state": "green"
     }
   ]
 }
