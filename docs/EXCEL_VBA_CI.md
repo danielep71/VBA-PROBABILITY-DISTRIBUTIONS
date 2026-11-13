@@ -305,7 +305,8 @@ Network failures cannot be fixed on the machine. The workflow
   export step is never re-run automatically, and no run is re-run twice.
 - **An alert issue.** Twice an hour a check reads the queue. It opens or
   updates one issue, "[CI]: The Excel runner needs attention", when:
-  - a run has been queued for more than 30 minutes with no job created;
+  - a run of a workflow that uses this runner has been queued for more than
+    30 minutes with no job created;
   - a job has waited for the runner for more than 60 minutes while nothing
     runs on it, which means the runner is probably offline, or for more than
     180 minutes while another job holds it.

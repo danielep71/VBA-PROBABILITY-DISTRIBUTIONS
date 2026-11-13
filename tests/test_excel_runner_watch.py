@@ -85,6 +85,7 @@ class Retry(unittest.TestCase):
 def queued_run(run_id: int, minutes: int, status: str = "queued") -> dict[str, object]:
     created = NOW.timestamp() - minutes * 60
     return {"id": run_id, "name": "Excel VBA Regression", "head_branch": "feat/x",
+            "path": ".github/workflows/excel-vba-regression.yml",
             "status": status,
             "created_at": datetime.fromtimestamp(created, timezone.utc).isoformat()}
 
@@ -110,6 +111,19 @@ class Watch(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertIn("no job was created", found[0])
         self.assertIn("run 1", found[0])
+
+    def test_a_jobless_run_of_a_hosted_workflow_is_not_this_runners_incident(self) -> None:
+        for path in (".github/workflows/codeql.yml", None):
+            hosted = dict(queued_run(1, 500), path=path)
+            self.assertEqual(W.findings([hosted], {}, NOW), [])
+
+    def test_the_runner_workflows_are_those_that_name_a_self_hosted_runner(self) -> None:
+        named = set()
+        for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+            text = path.read_text(encoding="utf-8")
+            if re.search(r"^\s*- self-hosted\s*$|runs-on:.*self-hosted", text, re.M):
+                named.add(f".github/workflows/{path.name}")
+        self.assertEqual(named, set(W.RUNNER_WORKFLOWS))
 
     def test_an_offline_runner_is_reported(self) -> None:
         runs = [queued_run(1, W.OFFLINE_MINUTES + 5, "in_progress")]

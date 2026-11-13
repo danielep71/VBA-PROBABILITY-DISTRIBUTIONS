@@ -20,7 +20,8 @@ retry
 watch
     Report what needs a person:
 
-      * a run still queued with no job created after STUCK_MINUTES. GitHub
+      * a run of a workflow that uses the runner (RUNNER_WORKFLOWS) still
+        queued with no job created after STUCK_MINUTES. GitHub
         sometimes never creates the jobs; such a run cannot be cancelled
         through the API, and starts only when the pull request is closed and
         reopened or a new commit is pushed;
@@ -56,6 +57,18 @@ INFRASTRUCTURE_STEPS = frozenset({"Set up job", "Check out repository"})
 HARNESS_STEPS = frozenset({
     "Run complete VBA regression suite through Excel COM",
     "Export selected grids through Excel COM",
+})
+# The workflows with a job on the self-hosted runner. A run that never got a
+# job has no labels to inspect, so only these are reported as stuck: a hosted
+# backlog elsewhere is not this runner's incident. A test holds the set equal
+# to the workflow files that name a self-hosted runner.
+RUNNER_WORKFLOWS = frozenset({
+    ".github/workflows/excel-vba-regression.yml",
+    ".github/workflows/gamma-cache-study.yml",
+    ".github/workflows/gamma-kernel-profile.yml",
+    ".github/workflows/gamma-pair-study.yml",
+    ".github/workflows/gamma-recurrence-study.yml",
+    ".github/workflows/gamma-scalar-study.yml",
 })
 LOST_RUNNER = ("lost communication with the server", "received a shutdown signal")
 
@@ -147,7 +160,7 @@ def findings(runs: Sequence[Json], jobs: Mapping[str, Sequence[Json]], now: date
         listed = jobs.get(str(run.get("id")), ())
         label = f"run {run.get('id')} ({run.get('name')}, branch {run.get('head_branch')})"
         if not listed:
-            if waiting and age > STUCK_MINUTES:
+            if waiting and age > STUCK_MINUTES and run.get("path") in RUNNER_WORKFLOWS:
                 found.append((-age, f"{label}: queued {int(age)} min and no job was created. "
                               "Close and reopen the pull request, or push a new commit to "
                               "the branch."))
