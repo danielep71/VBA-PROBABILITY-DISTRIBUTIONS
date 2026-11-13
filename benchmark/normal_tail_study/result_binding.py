@@ -9,6 +9,10 @@ kernel_coefficients.json, is bound by the top-level `coefficients_sha256`,
 which `holdout_exposure.candidate` repeats and holdout_record.check_record
 cross-checks; it is not listed a second time here.
 
+The three grids are bound by the rows the study reads, not by their file
+bytes (Amendment 4, #302): a row appended for another function leaves the
+record current, and a change to a row the study reads makes it stale.
+
 `stale(result)` compares those identities with the files on disk and returns
 every difference: a changed, missing or unlisted file, or a missing block.
 An empty list means the record was made from exactly these files. It reads
@@ -27,7 +31,11 @@ from __future__ import annotations
 
 import hashlib
 import os
+import sys
 from typing import Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from _row_binding import row_digest  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BENCH = os.path.dirname(HERE)
@@ -45,16 +53,35 @@ BOUND: tuple[tuple[str, str], ...] = (
     ("normal_tail_study/holdout_record.py", "validator: the exposure record and the modes"),
     ("normal_tail_study/result_binding.py", "validator: this binding"),
     ("normal_tail_study/PREREGISTRATION.md", "design and configuration, with its amendments"),
-    ("probability_accuracy_grid.csv", "input: §7 rows and committed observations"),
-    ("survival_boundary/survival_boundary_grid.csv", "input: §7 rows and committed observations"),
-    ("holdout_older/holdout_older_grid.csv", "input: §7 rows and committed observations"),
     ("accuracy_contracts.csv", "input: the P4 contracts"),
     ("student_t_large_df_study/results.json", "input: the A7 route points"),
 )
 
+# The three grids of the §7 predictions, bound by row (Amendment 4, #302).
+ROW_BOUND: tuple[tuple[str, str], ...] = (
+    ("probability_accuracy_grid.csv", "input: §7 rows and committed observations"),
+    ("survival_boundary/survival_boundary_grid.csv", "input: §7 rows and committed observations"),
+    ("holdout_older/holdout_older_grid.csv", "input: §7 rows and committed observations"),
+)
+# Every function validate_kernel.predictions() reads from those grids:
+# DIRECT, STANDARDISED, INTERVALS, INVERSES and UNCHANGED there.
+# test_result_binding.py holds the two lists equal.
+STUDY_FUNCTIONS: tuple[str, ...] = (
+    "NormalStandard_Survival", "NormalStandard_Cumulative", "NormalStandard_Density",
+    "Normal_Cumulative", "Normal_Survival", "Lognormal_Cumulative", "Lognormal_Survival",
+    "NormalStandard_IntervalProbability", "Normal_IntervalProbability",
+    "NormalStandard_InverseCumulative", "NormalStandard_InverseSurvival",
+    "Normal_InverseCumulative", "Normal_InverseSurvival",
+    "Lognormal_InverseCumulative", "Lognormal_InverseSurvival",
+    "Normal_Density", "Lognormal_Density", "NormalStandard_InverseCumulativeFast",
+)
+
 RULE = ("SHA-256 of every file that produces or shapes this record, by path relative to benchmark/. "
         "The candidate is bound by coefficients_sha256. A change to any of them makes the record stale "
-        "until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3).")
+        "until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3). "
+        "The three grids are bound by rows_sha256: the rows of the functions the predictions read, by "
+        "canonical key, with their claim, metric, reference, observation and expected_error "
+        "(Amendment 4, _row_binding.row_digest).")
 
 
 def file_sha256(path: str) -> str:
@@ -64,15 +91,20 @@ def file_sha256(path: str) -> str:
 
 def identities(root: str = BENCH) -> dict[str, Any]:
     """The provenance block for the files under root as they are now."""
-    return {"rule": RULE,
-            "files": {name: {"role": role, "sha256": file_sha256(os.path.join(root, name))}
-                      for name, role in BOUND}}
+    files: dict[str, Any] = {name: {"role": role, "sha256": file_sha256(os.path.join(root, name))}
+                             for name, role in BOUND}
+    for name, role in ROW_BOUND:
+        count, digest = row_digest(os.path.join(root, name), STUDY_FUNCTIONS)
+        files[name] = {"role": role, "rows": count, "rows_sha256": digest}
+    return {"rule": RULE, "files": files}
 
 
 def _current(root: str, name: str) -> str | None:
     try:
+        if name in dict(ROW_BOUND):
+            return str(row_digest(os.path.join(root, name), STUDY_FUNCTIONS)[1])
         return file_sha256(os.path.join(root, name))
-    except OSError:
+    except (OSError, ValueError, KeyError):
         return None
 
 
@@ -89,10 +121,12 @@ def stale(result: Any, root: str = BENCH) -> list[str]:
     if not isinstance(files, dict):
         return out + ["results.json has no provenance block: it does not record which generator, model, "
                       "validator, design and inputs produced it"]
-    roles = dict(BOUND)
-    for name in [n for n, _ in BOUND] + sorted(n for n in files if n not in roles):
+    roles = dict(BOUND + ROW_BOUND)
+    by_row = dict(ROW_BOUND)
+    for name in [n for n, _ in BOUND + ROW_BOUND] + sorted(n for n in files if n not in roles):
         entry = files.get(name)
-        recorded = entry.get("sha256") if isinstance(entry, dict) else None
+        field = "rows_sha256" if name in by_row else "sha256"
+        recorded = entry.get(field) if isinstance(entry, dict) else None
         if name not in roles:
             out.append(f"{name}: recorded but no longer bound")
             continue
@@ -100,7 +134,8 @@ def stale(result: Any, root: str = BENCH) -> list[str]:
         if entry is None:
             out.append(f"{name} ({roles[name]}): bound but not recorded")
         elif now is None:
-            out.append(f"{name} ({roles[name]}): recorded {recorded}, but the file is missing")
+            out.append(f"{name} ({roles[name]}): recorded {recorded}, but the file is missing "
+                       "or unreadable")
         elif recorded != now:
             out.append(f"{name} ({roles[name]}): recorded {recorded}, now {now}")
     return out

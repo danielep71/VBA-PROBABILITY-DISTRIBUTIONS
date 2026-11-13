@@ -340,8 +340,12 @@ of:
 - `kernel_model.py`, the #34 route model and its coefficients;
 - `validate_kernel.py`, `holdout_record.py` and `result_binding.py`;
 - the whole `PREREGISTRATION.md`;
-- the three §7 grids, `accuracy_contracts.csv` and the #34 study's
-  `results.json`.
+- `accuracy_contracts.csv` and the #34 study's `results.json`.
+
+Since Amendment 4 (#302) the three §7 grids are bound by row, not by file:
+the block records the count and `rows_sha256` of the rows of the normal and
+lognormal functions the predictions read (`result_binding.STUDY_FUNCTIONS`),
+hashed by `benchmark/_row_binding.py`.
 
 The candidate stays bound by `coefficients_sha256`. `test_kernel_model.py`
 and `test_result_binding.py` compare every identity with the files in CI, in
@@ -351,8 +355,9 @@ STALE without recomputing.
 A legitimate change to a bound file needs
 `validate_kernel.py --regenerate --reason TEXT`. That run records the
 identities that changed. It cannot re-bind the candidate or the frozen text,
-because the holdout record refuses both. So a change to the main accuracy
-grid, for example, now also requires this study to be regenerated.
+because the holdout record refuses both. A row promoted to a grid for another
+function leaves this study current; a change to a row it reads, including
+its observation, requires a regeneration.
 
 ## Running the validator
 

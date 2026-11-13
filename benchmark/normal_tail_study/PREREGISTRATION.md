@@ -605,3 +605,42 @@ Every other recorded value is unchanged, and the recorded status stays PASS.
 `test_fit_convergence.py` and `test_result_binding.py` pin this. They include
 deliberate nonconvergent, capped and missing-status fits, and mutations of
 each bound file.
+
+---
+
+## Amendment 4 — 2026-11-13: grids bound by row (#302)
+
+**Disclosure.** I wrote this amendment on 2026-11-13. By then every result
+listed in the disclosure of Amendment 3 had been observed, and nothing since:
+H was evaluated once, on 2026-10-13, and was not evaluated to write or apply
+this amendment.
+
+Nothing above this section has been changed. This amendment is a record
+control, not a design change: the fit, A1–A8, their thresholds, `B`, the
+evaluation sets of §5 and the predictions of §7 are unchanged.
+
+**Defect: the binding was wider than the input.** Amendment 3 bound the three
+grids of the §7 predictions by the SHA-256 of each file. The predictions read
+only the rows of the normal and lognormal functions. Every promotion of rows
+for another function therefore made the record stale and forced a
+regeneration that changed only metadata: #23, #289 and #327.
+
+**Binding.** The three grids are now bound by the rows the predictions read:
+- the rows whose function is one of those `validate_kernel.predictions()`
+  reads, listed in `result_binding.STUDY_FUNCTIONS`;
+- each identified by its canonical key (IEEE-754 argument bits, regime,
+  evidence set), with its claim, metric, reference, observation and
+  expected_error;
+- hashed in canonical-key order by `benchmark/_row_binding.py`.
+
+The `provenance` entry of each grid records the row count and `rows_sha256`
+in place of the file SHA-256. A row added for another function, or a
+different order of rows, leaves the record current. A change to any bound
+row, an added or removed bound row, or a duplicate key makes it stale. Every
+other bound file stays bound by its file SHA-256, as in Amendment 3.
+
+**What changes in the record.** `results.json` is regenerated without
+evaluating H. It records the three row bindings, this amendment in
+`amendments`, and a regeneration entry with `holdout_evaluated: false`. Every
+other recorded value is unchanged, and the recorded status stays PASS.
+`test_result_binding.py` pins the new behaviour in both directions.

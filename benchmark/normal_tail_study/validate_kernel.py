@@ -694,7 +694,10 @@ def compute():
                        "<= 0.01 against the de la Vallee Poussin bound; CAP_EXHAUSTED and NOT_CONVERGED fail) "
                        "and results bound to the SHA-256 of their generator, models, validator, design and "
                        "inputs; recorded after the fit and A6 were observed, nothing refitted, no threshold "
-                       "changed"],
+                       "changed",
+                       "Amendment 4 (#302): the three grids of the predictions are bound by the rows the "
+                       "predictions read (canonical key, claim, metric, reference, observation), not by file "
+                       "SHA-256; a record control, nothing refitted, no threshold changed, H not evaluated"],
         "acceptance": {"fit_convergence": convergence, "A1": a1, "A2": a2, "A2_as_frozen": a2_frozen, "A3": a3, "A4": a4, "A5": a5,
                        "A7": a7, "A8": a8},
         "bands": {"current": band_worst(current_rows), "candidate": band_worst(v_rows)},
