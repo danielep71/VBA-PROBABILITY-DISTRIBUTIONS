@@ -12,8 +12,10 @@ path of _manifest.verify_source_binding / verify_holdout_binding.
      like a comment (an apostrophe inside a string, "Remainder = 1"); a
      changed statement inside #If; a changed #If or #Const directive; a
      statement commented out; a comment uncommented; a changed [...]
-     expression, including one that holds a name Rem after a colon; `a=1`
-     against `a = 1`; a reordered pair of statements.
+     expression, including one that holds a name Rem after a colon or a
+     string; `a=1` against `a = 1`; a reordered pair of statements.
+  2b. A module that uses a [...] expression is never carried, even unchanged;
+     brackets inside a string literal do not count.
   3. NEGATIVE: the comparison fails closed on a non-ASCII byte.
   4. carried() on a real repository: a comment-only edit of a committed
      module is carried from the commit; a code edit, a recorded digest that is
@@ -60,7 +62,7 @@ BASE = (
     "#End If\n"
     "    Remainder = 1: Rem trailing remark\n"
     "    F = Total + _\n"
-    "        Remainder + [A1 : B2]\n"
+    "        Remainder\n"
     "End Function\n"
 )
 
@@ -91,6 +93,7 @@ for label, text in SAME.items():
     check(text != BASE and same(text), f"1: {label} must not be a code change")
 
 # 2. Code.
+BRACKETS = BASE.replace("        Remainder\n", "        Remainder + [A1 : B2]\n")
 DIFFERENT = {
     "a changed numeric literal": BASE.replace("X * 2#", "X * 3#"),
     "a changed string literal": BASE.replace("label", "lAbel"),
@@ -104,9 +107,15 @@ DIFFERENT = {
     "a statement commented out": BASE.replace("    Total = X * 2#", "    ' Total = X * 2#"),
     "a statement turned into Rem": BASE.replace("    Total = X * 2#", "    Rem Total = X * 2#"),
     "a comment uncommented": BASE.replace("' Module comment", "Dim Leak As Long"),
-    "a [...] expression": BASE.replace("[A1 : B2]", "[A1:B2]"),
-    "a name Rem inside [...]": (BASE.replace("[A1 : B2]", "[A1:Rem + 2]"),
-                                BASE.replace("[A1 : B2]", "[A1:Rem + 1]")),
+    "a [...] expression": (BRACKETS.replace("[A1 : B2]", "[A1:B2]"), BRACKETS),
+    "whitespace in a string inside [...]": (BRACKETS.replace("[A1 : B2]", '["]  "]'),
+                                            BRACKETS.replace("[A1 : B2]", '["] "]')),
+    "an added [...] expression": BRACKETS,
+    "whitespace after a string that holds a bracket": (
+        BASE.replace('"it\'s  a \'quoted\' label"', '"[" & "a  b"'),
+        BASE.replace('"it\'s  a \'quoted\' label"', '"[" & "a b"')),
+    "a name Rem inside [...]": (BRACKETS.replace("[A1 : B2]", "[A1:Rem + 2]"),
+                                BRACKETS.replace("[A1 : B2]", "[A1:Rem + 1]")),
     "whitespace removed between tokens": BASE.replace("Total = X + X", "Total=X+X"),
     "two statements swapped": BASE.replace(
         "    Total = X * 2#\n#Else\n    Total = X + X\n",
@@ -120,6 +129,15 @@ DIFFERENT = {
 for label, text in DIFFERENT.items():
     text, old = text if isinstance(text, tuple) else (text, BASE)
     check(text != old and not same(text, old), f"2: {label} must be a code change")
+
+# 2b. A [...] expression is never carried, even unchanged or comment-edited.
+check("never carried" in (V.first_difference(BRACKETS.encode(), BRACKETS.encode()) or ""),
+      "2b: an unchanged module with a [...] expression is refused")
+check(V.first_difference(BRACKETS.encode(),
+                         BRACKETS.replace("' Module comment", "' edited").encode()) is not None,
+      "2b: a comment edit beside a [...] expression is refused")
+check(same(BASE.replace('"it\'s  a', '"[it\'s]  a'), BASE.replace('"it\'s  a', '"[it\'s]  a')),
+      "2b: brackets inside a string literal are not a [...] expression")
 
 # 3. Fail closed.
 try:

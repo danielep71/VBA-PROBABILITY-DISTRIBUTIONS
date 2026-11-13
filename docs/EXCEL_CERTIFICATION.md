@@ -69,6 +69,10 @@ Limits:
   already requires an Excel run on the exact release commit; in addition,
   `render_readme_assurance.py` refuses `certified: true` while any module is
   carried.
+- A module that uses a `[...]` expression outside a string literal is never
+  carried, changed or not. Inside one, an apostrophe, a colon, `Rem` and a
+  quote do not mean what they mean in a statement. No tracked module uses the
+  construct.
 - A missing-only export still requires the exact bytes of the bound source.
 - Study records that hash a VBA procedure or module keep their own rules.
 

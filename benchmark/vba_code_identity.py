@@ -24,7 +24,8 @@ tools/vba_lexer.py, the lexer the VBA source checks already use:
     marked as such.
 
 Whitespace is never inserted or removed between two tokens, so `a=1` and
-`a = 1` are different code. Anything else that differs is a code change. The
+`a = 1` are different code. A module that uses a [...] expression outside a
+string literal is never carried, changed or not: no tracked module does. Anything else that differs is a code change. The
 comparison fails closed: a non-ASCII byte, an unreadable file, a missing
 commit or a recorded digest that does not match the executed bytes all refuse
 the carry.
@@ -59,6 +60,8 @@ def _normalize(code):
     index = 0
     while index < len(code):
         char = code[index]
+        # A string literal is kept whole wherever it is; inside one, a
+        # bracket does not open or close a [...] expression.
         if in_string:
             out.append(char)
             if char == '"':
@@ -69,7 +72,9 @@ def _normalize(code):
                     in_string = False
         elif brackets:
             out.append(char)
-            if char == "[":
+            if char == '"':
+                in_string = True
+            elif char == "[":
                 brackets += 1
             elif char == "]":
                 brackets -= 1
@@ -112,9 +117,39 @@ def code_digest(raw):
     return "sha256:" + hashlib.sha256(payload.encode("ascii")).hexdigest()
 
 
+def _outside_strings(code):
+    out, in_string = [], False
+    for char in code:
+        if char == '"':
+            in_string = not in_string
+        elif not in_string:
+            out.append(char)
+    return "".join(out)
+
+
+def bracket_statement(stream):
+    """The first statement that uses [ or ] outside a string literal, or None."""
+    for _kind, code in stream:
+        plain = _outside_strings(code)
+        if "[" in plain or "]" in plain:
+            return code
+    return None
+
+
 def first_difference(old_raw, new_raw):
-    """None when the code streams are equal, else a short description."""
+    """None when the code streams are equal, else a short description.
+
+    A module that uses a [...] expression is never carried. Inside one, an
+    apostrophe, a colon, Rem and a quote do not mean what they mean in a
+    statement, and no tracked module uses the construct; refusing it removes
+    that whole class of lexing doubt.
+    """
     old, new = code_stream(old_raw), code_stream(new_raw)
+    for stream, label in ((old, "executed"), (new, "current")):
+        statement = bracket_statement(stream)
+        if statement is not None:
+            return (f"the {label} module uses a [...] expression, which is never carried: "
+                    f"{statement[:80]!r}")
     for index, (a, b) in enumerate(zip(old, new)):
         if a != b:
             return f"statement {index + 1}: executed {a[1][:80]!r}, now {b[1][:80]!r}"
