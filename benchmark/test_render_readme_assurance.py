@@ -41,7 +41,7 @@ def fixture():
     # Unit controls need coherent evidence even while live source is unexported.
     # Use a real, immutable evidence snapshot; R itself is imported from the
     # current working tree. Live freshness is checked separately by CI.
-    subprocess.run(["git", "checkout", "--quiet", "fdd57f84060ac0ed171edf8651fc1cc779b19674"],
+    subprocess.run(["git", "checkout", "--quiet", "8fd0af5b8fa3754d112c06f4845e2a896933c7b6"],
                    cwd=root, check=True, capture_output=True)
     return root
 

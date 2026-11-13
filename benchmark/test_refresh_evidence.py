@@ -88,7 +88,7 @@ def fixture(root):
                    check=True, capture_output=True)
     # Start with real coherent historical evidence, then exercise CURRENT tools.
     # An unexported live test module must not invalidate the positive fixture.
-    git(root, "checkout", "--quiet", "fdd57f84060ac0ed171edf8651fc1cc779b19674")
+    git(root, "checkout", "--quiet", "8fd0af5b8fa3754d112c06f4845e2a896933c7b6")
     for rel in filter(None, git(ROOT, "ls-files", "-z", "--", "benchmark").decode().split("\0")):
         source = os.path.join(ROOT, *rel.split("/"))
         if rel.endswith(".py") and os.path.isfile(source):
