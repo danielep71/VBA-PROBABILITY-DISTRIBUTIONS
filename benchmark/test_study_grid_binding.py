@@ -7,10 +7,10 @@ Fixtures for check_study_grid_binding.py and _row_binding.py (#302).
      flagged, or one with no reason, is reported too.
   3. A file that only names the grid, or only hashes, is not flagged; files
      directly in benchmark/ are outside the scan.
-  4. row_digest: an appended row of another function, a different row order
-     and a text spelling of the same binary64 argument leave the digest
-     unchanged; a changed observation, reference or claim of a bound row, an
-     added or removed bound row change it; a duplicate key raises.
+  4. row_digest: an appended or inserted row of another function and a text
+     spelling of the same binary64 argument leave the digest unchanged; a
+     changed observation, reference or claim of a bound row, an added, removed
+     or reordered bound row change it; a duplicate key raises.
 
 Run: python3 test_study_grid_binding.py   (exit 0 = pass)
 """
@@ -87,7 +87,8 @@ base = [row("Foo_Survival", "0.85"), row("Foo_Survival", "2.0"), row("Bar_Densit
 n, h = digest(base)
 check(n == 2, f"4: two bound rows, got {n}")
 check(digest(base + [row("Bar_Density", "3.0")]) == (n, h), "4: an unrelated appended row")
-check(digest(base[::-1]) == (n, h), "4: another row order")
+check(digest([base[2], base[0], row("Bar_Density", "4.0"), base[1]]) == (n, h),
+      "4: unrelated rows moved or inserted between the bound ones")
 check(digest([row("Foo_Survival", "0.84999999999999998")] + base[1:]) == (n, h),
       "4: another spelling of the same binary64 argument")
 for label, changed in (
@@ -95,7 +96,8 @@ for label, changed in (
         ("reference", [row("Foo_Survival", "0.85", reference="0.51")] + base[1:]),
         ("claim", [row("Foo_Survival", "0.85", claim="rel<=1E-13")] + base[1:]),
         ("added bound row", base + [row("Foo_Survival", "3.0")]),
-        ("removed bound row", base[1:])):
+        ("removed bound row", base[1:]),
+        ("order of the bound rows", [base[1], base[0], base[2]])):
     check(digest(changed)[1] != h, f"4: a changed {label} changes the digest")
 try:
     digest(base + [row("Foo_Survival", "0.85")])

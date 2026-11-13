@@ -345,7 +345,7 @@ of:
 Since Amendment 4 (#302) the three §7 grids are bound by row, not by file:
 the block records the count and `rows_sha256` of the rows of the normal and
 lognormal functions the predictions read (`result_binding.STUDY_FUNCTIONS`),
-hashed by `benchmark/_row_binding.py`.
+hashed in file order by `benchmark/_row_binding.py`.
 
 The candidate stays bound by `coefficients_sha256`. `test_kernel_model.py`
 and `test_result_binding.py` compare every identity with the files in CI, in

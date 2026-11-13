@@ -631,12 +631,13 @@ regeneration that changed only metadata: #23, #289 and #327.
 - each identified by its canonical key (IEEE-754 argument bits, regime,
   evidence set), with its claim, metric, reference, observation and
   expected_error;
-- hashed in canonical-key order by `benchmark/_row_binding.py`.
+- hashed in file order by `benchmark/_row_binding.py`, because the
+  predictions are computed and recorded in that order.
 
 The `provenance` entry of each grid records the row count and `rows_sha256`
-in place of the file SHA-256. A row added for another function, or a
-different order of rows, leaves the record current. A change to any bound
-row, an added or removed bound row, or a duplicate key makes it stale. Every
+in place of the file SHA-256. A row added for another function, anywhere in
+the file, leaves the record current. A change to any bound row, an added,
+removed or reordered bound row, or a duplicate key makes it stale. Every
 other bound file stays bound by its file SHA-256, as in Amendment 3.
 
 **What changes in the record.** `results.json` is regenerated without

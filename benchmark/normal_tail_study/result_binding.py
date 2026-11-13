@@ -80,7 +80,8 @@ RULE = ("SHA-256 of every file that produces or shapes this record, by path rela
         "The candidate is bound by coefficients_sha256. A change to any of them makes the record stale "
         "until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3). "
         "The three grids are bound by rows_sha256: the rows of the functions the predictions read, by "
-        "canonical key, with their claim, metric, reference, observation and expected_error "
+        "canonical key and in file order, with their claim, metric, reference, observation and "
+        "expected_error "
         "(Amendment 4, _row_binding.row_digest).")
 
 

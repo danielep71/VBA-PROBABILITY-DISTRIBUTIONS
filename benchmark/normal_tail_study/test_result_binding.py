@@ -17,10 +17,11 @@ PREREGISTRATION.md Amendment 3).
      candidate, a deleted file, a missing provenance block, and a missing or
      unknown entry.
   2b. Rows, not files (Amendment 4, #302). The three grids are bound by the
-     rows the study reads. Appending a row of another function, reordering
-     rows or adding a trailing newline leaves the record current. Changing
-     the observation of a row the study reads, adding a row of a function it
-     reads, or removing one makes it stale. STUDY_FUNCTIONS equals the
+     rows the study reads. Appending or inserting a row of another function,
+     or adding a trailing newline, leaves the record current. Changing the
+     observation of a row the study reads, adding a row of a function it
+     reads, removing one or reordering them makes it stale: the validator
+     replays and records its rows in file order. STUDY_FUNCTIONS equals the
      functions validate_kernel.predictions() reads.
   3. The modes fail closed on a stale record: on a synthetic study, --verify
      reports STALE without computing, evaluating or writing; --regenerate
@@ -171,8 +172,8 @@ class Mutations(unittest.TestCase):
         cells[header.index("arg1")] = "0.123456789"
         self.write_lines(path, lines + [",".join(cells)])
         self.assertEqual(rb.stale(RESULT, self.root), [], "an appended row of another function")
-        self.write_lines(path, [lines[0]] + lines[:0:-1])
-        self.assertEqual(rb.stale(RESULT, self.root), [], "the same rows in another order")
+        self.write_lines(path, [lines[0], ",".join(cells)] + lines[1:])
+        self.assertEqual(rb.stale(RESULT, self.root), [], "an unrelated row inserted first")
         with open(path, "a", encoding="utf-8") as f:
             f.write("\n")
         self.assertEqual(rb.stale(RESULT, self.root), [], "a trailing blank line")
@@ -196,6 +197,8 @@ class Mutations(unittest.TestCase):
         self.assert_stale(name)
         self.write_lines(path, lines + [lines[row]])
         self.assertIn("unreadable", self.assert_stale(name), "a duplicate canonical key")
+        self.write_lines(path, [lines[0]] + lines[:0:-1])
+        self.assert_stale(name)   # the bound rows in another order
 
     def test_contract_and_route_inputs(self):
         with open(os.path.join(self.root, "accuracy_contracts.csv"), "a", encoding="utf-8") as f:

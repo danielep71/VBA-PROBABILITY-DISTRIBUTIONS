@@ -4,13 +4,13 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-13T13:51:09Z",
+ "generated_utc": "2026-11-13T14:13:58Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
  },
  "provenance": {
-  "rule": "SHA-256 of every file that produces or shapes this record, by path relative to benchmark/. The candidate is bound by coefficients_sha256. A change to any of them makes the record stale until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3). The three grids are bound by rows_sha256: the rows of the functions the predictions read, by canonical key, with their claim, metric, reference, observation and expected_error (Amendment 4, _row_binding.row_digest).",
+  "rule": "SHA-256 of every file that produces or shapes this record, by path relative to benchmark/. The candidate is bound by coefficients_sha256. A change to any of them makes the record stale until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3). The three grids are bound by rows_sha256: the rows of the functions the predictions read, by canonical key and in file order, with their claim, metric, reference, observation and expected_error (Amendment 4, _row_binding.row_digest).",
   "files": {
    "normal_tail_study/derive_kernel.py": {
     "role": "generator: the fit and its convergence decision",
@@ -42,11 +42,11 @@
    },
    "normal_tail_study/result_binding.py": {
     "role": "validator: this binding",
-    "sha256": "85bac5b1a54187167926c5e4919195f633e565df9d03fbce21df023021459602"
+    "sha256": "9017a6c59dbb857245533f3ac5bb9299bfae5a44175c03d518c17a00c386a438"
    },
    "normal_tail_study/PREREGISTRATION.md": {
     "role": "design and configuration, with its amendments",
-    "sha256": "768e59c8b588d4bcaa4fc5b412fce5440af1dcdcd35a85f3d447f1bf116f4452"
+    "sha256": "96a36012ff748ebb48690105db74ef96125622b38d20cbb604671a1cc0fdf4f6"
    },
    "accuracy_contracts.csv": {
     "role": "input: the P4 contracts",
@@ -59,17 +59,17 @@
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
     "rows": 118,
-    "rows_sha256": "0cd0775349bcb1621f47e3a2751934274eac56b885f0e9436e6fcb8f0b553f2d"
+    "rows_sha256": "2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
     "rows": 19,
-    "rows_sha256": "1a5f139fb3224295b74749d31ba0606fbc1907a43a220f42cdcb7cb2eb293707"
+    "rows_sha256": "00c8a94ecca9096ca0673dbd2bf9e9456c030194e259b1726da87c66995cc3eb"
    },
    "holdout_older/holdout_older_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
     "rows": 39,
-    "rows_sha256": "68861cc5dc3f6264926883f74f15a9dd4813f92cc9a8ae7e483efff4abe44000"
+    "rows_sha256": "b7a01e9e616674a5fa0534963badccfb3d498a12a88b20ae5952fceb77e27e99"
    }
   }
  },
@@ -3563,7 +3563,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 44.2,
+ "runtime_s": 40.8,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3749,16 +3749,16 @@
    ]
   },
   {
-   "utc": "2026-11-13T13:50:25Z",
+   "utc": "2026-11-13T14:13:18Z",
    "reason": "#302, Amendment 4: the three grids are bound by the rows the predictions read, not by file SHA-256; no row, rule or threshold changed",
    "holdout_evaluated": false,
    "identities_changed": [
     "normal_tail_study/validate_kernel.py (validator: sets, oracles, checks and predictions): recorded a1691b86edf1990a972b8a1a357eed0ba4cdbac5c724498ec84a54b0fa887065, now dc47a1bd7e321f34d67ddee1a9d2a822ceaabc08d3746c061755252913d7d298",
-    "normal_tail_study/result_binding.py (validator: this binding): recorded d19f69740a224de0f6dba908060b4e2c52653c7efea62fd6e6175dddb31986c6, now 85bac5b1a54187167926c5e4919195f633e565df9d03fbce21df023021459602",
-    "normal_tail_study/PREREGISTRATION.md (design and configuration, with its amendments): recorded 0292fe4c5aeb2546b6cf354207bf184dbdeb029cf67c435be79ad41d618b802d, now 768e59c8b588d4bcaa4fc5b412fce5440af1dcdcd35a85f3d447f1bf116f4452",
-    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 0cd0775349bcb1621f47e3a2751934274eac56b885f0e9436e6fcb8f0b553f2d",
-    "survival_boundary/survival_boundary_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 1a5f139fb3224295b74749d31ba0606fbc1907a43a220f42cdcb7cb2eb293707",
-    "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 68861cc5dc3f6264926883f74f15a9dd4813f92cc9a8ae7e483efff4abe44000"
+    "normal_tail_study/result_binding.py (validator: this binding): recorded d19f69740a224de0f6dba908060b4e2c52653c7efea62fd6e6175dddb31986c6, now 9017a6c59dbb857245533f3ac5bb9299bfae5a44175c03d518c17a00c386a438",
+    "normal_tail_study/PREREGISTRATION.md (design and configuration, with its amendments): recorded 0292fe4c5aeb2546b6cf354207bf184dbdeb029cf67c435be79ad41d618b802d, now 96a36012ff748ebb48690105db74ef96125622b38d20cbb604671a1cc0fdf4f6",
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4",
+    "survival_boundary/survival_boundary_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 00c8a94ecca9096ca0673dbd2bf9e9456c030194e259b1726da87c66995cc3eb",
+    "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded None, now b7a01e9e616674a5fa0534963badccfb3d498a12a88b20ae5952fceb77e27e99"
    ]
   }
  ]

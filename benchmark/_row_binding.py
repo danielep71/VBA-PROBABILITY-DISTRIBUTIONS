@@ -9,13 +9,14 @@ exactly those:
   * the rows are selected by function name;
   * each is identified by _grid_safety.canonical_key (IEEE-754 argument bits,
     regime, evidence set), so "0.85" and "0.84999999999999998" are one row;
-  * the digest covers, for each selected row in canonical-key order, the key
-    and the claim, metric, reference, observation and expected_error cells;
-  * rows outside the selection, and the order of rows in the file, do not
-    affect it.
+  * the digest covers, for each selected row in file order, the key and the
+    claim, metric, reference, observation and expected_error cells;
+  * rows outside the selection do not affect it, wherever they are.
 
-Appending a row of another function leaves the digest unchanged. Adding,
-removing or changing a selected row, including its observation, changes it.
+Appending or inserting a row of another function leaves the digest unchanged.
+Adding, removing, reordering or changing a selected row, including its
+observation, changes it. The order of the selected rows is bound because a
+study replays its rows in file order and records them in that order.
 Standard library only.
 """
 import csv
@@ -38,5 +39,5 @@ def row_digest(path, functions):
         lines.append(repr((key, cells)))
     if len({canonical_key(r) for r in rows}) != len(rows):
         raise ValueError(f"{path}: duplicate canonical key among the bound rows")
-    digest = hashlib.sha256("\n".join(sorted(lines)).encode("utf-8")).hexdigest()
+    digest = hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
     return len(rows), digest
