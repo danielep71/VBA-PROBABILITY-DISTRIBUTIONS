@@ -1119,6 +1119,81 @@ def build_tiny_unbalanced_rows():
 
 
 # ===========================================================================
+# POSITIVE RATIO  (regimes "positive_ratio_subnormal" and
+# "positive_ratio_hard_underflow", #13)
+#
+#   A positive X whose standardized argument, X / ScaleParam or X / 2, is
+#   stored as zero or as a subnormal. The reference is taken at the exact
+#   ratio of the two Doubles the exporter passes, never at the stored one:
+#   the gap between them is what the recovery repairs.
+#
+#   Gamma rows use two normal operands, the form in which the defect is
+#   reached from ordinary inputs. Chi-square can only reach it from a
+#   subnormal X, so those tokens are subnormal decimals; a mis-parsed token
+#   with few significant bits moves the result far beyond the threshold and
+#   fails the contract, so it cannot pass unnoticed.
+#
+#   Rows whose reference is not a normal Double are not emitted.
+def build_positive_ratio_rows():
+    rows = []
+    sub, hard = "positive_ratio_subnormal", "positive_ratio_hard_underflow"
+
+    def row(func, args, ref, regime):
+        v = abs(ref)
+        if not (mp.mpf("1e-300") < v < mp.mpf("1e300")):
+            return
+        rows.append({
+            "function": func, "vba_kernel": "K_STATS_" + func,
+            "claim": _CONTRACTS[(func, regime)]["claim"], "metric": "rel",
+            "arg1": format_double_arg(args[0]), "arg2": format_double_arg(args[1]),
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "", "arg4": "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": regime, "evidence_set": "main grid",
+        })
+
+    def lower(a, z):
+        return mp.gammainc(a, 0, z, regularized=True)
+
+    def upper(a, z):
+        return mp.gammainc(a, z, mp.inf, regularized=True)
+
+    def density(a, z, scale):
+        return mp.e ** ((a - 1) * mp.log(z) - z - mp.loggamma(a)) / scale
+
+    # --- Gamma: (X, Shape, ScaleParam). The ratios are 1E-400 (stored as
+    # zero), and 1E-310 down to 5E-321 (subnormals of 45 to 10 bits).
+    gamma_points = [("1e-300", "1e-4", "1e100"), ("1e-300", "0.5", "1e100"),
+                    ("1e-250", "0.25", "1e150"), ("1e-200", "0.5", "1e110"),
+                    ("1e-200", "0.9", "1e115"), ("3e-180", "0.3", "7e135"),
+                    ("1e-150", "0.75", "2e170")]
+    for xs, ks, ss in gamma_points:
+        x, k, s = D(mp.mpf(xs)), D(mp.mpf(ks)), D(mp.mpf(ss))
+        z = x / s
+        row("Gamma_Density", (x, k, s), density(k, z, s), sub)
+        row("Gamma_Cumulative", (x, k, s), lower(k, z), sub)
+    for xs, ks, ss in [("1e-300", "1e-4", "1e100"), ("1e-300", "1e-6", "1e100"),
+                       ("1e-250", "2.5e-3", "1e150"), ("1e-300", "1e-2", "1e100"),
+                       ("1e-300", "0.5", "1e100")]:
+        x, k, s = D(mp.mpf(xs)), D(mp.mpf(ks)), D(mp.mpf(ss))
+        row("Gamma_Survival", (x, k, s), upper(k, x / s), hard)
+
+    # --- Chi-square: (X, DegreesFreedom). X is the smallest positive Double
+    # (its half is stored as zero) or a subnormal of 45, 28, 22 or 11 bits.
+    minsub = mp.mpf(2) ** -1074
+    for xs in [None, "1e-310", "1e-315", "3e-317", "1e-320"]:
+        x = minsub if xs is None else D(mp.mpf(xs))
+        for dfs in ["0.0002", "0.5", "1", "1.99"]:
+            df = D(mp.mpf(dfs))
+            row("ChiSquare_Density", (x, df), density(df / 2, x / 2, mp.mpf(2)), sub)
+            row("ChiSquare_Cumulative", (x, df), lower(df / 2, x / 2), sub)
+    for dfs in ["0.0002", "0.000002", "0.02", "0.5", "1"]:
+        df = D(mp.mpf(dfs))
+        row("ChiSquare_Survival", (minsub, df), upper(df / 2, minsub / 2), hard)
+
+    return rows
+
+
+# ===========================================================================
 # ENVELOPE DOMAIN  (regime "envelope_domain", #159)
 #
 #   The main grid has carried these cumulative and survival rows since the
@@ -1468,6 +1543,7 @@ def build_rows():
     rows += build_discrete_rows()
     rows += build_deep_tail_rows()
     rows += build_tiny_unbalanced_rows()
+    rows += build_positive_ratio_rows()
 
     # --- PROB_LogGamma regime evidence, promoted from loggamma_regimes_study ---
     for _z, _reg in _LOGGAMMA_POINTS:
