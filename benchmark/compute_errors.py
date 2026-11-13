@@ -176,6 +176,9 @@ def main():
     from _manifest import repo_root, load_manifest, verify_source_binding, MANIFEST_NAME
     _root = repo_root()
     _manifest = load_manifest(_root)
+    # Modules that differ from the executed bytes in comments or whitespace
+    # only keep their binding and are reported as carried (#301).
+    _carried_main, _carried_holdout = [], []
     if _manifest is None:
         _msg = (f"no {MANIFEST_NAME}: the accuracy summary cannot be bound to the source that "
                 "produced the observations. Run write_manifest.py at export time and commit it.")
@@ -186,7 +189,8 @@ def main():
             sys.exit(1)
     else:
         _problems = verify_source_binding(_root, _manifest, args.grid,
-                                          os.path.join(HERE, "accuracy_contracts.csv"))
+                                          os.path.join(HERE, "accuracy_contracts.csv"),
+                                          carried=_carried_main)
         if _problems:
             print(f"  gate FAILED (exit 1): STALE EVIDENCE - the committed observations are not bound "
                   f"to the checked-out source ({len(_problems)} mismatch(es)); re-export from "
@@ -204,7 +208,7 @@ def main():
     _holdout_manifest = load_holdout_manifest(_root)
     _holdout_problems = verify_holdout_binding(
         _root, _holdout_manifest, _holdout_grid,
-        os.path.join(HERE, "accuracy_contracts.csv"))
+        os.path.join(HERE, "accuracy_contracts.csv"), carried=_carried_holdout)
     if _holdout_problems:
         print(f"  gate FAILED (exit 1): STALE HOLDOUT EVIDENCE - the independent holdout "
               f"is not bound to the checked-out source ({len(_holdout_problems)} "
@@ -251,6 +255,11 @@ def main():
         print(f"  KNOWN COVERAGE DEBT: {_coverage_result['missing_rows']} unresolved "
               "main-grid row(s); transition guard satisfied, completeness unresolved.")
 
+    for _label, _paths in (("main", _carried_main), ("holdout", _carried_holdout)):
+        if _paths:
+            print(f"  CARRIED ({_label}): {len(_paths)} module(s) changed in comments or whitespace "
+                  f"only since the export; code identical: {', '.join(_paths)}")
+
     contracts = load_contracts()
     rows = list(csv.DictReader(open(args.grid)))
 
@@ -294,8 +303,13 @@ def main():
             f"- observations exported: `{_manifest.get('generated_utc','unrecorded')}`",
             f"- Excel: `{env.get('excel_version','unrecorded')}` build "
             f"`{env.get('excel_build','unrecorded')}` ({env.get('office_bitness','unrecorded')}-bit)",
-            "",
         ]
+        if _carried_main:
+            prov += [f"- **carried from `{_manifest.get('commit_sha','unrecorded')}`**: "
+                     f"{len(_carried_main)} module(s) differ from the executed bytes in comments "
+                     "or whitespace only, with identical code (`vba_code_identity.py`): "
+                     + ", ".join(f"`{p}`" for p in _carried_main)]
+        prov += [""]
     else:
         prov += ["**Provenance.** No `observation_manifest.json` present - this summary is "
                  "NOT bound to a source revision (development run).", ""]

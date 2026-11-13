@@ -130,10 +130,43 @@ try:
 finally:
     shutil.rmtree(root)
 
+# 4a (#301). A comment-only source change is carried, visibly, and is never a
+# certified release.
+root = fixture()
+try:
+    edit(root, "src/M_STATS_PROBDIST_CORE.bas", "Option Explicit",
+         "Option Explicit\n' a comment added after the Excel run")
+    code, out = run(root, "--write")
+    text = read(root, R.README)
+    check(code == 0 and "STALE" not in text, f"a comment-only change is not stale: {out}")
+    check("**Carried from `" in text and "`src/M_STATS_PROBDIST_CORE.bas` changed since that run "
+          "in comments or whitespace only" in text and "| **carried**:" not in text.split(
+              "<!-- BEGIN")[0], "the carried certification is labelled in the evidence state")
+    check(text.count("**Carried**: 1 module(s)") == 2 and "**carried**: 1 regression module(s)" in text,
+          "the table and both grid bindings name the carried module")
+    code, _ = run(root, "--check")
+    check(code == 0, "a carried render is current after --write")
+    model = R.build_model(root)
+    check(model["carried"] == ["src/M_STATS_PROBDIST_CORE.bas"], "the model lists the carried module")
+
+    certified = {"certified": True, "release": "v9.9.9"}
+    check(R.certification_problem(certified, True, []) is None,
+          "a clean, uncarried release may be certified")
+    check("carried" in (R.certification_problem(certified, True, model["carried"]) or ""),
+          "a certified release on a carried binding is refused")
+    check(R.certification_problem(certified, False, []) is not None,
+          "a certified release with open evidence is refused")
+    check(R.certification_problem({"certified": False, "release": "v9.9.9"}, False,
+                                  model["carried"]) is None,
+          "an uncertified release may carry")
+finally:
+    shutil.rmtree(root)
+
 # 4. Stale source: rendered visibly, and blocking in both modes.
 root = fixture()
 try:
-    edit(root, "src/M_STATS_PROBDIST_CORE.bas", "Option Explicit", "Option Explicit\n' changed")
+    edit(root, "src/M_STATS_PROBDIST_CORE.bas", "Option Explicit",
+         "Option Explicit\nPublic Const PROB_FIXTURE_CHANGED As Long = 1")
     code, out = run(root, "--write")
     check(code == 1 and "BLOCKING: stale evidence" in out, "stale source blocks --write")
     text = read(root, R.README)
@@ -259,7 +292,8 @@ expect_failure("README markers missing",
 with tempfile.TemporaryDirectory(prefix="shallow-refresh-") as shallow:
     subprocess.run(["git", "clone", "--depth=1", Path(REAL_ROOT).as_uri(), shallow],
                    check=True, capture_output=True)
-    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py"):
+    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py",
+                   "_manifest.py", "vba_code_identity.py"):
         shutil.copyfile(os.path.join(R.HERE, script), path(shallow, "benchmark/" + script))
     before = {rel: read(shallow, rel) for rel in R.INPUTS}
     for args in ([], ["--check"], ["--bind-exported-main", "--bind-exported-holdout"]):
@@ -278,7 +312,8 @@ with tempfile.TemporaryDirectory(prefix="shallow-refresh-") as shallow:
 with tempfile.TemporaryDirectory(prefix="invalid-candidate-refresh-") as invalid:
     subprocess.run(["git", "clone", "--shared", REAL_ROOT, invalid],
                    check=True, capture_output=True)
-    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py"):
+    for script in ("refresh_evidence.py", "render_readme_assurance.py", "excel_certification.py",
+                   "_manifest.py", "vba_code_identity.py"):
         shutil.copyfile(os.path.join(R.HERE, script), path(invalid, "benchmark/" + script))
     retarget_candidate(invalid, "0" * 40)
     before = {rel: read(invalid, rel) for rel in R.INPUTS}

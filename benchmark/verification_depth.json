@@ -169,6 +169,13 @@
       "proof_command": "test_accuracy_tiers.py",
       "negative_claim": "a hand-edited, stale or too-strict guarantee is refused; a guarantee breach fails the gate and the holdout while a target-only miss passes; silent wrong, monotonicity and P + Q violations fail independently of the tiers",
       "current_state": "green"
+    },
+    {
+      "id": "carried-certification",
+      "live_command": "compute_errors.py",
+      "proof_command": "test_vba_code_identity.py",
+      "negative_claim": "a changed literal, string, directive, [...] expression or statement order, a statement commented out or uncommented, a non-ASCII byte, a digest that is not the executed commit's and an unknown commit all refuse the carry, and a code edit stays a source mismatch in the main and holdout bindings",
+      "current_state": "green"
     }
   ]
 }

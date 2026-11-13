@@ -97,6 +97,15 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Carried certification (#301)
+
+- A VBA change that alters only comments and whitespace keeps the Excel
+  certification and the grid bindings of the commit Excel executed, without a
+  new wave. `benchmark/vba_code_identity.py` proves the code identical from
+  Git and refuses on any doubt. The accuracy summary and the README assurance
+  block label the evidence as carried from that commit and list the modules.
+  A release is never certified on a carried binding.
+
 ### Proportionate evidence (#328)
 
 - `CONTRIBUTING.md` and `docs/EXCEL_CERTIFICATION.md` state what evidence each

@@ -47,9 +47,9 @@ def clean_manifest_seam():
     fake.HOLDOUT_MANIFEST_NAME = "holdout_manifest.json"
     fake.repo_root = lambda: ROOT
     fake.load_manifest = lambda _root: {}
-    fake.verify_source_binding = lambda _root, _manifest, _grid, _contracts: []
+    fake.verify_source_binding = lambda _root, _manifest, _grid, _contracts, **_kw: []
     fake.load_holdout_manifest = lambda _root: {}
-    fake.verify_holdout_binding = lambda _root, _manifest, _grid, _contracts: []
+    fake.verify_holdout_binding = lambda _root, _manifest, _grid, _contracts, **_kw: []
     return fake
 
 

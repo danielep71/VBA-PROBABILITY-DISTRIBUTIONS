@@ -35,6 +35,7 @@ from collections import Counter
 from datetime import date
 
 from _manifest import normalized_hash, verify_holdout_binding, verify_source_binding
+from vba_code_identity import CarryRefused, carried as prove_carried
 from check_grid_coverage import _load_json, evaluate_paths, validate_strict, validate_transition
 from excel_certification import (CertificationError, _source_map, _timestamp,
                                  canonical_grid_bytes, row_count_bytes, sha256_bytes,
@@ -255,8 +256,10 @@ def main_binding_facts(root, summary):
     if summary["source_commit"] != commit:
         raise AssuranceError(f"{SUMMARY} reports source commit {summary['source_commit']} "
                              f"but {MAIN_MANIFEST} records {commit}")
-    problems = verify_source_binding(root, manifest, _path(root, GRID), _path(root, CONTRACTS))
-    return {"commit": commit, "problems": problems}
+    carried = []
+    problems = verify_source_binding(root, manifest, _path(root, GRID), _path(root, CONTRACTS),
+                                     carried=carried)
+    return {"commit": commit, "problems": problems, "carried": carried}
 
 
 def coverage_facts(root):
@@ -301,11 +304,12 @@ def holdout_facts(root, contracts):
     observations = manifest.get("observation_row_count")
     if type(observations) is not int or observations <= 0:
         raise AssuranceError(f"{HOLDOUT_MANIFEST}: observation_row_count is missing or invalid")
+    carried = []
     problems = verify_holdout_binding(root, manifest, _path(root, HOLDOUT_GRID),
-                                      _path(root, CONTRACTS))
+                                      _path(root, CONTRACTS), carried=carried)
     return {"contracts": len(rows), "pass": verdicts["PASS"], "fail": verdicts["FAIL"],
             "incomplete": verdicts["INCOMPLETE"], "observations": observations,
-            "problems": problems}
+            "problems": problems, "carried": carried}
 
 
 def _grid_matches(path, entry):
@@ -338,12 +342,18 @@ def excel_facts(root):
     except CertificationError as exc:
         raise AssuranceError(f"{EXCEL_RECORD}: {exc}")
 
-    stale = []
+    # A module that differs from the executed bytes in comments or whitespace
+    # only keeps its certification, labelled as carried (#301).
+    stale, carried = [], []
     for rel, digest in sources.items():
         if not os.path.isfile(_path(root, rel)):
             stale.append(f"{rel} (missing)")
         elif normalized_hash(_path(root, rel)) != digest:
-            stale.append(rel)
+            try:
+                prove_carried(root, rel, digest, record["candidate_sha"])
+                carried.append(rel)
+            except CarryRefused:
+                stale.append(rel)
     grids = {}
     for rel, entry in record["grids"].items():
         if not entry["exported"]:
@@ -363,6 +373,7 @@ def excel_facts(root):
                  f"{environment['office_bitness']}",
         "finished": finished.date().isoformat(),
         "stale": stale,
+        "carried": carried,
         "grids": grids,
     }
 
@@ -428,6 +439,24 @@ def readiness_facts(root):
 
 # --- model ---------------------------------------------------------------------
 
+def certification_problem(readiness, clean, carried):
+    """Why the registry may not claim a certified release, or None.
+
+    A release is certified on the bytes Excel executed, never on a binding
+    carried across comment-only changes (#301).
+    """
+    if not readiness["certified"]:
+        return None
+    if not clean:
+        return (f"{READINESS} claims {readiness['release']} is certified, but "
+                "blockers, incomplete gates or non-passing evidence remain")
+    if carried:
+        return (f"{READINESS} claims {readiness['release']} is certified, but the Excel "
+                "evidence is carried across comment-only changes to " + ", ".join(carried)
+                + "; run a fresh Excel wave")
+    return None
+
+
 def build_model(root=ROOT):
     """Read every authority, cross-check them, and return the render model."""
     api = api_facts(root)
@@ -478,14 +507,15 @@ def build_model(root=ROOT):
     clean = (not stale and not open_blockers and all(gates.values()) and excel["green"]
              and verdicts["FAIL"] == verdicts["PENDING"] == verdicts["KNOWN LIMITATION"] == 0
              and holdout["fail"] == holdout["incomplete"] == 0)
-    if readiness["certified"] and not clean:
-        raise AssuranceError(f"{READINESS} claims {readiness['release']} is certified, but "
-                             "blockers, incomplete gates or non-passing evidence remain")
+    carried = sorted(set(excel["carried"]) | set(binding["carried"]) | set(holdout["carried"]))
+    problem = certification_problem(readiness, clean, carried)
+    if problem:
+        raise AssuranceError(problem)
     return {"api": api, "contracts": contracts, "verdicts": verdicts, "grid_rows": rows,
             "target_missed": summary["target_missed"],
             "binding": binding, "coverage": coverage, "holdout": holdout, "excel": excel,
             "readiness": readiness, "open_blockers": open_blockers, "owners": owners,
-            "stale": stale}
+            "stale": stale, "carried": carried}
 
 
 # --- rendering -----------------------------------------------------------------
@@ -543,7 +573,9 @@ def render_table(model):
     else:
         excel_row = (f"| **{excel['passed']:,}** | of {excel['assertions']:,} deterministic VBA "
                      f"assertions passed in the retained Excel run on `{excel['candidate']}`; "
-                     "regression sources unchanged since |")
+                     + ("regression sources unchanged since |" if not excel["carried"] else
+                        f"**carried**: {len(excel['carried'])} regression module(s) changed "
+                        "since in comments or whitespace only, code identical |"))
     contract_row = (f"| **{contracts['active']:,}** | active accuracy contracts "
                     f"({contracts['rows']:,} registry rows; {contracts['characterization']:,} "
                     f"characterization-only): {verdicts['PASS']:,} PASS, {verdicts['FAIL']:,} "
@@ -614,14 +646,23 @@ def render_state(model):
         lines.append(f"- **Excel regression** — {excel['passed']:,}/{excel['assertions']:,} "
                      f"assertions {'passed' if excel['green'] else 'recorded, not all stages passed'}"
                      f" on `{excel['candidate']}` ({excel['excel']}; finished "
-                     f"{excel['finished']}). Regression sources are unchanged since that run.")
+                     f"{excel['finished']}). "
+                     + ("Regression sources are unchanged since that run." if not excel["carried"]
+                        else f"**Carried from `{excel['candidate']}`**: "
+                        + ", ".join(f"`{p}`" for p in excel["carried"])
+                        + " changed since that run in comments or whitespace only; "
+                        "`vba_code_identity.py` proves the code identical. A release needs a "
+                        "fresh Excel wave."))
     if model["binding"]["problems"]:
         lines.append(f"- **Main-grid observations** — **STALE**: "
                      f"{model['binding']['problems'][0]}.")
     else:
         lines.append(f"- **Main-grid observations** — {model['grid_rows']:,} rows bound to the "
                      f"current source by `observation_manifest.json` (exported from "
-                     f"`{model['binding']['commit']}`).")
+                     f"`{model['binding']['commit']}`)."
+                     + (f" **Carried**: {len(model['binding']['carried'])} module(s) changed "
+                        "since in comments or whitespace only."
+                        if model["binding"]["carried"] else ""))
     lines.append(export(GRID, "main_grid_export", "Main-grid"))
     if coverage["missing"]:
         lines.append(f"- **Main-grid coverage** — `{coverage['mode']}` mode: "
@@ -643,7 +684,9 @@ def render_state(model):
         tail = (f", {holdout['incomplete']:,} incomplete" if holdout["incomplete"] else "")
         lines.append(f"- **Independent holdout** — {holdout['pass']:,} PASS, "
                      f"{holdout['fail']:,} FAIL{tail} of {holdout['contracts']:,} contracts on "
-                     f"{holdout['observations']:,} observations bound to the current source.")
+                     f"{holdout['observations']:,} observations bound to the current source."
+                     + (f" **Carried**: {len(holdout['carried'])} module(s) changed since in "
+                        "comments or whitespace only." if holdout["carried"] else ""))
     lines.append(export(HOLDOUT_GRID, "holdout_export", "Holdout"))
     if readiness["certified"]:
         lines.append(f"- **Release {readiness['release']}** — certified.")
