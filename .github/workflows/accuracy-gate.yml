@@ -250,6 +250,7 @@ jobs:
         # Runs while #13 is active; remove when the study closes.
         run: |
           python test_analyze_positive_ratio_subnormal.py
+          python test_analyze_amendment1.py
           python analyze_positive_ratio_subnormal.py gamma_probe.csv > /dev/null
           python analyze_positive_ratio_subnormal.py chisquare_probe.csv > /dev/null
           python analyze_positive_ratio_subnormal.py gamma_holdout.csv --claims
