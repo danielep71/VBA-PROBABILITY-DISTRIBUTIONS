@@ -11,11 +11,14 @@ The closed Gamma studies do not read the working tree's production sources
      continued-fraction, cache and recurrence studies still pass there.
   3. NEGATIVE: in the same clone, the working-tree check
      test_production_follows_study.py fails when the generated public Gamma
-     block changes in code, and passes when only a comment in it changes.
+     block changes in code, and passes when only a comment in it changes. The
+     clone's copy of the check always compares, even after the committed one
+     declares that production has moved on.
 
 Run: python3 test_frozen_sources.py   (exit 0 = pass)
 """
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -102,7 +105,20 @@ with tempfile.TemporaryDirectory(prefix="frozen-sources-clone-") as clone:
         code, tail = run(clone, rel)
         check(code == 0, f"2: {rel} must pass whatever the working-tree sources hold\n{tail}")
 
-    # 3. The narrow working-tree check.
+    # 3. The narrow working-tree check. When production has moved on, the
+    # committed check skips the comparison on purpose; the clone's copy is
+    # switched back on, so the detection itself stays proved.
+    live_check = os.path.join(clone, "benchmark", *LIVE_CHECK.split("/"))
+    with open(live_check, encoding="utf-8") as f:
+        check_text = f.read()
+    check_text = re.sub(r"^PRODUCTION_FOLLOWS_STUDY = .*$", "PRODUCTION_FOLLOWS_STUDY = True",
+                        check_text, count=1, flags=re.M)
+    check_text, replaced = re.subn(r'^MOVED_ON = (""".*?"""|"[^"\n]*"|\(.*?\))$', 'MOVED_ON = ""',
+                                   check_text, count=1, flags=re.M | re.S)
+    check(replaced == 1 and "PRODUCTION_FOLLOWS_STUDY = True" in check_text,
+          "3: the live check declares PRODUCTION_FOLLOWS_STUDY and MOVED_ON as single assignments")
+    with open(live_check, "w", encoding="utf-8") as f:
+        f.write(check_text)
     special = os.path.join(clone, "src", "M_STATS_PROBDIST_SPECIALFUNCS.bas")
     code, tail = run(clone, LIVE_CHECK)
     check(code == 0, f"3: changes outside the generated block leave the live check green\n{tail}")
