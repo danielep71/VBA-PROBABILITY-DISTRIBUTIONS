@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 failures = []
 commands = (
     ("test_contract_eval.py",),
+    ("test_accuracy_tiers.py",),
     ("test_harness_timing.py",),
     ("test_harness_studies.py",),
     ("positive_ratio_subnormal/check_post23_cutoffs.py",),

@@ -91,7 +91,7 @@
 - **Main-grid observations** — 2,139 rows bound to the current source by `observation_manifest.json` (exported from `b98feb5`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — `transition` mode: 1,756 of 1,783 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
-- **Contract verdicts** — 166 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only.
+- **Contract verdicts** — 166 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 0 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
 - **Independent holdout** — 83 PASS, 0 FAIL of 83 contracts on 659 observations bound to the current source.
 - **Holdout export certification** — certified by the retained Excel record.
 - **Release v1.0.0** — **not certified**. Open blockers registered in `release_readiness.json` (reviewed 2026-11-11); [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks the full release:
@@ -711,6 +711,10 @@ The repository contains two additional assurance channels:
 
 1. **Excel regression automation** through a self-hosted Windows runner, desktop Excel, PowerShell, and COM.
 2. **External accuracy contracts** generated from exported numerical results and summarized in `benchmark/accuracy_summary.md`.
+
+Every accuracy contract has two numbers ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)). The **guarantee** is what the release promises and what the Accuracy Gate enforces: at most 1E-13 relative error for densities, CDFs and survivals, 1E-12 for inverses, and 2E-13 for the balanced Beta CDF and survival, or the contract's own looser bound where it has one. The **measured target** is the contract's registry threshold, often 5E-15: what the code achieves today. It is reported beside every verdict and never blocks a release on its own. Inputs in a worksheet rarely carry more than a few significant digits, so the difference between 5E-15 and 1E-13 is not visible in use. It was costing speed and release time.
+
+Some properties gate whatever the tier: no silent wrong value (a result off by more than 1E-6, or an exact 0 or 1 where the true value differs), monotone CDFs, survivals and inverses, `P + Q = 1` within the two guarantees, and the documented `#NUM!`/`#VALUE!` behavior. [`benchmark/accuracy_tiers.py`](benchmark/accuracy_tiers.py) derives every guarantee from the registry by that rule; nobody sets one by hand.
 
 These layers complement each other:
 

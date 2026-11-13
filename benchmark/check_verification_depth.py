@@ -154,6 +154,7 @@ def main() -> int:
         "excel-exact-sha-certification", "grid-regeneration-safety",
         "committed-whitespace", "vba-procedure-jumps", "release-semantics",
         "ci-test-coverage", "df-cap-mirror", "older-holdout-summary-currency",
+        "accuracy-tiers",
     }
     for cid in sorted(required - seen):
         failures.append(f"required release-blocking control missing from inventory: {cid}")

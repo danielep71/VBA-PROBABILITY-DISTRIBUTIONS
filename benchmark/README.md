@@ -139,175 +139,177 @@ Where a contract comes from:
 
 **167 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
-| Contract | Function | Regime | Measure | Metric | Threshold | Provenance |
-|---|---|---|---|---|---|---|
-| Beta_Cumulative.balanced.output_rel | Beta_Cumulative | balanced | output_error | relative | 2E-14 | validated and frozen |
-| Beta_Cumulative.extreme_shape.output_rel | Beta_Cumulative | extreme_shape | output_error | relative | 5E-10 | validated and frozen |
-| Beta_Cumulative.large_shape.output_rel | Beta_Cumulative | large_shape | output_error | relative | 1E-12 | validated and frozen |
-| Beta_Cumulative.tiny_unbalanced.output | Beta_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | validated and frozen |
-| Beta_Cumulative.unbalanced.output_rel | Beta_Cumulative | unbalanced | output_error | relative | 1E-10 | validated and frozen |
-| Beta_Density.balanced.output_rel | Beta_Density | balanced | output_error | relative | 1E-14 | validated and frozen |
-| Beta_Density.large_shape.output_rel | Beta_Density | large_shape | output_error | relative | 1E-5 | validated and frozen |
-| Beta_Density.tiny_unbalanced.output | Beta_Density | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
-| Beta_Density.unbalanced.output_rel | Beta_Density | unbalanced | output_error | relative | 4E-12 | validated and frozen |
-| Beta_InverseCumulative.balanced.quantile_rel | Beta_InverseCumulative | balanced | quantile_error | relative | 5E-15 | validated and frozen |
-| Beta_InverseCumulative.tiny_unbalanced_representable.tail_rel | Beta_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-14 | validated and frozen |
-| Beta_InverseCumulative.unbalanced.quantile_rel | Beta_InverseCumulative | unbalanced | quantile_error | relative | 1E-10 | validated and frozen |
-| Beta_InverseCumulative.unbalanced.tail_rel | Beta_InverseCumulative | unbalanced | tail_probability_residual | relative | 1E-9 | validated and frozen |
-| Beta_Mean.all.output | Beta_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Beta_StdDev.all.output | Beta_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Beta_Survival.balanced.output_rel | Beta_Survival | balanced | output_error | relative | 5E-15 | validated and frozen |
-| Beta_Survival.extreme_shape.output_rel | Beta_Survival | extreme_shape | output_error | relative | 5E-10 | validated and frozen |
-| Beta_Survival.large_shape.output_rel | Beta_Survival | large_shape | output_error | relative | 1E-12 | validated and frozen |
-| Beta_Survival.tiny_unbalanced.output | Beta_Survival | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
-| Beta_Survival.unbalanced.output_rel | Beta_Survival | unbalanced | output_error | relative | 2E-10 | validated and frozen |
-| Beta_Variance.all.output | Beta_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| Binomial_Cumulative.all.output_rel | Binomial_Cumulative | all | output_error | relative | 5E-8 | validated and frozen |
-| Binomial_InverseCumulative.all.output_abs | Binomial_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
-| Binomial_LogPMF.all.output_rel | Binomial_LogPMF | all | output_error | relative | 1E-13 | validated and frozen |
-| Binomial_Mean.all.output_rel | Binomial_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Binomial_PMF.all.output_rel | Binomial_PMF | all | output_error | relative | 1E-12 | validated and frozen |
-| Binomial_StdDev.all.output_rel | Binomial_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Binomial_Survival.all.output_rel | Binomial_Survival | all | output_error | relative | 5E-8 | validated and frozen |
-| Binomial_Variance.all.output_rel | Binomial_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| ChiSquare_Cumulative.all.output | ChiSquare_Cumulative | all | output_error | relative | 2.6E-10 | validated and frozen |
-| ChiSquare_Cumulative.envelope_domain.output_rel | ChiSquare_Cumulative | envelope_domain | output_error | relative | 2E-12 | validated and frozen |
-| ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | validated and frozen |
-| ChiSquare_Density.large_shape.output_rel | ChiSquare_Density | large_shape | output_error | relative | 1E-13 | validated and frozen |
-| ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | validated and frozen |
-| ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | validated and frozen |
-| ChiSquare_Survival.envelope_domain.output_rel | ChiSquare_Survival | envelope_domain | output_error | relative | 2E-12 | validated and frozen |
-| DiscreteUniform_Cumulative.all.output_rel | DiscreteUniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| DiscreteUniform_InverseCumulative.all.output_abs | DiscreteUniform_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
-| DiscreteUniform_LogPMF.all.output_rel | DiscreteUniform_LogPMF | all | output_error | relative | 5E-15 | validated and frozen |
-| DiscreteUniform_Mean.all.output_rel | DiscreteUniform_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| DiscreteUniform_PMF.all.output_rel | DiscreteUniform_PMF | all | output_error | relative | 5E-15 | validated and frozen |
-| DiscreteUniform_StdDev.all.output_rel | DiscreteUniform_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| DiscreteUniform_Survival.all.output_rel | DiscreteUniform_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| DiscreteUniform_Variance.all.output_rel | DiscreteUniform_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| Exponential_Cumulative.all.output | Exponential_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Exponential_Density.all.output | Exponential_Density | all | output_error | relative | 5E-15 | validated and frozen |
-| Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Exponential_Survival.all.output | Exponential_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| F_Cumulative.envelope_domain.output_rel | F_Cumulative | envelope_domain | output_error | relative | 2E-11 | validated and frozen |
-| F_Cumulative.tiny_unbalanced.output | F_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | validated and frozen |
-| F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | validated and frozen |
-| F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | validated and frozen |
-| F_Density.extreme_ratio.output_rel | F_Density | extreme_ratio | output_error | relative | 5E-12 | validated and frozen |
-| F_Density.large_shape.output_rel | F_Density | large_shape | output_error | relative | 5E-5 | validated and frozen |
-| F_Density.tiny_unbalanced.output | F_Density | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
-| F_InverseCumulative.tiny_unbalanced_representable.tail_rel | F_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-13 | validated and frozen |
-| F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | validated and frozen |
-| F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | validated and frozen |
-| F_Survival.envelope_domain.output_rel | F_Survival | envelope_domain | output_error | relative | 2E-11 | validated and frozen |
-| F_Survival.tiny_unbalanced.output | F_Survival | tiny_unbalanced | output_error | relative | 5E-14 | validated and frozen |
-| F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | validated and frozen |
-| Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 3E-15 | validated and frozen |
-| Gamma_Cumulative.extreme_shape.output_rel | Gamma_Cumulative | extreme_shape | output_error | relative | 2E-12 | validated and frozen |
-| Gamma_Cumulative.large_shape.output_rel | Gamma_Cumulative | large_shape | output_error | relative | 2E-13 | validated and frozen |
-| Gamma_Density.all.output | Gamma_Density | all | output_error | relative | 2E-14 | validated and frozen |
-| Gamma_Density.large_shape.output_rel | Gamma_Density | large_shape | output_error | relative | 2E-13 | validated and frozen |
-| Gamma_InverseCumulative.all.output | Gamma_InverseCumulative | all | output_error | relative | 2E-14 | validated and frozen |
-| Gamma_Mean.all.output | Gamma_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Gamma_StdDev.all.output | Gamma_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Gamma_Survival.all.output | Gamma_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Gamma_Survival.extreme_shape.output_rel | Gamma_Survival | extreme_shape | output_error | relative | 5E-13 | validated and frozen |
-| Gamma_Survival.large_shape.output_rel | Gamma_Survival | large_shape | output_error | relative | 2E-13 | validated and frozen |
-| Gamma_Variance.all.output | Gamma_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| Geometric_Cumulative.all.output_rel | Geometric_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Geometric_InverseCumulative.all.output_abs | Geometric_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
-| Geometric_LogPMF.all.output_rel | Geometric_LogPMF | all | output_error | relative | 5E-15 | validated and frozen |
-| Geometric_Mean.all.output_rel | Geometric_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Geometric_PMF.all.output_rel | Geometric_PMF | all | output_error | relative | 2E-15 | validated and frozen |
-| Geometric_StdDev.all.output_rel | Geometric_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Geometric_Survival.all.output_rel | Geometric_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Geometric_Variance.all.output_rel | Geometric_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| Hypergeometric_Cumulative.all.output_rel | Hypergeometric_Cumulative | all | output_error | relative | 5E-14 | validated and frozen |
-| Hypergeometric_InverseCumulative.all.output_abs | Hypergeometric_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
-| Hypergeometric_LogPMF.all.output_rel | Hypergeometric_LogPMF | all | output_error | relative | 2E-13 | validated and frozen |
-| Hypergeometric_Mean.all.output_rel | Hypergeometric_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Hypergeometric_PMF.all.output_rel | Hypergeometric_PMF | all | output_error | relative | 2E-13 | validated and frozen |
-| Hypergeometric_StdDev.all.output_rel | Hypergeometric_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Hypergeometric_Survival.all.output_rel | Hypergeometric_Survival | all | output_error | relative | 2E-14 | validated and frozen |
-| Hypergeometric_Variance.all.output_rel | Hypergeometric_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| LogChoose.all.output | LogChoose | all | output_error | relative | 3.2E-16 | validated and frozen |
-| LogGamma.general.output_rel | LogGamma | general | output_error | relative | 5E-13 | validated and frozen |
-| LogGamma.near_zero.log_abs | LogGamma | near_zero | output_error | absolute | 5E-14 | validated and frozen |
-| LogGamma.small_positive.log_abs | LogGamma | small_positive | output_error | absolute | 5E-13 | validated and frozen |
-| LogGamma1p.series_seam.scaled_abs | LogGamma1p | series_seam | scaled_output_error | absolute |  | characterized |
-| LogGamma1p.small.scaled_abs | LogGamma1p | small | scaled_output_error | absolute | 5E-16 | validated and frozen |
-| LogGammaDelta.all.output | LogGammaDelta | all | output_error | relative | 5E-14 | validated and frozen |
-| LogGammaHalfDiff.all.output | LogGammaHalfDiff | all | output_error | relative | 2E-14 | validated and frozen |
-| Lognormal_Cumulative.all.output | Lognormal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_Density.all.output | Lognormal_Density | all | output_error | relative | 3E-14 | validated and frozen |
-| Lognormal_InverseCumulative.all.output | Lognormal_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_InverseSurvival.all.output | Lognormal_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_InverseSurvival.deep_tail.output_rel | Lognormal_InverseSurvival | deep_tail | output_error | relative | 1E-14 | validated and frozen |
-| Lognormal_InverseSurvival.split_boundary.output_rel | Lognormal_InverseSurvival | split_boundary | output_error | relative | 1E-9 | validated and frozen |
-| Lognormal_Mean.all.output | Lognormal_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_ParametersFromMeanStdDev.param_meanlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_meanlog | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_ParametersFromMeanStdDev.param_stddevlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_stddevlog | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_StdDev.all.output | Lognormal_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_Survival.all.output | Lognormal_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Lognormal_Variance.all.output | Lognormal_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| NegativeBinomial_Cumulative.all.output_rel | NegativeBinomial_Cumulative | all | output_error | relative | 2E-11 | validated and frozen |
-| NegativeBinomial_InverseCumulative.all.output_abs | NegativeBinomial_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
-| NegativeBinomial_LogPMF.all.output_rel | NegativeBinomial_LogPMF | all | output_error | relative | 2E-13 | validated and frozen |
-| NegativeBinomial_Mean.all.output_rel | NegativeBinomial_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| NegativeBinomial_PMF.all.output_rel | NegativeBinomial_PMF | all | output_error | relative | 2E-12 | validated and frozen |
-| NegativeBinomial_StdDev.all.output_rel | NegativeBinomial_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| NegativeBinomial_Survival.all.output_rel | NegativeBinomial_Survival | all | output_error | relative | 5E-11 | validated and frozen |
-| NegativeBinomial_Variance.all.output_rel | NegativeBinomial_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| NormalStandard_Cumulative.all.output | NormalStandard_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| NormalStandard_Density.all.output | NormalStandard_Density | all | output_error | relative | 5E-15 | validated and frozen |
-| NormalStandard_IntervalProbability.all.output | NormalStandard_IntervalProbability | all | output_error | relative | 5E-15 | validated and frozen |
-| NormalStandard_InverseCumulative.all.output | NormalStandard_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| NormalStandard_InverseCumulative.deep_tail.output_rel | NormalStandard_InverseCumulative | deep_tail | output_error | relative | 5E-16 | validated and frozen |
-| NormalStandard_InverseCumulative.split_boundary.output_rel | NormalStandard_InverseCumulative | split_boundary | output_error | relative | 1E-10 | validated and frozen |
-| NormalStandard_InverseCumulativeFast.all.output | NormalStandard_InverseCumulativeFast | all | output_error | relative | 5E-9 | validated and frozen |
-| NormalStandard_InverseSurvival.all.output | NormalStandard_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
-| NormalStandard_InverseSurvival.deep_tail.output_rel | NormalStandard_InverseSurvival | deep_tail | output_error | relative | 5E-16 | validated and frozen |
-| NormalStandard_InverseSurvival.split_boundary.output_rel | NormalStandard_InverseSurvival | split_boundary | output_error | relative | 1E-10 | validated and frozen |
-| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_Cumulative.all.output | Normal_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_Density.all.output | Normal_Density | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_IntervalProbability.all.output_rel | Normal_IntervalProbability | all | output_error | relative | 1E-14 | validated and frozen |
-| Normal_InverseCumulative.all.output | Normal_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_InverseSurvival.all.output | Normal_InverseSurvival | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_InverseSurvival.deep_tail.output_rel | Normal_InverseSurvival | deep_tail | output_error | relative | 5E-16 | validated and frozen |
-| Normal_InverseSurvival.split_boundary.output_rel | Normal_InverseSurvival | split_boundary | output_error | relative | 2E-10 | validated and frozen |
-| Normal_Survival.all.output | Normal_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Normal_ZScore.all.output | Normal_ZScore | all | output_error | relative | 5E-15 | validated and frozen |
-| PROB_LogBeta.all.log_abs | PROB_LogBeta | all | log_absolute_error | absolute | 2E-13 | validated and frozen |
-| PROB_LogBeta.tiny_unbalanced.output | PROB_LogBeta | tiny_unbalanced | log_absolute_error | absolute | 5E-14 | validated and frozen |
-| Poisson_Cumulative.all.output_rel | Poisson_Cumulative | all | output_error | relative | 2E-13 | validated and frozen |
-| Poisson_InverseCumulative.all.output_abs | Poisson_InverseCumulative | all | output_error | absolute | 1E-9 | validated and frozen |
-| Poisson_LogPMF.all.output_rel | Poisson_LogPMF | all | output_error | relative | 2E-15 | validated and frozen |
-| Poisson_Mean.all.output_rel | Poisson_Mean | all | output_error | relative | 5E-15 | validated and frozen |
-| Poisson_PMF.all.output_rel | Poisson_PMF | all | output_error | relative | 1E-14 | validated and frozen |
-| Poisson_StdDev.all.output_rel | Poisson_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Poisson_Survival.all.output_rel | Poisson_Survival | all | output_error | relative | 2E-13 | validated and frozen |
-| Poisson_Variance.all.output_rel | Poisson_Variance | all | output_error | relative | 5E-15 | validated and frozen |
-| StirlingError.all.output | StirlingError | all | output_error | absolute | 1E-13 | validated and frozen |
-| StudentT_Cumulative.all.output | StudentT_Cumulative | all | output_error | relative | 1.3E-12 | validated and frozen |
-| StudentT_Cumulative.envelope_domain.output_rel | StudentT_Cumulative | envelope_domain | output_error | relative | 5E-15 | validated and frozen |
-| StudentT_Density.all.output | StudentT_Density | all | output_error | relative | 2E-14 | validated and frozen |
-| StudentT_Density.large_df.output_rel | StudentT_Density | large_df | output_error | relative | 5E-12 | validated and frozen |
-| StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | validated and frozen |
-| StudentT_InverseCumulative.envelope_domain.quantile_rel | StudentT_InverseCumulative | envelope_domain | quantile_error | relative | 5E-15 | validated and frozen |
-| StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | validated and frozen |
-| StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 5E-15 | validated and frozen |
-| Uniform_Cumulative.all.output | Uniform_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Uniform_Density.all.output | Uniform_Density | all | output_error | relative | 5E-15 | validated and frozen |
-| Uniform_InverseCumulative.all.output | Uniform_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Uniform_Survival.all.output | Uniform_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Weibull_Cumulative.all.output | Weibull_Cumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Weibull_Density.all.output | Weibull_Density | all | output_error | relative | 5E-15 | validated and frozen |
-| Weibull_InverseCumulative.all.output | Weibull_InverseCumulative | all | output_error | relative | 5E-15 | validated and frozen |
-| Weibull_Mean.all.output | Weibull_Mean | all | output_error | relative | 2E-14 | validated and frozen |
-| Weibull_StdDev.all.output | Weibull_StdDev | all | output_error | relative | 5E-15 | validated and frozen |
-| Weibull_Survival.all.output | Weibull_Survival | all | output_error | relative | 5E-15 | validated and frozen |
-| Weibull_Variance.all.output | Weibull_Variance | all | output_error | relative | 2E-14 | validated and frozen |
+The **guarantee** gates the release; the **measured target** is the registry threshold, reported beside it ([accuracy_tiers.py](accuracy_tiers.py)).
+
+| Contract | Function | Regime | Measure | Metric | Guarantee | Measured target | Provenance |
+|---|---|---|---|---|---|---|---|
+| Beta_Cumulative.balanced.output_rel | Beta_Cumulative | balanced | output_error | relative | 2E-13 | 2E-14 | validated and frozen |
+| Beta_Cumulative.extreme_shape.output_rel | Beta_Cumulative | extreme_shape | output_error | relative | 5E-10 | 5E-10 | validated and frozen |
+| Beta_Cumulative.large_shape.output_rel | Beta_Cumulative | large_shape | output_error | relative | 1E-12 | 1E-12 | validated and frozen |
+| Beta_Cumulative.tiny_unbalanced.output | Beta_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
+| Beta_Cumulative.unbalanced.output_rel | Beta_Cumulative | unbalanced | output_error | relative | 1E-10 | 1E-10 | validated and frozen |
+| Beta_Density.balanced.output_rel | Beta_Density | balanced | output_error | relative | 1E-13 | 1E-14 | validated and frozen |
+| Beta_Density.large_shape.output_rel | Beta_Density | large_shape | output_error | relative | 1E-5 | 1E-5 | validated and frozen |
+| Beta_Density.tiny_unbalanced.output | Beta_Density | tiny_unbalanced | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| Beta_Density.unbalanced.output_rel | Beta_Density | unbalanced | output_error | relative | 4E-12 | 4E-12 | validated and frozen |
+| Beta_InverseCumulative.balanced.quantile_rel | Beta_InverseCumulative | balanced | quantile_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Beta_InverseCumulative.tiny_unbalanced_representable.tail_rel | Beta_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-14 | 1E-14 | validated and frozen |
+| Beta_InverseCumulative.unbalanced.quantile_rel | Beta_InverseCumulative | unbalanced | quantile_error | relative | 1E-10 | 1E-10 | validated and frozen |
+| Beta_InverseCumulative.unbalanced.tail_rel | Beta_InverseCumulative | unbalanced | tail_probability_residual | relative | 1E-9 | 1E-9 | validated and frozen |
+| Beta_Mean.all.output | Beta_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Beta_StdDev.all.output | Beta_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Beta_Survival.balanced.output_rel | Beta_Survival | balanced | output_error | relative | 2E-13 | 5E-15 | validated and frozen |
+| Beta_Survival.extreme_shape.output_rel | Beta_Survival | extreme_shape | output_error | relative | 5E-10 | 5E-10 | validated and frozen |
+| Beta_Survival.large_shape.output_rel | Beta_Survival | large_shape | output_error | relative | 1E-12 | 1E-12 | validated and frozen |
+| Beta_Survival.tiny_unbalanced.output | Beta_Survival | tiny_unbalanced | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| Beta_Survival.unbalanced.output_rel | Beta_Survival | unbalanced | output_error | relative | 2E-10 | 2E-10 | validated and frozen |
+| Beta_Variance.all.output | Beta_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Binomial_Cumulative.all.output_rel | Binomial_Cumulative | all | output_error | relative | 5E-8 | 5E-8 | validated and frozen |
+| Binomial_InverseCumulative.all.output_abs | Binomial_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
+| Binomial_LogPMF.all.output_rel | Binomial_LogPMF | all | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
+| Binomial_Mean.all.output_rel | Binomial_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Binomial_PMF.all.output_rel | Binomial_PMF | all | output_error | relative | 1E-12 | 1E-12 | validated and frozen |
+| Binomial_StdDev.all.output_rel | Binomial_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Binomial_Survival.all.output_rel | Binomial_Survival | all | output_error | relative | 5E-8 | 5E-8 | validated and frozen |
+| Binomial_Variance.all.output_rel | Binomial_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| ChiSquare_Cumulative.all.output | ChiSquare_Cumulative | all | output_error | relative | 2.6E-10 | 2.6E-10 | validated and frozen |
+| ChiSquare_Cumulative.envelope_domain.output_rel | ChiSquare_Cumulative | envelope_domain | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
+| ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
+| ChiSquare_Density.large_shape.output_rel | ChiSquare_Density | large_shape | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
+| ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | 4.7E-12 | validated and frozen |
+| ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | 2.6E-10 | validated and frozen |
+| ChiSquare_Survival.envelope_domain.output_rel | ChiSquare_Survival | envelope_domain | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
+| DiscreteUniform_Cumulative.all.output_rel | DiscreteUniform_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| DiscreteUniform_InverseCumulative.all.output_abs | DiscreteUniform_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
+| DiscreteUniform_LogPMF.all.output_rel | DiscreteUniform_LogPMF | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| DiscreteUniform_Mean.all.output_rel | DiscreteUniform_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| DiscreteUniform_PMF.all.output_rel | DiscreteUniform_PMF | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| DiscreteUniform_StdDev.all.output_rel | DiscreteUniform_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| DiscreteUniform_Survival.all.output_rel | DiscreteUniform_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| DiscreteUniform_Variance.all.output_rel | DiscreteUniform_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Exponential_Cumulative.all.output | Exponential_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Exponential_Density.all.output | Exponential_Density | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Exponential_InverseCumulative.all.output | Exponential_InverseCumulative | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Exponential_Survival.all.output | Exponential_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| F_Cumulative.envelope_domain.output_rel | F_Cumulative | envelope_domain | output_error | relative | 2E-11 | 2E-11 | validated and frozen |
+| F_Cumulative.tiny_unbalanced.output | F_Cumulative | tiny_unbalanced | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
+| F_Cumulative.validated.output_rel | F_Cumulative | validated | output_error | relative | 1.1E-10 | 1.1E-10 | validated and frozen |
+| F_Density.all.output_rel | F_Density | all | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
+| F_Density.extreme_ratio.output_rel | F_Density | extreme_ratio | output_error | relative | 5E-12 | 5E-12 | validated and frozen |
+| F_Density.large_shape.output_rel | F_Density | large_shape | output_error | relative | 5E-5 | 5E-5 | validated and frozen |
+| F_Density.tiny_unbalanced.output | F_Density | tiny_unbalanced | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| F_InverseCumulative.tiny_unbalanced_representable.tail_rel | F_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-13 | 1E-13 | validated and frozen |
+| F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | 2E-10 | validated and frozen |
+| F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | 2E-10 | validated and frozen |
+| F_Survival.envelope_domain.output_rel | F_Survival | envelope_domain | output_error | relative | 2E-11 | 2E-11 | validated and frozen |
+| F_Survival.tiny_unbalanced.output | F_Survival | tiny_unbalanced | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| F_Survival.validated.output_rel | F_Survival | validated | output_error | relative | 1.1E-10 | 1.1E-10 | validated and frozen |
+| Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 1E-13 | 3E-15 | validated and frozen |
+| Gamma_Cumulative.extreme_shape.output_rel | Gamma_Cumulative | extreme_shape | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
+| Gamma_Cumulative.large_shape.output_rel | Gamma_Cumulative | large_shape | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Gamma_Density.all.output | Gamma_Density | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
+| Gamma_Density.large_shape.output_rel | Gamma_Density | large_shape | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Gamma_InverseCumulative.all.output | Gamma_InverseCumulative | all | output_error | relative | 1E-12 | 2E-14 | validated and frozen |
+| Gamma_Mean.all.output | Gamma_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Gamma_StdDev.all.output | Gamma_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Gamma_Survival.all.output | Gamma_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Gamma_Survival.extreme_shape.output_rel | Gamma_Survival | extreme_shape | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
+| Gamma_Survival.large_shape.output_rel | Gamma_Survival | large_shape | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Gamma_Variance.all.output | Gamma_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Geometric_Cumulative.all.output_rel | Geometric_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Geometric_InverseCumulative.all.output_abs | Geometric_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
+| Geometric_LogPMF.all.output_rel | Geometric_LogPMF | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Geometric_Mean.all.output_rel | Geometric_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Geometric_PMF.all.output_rel | Geometric_PMF | all | output_error | relative | 1E-13 | 2E-15 | validated and frozen |
+| Geometric_StdDev.all.output_rel | Geometric_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Geometric_Survival.all.output_rel | Geometric_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Geometric_Variance.all.output_rel | Geometric_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Hypergeometric_Cumulative.all.output_rel | Hypergeometric_Cumulative | all | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| Hypergeometric_InverseCumulative.all.output_abs | Hypergeometric_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
+| Hypergeometric_LogPMF.all.output_rel | Hypergeometric_LogPMF | all | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Hypergeometric_Mean.all.output_rel | Hypergeometric_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Hypergeometric_PMF.all.output_rel | Hypergeometric_PMF | all | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Hypergeometric_StdDev.all.output_rel | Hypergeometric_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Hypergeometric_Survival.all.output_rel | Hypergeometric_Survival | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
+| Hypergeometric_Variance.all.output_rel | Hypergeometric_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| LogChoose.all.output | LogChoose | all | output_error | relative | 1E-13 | 3.2E-16 | validated and frozen |
+| LogGamma.general.output_rel | LogGamma | general | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
+| LogGamma.near_zero.log_abs | LogGamma | near_zero | output_error | absolute | 5E-14 | 5E-14 | validated and frozen |
+| LogGamma.small_positive.log_abs | LogGamma | small_positive | output_error | absolute | 5E-13 | 5E-13 | validated and frozen |
+| LogGamma1p.series_seam.scaled_abs | LogGamma1p | series_seam | scaled_output_error | absolute |  |  | characterized |
+| LogGamma1p.small.scaled_abs | LogGamma1p | small | scaled_output_error | absolute | 5E-16 | 5E-16 | validated and frozen |
+| LogGammaDelta.all.output | LogGammaDelta | all | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| LogGammaHalfDiff.all.output | LogGammaHalfDiff | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
+| Lognormal_Cumulative.all.output | Lognormal_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Lognormal_Density.all.output | Lognormal_Density | all | output_error | relative | 1E-13 | 3E-14 | validated and frozen |
+| Lognormal_InverseCumulative.all.output | Lognormal_InverseCumulative | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Lognormal_InverseSurvival.all.output | Lognormal_InverseSurvival | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Lognormal_InverseSurvival.deep_tail.output_rel | Lognormal_InverseSurvival | deep_tail | output_error | relative | 1E-12 | 1E-14 | validated and frozen |
+| Lognormal_InverseSurvival.split_boundary.output_rel | Lognormal_InverseSurvival | split_boundary | output_error | relative | 1E-9 | 1E-9 | validated and frozen |
+| Lognormal_Mean.all.output | Lognormal_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Lognormal_ParametersFromMeanStdDev.param_meanlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_meanlog | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Lognormal_ParametersFromMeanStdDev.param_stddevlog.output_rel | Lognormal_ParametersFromMeanStdDev | param_stddevlog | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Lognormal_StdDev.all.output | Lognormal_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Lognormal_Survival.all.output | Lognormal_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Lognormal_Variance.all.output | Lognormal_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NegativeBinomial_Cumulative.all.output_rel | NegativeBinomial_Cumulative | all | output_error | relative | 2E-11 | 2E-11 | validated and frozen |
+| NegativeBinomial_InverseCumulative.all.output_abs | NegativeBinomial_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
+| NegativeBinomial_LogPMF.all.output_rel | NegativeBinomial_LogPMF | all | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| NegativeBinomial_Mean.all.output_rel | NegativeBinomial_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NegativeBinomial_PMF.all.output_rel | NegativeBinomial_PMF | all | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
+| NegativeBinomial_StdDev.all.output_rel | NegativeBinomial_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NegativeBinomial_Survival.all.output_rel | NegativeBinomial_Survival | all | output_error | relative | 5E-11 | 5E-11 | validated and frozen |
+| NegativeBinomial_Variance.all.output_rel | NegativeBinomial_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NormalStandard_Cumulative.all.output | NormalStandard_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NormalStandard_Density.all.output | NormalStandard_Density | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NormalStandard_IntervalProbability.all.output | NormalStandard_IntervalProbability | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| NormalStandard_InverseCumulative.all.output | NormalStandard_InverseCumulative | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| NormalStandard_InverseCumulative.deep_tail.output_rel | NormalStandard_InverseCumulative | deep_tail | output_error | relative | 1E-12 | 5E-16 | validated and frozen |
+| NormalStandard_InverseCumulative.split_boundary.output_rel | NormalStandard_InverseCumulative | split_boundary | output_error | relative | 1E-10 | 1E-10 | validated and frozen |
+| NormalStandard_InverseCumulativeFast.all.output | NormalStandard_InverseCumulativeFast | all | output_error | relative | 5E-9 | 5E-9 | validated and frozen |
+| NormalStandard_InverseSurvival.all.output | NormalStandard_InverseSurvival | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| NormalStandard_InverseSurvival.deep_tail.output_rel | NormalStandard_InverseSurvival | deep_tail | output_error | relative | 1E-12 | 5E-16 | validated and frozen |
+| NormalStandard_InverseSurvival.split_boundary.output_rel | NormalStandard_InverseSurvival | split_boundary | output_error | relative | 1E-10 | 1E-10 | validated and frozen |
+| NormalStandard_Survival.all.output | NormalStandard_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Normal_Cumulative.all.output | Normal_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Normal_Density.all.output | Normal_Density | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Normal_IntervalProbability.all.output_rel | Normal_IntervalProbability | all | output_error | relative | 1E-13 | 1E-14 | validated and frozen |
+| Normal_InverseCumulative.all.output | Normal_InverseCumulative | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Normal_InverseSurvival.all.output | Normal_InverseSurvival | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Normal_InverseSurvival.deep_tail.output_rel | Normal_InverseSurvival | deep_tail | output_error | relative | 1E-12 | 5E-16 | validated and frozen |
+| Normal_InverseSurvival.split_boundary.output_rel | Normal_InverseSurvival | split_boundary | output_error | relative | 2E-10 | 2E-10 | validated and frozen |
+| Normal_Survival.all.output | Normal_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Normal_ZScore.all.output | Normal_ZScore | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| PROB_LogBeta.all.log_abs | PROB_LogBeta | all | log_absolute_error | absolute | 2E-13 | 2E-13 | validated and frozen |
+| PROB_LogBeta.tiny_unbalanced.output | PROB_LogBeta | tiny_unbalanced | log_absolute_error | absolute | 5E-14 | 5E-14 | validated and frozen |
+| Poisson_Cumulative.all.output_rel | Poisson_Cumulative | all | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Poisson_InverseCumulative.all.output_abs | Poisson_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
+| Poisson_LogPMF.all.output_rel | Poisson_LogPMF | all | output_error | relative | 1E-13 | 2E-15 | validated and frozen |
+| Poisson_Mean.all.output_rel | Poisson_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Poisson_PMF.all.output_rel | Poisson_PMF | all | output_error | relative | 1E-13 | 1E-14 | validated and frozen |
+| Poisson_StdDev.all.output_rel | Poisson_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Poisson_Survival.all.output_rel | Poisson_Survival | all | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Poisson_Variance.all.output_rel | Poisson_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| StirlingError.all.output | StirlingError | all | output_error | absolute | 1E-13 | 1E-13 | validated and frozen |
+| StudentT_Cumulative.all.output | StudentT_Cumulative | all | output_error | relative | 1.3E-12 | 1.3E-12 | validated and frozen |
+| StudentT_Cumulative.envelope_domain.output_rel | StudentT_Cumulative | envelope_domain | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| StudentT_Density.all.output | StudentT_Density | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
+| StudentT_Density.large_df.output_rel | StudentT_Density | large_df | output_error | relative | 5E-12 | 5E-12 | validated and frozen |
+| StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | 3.0E-12 | validated and frozen |
+| StudentT_InverseCumulative.envelope_domain.quantile_rel | StudentT_InverseCumulative | envelope_domain | quantile_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | 1.3E-12 | validated and frozen |
+| StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Uniform_Cumulative.all.output | Uniform_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Uniform_Density.all.output | Uniform_Density | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Uniform_InverseCumulative.all.output | Uniform_InverseCumulative | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Uniform_Survival.all.output | Uniform_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Weibull_Cumulative.all.output | Weibull_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Weibull_Density.all.output | Weibull_Density | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Weibull_InverseCumulative.all.output | Weibull_InverseCumulative | all | output_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| Weibull_Mean.all.output | Weibull_Mean | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
+| Weibull_StdDev.all.output | Weibull_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Weibull_Survival.all.output | Weibull_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
+| Weibull_Variance.all.output | Weibull_Variance | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
 
 **Numerical limitations** (documented, not accuracy contracts)
 

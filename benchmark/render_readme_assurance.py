@@ -69,9 +69,10 @@ GENERATOR = "benchmark/render_readme_assurance.py"
 REGIONS = ("assurance badges", "assurance table", "evidence state")
 
 CONTRACT_STATUSES = ("active", "characterization_only")
-SUMMARY_HEADER = "| Contract | Measure | Metric | Threshold | Worst error | Points | Verdict |"
-HOLDOUT_HEADER = ("| Contract | Metric | Threshold | Holdout worst | Points | Margin | "
-                  "Provenance | Verdict |")
+SUMMARY_HEADER = ("| Contract | Measure | Metric | Guarantee | Measured target | Worst error | "
+                  "Points | Verdict |")
+HOLDOUT_HEADER = ("| Contract | Metric | Guarantee | Measured target | Holdout worst | Points | "
+                  "Margin | Target | Provenance | Verdict |")
 # Checked in this order: "PENDING - ..." cells never contain PASS/FAIL, but the
 # explicit order keeps the classification independent of that accident.
 MAIN_VERDICTS = ("CHARACTERIZATION ONLY", "KNOWN LIMITATION", "PENDING", "FAIL", "PASS")
@@ -224,11 +225,17 @@ def summary_facts(root, contracts):
         if verdicts[verdict] != count:
             raise AssuranceError(f"{SUMMARY}: tally states {verdict}: {count} but the "
                                  f"table holds {verdicts[verdict]}")
+    target_missed = int(_one(r"^> \*\*Measured target\*\* — (\d+) passing contract\(s\) "
+                             r"exceed their measured target \(reported, not gating\)\.$",
+                             text, SUMMARY, "measured-target tally"))
+    if target_missed != sum(1 for _, cell in rows if "target missed" in cell):
+        raise AssuranceError(f"{SUMMARY}: measured-target tally contradicts its table")
     if verdicts["CHARACTERIZATION ONLY"] != contracts["characterization"]:
         raise AssuranceError(f"{SUMMARY} and {CONTRACTS} disagree on characterization-only "
                              "contracts")
     return {
         "verdicts": {verdict: verdicts[verdict] for verdict in MAIN_VERDICTS},
+        "target_missed": target_missed,
         "source_commit": _one(r"^- source commit: `([0-9a-f]+)`", text, SUMMARY,
                               "source commit"),
         "grid_rows": int(_one(r"^- total grid rows: ([0-9,]+)$", text, SUMMARY,
@@ -475,6 +482,7 @@ def build_model(root=ROOT):
         raise AssuranceError(f"{READINESS} claims {readiness['release']} is certified, but "
                              "blockers, incomplete gates or non-passing evidence remain")
     return {"api": api, "contracts": contracts, "verdicts": verdicts, "grid_rows": rows,
+            "target_missed": summary["target_missed"],
             "binding": binding, "coverage": coverage, "holdout": holdout, "excel": excel,
             "readiness": readiness, "open_blockers": open_blockers, "owners": owners,
             "stale": stale}
@@ -626,7 +634,9 @@ def render_state(model):
     lines.append(f"- **Contract verdicts** — {verdicts['PASS']:,} PASS, {verdicts['FAIL']:,} "
                  f"FAIL, {verdicts['KNOWN LIMITATION']:,} KNOWN LIMITATION, "
                  f"{verdicts['PENDING']:,} PENDING; {verdicts['CHARACTERIZATION ONLY']:,} "
-                 "characterization-only.")
+                 "characterization-only. Verdicts are scored against each contract's "
+                 f"guarantee; {model['target_missed']:,} passing contract(s) exceed the "
+                 f"stricter measured target, which is reported and never gates ({_issue(327)}).")
     if holdout["problems"]:
         lines.append(f"- **Independent holdout** — **STALE**: {holdout['problems'][0]}.")
     else:
