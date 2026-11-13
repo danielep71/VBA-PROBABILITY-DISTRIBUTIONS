@@ -35,6 +35,56 @@ Excel waves are batched: one wave, dispatched on `release/*` with the
 automated export below, certifies every change merged since the last one. The
 evidence commit is the direct child of the wave's candidate, as always.
 
+## Carried certification
+
+**Decision (2026-11-13, #301).** A VBA change that provably alters only
+comments and whitespace keeps the Excel certification and the grid bindings of
+the commit Excel executed. No wave is run for it.
+
+Reasons for:
+- Excel executes the same code, so a new wave measures nothing new;
+- one runner serves every wave, and a comment correction cost a full one
+  (in #242 the wave on `fa891a2` was cancelled and rerun on `c856ddd` for
+  comments only);
+- documentation in the source stays current instead of waiting for a wave.
+
+Reasons against, and the answer to each:
+- *The proof depends on a lexer.* `benchmark/vba_code_identity.py` uses
+  `tools/vba_lexer.py`, the lexer of the VBA source checks. It compares the
+  comment-free logical lines of both versions. Outside string literals and
+  `[...]` expressions it collapses runs of whitespace; it never inserts or
+  removes whitespace between tokens. `test_vba_code_identity.py` covers a
+  changed literal, a `Rem` line, a line continuation, an apostrophe in a
+  string and a change inside `#If`, among others. Any doubt refuses the carry:
+  a non-ASCII byte, an unreadable file, a missing commit, or recorded bytes
+  that are not the commit's.
+- *The record no longer binds the exact bytes in the tree.* The records are
+  not rewritten. They still name the executed commit and its bytes. The
+  verifiers prove from Git that the current module holds that commit's code,
+  and every report says **carried from** that commit and lists the modules:
+  the accuracy summary, the gate output and the README assurance block.
+
+Limits:
+- **A release is never certified on a carried binding.** The release workflow
+  already requires an Excel run on the exact release commit; in addition,
+  `render_readme_assurance.py` refuses `certified: true` while any module is
+  carried.
+- A module that uses a `[...]` expression outside a string literal is never
+  carried, changed or not. Inside one, an apostrophe, a colon, `Rem` and a
+  quote do not mean what they mean in a statement. No tracked module uses the
+  construct.
+- `check_excel_certification.py` accepts a carried source only with
+  `--allow-carried`, which the Accuracy Gate and `refresh_evidence.py` pass.
+  Release certification, a fresh export and `--candidate-sha` validation do
+  not pass it and still require the exact bytes.
+- A missing-only export still requires the exact bytes of the bound source.
+- Study records that hash a VBA procedure or module keep their own rules.
+
+To see what a change does before committing:
+`python benchmark/vba_code_identity.py --from <executed commit>`.
+After a comment-only change, run `python benchmark/refresh_evidence.py`: the
+summaries and the README then carry the label.
+
 ## What a regression record proves
 
 A green record binds:

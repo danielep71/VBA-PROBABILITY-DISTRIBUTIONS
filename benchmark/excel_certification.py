@@ -423,7 +423,15 @@ def _validate_corrections(record):
 
 def validate_record(record, root, *, policy_ref="HEAD", evidence_ref=None,
                     expected_candidate_sha=None, require_pass=False,
-                    require_grid=None, log_directory=None):
+                    require_grid=None, log_directory=None, carried=None):
+    """Validate a record against Git.
+
+    `carried`, when a list, receives every source whose bytes at the evidence
+    commit differ from the certified candidate in comments and whitespace
+    only (#301); such a source is not a failure. With `carried=None` the
+    evidence bytes must equal the certified ones, as release certification
+    and a fresh export require.
+    """
     policy = load_policy(root, policy_ref)
     _require_keys(record, RECORD_KEYS | ({"corrections"} if isinstance(record, dict)
                                          and "corrections" in record else set()),
@@ -470,8 +478,18 @@ def validate_record(record, root, *, policy_ref="HEAD", evidence_ref=None,
         if evidence_ref is not None:
             evidence_raw = git_bytes(root, evidence_ref, path)
             if sha256_bytes(evidence_raw) != digest:
-                raise CertificationError(
-                    f"source {path} at evidence commit {evidence_ref} differs from certified candidate {candidate}")
+                problem = (f"source {path} at evidence commit {evidence_ref} differs from "
+                           f"certified candidate {candidate}")
+                if carried is None:
+                    raise CertificationError(problem)
+                from vba_code_identity import CarryRefused, first_difference
+                try:
+                    difference = first_difference(candidate_raw, evidence_raw)
+                except CarryRefused as exc:
+                    difference = str(exc)
+                if difference is not None:
+                    raise CertificationError(f"{problem} in code: {difference}")
+                carried.append(path)
     return policy
 
 
