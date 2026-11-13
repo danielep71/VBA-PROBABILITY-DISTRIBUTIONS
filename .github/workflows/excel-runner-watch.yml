@@ -57,7 +57,8 @@ jobs:
           work="$RUNNER_TEMP/retry"
           mkdir -p "$work"
           gh api "repos/$GH_REPO/actions/runs/$RUN_ID" > "$work/run.json"
-          gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs?per_page=100" > "$work/jobs.json"
+          gh api --paginate "repos/$GH_REPO/actions/runs/$RUN_ID/jobs?per_page=100" \
+            --jq '.jobs[]' | jq -s '{jobs: .}' > "$work/jobs.json"
           echo "{}" > "$work/annotations.json"
           for job in $(jq -r '.jobs[] | select(.conclusion == "failure") | .id' "$work/jobs.json"); do
             gh api "repos/$GH_REPO/check-runs/$job/annotations" --jq '[.[].message]' > "$work/notes.json"
@@ -94,13 +95,17 @@ jobs:
           set -euo pipefail
           work="$RUNNER_TEMP/watch"
           mkdir -p "$work/jobs"
+          # Every page: a backlog is exactly when a stalled run may sit beyond
+          # the first hundred, and a partial list could close a live alert.
           for status in queued in_progress; do
-            gh api "repos/$GH_REPO/actions/runs?status=$status&per_page=100" > "$work/$status.json"
+            gh api --paginate "repos/$GH_REPO/actions/runs?status=$status&per_page=100" \
+              --jq '.workflow_runs[]' > "$work/$status.jsonl"
           done
-          jq -s '{workflow_runs: (map(.workflow_runs) | add)}' \
-            "$work/queued.json" "$work/in_progress.json" > "$work/runs.json"
+          jq -s '{workflow_runs: .}' "$work/queued.jsonl" "$work/in_progress.jsonl" \
+            > "$work/runs.json"
           for run in $(jq -r '.workflow_runs[].id' "$work/runs.json"); do
-            gh api "repos/$GH_REPO/actions/runs/$run/jobs?per_page=100" > "$work/jobs/$run.json"
+            gh api --paginate "repos/$GH_REPO/actions/runs/$run/jobs?per_page=100" \
+              --jq '.jobs[]' | jq -s '{jobs: .}' > "$work/jobs/$run.json"
           done
           # The open milestone with the earliest due date after today (UTC).
           milestone="$(TODAY="$(date -u +%F)" gh api \

@@ -170,6 +170,15 @@ class Watch(unittest.TestCase):
             self.assertEqual(W.main(args), 1)
 
 
+class Workflow(unittest.TestCase):
+    def test_every_list_request_is_paginated(self) -> None:
+        text = (ROOT / ".github/workflows/excel-runner-watch.yml").read_text(encoding="utf-8")
+        lists = [line for line in text.splitlines() if "per_page=100" in line]
+        self.assertEqual(len(lists), 3)
+        for line in lists:
+            self.assertIn("gh api --paginate", line)
+
+
 class StepNames(unittest.TestCase):
     def test_the_classified_steps_exist_in_the_workflow(self) -> None:
         workflow = (ROOT / ".github/workflows/excel-vba-regression.yml").read_text(encoding="utf-8")
