@@ -11,9 +11,10 @@ Accuracy Gate, and it is derived here by a fixed rule, never chosen by hand:
   * inverses (quantile_error, or any *Inverse* function scored relative):
                           guarantee = max(target, 1E-12)
   * balanced Beta CDF and survival (shape ratio >= 0.1): guarantee =
-    max(target, 2E-13). The route is modelled bit for bit (#174, 368 of 368
-    Excel observations) at up to 1.38E-13 for shapes 20 to 100; 2E-13 is the
-    recalibration decided in #163. The model covers shapes 0.5 to 100; the
+    max(target, 2E-13). The route is modelled bit for bit (#174; 383 of 383
+    Excel observations since #327) at up to 1.38E-13 for shapes 20 to 100;
+    2E-13 is the recalibration decided in #163. Excel confirmed the six
+    modelled worst points (run 43423207780), now main-grid rows. The model covers shapes 0.5 to 100; the
     regime's rows outside that range are measured in the main grid.
   * absolute, scaled, log-absolute and tail-residual metrics: guarantee =
     target, unchanged.

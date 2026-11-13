@@ -175,6 +175,7 @@ CID = "Exponential_Cumulative.all.output"      # target 5E-15, guarantee 1E-13
 with tempfile.TemporaryDirectory(prefix="tiers-gate-") as d:
     code, summary, _ = run_gate(MAIN)
     check(code == 0, f"3: the committed main grid passes the gate (exit {code})")
+    baseline = int(summary.split("> **Measured target** — ")[1].split(" ")[0])
     miss = os.path.join(d, "miss.csv")
     mutated_grid(MAIN, miss, "Exponential_Cumulative", "5E-14")
     code, summary, out = run_gate(miss)
@@ -182,7 +183,7 @@ with tempfile.TemporaryDirectory(prefix="tiers-gate-") as d:
     check(code == 0, f"3: a target-only miss must not fail the gate (exit {code})\n{out}")
     check("| 1E-13 | 5E-15 |" in line and "PASS · target missed" in line,
           f"3: the contract reports guarantee, target and the miss: {line!r}")
-    check("> **Measured target** — 1 passing contract(s) exceed" in summary,
+    check(f"> **Measured target** — {baseline + 1} passing contract(s) exceed" in summary,
           "3: the measured-target tally counts the miss")
     breach = os.path.join(d, "breach.csv")
     mutated_grid(MAIN, breach, "Exponential_Cumulative", "5E-13")
