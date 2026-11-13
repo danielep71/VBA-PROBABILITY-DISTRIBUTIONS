@@ -19142,10 +19142,15 @@ Private Sub Test_CN_GammaSurvival()
 '
     Debug.Print "-- Gamma survival"
     Test_GammaCF_Coverage
+    TimingLap "Test_GammaCF_Coverage"
     Test_GammaCF_AdditionalCallers
+    TimingLap "Test_GammaCF_AdditionalCallers"
     Test_GammaCF_CapAndXSeam
+    TimingLap "Test_GammaCF_CapAndXSeam"
     Test_GammaCF_PrecisionCounterexample
+    TimingLap "Test_GammaCF_PrecisionCounterexample"
     Test_PublicGamma_Integration
+    TimingLap "Test_PublicGamma_Integration"
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
@@ -19222,9 +19227,13 @@ Private Sub Test_CN_PositiveRatioRecovery()
 '   - Subnormal arguments are built from their words, never written as
 '     literals: a VBA source literal cannot be relied on to denote one.
 '   - The density cutoff is 2 ^ -1026: a value at the cutoff stays on the
-'     direct path, one unit below it is recovered. The cumulatives and the
-'     survivals recover a stored zero only, so their stored positive
-'     arguments stay on the direct path at every size.
+'     direct path, one unit below it is recovered.
+'   - The cumulative cutoff is 2 ^ -1034, and it applies only where the
+'     transform may have rounded: ScaleParam <> 1 for Gamma, an odd last bit
+'     of X for Chi-square (Amendment 1). The tolerance of those assertions,
+'     5E-13, separates the two paths: the recovery is within 1.5E-13 and the
+'     direct path is off by 7.7E-13 or more at these arguments.
+'   - The survivals recover a stored zero only.
 '
 ' DEPENDENCIES
 '   - Production functions under test
@@ -19238,6 +19247,7 @@ Private Sub Test_CN_PositiveRatioRecovery()
 '==============================================================================
 '
     Const TOL_PRS           As Double = 0.000000000001  '1E-12 relative
+    Const TOL_PRS_ROUNDED   As Double = 0.0000000000005 '5E-13 relative
 
     Dim MinSub              As Double          '2 ^ -1074
     Dim At48                As Double          '2 ^ -1026, the 48-bit cutoff
@@ -19300,7 +19310,7 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_Gamma_Density(Below48, 0.5, 1#), 1.51290911445653E+154, TOL_PRS
     AssertRelClose "PRS gamma cdf at 2^-1034 (direct)", _
         K_STATS_Gamma_Cumulative(At40, 0.5, 1#), 2.6299488444332E-156, TOL_PRS
-    AssertRelClose "PRS gamma cdf one unit below 2^-1034 (direct)", _
+    AssertRelClose "PRS gamma cdf one unit below 2^-1034, scale 1 (direct)", _
         K_STATS_Gamma_Cumulative(Below40, 0.5, 1#), 2.629948844432E-156, TOL_PRS
     AssertRelClose "PRS chi pdf at 2^-1025 (direct)", _
         K_STATS_ChiSquare_Density(ChiAt, 1#), 7.56454557228262E+153, TOL_PRS
@@ -19308,7 +19318,7 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_ChiSquare_Density(ChiBelow, 1#), 7.56454557228263E+153, TOL_PRS
     AssertRelClose "PRS chi cdf at 2^-1025 (direct)", _
         K_STATS_ChiSquare_Cumulative(ChiAt, 1#), 4.20791815109311E-155, TOL_PRS
-    AssertRelClose "PRS chi cdf two units below 2^-1025 (direct)", _
+    AssertRelClose "PRS chi cdf two units below 2^-1025, even X (direct)", _
         K_STATS_ChiSquare_Cumulative(ChiBelow, 1#), 4.20791815109311E-155, TOL_PRS
 
     'The smallest positive argument
@@ -19326,6 +19336,34 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_ChiSquare_Density(MinSub, 1.99), 20.6892082696049, TOL_PRS
     AssertRelClose "PRS chi sf(2^-1074,2e-10) small upper tail", _
         K_STATS_ChiSquare_Survival(MinSub, 0.0000000002), 7.44555975718941E-08, TOL_PRS
+
+    'Amendment 1: a rounded transform at 40 retained bits or fewer is
+    'recovered. Gamma, quotient 2/5 of a unit above 2 ^ -1036 and a quotient
+    'of two normal operands near 1E-312; Chi-square, an odd X
+    AssertRelClose "PRS gamma cdf rounded ratio, 39 bits (recovered)", _
+        K_STATS_Gamma_Cumulative(SP_FromWords(&H14&, &H2&), 0.57735026918963, 5#), _
+        9.8514837750235E-181, TOL_PRS_ROUNDED
+    AssertRelClose "PRS gamma cdf(1e-200,0.5,1e112) rounded ratio (recovered)", _
+        K_STATS_Gamma_Cumulative(1E-200, 0.5, 1E+112), _
+        1.12837916709551E-156, TOL_PRS_ROUNDED
+    AssertRelClose "PRS gamma cdf rounded ratio, 11 bits (recovered)", _
+        K_STATS_Gamma_Cumulative(SP_FromWords(&H0&, &HC01&), 0.5, 3#), _
+        8.02727313590598E-161, TOL_PRS_ROUNDED
+    AssertRelClose "PRS chi cdf odd X, 39 bits (recovered)", _
+        K_STATS_ChiSquare_Cumulative(SP_FromWords(&H80&, &H1&), 1#), _
+        1.31497442221779E-156, TOL_PRS_ROUNDED
+    AssertRelClose "PRS chi cdf odd X, 11 bits (recovered)", _
+        K_STATS_ChiSquare_Cumulative(SP_FromWords(&H0&, &H801&), 1#), _
+        8.0279261579234E-161, TOL_PRS_ROUNDED
+
+    'An exact transform below the cutoff stays on the direct path, which is
+    'exact for it; and a rounded one above the cutoff stays there too
+    AssertRelClose "PRS chi cdf even X, 39 bits (direct)", _
+        K_STATS_ChiSquare_Cumulative(SP_FromWords(&H80&, &H0&), 1#), _
+        1.3149744222166E-156, TOL_PRS_ROUNDED
+    AssertRelClose "PRS gamma cdf(1e-200,0.5,1e110) rounded ratio, 45 bits (direct)", _
+        K_STATS_Gamma_Cumulative(1E-200, 0.5, 1E+110), _
+        1.12837916709551E-155, TOL_PRS_ROUNDED
 
     'The survival has no precision dispatch: a stored positive argument
     'stays on the direct path

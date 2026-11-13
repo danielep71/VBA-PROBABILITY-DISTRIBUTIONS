@@ -14,6 +14,11 @@ built on it) call strip() first, so timing never reads as a change of a
 frozen study. test_harness_timing.py proves apply(strip(m)) == m for the
 committed module.
 
+A procedure in NESTED is a test procedure that only chains others (#13): each
+call inside it gets a lap too, and no TimingStart, because a lap measures from
+the previous mark. The procedure's own lap in its suite driver then holds only
+what it runs after its last chained call.
+
 Both functions work on LF text.
 """
 import re
@@ -22,6 +27,7 @@ BEGIN = "' BEGIN harness timing (#298)"
 END = "' END harness timing (#298)"
 DRIVERS = ("RunCoreSuite", "RunNormalFamilySuite", "RunTFamilySuite",
            "RunContinuousSuite", "RunDiscreteSuite", "RunStudyBatteries")
+NESTED = ("Test_CN_GammaSurvival",)
 ANCHOR = "Private Sub BeginRun("
 CALL = re.compile(r"^    (Test_\w+)$")
 INSTRUMENT = re.compile(r'^    Timing(?:Start|Lap) "\w+"\n', re.M)
@@ -147,6 +153,18 @@ def apply(text):
                 out.append(f'    TimingLap "{match.group(1)}"')
         if not started:
             raise TimingError(f"suite driver {name} calls no test procedure")
+        text = text[:start] + "\n".join(out) + text[end:]
+    for name in NESTED:
+        start, end = _driver_span(text, name)
+        out, chained = [], 0
+        for line in text[start:end].split("\n"):
+            out.append(line)
+            match = CALL.match(line)
+            if match:
+                out.append(f'    TimingLap "{match.group(1)}"')
+                chained += 1
+        if not chained:
+            raise TimingError(f"{name} chains no test procedure")
         text = text[:start] + "\n".join(out) + text[end:]
     if text.count(ANCHOR) != 1:
         raise TimingError("BeginRun anchor not found exactly once")

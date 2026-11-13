@@ -221,13 +221,14 @@ Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y
 'confirmed on an independent, preregistered holdout - see
 'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
 '
-'IN PRODUCTION the two densities use the 48-bit cutoff. The cumulative cutoffs
-'were measured on the kernel that preceded the public Gamma integration; on
-'the current one the cumulative recovers a stored zero only, and
-'PROB_PRS_CUTOFF_40BIT has no caller until the policy is registered again.
-'See benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md.
+'IN PRODUCTION the two densities use the 48-bit cutoff. The two cumulatives
+'use the 40-bit cutoff, and only where the transform may have rounded: the
+'integrated incomplete-gamma kernel is exact for the argument it receives,
+'so retained bits alone no longer decide. That rule is Amendment 1,
+'registered and confirmed on a second holdout; see AMENDMENT_1.md and
+'AMENDMENT_1_RESULT.md in benchmark/positive_ratio_subnormal.
 Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density
-Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Registered for the Gamma cumulative; not applied
+Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Gamma/ChiSquare cumulative, rounded transform only
 Private Const PROB_PRS_LOG_RATIO_MAX As Double = -700#   'Recovery kernels refuse a log ratio at or above this; every dispatched ratio is below 2 ^ -1026, whose logarithm is about -711.2
 Private Const PROB_PRS_TAIL_SHAPE_MAX As Double = 4#     'Above this shape the recovered lower tail is exactly zero: Shape * LogRatio < -2800 and LogGamma(1 + Shape) > 0
 
