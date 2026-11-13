@@ -350,6 +350,7 @@ answer is not the same as answering accurately.** It is now `None`, reported as
 | `HOLDOUT_DESIGN.md` | holdout specification, frozen before any holdout output |
 | `M_STATS_PROBDIST_GAMMAHOLD.bas` | Gamma holdout exporter; run `Probe_GammaHoldout` |
 | `gamma_holdout.csv` | Gamma holdout observations |
+| `AMENDMENT_1_RESULT.md` | Verdict of the second holdout: all four claims hold |
 | `AMENDMENT_1.md` | Amendment 1 (2026-11-13): the cumulative on the integrated kernel, its claims and the second holdout |
 | `POST_INTEGRATION_RESULT.md`, `post_integration/` | The four arms exported again on the integrated kernel, and what they showed |
 | `M_STATS_PROBDIST_GAMMAHOLD2.bas`, `gamma_holdout2.csv` | Second Gamma holdout, cumulative only (`prs_gamma_holdout2`) |
