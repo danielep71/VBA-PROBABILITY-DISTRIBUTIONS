@@ -20,6 +20,9 @@ param(
 )
 
 Set-StrictMode -Version Latest
+
+# The study batteries never run at the fast level (#299).
+if ($Fast) { $RunStudies = $false }
 $ErrorActionPreference = "Stop"
 
 $excel = $null
@@ -505,7 +508,7 @@ End Function
         # The study batteries (#300): private arithmetic ports of the #26
         # studies, run only when requested, against their own policy. A
         # failure fails the job; the regression stage stays as measured.
-        if ($RunStudies -and -not $Fast) {
+        if ($RunStudies) {
             $studyPolicyPath = Join-Path $RepositoryRoot ".github\excel-study-policy.json"
             $studyPolicy = Get-Content -LiteralPath $studyPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json
             $studyMacro = "'" + $workbook.Name + "'!" + [string]$studyPolicy.entry_point

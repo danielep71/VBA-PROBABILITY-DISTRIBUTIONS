@@ -135,7 +135,7 @@ class Wiring(unittest.TestCase):
         self.assertIn("if ($Fast) { $expectedAssertions = [int]$fastPolicy.expected_assertions }",
                       self.runner)
         self.assertIn("FAST level, not certification evidence", self.runner)
-        self.assertIn("if ($RunStudies -and -not $Fast) {", self.runner)
+        self.assertIn("if ($Fast) { $RunStudies = $false }", self.runner)
 
     def test_workflow_passes_fast_only_from_the_selection_or_a_plain_dispatch(self) -> None:
         self.assertIn("python3 tools/select_excel_suite.py --event", self.workflow)
