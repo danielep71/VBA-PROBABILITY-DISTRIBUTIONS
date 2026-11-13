@@ -19,6 +19,10 @@ cumulative needs on the integrated incomplete-gamma kernel:
 The file is tested AGAINST these claims. No cutoff is proposed from it: a
 rejection sends the amendment back to design.
 
+The file also checks the classifier that production wires (wired_path): on
+every row it must send an exact transform to the direct path and a rounded
+one below the cutoff to the recovery. See the addendum of AMENDMENT_1.md.
+
 The exporters write only the cumulative. A point's class is decided here from
 the echoed operands, as exact rationals, never from its label: the label is
 checked against it.
@@ -29,6 +33,7 @@ Exit 0 only when every claim holds on every file.
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from fractions import Fraction
 from pathlib import Path
@@ -60,6 +65,27 @@ def group(p) -> str:
     return "exact_scaled"
 
 
+def wired_path(p) -> str:
+    """The path production takes for this row: a mirror, in binary64, of the
+    dispatch in K_STATS_Gamma_Cumulative and K_STATS_ChiSquare_Cumulative."""
+    stored = p.stored
+    if stored == 0.0:
+        return "recovery"
+    if not stored < float(A.MIN_NORMAL) / 4096.0:
+        return "direct"
+    if p.family == "chisquare":
+        return "direct" if 2.0 * stored == p.x else "recovery"
+    if stored * p.scale == p.x and (p.x >= float(A.MIN_NORMAL) or p.scale == math.floor(p.scale)):
+        return "direct"
+    return "recovery"
+
+
+def expected_path(p) -> str:
+    if is_exact(p) or p.bucket_bits > CLAIM_BITS:
+        return "direct"
+    return "recovery"
+
+
 def verify(points) -> list[str]:
     problems = []
     for p in points:
@@ -80,6 +106,9 @@ def verify(points) -> list[str]:
         if group(p) != p.construction:
             problems.append(f"{where}: labelled {p.construction}, but the operands make it "
                             f"{group(p)}")
+        if wired_path(p) != expected_path(p):
+            problems.append(f"{where}: production takes the {wired_path(p)} path, the "
+                            f"amendment requires the {expected_path(p)} path")
         if A.bits_available(p.stored) not in (p.bucket_bits, p.bucket_bits + 1):
             problems.append(f"{where}: stored value carries {A.bits_available(p.stored)} "
                             f"bits, bucket declares {p.bucket_bits}")

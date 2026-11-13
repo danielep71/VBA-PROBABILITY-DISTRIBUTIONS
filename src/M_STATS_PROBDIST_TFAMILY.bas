@@ -1050,6 +1050,8 @@ Public Function K_STATS_ChiSquare_Cumulative( _
     Dim Value               As Double          'Cumulative probability
     Dim StandardX           As Double          'X / 2, as stored
     Dim Complement          As Double          'Upper tail from the recovery kernel, unused
+    Dim Doubled             As Double          'Twice the stored half, to test the halving
+    Dim RatioClass          As PROB_PositiveRatioClass 'Evaluation path of the stored half
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1091,14 +1093,23 @@ Public Function K_STATS_ChiSquare_Cumulative( _
     'Store the standardized argument X / 2
         StandardX = 0.5 * X
 
-    'A positive X whose half is stored as zero is evaluated from
-    'Log(X) - Log(2); the kernel would read it as the support origin. A stored
-    'positive argument goes to the regularized lower incomplete gamma function.
-    'The precision dispatch of the cumulative is not applied: its registered
-    'cutoff was rejected on the current kernel
-    '(#13; benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md)
-        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
-            = PROB_PRC_HARD_UNDERFLOW Then
+    'Store twice the halved argument: doubling is exact, so it equals X
+    'exactly when the halving did not round
+        Doubled = 2# * StandardX
+
+    'Classify the stored half. A zero is always recovered: the kernel would
+    'read it as the support origin. A subnormal below the 40-bit cutoff is
+    'recovered only when the halving rounded: the kernel is exact for the
+    'argument it receives, so an exact half is better left to it (#13,
+    'Amendment 1 in benchmark/positive_ratio_subnormal)
+        RatioClass = PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT)
+        If RatioClass = PROB_PRC_PRECISION_RECOVERY And Doubled = X Then
+            RatioClass = PROB_PRC_DIRECT
+        End If
+
+    'Evaluate from Log(X) - Log(2), or through the regularized lower
+    'incomplete gamma function
+        If RatioClass <> PROB_PRC_DIRECT Then
             If Not PROB_TryPositiveRatioTails( _
                 0.5 * DegreesFreedom, _
                 Log(X) - Log(2#), _

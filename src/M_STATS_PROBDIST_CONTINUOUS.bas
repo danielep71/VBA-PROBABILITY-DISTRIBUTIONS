@@ -434,6 +434,8 @@ Public Function K_STATS_Gamma_Cumulative( _
     Dim StandardX           As Double          'X divided by ScaleParam
     Dim Value               As Double          'Cumulative probability
     Dim Complement          As Double          'Upper tail from the recovery kernel, unused
+    Dim RatioClass          As PROB_PositiveRatioClass 'Evaluation path of the stored ratio
+    Dim Product             As Double          'StandardX * ScaleParam, to test the division
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -473,14 +475,30 @@ Public Function K_STATS_Gamma_Cumulative( _
             GoTo Return_Success
         End If
 
-    'A positive ratio stored as zero is evaluated from
-    'Log(X) - Log(ScaleParam); the kernel would read it as the support origin.
-    'A stored positive argument goes to the regularized lower incomplete gamma
-    'function, which is exact for it. The precision dispatch of the cumulative
-    'is not applied: its registered cutoff was measured on the earlier kernel
-    '(#13; benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md)
-        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
-            = PROB_PRC_HARD_UNDERFLOW Then
+    'Classify the stored ratio. A zero is always recovered: the kernel would
+    'read it as the support origin. A subnormal below the 40-bit cutoff is
+    'recovered only when the division rounded: the kernel is exact for the
+    'argument it receives, so an exact ratio is better left to it (#13,
+    'Amendment 1 in benchmark/positive_ratio_subnormal)
+        RatioClass = PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT)
+
+    'The division did not round when the stored product gives X back and that
+    'product is trustworthy: for a normal X it places the ratio within one
+    'part in 2 ^ 53, and for an integer ScaleParam it is exact. A subnormal X
+    'with a fractional scale can return X from a rounded product, so it is
+    'treated as rounded
+        If RatioClass = PROB_PRC_PRECISION_RECOVERY Then
+            Product = StandardX * ScaleParam
+            If Product = X Then
+                If X >= PROB_MIN_NORMAL Or ScaleParam = Int(ScaleParam) Then
+                    RatioClass = PROB_PRC_DIRECT
+                End If
+            End If
+        End If
+
+    'Evaluate from Log(X) - Log(ScaleParam), or through the regularized lower
+    'incomplete gamma function
+        If RatioClass <> PROB_PRC_DIRECT Then
             If Not PROB_TryPositiveRatioTails( _
                 Shape, Log(X) - Log(ScaleParam), Value, Complement, FailMsg) Then
                 GoTo Fail_Num

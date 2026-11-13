@@ -97,6 +97,13 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Harness timing of the Gamma sub-batteries
+
+- `Test_CN_GammaSurvival` chains five batteries and took about 90% of the
+  regression time as one line. Each battery now has its own `TIMING` line in
+  the Excel log; the line of `Test_CN_GammaSurvival` holds only its direct
+  assertions.
+
 ### Positive-ratio study: Amendment 1 (#13)
 
 - The cumulative's precision recovery was registered again for the current
@@ -116,11 +123,17 @@ Use only the categories needed by a release.
 - The two densities also recover precision where the standardized argument
   is a subnormal below 2^-1026, the cutoff measured and preregistered in
   `benchmark/positive_ratio_subnormal`.
-- Known limit: the cumulatives do not have that precision recovery yet. Its
-  registered cutoffs were measured on the earlier incomplete-gamma kernel and
-  one was rejected on the current kernel; see `POST_INTEGRATION_RESULT.md` in
-  that directory. A cumulative whose standardized argument is a rounded
-  subnormal carries the rounding of the ratio.
+- The two cumulatives recover precision where the standardized argument is a
+  subnormal below 2^-1034 and its transform rounded: a quotient that does
+  not multiply back to `X` for Gamma, an odd last bit of `X` for Chi-square.
+  Example:
+  `K_STATS_Gamma_Cumulative` at a ratio with 11 significant bits was off by
+  1.6E-4 relative and is now within 1.5E-13. An exact transform keeps the
+  direct path, which is exact for it. The rule is Amendment 1 of the study,
+  confirmed on a second holdout (`AMENDMENT_1_RESULT.md`).
+- Remaining limit: a rounded standardized argument between 2^-1034 and the
+  smallest normal Double stays on the direct path and carries the rounding of
+  the ratio, at most 5E-13 relative.
 - Results that binary64 cannot hold keep the documented policy: zero for an
   underflow, `#NUM!` for a density overflow. Arguments above the cutoffs take
   the same path as before.

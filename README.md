@@ -14,7 +14,7 @@
 [![No External DLL](https://img.shields.io/badge/External_DLL-None-555555?style=for-the-badge)](#installation)
 [![Tail Aware](https://img.shields.io/badge/Tail_API-Direct_Survival-c2185b?style=for-the-badge)](#why-direct-survival-functions-matter)
 <!-- BEGIN generated: assurance badges via benchmark/render_readme_assurance.py. Do not hand-edit. -->
-[![Excel CI](https://img.shields.io/badge/Excel_Regression-6018_of_6018_passed-d97706?style=for-the-badge&logo=githubactions&logoColor=white)](docs/EXCEL_VBA_CI.md)
+[![Excel CI](https://img.shields.io/badge/Excel_Regression-6026_of_6026_passed-d97706?style=for-the-badge&logo=githubactions&logoColor=white)](docs/EXCEL_VBA_CI.md)
 [![Accuracy Contracts](https://img.shields.io/badge/Accuracy_Contracts-166_of_166_PASS-0f766e?style=for-the-badge)](benchmark/accuracy_summary.md)
 [![Independent Holdout](https://img.shields.io/badge/Holdout-83_of_83_PASS-4c1d95?style=for-the-badge)](benchmark/holdout/holdout_summary.md)
 <!-- END generated: assurance badges -->
@@ -73,7 +73,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **6,018** | of 6,018 deterministic VBA assertions passed in the retained Excel run on `1c20ef9`; regression sources unchanged since |
+| **6,026** | of 6,026 deterministic VBA assertions passed in the retained Excel run on `7728b5e`; regression sources unchanged since |
 | **166** | active accuracy contracts (167 registry rows; 1 characterization-only): 166 PASS, 0 FAIL, 0 PENDING |
 | **2,151** | observation rows; main grid 1,795: 1,768 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
 | **83** | of 83 contracts PASS on an **independent holdout** of 659 observations |
@@ -87,8 +87,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 6,018/6,018 assertions passed on `1c20ef9` (Excel 16.0 build 20430, 64-bit; finished 2026-11-13). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,151 rows bound to the current source by `observation_manifest.json` (exported from `1c20ef9`).
+- **Excel regression** — 6,026/6,026 assertions passed on `7728b5e` (Excel 16.0 build 20430, 64-bit; finished 2026-11-13). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,151 rows bound to the current source by `observation_manifest.json` (exported from `7728b5e`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — `transition` mode: 1,768 of 1,795 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
 - **Contract verdicts** — 166 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 2 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
