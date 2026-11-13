@@ -8,6 +8,7 @@ import math
 import subprocess
 import unittest
 from public_integration import restore,EXTRA,live_total
+from frozen_tree import FROZEN
 from install_scaled_gamma_fidelity import HERE, ROOT, BEGIN, END, BASELINE, dataset, render
 from install_extended_gamma_fidelity import strip
 
@@ -64,7 +65,7 @@ class ScaledGammaVbaTests(unittest.TestCase):
                     blob = subprocess.check_output(['git','show',sha+':'+source['path']],cwd=ROOT)
                     self.assertEqual('sha256:'+hashlib.sha256(blob).hexdigest(),source['sha256'])
                     if not label:
-                        self.assertEqual(strip((ROOT/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
+                        self.assertEqual(strip((FROZEN/source['path']).read_text()),blob.decode().replace('\r\n','\n'))
                 details = failures(decoded['test-result.txt'])
                 self.assertEqual(len(details), failed)
                 self.assertEqual([s for s in details if not s.startswith('SG ')], baseline)
@@ -80,7 +81,7 @@ class ScaledGammaVbaTests(unittest.TestCase):
         self.assertEqual(len(saved['seams']),8)
 
     def test_generated_source_and_policy(self):
-        text = restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
+        text = restore((FROZEN/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         self.assertEqual(text.count(BEGIN),1)
         block = BEGIN+text.split(BEGIN)[1].split(END)[0]+END+'\n\n'
         self.assertEqual(block,render(dataset()))
@@ -105,13 +106,13 @@ class ScaledGammaVbaTests(unittest.TestCase):
     def test_earlier_vba_suite_and_public_sources_are_unchanged(self):
         sha = 'd94b70e7a98c78de9c0dd6fcfa2be997b3bf96af'
         baseline = subprocess.check_output(['git','show',sha+':tests/M_STATS_PROBDIST_TEST.bas'],cwd=ROOT).decode()
-        text = restore((ROOT/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
+        text = restore((FROZEN/'tests/M_STATS_PROBDIST_TEST.bas').read_text())
         before,rest = text.split(BEGIN)
         _,after = rest.split(END+'\n\n')
         restored = (before+after).replace('    Test_ScaledGamma_Fidelity\n','')
         self.assertEqual(strip(restored),baseline.replace('\r\n','\n'))
-        for path in (ROOT/'src').glob('*.bas'):
-            original = subprocess.check_output(['git','show',sha+':'+path.relative_to(ROOT).as_posix()],cwd=ROOT).decode()
+        for path in (FROZEN/'src').glob('*.bas'):
+            original = subprocess.check_output(['git','show',sha+':'+path.relative_to(FROZEN).as_posix()],cwd=ROOT).decode()
             self.assertEqual(restore(path.read_text()),original.replace('\r\n','\n'))
 
     def test_revealed_boundaries_are_present(self):

@@ -19,6 +19,8 @@ commands = (
     ("test_vba_code_identity.py",),
     ("test_study_grid_binding.py",),
     ("check_study_grid_binding.py",),
+    ("test_frozen_sources.py",),
+    ("gamma_cf_study/coverage/test_production_follows_study.py",),
     ("test_harness_timing.py",),
     ("test_harness_studies.py",),
     ("positive_ratio_subnormal/check_post23_cutoffs.py",),

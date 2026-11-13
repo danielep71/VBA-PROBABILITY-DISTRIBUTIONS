@@ -17,10 +17,19 @@ def _route_block():
     return module
 
 
+def frozen_source():
+    """SPECIALFUNCS as committed at the Gamma study pin (#338), never the
+    working tree: later production changes must not move a closed study."""
+    import sys
+    sys.path.insert(0, str(ROOT / 'benchmark'))
+    from _frozen_sources import text
+    return text('src/M_STATS_PROBDIST_SPECIALFUNCS.bas')
+
+
 def measured_source():
-    """The module as this study measured it (BASELINE): the current source with
+    """The module as this study measured it (BASELINE): the pinned source with
     the binary64 route block of #312, which left production after #307 closed."""
-    return _route_block().as_measured(SOURCE.read_text())
+    return _route_block().as_measured(frozen_source())
 
 SOURCE = ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
 BASELINE = 'f568e3a3d3e3517d5c66294d980f411e711188a2df40f2b608ace267b041fb6e'

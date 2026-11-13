@@ -12,7 +12,7 @@ OUT = ROOT / 'artifacts/gamma-cache'
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    source = C.SRC.read_text()
+    source = C.frozen_source()
     original = C.strip(source)
     assert C.apply(original) == source
     prior = json.loads((ROOT / 'benchmark/harness_timing/run_43017348872_profile.json').read_text())

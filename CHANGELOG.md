@@ -97,6 +97,15 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Closed studies read pinned sources (#338)
+
+- The replay fixtures and preparation checks of the Gamma continued-fraction,
+  cache and recurrence studies read the production modules from a pinned
+  commit, not from the working tree. A production change, a comment included,
+  no longer needs an inverse added to those studies' tooling. One check still
+  follows the working tree: the generated public Gamma block must keep the
+  studied code until the study declares that production has moved on.
+
 ### Carried certification (#301)
 
 - A VBA change that alters only comments and whitespace keeps the Excel
