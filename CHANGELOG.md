@@ -97,6 +97,22 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma and Chi-square: positive arguments that underflow (#13)
+
+- `K_STATS_Gamma_Density`, `K_STATS_Gamma_Cumulative`,
+  `K_STATS_Gamma_Survival` and the three Chi-square equivalents no longer
+  treat a positive `X` as the support origin when `X / ScaleParam`, or `X / 2`,
+  is too small for a Double. Example: `K_STATS_Gamma_Cumulative(1E-300, 1E-4,
+  1E+100)` returned 0 and now returns 0.912063476068496; the density at the
+  same point returned `#VALUE!` and now returns 9.12063476068505E+295.
+- The densities and cumulatives also recover precision where the standardized
+  argument is a subnormal with few significant bits: below 2^-1026, or below
+  2^-1034 for the Gamma cumulative. The cutoffs are those measured and
+  preregistered in `benchmark/positive_ratio_subnormal`.
+- Results that binary64 cannot hold keep the documented policy: zero for an
+  underflow, `#NUM!` for a density overflow. Arguments above the cutoffs take
+  the same path as before.
+
 ### Closed studies read pinned sources (#338)
 
 - The replay fixtures and preparation checks of the Gamma continued-fraction,

@@ -711,6 +711,8 @@ Private Sub RunContinuousSuite()
     TimingLap "Test_CN_GammaCumulative"
     Test_CN_GammaSurvival
     TimingLap "Test_CN_GammaSurvival"
+    Test_CN_PositiveRatioRecovery
+    TimingLap "Test_CN_PositiveRatioRecovery"
     Test_CN_GammaInverse
     TimingLap "Test_CN_GammaInverse"
     Test_CN_GammaMoments
@@ -19196,6 +19198,153 @@ Private Sub Test_CN_GammaSurvival()
         CDbl(K_STATS_Gamma_Survival(3#, 2.5, 1.5)), 1#, TOL_ABS_TIGHT
     AssertClose "gamma sf ratio overflow tends zero", _
         K_STATS_Gamma_Survival(1E+308, 2#, 9.99988867182683E-321), 0#, 0#
+End Sub
+
+
+Private Sub Test_CN_PositiveRatioRecovery()
+'
+'==============================================================================
+' Test_CN_PositiveRatioRecovery
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the six Gamma and Chi-square surfaces where the standardized
+'   argument is mathematically positive but stored as zero or as a
+'   low-significand subnormal (#13, parent #11).
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' NOTES
+'   - References are 60-digit evaluations at the exact ratio of the stored
+'     operands, not at the rounded standardized argument.
+'   - Subnormal arguments are built from their words, never written as
+'     literals: a VBA source literal cannot be relied on to denote one.
+'   - The cutoffs are 2 ^ -1026 for both densities and the Chi-square
+'     cumulative, and 2 ^ -1034 for the Gamma cumulative. A value at the
+'     cutoff stays on the direct path; one unit below it is recovered.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-11-13
+'==============================================================================
+'
+    Const TOL_PRS           As Double = 0.000000000001  '1E-12 relative
+
+    Dim MinSub              As Double          '2 ^ -1074
+    Dim At48                As Double          '2 ^ -1026, the 48-bit cutoff
+    Dim Below48             As Double          'One unit below 2 ^ -1026
+    Dim At40                As Double          '2 ^ -1034, the 40-bit cutoff
+    Dim Below40             As Double          'One unit below 2 ^ -1034
+    Dim Bits24              As Double          '2 ^ -1050
+    Dim ChiAt               As Double          '2 ^ -1025, whose half is the cutoff
+    Dim ChiBelow            As Double          'Two units below 2 ^ -1025
+
+    Debug.Print "-- Positive-ratio recovery (Gamma, Chi-square)"
+
+    MinSub = SP_FromWords(&H0&, &H1&)
+    At48 = SP_FromWords(&H10000, &H0&)
+    Below48 = SP_FromWords(&HFFFF&, &HFFFFFFFF)
+    At40 = SP_FromWords(&H100&, &H0&)
+    Below40 = SP_FromWords(&HFF&, &HFFFFFFFF)
+    Bits24 = SP_FromWords(&H0&, &H1000000)
+    ChiAt = SP_FromWords(&H20000, &H0&)
+    ChiBelow = SP_FromWords(&H1FFFF, &HFFFFFFFE)
+
+    AssertTrue "PRS constructed arguments are positive and ordered", _
+        MinSub > 0# And Below40 < At40 And Below48 < At48 And ChiBelow < ChiAt
+
+    'Parent counterexample: X / ScaleParam is 1E-400 and is stored as zero
+    AssertRelClose "PRS gamma cdf(1e-300,1e-4,1e100) hard underflow", _
+        K_STATS_Gamma_Cumulative(1E-300, 0.0001, 1E+100), _
+        0.912063476068496, TOL_PRS
+    AssertRelClose "PRS gamma sf(1e-300,1e-4,1e100) hard underflow", _
+        K_STATS_Gamma_Survival(1E-300, 0.0001, 1E+100), _
+        0.087936523931504, TOL_PRS
+    AssertRelClose "PRS gamma pdf(1e-300,1e-4,1e100) hard underflow", _
+        K_STATS_Gamma_Density(1E-300, 0.0001, 1E+100), _
+        9.12063476068505E+295, TOL_PRS
+    AssertClose "PRS gamma cdf + sf = 1 under hard underflow", _
+        CDbl(K_STATS_Gamma_Cumulative(1E-300, 0.0001, 1E+100)) + _
+        CDbl(K_STATS_Gamma_Survival(1E-300, 0.0001, 1E+100)), 1#, 0.000000000000001
+
+    'The support origin is a different input and keeps its exact values
+    AssertExactlyEqual "PRS gamma cdf(0,1e-4,1e100) stays 0", _
+        K_STATS_Gamma_Cumulative(0#, 0.0001, 1E+100), 0#
+    AssertExactlyEqual "PRS gamma sf(0,1e-4,1e100) stays 1", _
+        K_STATS_Gamma_Survival(0#, 0.0001, 1E+100), 1#
+    AssertExactlyEqual "PRS chi cdf(0,2e-4) stays 0", _
+        K_STATS_ChiSquare_Cumulative(0#, 0.0002), 0#
+
+    'A ratio of two normal operands that is stored as a subnormal
+    AssertRelClose "PRS gamma cdf(1e-200,0.5,1e110) subnormal ratio", _
+        K_STATS_Gamma_Cumulative(1E-200, 0.5, 1E+110), _
+        1.12837916709551E-155, TOL_PRS
+    AssertRelClose "PRS gamma pdf(1e-200,0.5,1e110) subnormal ratio", _
+        K_STATS_Gamma_Density(1E-200, 0.5, 1E+110), _
+        5.64189583547756E+44, TOL_PRS
+
+    'Both sides of each cutoff meet the same tolerance, so the seam is closed
+    AssertRelClose "PRS gamma pdf at 2^-1026 (direct)", _
+        K_STATS_Gamma_Density(At48, 0.5, 1#), 1.51290911445652E+154, TOL_PRS
+    AssertRelClose "PRS gamma pdf one unit below 2^-1026 (recovered)", _
+        K_STATS_Gamma_Density(Below48, 0.5, 1#), 1.51290911445653E+154, TOL_PRS
+    AssertRelClose "PRS gamma cdf at 2^-1034 (direct)", _
+        K_STATS_Gamma_Cumulative(At40, 0.5, 1#), 2.6299488444332E-156, TOL_PRS
+    AssertRelClose "PRS gamma cdf one unit below 2^-1034 (recovered)", _
+        K_STATS_Gamma_Cumulative(Below40, 0.5, 1#), 2.629948844432E-156, TOL_PRS
+    AssertRelClose "PRS chi pdf at 2^-1025 (direct)", _
+        K_STATS_ChiSquare_Density(ChiAt, 1#), 7.56454557228262E+153, TOL_PRS
+    AssertRelClose "PRS chi pdf two units below 2^-1025 (recovered)", _
+        K_STATS_ChiSquare_Density(ChiBelow, 1#), 7.56454557228263E+153, TOL_PRS
+    AssertRelClose "PRS chi cdf at 2^-1025 (direct)", _
+        K_STATS_ChiSquare_Cumulative(ChiAt, 1#), 4.20791815109311E-155, TOL_PRS
+    AssertRelClose "PRS chi cdf two units below 2^-1025 (recovered)", _
+        K_STATS_ChiSquare_Cumulative(ChiBelow, 1#), 4.20791815109311E-155, TOL_PRS
+
+    'The smallest positive argument
+    AssertRelClose "PRS gamma cdf(2^-1074,0.5,1)", _
+        K_STATS_Gamma_Cumulative(MinSub, 0.5, 1#), 2.50811466639823E-162, TOL_PRS
+    AssertRelClose "PRS gamma pdf(2^-1074,0.5,1)", _
+        K_STATS_Gamma_Density(MinSub, 0.5, 1#), 2.53824030016058E+161, TOL_PRS
+
+    'Parent counterexample: half of the smallest positive X is stored as zero
+    AssertRelClose "PRS chi cdf(2^-1074,2e-4) hard underflow", _
+        K_STATS_ChiSquare_Cumulative(MinSub, 0.0002), 0.92824867943255, TOL_PRS
+    AssertRelClose "PRS chi sf(2^-1074,2e-4) hard underflow", _
+        K_STATS_ChiSquare_Survival(MinSub, 0.0002), 0.0717513205674496, TOL_PRS
+    AssertRelClose "PRS chi pdf(2^-1074,1.99) hard underflow", _
+        K_STATS_ChiSquare_Density(MinSub, 1.99), 20.6892082696049, TOL_PRS
+    AssertRelClose "PRS chi sf(2^-1074,2e-10) small upper tail", _
+        K_STATS_ChiSquare_Survival(MinSub, 0.0000000002), 7.44555975718941E-08, TOL_PRS
+
+    'The survival has no precision dispatch: a stored positive argument
+    'stays on the direct path
+    AssertRelClose "PRS gamma sf(2^-1050,1e-4,1) direct", _
+        K_STATS_Gamma_Survival(Bits24, 0.0001, 1#), 0.070141393687446, TOL_PRS
+
+    'Results beyond binary64 keep the documented policy: a probability or
+    'density below the smallest Double is zero, a density above the largest
+    'is an error, and a large shape returns without overflow
+    AssertExactlyEqual "PRS gamma sf(1e-300,3,1e100) = 1", _
+        K_STATS_Gamma_Survival(1E-300, 3#, 1E+100), 1#
+    AssertExactlyEqual "PRS gamma cdf(1e-300,3,1e100) = 0", _
+        K_STATS_Gamma_Cumulative(1E-300, 3#, 1E+100), 0#
+    AssertExactlyEqual "PRS gamma pdf(1e-300,3,1e100) = 0", _
+        K_STATS_Gamma_Density(1E-300, 3#, 1E+100), 0#
+    AssertExactlyEqual "PRS gamma cdf(1e-300,1e300,1e100) = 0", _
+        K_STATS_Gamma_Cumulative(1E-300, 1E+300, 1E+100), 0#
+    AssertExactlyEqual "PRS gamma sf(1e-300,1e300,1e100) = 1", _
+        K_STATS_Gamma_Survival(1E-300, 1E+300, 1E+100), 1#
+    AssertErrorCode "PRS chi pdf(2^-1074,2e-4) overflows", _
+        K_STATS_ChiSquare_Density(MinSub, 0.0002), xlErrNum
 End Sub
 
 

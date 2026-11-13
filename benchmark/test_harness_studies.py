@@ -8,7 +8,10 @@ Proofs for the separated study batteries of #300 (_harness_studies.py).
      the binary64 series and continued fraction: they test private ports.
   3. The two policies split the 14,888 assertions of run 42766552574 into
      5,987 regression and 8,901 study assertions, as the batteries' own
-     fidelity records state.
+     fidelity records state. The split is a fact about the sources of that
+     time, so it is read from the pinned commit of _frozen_sources.py (#338);
+     the regression policy of the working tree grows with later tests, and
+     only its study part must still declare the separated batteries.
   4. The CI bridge runs the batteries only with -RunStudies, after a green
      regression, against the study policy, and fails the job on a mismatch;
      the workflow requests it on dispatch and on every export.
@@ -26,6 +29,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import _harness_studies as S  # noqa: E402
 import _harness_timing as T  # noqa: E402
+from _frozen_sources import text as frozen_text  # noqa: E402
 
 COVERAGE = os.path.join(HERE, "gamma_cf_study", "coverage")
 ALLOWED = {"PROB_IsFinite", "PROB_TryGammaSeriesP", "PROB_TryGammaContinuedFractionQ"}
@@ -80,10 +84,17 @@ def main():
         check(used <= ALLOWED, f"{name} calls production code: {sorted(used - ALLOWED)}")
 
     # 3. The policies and the batteries' records agree.
-    regression = json.loads(read(".github/excel-evidence-policy.json"))
+    regression = json.loads(frozen_text(".github/excel-evidence-policy.json"))
+    frozen_study = json.loads(frozen_text(S.STUDY_POLICY))
     study = json.loads(read(S.STUDY_POLICY))
-    check(regression["expected_assertions"] == 5987, "the regression policy is not 5,987")
-    check(S.live_total(ROOT) == 14888, "regression plus studies is not run 42766552574's 14,888")
+    check(regression["expected_assertions"] == 5987, "the pinned regression policy is not 5,987")
+    check(regression["expected_assertions"] + frozen_study["expected_assertions"] == 14888,
+          "pinned regression plus studies is not run 42766552574's 14,888")
+    check(study == frozen_study, "the study policy changed since the separation")
+    try:
+        S.live_total(ROOT)
+    except S.StudiesError as exc:
+        check(False, str(exc))
     check(study["entry_point"] == "Test_STATS_PROBDIST_RunStudies_CI", "wrong study entry point")
     records = {"Test_ScaledProduct_Fidelity": "scaled_product_fidelity.json",
                "Test_ScaledDD_Fidelity": "scaled_dd_fidelity.json",
