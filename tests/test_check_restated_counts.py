@@ -53,18 +53,20 @@ class RestatedCounts(unittest.TestCase):
                             ("passed 5987 assertions", "regression assertions"),
                             ("held to 8,901", "study assertions"),
                             ("the 2,151 rows", "main-grid rows"),
-                            ("holdout of 659 rows", "holdout rows")):
+                            ("holdout of 659 rows", "holdout rows"),
+                            ("passed `5,987` assertions", "regression assertions"),
+                            ("contains `659` rows", "holdout rows")):
             found = self.findings({"A.md": text + "\n"})
             self.assertTrue(any(label in f for f in found), (text, found))
 
     def test_stale_copies_are_refused_by_phrase(self) -> None:
         for text in ("currently 955", "lists 8 open blockers", "every blocker (11 open)",
-                     "the 2,139-row main grid"):
+                     "the 2,139-row main grid", "the `2,139-row` grid"):
             self.assertTrue(self.findings({"A.md": text + "\n"}), text)
 
     def test_references_and_other_numbers_pass(self) -> None:
-        text = ("Issue #659, commit `5987abc`, threshold 5E-15, run 42659870, "
-                "1.659 and 26590, currently 5E-15.\n")
+        text = ("Issue #659, commit `5987abc`, commit `abc5987`, threshold 5E-15, "
+                "run 42659870, 1.659, 659.5, 5,987,000 and 26590, currently 5E-15.\n")
         self.assertEqual(self.findings({"A.md": text}), [])
 
     def test_research_records_are_out_of_scope(self) -> None:

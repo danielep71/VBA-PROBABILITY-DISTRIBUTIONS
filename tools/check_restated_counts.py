@@ -47,7 +47,7 @@ PHRASES = (
     re.compile(r"\bcurrently\s+\d[\d,]*(?![\d.Ee])"),
     re.compile(r"\b\d+\s+(?:registered\s+)?open\s+blockers\b"),
     re.compile(r"\(\d+\s+open\)"),
-    re.compile(r"(?<![\w.#`])\d[\d,]*-row\b"),
+    re.compile(r"(?<![\w.#])\d[\d,]*-row\b"),
 )
 TABLE_BEGIN = "<!-- BEGIN evidence rules -->"
 TABLE_END = "<!-- END evidence rules -->"
@@ -68,8 +68,10 @@ def known_counts(root: Path) -> dict[str, int]:
 def number_pattern(value: int) -> re.Pattern[str]:
     plain, grouped = str(value), f"{value:,}"
     alternatives = "|".join(re.escape(t) for t in dict.fromkeys((grouped, plain)))
-    # Not part of a longer number, an issue or commit reference, or a decimal.
-    return re.compile(rf"(?<![\w.#`,])(?:{alternatives})(?![\w.,]\d|\d)")
+    # Not part of a longer number, an issue reference or a decimal. A count in
+    # an inline code span still counts; a commit reference such as `5987abc`
+    # does not, because a word character follows the digits.
+    return re.compile(rf"(?<![\w.#,])(?:{alternatives})(?!\w|[.,]\d)")
 
 
 def table(text: str) -> str | None:
