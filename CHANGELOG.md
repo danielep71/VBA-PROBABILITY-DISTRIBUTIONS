@@ -97,6 +97,16 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Excel suite levels (#299)
+
+- A pull request that cannot change what Excel executes now runs a fast level
+  of the Excel regression: the full suite without the two test procedures
+  that drive the double-double Gamma kernel, which take almost all of its
+  time. Pull requests that change VBA, the runner or an Excel policy, every
+  push to a protected branch and every export still run the full suite. A
+  fast run is never certification evidence.
+- The runner retries a log write that another process blocks for an instant;
+  one such collision failed a run whose assertions were all green.
 ### Studies bound to their rows (#302)
 
 - The normal-tail study record binds the grid rows its predictions read, not

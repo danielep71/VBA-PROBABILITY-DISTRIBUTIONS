@@ -53,6 +53,37 @@ executes the imported project through `Application.Run`. It is execution-backed
 compile evidence, not a fabricated claim that **Debug > Compile VBAProject** was
 separately clicked.
 
+## Suite levels
+
+The regression has two levels (#299).
+
+- **Full.** Every suite, held to `expected_assertions` in
+  `.github/excel-evidence-policy.json`. Only a full run is certification
+  evidence. It runs on every push to `main` and `release/**` that changes VBA,
+  the runner or a policy, on every dispatch unless the fast level is asked
+  for, on every export, and on every pull request that could change what
+  Excel executes.
+- **Fast.** The same run without the test procedures listed in
+  `.github/excel-fast-policy.json`, held to that file's own
+  `expected_assertions`. Those procedures drive the double-double Gamma kernel
+  and take almost all of the full suite's time. The adapter comments out their
+  calls in the temporary workbook only; the committed test module is not
+  changed. Each name must be called exactly once, or the run fails. A fast run
+  is a smoke test of the runner and harness. Its record states "FAST level,
+  not certification evidence" and carries a count the evidence policy rejects.
+
+`tools/select_excel_suite.py` chooses the level in the `select` job. A pull
+request runs the fast level only when no changed path can alter the Excel run:
+no VBA module anywhere, nothing under `ci/`, no `.github/excel-*.json`, not
+the workflow and not the selection tool. Anything else is full, and so is any
+event, base or path the tool cannot classify; if the selection job itself
+fails, the regression job runs the full suite. A pull request that changes
+VBA or the runner therefore runs the full suite on every push, its final head
+included. The study batteries never run at the fast level.
+
+A dispatch can ask for the fast level with `suite: fast`; the input is ignored
+when the dispatch also exports a grid.
+
 ## Artifact contract
 
 Every run uploads exactly these evidence files as

@@ -8,10 +8,21 @@ param(
     # Also run the study batteries (#300) after a complete green regression,
     # against .github/excel-study-policy.json.
     [Parameter(Mandatory = $false)]
-    [switch]$RunStudies
+    [switch]$RunStudies,
+
+    # Fast level (#299): skip the test procedures listed in
+    # .github/excel-fast-policy.json and hold the run to that policy's count.
+    # A fast run is a smoke test for changes that cannot alter what Excel
+    # executes. It is never certification evidence: its record carries a count
+    # the evidence policy rejects, and says so.
+    [Parameter(Mandatory = $false)]
+    [switch]$Fast
 )
 
 Set-StrictMode -Version Latest
+
+# The study batteries never run at the fast level (#299).
+if ($Fast) { $RunStudies = $false }
 $ErrorActionPreference = "Stop"
 
 $excel = $null
@@ -53,7 +64,19 @@ function Write-CiLog {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $line = "[$timestamp] $Message"
     Write-Host $line
-    Add-Content -LiteralPath $resultPath -Value $line -Encoding UTF8
+    # Another process (a scanner or indexer) can hold the log for an instant;
+    # run 43441031137 died on "Stream was not readable" with every assertion
+    # green. Retry briefly before giving up.
+    for ($attempt = 1; ; $attempt++) {
+        try {
+            Add-Content -LiteralPath $resultPath -Value $line -Encoding UTF8 -ErrorAction Stop
+            break
+        }
+        catch {
+            if ($attempt -ge 5) { throw }
+            Start-Sleep -Milliseconds (100 * $attempt)
+        }
+    }
 }
 
 function Release-ComObjectSafely {
@@ -369,6 +392,30 @@ End Function
     $insertLine = $codeModule.CountOfLines + 1
     $codeModule.InsertLines($insertLine, $ciBridge)
 
+    # Fast level (#299): in this temporary workbook only, turn the call of
+    # each listed test procedure into a comment. The committed test module is
+    # not changed, and each name must be called exactly once, so a renamed or
+    # removed test fails the run instead of silently running everything.
+    $fastPolicy = $null
+    if ($Fast) {
+        $fastPolicyPath = Join-Path $RepositoryRoot ".github\excel-fast-policy.json"
+        $fastPolicy = Get-Content -LiteralPath $fastPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        # One COM read of the whole module: a line-by-line read costs about 30 s
+        # per name. ReplaceLine keeps the line count, so the numbers stay valid.
+        $moduleLines = $codeModule.Lines(1, $codeModule.CountOfLines) -split "`r?`n"
+        foreach ($testName in @($fastPolicy.skip_tests | ForEach-Object { [string]$_ })) {
+            $hits = @()
+            for ($lineNumber = 1; $lineNumber -le $moduleLines.Count; $lineNumber++) {
+                if ($moduleLines[$lineNumber - 1].Trim() -ceq $testName) { $hits += $lineNumber }
+            }
+            if ($hits.Count -ne 1) {
+                throw "Fast level: expected exactly one call of $testName, found $($hits.Count)."
+            }
+            $codeModule.ReplaceLine($hits[0], "    ' FAST level: $testName skipped")
+            Write-CiLog "FAST level: skipping $testName"
+        }
+    }
+
     $workbook.Save()
     Write-CiLog "Executing $($policy.entry_point)"
 
@@ -437,6 +484,7 @@ End Function
     }
 
     $expectedAssertions = [int]$policy.expected_assertions
+    if ($Fast) { $expectedAssertions = [int]$fastPolicy.expected_assertions }
     if ($total -ne $expectedAssertions) {
         $stages.regression.status = "FAIL"
         $stages.regression.detail = "Regression completeness failure: expected $expectedAssertions assertions, observed $total"
@@ -451,6 +499,10 @@ End Function
     else {
         $stages.regression.status = "PASS"
         $stages.regression.detail = "Complete policy-declared regression: $passed/$total assertions passed"
+        if ($Fast) {
+            $stages.regression.detail = "FAST level, not certification evidence: $passed/$total assertions passed with $(@($fastPolicy.skip_tests).Count) test procedure(s) skipped"
+            Write-CiLog $stages.regression.detail
+        }
         $exitCode = 0
 
         # The study batteries (#300): private arithmetic ports of the #26
