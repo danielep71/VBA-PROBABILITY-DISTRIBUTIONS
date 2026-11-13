@@ -322,10 +322,20 @@ Public Function K_STATS_Gamma_Density( _
     'Form Log(X / ScaleParam) without dividing potentially extreme operands
         LogRatio = Log(X) - Log(ScaleParam)
 
-    'Stable Loader log-density via the shared kernel (no large-Shape cancellation)
-        If Not PROB_TryGammaLogPdf(StandardX, Shape, LogRatio, Log(ScaleParam), _
-                                   LogDensity, FailMsg) Then
-            GoTo Fail_Num
+    'A positive ratio stored as zero, or as a subnormal below the measured
+    'cutoff, takes the log-domain form; every other argument keeps the stable
+    'Loader log-density of the shared kernel (#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
+            = PROB_PRC_DIRECT Then
+            If Not PROB_TryGammaLogPdf(StandardX, Shape, LogRatio, Log(ScaleParam), _
+                                       LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryPositiveRatioLogPdf(Shape, LogRatio, StandardX, _
+                                               Log(ScaleParam), LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Exponentiate under the shared overflow and underflow contract
@@ -423,6 +433,7 @@ Public Function K_STATS_Gamma_Cumulative( _
 '------------------------------------------------------------------------------
     Dim StandardX           As Double          'X divided by ScaleParam
     Dim Value               As Double          'Cumulative probability
+    Dim Complement          As Double          'Upper tail from the recovery kernel, unused
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -462,10 +473,23 @@ Public Function K_STATS_Gamma_Cumulative( _
             GoTo Return_Success
         End If
 
-    'Evaluate the regularized lower incomplete gamma function
-        If Not PROB_TryGammaRegularizedP( _
-            Shape, StandardX, Value, FailMsg) Then
-            GoTo Fail_Num
+    'A positive ratio stored as zero is evaluated from
+    'Log(X) - Log(ScaleParam); the kernel would read it as the support origin.
+    'A stored positive argument goes to the regularized lower incomplete gamma
+    'function, which is exact for it. The precision dispatch of the cumulative
+    'is not applied: its registered cutoff was measured on the earlier kernel
+    '(#13; benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                Shape, Log(X) - Log(ScaleParam), Value, Complement, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryGammaRegularizedP( _
+                Shape, StandardX, Value, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Return the cumulative probability
@@ -561,6 +585,7 @@ Public Function K_STATS_Gamma_Survival( _
 '------------------------------------------------------------------------------
     Dim StandardX           As Double          'X divided by ScaleParam
     Dim Value               As Double          'Survival probability
+    Dim Complement          As Double          'Lower tail from the recovery kernel, unused
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -600,10 +625,21 @@ Public Function K_STATS_Gamma_Survival( _
             GoTo Return_Success
         End If
 
-    'Evaluate the regularized upper incomplete gamma function
-        If Not PROB_TryGammaRegularizedQ( _
-            Shape, StandardX, Value, FailMsg) Then
-            GoTo Fail_Num
+    'A positive ratio stored as zero is evaluated from
+    'Log(X) - Log(ScaleParam); the kernel would read it as the support origin.
+    'The survival has no precision dispatch, so every stored positive argument
+    'goes to the regularized upper incomplete gamma function (#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                Shape, Log(X) - Log(ScaleParam), Complement, Value, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryGammaRegularizedQ( _
+                Shape, StandardX, Value, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Return the survival probability

@@ -860,6 +860,7 @@ Public Function K_STATS_ChiSquare_Density( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim HalfDF              As Double          'DegreesFreedom / 2
+    Dim StandardX           As Double          'X / 2, as stored
     Dim LogDensity          As Double          'Log-density value
     Dim Density             As Double          'Density value
     Dim FailMsg             As String          'Detailed failure message
@@ -921,10 +922,24 @@ Public Function K_STATS_ChiSquare_Density( _
     'Compute half degrees of freedom
         HalfDF = 0.5 * DegreesFreedom
 
-    'Stable Loader log-density via the shared Gamma kernel (Shape=df/2, Scale=2)
-        If Not PROB_TryGammaLogPdf(0.5 * X, HalfDF, Log(X) - Log(2#), Log(2#), _
-                                   LogDensity, FailMsg) Then
-            GoTo Fail_Num
+    'Store the standardized argument X / 2
+        StandardX = 0.5 * X
+
+    'A positive X whose half is stored as zero, or as a subnormal below the
+    'measured cutoff, takes the log-domain form; every other argument keeps the
+    'stable Loader log-density of the shared Gamma kernel (Shape=df/2, Scale=2)
+    '(#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
+            = PROB_PRC_DIRECT Then
+            If Not PROB_TryGammaLogPdf(StandardX, HalfDF, Log(X) - Log(2#), Log(2#), _
+                                       LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryPositiveRatioLogPdf(HalfDF, Log(X) - Log(2#), StandardX, _
+                                               Log(2#), LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Exponentiate; underflow to zero is a valid result
@@ -1033,6 +1048,8 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Value               As Double          'Cumulative probability
+    Dim StandardX           As Double          'X / 2, as stored
+    Dim Complement          As Double          'Upper tail from the recovery kernel, unused
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1071,12 +1088,30 @@ Public Function K_STATS_ChiSquare_Cumulative( _
             GoTo Fail_Num
         End If
 
-    'Evaluate the regularized lower incomplete gamma function
-        If Not PROB_TryGammaRegularizedP( _
-            0.5 * DegreesFreedom, _
-            0.5 * X, _
-            Value, _
-            FailMsg) Then GoTo Fail_Num
+    'Store the standardized argument X / 2
+        StandardX = 0.5 * X
+
+    'A positive X whose half is stored as zero is evaluated from
+    'Log(X) - Log(2); the kernel would read it as the support origin. A stored
+    'positive argument goes to the regularized lower incomplete gamma function.
+    'The precision dispatch of the cumulative is not applied: its registered
+    'cutoff was rejected on the current kernel
+    '(#13; benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                0.5 * DegreesFreedom, _
+                Log(X) - Log(2#), _
+                Value, _
+                Complement, _
+                FailMsg) Then GoTo Fail_Num
+        Else
+            If Not PROB_TryGammaRegularizedP( _
+                0.5 * DegreesFreedom, _
+                StandardX, _
+                Value, _
+                FailMsg) Then GoTo Fail_Num
+        End If
 
     'Return the cumulative probability
         K_STATS_ChiSquare_Cumulative = Value
@@ -1171,6 +1206,8 @@ Public Function K_STATS_ChiSquare_Survival( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Value               As Double          'Survival probability
+    Dim StandardX           As Double          'X / 2, as stored
+    Dim Complement          As Double          'Lower tail from the recovery kernel, unused
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1209,12 +1246,28 @@ Public Function K_STATS_ChiSquare_Survival( _
             GoTo Fail_Num
         End If
 
-    'Evaluate the regularized upper incomplete gamma function
-        If Not PROB_TryGammaRegularizedQ( _
-            0.5 * DegreesFreedom, _
-            0.5 * X, _
-            Value, _
-            FailMsg) Then GoTo Fail_Num
+    'Store the standardized argument X / 2
+        StandardX = 0.5 * X
+
+    'A positive X whose half is stored as zero is evaluated from
+    'Log(X) - Log(2); the kernel would read it as the support origin. The
+    'survival has no precision dispatch, so every stored positive argument
+    'goes to the regularized upper incomplete gamma function (#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                0.5 * DegreesFreedom, _
+                Log(X) - Log(2#), _
+                Complement, _
+                Value, _
+                FailMsg) Then GoTo Fail_Num
+        Else
+            If Not PROB_TryGammaRegularizedQ( _
+                0.5 * DegreesFreedom, _
+                StandardX, _
+                Value, _
+                FailMsg) Then GoTo Fail_Num
+        End If
 
     'Return the survival probability
         K_STATS_ChiSquare_Survival = Value

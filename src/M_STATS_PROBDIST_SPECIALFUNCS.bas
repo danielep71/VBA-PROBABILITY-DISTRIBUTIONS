@@ -43,6 +43,7 @@ Option Private Module
 '   Positive-ratio dispatch (#13):
 '     - PROB_PositiveRatioClass, PROB_ClassifyPositiveRatio
 '     - PROB_PRS_CUTOFF_48BIT, PROB_PRS_CUTOFF_40BIT
+'     - PROB_TryPositiveRatioTails, PROB_TryPositiveRatioLogPdf
 '
 '   Combinatorics:
 '     - PROB_StirlingError
@@ -219,8 +220,16 @@ Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y
 'the 40-bit Gamma cumulative boundary the same way. Both boundaries were
 'confirmed on an independent, preregistered holdout - see
 'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
-Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density, ChiSquare cumulative
-Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Gamma cumulative
+'
+'IN PRODUCTION the two densities use the 48-bit cutoff. The cumulative cutoffs
+'were measured on the kernel that preceded the public Gamma integration; on
+'the current one the cumulative recovers a stored zero only, and
+'PROB_PRS_CUTOFF_40BIT has no caller until the policy is registered again.
+'See benchmark/positive_ratio_subnormal/POST_INTEGRATION_RESULT.md.
+Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density
+Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Registered for the Gamma cumulative; not applied
+Private Const PROB_PRS_LOG_RATIO_MAX As Double = -700#   'Recovery kernels refuse a log ratio at or above this; every dispatched ratio is below 2 ^ -1026, whose logarithm is about -711.2
+Private Const PROB_PRS_TAIL_SHAPE_MAX As Double = 4#     'Above this shape the recovered lower tail is exactly zero: Shape * LogRatio < -2800 and LogGamma(1 + Shape) > 0
 
 'Classification of a standardized argument for positive-ratio dispatch.
 '
@@ -1015,6 +1024,186 @@ Public Function PROB_ClassifyPositiveRatio( _
         End If
 
         PROB_ClassifyPositiveRatio = PROB_PRC_DIRECT
+End Function
+
+
+Public Function PROB_TryPositiveRatioTails( _
+    ByVal Shape As Double, _
+    ByVal LogStandardX As Double, _
+    ByRef P As Double, _
+    ByRef Q As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryPositiveRatioTails
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Lower and upper Gamma tails for a standardized argument that is
+'   mathematically positive but stored as a low-significand subnormal or as
+'   zero, for ICR-P1-01A (#13). The argument enters as its logarithm, which
+'   the caller forms from the original operands, so nothing is lost to the
+'   rounding of the ratio.
+'
+'       Log P = Shape * LogStandardX - LogGamma(1 + Shape)
+'       P     = Exp(Log P)
+'       Q     = -Expm1(Log P)
+'
+'   This is the leading term of the lower series. The next term is smaller
+'   by the factor StandardX * Shape / (Shape + 1), below 2 ^ -1026 in the
+'   region this function accepts, so it cannot change a binary64 result.
+'
+' PRECONDITION
+'   The caller classified the argument with PROB_ClassifyPositiveRatio and
+'   did not get PROB_PRC_DIRECT. LogStandardX is then below
+'   PROB_PRS_LOG_RATIO_MAX; a larger value is refused, not evaluated.
+'
+' INPUTS
+'   Shape         Gamma shape parameter (df / 2 for Chi-square), > 0
+'   LogStandardX  Log(X) - Log(ScaleParam), or Log(X) - Log(2) for Chi-square
+'
+' RETURNS
+'   Boolean
+'     TRUE  => P and Q hold the lower and upper tail.
+'     FALSE => The inputs are outside the recovery region, or the assembled
+'              probability left [0, 1] (FailMsg set).
+'
+' NOTES
+'   Above PROB_PRS_TAIL_SHAPE_MAX the lower tail is exactly zero in binary64
+'   and is returned without arithmetic: the products would otherwise overflow
+'   for the largest accepted shapes.
+'
+' DEPENDENCIES
+'   - PROB_TryLogGamma1p
+'   - PROB_TryExp
+'   - PROB_Expm1
+'
+' UPDATED
+'   2026-11-13
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogGamma1pShape     As Double          'LogGamma(1 + Shape)
+    Dim LogP                As Double          'Logarithm of the lower tail
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(Shape) Or Not PROB_IsFinite(LogStandardX) Then
+        FailMsg = "Positive-ratio recovery requires finite inputs"
+        Exit Function
+    End If
+    If Shape <= 0# Or LogStandardX >= PROB_PRS_LOG_RATIO_MAX Then
+        FailMsg = "Positive-ratio recovery was called outside its region"
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'The lower tail is exactly zero for these shapes; see NOTES
+        If Shape > PROB_PRS_TAIL_SHAPE_MAX Then
+            Q = 1#
+            PROB_TryPositiveRatioTails = True
+            Exit Function
+        End If
+
+        If Not PROB_TryLogGamma1p(Shape, LogGamma1pShape, FailMsg) Then
+            Exit Function
+        End If
+
+        LogP = Shape * LogStandardX - LogGamma1pShape
+
+    'A positive logarithm would be a probability above one
+        If LogP > 0# Then
+            FailMsg = "Positive-ratio recovery produced an invalid probability"
+            Exit Function
+        End If
+
+        If Not PROB_TryExp(LogP, P) Then
+            FailMsg = "Positive-ratio recovery produced an invalid probability"
+            Exit Function
+        End If
+
+    'Q = -Expm1(Log P): never 1 - Exp(Log P), which cancels when P is tiny
+        If P = 0# Then
+            Q = 1#
+        Else
+            Q = -PROB_Expm1(LogP)
+        End If
+
+        PROB_TryPositiveRatioTails = True
+End Function
+
+
+Public Function PROB_TryPositiveRatioLogPdf( _
+    ByVal Shape As Double, _
+    ByVal LogStandardX As Double, _
+    ByVal StandardX As Double, _
+    ByVal LogScale As Double, _
+    ByRef LogPdf As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryPositiveRatioLogPdf
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Gamma log-density for a standardized argument that is mathematically
+'   positive but stored as a low-significand subnormal or as zero, for
+'   ICR-P1-01A (#13).
+'
+'       log f = (Shape - 1) * LogStandardX - StandardX
+'               - LogGamma(Shape) - LogScale
+'
+'   The literal form is the accurate one here. Its cancellation appears at
+'   large Shape near the mode, far from this region, and the Loader form of
+'   PROB_TryGammaLogPdf needs the stored StandardX, which is what was lost.
+'
+' PRECONDITION
+'   As for PROB_TryPositiveRatioTails. The caller has enforced
+'   Shape <= PROB_DENSITY_SHAPE_MAX.
+'
+' INPUTS
+'   Shape         Gamma shape parameter (df / 2 for Chi-square), > 0
+'   LogStandardX  Log(X) - Log(ScaleParam), or Log(X) - Log(2) for Chi-square
+'   StandardX     The stored standardized argument, possibly zero
+'   LogScale      Log(ScaleParam), or Log(2) for Chi-square
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LogPdf holds the natural-log density.
+'     FALSE => The inputs are outside the recovery region (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_LogGamma
+'
+' UPDATED
+'   2026-11-13
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    If Not PROB_IsFinite(Shape) Or Not PROB_IsFinite(LogStandardX) Then
+        FailMsg = "Positive-ratio recovery requires finite inputs"
+        Exit Function
+    End If
+    If Shape <= 0# Or Shape > PROB_DENSITY_SHAPE_MAX _
+        Or LogStandardX >= PROB_PRS_LOG_RATIO_MAX Then
+        FailMsg = "Positive-ratio recovery was called outside its region"
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    LogPdf = (Shape - 1#) * LogStandardX _
+             - StandardX _
+             - PROB_LogGamma(Shape) _
+             - LogScale
+
+    PROB_TryPositiveRatioLogPdf = True
 End Function
 
 
