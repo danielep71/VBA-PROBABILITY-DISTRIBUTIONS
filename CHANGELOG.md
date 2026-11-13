@@ -124,8 +124,9 @@ Use only the categories needed by a release.
   is a subnormal below 2^-1026, the cutoff measured and preregistered in
   `benchmark/positive_ratio_subnormal`.
 - The two cumulatives recover precision where the standardized argument is a
-  subnormal below 2^-1034 and its transform may have rounded: `ScaleParam`
-  other than 1 for Gamma, an odd last bit of `X` for Chi-square. Example:
+  subnormal below 2^-1034 and its transform rounded: a quotient that does
+  not multiply back to `X` for Gamma, an odd last bit of `X` for Chi-square.
+  Example:
   `K_STATS_Gamma_Cumulative` at a ratio with 11 significant bits was off by
   1.6E-4 relative and is now within 1.5E-13. An exact transform keeps the
   direct path, which is exact for it. The rule is Amendment 1 of the study,

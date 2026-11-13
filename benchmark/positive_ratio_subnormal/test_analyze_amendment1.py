@@ -78,6 +78,31 @@ class Amendment1(unittest.TestCase):
         density = point("gamma", 39, "exact_unit", 2 ** 38, 1, 1e-16, 1e-13, surface="density")
         self.assertTrue(any("only the cumulative" in m for m in M.verify([density])))
 
+    def test_the_wired_classifier_follows_the_amendment(self):
+        n39, n43 = 2 ** 38, 2 ** 42
+        cases = [("gamma", 39, "exact_unit", n39, 1, "direct"),
+                 ("gamma", 39, "exact_scaled", 4 * n39, 4, "direct"),
+                 ("gamma", 39, "exact_scaled", 2 * n39, 2, "direct"),
+                 ("gamma", 39, "rounded", 5 * n39 + 2, 5, "recovery"),
+                 ("gamma", 43, "rounded", 7 * n43 + 3, 7, "direct"),
+                 ("chisquare", 39, "exact_scaled", 2 * n39, 2, "direct"),
+                 ("chisquare", 39, "rounded", 2 * n39 + 1, 2, "recovery"),
+                 ("chisquare", 43, "rounded", 2 * n43 + 1, 2, "direct")]
+        for family, bits, construction, numerator, scale, path in cases:
+            p = point(family, bits, construction, numerator, scale, 1e-16, 1e-13)
+            self.assertEqual(M.wired_path(p), path, (family, bits, construction, scale))
+            self.assertEqual(M.expected_path(p), path)
+        # A subnormal X with a fractional scale can multiply back to X from a
+        # rounded quotient (3.2 ULP stored as 3, and 3 * 2.5 rounds to 8), so
+        # it is never taken as exact.
+        tricky = point("gamma", 39, "rounded", 8, 2.5, 1e-9, 1e-13)
+        self.assertEqual(tricky.stored * 2.5, tricky.x)
+        self.assertFalse(M.is_exact(tricky))
+        self.assertEqual(M.wired_path(tricky), "recovery")
+        # A normal X over a large scale, the ordinary route to the defect.
+        wide = point("gamma", 39, "rounded", (3 * n39 + 1) * 2 ** 300, 3 * 2.0 ** 300, 1e-9, 1e-13)
+        self.assertEqual(M.wired_path(wide), "recovery")
+
     def test_all_claims_hold_on_the_expected_pattern(self):
         ok, text = run(gamma_set())
         self.assertTrue(ok, text)

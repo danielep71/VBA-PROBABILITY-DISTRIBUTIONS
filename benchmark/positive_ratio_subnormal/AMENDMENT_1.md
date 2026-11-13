@@ -118,3 +118,41 @@ Size: 624 Gamma rows and 208 Chi-square rows.
 3. `analyze_amendment1.py` gives the verdict. Only if every claim holds is the
    rule wired, with its own Excel wave and the zero-movement check.
 4. The six contract rows of #13 follow.
+
+## Addendum — the Gamma exactness test (2026-11-13)
+
+Added after the result, when the rule was wired. The claims, the cutoff and
+the second holdout are unchanged; only the production test of "the transform
+rounded" for Gamma is.
+
+The registered proxy, `ScaleParam <> 1`, was wired first. Excel run
+43507315705 on `8e3aca6` failed three bit-level assertions of the public
+Gamma integration (PF 000, PF 014, PF 028): they call the cumulative with
+scale 2 and an exact quotient, and the proxy sent them to the recovery. That
+is the cost claim C4 bounded, but those assertions hold the correctly rounded
+result and must keep holding.
+
+Production therefore tests the division itself. With
+`Product = StandardX * ScaleParam`, stored as a Double, the transform is
+taken as exact when `Product = X` and one of these holds:
+
+- `X` is a normal Double. Then the stored quotient is within one part in
+  `2^53` of the exact ratio, which the direct path cannot distinguish from
+  exact.
+- `ScaleParam` is an integer. Then the product of a subnormal quotient is
+  exact, so equality means the division was exact.
+
+A subnormal `X` with a fractional scale is treated as rounded: there a
+rounded quotient can multiply back to `X` (3.2 ULP stored as 3, and 3 times
+2.5 rounds to 8).
+
+The test only narrows the registered rule towards claim C2: it moves
+arguments with an exact transform from the recovery to the direct path, which
+C2 found better at every bucket. `analyze_amendment1.py` mirrors it
+(`wired_path`) and requires, on every row of the second holdout, the direct
+path for an exact transform and the recovery for a rounded one at 40 bits or
+fewer. All 832 rows agree. A random search over 390,000 quotients below the
+cutoff found no argument taken as exact with a transform error above
+1.2E-16.
+
+The Chi-square test, `2 * StandardX <> X`, is unchanged.

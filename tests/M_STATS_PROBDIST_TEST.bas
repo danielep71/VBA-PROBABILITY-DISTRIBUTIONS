@@ -19229,8 +19229,8 @@ Private Sub Test_CN_PositiveRatioRecovery()
 '   - The density cutoff is 2 ^ -1026: a value at the cutoff stays on the
 '     direct path, one unit below it is recovered.
 '   - The cumulative cutoff is 2 ^ -1034, and it applies only where the
-'     transform may have rounded: ScaleParam <> 1 for Gamma, an odd last bit
-'     of X for Chi-square (Amendment 1). The tolerance of those assertions,
+'     transform rounded: a quotient that does not multiply back to X for
+'     Gamma, an odd last bit of X for Chi-square (Amendment 1). The tolerance of those assertions,
 '     5E-13, separates the two paths: the recovery is within 1.5E-13 and the
 '     direct path is off by 7.7E-13 or more at these arguments.
 '   - The survivals recover a stored zero only.
@@ -19341,7 +19341,7 @@ Private Sub Test_CN_PositiveRatioRecovery()
     'recovered. Gamma, quotient 2/5 of a unit above 2 ^ -1036 and a quotient
     'of two normal operands near 1E-312; Chi-square, an odd X
     AssertRelClose "PRS gamma cdf rounded ratio, 39 bits (recovered)", _
-        K_STATS_Gamma_Cumulative(SP_FromWords(&H14&, &H2&), 0.57735026918963, 5#), _
+        K_STATS_Gamma_Cumulative(SP_FromWords(&H140&, &H2&), 0.57735026918963, 5#), _
         9.8514837750235E-181, TOL_PRS_ROUNDED
     AssertRelClose "PRS gamma cdf(1e-200,0.5,1e112) rounded ratio (recovered)", _
         K_STATS_Gamma_Cumulative(1E-200, 0.5, 1E+112), _
@@ -19357,7 +19357,12 @@ Private Sub Test_CN_PositiveRatioRecovery()
         8.0279261579234E-161, TOL_PRS_ROUNDED
 
     'An exact transform below the cutoff stays on the direct path, which is
-    'exact for it; and a rounded one above the cutoff stays there too
+    'exact for it; and a rounded one above the cutoff stays there too. The
+    'exact Gamma quotient has scale 4, so the path does not depend on scale 1;
+    'the bit-level cases of Test_PublicGamma_Integration use scale 2
+    AssertRelClose "PRS gamma cdf exact ratio with scale 4, 39 bits (direct)", _
+        K_STATS_Gamma_Cumulative(SP_FromWords(&H100&, &H0&), 0.5, 4#), _
+        1.3149744222166E-156, TOL_PRS_ROUNDED
     AssertRelClose "PRS chi cdf even X, 39 bits (direct)", _
         K_STATS_ChiSquare_Cumulative(SP_FromWords(&H80&, &H0&), 1#), _
         1.3149744222166E-156, TOL_PRS_ROUNDED

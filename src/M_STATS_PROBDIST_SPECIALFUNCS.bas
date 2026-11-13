@@ -222,7 +222,7 @@ Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y
 'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
 '
 'IN PRODUCTION the two densities use the 48-bit cutoff. The two cumulatives
-'use the 40-bit cutoff, and only where the transform may have rounded: the
+'use the 40-bit cutoff, and only where the transform rounded: the
 'integrated incomplete-gamma kernel is exact for the argument it receives,
 'so retained bits alone no longer decide. That rule is Amendment 1,
 'registered and confirmed on a second holdout; see AMENDMENT_1.md and
