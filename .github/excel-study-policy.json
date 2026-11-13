@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "entry_point": "Test_STATS_PROBDIST_RunStudies_CI",
-  "expected_assertions": 8901,
+  "expected_assertions": 12939,
   "batteries": {
     "Test_PrecisionV2_Fidelity": 500,
     "Test_ScaledProduct_Fidelity": 4657,
@@ -9,5 +9,8 @@
     "Test_ScaledGamma_Fidelity": 475,
     "Test_ExtendedGamma_Fidelity": 1772,
     "Test_WideGamma_Fidelity": 886
+  },
+  "production_batteries": {
+    "Test_PublicGamma_Integration": 4038
   }
 }

@@ -854,12 +854,14 @@ Public Sub Test_STATS_PROBDIST_RunStudies()
 ' Test_STATS_PROBDIST_RunStudies
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the study batteries: the bit-for-bit fidelity checks of the private
-'   arithmetic ports of the #26 studies, kept apart from the regression (#300).
+'   Runs the batteries kept apart from the pull-request regression: the
+'   bit-for-bit fidelity checks of the private arithmetic ports of the #26
+'   studies (#300), and the slow production battery of the public Gamma
+'   integration (#13).
 '
 ' BEHAVIOR
 '   - Resets the shared counters.
-'   - Runs RunStudyBatteries.
+'   - Runs RunStudyBatteries, then RunSlowProductionBatteries.
 '   - Prints one consolidated PASS/FAIL summary.
 '
 ' GENERATED
@@ -868,6 +870,7 @@ Public Sub Test_STATS_PROBDIST_RunStudies()
 '
     BeginRun "STUDY BATTERIES"
     RunStudyBatteries
+    RunSlowProductionBatteries
     EndRun
 End Sub
 
@@ -896,6 +899,24 @@ Private Sub RunStudyBatteries()
     TimingLap "Test_ExtendedGamma_Fidelity"
     Test_WideGamma_Fidelity
     TimingLap "Test_WideGamma_Fidelity"
+End Sub
+
+
+Private Sub RunSlowProductionBatteries()
+'
+'==============================================================================
+' RunSlowProductionBatteries
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls the slow production battery: the bit-level regression of the public
+'   Gamma and Chi-square surfaces. It tests production code, and it runs on
+'   dispatched and export waves, not on a pull-request run (#13).
+'==============================================================================
+'
+    Debug.Print "== SLOW PRODUCTION BATTERIES: public Gamma integration"
+    TimingStart "RunSlowProductionBatteries"
+    Test_PublicGamma_Integration
+    TimingLap "Test_PublicGamma_Integration"
 End Sub
 ' END study batteries (#300)
 
@@ -19149,8 +19170,6 @@ Private Sub Test_CN_GammaSurvival()
     TimingLap "Test_GammaCF_CapAndXSeam"
     Test_GammaCF_PrecisionCounterexample
     TimingLap "Test_GammaCF_PrecisionCounterexample"
-    Test_PublicGamma_Integration
-    TimingLap "Test_PublicGamma_Integration"
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _

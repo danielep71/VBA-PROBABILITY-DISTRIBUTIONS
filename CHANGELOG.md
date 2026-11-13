@@ -97,6 +97,19 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Slow production battery apart from the pull-request regression
+
+- `Test_PublicGamma_Integration`, the bit-level regression of the public
+  Gamma and Chi-square surfaces, took about three quarters of the Excel
+  regression. It no longer runs on a pull-request run. It runs with the study
+  batteries on every dispatched run and every export wave, as a declared
+  class of its own (`production_batteries` in
+  `.github/excel-study-policy.json`), and a failure stops the job before any
+  grid is exported. A VBA change still cannot reach a release branch without
+  it, because it needs an export wave.
+- The regression policy therefore counts fewer assertions; the difference is
+  the battery's count in the study policy.
+
 ### Harness timing of the Gamma sub-batteries
 
 - `Test_CN_GammaSurvival` chains five batteries and took about 90% of the
