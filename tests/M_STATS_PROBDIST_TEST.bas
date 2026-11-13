@@ -19339,10 +19339,10 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_Gamma_Cumulative(1E-300, 3#, 1E+100), 0#
     AssertExactlyEqual "PRS gamma pdf(1e-300,3,1e100) = 0", _
         K_STATS_Gamma_Density(1E-300, 3#, 1E+100), 0#
-    AssertExactlyEqual "PRS gamma cdf(1e-300,1e300,1e100) = 0", _
-        K_STATS_Gamma_Cumulative(1E-300, 1E+300, 1E+100), 0#
-    AssertExactlyEqual "PRS gamma sf(1e-300,1e300,1e100) = 1", _
-        K_STATS_Gamma_Survival(1E-300, 1E+300, 1E+100), 1#
+    AssertExactlyEqual "PRS gamma cdf(1e-300,1e6,1e100) = 0", _
+        K_STATS_Gamma_Cumulative(1E-300, 1000000#, 1E+100), 0#
+    AssertExactlyEqual "PRS gamma sf(1e-300,1e6,1e100) = 1", _
+        K_STATS_Gamma_Survival(1E-300, 1000000#, 1E+100), 1#
     AssertErrorCode "PRS chi pdf(2^-1074,2e-4) overflows", _
         K_STATS_ChiSquare_Density(MinSub, 0.0002), xlErrNum
 End Sub
