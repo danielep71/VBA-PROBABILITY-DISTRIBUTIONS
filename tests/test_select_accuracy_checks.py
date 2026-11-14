@@ -104,7 +104,7 @@ class ExecutionTests(unittest.TestCase):
     def test_single_list_full_and_live_modes(self):
         full = self.execute_shim([])
         live = self.execute_shim(['--checks-only'])
-        self.assertEqual(len(full), 115)
+        self.assertEqual(len(full), 116)
         self.assertIn(["gamma_route_study/test_pair_candidate.py"], full)
         self.assertIn(["gamma_route_study/test_scalar_candidate.py"], full)
         self.assertIn(["gamma_cache_study/test_cache_vba.py"], full)
