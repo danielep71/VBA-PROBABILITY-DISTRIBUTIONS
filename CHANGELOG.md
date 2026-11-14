@@ -97,6 +97,15 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma inverse at the final scale: registration (#14)
+
+- A rule for `K_STATS_Gamma_InverseCumulative` and
+  `K_STATS_ChiSquare_InverseCumulative` is registered in
+  `benchmark/gamma_inverse_scale_study/PREREGISTRATION.md`, before its
+  holdout is evaluated: where the unit-scale quantile is at most `exp(-40)`
+  the quantile is formed in log space, once, at the final scale. No
+  production source changes yet.
+
 ### README: the assertions run apart from the regression
 
 - The assurance block shows, next to the 1,922 assertions of the

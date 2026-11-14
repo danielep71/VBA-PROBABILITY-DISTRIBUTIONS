@@ -46,7 +46,7 @@ $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
-    "grh_route_holdout"
+    "grh_route_holdout", "gis_holdout"
 )
 
 function Get-StudyGridNames {
@@ -112,7 +112,7 @@ function Get-ExportGridSpec {
                      "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
                      "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
                      "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2",
-                     "prs_chisquare_holdout2", "grh_route_holdout")]
+                     "prs_chisquare_holdout2", "grh_route_holdout", "gis_holdout")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -249,6 +249,12 @@ function Get-ExportGridSpec {
                 -FileName "holdout_route_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_GRH.bas" -Macro "Export_GammaRouteHoldout" `
                 -Columns 12 -KeyColumns 6 -SuccessPrefix "Gamma routing holdout complete: "
+        }
+        "gis_holdout" {
+            return New-GeneratedGridSpec -Folder "gamma_inverse_scale_study" -Name "gis_holdout" `
+                -FileName "gamma_inverse_scale_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_GIS.bas" -Macro "Export_GammaInverseScaleHoldout" `
+                -Columns 10 -KeyColumns 6 -SuccessPrefix "Gamma inverse holdout complete: "
         }
         "gbr_binary64_map" {
             return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "gbr_binary64_map" `
