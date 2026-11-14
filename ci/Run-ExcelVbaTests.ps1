@@ -345,10 +345,11 @@ End Function
 
 Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
     'Microseconds per call of the Gamma P/Q kernel (#298), outside the
-    'assertion count: the public double-double route against the binary64
+    'assertion count: the double-double entry points against the binary64
     'routine that answered the same region before #242 (the lower series below
-    'X = A + 1, the continued fraction above it). Each timing repeats the call
-    'until at least 0.5 s has elapsed.
+    'X = A + 1, the continued fraction above it), and then the public
+    'functions and their inverses as users call them (#314). Each timing
+    'repeats the call until at least 0.5 s has elapsed.
     Dim Points As Variant, I As Long, A As Double, X As Double
     Dim Out As String
     Points = Array(0.0001, 0.5, 0.5, 0.25, 2.5, 1#, 2.5, 6#, 100#, 90#, 100#, 110#, _
@@ -358,12 +359,31 @@ Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
         Out = Out & GammaCostLine(A, X, "dd_p") & GammaCostLine(A, X, "dd_q") & _
               GammaCostLine(A, X, "binary64")
     Next I
+    'The public functions (#314), at the same points: Gamma with scale 1,
+    'Chi-square at 2X and 2A, and Poisson where the shape is an integer
+    '(count A - 1, mean X).
+    For I = 0 To UBound(Points) Step 2
+        A = Points(I): X = Points(I + 1)
+        Out = Out & GammaCostLine(A, X, "gamma_cdf") & GammaCostLine(A, X, "gamma_sf") & _
+              GammaCostLine(A, X, "chi_cdf") & GammaCostLine(A, X, "chi_sf")
+        If A >= 1# And A = Int(A) Then
+            Out = Out & GammaCostLine(A, X, "poisson_cdf") & GammaCostLine(A, X, "poisson_sf") & _
+                  GammaCostLine(A, X, "poisson_inv")
+        End If
+    Next I
+    'The inverses: X holds the probability
+    Points = Array(0.0001, 0.5, 2.5, 100#, 10000#)
+    For I = 0 To UBound(Points)
+        A = Points(I)
+        Out = Out & GammaCostLine(A, 0.1, "gamma_inv") & GammaCostLine(A, 0.9, "gamma_inv") & _
+              GammaCostLine(A, 0.1, "chi_inv") & GammaCostLine(A, 0.9, "chi_inv")
+    Next I
     Test_STATS_PROBDIST_GammaCost_CI = Out
 End Function
 
 Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String) As String
     Dim N As Long, K As Long, T0 As Double, Elapsed As Double
-    Dim V As Double, M As String, OK As Boolean
+    Dim V As Double, M As String, OK As Boolean, R As Variant
     N = 16
     Do
         T0 = Timer
@@ -371,6 +391,15 @@ Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route
             Select Case Route
                 Case "dd_p": OK = PROB_TryGammaRegularizedP(A, X, V, M)
                 Case "dd_q": OK = PROB_TryGammaRegularizedQ(A, X, V, M)
+                Case "gamma_cdf": R = K_STATS_Gamma_Cumulative(X, A, 1#): OK = Not IsError(R)
+                Case "gamma_sf": R = K_STATS_Gamma_Survival(X, A, 1#): OK = Not IsError(R)
+                Case "chi_cdf": R = K_STATS_ChiSquare_Cumulative(2# * X, 2# * A): OK = Not IsError(R)
+                Case "chi_sf": R = K_STATS_ChiSquare_Survival(2# * X, 2# * A): OK = Not IsError(R)
+                Case "poisson_cdf": R = K_STATS_Poisson_Cumulative(A - 1#, X): OK = Not IsError(R)
+                Case "poisson_sf": R = K_STATS_Poisson_Survival(A - 1#, X): OK = Not IsError(R)
+                Case "poisson_inv": R = K_STATS_Poisson_InverseCumulative(0.5, X): OK = Not IsError(R)
+                Case "gamma_inv": R = K_STATS_Gamma_InverseCumulative(X, A, 1#): OK = Not IsError(R)
+                Case "chi_inv": R = K_STATS_ChiSquare_InverseCumulative(X, 2# * A): OK = Not IsError(R)
                 Case Else
                     If X < A + 1# Then
                         OK = PROB_TryGammaSeriesP(A, X, V, M)
