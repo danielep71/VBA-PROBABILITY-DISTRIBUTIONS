@@ -97,6 +97,14 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Workflow timeouts and warning-free Python sources
+
+- The `select` job of the Excel regression workflow has a timeout, and a
+  test fails any workflow job without one.
+- The docstring of `tools/check_links.py` is a raw string: it held an
+  invalid escape sequence that Python 3.12 reports and a later version will
+  refuse. A test compiles every tracked Python file with warnings as errors.
+
 ### Closing keywords kept out of commit messages
 
 - Commit and squash messages reference issues with `Refs #N` only. A closing
