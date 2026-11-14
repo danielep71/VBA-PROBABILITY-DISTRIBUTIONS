@@ -4456,6 +4456,8 @@ Private Sub Test_TF_FInversePair()
 '   - References are 120-digit quantiles (benchmark/_ibeta.py).
 '   - The tolerance is the inverse guarantee of the accuracy policy, 1E-12.
 '     Before #35 the first six rows were wrong by 8E-11 to 9E-9.
+'   - The last row is not of the study: it guards the seed where the solved
+'     member's lower-tail target rounds to one.
 '
 ' DEPENDENCIES
 '   - Production functions under test
@@ -4487,6 +4489,11 @@ Private Sub Test_TF_FInversePair()
     'A control: correct before #35 as well
     AssertRelClose "FIP F inv(0.9,1e6,3) control", _
         K_STATS_F_InverseCumulative(0.9, 1000000#, 3#), 5.13369640442372, TOL_FIP
+
+    'The solved member's lower-tail target rounds to one: the seed must take
+    'its normal quantile from the upper tail
+    AssertRelClose "FIP Beta inv(1e-20,100,2) target rounds to one", _
+        K_STATS_Beta_InverseCumulative(1E-20, 100#, 2#), 0.608076992189161, TOL_FIP
 End Sub
 
 

@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Beta inverse, pair reconstruction: seed where the target rounds to one (#35)
+
+- `K_STATS_Beta_InverseCumulative(1E-20, 100, 2)` returned `#VALUE!` with the candidate: the solved member's lower-tail target is `1 - 1E-20`, which rounds to one, and the normal seed has no quantile there. The seed now takes it from the upper tail in that case alone. Found in review of the pull request. One assertion added: the regression has 1,941 assertions, the fast suite 997.
+
 ### Beta inverse, pair reconstruction: result (#35)
 
 - Accepted on the production holdout: all 126 rows hold the registered rules in Excel. On the sixteen reserved F points the worst error goes from 1.56E-10 to 2.55E-15, on the far tails from 3.54E-9 to 1.77E-15. 39 observations of the main grid and 41 of the consolidated holdout changed; every contract holds unchanged. Record: `benchmark/f_inverse_large_df_study/production/PRODUCTION_RESULT.md`.

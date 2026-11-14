@@ -2630,7 +2630,13 @@ Public Function PROB_TryBetaInvRegularized( _
 '------------------------------------------------------------------------------
     'Use the AS 109 normal approximation when both shapes exceed one
         If Sa > 1# And Sb > 1# Then
-            Z = PROB_NormalInvCDFRaw(Target)
+            'A lower-tail target that rounds to one has no normal quantile;
+            'its upper tail does, by symmetry
+            If Target < 1# Then
+                Z = PROB_NormalInvCDFRaw(Target)
+            Else
+                Z = -PROB_NormalInvCDFRaw(TargetUpper)
+            End If
             R = (Z * Z - 3#) / 6#
             S1 = 1# / (2# * Sa - 1#)
             S2 = 1# / (2# * Sb - 1#)
