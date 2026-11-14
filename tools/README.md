@@ -13,6 +13,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | Tool | Checks |
 | --- | --- |
 | `check_committed_whitespace.py` | No whitespace errors in the committed candidate range (`git diff --check` semantics, read only) |
+| `check_closing_keywords.py` | No commit message in the candidate range uses a closing keyword (`closes`, `fixes`, `resolves`) before an issue reference, unless the commit is recorded in `.github/closing-keyword-exceptions.json`; `--list` prints the table for an integration pull request |
 | `check_vba_jumps.py` | Every `GoTo`, `GoSub`, `Resume` and `On Error GoTo` target resolves inside its own procedure, across all tracked `.bas`/`.cls`/`.frm` modules |
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
@@ -53,6 +54,7 @@ It works on the repository that contains it, from any directory. It runs:
 | --- | --- |
 | `whitespace-self-test`, `vba-jumps-self-test`, `release-semantics-self-test` | Each checker's `--self-test` fixtures |
 | `whitespace` | `check_committed_whitespace.py --mode committed` on the candidate range |
+| `closing-keywords-self-test`, `closing-keywords` | `check_closing_keywords.py`: its fixtures, then the commit messages of the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
 | `vba-source`, `vba-conditionals`, `vba-visibility` | `check_vba_source.py`, `check_vba_conditionals.py` and `check_vba_visibility.py` on every tracked VBA module |
 | `vba-layout` | `format_vba.py --check` on every tracked VBA module, against `vba_layout_baseline.json` |
