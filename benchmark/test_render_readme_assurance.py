@@ -43,6 +43,11 @@ def fixture():
     # current working tree. Live freshness is checked separately by CI.
     subprocess.run(["git", "checkout", "--quiet", "8fd0af5b8fa3754d112c06f4845e2a896933c7b6"],
                    cwd=root, check=True, capture_output=True)
+    # The snapshot's README predates the study row: render it as it was.
+    # The row has its own controls at the end of this file.
+    study = os.path.join(root, ".github", "excel-study-policy.json")
+    if os.path.exists(study):
+        os.remove(study)
     return root
 
 
@@ -410,6 +415,31 @@ def restore_pre_47_record(r):
 
 expect_failure("uncertified main grid with #47 marked resolved", restore_pre_47_record,
                "main_grid_export is incomplete")
+
+# The study batteries: a declared count, shown only where the policy exists,
+# and refused when its total is not the sum of its batteries.
+check(R.study_rows(None) == [], "no study row without a study policy")
+root = fixture()
+try:
+    os.makedirs(path(root, ".github"), exist_ok=True)
+    write(root, R.STUDY_POLICY, json.dumps(
+        {"expected_assertions": 30, "batteries": {"A": 10, "B": 15},
+         "production_batteries": {"C": 5}}))
+    facts = R.study_facts(root)
+    check(facts == {"assertions": 30, "batteries": 3}, f"study policy is summed: {facts}")
+    row = R.study_rows(facts)
+    check(len(row) == 1 and "**30**" in row[0] and "3 study and slow production" in row[0]
+          and "not in the retained record" in row[0], f"study row states what it is: {row}")
+    write(root, R.STUDY_POLICY, json.dumps({"expected_assertions": 31, "batteries": {"A": 10}}))
+    try:
+        R.study_facts(root)
+        check(False, "a study total that is not the sum of its batteries is refused")
+    except R.AssuranceError:
+        pass
+    os.remove(path(root, R.STUDY_POLICY))
+    check(R.study_facts(root) is None, "a checkout without the policy has no study facts")
+finally:
+    shutil.rmtree(root)
 
 if fails:
     print("FAIL: README assurance renderer")
