@@ -736,7 +736,7 @@ The implementation uses established numerical ideas adapted carefully to VBA.
 | Large-parameter Gamma ratios | Stable log-gamma difference paths |
 | Beta normalization | Log-beta with balanced and unbalanced branches |
 | Incomplete beta | Paired arguments and modified-Lentz continued fractions |
-| Incomplete gamma | Scaled double-double lower series and upper continued fraction, with Q below `X = A + 1` taken from log P (#26); the binary64 series or continued fraction where the pair reaches its iteration cap |
+| Incomplete gamma | A binary64 lower series below `X = A + 1` and continued fraction from it, wherever the directly computed tail can be trusted (#314). Elsewhere a scaled double-double series and continued fraction, with Q below `X = A + 1` taken from log P (#26) |
 | Inverse beta/gamma | Safeguarded Newton iteration with bisection fallback |
 | Student t tails | Closed forms where available; order-5 large-df expansion for `df >= 1E5` and `\|t\| <= 8`; incomplete-beta transformation otherwise |
 | Student t inverse | Cornish-Fisher seed, safeguarded Newton with bisection, then up to three Newton polish steps on the large-df route |
@@ -1362,7 +1362,7 @@ The library is particularly suited to:
 ## Current boundaries
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
-- Gamma, Chi-square and Poisson probabilities use double-double arithmetic. Exact LogGamma reuse reduces repeated shape-100 P/Q calls from about 115–121 ms to 10–14 ms in the measured Excel runs, but cold calls and large-shape recurrences remain slow. Timing is host-dependent; see the [cache study and limitations](benchmark/gamma_cache_study/RESULT.md) and the [original uncached measurements](benchmark/harness_timing/RESULT.md);
+- Gamma, Chi-square and Poisson probabilities take about 0.06 to 0.23 ms per call in the measured Excel run, for shapes from 0.0001 to 10,000, and are held to 1E-13 relative. Three cases still use double-double arithmetic: an upper tail below `X = Shape + 1` when the lower tail exceeds 0.9 and results below 1E-290, at 13 to 400 ms per call, and the inverses for shapes below 0.01, at more than a second. A Gamma or Chi-square inverse takes 0.05 to 2 ms up to shape 100 and about 20 ms at shape 10,000. Timing is host-dependent; see the [measurements and their exceptions](benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md);
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
 - a self-hosted Excel runner must be online and correctly configured for CI execution;

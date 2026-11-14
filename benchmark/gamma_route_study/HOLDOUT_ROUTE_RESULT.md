@@ -69,7 +69,70 @@ Worst relative error by kind of row, against a bound of 1E-13:
    about 3.2E-14 relative, and one of `Gamma_Cumulative.positive_ratio_subnormal`
    by 7. All nine stay inside their 5E-13 contracts, and the accuracy gate
    passes on all 172 active contracts.
-4. **Cost: see below.**
+4. **Cost: not met as worded.** The prediction said microseconds up to
+   shape 10,000. The binary64 routines do take 4 to 77 microseconds, but a
+   public call takes 0.06 to 0.23 ms. The gain over the kernel is as
+   expected; the absolute figure was optimistic by more than a factor of
+   ten. The second part held: a lower-region survival with `S > 0.9` keeps
+   the kernel's cost. See the next section.
+
+## Cost per call
+
+Excel run 43573743649 on `cc20679`, the same runner and build; the #298
+benchmark, each figure the mean of repeated calls over at least half a
+second. Timing depends on the host, and a second run moved single figures
+by up to a factor of two. Milliseconds per call:
+
+| Shape, argument | Kernel P, Q | Gamma CDF, survival | Chi-square CDF, survival | Poisson CDF, survival |
+| --- | ---: | ---: | ---: | ---: |
+| 0.0001, 0.5 | 13, 14 | 0.09, **15** | 0.12, **16** | |
+| 0.5, 0.25 | 18, 17 | 0.09, 0.09 | 0.12, 0.10 | |
+| 2.5, 1 | 20, 20 | 0.07, 0.08 | 0.13, 0.13 | |
+| 2.5, 6 | 38, 36 | 0.08, 0.09 | 0.12, 0.09 | |
+| 100, 90 | 37, 36 | 0.07, 0.08 | 0.13, 0.15 | 0.14, 0.13 |
+| 100, 110 | 37, 32 | 0.11, 0.13 | 0.17, 0.13 | 0.07, 0.06 |
+| 10,000, 9,900 | 397, 327 | 0.14, 0.15 | 0.21, 0.18 | 0.23, 0.21 |
+| 10,000, 10,100 | 158, 156 | 0.10, 0.12 | 0.15, 0.17 | 0.15, 0.14 |
+
+The kernel columns are the double-double entry points, which answered every
+one of these calls before #314. The Chi-square call is at twice the argument
+and twice the shape; the Poisson call is at count `shape - 1` and mean
+`argument`. The two figures in bold are the registered exception: at shape
+0.0001 the lower tail is above 0.9, so the survival stays with the kernel.
+
+The binary64 routine of before #242, timed alone at the same points, takes
+0.004 to 0.077 ms. Most of a public call is therefore not the series or the
+continued fraction. Where the rest goes has not been measured.
+
+Inverses, milliseconds per call at probabilities 0.1 and 0.9:
+
+| Shape | Gamma inverse | Chi-square inverse |
+| --- | ---: | ---: |
+| 0.001 | refused after 1,050; 1,310 | refused after 1,350; 1,340 |
+| 0.01 | 0.27, **95** | 0.32, **88** |
+| 0.5 | 0.05, 0.15 | 0.17, 0.31 |
+| 2.5 | 0.15, 0.21 | 0.17, 0.21 |
+| 100 | 1.3, 0.35 | 1.7, 0.48 |
+| 10,000 | 21, 21 | 23, 18 |
+
+The Poisson inverse at probability 0.5 takes 0.19 to 0.30 ms at mean about
+100 and 0.73 to 1.1 ms at mean about 10,000.
+
+Three things in that table are not improvements, and none is new:
+
+- Shape 0.001 is below the limit of Addendum 1, so the solver uses the
+  kernel, at more than a second per call. At probability 0.1 the quantile is
+  `0.1^1000`, below the Double range, and the call is refused.
+- At shape 0.01 and probability 0.9 the solver works where the lower tail
+  exceeds 0.9, the registered exception, and pays the kernel's cost.
+- At shape 10,000 an inverse takes about 20 ms, far more than its tail
+  evaluations cost through the route. The solver was not profiled here.
+
+The regression of 1,922 assertions takes 5 s on the runner, against 57 s
+before the route, and the full export of the main grid 1 s against 3 min
+40 s. The two slow production batteries still take about 225 s, because
+they call the double-double entry points directly, and stay apart from the
+pull-request regression.
 
 ## A corner the sweep under-sampled
 

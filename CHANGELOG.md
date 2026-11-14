@@ -102,8 +102,11 @@ Use only the categories needed by a release.
 - `K_STATS_Gamma_Cumulative`, `K_STATS_Gamma_Survival`, the Chi-square and
   Poisson equivalents and the Gamma and Chi-square inverses answer from a
   binary64 route wherever its result can be trusted, and from the
-  double-double kernel elsewhere. A call that took 5 to 170 ms takes
-  microseconds up to shape 10,000.
+  double-double kernel elsewhere. A cumulative or survival that took 13 to
+  400 ms takes 0.06 to 0.23 ms for shapes up to 10,000, in the measured
+  Excel run (`benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md`).
+- The routing holdout is accepted: its six rules hold on all 371 rows, with
+  a worst relative error of 4.33E-15 against a bound of 1E-13.
 - Accuracy is held to the guarantee tier: 1E-13 relative for the tails and
   1E-12 for the inverses. The route measured a few 1E-15 on its fit set. A
   result may differ from the previous one by a few units in the last place,

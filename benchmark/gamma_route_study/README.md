@@ -48,6 +48,9 @@ of the binary64 route, used as a fitting set.
 
 ## #314: the fast route, registered again
 
+**Status: accepted and in production.** The routing holdout passed R1 to R6
+on all 371 rows; see [`HOLDOUT_ROUTE_RESULT.md`](HOLDOUT_ROUTE_RESULT.md).
+
 The study is open again under #314. The two-tier accuracy policy of #327 and
 the maintainer's decision of 2026-11-14 remove the two grounds on which the
 frozen rule was rejected, strict monotonicity between adjacent Doubles and a
@@ -61,6 +64,7 @@ limit of 0.2 ms per call. That rule stays rejected; a new one is registered.
 | `holdout_route_build.py`, `holdout_route_grid.csv` | The 117 holdout points with the boundary probes built from the rule, and their references; `--check` proves the grid is the design |
 | `M_STATS_PROBDIST_GRH.bas` | `Export_GammaRouteHoldout`: the four public routes and the two double-double entry points at every row, as bit patterns. The runner exports it as the study grid `grh_route_holdout` |
 | `holdout_route_analyze.py` | The verdict against R1 to R6 |
+| [`HOLDOUT_ROUTE_RESULT.md`](HOLDOUT_ROUTE_RESULT.md) | The result: accepted. Predictions against the outcome, and the cost per call |
 | `test_holdout_route.py` | Fixtures for the rule, the probe construction and each acceptance rule, on revealed shapes only |
 
 ## Phase B checkpoint
