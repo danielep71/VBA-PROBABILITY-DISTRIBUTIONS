@@ -14,6 +14,9 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 failures = []
 commands = (
+    ("f_inverse_large_df_study/fix_comparison/test_pair_cf_screen.py",),
+    ("f_inverse_large_df_study/fix_comparison/test_vba_order_model.py",),
+    ("f_inverse_large_df_study/fix_comparison/test_residual_diagnostic.py",),
     ("test_contract_eval.py",),
     ("test_accuracy_tiers.py",),
     ("test_vba_code_identity.py",),
