@@ -143,8 +143,11 @@
       "issue": 213,
       "class": "silent_wrong",
       "gate": null,
-      "status": "open",
-      "summary": "Student-t inverse misses its 5E-15 contract at quantiles just inside 8 in magnitude (1.3E-12 at df = 1E7)"
+      "status": "resolved",
+      "summary": "Student-t inverse misses its 5E-15 contract at quantiles just inside 8 in magnitude (1.3E-12 at df = 1E7)",
+      "resolution": {
+        "evidence": "For df >= 1E5 and |t| > 8 the Student-t tail gives the incomplete-beta continued fraction its argument as an exact pair (#363). In Excel (run 43637035288 on 9c4821c; benchmark/student_t_large_df_study/ABOVE8_RESULT.md) the survival at the Double above 8 is within 3.4E-15 at df 1E5 to 1E8, where it was 4.3E-13 to 7.8E-10 off; it is monotone across the seam; the inverse at the seam rows is within 1.11E-15, where df = 1E7 was 1.29E-12 off. The inverse was not edited. Main grid and consolidated holdout unchanged. Not addressed: the same conditioning below df = 1E5 (up to 3.16E-12), a recorded limitation."
+      }
     },
     {
       "issue": 307,
