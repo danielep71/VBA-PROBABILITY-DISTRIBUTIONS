@@ -99,7 +99,7 @@ Use only the categories needed by a release.
 
 ### README shows the social preview image
 
-- The image at the top of the README is now `assets/social3.jpg`, the one set as the repository's social preview, so the two match. `assets/Home2.jpg` stays in the repository, no longer referenced.
+- The image at the top of the README is now `assets/social3.jpg`, the one set as the repository's social preview, so the two match. `assets/Home2.jpg`, which it replaces, is removed.
 
 ### Beta inverse, pair reconstruction: probabilities within 2^-53 of zero (#35)
 
