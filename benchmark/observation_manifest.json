@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-14T12:01:40Z",
-  "commit_sha": "664cd48",
+  "generated_utc": "2026-11-14T14:51:57Z",
+  "commit_sha": "7d517cf",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -33,6 +33,7 @@
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:d332cad0a17d4bb78d8d2d1a682697d8f2e2cb379315de0ccd0f8ef3664161dd",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:460e230db92910215bd20af8e474e133d1be2ae23b42608b248b077e48f5d01c",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:5b4c2f9a27a5659a8ed38b7a4d95cf510bf92722b0512d736c796cc5d2f2926a",
+    "benchmark/f_inverse_large_df_study/production/M_STATS_PROBDIST_FIP.bas": "sha256:f2fa720b4f03a7f4fecd3559f31e9525fe8b7175ed89b6c0927915a9a09e2532",
     "benchmark/gamma_cache_study/M_STATS_PROBDIST_GCACHE.bas": "sha256:62db9728b54b30e44462c68ec41cd6c310160d0fd46ee5118dea3478ff089079",
     "benchmark/gamma_inverse_scale_study/M_STATS_PROBDIST_GIS.bas": "sha256:d45499235425f4066cde9f7705885a007c34d313919458811ece8cb9acb5c80d",
     "benchmark/gamma_inverse_scale_study/M_STATS_PROBDIST_GIS2.bas": "sha256:1174dca72569353d07d49e73d88ba50526c3dd9f4c2e40537bfc9ca8a01381d3",
