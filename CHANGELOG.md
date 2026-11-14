@@ -97,6 +97,16 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Closing keywords kept out of commit messages
+
+- Commit and squash messages reference issues with `Refs #N` only. A closing
+  keyword in a commit made on a release branch acts when the branch reaches
+  `main`, whatever the state of the issue by then.
+- `tools/check_closing_keywords.py` fails a pull request whose commits use
+  one, and prints the list an integration pull request carries in its body.
+  Two commits already on `release/1.0.0` are recorded in
+  `.github/closing-keyword-exceptions.json` with the action each needs.
+
 ### README: the assertions run apart from the regression
 
 - The assurance block shows, next to the 1,922 assertions of the
