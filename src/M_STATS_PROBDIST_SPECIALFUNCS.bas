@@ -199,6 +199,7 @@ Private Const PROB_GAMMA_FAST_FLOOR    As Double = 1E-290  'Routed P/Q: a direct
 Private Const PROB_GAMMA_FAST_LOWER_MAX As Double = 0.9    'Routed Q below the seam: 1 - series while the series is at most this (#314)
 Private Const PROB_GAMMA_FAST_UPPER_MAX As Double = 0.5    'Routed P/Q from the seam: the continued fraction is trusted up to this (#314)
 Private Const PROB_GAMMA_FAST_MAX_SHAPE As Double = 1E+15  'Routed P/Q: above this shape the binary64 deviance loses accuracy near X = A, and the kernel answers (#314, Addendum 2)
+Private Const PROB_GAMMAINV_LOG_CROSSOVER As Double = -40# 'Gamma inverse: at or below this unit log-quantile the quantile is formed in log space at the final scale (#14)
 Private Const PROB_GAMMAINV_FAST_MIN_SHAPE As Double = 0.01 'Gamma inverse: the routed tails serve from this shape; below it the quantile amplifies their error by about 1 / A (#314)
 'The ascending gamma series stops at machine epsilon rather than the shared
 'PROB_NUM_EPS (3E-14). Measured: the tighter criterion buys about 145x accuracy
@@ -2947,6 +2948,165 @@ Public Function PROB_TryGammaContinuedFractionQ( _
                   PROB_GAMMA_MAX_ITER & " iterations for A = " & A
 End Function
 
+
+Public Function PROB_TryGammaInvPScaled( _
+    ByVal Probability As Double, _
+    ByVal ComplementProbability As Double, _
+    ByVal A As Double, _
+    ByVal ScaleFactor As Double, _
+    ByVal OverflowMsg As String, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaInvPScaled
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Solves P(A, X / ScaleFactor) = Probability for X: the Gamma quantile at
+'   its final scale (#14). A unit-scale quantile below the Double range is
+'   not formed, so a final quantile that is representable is returned.
+'
+' PRECONDITION
+'   A > 0, 0 < Probability < 1, ScaleFactor > 0 and finite, and
+'   Probability + ComplementProbability = 1 in exact arithmetic.
+'
+' THE RULE
+'   Registered in benchmark/gamma_inverse_scale_study/PREREGISTRATION.md.
+'   The call is classified by the plain Double
+'
+'       L0 = (Log(Probability) + LogGamma1p(A)) / A
+'
+'   L0 <= PROB_GAMMAINV_LOG_CROSSOVER
+'       The unit quantile is at most Exp(-40), where the lower tail is its
+'       leading term X^A / Gamma(A + 1) to below 4.2E-18 relative. The
+'       quantile is Exp(L + Log(ScaleFactor)), formed once, with the two
+'       logarithms, the quotient and the sum carried as pairs of Doubles.
+'   otherwise
+'       PROB_TryGammaInvP on the unit scale, then one multiplication.
+'
+' REPRESENTABILITY
+'   Decided at the final scale only: an exponential that underflows returns
+'   zero, one that overflows fails with OverflowMsg, and a subnormal result
+'   is returned as it is.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds the quantile at the final scale.
+'     FALSE => the final quantile overflowed, or the unit-scale solver
+'              failed; FailMsg says which.
+'
+' DEPENDENCIES
+'   - PROB_TryLogGamma1p, PROB_TryExp, PROB_TryMultiply
+'   - PROB_GammaInvLogPair, PROB_B64_PairAdd, PROB_B64_PairDiv
+'   - PROB_TryGammaInvP
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogGamma1p          As Double          'Log(Gamma(1 + A))
+    Dim LogUnit             As Double          'L0, the classifying value
+    Dim LH                  As Double          'Log(Probability), high part
+    Dim LL                  As Double          'Log(Probability), low part
+    Dim NH                  As Double          'Numerator, high part
+    Dim NL                  As Double          'Numerator, low part
+    Dim QH                  As Double          'Unit log-quantile, high part
+    Dim QL                  As Double          'Unit log-quantile, low part
+    Dim SH                  As Double          'Log(ScaleFactor), high part
+    Dim SL                  As Double          'Log(ScaleFactor), low part
+    Dim FH                  As Double          'Final log-quantile, high part
+    Dim FL                  As Double          'Final log-quantile, low part
+    Dim Expo                As Double          'Exp of the high part
+    Dim Correction          As Double          'Expo times the low part
+    Dim UnitQuantile        As Double          'Quantile on the unit scale
+'------------------------------------------------------------------------------
+' CLASSIFY
+'------------------------------------------------------------------------------
+    Result = 0#
+
+    If Not PROB_TryLogGamma1p(A, LogGamma1p, FailMsg) Then Exit Function
+
+    LogUnit = Log(Probability) + LogGamma1p
+    LogUnit = LogUnit / A
+'------------------------------------------------------------------------------
+' LOG SPACE
+'------------------------------------------------------------------------------
+    If LogUnit <= PROB_GAMMAINV_LOG_CROSSOVER Then
+        PROB_GammaInvLogPair Probability, LH, LL
+        PROB_B64_PairAdd LH, LL, LogGamma1p, 0#, NH, NL
+        PROB_B64_PairDiv NH, NL, A, QH, QL
+        PROB_GammaInvLogPair ScaleFactor, SH, SL
+        PROB_B64_PairAdd QH, QL, SH, SL, FH, FL
+
+    'PROB_TryExp returns zero for an underflow and fails for an overflow
+        If Not PROB_TryExp(FH, Expo) Then
+            FailMsg = OverflowMsg
+            Exit Function
+        End If
+
+        Correction = Expo * FL
+        Result = Expo + Correction
+        PROB_TryGammaInvPScaled = True
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' UNIT SCALE
+'------------------------------------------------------------------------------
+    If Not PROB_TryGammaInvP( _
+        Probability, ComplementProbability, A, UnitQuantile, FailMsg) Then Exit Function
+
+    If Not PROB_TryMultiply(ScaleFactor, UnitQuantile, Result) Then
+        FailMsg = OverflowMsg
+        Exit Function
+    End If
+
+    PROB_TryGammaInvPScaled = True
+End Function
+
+Private Sub PROB_GammaInvLogPair( _
+    ByVal V As Double, _
+    ByRef LH As Double, _
+    ByRef LL As Double)
+'
+'==============================================================================
+' PROB_GammaInvLogPair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Log(V) as a pair of Doubles, for any positive finite V (#14).
+'
+' BEHAVIOR
+'   PROB_B64_PairLog is defined for exponent fields 1 to 2000. A subnormal
+'   V, or one from 2^978, is first moved by the exact factor 2^128, and the
+'   pair logarithm of that power of two is subtracted or added.
+'
+' DEPENDENCIES
+'   - PROB_B64_PairLog, PROB_B64_PairAdd, PROB_B64_Pow2
+'==============================================================================
+'
+    Dim Shift               As Double          '2^128
+    Dim TH                  As Double          'Log(2^128), high part
+    Dim TL                  As Double          'Log(2^128), low part
+    Dim Moved               As Double          'V times or over 2^128
+
+    If V >= PROB_MIN_NORMAL And V < PROB_B64_Pow2(2001) Then
+        PROB_B64_PairLog V, 0#, LH, LL
+        Exit Sub
+    End If
+
+    Shift = PROB_B64_Pow2(1151)
+    PROB_B64_PairLog Shift, 0#, TH, TL
+
+    If V < PROB_MIN_NORMAL Then
+        Moved = V * Shift
+        PROB_B64_PairLog Moved, 0#, LH, LL
+        PROB_B64_PairAdd LH, LL, -TH, -TL, LH, LL
+    Else
+        Moved = V / Shift
+        PROB_B64_PairLog Moved, 0#, LH, LL
+        PROB_B64_PairAdd LH, LL, TH, TL, LH, LL
+    End If
+End Sub
 
 Public Function PROB_TryGammaInvP( _
     ByVal Probability As Double, _

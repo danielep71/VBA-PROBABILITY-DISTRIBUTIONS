@@ -97,6 +97,22 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma inverse at the final scale: production (#14)
+
+- `K_STATS_Gamma_InverseCumulative` and `K_STATS_ChiSquare_InverseCumulative`
+  form the quantile at the final scale. Where the unit-scale quantile is at
+  most `exp(-40)` it is computed in log space together with the scale, so a
+  unit quantile below the Double range no longer turns a representable
+  result into zero or `#NUM!`. Above that the unit-scale solver answers as
+  before, and its results do not change.
+- A final quantile below every Double returns zero; one above returns
+  `#NUM!`.
+- Four contracts cover the regime `scaled_quantile_from_underflowed_unit`:
+  quantile error and tail-probability residual for each of the two inverses,
+  with 13 new main-grid rows. Tail-residual contracts can now be scored for
+  the Gamma inverse.
+- The Excel regression gains 11 assertions (1,933; fast suite 989).
+
 ### Gamma inverse at the final scale: registration (#14)
 
 - A rule for `K_STATS_Gamma_InverseCumulative` and

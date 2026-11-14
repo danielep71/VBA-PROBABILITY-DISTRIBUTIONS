@@ -16,7 +16,7 @@ import os as _os, sys as _sys
 # Single-sourced reference helper: benchmark/_ibeta.py is the only copy.
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 from _ibeta import ibeta, f_cdf, t_cdf
-from _igamma import chi2_cdf
+from _igamma import chi2_cdf, gamma_cdf
 # Single-sourced evaluation primitives shared with the release gate
 # (compute_errors.py) so the two analyzers cannot diverge on metric arithmetic,
 # parsing, or tail-residual normalisation.
@@ -34,7 +34,7 @@ from _invariants import (run_all as run_invariants, markdown as invariants_markd
 # identical table; the shared registry is what stops the two evaluators from
 # supporting different sets of distributions.
 _TAIL_CDFS = {"ibeta": ibeta, "f_cdf": f_cdf, "t_cdf": t_cdf,
-              "chi2_cdf": chi2_cdf}
+              "chi2_cdf": chi2_cdf, "gamma_cdf": gamma_cdf}
 
 
 def forward_cdf(fn, x, *shape):

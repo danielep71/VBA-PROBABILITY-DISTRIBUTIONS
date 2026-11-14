@@ -35,6 +35,8 @@ ChiSquare_Density.all.output_rel,1E-13,1E-13,"forward relative error: max(target
 ChiSquare_Density.large_shape.output_rel,1E-13,1E-13,"forward relative error: max(target, 1E-13)"
 ChiSquare_Density.positive_ratio_subnormal.output_rel,5E-13,5E-13,"forward relative error: max(target, 1E-13)"
 ChiSquare_InverseCumulative.all.output,4.7E-12,4.7E-12,"inverse: max(target, 1E-12)"
+ChiSquare_InverseCumulative.scaled_quantile_from_underflowed_unit.quantile_rel,1E-14,1E-12,"inverse: max(target, 1E-12)"
+ChiSquare_InverseCumulative.scaled_quantile_from_underflowed_unit.tail_rel,1E-14,1E-14,absolute or residual metric: guarantee = target
 ChiSquare_Survival.all.output,2.6E-10,2.6E-10,"forward relative error: max(target, 1E-13)"
 ChiSquare_Survival.envelope_domain.output_rel,2E-12,2E-12,"forward relative error: max(target, 1E-13)"
 ChiSquare_Survival.positive_ratio_hard_underflow.output_rel,5E-13,5E-13,"forward relative error: max(target, 1E-13)"
@@ -71,6 +73,8 @@ Gamma_Density.all.output,2E-14,1E-13,"forward relative error: max(target, 1E-13)
 Gamma_Density.large_shape.output_rel,2E-13,2E-13,"forward relative error: max(target, 1E-13)"
 Gamma_Density.positive_ratio_subnormal.output_rel,5E-13,5E-13,"forward relative error: max(target, 1E-13)"
 Gamma_InverseCumulative.all.output,2E-14,1E-12,"inverse: max(target, 1E-12)"
+Gamma_InverseCumulative.scaled_quantile_from_underflowed_unit.quantile_rel,1E-14,1E-12,"inverse: max(target, 1E-12)"
+Gamma_InverseCumulative.scaled_quantile_from_underflowed_unit.tail_rel,1E-14,1E-14,absolute or residual metric: guarantee = target
 Gamma_Mean.all.output,5E-15,1E-13,"forward relative error: max(target, 1E-13)"
 Gamma_StdDev.all.output,5E-15,1E-13,"forward relative error: max(target, 1E-13)"
 Gamma_Survival.all.output,5E-15,1E-13,"forward relative error: max(target, 1E-13)"

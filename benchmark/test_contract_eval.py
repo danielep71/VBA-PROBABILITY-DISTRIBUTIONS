@@ -242,8 +242,12 @@ check(tail_cdf_name("ChiSquare_InverseCumulative") == "chi2_cdf",
       "Chi-square routes to the incomplete-gamma CDF")
 check(set(TAIL_SUPPORTED) == {"Beta_InverseCumulative", "F_InverseCumulative",
                               "StudentT_InverseCumulative",
-                              "ChiSquare_InverseCumulative"},
-      "Beta, F, Student-t and Chi-square are registered")
+                              "ChiSquare_InverseCumulative",
+                              "Gamma_InverseCumulative"},
+      "Beta, F, Student-t, Chi-square and Gamma are registered")
+check(tail_cdf_name("Gamma_InverseCumulative") == "gamma_cdf"
+      and tail_shape_args("Gamma_InverseCumulative") == ("arg2", "arg3"),
+      "Gamma routes to the incomplete-gamma CDF with shape and scale")
 check(tail_shape_args("ChiSquare_InverseCumulative") == ("arg2",),
       "Chi-square takes one shape argument")
 # Arity comes from the registry, not a fixed three-column assumption.
@@ -255,7 +259,7 @@ check(tail_shape_args("StudentT_InverseCumulative") == ("arg2",),
       "Student-t takes one shape argument")
 
 # Every unsupported inverse must RAISE, not default to F.
-for _fn in ("Gamma_InverseCumulative", "Normal_InverseCumulative", "",
+for _fn in ("Weibull_InverseCumulative", "Normal_InverseCumulative", "",
             "beta_inversecumulative"):
     try:
         tail_cdf_name(_fn)
@@ -279,7 +283,7 @@ check(row_validity(_tail_ok, TR) is None, "valid F tail row passes preflight")
 check(row_validity(dict(_tail_ok, function="Beta_InverseCumulative"), TR) is None,
       "valid Beta tail row passes preflight")
 
-for _fn in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
+for _fn in ("Weibull_InverseCumulative", "Normal_InverseCumulative"):
     _bad = dict(_tail_ok, function=_fn)
     _why = row_validity(_bad, TR)
     check(_why is not None,
@@ -296,7 +300,7 @@ for _k in ("arg1", "arg2", "arg3"):
 
 # No unsupported function can reach the F evaluator: dispositions must not
 # place such a row in to_measure.
-_disp = dispositions([dict(_tail_ok, function="Gamma_InverseCumulative")], TR)
+_disp = dispositions([dict(_tail_ok, function="Weibull_InverseCumulative")], TR)
 check(len(_disp.to_measure) == 0 and _disp.n_invalid == 1,
       "an unsupported tail row is blocked, not measured")
 _disp_ok = dispositions([_tail_ok], TR)
@@ -343,7 +347,7 @@ check(_got_f != _wrong_f, "main evaluator did NOT dispatch F to ibeta")
 # An unsupported function must RAISE out of the evaluator itself, so it can
 # never be scored through F. compute_errors turns this into PENDING, never a
 # verdict.
-for _fn in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
+for _fn in ("Weibull_InverseCumulative", "Normal_InverseCumulative"):
     try:
         _CE.tail_residual([_tail_row(_fn, "0.9", "1000000", "1", "1039569.3")], _fn)
         check(False, f"main evaluator must refuse to score {_fn!r}")
