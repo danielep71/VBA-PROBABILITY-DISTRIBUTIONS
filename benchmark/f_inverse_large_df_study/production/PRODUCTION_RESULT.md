@@ -120,24 +120,45 @@ now takes one to four minutes.
 - No row with a shape above 3E9 or a probability beyond 1E-11 from 0 or 1.
 - The cost on other hosts. It was measured on one runner.
 
-## After the verdict: the seed where the target rounds to one
+## After the verdict: probabilities within 2^-53 of zero
 
-Review of pull request 358 found that `K_STATS_Beta_InverseCumulative(1E-20,
-100, 2)` returned `#VALUE!` with the candidate. The lower tail at 1/2 is
-about 4E-29, so the routine solves for the other member; that member's
-lower-tail target is `1 - 1E-20`, which is one in binary64, and the normal
-seed has no quantile there. The source before the change answered
-0.6080769921891604. `tail_aware_model.py` fails at the same point; it is
-left as the record of the screen.
+Review of pull request 358 found two failures of the candidate, both in one
+regime: a probability, or a complement, below 2^-53 whose quantile lies on
+the far side of 1/2. The member the rule solves for then has a lower-tail
+target of one in binary64.
 
-`f6b26cd` takes the seed's normal quantile from the upper tail in that case
-alone, and adds one assertion with a 120-digit reference. No row of this
-holdout has such a target. Run 43618326390 on `f6b26cd` exported the
-holdout, the main grid and the consolidated holdout again: all three came
-back with the same bytes, and the regression passed 1,941 of 1,941
-assertions (evidence `40413b7`). The verdict and every figure above stand for
-`f6b26cd`.
+| Call | Candidate `f0c0d5f` | Source before #35 |
+| --- | --- | --- |
+| `K_STATS_Beta_InverseCumulative(1E-20, 100, 2)` | `#VALUE!`: the normal seed has no quantile at one | 0.6080769921891604 |
+| `K_STATS_Beta_InverseCumulative(1E-200, 1000, 1)` | no convergence: the series seed starts at 0.001, the root is at 0.369 | 0.630957344480193 |
 
-What this adds to "what this does not show": the holdout had no row whose
-complement rounds to one. The rule was wrong there and nothing I had
-registered would have found it.
+`tail_aware_model.py` fails at the same points; it is left as the record of
+the screen.
+
+**What I tried and withdrew.** `f6b26cd` took the normal seed from the upper
+tail, and passed Excel with the holdout unchanged (run 43618326390,
+evidence `40413b7`). For the second case I modelled a mirrored series seed
+and a step to the neighbouring Double where Newton stalls. A sweep of
+1,451 points of the regime against the model of the source before #35 gave
+53 points that fail only with the new rule so repaired, and 93 that fail
+only with the old one; both models fail on 566, so the models themselves
+are not reliable evidence there. I stopped repairing a regime that no
+registered evidence covers.
+
+**What is in the source.** `b939c76`: where the lower-tail target of the
+member below 1/2 rounds to one, and where the evaluation at 1/2 fails,
+`PROB_TryBetaInvRegularized` runs the routine it had before #35,
+unchanged. Everywhere else it is the accepted candidate; the seed change
+of `f6b26cd` is withdrawn. Two assertions guard the two calls above.
+
+Run 43624391221 on `b939c76` exported the holdout, the main grid and the
+consolidated holdout again: all three came back with the same bytes as
+accepted, and the regression passed 1,942 of 1,942 assertions (evidence
+`2e2597a`). The verdict and every figure above stand for `b939c76`.
+
+**What this leaves open.**
+
+- In that regime the pair reconstruction is not corrected: the small member
+  is still `1 - U`, as before #35. No row of any grid measures it.
+- The holdout had no row whose complement rounds to one. The rule was wrong
+  there and nothing I had registered would have found it; review did.
