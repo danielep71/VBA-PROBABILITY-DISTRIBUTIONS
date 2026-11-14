@@ -228,6 +228,8 @@ Private Const TOL_ABS_ULP       As Double = 1E-16          'Constant-level absol
 Private Const TOL_ABS_FEW_ULP   As Double = 5E-16          'Few-ULP absolute
 
 Private Const TOL_REL_TIGHT     As Double = 0.0000000001  '1E-10 relative
+Private Const TOL_REL_GUARANTEE As Double = 0.0000000000001 '1E-13 relative: the forward guarantee of #327, for the routed Gamma tails (#314)
+Private Const TOL_REL_INV_GUARANTEE As Double = 0.000000000001 '1E-12 relative: the inverse guarantee of #327 (#314)
 Private Const TOL_REL_LOOSE     As Double = 0.000001      '1E-6 relative
 Private Const TOL_REL_TAIL      As Double = 0.000000001   '1E-9 relative
 Private Const TOL_REL_ACKLAM    As Double = 0.00000000115 '1.15E-9 published
@@ -11259,7 +11261,8 @@ Private Sub PG_Value(ByVal Label As String, ByVal Value As Variant, ByVal Expect
     If IsError(Value) Then
         AssertTrue Label & " returned error " & Diag, False
     Else
-        AssertTrue Label & " bits " & SG_Bits(CDbl(Value)) & " " & Diag, (Diag = "" And SP_SameBits(CDbl(Value), Expected))
+        AssertTrue Label & " bits " & SG_Bits(CDbl(Value)) & " " & Diag, _
+            (Diag = "" And GammaCF_WithinGuarantee(CDbl(Value), Expected))
     End If
 End Sub
 
@@ -12713,7 +12716,7 @@ Private Sub PF_InverseValue(ByVal Label As String, ByVal Value As Variant, ByVal
         AssertTrue Label & " returned error " & Diag, False
     Else
         AssertTrue Label & " bits " & SG_Bits(CDbl(Value)) & " normalized " & CStr(CDbl(Value) / Expected) & " " & Diag, _
-            (Diag = "" And Abs(CDbl(Value) / Expected - 1#) <= 0.00000000000002)
+            (Diag = "" And Abs(CDbl(Value) / Expected - 1#) <= TOL_REL_INV_GUARANTEE)
     End If
 End Sub
 
@@ -18130,12 +18133,12 @@ Private Sub Test_GammaCF_PrecisionCounterexample()
     AssertTrue "Precision upper CF Cumulative" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "Precision upper CF Survival" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.39000000000000E+00 + (1.11022302462516E-15)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#)))
 End Sub
 
@@ -18189,264 +18192,320 @@ Private Sub Test_GammaCF_CapAndXSeam()
     AssertTrue "B6 X seam 00 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 00 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.00000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 00 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (-1.11022302462516E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 00 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.00000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-100 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 01 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 01 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.00000100000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 01 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 01 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.00000100000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-06 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 02 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 02 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.00010000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 02 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 02 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.00010000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-04 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 03 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 03 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 03 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 03 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.01000000000000E+00 + (2.22044604925031E-16)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 04 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 04 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.25000000000000E+00 + (2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 04 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (-2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 04 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (0.00000000000000E+00)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.25000000000000E+00 + (2.22044604925031E-16)), (2.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 05 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 05 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.50000000000000E+00 + (2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 05 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (-2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 05 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.50000000000000E+00 + (2.22044604925031E-16)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 06 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 06 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.75000000000000E+00 + (2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 06 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (-2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 06 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (0.00000000000000E+00)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.75000000000000E+00 + (2.22044604925031E-16)), (7.50000000000000E-01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 07 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
     AssertTrue "B6 X seam 07 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
     AssertTrue "B6 X seam 07 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
     AssertTrue "B6 X seam 07 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (-1.11022302462516E-16)), 1#)))
     AssertTrue "B6 X seam 08 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 08 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 08 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 08 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 09 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
     AssertTrue "B6 X seam 09 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
     AssertTrue "B6 X seam 09 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (-2.22044604925031E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
     AssertTrue "B6 X seam 09 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (0.00000000000000E+00)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((2.00000000000000E+00 + (4.44089209850063E-16)), (1.00000000000000E+00 + (2.22044604925031E-16)), 1#)))
     AssertTrue "B6 X seam 10 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 10 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((3.00000000000000E+00 + (4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 10 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (-4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 10 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((3.00000000000000E+00 + (4.44089209850063E-16)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 11 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 11 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.10000000000000E+01 + (1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 11 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (-1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 11 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (0.00000000000000E+00)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.10000000000000E+01 + (1.77635683940025E-15)), (1.00000000000000E+01 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 12 Cumulative 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 12 Cumulative 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) <= _
+        GammaCF_NotAbove(CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Cumulative((1.01000000000000E+02 + (1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 12 Survival 0" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (-1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
     AssertTrue "B6 X seam 12 Survival 1" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))) & _
         " right=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#))), _
-        (CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)) >= _
+        GammaCF_NotBelow(CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (0.00000000000000E+00)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)), _
          CDbl(K_STATS_Gamma_Survival((1.01000000000000E+02 + (1.42108547152020E-14)), (1.00000000000000E+02 + (0.00000000000000E+00)), 1#)))
 End Sub
+
+
+Private Function GammaCF_WithinGuarantee(ByVal Actual As Double, ByVal Expected As Double) As Boolean
+'
+'==============================================================================
+' GammaCF_WithinGuarantee
+'------------------------------------------------------------------------------
+' PURPOSE
+'   True when Actual equals Expected or lies within the forward guarantee of
+'   #327, 1E-13 relative. Expected is the correctly rounded value, so an
+'   expected zero is met only by zero.
+'
+' NOTES
+'   The public Gamma and Chi-square tails are routed since #314: binary64
+'   where it can be trusted, the double-double kernel elsewhere. They are
+'   held to the guarantee; the kernel's entry points stay held to the bit.
+'==============================================================================
+'
+    If Actual = Expected Then
+        GammaCF_WithinGuarantee = True
+    Else
+        GammaCF_WithinGuarantee = (Abs(Actual - Expected) <= TOL_REL_GUARANTEE * Abs(Expected))
+    End If
+End Function
+
+
+Private Function GammaCF_NotAbove(ByVal Lower As Double, ByVal Upper As Double) As Boolean
+'
+'==============================================================================
+' GammaCF_NotAbove
+'------------------------------------------------------------------------------
+' PURPOSE
+'   True when Lower does not exceed Upper by more than the two values' error
+'   allowances, 1E-13 relative each: the monotonicity invariant of #327.
+'==============================================================================
+'
+    If Lower <= Upper Then
+        GammaCF_NotAbove = True
+    Else
+        GammaCF_NotAbove = (Lower - Upper <= TOL_REL_GUARANTEE * (Abs(Lower) + Abs(Upper)))
+    End If
+End Function
+
+
+Private Function GammaCF_NotBelow(ByVal Upper As Double, ByVal Lower As Double) As Boolean
+'
+'==============================================================================
+' GammaCF_NotBelow
+'------------------------------------------------------------------------------
+' PURPOSE
+'   True when Upper is not below Lower by more than the two values' error
+'   allowances: GammaCF_NotAbove with its arguments exchanged.
+'==============================================================================
+'
+    GammaCF_NotBelow = GammaCF_NotAbove(Lower, Upper)
+End Function
 
 
 Private Function GammaCF_FullPrecision(ByVal X As Double) As String
@@ -18547,51 +18606,51 @@ Private Sub Test_GammaCF_AdditionalCallers()
     Dim Diag As String
     Small = (2# ^ (-1022)) * (2# ^ (-52))
     AssertClose "B6 Gamma inverse 0.01 0.1", _
-        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (5.66073814706194E-101 + (-6.34485459328912E-117)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (5.66073814706194E-101 + (-6.34485459328912E-117)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 0.01 0.1", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E-02 + (0.00000000000000E+00)))) / (1.13214762941239E-100 + (-2.03035346985252E-115)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 0.01 0.5", _
-        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (4.46553501891035E-31 + (4.37905770101505E-46)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (4.46553501891035E-31 + (4.37905770101505E-46)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 0.01 0.5", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E-02 + (0.00000000000000E+00)))) / (8.93107003782071E-31 + (0.00000000000000E+00)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 0.01 0.9", _
-        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (1.50359362307029E-05 + (4.74338450462408E-20)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E-02 + (0.00000000000000E+00)), 1#)) / (1.50359362307029E-05 + (4.74338450462408E-20)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 0.01 0.9", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E-02 + (0.00000000000000E+00)))) / (3.00718724614059E-05 + (-3.38813178901720E-21)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 0.5 0.1", _
-        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (7.89538704671561E-03 + (1.73472347597681E-18)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (7.89538704671561E-03 + (1.73472347597681E-18)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 0.5 0.1", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)))) / (1.57907740934312E-02 + (2.42861286636753E-17)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 0.5 0.5", _
-        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (2.27468211559786E-01 + (3.88578058618805E-16)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (2.27468211559786E-01 + (3.88578058618805E-16)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 0.5 0.5", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)))) / (4.54936423119573E-01 + (-2.22044604925031E-16)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 0.5 0.9", _
-        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (1.35277172704771E+00 + (-2.44249065417534E-15)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (5.00000000000000E-01 + (0.00000000000000E+00)), 1#)) / (1.35277172704771E+00 + (-2.44249065417534E-15)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 0.5 0.9", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)))) / (2.70554345409542E+00 + (-4.88498130835069E-15)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 1.0 0.1", _
-        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (1.05360515657826E-01 + (3.05311331771918E-16)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (1.05360515657826E-01 + (3.05311331771918E-16)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 1.0 0.1", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)))) / (2.10721031315653E-01 + (-3.88578058618805E-16)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 1.0 0.5", _
-        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (6.93147180559945E-01 + (3.33066907387547E-16)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (6.93147180559945E-01 + (3.33066907387547E-16)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 1.0 0.5", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)))) / (1.38629436111989E+00 + (6.66133814775094E-16)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 1.0 0.9", _
-        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (2.30258509299405E+00 + (-3.99680288865056E-15)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (1.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (2.30258509299405E+00 + (-3.99680288865056E-15)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 1.0 0.9", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)))) / (4.60517018598809E+00 + (1.77635683940025E-15)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 2.0 0.1", _
-        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (5.31811608389612E-01 + (1.11022302462516E-16)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (5.31811608389612E-01 + (1.11022302462516E-16)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 2.0 0.1", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((1.00000000000000E-01 + (0.00000000000000E+00)), (4.00000000000000E+00 + (0.00000000000000E+00)))) / (1.06362321677922E+00 + (4.21884749357559E-15)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 2.0 0.5", _
-        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (1.67834699001666E+00 + (4.44089209850063E-16)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (1.67834699001666E+00 + (4.44089209850063E-16)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 2.0 0.5", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((5.00000000000000E-01 + (0.00000000000000E+00)), (4.00000000000000E+00 + (0.00000000000000E+00)))) / (3.35669398003332E+00 + (8.88178419700125E-16)), 1#, 4.7E-12
     AssertClose "B6 Gamma inverse 2.0 0.9", _
-        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (3.88972016986743E+00 + (-4.44089209850063E-16)), 1#, 2E-14
+        CDbl(K_STATS_Gamma_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (2.00000000000000E+00 + (0.00000000000000E+00)), 1#)) / (3.88972016986743E+00 + (-4.44089209850063E-16)), 1#, TOL_REL_INV_GUARANTEE
     AssertClose "B6 ChiSquare inverse 2.0 0.9", _
         CDbl(K_STATS_ChiSquare_InverseCumulative((9.00000000000000E-01 + (0.00000000000000E+00)), (4.00000000000000E+00 + (0.00000000000000E+00)))) / (7.77944033973486E+00 + (-8.88178419700125E-16)), 1#, 4.7E-12
     AssertClose "B6 Poisson Cumulative 0 0x1.fffffffffffffp+0", _
@@ -18747,9 +18806,9 @@ Private Sub Test_GammaCF_AdditionalCallers()
         CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
     A = 1E-300
     AssertClose "B6 underflow Gamma 0x1.56e1fc2f8f359p-997 2.0", _
-        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (4.89005107080611E-302 + (2.07226151461452E-317)), 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (4.89005107080611E-302 + (2.07226151461452E-317)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow ChiSquare 0x1.56e1fc2f8f359p-997 2.0", _
-        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (4.89005107080611E-302 + (2.07226151461452E-317)), 1#, 5E-15
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (4.89005107080611E-302 + (2.07226151461452E-317)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow Gamma 0x1.56e1fc2f8f359p-997 700.0", _
         CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
     AssertClose "B6 underflow ChiSquare 0x1.56e1fc2f8f359p-997 700.0", _
@@ -18764,13 +18823,13 @@ Private Sub Test_GammaCF_AdditionalCallers()
         CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
     A = 0.5
     AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 2.0", _
-        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 2.0", _
-        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 700.0", _
-        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / (2.10101451626422E-306 + (-2.52961610670718E-321)), 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / (2.10101451626422E-306 + (-2.52961610670718E-321)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 700.0", _
-        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / (2.10101451626422E-306 + (-2.52961610670718E-321)), 1#, 5E-15
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / (2.10101451626422E-306 + (-2.52961610670718E-321)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow Gamma 0x1.0000000000000p-1 740.0", _
         CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (2.00000000000000E+00 + (0.00000000000000E+00)), 1#
     AssertClose "B6 underflow ChiSquare 0x1.0000000000000p-1 740.0", _
@@ -18781,13 +18840,13 @@ Private Sub Test_GammaCF_AdditionalCallers()
         CDbl(K_STATS_ChiSquare_Survival(1490.0#, 2# * A)) / Small, (0.00000000000000E+00 + (0.00000000000000E+00)), 1#
     A = 1#
     AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 2.0", _
-        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(2.0#, A, 1#)) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 2.0", _
-        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+        CDbl(K_STATS_ChiSquare_Survival(4.0#, 2# * A)) / (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 700.0", _
-        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / (9.85967654375977E-305 + (0.00000000000000E+00)), 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(700.0#, A, 1#)) / (9.85967654375977E-305 + (0.00000000000000E+00)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 700.0", _
-        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / (9.85967654375977E-305 + (0.00000000000000E+00)), 1#, 5E-15
+        CDbl(K_STATS_ChiSquare_Survival(1400.0#, 2# * A)) / (9.85967654375977E-305 + (0.00000000000000E+00)), 1#, TOL_REL_GUARANTEE
     AssertClose "B6 underflow Gamma 0x1.0000000000000p+0 740.0", _
         CDbl(K_STATS_Gamma_Survival(740.0#, A, 1#)) / Small, (8.50000000000000E+01 + (0.00000000000000E+00)), 1#
     AssertClose "B6 underflow ChiSquare 0x1.0000000000000p+0 740.0", _
@@ -18799,23 +18858,23 @@ Private Sub Test_GammaCF_AdditionalCallers()
     L = CDbl(K_STATS_Gamma_Survival((2.10000000000000E+00 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
     V = CDbl(K_STATS_Gamma_Survival((2.10000000000000E+00 + (0.00000000000000E+00)), 1#, 1#))
     R = CDbl(K_STATS_Gamma_Survival((2.10000000000000E+00 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
-    AssertTrue "B6 shape seam lower 2.1", (L <= V)
-    AssertTrue "B6 shape seam upper 2.1", (V <= R)
+    AssertTrue "B6 shape seam lower 2.1", GammaCF_NotAbove(L, V)
+    AssertTrue "B6 shape seam upper 2.1", GammaCF_NotAbove(V, R)
     L = CDbl(K_STATS_Gamma_Survival((4.00000000000000E+00 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
     V = CDbl(K_STATS_Gamma_Survival((4.00000000000000E+00 + (0.00000000000000E+00)), 1#, 1#))
     R = CDbl(K_STATS_Gamma_Survival((4.00000000000000E+00 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
-    AssertTrue "B6 shape seam lower 4.0", (L <= V)
-    AssertTrue "B6 shape seam upper 4.0", (V <= R)
+    AssertTrue "B6 shape seam lower 4.0", GammaCF_NotAbove(L, V)
+    AssertTrue "B6 shape seam upper 4.0", GammaCF_NotAbove(V, R)
     L = CDbl(K_STATS_Gamma_Survival((8.00000000000000E+00 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
     V = CDbl(K_STATS_Gamma_Survival((8.00000000000000E+00 + (0.00000000000000E+00)), 1#, 1#))
     R = CDbl(K_STATS_Gamma_Survival((8.00000000000000E+00 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
-    AssertTrue "B6 shape seam lower 8.0", (L <= V)
-    AssertTrue "B6 shape seam upper 8.0", (V <= R)
+    AssertTrue "B6 shape seam lower 8.0", GammaCF_NotAbove(L, V)
+    AssertTrue "B6 shape seam upper 8.0", GammaCF_NotAbove(V, R)
     L = CDbl(K_STATS_Gamma_Survival((1.60000000000000E+01 + (0.00000000000000E+00)), 1# - 2# ^ (-53), 1#))
     V = CDbl(K_STATS_Gamma_Survival((1.60000000000000E+01 + (0.00000000000000E+00)), 1#, 1#))
     R = CDbl(K_STATS_Gamma_Survival((1.60000000000000E+01 + (0.00000000000000E+00)), 1# + 2# ^ (-52), 1#))
-    AssertTrue "B6 shape seam lower 16.0", (L <= V)
-    AssertTrue "B6 shape seam upper 16.0", (V <= R)
+    AssertTrue "B6 shape seam lower 16.0", GammaCF_NotAbove(L, V)
+    AssertTrue "B6 shape seam upper 16.0", GammaCF_NotAbove(V, R)
     AssertErrorCode "B6 invalid Gamma_Survival", K_STATS_Gamma_Survival(2#, 0#, 1#), xlErrNum
     AssertErrorCode "B6 invalid Gamma_Cumulative", K_STATS_Gamma_Cumulative(2#, 1#, 0#), xlErrNum
     AssertErrorCode "B6 invalid ChiSquare_Survival", K_STATS_ChiSquare_Survival(4#, 0#), xlErrNum
@@ -19123,21 +19182,21 @@ Private Sub GammaCF_CoverageCase( _
     Dim Q As Double
     P = CDbl(K_STATS_Gamma_Cumulative(X, A, 1#))
     Q = CDbl(K_STATS_Gamma_Survival(X, A, 1#))
-    AssertClose Label & " Gamma P", P / PRef, 1#, 3E-15
-    AssertClose Label & " Gamma Q", Q / QRef, 1#, 5E-15
+    AssertClose Label & " Gamma P", P / PRef, 1#, TOL_REL_GUARANTEE
+    AssertClose Label & " Gamma Q", Q / QRef, 1#, TOL_REL_GUARANTEE
     AssertClose Label & " Gamma Cumulative scale 0.5", _
-        CDbl(K_STATS_Gamma_Cumulative(X * 0.5, A, 0.5)) / PRef, 1#, 3E-15
+        CDbl(K_STATS_Gamma_Cumulative(X * 0.5, A, 0.5)) / PRef, 1#, TOL_REL_GUARANTEE
     AssertClose Label & " Gamma Survival scale 0.5", _
-        CDbl(K_STATS_Gamma_Survival(X * 0.5, A, 0.5)) / QRef, 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(X * 0.5, A, 0.5)) / QRef, 1#, TOL_REL_GUARANTEE
     AssertClose Label & " Gamma Cumulative scale 2#", _
-        CDbl(K_STATS_Gamma_Cumulative(X * 2#, A, 2#)) / PRef, 1#, 3E-15
+        CDbl(K_STATS_Gamma_Cumulative(X * 2#, A, 2#)) / PRef, 1#, TOL_REL_GUARANTEE
     AssertClose Label & " Gamma Survival scale 2#", _
-        CDbl(K_STATS_Gamma_Survival(X * 2#, A, 2#)) / QRef, 1#, 5E-15
+        CDbl(K_STATS_Gamma_Survival(X * 2#, A, 2#)) / QRef, 1#, TOL_REL_GUARANTEE
     AssertClose Label & " Chi-square Cumulative", _
         CDbl(K_STATS_ChiSquare_Cumulative(2# * X, 2# * A)) / PRef, 1#, 2.6E-10
     AssertClose Label & " Chi-square Survival", _
         CDbl(K_STATS_ChiSquare_Survival(2# * X, 2# * A)) / QRef, 1#, 2.6E-10
-    AssertClose Label & " P+Q", P + Q, 1#, 4.44089209850063E-16
+    AssertClose Label & " P+Q", P + Q, 1#, TOL_REL_GUARANTEE
 End Sub
 
 Private Sub Test_CN_GammaSurvival()
@@ -19175,42 +19234,42 @@ Private Sub Test_CN_GammaSurvival()
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-100", _
         CDbl(K_STATS_Gamma_Survival(2#, 1.00000000000000E-100, 1#)) / _
-        (4.89005107080611E-102 + (1.58621364832228E-117)), 1#, 5E-15
+        (4.89005107080611E-102 + (1.58621364832228E-117)), 1#, TOL_REL_GUARANTEE
     AssertClose "chisquare B6 normalized shape 1e-100", _
         CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 1.00000000000000E-100)) / _
-        (4.89005107080611E-102 + (1.58621364832228E-117)), 1#, 5E-15
+        (4.89005107080611E-102 + (1.58621364832228E-117)), 1#, TOL_REL_GUARANTEE
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1e-06", _
         CDbl(K_STATS_Gamma_Survival(2#, 1.00000000000000E-06, 1#)) / _
-        (4.89005870943097E-08 + (3.97046694025453E-23)), 1#, 5E-15
+        (4.89005870943097E-08 + (3.97046694025453E-23)), 1#, TOL_REL_GUARANTEE
     AssertClose "chisquare B6 normalized shape 1e-06", _
         CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 1.00000000000000E-06)) / _
-        (4.89005870943097E-08 + (3.97046694025453E-23)), 1#, 5E-15
+        (4.89005870943097E-08 + (3.97046694025453E-23)), 1#, TOL_REL_GUARANTEE
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 0.25", _
         CDbl(K_STATS_Gamma_Survival(2#, 2.50000000000000E-01, 1#)) / _
-        (1.72860118595168E-02 + (-2.42861286636753E-17)), 1#, 5E-15
+        (1.72860118595168E-02 + (-2.42861286636753E-17)), 1#, TOL_REL_GUARANTEE
     AssertClose "chisquare B6 normalized shape 0.25", _
         CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 2.50000000000000E-01)) / _
-        (1.72860118595168E-02 + (-2.42861286636753E-17)), 1#, 5E-15
+        (1.72860118595168E-02 + (-2.42861286636753E-17)), 1#, TOL_REL_GUARANTEE
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 0.5", _
         CDbl(K_STATS_Gamma_Survival(2#, 5.00000000000000E-01, 1#)) / _
-        (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+        (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, TOL_REL_GUARANTEE
     AssertClose "chisquare B6 normalized shape 0.5", _
         CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 5.00000000000000E-01)) / _
-        (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, 5E-15
+        (4.55002638963584E-02 + (1.38777878078145E-17)), 1#, TOL_REL_GUARANTEE
 
     'Normalize before asserting: this must test relative, not tiny absolute error.
     AssertClose "gamma B6 normalized shape 1.0", _
         CDbl(K_STATS_Gamma_Survival(2#, 1.00000000000000E+00, 1#)) / _
-        (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+        (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, TOL_REL_GUARANTEE
     AssertClose "chisquare B6 normalized shape 1.0", _
         CDbl(K_STATS_ChiSquare_Survival(4#, 2# * 1.00000000000000E+00)) / _
-        (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, 5E-15
+        (1.35335283236613E-01 + (-3.05311331771918E-16)), 1#, TOL_REL_GUARANTEE
 
     AssertClose "gamma sf(3,2.5,1.5)", K_STATS_Gamma_Survival(3#, 2.5, 1.5), _
         0.54941595135278, TOL_ABS_TIGHT

@@ -163,3 +163,24 @@ registration and its own untouched evidence.
 3. One Excel wave exports the main grid, the consolidated holdout and the
    routing holdout. `holdout_route_analyze.py` gives the verdict.
 4. Cost is measured and recorded in the README.
+
+## Addendum 1 — the inverse solver (2026-11-14, before any evaluation)
+
+Added while the rule was being wired, before any Excel run of it and before
+the holdout was evaluated. The rule for P and Q, its constants, the
+acceptance rules and the holdout are unchanged.
+
+The registration lists the Gamma inverse solver among the callers that move
+to the routed entry points. That is narrowed: the solver uses them **from
+shape 0.01**, and the double-double entry points below it.
+
+The reason is conditioning, not the rule. Where the solver works on the lower
+tail of a small shape, the quantile moves by about `1 / A` times the tail's
+relative error. The routed tails are held to 1E-13 and measured at a few
+1E-15, so at shape 0.01 the quantile stays within 4E-13, inside the inverse
+guarantee of 1E-12; at shape 1E-4 it would not. The kernel is correctly
+rounded there and keeps the inverse as it is today.
+
+The holdout does not exercise the inverses. They are judged by their
+contracts on the main grid, by the existing Excel assertions, realigned to
+the guarantee of 1E-12, and by the consolidated holdout.

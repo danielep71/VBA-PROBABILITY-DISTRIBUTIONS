@@ -5,7 +5,7 @@ Proofs for the #307 repaired binary64 route model and its VBA block.
      PROB_Log1p, PROB_GammaSmallLogGamma1p) are the source text the port was
      written against: their SHA-256 is pinned here.
   2. The block b64_route_vba.py generates is the one the fit candidate 88ff6ba
-     carried, the module no longer carries it, and its constants are the
+     carried, the module ends with exactly that block (#314), and its constants are the
      model's: every log(k / 256) pair, log 2 and 2 pi.
   3. The deviance pair is accurate to 1E-16 absolute on 3,000 seeded random
      points (A from 1.01 to 1E7, X from 1E-3 A to 1E3 A).
@@ -56,7 +56,7 @@ def main():
         check(hashlib.sha256(text.encode()).hexdigest() == digest, f"{name} changed since the port")
 
     # 2. The generated block and its constants.
-    check(V.main(["--check"]) == 0, "the block is not the fit candidate's, or is still in the module")
+    check(V.main(["--check"]) == 0, "the block is not the fit candidate's, or the module does not end with it")
     block = V.block()
     words = re.findall(r"Table(Hi|Lo)\((\d+)\) = PROB_DD_SP_FromWords\(&H(\w{8})&, &H(\w{8})&\)", block)
     check(len(words) == 2 * 129, f"{len(words)} table entries, not 258")
