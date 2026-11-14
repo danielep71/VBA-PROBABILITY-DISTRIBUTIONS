@@ -51,8 +51,8 @@
 ---
 
 <p align="center">
-  <img src="assets/Home2.jpg"
-       alt="VBA Probability Distributions — native numerical probability library for Excel VBA"
+  <img src="assets/social3.jpg"
+       alt="VBA Probability Distributions — complete, accurate numerical library for probability distributions; native Excel VBA implementation, not a thin wrapper around worksheet functions"
        width="100%">
 </p>
 

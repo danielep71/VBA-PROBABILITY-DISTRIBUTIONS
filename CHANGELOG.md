@@ -110,6 +110,9 @@ Use only the categories needed by a release.
 ### Student-t above |t| = 8 at large df: registration (#213)
 
 - The Student-t survival just above `|t| = 8` for `df >= 1E5` is wrong by 4E-13 to 8E-10 relative in the committed seam export, and the inverse near `q = -8` at `df = 1E7` by 1.3E-12. The cause is the conditioning of the incomplete-beta continued fraction in an argument within 1E-5 of one, not the prefactor. `benchmark/student_t_large_df_study/ABOVE8_PREREGISTRATION.md` registers the rule, 32 new rows of regime `above8` and the acceptance rules, before the Excel wave.
+### README shows the social preview image
+
+- The image at the top of the README is now `assets/social3.jpg`, the one set as the repository's social preview, so the two match. `assets/Home2.jpg`, which it replaces, is removed.
 
 ### Beta inverse, pair reconstruction: probabilities within 2^-53 of zero (#35)
 
