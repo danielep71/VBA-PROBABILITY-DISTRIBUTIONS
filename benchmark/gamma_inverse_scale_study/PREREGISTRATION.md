@@ -173,3 +173,24 @@ registration and its own untouched evidence.
    Excel regressions are added.
 3. One Excel wave exports the main grid, the consolidated holdout and this
    holdout. `holdout_analyze.py` gives the verdict.
+
+## Addendum 1 — arguments outside the pair logarithm (2026-11-14, before any evaluation)
+
+Added while the rule was being wired, before any Excel run of it and before
+the holdout was evaluated. The rule, the crossover, the acceptance rules and
+the holdout are unchanged.
+
+The registration says that a subnormal probability or factor takes the plain
+logarithm with a zero low part. Reading the routine showed a second limit:
+`PROB_B64_PairLog` is defined for exponent fields 1 to 2000, so it also
+excludes a factor from `2^978`, about 3.2E294, and the holdout's scales reach
+about 8E307.
+
+Both cases are now handled the same way, and exactly: the argument is
+multiplied or divided by `2^128`, which is exact and brings it into the
+routine's range, and the pair logarithm of `2^128` is subtracted or added.
+No plain logarithm remains in the log branch. This is more accurate than
+what was registered, not less: a plain logarithm of a factor near 1E300
+would add about 7.7E-14 to the result.
+
+`inv_scale_model.py` and its test follow.

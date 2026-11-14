@@ -56,11 +56,22 @@ def uses_log(p, a):
     return log_unit(p, a) <= CROSSOVER
 
 
+PAIR_LOG_LIMIT = math.ldexp(1.0, 978)      # exponent field 2001
+SHIFT = math.ldexp(1.0, 128)
+
+
 def _log_pair(v):
-    # PROB_B64_PairLog needs a normal Double; a subnormal one takes the plain
-    # logarithm with a zero low part.
+    # PROB_B64_PairLog is defined for exponent fields 1 to 2000. Outside it
+    # the argument is moved by an exact factor of 2^128, whose logarithm is
+    # the pair logarithm of that power of two (Addendum 1).
     if v < MIN_NORMAL:
-        return math.log(v), 0.0
+        hi, lo = rm.pair_log(v * SHIFT, 0.0)
+        sh, sl = rm.pair_log(SHIFT, 0.0)
+        return rm.pair_add(hi, lo, -sh, -sl)
+    if v >= PAIR_LOG_LIMIT:
+        hi, lo = rm.pair_log(v / SHIFT, 0.0)
+        sh, sl = rm.pair_log(SHIFT, 0.0)
+        return rm.pair_add(hi, lo, sh, sl)
     return rm.pair_log(v, 0.0)
 
 

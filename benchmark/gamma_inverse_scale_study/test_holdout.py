@@ -77,9 +77,13 @@ class Model(Fixture):
     def test_a_final_underflow_is_the_exact_zero(self):
         self.assertEqual(M.candidate(1e-4, 0.01, 1e-300), 0.0)
 
-    def test_a_subnormal_probability_takes_the_plain_logarithm(self):
-        value = M.candidate(5e-320, 1.0, 1e300)
-        self.assertAlmostEqual(value / float(M.exact(5e-320, 1.0, 1e300)), 1.0, delta=1e-12)
+    def test_arguments_outside_the_pair_logarithm_are_rescaled_exactly(self):
+        # Addendum 1: a subnormal probability, and a scale from 2^978.
+        for p, a, s in ((5e-320, 1.0, 1e300), (1e-4, 0.01, 1e100), (1e-100, 0.25, 8e307),
+                        (3e-310, 0.9, 1.7e308)):
+            self.assertTrue(M.uses_log(p, a))
+            value, ref = M.candidate(p, a, s), M.exact(p, a, s)
+            self.assertLess(abs(mpf(value) - ref) / ref, mpf("2e-15"), (p, a, s))
 
 
 class Construction(Fixture):
