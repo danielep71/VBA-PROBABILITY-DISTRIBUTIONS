@@ -93,8 +93,11 @@
       "issue": 35,
       "class": "numerical_uncertainty",
       "gate": null,
-      "status": "open",
-      "summary": "Unexplained large-df F inverse degradation; necessity of the 2E-10 threshold unresolved"
+      "status": "resolved",
+      "summary": "Unexplained large-df F inverse degradation; necessity of the 2E-10 threshold unresolved",
+      "resolution": {
+        "evidence": "The beta inverse solves for the pair member at most 1/2, on the smaller probability tail, with a pair continued fraction (#358). The production holdout of benchmark/f_inverse_large_df_study/production is accepted on all 126 rows (PRODUCTION_RESULT.md; reserved F points 1.56E-10 before and 2.55E-15 after; Excel run 43624391221 on b939c76). The envelope rows of the main grid are at or below 2.2E-15. Recorded with it: the rule failed the gates of its Python screen; Addendum 1 changed a gate with the baseline in view; for a probability or complement below 2^-53 whose quantile is beyond 1/2 the routine before the change answers and the reconstruction is not corrected; a Beta or F inverse costs 0.6 to 28 ms per call (#359). The F contracts stay with #22."
+      }
     },
     {
       "issue": 47,
