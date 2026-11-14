@@ -675,6 +675,8 @@ Private Sub RunTFamilySuite()
     TimingLap "Test_TF_FSurvival"
     Test_TF_FInverse
     TimingLap "Test_TF_FInverse"
+    Test_TF_FInversePair
+    TimingLap "Test_TF_FInversePair"
     Test_TF_ErrorContract
     TimingLap "Test_TF_ErrorContract"
     Test_TF_SupportEdges
@@ -4429,6 +4431,62 @@ Private Sub Test_TF_FInverse()
     AssertRoundTripF "F round-trip p=0.5 df=(1,1)", 0.5, 1#, 1#
     AssertRoundTripF "F round-trip p=0.99 df=(10,4)", 0.99, 10#, 4#
     AssertRoundTripF "F round-trip p=0.975 df=(100,1000)", 0.975, 100#, 1000#
+End Sub
+
+
+Private Sub Test_TF_FInversePair()
+'
+'==============================================================================
+' Test_TF_FInversePair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the F inverse where the two degrees of freedom differ by many
+'   orders of magnitude (#35): the beta inverse must solve for the small
+'   member of its pair, or the quantile is wrong by up to 1E-8 relative.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' NOTES
+'   - The rows are revealed ones of the study: the retained counterexamples
+'     and the fitting grid of benchmark/f_inverse_large_df_study. None is a
+'     row of the production holdout.
+'   - References are 120-digit quantiles (benchmark/_ibeta.py).
+'   - The tolerance is the inverse guarantee of the accuracy policy, 1E-12.
+'     Before #35 the first six rows were wrong by 8E-11 to 9E-9.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-11-14
+'==============================================================================
+'
+    Const TOL_FIP           As Double = 0.000000000001  '1E-12 relative
+
+    Debug.Print "-- F inverse, pair reconstruction"
+    AssertRelClose "FIP F inv(0.5,1e6,3)", _
+        K_STATS_F_InverseCumulative(0.5, 1000000#, 3#), 1.26797593618905, TOL_FIP
+    AssertRelClose "FIP F inv(0.5,1e8,10)", _
+        K_STATS_F_InverseCumulative(0.5, 100000000#, 10#), 1.07045547064099, TOL_FIP
+    AssertRelClose "FIP F inv(0.9,100,1e10)", _
+        K_STATS_F_InverseCumulative(0.9, 100#, 10000000000#), 1.18498003932511, TOL_FIP
+    AssertRelClose "FIP F inv(0.99,100,1e10)", _
+        K_STATS_F_InverseCumulative(0.99, 100#, 10000000000#), 1.35806723427747, TOL_FIP
+    AssertRelClose "FIP F inv(0.75,10,1e9)", _
+        K_STATS_F_InverseCumulative(0.75, 10#, 1000000000#), 1.25488614254309, TOL_FIP
+    AssertRelClose "FIP F inv(0.25,1e7,4)", _
+        K_STATS_F_InverseCumulative(0.25, 10000000#, 4#), 0.742766847863984, TOL_FIP
+
+    'A control: correct before #35 as well
+    AssertRelClose "FIP F inv(0.9,1e6,3) control", _
+        K_STATS_F_InverseCumulative(0.9, 1000000#, 3#), 5.13369640442372, TOL_FIP
 End Sub
 
 

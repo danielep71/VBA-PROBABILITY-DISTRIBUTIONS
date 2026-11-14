@@ -97,6 +97,17 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Beta inverse, pair reconstruction: candidate (#35)
+
+- `PROB_TryBetaInvRegularized`, which serves the Beta, F and small-df Student-t inverses, solves for the member of the pair `(x, 1 - x)` that is at most 1/2, forms its Newton residual on the smaller probability tail with a continued fraction carried as pairs of Doubles, and settles when the two neighbouring Doubles bracket the root. Before, the F inverse with degrees of freedom far apart was wrong by up to 1E-8 relative. The verdict is that of `benchmark/f_inverse_large_df_study/production/PRODUCTION_PREREGISTRATION.md` and is recorded with the Excel wave of this commit.
+- Seven assertions on the F inverse (`Test_TF_FInversePair`): the regression has 1,940 assertions, the fast suite 996.
+- The cost benchmark times the Beta, F and Student-t inverses.
+
+### Beta inverse, pair reconstruction: registration (#35)
+
+- The production holdout of the tail-aware beta inverse is registered: 126 rows, exported once from the source before the change and once from the candidate, with rules on regression, the 1E-12 guarantee, the domain and the Student-t invariance. Addendum 1, written with the baseline in view and before the candidate was evaluated, leaves the Student-t rows to the invariance rules: 40 of them are outside 1E-12 in the current source, which is #22.
+- Study exports `fip_baseline` and `fip_holdout`.
+
 ### Gamma inverse at the final scale: result (#14)
 
 - The second holdout is accepted: its seven rules hold on all 525 rows
