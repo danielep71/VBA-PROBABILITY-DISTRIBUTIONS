@@ -97,6 +97,14 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### README: the assertions run apart from the regression
+
+- The assurance block shows, next to the 1,922 assertions of the
+  pull-request regression, the 13,005 declared for the study and slow
+  production batteries that run on the Excel runner apart from it. The
+  figure is the policy's count: the retained certification record covers
+  the regression only, and the row says so.
+
 ### Fast Gamma route: production (#314)
 
 - `K_STATS_Gamma_Cumulative`, `K_STATS_Gamma_Survival`, the Chi-square and

@@ -74,6 +74,7 @@
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
 | **1,922** | of 1,922 deterministic VBA assertions passed in the retained Excel run on `31a1e76`; regression sources unchanged since |
+| **13,005** | further VBA assertions declared in 8 study and slow production batteries, run on the Excel runner apart from the pull-request regression; their result is in each run's log, not in the retained record |
 | **172** | active accuracy contracts (173 registry rows; 1 characterization-only): 172 PASS, 0 FAIL, 0 PENDING |
 | **2,205** | observation rows; main grid 1,849: 1,822 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
 | **83** | of 83 contracts PASS on an **independent holdout** of 659 observations |

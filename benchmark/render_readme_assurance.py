@@ -48,6 +48,7 @@ REPO_URL = "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS"
 README = "README.md"
 PUBLIC_API = "docs/PUBLIC_API.txt"
 POLICY = ".github/excel-evidence-policy.json"
+STUDY_POLICY = ".github/excel-study-policy.json"
 EXCEL_RECORD = "benchmark/excel_regression_record.json"
 CONTRACTS = "benchmark/accuracy_contracts.csv"
 GRID = "benchmark/probability_accuracy_grid.csv"
@@ -321,6 +322,24 @@ def _grid_matches(path, entry):
             and row_count_bytes(canonical) == entry["row_count"])
 
 
+def study_facts(root):
+    """The assertions declared for the batteries that run on the Excel runner
+    apart from the pull-request regression (#300, #345). The count is the
+    policy's, not a retained result: the certification record covers the
+    regression only. None where a checkout predates the policy."""
+    if not os.path.exists(os.path.join(root, *STUDY_POLICY.split("/"))):
+        return None
+    policy = _read_json(root, STUDY_POLICY)
+    groups = [policy.get("batteries"), policy.get("production_batteries", {})]
+    total = policy.get("expected_assertions")
+    if (not all(isinstance(g, dict) for g in groups) or type(total) is not int
+            or any(type(v) is not int or v < 1 for g in groups for v in g.values())
+            or total != sum(v for g in groups for v in g.values())):
+        raise AssuranceError(f"{STUDY_POLICY}: expected_assertions must be the sum of its "
+                             "positive battery counts")
+    return {"assertions": total, "batteries": sum(len(g) for g in groups)}
+
+
 def excel_facts(root):
     """Validate the retained record against its actual candidate, then assess
     working-tree freshness separately. A changed checkout can be rendered STALE;
@@ -515,7 +534,7 @@ def build_model(root=ROOT):
             "target_missed": summary["target_missed"],
             "binding": binding, "coverage": coverage, "holdout": holdout, "excel": excel,
             "readiness": readiness, "open_blockers": open_blockers, "owners": owners,
-            "stale": stale, "carried": carried}
+            "stale": stale, "carried": carried, "studies": study_facts(root)}
 
 
 # --- rendering -----------------------------------------------------------------
@@ -561,6 +580,15 @@ def render_badges(model):
         _badge("Independent Holdout", "Holdout", holdout_message, holdout_color,
                "benchmark/holdout/holdout_summary.md"),
     ])
+
+
+def study_rows(studies):
+    if not studies:
+        return []
+    return [f"| **{studies['assertions']:,}** | further VBA assertions declared in "
+            f"{studies['batteries']} study and slow production batteries, run on the Excel "
+            "runner apart from the pull-request regression; their result is in each run's "
+            "log, not in the retained record |"]
 
 
 def render_table(model):
@@ -610,6 +638,7 @@ def render_table(model):
         f"| **{api['functions']:,}** | worksheet-facing `K_STATS_` functions across "
         f"**{api['surfaces']:,}** distribution surfaces |",
         excel_row,
+        *study_rows(model.get("studies")),
         contract_row,
         grid_row,
         holdout_row,
