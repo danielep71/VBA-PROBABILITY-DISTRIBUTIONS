@@ -145,6 +145,12 @@ def checks(context: Context) -> list[Check]:
                "--summary", f"{results}/release-semantics.md"],
               summary=f"{results}/release-semantics.md",
               reports=(f"{results}/release-semantics.json",)),
+        Check("closing-keywords-self-test",
+              [python, "tools/check_closing_keywords.py", "--self-test"]),
+        # Commit messages of the candidate range; without a base there is no range.
+        Check("closing-keywords",
+              [python, "tools/check_closing_keywords.py", "--root", ".", "--head", context.head]
+              + (["--base", context.base] if context.base else [])),
         # Tracked binaries: approved assets/ images, or a reviewed SHA-256 in the allowlist.
         Check("binaries", [python, "tools/check_binaries.py", "--root", "."]),
         Check("release-bundle-self-test",

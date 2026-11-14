@@ -152,6 +152,15 @@ Keep commits reviewable. Reference the issue when one exists. Do not include
 secrets, private links, generated attribution boilerplate, or unverifiable test
 claims in commit messages.
 
+Reference an issue in a commit message with `Refs #N` only, and write the same
+in a squash message. Never write `closes`, `fixes` or `resolves` before an
+issue number there: GitHub acts on those words when the commit reaches `main`,
+so a commit made on a release branch would close the issue at the next
+integration, whatever its state by then. `tools/check_closing_keywords.py`
+fails a pull request whose commits use one. A commit that is already pushed is
+not rewritten; it is recorded in `.github/closing-keyword-exceptions.json` with
+what is done about the issues it names.
+
 ---
 
 <a id="source-first-vba"></a>

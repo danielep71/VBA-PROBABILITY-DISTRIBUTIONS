@@ -144,6 +144,23 @@ Use only the categories needed by a release.
   holdout is evaluated: where the unit-scale quantile is at most `exp(-40)`
   the quantile is formed in log space, once, at the final scale. No
   production source changes yet.
+### Workflow timeouts and warning-free Python sources
+
+- The `select` job of the Excel regression workflow has a timeout, and a
+  test fails any workflow job without one.
+- The docstring of `tools/check_links.py` is a raw string: it held an
+  invalid escape sequence that Python 3.12 reports and a later version will
+  refuse. A test compiles every tracked Python file with warnings as errors.
+
+### Closing keywords kept out of commit messages
+
+- Commit and squash messages reference issues with `Refs #N` only. A closing
+  keyword in a commit made on a release branch acts when the branch reaches
+  `main`, whatever the state of the issue by then.
+- `tools/check_closing_keywords.py` fails a pull request whose commits use
+  one, and prints the list an integration pull request carries in its body.
+  Two commits already on `release/1.0.0` are recorded in
+  `.github/closing-keyword-exceptions.json` with the action each needs.
 
 ### README: the assertions run apart from the regression
 

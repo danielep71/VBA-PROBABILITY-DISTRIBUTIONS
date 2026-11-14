@@ -91,6 +91,7 @@ jobs:
   select:
     name: Select the Excel suite level
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       suite: ${{ steps.select.outputs.suite }}
     steps:

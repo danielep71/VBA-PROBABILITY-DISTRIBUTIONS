@@ -285,7 +285,8 @@ class CheckListTest(unittest.TestCase):
         self.assertEqual(list(checks), [
             "whitespace-self-test", "whitespace", "vba-jumps-self-test", "vba-jumps",
             "vba-source", "vba-conditionals", "vba-visibility", "vba-layout",
-            "release-semantics-self-test", "release-semantics", "binaries",
+            "release-semantics-self-test", "release-semantics",
+            "closing-keywords-self-test", "closing-keywords", "binaries",
             "release-bundle-self-test", "markdown-links", "restated-counts", "python-tests", "ruff", "mypy",
             "actionlint", "actionlint-probe"])
         for check in checks.values():

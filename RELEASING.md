@@ -330,6 +330,17 @@ both rulesets.
   - The integration pull request merges the release branch into `main` with a
     merge commit. It uses `Refs #` for the issues and pull requests it carries,
     never a closing keyword.
+  - Commit and squash messages on a release branch use `Refs #N` only. A
+    closing keyword in a commit message acts when the commit reaches `main`,
+    not when it is written. `tools/check_closing_keywords.py` checks the
+    commits of every pull request.
+  - The body of the integration pull request lists every commit it carries
+    that uses a closing keyword, from
+    `python tools/check_closing_keywords.py --base origin/main --head HEAD --list`.
+    Each is recorded in `.github/closing-keyword-exceptions.json` with its
+    action. After the merge I check each issue named there, reopen any that
+    GitHub closed against its recorded state, and remove the warning from the
+    issue.
   - Right after each integration, a sync pull request merges `main` back into
     the release branch, so the next task branch starts from the same history.
   - Integration and sync pull requests follow the same review and check rules
