@@ -1,0 +1,197 @@
+{
+  "fit": {
+    "counts": {
+      "P:complement": 223,
+      "P:series": 167,
+      "Q:cf": 220,
+      "Q:complement": 137,
+      "Q:dd": 32
+    },
+    "failures": [],
+    "worst": {
+      "P:complement": {
+        "a": "0x1.312d000000000p+23",
+        "error": 3.7984599653876074e-15,
+        "x": "0x1.312d020000000p+23"
+      },
+      "P:series": {
+        "a": "0x1.312d000000000p+23",
+        "error": 1.874343593983007e-15,
+        "x": "0x1.312d01fffffffp+23"
+      },
+      "Q:cf": {
+        "a": "0x1.312d000000000p+23",
+        "error": 3.801016563428178e-15,
+        "x": "0x1.312d020000000p+23"
+      },
+      "Q:complement": {
+        "a": "0x1.312d000000000p+23",
+        "error": 1.8756051429256577e-15,
+        "x": "0x1.312d01fffffffp+23"
+      },
+      "Q:dd": {
+        "a": "0x1.4f8b588e368f1p-17",
+        "error": 8.946266787506657e-17,
+        "x": "0x1.0c6f7a0b5ed8dp-20"
+      }
+    }
+  },
+  "holdout": {
+    "counts": {
+      "Poisson_Cumulative.all": 3,
+      "Poisson_Survival.all": 3
+    },
+    "failures": [],
+    "worst": {
+      "Poisson_Cumulative.all": {
+        "a": "0x1.1000000000000p+4",
+        "bound": 2e-13,
+        "error": 4.992505919637542e-17,
+        "x": "0x1.4000000000000p+3"
+      },
+      "Poisson_Survival.all": {
+        "a": "0x1.8919000000000p+16",
+        "bound": 2e-13,
+        "error": 6.6261840361668e-16,
+        "x": "0x1.86a0000000000p+16"
+      }
+    }
+  },
+  "kind": "development replay on revealed data; not the routing holdout",
+  "main": {
+    "counts": {
+      "ChiSquare_Cumulative.all": 26,
+      "ChiSquare_Cumulative.envelope_domain": 9,
+      "ChiSquare_Survival.all": 48,
+      "ChiSquare_Survival.envelope_domain": 9,
+      "Gamma_Cumulative.all": 7,
+      "Gamma_Cumulative.extreme_shape": 2,
+      "Gamma_Cumulative.large_shape": 9,
+      "Gamma_Survival.all": 26,
+      "Gamma_Survival.extreme_shape": 2,
+      "Gamma_Survival.large_shape": 9,
+      "Poisson_Cumulative.all": 8,
+      "Poisson_Survival.all": 8
+    },
+    "failures": [],
+    "worst": {
+      "ChiSquare_Cumulative.all": {
+        "a": "0x1.e000000000000p+3",
+        "bound": 2.6e-10,
+        "error": 3.029939391350245e-16,
+        "x": "0x1.4000000000000p+1"
+      },
+      "ChiSquare_Cumulative.envelope_domain": {
+        "a": "0x1.312d000000000p+22",
+        "bound": 2e-12,
+        "error": 3.3447071889233417e-15,
+        "x": "0x1.310a0fba641b3p+22"
+      },
+      "ChiSquare_Survival.all": {
+        "a": "0x1.4f8b588e368f1p-17",
+        "bound": 2.6e-10,
+        "error": 6.922345522384168e-16,
+        "x": "0x1.0000000000000p+1"
+      },
+      "ChiSquare_Survival.envelope_domain": {
+        "a": "0x1.e848000000000p+18",
+        "bound": 2e-12,
+        "error": 1.986428046062974e-15,
+        "x": "0x1.e8f8c6d580c20p+18"
+      },
+      "Gamma_Cumulative.all": {
+        "a": "0x1.8000000000000p+1",
+        "bound": 1e-13,
+        "error": 1.5723820560439046e-16,
+        "x": "0x1.4000000000000p+1"
+      },
+      "Gamma_Cumulative.extreme_shape": {
+        "a": "0x1.7d78400000000p+26",
+        "bound": 2e-12,
+        "error": 4.024303087083974e-15,
+        "x": "0x1.7d6e7c0000000p+26"
+      },
+      "Gamma_Cumulative.large_shape": {
+        "a": "0x1.e848000000000p+19",
+        "bound": 2e-13,
+        "error": 9.97586452413984e-16,
+        "x": "0x1.e848000000000p+19"
+      },
+      "Gamma_Survival.all": {
+        "a": "0x1.4f8b588e368f1p-17",
+        "bound": 1e-13,
+        "error": 6.922345522384168e-16,
+        "x": "0x1.0000000000000p+1"
+      },
+      "Gamma_Survival.extreme_shape": {
+        "a": "0x1.7d78400000000p+26",
+        "bound": 5e-13,
+        "error": 1.1322458000421108e-15,
+        "x": "0x1.7d82040000000p+26"
+      },
+      "Gamma_Survival.large_shape": {
+        "a": "0x1.e848000000000p+19",
+        "bound": 2e-13,
+        "error": 3.2889886245345015e-15,
+        "x": "0x1.e8c5000000000p+19"
+      },
+      "Poisson_Cumulative.all": {
+        "a": "0x1.e848200000000p+19",
+        "bound": 2e-13,
+        "error": 4.607340621933254e-16,
+        "x": "0x1.e848000000000p+19"
+      },
+      "Poisson_Survival.all": {
+        "a": "0x1.e848200000000p+19",
+        "bound": 2e-13,
+        "error": 5.723058623232707e-16,
+        "x": "0x1.e848000000000p+19"
+      }
+    }
+  },
+  "rule": {
+    "complement_max": 0.9,
+    "floor": 1e-290,
+    "upper_max": 0.5
+  },
+  "sha256": {
+    "b64_fit_grid.csv": "0db56c3261d94637db70ef9d9c9a8f3fd0b60e100bfce8c38cfd4c70ed022df9",
+    "fast_route.py": "99127bab940fc68497b4dafdd55fb8a73aa8e959c5e84388a4aba7e3a45df6e1",
+    "replay_fast_route.py": "e7eeccd014dcc2fc900e913e9feb324dbfced42b821f13b851a0be0a49fbc59d",
+    "route_model.py": "56ac938907fa6583004948fc5e9dc7cb53590a60c6f90786c4e139bc4d97f9e6"
+  },
+  "sweep": {
+    "counts": {
+      "P:complement": 366,
+      "P:series": 1702,
+      "Q:cf": 312,
+      "Q:complement": 524,
+      "delegated": 5
+    },
+    "failures": [],
+    "points": 2153,
+    "seed": 314,
+    "worst": {
+      "P:complement": {
+        "a": "0x1.7c3ed4e773ed6p+16",
+        "error": 1.9606147181893395e-15,
+        "x": "0x1.7c4a9658a56a5p+16"
+      },
+      "P:series": {
+        "a": "0x1.d3ec2875cf0fbp-1",
+        "error": 1.4030202941370998e-15,
+        "x": "0x1.f756132aa2189p-18"
+      },
+      "Q:cf": {
+        "a": "0x1.06f7586caf541p-22",
+        "error": 2.078314121447314e-15,
+        "x": "0x1.28cab04f43158p+0"
+      },
+      "Q:complement": {
+        "a": "0x1.38530d8bbd80ap-7",
+        "error": 2.4093133614890364e-15,
+        "x": "0x1.bd19f25fa1dc8p-19"
+      }
+    }
+  }
+}

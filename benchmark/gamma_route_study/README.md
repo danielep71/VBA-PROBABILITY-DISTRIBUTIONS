@@ -1,6 +1,6 @@
 # #307 Gamma routing study
 
-**Status: closed.** #307 was closed on 2026-11-11 under the maintainer's
+**Status: #307 closed; continued under #314 (see below).** #307 was closed on 2026-11-11 under the maintainer's
 revised scope ([current disposition](../../docs/research/GAMMA_PERFORMANCE_STATUS.md)).
 No routing rule ships: the frozen A2 = 10,000 rule is rejected (below), and
 the 117-point routing holdout remains unevaluated. The repaired binary64
@@ -45,6 +45,23 @@ of the binary64 route, used as a fitting set.
 | [`ARITHMETIC_DIAGNOSIS.md`](ARITHMETIC_DIAGNOSIS.md) | Isolates the arithmetic error on 17 retained failing pairs |
 | [`PAIR_CANDIDATE.md`](PAIR_CANDIDATE.md) | B4: the residual-preserving pair recurrence |
 | [`SCALAR_CANDIDATE.md`](SCALAR_CANDIDATE.md) | B5: scalar pairs in the B4 recurrences; a retained prototype, not wired into public functions |
+
+## #314: the fast route, registered again
+
+The study is open again under #314. The two-tier accuracy policy of #327 and
+the maintainer's decision of 2026-11-14 remove the two grounds on which the
+frozen rule was rejected, strict monotonicity between adjacent Doubles and a
+limit of 0.2 ms per call. That rule stays rejected; a new one is registered.
+
+| File | Role |
+| --- | --- |
+| [`FAST_ROUTE_PREREGISTRATION.md`](FAST_ROUTE_PREREGISTRATION.md) | The rule, its constants, the amended acceptance rules R1 to R6 and the predictions, frozen before the holdout is evaluated |
+| `fast_route.py` | The rule as a model over `route_model.py` and the double-double model |
+| `replay_fast_route.py`, `fast_route_development.json` | Development replay on revealed data only: fit grid, main grid, consolidated holdout and a seeded sweep |
+| `holdout_route_build.py`, `holdout_route_grid.csv` | The 117 holdout points with the boundary probes built from the rule, and their references; `--check` proves the grid is the design |
+| `M_STATS_PROBDIST_GRH.bas` | `Export_GammaRouteHoldout`: the four public routes and the two double-double entry points at every row, as bit patterns. The runner exports it as the study grid `grh_route_holdout` |
+| `holdout_route_analyze.py` | The verdict against R1 to R6 |
+| `test_holdout_route.py` | Fixtures for the rule, the probe construction and each acceptance rule, on revealed shapes only |
 
 ## Phase B checkpoint
 

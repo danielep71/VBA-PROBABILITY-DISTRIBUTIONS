@@ -97,6 +97,15 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Fast Gamma route: registration (#314)
+
+- A new routing rule for Gamma and Chi-square P and Q is registered in
+  `benchmark/gamma_route_study/FAST_ROUTE_PREREGISTRATION.md`, before its
+  holdout is evaluated: binary64 wherever its directly computed tail can be
+  trusted, the double-double kernel elsewhere, with no shape ceiling. It is
+  held to the guarantee tier of #327, including that policy's monotonicity
+  invariant. No production source changes yet.
+
 ### Accuracy contracts for the positive-ratio regimes (#13)
 
 - Six contracts make the region repaired by #13 visible to the accuracy gate:
