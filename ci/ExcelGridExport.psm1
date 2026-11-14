@@ -46,7 +46,7 @@ $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
-    "grh_route_holdout", "gis_holdout", "gis_holdout2"
+    "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout"
 )
 
 function Get-StudyGridNames {
@@ -113,7 +113,7 @@ function Get-ExportGridSpec {
                      "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
                      "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2",
                      "prs_chisquare_holdout2", "grh_route_holdout", "gis_holdout",
-                     "gis_holdout2")]
+                     "gis_holdout2", "fip_baseline", "fip_holdout")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -262,6 +262,18 @@ function Get-ExportGridSpec {
                 -FileName "gamma_inverse_scale_grid2.csv" `
                 -Exporter "M_STATS_PROBDIST_GIS2.bas" -Macro "Export_GammaInverseScaleHoldout2" `
                 -Columns 10 -KeyColumns 6 -SuccessPrefix "Gamma inverse second holdout complete: "
+        }
+        "fip_baseline" {
+            return New-GeneratedGridSpec -Folder "f_inverse_large_df_study/production" -Name "fip_baseline" `
+                -FileName "f_inverse_pair_baseline.csv" `
+                -Exporter "M_STATS_PROBDIST_FIP.bas" -Macro "Export_FInversePairBaseline" `
+                -Columns 8 -KeyColumns 7 -SuccessPrefix "F inverse pair baseline complete: "
+        }
+        "fip_holdout" {
+            return New-GeneratedGridSpec -Folder "f_inverse_large_df_study/production" -Name "fip_holdout" `
+                -FileName "f_inverse_pair_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_FIP.bas" -Macro "Export_FInversePair" `
+                -Columns 8 -KeyColumns 7 -SuccessPrefix "F inverse pair holdout complete: "
         }
         "gbr_binary64_map" {
             return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "gbr_binary64_map" `
