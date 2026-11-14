@@ -49,7 +49,9 @@ evaluation at its own working precision:
     references.
 
 The grid also holds the 130 seam rows of the #210 study (regime "seam"), which
-student_t_large_df_study/seam_study.py defines; build() takes them from there.
+student_t_large_df_study/seam_study.py defines, and the 32 rows of #213 above
+|t| = 8 (regime "above8"), which above8_study.py defines; build() takes both
+from there.
 
 The committed grid holds Excel observations. Re-reference it, changing
 reference cells only, with
@@ -256,6 +258,7 @@ def build():
             add("ChiSquare_InverseCumulative", ps, df, chi_inv_wh(ps, df), True, "inverse_normal_limit")
 
     rows += seam_rows()
+    rows += above8_rows()
     return rows, dropped
 
 
@@ -268,6 +271,14 @@ def seam_rows():
         sys.path.insert(0, study)
     import seam_study
     return seam_study.rows()
+
+
+def above8_rows():
+    """The #213 rows above |t| = 8 (regime "above8"), from the study that owns
+    them, as for the seam rows."""
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "student_t_large_df_study"))
+    import above8_study
+    return above8_study.rows()
 
 
 def main():
