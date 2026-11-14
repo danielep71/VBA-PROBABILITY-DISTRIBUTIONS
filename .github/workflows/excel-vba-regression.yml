@@ -36,7 +36,7 @@ on:
         type: boolean
         default: true
       export_studies:
-        description: "Also export these study grids after a green regression, comma-separated: prs_gamma_probe, prs_chisquare_probe, prs_gamma_holdout, prs_chisquare_holdout, prs_gamma_q_complement, gss_small_shape, glq_lower_q, gbr_binary64_map, prs_gamma_holdout2, prs_chisquare_holdout2, grh_route_holdout, gis_holdout"
+        description: "Also export these study grids after a green regression, comma-separated: prs_gamma_probe, prs_chisquare_probe, prs_gamma_holdout, prs_chisquare_holdout, prs_gamma_q_complement, gss_small_shape, glq_lower_q, gbr_binary64_map, prs_gamma_holdout2, prs_chisquare_holdout2, grh_route_holdout, gis_holdout, gis_holdout2"
         type: string
         default: ""
       suite:

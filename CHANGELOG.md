@@ -115,6 +115,9 @@ Use only the categories needed by a release.
   unit quantile below the Double range no longer turns a representable
   result into zero or `#NUM!`. Above that the unit-scale solver answers as
   before, and its results do not change.
+- In that branch `LogGamma(1 + A)` comes from the polynomial of #26 up to
+  shape 2 (second candidate), not from `PROB_TryLogGamma1p`, which limited
+  the first candidate to about 2.3E-14.
 - A final quantile below every Double returns zero; one above returns
   `#NUM!`.
 - Four contracts cover the regime `scaled_quantile_from_underflowed_unit`:

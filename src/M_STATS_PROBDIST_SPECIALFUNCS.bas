@@ -2972,10 +2972,10 @@ Public Function PROB_TryGammaInvPScaled( _
 '   Probability + ComplementProbability = 1 in exact arithmetic.
 '
 ' THE RULE
-'   Registered in benchmark/gamma_inverse_scale_study/PREREGISTRATION.md.
-'   The call is classified by the plain Double
+'   Registered in benchmark/gamma_inverse_scale_study/PREREGISTRATION_2.md.
+'   The call is classified by the plain Double of PROB_TryGammaInvLogUnit,
 '
-'       L0 = (Log(Probability) + LogGamma1p(A)) / A
+'       L0 = (Log(Probability) + LogGamma(1 + A)) / A
 '
 '   L0 <= PROB_GAMMAINV_LOG_CROSSOVER
 '       The unit quantile is at most Exp(-40), where the lower tail is its
@@ -2997,7 +2997,7 @@ Public Function PROB_TryGammaInvPScaled( _
 '              failed; FailMsg says which.
 '
 ' DEPENDENCIES
-'   - PROB_TryLogGamma1p, PROB_TryExp, PROB_TryMultiply
+'   - PROB_TryGammaInvLogUnit, PROB_TryExp, PROB_TryMultiply
 '   - PROB_GammaInvLogPair, PROB_B64_PairAdd, PROB_B64_PairDiv
 '   - PROB_TryGammaInvP
 '==============================================================================
@@ -3025,10 +3025,7 @@ Public Function PROB_TryGammaInvPScaled( _
 '------------------------------------------------------------------------------
     Result = 0#
 
-    If Not PROB_TryLogGamma1p(A, LogGamma1p, FailMsg) Then Exit Function
-
-    LogUnit = Log(Probability) + LogGamma1p
-    LogUnit = LogUnit / A
+    If Not PROB_TryGammaInvLogUnit(Probability, A, LogGamma1p, LogUnit, FailMsg) Then Exit Function
 '------------------------------------------------------------------------------
 ' LOG SPACE
 '------------------------------------------------------------------------------
@@ -3062,6 +3059,62 @@ Public Function PROB_TryGammaInvPScaled( _
     End If
 
     PROB_TryGammaInvPScaled = True
+End Function
+
+Public Function PROB_TryGammaInvLogUnit( _
+    ByVal Probability As Double, _
+    ByVal A As Double, _
+    ByRef LogGamma1p As Double, _
+    ByRef LogUnit As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaInvLogUnit
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The value the Gamma inverse classifies a call by (#14), and the
+'   LogGamma(1 + A) it is formed from:
+'
+'       LogUnit = (Log(Probability) + LogGamma(1 + A)) / A
+'
+'   the logarithm of the unit-scale quantile where that quantile is tiny.
+'
+' PRECONDITION
+'   A > 0 and 0 < Probability < 1.
+'
+' SOURCE OF LogGamma(1 + A)
+'   A <= 1       PROB_GammaSmallLogGamma1p(A), relative to its exact zeros
+'                at 0 and 1.
+'   1 < A <= 2   PROB_GammaSmallLogGamma1p(A - 1) + Log(A), from
+'                Gamma(1 + A) = A * Gamma(A); A - 1 is exact.
+'   A > 2        PROB_TryLogGamma1p(A).
+'
+'   PROB_TryLogGamma1p alone is accurate to about 2E-14 of the quantile for
+'   shapes between 0.1 and 2 (benchmark/gamma_inverse_scale_study/RESULT_1.md).
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LogGamma1p and LogUnit are set.
+'     FALSE => PROB_TryLogGamma1p failed (FailMsg set).
+'
+' CALLED FROM
+'   - PROB_TryGammaInvPScaled
+'   - benchmark/gamma_inverse_scale_study/M_STATS_PROBDIST_GIS2.bas
+'==============================================================================
+'
+    If A <= 1# Then
+        LogGamma1p = PROB_GammaSmallLogGamma1p(A)
+    ElseIf A <= 2# Then
+        LogGamma1p = PROB_GammaSmallLogGamma1p(A - 1#)
+        LogGamma1p = LogGamma1p + Log(A)
+    Else
+        If Not PROB_TryLogGamma1p(A, LogGamma1p, FailMsg) Then Exit Function
+    End If
+
+    LogUnit = Log(Probability) + LogGamma1p
+    LogUnit = LogUnit / A
+    PROB_TryGammaInvLogUnit = True
 End Function
 
 Private Sub PROB_GammaInvLogPair( _
