@@ -14,6 +14,10 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 failures = []
 commands = (
+    ("f_inverse_large_df_study/fix_comparison/test_pair_cf_screen.py",),
+    ("f_inverse_large_df_study/fix_comparison/test_vba_order_model.py",),
+    ("f_inverse_large_df_study/fix_comparison/test_residual_diagnostic.py",),
+    ("f_inverse_large_df_study/fix_comparison/test_tail_aware.py",),
     ("test_contract_eval.py",),
     ("test_accuracy_tiers.py",),
     ("test_vba_code_identity.py",),
@@ -80,6 +84,9 @@ commands = (
     ("gamma_inverse_scale_study/holdout_build.py", "--check"),
     ("gamma_inverse_scale_study/holdout_build.py", "--check", "--holdout", "2"),
     ("gamma_inverse_scale_study/holdout_analyze.py", "--holdout", "2"),
+    ("f_inverse_large_df_study/production/test_production.py",),
+    ("f_inverse_large_df_study/production/build_grid.py", "--check"),
+    ("f_inverse_large_df_study/production/analyze.py",),
     ("gamma_cache_study/test_cache_vba.py",),
     ("gamma_recurrence_study/test_prepare.py",),
     ("gamma_route_study/analyze_b64_fit.py", "--check"),

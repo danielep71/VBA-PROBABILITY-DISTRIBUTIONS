@@ -97,6 +97,27 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Beta inverse, pair reconstruction: probabilities within 2^-53 of zero (#35)
+
+- With the candidate, `K_STATS_Beta_InverseCumulative(1E-20, 100, 2)` returned `#VALUE!` and `K_STATS_Beta_InverseCumulative(1E-200, 1000, 1)` did not converge: the quantile is above 1/2, so the new rule solved for the other member, whose lower-tail target `1 - p` rounds to one. Both found in review of the pull request. A sweep of the Python model then showed the new rule unreliable across that regime. There, and where the evaluation at 1/2 fails, `PROB_TryBetaInvRegularized` now runs the routine it had before #35, unchanged. Everywhere else it is the accepted candidate. The pair reconstruction of #35 is therefore not corrected for a probability or complement below 2^-53 whose quantile lies on the far side of 1/2. Two assertions added: the regression has 1,942 assertions, the fast suite 998.
+
+### Beta inverse, pair reconstruction: result (#35)
+
+- Accepted on the production holdout: all 126 rows hold the registered rules in Excel. On the sixteen reserved F points the worst error goes from 1.56E-10 to 2.55E-15, on the far tails from 3.54E-9 to 1.77E-15. 39 observations of the main grid and 41 of the consolidated holdout changed; every contract holds unchanged. Record: `benchmark/f_inverse_large_df_study/production/PRODUCTION_RESULT.md`.
+- **Slower.** A Beta or F inverse now takes 0.6 to 28 ms per call, 6 to 580 times what it took. I had predicted two to ten times. The README states the cost.
+- The 66 Student-t rows return the same Doubles: at those arguments the Student-t inverse does not reach the changed routine.
+
+### Beta inverse, pair reconstruction: candidate (#35)
+
+- `PROB_TryBetaInvRegularized`, which serves the Beta, F and small-df Student-t inverses, solves for the member of the pair `(x, 1 - x)` that is at most 1/2, forms its Newton residual on the smaller probability tail with a continued fraction carried as pairs of Doubles, and settles when the two neighbouring Doubles bracket the root. Before, the F inverse with degrees of freedom far apart was wrong by up to 1E-8 relative. The verdict is that of `benchmark/f_inverse_large_df_study/production/PRODUCTION_PREREGISTRATION.md` and is recorded with the Excel wave of this commit.
+- Seven assertions on the F inverse (`Test_TF_FInversePair`): the regression has 1,940 assertions, the fast suite 996.
+- The cost benchmark times the Beta, F and Student-t inverses.
+
+### Beta inverse, pair reconstruction: registration (#35)
+
+- The production holdout of the tail-aware beta inverse is registered: 126 rows, exported once from the source before the change and once from the candidate, with rules on regression, the 1E-12 guarantee, the domain and the Student-t invariance. Addendum 1, written with the baseline in view and before the candidate was evaluated, leaves the Student-t rows to the invariance rules: 40 of them are outside 1E-12 in the current source, which is #22.
+- Study exports `fip_baseline` and `fip_holdout`.
+
 ### Gamma inverse at the final scale: result (#14)
 
 - The second holdout is accepted: its seven rules hold on all 525 rows

@@ -2015,6 +2015,473 @@ Public Function PROB_TryBetaContinuedFraction( _
 End Function
 
 
+Private Sub PROB_BP_Sum( _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef S As Double, _
+    ByRef E As Double)
+'
+'==============================================================================
+' PROB_BP_Sum
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Error-free sum of two Doubles: S + E = A + B exactly. The scalar form of
+'   PROB_DD_PV2_Sum, for the pair continued fraction of the beta inverse (#35).
+'==============================================================================
+'
+    Dim V                   As Double          'Virtual addend
+    Dim AV                  As Double          'Recovered A
+    Dim AR                  As Double          'Roundoff of A
+    Dim BR                  As Double          'Roundoff of B
+
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    E = AR + BR
+End Sub
+
+Private Sub PROB_BP_Add( _
+    ByVal AH As Double, _
+    ByVal AL As Double, _
+    ByVal BH As Double, _
+    ByVal BL As Double, _
+    ByRef RH As Double, _
+    ByRef RL As Double)
+'
+'==============================================================================
+' PROB_BP_Add
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Sum of two pairs of Doubles, in the operation order of PROB_DD_PV2_Add.
+'   Inputs are passed by value, so a result may overwrite an operand.
+'==============================================================================
+'
+    Dim S                   As Double          'High sum
+    Dim E                   As Double          'Its roundoff
+    Dim T                   As Double          'Low sum
+    Dim F                   As Double          'Its roundoff
+
+    PROB_BP_Sum AH, BH, S, E
+    PROB_BP_Sum AL, BL, T, F
+    E = E + T
+    PROB_BP_Sum S, E, S, E
+    E = E + F
+    PROB_BP_Sum S, E, RH, RL
+End Sub
+
+Private Sub PROB_BP_Mul( _
+    ByVal AH As Double, _
+    ByVal AL As Double, _
+    ByVal BH As Double, _
+    ByVal BL As Double, _
+    ByRef RH As Double, _
+    ByRef RL As Double)
+'
+'==============================================================================
+' PROB_BP_Mul
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Product of two pairs of Doubles, in the operation order of
+'   PROB_DD_PV2_Mul: Dekker's split product of the high parts, then the three
+'   cross terms. The order of the operands matters at the last bit.
+'==============================================================================
+'
+    Dim CA                  As Double          'Split multiple of AH
+    Dim CB                  As Double          'Split multiple of BH
+    Dim HA                  As Double          'High half of AH
+    Dim HB                  As Double          'High half of BH
+    Dim LA                  As Double          'Low half of AH
+    Dim LB                  As Double          'Low half of BH
+    Dim P                   As Double          'Rounded product
+    Dim E                   As Double          'Accumulated error
+    Dim T                   As Double          'Working term
+
+    P = AH * BH
+    CA = 134217729# * AH
+    CB = 134217729# * BH
+    T = CA - AH
+    HA = CA - T
+    T = CB - BH
+    HB = CB - T
+    LA = AH - HA
+    LB = BH - HB
+    T = HA * HB
+    E = T - P
+    T = HA * LB
+    E = E + T
+    T = LA * HB
+    E = E + T
+    T = LA * LB
+    E = E + T
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    PROB_BP_Sum P, E, RH, RL
+End Sub
+
+Private Sub PROB_BP_Div( _
+    ByVal AH As Double, _
+    ByVal AL As Double, _
+    ByVal BH As Double, _
+    ByVal BL As Double, _
+    ByRef RH As Double, _
+    ByRef RL As Double)
+'
+'==============================================================================
+' PROB_BP_Div
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Quotient of two pairs of Doubles, in the operation order of
+'   PROB_DD_PV2_Div: the quotient of the high parts, corrected twice by the
+'   high part of the remainder. The caller ensures BH is not zero.
+'==============================================================================
+'
+    Dim QH                  As Double          'Quotient, high part
+    Dim QL                  As Double          'Quotient, low part
+    Dim PH                  As Double          'Quotient times divisor, high
+    Dim PL                  As Double          'Quotient times divisor, low
+    Dim T                   As Double          'Correction
+    Dim J                   As Long            'Correction index
+
+    QH = AH / BH
+    QL = 0#
+    For J = 1 To 2
+        PROB_BP_Mul QH, QL, BH, BL, PH, PL
+        PROB_BP_Add AH, AL, -PH, -PL, PH, PL
+        T = PH / BH
+        PROB_BP_Add QH, QL, T, 0#, QH, QL
+    Next J
+    RH = QH
+    RL = QL
+End Sub
+
+Private Function PROB_BP_InRange( _
+    ByVal VH As Double, _
+    ByVal VL As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_BP_InRange
+'------------------------------------------------------------------------------
+' PURPOSE
+'   TRUE when both parts of a pair are finite and at most 1E100 in size: the
+'   range in which the pair continued fraction was studied (#35).
+'==============================================================================
+'
+    If Not PROB_IsFinite(VH) Then Exit Function
+    If Not PROB_IsFinite(VL) Then Exit Function
+    If Abs(VH) > 1E+100 Then Exit Function
+    If Abs(VL) > 1E+100 Then Exit Function
+    PROB_BP_InRange = True
+End Function
+
+Private Function PROB_TryBetaContinuedFractionPair( _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByVal XH As Double, _
+    ByVal XL As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaContinuedFractionPair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The modified-Lentz continued fraction of the incomplete beta function,
+'   with every quantity carried as a pair of Doubles and the argument given
+'   as a pair (#35). The beta inverse calls it with 1 - U as an exact pair,
+'   which the binary64 fraction receives rounded.
+'
+' METHOD
+'   The recurrences of PROB_TryBetaContinuedFraction in pair arithmetic,
+'   stopped when the increment is within 2^-100 of one. Selected by the
+'   fix-comparison study of benchmark/f_inverse_large_df_study (candidate P4).
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds the value, rounded to a Double.
+'     FALSE => a quantity left the studied range (1E100) or the fraction did
+'              not settle in PROB_BETA_MAX_ITER steps. The caller then uses
+'              the binary64 fraction; this is not an error.
+'
+' DEPENDENCIES
+'   - PROB_BP_Add, PROB_BP_Mul, PROB_BP_Div, PROB_BP_InRange, PROB_B64_Pow2
+'==============================================================================
+'
+    Dim QabH As Double, QabL As Double         'A + B
+    Dim QapH As Double, QapL As Double         'A + 1
+    Dim QamH As Double, QamL As Double         'A - 1
+    Dim CH As Double, CL As Double             'Lentz c
+    Dim DH As Double, DL As Double             'Lentz d
+    Dim HH As Double, HL As Double             'Continued-fraction value
+    Dim AaH As Double, AaL As Double           'Coefficient
+    Dim NH As Double, NL As Double             'Numerator
+    Dim UH As Double, UL As Double             'Working factor
+    Dim VH As Double, VL As Double             'Working factor
+    Dim TH As Double, TL As Double             'Working value
+    Dim DelH As Double, DelL As Double         'Increment
+    Dim StopAt              As Double          '2^-100
+    Dim Pass                As Long            'Even step, then odd step
+    Dim M                   As Long            'Iteration index
+    Dim M2                  As Double          '2 * M
+    Dim MD                  As Double          'M as a Double
+
+    On Error GoTo Declined
+
+    StopAt = PROB_B64_Pow2(923)
+    PROB_BP_Add A, 0#, B, 0#, QabH, QabL
+    PROB_BP_Add A, 0#, 1#, 0#, QapH, QapL
+    PROB_BP_Add A, 0#, -1#, 0#, QamH, QamL
+    CH = 1#: CL = 0#
+
+    'D = 1 / (1 - Qab * X / Qap)
+    PROB_BP_Mul QabH, QabL, XH, XL, TH, TL
+    PROB_BP_Div TH, TL, QapH, QapL, TH, TL
+    PROB_BP_Add 1#, 0#, -TH, -TL, TH, TL
+    If Not PROB_BP_InRange(TH, TL) Then Exit Function
+    If Abs(TH + TL) < PROB_FPMIN Then TH = PROB_FPMIN: TL = 0#
+    PROB_BP_Div 1#, 0#, TH, TL, DH, DL
+    HH = DH: HL = DL
+
+    For M = 1 To PROB_BETA_MAX_ITER
+        MD = CDbl(M)
+        M2 = 2# * MD
+        For Pass = 1 To 2
+            If Pass = 1 Then
+    'Aa = M * (B - M) * X / ((Qam + 2M) * (A + 2M))
+                PROB_BP_Add B, 0#, -MD, 0#, UH, UL
+                PROB_BP_Mul MD, 0#, UH, UL, NH, NL
+                PROB_BP_Mul NH, NL, XH, XL, NH, NL
+                PROB_BP_Add QamH, QamL, M2, 0#, UH, UL
+                PROB_BP_Add A, 0#, M2, 0#, VH, VL
+            Else
+    'Aa = -(A + M) * (Qab + M) * X / ((A + 2M) * (Qap + 2M))
+                PROB_BP_Add A, 0#, MD, 0#, UH, UL
+                PROB_BP_Add QabH, QabL, MD, 0#, VH, VL
+                UH = -UH
+                UL = -UL
+                PROB_BP_Mul UH, UL, VH, VL, NH, NL
+                PROB_BP_Mul NH, NL, XH, XL, NH, NL
+                PROB_BP_Add A, 0#, M2, 0#, UH, UL
+                PROB_BP_Add QapH, QapL, M2, 0#, VH, VL
+            End If
+            PROB_BP_Mul UH, UL, VH, VL, TH, TL
+            PROB_BP_Div NH, NL, TH, TL, AaH, AaL
+
+    'D = 1 / (1 + Aa * D)
+            PROB_BP_Mul AaH, AaL, DH, DL, TH, TL
+            PROB_BP_Add 1#, 0#, TH, TL, TH, TL
+            If Not PROB_BP_InRange(TH, TL) Then Exit Function
+            If Abs(TH + TL) < PROB_FPMIN Then TH = PROB_FPMIN: TL = 0#
+            PROB_BP_Div 1#, 0#, TH, TL, DH, DL
+
+    'C = 1 + Aa / C
+            PROB_BP_Div AaH, AaL, CH, CL, TH, TL
+            PROB_BP_Add 1#, 0#, TH, TL, CH, CL
+            If Not PROB_BP_InRange(CH, CL) Then Exit Function
+            If Abs(CH + CL) < PROB_FPMIN Then CH = PROB_FPMIN: CL = 0#
+
+            If Pass = 1 Then
+    'H = H * D * C
+                PROB_BP_Mul HH, HL, DH, DL, HH, HL
+                PROB_BP_Mul HH, HL, CH, CL, HH, HL
+                If Not PROB_BP_InRange(HH, HL) Then Exit Function
+            Else
+    'Del = D * C;  H = H * Del
+                PROB_BP_Mul DH, DL, CH, CL, DelH, DelL
+                If Not PROB_BP_InRange(DelH, DelL) Then Exit Function
+                PROB_BP_Mul HH, HL, DelH, DelL, HH, HL
+                If Not PROB_BP_InRange(HH, HL) Then Exit Function
+                PROB_BP_Add DelH, DelL, -1#, 0#, TH, TL
+                If Abs(TH + TL) <= StopAt Then
+                    Result = HH + HL
+                    PROB_TryBetaContinuedFractionPair = True
+                    Exit Function
+                End If
+            End If
+        Next Pass
+    Next M
+    Exit Function
+
+Declined:
+    Err.Clear
+End Function
+
+Private Function PROB_TryBetaTailsPair( _
+    ByVal X As Double, _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef LowerTail As Double, _
+    ByRef UpperTail As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaTailsPair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Both tails of I_X(A, B) at a Double X, for the beta inverse (#35): the
+'   lower tail I_X(A, B) and the upper tail 1 - I_X(A, B). The smaller of
+'   the two is computed directly; the other is its complement.
+'
+' BEHAVIOR
+'   - The factor is that of PROB_TryBetaRegularized, with Y = 1 - X.
+'   - Below the mean the continued fraction gives the lower tail. From the
+'     mean it gives the upper tail, at the argument 1 - X carried as an exact
+'     pair of Doubles.
+'   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
+'     declines, the binary64 fraction answers as before #35.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LowerTail and UpperTail are set, each in [0, 1].
+'     FALSE => the factor overflowed or no fraction converged (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryBetaLogPdf, PROB_LogBeta, PROB_TryExp
+'   - PROB_TryBetaContinuedFractionPair, PROB_TryBetaContinuedFraction
+'   - PROB_BP_Add
+'==============================================================================
+'
+    Dim Y                   As Double          '1 - X, rounded
+    Dim YH                  As Double          '1 - X, high part
+    Dim YL                  As Double          '1 - X, low part
+    Dim LogBt               As Double          'Log of the common beta factor
+    Dim Bt                  As Double          'Common beta factor
+    Dim CFValue             As Double          'Continued-fraction value
+    Dim Value               As Double          'The tail computed directly
+
+    If X <= 0# Then
+        LowerTail = 0#
+        UpperTail = 1#
+        PROB_TryBetaTailsPair = True
+        Exit Function
+    End If
+
+    Y = 1# - X
+    If Y <= 0# Then
+        LowerTail = 1#
+        UpperTail = 0#
+        PROB_TryBetaTailsPair = True
+        Exit Function
+    End If
+
+    If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
+        If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+            Exit Function
+        End If
+        LogBt = LogBt + Log(X) + Log(Y)
+    Else
+        LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
+    End If
+
+    If Not PROB_TryExp(LogBt, Bt) Then
+        FailMsg = "Incomplete beta factor overflowed for A = " & A & _
+                  ", B = " & B
+        Exit Function
+    End If
+
+    If X < (A + 1#) / (A + B + 2#) Then
+        If Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
+            If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
+        End If
+        Value = Bt * CFValue / A
+        If Value < 0# Then Value = 0#
+        If Value > 1# Then Value = 1#
+        LowerTail = Value
+        UpperTail = 1# - Value
+    Else
+        PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
+        If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
+            If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+        End If
+        Value = Bt * CFValue / B
+        If Value < 0# Then Value = 0#
+        If Value > 1# Then Value = 1#
+        UpperTail = Value
+        LowerTail = 1# - Value
+    End If
+
+    PROB_TryBetaTailsPair = True
+End Function
+
+Private Function PROB_TryBetaInvResidual( _
+    ByVal U As Double, _
+    ByVal Sa As Double, _
+    ByVal Sb As Double, _
+    ByVal MatchLower As Boolean, _
+    ByVal Target As Double, _
+    ByRef Residual As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaInvResidual
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The residual the beta inverse drives to zero at U (#35), formed on the
+'   smaller probability tail: the lower tail minus its target, or the upper
+'   tail's target minus the upper tail. Both grow with U.
+'==============================================================================
+'
+    Dim LowerTail           As Double          'I_U(Sa, Sb)
+    Dim UpperTail           As Double          '1 - I_U(Sa, Sb)
+
+    If Not PROB_TryBetaTailsPair(U, Sa, Sb, LowerTail, UpperTail, FailMsg) Then Exit Function
+    If MatchLower Then
+        Residual = LowerTail - Target
+    Else
+        Residual = Target - UpperTail
+    End If
+    PROB_TryBetaInvResidual = True
+End Function
+
+Private Function PROB_BP_Adjacent( _
+    ByVal U As Double, _
+    ByVal Upward As Boolean) _
+    As Double
+'
+'==============================================================================
+' PROB_BP_Adjacent
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The Double next to a positive finite U, above or below it, by its bit
+'   pattern. Used by the stagnation guard of the beta inverse (#35).
+'==============================================================================
+'
+    Dim Number              As PROB_DD_Number  'U as eight bytes
+    Dim Words               As PROB_DD_Words   'The same bytes as two Longs
+
+    Number.Value = U
+    LSet Words = Number
+    If Upward Then
+        If Words.Low = -1 Then
+            Words.Low = 0
+            Words.High = Words.High + 1
+        ElseIf Words.Low = &H7FFFFFFF Then
+            Words.Low = &H80000000
+        Else
+            Words.Low = Words.Low + 1
+        End If
+    Else
+        If Words.Low = 0 Then
+            Words.Low = -1
+            Words.High = Words.High - 1
+        ElseIf Words.Low = &H80000000 Then
+            Words.Low = &H7FFFFFFF
+        Else
+            Words.Low = Words.Low - 1
+        End If
+    End If
+    LSet Number = Words
+    PROB_BP_Adjacent = Number.Value
+End Function
+
 Public Function PROB_TryBetaInvRegularized( _
     ByVal Probability As Double, _
     ByVal ComplementProbability As Double, _
@@ -2039,9 +2506,20 @@ Public Function PROB_TryBetaInvRegularized( _
 '   Probability >= 0.5 (Sterbenz), and the far tail depends on it.
 '
 ' BEHAVIOR
-'   - Solves on whichever tail is the smaller, so the quantity driven to its
-'     target keeps full relative precision. Without this the upper tail loses
-'     everything: I_X - Probability with both near 1 is pure cancellation.
+'   - Solves for the smaller member of the pair (X, Y): the member below 1/2,
+'     decided by one evaluation at 1/2. The other member is then 1 minus a
+'     number below 1/2 and loses nothing (#35). Solving for the larger member
+'     left the small one as 1 - U, wrong by 2^-52 / U.
+'   - Forms the residual on whichever probability tail is the smaller, and
+'     computes that tail directly (PROB_TryBetaTailsPair). Without this the
+'     upper tail loses everything: I_X - Probability with both near 1 is pure
+'     cancellation.
+'   - A Newton step that returns the current iterate settles when the two
+'     adjacent Doubles bracket the root and neither has a smaller residual.
+'   - Where the lower-tail target of the member chosen that way rounds to
+'     one, or the evaluation at 1/2 fails, the routine before #35 answers
+'     unchanged: it solves on the smaller
+'     probability tail with PROB_TryBetaRegularized and no stagnation guard.
 '   - Returns both X and Y so that callers such as the F quantile, which needs
 '     X / Y, do not have to re-derive the small one by subtraction. This is what
 '     lets F.INV reach 1E+34.
@@ -2056,8 +2534,13 @@ Public Function PROB_TryBetaInvRegularized( _
 '              not settle within PROB_INV_MAX_ITER, or (both shapes below one)
 '              no representable interior quantile exists; FailMsg says which.
 '
+' METHOD
+'   Candidate P4 of benchmark/f_inverse_large_df_study/fix_comparison, under
+'   the accuracy tiers of #327.
+'
 ' DEPENDENCIES
 '   - PROB_NormalInvCDFRaw, PROB_LogBeta, PROB_TryExp
+'   - PROB_TryBetaTailsPair, PROB_TryBetaInvResidual, PROB_BP_Adjacent
 '   - PROB_TryBetaRegularized
 '==============================================================================
 '
@@ -2065,6 +2548,18 @@ Public Function PROB_TryBetaInvRegularized( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim SolveDirect         As Boolean         'TRUE when solving for X, FALSE for Y
+    Dim MatchLower          As Boolean         'TRUE when the residual is on the lower tail of U
+    Dim TargetLower         As Double          'Lower-tail probability of the solved member
+    Dim TargetUpper         As Double          'Upper-tail probability of the solved member
+    Dim HalfLower           As Double          'I_(1/2)(A, B)
+    Dim HalfUpper           As Double          'Its complement, unused
+    Dim Below               As Double          'The Double below U
+    Dim Above               As Double          'The Double above U
+    Dim ResidualBelow       As Double          'Residual at Below
+    Dim ResidualAbove       As Double          'Residual at Above
+    Dim Stagnated           As Boolean         'TRUE when the stagnation guard settles
+    Dim Legacy              As Boolean         'TRUE where the routine before #35 answers
+    Dim Ibeta               As Double          'I_U(Sa, Sb), on the legacy path
     Dim RoundTrip           As Double          'Forward probability at the root
     Dim TailMass            As Double          'Min(Probability, Complement)
     Dim Sa                  As Double          'Shape parameter of the solved tail
@@ -2075,8 +2570,7 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim UNew                As Double          'Proposed iterate
     Dim Low                 As Double          'Bisection lower bound
     Dim High                As Double          'Bisection upper bound
-    Dim Ibeta               As Double          'I_U(Sa, Sb)
-    Dim Residual            As Double          'Ibeta - Target
+    Dim Residual            As Double          'Signed distance of the matched tail from its target
     Dim Density             As Double          'Beta density at U
     Dim LogDensity          As Double          'Log of the beta density at U
     Dim LogSeed             As Double          'Log of the series-inverted seed
@@ -2109,20 +2603,58 @@ Public Function PROB_TryBetaInvRegularized( _
         End If
 
 '------------------------------------------------------------------------------
-' ORIENT ONTO THE SMALLER TAIL
+' ORIENT ONTO THE SMALLER MEMBER
 '------------------------------------------------------------------------------
-    'Solve I_U(Sa, Sb) = Target where Target <= 0.5, then unwind
-        If Probability <= ComplementProbability Then
+    'Solve for X when X <= 1/2, that is when Probability <= I_(1/2)(A, B), and
+    'for Y otherwise: the member solved for is the small one (#35)
+    'An evaluation at 1/2 that fails decides nothing: the routine before #35
+    'did not make it, and answers instead (below)
+        Legacy = Not PROB_TryBetaTailsPair(0.5, A, B, HalfLower, HalfUpper, FailMsg)
+        If Legacy Then
+            FailMsg = vbNullString
+            HalfLower = 0#
+        End If
+
+        If Probability <= HalfLower Then
             SolveDirect = True
             Sa = A
             Sb = B
-            Target = Probability
+            TargetLower = Probability
+            TargetUpper = ComplementProbability
         Else
             SolveDirect = False
             Sa = B
             Sb = A
-            Target = ComplementProbability
+            TargetLower = ComplementProbability
+            TargetUpper = Probability
         End If
+
+    'Where the solved member's lower-tail target rounds to one - a probability
+    'or a complement within 2^-53 of zero whose quantile lies on the far side
+    'of 1/2 - the rule of #35 was never validated and its seed has no
+    'information. There the routine is the one before #35, unchanged: solve
+    'on the smaller probability tail with the binary64 forward function
+        If TargetLower >= 1# Then Legacy = True
+        If Legacy Then
+            If Probability <= ComplementProbability Then
+                SolveDirect = True
+                Sa = A
+                Sb = B
+                TargetLower = Probability
+                TargetUpper = ComplementProbability
+            Else
+                SolveDirect = False
+                Sa = B
+                Sb = A
+                TargetLower = ComplementProbability
+                TargetUpper = Probability
+            End If
+        End If
+
+    'Match the smaller probability tail of the solved member, so the residual
+    'keeps its relative precision. The seed uses the lower tail either way
+        MatchLower = (TargetLower <= TargetUpper)
+        Target = TargetLower
 
     'Cache the log-beta for the density evaluations
         LogBetaAB = PROB_LogBeta(Sa, Sb)
@@ -2138,9 +2670,8 @@ Public Function PROB_TryBetaInvRegularized( _
             S2 = 1# / (2# * Sb - 1#)
             HH = 2# / (S1 + S2)
             W = Z * Sqr(HH + R) / HH - (S2 - S1) * (R + 5# / 6# - 2# / (3# * HH))
-            'Guard the module's one raw exponential; W is bounded above here
-            '(Target <= 0.5 forces Z <= 0) so overflow is not reachable in
-            'practice, and the seed clamp below recovers U on any failure
+            'Guard the module's one raw exponential; the seed clamp below
+            'recovers U on any failure
             If PROB_TryExp(2# * W, ExpTwoW) Then U = Sa / (Sa + Sb * ExpTwoW)
     'Otherwise invert the leading series term I_U ~ U^Sa / (Sa * Beta(Sa, Sb))
         Else
@@ -2160,11 +2691,19 @@ Public Function PROB_TryBetaInvRegularized( _
 
     'Iterate
         For IterIdx = 1 To PROB_INV_MAX_ITER
-            'Evaluate the objective
-                If Not PROB_TryBetaRegularized(U, 1# - U, Sa, Sb, Ibeta, FailMsg) Then Exit Function
-                Residual = Ibeta - Target
+            'Evaluate the objective on the matched tail
+                If Legacy Then
+                    If Not PROB_TryBetaRegularized(U, 1# - U, Sa, Sb, Ibeta, FailMsg) Then Exit Function
+                    Residual = Ibeta - Target
+                ElseIf MatchLower Then
+                    If Not PROB_TryBetaInvResidual( _
+                        U, Sa, Sb, True, TargetLower, Residual, FailMsg) Then Exit Function
+                Else
+                    If Not PROB_TryBetaInvResidual( _
+                        U, Sa, Sb, False, TargetUpper, Residual, FailMsg) Then Exit Function
+                End If
 
-            'Tighten the bracket; I_U is increasing in U
+            'Tighten the bracket; the residual is increasing in U
                 If Residual < 0# Then
                     If U > Low Then Low = U
                 Else
@@ -2179,11 +2718,43 @@ Public Function PROB_TryBetaInvRegularized( _
                 End If
 
             'Take a Newton step, falling back to bisection when it is unusable
+                Stagnated = False
                 If Density <= 0# Then
                     UNew = 0.5 * (Low + High)
                 Else
                     UNew = U - Residual / Density
-                    If UNew <= Low Or UNew >= High Then UNew = 0.5 * (Low + High)
+
+            'A step that returns U itself: settle when the two adjacent
+            'Doubles bracket the root and neither has a smaller residual.
+            'Checked before the bracket test, which would otherwise send a
+            'settled iterate on a distant bisection
+                    If Not Legacy And UNew = U And U > 0# And U < 1# Then
+                        Below = PROB_BP_Adjacent(U, False)
+                        Above = PROB_BP_Adjacent(U, True)
+                        If Below > 0# And Above < 1# Then
+                            If MatchLower Then
+                                If Not PROB_TryBetaInvResidual( _
+                                    Below, Sa, Sb, True, TargetLower, ResidualBelow, FailMsg) Then Exit Function
+                                If Not PROB_TryBetaInvResidual( _
+                                    Above, Sa, Sb, True, TargetLower, ResidualAbove, FailMsg) Then Exit Function
+                            Else
+                                If Not PROB_TryBetaInvResidual( _
+                                    Below, Sa, Sb, False, TargetUpper, ResidualBelow, FailMsg) Then Exit Function
+                                If Not PROB_TryBetaInvResidual( _
+                                    Above, Sa, Sb, False, TargetUpper, ResidualAbove, FailMsg) Then Exit Function
+                            End If
+                            If ResidualBelow <= Residual And Residual <= ResidualAbove Then
+                                If ResidualBelow <= 0# And 0# <= ResidualAbove Then
+                                    If Abs(Residual) <= Abs(ResidualBelow) And _
+                                       Abs(Residual) <= Abs(ResidualAbove) Then Stagnated = True
+                                End If
+                            End If
+                        End If
+                    End If
+
+                    If Not Stagnated Then
+                        If UNew <= Low Or UNew >= High Then UNew = 0.5 * (Low + High)
+                    End If
                 End If
 
             'Return on convergence, including the case where the iterate has

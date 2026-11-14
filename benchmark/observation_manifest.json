@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-14T12:01:40Z",
-  "commit_sha": "664cd48",
+  "generated_utc": "2026-11-14T18:11:25Z",
+  "commit_sha": "b939c76",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:60332c8179098d254c9033ca3d559ba709e6238624a437eff24ad486c3d7c259",
+  "observation_grid_sha256": "sha256:4aba54a7e3692fafb22b91451fe4d053f1a65ac7a809a2165c8c4c9963e4539c",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:76b888340008325ec486429baabee256c699574308b947ee8894f082ef398090",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -33,6 +33,7 @@
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:d332cad0a17d4bb78d8d2d1a682697d8f2e2cb379315de0ccd0f8ef3664161dd",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:460e230db92910215bd20af8e474e133d1be2ae23b42608b248b077e48f5d01c",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVGAP.bas": "sha256:5b4c2f9a27a5659a8ed38b7a4d95cf510bf92722b0512d736c796cc5d2f2926a",
+    "benchmark/f_inverse_large_df_study/production/M_STATS_PROBDIST_FIP.bas": "sha256:f2fa720b4f03a7f4fecd3559f31e9525fe8b7175ed89b6c0927915a9a09e2532",
     "benchmark/gamma_cache_study/M_STATS_PROBDIST_GCACHE.bas": "sha256:62db9728b54b30e44462c68ec41cd6c310160d0fd46ee5118dea3478ff089079",
     "benchmark/gamma_inverse_scale_study/M_STATS_PROBDIST_GIS.bas": "sha256:d45499235425f4066cde9f7705885a007c34d313919458811ece8cb9acb5c80d",
     "benchmark/gamma_inverse_scale_study/M_STATS_PROBDIST_GIS2.bas": "sha256:1174dca72569353d07d49e73d88ba50526c3dd9f4c2e40537bfc9ca8a01381d3",
@@ -63,9 +64,9 @@
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:77b3e344b7048246643a212fd39d21a39b34bb0444b07f045bedcfac37a3a87f",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:8e4dda5287bcdd71e2466ade4018dd0b9b5f4c4831c701d5ea76f04b051f4b28",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:e7434a5473396a5f0f67472327df989788f42876c58951a79d28167fd39c3658",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:db242bfc20f024319ea9f3c0e9ab62d27fc01c1c02baad09d274674118326247",
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:53b1fc48124b4dc46a8f206ad8c367cfb0779eabbe6b73d560833ebf34db379a",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:85284e2023b51a367adfb951d7b746d20424770111ee0b9b80ea6392ab89e4d0"
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:e93ae6551cd767297f119fa5f8d8a18d3abb415b8c4f28ddc38e0fbf39ed1209"
   },
   "contract_registry_sha256": "sha256:ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90",
   "environment": {

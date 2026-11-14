@@ -348,7 +348,8 @@ Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
     'assertion count: the double-double entry points against the binary64
     'routine that answered the same region before #242 (the lower series below
     'X = A + 1, the continued fraction above it), and then the public
-    'functions and their inverses as users call them (#314). Each timing
+    'functions and their inverses as users call them (#314), and the Beta, F
+    'and Student-t inverses, which share the beta inverse (#35). Each timing
     'repeats the call until at least 0.5 s has elapsed.
     Dim Points As Variant, I As Long, A As Double, X As Double
     Dim Out As String
@@ -380,10 +381,27 @@ Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
         Out = Out & GammaCostLine(A, 0.1, "gamma_inv") & GammaCostLine(A, 0.9, "gamma_inv") & _
               GammaCostLine(A, 0.1, "chi_inv") & GammaCostLine(A, 0.9, "chi_inv")
     Next I
+    'The inverses that share the beta inverse (#35): X holds the probability,
+    'A and B the two shapes or degrees of freedom.
+    Points = Array(0.5, 0.5, 2#, 5#, 50#, 80#, 0.7, 25#)
+    For I = 0 To UBound(Points) Step 2
+        Out = Out & GammaCostLine(Points(I), 0.1, "beta_inv", Points(I + 1)) & _
+              GammaCostLine(Points(I), 0.9, "beta_inv", Points(I + 1))
+    Next I
+    Points = Array(5#, 10#, 100#, 100#, 50#, 100000000#, 100000#, 2#)
+    For I = 0 To UBound(Points) Step 2
+        Out = Out & GammaCostLine(Points(I), 0.1, "f_inv", Points(I + 1)) & _
+              GammaCostLine(Points(I), 0.9, "f_inv", Points(I + 1))
+    Next I
+    Points = Array(3#, 10#, 30#)
+    For I = 0 To UBound(Points)
+        Out = Out & GammaCostLine(Points(I), 0.9, "t_inv")
+    Next I
     Test_STATS_PROBDIST_GammaCost_CI = Out
 End Function
 
-Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String) As String
+Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String, _
+    Optional ByVal B As Double = 0#) As String
     Dim N As Long, K As Long, T0 As Double, Elapsed As Double
     Dim V As Double, M As String, OK As Boolean, R As Variant
     'One call first: a route that takes a second is not repeated 16 times
@@ -403,6 +421,9 @@ Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route
                 Case "poisson_inv": R = K_STATS_Poisson_InverseCumulative(0.5, X): OK = Not IsError(R)
                 Case "gamma_inv": R = K_STATS_Gamma_InverseCumulative(X, A, 1#): OK = Not IsError(R)
                 Case "chi_inv": R = K_STATS_ChiSquare_InverseCumulative(X, 2# * A): OK = Not IsError(R)
+                Case "beta_inv": R = K_STATS_Beta_InverseCumulative(X, A, B): OK = Not IsError(R)
+                Case "f_inv": R = K_STATS_F_InverseCumulative(X, A, B): OK = Not IsError(R)
+                Case "t_inv": R = K_STATS_StudentT_InverseCumulative(X, A): OK = Not IsError(R)
                 Case Else
                     If X < A + 1# Then
                         OK = PROB_TryGammaSeriesP(A, X, V, M)
@@ -416,7 +437,9 @@ Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route
         If Elapsed >= 0.5 Or N >= 536870912 Then Exit Do
         N = N * 2
     Loop
-    GammaCostLine = Route & " A=" & Replace(CStr(A), ",", ".") & " X=" & Replace(CStr(X), ",", ".") & _
+    GammaCostLine = Route & " A=" & Replace(CStr(A), ",", ".") & _
+        IIf(B <> 0#, " B=" & Replace(CStr(B), ",", "."), "") & _
+        " X=" & Replace(CStr(X), ",", ".") & _
         " ok=" & IIf(OK, "1", "0") & _
         " calls=" & CStr(N) & " us_per_call=" & _
         Replace(Format$(Elapsed / N * 1000000#, "0.000"), ",", ".") & vbLf
