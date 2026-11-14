@@ -14,6 +14,9 @@ import tail_aware_model as p4
 
 HERE = Path(__file__).resolve().parent
 BOUND, FLOOR = 2.0 ** -48, 2.0 ** -52
+# Addendum 1: references at 80 and 120 digits. At 50 the far tails lose
+# about thirteen digits and miss the 40-digit agreement rule.
+DPS_LOW, DPS_HIGH = 80, 120
 PROBE_ROWS = ((1 - 1e-6, 5., 2e6), (1 - 1e-10, 5., 2e6), (1 - 1e-13, 5., 2e6), (1e-10, 5., 2e6),
               (1 - 1e-10, 2e6, 5.), (1e-10, 2e6, 5.), (1 - 1e-10, 100., 1e10), (1e-12, 8., 5e4),
               (1 - 1e-12, 8., 5e4), (1 - 1e-12, 30., 40.))
@@ -44,9 +47,9 @@ def evaluate_row(group, kind, p, d1, d2):
     row = dict(group=group, kind=kind, inputs=[v.hex() for v in (p, d1, d2)],
                complement=(1 - p).hex(), passes=False)
     try:
-        r50 = extended.baseline.reference(p, d1, d2, 50)
-        r80 = extended.baseline.reference(p, d1, d2, 80)
-        with mp.workdps(80):
+        r50 = extended.baseline.reference(p, d1, d2, DPS_LOW)
+        r80 = extended.baseline.reference(p, d1, d2, DPS_HIGH)
+        with mp.workdps(DPS_HIGH):
             stable = all(abs(a - b) <= mp.mpf('1e-40') * abs(b) for a, b in zip(r50, r80))
         variants = {}
         row['variants'] = variants
@@ -58,7 +61,7 @@ def evaluate_row(group, kind, p, d1, d2):
                     raise
                 variants[name] = dict(failure=str(exc))
                 continue
-            with mp.workdps(80):
+            with mp.workdps(DPS_HIGH):
                 error = float(abs(mp.mpf(value) - r80[0]) / abs(r80[0]))
             variants[name] = dict(result=value.hex(), pair=[x.hex(), y.hex()], error=error,
                                   iterations=len(trace),
@@ -99,12 +102,14 @@ def main():
              Path(extended.__file__), Path(p4.pair.__file__), Path(p4.pair.DD_MODULE.__file__),
              Path(extended.model.__file__), Path(extended.model.forward.__file__),
              Path(extended.model.normal.__file__), Path(extended.baseline.__file__),
-             root / 'benchmark/_ibeta.py', HERE / 'stagnation_result.json']
+             root / 'benchmark/_ibeta.py', HERE / 'stagnation_result.json',
+             HERE / 'TAIL_AWARE_ADDENDUM_1.md', HERE / 'tail_aware_result_blocked.json']
     bindings = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     revealed = json.loads((HERE / 'stagnation_result.json').read_text())['rows']
     points = [(r['group'], r['kind'], *map(float.fromhex, r['inputs'])) for r in revealed]
     points += [('probe', 'far', *row) for row in PROBE_ROWS]
     result = dict(status='INCOMPLETE', holdout_evaluated=False, stage2_evaluated=False,
+                  oracle_digits=[DPS_LOW, DPS_HIGH],
                   bindings=bindings, rows=[])
 
     def save():
