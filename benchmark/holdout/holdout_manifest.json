@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-14T08:56:41Z",
-  "commit_sha": "31a1e76",
+  "generated_utc": "2026-11-14T12:01:40Z",
+  "commit_sha": "664cd48",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -23,14 +23,14 @@
   "observation_grid_sha256": "sha256:e93b87316edef7b8f70c6d1bdd17a5a9a736fa330410ca71e31bf28c749b0ebd",
   "source_binding": {
     "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:914a68538334c0fa127eb4f88cfa8301ce8862d53ee3b093f88d5cbd84f251f5",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:efe70d9de57fa0fd6f7566c3ab5a45f460b5dde6d2cd3fb67e6422bd7d5d3cda",
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:9d2caa1f5091b6748ca74d7db90d6ee4b06f3a2442a6ca581de70c679aa72f01",
     "src/M_STATS_PROBDIST_CORE.bas": "sha256:906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
     "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:77b3e344b7048246643a212fd39d21a39b34bb0444b07f045bedcfac37a3a87f",
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:8e4dda5287bcdd71e2466ade4018dd0b9b5f4c4831c701d5ea76f04b051f4b28",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:96b2af4bad04804edb25d937bc0000c2e4263b0855dafee52e09fda03324e146",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:2e930c4f14e6f200c0601c9ba721e791a6e252a45358ababe9ee80a486fc09b0"
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:e7434a5473396a5f0f67472327df989788f42876c58951a79d28167fd39c3658",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:53b1fc48124b4dc46a8f206ad8c367cfb0779eabbe6b73d560833ebf34db379a"
   },
-  "contract_registry_sha256": "sha256:a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67",
+  "contract_registry_sha256": "sha256:ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20430",

@@ -715,6 +715,8 @@ Private Sub RunContinuousSuite()
     TimingLap "Test_CN_GammaSurvival"
     Test_CN_PositiveRatioRecovery
     TimingLap "Test_CN_PositiveRatioRecovery"
+    Test_CN_GammaInverseFinalScale
+    TimingLap "Test_CN_GammaInverseFinalScale"
     Test_CN_GammaInverse
     TimingLap "Test_CN_GammaInverse"
     Test_CN_GammaMoments
@@ -19469,6 +19471,94 @@ Private Sub Test_CN_PositiveRatioRecovery()
         K_STATS_Gamma_Survival(1E-300, 1000000#, 1E+100), 1#
     AssertErrorCode "PRS chi pdf(2^-1074,2e-4) overflows", _
         K_STATS_ChiSquare_Density(MinSub, 0.0002), xlErrNum
+End Sub
+
+Private Sub Test_CN_GammaInverseFinalScale()
+'
+'==============================================================================
+' Test_CN_GammaInverseFinalScale
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies that the Gamma and Chi-square inverses form the quantile at the
+'   final scale (#14, parent #11): a unit-scale quantile below the Double
+'   range must not turn a representable final quantile into zero.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' NOTES
+'   - References are 60-digit solutions of P(Shape, X / ScaleParam) = P.
+'   - The rule answers in log space where the unit quantile is at most
+'     Exp(-40); benchmark/gamma_inverse_scale_study/PREREGISTRATION.md.
+'   - Tolerances are the inverse guarantee of the accuracy policy, 1E-12.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunContinuousSuite
+'
+' UPDATED
+'   2026-11-14
+'==============================================================================
+'
+    Const TOL_GIS           As Double = 0.000000000001  '1E-12 relative
+
+    Dim Quantile            As Variant         'Quantile under test
+
+    Debug.Print "-- Gamma inverse at the final scale (Gamma, Chi-square)"
+
+    'Parent counterexample: the unit quantile is 5.7E-401
+    Quantile = K_STATS_Gamma_InverseCumulative(0.0001, 0.01, 1E+100)
+    AssertRelClose "GIS gamma inv(1e-4,0.01,1e100) underflowed unit", _
+        Quantile, 5.66073814706202E-301, TOL_GIS
+    If IsError(Quantile) Then
+        AssertTrue "GIS gamma cdf at inv(1e-4,0.01,1e100) returns p", False
+    Else
+        AssertRelClose "GIS gamma cdf at inv(1e-4,0.01,1e100) returns p", _
+            K_STATS_Gamma_Cumulative(CDbl(Quantile), 0.01, 1E+100), 0.0001, TOL_GIS
+    End If
+
+    AssertRelClose "GIS gamma inv(0.4,1e-3,1e300) underflowed unit", _
+        K_STATS_Gamma_InverseCumulative(0.4, 0.001, 1E+300), _
+        6.45159012986585E-99, TOL_GIS
+
+    'Unit quantile inside the Double range, still answered in log space
+    AssertRelClose "GIS gamma inv(0.5,1e-3,1e200) log region", _
+        K_STATS_Gamma_InverseCumulative(0.5, 0.001, 1E+200), _
+        5.24420640827798E-102, TOL_GIS
+    AssertRelClose "GIS gamma inv(1e-300,2.5,3) log region", _
+        K_STATS_Gamma_InverseCumulative(1E-300, 2.5, 3#), _
+        4.85011167087469E-120, TOL_GIS
+
+    'Either side of the crossover at shape 0.5
+    AssertRelClose "GIS gamma inv(2.3e-9,0.5,1) below the crossover", _
+        K_STATS_Gamma_InverseCumulative(0.0000000023, 0.5, 1#), _
+        4.1547562843725E-18, TOL_GIS
+    AssertRelClose "GIS gamma inv(2.4e-9,0.5,1) above the crossover", _
+        K_STATS_Gamma_InverseCumulative(0.0000000024, 0.5, 1#), _
+        4.5238934211693E-18, TOL_GIS
+
+    'Chi-square: half the quantile is below the smallest normal Double
+    AssertRelClose "GIS chi-square inv(1.3e-154,1) half below normal range", _
+        K_STATS_ChiSquare_InverseCumulative(1.3E-154, 1#), _
+        2.65464579228338E-308, TOL_GIS
+    Quantile = K_STATS_Gamma_InverseCumulative(1.3E-154, 0.5, 2#)
+    If IsError(Quantile) Then
+        AssertTrue "GIS chi-square inv equals gamma inv at scale 2", False
+    Else
+        AssertExactlyEqual "GIS chi-square inv equals gamma inv at scale 2", _
+            K_STATS_ChiSquare_InverseCumulative(1.3E-154, 1#), CDbl(Quantile)
+    End If
+
+    'A final quantile below every Double is zero, not an error
+    AssertExactlyEqual "GIS gamma inv(1e-4,0.01,1) final underflow is zero", _
+        K_STATS_Gamma_InverseCumulative(0.0001, 0.01, 1#), 0#
+    AssertExactlyEqual "GIS gamma inv(1e-30,0.75,1e-290) final underflow is zero", _
+        K_STATS_Gamma_InverseCumulative(1E-30, 0.75, 1E-290), 0#
 End Sub
 
 

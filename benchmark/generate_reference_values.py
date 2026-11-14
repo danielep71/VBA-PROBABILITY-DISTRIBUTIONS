@@ -1194,6 +1194,61 @@ def build_positive_ratio_rows():
 
 
 # ===========================================================================
+# GAMMA INVERSE AT THE FINAL SCALE  (regime
+# "scaled_quantile_from_underflowed_unit", #14)
+#
+#   The unit-scale quantile is below the smallest normal Double and the final
+#   quantile is an ordinary number: a scale from 1E100 up for Gamma, and for
+#   Chi-square a half-quantile in [2^-1023, 2^-1022). The quantile is tiny, so
+#   the lower series P = x^a e^-x / Gamma(a + 1) * (1 + x / (a + 1) + ...) is
+#   inverted by fixed-point iteration from its leading term.
+# ===========================================================================
+def build_gamma_inverse_scale_rows():
+    rows = []
+    regime = "scaled_quantile_from_underflowed_unit"
+    min_normal = mp.mpf(2) ** -1022
+
+    def unit_quantile(p, a):
+        log0 = (mp.log(p) + mp.loggamma(1 + a)) / a
+
+        def refine(x):
+            series = 1 + x / (a + 1) + x * x / ((a + 1) * (a + 2))
+            return mp.e ** (log0 + (x - mp.log(series)) / a)
+
+        # Four steps from the leading term; each gains the size of x in digits.
+        return refine(refine(refine(refine(mp.e ** log0))))
+
+    def row(func, args, unit, factor):
+        ref = unit * factor
+        assert unit < min_normal <= ref < mp.mpf("1e300"), (func, args)
+        rows.append({
+            "function": func, "vba_kernel": "K_STATS_" + func,
+            "claim": _CONTRACTS[(func, regime)]["claim"], "metric": "rel",
+            "arg1": format_double_arg(args[0]), "arg2": format_double_arg(args[1]),
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "", "arg4": "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": regime, "evidence_set": "main grid",
+        })
+
+    # --- Gamma: (Probability, Shape, ScaleParam)
+    for ps, ks, ss in [("1e-5", "0.01", "1e250"), ("0.01", "0.005", "1e300"),
+                       ("0.5", "0.0008", "1e280"), ("0.9", "0.0001", "1e200"),
+                       ("1e-200", "0.5", "1e150"), ("1e-290", "0.9", "1e100"),
+                       ("3e-7", "0.02", "7e305"), ("0.25", "0.001", "2e305")]:
+        p, k, s = D(mp.mpf(ps)), D(mp.mpf(ks)), D(mp.mpf(ss))
+        row("Gamma_InverseCumulative", (p, k, s), unit_quantile(p, k), s)
+
+    # --- Chi-square: (Probability, DegreesFreedom); the final factor is 2
+    for ps, dfs in [("0.4926168", "0.002"), ("4.150441e-16", "0.1"),
+                    ("1.313012e-77", "0.5"), ("1.375595e-154", "1"),
+                    ("6.357288e-247", "1.6")]:
+        p, df = D(mp.mpf(ps)), D(mp.mpf(dfs))
+        row("ChiSquare_InverseCumulative", (p, df), unit_quantile(p, df / 2), mp.mpf(2))
+
+    return rows
+
+
+# ===========================================================================
 # ENVELOPE DOMAIN  (regime "envelope_domain", #159)
 #
 #   The main grid has carried these cumulative and survival rows since the
@@ -1544,6 +1599,7 @@ def build_rows():
     rows += build_deep_tail_rows()
     rows += build_tiny_unbalanced_rows()
     rows += build_positive_ratio_rows()
+    rows += build_gamma_inverse_scale_rows()
 
     # --- PROB_LogGamma regime evidence, promoted from loggamma_regimes_study ---
     for _z, _reg in _LOGGAMMA_POINTS:

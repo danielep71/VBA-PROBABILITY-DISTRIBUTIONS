@@ -38,7 +38,7 @@ from _contract_eval import (parse_observed, parse_reference, parse_threshold,
 _IBETA_IMPORT_ERROR = None
 try:
     from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf, t_cdf as _t_cdf
-    from _igamma import chi2_cdf as _chi2_cdf
+    from _igamma import chi2_cdf as _chi2_cdf, gamma_cdf as _gamma_cdf
     import mpmath as _mp
     _mp.mp.dps = 50
     # Name -> callable, keyed by the names registered in
@@ -46,7 +46,7 @@ try:
     # there and adding its callable here; there is no default entry, so an
     # unregistered function cannot reach any CDF.
     _TAIL_CDFS = {"ibeta": _ibeta_cdf, "f_cdf": _f_cdf, "t_cdf": _t_cdf,
-                  "chi2_cdf": _chi2_cdf}
+                  "chi2_cdf": _chi2_cdf, "gamma_cdf": _gamma_cdf}
     _HAVE_IBETA = True
 except (ImportError, ModuleNotFoundError, SyntaxError) as _e:
     # Missing, corrupt, or incompatible reference helper. Retain the exact reason;

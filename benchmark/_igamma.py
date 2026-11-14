@@ -157,3 +157,14 @@ def chi2_cdf(x, df):
         return mp.mpf(0)
     value, _route, _n = reg_lower(df / 2, x / 2)
     return value
+
+
+def gamma_cdf(x, shape, scale):
+    """Gamma CDF: P(shape, x / scale), quantile first like the other
+    tail-residual forward CDFs. The ratio is formed in mpmath, so a unit-scale
+    argument below the Double range is evaluated where it is (#14)."""
+    x, shape, scale = mp.mpf(x), mp.mpf(shape), mp.mpf(scale)
+    if x <= 0:
+        return mp.mpf(0)
+    value, _route, _n = reg_lower(shape, x / scale)
+    return value

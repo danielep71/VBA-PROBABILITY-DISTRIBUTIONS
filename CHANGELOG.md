@@ -97,6 +97,53 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma inverse at the final scale: result (#14)
+
+- The second holdout is accepted: its seven rules hold on all 525 rows
+  (`benchmark/gamma_inverse_scale_study/RESULT_2.md`). In log space the
+  worst relative error is 2.1E-16 up to shape 2 and 7.6E-15 above it.
+- The four contracts of `scaled_quantile_from_underflowed_unit` meet their
+  target of 1E-14.
+- A Gamma inverse at shape 0.001 takes about 0.02 ms, where it took more
+  than a second.
+
+### Gamma inverse at the final scale: second registration (#14)
+
+- The first candidate was rejected by its own seam rule: at five shapes the
+  probes did not reach the crossover in Excel
+  (`benchmark/gamma_inverse_scale_study/RESULT_1.md`). Its accuracy rules
+  held on every row.
+- A second candidate is registered in `PREREGISTRATION_2.md`, with a new
+  holdout of 525 rows: `LogGamma(1 + A)` from the polynomial of #26 up to
+  shape 2, and a seam probed out to 16,384 units in the last place.
+
+### Gamma inverse at the final scale: production (#14)
+
+- `K_STATS_Gamma_InverseCumulative` and `K_STATS_ChiSquare_InverseCumulative`
+  form the quantile at the final scale. Where the unit-scale quantile is at
+  most `exp(-40)` it is computed in log space together with the scale, so a
+  unit quantile below the Double range no longer turns a representable
+  result into zero or `#NUM!`. Above that the unit-scale solver answers as
+  before, and its results do not change.
+- In that branch `LogGamma(1 + A)` comes from the polynomial of #26 up to
+  shape 2 (second candidate), not from `PROB_TryLogGamma1p`, which limited
+  the first candidate to about 2.3E-14.
+- A final quantile below every Double returns zero; one above returns
+  `#NUM!`.
+- Four contracts cover the regime `scaled_quantile_from_underflowed_unit`:
+  quantile error and tail-probability residual for each of the two inverses,
+  with 13 new main-grid rows. Tail-residual contracts can now be scored for
+  the Gamma inverse.
+- The Excel regression gains 11 assertions (1,933; fast suite 989).
+
+### Gamma inverse at the final scale: registration (#14)
+
+- A rule for `K_STATS_Gamma_InverseCumulative` and
+  `K_STATS_ChiSquare_InverseCumulative` is registered in
+  `benchmark/gamma_inverse_scale_study/PREREGISTRATION.md`, before its
+  holdout is evaluated: where the unit-scale quantile is at most `exp(-40)`
+  the quantile is formed in log space, once, at the final scale. No
+  production source changes yet.
 ### Workflow timeouts and warning-free Python sources
 
 - The `select` job of the Excel regression workflow has a timeout, and a

@@ -149,7 +149,7 @@ Option Explicit
 '       PROB_DENSITY_SHAPE_MAX
 '       PROB_TryGammaRoutedP
 '       PROB_TryGammaRoutedQ
-'       PROB_TryGammaInvP
+'       PROB_TryGammaInvPScaled
 '       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
 '
@@ -727,8 +727,11 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Inverts the regularized lower incomplete gamma function on the unit scale.
-'   - Rescales the unit quantile with explicit overflow classification.
+'   - Inverts the regularized lower incomplete gamma function at the final
+'     scale: a small unit quantile is formed in log space with the scale
+'     (#14), a larger one on the unit scale and then rescaled.
+'   - A final quantile below the Double range returns zero; one above it
+'     returns #NUM!.
 '
 ' ERROR POLICY
 '   - Invalid inputs, non-convergence or rescaling overflow return #NUM!.
@@ -738,8 +741,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsPositiveWithinSupportedMagnitude
 '   - PROB_IsPositiveFinite
-'   - PROB_TryGammaInvP
-'   - PROB_TryMultiply
+'   - PROB_TryGammaInvPScaled
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -747,14 +749,13 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-11-14
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim GammaQuantile       As Double          'Unit-scale gamma quantile
-    Dim RescaledQuantile    As Double          'Quantile after applying ScaleParam
+    Dim RescaledQuantile    As Double          'Quantile at the final scale
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -789,15 +790,12 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '------------------------------------------------------------------------------
 ' COMPUTE QUANTILE
 '------------------------------------------------------------------------------
-    'Invert the regularized lower incomplete gamma function on the unit scale
-        If Not PROB_TryGammaInvP( _
-            Probability, 1# - Probability, Shape, GammaQuantile, FailMsg) Then GoTo Fail_Num
-
-    'Rescale from the unit-scale gamma with explicit overflow classification
-        If Not PROB_TryMultiply(ScaleParam, GammaQuantile, RescaledQuantile) Then
-            FailMsg = "Gamma quantile overflowed a Double"
-            GoTo Fail_Num
-        End If
+    'Invert the regularized lower incomplete gamma function at the final
+    'scale (#14): a unit-scale quantile below the Double range is not formed
+        If Not PROB_TryGammaInvPScaled( _
+            Probability, 1# - Probability, Shape, ScaleParam, _
+            "Gamma quantile overflowed a Double", _
+            RescaledQuantile, FailMsg) Then GoTo Fail_Num
 
         K_STATS_Gamma_InverseCumulative = RescaledQuantile
 

@@ -81,7 +81,7 @@ Option Explicit
 '
 '   Chi-square
 '     Uses the regularized incomplete gamma functions P(DF / 2, X / 2) and
-'     Q(DF / 2, X / 2). Quantiles use PROB_TryGammaInvP and a guarded rescale.
+'     Q(DF / 2, X / 2). Quantiles use PROB_TryGammaInvPScaled, at the final scale.
 '
 '   F
 '     Uses a log-ratio logistic pair to form r / (1 + r) and 1 / (1 + r), where
@@ -134,7 +134,7 @@ Option Explicit
 '       PROB_TryBetaLogPdf
 '       PROB_TryGammaRoutedP
 '       PROB_TryGammaRoutedQ
-'       PROB_TryGammaInvP
+'       PROB_TryGammaInvPScaled
 '       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
 '       PROB_DENSITY_SHAPE_MAX
@@ -1354,6 +1354,8 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '   Degrees of freedom beyond PROB_CHI_MAX_DF are REJECTED with CVErr(xlErrNum);
 '   the inverse shares the forward cap (see PROB_CHI_ValidateEnvelope).
 '   - Returns 2 * G, where G solves P(DegreesFreedom / 2, G) = Probability.
+'     A small G is formed in log space together with the factor 2 (#14), so
+'     a quantile whose half is below the Double range is not lost.
 '   - The solver drives whichever of P and Q is the smaller onto its target, so
 '     the upper tail does not dissolve into cancellation.
 '
@@ -1368,19 +1370,17 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_TF_ValidateDF
 '   - PROB_CHI_ValidateEnvelope
-'   - PROB_TryGammaInvP
-'   - PROB_TryMultiply
+'   - PROB_TryGammaInvPScaled
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
+'   2026-11-14 - Quantile formed at the final scale (#14)
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim GammaQuantile       As Double          'Quantile of the unit-scale gamma
-    Dim ChiSquareQuantile   As Double          'Rescaled chi-square quantile
+    Dim ChiSquareQuantile   As Double          'Chi-square quantile, at the final scale
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1418,20 +1418,16 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '------------------------------------------------------------------------------
 ' COMPUTE QUANTILE
 '------------------------------------------------------------------------------
-    'Invert the regularized lower incomplete gamma function
-        If Not PROB_TryGammaInvP( _
+    'Invert the regularized lower incomplete gamma function at the final
+    'scale, a factor of 2 (#14)
+        If Not PROB_TryGammaInvPScaled( _
             Probability, _
             1# - Probability, _
             0.5 * DegreesFreedom, _
-            GammaQuantile, _
+            2#, _
+            "Chi-square quantile overflowed a Double", _
+            ChiSquareQuantile, _
             FailMsg) Then GoTo Fail_Num
-
-    'Rescale from the unit-scale gamma to the chi-square with an explicit
-    'overflow classification.
-        If Not PROB_TryMultiply(2#, GammaQuantile, ChiSquareQuantile) Then
-            FailMsg = "Chi-square quantile overflowed a Double"
-            GoTo Fail_Num
-        End If
 
         K_STATS_ChiSquare_InverseCumulative = ChiSquareQuantile
 
