@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Student-t above |t| = 8 at large df: registration (#213)
+
+- The Student-t survival just above `|t| = 8` for `df >= 1E5` is wrong by 4E-13 to 8E-10 relative in the committed seam export, and the inverse near `q = -8` at `df = 1E7` by 1.3E-12. The cause is the conditioning of the incomplete-beta continued fraction in an argument within 1E-5 of one, not the prefactor. `benchmark/student_t_large_df_study/ABOVE8_PREREGISTRATION.md` registers the rule, 32 new rows of regime `above8` and the acceptance rules, before the Excel wave.
+
 ### Beta inverse, pair reconstruction: probabilities within 2^-53 of zero (#35)
 
 - With the candidate, `K_STATS_Beta_InverseCumulative(1E-20, 100, 2)` returned `#VALUE!` and `K_STATS_Beta_InverseCumulative(1E-200, 1000, 1)` did not converge: the quantile is above 1/2, so the new rule solved for the other member, whose lower-tail target `1 - p` rounds to one. Both found in review of the pull request. A sweep of the Python model then showed the new rule unreliable across that regime. There, and where the evaluation at 1/2 fails, `PROB_TryBetaInvRegularized` now runs the routine it had before #35, unchanged. Everywhere else it is the accepted candidate. The pair reconstruction of #35 is therefore not corrected for a probability or complement below 2^-53 whose quantile lies on the far side of 1/2. Two assertions added: the regression has 1,942 assertions, the fast suite 998.

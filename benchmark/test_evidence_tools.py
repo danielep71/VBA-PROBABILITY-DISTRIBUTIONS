@@ -45,6 +45,7 @@ commands = (
     ("student_t_large_df_study/test_production_route.py",),
     ("student_t_large_df_study/test_vba_large_df_source.py",),
     ("student_t_large_df_study/test_inverse_polish.py",),
+    ("student_t_large_df_study/test_above8.py",),
     ("tchi_large_df/test_tchi_merge.py",),
     ("gamma_cf_study/coverage/test_precision_probe.py",),
     ("gamma_cf_study/coverage/test_precision_v2.py",),
