@@ -19697,6 +19697,31 @@ Private Sub Test_CN_GammaInverseFinalScale()
         K_STATS_Gamma_InverseCumulative(0.0001, 0.01, 1#), 0#
     AssertExactlyEqual "GIS gamma inv(1e-30,0.75,1e-290) final underflow is zero", _
         K_STATS_Gamma_InverseCumulative(1E-30, 0.75, 1E-290), 0#
+
+    'The inverse counterexamples of the parent issue (#11): the probabilities
+    'that the forward functions return at X = 1E-300 (shape 1E-4, scale 1E100)
+    'and at the smallest positive X (df = 2E-4). The quantile moves by 1E4
+    'times the relative change of the probability, so the references are the
+    'quantiles of these literals, not 1E-300 itself
+    Quantile = K_STATS_Gamma_InverseCumulative(0.912063476068496, 0.0001, 1E+100)
+    AssertRelClose "GIS gamma inv(0.912063476068496,1e-4,1e100) parent counterexample", _
+        Quantile, 1.00000000000068E-300, TOL_GIS
+    If IsError(Quantile) Then
+        AssertTrue "GIS gamma cdf at the parent counterexample's quantile returns p", False
+    Else
+        AssertRelClose "GIS gamma cdf at the parent counterexample's quantile returns p", _
+            K_STATS_Gamma_Cumulative(CDbl(Quantile), 0.0001, 1E+100), 0.912063476068496, TOL_GIS
+    End If
+
+    'The Chi-square quantile is 0.999999999995 units of the smallest positive
+    'Double: a positive subnormal, never zero
+    Quantile = K_STATS_ChiSquare_InverseCumulative(0.92824867943255, 0.0002)
+    If IsError(Quantile) Then
+        AssertTrue "GIS chi-square inv(0.92824867943255,2e-4) is the smallest subnormal", False
+    Else
+        AssertTrue "GIS chi-square inv(0.92824867943255,2e-4) is the smallest subnormal", _
+            CDbl(Quantile) > 0# And CDbl(Quantile) <= 2# * SP_FromWords(&H0&, &H1&)
+    End If
 End Sub
 
 
