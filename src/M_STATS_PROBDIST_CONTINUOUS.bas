@@ -147,8 +147,8 @@ Option Explicit
 '       PROB_TryGammaLogPdf
 '       PROB_TryBetaLogPdf
 '       PROB_DENSITY_SHAPE_MAX
-'       PROB_TryGammaRegularizedP
-'       PROB_TryGammaRegularizedQ
+'       PROB_TryGammaRoutedP
+'       PROB_TryGammaRoutedQ
 '       PROB_TryGammaInvP
 '       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
@@ -417,7 +417,7 @@ Public Function K_STATS_Gamma_Cumulative( _
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXShapeScale
 '   - PROB_TryDivide
-'   - PROB_TryGammaRegularizedP
+'   - PROB_TryGammaRoutedP
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -477,9 +477,10 @@ Public Function K_STATS_Gamma_Cumulative( _
 
     'Classify the stored ratio. A zero is always recovered: the kernel would
     'read it as the support origin. A subnormal below the 40-bit cutoff is
-    'recovered only when the division rounded: the kernel is exact for the
-    'argument it receives, so an exact ratio is better left to it (#13,
-    'Amendment 1 in benchmark/positive_ratio_subnormal)
+    'recovered only when the division rounded: the direct path is accurate
+    'to a few 1E-15 for the argument it receives, far inside the recovery's
+    '1E-13, so an exact ratio is better left to it (#13, Amendment 1 in
+    'benchmark/positive_ratio_subnormal; #314 for the direct path)
         RatioClass = PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT)
 
     'The division did not round when the stored product gives X back and that
@@ -504,7 +505,7 @@ Public Function K_STATS_Gamma_Cumulative( _
                 GoTo Fail_Num
             End If
         Else
-            If Not PROB_TryGammaRegularizedP( _
+            If Not PROB_TryGammaRoutedP( _
                 Shape, StandardX, Value, FailMsg) Then
                 GoTo Fail_Num
             End If
@@ -587,7 +588,7 @@ Public Function K_STATS_Gamma_Survival( _
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXShapeScale
 '   - PROB_TryDivide
-'   - PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaRoutedQ
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -654,7 +655,7 @@ Public Function K_STATS_Gamma_Survival( _
                 GoTo Fail_Num
             End If
         Else
-            If Not PROB_TryGammaRegularizedQ( _
+            If Not PROB_TryGammaRoutedQ( _
                 Shape, StandardX, Value, FailMsg) Then
                 GoTo Fail_Num
             End If

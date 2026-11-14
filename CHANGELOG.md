@@ -97,6 +97,36 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Fast Gamma route: production (#314)
+
+- `K_STATS_Gamma_Cumulative`, `K_STATS_Gamma_Survival`, the Chi-square and
+  Poisson equivalents and the Gamma and Chi-square inverses answer from a
+  binary64 route wherever its result can be trusted, and from the
+  double-double kernel elsewhere. A cumulative or survival that took 13 to
+  400 ms takes 0.06 to 0.23 ms for shapes up to 10,000, in the measured
+  Excel run (`benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md`).
+- The routing holdout is accepted: its six rules hold on all 371 rows, with
+  a worst relative error of 4.33E-15 against a bound of 1E-13.
+- Accuracy is held to the guarantee tier: 1E-13 relative for the tails and
+  1E-12 for the inverses. The route measured a few 1E-15 on its fit set. A
+  result may differ from the previous one by a few units in the last place,
+  and two results at adjacent arguments may be out of order by that much.
+- Still served by the kernel, at its cost: an upper tail below the argument
+  `Shape + 1` when the lower tail exceeds 0.9, results below 1E-290, the
+  inverses for shapes below 0.01, shapes above 1E15, and shapes whose
+  series needs more than 100,000 terms.
+- The Excel assertions on the public tails are held to the guarantee tier.
+  The assertions on the kernel's own entry points stay bit for bit.
+
+### Fast Gamma route: registration (#314)
+
+- A new routing rule for Gamma and Chi-square P and Q is registered in
+  `benchmark/gamma_route_study/FAST_ROUTE_PREREGISTRATION.md`, before its
+  holdout is evaluated: binary64 wherever its directly computed tail can be
+  trusted, the double-double kernel elsewhere, with no shape ceiling. It is
+  held to the guarantee tier of #327, including that policy's monotonicity
+  invariant. No production source changes yet.
+
 ### Accuracy contracts for the positive-ratio regimes (#13)
 
 - Six contracts make the region repaired by #13 visible to the accuracy gate:

@@ -73,7 +73,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **1,922** | of 1,922 deterministic VBA assertions passed in the retained Excel run on `dbc1fdc`; regression sources unchanged since |
+| **1,922** | of 1,922 deterministic VBA assertions passed in the retained Excel run on `31a1e76`; regression sources unchanged since |
 | **172** | active accuracy contracts (173 registry rows; 1 characterization-only): 172 PASS, 0 FAIL, 0 PENDING |
 | **2,205** | observation rows; main grid 1,849: 1,822 claimed, 0 exempt, 27 without a disposition ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)) |
 | **83** | of 83 contracts PASS on an **independent holdout** of 659 observations |
@@ -87,8 +87,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 1,922/1,922 assertions passed on `dbc1fdc` (Excel 16.0 build 20430, 64-bit; finished 2026-11-13). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,205 rows bound to the current source by `observation_manifest.json` (exported from `dbc1fdc`).
+- **Excel regression** — 1,922/1,922 assertions passed on `31a1e76` (Excel 16.0 build 20430, 64-bit; finished 2026-11-14). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,205 rows bound to the current source by `observation_manifest.json` (exported from `31a1e76`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — `transition` mode: 1,822 of 1,849 rows claimed, 0 exempt, **27 without a disposition** ([#22](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/22)).
 - **Contract verdicts** — 172 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 2 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
@@ -736,7 +736,7 @@ The implementation uses established numerical ideas adapted carefully to VBA.
 | Large-parameter Gamma ratios | Stable log-gamma difference paths |
 | Beta normalization | Log-beta with balanced and unbalanced branches |
 | Incomplete beta | Paired arguments and modified-Lentz continued fractions |
-| Incomplete gamma | Scaled double-double lower series and upper continued fraction, with Q below `X = A + 1` taken from log P (#26); the binary64 series or continued fraction where the pair reaches its iteration cap |
+| Incomplete gamma | A binary64 lower series below `X = A + 1` and continued fraction from it, wherever the directly computed tail can be trusted (#314). Elsewhere a scaled double-double series and continued fraction, with Q below `X = A + 1` taken from log P (#26) |
 | Inverse beta/gamma | Safeguarded Newton iteration with bisection fallback |
 | Student t tails | Closed forms where available; order-5 large-df expansion for `df >= 1E5` and `\|t\| <= 8`; incomplete-beta transformation otherwise |
 | Student t inverse | Cornish-Fisher seed, safeguarded Newton with bisection, then up to three Newton polish steps on the large-df route |
@@ -1362,7 +1362,7 @@ The library is particularly suited to:
 ## Current boundaries
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
-- Gamma, Chi-square and Poisson probabilities use double-double arithmetic. Exact LogGamma reuse reduces repeated shape-100 P/Q calls from about 115–121 ms to 10–14 ms in the measured Excel runs, but cold calls and large-shape recurrences remain slow. Timing is host-dependent; see the [cache study and limitations](benchmark/gamma_cache_study/RESULT.md) and the [original uncached measurements](benchmark/harness_timing/RESULT.md);
+- Gamma, Chi-square and Poisson probabilities take about 0.06 to 0.23 ms per call in the measured Excel run, for shapes from 0.0001 to 10,000, and are held to 1E-13 relative. Three cases still use double-double arithmetic: an upper tail below `X = Shape + 1` when the lower tail exceeds 0.9 and results below 1E-290, at 13 to 400 ms per call, and the inverses for shapes below 0.01, at more than a second. Shapes above 1E15 use it too. A Gamma or Chi-square inverse takes 0.05 to 2 ms up to shape 100 and about 20 ms at shape 10,000. Timing is host-dependent; see the [measurements and their exceptions](benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md);
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
 - a self-hosted Excel runner must be online and correctly configured for CI execution;

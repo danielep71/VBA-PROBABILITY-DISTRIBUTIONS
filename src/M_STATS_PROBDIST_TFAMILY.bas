@@ -132,8 +132,8 @@ Option Explicit
 '       PROB_LogGammaHalfDiff
 '       PROB_TryGammaLogPdf
 '       PROB_TryBetaLogPdf
-'       PROB_TryGammaRegularizedP
-'       PROB_TryGammaRegularizedQ
+'       PROB_TryGammaRoutedP
+'       PROB_TryGammaRoutedQ
 '       PROB_TryGammaInvP
 '       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
@@ -1037,7 +1037,7 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
 '   - PROB_CHI_ValidateEnvelope
-'   - PROB_TryGammaRegularizedP
+'   - PROB_TryGammaRoutedP
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1099,9 +1099,10 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 
     'Classify the stored half. A zero is always recovered: the kernel would
     'read it as the support origin. A subnormal below the 40-bit cutoff is
-    'recovered only when the halving rounded: the kernel is exact for the
-    'argument it receives, so an exact half is better left to it (#13,
-    'Amendment 1 in benchmark/positive_ratio_subnormal)
+    'recovered only when the halving rounded: the direct path is accurate
+    'to a few 1E-15 for the argument it receives, far inside the recovery's
+    '1E-13, so an exact half is better left to it (#13, Amendment 1 in
+    'benchmark/positive_ratio_subnormal; #314 for the direct path)
         RatioClass = PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT)
         If RatioClass = PROB_PRC_PRECISION_RECOVERY And Doubled = X Then
             RatioClass = PROB_PRC_DIRECT
@@ -1117,7 +1118,7 @@ Public Function K_STATS_ChiSquare_Cumulative( _
                 Complement, _
                 FailMsg) Then GoTo Fail_Num
         Else
-            If Not PROB_TryGammaRegularizedP( _
+            If Not PROB_TryGammaRoutedP( _
                 0.5 * DegreesFreedom, _
                 StandardX, _
                 Value, _
@@ -1206,7 +1207,7 @@ Public Function K_STATS_ChiSquare_Survival( _
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
 '   - PROB_CHI_ValidateEnvelope
-'   - PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaRoutedQ
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1273,7 +1274,7 @@ Public Function K_STATS_ChiSquare_Survival( _
                 Value, _
                 FailMsg) Then GoTo Fail_Num
         Else
-            If Not PROB_TryGammaRegularizedQ( _
+            If Not PROB_TryGammaRoutedQ( _
                 0.5 * DegreesFreedom, _
                 StandardX, _
                 Value, _

@@ -31,6 +31,9 @@ PRIMITIVE = re.compile(r"hashlib|sha256|read_bytes|filecmp|normalized_hash")
 
 # Path relative to benchmark/ -> why the whole-file primitive does not bind a live grid.
 DECLARED = {
+    "gamma_route_study/replay_fast_route.py":
+        "hashes its own code and the frozen fit grid; the two live grids are replayed afresh "
+        "and only required to stay within their guarantees, never compared with a record",
     "normal_tail_study/result_binding.py":
         "binds the three grids by row through _row_binding.row_digest (Amendment 4); "
         "file hashes cover code, design and non-grid inputs only",
