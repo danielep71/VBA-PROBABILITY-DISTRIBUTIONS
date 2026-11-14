@@ -371,8 +371,10 @@ Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
                   GammaCostLine(A, X, "poisson_inv")
         End If
     Next I
-    'The inverses: X holds the probability
-    Points = Array(0.0001, 0.5, 2.5, 100#, 10000#)
+    'The inverses: X holds the probability. Shape 0.01 is the smallest the
+    'solver takes through the routed entry points; 0.001 stays with the
+    'double-double ones.
+    Points = Array(0.001, 0.01, 0.5, 2.5, 100#, 10000#)
     For I = 0 To UBound(Points)
         A = Points(I)
         Out = Out & GammaCostLine(A, 0.1, "gamma_inv") & GammaCostLine(A, 0.9, "gamma_inv") & _
@@ -384,7 +386,8 @@ End Function
 Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String) As String
     Dim N As Long, K As Long, T0 As Double, Elapsed As Double
     Dim V As Double, M As String, OK As Boolean, R As Variant
-    N = 16
+    'One call first: a route that takes a second is not repeated 16 times
+    N = 1
     Do
         T0 = Timer
         For K = 1 To N
