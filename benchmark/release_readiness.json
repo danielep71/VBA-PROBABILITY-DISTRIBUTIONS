@@ -9,8 +9,11 @@
       "issue": 11,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Positive intermediate underflow and subnormal precision loss in Gamma-family scale transformations"
+      "status": "resolved",
+      "summary": "Positive intermediate underflow and subnormal precision loss in Gamma-family scale transformations",
+      "resolution": {
+        "evidence": "Both children are resolved (#13 forward, #14 inverse) and the regression holds every counterexample of the parent on one source: the forward ones since #13, the inverse ones since #366 (Gamma inverse at the counterexample's probability within 1E-12 of the 80-digit quantile, its cumulative returning the probability, and the Chi-square inverse a positive subnormal where it was zero). Excel run 43645921243 on 755b072: 1,955 of 1,955; main grid and consolidated holdout unchanged."
+      }
     },
     {
       "issue": 13,
