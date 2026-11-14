@@ -26,8 +26,11 @@
       "issue": 14,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Gamma/Chi-square inverse discards a representable quantile at the unit scale"
+      "status": "resolved",
+      "summary": "Gamma/Chi-square inverse discards a representable quantile at the unit scale",
+      "resolution": {
+        "evidence": "Both inverses form the quantile at the final scale (#356): in log space where the unit quantile is at most exp(-40), on the unit scale above. The second holdout of benchmark/gamma_inverse_scale_study is accepted on all 525 rows (RESULT_2.md; worst 7.64E-15 against 1E-12; Excel run 43592089271 on 664cd48). Four contracts and 13 main-grid rows hold the regime at 1E-14 (worst quantile error 2.13E-16). The first candidate's rejection is recorded in RESULT_1.md. No other observation changed."
+      }
     },
     {
       "issue": 22,
