@@ -136,3 +136,44 @@ later candidate needs its own registration and its own untouched evidence.
    and the cost benchmark.
 4. One Excel wave on the candidate fills `f_inverse_pair_grid.csv`.
    `analyze.py` gives the verdict.
+
+## Addendum 1 — the Student-t rows and the guarantee (2026-11-14, before the candidate is evaluated)
+
+Written after the baseline file was exported (run 43606344252, evidence
+`c78bc47`) and before the candidate's source was pushed or run in Excel.
+`f_inverse_pair_grid.csv` is still blank. The text above is unchanged.
+
+**What the baseline shows.** On 40 of the 66 Student-t rows the source
+before the change is outside 1E-12: at df 3, 5, 10 and 30, at the eight
+probabilities within 2^-23 of 1/2, the error runs from 2.3E-10 at 2^-23 to
+0.25 at 2^-53. That is the defect of #22, the Student-t inverse near the
+median. It is not the pair reconstruction of #35, and the rule registered
+here does not claim to repair it.
+
+**What was wrong in the registration.** R2 asked 1E-12 of every row. On
+those 40 rows it would reject a candidate that returns exactly what the
+source returns today. `FIX_COMPARISON_PREREGISTRATION.md` §4 reserved the
+Student-t set for one condition only, the one R4 states: within one unit in
+the last place of the baseline, or closer to the reference. I added the
+absolute bound on top of it without evidence that the baseline met it.
+
+**The change.** R2 applies to the F and Beta rows. The Student-t rows are
+held by R0, R1, R3 and R4: no fault, no error larger than the baseline's
+beyond 1E-14, a number where the baseline gives a number, and the
+invariance condition. No bound, row or reference changes.
+
+This is a change of a gate made with the baseline in view, and I record it
+as such. The candidate has not been evaluated on any row, by the model or
+by Excel, and the change removes no row on which the candidate's own
+effect is judged. I decided it on 2026-11-14 with the three alternatives
+written down: this addendum, running the rules unchanged, or resolving #22
+first.
+
+**A correction of fact.** The holdout section says `0.5 + 2^-53` is not a
+Double. It is: the spacing of Doubles from 1/2 upward is 2^-53. Each df has
+eleven distinct probabilities, none of them 1/2, and no reference is zero.
+The rows are as committed; only that sentence was wrong.
+
+**Baseline, for the record.** Worst error by kind: `holdout_f` 1.56E-10,
+`far_f` 3.54E-9, `seam_f` 4.48E-15, `beta` 1.1E-13, `t_invariance` 0.25.
+The first half of prediction 2 holds.

@@ -74,6 +74,12 @@ class Rules(unittest.TestCase):
         self.assertEqual(rules(row("CVERR"), row(2.0)), [])
         self.assertEqual(rules(row("CVERR"), row("CVERR")), [])
 
+    def test_guarantee_leaves_student_t_to_r1_and_r4(self):
+        t = dict(kind="t_invariance", func="T")
+        off = 2.0 * (1 + 1e-7)
+        self.assertEqual(rules(row(off, **t), row(off, **t)), [])
+        self.assertEqual(rules(row(off), row(off)), ["R2"])
+
     def test_domain(self):
         self.assertEqual(rules(row(2.0), row("CVERR")), ["R3"])
 
@@ -88,7 +94,7 @@ class Rules(unittest.TestCase):
     def test_zero_reference_is_absolute(self):
         t = dict(kind="t_invariance", func="T", ref="0")
         self.assertEqual(rules(row(0.0, **t), row(0.0, **t)), [])
-        self.assertEqual(rules(row(0.0, **t), row(1e-3, **t)), ["R1", "R2", "R4"])
+        self.assertEqual(rules(row(0.0, **t), row(1e-3, **t)), ["R1", "R4"])
 
     def test_different_rows(self):
         self.assertEqual(rules(row(2.0), row(2.0, point="x001")), ["R0:"])

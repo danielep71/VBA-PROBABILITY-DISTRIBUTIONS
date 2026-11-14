@@ -9,8 +9,10 @@ rows. Every bound is fixed in the preregistration; nothing is fitted here.
                    error: none is blank and none is a runtime fault.
   R1  no regress   where both files hold a number, the candidate's error is
                    at most max(the baseline's, FLOOR).
-  R2  guarantee    every number the candidate returns is within GUARANTEE
-                   of the reference: the inverse guarantee of #327.
+  R2  guarantee    every number the candidate returns for an F or Beta
+                   row is within GUARANTEE of the reference: the inverse
+                   guarantee of #327. The Student-t rows are held by R1 and
+                   R4 alone (Addendum 1).
   R3  domain       a row the baseline answers with a number, the candidate
                    answers with a number.
   R4  shared path  on the Student-t rows the candidate is the baseline's
@@ -125,7 +127,7 @@ def analyze(base, cand=None, model=None):
             counts["changed"] += 1
         if e_new > BINARY64:
             counts["above_2^-48"] += 1
-        if e_new > GUARANTEE:
+        if e_new > GUARANTEE and c["kind"] != "t_invariance":
             fail("R2", c, f"error {mp.nstr(e_new, 3)} above {mp.nstr(GUARANTEE, 3)}")
         if b_number:
             if e_new > max(e_base, FLOOR):
