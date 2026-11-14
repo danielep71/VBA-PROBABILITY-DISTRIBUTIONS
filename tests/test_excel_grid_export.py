@@ -217,7 +217,9 @@ class WorkflowWiringTests(unittest.TestCase):
         export = step(self.text, "Export selected grids through Excel COM")
         condition = "inputs.export_studies != ''"
         self.assertIn(condition, re.search(r"^\s+if: (.*)$", export, re.M).group(1))
-        timeout = re.search(r"^    timeout-minutes: (.*)$", self.text, re.M)
+        # The timeout of the regression job, not of the select job before it.
+        regression = self.text[self.text.index("\n  regression:\n"):]
+        timeout = re.search(r"^    timeout-minutes: (.*)$", regression, re.M)
         assert timeout is not None
         self.assertIn(condition, timeout.group(1))
 
