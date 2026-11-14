@@ -2410,6 +2410,81 @@ Private Function PROB_TryBetaTailsPair( _
     PROB_TryBetaTailsPair = True
 End Function
 
+Public Function PROB_TryBetaLowerNearOne( _
+    ByVal Y As Double, _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaLowerNearOne
+'------------------------------------------------------------------------------
+' PURPOSE
+'   I_(1 - Y)(A, B) for a small Y and a large A: the lower tail of the
+'   incomplete beta function at an argument near one, given by its
+'   complement (#213).
+'
+' WHY THIS EXISTS
+'   PROB_TryBetaRegularized evaluates its continued fraction at X as a
+'   Double. Near one, with A large, the fraction's leading denominator
+'   1 - (A + B) X / (A + 1) is a difference of nearly equal numbers, and the
+'   rounding of X is multiplied by about A / (1/2 + A Y): 8E-11 relative in
+'   the Student-t tail at df = 1E7 just above |t| = 8. Here the fraction
+'   receives X = 1 - Y as an exact pair of Doubles.
+'
+' BEHAVIOR
+'   - Serves 0 < Y < 1/2, A + B at or above PROB_IBETA_LOADER_MIN_SHAPE, and
+'     an argument below the mean (A + 1) / (A + B + 2), where the fraction
+'     gives the lower tail directly.
+'   - The prefactor is the Loader form of PROB_TryBetaRegularized, unchanged.
+'   - The fraction is PROB_TryBetaContinuedFractionPair.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds I_(1 - Y)(A, B), in [0, 1].
+'     FALSE => the case is not served or a step declined. This is not an
+'              error: the caller uses PROB_TryBetaRegularized.
+'
+' DEPENDENCIES
+'   - PROB_TryBetaLogPdf, PROB_TryExp
+'   - PROB_TryBetaContinuedFractionPair, PROB_BP_Add
+'==============================================================================
+'
+    Dim X                   As Double          '1 - Y, rounded
+    Dim XH                  As Double          '1 - Y, high part
+    Dim XL                  As Double          '1 - Y, low part
+    Dim LogX                As Double          'Log(X)
+    Dim LogY                As Double          'Log(Y)
+    Dim LogBt               As Double          'Log of the beta factor
+    Dim Bt                  As Double          'Beta factor
+    Dim CFValue             As Double          'Continued-fraction value
+    Dim Value               As Double          'Result before the clamp
+    Dim Msg                 As String          'Discarded failure text
+
+    If Not (Y > 0# And Y < 0.5) Then Exit Function
+    If A + B < PROB_IBETA_LOADER_MIN_SHAPE Then Exit Function
+
+    X = 1# - Y
+    If Not (X < (A + 1#) / (A + B + 2#)) Then Exit Function
+
+    LogX = Log(X)
+    LogY = Log(Y)
+    If Not PROB_TryBetaLogPdf(X, Y, A, B, LogX, LogY, LogBt, Msg) Then Exit Function
+    LogBt = LogBt + LogX + LogY
+    If Not PROB_TryExp(LogBt, Bt) Then Exit Function
+    If Bt <= 0# Then Exit Function
+
+    PROB_BP_Add 1#, 0#, -Y, 0#, XH, XL
+    If Not PROB_TryBetaContinuedFractionPair(A, B, XH, XL, CFValue) Then Exit Function
+
+    Value = Bt * CFValue / A
+    If Value < 0# Then Value = 0#
+    If Value > 1# Then Value = 1#
+    Result = Value
+    PROB_TryBetaLowerNearOne = True
+End Function
+
 Private Function PROB_TryBetaInvResidual( _
     ByVal U As Double, _
     ByVal Sa As Double, _

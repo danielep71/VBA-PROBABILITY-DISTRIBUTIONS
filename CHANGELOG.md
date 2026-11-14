@@ -97,6 +97,11 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Student-t above |t| = 8 at large df: candidate (#213)
+
+- For `df >= 1E5` and `|t| > 8` the Student-t tail forms the small beta argument `t^2 / (df + t^2)` directly and evaluates the incomplete-beta continued fraction at its complement as an exact pair of Doubles (`PROB_TryBetaLowerNearOne`, new in SPECIALFUNCS). Where that declines, the previous route answers. Nothing changes for `df < 1E5` or `|t| <= 8`. The verdict is that of the Excel wave of this commit.
+- Ten assertions (`Test_TF_StudentTAboveEight`): the regression has 1,952 assertions, the fast suite 1,008.
+
 ### Student-t above |t| = 8 at large df: registration (#213)
 
 - The Student-t survival just above `|t| = 8` for `df >= 1E5` is wrong by 4E-13 to 8E-10 relative in the committed seam export, and the inverse near `q = -8` at `df = 1E7` by 1.3E-12. The cause is the conditioning of the incomplete-beta continued fraction in an argument within 1E-5 of one, not the prefactor. `benchmark/student_t_large_df_study/ABOVE8_PREREGISTRATION.md` registers the rule, 32 new rows of regime `above8` and the acceptance rules, before the Excel wave.
