@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
-  "candidate_sha": "f0c0d5fbd7f49babb17c25bfbbe1925ca113683b",
+  "candidate_sha": "f6b26cd9896d4035ea061dc74b019c4aacf69614",
   "execution": "automated",
-  "started_at": "2026-11-14T15:23:45.2852653Z",
-  "finished_at": "2026-11-14T15:30:31.9985640Z",
+  "started_at": "2026-11-14T16:57:17.6697636Z",
+  "finished_at": "2026-11-14T17:04:12.3117828Z",
   "runner": {
     "class": "self-hosted-excel",
     "identity": "ITPF545VX1",
     "workflow": {
       "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
       "path": ".github/workflows/excel-vba-regression.yml",
-      "sha": "f0c0d5fbd7f49babb17c25bfbbe1925ca113683b",
-      "run_id": 43609869324,
+      "sha": "f6b26cd9896d4035ea061dc74b019c4aacf69614",
+      "run_id": 43618326390,
       "run_attempt": 1
     }
   },
@@ -52,7 +52,7 @@
     },
     {
       "path": "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
-      "sha256": "sha256:fb481b6d1c31539669b9261c24b393356935814ea44b510af8ef388b361a3ff9"
+      "sha256": "sha256:be2d55fb534f469908c1e0a62042db1f93dba8bd9c15bc71d006408db54e32c3"
     },
     {
       "path": "src/M_STATS_PROBDIST_TFAMILY.bas",
@@ -60,7 +60,7 @@
     },
     {
       "path": "tests/M_STATS_PROBDIST_TEST.bas",
-      "sha256": "sha256:15d604cfdbf20d8bc6c25cb91d50045512f6cc6da6894e678a81b7b93f9615a7"
+      "sha256": "sha256:9ef6bc139eae0b8a2cdf1f234867b2ed127279aaa984ce91289cf97f791de63c"
     }
   ],
   "stages": {
@@ -74,7 +74,7 @@
     },
     "regression": {
       "status": "PASS",
-      "detail": "Complete policy-declared regression: 1940/1940 assertions passed"
+      "detail": "Complete policy-declared regression: 1941/1941 assertions passed"
     },
     "cleanup": {
       "status": "PASS",
@@ -83,13 +83,13 @@
   },
   "harness": {
     "entry_point": "Test_STATS_PROBDIST_RunAll_CI",
-    "assertions": 1940,
-    "passed": 1940,
+    "assertions": 1941,
+    "passed": 1941,
     "failed": 0
   },
   "log": {
     "path": "test-result.txt",
-    "sha256": "sha256:b00e06c4d0823b10d33ea9056e58576b169c64e8fe66c3a9b4a5a3c80ba23378"
+    "sha256": "sha256:7ab6a6bc95020cc5fe839b480c45eba828acfdc7c4c9fe1416dd5197488a9750"
   },
   "grids": {
     "benchmark/probability_accuracy_grid.csv": {
@@ -97,14 +97,14 @@
       "sha256": "sha256:4aba54a7e3692fafb22b91451fe4d053f1a65ac7a809a2165c8c4c9963e4539c",
       "raw_sha256": "sha256:56b26ce808c01afd2e2ed4d5317675fed53952ddbd1cecf9d43c92d7f6db15a5",
       "row_count": 2218,
-      "exported_utc": "2026-11-14T15:32:25Z"
+      "exported_utc": "2026-11-14T17:05:56Z"
     },
     "benchmark/holdout/holdout_grid.csv": {
       "exported": true,
       "sha256": "sha256:3d4c41e5357617921a984140e16244669fae93d196eace970a9e9f2c9835af3f",
       "raw_sha256": "sha256:66ef971cf00da286fde2e2659eaa61325d3985541ba72401746924e1b2537f09",
       "row_count": 659,
-      "exported_utc": "2026-11-14T15:32:25Z"
+      "exported_utc": "2026-11-14T17:05:56Z"
     }
   }
 }
