@@ -97,6 +97,16 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma inverse at the final scale: second registration (#14)
+
+- The first candidate was rejected by its own seam rule: at five shapes the
+  probes did not reach the crossover in Excel
+  (`benchmark/gamma_inverse_scale_study/RESULT_1.md`). Its accuracy rules
+  held on every row.
+- A second candidate is registered in `PREREGISTRATION_2.md`, with a new
+  holdout of 525 rows: `LogGamma(1 + A)` from the polynomial of #26 up to
+  shape 2, and a seam probed out to 16,384 units in the last place.
+
 ### Gamma inverse at the final scale: production (#14)
 
 - `K_STATS_Gamma_InverseCumulative` and `K_STATS_ChiSquare_InverseCumulative`

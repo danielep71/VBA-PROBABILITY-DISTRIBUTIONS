@@ -33,9 +33,14 @@ reference; M_STATS_PROBDIST_GIS.bas writes the rest. The inputs are the 16
 hexadecimal digits of the Doubles, so no decimal is parsed in Excel. ref_x
 is the quantile at the final scale to 40 digits, or ZERO, or NUM.
 
+The second holdout (--holdout 2, gamma_inverse_scale_grid2.csv) is described
+in PREREGISTRATION_2.md: the same kinds from seed 2014, the seam out to
+16,384 units in the last place at ten other shapes, located with the second
+model's predicate, and thirty rows at the shapes next to 1 and 2.
+
 Run:
-    python3 holdout_build.py --write   (only when the grid is absent)
-    python3 holdout_build.py --check   (the committed grid is the design)
+    python3 holdout_build.py --write [--holdout 2]   (only when the grid is absent)
+    python3 holdout_build.py --check [--holdout 2]   (the committed grid is the design)
 """
 import argparse
 import csv
@@ -53,6 +58,7 @@ sys.path.insert(0, HERE)
 import inv_scale_model as M  # noqa: E402
 
 GRID = os.path.join(HERE, "gamma_inverse_scale_grid.csv")
+GRID_2 = os.path.join(HERE, "gamma_inverse_scale_grid2.csv")
 FIELDS = ["point_id", "kind", "p_bits", "a_bits", "s_bits", "ref_x", "gamma_inv", "chi_inv",
           "gamma_cdf", "log_unit"]
 KEY_COLUMNS = 6
@@ -60,6 +66,13 @@ SEED = 14
 LOG_MIN_NORMAL = math.log(M.MIN_NORMAL)
 SEAM_SHAPES = (1e-4, 1e-3, 0.01, 0.02, 0.1, 0.5, 1.0, 2.5, 7.0, 15.0)
 SEAM_OFFSETS = (-32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32)
+# Second holdout (PREREGISTRATION_2.md)
+SEED_2 = 2014
+SEAM_SHAPES_2 = (3e-4, 5e-3, 0.03, 0.2, 0.7, 0.95, 1.5, 2.0, 4.0, 12.0)
+SEAM_OFFSETS_2 = (-16384, -4096, -1024, -256, -64, -16, -4, -1, 0, 1, 4, 16, 64, 256, 1024,
+                  4096, 16384)
+BOUNDARY_SHAPES_2 = (math.nextafter(1.0, 0.0), 1.0, math.nextafter(1.0, 2.0),
+                     math.nextafter(2.0, 0.0), 2.0, math.nextafter(2.0, 3.0))
 DBL_MAX = mpf(2) ** 1024 * (1 - mpf(2) ** -53)
 HALF_MIN_SUBNORMAL = mpf(2) ** -1075
 
@@ -128,21 +141,23 @@ def sample(rng, count, shape_range, unit_range, scale=None, final_range=(-700.0,
     return out
 
 
-def seam(a):
-    """Thirteen probabilities around the model's crossover at shape a."""
+def seam(a, uses_log=M.uses_log, offsets=SEAM_OFFSETS):
+    """Probabilities around the model's crossover at shape a: the last one the
+    predicate answers in log space, moved by each offset in units in the last
+    place."""
     low = math.exp(-41.0 * a - M.log_gamma1p(a))      # log side
     high = math.exp(-39.0 * a - M.log_gamma1p(a))     # ordinary side
-    assert M.uses_log(low, a) and not M.uses_log(high, a)
+    assert uses_log(low, a) and not uses_log(high, a)
     lo = struct.unpack("<Q", struct.pack("<d", low))[0]
     hi = struct.unpack("<Q", struct.pack("<d", high))[0]
     while hi - lo > 1:
         mid = (lo + hi) // 2
-        if M.uses_log(struct.unpack("<d", struct.pack("<Q", mid))[0], a):
+        if uses_log(struct.unpack("<d", struct.pack("<Q", mid))[0], a):
             lo = mid
         else:
             hi = mid
     last_log = struct.unpack("<d", struct.pack("<Q", lo))[0]
-    return [step(last_log, n) for n in SEAM_OFFSETS]
+    return [step(last_log, n) for n in offsets]
 
 
 def build(seed=SEED, seam_shapes=SEAM_SHAPES):
@@ -172,6 +187,45 @@ def build(seed=SEED, seam_shapes=SEAM_SHAPES):
     return rows
 
 
+def build_2(seed=SEED_2, seam_shapes=SEAM_SHAPES_2):
+    """The second holdout: the kinds of the first from another seed, a seam
+    probed out to 16,384 units in the last place, and the two shapes where
+    the source of LogGamma(1 + A) changes."""
+    rng = random.Random(seed)
+    rows = []
+
+    def add(kind, points):
+        for i, (p, a, s) in enumerate(points):
+            rows.append({"point_id": f"{kind[:2]}{i:03d}", "kind": kind, "p_bits": bits(p),
+                         "a_bits": bits(a), "s_bits": bits(s), "ref_x": reference(p, a, s)})
+
+    add("underflowed", sample(rng, 120, (-8.0, 0.02), (-1415.0, LOG_MIN_NORMAL - 0.01)))
+    add("log_region", sample(rng, 60, (-8.0, 1.2), (LOG_MIN_NORMAL + 0.01, -40.5), scale=1.0)
+        + sample(rng, 60, (-8.0, 1.2), (LOG_MIN_NORMAL + 0.01, -40.5)))
+    add("seam", [(p, a, 1.0) for a in seam_shapes
+                 for p in seam(a, M.uses_log_2, SEAM_OFFSETS_2)])
+    add("chisquare",
+        sample(rng, 20, (-6.0, 0.0), (LOG_MIN_NORMAL - math.log(2.0) + 0.001, LOG_MIN_NORMAL - 0.001),
+               scale=2.0)
+        + sample(rng, 20, (-6.0, 1.0), (LOG_MIN_NORMAL + 0.01, -40.5), scale=2.0)
+        + sample(rng, 20, (-6.0, 1.0), (-39.5, -20.0), scale=2.0))
+    add("limits",
+        sample(rng, 10, (-8.0, 0.0), (-1415.0, -800.0), final_range=(-1400.0, -760.0))
+        + sample(rng, 10, (-8.0, 0.0), (-1415.0, -800.0), final_range=(-743.0, -709.5))
+        + [(0.25, 1.0, 1e308)] + [(p, 1.0, 1.6e308) for p in (0.75, 0.95, 0.995, 0.99999)])
+    boundary = []
+    for a in BOUNDARY_SHAPES_2:
+        found = 0
+        while found < 5:
+            p = probability(rng, a, -700.0, -41.0)
+            s = None if p is None else scale_for(rng, p, a, -700.0, 700.0)
+            if s is not None:
+                boundary.append((p, a, s))
+                found += 1
+    add("shape_boundary", boundary)
+    return rows
+
+
 def render(rows):
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=FIELDS, lineterminator="\n", restval="")
@@ -189,22 +243,24 @@ def main(argv=None):
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check", action="store_true")
+    ap.add_argument("--holdout", type=int, choices=(1, 2), default=1)
     a = ap.parse_args(argv)
-    text = render(build())
+    grid = GRID if a.holdout == 1 else GRID_2
+    text = render(build() if a.holdout == 1 else build_2())
     if a.check:
-        with open(GRID, encoding="utf-8") as handle:
+        with open(grid, encoding="utf-8") as handle:
             committed = handle.read()
         if identity(committed) != identity(text):
             print("FAIL: the holdout's identity columns differ from a fresh build")
             return 1
         print(f"PASS: {len(identity(text)) - 1} rows match the frozen design")
         return 0
-    if os.path.exists(GRID):
-        print(f"refusing: {GRID} exists; it may hold observations. Use --check.")
+    if os.path.exists(grid):
+        print(f"refusing: {grid} exists; it may hold observations. Use --check.")
         return 1
-    with open(GRID, "w", encoding="utf-8", newline="") as handle:
+    with open(grid, "w", encoding="utf-8", newline="") as handle:
         handle.write(text)
-    print(f"wrote {len(identity(text)) - 1} rows to {GRID}")
+    print(f"wrote {len(identity(text)) - 1} rows to {grid}")
     return 0
 
 

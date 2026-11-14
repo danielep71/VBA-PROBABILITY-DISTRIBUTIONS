@@ -24,7 +24,10 @@ preregistration; the bounds are fixed there and nothing is fitted here.
 Reported, not gating: the worst error by kind and by branch, and whether the
 rows answered in log space stay below PREDICTED.
 
-Usage: python3 holdout_analyze.py [grid.csv]
+The rules serve both holdouts: the first (PREREGISTRATION.md), which was
+rejected on G7, and the second (PREREGISTRATION_2.md, --holdout 2).
+
+Usage: python3 holdout_analyze.py [grid.csv] [--holdout 2]
 Exit 0 only when every rule holds on every row.
 """
 import argparse
@@ -38,9 +41,11 @@ from mpmath import mp, mpf
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 GRID = os.path.join(HERE, "gamma_inverse_scale_grid.csv")
+GRID_2 = os.path.join(HERE, "gamma_inverse_scale_grid2.csv")
 BOUND = mpf("1e-12")          # inverse guarantee of #327
 FORWARD = mpf("5e-13")        # loosest forward contract in the region (#13)
 PREDICTED = mpf("1e-14")
+PREDICTED_2 = mpf("5e-15")
 CROSSOVER = -40.0
 MIN_NORMAL = mpf(2) ** -1022
 MIN_SUBNORMAL = mpf(2) ** -1074
@@ -143,18 +148,21 @@ def analyze(rows):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("grid", nargs="?", default=GRID)
+    ap.add_argument("grid", nargs="?", default=None)
+    ap.add_argument("--holdout", type=int, choices=(1, 2), default=1)
     a = ap.parse_args(argv)
-    with open(a.grid, newline="", encoding="utf-8") as handle:
+    path = a.grid or (GRID if a.holdout == 1 else GRID_2)
+    with open(path, newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     failures, counts, worst = analyze(rows)
     print(f"{len(rows)} rows; counts {dict(sorted(counts.items()))}")
     for key in sorted(worst):
         print(f"   worst relative error, {key}: {mp.nstr(worst[key], 4)}")
     log_worst = worst.get("branch log")
+    predicted = PREDICTED if a.holdout == 1 else PREDICTED_2
     if log_worst is not None:
-        print(f"   prediction (log space below {mp.nstr(PREDICTED, 2)}): "
-              f"{'met' if log_worst < PREDICTED else 'NOT met'}")
+        print(f"   prediction (log space below {mp.nstr(predicted, 2)}): "
+              f"{'met' if log_worst < predicted else 'NOT met'}")
     for line in failures[:40]:
         print("  " + line)
     if len(failures) > 40:

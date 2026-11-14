@@ -22,13 +22,15 @@ DEV_SEED = 1400
 DEV_SEAM_SHAPES = (0.05, 0.3, 3.0)
 
 
-def fill(row):
+def fill(row, version=1):
     """The row as an exact implementation of the rule would export it: the
     model in log space, the correctly rounded reference elsewhere."""
+    uses_log, candidate, log_unit = ((M.uses_log, M.candidate, M.log_unit) if version == 1 else
+                                     (M.uses_log_2, M.candidate_2, M.log_unit_2))
     p, a, s = (B.from_bits(row[k]) for k in ("p_bits", "a_bits", "s_bits"))
     out = dict(row)
-    if M.uses_log(p, a):
-        value = M.candidate(p, a, s)
+    if uses_log(p, a):
+        value = candidate(p, a, s)
     elif row["ref_x"] == "NUM":
         value = None
     else:
@@ -36,7 +38,7 @@ def fill(row):
     out["gamma_inv"] = "CVERR" if value is None else B.bits(value)
     out["chi_inv"] = out["gamma_inv"] if s == 2.0 else "NA"
     out["gamma_cdf"] = B.bits(p) if value is not None and value >= M.MIN_NORMAL else "NA"
-    out["log_unit"] = B.bits(M.log_unit(p, a))
+    out["log_unit"] = B.bits(log_unit(p, a))
     return out
 
 
@@ -180,6 +182,83 @@ class Rules(Fixture):
         for r in [r for r in rows if r["kind"] == "seam"][:13]:
             r["log_unit"] = B.bits(-41.0)
         self.assertTrue(any(f.startswith("G7") for f in self.verdict(rows)))
+
+
+class FirstVerdict(unittest.TestCase):
+    """The first holdout as Excel exported it: rejected, on G7 alone."""
+
+    def test_the_first_holdout_is_rejected_on_the_seam_rule_only(self):
+        import csv
+        with open(B.GRID, newline="", encoding="utf-8") as handle:
+            failures = A.analyze(list(csv.DictReader(handle)))[0]
+        self.assertEqual(len(failures), 5)
+        self.assertTrue(all(f.startswith("G7") for f in failures), failures)
+        self.assertEqual(sorted(f.split("shape ")[1].split(":")[0] for f in failures),
+                         ["0.5", "1.0", "15.0", "2.5", "7.0"])
+
+
+class SecondCandidate(unittest.TestCase):
+    DEV_SEAM_SHAPES = (0.05, 0.3, 1.2, 3.0)
+
+    @classmethod
+    def setUpClass(cls):
+        mp.dps = 60
+        cls.rows = [fill(r, 2) for r in B.build_2(seed=DEV_SEED, seam_shapes=cls.DEV_SEAM_SHAPES)]
+
+    def test_the_committed_grid_is_the_design(self):
+        self.assertEqual(B.main(["--check", "--holdout", "2"]), 0)
+
+    def test_sizes_and_no_point_of_the_first_holdout(self):
+        rows = B.build_2()
+        kinds = [r["kind"] for r in rows]
+        self.assertEqual([kinds.count(k) for k in ("underflowed", "log_region", "seam", "chisquare",
+                                                   "limits", "shape_boundary")],
+                         [120, 120, 170, 60, 25, 30])
+        self.assertEqual(len({r["point_id"] for r in rows}), 525)
+        key = ("p_bits", "a_bits", "s_bits")
+        first = {tuple(r[k] for k in key) for r in B.build()}
+        self.assertEqual(first & {tuple(r[k] for k in key) for r in rows}, set())
+
+    def test_the_seam_reaches_far_on_both_sides(self):
+        for a in self.DEV_SEAM_SHAPES:
+            probes = B.seam(a, M.uses_log_2, B.SEAM_OFFSETS_2)
+            self.assertEqual(probes, sorted(probes))
+            self.assertEqual([M.uses_log_2(p, a) for p in probes], [True] * 9 + [False] * 8)
+            # The first holdout missed by about 7E-15 in L0; this reaches further.
+            self.assertLess(M.log_unit_2(probes[0], a), -40.0 - 1e-13)
+            self.assertGreater(M.log_unit_2(probes[-1], a), -40.0 + 1e-13)
+
+    def test_log_gamma1p_is_accurate_up_to_shape_two(self):
+        worst = mpf(0)
+        for k in range(1, 400):
+            a = 2.0 * k / 400.0
+            exact = mp.loggamma(1 + mpf(a))
+            if exact != 0:
+                worst = max(worst, abs(mpf(M.log_gamma1p_2(a)) - exact) / abs(exact))
+        self.assertLess(worst, mpf("1e-15"))
+        self.assertEqual(M.log_gamma1p_2(1.0), 0.0)
+
+    def test_the_first_holdout_as_development_data(self):
+        # Revealed by the first verdict, so development data for the second
+        # candidate: the model in log space against the references.
+        import csv
+        worst = mpf(0)
+        with open(B.GRID, newline="", encoding="utf-8") as handle:
+            for r in csv.DictReader(handle):
+                p, a, s = (B.from_bits(r[k]) for k in ("p_bits", "a_bits", "s_bits"))
+                if r["ref_x"] in ("NUM", "ZERO") or not M.uses_log_2(p, a):
+                    continue
+                ref = mpf(r["ref_x"])
+                if ref >= A.MIN_NORMAL:
+                    worst = max(worst, abs(mpf(M.candidate_2(p, a, s)) - ref) / ref)
+        self.assertLess(worst, mpf("1e-15"))
+
+    def test_the_model_passes_every_rule(self):
+        self.assertEqual(A.analyze(self.rows)[0], [])
+
+    def test_a_blank_grid_is_rejected(self):
+        blank = B.build_2(seed=DEV_SEED, seam_shapes=self.DEV_SEAM_SHAPES)
+        self.assertEqual(len(A.analyze(blank)[0]), len(blank))
 
 
 if __name__ == "__main__":

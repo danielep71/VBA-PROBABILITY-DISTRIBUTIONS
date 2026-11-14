@@ -102,3 +102,38 @@ def exact(p, a, scale=1.0, digits=60):
                 + x ** 3 / ((fa + 1) * (fa + 2) * (fa + 3))
             x = mp.exp(log0 + (x - mp.log(series)) / fa)
         return x * mpf(scale)
+
+
+# --------------------------------------------------------------------------
+# Second candidate (PREREGISTRATION_2.md): LogGamma(1 + A) from the degree-32
+# polynomial PROB_GammaSmallLogGamma1p up to shape 2, which route_model
+# reproduces bit for bit, and from PROB_TryLogGamma1p above it.
+
+def log_gamma1p_2(a):
+    if a <= 1.0:
+        return rm.small_log_gamma1p(a)
+    if a <= 2.0:
+        # Gamma(1 + A) = A Gamma(A), and A - 1 is exact for A in (1, 2]
+        return rm.add(rm.small_log_gamma1p(rm.sub(a, 1.0)), math.log(a))
+    return log_gamma1p(a)
+
+
+def log_unit_2(p, a):
+    return rm.div(rm.add(math.log(p), log_gamma1p_2(a)), a)
+
+
+def uses_log_2(p, a):
+    return log_unit_2(p, a) <= CROSSOVER
+
+
+def candidate_2(p, a, scale):
+    lh, ll = _log_pair(p)
+    nh, nl = rm.pair_add(lh, ll, log_gamma1p_2(a), 0.0)
+    qh, ql = rm.pair_div(nh, nl, a)
+    sh, sl = _log_pair(scale)
+    fh, fl = rm.pair_add(qh, ql, sh, sl)
+    try:
+        e = math.exp(fh)
+    except OverflowError:
+        return None
+    return rm.add(e, rm.mul(e, fl))

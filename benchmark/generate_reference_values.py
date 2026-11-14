@@ -1210,11 +1210,13 @@ def build_gamma_inverse_scale_rows():
 
     def unit_quantile(p, a):
         log0 = (mp.log(p) + mp.loggamma(1 + a)) / a
-        x = mp.e ** log0
-        for _ in range(4):
+
+        def refine(x):
             series = 1 + x / (a + 1) + x * x / ((a + 1) * (a + 2))
-            x = mp.e ** (log0 + (x - mp.log(series)) / a)
-        return x
+            return mp.e ** (log0 + (x - mp.log(series)) / a)
+
+        # Four steps from the leading term; each gains the size of x in digits.
+        return refine(refine(refine(refine(mp.e ** log0))))
 
     def row(func, args, unit, factor):
         ref = unit * factor
