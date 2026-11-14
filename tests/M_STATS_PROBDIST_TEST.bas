@@ -657,6 +657,8 @@ Private Sub RunTFamilySuite()
     TimingLap "Test_TF_StudentTLargeDFTail"
     Test_TF_StudentTLargeDFQuantile
     TimingLap "Test_TF_StudentTLargeDFQuantile"
+    Test_TF_StudentTAboveEight
+    TimingLap "Test_TF_StudentTAboveEight"
     Test_TF_ChiSquareDensity
     TimingLap "Test_TF_ChiSquareDensity"
     Test_TF_ChiSquareCumulative
@@ -4431,6 +4433,74 @@ Private Sub Test_TF_FInverse()
     AssertRoundTripF "F round-trip p=0.5 df=(1,1)", 0.5, 1#, 1#
     AssertRoundTripF "F round-trip p=0.99 df=(10,4)", 0.99, 10#, 4#
     AssertRoundTripF "F round-trip p=0.975 df=(100,1000)", 0.975, 100#, 1000#
+End Sub
+
+
+Private Sub Test_TF_StudentTAboveEight()
+'
+'==============================================================================
+' Test_TF_StudentTAboveEight
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the Student-t tail just above |t| = 8 at large df, and the
+'   inverse at the seam (#213): the continued fraction at a rounded argument
+'   was wrong by up to 8E-10 there, and pulled the inverse off by 1.3E-12.
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' NOTES
+'   - References are 80-digit values of I_z(df/2, 1/2) / 2 and of its
+'     inverse (benchmark/student_t_large_df_study/above8_study.py).
+'   - Tolerances are the guarantees of the accuracy policy: 1E-13 forward,
+'     1E-12 inverse.
+'   - 8.000000000000002 is the Double above 8.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunTFamilySuite
+'
+' UPDATED
+'   2026-11-14
+'==============================================================================
+'
+    Const TOL_A8_FWD        As Double = 0.0000000000001   '1E-13 relative
+    Const TOL_A8_INV        As Double = 0.000000000001    '1E-12 relative
+
+    Dim Dfs                 As Variant         'Degrees of freedom at the seam
+    Dim I                   As Long            'Index
+
+    Debug.Print "-- Student t above |t| = 8 at large df"
+
+    AssertRelClose "A8 t sf(8+ulp,1e7)", _
+        K_STATS_StudentT_Survival(8.000000000000002, 10000000#), 6.2216174014033E-16, TOL_A8_FWD
+    AssertRelClose "A8 t sf(8.25,1e7)", _
+        K_STATS_StudentT_Survival(8.25, 10000000#), 7.92067034542733E-17, TOL_A8_FWD
+    AssertRelClose "A8 t sf(10,1e5)", _
+        K_STATS_StudentT_Survival(10#, 100000#), 7.81650765010364E-24, TOL_A8_FWD
+    AssertRelClose "A8 t sf(10,1e8)", _
+        K_STATS_StudentT_Survival(10#, 100000000#), 7.62004731512392E-24, TOL_A8_FWD
+
+    'The survival does not rise across the seam
+    Dfs = Array(100000#, 1000000#, 10000000#, 100000000#)
+    For I = 0 To UBound(Dfs)
+        AssertTrue "A8 t sf monotone across 8, df=" & CStr(Dfs(I)), _
+            K_STATS_StudentT_Survival(8.000000000000002, Dfs(I)) <= _
+            K_STATS_StudentT_Survival(8#, Dfs(I))
+    Next I
+
+    'The inverse at the lower-tail probabilities of t = -8 and the Double
+    'above it, at the df where it was off by 1.3E-12
+    AssertRelClose "A8 t inv(6.22161740140339e-16,1e7)", _
+        K_STATS_StudentT_InverseCumulative(6.22161740140339E-16, 10000000#), -8#, TOL_A8_INV
+    AssertRelClose "A8 t inv(6.22161740140344e-16,1e7)", _
+        K_STATS_StudentT_InverseCumulative(6.22161740140344E-16, 10000000#), _
+        -7.99999999999999, TOL_A8_INV
 End Sub
 
 

@@ -122,6 +122,13 @@ df = 1E7, for t = -8 and t = -8 + 1 ulp. That is inside the domain of
 `|q| <= 8`). The continued fraction serves `|t| > 8` and overestimates the
 survival there, and the polish does not run above 8.
 
+**Resolved 2026-11-14.** The cause was the conditioning of the continued
+fraction in an argument rounded near one, not the fraction itself. For
+`df >= 1E5` and `|t| > 8` the tail now gives it the argument as an exact
+pair; the inverse was not edited and is within 1.2E-15 at those rows
+(`benchmark/student_t_large_df_study/ABOVE8_RESULT.md`). The choice below is
+kept as the record of what was considered.
+
 Choose one:
 
 - fix the inverse by bracketing at 8 and polishing, with its own

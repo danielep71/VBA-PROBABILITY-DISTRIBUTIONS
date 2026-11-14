@@ -193,6 +193,7 @@ Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; v
 'test_vba_large_df_source.py checks every pair. Do not retype or round them.
 Private Const PROB_T_LDF_MIN_DF   As Double = 100000#  'Smallest df the expansion serves
 Private Const PROB_T_LDF_MAX_ABS_T As Double = 8#      'Largest Abs(X) the expansion serves
+Private Const PROB_T_NEAR_ONE_MAX_ABS_T As Double = 1E+100 'Largest Abs(X) squared directly above it (#213)
 Private Const PROB_T_INV_SQRT_TWO_PI As Double = _
     0.398942280401433 - 2.77555756156289E-16
 Private Const PROB_T_LDF_G1_0 As Double = 0.25
@@ -2356,6 +2357,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TF_TryStudentTCentralMass
 '   - PROB_TF_TrySquareRatioPair
 '   - PROB_TryBetaRegularized
+'   - PROB_TryBetaLowerNearOne
 '   - PROB_TryDivide
 '   - PROB_PI
 '
@@ -2365,7 +2367,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TryStudentTInvTail
 '
 ' UPDATED
-'   2026-07-21
+'   2026-11-14
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2463,6 +2465,22 @@ Private Function PROB_TryStudentTTail( _
             Result = PROB_TF_StudentTLargeDFTail(AbsX, DegreesFreedom)
             PROB_TryStudentTTail = True
             Exit Function
+        End If
+
+    'Above the expansion's range at large df the beta argument is within
+    '1E-5 of one, and the continued fraction at a rounded argument loses up
+    'to 8E-10 relative there (#213). Form the small member directly - the
+    'square is harmless at this size - and let the fraction take its
+    'complement as an exact pair. Where that route declines, the general
+    'route below answers as before
+        If DegreesFreedom >= PROB_T_LDF_MIN_DF And AbsX <= PROB_T_NEAR_ONE_MAX_ABS_T Then
+            BetaY = AbsX * AbsX
+            BetaY = BetaY / (DegreesFreedom + BetaY)
+            If PROB_TryBetaLowerNearOne(BetaY, 0.5 * DegreesFreedom, 0.5, Ibeta) Then
+                Result = 0.5 * Ibeta
+                PROB_TryStudentTTail = True
+                Exit Function
+            End If
         End If
 
         If Not PROB_TF_TrySquareRatioPair( _
