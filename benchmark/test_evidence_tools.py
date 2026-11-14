@@ -79,6 +79,7 @@ commands = (
     ("gamma_inverse_scale_study/test_holdout.py",),
     ("gamma_inverse_scale_study/holdout_build.py", "--check"),
     ("gamma_inverse_scale_study/holdout_build.py", "--check", "--holdout", "2"),
+    ("gamma_inverse_scale_study/holdout_analyze.py", "--holdout", "2"),
     ("gamma_cache_study/test_cache_vba.py",),
     ("gamma_recurrence_study/test_prepare.py",),
     ("gamma_route_study/analyze_b64_fit.py", "--check"),

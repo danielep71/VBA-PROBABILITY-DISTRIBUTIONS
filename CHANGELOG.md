@@ -97,6 +97,16 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma inverse at the final scale: result (#14)
+
+- The second holdout is accepted: its seven rules hold on all 525 rows
+  (`benchmark/gamma_inverse_scale_study/RESULT_2.md`). In log space the
+  worst relative error is 2.1E-16 up to shape 2 and 7.6E-15 above it.
+- The four contracts of `scaled_quantile_from_underflowed_unit` meet their
+  target of 1E-14.
+- A Gamma inverse at shape 0.001 takes about 0.02 ms, where it took more
+  than a second.
+
 ### Gamma inverse at the final scale: second registration (#14)
 
 - The first candidate was rejected by its own seam rule: at five shapes the
