@@ -119,3 +119,25 @@ now takes one to four minutes.
 - Nothing about the Student-t path: see above.
 - No row with a shape above 3E9 or a probability beyond 1E-11 from 0 or 1.
 - The cost on other hosts. It was measured on one runner.
+
+## After the verdict: the seed where the target rounds to one
+
+Review of pull request 358 found that `K_STATS_Beta_InverseCumulative(1E-20,
+100, 2)` returned `#VALUE!` with the candidate. The lower tail at 1/2 is
+about 4E-29, so the routine solves for the other member; that member's
+lower-tail target is `1 - 1E-20`, which is one in binary64, and the normal
+seed has no quantile there. The source before the change answered
+0.6080769921891604. `tail_aware_model.py` fails at the same point; it is
+left as the record of the screen.
+
+`f6b26cd` takes the seed's normal quantile from the upper tail in that case
+alone, and adds one assertion with a 120-digit reference. No row of this
+holdout has such a target. Run 43618326390 on `f6b26cd` exported the
+holdout, the main grid and the consolidated holdout again: all three came
+back with the same bytes, and the regression passed 1,941 of 1,941
+assertions (evidence `40413b7`). The verdict and every figure above stand for
+`f6b26cd`.
+
+What this adds to "what this does not show": the holdout had no row whose
+complement rounds to one. The rule was wrong there and nothing I had
+registered would have found it.
