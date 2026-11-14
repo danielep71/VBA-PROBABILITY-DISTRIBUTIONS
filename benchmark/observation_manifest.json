@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-14T20:32:21Z",
-  "commit_sha": "9c4821c",
+  "generated_utc": "2026-11-14T22:11:48Z",
+  "commit_sha": "755b072",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -66,7 +66,7 @@
     "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:8e4dda5287bcdd71e2466ade4018dd0b9b5f4c4831c701d5ea76f04b051f4b28",
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:6f74bfce601d011808ab8e5025133a1447f94a7215c11909b613f236cc835b7d",
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:09ee96e74e65861ecdf506e793e1a31e116048deb757a7ec7ca7582786c5c77d",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:54b34fb9111037a4432c6c7066a646e8c13953607d973bdbed01425703a57bc2"
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:79e1512582b4ba9155f5295672ee604845b872654a45fe323bb1d5397fd631ba"
   },
   "contract_registry_sha256": "sha256:ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90",
   "environment": {

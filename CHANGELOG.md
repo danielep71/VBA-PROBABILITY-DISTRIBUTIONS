@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Gamma and Chi-square representability: the parent's inverse counterexamples (#11)
+
+- Three assertions hold the inverse counterexamples of the parent issue: `K_STATS_Gamma_InverseCumulative(0.912063476068496, 1E-4, 1E100)` returns 1.00000000000068E-300 and its cumulative returns the probability; `K_STATS_ChiSquare_InverseCumulative(0.92824867943255, 2E-4)` returns a positive subnormal, not zero. The forward counterexamples were already held. The regression has 1,955 assertions, the fast suite 1,011.
+
 ### Student-t above |t| = 8 at large df: result (#213)
 
 - Accepted in Excel. The survival at the Double above 8 is within 3.4E-15 at df 1E5 to 1E8, where it was wrong by 4.3E-13 to 7.8E-10; it no longer rises across the seam; the inverse near `q = -8` at df = 1E7 is within 1.2E-15, where it was 1.29E-12 off. No observation of the main grid or of the consolidated holdout changed. Record: `benchmark/student_t_large_df_study/ABOVE8_RESULT.md`.
