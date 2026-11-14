@@ -1364,6 +1364,7 @@ The library is particularly suited to:
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
 - Gamma, Chi-square and Poisson probabilities take about 0.06 to 0.23 ms per call in the measured Excel run, for shapes from 0.0001 to 10,000, and are held to 1E-13 relative. Three cases still use double-double arithmetic: an upper tail below `X = Shape + 1` when the lower tail exceeds 0.9 and results below 1E-290, at 13 to 400 ms per call, and the inverses for shapes below 0.01 whose unit-scale quantile is above `exp(-40)`, at up to a second; a smaller quantile is formed in log space in about 0.02 ms (#14). Shapes above 1E15 use it too. A Gamma or Chi-square inverse takes 0.05 to 2 ms up to shape 100 and about 20 ms at shape 10,000. Timing is host-dependent; see the [measurements and their exceptions](benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md);
+- a Beta or F inverse takes 0.6 to 28 ms per call in the measured Excel run, 6 to 580 times what it took before the pair reconstruction of #35, which brought the F inverse with degrees of freedom far apart from 1E-8 to below 1E-14 relative. The balanced cases are the slowest. See the [measurements](benchmark/f_inverse_large_df_study/production/PRODUCTION_RESULT.md);
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
 - a self-hosted Excel runner must be online and correctly configured for CI execution;

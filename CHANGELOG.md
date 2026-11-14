@@ -97,6 +97,12 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Beta inverse, pair reconstruction: result (#35)
+
+- Accepted on the production holdout: all 126 rows hold the registered rules in Excel. On the sixteen reserved F points the worst error goes from 1.56E-10 to 2.55E-15, on the far tails from 3.54E-9 to 1.77E-15. 39 observations of the main grid and 41 of the consolidated holdout changed; every contract holds unchanged. Record: `benchmark/f_inverse_large_df_study/production/PRODUCTION_RESULT.md`.
+- **Slower.** A Beta or F inverse now takes 0.6 to 28 ms per call, 6 to 580 times what it took. I had predicted two to ten times. The README states the cost.
+- The 66 Student-t rows return the same Doubles: at those arguments the Student-t inverse does not reach the changed routine.
+
 ### Beta inverse, pair reconstruction: candidate (#35)
 
 - `PROB_TryBetaInvRegularized`, which serves the Beta, F and small-df Student-t inverses, solves for the member of the pair `(x, 1 - x)` that is at most 1/2, forms its Newton residual on the smaller probability tail with a continued fraction carried as pairs of Doubles, and settles when the two neighbouring Doubles bracket the root. Before, the F inverse with degrees of freedom far apart was wrong by up to 1E-8 relative. The verdict is that of `benchmark/f_inverse_large_df_study/production/PRODUCTION_PREREGISTRATION.md` and is recorded with the Excel wave of this commit.
