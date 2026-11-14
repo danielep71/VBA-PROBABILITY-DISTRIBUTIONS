@@ -16,8 +16,11 @@
       "issue": 13,
       "class": "numerical_defect",
       "gate": null,
-      "status": "open",
-      "summary": "Gamma/Chi-square density, CDF and survival lose a positive standardized argument"
+      "status": "resolved",
+      "summary": "Gamma/Chi-square density, CDF and survival lose a positive standardized argument",
+      "resolution": {
+        "evidence": "All six surfaces recover a positive standardized argument (#342, #344). The cumulative rule is Amendment 1 of benchmark/positive_ratio_subnormal, confirmed on a second holdout (#343; AMENDMENT_1_RESULT.md). Six contracts and 54 main-grid rows hold the regimes at 5E-13 (worst 9.07E-14; Excel run 43526949985 on dbc1fdc). No existing observation changed in any of the four waves."
+      }
     },
     {
       "issue": 14,

@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-13T22:47:43Z",
-  "commit_sha": "3d1f5f8",
+  "generated_utc": "2026-11-13T23:36:16Z",
+  "commit_sha": "dbc1fdc",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -30,7 +30,7 @@
     "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:5a81a5994da653719e525e4b942a6f0a18c460e1c3459cc338f01bd8321e0385",
     "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:ca1ba41e77a1020ea4cbc4adeeffab80e03f3b373730eff9835bc71f244ede81"
   },
-  "contract_registry_sha256": "sha256:a253fd89c53eadc0563ee0e305be76c748a3da783c0d5842fbad93af3d57177d",
+  "contract_registry_sha256": "sha256:a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67",
   "environment": {
     "excel_version": "16.0",
     "excel_build": "20430",

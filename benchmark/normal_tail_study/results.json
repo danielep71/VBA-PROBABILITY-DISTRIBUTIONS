@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-13T14:13:58Z",
+ "generated_utc": "2026-11-13T23:24:02Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -50,7 +50,7 @@
    },
    "accuracy_contracts.csv": {
     "role": "input: the P4 contracts",
-    "sha256": "a253fd89c53eadc0563ee0e305be76c748a3da783c0d5842fbad93af3d57177d"
+    "sha256": "a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67"
    },
    "student_t_large_df_study/results.json": {
     "role": "input: the A7 route points",
@@ -3563,7 +3563,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 40.8,
+ "runtime_s": 38.9,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3759,6 +3759,14 @@
     "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4",
     "survival_boundary/survival_boundary_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 00c8a94ecca9096ca0673dbd2bf9e9456c030194e259b1726da87c66995cc3eb",
     "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded None, now b7a01e9e616674a5fa0534963badccfb3d498a12a88b20ae5952fceb77e27e99"
+   ]
+  },
+  {
+   "utc": "2026-11-13T23:23:24Z",
+   "reason": "accuracy_contracts.csv gained the six positive-ratio contract rows of #13; no normal-family contract or bound grid row changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "accuracy_contracts.csv (input: the P4 contracts): recorded a253fd89c53eadc0563ee0e305be76c748a3da783c0d5842fbad93af3d57177d, now a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67"
    ]
   }
  ]

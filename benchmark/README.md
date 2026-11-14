@@ -139,7 +139,7 @@ Where a contract comes from:
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**167 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**173 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 The **guarantee** gates the release; the **measured target** is the registry threshold, reported beside it ([accuracy_tiers.py](accuracy_tiers.py)).
 
@@ -176,11 +176,14 @@ The **guarantee** gates the release; the **measured target** is the registry thr
 | Binomial_Variance.all.output_rel | Binomial_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | ChiSquare_Cumulative.all.output | ChiSquare_Cumulative | all | output_error | relative | 2.6E-10 | 2.6E-10 | validated and frozen |
 | ChiSquare_Cumulative.envelope_domain.output_rel | ChiSquare_Cumulative | envelope_domain | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
+| ChiSquare_Cumulative.positive_ratio_subnormal.output_rel | ChiSquare_Cumulative | positive_ratio_subnormal | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | ChiSquare_Density.all.output_rel | ChiSquare_Density | all | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
 | ChiSquare_Density.large_shape.output_rel | ChiSquare_Density | large_shape | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
+| ChiSquare_Density.positive_ratio_subnormal.output_rel | ChiSquare_Density | positive_ratio_subnormal | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | 4.7E-12 | validated and frozen |
 | ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | 2.6E-10 | validated and frozen |
 | ChiSquare_Survival.envelope_domain.output_rel | ChiSquare_Survival | envelope_domain | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
+| ChiSquare_Survival.positive_ratio_hard_underflow.output_rel | ChiSquare_Survival | positive_ratio_hard_underflow | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | DiscreteUniform_Cumulative.all.output_rel | DiscreteUniform_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | DiscreteUniform_InverseCumulative.all.output_abs | DiscreteUniform_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |
 | DiscreteUniform_LogPMF.all.output_rel | DiscreteUniform_LogPMF | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
@@ -209,14 +212,17 @@ The **guarantee** gates the release; the **measured target** is the registry thr
 | Gamma_Cumulative.all.output | Gamma_Cumulative | all | output_error | relative | 1E-13 | 3E-15 | validated and frozen |
 | Gamma_Cumulative.extreme_shape.output_rel | Gamma_Cumulative | extreme_shape | output_error | relative | 2E-12 | 2E-12 | validated and frozen |
 | Gamma_Cumulative.large_shape.output_rel | Gamma_Cumulative | large_shape | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Gamma_Cumulative.positive_ratio_subnormal.output_rel | Gamma_Cumulative | positive_ratio_subnormal | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | Gamma_Density.all.output | Gamma_Density | all | output_error | relative | 1E-13 | 2E-14 | validated and frozen |
 | Gamma_Density.large_shape.output_rel | Gamma_Density | large_shape | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Gamma_Density.positive_ratio_subnormal.output_rel | Gamma_Density | positive_ratio_subnormal | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | Gamma_InverseCumulative.all.output | Gamma_InverseCumulative | all | output_error | relative | 1E-12 | 2E-14 | validated and frozen |
 | Gamma_Mean.all.output | Gamma_Mean | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | Gamma_StdDev.all.output | Gamma_StdDev | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | Gamma_Survival.all.output | Gamma_Survival | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | Gamma_Survival.extreme_shape.output_rel | Gamma_Survival | extreme_shape | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | Gamma_Survival.large_shape.output_rel | Gamma_Survival | large_shape | output_error | relative | 2E-13 | 2E-13 | validated and frozen |
+| Gamma_Survival.positive_ratio_hard_underflow.output_rel | Gamma_Survival | positive_ratio_hard_underflow | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | Gamma_Variance.all.output | Gamma_Variance | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | Geometric_Cumulative.all.output_rel | Geometric_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | Geometric_InverseCumulative.all.output_abs | Geometric_InverseCumulative | all | output_error | absolute | 1E-9 | 1E-9 | validated and frozen |

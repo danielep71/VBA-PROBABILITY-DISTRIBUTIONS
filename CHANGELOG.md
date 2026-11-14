@@ -97,6 +97,14 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Accuracy contracts for the positive-ratio regimes (#13)
+
+- Six contracts make the region repaired by #13 visible to the accuracy gate:
+  `positive_ratio_subnormal` for the Gamma and Chi-square densities and
+  cumulatives, and `positive_ratio_hard_underflow` for the two survivals.
+  Each is held to 5E-13 relative, registered before the Excel export.
+- The main grid gains 54 rows in those regimes. No existing row changes.
+
 ### Slow production batteries apart from the pull-request regression
 
 - `Test_PublicGamma_Integration`, the bit-level regression of the public
