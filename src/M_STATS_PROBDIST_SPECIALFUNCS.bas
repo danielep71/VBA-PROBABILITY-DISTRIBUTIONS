@@ -2516,6 +2516,10 @@ Public Function PROB_TryBetaInvRegularized( _
 '     cancellation.
 '   - A Newton step that returns the current iterate settles when the two
 '     adjacent Doubles bracket the root and neither has a smaller residual.
+'   - Where the lower-tail target of the member chosen that way rounds to
+'     one, or the evaluation at 1/2 fails, the routine before #35 answers
+'     unchanged: it solves on the smaller
+'     probability tail with PROB_TryBetaRegularized and no stagnation guard.
 '   - Returns both X and Y so that callers such as the F quantile, which needs
 '     X / Y, do not have to re-derive the small one by subtraction. This is what
 '     lets F.INV reach 1E+34.
@@ -2554,6 +2558,8 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim ResidualBelow       As Double          'Residual at Below
     Dim ResidualAbove       As Double          'Residual at Above
     Dim Stagnated           As Boolean         'TRUE when the stagnation guard settles
+    Dim Legacy              As Boolean         'TRUE where the routine before #35 answers
+    Dim Ibeta               As Double          'I_U(Sa, Sb), on the legacy path
     Dim RoundTrip           As Double          'Forward probability at the root
     Dim TailMass            As Double          'Min(Probability, Complement)
     Dim Sa                  As Double          'Shape parameter of the solved tail
@@ -2601,7 +2607,13 @@ Public Function PROB_TryBetaInvRegularized( _
 '------------------------------------------------------------------------------
     'Solve for X when X <= 1/2, that is when Probability <= I_(1/2)(A, B), and
     'for Y otherwise: the member solved for is the small one (#35)
-        If Not PROB_TryBetaTailsPair(0.5, A, B, HalfLower, HalfUpper, FailMsg) Then Exit Function
+    'An evaluation at 1/2 that fails decides nothing: the routine before #35
+    'did not make it, and answers instead (below)
+        Legacy = Not PROB_TryBetaTailsPair(0.5, A, B, HalfLower, HalfUpper, FailMsg)
+        If Legacy Then
+            FailMsg = vbNullString
+            HalfLower = 0#
+        End If
 
         If Probability <= HalfLower Then
             SolveDirect = True
@@ -2617,6 +2629,28 @@ Public Function PROB_TryBetaInvRegularized( _
             TargetUpper = Probability
         End If
 
+    'Where the solved member's lower-tail target rounds to one - a probability
+    'or a complement within 2^-53 of zero whose quantile lies on the far side
+    'of 1/2 - the rule of #35 was never validated and its seed has no
+    'information. There the routine is the one before #35, unchanged: solve
+    'on the smaller probability tail with the binary64 forward function
+        If TargetLower >= 1# Then Legacy = True
+        If Legacy Then
+            If Probability <= ComplementProbability Then
+                SolveDirect = True
+                Sa = A
+                Sb = B
+                TargetLower = Probability
+                TargetUpper = ComplementProbability
+            Else
+                SolveDirect = False
+                Sa = B
+                Sb = A
+                TargetLower = ComplementProbability
+                TargetUpper = Probability
+            End If
+        End If
+
     'Match the smaller probability tail of the solved member, so the residual
     'keeps its relative precision. The seed uses the lower tail either way
         MatchLower = (TargetLower <= TargetUpper)
@@ -2630,13 +2664,7 @@ Public Function PROB_TryBetaInvRegularized( _
 '------------------------------------------------------------------------------
     'Use the AS 109 normal approximation when both shapes exceed one
         If Sa > 1# And Sb > 1# Then
-            'A lower-tail target that rounds to one has no normal quantile;
-            'its upper tail does, by symmetry
-            If Target < 1# Then
-                Z = PROB_NormalInvCDFRaw(Target)
-            Else
-                Z = -PROB_NormalInvCDFRaw(TargetUpper)
-            End If
+            Z = PROB_NormalInvCDFRaw(Target)
             R = (Z * Z - 3#) / 6#
             S1 = 1# / (2# * Sa - 1#)
             S2 = 1# / (2# * Sb - 1#)
@@ -2664,7 +2692,10 @@ Public Function PROB_TryBetaInvRegularized( _
     'Iterate
         For IterIdx = 1 To PROB_INV_MAX_ITER
             'Evaluate the objective on the matched tail
-                If MatchLower Then
+                If Legacy Then
+                    If Not PROB_TryBetaRegularized(U, 1# - U, Sa, Sb, Ibeta, FailMsg) Then Exit Function
+                    Residual = Ibeta - Target
+                ElseIf MatchLower Then
                     If Not PROB_TryBetaInvResidual( _
                         U, Sa, Sb, True, TargetLower, Residual, FailMsg) Then Exit Function
                 Else
@@ -2697,7 +2728,7 @@ Public Function PROB_TryBetaInvRegularized( _
             'Doubles bracket the root and neither has a smaller residual.
             'Checked before the bracket test, which would otherwise send a
             'settled iterate on a distant bisection
-                    If UNew = U And U > 0# And U < 1# Then
+                    If Not Legacy And UNew = U And U > 0# And U < 1# Then
                         Below = PROB_BP_Adjacent(U, False)
                         Above = PROB_BP_Adjacent(U, True)
                         If Below > 0# And Above < 1# Then

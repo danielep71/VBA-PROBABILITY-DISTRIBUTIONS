@@ -97,9 +97,9 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
-### Beta inverse, pair reconstruction: seed where the target rounds to one (#35)
+### Beta inverse, pair reconstruction: probabilities within 2^-53 of zero (#35)
 
-- `K_STATS_Beta_InverseCumulative(1E-20, 100, 2)` returned `#VALUE!` with the candidate: the solved member's lower-tail target is `1 - 1E-20`, which rounds to one, and the normal seed has no quantile there. The seed now takes it from the upper tail in that case alone. Found in review of the pull request. One assertion added: the regression has 1,941 assertions, the fast suite 997.
+- With the candidate, `K_STATS_Beta_InverseCumulative(1E-20, 100, 2)` returned `#VALUE!` and `K_STATS_Beta_InverseCumulative(1E-200, 1000, 1)` did not converge: the quantile is above 1/2, so the new rule solved for the other member, whose lower-tail target `1 - p` rounds to one. Both found in review of the pull request. A sweep of the Python model then showed the new rule unreliable across that regime. There, and where the evaluation at 1/2 fails, `PROB_TryBetaInvRegularized` now runs the routine it had before #35, unchanged. Everywhere else it is the accepted candidate. The pair reconstruction of #35 is therefore not corrected for a probability or complement below 2^-53 whose quantile lies on the far side of 1/2. Two assertions added: the regression has 1,942 assertions, the fast suite 998.
 
 ### Beta inverse, pair reconstruction: result (#35)
 
