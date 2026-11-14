@@ -146,9 +146,24 @@ regimes above are the measured instance: 3.2E-14. The holdout has no failure
 in this corner, and the acceptance rules are not retuned for it. A wider
 margin there would need its own registration.
 
+## A correction after the verdict: the shape ceiling
+
+A review of pull request #347 found that the registration's "no shape
+ceiling" was wrong: near `X = A` the route's exponent loses accuracy in
+proportion to the shape, and from about 1E18 the tail misses the bound of
+1E-13 without the routine declining. No row of the holdout, the sweep or the
+main grid is that large, so the verdict above did not see it.
+
+Addendum 2 of the preregistration records the measurement and the
+correction: shapes above 1E15 are delegated to the kernel. The verdict above
+was computed on `c7042c5`, without the ceiling. No holdout row has a
+shape above it, so the corrected candidate must return the same grid bit for
+bit. The evidence commit that follows the corrected candidate records that
+export, and CI recomputes the verdict on it.
+
 ## What stays with the kernel
 
-As registered: an upper tail below `X = A + 1` when the lower tail exceeds
+Shapes above 1E15, by Addendum 2. As registered: an upper tail below `X = A + 1` when the lower tail exceeds
 0.9, any directly returned tail below 1E-290, the inverses for shapes below
 0.01, and any call the binary64 routine declines. Their accuracy and their
 cost are unchanged.

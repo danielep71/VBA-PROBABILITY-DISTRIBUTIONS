@@ -18,9 +18,11 @@ A directly returned tail must be at least FLOOR, so that a result near the
 bottom of the Double range keeps the behaviour of the double-double kernel.
 A complemented tail has no floor: 1 - value is then exactly one.
 
-There is no shape ceiling. The binary64 routines decline by themselves where
-their arithmetic would leave the normal range or their iteration cap is
-reached, and every decline delegates.
+Shapes above MAX_SHAPE are delegated (Addendum 2 of the preregistration): the
+binary64 deviance loses accuracy near X = A from about 1E18. Below it the
+binary64 routines decline by themselves where their arithmetic would leave
+the normal range or their iteration cap is reached, and every decline
+delegates.
 
 paths(a, x) names what each tail used: "series", "cf", "complement" or "dd".
 """
@@ -36,6 +38,7 @@ import route_model as rm  # noqa: E402
 FLOOR = 1e-290
 COMPLEMENT_MAX = 0.9
 UPPER_MAX = 0.5
+MAX_SHAPE = 1e15
 
 
 def _dd(a, x):
@@ -45,7 +48,9 @@ def _dd(a, x):
 
 def fast(a, x):
     """(routine, value) from the binary64 route, value None where it declines
-    or returns something outside [0, 1]."""
+    or returns something outside [0, 1], and above MAX_SHAPE."""
+    if a > MAX_SHAPE:
+        return ("series" if rm.below_seam(a, x) else "cf"), None
     try:
         routine, value, _ = rm.route(a, x)
     except ArithmeticError:

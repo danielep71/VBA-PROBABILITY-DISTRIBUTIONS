@@ -184,3 +184,43 @@ rounded there and keeps the inverse as it is today.
 The holdout does not exercise the inverses. They are judged by their
 contracts on the main grid, by the existing Excel assertions, realigned to
 the guarantee of 1E-12, and by the consolidated holdout.
+
+## Addendum 2 — a shape ceiling (2026-11-14, after the evaluation)
+
+Added **after** the holdout was evaluated and accepted, on a review finding
+of pull request #347. It is a correction, recorded as one; it is not part of
+what the holdout tested.
+
+The registration says there is no shape ceiling. That was wrong for shapes
+far above the evidence. The continued fraction and the series scale their
+result by `exp(-A * ((X/A - 1) - ln(X/A)))`. Near `X = A` the bracket is a
+difference of nearly equal pair values, and its error is multiplied by `A`.
+Measured on the model against 100-digit arithmetic, 300 points per decade
+within eight standard deviations of the mean:
+
+| Shape decade | Worst absolute error of the exponent |
+| --- | ---: |
+| 1E13 | 6.0E-19 |
+| 1E14 | 7.3E-18 |
+| 1E15 | 6.7E-17 |
+| 1E16 | 6.9E-16 |
+| 1E17 | 7.4E-15 |
+| 1E18 | 7.6E-14 |
+| 1E19 | 9.0E-13 |
+
+An absolute error of the exponent is a relative error of the tail, so the
+route breaks the bound of 1E-13 from about shape 1E18, and the routines do
+not decline there. The evidence could not see it: the largest holdout shape
+is 2,718,281, the sweep stopped at 1E5, and the main grid has no Gamma,
+Chi-square or Poisson tail above shape 1E8.
+
+**The correction: a shape above 1E15 is delegated to the double-double entry
+point**, for P and for Q. Below it the rule is as registered. At 1E15 the
+error of the exponent is three orders of magnitude under the bound.
+
+The change only narrows the binary64 route in favour of the kernel, which
+was the production route before #314. No holdout row has a shape above the
+ceiling, so `holdout_route_grid.csv` must come back from Excel unchanged,
+bit for bit; the export of the corrected candidate checks that. The ceiling
+itself has no holdout of its own: its support is the table above and the
+kernel's existing evidence.

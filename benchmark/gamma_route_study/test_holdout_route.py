@@ -59,6 +59,22 @@ class Rule(unittest.TestCase):
         self.assertEqual(float(A.FLOOR), F.FLOOR)
         self.assertEqual((F.COMPLEMENT_MAX, F.UPPER_MAX), (0.9, 0.5))
 
+    def test_shapes_above_the_ceiling_are_delegated(self):
+        # Addendum 2: near X = A the binary64 deviance is wrong by more than
+        # the guarantee from about shape 1E18.
+        self.assertEqual(F.MAX_SHAPE, 1e15)
+        self.assertNotEqual(F.paths(1e15, 1e15 + 1e8), ("dd", "dd"))
+        for a in (1.0000000000000002e15, 1e18, 1e20):
+            for x in (a - 2 * a ** 0.5, a + 2 * a ** 0.5):
+                self.assertEqual(F.paths(a, x), ("dd", "dd"))
+
+    def test_production_has_the_same_ceiling(self):
+        with open(os.path.join(HERE, "..", "..", "src", "M_STATS_PROBDIST_SPECIALFUNCS.bas"),
+                  encoding="latin-1") as handle:
+            source = handle.read()
+        self.assertIn("PROB_GAMMA_FAST_MAX_SHAPE As Double = 1E+15", source)
+        self.assertEqual(source.count("If A > 0# And A <= PROB_GAMMA_FAST_MAX_SHAPE And X > 0# Then"), 2)
+
     def test_sources_follow_the_rule(self):
         self.assertEqual(F.decide("series", 0.3), ("series", "complement"))
         self.assertEqual(F.decide("series", 0.9), ("series", "complement"))

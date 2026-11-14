@@ -58,7 +58,7 @@ limit of 0.2 ms per call. That rule stays rejected; a new one is registered.
 
 | File | Role |
 | --- | --- |
-| [`FAST_ROUTE_PREREGISTRATION.md`](FAST_ROUTE_PREREGISTRATION.md) | The rule, its constants, the amended acceptance rules R1 to R6 and the predictions, frozen before the holdout is evaluated |
+| [`FAST_ROUTE_PREREGISTRATION.md`](FAST_ROUTE_PREREGISTRATION.md) | The rule, its constants, the amended acceptance rules R1 to R6 and the predictions, frozen before the holdout is evaluated. Addendum 2, after the verdict, adds a shape ceiling of 1E15 |
 | `fast_route.py` | The rule as a model over `route_model.py` and the double-double model |
 | `replay_fast_route.py`, `fast_route_development.json` | Development replay on revealed data only: fit grid, main grid, consolidated holdout and a seeded sweep |
 | `holdout_route_build.py`, `holdout_route_grid.csv` | The 117 holdout points with the boundary probes built from the rule, and their references; `--check` proves the grid is the design |

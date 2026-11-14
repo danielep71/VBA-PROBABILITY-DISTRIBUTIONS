@@ -113,8 +113,8 @@ Use only the categories needed by a release.
   and two results at adjacent arguments may be out of order by that much.
 - Still served by the kernel, at its cost: an upper tail below the argument
   `Shape + 1` when the lower tail exceeds 0.9, results below 1E-290, the
-  inverses for shapes below 0.01, and shapes whose series needs more than
-  100,000 terms.
+  inverses for shapes below 0.01, shapes above 1E15, and shapes whose
+  series needs more than 100,000 terms.
 - The Excel assertions on the public tails are held to the guarantee tier.
   The assertions on the kernel's own entry points stay bit for bit.
 

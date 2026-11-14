@@ -198,6 +198,7 @@ Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterat
 Private Const PROB_GAMMA_FAST_FLOOR    As Double = 1E-290  'Routed P/Q: a directly returned binary64 tail must be at least this (#314)
 Private Const PROB_GAMMA_FAST_LOWER_MAX As Double = 0.9    'Routed Q below the seam: 1 - series while the series is at most this (#314)
 Private Const PROB_GAMMA_FAST_UPPER_MAX As Double = 0.5    'Routed P/Q from the seam: the continued fraction is trusted up to this (#314)
+Private Const PROB_GAMMA_FAST_MAX_SHAPE As Double = 1E+15  'Routed P/Q: above this shape the binary64 deviance loses accuracy near X = A, and the kernel answers (#314, Addendum 2)
 Private Const PROB_GAMMAINV_FAST_MIN_SHAPE As Double = 0.01 'Gamma inverse: the routed tails serve from this shape; below it the quantile amplifies their error by about 1 / A (#314)
 'The ascending gamma series stops at machine epsilon rather than the shared
 'PROB_NUM_EPS (3E-14). Measured: the tighter criterion buys about 145x accuracy
@@ -2405,8 +2406,9 @@ Public Function PROB_TryGammaRoutedP( _
 '     otherwise   the continued fraction gives Q. P = 1 - Q is returned when
 '                 Q lies in [0, PROB_GAMMA_FAST_UPPER_MAX].
 '
-'   Any other value, a routine that declines, and every other argument are
-'   delegated, with the kernel's own cap fallback and error policy.
+'   Any other value, a routine that declines, a shape above
+'   PROB_GAMMA_FAST_MAX_SHAPE and every other argument are delegated, with
+'   the kernel's own cap fallback and error policy.
 '
 ' ACCURACY
 '   Held to the guarantee tier of #327, 1E-13 relative; the fit and the
@@ -2442,7 +2444,7 @@ Public Function PROB_TryGammaRoutedP( _
     Result = 0#: FailMsg = ""
 
     If PROB_IsFinite(A) And PROB_IsFinite(X) Then
-        If A > 0# And X > 0# Then
+        If A > 0# And A <= PROB_GAMMA_FAST_MAX_SHAPE And X > 0# Then
 
     'Store the seam before comparing: the fit wave showed that Excel
     'compares X with A + 1 as a Double
@@ -2501,8 +2503,9 @@ Public Function PROB_TryGammaRoutedQ( _
 '     otherwise   the continued fraction gives Q. It is returned when it lies
 '                 in [PROB_GAMMA_FAST_FLOOR, PROB_GAMMA_FAST_UPPER_MAX].
 '
-'   Any other value, a routine that declines, and every other argument are
-'   delegated, with the kernel's own cap fallback and error policy.
+'   Any other value, a routine that declines, a shape above
+'   PROB_GAMMA_FAST_MAX_SHAPE and every other argument are delegated, with
+'   the kernel's own cap fallback and error policy.
 '
 ' ACCURACY
 '   As PROB_TryGammaRoutedP.
@@ -2536,7 +2539,7 @@ Public Function PROB_TryGammaRoutedQ( _
     Result = 0#: FailMsg = ""
 
     If PROB_IsFinite(A) And PROB_IsFinite(X) Then
-        If A > 0# And X > 0# Then
+        If A > 0# And A <= PROB_GAMMA_FAST_MAX_SHAPE And X > 0# Then
 
     'Store the seam before comparing: the fit wave showed that Excel
     'compares X with A + 1 as a Double
