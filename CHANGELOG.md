@@ -102,6 +102,11 @@ Use only the categories needed by a release.
 - With no open blocker registered, the release line of the generated block no longer announces a list that does not follow: it says that none is registered and that certification and publication remain. A test holds both wordings.
 - The readiness register is reviewed at 2026-11-15: every blocker resolved, release not certified.
 
+### User manual (#263)
+
+- `docs/user-manual/v1.0.0/` holds the source of the first user manual: fourteen chapters, about 10,000 words, built into a 32-page PDF with `build_manual.py` (pandoc and Chromium). It covers installation, calling conventions, every distribution with its parameters and limits, the error convention, eight worked examples, the two accuracy tiers with the guarantee by family, and every recorded numerical limitation.
+- The build fails when a chapter names a function that `docs/PUBLIC_API.txt` does not declare or calls one with a number of arguments it does not accept; `tests/test_user_manual.py` runs the same check. `checks/example_values.py` recomputes every expected result with mpmath.
+- The PDF is built and attached at the release; it is not committed.
 ### The reference generator and the main grid agree (#349)
 
 - 111 of the generator's 1,519 rows were not in `probability_accuracy_grid.csv` as the generator wrote them. Each group was settled by deciding which side was right; `benchmark/GENERATOR_GRID_RECONCILIATION.md` gives the cause of each and `benchmark/generator_grid_dispositions.csv` the rows.
