@@ -101,6 +101,7 @@ Use only the categories needed by a release.
 
 - `DESKTOP-UV7P4JQ` (Excel 16.0 build 20710, 64-bit) is the reference Excel runner from 2026-11-15; `ITPF545VX1` (build 20430) stays as a spare. `docs/EXCEL_VBA_CI.md` lists both; only one carries the `excel` label at a time.
 - Before the change the same commit was run on both: 2,007 of 2,007 assertions on build 20710, and an export of the main grid and the holdout identical, byte for byte, to the retained one from build 20430. `benchmark/excel_build_comparison_2026-11-15.json` records it as an observation, not as certification evidence. The user manual's environment chapter mentions it.
+- The hardened set-up is applied on the new runner and tested by a restart with a job waiting: the logon task brought the runner back and the job ran. Automatic logon is not set up, so a restart needs one sign-in; the guide says so.
 - Git for Windows is now among the runner's requirements, with a troubleshooting entry: without it the checkout downloads an archive that leaves out `.github`, and the run stops before Excel starts.
 
 ### The manual's examples are asserted in Excel (#263)

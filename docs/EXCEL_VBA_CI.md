@@ -284,10 +284,17 @@ out, the checkout could not resolve `github.com`, and the machine went to
 standby (#295). The set-up below removes the causes that are on the machine.
 It keeps the interactive session that Excel COM needs.
 
-**Status: written on 2026-11-13. On `DESKTOP-UV7P4JQ`, step 3 was applied on
-2026-11-15 for mains power (standby and hibernate timeouts at zero); steps 1
-and 2 and the restart test are open.** Record the date here when the test has
-passed.
+**Status: applied and tested on `DESKTOP-UV7P4JQ` on 2026-11-15, except
+step 1.** Steps 2 and 3 are in place: the logon task, and no standby or
+hibernation on mains power. Automatic logon is not set up, by choice: after a
+restart someone signs in, and the runner then starts by itself.
+
+The test: the machine was restarted with a job waiting in the queue, the
+maintainer signed in and touched nothing else. The task opened the runner,
+which was listening 74 seconds after the job had been queued and took it three
+seconds later; run 43744780159 passed. A restart nobody attends, such as one
+after a Windows update, leaves the runner down until the next sign-in. The
+scheduled watch reports a job that waits longer than its limit.
 
 Run the commands in an elevated PowerShell on the runner machine.
 
