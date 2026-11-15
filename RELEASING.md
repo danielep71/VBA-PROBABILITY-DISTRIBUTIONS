@@ -321,7 +321,7 @@ both rulesets.
   The pull request title and body describe the delivered change, link the
   relevant issues and evidence, and state what was validated; the merge commit
   names the pull request.
-- **Release branches.** While a release branch such as `release/1.0.0` is
+- **Release branches.** While a release branch such as `release/1.0.1` is
   active, task pull requests branch from it and target it, and Dependabot
   targets it through `target-branch` in `.github/dependabot.yml`.
   - GitHub closes an issue from a keyword only when a pull request merges into
