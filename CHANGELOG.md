@@ -97,6 +97,12 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### A second Excel runner, and the same results on a second build (#295)
+
+- `DESKTOP-UV7P4JQ` (Excel 16.0 build 20710, 64-bit) is the reference Excel runner from 2026-11-15; `ITPF545VX1` (build 20430) stays as a spare. `docs/EXCEL_VBA_CI.md` lists both; only one carries the `excel` label at a time.
+- Before the change the same commit was run on both: 2,007 of 2,007 assertions on build 20710, and an export of the main grid and the holdout identical, byte for byte, to the retained one from build 20430. `benchmark/excel_build_comparison_2026-11-15.json` records it as an observation, not as certification evidence. The user manual's environment chapter mentions it.
+- Git for Windows is now among the runner's requirements, with a troubleshooting entry: without it the checkout downloads an archive that leaves out `.github`, and the run stops before Excel starts.
+
 ### The manual's examples are asserted in Excel (#263)
 
 - `Test_DS_ManualExamples`: 45 assertions that call every formula the user manual shows in chapters 4, 5, 7, 8 and 9 and compare the result with the printed figure, to half a unit of its tenth digit; the three `#NUM!` cases, the two exact identities and the diagnostic message of section 9.5 are asserted as such. The regression has 2,007 assertions, the fast suite 1,063.
