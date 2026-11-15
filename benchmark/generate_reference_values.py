@@ -920,7 +920,9 @@ def build_discrete_rows():
                 du_row("DiscreteUniform_Survival", (x, lo_m, hi_m), _du_sf(x, lo_m, hi_m), REL14, "rel")
 
         for j in sorted(set([0, int(n) // 3, int(n) - 1])):
-            prob = (mp.mpf(j) + mp.mpf("0.37")) / n
+            # A design point: formed in binary64, as the committed rows were,
+            # so the generator names the Doubles the grid holds (#349).
+            prob = mp.mpf((j + 0.37) / int(n))
             du_row("DiscreteUniform_InverseCumulative", (prob, lo_m, hi_m), _du_inv(prob, lo_m, hi_m), ABS9, "abs")
 
         du_row("DiscreteUniform_Mean", (lo_m, hi_m), _du_mean(lo_m, hi_m), REL14, "rel")
@@ -974,6 +976,10 @@ def build_deep_tail_rows():
     REL = "measured"
 
     def row(func, args, ref):
+        # The deep_tail contracts hold q <= 1E-13. The first probe, q = 1E-12,
+        # sits on the other side of PROB_CDF_SPLIT and is committed under
+        # split_boundary (#349).
+        regime = "deep_tail" if args[0] <= mp.mpf("1e-13") else "split_boundary"
         rows.append({
             "function": func, "vba_kernel": "K_STATS_" + func,
             "claim": REL, "metric": "rel",
@@ -982,7 +988,7 @@ def build_deep_tail_rows():
             "arg3": format_double_arg(args[2]) if len(args) > 2 else "",
             "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
-            "regime": "deep_tail", "evidence_set": "main grid",
+            "regime": regime, "evidence_set": "main grid",
         })
 
     probs = ["1e-12", "1e-15", "1e-18", "1e-30", "1e-50", "1e-100", "1e-200", "1e-300"]
@@ -1000,8 +1006,28 @@ def build_deep_tail_rows():
     return rows
 
 
-_TU_BETA_INV = [(0.020391305237761687, 0.5, 0.05, '0.04601031892528297249793596'), (0.011614828246796624, 0.2, 0.01, '0.0008504300838312333727749314'), (0.023229656493593247, 0.2, 0.01, '0.02663371583762863112542433'), (0.09081818114602173, 0.0001, 1e-05, '0.0000451672198517511166661721'), (0.09090818114535563, 0.0001, 1e-05, '0.4750188540160881796474294')]
-_TU_F_INV = [(0.04183587875236068, 1.0, 0.1, '0.02146355524527151411231635'), (0.08367175750472136, 1.0, 0.1, '0.1067565108965985104078747'), (0.15060916350849846, 1.0, 0.1, '0.6549861983264712392580451'), (0.16717617149443328, 1.0, 0.1, '0.9957837553502971382239687'), (0.018292907737209336, 0.4, 0.02, '0.0004129422049921151028783592'), (0.03658581547441867, 0.4, 0.02, '0.01379719153186172772697386'), (0.06585446785395362, 0.4, 0.02, '0.4500007034584452265679211'), (0.07309845931788851, 0.4, 0.02, '0.9920563872998486874964019'), (0.09083909184035142, 0.0002, 2e-05, '0.00004515249603705946469723038')]
+# Quantiles solved at the exact binary64 arguments. The constants written here
+# before #349 were solved at the decimal spellings and missed the committed
+# references by up to 2.2E-13 relative; a 90-digit check puts the committed
+# values within 2E-25 of the root in probability, and the earlier ones 6E-17.
+_TU_BETA_INV = [
+    (0.020391305237761687, 0.5, 0.05, '0.0460103189252829776817163'),
+    (0.011614828246796624, 0.2, 0.01, '0.0008504300838312332800788581'),
+    (0.023229656493593247, 0.2, 0.01, '0.02663371583762862828433306'),
+    (0.09081818114602173, 0.0001, 1e-05, '0.00004516721985176109752297216'),
+    (0.09090818114535563, 0.0001, 1e-05, '0.47501885401617214363346'),
+]
+_TU_F_INV = [
+    (0.04183587875236068, 1.0, 0.1, '0.02146355524527151551756332'),
+    (0.08367175750472136, 1.0, 0.1, '0.1067565108965985188060758'),
+    (0.15060916350849846, 1.0, 0.1, '0.6549861983264713460869071'),
+    (0.16717617149443328, 1.0, 0.1, '0.9957837553502973832462148'),
+    (0.018292907737209336, 0.4, 0.02, '0.0004129422049921149347088256'),
+    (0.03658581547441867, 0.4, 0.02, '0.01379719153186172187404898'),
+    (0.06585446785395362, 0.4, 0.02, '0.4500007034584452245028831'),
+    (0.07309845931788851, 0.4, 0.02, '0.9920563872998486594073559'),
+    (0.09083909184035142, 0.0002, 2e-05, '0.00004515249603703414461200275'),
+]
 
 
 # ===========================================================================
@@ -1097,8 +1123,10 @@ def build_tiny_unbalanced_rows():
     # --- F forward surface; x straddles the log-ratio branch at x = DF2 / DF1 ---
     for d1, d2 in [(2e-12, 1.98e-13), (1.98e-13, 2e-12), (2e-16, 1.98e-17),
                    (2e-8, 2e-9), (2e-4, 2e-5)]:
-        branch = mp.mpf(d2) / mp.mpf(d1)
-        for x in [branch / 10, branch, branch * 10]:
+        # Design points formed in binary64, as the committed rows were (#349):
+        # a 50-digit quotient rounds to a neighbouring Double for 4 of the 15.
+        branch = d2 / d1
+        for x in [mp.mpf(branch / 10), mp.mpf(branch), mp.mpf(branch * 10)]:
             row("F_Density", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_density(x, d1, d2), REL, "rel", "tiny_unbalanced")
             c = _tu_f_cdf(x, d1, d2)
             row("F_Cumulative", (x, mp.mpf(d1), mp.mpf(d2)), c, REL, "rel", "tiny_unbalanced")
@@ -1435,7 +1463,10 @@ def build_rows():
             add("StudentT_Cumulative", "K_STATS_StudentT_Cumulative", (x, df), _student_t_cdf(x, df))
             add("StudentT_Survival", "K_STATS_StudentT_Survival", (x, df), _student_t_sf(x, df))
         for p in [mp.mpf("0.001"), mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95"), mp.mpf("0.999")]:
-            add("StudentT_InverseCumulative", "K_STATS_StudentT_InverseCumulative", (p, df), _student_t_ppf(p, df))
+            # The median is exactly zero, where a relative error is undefined:
+            # it is scored on absolute error under exact_median (#22).
+            add("StudentT_InverseCumulative", "K_STATS_StudentT_InverseCumulative", (p, df), _student_t_ppf(p, df),
+                regime="exact_median" if p == mp.mpf("0.5") else None)
 
     # --- Chi-square ---
     for df in [mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(30), mp.mpf(100)]:

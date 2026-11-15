@@ -166,6 +166,38 @@ def quantile_bound(p, q, df):
 
 REMOVED_AFTER_FREEZE = {"probability_accuracy_grid.csv": 3}
 
+# Main-grid references as they were when these predictions were frozen. #349
+# replaced them with the generator's 25-digit values, which differ from these
+# beyond the 22nd digit; a recorded predicted_error is the route's result
+# against the reference of the time, so the frozen file reproduces only from
+# these. Keyed by function and the committed argument text.
+REFERENCE_AT_FREEZE = {
+    ("StudentT_Cumulative", "0.5", "1000000.0"):
+        "0.6914624062638143061143211912640276",
+    ("StudentT_Survival", "0.5", "1000000.0"):
+        "0.3085375937361856938856788087359724",
+    ("StudentT_Cumulative", "1.0", "1000000.0"):
+        "0.8413446250832109353591636792022017",
+    ("StudentT_Survival", "1.0", "1000000.0"):
+        "0.1586553749167890646408363207977983",
+    ("StudentT_Cumulative", "2.0", "1000000.0"):
+        "0.9772497330743403957894074651647034",
+    ("StudentT_Survival", "2.0", "1000000.0"):
+        "0.02275026692565960421059253483529662",
+    ("StudentT_Cumulative", "0.5", "10000000.0"):
+        "0.6914624557729924580394461114185633",
+    ("StudentT_Cumulative", "1.0", "10000000.0"):
+        "0.8413447339700070250914745548869778",
+    ("StudentT_Cumulative", "2.0", "10000000.0"):
+        "0.9772498545540785233602096755673797",
+    ("StudentT_Cumulative", "0.5", "100000000.0"):
+        "0.6914624607239110314194229527391931",
+    ("StudentT_Cumulative", "1.0", "100000000.0"):
+        "0.8413447448586893290141437092387257",
+    ("StudentT_Cumulative", "2.0", "100000000.0"):
+        "0.9772498667020466235585894158190951",
+}
+
 
 def predictions():
     records, unchanged = [], {}
@@ -181,8 +213,10 @@ def predictions():
                    "regime": row.get("regime", "")}
             if fn in FORWARD and a2 is not None and reaches_route(abs(a1), a2):
                 value = P.survival(a1, a2) if fn == "StudentT_Survival" else P.cumulative(a1, a2)
+                at_freeze = (REFERENCE_AT_FREEZE.get((fn, row["arg1"], row["arg2"]))
+                             if grid == "probability_accuracy_grid.csv" else None)
                 with mp.workdps(60):
-                    reference = mp.mpf(row["reference"])
+                    reference = mp.mpf(at_freeze or row["reference"])
                 records.append({**key, "prediction": "PT1", "predicted": repr(value),
                                 "predicted_error": rel(value, reference), "bound": B,
                                 "ulps_allowed": ULPS})

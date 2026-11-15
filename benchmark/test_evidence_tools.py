@@ -34,6 +34,8 @@ commands = (
     ("test_grid_regeneration.py",),
     ("test_binary64.py",),
     ("check_grid_keys.py",),
+    ("test_check_generator_grid.py",),
+    ("check_generator_grid.py",),
     ("test_root_readme.py",),
     ("check_root_readme.py",),
     ("test_render_readme_assurance.py",),

@@ -45,6 +45,7 @@ required, and they answer different questions.
 | `probability_accuracy_grid.csv` | The committed grid: inputs, references, and the Excel observations in `observed_vba`, which cannot be regenerated from Python. |
 | `promote_grid_rows.py` | The sanctioned way to add, patch, re-reference or retire grid rows. Report-only unless `--write`; preserves every observation. |
 | `migrate_references.py` | Audited, reference-only replacement driven by the reference audit. Report-only unless `--write`. |
+| `check_generator_grid.py` | Fails when a row the generator emits is absent from the committed grid or held with a different reference, claim, metric or expected-error marker (#349). `GENERATOR_GRID_RECONCILIATION.md` records how the two were brought to agree. |
 | `_grid_safety.py`, `check_grid_keys.py` | Shared canonical-key and write-target safeguards, and the duplicate-key guard run on the committed grids. |
 | `_frozen_sources.py` | Production sources at a pinned commit, for closed studies: their replay fixtures and preparation tooling read these, never the working tree (#338). |
 | `_row_binding.py`, `check_study_grid_binding.py` | Bind a study to the grid rows it reads (`row_digest`), and fail when a study file hashes or compares a whole live grid without a declared reason (#302). |

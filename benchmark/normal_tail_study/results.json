@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-15T06:47:20Z",
+ "generated_utc": "2026-11-15T08:09:33Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -59,7 +59,7 @@
    "probability_accuracy_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
     "rows": 118,
-    "rows_sha256": "2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4"
+    "rows_sha256": "c59bd5c8c0f863f10b1304b6d497331312bcd989bb7c7cfb76bd5d76668ac4d9"
    },
    "survival_boundary/survival_boundary_grid.csv": {
     "role": "input: \u00a77 rows and committed observations",
@@ -1784,8 +1784,8 @@
     ],
     "predicted": "7.034483825301132",
     "predicted_hex": "401c234fba57a32a",
-    "predicted_error": 2.2697576331264924e-26,
-    "current_model_error": 5.4603812096028335e-11,
+    "predicted_error": 2.9868918655260575e-17,
+    "current_model_error": 5.4603841964946967e-11,
     "model_vs_committed_ulps": 432469,
     "prediction": "P4",
     "contract": 1e-10,
@@ -1802,8 +1802,8 @@
     ],
     "predicted": "-7.034483825301132",
     "predicted_hex": "c01c234fba57a32a",
-    "predicted_error": 2.2697576331264924e-26,
-    "current_model_error": 5.4603812096028335e-11,
+    "predicted_error": 2.9868918655260575e-17,
+    "current_model_error": 5.4603841964946967e-11,
     "model_vs_committed_ulps": 432469,
     "prediction": "P4",
     "contract": 1e-10,
@@ -1822,8 +1822,8 @@
     ],
     "predicted": "205.517257379517",
     "predicted_hex": "4069b08d5f59147c",
-    "predicted_error": 7.004880519810391e-26,
-    "current_model_error": 2.8034866799977806e-11,
+    "predicted_error": 5.855211755854992e-17,
+    "current_model_error": 2.8034925352095297e-11,
     "model_vs_committed_ulps": 202720,
     "prediction": "P4",
     "contract": 2e-10,
@@ -1842,8 +1842,8 @@
     ],
     "predicted": "2.7758628689758496",
     "predicted_hex": "400634f7978374c0",
-    "predicted_error": 1.0093729296939536e-25,
-    "current_model_error": 1.0378090424706114e-10,
+    "predicted_error": 2.1675189197721377e-16,
+    "current_model_error": 1.0378112099895323e-10,
     "model_vs_committed_ulps": 648702,
     "prediction": "P4",
     "contract": 2e-10,
@@ -1862,8 +1862,8 @@
     ],
     "predicted": "1135.1088464815432",
     "predicted_hex": "4091bc6f7573ba0d",
-    "predicted_error": 4.006200397240101e-16,
-    "current_model_error": 3.8411008702870853e-10,
+    "predicted_error": 1.45403389886447e-16,
+    "current_model_error": 3.841098318120586e-10,
     "model_vs_committed_ulps": 1917576,
     "prediction": "P4",
     "contract": 1e-09,
@@ -1882,8 +1882,8 @@
     ],
     "predicted": "91.58265635503582",
     "predicted_hex": "4056e54a3de16bde",
-    "predicted_error": 3.1033943068832456e-16,
-    "current_model_error": 1.9205557386248132e-10,
+    "predicted_error": 1.6316416894719843e-16,
+    "current_model_error": 1.9205542668721955e-10,
     "model_vs_committed_ulps": 1237711,
     "prediction": "P4",
     "contract": 1e-09,
@@ -3563,7 +3563,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 40.2,
+ "runtime_s": 38.8,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3783,6 +3783,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "accuracy_contracts.csv (input: the P4 contracts): recorded ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90, now 5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89"
+   ]
+  },
+  {
+   "utc": "2026-11-15T08:08:54Z",
+   "reason": "#349 replaced six split_boundary references of the main grid, at q = 1E-12, by their value at the exact binary64 probability (largest move 2.6E-16 relative), and corrected the claim text of six NormalStandard_Survival rows to the registry's 5E-15. The bound rows are re-read; no P4 contract changed and the holdout was not evaluated again.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded 2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4, now c59bd5c8c0f863f10b1304b6d497331312bcd989bb7c7cfb76bd5d76668ac4d9"
    ]
   }
  ]
