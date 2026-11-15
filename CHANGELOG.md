@@ -97,6 +97,13 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### The reference generator and the main grid agree (#349)
+
+- 111 of the generator's 1,519 rows were not in `probability_accuracy_grid.csv` as the generator wrote them. Each group was settled by deciding which side was right; `benchmark/GENERATOR_GRID_RECONCILIATION.md` gives the cause of each and `benchmark/generator_grid_dispositions.csv` the rows.
+- Generator corrected, grid unchanged (41 rows): the Student-t medians are emitted under `exact_median`, the inverse-normal rows at `q = 1E-12` under `split_boundary`, 16 design points are formed in binary64 as the committed rows were, and 14 hard-coded inverse quantiles solved at decimal arguments are replaced by the roots at the Doubles.
+- Grid corrected through `promote_grid_rows.py` (84 rows): the claim text of 39 rows follows the registry, and 45 references are replaced by the value at the exact binary64 arguments. The largest move is 2.8E-14 relative, on `F_Cumulative(1.001, 1E6, 1E6)`; 24 of the 45 move below 2E-22. No observation changed and no verdict changed: every affected row stays inside its contract by a factor of nine or more.
+- `benchmark/check_generator_grid.py` runs in CI and fails when a generator row is absent from the grid or held differently; `test_check_generator_grid.py` holds its fixtures.
+
 ### Every main-grid row has a contract (#22)
 
 - The 27 main-grid rows without a contract are claimed: 18 F inverse and 9 Chi-square inverse rows of `envelope_domain`, by two contracts whose threshold is the 1E-12 inverse guarantee. Measured worst 2.15E-15 and 1.09E-15. `coverage_debt_v1_0_0.json` is deleted and the gate runs the coverage check in strict mode: zero rows without a disposition.

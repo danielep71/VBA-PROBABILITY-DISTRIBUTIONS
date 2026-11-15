@@ -122,6 +122,13 @@
       "current_state": "green"
     },
     {
+      "id": "generator-grid-agreement",
+      "live_command": "check_generator_grid.py",
+      "proof_command": "test_check_generator_grid.py",
+      "negative_claim": "a generator row absent from the committed grid, committed under another regime or evidence set, one ulp away in an argument, or held with a different reference, claim, metric or expected-error marker fails; a grid row the generator does not emit, another spelling of the same Double and a changed observation do not",
+      "current_state": "green"
+    },
+    {
       "id": "committed-whitespace",
       "live_command": "../tools/check_committed_whitespace.py --root .. --mode committed --head HEAD",
       "proof_command": "../tools/check_committed_whitespace.py --root .. --self-test",
