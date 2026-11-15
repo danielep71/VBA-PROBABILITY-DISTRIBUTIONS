@@ -97,6 +97,11 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### README assurance block on the final evidence (#28)
+
+- With no open blocker registered, the release line of the generated block no longer announces a list that does not follow: it says that none is registered and that certification and publication remain. A test holds both wordings.
+- The readiness register is reviewed at 2026-11-15: every blocker resolved, release not certified.
+
 ### User manual (#263)
 
 - `docs/user-manual/v1.0.0/` holds the source of the first user manual: fourteen chapters, about 10,000 words, built into a 32-page PDF with `build_manual.py` (pandoc and Chromium). It covers installation, calling conventions, every distribution with its parameters and limits, the error convention, eight worked examples, the two accuracy tiers with the guarantee by family, and every recorded numerical limitation.
