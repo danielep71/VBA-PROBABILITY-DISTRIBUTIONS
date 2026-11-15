@@ -60,6 +60,15 @@ issue's complete acceptance criteria. See the
 - [ ] Accuracy, stability, tail, or convergence improvement
 - [ ] New distribution, moment, interval, or special function
 
+## 🧪 Evidence class
+
+Which row of the [evidence table](../CONTRIBUTING.md#evidence-by-kind-of-change) applies (#328)?
+
+- [ ] New numerical claim — preregistration with predictions and an untouched holdout
+- [ ] Defect fix inside existing guarantees — regression test; certified by the next batch Excel wave
+- [ ] VBA change with identical code — existing certification reused (#301)
+- [ ] Python, CI or documentation only — static checks and the evidence-tool suite
+
 ## 🎚️ Affected surface
 
 - [ ] Worksheet-facing statistical API

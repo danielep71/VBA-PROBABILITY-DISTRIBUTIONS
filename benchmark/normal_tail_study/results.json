@@ -4,13 +4,13 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-09T21:58:03Z",
+ "generated_utc": "2026-11-15T08:09:33Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
  },
  "provenance": {
-  "rule": "SHA-256 of every file that produces or shapes this record, by path relative to benchmark/. The candidate is bound by coefficients_sha256. A change to any of them makes the record stale until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3).",
+  "rule": "SHA-256 of every file that produces or shapes this record, by path relative to benchmark/. The candidate is bound by coefficients_sha256. A change to any of them makes the record stale until validate_kernel.py --regenerate --reason TEXT rewrites it (PREREGISTRATION.md Amendment 3). The three grids are bound by rows_sha256: the rows of the functions the predictions read, by canonical key and in file order, with their claim, metric, reference, observation and expected_error (Amendment 4, _row_binding.row_digest).",
   "files": {
    "normal_tail_study/derive_kernel.py": {
     "role": "generator: the fit and its convergence decision",
@@ -34,7 +34,7 @@
    },
    "normal_tail_study/validate_kernel.py": {
     "role": "validator: sets, oracles, checks and predictions",
-    "sha256": "a1691b86edf1990a972b8a1a357eed0ba4cdbac5c724498ec84a54b0fa887065"
+    "sha256": "dc47a1bd7e321f34d67ddee1a9d2a822ceaabc08d3746c061755252913d7d298"
    },
    "normal_tail_study/holdout_record.py": {
     "role": "validator: the exposure record and the modes",
@@ -42,31 +42,34 @@
    },
    "normal_tail_study/result_binding.py": {
     "role": "validator: this binding",
-    "sha256": "d19f69740a224de0f6dba908060b4e2c52653c7efea62fd6e6175dddb31986c6"
+    "sha256": "9017a6c59dbb857245533f3ac5bb9299bfae5a44175c03d518c17a00c386a438"
    },
    "normal_tail_study/PREREGISTRATION.md": {
     "role": "design and configuration, with its amendments",
-    "sha256": "0292fe4c5aeb2546b6cf354207bf184dbdeb029cf67c435be79ad41d618b802d"
-   },
-   "probability_accuracy_grid.csv": {
-    "role": "input: \u00a77 rows and committed observations",
-    "sha256": "d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561"
-   },
-   "survival_boundary/survival_boundary_grid.csv": {
-    "role": "input: \u00a77 rows and committed observations",
-    "sha256": "2e833b348ee0d6fd2847fb5117558a0e680b08ea785f30c449f4a43512c00c4b"
-   },
-   "holdout_older/holdout_older_grid.csv": {
-    "role": "input: \u00a77 rows and committed observations",
-    "sha256": "59cebdcb8bd52be0b97e2f7a843dce331ef08f7e925a2d81254877469e880f6d"
+    "sha256": "96a36012ff748ebb48690105db74ef96125622b38d20cbb604671a1cc0fdf4f6"
    },
    "accuracy_contracts.csv": {
     "role": "input: the P4 contracts",
-    "sha256": "a253fd89c53eadc0563ee0e305be76c748a3da783c0d5842fbad93af3d57177d"
+    "sha256": "5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89"
    },
    "student_t_large_df_study/results.json": {
     "role": "input: the A7 route points",
     "sha256": "a28da562e531bef781951b7c879aa2fb9f78387f55361bfe064ea5d720897c5f"
+   },
+   "probability_accuracy_grid.csv": {
+    "role": "input: \u00a77 rows and committed observations",
+    "rows": 118,
+    "rows_sha256": "c59bd5c8c0f863f10b1304b6d497331312bcd989bb7c7cfb76bd5d76668ac4d9"
+   },
+   "survival_boundary/survival_boundary_grid.csv": {
+    "role": "input: \u00a77 rows and committed observations",
+    "rows": 19,
+    "rows_sha256": "00c8a94ecca9096ca0673dbd2bf9e9456c030194e259b1726da87c66995cc3eb"
+   },
+   "holdout_older/holdout_older_grid.csv": {
+    "role": "input: \u00a77 rows and committed observations",
+    "rows": 39,
+    "rows_sha256": "b7a01e9e616674a5fa0534963badccfb3d498a12a88b20ae5952fceb77e27e99"
    }
   }
  },
@@ -79,7 +82,8 @@
  "amendments": [
   "Amendment 1: A2 (strict positivity) replaced by A2' (cancellation factor <= 1 + 2^-20 on set A), recorded after the derivation run failed A2 only",
   "Amendment 2 (#78): P2 conditioning restated as kappa = |z| phi(z) / F for survival and cumulative alike, and kappa * delta as phi(z) * eta / F with eta = 2^-52 |z| (Normal) or 2^-52 (|z| + |ln x| / sigma) (Lognormal), defined at z = 0; recorded after A6 was observed, nothing refitted, no threshold changed",
-  "Amendment 3 (#79): fit convergence defined (16-point alternation, levelling ratio <= 0.01 against the de la Vallee Poussin bound; CAP_EXHAUSTED and NOT_CONVERGED fail) and results bound to the SHA-256 of their generator, models, validator, design and inputs; recorded after the fit and A6 were observed, nothing refitted, no threshold changed"
+  "Amendment 3 (#79): fit convergence defined (16-point alternation, levelling ratio <= 0.01 against the de la Vallee Poussin bound; CAP_EXHAUSTED and NOT_CONVERGED fail) and results bound to the SHA-256 of their generator, models, validator, design and inputs; recorded after the fit and A6 were observed, nothing refitted, no threshold changed",
+  "Amendment 4 (#302): the three grids of the predictions are bound by the rows the predictions read (canonical key, claim, metric, reference, observation), not by file SHA-256; a record control, nothing refitted, no threshold changed, H not evaluated"
  ],
  "acceptance": {
   "fit_convergence": {
@@ -1780,8 +1784,8 @@
     ],
     "predicted": "7.034483825301132",
     "predicted_hex": "401c234fba57a32a",
-    "predicted_error": 2.2697576331264924e-26,
-    "current_model_error": 5.4603812096028335e-11,
+    "predicted_error": 2.9868918655260575e-17,
+    "current_model_error": 5.4603841964946967e-11,
     "model_vs_committed_ulps": 432469,
     "prediction": "P4",
     "contract": 1e-10,
@@ -1798,8 +1802,8 @@
     ],
     "predicted": "-7.034483825301132",
     "predicted_hex": "c01c234fba57a32a",
-    "predicted_error": 2.2697576331264924e-26,
-    "current_model_error": 5.4603812096028335e-11,
+    "predicted_error": 2.9868918655260575e-17,
+    "current_model_error": 5.4603841964946967e-11,
     "model_vs_committed_ulps": 432469,
     "prediction": "P4",
     "contract": 1e-10,
@@ -1818,8 +1822,8 @@
     ],
     "predicted": "205.517257379517",
     "predicted_hex": "4069b08d5f59147c",
-    "predicted_error": 7.004880519810391e-26,
-    "current_model_error": 2.8034866799977806e-11,
+    "predicted_error": 5.855211755854992e-17,
+    "current_model_error": 2.8034925352095297e-11,
     "model_vs_committed_ulps": 202720,
     "prediction": "P4",
     "contract": 2e-10,
@@ -1838,8 +1842,8 @@
     ],
     "predicted": "2.7758628689758496",
     "predicted_hex": "400634f7978374c0",
-    "predicted_error": 1.0093729296939536e-25,
-    "current_model_error": 1.0378090424706114e-10,
+    "predicted_error": 2.1675189197721377e-16,
+    "current_model_error": 1.0378112099895323e-10,
     "model_vs_committed_ulps": 648702,
     "prediction": "P4",
     "contract": 2e-10,
@@ -1858,8 +1862,8 @@
     ],
     "predicted": "1135.1088464815432",
     "predicted_hex": "4091bc6f7573ba0d",
-    "predicted_error": 4.006200397240101e-16,
-    "current_model_error": 3.8411008702870853e-10,
+    "predicted_error": 1.45403389886447e-16,
+    "current_model_error": 3.841098318120586e-10,
     "model_vs_committed_ulps": 1917576,
     "prediction": "P4",
     "contract": 1e-09,
@@ -1878,8 +1882,8 @@
     ],
     "predicted": "91.58265635503582",
     "predicted_hex": "4056e54a3de16bde",
-    "predicted_error": 3.1033943068832456e-16,
-    "current_model_error": 1.9205557386248132e-10,
+    "predicted_error": 1.6316416894719843e-16,
+    "current_model_error": 1.9205542668721955e-10,
     "model_vs_committed_ulps": 1237711,
     "prediction": "P4",
     "contract": 1e-09,
@@ -3559,7 +3563,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 41.8,
+ "runtime_s": 38.8,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3734,6 +3738,59 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded bf129af3dd9d561576bc9f08a0f641b5219c38fae2f2af2dac1df29cd3325c3a, now d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561"
+   ]
+  },
+  {
+   "utc": "2026-11-13T12:28:52Z",
+   "reason": "#327: twelve balanced Beta rows promoted to the main grid and exported (run 43423207780); no normal-tail row, rule or threshold changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded d084f3c98a1ce711c00ae3668d4bae5f02b9669e64648265c3fc6fc57f64f561, now 7b5900acb35b3ba7793261f0787b5d635c297023271c120c14805cecf63c7cd3"
+   ]
+  },
+  {
+   "utc": "2026-11-13T14:13:18Z",
+   "reason": "#302, Amendment 4: the three grids are bound by the rows the predictions read, not by file SHA-256; no row, rule or threshold changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "normal_tail_study/validate_kernel.py (validator: sets, oracles, checks and predictions): recorded a1691b86edf1990a972b8a1a357eed0ba4cdbac5c724498ec84a54b0fa887065, now dc47a1bd7e321f34d67ddee1a9d2a822ceaabc08d3746c061755252913d7d298",
+    "normal_tail_study/result_binding.py (validator: this binding): recorded d19f69740a224de0f6dba908060b4e2c52653c7efea62fd6e6175dddb31986c6, now 9017a6c59dbb857245533f3ac5bb9299bfae5a44175c03d518c17a00c386a438",
+    "normal_tail_study/PREREGISTRATION.md (design and configuration, with its amendments): recorded 0292fe4c5aeb2546b6cf354207bf184dbdeb029cf67c435be79ad41d618b802d, now 96a36012ff748ebb48690105db74ef96125622b38d20cbb604671a1cc0fdf4f6",
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4",
+    "survival_boundary/survival_boundary_grid.csv (input: \u00a77 rows and committed observations): recorded None, now 00c8a94ecca9096ca0673dbd2bf9e9456c030194e259b1726da87c66995cc3eb",
+    "holdout_older/holdout_older_grid.csv (input: \u00a77 rows and committed observations): recorded None, now b7a01e9e616674a5fa0534963badccfb3d498a12a88b20ae5952fceb77e27e99"
+   ]
+  },
+  {
+   "utc": "2026-11-13T23:23:24Z",
+   "reason": "accuracy_contracts.csv gained the six positive-ratio contract rows of #13; no normal-family contract or bound grid row changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "accuracy_contracts.csv (input: the P4 contracts): recorded a253fd89c53eadc0563ee0e305be76c748a3da783c0d5842fbad93af3d57177d, now a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67"
+   ]
+  },
+  {
+   "utc": "2026-11-14T10:24:40Z",
+   "reason": "Contract registry gained the four scaled_quantile_from_underflowed_unit contracts of #14; no normal-family contract or bound row changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "accuracy_contracts.csv (input: the P4 contracts): recorded a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67, now ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90"
+   ]
+  },
+  {
+   "utc": "2026-11-15T06:46:40Z",
+   "reason": "#22: three contracts added to accuracy_contracts.csv (F and Chi-square inverse envelope_domain, Student-t exact_median) and domain strings of six contracts corrected; no P4 contract changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "accuracy_contracts.csv (input: the P4 contracts): recorded ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90, now 5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89"
+   ]
+  },
+  {
+   "utc": "2026-11-15T08:08:54Z",
+   "reason": "#349 replaced six split_boundary references of the main grid, at q = 1E-12, by their value at the exact binary64 probability (largest move 2.6E-16 relative), and corrected the claim text of six NormalStandard_Survival rows to the registry's 5E-15. The bound rows are re-read; no P4 contract changed and the holdout was not evaluated again.",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "probability_accuracy_grid.csv (input: \u00a77 rows and committed observations): recorded 2fc4e0403b3fcd885a71c20c82df9a98e79e6a86f28132157d81c56ab4d5e5d4, now c59bd5c8c0f863f10b1304b6d497331312bcd989bb7c7cfb76bd5d76668ac4d9"
    ]
   }
  ]

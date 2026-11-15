@@ -1,0 +1,3086 @@
+{
+  "status": "REJECT_OR_BLOCKED",
+  "holdout_evaluated": false,
+  "stage2_evaluated": false,
+  "bindings": {
+    "benchmark/f_inverse_large_df_study/fix_comparison/run_tail_aware.py": "d9f4d611193d0f65f3753895dab7f8dc225ac3c756cb7df891ff91328eeeb0fb",
+    "benchmark/f_inverse_large_df_study/fix_comparison/tail_aware_model.py": "30d51f76b2ce57247d350f683c52702410817ce225744bef6d176769c576ee38",
+    "benchmark/f_inverse_large_df_study/fix_comparison/stagnation_model.py": "e4c68d2241d4949a4d88c011889159b5c0d054bef5dc709c8f34d86314f675cc",
+    "benchmark/f_inverse_large_df_study/fix_comparison/TAIL_AWARE_PROTOCOL.md": "5249f365fe56c80d1cf667d9a79b355511f723089b78f336dbc817a712fe72a6",
+    "benchmark/f_inverse_large_df_study/fix_comparison/run_extended_fit.py": "44f75b9be5d95602df0208f26f2071428bebe4c2b8571a9eea7b34f6d7e7a48a",
+    "benchmark/f_inverse_large_df_study/fix_comparison/pair_cf_screen.py": "9c07b6f9f00352c9e5c12cf0c16579ecb5bd6ea124b187151433d2c451f6806d",
+    "benchmark/gamma_cf_study/coverage/precision_probe.py": "053823b620aa86ba491e8f919faee73c888fa599af6fd6feb227a27c8c2020c3",
+    "benchmark/f_inverse_large_df_study/fix_comparison/vba_order_model.py": "9be88dc18581c60d4316f16005b689e8b331402cf11a75ed238fc7ba485c03b0",
+    "benchmark/beta_balanced_survival/beta_route_model.py": "44aa4eae5cf55a41b00871a23c8e405a19b0726c15331155d9fbaabb761c5b10",
+    "benchmark/normal_tail_study/kernel_model.py": "0e50dd4e2fced094d1d0cac1a305934e062034300c7bd3410eb8b0726c89f762",
+    "benchmark/f_inverse_large_df_study/fix_comparison/run_baseline.py": "e5d1f6c913bead22694be6dbfa28793aa7a0c3e00ba65cd369b42a817e2d5500",
+    "benchmark/_ibeta.py": "4f5a661352367fb1ba21075bac52da5e41826d121fe8fbabfcd1d16fddd64371",
+    "benchmark/f_inverse_large_df_study/fix_comparison/stagnation_result.json": "7a90e3b340ca77d743a7dbd5ae3c436649204a071067190ebf6285f5fb725d0b"
+  },
+  "rows": [
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.0000000000000p-1",
+        "0x1.e848000000000p+19",
+        "0x1.8000000000000p+1"
+      ],
+      "complement": "0x1.0000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.449a12299fae7p+0",
+          "pair": [
+            "0x1.ffffb09c79298p-1",
+            "0x1.3d8e1b5a00000p-19"
+          ],
+          "error": 7.770559085747946e-11,
+          "iterations": 33,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.449a122a0c04ep+0",
+          "pair": [
+            "0x1.ffffb09c7929ap-1",
+            "0x1.3d8e1b5996040p-19"
+          ],
+          "error": 2.9150123015954274e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.449a122a0c04ep+0",
+          "pair": [
+            "0x1.ffffb09c7929ap-1",
+            "0x1.3d8e1b5996040p-19"
+          ],
+          "error": 2.9150123015954274e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.3897701220000158
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.0000000000000p-1",
+        "0x1.7d78400000000p+26",
+        "0x1.4000000000000p+3"
+      ],
+      "complement": "0x1.0000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.12095ea1dd499p+0",
+          "pair": [
+            "0x1.fffffcdd8b45cp-1",
+            "0x1.913a5d2000000p-24"
+          ],
+          "error": 9.489655760390796e-10,
+          "iterations": 23,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.12095ea63a32fp+0",
+          "pair": [
+            "0x1.fffffcdd8b45dp-1",
+            "0x1.913a5d199cb07p-24"
+          ],
+          "error": 1.7804349502893975e-16,
+          "iterations": 4,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.12095ea63a32fp+0",
+          "pair": [
+            "0x1.fffffcdd8b45dp-1",
+            "0x1.913a5d199cb07p-24"
+          ],
+          "error": 1.7804349502893975e-16,
+          "iterations": 4,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.5096235379999712
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.ccccccccccccdp-1",
+        "0x1.4000000000000p+1",
+        "0x1.e848000000000p+19"
+      ],
+      "complement": "0x1.9999999999998p-4",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.16eea19f7284fp+1",
+          "pair": [
+            "0x1.6d99970660000p-18",
+            "0x1.ffff4933347cdp-1"
+          ],
+          "error": 3.8702099995644484e-11,
+          "iterations": 59,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.16eea19f44270p+1",
+          "pair": [
+            "0x1.6d999706233a7p-18",
+            "0x1.ffff4933347cfp-1"
+          ],
+          "error": 1.380851029833712e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.16eea19f44270p+1",
+          "pair": [
+            "0x1.6d999706233a6p-18",
+            "0x1.ffff4933347cfp-1"
+          ],
+          "error": 1.380851029833712e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 4.63569153100002
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.e666666666666p-1",
+        "0x1.4000000000000p+1",
+        "0x1.e848000000000p+19"
+      ],
+      "complement": "0x1.99999999999a0p-5",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.62b7f899b8d8ep+1",
+          "pair": [
+            "0x1.d0eeffd040000p-18",
+            "0x1.ffff17888017ep-1"
+          ],
+          "error": 1.5808325241131195e-11,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.62b7f899a0c2ep+1",
+          "pair": [
+            "0x1.d0eeffd0206e3p-18",
+            "0x1.ffff17888017fp-1"
+          ],
+          "error": 1.2312490238836587e-15,
+          "iterations": 9,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.62b7f899a0c2ep+1",
+          "pair": [
+            "0x1.d0eeffd0206e2p-18",
+            "0x1.ffff17888017fp-1"
+          ],
+          "error": 1.2312490238836587e-15,
+          "iterations": 8,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 3.7439741030000278
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.fae147ae147aep-1",
+        "0x1.4000000000000p+1",
+        "0x1.e848000000000p+19"
+      ],
+      "complement": "0x1.47ae147ae1480p-7",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.07f81a4dbb0f0p+2",
+          "pair": [
+            "0x1.59fc6fa420000p-17",
+            "0x1.fffea603905bep-1"
+          ],
+          "error": 8.991252497350741e-12,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.07f81a4db0dcbp+2",
+          "pair": [
+            "0x1.59fc6fa412a33p-17",
+            "0x1.fffea603905bfp-1"
+          ],
+          "error": 2.470354341979845e-15,
+          "iterations": 9,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.07f81a4db0dd3p+2",
+          "pair": [
+            "0x1.59fc6fa412a39p-17",
+            "0x1.fffea603905bfp-1"
+          ],
+          "error": 7.476251952411457e-16,
+          "iterations": 10,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 2.4958320669999807
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.ccccccccccccdp-1",
+        "0x1.4000000000000p+2",
+        "0x1.86a0000000000p+16"
+      ],
+      "complement": "0x1.9999999999998p-4",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.d8ea8d5ac9e6ep+0",
+          "pair": [
+            "0x1.83608f47a8000p-14",
+            "0x1.fff3e4fb85c2cp-1"
+          ],
+          "error": 1.000624770860529e-12,
+          "iterations": 48,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.d8ea8d5ac7dedp+0",
+          "pair": [
+            "0x1.83608f47a6563p-14",
+            "0x1.fff3e4fb85c2dp-1"
+          ],
+          "error": 4.601139141662273e-16,
+          "iterations": 7,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.d8ea8d5ac7dedp+0",
+          "pair": [
+            "0x1.83608f47a6562p-14",
+            "0x1.fff3e4fb85c2dp-1"
+          ],
+          "error": 4.601139141662273e-16,
+          "iterations": 7,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 2.954530895000005
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.ccccccccccccdp-1",
+        "0x1.9000000000000p+6",
+        "0x1.2a05f20000000p+33"
+      ],
+      "complement": "0x1.9999999999998p-4",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.2f5ada42b461dp+0",
+          "pair": [
+            "0x1.9727f24000000p-27",
+            "0x1.ffffff9a36037p-1"
+          ],
+          "error": 9.311513591165466e-09,
+          "iterations": 30,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.2f5ada13506aep+0",
+          "pair": [
+            "0x1.9727f20064c1fp-27",
+            "0x1.ffffff9a36038p-1"
+          ],
+          "error": 1.8227655080827862e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.2f5ada13506aep+0",
+          "pair": [
+            "0x1.9727f20064c1fp-27",
+            "0x1.ffffff9a36038p-1"
+          ],
+          "error": 1.8227655080827862e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 1.0583413899999528
+    },
+    {
+      "group": "retained",
+      "kind": "affected",
+      "inputs": [
+        "0x1.fae147ae147aep-1",
+        "0x1.9000000000000p+6",
+        "0x1.2a05f20000000p+33"
+      ],
+      "complement": "0x1.47ae147ae1480p-7",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.5baa4b7dd5374p+0",
+          "pair": [
+            "0x1.d2a0db4000000p-27",
+            "0x1.ffffff8b57c93p-1"
+          ],
+          "error": 7.0020546049112265e-09,
+          "iterations": 35,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.5baa4b54fdac6p+0",
+          "pair": [
+            "0x1.d2a0db092ed03p-27",
+            "0x1.ffffff8b57c94p-1"
+          ],
+          "error": 3.2502331425392395e-16,
+          "iterations": 14,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.5baa4b54fdac6p+0",
+          "pair": [
+            "0x1.d2a0db092ed04p-27",
+            "0x1.ffffff8b57c94p-1"
+          ],
+          "error": 3.2502331425392395e-16,
+          "iterations": 16,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.8650313200000141
+    },
+    {
+      "group": "retained",
+      "kind": "control",
+      "inputs": [
+        "0x1.ccccccccccccdp-1",
+        "0x1.e848000000000p+19",
+        "0x1.8000000000000p+1"
+      ],
+      "complement": "0x1.9999999999998p-4",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.488e7b5d25ef0p+2",
+          "pair": [
+            "0x1.ffffec64442dep-1",
+            "0x1.39bbbd21a598fp-21"
+          ],
+          "error": 1.8318107913214784e-15,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.488e7b5d25ef0p+2",
+          "pair": [
+            "0x1.ffffec64442dep-1",
+            "0x1.39bbbd21a5994p-21"
+          ],
+          "error": 1.8318107913214784e-15,
+          "iterations": 11,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.488e7b5d25ef0p+2",
+          "pair": [
+            "0x1.ffffec64442dep-1",
+            "0x1.39bbbd21a5994p-21"
+          ],
+          "error": 1.8318107913214784e-15,
+          "iterations": 11,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "control_nonregression": true
+      },
+      "seconds": 0.28949909199997137
+    },
+    {
+      "group": "retained",
+      "kind": "control",
+      "inputs": [
+        "0x1.fae147ae147aep-1",
+        "0x1.e848000000000p+19",
+        "0x1.8000000000000p+1"
+      ],
+      "complement": "0x1.47ae147ae1480p-7",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.a200bb38f6198p+4",
+          "pair": [
+            "0x1.fffffc259a568p-1",
+            "0x1.ed32d4bf8e0efp-24"
+          ],
+          "error": 1.756365548243275e-15,
+          "iterations": 12,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.a200bb38f6198p+4",
+          "pair": [
+            "0x1.fffffc259a568p-1",
+            "0x1.ed32d4bf8e0edp-24"
+          ],
+          "error": 1.756365548243275e-15,
+          "iterations": 11,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.a200bb38f6198p+4",
+          "pair": [
+            "0x1.fffffc259a568p-1",
+            "0x1.ed32d4bf8e0edp-24"
+          ],
+          "error": 1.756365548243275e-15,
+          "iterations": 11,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "control_nonregression": true
+      },
+      "seconds": 0.2661910060000423
+    },
+    {
+      "group": "retained",
+      "kind": "control",
+      "inputs": [
+        "0x1.0000000000000p-1",
+        "0x1.4000000000000p+1",
+        "0x1.e848000000000p+19"
+      ],
+      "complement": "0x1.0000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.7fc3a846ff3dbp-1",
+          "pair": [
+            "0x1.f701af6c372cbp-20",
+            "0x1.ffffc11fca128p-1"
+          ],
+          "error": 3.4447306218796088e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.7fc3a846ff3dbp-1",
+          "pair": [
+            "0x1.f701af6c372cbp-20",
+            "0x1.ffffc11fca128p-1"
+          ],
+          "error": 3.4447306218796088e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.7fc3a846ff3dbp-1",
+          "pair": [
+            "0x1.f701af6c372cbp-20",
+            "0x1.ffffc11fca128p-1"
+          ],
+          "error": 3.4447306218796088e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "control_nonregression": true
+      },
+      "seconds": 0.33810423099998843
+    },
+    {
+      "group": "retained",
+      "kind": "control",
+      "inputs": [
+        "0x1.ccccccccccccdp-1",
+        "0x1.7d78400000000p+26",
+        "0x1.4000000000000p+3"
+      ],
+      "complement": "0x1.9999999999998p-4",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.07180dde76007p+1",
+          "pair": [
+            "0x1.fffffe5e1585bp-1",
+            "0x1.a1ea7a5558970p-25"
+          ],
+          "error": 2.627742230620246e-15,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.07180dde76007p+1",
+          "pair": [
+            "0x1.fffffe5e1585bp-1",
+            "0x1.a1ea7a5558971p-25"
+          ],
+          "error": 2.627742230620246e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.07180dde76007p+1",
+          "pair": [
+            "0x1.fffffe5e1585bp-1",
+            "0x1.a1ea7a5558971p-25"
+          ],
+          "error": 2.627742230620246e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "control_nonregression": true
+      },
+      "seconds": 0.3461821059999579
+    },
+    {
+      "group": "retained",
+      "kind": "control",
+      "inputs": [
+        "0x1.0000000000000p-1",
+        "0x1.9000000000000p+6",
+        "0x1.2a05f20000000p+33"
+      ],
+      "complement": "0x1.0000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.fc973ad9792e7p-1",
+          "pair": [
+            "0x1.554f3926611f4p-27",
+            "0x1.ffffffaaac31bp-1"
+          ],
+          "error": 2.1657041376947876e-15,
+          "iterations": 5,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.fc973ad9792e7p-1",
+          "pair": [
+            "0x1.554f3926611f5p-27",
+            "0x1.ffffffaaac31bp-1"
+          ],
+          "error": 2.1657041376947876e-15,
+          "iterations": 4,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.fc973ad9792e7p-1",
+          "pair": [
+            "0x1.554f3926611f5p-27",
+            "0x1.ffffffaaac31bp-1"
+          ],
+          "error": 2.1657041376947876e-15,
+          "iterations": 4,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "control_nonregression": true
+      },
+      "seconds": 0.7687341860000174
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-3",
+        "0x1.3880000000000p+14",
+        "0x1.8000000000000p+2"
+      ],
+      "complement": "0x1.999999999999ap-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.66eb41841d1e4p-1",
+          "pair": [
+            "0x1.ffc7ee76fc486p-1",
+            "0x1.c08c481dbd000p-12"
+          ],
+          "error": 5.6339533988524325e-14,
+          "iterations": 44,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.66eb41841d083p-1",
+          "pair": [
+            "0x1.ffc7ee76fc486p-1",
+            "0x1.c08c481dbd1bep-12"
+          ],
+          "error": 4.335256079951316e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.66eb41841d083p-1",
+          "pair": [
+            "0x1.ffc7ee76fc486p-1",
+            "0x1.c08c481dbd1bep-12"
+          ],
+          "error": 4.335256079951316e-16,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.12805818499998622
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-3",
+        "0x1.8000000000000p+2",
+        "0x1.3880000000000p+14"
+      ],
+      "complement": "0x1.999999999999ap-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.05f98bae4b483p-1",
+          "pair": [
+            "0x1.41dd7e8fd88b6p-13",
+            "0x1.ffebe22817027p-1"
+          ],
+          "error": 1.111984260221588e-16,
+          "iterations": 41,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.05f98bae4b483p-1",
+          "pair": [
+            "0x1.41dd7e8fd88b7p-13",
+            "0x1.ffebe22817027p-1"
+          ],
+          "error": 1.111984260221588e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.05f98bae4b483p-1",
+          "pair": [
+            "0x1.41dd7e8fd88b7p-13",
+            "0x1.ffebe22817027p-1"
+          ],
+          "error": 1.111984260221588e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.365656730000012
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-3",
+        "0x1.4000000000000p+5",
+        "0x1.312d000000000p+24"
+      ],
+      "complement": "0x1.999999999999ap-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.9e03ed02200b0p-1",
+          "pair": [
+            "0x1.b220372f2726ap-20",
+            "0x1.ffffc9bbf91a2p-1"
+          ],
+          "error": 1.3391603114392482e-16,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.9e03ed02200b0p-1",
+          "pair": [
+            "0x1.b220372f27269p-20",
+            "0x1.ffffc9bbf91a2p-1"
+          ],
+          "error": 1.3391603114392482e-16,
+          "iterations": 11,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.9e03ed02200b0p-1",
+          "pair": [
+            "0x1.b220372f27269p-20",
+            "0x1.ffffc9bbf91a2p-1"
+          ],
+          "error": 1.3391603114392482e-16,
+          "iterations": 11,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.6676730410000005
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-3",
+        "0x1.312d000000000p+24",
+        "0x1.4000000000000p+5"
+      ],
+      "complement": "0x1.999999999999ap-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.b144e19b35d2ap-1",
+          "pair": [
+            "0x1.ffffb0b25c652p-1",
+            "0x1.3d368e6b80000p-19"
+          ],
+          "error": 8.638155415990277e-12,
+          "iterations": 24,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.b144e19b45e5ep-1",
+          "pair": [
+            "0x1.ffffb0b25c652p-1",
+            "0x1.3d368e6b743aap-19"
+          ],
+          "error": 3.520436310577733e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.b144e19b45e5ep-1",
+          "pair": [
+            "0x1.ffffb0b25c652p-1",
+            "0x1.3d368e6b743a9p-19"
+          ],
+          "error": 3.520436310577733e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.6296881760000019
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-1",
+        "0x1.3880000000000p+14",
+        "0x1.8000000000000p+2"
+      ],
+      "complement": "0x1.9999999999998p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.f452ad35f1717p+0",
+          "pair": [
+            "0x1.ffebe22817027p-1",
+            "0x1.41dd7e8fd88b8p-13"
+          ],
+          "error": 3.567644881116057e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.f452ad35f1726p+0",
+          "pair": [
+            "0x1.ffebe22817027p-1",
+            "0x1.41dd7e8fd88b5p-13"
+          ],
+          "error": 1.3474373150702429e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.f452ad35f1726p+0",
+          "pair": [
+            "0x1.ffebe22817027p-1",
+            "0x1.41dd7e8fd88b5p-13"
+          ],
+          "error": 1.3474373150702429e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.38385226500003
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-1",
+        "0x1.8000000000000p+2",
+        "0x1.3880000000000p+14"
+      ],
+      "complement": "0x1.9999999999998p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.6d2f7c639bdb9p+0",
+          "pair": [
+            "0x1.c08c481dbd000p-12",
+            "0x1.ffc7ee76fc486p-1"
+          ],
+          "error": 5.630434465091822e-14,
+          "iterations": 44,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.6d2f7c639bf20p+0",
+          "pair": [
+            "0x1.c08c481dbd1bep-12",
+            "0x1.ffc7ee76fc486p-1"
+          ],
+          "error": 4.2373649277498685e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.6d2f7c639bf20p+0",
+          "pair": [
+            "0x1.c08c481dbd1bfp-12",
+            "0x1.ffc7ee76fc486p-1"
+          ],
+          "error": 4.2373649277498685e-16,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.11059088100000736
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-1",
+        "0x1.4000000000000p+5",
+        "0x1.312d000000000p+24"
+      ],
+      "complement": "0x1.9999999999998p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.2e84ca45d9f68p+0",
+          "pair": [
+            "0x1.3d368e6b80000p-19",
+            "0x1.ffffb0b25c652p-1"
+          ],
+          "error": 8.638257218533415e-12,
+          "iterations": 24,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.2e84ca45cebd3p+0",
+          "pair": [
+            "0x1.3d368e6b743aap-19",
+            "0x1.ffffb0b25c652p-1"
+          ],
+          "error": 9.272974293588526e-17,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.2e84ca45cebd3p+0",
+          "pair": [
+            "0x1.3d368e6b743aap-19",
+            "0x1.ffffb0b25c652p-1"
+          ],
+          "error": 9.272974293588526e-17,
+          "iterations": 6,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.4496407100000397
+    },
+    {
+      "group": "revealed_screen",
+      "kind": "screen",
+      "inputs": [
+        "0x1.999999999999ap-1",
+        "0x1.312d000000000p+24",
+        "0x1.4000000000000p+5"
+      ],
+      "complement": "0x1.9999999999998p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.3c9659bf26e17p+0",
+          "pair": [
+            "0x1.ffffc9bbf91a2p-1",
+            "0x1.b220372f27262p-20"
+          ],
+          "error": 2.0287524312986765e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.3c9659bf26e17p+0",
+          "pair": [
+            "0x1.ffffc9bbf91a2p-1",
+            "0x1.b220372f27266p-20"
+          ],
+          "error": 2.0287524312986765e-15,
+          "iterations": 11,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.3c9659bf26e17p+0",
+          "pair": [
+            "0x1.ffffc9bbf91a2p-1",
+            "0x1.b220372f27266p-20"
+          ],
+          "error": 2.0287524312986765e-15,
+          "iterations": 11,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.6527858240000342
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.999999999999ap-5",
+        "0x1.86a0000000000p+16",
+        "0x1.0000000000000p+1"
+      ],
+      "complement": "0x1.e666666666666p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.55cf320f8688ap-2",
+          "pair": [
+            "0x1.fff825a8882bap-1",
+            "0x1.f695ddf518000p-15"
+          ],
+          "error": 1.6674723652864731e-12,
+          "iterations": 18,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.55cf320f84167p-2",
+          "pair": [
+            "0x1.fff825a8882b9p-1",
+            "0x1.f695ddf51b98ap-15"
+          ],
+          "error": 1.29734438748843e-15,
+          "iterations": 8,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.55cf320f8415cp-2",
+          "pair": [
+            "0x1.fff825a8882b9p-1",
+            "0x1.f695ddf51b98dp-15"
+          ],
+          "error": 5.319724335404981e-16,
+          "iterations": 8,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.0847421330000202
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.999999999999ap-5",
+        "0x1.312d000000000p+23",
+        "0x1.0000000000000p+2"
+      ],
+      "complement": "0x1.e666666666666p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.afb72297b89fep-2",
+          "pair": [
+            "0x1.ffffe02a1b84ep-1",
+            "0x1.fd5e47b200000p-21"
+          ],
+          "error": 4.051164086823886e-11,
+          "iterations": 54,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.afb722976d813p-2",
+          "pair": [
+            "0x1.ffffe02a1b84ep-1",
+            "0x1.fd5e47b258a23p-21"
+          ],
+          "error": 1.6453020163155129e-15,
+          "iterations": 8,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.afb722976d813p-2",
+          "pair": [
+            "0x1.ffffe02a1b84ep-1",
+            "0x1.fd5e47b258a23p-21"
+          ],
+          "error": 1.6453020163155129e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.09433046099997
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.999999999999ap-5",
+        "0x1.8000000000000p+1",
+        "0x1.312d000000000p+23"
+      ],
+      "complement": "0x1.e666666666666p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.e063328fe1874p-4",
+          "pair": [
+            "0x1.2e3bd17ae3193p-25",
+            "0x1.fffffed1c42e8p-1"
+          ],
+          "error": 7.241157654248039e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.e063328fe1874p-4",
+          "pair": [
+            "0x1.2e3bd17ae3190p-25",
+            "0x1.fffffed1c42e8p-1"
+          ],
+          "error": 7.241157654248039e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.e063328fe1874p-4",
+          "pair": [
+            "0x1.2e3bd17ae3190p-25",
+            "0x1.fffffed1c42e8p-1"
+          ],
+          "error": 7.241157654248039e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.28071109699999397
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.999999999999ap-5",
+        "0x1.4000000000000p+3",
+        "0x1.dcd6500000000p+29"
+      ],
+      "complement": "0x1.e666666666666p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.937c93d4b1cb9p-2",
+          "pair": [
+            "0x1.0ec6799d7e717p-28",
+            "0x1.ffffffde2730dp-1"
+          ],
+          "error": 2.9761832091079383e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.937c93d4b1cb9p-2",
+          "pair": [
+            "0x1.0ec6799d7e717p-28",
+            "0x1.ffffffde2730dp-1"
+          ],
+          "error": 2.9761832091079383e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.937c93d4b1cb9p-2",
+          "pair": [
+            "0x1.0ec6799d7e717p-28",
+            "0x1.ffffffde2730dp-1"
+          ],
+          "error": 2.9761832091079383e-15,
+          "iterations": 10,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.35589742100000876
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.999999999999ap-5",
+        "0x1.f400000000000p+9",
+        "0x1.f400000000000p+9"
+      ],
+      "complement": "0x1.e666666666666p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.cd640d5c07b98p-1",
+          "pair": [
+            "0x1.e56138136a001p-2",
+            "0x1.0d4f63f64b000p-1"
+          ],
+          "error": 1.8438087120077389e-16,
+          "iterations": 11,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.cd640d5c07b98p-1",
+          "pair": [
+            "0x1.e56138136a001p-2",
+            "0x1.0d4f63f64b000p-1"
+          ],
+          "error": 1.8438087120077389e-16,
+          "iterations": 10,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.cd640d5c07b98p-1",
+          "pair": [
+            "0x1.e56138136a001p-2",
+            "0x1.0d4f63f64b000p-1"
+          ],
+          "error": 1.8438087120077389e-16,
+          "iterations": 10,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 1.3993576479999774
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.999999999999ap-5",
+        "0x1.7d78400000000p+26",
+        "0x1.7d78400000000p+26"
+      ],
+      "complement": "0x1.e666666666666p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.ffd4e363bb0b8p-1",
+          "pair": [
+            "0x1.ffea70c97fc72p-2",
+            "0x1.000ac79b401c7p-1"
+          ],
+          "error": 2.188798191700782e-17,
+          "iterations": 11,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.ffd4e363bb0b8p-1",
+          "pair": [
+            "0x1.ffea70c97fc72p-2",
+            "0x1.000ac79b401c7p-1"
+          ],
+          "error": 2.188798191700782e-17,
+          "iterations": 10,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.ffd4e363bb0b8p-1",
+          "pair": [
+            "0x1.ffea70c97fc72p-2",
+            "0x1.000ac79b401c7p-1"
+          ],
+          "error": 2.188798191700782e-17,
+          "iterations": 10,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 18.110882869000022
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.0000000000000p-2",
+        "0x1.86a0000000000p+16",
+        "0x1.0000000000000p+1"
+      ],
+      "complement": "0x1.8000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.715326c7ca3f9p-1",
+          "pair": [
+            "0x1.fffc5dafbe6e7p-1",
+            "0x1.d12820c8c8000p-16"
+          ],
+          "error": 3.1523174121407235e-12,
+          "iterations": 16,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.715326c7c53ffp-1",
+          "pair": [
+            "0x1.fffc5dafbe6e6p-1",
+            "0x1.d12820c8ce4b5p-16"
+          ],
+          "error": 1.1287438023787891e-15,
+          "iterations": 12,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.715326c7c53ffp-1",
+          "pair": [
+            "0x1.fffc5dafbe6e6p-1",
+            "0x1.d12820c8ce4b5p-16"
+          ],
+          "error": 1.1287438023787891e-15,
+          "iterations": 12,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.3492564430000016
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.0000000000000p-2",
+        "0x1.312d000000000p+23",
+        "0x1.0000000000000p+2"
+      ],
+      "complement": "0x1.8000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.7c4befaf3d11ep-1",
+          "pair": [
+            "0x1.ffffedee173f6p-1",
+            "0x1.211e8c0a00000p-21"
+          ],
+          "error": 1.597233208184225e-10,
+          "iterations": 58,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.7c4befb041f48p-1",
+          "pair": [
+            "0x1.ffffedee173f7p-1",
+            "0x1.211e8c0939a97p-21"
+          ],
+          "error": 4.1659836959987595e-16,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.7c4befb041f48p-1",
+          "pair": [
+            "0x1.ffffedee173f7p-1",
+            "0x1.211e8c0939a97p-21"
+          ],
+          "error": 4.1659836959987595e-16,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.3925276469999517
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.0000000000000p-2",
+        "0x1.8000000000000p+1",
+        "0x1.312d000000000p+23"
+      ],
+      "complement": "0x1.8000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.9de0be2efec79p-2",
+          "pair": [
+            "0x1.0463b1a4fae90p-23",
+            "0x1.fffffbee71397p-1"
+          ],
+          "error": 3.482756339200676e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.9de0be2efec79p-2",
+          "pair": [
+            "0x1.0463b1a4fae92p-23",
+            "0x1.fffffbee71397p-1"
+          ],
+          "error": 3.482756339200676e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.9de0be2efec79p-2",
+          "pair": [
+            "0x1.0463b1a4fae92p-23",
+            "0x1.fffffbee71397p-1"
+          ],
+          "error": 3.482756339200676e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.31212123299997074
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.0000000000000p-2",
+        "0x1.4000000000000p+3",
+        "0x1.dcd6500000000p+29"
+      ],
+      "complement": "0x1.8000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.58f1d680c5ad4p-1",
+          "pair": [
+            "0x1.cefa16a99ae29p-28",
+            "0x1.ffffffc620bd3p-1"
+          ],
+          "error": 1.817103565251681e-15,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.58f1d680c5ad4p-1",
+          "pair": [
+            "0x1.cefa16a99ae2cp-28",
+            "0x1.ffffffc620bd3p-1"
+          ],
+          "error": 1.817103565251681e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.58f1d680c5ad4p-1",
+          "pair": [
+            "0x1.cefa16a99ae2cp-28",
+            "0x1.ffffffc620bd3p-1"
+          ],
+          "error": 1.817103565251681e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.5503313469999966
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.0000000000000p-2",
+        "0x1.f400000000000p+9",
+        "0x1.f400000000000p+9"
+      ],
+      "complement": "0x1.8000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.ea9cb4c94462ap-1",
+          "pair": [
+            "0x1.f513f4063b2edp-2",
+            "0x1.057605fce268ap-1"
+          ],
+          "error": 8.704161834281954e-17,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.ea9cb4c94462ap-1",
+          "pair": [
+            "0x1.f513f4063b2edp-2",
+            "0x1.057605fce268ap-1"
+          ],
+          "error": 8.704161834281954e-17,
+          "iterations": 25,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.ea9cb4c94462ap-1",
+          "pair": [
+            "0x1.f513f4063b2edp-2",
+            "0x1.057605fce268ap-1"
+          ],
+          "error": 8.704161834281954e-17,
+          "iterations": 25,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 1.9628627200000324
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.0000000000000p-2",
+        "0x1.7d78400000000p+26",
+        "0x1.7d78400000000p+26"
+      ],
+      "complement": "0x1.8000000000000p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.ffee51e1954cep-1",
+          "pair": [
+            "0x1.fff728c9b72adp-2",
+            "0x1.00046b9b246aap-1"
+          ],
+          "error": 4.3473149081743117e-16,
+          "iterations": 18,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.ffee51e1954c9p-1",
+          "pair": [
+            "0x1.fff728c9b72aap-2",
+            "0x1.00046b9b246abp-1"
+          ],
+          "error": 1.2045490995145288e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.ffee51e1954c9p-1",
+          "pair": [
+            "0x1.fff728c9b72aap-2",
+            "0x1.00046b9b246abp-1"
+          ],
+          "error": 1.2045490995145288e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 49.39164488
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.8000000000000p-1",
+        "0x1.86a0000000000p+16",
+        "0x1.0000000000000p+1"
+      ],
+      "complement": "0x1.0000000000000p-2",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.bcef309dffc08p+1",
+          "pair": [
+            "0x1.ffff3ef0bd0c5p-1",
+            "0x1.821e85e76561ap-18"
+          ],
+          "error": 2.682555024087517e-15,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.bcef309dffbfap+1",
+          "pair": [
+            "0x1.ffff3ef0bd0c5p-1",
+            "0x1.821e85e765621p-18"
+          ],
+          "error": 8.939588192178632e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.bcef309dffbfap+1",
+          "pair": [
+            "0x1.ffff3ef0bd0c5p-1",
+            "0x1.821e85e765621p-18"
+          ],
+          "error": 8.939588192178632e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.26030266800000845
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.8000000000000p-1",
+        "0x1.312d000000000p+23",
+        "0x1.0000000000000p+2"
+      ],
+      "complement": "0x1.0000000000000p-2",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0a4fda87a232cp+1",
+          "pair": [
+            "0x1.fffff98c89364p-1",
+            "0x1.9cddb27074128p-23"
+          ],
+          "error": 4.60740062127235e-16,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0a4fda87a232cp+1",
+          "pair": [
+            "0x1.fffff98c89364p-1",
+            "0x1.9cddb27074129p-23"
+          ],
+          "error": 4.60740062127235e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.0a4fda87a232cp+1",
+          "pair": [
+            "0x1.fffff98c89364p-1",
+            "0x1.9cddb27074129p-23"
+          ],
+          "error": 4.60740062127235e-16,
+          "iterations": 6,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.386158609000006
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.8000000000000p-1",
+        "0x1.8000000000000p+1",
+        "0x1.312d000000000p+23"
+      ],
+      "complement": "0x1.0000000000000p-2",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.5e942db4a8c59p+0",
+          "pair": [
+            "0x1.b9214c0000000p-22",
+            "0x1.fffff236f5a00p-1"
+          ],
+          "error": 2.482265923718043e-10,
+          "iterations": 58,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.5e942db33302dp+0",
+          "pair": [
+            "0x1.b9214bfe29b3dp-22",
+            "0x1.fffff236f5a01p-1"
+          ],
+          "error": 9.198442817055706e-17,
+          "iterations": 9,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.5e942db33302dp+0",
+          "pair": [
+            "0x1.b9214bfe29b3dp-22",
+            "0x1.fffff236f5a01p-1"
+          ],
+          "error": 9.198442817055706e-17,
+          "iterations": 10,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.47501017999996975
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.8000000000000p-1",
+        "0x1.4000000000000p+3",
+        "0x1.dcd6500000000p+29"
+      ],
+      "complement": "0x1.0000000000000p-2",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.414037b563d87p+0",
+          "pair": [
+            "0x1.af2cf34000000p-27",
+            "0x1.ffffff9434c33p-1"
+          ],
+          "error": 7.613815207974528e-09,
+          "iterations": 5,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.414037de6d187p+0",
+          "pair": [
+            "0x1.af2cf37713e86p-27",
+            "0x1.ffffff9434c32p-1"
+          ],
+          "error": 1.5782874173963042e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.414037de6d187p+0",
+          "pair": [
+            "0x1.af2cf37713e86p-27",
+            "0x1.ffffff9434c32p-1"
+          ],
+          "error": 1.5782874173963042e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.17245812100003377
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.8000000000000p-1",
+        "0x1.f400000000000p+9",
+        "0x1.f400000000000p+9"
+      ],
+      "complement": "0x1.0000000000000p-2",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0b28fe1830173p+0",
+          "pair": [
+            "0x1.057605fce268ap-1",
+            "0x1.f513f4063b2edp-2"
+          ],
+          "error": 6.642475187964304e-17,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0b28fe1830173p+0",
+          "pair": [
+            "0x1.057605fce268ap-1",
+            "0x1.f513f4063b2edp-2"
+          ],
+          "error": 6.642475187964304e-17,
+          "iterations": 25,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.0b28fe1830173p+0",
+          "pair": [
+            "0x1.057605fce268ap-1",
+            "0x1.f513f4063b2edp-2"
+          ],
+          "error": 6.642475187964304e-17,
+          "iterations": 25,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 2.1726708999999573
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.8000000000000p-1",
+        "0x1.7d78400000000p+26",
+        "0x1.7d78400000000p+26"
+      ],
+      "complement": "0x1.0000000000000p-2",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0008d75d5daa6p+0",
+          "pair": [
+            "0x1.00046b9b246aap-1",
+            "0x1.fff728c9b72adp-2"
+          ],
+          "error": 3.9503626614629766e-16,
+          "iterations": 18,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0008d75d5daa8p+0",
+          "pair": [
+            "0x1.00046b9b246abp-1",
+            "0x1.fff728c9b72aap-2"
+          ],
+          "error": 4.8993041020014644e-17,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.0008d75d5daa8p+0",
+          "pair": [
+            "0x1.00046b9b246abp-1",
+            "0x1.fff728c9b72aap-2"
+          ],
+          "error": 4.8993041020014644e-17,
+          "iterations": 6,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 44.492163473000005
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.ff7ced916872bp-1",
+        "0x1.86a0000000000p+16",
+        "0x1.0000000000000p+1"
+      ],
+      "complement": "0x1.0624dd2f1aa00p-10",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.f3bffcf0b6a74p+9",
+          "pair": [
+            "0x1.ffffff541d87dp-1",
+            "0x1.57c4f06c11f43p-26"
+          ],
+          "error": 1.1656460281517195e-15,
+          "iterations": 6,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.f3bffcf0b6a74p+9",
+          "pair": [
+            "0x1.ffffff541d87dp-1",
+            "0x1.57c4f06c11f43p-26"
+          ],
+          "error": 1.1656460281517195e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.f3bffcf0b6a74p+9",
+          "pair": [
+            "0x1.ffffff541d87dp-1",
+            "0x1.57c4f06c11f43p-26"
+          ],
+          "error": 1.1656460281517195e-15,
+          "iterations": 7,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.17870457699996223
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.ff7ced916872bp-1",
+        "0x1.312d000000000p+23",
+        "0x1.0000000000000p+2"
+      ],
+      "complement": "0x1.0624dd2f1aa00p-10",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.60684369e157fp+5",
+          "pair": [
+            "0x1.ffffffb1fffbcp-1",
+            "0x1.380010e4aef74p-27"
+          ],
+          "error": 1.1175283051438659e-15,
+          "iterations": 13,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.60684369e157fp+5",
+          "pair": [
+            "0x1.ffffffb1fffbcp-1",
+            "0x1.380010e4aef73p-27"
+          ],
+          "error": 1.1175283051438659e-15,
+          "iterations": 14,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.60684369e157fp+5",
+          "pair": [
+            "0x1.ffffffb1fffbcp-1",
+            "0x1.380010e4aef73p-27"
+          ],
+          "error": 1.1175283051438659e-15,
+          "iterations": 14,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.2466757039999834
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.ff7ced916872bp-1",
+        "0x1.8000000000000p+1",
+        "0x1.312d000000000p+23"
+      ],
+      "complement": "0x1.0624dd2f1aa00p-10",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.5b0367df4958cp+2",
+          "pair": [
+            "0x1.b4a4a0a280000p-20",
+            "0x1.ffffc96b6bebbp-1"
+          ],
+          "error": 5.2369666324675587e-11,
+          "iterations": 12,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.5b0367df97673p+2",
+          "pair": [
+            "0x1.b4a4a0a2e2379p-20",
+            "0x1.ffffc96b6bebap-1"
+          ],
+          "error": 2.7379586358421748e-15,
+          "iterations": 11,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.5b0367df97668p+2",
+          "pair": [
+            "0x1.b4a4a0a2e236fp-20",
+            "0x1.ffffc96b6bebap-1"
+          ],
+          "error": 9.360749595000564e-16,
+          "iterations": 12,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 2.1426171019999742
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.ff7ced916872bp-1",
+        "0x1.4000000000000p+3",
+        "0x1.dcd6500000000p+29"
+      ],
+      "complement": "0x1.0624dd2f1aa00p-10",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.7abaf000288fbp+1",
+          "pair": [
+            "0x1.fc52b5e000000p-26",
+            "0x1.ffffff01d6a51p-1"
+          ],
+          "error": 1.145395371848269e-09,
+          "iterations": 12,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.7abaeff8e1696p+1",
+          "pair": [
+            "0x1.fc52b5d63b534p-26",
+            "0x1.ffffff01d6a51p-1"
+          ],
+          "error": 6.569801349664327e-15,
+          "iterations": 13,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.7abaeff8e16aep+1",
+          "pair": [
+            "0x1.fc52b5d63b559p-26",
+            "0x1.ffffff01d6a51p-1"
+          ],
+          "error": 2.967654054462157e-15,
+          "iterations": 13,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 0.16601630200000272
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.ff7ced916872bp-1",
+        "0x1.f400000000000p+9",
+        "0x1.f400000000000p+9"
+      ],
+      "complement": "0x1.0624dd2f1aa00p-10",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.37523ef0dec78p+0",
+          "pair": [
+            "0x1.18f69ed743777p-1",
+            "0x1.ce12c25179112p-2"
+          ],
+          "error": 4.1943876948801354e-17,
+          "iterations": 14,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.37523ef0dec78p+0",
+          "pair": [
+            "0x1.18f69ed743777p-1",
+            "0x1.ce12c25179112p-2"
+          ],
+          "error": 4.1943876948801354e-17,
+          "iterations": 13,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.37523ef0dec78p+0",
+          "pair": [
+            "0x1.18f69ed743777p-1",
+            "0x1.ce12c25179112p-2"
+          ],
+          "error": 4.1943876948801354e-17,
+          "iterations": 13,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 1.2570199849999995
+    },
+    {
+      "group": "fit",
+      "kind": "fit",
+      "inputs": [
+        "0x1.ff7ced916872bp-1",
+        "0x1.7d78400000000p+26",
+        "0x1.7d78400000000p+26"
+      ],
+      "complement": "0x1.0624dd2f1aa00p-10",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0028844dd5860p+0",
+          "pair": [
+            "0x1.0014408ca40dcp-1",
+            "0x1.ffd77ee6b7e47p-2"
+          ],
+          "error": 4.555626645002455e-17,
+          "iterations": 16,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0028844dd5860p+0",
+          "pair": [
+            "0x1.0014408ca40dcp-1",
+            "0x1.ffd77ee6b7e47p-2"
+          ],
+          "error": 4.555626645002455e-17,
+          "iterations": 16,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.0028844dd5860p+0",
+          "pair": [
+            "0x1.0014408ca40dcp-1",
+            "0x1.ffd77ee6b7e47p-2"
+          ],
+          "error": 4.555626645002455e-17,
+          "iterations": 16,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_nonregression": true,
+        "clean_f_threshold": true
+      },
+      "seconds": 6.008269473999974
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.3333333333333p-3",
+        "0x1.86a0000000000p+15",
+        "0x1.0000000000000p+3"
+      ],
+      "complement": "0x1.b333333333333p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.548b60a6eee44p-1",
+          "pair": [
+            "0x1.ffe07a38e18e8p-1",
+            "0x1.f85c71e718000p-13"
+          ],
+          "error": 2.0604702983243691e-13,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.548b60a6ee972p-1",
+          "pair": [
+            "0x1.ffe07a38e18e8p-1",
+            "0x1.f85c71e71872bp-13"
+          ],
+          "error": 6.869072251813944e-17,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.548b60a6ee972p-1",
+          "pair": [
+            "0x1.ffe07a38e18e8p-1",
+            "0x1.f85c71e71872ap-13"
+          ],
+          "error": 6.869072251813944e-17,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.17319432200008578
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.3333333333333p-3",
+        "0x1.0000000000000p+3",
+        "0x1.86a0000000000p+15"
+      ],
+      "complement": "0x1.b333333333333p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.04ffee131346bp-1",
+          "pair": [
+            "0x1.5611d555683abp-14",
+            "0x1.fff54f715554cp-1"
+          ],
+          "error": 6.519018662837568e-17,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.04ffee131346bp-1",
+          "pair": [
+            "0x1.5611d555683adp-14",
+            "0x1.fff54f715554cp-1"
+          ],
+          "error": 6.519018662837568e-17,
+          "iterations": 7,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.04ffee131346bp-1",
+          "pair": [
+            "0x1.5611d555683adp-14",
+            "0x1.fff54f715554cp-1"
+          ],
+          "error": 6.519018662837568e-17,
+          "iterations": 7,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.33999689100005526
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.3333333333333p-3",
+        "0x1.f400000000000p+10",
+        "0x1.f400000000000p+10"
+      ],
+      "complement": "0x1.b333333333333p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.e8ce61a2b2d55p-1",
+          "pair": [
+            "0x1.f422635c25fd4p-2",
+            "0x1.05eece51ed016p-1"
+          ],
+          "error": 3.1534163280585845e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.e8ce61a2b2d54p-1",
+          "pair": [
+            "0x1.f422635c25fd3p-2",
+            "0x1.05eece51ed016p-1"
+          ],
+          "error": 1.990513289991905e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.e8ce61a2b2d54p-1",
+          "pair": [
+            "0x1.f422635c25fd3p-2",
+            "0x1.05eece51ed016p-1"
+          ],
+          "error": 1.990513289991905e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 1.7299898750000011
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.3333333333333p-3",
+        "0x1.e848000000000p+20",
+        "0x1.e848000000000p+20"
+      ],
+      "complement": "0x1.b333333333333p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.ff400601ba7f7p-1",
+          "pair": [
+            "0x1.ff9ff0fe9d3d3p-2",
+            "0x1.00300780b1616p-1"
+          ],
+          "error": 2.5644964012764236e-17,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.ff400601ba7f7p-1",
+          "pair": [
+            "0x1.ff9ff0fe9d3d3p-2",
+            "0x1.00300780b1616p-1"
+          ],
+          "error": 2.5644964012764236e-17,
+          "iterations": 31,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.ff400601ba7f7p-1",
+          "pair": [
+            "0x1.ff9ff0fe9d3d3p-2",
+            "0x1.00300780b1616p-1"
+          ],
+          "error": 2.5644964012764236e-17,
+          "iterations": 31,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 15.561415363000037
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.b333333333333p-1",
+        "0x1.86a0000000000p+15",
+        "0x1.0000000000000p+3"
+      ],
+      "complement": "0x1.3333333333334p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.f6312d47a3865p+0",
+          "pair": [
+            "0x1.fff54f715554cp-1",
+            "0x1.5611d555683acp-14"
+          ],
+          "error": 6.140362231348092e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.f6312d47a3865p+0",
+          "pair": [
+            "0x1.fff54f715554cp-1",
+            "0x1.5611d555683adp-14"
+          ],
+          "error": 6.140362231348092e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.f6312d47a3865p+0",
+          "pair": [
+            "0x1.fff54f715554cp-1",
+            "0x1.5611d555683adp-14"
+          ],
+          "error": 6.140362231348092e-16,
+          "iterations": 9,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.3797165839999934
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.b333333333333p-1",
+        "0x1.0000000000000p+3",
+        "0x1.86a0000000000p+15"
+      ],
+      "complement": "0x1.3333333333334p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.80e3ba0139c95p+0",
+          "pair": [
+            "0x1.f85c71e718000p-13",
+            "0x1.ffe07a38e18e8p-1"
+          ],
+          "error": 2.0652932134898787e-13,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.80e3ba013a208p+0",
+          "pair": [
+            "0x1.f85c71e71872bp-13",
+            "0x1.ffe07a38e18e8p-1"
+          ],
+          "error": 5.051051099904121e-16,
+          "iterations": 7,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.80e3ba013a208p+0",
+          "pair": [
+            "0x1.f85c71e71872ap-13",
+            "0x1.ffe07a38e18e8p-1"
+          ],
+          "error": 5.051051099904121e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 0.12893356800009315
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.b333333333333p-1",
+        "0x1.f400000000000p+10",
+        "0x1.f400000000000p+10"
+      ],
+      "complement": "0x1.3333333333334p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0c25addaf77b7p+0",
+          "pair": [
+            "0x1.05eece51ed016p-1",
+            "0x1.f422635c25fd4p-2"
+          ],
+          "error": 1.906951128164866e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0c25addaf77b7p+0",
+          "pair": [
+            "0x1.05eece51ed016p-1",
+            "0x1.f422635c25fd3p-2"
+          ],
+          "error": 1.906951128164866e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.0c25addaf77b7p+0",
+          "pair": [
+            "0x1.05eece51ed016p-1",
+            "0x1.f422635c25fd3p-2"
+          ],
+          "error": 1.906951128164866e-16,
+          "iterations": 8,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 1.9968407269999489
+    },
+    {
+      "group": "new",
+      "kind": "screen",
+      "inputs": [
+        "0x1.b333333333333p-1",
+        "0x1.e848000000000p+20",
+        "0x1.e848000000000p+20"
+      ],
+      "complement": "0x1.3333333333334p-3",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0060210a65f05p+0",
+          "pair": [
+            "0x1.00300780b1616p-1",
+            "0x1.ff9ff0fe9d3d3p-2"
+          ],
+          "error": 4.7010365824032935e-17,
+          "iterations": 8,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0060210a65f05p+0",
+          "pair": [
+            "0x1.00300780b1616p-1",
+            "0x1.ff9ff0fe9d3d3p-2"
+          ],
+          "error": 4.7010365824032935e-17,
+          "iterations": 31,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.0060210a65f05p+0",
+          "pair": [
+            "0x1.00300780b1616p-1",
+            "0x1.ff9ff0fe9d3d3p-2"
+          ],
+          "error": 4.7010365824032935e-17,
+          "iterations": 31,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true
+      },
+      "seconds": 14.700772062000055
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.ffffde7210be9p-1",
+        "0x1.4000000000000p+2",
+        "0x1.e848000000000p+20"
+      ],
+      "complement": "0x1.0c6f7a0b80000p-20",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.cb5f60af1eb93p+2",
+          "pair": [
+            "0x1.2d0c8b9330000p-16",
+            "0x1.fffda5e6e8d9ap-1"
+          ],
+          "error": 3.676393747192841e-12,
+          "iterations": 21,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.cb5f60af1d393p+2",
+          "pair": [
+            "0x1.2d0c8b932f046p-16",
+            "0x1.fffda5e6e8d9ap-1"
+          ],
+          "error": 2.9161263977116932e-12,
+          "iterations": 21,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.cb5f60af1778cp+2",
+          "pair": [
+            "0x1.2d0c8b932b3f0p-16",
+            "0x1.fffda5e6e8d9bp-1"
+          ],
+          "error": 9.020346865698674e-16,
+          "iterations": 22,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 1.188845618000073
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.ffffffff24190p-1",
+        "0x1.4000000000000p+2",
+        "0x1.e848000000000p+20"
+      ],
+      "complement": "0x1.b7ce000000000p-34",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.639aa1335d9adp+3",
+          "pair": [
+            "0x1.d2159851c8000p-16",
+            "0x1.fffc5bd4cf5c7p-1"
+          ],
+          "error": 1.9021532102370994e-12,
+          "iterations": 35,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.639aa15702a27p+3",
+          "pair": [
+            "0x1.d21598807fb20p-16",
+            "0x1.fffc5bd4ceff0p-1"
+          ],
+          "error": 5.972683131093327e-09,
+          "iterations": 32,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.639aa1336082bp+3",
+          "pair": [
+            "0x1.d2159851cbcf1p-16",
+            "0x1.fffc5bd4cf5c7p-1"
+          ],
+          "error": 3.853691741358956e-16,
+          "iterations": 34,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.6651057180000635
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.ffffffffffc7bp-1",
+        "0x1.4000000000000p+2",
+        "0x1.e848000000000p+20"
+      ],
+      "complement": "0x1.c280000000000p-44",
+      "passes": false,
+      "variants": {
+        "F-0": {
+          "result": "0x1.c054974a67196p+3",
+          "pair": [
+            "0x1.25cebb1388000p-15",
+            "0x1.fffb68c513b1ep-1"
+          ],
+          "error": 1.5240827174701022e-12,
+          "iterations": 53,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.c05614bdabe42p+3",
+          "pair": [
+            "0x1.25cfb50bc8aa4p-15",
+            "0x1.fffb68c12bd0ep-1"
+          ],
+          "error": 1.2982544641356753e-05,
+          "iterations": 24,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.c054974a642a1p+3",
+          "pair": [
+            "0x1.25cebb1386141p-15",
+            "0x1.fffb68c513b1ep-1"
+          ],
+          "error": 4.9233096404007716e-17,
+          "iterations": 25,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": false,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.5244939359999989
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.b7cdfd9d7bdbbp-34",
+        "0x1.4000000000000p+2",
+        "0x1.e848000000000p+20"
+      ],
+      "complement": "0x1.ffffffff24190p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.0f400f136aca3p-14",
+          "pair": [
+            "0x1.6388795655ed4p-33",
+            "0x1.fffffffe9c778p-1"
+          ],
+          "error": 9.290878292466683e-16,
+          "iterations": 29,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.0f400f136aca3p-14",
+          "pair": [
+            "0x1.6388795655ed4p-33",
+            "0x1.fffffffe9c778p-1"
+          ],
+          "error": 9.290878292466683e-16,
+          "iterations": 30,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.0f400f136aca3p-14",
+          "pair": [
+            "0x1.6388795655ed4p-33",
+            "0x1.fffffffe9c778p-1"
+          ],
+          "error": 9.290878292466683e-16,
+          "iterations": 30,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.1911044700000275
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.ffffffff24190p-1",
+        "0x1.e848000000000p+20",
+        "0x1.4000000000000p+2"
+      ],
+      "complement": "0x1.b7ce000000000p-34",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.e336ddb98689ep+13",
+          "pair": [
+            "0x1.fffffffe9c778p-1",
+            "0x1.63887a1bc22e9p-33"
+          ],
+          "error": 2.572935336765444e-15,
+          "iterations": 31,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.e336ddb98689ep+13",
+          "pair": [
+            "0x1.fffffffe9c778p-1",
+            "0x1.63887a1bc22e9p-33"
+          ],
+          "error": 2.572935336765444e-15,
+          "iterations": 31,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.e336ddb98689ep+13",
+          "pair": [
+            "0x1.fffffffe9c778p-1",
+            "0x1.63887a1bc22e9p-33"
+          ],
+          "error": 2.572935336765444e-15,
+          "iterations": 31,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.1891097099999115
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.b7cdfd9d7bdbbp-34",
+        "0x1.e848000000000p+20",
+        "0x1.4000000000000p+2"
+      ],
+      "complement": "0x1.ffffffff24190p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.7096fa3682c79p-4",
+          "pair": [
+            "0x1.fffc5bd4cf2b5p-1",
+            "0x1.d215986a58000p-16"
+          ],
+          "error": 2.6519754810778796e-12,
+          "iterations": 35,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.7096fa24fd5a2p-4",
+          "pair": [
+            "0x1.fffc5bd4ceff0p-1",
+            "0x1.d21598807fb20p-16"
+          ],
+          "error": 2.8307012422503476e-09,
+          "iterations": 32,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.7096fa367e94cp-4",
+          "pair": [
+            "0x1.fffc5bd4cf2b4p-1",
+            "0x1.d215986a5d4ecp-16"
+          ],
+          "error": 1.228469619258606e-16,
+          "iterations": 33,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.7525012669999569
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.ffffffff24190p-1",
+        "0x1.9000000000000p+6",
+        "0x1.2a05f20000000p+33"
+      ],
+      "complement": "0x1.b7ce000000000p-34",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.16ac9732321b2p+1",
+          "pair": [
+            "0x1.7607b7c000000p-26",
+            "0x1.ffffff44fc242p-1"
+          ],
+          "error": 2.7424212530772448e-09,
+          "iterations": 70,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.16ac974f15825p+1",
+          "pair": [
+            "0x1.7607b7e6c5f0ap-26",
+            "0x1.ffffff44fc241p-1"
+          ],
+          "error": 8.921237138505726e-09,
+          "iterations": 46,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.16ac97255fb73p+1",
+          "pair": [
+            "0x1.7607b7aeca725p-26",
+            "0x1.ffffff44fc243p-1"
+          ],
+          "error": 3.3458264250064785e-15,
+          "iterations": 47,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.7057273210000403
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.19799812dea11p-40",
+        "0x1.0000000000000p+3",
+        "0x1.86a0000000000p+15"
+      ],
+      "complement": "0x1.fffffffffdcd1p-1",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.22389bf05246cp-11",
+          "pair": [
+            "0x1.7c660afb96e69p-24",
+            "0x1.fffffd0733ea1p-1"
+          ],
+          "error": 1.6239395908184392e-15,
+          "iterations": 29,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.22389bf05246cp-11",
+          "pair": [
+            "0x1.7c660afb96e6ap-24",
+            "0x1.fffffd0733ea1p-1"
+          ],
+          "error": 1.6239395908184392e-15,
+          "iterations": 28,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.22389bf05246cp-11",
+          "pair": [
+            "0x1.7c660afb96e6ap-24",
+            "0x1.fffffd0733ea1p-1"
+          ],
+          "error": 1.6239395908184392e-15,
+          "iterations": 28,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.2728081430000202
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.fffffffffdcd1p-1",
+        "0x1.0000000000000p+3",
+        "0x1.86a0000000000p+15"
+      ],
+      "complement": "0x1.1978000000000p-40",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.2610073e725fdp+3",
+          "pair": [
+            "0x1.80de2ca36de00p-10",
+            "0x1.ff3f90e9ae491p-1"
+          ],
+          "error": 4.5873144936277166e-14,
+          "iterations": 34,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.260ff9e09ebd8p+3",
+          "pair": [
+            "0x1.80de1b2b88487p-10",
+            "0x1.ff3f90f26a3bep-1"
+          ],
+          "error": 6.935828318473541e-07,
+          "iterations": 25,
+          "guard_activations": 1
+        },
+        "P4": {
+          "result": "0x1.2610073e726e7p+3",
+          "pair": [
+            "0x1.80de2ca36df35p-10",
+            "0x1.ff3f90e9ae490p-1"
+          ],
+          "error": 6.400566858184526e-16,
+          "iterations": 27,
+          "guard_activations": 1
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.20603324899991549
+    },
+    {
+      "group": "probe",
+      "kind": "far",
+      "inputs": [
+        "0x1.fffffffffdcd1p-1",
+        "0x1.e000000000000p+4",
+        "0x1.4000000000000p+5"
+      ],
+      "complement": "0x1.1978000000000p-40",
+      "passes": true,
+      "variants": {
+        "F-0": {
+          "result": "0x1.9d4e63f78507cp+3",
+          "pair": [
+            "0x1.d017394928d9ap-1",
+            "0x1.7f4635b6b932dp-4"
+          ],
+          "error": 2.6243614965373767e-15,
+          "iterations": 33,
+          "guard_activations": 0
+        },
+        "P3": {
+          "result": "0x1.9d4e63f78507fp+3",
+          "pair": [
+            "0x1.d017394928d9ap-1",
+            "0x1.7f4635b6b932cp-4"
+          ],
+          "error": 2.2117612227673738e-15,
+          "iterations": 33,
+          "guard_activations": 0
+        },
+        "P4": {
+          "result": "0x1.9d4e63f78507fp+3",
+          "pair": [
+            "0x1.d017394928d9ap-1",
+            "0x1.7f4635b6b932cp-4"
+          ],
+          "error": 2.2117612227673738e-15,
+          "iterations": 33,
+          "guard_activations": 0
+        }
+      },
+      "gates": {
+        "oracle": true,
+        "f_threshold": true,
+        "no_worse": true
+      },
+      "seconds": 0.43225252199999886
+    }
+  ],
+  "fit_median_gate": true
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the links in the repository's tracked Markdown files.
+r"""Check the links in the repository's tracked Markdown files.
 
 Offline (the default, run by tools/run_static_checks.py on every change), every
 relative link, in Markdown syntax or in an HTML href or src attribute, must name

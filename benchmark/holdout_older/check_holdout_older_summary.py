@@ -39,7 +39,7 @@ import analyze_holdout_older as A  # noqa: E402
 def check(summary, grid, contracts):
     """Return (ok, message)."""
     try:
-        expected, results, _failing, unclaimed = A.render(*A.load(grid, contracts))
+        expected, results, _failing, unclaimed, _above = A.render(*A.load(grid, contracts))
     except (OSError, KeyError, ValueError, ArithmeticError) as exc:
         return False, f"cannot render the summary: {exc!r}"
     try:

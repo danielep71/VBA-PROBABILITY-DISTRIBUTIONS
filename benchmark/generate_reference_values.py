@@ -920,7 +920,9 @@ def build_discrete_rows():
                 du_row("DiscreteUniform_Survival", (x, lo_m, hi_m), _du_sf(x, lo_m, hi_m), REL14, "rel")
 
         for j in sorted(set([0, int(n) // 3, int(n) - 1])):
-            prob = (mp.mpf(j) + mp.mpf("0.37")) / n
+            # A design point: formed in binary64, as the committed rows were,
+            # so the generator names the Doubles the grid holds (#349).
+            prob = mp.mpf((j + 0.37) / int(n))
             du_row("DiscreteUniform_InverseCumulative", (prob, lo_m, hi_m), _du_inv(prob, lo_m, hi_m), ABS9, "abs")
 
         du_row("DiscreteUniform_Mean", (lo_m, hi_m), _du_mean(lo_m, hi_m), REL14, "rel")
@@ -974,6 +976,10 @@ def build_deep_tail_rows():
     REL = "measured"
 
     def row(func, args, ref):
+        # The deep_tail contracts hold q <= 1E-13. The first probe, q = 1E-12,
+        # sits on the other side of PROB_CDF_SPLIT and is committed under
+        # split_boundary (#349).
+        regime = "deep_tail" if args[0] <= mp.mpf("1e-13") else "split_boundary"
         rows.append({
             "function": func, "vba_kernel": "K_STATS_" + func,
             "claim": REL, "metric": "rel",
@@ -982,7 +988,7 @@ def build_deep_tail_rows():
             "arg3": format_double_arg(args[2]) if len(args) > 2 else "",
             "arg4": "",
             "reference": mp.nstr(ref, 25), "observed_vba": "",
-            "regime": "deep_tail", "evidence_set": "main grid",
+            "regime": regime, "evidence_set": "main grid",
         })
 
     probs = ["1e-12", "1e-15", "1e-18", "1e-30", "1e-50", "1e-100", "1e-200", "1e-300"]
@@ -1000,8 +1006,28 @@ def build_deep_tail_rows():
     return rows
 
 
-_TU_BETA_INV = [(0.020391305237761687, 0.5, 0.05, '0.04601031892528297249793596'), (0.011614828246796624, 0.2, 0.01, '0.0008504300838312333727749314'), (0.023229656493593247, 0.2, 0.01, '0.02663371583762863112542433'), (0.09081818114602173, 0.0001, 1e-05, '0.0000451672198517511166661721'), (0.09090818114535563, 0.0001, 1e-05, '0.4750188540160881796474294')]
-_TU_F_INV = [(0.04183587875236068, 1.0, 0.1, '0.02146355524527151411231635'), (0.08367175750472136, 1.0, 0.1, '0.1067565108965985104078747'), (0.15060916350849846, 1.0, 0.1, '0.6549861983264712392580451'), (0.16717617149443328, 1.0, 0.1, '0.9957837553502971382239687'), (0.018292907737209336, 0.4, 0.02, '0.0004129422049921151028783592'), (0.03658581547441867, 0.4, 0.02, '0.01379719153186172772697386'), (0.06585446785395362, 0.4, 0.02, '0.4500007034584452265679211'), (0.07309845931788851, 0.4, 0.02, '0.9920563872998486874964019'), (0.09083909184035142, 0.0002, 2e-05, '0.00004515249603705946469723038')]
+# Quantiles solved at the exact binary64 arguments. The constants written here
+# before #349 were solved at the decimal spellings and missed the committed
+# references by up to 2.2E-13 relative; a 90-digit check puts the committed
+# values within 2E-25 of the root in probability, and the earlier ones 6E-17.
+_TU_BETA_INV = [
+    (0.020391305237761687, 0.5, 0.05, '0.0460103189252829776817163'),
+    (0.011614828246796624, 0.2, 0.01, '0.0008504300838312332800788581'),
+    (0.023229656493593247, 0.2, 0.01, '0.02663371583762862828433306'),
+    (0.09081818114602173, 0.0001, 1e-05, '0.00004516721985176109752297216'),
+    (0.09090818114535563, 0.0001, 1e-05, '0.47501885401617214363346'),
+]
+_TU_F_INV = [
+    (0.04183587875236068, 1.0, 0.1, '0.02146355524527151551756332'),
+    (0.08367175750472136, 1.0, 0.1, '0.1067565108965985188060758'),
+    (0.15060916350849846, 1.0, 0.1, '0.6549861983264713460869071'),
+    (0.16717617149443328, 1.0, 0.1, '0.9957837553502973832462148'),
+    (0.018292907737209336, 0.4, 0.02, '0.0004129422049921149347088256'),
+    (0.03658581547441867, 0.4, 0.02, '0.01379719153186172187404898'),
+    (0.06585446785395362, 0.4, 0.02, '0.4500007034584452245028831'),
+    (0.07309845931788851, 0.4, 0.02, '0.9920563872998486594073559'),
+    (0.09083909184035142, 0.0002, 2e-05, '0.00004515249603703414461200275'),
+]
 
 
 # ===========================================================================
@@ -1097,8 +1123,10 @@ def build_tiny_unbalanced_rows():
     # --- F forward surface; x straddles the log-ratio branch at x = DF2 / DF1 ---
     for d1, d2 in [(2e-12, 1.98e-13), (1.98e-13, 2e-12), (2e-16, 1.98e-17),
                    (2e-8, 2e-9), (2e-4, 2e-5)]:
-        branch = mp.mpf(d2) / mp.mpf(d1)
-        for x in [branch / 10, branch, branch * 10]:
+        # Design points formed in binary64, as the committed rows were (#349):
+        # a 50-digit quotient rounds to a neighbouring Double for 4 of the 15.
+        branch = d2 / d1
+        for x in [mp.mpf(branch / 10), mp.mpf(branch), mp.mpf(branch * 10)]:
             row("F_Density", (x, mp.mpf(d1), mp.mpf(d2)), _tu_f_density(x, d1, d2), REL, "rel", "tiny_unbalanced")
             c = _tu_f_cdf(x, d1, d2)
             row("F_Cumulative", (x, mp.mpf(d1), mp.mpf(d2)), c, REL, "rel", "tiny_unbalanced")
@@ -1114,6 +1142,136 @@ def build_tiny_unbalanced_rows():
     for pr, d1, d2, q in _TU_F_INV:
         row("F_InverseCumulative", (mp.mpf(pr), mp.mpf(d1), mp.mpf(d2)), mp.mpf(q),
             "tail_rel<=1E-9", "rel", "tiny_unbalanced_representable")
+
+    return rows
+
+
+# ===========================================================================
+# POSITIVE RATIO  (regimes "positive_ratio_subnormal" and
+# "positive_ratio_hard_underflow", #13)
+#
+#   A positive X whose standardized argument, X / ScaleParam or X / 2, is
+#   stored as zero or as a subnormal. The reference is taken at the exact
+#   ratio of the two Doubles the exporter passes, never at the stored one:
+#   the gap between them is what the recovery repairs.
+#
+#   Gamma rows use two normal operands, the form in which the defect is
+#   reached from ordinary inputs. Chi-square can only reach it from a
+#   subnormal X, so those tokens are subnormal decimals; a mis-parsed token
+#   with few significant bits moves the result far beyond the threshold and
+#   fails the contract, so it cannot pass unnoticed.
+#
+#   Rows whose reference is not a normal Double are not emitted.
+def build_positive_ratio_rows():
+    rows = []
+    sub, hard = "positive_ratio_subnormal", "positive_ratio_hard_underflow"
+
+    def row(func, args, ref, regime):
+        v = abs(ref)
+        if not (mp.mpf("1e-300") < v < mp.mpf("1e300")):
+            return
+        rows.append({
+            "function": func, "vba_kernel": "K_STATS_" + func,
+            "claim": _CONTRACTS[(func, regime)]["claim"], "metric": "rel",
+            "arg1": format_double_arg(args[0]), "arg2": format_double_arg(args[1]),
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "", "arg4": "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": regime, "evidence_set": "main grid",
+        })
+
+    def lower(a, z):
+        return mp.gammainc(a, 0, z, regularized=True)
+
+    def upper(a, z):
+        return mp.gammainc(a, z, mp.inf, regularized=True)
+
+    def density(a, z, scale):
+        return mp.e ** ((a - 1) * mp.log(z) - z - mp.loggamma(a)) / scale
+
+    # --- Gamma: (X, Shape, ScaleParam). The ratios are 1E-400 (stored as
+    # zero), and 1E-310 down to 5E-321 (subnormals of 45 to 10 bits).
+    gamma_points = [("1e-300", "1e-4", "1e100"), ("1e-300", "0.5", "1e100"),
+                    ("1e-250", "0.25", "1e150"), ("1e-200", "0.5", "1e110"),
+                    ("1e-200", "0.9", "1e115"), ("3e-180", "0.3", "7e135"),
+                    ("1e-150", "0.75", "2e170")]
+    for xs, ks, ss in gamma_points:
+        x, k, s = D(mp.mpf(xs)), D(mp.mpf(ks)), D(mp.mpf(ss))
+        z = x / s
+        row("Gamma_Density", (x, k, s), density(k, z, s), sub)
+        row("Gamma_Cumulative", (x, k, s), lower(k, z), sub)
+    for xs, ks, ss in [("1e-300", "1e-4", "1e100"), ("1e-300", "1e-6", "1e100"),
+                       ("1e-250", "2.5e-3", "1e150"), ("1e-300", "1e-2", "1e100"),
+                       ("1e-300", "0.5", "1e100")]:
+        x, k, s = D(mp.mpf(xs)), D(mp.mpf(ks)), D(mp.mpf(ss))
+        row("Gamma_Survival", (x, k, s), upper(k, x / s), hard)
+
+    # --- Chi-square: (X, DegreesFreedom). X is the smallest positive Double
+    # (its half is stored as zero) or a subnormal of 45, 28, 22 or 11 bits.
+    minsub = mp.mpf(2) ** -1074
+    for xs in [None, "1e-310", "1e-315", "3e-317", "1e-320"]:
+        x = minsub if xs is None else D(mp.mpf(xs))
+        for dfs in ["0.0002", "0.5", "1", "1.99"]:
+            df = D(mp.mpf(dfs))
+            row("ChiSquare_Density", (x, df), density(df / 2, x / 2, mp.mpf(2)), sub)
+            row("ChiSquare_Cumulative", (x, df), lower(df / 2, x / 2), sub)
+    for dfs in ["0.0002", "0.000002", "0.02", "0.5", "1"]:
+        df = D(mp.mpf(dfs))
+        row("ChiSquare_Survival", (minsub, df), upper(df / 2, minsub / 2), hard)
+
+    return rows
+
+
+# ===========================================================================
+# GAMMA INVERSE AT THE FINAL SCALE  (regime
+# "scaled_quantile_from_underflowed_unit", #14)
+#
+#   The unit-scale quantile is below the smallest normal Double and the final
+#   quantile is an ordinary number: a scale from 1E100 up for Gamma, and for
+#   Chi-square a half-quantile in [2^-1023, 2^-1022). The quantile is tiny, so
+#   the lower series P = x^a e^-x / Gamma(a + 1) * (1 + x / (a + 1) + ...) is
+#   inverted by fixed-point iteration from its leading term.
+# ===========================================================================
+def build_gamma_inverse_scale_rows():
+    rows = []
+    regime = "scaled_quantile_from_underflowed_unit"
+    min_normal = mp.mpf(2) ** -1022
+
+    def unit_quantile(p, a):
+        log0 = (mp.log(p) + mp.loggamma(1 + a)) / a
+
+        def refine(x):
+            series = 1 + x / (a + 1) + x * x / ((a + 1) * (a + 2))
+            return mp.e ** (log0 + (x - mp.log(series)) / a)
+
+        # Four steps from the leading term; each gains the size of x in digits.
+        return refine(refine(refine(refine(mp.e ** log0))))
+
+    def row(func, args, unit, factor):
+        ref = unit * factor
+        assert unit < min_normal <= ref < mp.mpf("1e300"), (func, args)
+        rows.append({
+            "function": func, "vba_kernel": "K_STATS_" + func,
+            "claim": _CONTRACTS[(func, regime)]["claim"], "metric": "rel",
+            "arg1": format_double_arg(args[0]), "arg2": format_double_arg(args[1]),
+            "arg3": format_double_arg(args[2]) if len(args) > 2 else "", "arg4": "",
+            "reference": mp.nstr(ref, 25), "observed_vba": "",
+            "regime": regime, "evidence_set": "main grid",
+        })
+
+    # --- Gamma: (Probability, Shape, ScaleParam)
+    for ps, ks, ss in [("1e-5", "0.01", "1e250"), ("0.01", "0.005", "1e300"),
+                       ("0.5", "0.0008", "1e280"), ("0.9", "0.0001", "1e200"),
+                       ("1e-200", "0.5", "1e150"), ("1e-290", "0.9", "1e100"),
+                       ("3e-7", "0.02", "7e305"), ("0.25", "0.001", "2e305")]:
+        p, k, s = D(mp.mpf(ps)), D(mp.mpf(ks)), D(mp.mpf(ss))
+        row("Gamma_InverseCumulative", (p, k, s), unit_quantile(p, k), s)
+
+    # --- Chi-square: (Probability, DegreesFreedom); the final factor is 2
+    for ps, dfs in [("0.4926168", "0.002"), ("4.150441e-16", "0.1"),
+                    ("1.313012e-77", "0.5"), ("1.375595e-154", "1"),
+                    ("6.357288e-247", "1.6")]:
+        p, df = D(mp.mpf(ps)), D(mp.mpf(dfs))
+        row("ChiSquare_InverseCumulative", (p, df), unit_quantile(p, df / 2), mp.mpf(2))
 
     return rows
 
@@ -1305,7 +1463,10 @@ def build_rows():
             add("StudentT_Cumulative", "K_STATS_StudentT_Cumulative", (x, df), _student_t_cdf(x, df))
             add("StudentT_Survival", "K_STATS_StudentT_Survival", (x, df), _student_t_sf(x, df))
         for p in [mp.mpf("0.001"), mp.mpf("0.05"), mp.mpf("0.5"), mp.mpf("0.95"), mp.mpf("0.999")]:
-            add("StudentT_InverseCumulative", "K_STATS_StudentT_InverseCumulative", (p, df), _student_t_ppf(p, df))
+            # The median is exactly zero, where a relative error is undefined:
+            # it is scored on absolute error under exact_median (#22).
+            add("StudentT_InverseCumulative", "K_STATS_StudentT_InverseCumulative", (p, df), _student_t_ppf(p, df),
+                regime="exact_median" if p == mp.mpf("0.5") else None)
 
     # --- Chi-square ---
     for df in [mp.mpf(1), mp.mpf(2), mp.mpf(5), mp.mpf(30), mp.mpf(100)]:
@@ -1468,6 +1629,8 @@ def build_rows():
     rows += build_discrete_rows()
     rows += build_deep_tail_rows()
     rows += build_tiny_unbalanced_rows()
+    rows += build_positive_ratio_rows()
+    rows += build_gamma_inverse_scale_rows()
 
     # --- PROB_LogGamma regime evidence, promoted from loggamma_regimes_study ---
     for _z, _reg in _LOGGAMMA_POINTS:

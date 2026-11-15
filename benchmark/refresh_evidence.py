@@ -124,7 +124,8 @@ VERIFY = [
     # The retained record is live evidence, not a fixture: its candidate,
     # sources and exported-grid digests must match this commit (#47).
     ("retained Excel record", HERE, ["check_excel_certification.py", "--record",
-                                     "excel_regression_record.json", "--require-pass"]),
+                                     "excel_regression_record.json", "--require-pass",
+                                     "--allow-carried"]),
     ("root README assurance block", HERE, ["render_readme_assurance.py", "--check"]),
 ]
 

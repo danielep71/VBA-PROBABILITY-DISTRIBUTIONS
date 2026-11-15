@@ -81,7 +81,7 @@ Option Explicit
 '
 '   Chi-square
 '     Uses the regularized incomplete gamma functions P(DF / 2, X / 2) and
-'     Q(DF / 2, X / 2). Quantiles use PROB_TryGammaInvP and a guarded rescale.
+'     Q(DF / 2, X / 2). Quantiles use PROB_TryGammaInvPScaled, at the final scale.
 '
 '   F
 '     Uses a log-ratio logistic pair to form r / (1 + r) and 1 / (1 + r), where
@@ -132,9 +132,9 @@ Option Explicit
 '       PROB_LogGammaHalfDiff
 '       PROB_TryGammaLogPdf
 '       PROB_TryBetaLogPdf
-'       PROB_TryGammaRegularizedP
-'       PROB_TryGammaRegularizedQ
-'       PROB_TryGammaInvP
+'       PROB_TryGammaRoutedP
+'       PROB_TryGammaRoutedQ
+'       PROB_TryGammaInvPScaled
 '       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
 '       PROB_DENSITY_SHAPE_MAX
@@ -193,6 +193,7 @@ Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; v
 'test_vba_large_df_source.py checks every pair. Do not retype or round them.
 Private Const PROB_T_LDF_MIN_DF   As Double = 100000#  'Smallest df the expansion serves
 Private Const PROB_T_LDF_MAX_ABS_T As Double = 8#      'Largest Abs(X) the expansion serves
+Private Const PROB_T_NEAR_ONE_MAX_ABS_T As Double = 1E+100 'Largest Abs(X) squared directly above it (#213)
 Private Const PROB_T_INV_SQRT_TWO_PI As Double = _
     0.398942280401433 - 2.77555756156289E-16
 Private Const PROB_T_LDF_G1_0 As Double = 0.25
@@ -860,6 +861,7 @@ Public Function K_STATS_ChiSquare_Density( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim HalfDF              As Double          'DegreesFreedom / 2
+    Dim StandardX           As Double          'X / 2, as stored
     Dim LogDensity          As Double          'Log-density value
     Dim Density             As Double          'Density value
     Dim FailMsg             As String          'Detailed failure message
@@ -921,10 +923,24 @@ Public Function K_STATS_ChiSquare_Density( _
     'Compute half degrees of freedom
         HalfDF = 0.5 * DegreesFreedom
 
-    'Stable Loader log-density via the shared Gamma kernel (Shape=df/2, Scale=2)
-        If Not PROB_TryGammaLogPdf(0.5 * X, HalfDF, Log(X) - Log(2#), Log(2#), _
-                                   LogDensity, FailMsg) Then
-            GoTo Fail_Num
+    'Store the standardized argument X / 2
+        StandardX = 0.5 * X
+
+    'A positive X whose half is stored as zero, or as a subnormal below the
+    'measured cutoff, takes the log-domain form; every other argument keeps the
+    'stable Loader log-density of the shared Gamma kernel (Shape=df/2, Scale=2)
+    '(#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
+            = PROB_PRC_DIRECT Then
+            If Not PROB_TryGammaLogPdf(StandardX, HalfDF, Log(X) - Log(2#), Log(2#), _
+                                       LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryPositiveRatioLogPdf(HalfDF, Log(X) - Log(2#), StandardX, _
+                                               Log(2#), LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Exponentiate; underflow to zero is a valid result
@@ -1022,7 +1038,7 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
 '   - PROB_CHI_ValidateEnvelope
-'   - PROB_TryGammaRegularizedP
+'   - PROB_TryGammaRoutedP
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1033,6 +1049,10 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Value               As Double          'Cumulative probability
+    Dim StandardX           As Double          'X / 2, as stored
+    Dim Complement          As Double          'Upper tail from the recovery kernel, unused
+    Dim Doubled             As Double          'Twice the stored half, to test the halving
+    Dim RatioClass          As PROB_PositiveRatioClass 'Evaluation path of the stored half
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1071,12 +1091,40 @@ Public Function K_STATS_ChiSquare_Cumulative( _
             GoTo Fail_Num
         End If
 
-    'Evaluate the regularized lower incomplete gamma function
-        If Not PROB_TryGammaRegularizedP( _
-            0.5 * DegreesFreedom, _
-            0.5 * X, _
-            Value, _
-            FailMsg) Then GoTo Fail_Num
+    'Store the standardized argument X / 2
+        StandardX = 0.5 * X
+
+    'Store twice the halved argument: doubling is exact, so it equals X
+    'exactly when the halving did not round
+        Doubled = 2# * StandardX
+
+    'Classify the stored half. A zero is always recovered: the kernel would
+    'read it as the support origin. A subnormal below the 40-bit cutoff is
+    'recovered only when the halving rounded: the direct path is accurate
+    'to a few 1E-15 for the argument it receives, far inside the recovery's
+    '1E-13, so an exact half is better left to it (#13, Amendment 1 in
+    'benchmark/positive_ratio_subnormal; #314 for the direct path)
+        RatioClass = PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT)
+        If RatioClass = PROB_PRC_PRECISION_RECOVERY And Doubled = X Then
+            RatioClass = PROB_PRC_DIRECT
+        End If
+
+    'Evaluate from Log(X) - Log(2), or through the regularized lower
+    'incomplete gamma function
+        If RatioClass <> PROB_PRC_DIRECT Then
+            If Not PROB_TryPositiveRatioTails( _
+                0.5 * DegreesFreedom, _
+                Log(X) - Log(2#), _
+                Value, _
+                Complement, _
+                FailMsg) Then GoTo Fail_Num
+        Else
+            If Not PROB_TryGammaRoutedP( _
+                0.5 * DegreesFreedom, _
+                StandardX, _
+                Value, _
+                FailMsg) Then GoTo Fail_Num
+        End If
 
     'Return the cumulative probability
         K_STATS_ChiSquare_Cumulative = Value
@@ -1160,7 +1208,7 @@ Public Function K_STATS_ChiSquare_Survival( _
 ' DEPENDENCIES
 '   - PROB_TF_ValidateXAndDF
 '   - PROB_CHI_ValidateEnvelope
-'   - PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaRoutedQ
 '   - PROB_SetStatus
 '
 ' UPDATED
@@ -1171,6 +1219,8 @@ Public Function K_STATS_ChiSquare_Survival( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim Value               As Double          'Survival probability
+    Dim StandardX           As Double          'X / 2, as stored
+    Dim Complement          As Double          'Lower tail from the recovery kernel, unused
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1209,12 +1259,28 @@ Public Function K_STATS_ChiSquare_Survival( _
             GoTo Fail_Num
         End If
 
-    'Evaluate the regularized upper incomplete gamma function
-        If Not PROB_TryGammaRegularizedQ( _
-            0.5 * DegreesFreedom, _
-            0.5 * X, _
-            Value, _
-            FailMsg) Then GoTo Fail_Num
+    'Store the standardized argument X / 2
+        StandardX = 0.5 * X
+
+    'A positive X whose half is stored as zero is evaluated from
+    'Log(X) - Log(2); the kernel would read it as the support origin. The
+    'survival has no precision dispatch, so every stored positive argument
+    'goes to the regularized upper incomplete gamma function (#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                0.5 * DegreesFreedom, _
+                Log(X) - Log(2#), _
+                Complement, _
+                Value, _
+                FailMsg) Then GoTo Fail_Num
+        Else
+            If Not PROB_TryGammaRoutedQ( _
+                0.5 * DegreesFreedom, _
+                StandardX, _
+                Value, _
+                FailMsg) Then GoTo Fail_Num
+        End If
 
     'Return the survival probability
         K_STATS_ChiSquare_Survival = Value
@@ -1289,6 +1355,8 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '   Degrees of freedom beyond PROB_CHI_MAX_DF are REJECTED with CVErr(xlErrNum);
 '   the inverse shares the forward cap (see PROB_CHI_ValidateEnvelope).
 '   - Returns 2 * G, where G solves P(DegreesFreedom / 2, G) = Probability.
+'     A small G is formed in log space together with the factor 2 (#14), so
+'     a quantile whose half is below the Double range is not lost.
 '   - The solver drives whichever of P and Q is the smaller onto its target, so
 '     the upper tail does not dissolve into cancellation.
 '
@@ -1303,19 +1371,17 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_TF_ValidateDF
 '   - PROB_CHI_ValidateEnvelope
-'   - PROB_TryGammaInvP
-'   - PROB_TryMultiply
+'   - PROB_TryGammaInvPScaled
 '   - PROB_SetStatus
 '
 ' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
+'   2026-11-14 - Quantile formed at the final scale (#14)
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim GammaQuantile       As Double          'Quantile of the unit-scale gamma
-    Dim ChiSquareQuantile   As Double          'Rescaled chi-square quantile
+    Dim ChiSquareQuantile   As Double          'Chi-square quantile, at the final scale
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -1353,20 +1419,16 @@ Public Function K_STATS_ChiSquare_InverseCumulative( _
 '------------------------------------------------------------------------------
 ' COMPUTE QUANTILE
 '------------------------------------------------------------------------------
-    'Invert the regularized lower incomplete gamma function
-        If Not PROB_TryGammaInvP( _
+    'Invert the regularized lower incomplete gamma function at the final
+    'scale, a factor of 2 (#14)
+        If Not PROB_TryGammaInvPScaled( _
             Probability, _
             1# - Probability, _
             0.5 * DegreesFreedom, _
-            GammaQuantile, _
+            2#, _
+            "Chi-square quantile overflowed a Double", _
+            ChiSquareQuantile, _
             FailMsg) Then GoTo Fail_Num
-
-    'Rescale from the unit-scale gamma to the chi-square with an explicit
-    'overflow classification.
-        If Not PROB_TryMultiply(2#, GammaQuantile, ChiSquareQuantile) Then
-            FailMsg = "Chi-square quantile overflowed a Double"
-            GoTo Fail_Num
-        End If
 
         K_STATS_ChiSquare_InverseCumulative = ChiSquareQuantile
 
@@ -2295,6 +2357,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TF_TryStudentTCentralMass
 '   - PROB_TF_TrySquareRatioPair
 '   - PROB_TryBetaRegularized
+'   - PROB_TryBetaLowerNearOne
 '   - PROB_TryDivide
 '   - PROB_PI
 '
@@ -2304,7 +2367,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TryStudentTInvTail
 '
 ' UPDATED
-'   2026-07-21
+'   2026-11-14
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2402,6 +2465,22 @@ Private Function PROB_TryStudentTTail( _
             Result = PROB_TF_StudentTLargeDFTail(AbsX, DegreesFreedom)
             PROB_TryStudentTTail = True
             Exit Function
+        End If
+
+    'Above the expansion's range at large df the beta argument is within
+    '1E-5 of one, and the continued fraction at a rounded argument loses up
+    'to 8E-10 relative there (#213). Form the small member directly - the
+    'square is harmless at this size - and let the fraction take its
+    'complement as an exact pair. Where that route declines, the general
+    'route below answers as before
+        If DegreesFreedom >= PROB_T_LDF_MIN_DF And AbsX <= PROB_T_NEAR_ONE_MAX_ABS_T Then
+            BetaY = AbsX * AbsX
+            BetaY = BetaY / (DegreesFreedom + BetaY)
+            If PROB_TryBetaLowerNearOne(BetaY, 0.5 * DegreesFreedom, 0.5, Ibeta) Then
+                Result = 0.5 * Ibeta
+                PROB_TryStudentTTail = True
+                Exit Function
+            End If
         End If
 
         If Not PROB_TF_TrySquareRatioPair( _

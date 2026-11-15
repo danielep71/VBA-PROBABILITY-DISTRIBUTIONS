@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "exceptions": [
+    {
+      "commit": "cc84466d3cb738144079ffa94e064e6cd9fb882f",
+      "issues": [163, 173],
+      "reason": "Pushed to release/1.0.0 on 2026-11-13 before the rule existed. The message means that the release register resolves the two blockers; both issues stay open as v1.0.2 measured-target work.",
+      "action": "After the integration into main: check #163 and #173, reopen either one that GitHub closed, then delete their Integration warning sections."
+    },
+    {
+      "commit": "6c719dcd8d35f3c5fefe428a893b2f512f30939f",
+      "issues": [13],
+      "reason": "Pushed to release/1.0.0 on 2026-11-14 before the rule existed. #13 was closed by hand the same day, with its Resolution.",
+      "action": "None: the issue is already closed, so the keyword changes nothing."
+    }
+  ]
+}

@@ -3,8 +3,10 @@ Reconcile probability_accuracy_grid.csv against its declared generator.
 
 REPORT ONLY. This script never writes the grid. The grid holds Excel
 observations that cannot be regenerated, and generate_reference_values.py does
-not reproduce it in either direction (#17, #32). Changes to the grid go only
-through promote_grid_rows.py or migrate_references.py.
+not emit every row of it: many were promoted from study folders (#17, #32).
+Every row the generator does emit is in the grid unchanged, which
+check_generator_grid.py enforces (#349). Changes to the grid go only through
+promote_grid_rows.py or migrate_references.py.
 
 Key. Arguments are compared as IEEE-754 bit patterns, not as text. The exporter
 parses every argument with Val(), so "0.85" and "0.84999999999999998" reach the

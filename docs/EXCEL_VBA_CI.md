@@ -37,8 +37,12 @@ For each run, the PowerShell adapter:
 6. injects a CI-only bridge into `M_STATS_PROBDIST_TEST`;
 7. executes all suites in dependency order and reads the private assertion
    counters;
-8. requires the exact policy count (currently 5,987; the study batteries, run
-   apart since #300, have their own policy of 8,901), zero failures, and
+8. requires the exact policy count (`expected_assertions` in
+   [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json);
+   the study batteries, run apart since #300, and the slow production
+   batteries, run apart since #13, have their own count in
+   [`.github/excel-study-policy.json`](../.github/excel-study-policy.json)),
+   zero failures, and
    consistent TOTAL/PASS/FAIL counters;
 9. closes its workbook and Excel instance and records cleanup separately;
 10. writes `test-result.txt` and `excel-certification.json`.
@@ -49,6 +53,43 @@ The automated compile stage is recorded as PASS only after Excel successfully
 executes the imported project through `Application.Run`. It is execution-backed
 compile evidence, not a fabricated claim that **Debug > Compile VBAProject** was
 separately clicked.
+
+## Suite levels
+
+The regression has two levels (#299).
+
+- **Full.** Every suite, held to `expected_assertions` in
+  `.github/excel-evidence-policy.json`. Only a full run is certification
+  evidence. It runs on every push to `main` and `release/**` that changes VBA,
+  the runner or a policy, on every dispatch unless the fast level is asked
+  for, on every export, and on every pull request that could change what
+  Excel executes.
+- **Fast.** The same run without the test procedures listed in
+  `.github/excel-fast-policy.json`, held to that file's own
+  `expected_assertions`. Those procedures drive the double-double Gamma kernel
+  and take almost all of the full suite's time. The adapter comments out their
+  calls in the temporary workbook only; the committed test module is not
+  changed. Each name must be called exactly once, or the run fails. A fast run
+  is a smoke test of the runner and harness. Its record states "FAST level,
+  not certification evidence" and carries a count the evidence policy rejects.
+
+`tools/select_excel_suite.py` chooses the level in the `select` job. A pull
+request runs the fast level only when no changed path can alter the Excel run:
+no VBA module anywhere, nothing under `ci/`, no `.github/excel-*.json`, not
+the workflow and not the selection tool. Anything else is full, and so is any
+event, base or path the tool cannot classify; if the selection job itself
+fails, the regression job runs the full suite. A pull request that changes
+VBA or the runner therefore runs the full suite on every push, its final head
+included, with one exception: when the head carries an Excel record for a
+candidate commit that is its ancestor, passed its complete regression with
+the assertion count the policy expects, and differs from the head in no path
+that can change the Excel run, the pull request runs the fast level instead
+of repeating that run. The run after the merge is a push and is always
+full. The study batteries and the slow production batteries never run at
+the fast level, nor on any pull-request run.
+
+A dispatch can ask for the fast level with `suite: fast`; the input is ignored
+when the dispatch also exports a grid.
 
 ## Artifact contract
 
@@ -83,8 +124,8 @@ and a dispatch without inputs, behave as before.
 | `export_holdout_older` | `true`/`false` | Export `benchmark/holdout_older/holdout_older_grid.csv` |
 | `export_survival_boundary` | `true`/`false` | Export `benchmark/survival_boundary/survival_boundary_grid.csv` |
 | `export_tchi_large_df` | `true`/`false` | Export `benchmark/tchi_large_df/tchi_large_df_grid.csv` |
-| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid), `glq_lower_q` (the #24 holdout) and `gbr_binary64_map` (the #307 binary64 route map). The #307 fit set `gbf_b64_fit` is no longer exportable: the routines it calls left production after #307 closed |
-| `run_studies` | boolean, default `true` | Also run the study batteries of #300 (`Test_STATS_PROBDIST_RunStudies`, against `.github/excel-study-policy.json`) after a green regression. Always on when any grid is exported; pull-request runs never run them |
+| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid), `glq_lower_q` (the #24 holdout) and `gbr_binary64_map`, `prs_gamma_holdout2`, `prs_chisquare_holdout2`, `grh_route_holdout` (the #314 routing holdout), `gis_holdout` and `gis_holdout2` (the two #14 holdouts of the Gamma inverse at the final scale), `fip_baseline` and `fip_holdout` (the #35 production holdout of the beta inverse, before and after the change) (the #307 binary64 route map). The #307 fit set `gbf_b64_fit` is no longer exportable: the routines it calls left production after #307 closed |
+| `run_studies` | boolean, default `true` | Also run the study batteries of #300 and the slow production batteries of #13 (`Test_STATS_PROBDIST_RunStudies`, against `.github/excel-study-policy.json`) after a green regression. Always on when any grid is exported, and a failure stops the job before the export; pull-request runs never run them |
 | `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
 
 `export_studies` is one text input rather than one boolean per grid, so a new
@@ -207,16 +248,110 @@ Microsoft does not recommend unattended Office automation from a
 non-interactive Windows service. An interactive dedicated session is materially
 more reliable for Excel COM execution.
 
+## Hardened runner set-up
+
+One machine runs every Excel regression and every export. It has failed in
+four ways: the runner lost communication with GitHub, an action download timed
+out, the checkout could not resolve `github.com`, and the machine went to
+standby (#295). The set-up below removes the causes that are on the machine.
+It keeps the interactive session that Excel COM needs.
+
+**Status: written on 2026-11-13, not yet applied or tested on the runner
+machine.** Apply it there once and record the date here.
+
+Run the commands in an elevated PowerShell on the runner machine.
+
+1. **Sign in automatically.** Use Sysinternals Autologon (it stores the
+   password as an LSA secret, not in clear text) for the dedicated runner
+   account. The account should have no rights beyond the runner's needs.
+2. **Start the runner at logon and restart it when it exits.** Replace the
+   path with the runner directory:
+
+   ```powershell
+   $action = New-ScheduledTaskAction -Execute "cmd.exe" `
+       -Argument "/c run.cmd" -WorkingDirectory "C:\actions-runner"
+   $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+   $settings = New-ScheduledTaskSettingsSet -RestartCount 999 `
+       -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) `
+       -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+   Register-ScheduledTask -TaskName "GitHub Actions runner (Excel)" -Action $action `
+       -Trigger $trigger -Settings $settings -RunLevel Limited
+   ```
+
+   The task must run in the interactive session: leave "Run only when user is
+   logged on" selected. Do not install the runner as a Windows service.
+3. **Never sleep.**
+
+   ```powershell
+   powercfg /change standby-timeout-ac 0
+   powercfg /change hibernate-timeout-ac 0
+   powercfg /hibernate off
+   ```
+
+   Keep the machine on mains power, and do not close a laptop lid unless the
+   lid action is "Do nothing".
+4. **Keep Windows Update out of the waves.** Set active hours to the hours
+   when waves run (**Settings > Windows Update > Advanced options > Active
+   hours**), and restart the machine deliberately after updates.
+5. **Let the runner update itself.** Do not pass `--disableupdate` to
+   `config.cmd`. After a GitHub runner release, the first job updates the
+   runner and restarts it; the scheduled task of step 2 brings it back.
+
+To test the set-up: restart the machine, do not sign in by hand, and dispatch
+the Excel workflow with `suite: fast`. It must start within a few minutes.
+
+### What the repository does about the rest
+
+Network failures cannot be fixed on the machine. The workflow
+`.github/workflows/excel-runner-watch.yml` handles them, with the rules in
+`tools/excel_runner_watch.py`:
+
+- **One automatic re-run of an infrastructure failure.** When an Excel run
+  fails in job set-up or checkout, or GitHub reports a lost runner and no step
+  failed, its failed jobs are re-run once. A failure of the regression or
+  export step is never re-run automatically, and no run is re-run twice.
+- **An alert issue.** Twice an hour a check reads the queue. It opens or
+  updates one issue, "[CI]: The Excel runner needs attention", when:
+  - a run of a workflow that uses this runner has been queued for more than
+    30 minutes with no job created;
+  - a job has waited for the runner for more than 60 minutes while nothing
+    runs on it, which means the runner is probably offline, or for more than
+    180 minutes while another job holds it.
+
+  It closes the issue when nothing is waiting any more. Runs older than 48
+  hours are left out.
+- **A run queued with no job** cannot be cancelled through the API. Close and
+  reopen its pull request, or push a new commit to the branch; cancel the old
+  run from the Actions page if it remains listed.
+
+Both jobs run from the default branch, so they act only once this file is on
+`main`. The workflow token cannot list runners, so "offline" is inferred from
+a job that waits while nothing runs.
+
 ## Security model
 
 Self-hosted runners execute repository code with the runner account's
-permissions. The workflow therefore does not execute pull requests from forks:
+permissions. The workflow therefore does not execute pull requests from forks,
+nor those Dependabot opens:
 
 ```yaml
 if: >-
-  github.event_name != 'pull_request' ||
-  github.event.pull_request.head.repo.full_name == github.repository
+  !cancelled() &&
+  (github.event_name != 'pull_request' ||
+  (github.event.pull_request.head.repo.full_name == github.repository &&
+  github.event.pull_request.user.login != 'dependabot[bot]'))
 ```
+
+Dependabot's branches live in this repository, so the fork check alone lets
+them through: a proposed action or package would run on the Excel host before
+anyone has read the bump. Its pull requests skip the job, which leaves the
+required check satisfied, and the bump first runs on this machine with the
+push that follows its merge. `tests/test_workflow_controls.py` keeps both
+conditions on every job of this runner that a pull request can reach.
+
+The guard does not restrain an account with write access: such an account can
+dispatch any workflow from a branch it edited. Write access to the repository
+is the control for that, and it is why the runner must not be shared.
 
 For an external contribution, review the change and copy or cherry-pick it to a
 maintainer-controlled branch before running the Excel workflow. Do not switch

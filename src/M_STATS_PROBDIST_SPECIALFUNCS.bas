@@ -43,6 +43,7 @@ Option Private Module
 '   Positive-ratio dispatch (#13):
 '     - PROB_PositiveRatioClass, PROB_ClassifyPositiveRatio
 '     - PROB_PRS_CUTOFF_48BIT, PROB_PRS_CUTOFF_40BIT
+'     - PROB_TryPositiveRatioTails, PROB_TryPositiveRatioLogPdf
 '
 '   Combinatorics:
 '     - PROB_StirlingError
@@ -54,6 +55,8 @@ Option Private Module
 '     - PROB_TryBetaInvRegularized
 '
 '   Incomplete gamma:
+'     - PROB_TryGammaRoutedP
+'     - PROB_TryGammaRoutedQ
 '     - PROB_TryGammaRegularizedP
 '     - PROB_TryGammaRegularizedQ
 '     - PROB_TryGammaSeriesP
@@ -192,6 +195,12 @@ Option Private Module
 
 Private Const PROB_BETA_MAX_ITER       As Long = 100000   'Lentz iterations, incomplete beta
 Private Const PROB_GAMMA_MAX_ITER      As Long = 100000   'Series / Lentz iterations, incomplete gamma
+Private Const PROB_GAMMA_FAST_FLOOR    As Double = 1E-290  'Routed P/Q: a directly returned binary64 tail must be at least this (#314)
+Private Const PROB_GAMMA_FAST_LOWER_MAX As Double = 0.9    'Routed Q below the seam: 1 - series while the series is at most this (#314)
+Private Const PROB_GAMMA_FAST_UPPER_MAX As Double = 0.5    'Routed P/Q from the seam: the continued fraction is trusted up to this (#314)
+Private Const PROB_GAMMA_FAST_MAX_SHAPE As Double = 1E+15  'Routed P/Q: above this shape the binary64 deviance loses accuracy near X = A, and the kernel answers (#314, Addendum 2)
+Private Const PROB_GAMMAINV_LOG_CROSSOVER As Double = -40# 'Gamma inverse: at or below this unit log-quantile the quantile is formed in log space at the final scale (#14)
+Private Const PROB_GAMMAINV_FAST_MIN_SHAPE As Double = 0.01 'Gamma inverse: the routed tails serve from this shape; below it the quantile amplifies their error by about 1 / A (#314)
 'The ascending gamma series stops at machine epsilon rather than the shared
 'PROB_NUM_EPS (3E-14). Measured: the tighter criterion buys about 145x accuracy
 '(A = 1E6: 4.1E-12 -> 2.9E-14) for about 11% more terms, and it does NOT move
@@ -219,8 +228,17 @@ Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y
 'the 40-bit Gamma cumulative boundary the same way. Both boundaries were
 'confirmed on an independent, preregistered holdout - see
 'benchmark/positive_ratio_subnormal/HOLDOUT_DESIGN.md.
-Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density, ChiSquare cumulative
-Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Gamma cumulative
+'
+'IN PRODUCTION the two densities use the 48-bit cutoff. The two cumulatives
+'use the 40-bit cutoff, and only where the transform rounded: the direct
+'path is accurate to a few 1E-15 for the argument it receives, far inside
+'the recovery's 1E-13, so retained bits alone do not decide. That rule is Amendment 1,
+'registered and confirmed on a second holdout; see AMENDMENT_1.md and
+'AMENDMENT_1_RESULT.md in benchmark/positive_ratio_subnormal.
+Public Const PROB_PRS_CUTOFF_48BIT As Double = PROB_MIN_NORMAL / 16#       'Gamma/ChiSquare density
+Public Const PROB_PRS_CUTOFF_40BIT As Double = PROB_MIN_NORMAL / 4096#     'Gamma/ChiSquare cumulative, rounded transform only
+Private Const PROB_PRS_LOG_RATIO_MAX As Double = -700#   'Recovery kernels refuse a log ratio at or above this; every dispatched ratio is below 2 ^ -1026, whose logarithm is about -711.2
+Private Const PROB_PRS_TAIL_SHAPE_MAX As Double = 4#     'Above this shape the recovered lower tail is exactly zero: Shape * LogRatio < -2800 and LogGamma(1 + Shape) > 0
 
 'Classification of a standardized argument for positive-ratio dispatch.
 '
@@ -1015,6 +1033,186 @@ Public Function PROB_ClassifyPositiveRatio( _
         End If
 
         PROB_ClassifyPositiveRatio = PROB_PRC_DIRECT
+End Function
+
+
+Public Function PROB_TryPositiveRatioTails( _
+    ByVal Shape As Double, _
+    ByVal LogStandardX As Double, _
+    ByRef P As Double, _
+    ByRef Q As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryPositiveRatioTails
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Lower and upper Gamma tails for a standardized argument that is
+'   mathematically positive but stored as a low-significand subnormal or as
+'   zero, for ICR-P1-01A (#13). The argument enters as its logarithm, which
+'   the caller forms from the original operands, so nothing is lost to the
+'   rounding of the ratio.
+'
+'       Log P = Shape * LogStandardX - LogGamma(1 + Shape)
+'       P     = Exp(Log P)
+'       Q     = -Expm1(Log P)
+'
+'   This is the leading term of the lower series. The next term is smaller
+'   by the factor StandardX * Shape / (Shape + 1), below 2 ^ -1026 in the
+'   region this function accepts, so it cannot change a binary64 result.
+'
+' PRECONDITION
+'   The caller classified the argument with PROB_ClassifyPositiveRatio and
+'   did not get PROB_PRC_DIRECT. LogStandardX is then below
+'   PROB_PRS_LOG_RATIO_MAX; a larger value is refused, not evaluated.
+'
+' INPUTS
+'   Shape         Gamma shape parameter (df / 2 for Chi-square), > 0
+'   LogStandardX  Log(X) - Log(ScaleParam), or Log(X) - Log(2) for Chi-square
+'
+' RETURNS
+'   Boolean
+'     TRUE  => P and Q hold the lower and upper tail.
+'     FALSE => The inputs are outside the recovery region, or the assembled
+'              probability left [0, 1] (FailMsg set).
+'
+' NOTES
+'   Above PROB_PRS_TAIL_SHAPE_MAX the lower tail is exactly zero in binary64
+'   and is returned without arithmetic: the products would otherwise overflow
+'   for the largest accepted shapes.
+'
+' DEPENDENCIES
+'   - PROB_TryLogGamma1p
+'   - PROB_TryExp
+'   - PROB_Expm1
+'
+' UPDATED
+'   2026-11-13
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogGamma1pShape     As Double          'LogGamma(1 + Shape)
+    Dim LogP                As Double          'Logarithm of the lower tail
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    P = 0#: Q = 0#
+    If Not PROB_IsFinite(Shape) Or Not PROB_IsFinite(LogStandardX) Then
+        FailMsg = "Positive-ratio recovery requires finite inputs"
+        Exit Function
+    End If
+    If Shape <= 0# Or LogStandardX >= PROB_PRS_LOG_RATIO_MAX Then
+        FailMsg = "Positive-ratio recovery was called outside its region"
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    'The lower tail is exactly zero for these shapes; see NOTES
+        If Shape > PROB_PRS_TAIL_SHAPE_MAX Then
+            Q = 1#
+            PROB_TryPositiveRatioTails = True
+            Exit Function
+        End If
+
+        If Not PROB_TryLogGamma1p(Shape, LogGamma1pShape, FailMsg) Then
+            Exit Function
+        End If
+
+        LogP = Shape * LogStandardX - LogGamma1pShape
+
+    'A positive logarithm would be a probability above one
+        If LogP > 0# Then
+            FailMsg = "Positive-ratio recovery produced an invalid probability"
+            Exit Function
+        End If
+
+        If Not PROB_TryExp(LogP, P) Then
+            FailMsg = "Positive-ratio recovery produced an invalid probability"
+            Exit Function
+        End If
+
+    'Q = -Expm1(Log P): never 1 - Exp(Log P), which cancels when P is tiny
+        If P = 0# Then
+            Q = 1#
+        Else
+            Q = -PROB_Expm1(LogP)
+        End If
+
+        PROB_TryPositiveRatioTails = True
+End Function
+
+
+Public Function PROB_TryPositiveRatioLogPdf( _
+    ByVal Shape As Double, _
+    ByVal LogStandardX As Double, _
+    ByVal StandardX As Double, _
+    ByVal LogScale As Double, _
+    ByRef LogPdf As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryPositiveRatioLogPdf
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Gamma log-density for a standardized argument that is mathematically
+'   positive but stored as a low-significand subnormal or as zero, for
+'   ICR-P1-01A (#13).
+'
+'       log f = (Shape - 1) * LogStandardX - StandardX
+'               - LogGamma(Shape) - LogScale
+'
+'   The literal form is the accurate one here. Its cancellation appears at
+'   large Shape near the mode, far from this region, and the Loader form of
+'   PROB_TryGammaLogPdf needs the stored StandardX, which is what was lost.
+'
+' PRECONDITION
+'   As for PROB_TryPositiveRatioTails. The caller has enforced
+'   Shape <= PROB_DENSITY_SHAPE_MAX.
+'
+' INPUTS
+'   Shape         Gamma shape parameter (df / 2 for Chi-square), > 0
+'   LogStandardX  Log(X) - Log(ScaleParam), or Log(X) - Log(2) for Chi-square
+'   StandardX     The stored standardized argument, possibly zero
+'   LogScale      Log(ScaleParam), or Log(2) for Chi-square
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LogPdf holds the natural-log density.
+'     FALSE => The inputs are outside the recovery region (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_LogGamma
+'
+' UPDATED
+'   2026-11-13
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' VALIDATE
+'------------------------------------------------------------------------------
+    If Not PROB_IsFinite(Shape) Or Not PROB_IsFinite(LogStandardX) Then
+        FailMsg = "Positive-ratio recovery requires finite inputs"
+        Exit Function
+    End If
+    If Shape <= 0# Or Shape > PROB_DENSITY_SHAPE_MAX _
+        Or LogStandardX >= PROB_PRS_LOG_RATIO_MAX Then
+        FailMsg = "Positive-ratio recovery was called outside its region"
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' COMPUTE
+'------------------------------------------------------------------------------
+    LogPdf = (Shape - 1#) * LogStandardX _
+             - StandardX _
+             - PROB_LogGamma(Shape) _
+             - LogScale
+
+    PROB_TryPositiveRatioLogPdf = True
 End Function
 
 
@@ -1817,6 +2015,548 @@ Public Function PROB_TryBetaContinuedFraction( _
 End Function
 
 
+Private Sub PROB_BP_Sum( _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef S As Double, _
+    ByRef E As Double)
+'
+'==============================================================================
+' PROB_BP_Sum
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Error-free sum of two Doubles: S + E = A + B exactly. The scalar form of
+'   PROB_DD_PV2_Sum, for the pair continued fraction of the beta inverse (#35).
+'==============================================================================
+'
+    Dim V                   As Double          'Virtual addend
+    Dim AV                  As Double          'Recovered A
+    Dim AR                  As Double          'Roundoff of A
+    Dim BR                  As Double          'Roundoff of B
+
+    S = A + B
+    V = S - A
+    AV = S - V
+    AR = A - AV
+    BR = B - V
+    E = AR + BR
+End Sub
+
+Private Sub PROB_BP_Add( _
+    ByVal AH As Double, _
+    ByVal AL As Double, _
+    ByVal BH As Double, _
+    ByVal BL As Double, _
+    ByRef RH As Double, _
+    ByRef RL As Double)
+'
+'==============================================================================
+' PROB_BP_Add
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Sum of two pairs of Doubles, in the operation order of PROB_DD_PV2_Add.
+'   Inputs are passed by value, so a result may overwrite an operand.
+'==============================================================================
+'
+    Dim S                   As Double          'High sum
+    Dim E                   As Double          'Its roundoff
+    Dim T                   As Double          'Low sum
+    Dim F                   As Double          'Its roundoff
+
+    PROB_BP_Sum AH, BH, S, E
+    PROB_BP_Sum AL, BL, T, F
+    E = E + T
+    PROB_BP_Sum S, E, S, E
+    E = E + F
+    PROB_BP_Sum S, E, RH, RL
+End Sub
+
+Private Sub PROB_BP_Mul( _
+    ByVal AH As Double, _
+    ByVal AL As Double, _
+    ByVal BH As Double, _
+    ByVal BL As Double, _
+    ByRef RH As Double, _
+    ByRef RL As Double)
+'
+'==============================================================================
+' PROB_BP_Mul
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Product of two pairs of Doubles, in the operation order of
+'   PROB_DD_PV2_Mul: Dekker's split product of the high parts, then the three
+'   cross terms. The order of the operands matters at the last bit.
+'==============================================================================
+'
+    Dim CA                  As Double          'Split multiple of AH
+    Dim CB                  As Double          'Split multiple of BH
+    Dim HA                  As Double          'High half of AH
+    Dim HB                  As Double          'High half of BH
+    Dim LA                  As Double          'Low half of AH
+    Dim LB                  As Double          'Low half of BH
+    Dim P                   As Double          'Rounded product
+    Dim E                   As Double          'Accumulated error
+    Dim T                   As Double          'Working term
+
+    P = AH * BH
+    CA = 134217729# * AH
+    CB = 134217729# * BH
+    T = CA - AH
+    HA = CA - T
+    T = CB - BH
+    HB = CB - T
+    LA = AH - HA
+    LB = BH - HB
+    T = HA * HB
+    E = T - P
+    T = HA * LB
+    E = E + T
+    T = LA * HB
+    E = E + T
+    T = LA * LB
+    E = E + T
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+    PROB_BP_Sum P, E, RH, RL
+End Sub
+
+Private Sub PROB_BP_Div( _
+    ByVal AH As Double, _
+    ByVal AL As Double, _
+    ByVal BH As Double, _
+    ByVal BL As Double, _
+    ByRef RH As Double, _
+    ByRef RL As Double)
+'
+'==============================================================================
+' PROB_BP_Div
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Quotient of two pairs of Doubles, in the operation order of
+'   PROB_DD_PV2_Div: the quotient of the high parts, corrected twice by the
+'   high part of the remainder. The caller ensures BH is not zero.
+'==============================================================================
+'
+    Dim QH                  As Double          'Quotient, high part
+    Dim QL                  As Double          'Quotient, low part
+    Dim PH                  As Double          'Quotient times divisor, high
+    Dim PL                  As Double          'Quotient times divisor, low
+    Dim T                   As Double          'Correction
+    Dim J                   As Long            'Correction index
+
+    QH = AH / BH
+    QL = 0#
+    For J = 1 To 2
+        PROB_BP_Mul QH, QL, BH, BL, PH, PL
+        PROB_BP_Add AH, AL, -PH, -PL, PH, PL
+        T = PH / BH
+        PROB_BP_Add QH, QL, T, 0#, QH, QL
+    Next J
+    RH = QH
+    RL = QL
+End Sub
+
+Private Function PROB_BP_InRange( _
+    ByVal VH As Double, _
+    ByVal VL As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_BP_InRange
+'------------------------------------------------------------------------------
+' PURPOSE
+'   TRUE when both parts of a pair are finite and at most 1E100 in size: the
+'   range in which the pair continued fraction was studied (#35).
+'==============================================================================
+'
+    If Not PROB_IsFinite(VH) Then Exit Function
+    If Not PROB_IsFinite(VL) Then Exit Function
+    If Abs(VH) > 1E+100 Then Exit Function
+    If Abs(VL) > 1E+100 Then Exit Function
+    PROB_BP_InRange = True
+End Function
+
+Private Function PROB_TryBetaContinuedFractionPair( _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByVal XH As Double, _
+    ByVal XL As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaContinuedFractionPair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The modified-Lentz continued fraction of the incomplete beta function,
+'   with every quantity carried as a pair of Doubles and the argument given
+'   as a pair (#35). The beta inverse calls it with 1 - U as an exact pair,
+'   which the binary64 fraction receives rounded.
+'
+' METHOD
+'   The recurrences of PROB_TryBetaContinuedFraction in pair arithmetic,
+'   stopped when the increment is within 2^-100 of one. Selected by the
+'   fix-comparison study of benchmark/f_inverse_large_df_study (candidate P4).
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds the value, rounded to a Double.
+'     FALSE => a quantity left the studied range (1E100) or the fraction did
+'              not settle in PROB_BETA_MAX_ITER steps. The caller then uses
+'              the binary64 fraction; this is not an error.
+'
+' DEPENDENCIES
+'   - PROB_BP_Add, PROB_BP_Mul, PROB_BP_Div, PROB_BP_InRange, PROB_B64_Pow2
+'==============================================================================
+'
+    Dim QabH As Double, QabL As Double         'A + B
+    Dim QapH As Double, QapL As Double         'A + 1
+    Dim QamH As Double, QamL As Double         'A - 1
+    Dim CH As Double, CL As Double             'Lentz c
+    Dim DH As Double, DL As Double             'Lentz d
+    Dim HH As Double, HL As Double             'Continued-fraction value
+    Dim AaH As Double, AaL As Double           'Coefficient
+    Dim NH As Double, NL As Double             'Numerator
+    Dim UH As Double, UL As Double             'Working factor
+    Dim VH As Double, VL As Double             'Working factor
+    Dim TH As Double, TL As Double             'Working value
+    Dim DelH As Double, DelL As Double         'Increment
+    Dim StopAt              As Double          '2^-100
+    Dim Pass                As Long            'Even step, then odd step
+    Dim M                   As Long            'Iteration index
+    Dim M2                  As Double          '2 * M
+    Dim MD                  As Double          'M as a Double
+
+    On Error GoTo Declined
+
+    StopAt = PROB_B64_Pow2(923)
+    PROB_BP_Add A, 0#, B, 0#, QabH, QabL
+    PROB_BP_Add A, 0#, 1#, 0#, QapH, QapL
+    PROB_BP_Add A, 0#, -1#, 0#, QamH, QamL
+    CH = 1#: CL = 0#
+
+    'D = 1 / (1 - Qab * X / Qap)
+    PROB_BP_Mul QabH, QabL, XH, XL, TH, TL
+    PROB_BP_Div TH, TL, QapH, QapL, TH, TL
+    PROB_BP_Add 1#, 0#, -TH, -TL, TH, TL
+    If Not PROB_BP_InRange(TH, TL) Then Exit Function
+    If Abs(TH + TL) < PROB_FPMIN Then TH = PROB_FPMIN: TL = 0#
+    PROB_BP_Div 1#, 0#, TH, TL, DH, DL
+    HH = DH: HL = DL
+
+    For M = 1 To PROB_BETA_MAX_ITER
+        MD = CDbl(M)
+        M2 = 2# * MD
+        For Pass = 1 To 2
+            If Pass = 1 Then
+    'Aa = M * (B - M) * X / ((Qam + 2M) * (A + 2M))
+                PROB_BP_Add B, 0#, -MD, 0#, UH, UL
+                PROB_BP_Mul MD, 0#, UH, UL, NH, NL
+                PROB_BP_Mul NH, NL, XH, XL, NH, NL
+                PROB_BP_Add QamH, QamL, M2, 0#, UH, UL
+                PROB_BP_Add A, 0#, M2, 0#, VH, VL
+            Else
+    'Aa = -(A + M) * (Qab + M) * X / ((A + 2M) * (Qap + 2M))
+                PROB_BP_Add A, 0#, MD, 0#, UH, UL
+                PROB_BP_Add QabH, QabL, MD, 0#, VH, VL
+                UH = -UH
+                UL = -UL
+                PROB_BP_Mul UH, UL, VH, VL, NH, NL
+                PROB_BP_Mul NH, NL, XH, XL, NH, NL
+                PROB_BP_Add A, 0#, M2, 0#, UH, UL
+                PROB_BP_Add QapH, QapL, M2, 0#, VH, VL
+            End If
+            PROB_BP_Mul UH, UL, VH, VL, TH, TL
+            PROB_BP_Div NH, NL, TH, TL, AaH, AaL
+
+    'D = 1 / (1 + Aa * D)
+            PROB_BP_Mul AaH, AaL, DH, DL, TH, TL
+            PROB_BP_Add 1#, 0#, TH, TL, TH, TL
+            If Not PROB_BP_InRange(TH, TL) Then Exit Function
+            If Abs(TH + TL) < PROB_FPMIN Then TH = PROB_FPMIN: TL = 0#
+            PROB_BP_Div 1#, 0#, TH, TL, DH, DL
+
+    'C = 1 + Aa / C
+            PROB_BP_Div AaH, AaL, CH, CL, TH, TL
+            PROB_BP_Add 1#, 0#, TH, TL, CH, CL
+            If Not PROB_BP_InRange(CH, CL) Then Exit Function
+            If Abs(CH + CL) < PROB_FPMIN Then CH = PROB_FPMIN: CL = 0#
+
+            If Pass = 1 Then
+    'H = H * D * C
+                PROB_BP_Mul HH, HL, DH, DL, HH, HL
+                PROB_BP_Mul HH, HL, CH, CL, HH, HL
+                If Not PROB_BP_InRange(HH, HL) Then Exit Function
+            Else
+    'Del = D * C;  H = H * Del
+                PROB_BP_Mul DH, DL, CH, CL, DelH, DelL
+                If Not PROB_BP_InRange(DelH, DelL) Then Exit Function
+                PROB_BP_Mul HH, HL, DelH, DelL, HH, HL
+                If Not PROB_BP_InRange(HH, HL) Then Exit Function
+                PROB_BP_Add DelH, DelL, -1#, 0#, TH, TL
+                If Abs(TH + TL) <= StopAt Then
+                    Result = HH + HL
+                    PROB_TryBetaContinuedFractionPair = True
+                    Exit Function
+                End If
+            End If
+        Next Pass
+    Next M
+    Exit Function
+
+Declined:
+    Err.Clear
+End Function
+
+Private Function PROB_TryBetaTailsPair( _
+    ByVal X As Double, _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef LowerTail As Double, _
+    ByRef UpperTail As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaTailsPair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Both tails of I_X(A, B) at a Double X, for the beta inverse (#35): the
+'   lower tail I_X(A, B) and the upper tail 1 - I_X(A, B). The smaller of
+'   the two is computed directly; the other is its complement.
+'
+' BEHAVIOR
+'   - The factor is that of PROB_TryBetaRegularized, with Y = 1 - X.
+'   - Below the mean the continued fraction gives the lower tail. From the
+'     mean it gives the upper tail, at the argument 1 - X carried as an exact
+'     pair of Doubles.
+'   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
+'     declines, the binary64 fraction answers as before #35.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LowerTail and UpperTail are set, each in [0, 1].
+'     FALSE => the factor overflowed or no fraction converged (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryBetaLogPdf, PROB_LogBeta, PROB_TryExp
+'   - PROB_TryBetaContinuedFractionPair, PROB_TryBetaContinuedFraction
+'   - PROB_BP_Add
+'==============================================================================
+'
+    Dim Y                   As Double          '1 - X, rounded
+    Dim YH                  As Double          '1 - X, high part
+    Dim YL                  As Double          '1 - X, low part
+    Dim LogBt               As Double          'Log of the common beta factor
+    Dim Bt                  As Double          'Common beta factor
+    Dim CFValue             As Double          'Continued-fraction value
+    Dim Value               As Double          'The tail computed directly
+
+    If X <= 0# Then
+        LowerTail = 0#
+        UpperTail = 1#
+        PROB_TryBetaTailsPair = True
+        Exit Function
+    End If
+
+    Y = 1# - X
+    If Y <= 0# Then
+        LowerTail = 1#
+        UpperTail = 0#
+        PROB_TryBetaTailsPair = True
+        Exit Function
+    End If
+
+    If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
+        If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+            Exit Function
+        End If
+        LogBt = LogBt + Log(X) + Log(Y)
+    Else
+        LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
+    End If
+
+    If Not PROB_TryExp(LogBt, Bt) Then
+        FailMsg = "Incomplete beta factor overflowed for A = " & A & _
+                  ", B = " & B
+        Exit Function
+    End If
+
+    If X < (A + 1#) / (A + B + 2#) Then
+        If Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
+            If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
+        End If
+        Value = Bt * CFValue / A
+        If Value < 0# Then Value = 0#
+        If Value > 1# Then Value = 1#
+        LowerTail = Value
+        UpperTail = 1# - Value
+    Else
+        PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
+        If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
+            If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+        End If
+        Value = Bt * CFValue / B
+        If Value < 0# Then Value = 0#
+        If Value > 1# Then Value = 1#
+        UpperTail = Value
+        LowerTail = 1# - Value
+    End If
+
+    PROB_TryBetaTailsPair = True
+End Function
+
+Public Function PROB_TryBetaLowerNearOne( _
+    ByVal Y As Double, _
+    ByVal A As Double, _
+    ByVal B As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaLowerNearOne
+'------------------------------------------------------------------------------
+' PURPOSE
+'   I_(1 - Y)(A, B) for a small Y and a large A: the lower tail of the
+'   incomplete beta function at an argument near one, given by its
+'   complement (#213).
+'
+' WHY THIS EXISTS
+'   PROB_TryBetaRegularized evaluates its continued fraction at X as a
+'   Double. Near one, with A large, the fraction's leading denominator
+'   1 - (A + B) X / (A + 1) is a difference of nearly equal numbers, and the
+'   rounding of X is multiplied by about A / (1/2 + A Y): 8E-11 relative in
+'   the Student-t tail at df = 1E7 just above |t| = 8. Here the fraction
+'   receives X = 1 - Y as an exact pair of Doubles.
+'
+' BEHAVIOR
+'   - Serves 0 < Y < 1/2, A + B at or above PROB_IBETA_LOADER_MIN_SHAPE, and
+'     an argument below the mean (A + 1) / (A + B + 2), where the fraction
+'     gives the lower tail directly.
+'   - The prefactor is the Loader form of PROB_TryBetaRegularized, unchanged.
+'   - The fraction is PROB_TryBetaContinuedFractionPair.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds I_(1 - Y)(A, B), in [0, 1].
+'     FALSE => the case is not served or a step declined. This is not an
+'              error: the caller uses PROB_TryBetaRegularized.
+'
+' DEPENDENCIES
+'   - PROB_TryBetaLogPdf, PROB_TryExp
+'   - PROB_TryBetaContinuedFractionPair, PROB_BP_Add
+'==============================================================================
+'
+    Dim X                   As Double          '1 - Y, rounded
+    Dim XH                  As Double          '1 - Y, high part
+    Dim XL                  As Double          '1 - Y, low part
+    Dim LogX                As Double          'Log(X)
+    Dim LogY                As Double          'Log(Y)
+    Dim LogBt               As Double          'Log of the beta factor
+    Dim Bt                  As Double          'Beta factor
+    Dim CFValue             As Double          'Continued-fraction value
+    Dim Value               As Double          'Result before the clamp
+    Dim Msg                 As String          'Discarded failure text
+
+    If Not (Y > 0# And Y < 0.5) Then Exit Function
+    If A + B < PROB_IBETA_LOADER_MIN_SHAPE Then Exit Function
+
+    X = 1# - Y
+    If Not (X < (A + 1#) / (A + B + 2#)) Then Exit Function
+
+    LogX = Log(X)
+    LogY = Log(Y)
+    If Not PROB_TryBetaLogPdf(X, Y, A, B, LogX, LogY, LogBt, Msg) Then Exit Function
+    LogBt = LogBt + LogX + LogY
+    If Not PROB_TryExp(LogBt, Bt) Then Exit Function
+    If Bt <= 0# Then Exit Function
+
+    PROB_BP_Add 1#, 0#, -Y, 0#, XH, XL
+    If Not PROB_TryBetaContinuedFractionPair(A, B, XH, XL, CFValue) Then Exit Function
+
+    Value = Bt * CFValue / A
+    If Value < 0# Then Value = 0#
+    If Value > 1# Then Value = 1#
+    Result = Value
+    PROB_TryBetaLowerNearOne = True
+End Function
+
+Private Function PROB_TryBetaInvResidual( _
+    ByVal U As Double, _
+    ByVal Sa As Double, _
+    ByVal Sb As Double, _
+    ByVal MatchLower As Boolean, _
+    ByVal Target As Double, _
+    ByRef Residual As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryBetaInvResidual
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The residual the beta inverse drives to zero at U (#35), formed on the
+'   smaller probability tail: the lower tail minus its target, or the upper
+'   tail's target minus the upper tail. Both grow with U.
+'==============================================================================
+'
+    Dim LowerTail           As Double          'I_U(Sa, Sb)
+    Dim UpperTail           As Double          '1 - I_U(Sa, Sb)
+
+    If Not PROB_TryBetaTailsPair(U, Sa, Sb, LowerTail, UpperTail, FailMsg) Then Exit Function
+    If MatchLower Then
+        Residual = LowerTail - Target
+    Else
+        Residual = Target - UpperTail
+    End If
+    PROB_TryBetaInvResidual = True
+End Function
+
+Private Function PROB_BP_Adjacent( _
+    ByVal U As Double, _
+    ByVal Upward As Boolean) _
+    As Double
+'
+'==============================================================================
+' PROB_BP_Adjacent
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The Double next to a positive finite U, above or below it, by its bit
+'   pattern. Used by the stagnation guard of the beta inverse (#35).
+'==============================================================================
+'
+    Dim Number              As PROB_DD_Number  'U as eight bytes
+    Dim Words               As PROB_DD_Words   'The same bytes as two Longs
+
+    Number.Value = U
+    LSet Words = Number
+    If Upward Then
+        If Words.Low = -1 Then
+            Words.Low = 0
+            Words.High = Words.High + 1
+        ElseIf Words.Low = &H7FFFFFFF Then
+            Words.Low = &H80000000
+        Else
+            Words.Low = Words.Low + 1
+        End If
+    Else
+        If Words.Low = 0 Then
+            Words.Low = -1
+            Words.High = Words.High - 1
+        ElseIf Words.Low = &H80000000 Then
+            Words.Low = &H7FFFFFFF
+        Else
+            Words.Low = Words.Low - 1
+        End If
+    End If
+    LSet Number = Words
+    PROB_BP_Adjacent = Number.Value
+End Function
+
 Public Function PROB_TryBetaInvRegularized( _
     ByVal Probability As Double, _
     ByVal ComplementProbability As Double, _
@@ -1841,9 +2581,20 @@ Public Function PROB_TryBetaInvRegularized( _
 '   Probability >= 0.5 (Sterbenz), and the far tail depends on it.
 '
 ' BEHAVIOR
-'   - Solves on whichever tail is the smaller, so the quantity driven to its
-'     target keeps full relative precision. Without this the upper tail loses
-'     everything: I_X - Probability with both near 1 is pure cancellation.
+'   - Solves for the smaller member of the pair (X, Y): the member below 1/2,
+'     decided by one evaluation at 1/2. The other member is then 1 minus a
+'     number below 1/2 and loses nothing (#35). Solving for the larger member
+'     left the small one as 1 - U, wrong by 2^-52 / U.
+'   - Forms the residual on whichever probability tail is the smaller, and
+'     computes that tail directly (PROB_TryBetaTailsPair). Without this the
+'     upper tail loses everything: I_X - Probability with both near 1 is pure
+'     cancellation.
+'   - A Newton step that returns the current iterate settles when the two
+'     adjacent Doubles bracket the root and neither has a smaller residual.
+'   - Where the lower-tail target of the member chosen that way rounds to
+'     one, or the evaluation at 1/2 fails, the routine before #35 answers
+'     unchanged: it solves on the smaller
+'     probability tail with PROB_TryBetaRegularized and no stagnation guard.
 '   - Returns both X and Y so that callers such as the F quantile, which needs
 '     X / Y, do not have to re-derive the small one by subtraction. This is what
 '     lets F.INV reach 1E+34.
@@ -1858,8 +2609,13 @@ Public Function PROB_TryBetaInvRegularized( _
 '              not settle within PROB_INV_MAX_ITER, or (both shapes below one)
 '              no representable interior quantile exists; FailMsg says which.
 '
+' METHOD
+'   Candidate P4 of benchmark/f_inverse_large_df_study/fix_comparison, under
+'   the accuracy tiers of #327.
+'
 ' DEPENDENCIES
 '   - PROB_NormalInvCDFRaw, PROB_LogBeta, PROB_TryExp
+'   - PROB_TryBetaTailsPair, PROB_TryBetaInvResidual, PROB_BP_Adjacent
 '   - PROB_TryBetaRegularized
 '==============================================================================
 '
@@ -1867,6 +2623,18 @@ Public Function PROB_TryBetaInvRegularized( _
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim SolveDirect         As Boolean         'TRUE when solving for X, FALSE for Y
+    Dim MatchLower          As Boolean         'TRUE when the residual is on the lower tail of U
+    Dim TargetLower         As Double          'Lower-tail probability of the solved member
+    Dim TargetUpper         As Double          'Upper-tail probability of the solved member
+    Dim HalfLower           As Double          'I_(1/2)(A, B)
+    Dim HalfUpper           As Double          'Its complement, unused
+    Dim Below               As Double          'The Double below U
+    Dim Above               As Double          'The Double above U
+    Dim ResidualBelow       As Double          'Residual at Below
+    Dim ResidualAbove       As Double          'Residual at Above
+    Dim Stagnated           As Boolean         'TRUE when the stagnation guard settles
+    Dim Legacy              As Boolean         'TRUE where the routine before #35 answers
+    Dim Ibeta               As Double          'I_U(Sa, Sb), on the legacy path
     Dim RoundTrip           As Double          'Forward probability at the root
     Dim TailMass            As Double          'Min(Probability, Complement)
     Dim Sa                  As Double          'Shape parameter of the solved tail
@@ -1877,8 +2645,7 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim UNew                As Double          'Proposed iterate
     Dim Low                 As Double          'Bisection lower bound
     Dim High                As Double          'Bisection upper bound
-    Dim Ibeta               As Double          'I_U(Sa, Sb)
-    Dim Residual            As Double          'Ibeta - Target
+    Dim Residual            As Double          'Signed distance of the matched tail from its target
     Dim Density             As Double          'Beta density at U
     Dim LogDensity          As Double          'Log of the beta density at U
     Dim LogSeed             As Double          'Log of the series-inverted seed
@@ -1911,20 +2678,58 @@ Public Function PROB_TryBetaInvRegularized( _
         End If
 
 '------------------------------------------------------------------------------
-' ORIENT ONTO THE SMALLER TAIL
+' ORIENT ONTO THE SMALLER MEMBER
 '------------------------------------------------------------------------------
-    'Solve I_U(Sa, Sb) = Target where Target <= 0.5, then unwind
-        If Probability <= ComplementProbability Then
+    'Solve for X when X <= 1/2, that is when Probability <= I_(1/2)(A, B), and
+    'for Y otherwise: the member solved for is the small one (#35)
+    'An evaluation at 1/2 that fails decides nothing: the routine before #35
+    'did not make it, and answers instead (below)
+        Legacy = Not PROB_TryBetaTailsPair(0.5, A, B, HalfLower, HalfUpper, FailMsg)
+        If Legacy Then
+            FailMsg = vbNullString
+            HalfLower = 0#
+        End If
+
+        If Probability <= HalfLower Then
             SolveDirect = True
             Sa = A
             Sb = B
-            Target = Probability
+            TargetLower = Probability
+            TargetUpper = ComplementProbability
         Else
             SolveDirect = False
             Sa = B
             Sb = A
-            Target = ComplementProbability
+            TargetLower = ComplementProbability
+            TargetUpper = Probability
         End If
+
+    'Where the solved member's lower-tail target rounds to one - a probability
+    'or a complement within 2^-53 of zero whose quantile lies on the far side
+    'of 1/2 - the rule of #35 was never validated and its seed has no
+    'information. There the routine is the one before #35, unchanged: solve
+    'on the smaller probability tail with the binary64 forward function
+        If TargetLower >= 1# Then Legacy = True
+        If Legacy Then
+            If Probability <= ComplementProbability Then
+                SolveDirect = True
+                Sa = A
+                Sb = B
+                TargetLower = Probability
+                TargetUpper = ComplementProbability
+            Else
+                SolveDirect = False
+                Sa = B
+                Sb = A
+                TargetLower = ComplementProbability
+                TargetUpper = Probability
+            End If
+        End If
+
+    'Match the smaller probability tail of the solved member, so the residual
+    'keeps its relative precision. The seed uses the lower tail either way
+        MatchLower = (TargetLower <= TargetUpper)
+        Target = TargetLower
 
     'Cache the log-beta for the density evaluations
         LogBetaAB = PROB_LogBeta(Sa, Sb)
@@ -1940,9 +2745,8 @@ Public Function PROB_TryBetaInvRegularized( _
             S2 = 1# / (2# * Sb - 1#)
             HH = 2# / (S1 + S2)
             W = Z * Sqr(HH + R) / HH - (S2 - S1) * (R + 5# / 6# - 2# / (3# * HH))
-            'Guard the module's one raw exponential; W is bounded above here
-            '(Target <= 0.5 forces Z <= 0) so overflow is not reachable in
-            'practice, and the seed clamp below recovers U on any failure
+            'Guard the module's one raw exponential; the seed clamp below
+            'recovers U on any failure
             If PROB_TryExp(2# * W, ExpTwoW) Then U = Sa / (Sa + Sb * ExpTwoW)
     'Otherwise invert the leading series term I_U ~ U^Sa / (Sa * Beta(Sa, Sb))
         Else
@@ -1962,11 +2766,19 @@ Public Function PROB_TryBetaInvRegularized( _
 
     'Iterate
         For IterIdx = 1 To PROB_INV_MAX_ITER
-            'Evaluate the objective
-                If Not PROB_TryBetaRegularized(U, 1# - U, Sa, Sb, Ibeta, FailMsg) Then Exit Function
-                Residual = Ibeta - Target
+            'Evaluate the objective on the matched tail
+                If Legacy Then
+                    If Not PROB_TryBetaRegularized(U, 1# - U, Sa, Sb, Ibeta, FailMsg) Then Exit Function
+                    Residual = Ibeta - Target
+                ElseIf MatchLower Then
+                    If Not PROB_TryBetaInvResidual( _
+                        U, Sa, Sb, True, TargetLower, Residual, FailMsg) Then Exit Function
+                Else
+                    If Not PROB_TryBetaInvResidual( _
+                        U, Sa, Sb, False, TargetUpper, Residual, FailMsg) Then Exit Function
+                End If
 
-            'Tighten the bracket; I_U is increasing in U
+            'Tighten the bracket; the residual is increasing in U
                 If Residual < 0# Then
                     If U > Low Then Low = U
                 Else
@@ -1981,11 +2793,43 @@ Public Function PROB_TryBetaInvRegularized( _
                 End If
 
             'Take a Newton step, falling back to bisection when it is unusable
+                Stagnated = False
                 If Density <= 0# Then
                     UNew = 0.5 * (Low + High)
                 Else
                     UNew = U - Residual / Density
-                    If UNew <= Low Or UNew >= High Then UNew = 0.5 * (Low + High)
+
+            'A step that returns U itself: settle when the two adjacent
+            'Doubles bracket the root and neither has a smaller residual.
+            'Checked before the bracket test, which would otherwise send a
+            'settled iterate on a distant bisection
+                    If Not Legacy And UNew = U And U > 0# And U < 1# Then
+                        Below = PROB_BP_Adjacent(U, False)
+                        Above = PROB_BP_Adjacent(U, True)
+                        If Below > 0# And Above < 1# Then
+                            If MatchLower Then
+                                If Not PROB_TryBetaInvResidual( _
+                                    Below, Sa, Sb, True, TargetLower, ResidualBelow, FailMsg) Then Exit Function
+                                If Not PROB_TryBetaInvResidual( _
+                                    Above, Sa, Sb, True, TargetLower, ResidualAbove, FailMsg) Then Exit Function
+                            Else
+                                If Not PROB_TryBetaInvResidual( _
+                                    Below, Sa, Sb, False, TargetUpper, ResidualBelow, FailMsg) Then Exit Function
+                                If Not PROB_TryBetaInvResidual( _
+                                    Above, Sa, Sb, False, TargetUpper, ResidualAbove, FailMsg) Then Exit Function
+                            End If
+                            If ResidualBelow <= Residual And Residual <= ResidualAbove Then
+                                If ResidualBelow <= 0# And 0# <= ResidualAbove Then
+                                    If Abs(Residual) <= Abs(ResidualBelow) And _
+                                       Abs(Residual) <= Abs(ResidualAbove) Then Stagnated = True
+                                End If
+                            End If
+                        End If
+                    End If
+
+                    If Not Stagnated Then
+                        If UNew <= Low Or UNew >= High Then UNew = 0.5 * (Low + High)
+                    End If
                 End If
 
             'Return on convergence, including the case where the iterate has
@@ -2182,6 +3026,196 @@ Public Function PROB_TryGammaRegularizedQ( _
     End If
     Result = Q
     PROB_TryGammaRegularizedQ = True
+End Function
+
+
+Public Function PROB_TryGammaRoutedP( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaRoutedP
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The regularized Gamma P tail for the public families (#314): from the
+'   binary64 route wherever its directly computed tail can be trusted, from
+'   the double-double entry point PROB_TryGammaRegularizedP everywhere else.
+'
+' THE RULE
+'   Registered in benchmark/gamma_route_study/FAST_ROUTE_PREREGISTRATION.md,
+'   for finite A > 0 and X > 0:
+'
+'     X < A + 1   the lower series gives P. It is returned when it lies in
+'                 [PROB_GAMMA_FAST_FLOOR, 1].
+'     otherwise   the continued fraction gives Q. P = 1 - Q is returned when
+'                 Q lies in [0, PROB_GAMMA_FAST_UPPER_MAX].
+'
+'   Any other value, a routine that declines, a shape above
+'   PROB_GAMMA_FAST_MAX_SHAPE and every other argument are delegated, with
+'   the kernel's own cap fallback and error policy.
+'
+' ACCURACY
+'   Held to the guarantee tier of #327, 1E-13 relative; the fit and the
+'   holdout of the route study measured a few 1E-15. The double-double entry
+'   point stays correctly rounded where it answers.
+'
+' INPUTS
+'   A         Shape, finite and positive
+'   X         Standardized argument, finite and non-negative
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds P(A, X).
+'     FALSE => The kernel refused the arguments or failed (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryGammaB64SeriesP, PROB_TryGammaB64ContinuedFractionQ
+'   - PROB_TryGammaRegularizedP
+'
+' UPDATED
+'   2026-11-14
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Seam                As Double          'A + 1, rounded to a Double
+    Dim Fast                As Double          'Binary64 tail
+    Dim Probe               As String          'Diagnostic of a declined routine
+'------------------------------------------------------------------------------
+' BINARY64 ROUTE
+'------------------------------------------------------------------------------
+    Result = 0#: FailMsg = ""
+
+    If PROB_IsFinite(A) And PROB_IsFinite(X) Then
+        If A > 0# And A <= PROB_GAMMA_FAST_MAX_SHAPE And X > 0# Then
+
+    'Store the seam before comparing: the fit wave showed that Excel
+    'compares X with A + 1 as a Double
+            Seam = A + 1#
+
+            If X < Seam Then
+                If PROB_TryGammaB64SeriesP(A, X, Fast, Probe) Then
+                    If Fast >= PROB_GAMMA_FAST_FLOOR And Fast <= 1# Then
+                        Result = Fast
+                        PROB_TryGammaRoutedP = True
+                        Exit Function
+                    End If
+                End If
+            Else
+                If PROB_TryGammaB64ContinuedFractionQ(A, X, Fast, Probe) Then
+                    If Fast >= 0# And Fast <= PROB_GAMMA_FAST_UPPER_MAX Then
+                        Result = 1# - Fast
+                        PROB_TryGammaRoutedP = True
+                        Exit Function
+                    End If
+                End If
+            End If
+
+        End If
+    End If
+'------------------------------------------------------------------------------
+' DELEGATE
+'------------------------------------------------------------------------------
+    PROB_TryGammaRoutedP = PROB_TryGammaRegularizedP(A, X, Result, FailMsg)
+End Function
+
+
+Public Function PROB_TryGammaRoutedQ( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaRoutedQ
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The regularized Gamma Q tail for the public families (#314): from the
+'   binary64 route wherever its directly computed tail can be trusted, from
+'   the double-double entry point PROB_TryGammaRegularizedQ everywhere else.
+'
+' THE RULE
+'   Registered in benchmark/gamma_route_study/FAST_ROUTE_PREREGISTRATION.md,
+'   for finite A > 0 and X > 0:
+'
+'     X < A + 1   the lower series gives P. Q = 1 - P is returned when P lies
+'                 in [0, PROB_GAMMA_FAST_LOWER_MAX]. Above that the complement
+'                 loses relative accuracy, and the kernel forms Q from log P
+'                 (#24).
+'     otherwise   the continued fraction gives Q. It is returned when it lies
+'                 in [PROB_GAMMA_FAST_FLOOR, PROB_GAMMA_FAST_UPPER_MAX].
+'
+'   Any other value, a routine that declines, a shape above
+'   PROB_GAMMA_FAST_MAX_SHAPE and every other argument are delegated, with
+'   the kernel's own cap fallback and error policy.
+'
+' ACCURACY
+'   As PROB_TryGammaRoutedP.
+'
+' INPUTS
+'   A         Shape, finite and positive
+'   X         Standardized argument, finite and non-negative
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds Q(A, X).
+'     FALSE => The kernel refused the arguments or failed (FailMsg set).
+'
+' DEPENDENCIES
+'   - PROB_TryGammaB64SeriesP, PROB_TryGammaB64ContinuedFractionQ
+'   - PROB_TryGammaRegularizedQ
+'
+' UPDATED
+'   2026-11-14
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Seam                As Double          'A + 1, rounded to a Double
+    Dim Fast                As Double          'Binary64 tail
+    Dim Probe               As String          'Diagnostic of a declined routine
+'------------------------------------------------------------------------------
+' BINARY64 ROUTE
+'------------------------------------------------------------------------------
+    Result = 0#: FailMsg = ""
+
+    If PROB_IsFinite(A) And PROB_IsFinite(X) Then
+        If A > 0# And A <= PROB_GAMMA_FAST_MAX_SHAPE And X > 0# Then
+
+    'Store the seam before comparing: the fit wave showed that Excel
+    'compares X with A + 1 as a Double
+            Seam = A + 1#
+
+            If X < Seam Then
+                If PROB_TryGammaB64SeriesP(A, X, Fast, Probe) Then
+                    If Fast >= 0# And Fast <= PROB_GAMMA_FAST_LOWER_MAX Then
+                        Result = 1# - Fast
+                        PROB_TryGammaRoutedQ = True
+                        Exit Function
+                    End If
+                End If
+            Else
+                If PROB_TryGammaB64ContinuedFractionQ(A, X, Fast, Probe) Then
+                    If Fast >= PROB_GAMMA_FAST_FLOOR And Fast <= PROB_GAMMA_FAST_UPPER_MAX Then
+                        Result = Fast
+                        PROB_TryGammaRoutedQ = True
+                        Exit Function
+                    End If
+                End If
+            End If
+
+        End If
+    End If
+'------------------------------------------------------------------------------
+' DELEGATE
+'------------------------------------------------------------------------------
+    PROB_TryGammaRoutedQ = PROB_TryGammaRegularizedQ(A, X, Result, FailMsg)
 End Function
 
 
@@ -2561,6 +3595,218 @@ Public Function PROB_TryGammaContinuedFractionQ( _
 End Function
 
 
+Public Function PROB_TryGammaInvPScaled( _
+    ByVal Probability As Double, _
+    ByVal ComplementProbability As Double, _
+    ByVal A As Double, _
+    ByVal ScaleFactor As Double, _
+    ByVal OverflowMsg As String, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaInvPScaled
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Solves P(A, X / ScaleFactor) = Probability for X: the Gamma quantile at
+'   its final scale (#14). A unit-scale quantile below the Double range is
+'   not formed, so a final quantile that is representable is returned.
+'
+' PRECONDITION
+'   A > 0, 0 < Probability < 1, ScaleFactor > 0 and finite, and
+'   Probability + ComplementProbability = 1 in exact arithmetic.
+'
+' THE RULE
+'   Registered in benchmark/gamma_inverse_scale_study/PREREGISTRATION_2.md.
+'   The call is classified by the plain Double of PROB_TryGammaInvLogUnit,
+'
+'       L0 = (Log(Probability) + LogGamma(1 + A)) / A
+'
+'   L0 <= PROB_GAMMAINV_LOG_CROSSOVER
+'       The unit quantile is at most Exp(-40), where the lower tail is its
+'       leading term X^A / Gamma(A + 1) to below 4.2E-18 relative. The
+'       quantile is Exp(L + Log(ScaleFactor)), formed once, with the two
+'       logarithms, the quotient and the sum carried as pairs of Doubles.
+'   otherwise
+'       PROB_TryGammaInvP on the unit scale, then one multiplication.
+'
+' REPRESENTABILITY
+'   Decided at the final scale only: an exponential that underflows returns
+'   zero, one that overflows fails with OverflowMsg, and a subnormal result
+'   is returned as it is.
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result holds the quantile at the final scale.
+'     FALSE => the final quantile overflowed, or the unit-scale solver
+'              failed; FailMsg says which.
+'
+' DEPENDENCIES
+'   - PROB_TryGammaInvLogUnit, PROB_TryExp, PROB_TryMultiply
+'   - PROB_GammaInvLogPair, PROB_B64_PairAdd, PROB_B64_PairDiv
+'   - PROB_TryGammaInvP
+'==============================================================================
+'
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogGamma1p          As Double          'Log(Gamma(1 + A))
+    Dim LogUnit             As Double          'L0, the classifying value
+    Dim LH                  As Double          'Log(Probability), high part
+    Dim LL                  As Double          'Log(Probability), low part
+    Dim NH                  As Double          'Numerator, high part
+    Dim NL                  As Double          'Numerator, low part
+    Dim QH                  As Double          'Unit log-quantile, high part
+    Dim QL                  As Double          'Unit log-quantile, low part
+    Dim SH                  As Double          'Log(ScaleFactor), high part
+    Dim SL                  As Double          'Log(ScaleFactor), low part
+    Dim FH                  As Double          'Final log-quantile, high part
+    Dim FL                  As Double          'Final log-quantile, low part
+    Dim Expo                As Double          'Exp of the high part
+    Dim Correction          As Double          'Expo times the low part
+    Dim UnitQuantile        As Double          'Quantile on the unit scale
+'------------------------------------------------------------------------------
+' CLASSIFY
+'------------------------------------------------------------------------------
+    Result = 0#
+
+    If Not PROB_TryGammaInvLogUnit(Probability, A, LogGamma1p, LogUnit, FailMsg) Then Exit Function
+'------------------------------------------------------------------------------
+' LOG SPACE
+'------------------------------------------------------------------------------
+    If LogUnit <= PROB_GAMMAINV_LOG_CROSSOVER Then
+        PROB_GammaInvLogPair Probability, LH, LL
+        PROB_B64_PairAdd LH, LL, LogGamma1p, 0#, NH, NL
+        PROB_B64_PairDiv NH, NL, A, QH, QL
+        PROB_GammaInvLogPair ScaleFactor, SH, SL
+        PROB_B64_PairAdd QH, QL, SH, SL, FH, FL
+
+    'PROB_TryExp returns zero for an underflow and fails for an overflow
+        If Not PROB_TryExp(FH, Expo) Then
+            FailMsg = OverflowMsg
+            Exit Function
+        End If
+
+        Correction = Expo * FL
+        Result = Expo + Correction
+        PROB_TryGammaInvPScaled = True
+        Exit Function
+    End If
+'------------------------------------------------------------------------------
+' UNIT SCALE
+'------------------------------------------------------------------------------
+    If Not PROB_TryGammaInvP( _
+        Probability, ComplementProbability, A, UnitQuantile, FailMsg) Then Exit Function
+
+    If Not PROB_TryMultiply(ScaleFactor, UnitQuantile, Result) Then
+        FailMsg = OverflowMsg
+        Exit Function
+    End If
+
+    PROB_TryGammaInvPScaled = True
+End Function
+
+Public Function PROB_TryGammaInvLogUnit( _
+    ByVal Probability As Double, _
+    ByVal A As Double, _
+    ByRef LogGamma1p As Double, _
+    ByRef LogUnit As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_TryGammaInvLogUnit
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The value the Gamma inverse classifies a call by (#14), and the
+'   LogGamma(1 + A) it is formed from:
+'
+'       LogUnit = (Log(Probability) + LogGamma(1 + A)) / A
+'
+'   the logarithm of the unit-scale quantile where that quantile is tiny.
+'
+' PRECONDITION
+'   A > 0 and 0 < Probability < 1.
+'
+' SOURCE OF LogGamma(1 + A)
+'   A <= 1       PROB_GammaSmallLogGamma1p(A), relative to its exact zeros
+'                at 0 and 1.
+'   1 < A <= 2   PROB_GammaSmallLogGamma1p(A - 1) + Log(A), from
+'                Gamma(1 + A) = A * Gamma(A); A - 1 is exact.
+'   A > 2        PROB_TryLogGamma1p(A).
+'
+'   PROB_TryLogGamma1p alone is accurate to about 2E-14 of the quantile for
+'   shapes between 0.1 and 2 (benchmark/gamma_inverse_scale_study/RESULT_1.md).
+'
+' RETURNS
+'   Boolean
+'     TRUE  => LogGamma1p and LogUnit are set.
+'     FALSE => PROB_TryLogGamma1p failed (FailMsg set).
+'
+' CALLED FROM
+'   - PROB_TryGammaInvPScaled
+'   - benchmark/gamma_inverse_scale_study/M_STATS_PROBDIST_GIS2.bas
+'==============================================================================
+'
+    If A <= 1# Then
+        LogGamma1p = PROB_GammaSmallLogGamma1p(A)
+    ElseIf A <= 2# Then
+        LogGamma1p = PROB_GammaSmallLogGamma1p(A - 1#)
+        LogGamma1p = LogGamma1p + Log(A)
+    Else
+        If Not PROB_TryLogGamma1p(A, LogGamma1p, FailMsg) Then Exit Function
+    End If
+
+    LogUnit = Log(Probability) + LogGamma1p
+    LogUnit = LogUnit / A
+    PROB_TryGammaInvLogUnit = True
+End Function
+
+Private Sub PROB_GammaInvLogPair( _
+    ByVal V As Double, _
+    ByRef LH As Double, _
+    ByRef LL As Double)
+'
+'==============================================================================
+' PROB_GammaInvLogPair
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Log(V) as a pair of Doubles, for any positive finite V (#14).
+'
+' BEHAVIOR
+'   PROB_B64_PairLog is defined for exponent fields 1 to 2000. A subnormal
+'   V, or one from 2^978, is first moved by the exact factor 2^128, and the
+'   pair logarithm of that power of two is subtracted or added.
+'
+' DEPENDENCIES
+'   - PROB_B64_PairLog, PROB_B64_PairAdd, PROB_B64_Pow2
+'==============================================================================
+'
+    Dim Shift               As Double          '2^128
+    Dim TH                  As Double          'Log(2^128), high part
+    Dim TL                  As Double          'Log(2^128), low part
+    Dim Moved               As Double          'V times or over 2^128
+
+    If V >= PROB_MIN_NORMAL And V < PROB_B64_Pow2(2001) Then
+        PROB_B64_PairLog V, 0#, LH, LL
+        Exit Sub
+    End If
+
+    Shift = PROB_B64_Pow2(1151)
+    PROB_B64_PairLog Shift, 0#, TH, TL
+
+    If V < PROB_MIN_NORMAL Then
+        Moved = V * Shift
+        PROB_B64_PairLog Moved, 0#, LH, LL
+        PROB_B64_PairAdd LH, LL, -TH, -TL, LH, LL
+    Else
+        Moved = V / Shift
+        PROB_B64_PairLog Moved, 0#, LH, LL
+        PROB_B64_PairAdd LH, LL, TH, TL, LH, LL
+    End If
+End Sub
+
 Public Function PROB_TryGammaInvP( _
     ByVal Probability As Double, _
     ByVal ComplementProbability As Double, _
@@ -2681,11 +3927,22 @@ Public Function PROB_TryGammaInvP( _
     'Iterate
         For IterIdx = 1 To PROB_INV_MAX_ITER
             'Evaluate the objective, always increasing in X
+            'From PROB_GAMMAINV_FAST_MIN_SHAPE the routed tails serve. Below it
+            'the quantile amplifies the tail's error by about 1 / A, so the
+            'double-double entry points keep the inverse within its guarantee
                 If SolveLower Then
-                    If Not PROB_TryGammaRegularizedP(A, X, Value, FailMsg) Then Exit Function
+                    If A >= PROB_GAMMAINV_FAST_MIN_SHAPE Then
+                        If Not PROB_TryGammaRoutedP(A, X, Value, FailMsg) Then Exit Function
+                    Else
+                        If Not PROB_TryGammaRegularizedP(A, X, Value, FailMsg) Then Exit Function
+                    End If
                     Residual = Value - Target
                 Else
-                    If Not PROB_TryGammaRegularizedQ(A, X, Value, FailMsg) Then Exit Function
+                    If A >= PROB_GAMMAINV_FAST_MIN_SHAPE Then
+                        If Not PROB_TryGammaRoutedQ(A, X, Value, FailMsg) Then Exit Function
+                    Else
+                        If Not PROB_TryGammaRegularizedQ(A, X, Value, FailMsg) Then Exit Function
+                    End If
                     Residual = Target - Value
                 End If
 
@@ -4342,4 +5599,677 @@ Private Function PROB_DD_PV2_Div(ByVal A As Variant, ByVal B As Variant) As Vari
 End Function
 
 ' END generated public Gamma integration
+
+' BEGIN generated binary64 Gamma route (#307)
+Private Function PROB_B64_Pow2(ByVal Biased As Long) As Double
+'==============================================================================
+' PROB_B64_Pow2
+'------------------------------------------------------------------------------
+' PURPOSE
+'   2 ^ (Biased - 1023), exactly, for a biased exponent in 1 .. 2046.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    PROB_B64_Pow2 = PROB_DD_SP_FromWords(Biased * &H100000, 0)
+End Function
+
+Private Function PROB_B64_Field(ByVal Y As Double) As Long
+'==============================================================================
+' PROB_B64_Field
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The biased exponent field of a Double: 0 for zero or a subnormal.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim N As PROB_DD_Number, W As PROB_DD_Words
+    N.Value = Y
+    LSet W = N
+    PROB_B64_Field = (W.High And &H7FF00000) \ &H100000
+End Function
+
+Private Sub PROB_B64_TwoSum(ByVal A As Double, ByVal B As Double, ByRef S As Double, ByRef E As Double)
+'==============================================================================
+' PROB_B64_TwoSum
+'------------------------------------------------------------------------------
+' PURPOSE
+'   S + E = A + B exactly, S the rounded sum (Knuth).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim BB As Double, T As Double, U As Double
+    S = A + B
+    BB = S - A
+    T = S - BB
+    T = A - T
+    U = B - BB
+    E = T + U
+End Sub
+
+Private Sub PROB_B64_FastTwoSum(ByVal A As Double, ByVal B As Double, ByRef S As Double, ByRef E As Double)
+'==============================================================================
+' PROB_B64_FastTwoSum
+'------------------------------------------------------------------------------
+' PURPOSE
+'   S + E = A + B exactly for |A| >= |B| (Dekker).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim T As Double
+    S = A + B
+    T = S - A
+    E = B - T
+End Sub
+
+Private Sub PROB_B64_Split(ByVal A As Double, ByRef Hi As Double, ByRef Lo As Double)
+'==============================================================================
+' PROB_B64_Split
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Hi + Lo = A, each with at most 26 significant bits (Veltkamp).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Const SPLITTER As Double = 134217729#
+    Dim C As Double, T As Double
+    C = SPLITTER * A
+    T = C - A
+    Hi = C - T
+    Lo = A - Hi
+End Sub
+
+Private Sub PROB_B64_TwoProd(ByVal A As Double, ByVal B As Double, ByRef P As Double, ByRef E As Double)
+'==============================================================================
+' PROB_B64_TwoProd
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P + E = A * B exactly, P the rounded product (Dekker).
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim AH As Double, AL As Double, BH As Double, BL As Double, T As Double
+    P = A * B
+    PROB_B64_Split A, AH, AL
+    PROB_B64_Split B, BH, BL
+    E = AH * BH
+    E = E - P
+    T = AH * BL
+    E = E + T
+    T = AL * BH
+    E = E + T
+    T = AL * BL
+    E = E + T
+End Sub
+
+Private Sub PROB_B64_PairAdd(ByVal AH As Double, ByVal AL As Double, ByVal BH As Double, ByVal BL As Double, _
+    ByRef SH As Double, ByRef SL As Double)
+'==============================================================================
+' PROB_B64_PairAdd
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The sum of two unevaluated pairs, as a pair.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim S As Double, E As Double, T As Double
+    PROB_B64_TwoSum AH, BH, S, E
+    T = AL + BL
+    E = E + T
+    PROB_B64_FastTwoSum S, E, SH, SL
+End Sub
+
+Private Sub PROB_B64_PairMul(ByVal AH As Double, ByVal AL As Double, ByVal B As Double, _
+    ByRef PH As Double, ByRef PL As Double)
+'==============================================================================
+' PROB_B64_PairMul
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The product of a pair and a Double, as a pair.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim P As Double, E As Double, T As Double
+    PROB_B64_TwoProd AH, B, P, E
+    T = AL * B
+    E = E + T
+    PROB_B64_FastTwoSum P, E, PH, PL
+End Sub
+
+Private Sub PROB_B64_PairDiv(ByVal AH As Double, ByVal AL As Double, ByVal B As Double, _
+    ByRef QH As Double, ByRef QL As Double)
+'==============================================================================
+' PROB_B64_PairDiv
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The quotient of a pair by a Double, as a pair.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim Q As Double, P As Double, E As Double, R As Double
+    Q = AH / B
+    PROB_B64_TwoProd Q, B, P, E
+    R = AH - P
+    R = R - E
+    R = R + AL
+    R = R / B
+    PROB_B64_FastTwoSum Q, R, QH, QL
+End Sub
+
+Private Sub PROB_B64_PairLog(ByVal YH As Double, ByVal YL As Double, ByRef LH As Double, ByRef LL As Double)
+'==============================================================================
+' PROB_B64_PairLog
+'------------------------------------------------------------------------------
+' PURPOSE
+'   log(YH + YL) as a pair, for a positive pair whose high part is normal.
+'   Y = M 2^E with 0.5 <= M < 1; C = K / 256 nearest to M; then
+'   log Y = E log 2 + log C + log(1 + U), U = (M - C) / C, |U| <= 2^-8,
+'   log(1 + U) = U - U^2 / 2 + U^3 S(U), S(U) = sum (-U)^J / (J + 3), J = 0 .. 7.
+' NOTES
+'   log(K / 256) and log 2 are exact pairs; the table loads on the first call.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Static TableHi(128 To 256) As Double, TableLo(128 To 256) As Double, S(0 To 7) As Double
+    Static Ln2Hi As Double, Ln2Lo As Double, Ready As Boolean
+    Dim Field As Long, E As Long, K As Long, J As Long
+    Dim Scale2 As Double, M As Double, C As Double, VH As Double, VL As Double, WH As Double, WL As Double
+    Dim UH As Double, UL As Double, SH As Double, SL As Double, T As Double, Poly As Double, Cube As Double
+    Dim AH As Double, AL As Double, EH As Double, EL As Double, Sign As Double
+    If Not Ready Then
+        TableHi(128) = PROB_DD_SP_FromWords(&HBFE62E42&, &HFEFA39EF&)
+        TableLo(128) = PROB_DD_SP_FromWords(&HBC7ABC9E&, &H3B39803F&)
+        TableHi(129) = PROB_DD_SP_FromWords(&HBFE5EE82&, &HAA241920&)
+        TableLo(129) = PROB_DD_SP_FromWords(&HBC71C066&, &HD235EE63&)
+        TableHi(130) = PROB_DD_SP_FromWords(&HBFE5AF40&, &H5C3649E0&)
+        TableLo(130) = PROB_DD_SP_FromWords(&H3C86714F&, &HBCD8135B&)
+        TableHi(131) = PROB_DD_SP_FromWords(&HBFE5707A&, &H26BB8C66&)
+        TableLo(131) = PROB_DD_SP_FromWords(&HBC880BFF&, &H3303DD48&)
+        TableHi(132) = PROB_DD_SP_FromWords(&HBFE5322E&, &H26867857&)
+        TableLo(132) = PROB_DD_SP_FromWords(&HBC7988BA&, &H4AEA614D&)
+        TableHi(133) = PROB_DD_SP_FromWords(&HBFE4F45A&, &H835A4E19&)
+        TableLo(133) = PROB_DD_SP_FromWords(&HBC7D7493&, &H62382A77&)
+        TableHi(134) = PROB_DD_SP_FromWords(&HBFE4B6FD&, &H6F970C1F&)
+        TableLo(134) = PROB_DD_SP_FromWords(&HBC8C457B&, &H531506F6&)
+        TableHi(135) = PROB_DD_SP_FromWords(&HBFE47A15&, &H27E8A2D3&)
+        TableLo(135) = PROB_DD_SP_FromWords(&HBC82541A&, &HCA7D5844&)
+        TableHi(136) = PROB_DD_SP_FromWords(&HBFE43D9F&, &HF2F923C5&)
+        TableLo(136) = PROB_DD_SP_FromWords(&H3C784F48&, &H1051F71A&)
+        TableHi(137) = PROB_DD_SP_FromWords(&HBFE4019C&, &H2125CA93&)
+        TableLo(137) = PROB_DD_SP_FromWords(&HBC686CF0&, &HF38B461A&)
+        TableHi(138) = PROB_DD_SP_FromWords(&HBFE3C608&, &H0C36BFB5&)
+        TableLo(138) = PROB_DD_SP_FromWords(&HBC719306&, &H03D87B6E&)
+        TableHi(139) = PROB_DD_SP_FromWords(&HBFE38AE2&, &H171976E7&)
+        TableLo(139) = PROB_DD_SP_FromWords(&HBC821512&, &HAA596EA3&)
+        TableHi(140) = PROB_DD_SP_FromWords(&HBFE35028&, &HAD9D8C86&)
+        TableLo(140) = PROB_DD_SP_FromWords(&H3C7F01AB&, &H6065515C&)
+        TableHi(141) = PROB_DD_SP_FromWords(&HBFE315DA&, &H4434068B&)
+        TableLo(141) = PROB_DD_SP_FromWords(&HBC66C3A5&, &HF12642C9&)
+        TableHi(142) = PROB_DD_SP_FromWords(&HBFE2DBF5&, &H57B0DF43&)
+        TableLo(142) = PROB_DD_SP_FromWords(&H3C7B941E&, &HE770436B&)
+        TableHi(143) = PROB_DD_SP_FromWords(&HBFE2A278&, &H6D0EC107&)
+        TableLo(143) = PROB_DD_SP_FromWords(&H3C76A0C3&, &H43BE95DC&)
+        TableHi(144) = PROB_DD_SP_FromWords(&HBFE26962&, &H1134DB92&)
+        TableLo(144) = PROB_DD_SP_FromWords(&HBC8E0EFA&, &HDD9DB02B&)
+        TableHi(145) = PROB_DD_SP_FromWords(&HBFE230B0&, &HD8BEBC98&)
+        TableLo(145) = PROB_DD_SP_FromWords(&H3C6FCC8D&, &HBCCC25CB&)
+        TableHi(146) = PROB_DD_SP_FromWords(&HBFE1F863&, &H5FC61659&)
+        TableLo(146) = PROB_DD_SP_FromWords(&H3C72164F&, &HF40E9817&)
+        TableHi(147) = PROB_DD_SP_FromWords(&HBFE1C078&, &H49AE6007&)
+        TableLo(147) = PROB_DD_SP_FromWords(&HBC759BDD&, &HAE1CCCE2&)
+        TableHi(148) = PROB_DD_SP_FromWords(&HBFE188EE&, &H40F23CA6&)
+        TableLo(148) = PROB_DD_SP_FromWords(&HBC889DF1&, &H568CA0B0&)
+        TableHi(149) = PROB_DD_SP_FromWords(&HBFE151C3&, &HF6F29612&)
+        TableLo(149) = PROB_DD_SP_FromWords(&HBC7342EB&, &H628DBA17&)
+        TableHi(150) = PROB_DD_SP_FromWords(&HBFE11AF8&, &H23C75AA8&)
+        TableLo(150) = PROB_DD_SP_FromWords(&H3C891EEE&, &H7772C7C2&)
+        TableHi(151) = PROB_DD_SP_FromWords(&HBFE0E489&, &H8611CCE1&)
+        TableLo(151) = PROB_DD_SP_FromWords(&HBC83300F&, &H002E836E&)
+        TableHi(152) = PROB_DD_SP_FromWords(&HBFE0AE76&, &HE2D054FA&)
+        TableLo(152) = PROB_DD_SP_FromWords(&HBC80D710&, &HFCFC4E0D&)
+        TableHi(153) = PROB_DD_SP_FromWords(&HBFE078BF&, &H0533C568&)
+        TableLo(153) = PROB_DD_SP_FromWords(&HBC62241E&, &HDF5FD1F7&)
+        TableHi(154) = PROB_DD_SP_FromWords(&HBFE04360&, &HBE7603AD&)
+        TableLo(154) = PROB_DD_SP_FromWords(&H3C617F9E&, &H54E78104&)
+        TableHi(155) = PROB_DD_SP_FromWords(&HBFE00E5A&, &HE5B207AB&)
+        TableLo(155) = PROB_DD_SP_FromWords(&HBC61713A&, &H36138E19&)
+        TableHi(156) = PROB_DD_SP_FromWords(&HBFDFB358&, &HAF7A4884&)
+        TableLo(156) = PROB_DD_SP_FromWords(&HBC67E8F0&, &H5924D259&)
+        TableHi(157) = PROB_DD_SP_FromWords(&HBFDF4AA7&, &HEE03192D&)
+        TableLo(157) = PROB_DD_SP_FromWords(&H3C60D487&, &HF5ABA5E5&)
+        TableHi(158) = PROB_DD_SP_FromWords(&HBFDEE2A1&, &H56B413E5&)
+        TableLo(158) = PROB_DD_SP_FromWords(&H3C174B71&, &HFB5E57E3&)
+        TableHi(159) = PROB_DD_SP_FromWords(&HBFDE7B42&, &HC3DDAD73&)
+        TableLo(159) = PROB_DD_SP_FromWords(&HBC757D64&, &H6A17BC6A&)
+        TableHi(160) = PROB_DD_SP_FromWords(&HBFDE148A&, &H1A2726CE&)
+        TableLo(160) = PROB_DD_SP_FromWords(&H3C7AC81C&, &HC8A4DFB8&)
+        TableHi(161) = PROB_DD_SP_FromWords(&HBFDDAE75&, &H484C9616&)
+        TableLo(161) = PROB_DD_SP_FromWords(&H3C70B583&, &H7185A661&)
+        TableHi(162) = PROB_DD_SP_FromWords(&HBFDD4902&, &H46DEFA6B&)
+        TableLo(162) = PROB_DD_SP_FromWords(&HBC7D7F4D&, &H3B3D406B&)
+        TableHi(163) = PROB_DD_SP_FromWords(&HBFDCE42F&, &H18064743&)
+        TableLo(163) = PROB_DD_SP_FromWords(&HBC707982&, &H70B29F39&)
+        TableHi(164) = PROB_DD_SP_FromWords(&HBFDC7FF9&, &HC74554C9&)
+        TableLo(164) = PROB_DD_SP_FromWords(&HBC6223EA&, &HDB651B4A&)
+        TableHi(165) = PROB_DD_SP_FromWords(&HBFDC1C60&, &H693FA39E&)
+        TableLo(165) = PROB_DD_SP_FromWords(&H3C7BFC00&, &HB8F3FEAA&)
+        TableHi(166) = PROB_DD_SP_FromWords(&HBFDBB961&, &H1B80E2FB&)
+        TableLo(166) = PROB_DD_SP_FromWords(&HBC46FD02&, &H999B21E1&)
+        TableHi(167) = PROB_DD_SP_FromWords(&HBFDB56FA&, &H04462909&)
+        TableLo(167) = PROB_DD_SP_FromWords(&HBC7494B6&, &H10665378&)
+        TableHi(168) = PROB_DD_SP_FromWords(&HBFDAF529&, &H5248CDD0&)
+        TableLo(168) = PROB_DD_SP_FromWords(&HBC79D56C&, &H45DD3E86&)
+        TableHi(169) = PROB_DD_SP_FromWords(&HBFDA93ED&, &H3C8AD9E3&)
+        TableLo(169) = PROB_DD_SP_FromWords(&HBC7BCAFA&, &H9DE97203&)
+        TableHi(170) = PROB_DD_SP_FromWords(&HBFDA3344&, &H0224FA79&)
+        TableLo(170) = PROB_DD_SP_FromWords(&H3C6BA806&, &H2860AE23&)
+        TableHi(171) = PROB_DD_SP_FromWords(&HBFD9D32B&, &HEA15ED3B&)
+        TableLo(171) = PROB_DD_SP_FromWords(&HBC487BCB&, &HCFD3E187&)
+        TableHi(172) = PROB_DD_SP_FromWords(&HBFD973A3&, &H431356AE&)
+        TableLo(172) = PROB_DD_SP_FromWords(&H3C689D28&, &H16CF838F&)
+        TableHi(173) = PROB_DD_SP_FromWords(&HBFD914A8&, &H635BF68A&)
+        TableLo(173) = PROB_DD_SP_FromWords(&H3C7AD4BB&, &H98C1F2C5&)
+        TableHi(174) = PROB_DD_SP_FromWords(&HBFD8B639&, &HA88B2DF5&)
+        TableLo(174) = PROB_DD_SP_FromWords(&H3C770F2F&, &H38238303&)
+        TableHi(175) = PROB_DD_SP_FromWords(&HBFD85855&, &H776DCBFB&)
+        TableLo(175) = PROB_DD_SP_FromWords(&H3C748666&, &H6443B153&)
+        TableHi(176) = PROB_DD_SP_FromWords(&HBFD7FAFA&, &H3BD8151C&)
+        TableLo(176) = PROB_DD_SP_FromWords(&H3C521902&, &H4ACD3B77&)
+        TableHi(177) = PROB_DD_SP_FromWords(&HBFD79E26&, &H687CFB3E&)
+        TableLo(177) = PROB_DD_SP_FromWords(&H3C7C1688&, &H17443F22&)
+        TableHi(178) = PROB_DD_SP_FromWords(&HBFD741D8&, &H76C67BB1&)
+        TableLo(178) = PROB_DD_SP_FromWords(&HBC784A4E&, &HE3059583&)
+        TableHi(179) = PROB_DD_SP_FromWords(&HBFD6E60E&, &HE6AF1972&)
+        TableLo(179) = PROB_DD_SP_FromWords(&HBC5657C2&, &H22D868CD&)
+        TableHi(180) = PROB_DD_SP_FromWords(&HBFD68AC8&, &H3E9C6A14&)
+        TableLo(180) = PROB_DD_SP_FromWords(&HBC5A64EA&, &HDD740178&)
+        TableHi(181) = PROB_DD_SP_FromWords(&HBFD63003&, &H0B3AAC49&)
+        TableLo(181) = PROB_DD_SP_FromWords(&HBC6DC18C&, &HE51FFF99&)
+        TableHi(182) = PROB_DD_SP_FromWords(&HBFD5D5BD&, &HDF595F30&)
+        TableLo(182) = PROB_DD_SP_FromWords(&H3C765411&, &H48CBB8A2&)
+        TableHi(183) = PROB_DD_SP_FromWords(&HBFD57BF7&, &H53C8D1FB&)
+        TableLo(183) = PROB_DD_SP_FromWords(&H3C60908D&, &H15F88B63&)
+        TableHi(184) = PROB_DD_SP_FromWords(&HBFD522AE&, &H0738A3D8&)
+        TableLo(184) = PROB_DD_SP_FromWords(&H3C68F7E9&, &HB38A6979&)
+        TableHi(185) = PROB_DD_SP_FromWords(&HBFD4C9E0&, &H9E172C3C&)
+        TableLo(185) = PROB_DD_SP_FromWords(&H3C512361&, &H5B147A5D&)
+        TableHi(186) = PROB_DD_SP_FromWords(&HBFD4718D&, &HC271C41B&)
+        TableLo(186) = PROB_DD_SP_FromWords(&HBC38FB4C&, &H14C56EEF&)
+        TableHi(187) = PROB_DD_SP_FromWords(&HBFD419B4&, &H23D5E8C7&)
+        TableLo(187) = PROB_DD_SP_FromWords(&HBC60DBB2&, &H43827392&)
+        TableHi(188) = PROB_DD_SP_FromWords(&HBFD3C252&, &H77333184&)
+        TableLo(188) = PROB_DD_SP_FromWords(&H3C72AD27&, &HE50A8EC6&)
+        TableHi(189) = PROB_DD_SP_FromWords(&HBFD36B67&, &H76BE1117&)
+        TableLo(189) = PROB_DD_SP_FromWords(&H3C5324F0&, &HE883858E&)
+        TableHi(190) = PROB_DD_SP_FromWords(&HBFD314F1&, &HE1D35CE4&)
+        TableLo(190) = PROB_DD_SP_FromWords(&H3C73D699&, &H09E5C3DC&)
+        TableHi(191) = PROB_DD_SP_FromWords(&HBFD2BEF0&, &H7CDC9354&)
+        TableLo(191) = PROB_DD_SP_FromWords(&H3C782DAD&, &H7FD86088&)
+        TableHi(192) = PROB_DD_SP_FromWords(&HBFD26962&, &H1134DB92&)
+        TableLo(192) = PROB_DD_SP_FromWords(&HBC7E0EFA&, &HDD9DB02B&)
+        TableHi(193) = PROB_DD_SP_FromWords(&HBFD21445&, &H6D0EB8D4&)
+        TableLo(193) = PROB_DD_SP_FromWords(&HBC6F7AE9&, &H1AEBA60A&)
+        TableHi(194) = PROB_DD_SP_FromWords(&HBFD1BF99&, &H635A6B95&)
+        TableLo(194) = PROB_DD_SP_FromWords(&H3C612AEB&, &H84249223&)
+        TableHi(195) = PROB_DD_SP_FromWords(&HBFD16B5C&, &HCBACFB73&)
+        TableLo(195) = PROB_DD_SP_FromWords(&HBC766FBD&, &H28B40935&)
+        TableHi(196) = PROB_DD_SP_FromWords(&HBFD1178E&, &H8227E47C&)
+        TableLo(196) = PROB_DD_SP_FromWords(&H3C60E63A&, &H5F01C691&)
+        TableHi(197) = PROB_DD_SP_FromWords(&HBFD0C42D&, &H676162E3&)
+        TableLo(197) = PROB_DD_SP_FromWords(&HBC5162C7&, &H9D5D11EE&)
+        TableHi(198) = PROB_DD_SP_FromWords(&HBFD07138&, &H604D5862&)
+        TableLo(198) = PROB_DD_SP_FromWords(&HBC7CDB16&, &HED4E9138&)
+        TableHi(199) = PROB_DD_SP_FromWords(&HBFD01EAE&, &H5626C691&)
+        TableLo(199) = PROB_DD_SP_FromWords(&H3C418290&, &HBD2932E2&)
+        TableHi(200) = PROB_DD_SP_FromWords(&HBFCF991C&, &H6CB3B379&)
+        TableLo(200) = PROB_DD_SP_FromWords(&HBC6F6650&, &H66F980A2&)
+        TableHi(201) = PROB_DD_SP_FromWords(&HBFCEF5AD&, &HE4DCFFE6&)
+        TableLo(201) = PROB_DD_SP_FromWords(&H3C508AB2&, &HDDC708A0&)
+        TableHi(202) = PROB_DD_SP_FromWords(&HBFCE530E&, &HFFE71012&)
+        TableLo(202) = PROB_DD_SP_FromWords(&HBC422760&, &H41F43042&)
+        TableHi(203) = PROB_DD_SP_FromWords(&HBFCDB13D&, &HB0D48940&)
+        TableLo(203) = PROB_DD_SP_FromWords(&HBC5AA11D&, &H49F96CB9&)
+        TableHi(204) = PROB_DD_SP_FromWords(&HBFCD1037&, &HF2655E7B&)
+        TableLo(204) = PROB_DD_SP_FromWords(&HBC660629&, &H242471A2&)
+        TableHi(205) = PROB_DD_SP_FromWords(&HBFCC6FFB&, &HC6F00F71&)
+        TableLo(205) = PROB_DD_SP_FromWords(&H3C68E58B&, &H2C57A4A5&)
+        TableHi(206) = PROB_DD_SP_FromWords(&HBFCBD087&, &H383BD8AD&)
+        TableLo(206) = PROB_DD_SP_FromWords(&HBC3DD355&, &HF6A516D7&)
+        TableHi(207) = PROB_DD_SP_FromWords(&HBFCB31D8&, &H575BCE3D&)
+        TableLo(207) = PROB_DD_SP_FromWords(&H3C66353A&, &HB386A94D&)
+        TableHi(208) = PROB_DD_SP_FromWords(&HBFCA93ED&, &H3C8AD9E3&)
+        TableLo(208) = PROB_DD_SP_FromWords(&HBC6BCAFA&, &H9DE97203&)
+        TableHi(209) = PROB_DD_SP_FromWords(&HBFC9F6C4&, &H07089664&)
+        TableLo(209) = PROB_DD_SP_FromWords(&HBC435A19&, &H605E67EF&)
+        TableHi(210) = PROB_DD_SP_FromWords(&HBFC95A5A&, &HDCF7017F&)
+        TableLo(210) = PROB_DD_SP_FromWords(&HBC5142C5&, &H07FB7A3D&)
+        TableHi(211) = PROB_DD_SP_FromWords(&HBFC8BEAF&, &HEB38FE8C&)
+        TableLo(211) = PROB_DD_SP_FromWords(&HBC555AA8&, &HB6997A40&)
+        TableHi(212) = PROB_DD_SP_FromWords(&HBFC823C1&, &H6551A3C2&)
+        TableLo(212) = PROB_DD_SP_FromWords(&H3C61232C&, &HE70BE781&)
+        TableHi(213) = PROB_DD_SP_FromWords(&HBFC7898D&, &H85444C73&)
+        TableLo(213) = PROB_DD_SP_FromWords(&HBC5EF8F6&, &HEBCFB201&)
+        TableHi(214) = PROB_DD_SP_FromWords(&HBFC6F012&, &H8B756ABC&)
+        TableLo(214) = PROB_DD_SP_FromWords(&H3C68DE59&, &HC21E166C&)
+        TableHi(215) = PROB_DD_SP_FromWords(&HBFC6574E&, &HBE8C133A&)
+        TableLo(215) = PROB_DD_SP_FromWords(&H3C3D34F0&, &HF4621BED&)
+        TableHi(216) = PROB_DD_SP_FromWords(&HBFC5BF40&, &H6B543DB2&)
+        TableLo(216) = PROB_DD_SP_FromWords(&H3C21F5B4&, &H4C0DF7E7&)
+        TableHi(217) = PROB_DD_SP_FromWords(&HBFC527E5&, &HE4A1B58D&)
+        TableLo(217) = PROB_DD_SP_FromWords(&H3C271A96&, &H82395BFD&)
+        TableHi(218) = PROB_DD_SP_FromWords(&HBFC4913D&, &H8333B561&)
+        TableLo(218) = PROB_DD_SP_FromWords(&H3C50D560&, &H4930F135&)
+        TableHi(219) = PROB_DD_SP_FromWords(&HBFC3FB45&, &HA59928CC&)
+        TableLo(219) = PROB_DD_SP_FromWords(&H3C6D87E6&, &HA354D056&)
+        TableHi(220) = PROB_DD_SP_FromWords(&HBFC365FC&, &HB0159016&)
+        TableLo(220) = PROB_DD_SP_FromWords(&HBC57D411&, &HA5B944AD&)
+        TableHi(221) = PROB_DD_SP_FromWords(&HBFC2D161&, &H0C86813A&)
+        TableLo(221) = PROB_DD_SP_FromWords(&H3C5499A3&, &HF25AF95F&)
+        TableHi(222) = PROB_DD_SP_FromWords(&HBFC23D71&, &H2A49C202&)
+        TableLo(222) = PROB_DD_SP_FromWords(&H3C66E381&, &H61051D69&)
+        TableHi(223) = PROB_DD_SP_FromWords(&HBFC1AA2B&, &H7E23F72A&)
+        TableLo(223) = PROB_DD_SP_FromWords(&H3C4C6EF1&, &HD9B2EF7E&)
+        TableHi(224) = PROB_DD_SP_FromWords(&HBFC1178E&, &H8227E47C&)
+        TableLo(224) = PROB_DD_SP_FromWords(&H3C50E63A&, &H5F01C691&)
+        TableHi(225) = PROB_DD_SP_FromWords(&HBFC08598&, &HB59E3A07&)
+        TableLo(225) = PROB_DD_SP_FromWords(&H3C6DD700&, &H9902BF32&)
+        TableHi(226) = PROB_DD_SP_FromWords(&HBFBFE891&, &H39DBD566&)
+        TableLo(226) = PROB_DD_SP_FromWords(&H3C5AC9F4&, &H215F9393&)
+        TableHi(227) = PROB_DD_SP_FromWords(&HBFBEC739&, &H830A1120&)
+        TableLo(227) = PROB_DD_SP_FromWords(&H3C4A2BF9&, &H91780D3F&)
+        TableHi(228) = PROB_DD_SP_FromWords(&HBFBDA727&, &H638446A2&)
+        TableLo(228) = PROB_DD_SP_FromWords(&HBC5401FA&, &H71733019&)
+        TableHi(229) = PROB_DD_SP_FromWords(&HBFBC8858&, &H01BC4B23&)
+        TableLo(229) = PROB_DD_SP_FromWords(&HBC5A38CB&, &H559A6706&)
+        TableHi(230) = PROB_DD_SP_FromWords(&HBFBB6AC8&, &H8DAD5B1C&)
+        TableLo(230) = PROB_DD_SP_FromWords(&H3C40057E&, &HED1CA59F&)
+        TableHi(231) = PROB_DD_SP_FromWords(&HBFBA4E76&, &H40B1BC38&)
+        TableLo(231) = PROB_DD_SP_FromWords(&H3C55B5CA&, &H203E4259&)
+        TableHi(232) = PROB_DD_SP_FromWords(&HBFB9335E&, &H5D594989&)
+        TableLo(232) = PROB_DD_SP_FromWords(&H3C5478A8&, &H5704CCB7&)
+        TableHi(233) = PROB_DD_SP_FromWords(&HBFB8197E&, &H2F40E3F0&)
+        TableLo(233) = PROB_DD_SP_FromWords(&HBC3B9F2D&, &HFFBEED43&)
+        TableHi(234) = PROB_DD_SP_FromWords(&HBFB700D3&, &H0AEAC0E1&)
+        TableLo(234) = PROB_DD_SP_FromWords(&H3C272566&, &H212CDD05&)
+        TableHi(235) = PROB_DD_SP_FromWords(&HBFB5E95A&, &H4D9791CB&)
+        TableLo(235) = PROB_DD_SP_FromWords(&HBC5F3874&, &H5C5C450A&)
+        TableHi(236) = PROB_DD_SP_FromWords(&HBFB4D311&, &H5D207EAC&)
+        TableLo(236) = PROB_DD_SP_FromWords(&HBC5769F4&, &H2C7842CC&)
+        TableHi(237) = PROB_DD_SP_FromWords(&HBFB3BDF5&, &HA7D1EE64&)
+        TableLo(237) = PROB_DD_SP_FromWords(&HBC47A976&, &HD3B5B45F&)
+        TableHi(238) = PROB_DD_SP_FromWords(&HBFB2AA04&, &HA44717A5&)
+        TableLo(238) = PROB_DD_SP_FromWords(&H3C5D15D3&, &H8D2FA3F7&)
+        TableHi(239) = PROB_DD_SP_FromWords(&HBFB1973B&, &HD1465567&)
+        TableLo(239) = PROB_DD_SP_FromWords(&H3C475583&, &H67A6ACF6&)
+        TableHi(240) = PROB_DD_SP_FromWords(&HBFB08598&, &HB59E3A07&)
+        TableLo(240) = PROB_DD_SP_FromWords(&H3C5DD700&, &H9902BF32&)
+        TableHi(241) = PROB_DD_SP_FromWords(&HBFAEEA31&, &HC006B87C&)
+        TableLo(241) = PROB_DD_SP_FromWords(&H3C43E4FC&, &H93B7B66C&)
+        TableHi(242) = PROB_DD_SP_FromWords(&HBFACCB73&, &HCDDDB2CC&)
+        TableLo(242) = PROB_DD_SP_FromWords(&H3C4E48FB&, &H0500EFD4&)
+        TableHi(243) = PROB_DD_SP_FromWords(&HBFAAAEF2&, &HD0FB10FC&)
+        TableLo(243) = PROB_DD_SP_FromWords(&HBC2A353B&, &HB42E0ADD&)
+        TableHi(244) = PROB_DD_SP_FromWords(&HBFA894AA&, &H149FB343&)
+        TableLo(244) = PROB_DD_SP_FromWords(&HBC3A8BE9&, &H7660A23D&)
+        TableHi(245) = PROB_DD_SP_FromWords(&HBFA67C94&, &HF2D4BB58&)
+        TableLo(245) = PROB_DD_SP_FromWords(&HBC40413E&, &H6505E603&)
+        TableHi(246) = PROB_DD_SP_FromWords(&HBFA466AE&, &HD42DE3EA&)
+        TableLo(246) = PROB_DD_SP_FromWords(&H3C4CDD6F&, &H7F4A137E&)
+        TableHi(247) = PROB_DD_SP_FromWords(&HBFA252F3&, &H2F8D183F&)
+        TableLo(247) = PROB_DD_SP_FromWords(&H3C4947F7&, &H92615916&)
+        TableHi(248) = PROB_DD_SP_FromWords(&HBFA0415D&, &H89E74444&)
+        TableLo(248) = PROB_DD_SP_FromWords(&HBC4C05CF&, &H1D753622&)
+        TableHi(249) = PROB_DD_SP_FromWords(&HBF9C63D2&, &HEC14AAF2&)
+        TableLo(249) = PROB_DD_SP_FromWords(&H3C3CE030&, &HA686BD86&)
+        TableHi(250) = PROB_DD_SP_FromWords(&HBF984925&, &H28C8CABF&)
+        TableLo(250) = PROB_DD_SP_FromWords(&H3C3D192D&, &H0619FA67&)
+        TableHi(251) = PROB_DD_SP_FromWords(&HBF9432A9&, &H25980CC1&)
+        TableLo(251) = PROB_DD_SP_FromWords(&H3C38CDAF&, &H39004192&)
+        TableHi(252) = PROB_DD_SP_FromWords(&HBF902056&, &H58935847&)
+        TableLo(252) = PROB_DD_SP_FromWords(&HBC327C8E&, &H8416E71F&)
+        TableHi(253) = PROB_DD_SP_FromWords(&HBF882448&, &HA388A2AA&)
+        TableLo(253) = PROB_DD_SP_FromWords(&HBC104B16&, &H137F09A0&)
+        TableHi(254) = PROB_DD_SP_FromWords(&HBF801015&, &H7588DE71&)
+        TableLo(254) = PROB_DD_SP_FromWords(&HBC146662&, &HD417CED0&)
+        TableHi(255) = PROB_DD_SP_FromWords(&HBF700805&, &H59588B35&)
+        TableLo(255) = PROB_DD_SP_FromWords(&HBC1F9663&, &H8CF63677&)
+        TableHi(256) = PROB_DD_SP_FromWords(&H00000000&, &H00000000&)
+        TableLo(256) = PROB_DD_SP_FromWords(&H00000000&, &H00000000&)
+        Ln2Hi = PROB_DD_SP_FromWords(&H3FE62E42&, &HFEFA39EF&)
+        Ln2Lo = PROB_DD_SP_FromWords(&H3C7ABC9E&, &H3B39803F&)
+        Sign = 1#
+        For J = 0 To 7
+            S(J) = Sign / CDbl(J + 3)
+            Sign = -Sign
+        Next J
+        Ready = True
+    End If
+    Field = PROB_B64_Field(YH)
+    E = Field - 1022
+    Scale2 = PROB_B64_Pow2(2045 - Field)
+    M = YH * Scale2
+    K = CLng(Int(M * 256# + 0.5))
+    C = CDbl(K) / 256#
+    VH = M - C
+    VL = YL * Scale2
+    PROB_B64_TwoSum VH, VL, WH, WL
+    PROB_B64_PairDiv WH, WL, C, UH, UL
+    PROB_B64_TwoProd UH, UH, SH, SL
+    T = 2# * UH
+    T = T * UL
+    SL = SL + T
+    SH = SH * 0.5
+    SL = SL * 0.5
+    Poly = S(7)
+    For J = 6 To 0 Step -1
+        Poly = Poly * UH
+        Poly = Poly + S(J)
+    Next J
+    Cube = UH * UH
+    Cube = Cube * UH
+    Cube = Cube * Poly
+    PROB_B64_PairAdd UH, UL, -SH, -SL, AH, AL
+    PROB_B64_PairAdd AH, AL, Cube, 0#, AH, AL
+    PROB_B64_PairAdd AH, AL, TableHi(K), TableLo(K), AH, AL
+    PROB_B64_PairMul Ln2Hi, Ln2Lo, CDbl(E), EH, EL
+    PROB_B64_PairAdd AH, AL, EH, EL, LH, LL
+End Sub
+
+Private Sub PROB_B64_Deviance(ByVal A As Double, ByVal X As Double, ByRef DH As Double, ByRef DL As Double)
+'==============================================================================
+' PROB_B64_Deviance
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Loader's deviance D = A log(A/X) + X - A = A (T - log(1 + T)),
+'   T = X/A - 1, as a pair accurate to about 1E-17 absolute.
+' NOTES
+'   Raises error 5 when X / A has a biased exponent field outside
+'   1 .. {RM.EXPONENT_FIELD[1]}; the calling route then declines.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim Q As Double, YH As Double, YL As Double, TH As Double, TL As Double
+    Dim LH As Double, LL As Double, GH As Double, GL As Double, Field As Long
+    Q = X / A
+    Field = PROB_B64_Field(Q)
+    If Field < 1 Or Field > 2000 Then Err.Raise 5
+    PROB_B64_PairDiv X, 0#, A, YH, YL
+    PROB_B64_PairAdd YH, YL, -1#, 0#, TH, TL
+    PROB_B64_PairLog YH, YL, LH, LL
+    PROB_B64_PairAdd TH, TL, -LH, -LL, GH, GL
+    PROB_B64_PairMul GH, GL, A, DH, DL
+End Sub
+
+Private Function PROB_B64_Factor(ByVal A As Double, ByVal X As Double) As Double
+'==============================================================================
+' PROB_B64_Factor
+'------------------------------------------------------------------------------
+' PURPOSE
+'   x^A e^-x / Gamma(A) for A > 0 and X > 0.
+'   A > 1: sqrt(A / (2 pi)) exp(-(D + stirlerr(A))), with the exponent
+'   kept as a pair, exp(EH) (1 + EL).
+'   A <= 1: A e^-X exp(A log X - log Gamma(1 + A)), as the small-shape
+'   factor of PROB_TryGammaContinuedFractionQ.
+' NOTES
+'   Returns 0 where the factor is below about 1E-307 (X >= 708 at A <= 1,
+'   EH < -708 above): every probability it scales is then below 1E-300.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim F As Double, LX As Double, EX As Double, Corr As Double
+    Dim DH As Double, DL As Double, Stir As Double, EH As Double, EL As Double
+    Dim Root As Double, T As Double
+    If A <= 1# Then
+        If X >= 708# Then
+            PROB_B64_Factor = 0#
+            Exit Function
+        End If
+        F = Exp(-X)
+        LX = Log(X)
+        EX = A * LX - PROB_GammaSmallLogGamma1p(A)
+        Corr = Exp(EX)
+        F = A * F
+        PROB_B64_Factor = F * Corr
+        Exit Function
+    End If
+    PROB_B64_Deviance A, X, DH, DL
+    Stir = PROB_StirlingError(A)
+    PROB_B64_TwoSum -DH, -Stir, EH, EL
+    If EH < -708# Then
+        PROB_B64_Factor = 0#
+        Exit Function
+    End If
+    EL = EL - DL
+    Root = A / PROB_DD_SP_FromWords(&H401921FB&, &H54442D18&)
+    Root = Sqr(Root)
+    F = Exp(EH)
+    F = Root * F
+    T = F * EL
+    PROB_B64_Factor = F + T
+End Function
+
+Public Function PROB_TryGammaB64SeriesP( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'==============================================================================
+' PROB_TryGammaB64SeriesP
+'------------------------------------------------------------------------------
+' PURPOSE
+'   P(A, X) for 0 < X < A + 1 by the lower series in binary64 (#307): the
+'   recurrence of PROB_TryGammaSeriesP with a compensated (Kahan) sum, times
+'   PROB_B64_Factor. It stops once the term is below an ulp of the sum and the
+'   remaining terms, which fall at least geometrically by X / (Ap + 1), sum to
+'   at most half an ulp.
+' NOTES
+'   False (declined) clears Result: invalid arguments, the 100000-iteration
+'   cap, a deviance outside its range or any runtime error. The caller then
+'   answers with the double-double kernel.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim Ap As Double, SumValue As Double, Del As Double, Carry As Double
+    Dim S As Double, T As Double, Room As Double, Bound As Double, Limit As Double
+    Dim Eps As Double, HalfEps As Double, IterIdx As Long
+    Result = 0#: FailMsg = ""
+    On Error GoTo Declined
+    If Not (A > 0# And X > 0# And X < A + 1#) Then GoTo Declined
+    Eps = PROB_B64_Pow2(971)
+    HalfEps = PROB_B64_Pow2(970)
+    Ap = A
+    SumValue = 1# / A
+    Del = SumValue
+    Carry = 0#
+    For IterIdx = 1 To PROB_GAMMA_MAX_ITER
+        Ap = Ap + 1#
+        Del = Del * X / Ap
+        S = SumValue + Del
+        T = S - SumValue
+        T = Del - T
+        Carry = Carry + T
+        SumValue = S
+        If Abs(Del) <= Abs(SumValue) * Eps Then
+            Room = Ap + 1#
+            Room = Room - X
+            If Room > 0# Then
+                Bound = Del * X
+                Limit = SumValue * HalfEps
+                Limit = Limit * Room
+                If Bound <= Limit Then
+                    SumValue = SumValue + Carry
+                    Result = SumValue * PROB_B64_Factor(A, X)
+                    PROB_TryGammaB64SeriesP = True
+                    Exit Function
+                End If
+            End If
+        End If
+    Next IterIdx
+Declined:
+    Result = 0#
+    FailMsg = "binary64 Gamma series declined"
+End Function
+
+Public Function PROB_TryGammaB64ContinuedFractionQ( _
+    ByVal A As Double, _
+    ByVal X As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'==============================================================================
+' PROB_TryGammaB64ContinuedFractionQ
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Q(A, X) for X >= A + 1 by the continued fraction in binary64 (#307): the
+'   modified Lentz recurrence of PROB_TryGammaContinuedFractionQ stopped at
+'   machine epsilon at every shape, with its backward re-evaluation at shape 1
+'   and below, times PROB_B64_Factor.
+' NOTES
+'   False (declined) clears Result: invalid arguments, the 100000-iteration
+'   cap, a deviance outside its range or any runtime error. The caller then
+'   answers with the double-double kernel.
+' GENERATED
+'   benchmark/gamma_route_study/b64_route_vba.py (#307). Do not edit.
+'==============================================================================
+    Dim B As Double, C As Double, D As Double, H As Double, An As Double, Del As Double
+    Dim Eps As Double, Base As Double, Tail As Double, IterIdx As Long, BackIdx As Long
+    Result = 0#: FailMsg = ""
+    On Error GoTo Declined
+    If Not (A > 0# And X >= A + 1#) Then GoTo Declined
+    Eps = PROB_B64_Pow2(971)
+    B = X + 1# - A
+    If Abs(B) < PROB_FPMIN Then B = PROB_FPMIN
+    C = 1# / PROB_FPMIN
+    D = 1# / B
+    H = D
+    For IterIdx = 1 To PROB_GAMMA_MAX_ITER
+        An = -CDbl(IterIdx) * (CDbl(IterIdx) - A)
+        B = B + 2#
+        D = An * D + B
+        If Abs(D) < PROB_FPMIN Then D = PROB_FPMIN
+        C = B + An / C
+        If Abs(C) < PROB_FPMIN Then C = PROB_FPMIN
+        D = 1# / D
+        Del = D * C
+        H = H * Del
+        If Abs(Del - 1#) <= Eps Then
+            If A <= 1# Then
+                Base = X + 1# - A
+                Tail = 0#
+                For BackIdx = IterIdx To 1 Step -1
+                    Tail = (-CDbl(BackIdx) * (CDbl(BackIdx) - A)) / (Base + 2# * CDbl(BackIdx) + Tail)
+                Next BackIdx
+                Tail = Base + Tail
+                H = 1# / Tail
+            End If
+            Result = PROB_B64_Factor(A, X) * H
+            PROB_TryGammaB64ContinuedFractionQ = True
+            Exit Function
+        End If
+    Next IterIdx
+Declined:
+    Result = 0#
+    FailMsg = "binary64 Gamma continued fraction declined"
+End Function
+' END generated binary64 Gamma route (#307)
 

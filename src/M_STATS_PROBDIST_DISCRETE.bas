@@ -211,8 +211,8 @@ Option Explicit
 '       PROB_StirlingError
 '       PROB_TryDeviancePart
 '       PROB_TryBetaRegularized
-'       PROB_TryGammaRegularizedP
-'       PROB_TryGammaRegularizedQ
+'       PROB_TryGammaRoutedP
+'       PROB_TryGammaRoutedQ
 '
 ' NOTES
 '   - This module is complete for the stated Binomial, Poisson, Geometric,
@@ -6833,7 +6833,7 @@ Private Function PROB_DS_TryPoissonCDF( _
             Exit Function
         End If
 
-        PROB_DS_TryPoissonCDF = PROB_TryGammaRegularizedQ( _
+        PROB_DS_TryPoissonCDF = PROB_TryGammaRoutedQ( _
             K + 1#, Mean, Result, FailMsg)
 End Function
 
@@ -6861,7 +6861,7 @@ Private Function PROB_DS_TryPoissonSF( _
             Exit Function
         End If
 
-        PROB_DS_TryPoissonSF = PROB_TryGammaRegularizedP( _
+        PROB_DS_TryPoissonSF = PROB_TryGammaRoutedP( _
             K + 1#, Mean, Result, FailMsg)
 End Function
 

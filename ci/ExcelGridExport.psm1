@@ -45,7 +45,8 @@ $script:Latin1 = [System.Text.Encoding]::GetEncoding(28591)
 $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
-    "glq_lower_q", "gbr_binary64_map"
+    "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
+    "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout"
 )
 
 function Get-StudyGridNames {
@@ -110,7 +111,9 @@ function Get-ExportGridSpec {
         [ValidateSet("main", "holdout", "holdout_older", "survival_boundary", "tchi_large_df",
                      "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
                      "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
-                     "glq_lower_q", "gbr_binary64_map")]
+                     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2",
+                     "prs_chisquare_holdout2", "grh_route_holdout", "gis_holdout",
+                     "gis_holdout2", "fip_baseline", "fip_holdout")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -212,6 +215,19 @@ function Get-ExportGridSpec {
                 -Exporter "M_STATS_PROBDIST_CHISQHOLD.bas" -Macro "Export_ChiSquareHoldout" `
                 -Columns 14 -KeyColumns 8 -SuccessPrefix "Chi-square positive-ratio HOLDOUT complete: "
         }
+        # The second holdouts (#13, Amendment 1) key on the six text fields
+        # only: their echoed operands are measurements, checked by
+        # analyze_amendment1.py against the exact construction.
+        "prs_gamma_holdout2" {
+            return New-GeneratedGridSpec -Name "prs_gamma_holdout2" -FileName "gamma_holdout2.csv" `
+                -Exporter "M_STATS_PROBDIST_GAMMAHOLD2.bas" -Macro "Export_GammaHoldout2" `
+                -Columns 15 -KeyColumns 6 -SuccessPrefix "Gamma positive-ratio HOLDOUT 2 complete: "
+        }
+        "prs_chisquare_holdout2" {
+            return New-GeneratedGridSpec -Name "prs_chisquare_holdout2" -FileName "chisquare_holdout2.csv" `
+                -Exporter "M_STATS_PROBDIST_CHISQHOLD2.bas" -Macro "Export_ChiSquareHoldout2" `
+                -Columns 14 -KeyColumns 6 -SuccessPrefix "Chi-square positive-ratio HOLDOUT 2 complete: "
+        }
         "prs_gamma_q_complement" {
             return New-GeneratedGridSpec -Name "prs_gamma_q_complement" -FileName "gamma_q_complement.csv" `
                 -Exporter "M_STATS_PROBDIST_GQPROBE.bas" -Macro "Export_GammaQComplement" `
@@ -228,6 +244,36 @@ function Get-ExportGridSpec {
                 -FileName "gamma_lower_q_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_GLQ.bas" -Macro "Export_GammaLowerQ" `
                 -Columns 13 -KeyColumns 10 -SuccessPrefix "Gamma lower-Q holdout complete: "
+        }
+        "grh_route_holdout" {
+            return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "grh_route_holdout" `
+                -FileName "holdout_route_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_GRH.bas" -Macro "Export_GammaRouteHoldout" `
+                -Columns 12 -KeyColumns 6 -SuccessPrefix "Gamma routing holdout complete: "
+        }
+        "gis_holdout" {
+            return New-GeneratedGridSpec -Folder "gamma_inverse_scale_study" -Name "gis_holdout" `
+                -FileName "gamma_inverse_scale_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_GIS.bas" -Macro "Export_GammaInverseScaleHoldout" `
+                -Columns 10 -KeyColumns 6 -SuccessPrefix "Gamma inverse holdout complete: "
+        }
+        "gis_holdout2" {
+            return New-GeneratedGridSpec -Folder "gamma_inverse_scale_study" -Name "gis_holdout2" `
+                -FileName "gamma_inverse_scale_grid2.csv" `
+                -Exporter "M_STATS_PROBDIST_GIS2.bas" -Macro "Export_GammaInverseScaleHoldout2" `
+                -Columns 10 -KeyColumns 6 -SuccessPrefix "Gamma inverse second holdout complete: "
+        }
+        "fip_baseline" {
+            return New-GeneratedGridSpec -Folder "f_inverse_large_df_study/production" -Name "fip_baseline" `
+                -FileName "f_inverse_pair_baseline.csv" `
+                -Exporter "M_STATS_PROBDIST_FIP.bas" -Macro "Export_FInversePairBaseline" `
+                -Columns 8 -KeyColumns 7 -SuccessPrefix "F inverse pair baseline complete: "
+        }
+        "fip_holdout" {
+            return New-GeneratedGridSpec -Folder "f_inverse_large_df_study/production" -Name "fip_holdout" `
+                -FileName "f_inverse_pair_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_FIP.bas" -Macro "Export_FInversePair" `
+                -Columns 8 -KeyColumns 7 -SuccessPrefix "F inverse pair holdout complete: "
         }
         "gbr_binary64_map" {
             return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "gbr_binary64_map" `

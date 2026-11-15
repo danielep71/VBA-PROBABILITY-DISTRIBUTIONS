@@ -10,18 +10,18 @@ the generated public Gamma block: a VBA decimal literal keeps only 15
 significant digits.
 
 History. #312 appended the block to the module at candidate 88ff6ba, where
-Excel run 42798193976 measured it (FIT_RESULT.md). No public function ever
-called it, and #307 closed without a routing rule, so the block was removed
-from production again. It stays reproducible: --check proves that the block
-generated here is byte for byte the one the fit candidate carried, and that
-the current module no longer carries it, and that b64_route_block.txt, the
-frozen copy that historical_block.py serves to the studies without mpmath, is
-the same block. apply() and strip() remain for
-historical replays; public_integration.py strips it before restoring the
-frozen port.
+Excel run 42798193976 measured it (FIT_RESULT.md). No public function called
+it, and #307 closed without a routing rule, so the block left production.
+#314 installs it again, unchanged, behind the routed entry points
+PROB_TryGammaRoutedP and PROB_TryGammaRoutedQ. --check proves that the block
+generated here is byte for byte the one the fit candidate carried, that the
+current module ends with exactly that block, and that b64_route_block.txt,
+the frozen copy that historical_block.py serves to the studies without
+mpmath, is the same block. strip() remains for historical replays;
+public_integration.py strips it before restoring the frozen port.
 
 Run:
-    python3 b64_route_vba.py --check    (the historical block, absent from the module)
+    python3 b64_route_vba.py --check    (the measured block, installed in the module)
 """
 import argparse
 import os
@@ -439,12 +439,12 @@ def main(argv=None):
     carried = historical.endswith(block()) and historical.count(BEGIN) == 1
     import historical_block
     frozen = historical_block.block() == block()
-    absent = BEGIN not in current and END not in current
+    installed = current.endswith(block()) and current.count(BEGIN) == 1
     print("binary64 Gamma route block: "
           + ("generated as at the fit candidate" if carried else "DIFFERS FROM THE FIT CANDIDATE")
           + "; " + ("frozen copy current" if frozen else "FROZEN COPY DIFFERS")
-          + "; " + ("absent from the module" if absent else "STILL IN THE MODULE"))
-    return 0 if carried and frozen and absent else 1
+          + "; " + ("installed in the module" if installed else "NOT THE MODULE'S LAST BLOCK"))
+    return 0 if carried and frozen and installed else 1
 
 
 if __name__ == "__main__":

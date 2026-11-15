@@ -8,10 +8,21 @@ param(
     # Also run the study batteries (#300) after a complete green regression,
     # against .github/excel-study-policy.json.
     [Parameter(Mandatory = $false)]
-    [switch]$RunStudies
+    [switch]$RunStudies,
+
+    # Fast level (#299): skip the test procedures listed in
+    # .github/excel-fast-policy.json and hold the run to that policy's count.
+    # A fast run is a smoke test for changes that cannot alter what Excel
+    # executes. It is never certification evidence: its record carries a count
+    # the evidence policy rejects, and says so.
+    [Parameter(Mandatory = $false)]
+    [switch]$Fast
 )
 
 Set-StrictMode -Version Latest
+
+# The study batteries never run at the fast level (#299).
+if ($Fast) { $RunStudies = $false }
 $ErrorActionPreference = "Stop"
 
 $excel = $null
@@ -53,7 +64,19 @@ function Write-CiLog {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $line = "[$timestamp] $Message"
     Write-Host $line
-    Add-Content -LiteralPath $resultPath -Value $line -Encoding UTF8
+    # Another process (a scanner or indexer) can hold the log for an instant;
+    # run 43441031137 died on "Stream was not readable" with every assertion
+    # green. Retry briefly before giving up.
+    for ($attempt = 1; ; $attempt++) {
+        try {
+            Add-Content -LiteralPath $resultPath -Value $line -Encoding UTF8 -ErrorAction Stop
+            break
+        }
+        catch {
+            if ($attempt -ge 5) { throw }
+            Start-Sleep -Milliseconds (100 * $attempt)
+        }
+    }
 }
 
 function Release-ComObjectSafely {
@@ -293,13 +316,15 @@ Public Function Test_STATS_PROBDIST_GetFailureLog_CI() As String
 End Function
 
 Public Function Test_STATS_PROBDIST_RunStudies_CI() As String
-    'Runs the study batteries kept apart from the regression (#300) and
-    'returns machine-readable counters, as Test_STATS_PROBDIST_RunAll_CI does.
+    'Runs the batteries kept apart from the pull-request regression: the
+    'study batteries (#300) and the slow production batteries (#13). Returns
+    'machine-readable counters, as Test_STATS_PROBDIST_RunAll_CI does.
     On Error GoTo Err_Handler
 
     HarnessTiming "reset"
     BeginRun "STUDY BATTERIES - GITHUB ACTIONS"
     RunStudyBatteries
+    RunSlowProductionBatteries
     EndRun
 
     Test_STATS_PROBDIST_RunStudies_CI = _
@@ -320,10 +345,12 @@ End Function
 
 Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
     'Microseconds per call of the Gamma P/Q kernel (#298), outside the
-    'assertion count: the public double-double route against the binary64
+    'assertion count: the double-double entry points against the binary64
     'routine that answered the same region before #242 (the lower series below
-    'X = A + 1, the continued fraction above it). Each timing repeats the call
-    'until at least 0.5 s has elapsed.
+    'X = A + 1, the continued fraction above it), and then the public
+    'functions and their inverses as users call them (#314), and the Beta, F
+    'and Student-t inverses, which share the beta inverse (#35). Each timing
+    'repeats the call until at least 0.5 s has elapsed.
     Dim Points As Variant, I As Long, A As Double, X As Double
     Dim Out As String
     Points = Array(0.0001, 0.5, 0.5, 0.25, 2.5, 1#, 2.5, 6#, 100#, 90#, 100#, 110#, _
@@ -333,19 +360,70 @@ Public Function Test_STATS_PROBDIST_GammaCost_CI() As String
         Out = Out & GammaCostLine(A, X, "dd_p") & GammaCostLine(A, X, "dd_q") & _
               GammaCostLine(A, X, "binary64")
     Next I
+    'The public functions (#314), at the same points: Gamma with scale 1,
+    'Chi-square at 2X and 2A, and Poisson where the shape is an integer
+    '(count A - 1, mean X).
+    For I = 0 To UBound(Points) Step 2
+        A = Points(I): X = Points(I + 1)
+        Out = Out & GammaCostLine(A, X, "gamma_cdf") & GammaCostLine(A, X, "gamma_sf") & _
+              GammaCostLine(A, X, "chi_cdf") & GammaCostLine(A, X, "chi_sf")
+        If A >= 1# And A = Int(A) Then
+            Out = Out & GammaCostLine(A, X, "poisson_cdf") & GammaCostLine(A, X, "poisson_sf") & _
+                  GammaCostLine(A, X, "poisson_inv")
+        End If
+    Next I
+    'The inverses: X holds the probability. Shape 0.01 is the smallest the
+    'solver takes through the routed entry points; 0.001 stays with the
+    'double-double ones.
+    Points = Array(0.001, 0.01, 0.5, 2.5, 100#, 10000#)
+    For I = 0 To UBound(Points)
+        A = Points(I)
+        Out = Out & GammaCostLine(A, 0.1, "gamma_inv") & GammaCostLine(A, 0.9, "gamma_inv") & _
+              GammaCostLine(A, 0.1, "chi_inv") & GammaCostLine(A, 0.9, "chi_inv")
+    Next I
+    'The inverses that share the beta inverse (#35): X holds the probability,
+    'A and B the two shapes or degrees of freedom.
+    Points = Array(0.5, 0.5, 2#, 5#, 50#, 80#, 0.7, 25#)
+    For I = 0 To UBound(Points) Step 2
+        Out = Out & GammaCostLine(Points(I), 0.1, "beta_inv", Points(I + 1)) & _
+              GammaCostLine(Points(I), 0.9, "beta_inv", Points(I + 1))
+    Next I
+    Points = Array(5#, 10#, 100#, 100#, 50#, 100000000#, 100000#, 2#)
+    For I = 0 To UBound(Points) Step 2
+        Out = Out & GammaCostLine(Points(I), 0.1, "f_inv", Points(I + 1)) & _
+              GammaCostLine(Points(I), 0.9, "f_inv", Points(I + 1))
+    Next I
+    Points = Array(3#, 10#, 30#)
+    For I = 0 To UBound(Points)
+        Out = Out & GammaCostLine(Points(I), 0.9, "t_inv")
+    Next I
     Test_STATS_PROBDIST_GammaCost_CI = Out
 End Function
 
-Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String) As String
+Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route As String, _
+    Optional ByVal B As Double = 0#) As String
     Dim N As Long, K As Long, T0 As Double, Elapsed As Double
-    Dim V As Double, M As String, OK As Boolean
-    N = 16
+    Dim V As Double, M As String, OK As Boolean, R As Variant
+    'One call first: a route that takes a second is not repeated 16 times
+    N = 1
     Do
         T0 = Timer
         For K = 1 To N
             Select Case Route
                 Case "dd_p": OK = PROB_TryGammaRegularizedP(A, X, V, M)
                 Case "dd_q": OK = PROB_TryGammaRegularizedQ(A, X, V, M)
+                Case "gamma_cdf": R = K_STATS_Gamma_Cumulative(X, A, 1#): OK = Not IsError(R)
+                Case "gamma_sf": R = K_STATS_Gamma_Survival(X, A, 1#): OK = Not IsError(R)
+                Case "chi_cdf": R = K_STATS_ChiSquare_Cumulative(2# * X, 2# * A): OK = Not IsError(R)
+                Case "chi_sf": R = K_STATS_ChiSquare_Survival(2# * X, 2# * A): OK = Not IsError(R)
+                Case "poisson_cdf": R = K_STATS_Poisson_Cumulative(A - 1#, X): OK = Not IsError(R)
+                Case "poisson_sf": R = K_STATS_Poisson_Survival(A - 1#, X): OK = Not IsError(R)
+                Case "poisson_inv": R = K_STATS_Poisson_InverseCumulative(0.5, X): OK = Not IsError(R)
+                Case "gamma_inv": R = K_STATS_Gamma_InverseCumulative(X, A, 1#): OK = Not IsError(R)
+                Case "chi_inv": R = K_STATS_ChiSquare_InverseCumulative(X, 2# * A): OK = Not IsError(R)
+                Case "beta_inv": R = K_STATS_Beta_InverseCumulative(X, A, B): OK = Not IsError(R)
+                Case "f_inv": R = K_STATS_F_InverseCumulative(X, A, B): OK = Not IsError(R)
+                Case "t_inv": R = K_STATS_StudentT_InverseCumulative(X, A): OK = Not IsError(R)
                 Case Else
                     If X < A + 1# Then
                         OK = PROB_TryGammaSeriesP(A, X, V, M)
@@ -359,7 +437,9 @@ Private Function GammaCostLine(ByVal A As Double, ByVal X As Double, ByVal Route
         If Elapsed >= 0.5 Or N >= 536870912 Then Exit Do
         N = N * 2
     Loop
-    GammaCostLine = Route & " A=" & Replace(CStr(A), ",", ".") & " X=" & Replace(CStr(X), ",", ".") & _
+    GammaCostLine = Route & " A=" & Replace(CStr(A), ",", ".") & _
+        IIf(B <> 0#, " B=" & Replace(CStr(B), ",", "."), "") & _
+        " X=" & Replace(CStr(X), ",", ".") & _
         " ok=" & IIf(OK, "1", "0") & _
         " calls=" & CStr(N) & " us_per_call=" & _
         Replace(Format$(Elapsed / N * 1000000#, "0.000"), ",", ".") & vbLf
@@ -368,6 +448,30 @@ End Function
 
     $insertLine = $codeModule.CountOfLines + 1
     $codeModule.InsertLines($insertLine, $ciBridge)
+
+    # Fast level (#299): in this temporary workbook only, turn the call of
+    # each listed test procedure into a comment. The committed test module is
+    # not changed, and each name must be called exactly once, so a renamed or
+    # removed test fails the run instead of silently running everything.
+    $fastPolicy = $null
+    if ($Fast) {
+        $fastPolicyPath = Join-Path $RepositoryRoot ".github\excel-fast-policy.json"
+        $fastPolicy = Get-Content -LiteralPath $fastPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        # One COM read of the whole module: a line-by-line read costs about 30 s
+        # per name. ReplaceLine keeps the line count, so the numbers stay valid.
+        $moduleLines = $codeModule.Lines(1, $codeModule.CountOfLines) -split "`r?`n"
+        foreach ($testName in @($fastPolicy.skip_tests | ForEach-Object { [string]$_ })) {
+            $hits = @()
+            for ($lineNumber = 1; $lineNumber -le $moduleLines.Count; $lineNumber++) {
+                if ($moduleLines[$lineNumber - 1].Trim() -ceq $testName) { $hits += $lineNumber }
+            }
+            if ($hits.Count -ne 1) {
+                throw "Fast level: expected exactly one call of $testName, found $($hits.Count)."
+            }
+            $codeModule.ReplaceLine($hits[0], "    ' FAST level: $testName skipped")
+            Write-CiLog "FAST level: skipping $testName"
+        }
+    }
 
     $workbook.Save()
     Write-CiLog "Executing $($policy.entry_point)"
@@ -437,6 +541,7 @@ End Function
     }
 
     $expectedAssertions = [int]$policy.expected_assertions
+    if ($Fast) { $expectedAssertions = [int]$fastPolicy.expected_assertions }
     if ($total -ne $expectedAssertions) {
         $stages.regression.status = "FAIL"
         $stages.regression.detail = "Regression completeness failure: expected $expectedAssertions assertions, observed $total"
@@ -451,11 +556,18 @@ End Function
     else {
         $stages.regression.status = "PASS"
         $stages.regression.detail = "Complete policy-declared regression: $passed/$total assertions passed"
+        if ($Fast) {
+            $stages.regression.detail = "FAST level, not certification evidence: $passed/$total assertions passed with $(@($fastPolicy.skip_tests).Count) test procedure(s) skipped"
+            Write-CiLog $stages.regression.detail
+        }
         $exitCode = 0
 
         # The study batteries (#300): private arithmetic ports of the #26
-        # studies, run only when requested, against their own policy. A
-        # failure fails the job; the regression stage stays as measured.
+        # studies, and the slow production batteries (#13): the cap and seams
+        # of the Gamma kernel and the bit-level regression of its public
+        # surfaces. Run only when requested,
+        # against their own policy. A failure fails the job, so no grid is
+        # exported after it; the regression stage stays as measured.
         if ($RunStudies) {
             $studyPolicyPath = Join-Path $RepositoryRoot ".github\excel-study-policy.json"
             $studyPolicy = Get-Content -LiteralPath $studyPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json

@@ -147,9 +147,9 @@ Option Explicit
 '       PROB_TryGammaLogPdf
 '       PROB_TryBetaLogPdf
 '       PROB_DENSITY_SHAPE_MAX
-'       PROB_TryGammaRegularizedP
-'       PROB_TryGammaRegularizedQ
-'       PROB_TryGammaInvP
+'       PROB_TryGammaRoutedP
+'       PROB_TryGammaRoutedQ
+'       PROB_TryGammaInvPScaled
 '       PROB_TryBetaRegularized
 '       PROB_TryBetaInvRegularized
 '
@@ -322,10 +322,20 @@ Public Function K_STATS_Gamma_Density( _
     'Form Log(X / ScaleParam) without dividing potentially extreme operands
         LogRatio = Log(X) - Log(ScaleParam)
 
-    'Stable Loader log-density via the shared kernel (no large-Shape cancellation)
-        If Not PROB_TryGammaLogPdf(StandardX, Shape, LogRatio, Log(ScaleParam), _
-                                   LogDensity, FailMsg) Then
-            GoTo Fail_Num
+    'A positive ratio stored as zero, or as a subnormal below the measured
+    'cutoff, takes the log-domain form; every other argument keeps the stable
+    'Loader log-density of the shared kernel (#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
+            = PROB_PRC_DIRECT Then
+            If Not PROB_TryGammaLogPdf(StandardX, Shape, LogRatio, Log(ScaleParam), _
+                                       LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryPositiveRatioLogPdf(Shape, LogRatio, StandardX, _
+                                               Log(ScaleParam), LogDensity, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Exponentiate under the shared overflow and underflow contract
@@ -407,7 +417,7 @@ Public Function K_STATS_Gamma_Cumulative( _
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXShapeScale
 '   - PROB_TryDivide
-'   - PROB_TryGammaRegularizedP
+'   - PROB_TryGammaRoutedP
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -423,6 +433,9 @@ Public Function K_STATS_Gamma_Cumulative( _
 '------------------------------------------------------------------------------
     Dim StandardX           As Double          'X divided by ScaleParam
     Dim Value               As Double          'Cumulative probability
+    Dim Complement          As Double          'Upper tail from the recovery kernel, unused
+    Dim RatioClass          As PROB_PositiveRatioClass 'Evaluation path of the stored ratio
+    Dim Product             As Double          'StandardX * ScaleParam, to test the division
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -462,10 +475,40 @@ Public Function K_STATS_Gamma_Cumulative( _
             GoTo Return_Success
         End If
 
-    'Evaluate the regularized lower incomplete gamma function
-        If Not PROB_TryGammaRegularizedP( _
-            Shape, StandardX, Value, FailMsg) Then
-            GoTo Fail_Num
+    'Classify the stored ratio. A zero is always recovered: the kernel would
+    'read it as the support origin. A subnormal below the 40-bit cutoff is
+    'recovered only when the division rounded: the direct path is accurate
+    'to a few 1E-15 for the argument it receives, far inside the recovery's
+    '1E-13, so an exact ratio is better left to it (#13, Amendment 1 in
+    'benchmark/positive_ratio_subnormal; #314 for the direct path)
+        RatioClass = PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_40BIT)
+
+    'The division did not round when the stored product gives X back and that
+    'product is trustworthy: for a normal X it places the ratio within one
+    'part in 2 ^ 53, and for an integer ScaleParam it is exact. A subnormal X
+    'with a fractional scale can return X from a rounded product, so it is
+    'treated as rounded
+        If RatioClass = PROB_PRC_PRECISION_RECOVERY Then
+            Product = StandardX * ScaleParam
+            If Product = X Then
+                If X >= PROB_MIN_NORMAL Or ScaleParam = Int(ScaleParam) Then
+                    RatioClass = PROB_PRC_DIRECT
+                End If
+            End If
+        End If
+
+    'Evaluate from Log(X) - Log(ScaleParam), or through the regularized lower
+    'incomplete gamma function
+        If RatioClass <> PROB_PRC_DIRECT Then
+            If Not PROB_TryPositiveRatioTails( _
+                Shape, Log(X) - Log(ScaleParam), Value, Complement, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryGammaRoutedP( _
+                Shape, StandardX, Value, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Return the cumulative probability
@@ -545,7 +588,7 @@ Public Function K_STATS_Gamma_Survival( _
 ' DEPENDENCIES
 '   - PROB_CN_ValidateXShapeScale
 '   - PROB_TryDivide
-'   - PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaRoutedQ
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -561,6 +604,7 @@ Public Function K_STATS_Gamma_Survival( _
 '------------------------------------------------------------------------------
     Dim StandardX           As Double          'X divided by ScaleParam
     Dim Value               As Double          'Survival probability
+    Dim Complement          As Double          'Lower tail from the recovery kernel, unused
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -600,10 +644,21 @@ Public Function K_STATS_Gamma_Survival( _
             GoTo Return_Success
         End If
 
-    'Evaluate the regularized upper incomplete gamma function
-        If Not PROB_TryGammaRegularizedQ( _
-            Shape, StandardX, Value, FailMsg) Then
-            GoTo Fail_Num
+    'A positive ratio stored as zero is evaluated from
+    'Log(X) - Log(ScaleParam); the kernel would read it as the support origin.
+    'The survival has no precision dispatch, so every stored positive argument
+    'goes to the regularized upper incomplete gamma function (#13)
+        If PROB_ClassifyPositiveRatio(True, StandardX, 0#) _
+            = PROB_PRC_HARD_UNDERFLOW Then
+            If Not PROB_TryPositiveRatioTails( _
+                Shape, Log(X) - Log(ScaleParam), Complement, Value, FailMsg) Then
+                GoTo Fail_Num
+            End If
+        Else
+            If Not PROB_TryGammaRoutedQ( _
+                Shape, StandardX, Value, FailMsg) Then
+                GoTo Fail_Num
+            End If
         End If
 
     'Return the survival probability
@@ -672,8 +727,11 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
 '
 ' BEHAVIOR
-'   - Inverts the regularized lower incomplete gamma function on the unit scale.
-'   - Rescales the unit quantile with explicit overflow classification.
+'   - Inverts the regularized lower incomplete gamma function at the final
+'     scale: a small unit quantile is formed in log space with the scale
+'     (#14), a larger one on the unit scale and then rescaled.
+'   - A final quantile below the Double range returns zero; one above it
+'     returns #NUM!.
 '
 ' ERROR POLICY
 '   - Invalid inputs, non-convergence or rescaling overflow return #NUM!.
@@ -683,8 +741,7 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsPositiveWithinSupportedMagnitude
 '   - PROB_IsPositiveFinite
-'   - PROB_TryGammaInvP
-'   - PROB_TryMultiply
+'   - PROB_TryGammaInvPScaled
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -692,14 +749,13 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '   - M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-07-21
+'   2026-11-14
 '==============================================================================
 '
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim GammaQuantile       As Double          'Unit-scale gamma quantile
-    Dim RescaledQuantile    As Double          'Quantile after applying ScaleParam
+    Dim RescaledQuantile    As Double          'Quantile at the final scale
     Dim FailMsg             As String          'Detailed failure message
 
 '------------------------------------------------------------------------------
@@ -734,15 +790,12 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '------------------------------------------------------------------------------
 ' COMPUTE QUANTILE
 '------------------------------------------------------------------------------
-    'Invert the regularized lower incomplete gamma function on the unit scale
-        If Not PROB_TryGammaInvP( _
-            Probability, 1# - Probability, Shape, GammaQuantile, FailMsg) Then GoTo Fail_Num
-
-    'Rescale from the unit-scale gamma with explicit overflow classification
-        If Not PROB_TryMultiply(ScaleParam, GammaQuantile, RescaledQuantile) Then
-            FailMsg = "Gamma quantile overflowed a Double"
-            GoTo Fail_Num
-        End If
+    'Invert the regularized lower incomplete gamma function at the final
+    'scale (#14): a unit-scale quantile below the Double range is not formed
+        If Not PROB_TryGammaInvPScaled( _
+            Probability, 1# - Probability, Shape, ScaleParam, _
+            "Gamma quantile overflowed a Double", _
+            RescaledQuantile, FailMsg) Then GoTo Fail_Num
 
         K_STATS_Gamma_InverseCumulative = RescaledQuantile
 

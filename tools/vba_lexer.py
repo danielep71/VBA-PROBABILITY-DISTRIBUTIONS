@@ -74,7 +74,8 @@ def read_component(root: Path, path: str) -> str:
 def strip_code(raw: str, *, blank_strings: bool = False) -> str:
     """One physical line without its comment: from a ' outside a string and
     outside [...] (where it quotes a sheet name, as in ['Sheet 1'!A1]), or
-    from Rem where a statement starts (at the line start, after a numeric line
+    from Rem where a statement starts outside [...] (inside, as in
+    [A1:Rem], the colon is a range operator and Rem a name) (at the line start, after a numeric line
     label such as ``100``, or after a ``:`` separator, not after a ``:=``
     named argument). With ``blank_strings`` the content of string literals
     and of [...] expressions becomes spaces, so that keywords quoted in a
@@ -95,8 +96,8 @@ def strip_code(raw: str, *, blank_strings: bool = False) -> str:
                 continue
             in_string = not in_string
             result.append(" " if blank_strings else char)
-        elif not in_string and ((char == "'" and not brackets)
-                                or (statement_start and REM.match(raw, index))):
+        elif not in_string and not brackets and (
+                char == "'" or (statement_start and REM.match(raw, index))):
             break
         else:
             hidden = in_string or (brackets and char not in "[]")
@@ -105,7 +106,7 @@ def strip_code(raw: str, *, blank_strings: bool = False) -> str:
             brackets += 1
         elif not in_string and char == "]" and brackets:
             brackets -= 1
-        if not in_string and char == ":" and raw[index + 1:index + 2] != "=":
+        if not in_string and not brackets and char == ":" and raw[index + 1:index + 2] != "=":
             statement_start = True
         elif not char.isspace():
             statement_start = False

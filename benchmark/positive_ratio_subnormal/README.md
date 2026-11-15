@@ -350,6 +350,12 @@ answer is not the same as answering accurately.** It is now `None`, reported as
 | `HOLDOUT_DESIGN.md` | holdout specification, frozen before any holdout output |
 | `M_STATS_PROBDIST_GAMMAHOLD.bas` | Gamma holdout exporter; run `Probe_GammaHoldout` |
 | `gamma_holdout.csv` | Gamma holdout observations |
+| `AMENDMENT_1_RESULT.md` | Verdict of the second holdout: all four claims hold |
+| `AMENDMENT_1.md` | Amendment 1 (2026-11-13): the cumulative on the integrated kernel, its claims and the second holdout |
+| `POST_INTEGRATION_RESULT.md`, `post_integration/` | The four arms exported again on the integrated kernel, and what they showed |
+| `M_STATS_PROBDIST_GAMMAHOLD2.bas`, `gamma_holdout2.csv` | Second Gamma holdout, cumulative only (`prs_gamma_holdout2`) |
+| `M_STATS_PROBDIST_CHISQHOLD2.bas`, `chisquare_holdout2.csv` | Second Chi-square holdout, cumulative only (`prs_chisquare_holdout2`) |
+| `analyze_amendment1.py`, `test_analyze_amendment1.py` | Claim test of Amendment 1 and its fixtures |
 | `M_STATS_PROBDIST_CHISQHOLD.bas` | Chi-square holdout exporter; run `Probe_ChiSquareHoldout` |
 | `chisquare_holdout.csv` | Chi-square holdout observations |
 | `M_STATS_PROBDIST_GQPROBE.bas` | probe of a Gamma survival defect outside #13 (ScaleParam = 1); run `Probe_GammaQComplement` |

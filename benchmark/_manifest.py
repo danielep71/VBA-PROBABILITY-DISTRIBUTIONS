@@ -14,6 +14,13 @@ the checked-out source.
 Hashes are taken over LF-normalized bytes so a CRLF working tree (the .bas
 files are eol=crlf) and an LF checkout hash identically - the binding is to
 content, not to line-ending presentation. No git or network is required.
+
+Carried bindings (#301). A module whose bytes differ from the recorded ones
+but whose comment-free code is identical to the code at the manifest's commit
+keeps its binding: vba_code_identity.carried proves it from Git, and the
+verifiers report the path in `carried` instead of as a mismatch. Git is used
+only for a module whose hash differs; any doubt refuses the carry and the
+mismatch stands.
 """
 import glob
 import hashlib
@@ -73,6 +80,19 @@ def source_hashes(root, patterns=_BAS_GLOBS):
         for p in glob.glob(os.path.join(root, pattern), recursive=True):
             out[_rel(root, p)] = normalized_hash(p)
     return dict(sorted(out.items()))
+
+
+def _carried_or_problem(root, manifest, path, recorded, message, carried):
+    """None when `path` provably holds the executed code, else the mismatch text."""
+    if carried is None:
+        return message
+    from vba_code_identity import CarryRefused, carried as prove_carried
+    try:
+        prove_carried(root, path, recorded, manifest.get("commit_sha"))
+    except CarryRefused as exc:
+        return f"{message} ({exc})"
+    carried.append(path)
+    return None
 
 
 def grid_columns(grid_path):
@@ -146,8 +166,12 @@ def load_holdout_manifest(root):
         return {"_load_error": f"{type(exc).__name__}: {exc}"}
 
 
-def verify_source_binding(root, manifest, grid_path, contracts_path):
+def verify_source_binding(root, manifest, grid_path, contracts_path, carried=None):
     """
+    `carried`, when a list, receives every module whose bytes differ from the
+    recorded ones in comments and whitespace only (#301); such a module is not
+    a mismatch. With `carried=None` every byte difference is a mismatch.
+
     Return a list of human-readable mismatches between the manifest and the
     checked-out source, grid, and contract registry. Empty list means these
     exact observation bytes are bound to this exact source. Enforces:
@@ -164,7 +188,11 @@ def verify_source_binding(root, manifest, grid_path, contracts_path):
         if path not in current:
             problems.append(f"{path}: recorded in manifest but missing from the tree")
         elif current[path] != h:
-            problems.append(f"{path}: source changed since observations were generated")
+            problem = _carried_or_problem(
+                root, manifest, path, h,
+                f"{path}: source changed since observations were generated", carried)
+            if problem:
+                problems.append(problem)
     for path in current:
         if path not in recorded:
             problems.append(f"{path}: present in the tree but absent from the manifest "
@@ -200,8 +228,10 @@ def verify_source_binding(root, manifest, grid_path, contracts_path):
     return problems
 
 
-def verify_holdout_binding(root, manifest, grid_path, contracts_path):
+def verify_holdout_binding(root, manifest, grid_path, contracts_path, carried=None):
     """
+    `carried` works as in verify_source_binding.
+
     Verify that independent-holdout observations came from the checked-out
     production modules and holdout exporter under the recorded schema and
     contract registry.  Missing provenance is a mismatch, never a legacy PASS.
@@ -224,7 +254,11 @@ def verify_holdout_binding(root, manifest, grid_path, contracts_path):
         if path not in current:
             problems.append(f"{path}: recorded in holdout manifest but missing from the tree")
         elif current[path] != h:
-            problems.append(f"{path}: source changed since holdout observations were generated")
+            problem = _carried_or_problem(
+                root, manifest, path, h,
+                f"{path}: source changed since holdout observations were generated", carried)
+            if problem:
+                problems.append(problem)
     for path in current:
         if path not in recorded:
             problems.append(f"{path}: present in the tree but absent from the holdout manifest "

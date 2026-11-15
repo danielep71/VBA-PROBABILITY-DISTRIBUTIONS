@@ -20,6 +20,9 @@ def main():
     ap.add_argument("--fetch-candidate", action="store_true",
                     help="explicitly fetch a missing certified SHA from origin before validation")
     ap.add_argument("--require-pass", action="store_true")
+    ap.add_argument("--allow-carried", action="store_true",
+                    help="accept a source that differs from the certified bytes in comments and "
+                         "whitespace only (#301); never for release certification or a fresh export")
     ap.add_argument("--require-grid", default=None)
     ap.add_argument("--log-directory", default=None,
                     help="when supplied, verify the retained log file and digest")
@@ -33,7 +36,8 @@ def main():
             fetch_candidate(root, record.get("candidate_sha"))
         evidence_ref = a.evidence_ref or git_head(root)
         policy_ref = a.policy_ref or evidence_ref
-        validate_record(record, root, policy_ref=policy_ref,
+        carried = [] if a.allow_carried else None
+        validate_record(record, root, policy_ref=policy_ref, carried=carried,
                         evidence_ref=evidence_ref,
                         expected_candidate_sha=a.candidate_sha,
                         require_pass=a.require_pass,
@@ -51,9 +55,13 @@ def main():
     # certified VBA bytes are unchanged; that does not certify the evidence
     # commit itself (#76). Say which binding was checked.
     if a.candidate_sha is None:
-        print(f"  exact candidate: not required; certified sources unchanged at {evidence_ref}")
+        state = "hold the certified code" if carried else "unchanged"
+        print(f"  exact candidate: not required; certified sources {state} at {evidence_ref}")
     else:
         print(f"  exact candidate: required and matched ({a.candidate_sha})")
+    if carried:
+        print(f"  CARRIED from {record['candidate_sha'][:7]}: {len(carried)} source(s) changed in "
+              "comments or whitespace only, code identical: " + ", ".join(carried))
     print(f"  regression: {record['harness']['passed']}/{record['harness']['assertions']} PASS")
     print("  exported grids: " + (", ".join(grids) if grids else "none (regression-only evidence)"))
     return 0

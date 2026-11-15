@@ -162,7 +162,7 @@ def main():
     if AH._TAIL_CDFS.get("f_cdf") is not AH.f_cdf:
         fails.append("holdout: f_cdf name is not bound to the f_cdf callable")
 
-    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative", ""):
+    for fn_bad in ("Weibull_InverseCumulative", "Normal_InverseCumulative", ""):
         try:
             tail_cdf_name(fn_bad)
             fails.append(f"holdout: unsupported tail function must raise: {fn_bad!r}")
@@ -177,7 +177,7 @@ def main():
     d_ok = dispositions([tail_row], "tail_probability_residual")
     if len(d_ok.to_measure) != 1:
         fails.append("holdout: a supported tail row must reach the measurer")
-    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
+    for fn_bad in ("Weibull_InverseCumulative", "Normal_InverseCumulative"):
         d_bad = dispositions([dict(tail_row, function=fn_bad)],
                              "tail_probability_residual")
         if d_bad.to_measure or d_bad.n_invalid != 1:
@@ -233,7 +233,7 @@ def main():
     # already-filtered rows, so there the dispatch itself must raise. Both are
     # fail-closed; only the layer that stops them differs. Assert the property
     # that matters - the row is not scored - rather than the mechanism.
-    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative"):
+    for fn_bad in ("Weibull_InverseCumulative", "Normal_InverseCumulative"):
         res = AH.worst_for("tail_probability_residual", "relative",
                            [tail_row(fn_bad, "0.9", "1000000", "1", "1039569.3")],
                            fn_bad)
@@ -251,7 +251,7 @@ def main():
     if AH.forward_cdf("F_InverseCumulative", mp.mpf(fx), mp.mpf(f1),
                       mp.mpf(f2)) != AH.f_cdf(mp.mpf(fx), mp.mpf(f1), mp.mpf(f2)):
         fails.append("forward_cdf did not dispatch F to f_cdf")
-    for fn_bad in ("Gamma_InverseCumulative", "Normal_InverseCumulative", ""):
+    for fn_bad in ("Weibull_InverseCumulative", "Normal_InverseCumulative", ""):
         try:
             AH.forward_cdf(fn_bad, mp.mpf("0.5"), mp.mpf(5), mp.mpf(7))
             fails.append(f"forward_cdf must refuse {fn_bad!r}")

@@ -16,6 +16,75 @@ a new module cannot escape the evidence binding. The comparison ignores order.
 
 **Current evidence state.** The Excel run, grid bindings and export certification, coverage, contract and holdout verdicts, and registered release blockers are generated from committed records in the [README assurance block](../README.md#assurance-at-a-glance) and checked by the Accuracy Gate on every change. They are not restated here.
 
+## When a change needs an Excel wave
+
+The evidence a change needs depends on what it can break (#328). The same
+table is in [CONTRIBUTING.md](../CONTRIBUTING.md#evidence-by-kind-of-change);
+`tools/check_restated_counts.py` fails if the two differ.
+
+<!-- BEGIN evidence rules -->
+| Change | Evidence required |
+| --- | --- |
+| New numerical claim: a new kernel or route, a new or tighter guarantee | A preregistration with predictions, frozen before evaluation, and an untouched holdout |
+| Defect fix inside existing guarantees | A regression test for the defect, and the main-grid export of the batch wave that certifies it |
+| VBA change with identical code: comments, layout, a refactor proven equivalent | The existing certification, reused under #301; no wave |
+| Python, CI or documentation only | The static checks and the evidence-tool suite |
+<!-- END evidence rules -->
+
+Excel waves are batched: one wave, dispatched on `release/*` with the
+automated export below, certifies every change merged since the last one. The
+evidence commit is the direct child of the wave's candidate, as always.
+
+## Carried certification
+
+**Decision (2026-11-13, #301).** A VBA change that provably alters only
+comments and whitespace keeps the Excel certification and the grid bindings of
+the commit Excel executed. No wave is run for it.
+
+Reasons for:
+- Excel executes the same code, so a new wave measures nothing new;
+- one runner serves every wave, and a comment correction cost a full one
+  (in #242 the wave on `fa891a2` was cancelled and rerun on `c856ddd` for
+  comments only);
+- documentation in the source stays current instead of waiting for a wave.
+
+Reasons against, and the answer to each:
+- *The proof depends on a lexer.* `benchmark/vba_code_identity.py` uses
+  `tools/vba_lexer.py`, the lexer of the VBA source checks. It compares the
+  comment-free logical lines of both versions. Outside string literals and
+  `[...]` expressions it collapses runs of whitespace; it never inserts or
+  removes whitespace between tokens. `test_vba_code_identity.py` covers a
+  changed literal, a `Rem` line, a line continuation, an apostrophe in a
+  string and a change inside `#If`, among others. Any doubt refuses the carry:
+  a non-ASCII byte, an unreadable file, a missing commit, or recorded bytes
+  that are not the commit's.
+- *The record no longer binds the exact bytes in the tree.* The records are
+  not rewritten. They still name the executed commit and its bytes. The
+  verifiers prove from Git that the current module holds that commit's code,
+  and every report says **carried from** that commit and lists the modules:
+  the accuracy summary, the gate output and the README assurance block.
+
+Limits:
+- **A release is never certified on a carried binding.** The release workflow
+  already requires an Excel run on the exact release commit; in addition,
+  `render_readme_assurance.py` refuses `certified: true` while any module is
+  carried.
+- A module that uses a `[...]` expression outside a string literal is never
+  carried, changed or not. Inside one, an apostrophe, a colon, `Rem` and a
+  quote do not mean what they mean in a statement. No tracked module uses the
+  construct.
+- `check_excel_certification.py` accepts a carried source only with
+  `--allow-carried`, which the Accuracy Gate and `refresh_evidence.py` pass.
+  Release certification, a fresh export and `--candidate-sha` validation do
+  not pass it and still require the exact bytes.
+- A missing-only export still requires the exact bytes of the bound source.
+- Study records that hash a VBA procedure or module keep their own rules.
+
+To see what a change does before committing:
+`python benchmark/vba_code_identity.py --from <executed commit>`.
+After a comment-only change, run `python benchmark/refresh_evidence.py`: the
+summaries and the README then carry the label.
+
 ## What a regression record proves
 
 A green record binds:
@@ -28,9 +97,9 @@ A green record binds:
 - import, execution-backed compile, regression, and cleanup outcomes;
 - the retained regression-log SHA-256.
 
-The policy currently requires 5,987 assertions. A run with 5,986 or 5,988
-assertions is incomplete even if every executed assertion passes. The study
-batteries, run apart since #300, are held to their own count of 8,901 in
+The policy's `expected_assertions` is exact: a run with one assertion more or
+one fewer is incomplete even if every executed assertion passes. The study
+batteries, run apart since #300, are held to their own count in
 `.github/excel-study-policy.json`.
 
 `compile = PASS` in an automated record means the complete imported project was
@@ -393,8 +462,12 @@ It does not move the branch or the stash reference. A mismatched companion grid
 or source digest still fails validation; the export record and both manifests
 must be committed atomically with their corresponding grids.
 
-Positive tooling fixtures use the coherent historical evidence snapshot
-`fdd57f84060ac0ed171edf8651fc1cc779b19674` (the release base, reachable from this change's ancestry) in throwaway clones, with the current
+Positive tooling fixtures use a coherent historical evidence snapshot in
+throwaway clones: `test_manifest_provenance.py` uses
+`fdd57f84060ac0ed171edf8651fc1cc779b19674` (the release base), and
+`test_render_readme_assurance.py` and `test_refresh_evidence.py` use
+`8fd0af5b8fa3754d112c06f4845e2a896933c7b6`, the first commit whose summaries carry the guarantee and measured-target
+columns (#327). Both are reachable from this change's ancestry. They run with the current
 writer, renderer and refresh tools. Their success does not certify the live
 checkout. CI separately checks live source identities, export records, grids,
 counts and summaries, and the negative controls continue to reject stale or

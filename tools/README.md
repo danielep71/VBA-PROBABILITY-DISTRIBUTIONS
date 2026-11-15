@@ -13,6 +13,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | Tool | Checks |
 | --- | --- |
 | `check_committed_whitespace.py` | No whitespace errors in the committed candidate range (`git diff --check` semantics, read only) |
+| `check_closing_keywords.py` | No commit message in the candidate range uses a closing keyword (`closes`, `fixes`, `resolves`) before an issue reference, unless the commit is recorded in `.github/closing-keyword-exceptions.json`; `--list` prints the table for an integration pull request |
 | `check_vba_jumps.py` | Every `GoTo`, `GoSub`, `Resume` and `On Error GoTo` target resolves inside its own procedure, across all tracked `.bas`/`.cls`/`.frm` modules |
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the three checks above |
@@ -23,13 +24,16 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
 | `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
+| `check_restated_counts.py` | Fails when `docs/*.md` restates a count held by a record, or when the evidence-rules tables of `CONTRIBUTING.md` and `docs/EXCEL_CERTIFICATION.md` differ (#328); tested by `tests/test_check_restated_counts.py` |
 | `traffic_alert.py` | Decides whether the daily traffic snapshot needs an alert issue and writes one that passes Issue triage; run by the alert job of `daily-traffic.yml` ([Traffic alerts](#traffic-alerts)) |
 | `link_check_exclusions.json` | Reviewed exclusions of `check_links.py`, each with its reason ([False reports](#false-reports)) |
 | `check_ci_test_coverage.py` | Fails when a tracked `test_*.py` file is executed on no pull request ([CI test coverage](#ci-test-coverage)) |
+| `excel_runner_watch.py` | Decides whether a failed Excel run may be re-run once as an infrastructure failure, and what the scheduled runner check reports ([Excel/VBA CI](../docs/EXCEL_VBA_CI.md#hardened-runner-set-up)); tested by `tests/test_excel_runner_watch.py` |
+| `select_excel_suite.py` | Chooses the fast or full Excel suite level for a pull request, failing closed to full ([Excel/VBA CI](../docs/EXCEL_VBA_CI.md#suite-levels)); tested by `tests/test_select_excel_suite.py` |
 | `select_accuracy_checks.py` | Lets the Accuracy Gate skip the expensive proofs only for a positively identified metadata-only change |
 | `check_issues.py` | Read-only audit of open-issue metadata and dependency status that issue forms cannot enforce; run by `issue-triage.yml` |
 | `setup_repository.py` | Previews, applies or verifies the repository settings baseline through the `gh` CLI ([Repository settings](#repository-settings)) |
-| `requirements-lint-ci.txt` | Hash-locked Ruff and mypy, with mypy's dependencies, for the Static checks workflow ([Dependency updates](#dependency-updates)) |
+| `requirements-lint-ci.txt` | Hash-locked Ruff and mypy, with mypy's dependencies, and PyYAML for the workflow rule tests, for the Static checks workflow ([Dependency updates](#dependency-updates)) |
 | `vba_layout_baseline.json` | Modules still out of the VBA source layout, ratcheted by `format_vba.py` ([VBA source layout](#vba-source-layout)) |
 | `devbuild/` | Builds the Excel workbook under test from source and verifies its binding to a commit ([below](#building-the-workbook-under-test-devbuild)) |
 
@@ -50,6 +54,7 @@ It works on the repository that contains it, from any directory. It runs:
 | --- | --- |
 | `whitespace-self-test`, `vba-jumps-self-test`, `release-semantics-self-test` | Each checker's `--self-test` fixtures |
 | `whitespace` | `check_committed_whitespace.py --mode committed` on the candidate range |
+| `closing-keywords-self-test`, `closing-keywords` | `check_closing_keywords.py`: its fixtures, then the commit messages of the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
 | `vba-source`, `vba-conditionals`, `vba-visibility` | `check_vba_source.py`, `check_vba_conditionals.py` and `check_vba_visibility.py` on every tracked VBA module |
 | `vba-layout` | `format_vba.py --check` on every tracked VBA module, against `vba_layout_baseline.json` |
@@ -57,6 +62,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `markdown-links` | `check_links.py`: relative links and anchors in every tracked Markdown file |
+| `restated-counts` | `check_restated_counts.py`: no record-held count copied into `docs/*.md` |
 | `python-tests` | `python -m unittest discover -s tests`: every Python test under `tests/` |
 | `ruff` | `python -m ruff check .`, restricted by [`ruff.toml`](../ruff.toml) to syntax errors and pyflakes rules |
 | `mypy` | `python -m mypy`: strict type checking of `tools/` and `.github/scripts/`, configured in [`mypy.ini`](../mypy.ini) |
@@ -555,7 +561,7 @@ python3 tools/check_links.py --external --repository danielep71/VBA-PROBABILITY-
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
-(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff, mypy and mypy's
+(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff, mypy, PyYAML and mypy's
 dependencies, in one grouped pull request) weekly. Updates
 are assigned to the maintainer with priority P3 for initial triage; raise the
 priority when a security advisory or other material risk requires it. Review

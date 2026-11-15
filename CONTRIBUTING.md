@@ -152,6 +152,15 @@ Keep commits reviewable. Reference the issue when one exists. Do not include
 secrets, private links, generated attribution boilerplate, or unverifiable test
 claims in commit messages.
 
+Reference an issue in a commit message with `Refs #N` only, and write the same
+in a squash message. Never write `closes`, `fixes` or `resolves` before an
+issue number there: GitHub acts on those words when the commit reaches `main`,
+so a commit made on a release branch would close the issue at the next
+integration, whatever its state by then. `tools/check_closing_keywords.py`
+fails a pull request whose commits use one. A commit that is already pushed is
+not rewritten; it is recorded in `.github/closing-keyword-exceptions.json` with
+what is done about the issues it names.
+
 ---
 
 <a id="source-first-vba"></a>
@@ -244,6 +253,46 @@ under review.
 - Record exact commit, Excel/Office bitness, reference system/version/precision, tested points, tolerance, worst observed error, and failures.
 
 When source changes, follow [the provenance procedure](benchmark/PROVENANCE.md) and [exact-SHA certification](docs/EXCEL_CERTIFICATION.md): certify the source candidate in Excel; export the selected grids and environment; finalize the certification record; bind the corresponding manifests; regenerate summaries; commit the evidence together; then validate the retained record against the committed grid bytes. The self-hosted runner can export the main and holdout grids unattended; the same document describes that path and the manual fallback. Never rebind old measurements to new code.
+
+### Accuracy tiers
+
+Each accuracy contract carries a **guarantee** and a **measured target** (#327).
+The guarantee gates the release: `max(target, 1E-13)` for forward relative
+errors, `max(target, 1E-12)` for inverses, `max(target, 2E-13)` for the
+balanced Beta CDF and survival, and the target itself for absolute and residual
+metrics. The target is the threshold in `benchmark/accuracy_contracts.csv`; a
+change that keeps every result inside its guarantee but misses a target is
+reported as "PASS · target missed" and does not block. Never edit
+`benchmark/accuracy_guarantees.csv`: change the registry and run
+`python benchmark/accuracy_tiers.py --write`.
+
+Independently of the tiers, a silent wrong value (relative error above 1E-6,
+or an exact 0 or 1 where the reference differs), a monotonicity reversal, a
+`P + Q` mismatch or a wrong worksheet error always fails. Design a numerical
+change against the guarantee; spend effort on the target only when it is cheap.
+
+### Evidence by kind of change
+
+The evidence a change needs depends on what it can break (#328):
+
+<!-- BEGIN evidence rules -->
+| Change | Evidence required |
+| --- | --- |
+| New numerical claim: a new kernel or route, a new or tighter guarantee | A preregistration with predictions, frozen before evaluation, and an untouched holdout |
+| Defect fix inside existing guarantees | A regression test for the defect, and the main-grid export of the batch wave that certifies it |
+| VBA change with identical code: comments, layout, a refactor proven equivalent | The existing certification, reused under #301; no wave |
+| Python, CI or documentation only | The static checks and the evidence-tool suite |
+<!-- END evidence rules -->
+
+- **Batched Excel waves.** One Excel wave certifies a batch of merged changes
+  on `release/*`, not each pull request. A pull request runs the VBA suites it
+  selects (#299).
+- **One home per number.** Assertion counts, row counts, blocker lists and
+  timings live in their records and are generated into the README assurance
+  block, or linked. Never copy them into prose:
+  `tools/check_restated_counts.py` fails on a count restated in `docs/*.md`.
+- **Frozen means frozen, and only that.** Preregistrations, designs and
+  retained evidence are never rewritten. Everything else is edited normally.
 
 ### Evidence principles
 

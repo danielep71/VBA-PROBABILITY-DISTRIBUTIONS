@@ -12,6 +12,7 @@ import subprocess
 import sys
 from install_scaled_fidelity import HERE,ROOT,literal,documented
 sys.path.insert(0,str(ROOT/'benchmark'))
+from frozen_tree import FROZEN  # noqa: E402
 import _harness_timing as harness  # noqa: E402
 import _harness_studies as studies  # noqa: E402
 sys.path.insert(0,str(ROOT/'benchmark'/'gamma_route_study'))
@@ -157,8 +158,8 @@ def code_only(text):
 
 @lru_cache(maxsize=None)
 def live_total():
-    """Regression plus study assertions of the committed policies (#300)."""
-    return studies.live_total(ROOT)
+    """Regression plus study assertions of the policies at frozen_tree.PIN (#300, #338)."""
+    return studies.live_total(FROZEN)
 
 
 def original(path):

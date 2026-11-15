@@ -6,8 +6,8 @@ first Excel wave, run under `PRODUCTION_AMENDMENT_1.md`, falsified PT2
 (`INVERSE_PREREGISTRATION.md`, #200 and #205) met every prediction and adopted
 the survival, cumulative and quantile `envelope_domain` contracts at 5E-15
 (`INVERSE_WAVE_RESULT.md`); #34 is closed. The seam study (`SEAM_STUDY.md`)
-closed #210. Open: #213, the inverse misses 5E-15 near `|q| = 8` at
-`df = 1E7` (1.29E-12). The Defect, Result and Corrections sections record the
+closed #210. #213, the inverse 1.29E-12 off near `|q| = 8` at `df = 1E7`, is
+resolved by the rule of `ABOVE8_PREREGISTRATION.md` (`ABOVE8_RESULT.md`). The Defect, Result and Corrections sections record the
 derivation as it was done, before any VBA existed; see
 [Outcomes](#outcomes-2026-11-07) for what followed.
 
@@ -50,7 +50,8 @@ both edges of the adopted predicate — were probed below, at and above.
 **Dispatch:** `df ≥ 1E5 AND |t| ≤ 8` → order-5 expansion; otherwise the
 existing route. The CF is retained outside the region, where it is not
 accurate to the bound: below df 1E5 it errs by up to 3.16E-12 (Excel), and
-above |t| = 8 by up to 4.7E-10 (model) and 8.1E-11 at df 1E7 (Excel). Both
+above |t| = 8 it erred by up to 7.8E-10 at df 1E8 (Excel) until #213 gave it
+an exact-pair argument (3.4E-15 since). Both
 are recorded in `numerical_limitations.csv`
 (`IncompleteBeta.StudentTLargeDFFarTail`, `StudentT.LargeDFSeamMonotonicity`).
 
@@ -157,8 +158,9 @@ VBA statement by statement on `PROB_NormalUpperTail` and
 - **Seams** (#210, closed). Survival and cumulative are not monotone across
   the seams, where the continued fraction serves the outside. See
   `SEAM_STUDY.md`.
-- **Open defect #213.** At `df = 1E7` near `q = −8` the inverse is 1.29E-12
-  off, inside its 5E-15 contract's domain.
+- **Defect #213, resolved.** At `df = 1E7` near `q = −8` the inverse was
+  1.29E-12 off, inside its 5E-15 contract's domain; it is within 1.2E-15
+  since the tail above 8 was corrected (`ABOVE8_RESULT.md`).
 
 ## Oracle gap
 

@@ -269,6 +269,22 @@ try:
     drift_sha = commit(root, "source drift")
     expect_fail(root, record, "later source drift must invalidate retained record",
                 policy_ref=drift_sha, evidence_ref=drift_sha, require_pass=True)
+
+    # Carried certification (#301). The drift above is a comment: strict
+    # validation refuses it, validation with a carried list accepts it and
+    # names the source. A code change is refused either way, and so is a
+    # carried source when the record must certify the exact commit.
+    seen = []
+    E.validate_record(record, root, policy_ref=drift_sha, evidence_ref=drift_sha,
+                      require_pass=True, carried=seen)
+    check(seen == ["src/A.bas"], f"a comment-only drift is carried and named, got {seen}")
+    expect_fail(root, record, "a carried source must not certify the exact evidence commit",
+                policy_ref=drift_sha, evidence_ref=drift_sha, carried=[],
+                expected_candidate_sha=drift_sha, require_pass=True)
+    write(root, "src/A.bas", "Attribute VB_Name = \"A\"\nPublic Const CHANGED As Long = 1\n")
+    code_sha = commit(root, "code drift")
+    expect_fail(root, record, "a code drift must invalidate the record even with a carried list",
+                policy_ref=code_sha, evidence_ref=code_sha, require_pass=True, carried=[])
 finally:
     shutil.rmtree(root, ignore_errors=True)
 

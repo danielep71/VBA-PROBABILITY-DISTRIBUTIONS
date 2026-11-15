@@ -214,6 +214,13 @@ TAIL_SUPPORTED = {
         "cdf": "chi2_cdf",
         "args": ("arg1", "arg2"),
     },
+    # Gamma inverse rows carry (p, shape, scale). The CDF divides by the scale
+    # in mpmath, so a unit-scale quantile below the Double range is scored at
+    # its true value (#14).
+    "Gamma_InverseCumulative": {
+        "cdf": "gamma_cdf",
+        "args": ("arg1", "arg2", "arg3"),
+    },
 }
 
 

@@ -22,12 +22,13 @@ Measures:
 """
 import argparse, csv, os, sys
 from collections import defaultdict
-from decimal import Decimal, getcontext, InvalidOperation
+from decimal import Decimal, getcontext
 getcontext().prec = 50
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)  # single-sourced benchmark/ helpers
-from _contract_eval import (parse_observed, parse_reference, calculate_error,
+from _contract_eval import (parse_observed, parse_reference, parse_threshold,
+                            calculate_error,
                             calculate_scaled_error, validate_scaled_metric,
                             SCALED_MEASURE, validate_measure,
                             normalize_tail_residual, dispositions, expected_error_drift,
@@ -37,7 +38,7 @@ from _contract_eval import (parse_observed, parse_reference, calculate_error,
 _IBETA_IMPORT_ERROR = None
 try:
     from _ibeta import ibeta as _ibeta_cdf, f_cdf as _f_cdf, t_cdf as _t_cdf
-    from _igamma import chi2_cdf as _chi2_cdf
+    from _igamma import chi2_cdf as _chi2_cdf, gamma_cdf as _gamma_cdf
     import mpmath as _mp
     _mp.mp.dps = 50
     # Name -> callable, keyed by the names registered in
@@ -45,7 +46,7 @@ try:
     # there and adding its callable here; there is no default entry, so an
     # unregistered function cannot reach any CDF.
     _TAIL_CDFS = {"ibeta": _ibeta_cdf, "f_cdf": _f_cdf, "t_cdf": _t_cdf,
-                  "chi2_cdf": _chi2_cdf}
+                  "chi2_cdf": _chi2_cdf, "gamma_cdf": _gamma_cdf}
     _HAVE_IBETA = True
 except (ImportError, ModuleNotFoundError, SyntaxError) as _e:
     # Missing, corrupt, or incompatible reference helper. Retain the exact reason;
@@ -116,6 +117,21 @@ def tail_residual(rows, fn):
     return (worst, worst_at, cnt) if cnt else (None, "", 0)
 
 
+PASS = "\u2705 PASS"
+PASS_TARGET_MISSED = "\u2705 PASS \u00b7 target missed"
+
+
+def _pass_verdict(worst, target):
+    """PASS cell for a contract that meets its guarantee (#327).
+
+    The measured target is reported, never gating: a contract inside its
+    guarantee but above its target still passes, and says so.
+    """
+    if target is not None and worst <= target:
+        return PASS
+    return PASS_TARGET_MISSED
+
+
 def _incomplete_detail(disp):
     """Human-readable reason an active contract is blocked, naming every bad row."""
     bits = []
@@ -160,6 +176,9 @@ def main():
     from _manifest import repo_root, load_manifest, verify_source_binding, MANIFEST_NAME
     _root = repo_root()
     _manifest = load_manifest(_root)
+    # Modules that differ from the executed bytes in comments or whitespace
+    # only keep their binding and are reported as carried (#301).
+    _carried_main, _carried_holdout = [], []
     if _manifest is None:
         _msg = (f"no {MANIFEST_NAME}: the accuracy summary cannot be bound to the source that "
                 "produced the observations. Run write_manifest.py at export time and commit it.")
@@ -170,7 +189,8 @@ def main():
             sys.exit(1)
     else:
         _problems = verify_source_binding(_root, _manifest, args.grid,
-                                          os.path.join(HERE, "accuracy_contracts.csv"))
+                                          os.path.join(HERE, "accuracy_contracts.csv"),
+                                          carried=_carried_main)
         if _problems:
             print(f"  gate FAILED (exit 1): STALE EVIDENCE - the committed observations are not bound "
                   f"to the checked-out source ({len(_problems)} mismatch(es)); re-export from "
@@ -188,7 +208,7 @@ def main():
     _holdout_manifest = load_holdout_manifest(_root)
     _holdout_problems = verify_holdout_binding(
         _root, _holdout_manifest, _holdout_grid,
-        os.path.join(HERE, "accuracy_contracts.csv"))
+        os.path.join(HERE, "accuracy_contracts.csv"), carried=_carried_holdout)
     if _holdout_problems:
         print(f"  gate FAILED (exit 1): STALE HOLDOUT EVIDENCE - the independent holdout "
               f"is not bound to the checked-out source ({len(_holdout_problems)} "
@@ -235,8 +255,23 @@ def main():
         print(f"  KNOWN COVERAGE DEBT: {_coverage_result['missing_rows']} unresolved "
               "main-grid row(s); transition guard satisfied, completeness unresolved.")
 
+    for _label, _paths in (("main", _carried_main), ("holdout", _carried_holdout)):
+        if _paths:
+            print(f"  CARRIED ({_label}): {len(_paths)} module(s) changed in comments or whitespace "
+                  f"only since the export; code identical: {', '.join(_paths)}")
+
     contracts = load_contracts()
     rows = list(csv.DictReader(open(args.grid)))
+
+    # GUARANTEE GATE (#327): the guarantees are generated from the registry by
+    # accuracy_tiers.py. A hand-edited or stale guarantees file stops the gate
+    # rather than deciding verdicts.
+    from accuracy_tiers import load_guarantees
+    try:
+        guarantees = load_guarantees(contracts=contracts)
+    except (OSError, ValueError) as _ge:
+        print(f"  gate FAILED (exit 1): GUARANTEES - {_ge}")
+        sys.exit(1)
 
     # The stored expected_error column must match the envelope predicate exactly,
     # so a hand-edited or stale marker cannot silently reclassify a row. A
@@ -268,8 +303,13 @@ def main():
             f"- observations exported: `{_manifest.get('generated_utc','unrecorded')}`",
             f"- Excel: `{env.get('excel_version','unrecorded')}` build "
             f"`{env.get('excel_build','unrecorded')}` ({env.get('office_bitness','unrecorded')}-bit)",
-            "",
         ]
+        if _carried_main:
+            prov += [f"- **carried from `{_manifest.get('commit_sha','unrecorded')}`**: "
+                     f"{len(_carried_main)} module(s) differ from the executed bytes in comments "
+                     "or whitespace only, with identical code (`vba_code_identity.py`): "
+                     + ", ".join(f"`{p}`" for p in _carried_main)]
+        prov += [""]
     else:
         prov += ["**Provenance.** No `observation_manifest.json` present - this summary is "
                  "NOT bound to a source revision (development run).", ""]
@@ -278,19 +318,20 @@ def main():
         _coverage_result, _coverage_mode, _coverage_problems).splitlines()
     _coverage_section[0] = "## Main-grid disposition"
     lines = ["# Accuracy summary", ""] + prov + _coverage_section + [
-             "| Contract | Measure | Metric | Threshold | Worst error | Points | Verdict |",
-             "|---|---|---|---|---:|---:|---|"]
+             "| Contract | Measure | Metric | Guarantee | Measured target | Worst error | Points | Verdict |",
+             "|---|---|---|---|---|---:|---:|---|"]
 
-    n_fail = n_known = n_char = n_pending = 0
+    n_fail = n_known = n_char = n_pending = n_target_miss = 0
     unevaluated = []   # (contract_id, reason) for active contracts that could not be evaluated
 
     for c in sorted(contracts, key=lambda c: c["contract_id"]):
         cid = c["contract_id"]; fn = c["function"]; regime = c["regime"]
         measure = validate_measure(c["measure"]); metric = c["metric"]; status = c["status"]
-        try:
-            threshold = Decimal(c["threshold"]) if c["threshold"].strip() else None
-        except InvalidOperation:
-            threshold = None
+        # The guarantee gates; the registry threshold is the measured target,
+        # reported beside it and never blocking on its own (#327).
+        gtxt = guarantees.get(cid, "")
+        guarantee = parse_threshold(gtxt)
+        target = parse_threshold(c["threshold"])
 
         matched = grid_by.get((fn, regime), [])
 
@@ -299,7 +340,7 @@ def main():
             # CHARACTERIZATION ONLY is reserved for contracts EXPLICITLY marked so.
             if status == "characterization_only":
                 n_char += 1
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"study | \U0001f9ea CHARACTERIZATION ONLY |")
                 continue
             # An ACTIVE tail contract that cannot be evaluated must BLOCK.
@@ -307,13 +348,13 @@ def main():
                 n_pending += 1
                 unevaluated.append((cid, "reference helper unavailable: "
                                     + (_IBETA_IMPORT_ERROR or "unknown import failure")))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"evaluator | \u23f3 PENDING - evaluator unavailable |")
                 continue
             if not mt:
                 n_pending += 1
                 unevaluated.append((cid, "no matching observations in the grid"))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"0 | \u23f3 PENDING - no observations |")
                 continue
             disp = dispositions(mt, measure)
@@ -321,7 +362,7 @@ def main():
             if status == "active" and (disp.n_missing or disp.n_error or disp.n_violation or disp.n_invalid):
                 n_pending += 1
                 unevaluated.append((cid, _incomplete_detail(disp)))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"{len(disp.to_measure)}/{in_env} | \u23f3 PENDING - incomplete evidence |")
                 continue
             try:
@@ -329,33 +370,33 @@ def main():
             except Exception as _te:
                 n_pending += 1
                 unevaluated.append((cid, f"evaluator error: {type(_te).__name__}: {_te}"))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"evaluator | \u23f3 PENDING - evaluator error |")
                 continue
             if worst is None:
                 n_pending += 1
                 unevaluated.append((cid, "no usable in-envelope observations"))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"0/{in_env} | \u23f3 PENDING |")
                 continue
             if nn != len(disp.to_measure):
                 n_pending += 1
                 unevaluated.append((cid, f"internal skip: scored {nn} of {len(disp.to_measure)} valid rows"))
-                lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+                lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                              f"{nn}/{in_env} | \u23f3 PENDING - internal skip |")
                 continue
-            ok = threshold is not None and worst <= threshold
-            if ok:
-                verdict = "\u2705 PASS"
+            if guarantee is not None and worst <= guarantee:
+                verdict = _pass_verdict(worst, target)
+                n_target_miss += verdict != PASS
             else:
                 n_fail += 1; verdict = "\u274c FAIL"
-            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
+            lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | "
                          f"{float(worst):.2e} | {nn}/{in_env} | {verdict} |")
             continue
 
         if not matched:
             n_pending += 1
-            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+            lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                          f"0 | \u23f3 PENDING |")
             continue
 
@@ -371,7 +412,7 @@ def main():
         if status == "active" and (disp.n_missing or disp.n_error or disp.n_violation or disp.n_invalid):
             n_pending += 1
             unevaluated.append((cid, _incomplete_detail(disp)))
-            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+            lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                          f"{len(disp.to_measure)}/{in_env} | "
                          f"\u23f3 PENDING - incomplete evidence |")
             continue
@@ -379,28 +420,37 @@ def main():
         worst, at, n = measure_error(disp.to_measure, metric, measure)
         if worst is None:
             n_pending += 1
-            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+            lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                          f"0/{in_env} | \u23f3 PENDING |")
             continue
         if n != len(disp.to_measure):
             n_pending += 1
             unevaluated.append((cid, f"internal skip: measured {n} of {len(disp.to_measure)} valid rows"))
-            lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | — | "
+            lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | — | "
                          f"{n}/{in_env} | \u23f3 PENDING - internal skip |")
             continue
 
-        ok = threshold is not None and worst <= threshold
+        ok = guarantee is not None and worst <= guarantee
         if status == "known_limitation":
             n_known += 1; verdict = "\U0001f537 KNOWN LIMITATION"
         elif status == "characterization_only":
             n_char += 1; verdict = "\U0001f9ea CHARACTERIZATION ONLY"
         elif ok:
-            verdict = "\u2705 PASS"
+            verdict = _pass_verdict(worst, target)
+            n_target_miss += verdict != PASS
         else:
             n_fail += 1; verdict = "\u274c FAIL"
 
-        lines.append(f"| {cid} | {measure} | {metric} | {c['threshold']} | "
+        lines.append(f"| {cid} | {measure} | {metric} | {gtxt} | {c['threshold']} | "
                      f"{float(worst):.2e} | {n}/{in_env} | {verdict} |")
+
+    # ALWAYS-GATING INVARIANTS (#327): silent wrong values, monotonicity and
+    # P + Q, over every main-grid row, whatever its contract or tier.
+    from _invariants import run_all as _run_invariants, markdown as _inv_markdown, \
+        violation_count as _inv_count
+    _inv = _run_invariants(rows, contracts, guarantees)
+    n_invariant = _inv_count(_inv)
+    lines += [""] + _inv_markdown(_inv)
 
     # The verdict tally counts CONTRACT states. A reader can otherwise take
     # "KNOWN LIMITATION: 0" to mean the library has no numerical boundaries,
@@ -430,7 +480,14 @@ def main():
               f"> **Verdict tally** — FAIL: {n_fail}, KNOWN LIMITATION: {n_known}, "
               f"CHARACTERIZATION ONLY: {n_char}, PENDING: {n_pending}.",
               "",
-              "> States: **PASS** meets the contract; **FAIL** exceeds it; **KNOWN LIMITATION** "
+              f"> **Measured target** — {n_target_miss} passing contract(s) exceed their "
+              f"measured target (reported, not gating).",
+              "",
+              "> Tiers (#327): the **guarantee** gates the release; the **measured target** is "
+              "the registry threshold, reported beside it. **PASS · target missed** meets "
+              "the guarantee but not the target.",
+              "",
+              "> States: **PASS** meets the guarantee; **FAIL** exceeds it; **KNOWN LIMITATION** "
               "is a documented defect; **CHARACTERIZATION ONLY** is measured but not held to a "
               "pass/fail claim (or verified in a study directory); **PENDING** is not yet "
               "measured in the main grid. Errors are Decimal from the two-part hi;lo export.",
@@ -449,7 +506,11 @@ def main():
     for cid, reason in unevaluated:
         print(f"  UNEVALUATED active contract: {cid} - {reason}")
 
-    fail_block = n_fail + (0 if args.allow_known_limitations else n_known)
+    for _name, _res in _inv:
+        for _v in _res.violations:
+            print(f"  INVARIANT VIOLATED ({_name}): {_v.function} "
+                  f"({', '.join(a for a in _v.args if a)}) - {_v.detail}")
+    fail_block = n_fail + n_invariant + (0 if args.allow_known_limitations else n_known)
     if fail_block:
         print(f"  gate FAILED (exit 1): {fail_block} blocking item(s).")
         sys.exit(1)

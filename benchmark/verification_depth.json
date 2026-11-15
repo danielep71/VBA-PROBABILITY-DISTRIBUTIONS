@@ -122,6 +122,13 @@
       "current_state": "green"
     },
     {
+      "id": "generator-grid-agreement",
+      "live_command": "check_generator_grid.py",
+      "proof_command": "test_check_generator_grid.py",
+      "negative_claim": "a generator row absent from the committed grid, committed under another regime or evidence set, one ulp away in an argument, or held with a different reference, claim, metric or expected-error marker fails; a grid row the generator does not emit, another spelling of the same Double and a changed observation do not",
+      "current_state": "green"
+    },
+    {
       "id": "committed-whitespace",
       "live_command": "../tools/check_committed_whitespace.py --root .. --mode committed --head HEAD",
       "proof_command": "../tools/check_committed_whitespace.py --root .. --self-test",
@@ -162,6 +169,20 @@
       "proof_command": "test_survival_references.py",
       "negative_claim": "a survival reference taken at the decimal token instead of the binary64 argument, one formed as 1 - CDF at 53 bits, one below the 25-digit floor, stale or orphaned debt, an undefined blocker, an unknown survival function, an unlisted or empty grid and an uncertified oracle are rejected",
       "current_state": "green_with_registered_transition_debt"
+    },
+    {
+      "id": "accuracy-tiers",
+      "live_command": "accuracy_tiers.py",
+      "proof_command": "test_accuracy_tiers.py",
+      "negative_claim": "a hand-edited, stale or too-strict guarantee is refused; a guarantee breach fails the gate and the holdout while a target-only miss passes; silent wrong, monotonicity and P + Q violations fail independently of the tiers",
+      "current_state": "green"
+    },
+    {
+      "id": "carried-certification",
+      "live_command": "compute_errors.py",
+      "proof_command": "test_vba_code_identity.py",
+      "negative_claim": "a changed literal, string, directive, [...] expression or statement order, a statement commented out or uncommented, a non-ASCII byte, a digest that is not the executed commit's and an unknown commit all refuse the carry, and a code edit stays a source mismatch in the main and holdout bindings",
+      "current_state": "green"
     }
   ]
 }

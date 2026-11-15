@@ -19,23 +19,24 @@ full version at `a9812c7`).
 
 v1.0.0 is **not release-ready** (NO-GO).
 
-- **Registered release blockers.** `release_readiness.json` (reviewed
-  2026-11-11, `certified: false`) lists 8 open blockers: #11, #13, #14, #22,
-  #35, #163, #173 and #213. #23, #24, #26, #29, #34, #47, #72 and #307 are
-  recorded there as resolved, with their evidence.
+- **Registered release blockers.** [`release_readiness.json`](../benchmark/release_readiness.json)
+  holds the open and resolved blockers with their evidence; the
+  [README assurance block](../README.md#assurance-at-a-glance) lists the open ones.
+- **Accuracy tiers (#327).** Each contract is gated by its guarantee
+  (1E-13 forward, 1E-12 inverse, 2E-13 balanced Beta, or a looser contract
+  bound) and reports its measured target, the registry threshold.
 - **Milestone.** The P3 issues of v1.0.0 moved to v1.0.2 on 2026-11-11; the
   [milestone](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/milestone/1)
   lists what remains.
-- **Balanced Beta.** #163 and #173 were added to the registry on 2026-11-07
-  as open silent-wrong blockers, and the README renderer now requires both
-  entries, as it does #34 and #35.
-- **Retained Excel evidence.** Candidate `d6d952a`, 5,987/5,987 regression
-  assertions, Excel 16.0 build 20430, 64-bit
-  ([`excel_regression_record.json`](../benchmark/excel_regression_record.json);
-  expected count in
-  [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json)).
-  It exported and certifies the 2,139-row main grid and the 659-row holdout.
-  It does not certify the release commit.
+- **Balanced Beta.** #163 and #173 are resolved by the 2E-13 balanced Beta
+  guarantee of #327, confirmed in Excel (run 43423207780) at the six modelled
+  worst points, now main-grid rows. Their targets move to v1.0.2.
+- **Retained Excel evidence.** The candidate, assertion counts, Excel build
+  and certified grids are in
+  [`excel_regression_record.json`](../benchmark/excel_regression_record.json)
+  and the [README assurance block](../README.md#assurance-at-a-glance); the expected count is in
+  [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json).
+  The retained record does not certify the release commit.
 - **Coverage debt.** 27 main-grid rows have no disposition:
   `F_InverseCumulative` 18 and `ChiSquare_InverseCumulative` 9, both
   `envelope_domain` ([`coverage_summary.md`](../benchmark/coverage_summary.md)).
@@ -95,7 +96,7 @@ worksheet error.
 - **#22: zero coverage debt.** Its remaining scope, checked against the
   current grids and registry:
   - give the 18 F and 9 Chi-square `envelope_domain` inverse rows real
-    contracts. The Student-t rows of the original 36-row debt were settled
+    contracts. The Student-t rows of the original debt were settled
     by #34;
   - remove the false "enforced by `PROB_F_ValidateEnvelope`" wording from the
     four F `validated` contracts in `accuracy_contracts.csv`. The runtime cap
@@ -113,6 +114,13 @@ worksheet error.
   `benchmark/coverage_debt_v1_0_0.json`, and strict mode must then report
   zero missing rows.
 
+  **Done 2026-11-15**, in the shorter form the replanning of 2026-11-13
+  allowed: the 27 remaining rows are claimed by two guarantee-tier contracts,
+  the fingerprint is deleted and strict mode reports zero missing rows. The
+  frozen fitting arm, the classifier and the threshold-selection rule above
+  were not needed and were not run; `benchmark/COVERAGE.md` lists what was
+  done to each row.
+
 ### C. Student-t inverse near |q| = 8: #213
 
 The #210 seam study (run 42281403598) measured 1.29E-12 relative error at
@@ -120,6 +128,13 @@ df = 1E7, for t = -8 and t = -8 + 1 ulp. That is inside the domain of
 `StudentT_InverseCumulative.envelope_domain.quantile_rel` (5E-15,
 `|q| <= 8`). The continued fraction serves `|t| > 8` and overestimates the
 survival there, and the polish does not run above 8.
+
+**Resolved 2026-11-14.** The cause was the conditioning of the continued
+fraction in an argument rounded near one, not the fraction itself. For
+`df >= 1E5` and `|t| > 8` the tail now gives it the argument as an exact
+pair; the inverse was not edited and is within 1.2E-15 at those rows
+(`benchmark/student_t_large_df_study/ABOVE8_RESULT.md`). The choice below is
+kept as the record of what was considered.
 
 Choose one:
 
@@ -137,22 +152,21 @@ Decision of 2026-11-05: for v1.0.0, recalibrate the balanced
 contracts to what the route delivers. The route repair moves to #175
 (v1.0.1).
 
-- The proposed threshold is about 2E-13, for ratio ≥ 0.1 with both shapes in
-  [0.5, 100), from the `benchmark/beta_balanced_survival` model (PR #174).
-- Before adoption, a preregistered Excel wave must confirm it:
-  - at the modelled worst fitting points (0.99, 14, 19), (0.7, 19, 14) and
-    (0.41, 50, 100);
-  - on a disjoint holdout frozen before it is observed.
-- Resolve the shape-100 point explicitly: [0.5, 100) excludes it. Either
-  validate an inclusive bound or keep the point as an outside-domain control.
-- The threshold change is a reviewed recalibration with recorded evidence,
-  never a silent relaxation. No VBA change is planned, but the wave needs the
-  export tooling.
+**Done (2026-11-13, #327).** The registry thresholds are unchanged and are
+now measured targets; the balanced Beta CDF and survival are gated by a
+2E-13 guarantee. Excel run 43423207780 measured the six points where the
+`benchmark/beta_balanced_survival` model is worst, including (0.99, 14, 19),
+(0.7, 19, 14) and (0.410058, 50, 100). The shape-100 points are inside the
+balanced regime, since large_shape needs both shapes at least 100. All twelve
+promoted rows equal the model bit for bit, worst 1.38E-13. Under the
+proportionate evidence rules of #328 the separate frozen holdout planned here
+was not run: the model reproduces 383 of 383 Excel observations, and the
+gate now holds the worst points on every change.
 
 ### E. Documentation and test records: #154, #155, #4
 
 - **#154.** Regenerate `benchmark/cross_check_scipy.md` from the current
-  grids (the holdout is now 659 rows). Record the environment and the grid
+  grids (the holdout has grown since). Record the environment and the grid
   SHA-256 values, and reconcile the README coverage statement. The mapping
   fix (PR #160) is done.
 - **#155.** Make `benchmark/README.md` describe the survival-reference route
@@ -172,8 +186,7 @@ contracts to what the route delivers. The route repair moves to #175
 - **#28.**
   - Keep `release_readiness.json` in step with GitHub. The #34 and #72
     entries are now resolved, by PR #205 and PR #217.
-  - #163 and #173 are registered as open silent-wrong blockers
-    (2026-11-07).
+  - #163 and #173 are resolved by the #327 guarantee (2026-11-13).
   - After the last numerical change, regenerate the README assurance block.
     The renderer (`benchmark/render_readme_assurance.py`, PRs #60/#62) and
     its Accuracy Gate drift check already exist.
@@ -252,11 +265,10 @@ hardening, are listed in the milestone: #38, #40, #42, #49, #52, #77–#80,
 GO requires every item. Items marked done describe lasting state; the
 others must hold on the exact release commit.
 
-- [ ] Every blocker in `release_readiness.json` is resolved with evidence
-  (11 open).
-- [ ] Every v1.0.0 milestone issue is closed or explicitly moved (16 open).
+- [ ] Every blocker in `release_readiness.json` is resolved with evidence.
+- [ ] Every v1.0.0 milestone issue is closed or explicitly moved.
 - [ ] No accepted-domain wrong result is left documented as a limitation
-  instead of fixed (#11, #13, #14, #163, #173, #213).
+  instead of fixed (#11, #13, #14, #213).
 - [x] Exact-SHA Excel certification, unattended grid export and exact-tag
   certification exist (#38, #181, #76).
 - [x] Export records validate against committed grid bytes, and the holdout
@@ -267,8 +279,8 @@ others must hold on the exact release commit.
 - [ ] Zero FAIL and zero PENDING, on the main grid and the holdout.
 - [ ] Zero missing main-grid dispositions, and the #22 debt fingerprint is
   deleted (27 rows remain).
-- [ ] No contract is relaxed. Any recalibration (#163/#173) has recorded,
-  reviewed evidence.
+- [x] No registry threshold is relaxed: since #327 thresholds are measured
+  targets, and the guarantees are derived from them by a fixed rule.
 - [x] The README assurance block is generated and checked by the Accuracy
   Gate (#28 renderer). It must be regenerated on the final evidence.
 - [x] Rulesets are active:

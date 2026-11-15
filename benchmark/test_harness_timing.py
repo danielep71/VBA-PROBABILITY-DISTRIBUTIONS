@@ -41,7 +41,7 @@ def main():
     check(H.apply(bare) == module, "the committed module is not apply(strip(module))")
     check(module.count('    TimingStart "') == len(H.DRIVERS), "expected one TimingStart per driver")
     calls = laps = 0
-    for name in H.DRIVERS:
+    for name in H.DRIVERS + H.NESTED:
         start, end = H._driver_span(module, name)
         body = module[start:end].split("\n")
         for i, line in enumerate(body):
@@ -52,6 +52,11 @@ def main():
                 laps += ok
                 check(ok, f"{name}: {m.group(1)} has no lap")
     check(calls == laps and calls > 0, f"{laps} laps for {calls} calls")
+    for name in H.NESTED:
+        start, end = H._driver_span(module, name)
+        check("TimingStart" not in module[start:end], f"{name} restarts the suite mark")
+        check(sum(1 for line in module[start:end].split("\n") if H.CALL.match(line)) >= 2,
+              f"{name} no longer chains test procedures; remove it from NESTED")
     check(module.count(H.BLOCK) == 1 and module.index(H.BLOCK) < module.index(H.ANCHOR),
           "the timing block is not once, before BeginRun")
 
