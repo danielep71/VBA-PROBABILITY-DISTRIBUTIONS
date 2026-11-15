@@ -1,0 +1,211 @@
+{
+  "schema_version": 2,
+  "record": "repository-settings-evidence",
+  "checked_at": "2026-11-15T08:16:08Z",
+  "tool": "tools/setup_repository.py",
+  "mode": "verify",
+  "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
+  "default_branch": "main",
+  "baseline": {
+    "path": "docs/repo_governance/repository-settings.json",
+    "sha256": "61d4bb8dd23118ead7828816ef4d0a581efeb5f12b73cf7954ef69aa5d4ceeec"
+  },
+  "result": "VERIFIED",
+  "visibility": {
+    "baseline": "public",
+    "observed": "public",
+    "matches": true
+  },
+  "settings": [
+    {
+      "setting": "allow_merge_commit",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "allow_squash_merge",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "allow_rebase_merge",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "allow_auto_merge",
+      "baseline": false,
+      "observed": false,
+      "matches": true
+    },
+    {
+      "setting": "allow_update_branch",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "delete_branch_on_merge",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "web_commit_signoff_required",
+      "baseline": false,
+      "observed": false,
+      "matches": true
+    },
+    {
+      "setting": "has_issues",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "has_projects",
+      "baseline": false,
+      "observed": false,
+      "matches": true
+    },
+    {
+      "setting": "has_wiki",
+      "baseline": true,
+      "observed": true,
+      "matches": true
+    },
+    {
+      "setting": "has_discussions",
+      "baseline": false,
+      "observed": false,
+      "matches": true
+    },
+    {
+      "setting": "has_downloads",
+      "baseline": false,
+      "observed": false,
+      "matches": true
+    }
+  ],
+  "security": [
+    {
+      "feature": "private_vulnerability_reporting",
+      "baseline": true,
+      "observed": true,
+      "source": "GET private-vulnerability-reporting",
+      "matches": true
+    },
+    {
+      "feature": "vulnerability_alerts",
+      "baseline": true,
+      "observed": true,
+      "source": "inferred from Dependabot security updates being on (GET vulnerability-alerts unreadable: HTTP 403)",
+      "matches": true
+    },
+    {
+      "feature": "automated_security_fixes",
+      "baseline": true,
+      "observed": true,
+      "source": "security_and_analysis.dependabot_security_updates; paused state unknown (GET automated-security-fixes unreadable: HTTP 403)",
+      "paused": null,
+      "matches": true
+    },
+    {
+      "feature": "secret_scanning",
+      "baseline": true,
+      "observed": true,
+      "source": "security_and_analysis.secret_scanning",
+      "matches": true
+    },
+    {
+      "feature": "secret_scanning_push_protection",
+      "baseline": true,
+      "observed": true,
+      "source": "security_and_analysis.secret_scanning_push_protection",
+      "matches": true
+    }
+  ],
+  "actions": [
+    {
+      "setting": "actions_enabled",
+      "baseline": true,
+      "observed": null,
+      "source": "GET actions/permissions unreadable (HTTP 403)",
+      "matches": null
+    },
+    {
+      "setting": "sha_pinning_required",
+      "baseline": true,
+      "observed": null,
+      "source": "GET actions/permissions unreadable (HTTP 403)",
+      "matches": null
+    },
+    {
+      "setting": "default_workflow_permissions",
+      "baseline": "read",
+      "observed": null,
+      "source": "GET actions/permissions/workflow unreadable (HTTP 403)",
+      "matches": null
+    },
+    {
+      "setting": "can_approve_pull_request_reviews",
+      "baseline": false,
+      "observed": null,
+      "source": "GET actions/permissions/workflow unreadable (HTTP 403)",
+      "matches": null
+    },
+    {
+      "setting": "fork_pr_approval_policy",
+      "baseline": "all_external_contributors",
+      "observed": null,
+      "source": "GET actions/permissions/fork-pr-contributor-approval unreadable (HTTP 403)",
+      "matches": null
+    },
+    {
+      "setting": "artifact_and_log_retention_days",
+      "baseline": 90,
+      "observed": null,
+      "source": "GET actions/permissions/artifact-and-log-retention unreadable (HTTP 403)",
+      "matches": null
+    }
+  ],
+  "rulesets": [
+    {
+      "name": "Protect main",
+      "id": 22186928,
+      "status": "matches",
+      "differences": []
+    },
+    {
+      "name": "Protect release branches",
+      "id": 26368120,
+      "status": "matches",
+      "differences": []
+    },
+    {
+      "name": "Prevent release branch deletion",
+      "id": 26368180,
+      "status": "matches",
+      "differences": []
+    },
+    {
+      "name": "Protect release tags",
+      "id": 24272257,
+      "status": "matches",
+      "differences": []
+    },
+    {
+      "name": "Protect traffic history",
+      "id": 24274070,
+      "status": "matches",
+      "differences": []
+    }
+  ],
+  "unmanaged_rulesets": [],
+  "inherited_rulesets": [],
+  "planned_changes": [],
+  "scope": "Only the settings in the baseline are recorded; everything else is outside this record."
+}

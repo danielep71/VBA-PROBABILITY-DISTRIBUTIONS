@@ -102,6 +102,12 @@ Use only the categories needed by a release.
 - `docs/user-manual/v1.0.0/` holds the source of the first user manual: fourteen chapters, about 10,000 words, built into a 32-page PDF with `build_manual.py` (pandoc and Chromium). It covers installation, calling conventions, every distribution with its parameters and limits, the error convention, eight worked examples, the two accuracy tiers with the guarantee by family, and every recorded numerical limitation.
 - The build fails when a chapter names a function that `docs/PUBLIC_API.txt` does not declare or calls one with a number of arguments it does not accept; `tests/test_user_manual.py` runs the same check. `checks/example_values.py` recomputes every expected result with mpmath.
 - The PDF is built and attached at the release; it is not committed.
+### Security and dependency audit of the candidate (#222)
+
+- `docs/SECURITY_DEPENDENCY_AUDIT_2026-11-15.md` reviews the 18 workflows, the pinned dependencies and the live settings at `074b800`. The audit of 2026-09-30 stays as it is.
+- Fixed: Dependabot's pull requests no longer run on the self-hosted Excel runner. Its branches live in the repository, so the fork guard let them through and a proposed action or package ran on the Excel host before review. `tests/test_workflow_controls.py` requires the fork guard and the Dependabot guard on every job of that runner a pull request can reach.
+- Five further findings are accepted with their reasons. They rest on one assumption, stated in the audit: every account with write access is trusted with the runner and the release path.
+- The audit lists what it could not read: the open alerts, six Actions settings, the `analytics` environment's branch rule, the collaborators and the runner host.
 
 ### Every main-grid row has a contract (#22)
 

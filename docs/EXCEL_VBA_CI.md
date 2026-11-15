@@ -331,13 +331,27 @@ a job that waits while nothing runs.
 ## Security model
 
 Self-hosted runners execute repository code with the runner account's
-permissions. The workflow therefore does not execute pull requests from forks:
+permissions. The workflow therefore does not execute pull requests from forks,
+nor those Dependabot opens:
 
 ```yaml
 if: >-
-  github.event_name != 'pull_request' ||
-  github.event.pull_request.head.repo.full_name == github.repository
+  !cancelled() &&
+  (github.event_name != 'pull_request' ||
+  (github.event.pull_request.head.repo.full_name == github.repository &&
+  github.event.pull_request.user.login != 'dependabot[bot]'))
 ```
+
+Dependabot's branches live in this repository, so the fork check alone lets
+them through: a proposed action or package would run on the Excel host before
+anyone has read the bump. Its pull requests skip the job, which leaves the
+required check satisfied, and the bump first runs on this machine with the
+push that follows its merge. `tests/test_workflow_controls.py` keeps both
+conditions on every job of this runner that a pull request can reach.
+
+The guard does not restrain an account with write access: such an account can
+dispatch any workflow from a branch it edited. Write access to the repository
+is the control for that, and it is why the runner must not be shared.
 
 For an external contribution, review the change and copy or cherry-pick it to a
 maintainer-controlled branch before running the Excel workflow. Do not switch

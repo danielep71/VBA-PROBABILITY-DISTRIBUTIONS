@@ -14,6 +14,8 @@ dropping one unnoticed:
   pip                 every `pip install` requires hashes;
   toolchain           every hosted job names the exact runner image, and
                       every Python version is an exact x.y.z;
+  Excel runner        a job on the self-hosted runner that a pull request
+                      can reach refuses forks and Dependabot;
   duplicate keys      none in the workflows, Dependabot's configuration and
                       the issue forms.
 
@@ -70,6 +72,18 @@ WRITING_JOBS = {
 }
 
 
+FORK_GUARD = "github.event.pull_request.head.repo.full_name == github.repository"
+DEPENDABOT_GUARD = "github.event.pull_request.user.login != 'dependabot[bot]'"
+
+
+def pull_request_reaches(document: dict) -> bool:
+    """Whether the workflow runs on pull_request."""
+    triggers = strict_yaml.events(document)
+    if isinstance(triggers, str):
+        return triggers == "pull_request"
+    return "pull_request" in (triggers or ())
+
+
 def writes(permissions: object) -> set[str]:
     if permissions == "write-all":
         return {"*"}
@@ -103,6 +117,12 @@ def problems(name: str, document: dict) -> list[str]:
         runner = body.get("runs-on")
         if runner != RUNNER_IMAGE and runner != SELF_HOSTED:
             out.append(f"{where}: runs-on {runner!r} is neither {RUNNER_IMAGE} nor the Excel runner")
+        if runner == SELF_HOSTED and pull_request_reaches(document):
+            guard = " ".join(str(body.get("if", "")).split())
+            if FORK_GUARD not in guard:
+                out.append(f"{where}: a pull request reaches the Excel runner without the fork guard")
+            if DEPENDABOT_GUARD not in guard:
+                out.append(f"{where}: a pull request reaches the Excel runner without the Dependabot guard")
         granted = writes(body.get("permissions", top))
         allowed = WRITING_JOBS.get((name, job), set())
         if granted != allowed:
@@ -151,6 +171,38 @@ jobs:
       - run: python -m pip install --require-hashes -r tools/requirements-lint-ci.txt
 """
 
+# A job on the Excel runner in a workflow that pull requests trigger.
+GOOD_EXCEL = """
+name: Fixture
+on:
+  pull_request:
+  push:
+permissions:
+  contents: read
+concurrency:
+  group: fixture
+jobs:
+  excel:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: [self-hosted, Windows, X64, excel]
+    timeout-minutes: 5
+    steps:
+      - run: echo
+"""
+
+BROKEN_EXCEL = {
+    "no Dependabot guard": (" &&\n      github.event.pull_request.user.login != 'dependabot[bot]')", ")",
+                            "Dependabot guard"),
+    "no fork guard": ("github.event.pull_request.head.repo.full_name == github.repository &&", "",
+                      "fork guard"),
+    "no condition": ("    if: >-\n      github.event_name != 'pull_request' ||\n"
+                     "      (github.event.pull_request.head.repo.full_name == github.repository &&\n"
+                     "      github.event.pull_request.user.login != 'dependabot[bot]')\n", "", "fork guard"),
+}
+
 # One edit of GOOD per rule, and a word of the finding it must produce.
 BROKEN = {
     "unpinned action": ("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1", "actions/checkout@v7",
@@ -190,6 +242,18 @@ class Rules(unittest.TestCase):
                 self.assertIn(old, GOOD)
                 found = problems("fixture.yml", strict_yaml.loads(GOOD.replace(old, new, 1)))
                 self.assertTrue(any(word in text for text in found), f"{name}: {found}")
+
+    def test_the_excel_runner_refuses_forks_and_dependabot(self) -> None:
+        self.assertEqual(problems("fixture.yml", strict_yaml.loads(GOOD_EXCEL)), [])
+        for label, (old, new, word) in BROKEN_EXCEL.items():
+            with self.subTest(label):
+                self.assertIn(old, GOOD_EXCEL)
+                found = problems("fixture.yml", strict_yaml.loads(GOOD_EXCEL.replace(old, new)))
+                self.assertTrue(any(word in finding for finding in found), found)
+        # A workflow that pull requests do not trigger needs no guard.
+        pushed = GOOD_EXCEL.replace("  pull_request:\n", "")
+        unguarded = pushed.replace(BROKEN_EXCEL["no condition"][0], "")
+        self.assertEqual(problems("fixture.yml", strict_yaml.loads(unguarded)), [])
 
     def test_a_listed_job_must_use_what_it_is_listed_for(self) -> None:
         document = strict_yaml.loads(GOOD)
