@@ -97,6 +97,16 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
+The first release. It ships the six production modules in `src/`: 112 worksheet functions over seventeen distributions, each held to a published accuracy guarantee and verified in Excel on the exact released source. The sections below are the history of the work that led to it, newest first.
+
+### Release contents (#31)
+
+- The release attaches the source bundle, its checksum and build-provenance attestation, and the user manual as a PDF.
+- v1.0.0 includes no demonstration workbook. The one kept in `examples/` during development was removed: its embedded VBA was never checked against the released modules. The README and the landing page link the user manual in its place.
+- Tested environment: Excel 16.0, 64-bit, on Windows. 32-bit Office is untested.
+
 ### The audit's open items, verified (#222)
 
 - The maintainer read in the repository's settings what the audit's token could not: no open code-scanning, Dependabot or secret-scanning alert; the six Actions settings as the baseline states them; the `analytics` environment restricted to `main`; no collaborator. `docs/SECURITY_DEPENDENCY_AUDIT_2026-11-15.md` records each, and the changes to audited paths since its baseline.
@@ -727,3 +737,6 @@ Use only the categories needed by a release.
   changes made before this changelog was introduced.
 
 ---
+
+[Unreleased]: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0
