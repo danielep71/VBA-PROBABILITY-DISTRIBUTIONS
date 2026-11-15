@@ -15,6 +15,11 @@ For the exact-SHA evidence contract and fresh-export procedure, see
 - A dedicated Windows machine or VM.
 - Desktop Microsoft Excel installed and activated.
 - A self-hosted GitHub Actions runner labeled `excel`.
+- Git for Windows, on the `PATH` of the account that runs the runner. Without
+  it the checkout step downloads an archive instead of cloning, the archive
+  leaves out `.github`, and the run stops before Excel starts (see
+  Troubleshooting). The adapter also reads the commit and the source hashes
+  through Git.
 - Excel Trust Center **Trust access to the VBA project object model** enabled
   before the job starts.
 - An interactive logged-in Windows session for reliable Office COM automation.
@@ -248,6 +253,29 @@ Microsoft does not recommend unattended Office automation from a
 non-interactive Windows service. An interactive dedicated session is materially
 more reliable for Excel COM execution.
 
+## The runners
+
+Two machines are registered. A job goes to whichever free runner carries all
+four labels, so only one machine has the `excel` label at a time.
+
+| Runner | Excel | Role |
+| --- | --- | --- |
+| `DESKTOP-UV7P4JQ` | 16.0 build 20710, 64-bit | Reference from 2026-11-15: a desktop that stays on |
+| `ITPF545VX1` | 16.0 build 20430, 64-bit | Produced every record up to the integration of 2026-11-15. A spare: its `excel` label was removed on 2026-11-15, and adding it back in the runner's settings returns it to service |
+
+Before the reference changed, the same commit was run on both. On
+`DESKTOP-UV7P4JQ` every assertion of the full regression passed, and the
+export of the main grid and the holdout is identical, byte for byte, to the
+one in the retained record from `ITPF545VX1`: no observation differs between
+the two builds.
+[`benchmark/excel_build_comparison_2026-11-15.json`](../benchmark/excel_build_comparison_2026-11-15.json)
+holds the run, the counts and the digests. It is an observation on a second
+build, not certification evidence.
+
+A record states the build that produced it. An export on a different build
+that changes an observation is not an error, but it is read row by row before
+it is committed.
+
 ## Hardened runner set-up
 
 One machine runs every Excel regression and every export. It has failed in
@@ -256,8 +284,17 @@ out, the checkout could not resolve `github.com`, and the machine went to
 standby (#295). The set-up below removes the causes that are on the machine.
 It keeps the interactive session that Excel COM needs.
 
-**Status: written on 2026-11-13, not yet applied or tested on the runner
-machine.** Apply it there once and record the date here.
+**Status: applied and tested on `DESKTOP-UV7P4JQ` on 2026-11-15, except
+step 1.** Steps 2 and 3 are in place: the logon task, and no standby or
+hibernation on mains power. Automatic logon is not set up, by choice: after a
+restart someone signs in, and the runner then starts by itself.
+
+The test: the machine was restarted with a job waiting in the queue, the
+maintainer signed in and touched nothing else. The task opened the runner,
+which was listening 74 seconds after the job had been queued and took it three
+seconds later; run 43744780159 passed. A restart nobody attends, such as one
+after a Windows update, leaves the runner down until the next sign-in. The
+scheduled watch reports a job that waits longer than its limit.
 
 Run the commands in an elevated PowerShell on the runner machine.
 
@@ -490,6 +527,19 @@ account running the self-hosted runner.
 
 Confirm that desktop Excel is installed and activated. Repair Office if
 `New-Object -ComObject Excel.Application` fails.
+
+### Excel evidence policy not found
+
+```text
+RESULT: CI EXECUTION ERROR
+Excel evidence policy not found: ...\.github\excel-evidence-policy.json
+```
+
+The checkout log says "The repository will be downloaded using the GitHub REST
+API": Git is not installed, or not on the `PATH` of the window that started
+`run.cmd`. Install Git for Windows, open a new PowerShell window and start the
+runner again. Seen on 2026-11-15, on the first job of a newly registered
+runner.
 
 ### Workflow remains queued
 

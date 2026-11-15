@@ -1,0 +1,51 @@
+{
+ "schema_version": 1,
+ "kind": "excel-build-comparison",
+ "purpose": "The same candidate run on a second Excel build. An observation, not certification evidence: the retained record of the release is benchmark/excel_regression_record.json.",
+ "candidate_sha": "3573a3550dcf3907f67fc35a3b7b4b1a61d30d83",
+ "reference": {
+  "runner": "ITPF545VX1",
+  "excel_version": "16.0",
+  "excel_build": "20430",
+  "office_bitness": "64-bit",
+  "run_id": 43703503521,
+  "note": "the run of the retained record, on the candidate 1766c81 that the compared commit merges"
+ },
+ "compared": {
+  "runner": "DESKTOP-UV7P4JQ",
+  "excel_version": "16.0",
+  "excel_build": "20710",
+  "office_bitness": "64-bit",
+  "run_id": 43742731819,
+  "run_attempt": 1,
+  "finished_at": "2026-11-15T17:52:04.4206086Z"
+ },
+ "regression": {
+  "assertions": 2007,
+  "passed": 2007,
+  "failed": 0
+ },
+ "grids": [
+  {
+   "path": "benchmark/probability_accuracy_grid.csv",
+   "macro": "Export_Accuracy_Observations",
+   "rows": 2215,
+   "in_scope_rows": 1859,
+   "filled_rows": 1859,
+   "error_rows": 0,
+   "changed_observations": 0,
+   "raw_sha256": "sha256:6534f63aac38785ea9e51aa0e9fbc974c430d76e0318d46568c01a01440988de"
+  },
+  {
+   "path": "benchmark/holdout/holdout_grid.csv",
+   "macro": "Export_Holdout",
+   "rows": 659,
+   "in_scope_rows": 659,
+   "filled_rows": 659,
+   "error_rows": 0,
+   "changed_observations": 0,
+   "raw_sha256": "sha256:94c077cef22c42a3f5e834b4e40d3b3ab5a74f1545b2eed5ed0270d137c4829e"
+  }
+ ],
+ "result": "No observation differs between the two builds on either grid, and the raw SHA-256 of each exported file equals the one in the retained record: the exports are identical byte for byte."
+}
