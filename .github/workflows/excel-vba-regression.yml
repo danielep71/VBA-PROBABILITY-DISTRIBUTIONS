@@ -91,7 +91,7 @@ jobs:
   # leaves the output empty, which the regression job reads as full.
   select:
     name: Select the Excel suite level
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       suite: ${{ steps.select.outputs.suite }}

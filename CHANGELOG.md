@@ -97,6 +97,13 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### The workflows' rules are tested (#353)
+
+- `tests/test_workflow_controls.py` holds the rules the workflows follow, each with a fixture that breaks it: actions pinned to a commit, checkouts without persisted credentials, top-level permissions without write and a list of the jobs that may write, a timeout on every job, concurrency on every workflow, hashed `pip` installs, one exact runner image and exact Python versions, and no duplicate YAML key in the workflows, Dependabot's configuration and the issue forms.
+- Eleven jobs ran on `ubuntu-latest`; every hosted job now names `ubuntu-24.04`.
+- The `traffic` job keeps the checkout's credentials: it pushes the daily snapshot with the job's own token and runs no repository code. It is the one listed exception.
+- PyYAML 6.0.3 is added to the hash-locked `tools/requirements-lint-ci.txt`; `tests/strict_yaml.py` loads YAML and refuses a repeated key.
+
 ### Two limitations recorded for v1.0.0
 
 - `numerical_limitations.csv` gains `BetaInverse.FarSideTinyProbabilityPairMember` and `IncompleteBeta.StudentTBelowLargeDF`, with what is measured and what is not. Their correction, and the cost of the Beta and F inverses, are planned for v1.0.2. The README names both under Current boundaries.
