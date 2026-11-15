@@ -18,7 +18,7 @@ updates:
       time: "06:00"
       timezone: "Europe/Rome"
     # While a release branch is active, updates go through it to main.
-    target-branch: "release/1.0.0"
+    target-branch: "release/1.0.1"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps(actions)"
@@ -45,7 +45,7 @@ updates:
       time: "06:15"
       timezone: "Europe/Rome"
     # While a release branch is active, updates go through it to main.
-    target-branch: "release/1.0.0"
+    target-branch: "release/1.0.1"
     open-pull-requests-limit: 5
     assignees: ["danielep71"]
     labels: ["ci", "P3"]
@@ -69,7 +69,7 @@ updates:
       time: "06:30"
       timezone: "Europe/Rome"
     # While a release branch is active, updates go through it to main.
-    target-branch: "release/1.0.0"
+    target-branch: "release/1.0.1"
     open-pull-requests-limit: 5
     assignees: ["danielep71"]
     labels: ["ci", "P3"]

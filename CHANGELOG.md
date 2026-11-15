@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Changed
+
+- `release/1.0.1` is the active release branch after the v1.0.0 release: task pull requests and Dependabot updates target it. `release/1.0.0` stays as history.
+
 ## [1.0.0] - 2026-11-15
 
 The first release. It ships the six production modules in `src/`: 112 worksheet functions over seventeen distributions, each held to a published accuracy guarantee and verified in Excel on the exact released source. The sections below are the history of the work that led to it, newest first.
