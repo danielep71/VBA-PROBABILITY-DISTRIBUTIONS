@@ -97,6 +97,27 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
+The first release. It ships the six production modules in `src/`: 112 worksheet functions over seventeen distributions, each held to a published accuracy guarantee and verified in Excel on the exact released source. The sections below are the history of the work that led to it, newest first.
+
+### Release contents (#31)
+
+- The release attaches the source bundle, its checksum and build-provenance attestation, and the user manual as a PDF.
+- v1.0.0 includes no demonstration workbook. The one kept in `examples/` during development was removed: its embedded VBA was never checked against the released modules. The README and the landing page link the user manual in its place.
+- Tested environment: Excel 16.0, 64-bit, on Windows. The retained record is from build 20710; build 20430, which produced the earlier evidence, gives identical exported observations. 32-bit Office is untested.
+
+### The audit's open items, verified (#222)
+
+- The maintainer read in the repository's settings what the audit's token could not: no open code-scanning, Dependabot or secret-scanning alert; the six Actions settings as the baseline states them; the `analytics` environment restricted to `main`; no collaborator. `docs/SECURITY_DEPENDENCY_AUDIT_2026-11-15.md` records each, and the changes to audited paths since its baseline.
+
+### A second Excel runner, and the same results on a second build (#295)
+
+- `DESKTOP-UV7P4JQ` (Excel 16.0 build 20710, 64-bit) is the reference Excel runner from 2026-11-15; `ITPF545VX1` (build 20430) stays as a spare. `docs/EXCEL_VBA_CI.md` lists both; only one carries the `excel` label at a time.
+- Before the change the same commit was run on both: 2,007 of 2,007 assertions on build 20710, and an export of the main grid and the holdout identical, byte for byte, to the retained one from build 20430. `benchmark/excel_build_comparison_2026-11-15.json` records it as an observation, not as certification evidence. The user manual's environment chapter mentions it.
+- The hardened set-up is applied on the new runner and tested by a restart with a job waiting: the logon task brought the runner back and the job ran. Automatic logon is not set up, so a restart needs one sign-in; the guide says so.
+- Git for Windows is now among the runner's requirements, with a troubleshooting entry: without it the checkout downloads an archive that leaves out `.github`, and the run stops before Excel starts.
+
 ### The manual's examples are asserted in Excel (#263)
 
 - `Test_DS_ManualExamples`: 45 assertions that call every formula the user manual shows in chapters 4, 5, 7, 8 and 9 and compare the result with the printed figure, to half a unit of its tenth digit; the three `#NUM!` cases, the two exact identities and the diagnostic message of section 9.5 are asserted as such. The regression has 2,007 assertions, the fast suite 1,063.
@@ -716,3 +737,6 @@ Use only the categories needed by a release.
   changes made before this changelog was introduced.
 
 ---
+
+[Unreleased]: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0

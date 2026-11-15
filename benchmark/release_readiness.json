@@ -3,7 +3,7 @@
   "release": "v1.0.0",
   "tracker_issue": 31,
   "reviewed": "2026-11-15",
-  "certified": false,
+  "certified": true,
   "blockers": [
     {
       "issue": 11,

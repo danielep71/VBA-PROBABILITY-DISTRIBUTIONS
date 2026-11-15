@@ -14,7 +14,7 @@ The library consists of standard VBA modules (`.bas` files). It has no class mod
 
 ## 2.2 What is tested
 
-The retained runtime evidence covers **64-bit Office on Windows**. The recorded Excel regression run used Excel 16.0 (build 20430), 64-bit. This is the only environment for which the project holds test evidence.
+The retained runtime evidence covers **64-bit Office on Windows**. The recorded Excel regression run used Excel 16.0 (build 20710), 64-bit. The evidence before it was produced on build 20430, 64-bit, and the two builds gave the same assertions passing and every exported observation identical. No other environment has test evidence.
 
 ## 2.3 What is not tested
 
