@@ -97,6 +97,13 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Security and dependency audit of the candidate (#222)
+
+- `docs/SECURITY_DEPENDENCY_AUDIT_2026-11-15.md` reviews the 18 workflows, the pinned dependencies and the live settings at `074b800`. The audit of 2026-09-30 stays as it is.
+- Fixed: Dependabot's pull requests no longer run on the self-hosted Excel runner. Its branches live in the repository, so the fork guard let them through and a proposed action or package ran on the Excel host before review. `tests/test_workflow_controls.py` requires the fork guard and the Dependabot guard on every job of that runner a pull request can reach.
+- Five further findings are accepted with their reasons. They rest on one assumption, stated in the audit: every account with write access is trusted with the runner and the release path.
+- The audit lists what it could not read: the open alerts, six Actions settings, the `analytics` environment's branch rule, the collaborators and the runner host.
+
 ### Every main-grid row has a contract (#22)
 
 - The 27 main-grid rows without a contract are claimed: 18 F inverse and 9 Chi-square inverse rows of `envelope_domain`, by two contracts whose threshold is the 1E-12 inverse guarantee. Measured worst 2.15E-15 and 1.09E-15. `coverage_debt_v1_0_0.json` is deleted and the gate runs the coverage check in strict mode: zero rows without a disposition.
