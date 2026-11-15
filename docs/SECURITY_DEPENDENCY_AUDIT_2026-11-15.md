@@ -23,18 +23,42 @@ Eleven workflows are new since `3c205bf`: `daily-traffic`,
 `accuracy-gate`, `codeql`, `excel-vba-regression`, `labels-drift`,
 `labels-sync`, `scorecard` and `static-checks`.
 
-## Not verified here
+## Verified by the maintainer
 
-The token this audit ran with cannot read the following. Each needs a
-maintainer session before the release; none is assumed to be in order.
+The token this audit ran with could not read the following. The maintainer
+read each of them in the repository's settings on 2026-11-15, after the
+integration of `release/1.0.0` into `main`.
 
-| Item | How to verify |
+| Item | Found |
 | --- | --- |
-| Open code-scanning, Dependabot and secret-scanning alerts | The Security tab; the 2026-09-30 audit left seven Scorecard alerts open |
-| Six Actions settings: Actions enabled, SHA pinning required, default token permissions, approval of pull-request reviews, fork approval policy, retention | `python tools/setup_repository.py --verify --evidence <file>` with an administrator's token |
-| The `analytics` environment: its deployment branches and reviewers | Settings, Environments |
-| Who has write access | Settings, Collaborators |
-| The configuration of the runner host `ITPF545VX1` | On the machine; `docs/EXCEL_VBA_CI.md` has the hardened set-up |
+| Code-scanning alerts on `main` | none open; ten closed. The seven Scorecard alerts the 2026-09-30 audit left open are among the closed |
+| Dependabot alerts | none open, none closed, for vulnerabilities and for malware |
+| Secret-scanning alerts | none open, none closed |
+| Actions enabled | yes; every action and reusable workflow is allowed, which the baseline permits. What restrains an action is the pin below |
+| Actions pinned to a full-length commit SHA | required |
+| Default permissions of the workflow token | read |
+| Actions may create or approve pull requests | no |
+| Approval of workflows from forks | required for all external contributors |
+| Retention of logs and artifacts | 90 days |
+| The `analytics` environment | deployment restricted to selected branches: `main` only. The App's private key is a secret of the environment |
+| Collaborators | none: only the owner can contribute |
+
+The six Actions settings match `docs/repo_governance/repository-settings.json`.
+They were read in the settings page, not by `setup_repository.py`, whose
+record of the same day covers the settings its token could read.
+
+The runner host changed on 2026-11-15. The reference Excel runner is
+`DESKTOP-UV7P4JQ`, a desktop owned and used by the maintainer alone, set up as
+`docs/EXCEL_VBA_CI.md` describes; `ITPF545VX1` stays registered without the
+`excel` label. The host's own configuration beyond that guide was not
+inspected.
+
+### Changes after the baseline
+
+Between `074b800` and `302ea78`, the paths this audit covers changed in three
+files: the regression workflow gained the Dependabot guard of finding 1, and
+the two Excel policy files carry a new assertion count. No action pin, no
+requirements file and no settings baseline changed.
 
 ## Workflows
 
@@ -71,8 +95,8 @@ What holds by reading, without a test:
 | # | Severity | Finding | Disposition |
 | ---: | --- | --- | --- |
 | 1 | Medium | Dependabot's pull requests reached the self-hosted Excel runner. The job refused forks, but Dependabot's branches live in the repository, and it opens action and package bumps against `release/1.0.0`. A compromised upstream release would have run on the Excel host before anyone read the bump. | **Fixed with this audit.** The job also refuses pull requests opened by Dependabot; a rule in `tests/test_workflow_controls.py` requires both guards on every job of that runner a pull request can reach. The bump first runs on the host with the push that follows its merge, after review. |
-| 2 | Low | An account with write access can run arbitrary code on the Excel runner: by dispatching any of the six workflows that use it from a branch it edited, or by a pull request from such a branch. No condition written in a workflow can prevent this, because the dispatched ref supplies the workflow. | **Accepted.** The control is write access to the repository, which one maintainer holds, and a runner that is not shared. Recorded in `docs/EXCEL_VBA_CI.md`. To be read again if a second account gains write access. |
-| 3 | Low | The `traffic` job combines dispatch, `contents: write`, persisted credentials and the App's private key, with no condition on the ref. As in finding 2, a condition in the file would not bind a dispatched branch. | **Accepted, with a setting to confirm.** The binding control is the `analytics` environment's deployment-branch rule, listed above as not verified here. |
+| 2 | Low | An account with write access can run arbitrary code on the Excel runner: by dispatching any of the six workflows that use it from a branch it edited, or by a pull request from such a branch. No condition written in a workflow can prevent this, because the dispatched ref supplies the workflow. | **Accepted.** The control is write access to the repository, which the owner alone holds (no collaborator, confirmed above), and a runner that is not shared. Recorded in `docs/EXCEL_VBA_CI.md`. To be read again if a second account gains write access. |
+| 3 | Low | The `traffic` job combines dispatch, `contents: write`, persisted credentials and the App's private key, with no condition on the ref. As in finding 2, a condition in the file would not bind a dispatched branch. | **Accepted.** The binding control is the `analytics` environment's deployment-branch rule, confirmed above: only `main` may deploy to it, so a run dispatched from another branch does not receive the key. |
 | 4 | Low | A rehearsal of `release.yml` checks out the ref it is given and runs that ref's two release scripts with a token. | **Accepted.** The token is `contents: read` and `actions: read`; the signing and draft jobs are skipped in a rehearsal by the event name, not by an input. |
 | 5 | Informational | The signing and draft jobs of `release.yml` have no environment approval. A tag pushed by an account with write access reaches signing if the checks pass. | **Accepted.** The workflow requires an annotated tag equal to `VERSION`, a commit that is an ancestor of `main`, the Excel certification of that exact commit, and publishes only a draft. The tag ruleset forbids moving or deleting a `v*` tag; it does not restrict who creates one. |
 | 6 | Informational | The five `gamma-*` study workflows belong to a closed study. Their push triggers name branches that no longer exist, so only dispatch can start them. | **Left as they are.** They keep the closed study reproducible. Finding 2 covers their exposure. |
@@ -110,7 +134,8 @@ This says nothing about vulnerabilities not yet known.
 `docs/repo_governance/repository-settings.json` that the token could read
 matches, including visibility, merge methods, the five security features and
 the five rulesets with their required checks. The six Actions settings could
-not be read and are listed above. The record is
+not be read by the tool; the maintainer read them in the settings page, as
+recorded above. The record is
 `docs/repo_governance/evidence/settings-verify-2026-11-15.json`.
 
 ## Verification boundary

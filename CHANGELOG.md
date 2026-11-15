@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### The audit's open items, verified (#222)
+
+- The maintainer read in the repository's settings what the audit's token could not: no open code-scanning, Dependabot or secret-scanning alert; the six Actions settings as the baseline states them; the `analytics` environment restricted to `main`; no collaborator. `docs/SECURITY_DEPENDENCY_AUDIT_2026-11-15.md` records each, and the changes to audited paths since its baseline.
+
 ### A second Excel runner, and the same results on a second build (#295)
 
 - `DESKTOP-UV7P4JQ` (Excel 16.0 build 20710, 64-bit) is the reference Excel runner from 2026-11-15; `ITPF545VX1` (build 20430) stays as a spare. `docs/EXCEL_VBA_CI.md` lists both; only one carries the `excel` label at a time.
