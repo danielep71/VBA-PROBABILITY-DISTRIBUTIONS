@@ -139,7 +139,7 @@ Where a contract comes from:
 
 <!-- BEGIN generated: accuracy_contracts.csv via render_contract_table.py. Do not hand-edit. -->
 
-**177 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
+**180 contracts** across **23 function families**: Beta, Binomial, ChiSquare, DiscreteUniform, Exponential, F, Gamma, Geometric, Hypergeometric, LogChoose, LogGamma, LogGamma1p, LogGammaDelta, LogGammaHalfDiff, Lognormal, NegativeBinomial, Normal, NormalStandard, Poisson, StirlingError, StudentT, Uniform, Weibull. Kernel-level contracts: PROB_LogBeta.
 
 The **guarantee** gates the release; the **measured target** is the registry threshold, reported beside it ([accuracy_tiers.py](accuracy_tiers.py)).
 
@@ -181,6 +181,7 @@ The **guarantee** gates the release; the **measured target** is the registry thr
 | ChiSquare_Density.large_shape.output_rel | ChiSquare_Density | large_shape | output_error | relative | 1E-13 | 1E-13 | validated and frozen |
 | ChiSquare_Density.positive_ratio_subnormal.output_rel | ChiSquare_Density | positive_ratio_subnormal | output_error | relative | 5E-13 | 5E-13 | validated and frozen |
 | ChiSquare_InverseCumulative.all.output | ChiSquare_InverseCumulative | all | output_error | relative | 4.7E-12 | 4.7E-12 | validated and frozen |
+| ChiSquare_InverseCumulative.envelope_domain.quantile_rel | ChiSquare_InverseCumulative | envelope_domain | quantile_error | relative | 1E-12 | 1E-12 | guarantee tier (#327) |
 | ChiSquare_InverseCumulative.scaled_quantile_from_underflowed_unit.quantile_rel | ChiSquare_InverseCumulative | scaled_quantile_from_underflowed_unit | quantile_error | relative | 1E-12 | 1E-14 | validated and frozen |
 | ChiSquare_InverseCumulative.scaled_quantile_from_underflowed_unit.tail_rel | ChiSquare_InverseCumulative | scaled_quantile_from_underflowed_unit | tail_probability_residual | relative | 1E-14 | 1E-14 | validated and frozen |
 | ChiSquare_Survival.all.output | ChiSquare_Survival | all | output_error | relative | 2.6E-10 | 2.6E-10 | validated and frozen |
@@ -205,6 +206,7 @@ The **guarantee** gates the release; the **measured target** is the registry thr
 | F_Density.extreme_ratio.output_rel | F_Density | extreme_ratio | output_error | relative | 5E-12 | 5E-12 | validated and frozen |
 | F_Density.large_shape.output_rel | F_Density | large_shape | output_error | relative | 5E-5 | 5E-5 | validated and frozen |
 | F_Density.tiny_unbalanced.output | F_Density | tiny_unbalanced | output_error | relative | 1E-13 | 5E-14 | validated and frozen |
+| F_InverseCumulative.envelope_domain.quantile_rel | F_InverseCumulative | envelope_domain | quantile_error | relative | 1E-12 | 1E-12 | guarantee tier (#327) |
 | F_InverseCumulative.tiny_unbalanced_representable.tail_rel | F_InverseCumulative | tiny_unbalanced_representable | tail_probability_residual | relative | 1E-13 | 1E-13 | validated and frozen |
 | F_InverseCumulative.validated.quantile_rel | F_InverseCumulative | validated | quantile_error | relative | 2E-10 | 2E-10 | validated and frozen |
 | F_InverseCumulative.validated.tail_rel | F_InverseCumulative | validated | tail_probability_residual | relative | 2E-10 | 2E-10 | validated and frozen |
@@ -309,6 +311,7 @@ The **guarantee** gates the release; the **measured target** is the registry thr
 | StudentT_Density.large_df.output_rel | StudentT_Density | large_df | output_error | relative | 5E-12 | 5E-12 | validated and frozen |
 | StudentT_InverseCumulative.all.output | StudentT_InverseCumulative | all | output_error | relative | 3.0E-12 | 3.0E-12 | validated and frozen |
 | StudentT_InverseCumulative.envelope_domain.quantile_rel | StudentT_InverseCumulative | envelope_domain | quantile_error | relative | 1E-12 | 5E-15 | validated and frozen |
+| StudentT_InverseCumulative.exact_median.output_abs | StudentT_InverseCumulative | exact_median | output_error | absolute | 0 | 0 | exact by contract |
 | StudentT_Survival.all.output | StudentT_Survival | all | output_error | relative | 1.3E-12 | 1.3E-12 | validated and frozen |
 | StudentT_Survival.envelope_domain.output_rel | StudentT_Survival | envelope_domain | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
 | Uniform_Cumulative.all.output | Uniform_Cumulative | all | output_error | relative | 1E-13 | 5E-15 | validated and frozen |
