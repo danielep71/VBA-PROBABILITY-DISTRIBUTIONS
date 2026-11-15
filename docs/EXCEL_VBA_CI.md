@@ -80,7 +80,12 @@ the workflow and not the selection tool. Anything else is full, and so is any
 event, base or path the tool cannot classify; if the selection job itself
 fails, the regression job runs the full suite. A pull request that changes
 VBA or the runner therefore runs the full suite on every push, its final head
-included. The study batteries and the slow production batteries never run at
+included, with one exception: when the head carries an Excel record for a
+candidate commit that is its ancestor, passed its complete regression with
+the assertion count the policy expects, and differs from the head in no path
+that can change the Excel run, the pull request runs the fast level instead
+of repeating that run. The run after the merge is a push and is always
+full. The study batteries and the slow production batteries never run at
 the fast level, nor on any pull-request run.
 
 A dispatch can ask for the fast level with `suite: fast`; the input is ignored

@@ -60,6 +60,54 @@ class Selection(unittest.TestCase):
         finally:
             os.chdir(cwd)
 
+    def record(self, candidate: str, assertions: int = 7, passed: int = 7, failed: int = 0,
+               regression: str = "PASS") -> str:
+        import json
+        stages = {name: {"status": "PASS"} for name in ("import", "compile", "regression", "cleanup")}
+        stages["regression"]["status"] = regression
+        return json.dumps({"candidate_sha": candidate, "stages": stages,
+                           "harness": {"assertions": assertions, "passed": passed, "failed": failed}})
+
+    def candidate(self) -> str:
+        """A commit that changes VBA and states the policy's assertion count."""
+        self.level({"src/M_A.bas": "candidate\n",
+                    ".github/excel-evidence-policy.json": '{"expected_assertions": 7}\n'})
+        return git(self.root, "rev-parse", "HEAD")
+
+    def test_a_certified_candidate_is_fast(self) -> None:
+        c = self.candidate()
+        self.assertEqual(self.level({}), "full")                       # no record yet
+        self.assertEqual(self.level({"benchmark/excel_regression_record.json": self.record(c),
+                                     "docs/A.md": "result\n"}), "fast")
+
+    def test_a_vba_change_after_the_candidate_is_full(self) -> None:
+        c = self.candidate()
+        self.level({"benchmark/excel_regression_record.json": self.record(c)})
+        self.assertEqual(self.level({"tests/M_T.bas": "later\n"}), "full")
+        self.assertEqual(self.level({"tests/M_T.bas": "base\n", "ci/Run.ps1": "later\n"}), "full")
+
+    def test_a_record_that_does_not_certify_is_full(self) -> None:
+        c = self.candidate()
+        path = "benchmark/excel_regression_record.json"
+        for text in (self.record(c, regression="FAIL"), self.record(c, passed=6, failed=1),
+                     self.record(c, assertions=6, passed=6), self.record("0" * 39 + "g"),
+                     self.record("1" * 40), "not json", "[]"):
+            with self.subTest(text=text[:40]):
+                self.assertEqual(self.level({path: text}), "full")
+
+    def test_a_policy_change_after_the_candidate_is_full(self) -> None:
+        c = self.candidate()
+        self.assertEqual(self.level({
+            "benchmark/excel_regression_record.json": self.record(c, assertions=8, passed=8),
+            ".github/excel-evidence-policy.json": '{"expected_assertions": 8}\n'}), "full")
+
+    def test_a_candidate_that_is_not_an_ancestor_is_full(self) -> None:
+        c = self.candidate()
+        git(self.root, "checkout", "-q", "-b", "other", self.base)
+        self.assertEqual(self.level({"src/M_A.bas": "other\n",
+                                     ".github/excel-evidence-policy.json": '{"expected_assertions": 7}\n',
+                                     "benchmark/excel_regression_record.json": self.record(c)}), "full")
+
     def test_documentation_and_python_only_is_fast(self) -> None:
         self.assertEqual(self.level({"docs/A.md": "new\n", "benchmark/tool.py": "new\n",
                                      "tests/test_x.py": "new\n"}), "fast")

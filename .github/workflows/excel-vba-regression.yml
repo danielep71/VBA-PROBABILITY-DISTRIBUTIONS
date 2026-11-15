@@ -84,7 +84,8 @@ permissions:
 
 jobs:
   # Suite level (#299). A pull request whose diff cannot change what Excel
-  # executes runs the fast level; everything else runs the full suite. The
+  # executes runs the fast level, and so does one whose head carries an Excel
+  # record certifying the same candidate; everything else runs the full suite. The
   # selection fails closed: tools/select_excel_suite.py answers "full" for any
   # event, base or path it cannot classify, and a failed or skipped selection
   # leaves the output empty, which the regression job reads as full.
