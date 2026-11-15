@@ -42,9 +42,9 @@ the reference.
 | ---: | --- | --- | ---: |
 | 39 | Claim text of six contracts | The committed claim predates a change of the contract threshold; the registry is the source of the claim | none: metadata |
 | 24 | Chi-square and Student-t `envelope_domain` forward references | Digits of an earlier oracle, beyond double precision | 1.5E-22 |
-| 7 | F `envelope_domain` forward references | Four were evaluated at the decimal `0.999` or `1.001`, not at the Double; three differ beyond double precision | 2.8E-14 |
-| 6 | `split_boundary` references at `q = 1E-12` | Evaluated at the decimal 1E-12, not at the Double | 2.6E-16 |
-| 8 | F `tiny_unbalanced` density and cumulative references | Evaluated at the 50-digit design point, not at the Double | 2.1E-15 |
+| 7 | F `envelope_domain` forward references | Four were the value at the decimal `0.999` or `1.001`, which they match to 2E-22, not at the Double; three differ beyond double precision | 2.8E-14 |
+| 6 | `split_boundary` references at `q = 1E-12` | Each was a binary64 result printed to 25 digits: it equals a Double to 3E-25 | 2.6E-16 |
+| 8 | F `tiny_unbalanced` density and cumulative references | Each was a binary64 result printed to 25 digits: it equals a Double to 4E-26 | 2.1E-15 |
 
 The six contracts whose claim text was stale: `Beta_Density.balanced`
 (5E-15, now 1E-14), `F_InverseCumulative.validated` (5.9E-13, now 2E-10),
@@ -73,6 +73,16 @@ or more.
 | `NormalStandard_InverseCumulative.split_boundary` | 5.21E-17 | 2.22E-17 | 1E-10 |
 | `Normal_InverseSurvival.split_boundary` | 4.37E-17 | 2.18E-16 | 2E-10 |
 | `Lognormal_InverseSurvival.split_boundary` | 3.89E-16 | 2.22E-16 | 1E-9 |
+
+### No other reference is a Double in disguise
+
+Fourteen of the replaced references were binary64 results written out to 25
+digits. Every reference of the main grid, the holdout and the study grids was
+then tested for the same signature: 20 or more digits that equal a Double to
+1E-23. In the main grid 19 rows have it, and each is a value that is a Double
+by nature: a probability equal to its own parameter, a symmetric point at 1/2,
+or a result within 1E-23 of one. Twelve of them are generator rows and agree
+with the 50-digit evaluation.
 
 ## What the check does not cover
 
