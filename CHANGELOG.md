@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### A pull request does not repeat a certified Excel run
+
+- `tools/select_excel_suite.py` chooses the fast level for a pull request whose head carries an Excel record for a candidate that is its ancestor, passed its complete regression with the policy's assertion count, and differs from the head in no path that can change the Excel run. Before, such a pull request ran the full suite a second time, 30 to 50 minutes on the one runner. Anything the record does not certify stays full, and the run after the merge is always full.
+
 ### Gamma and Chi-square representability: the parent's inverse counterexamples (#11)
 
 - Three assertions hold the inverse counterexamples of the parent issue: `K_STATS_Gamma_InverseCumulative(0.912063476068496, 1E-4, 1E100)` returns 1.00000000000068E-300 and its cumulative returns the probability; `K_STATS_ChiSquare_InverseCumulative(0.92824867943255, 2E-4)` returns a positive subnormal, not zero. The forward counterexamples were already held. The regression has 1,955 assertions, the fast suite 1,011.
