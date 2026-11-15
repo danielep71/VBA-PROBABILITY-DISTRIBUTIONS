@@ -2,7 +2,7 @@
 # VBA-PROBABILITY-DISTRIBUTIONS .gitattributes
 #------------------------------------------------------------------------------
 # PURPOSE
-#   Define deterministic Git behavior for exported numerical source, multi-language benchmark tooling, evidence, and the tracked demo workbook.
+#   Define deterministic Git behavior for exported numerical source, multi-language benchmark tooling, and evidence.
 #
 # POLICY
 #   - Exported VBA source is normalized in Git and checked out as CRLF.

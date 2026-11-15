@@ -9,7 +9,7 @@
 This maintainer guide turns a reviewed commit into a traceable VBA Probability Distributions release. Source identity, validation, packaging, provenance, and publication must describe the same candidate.
 
 > [!IMPORTANT]
-> The first `v1.0.0` release is blocked until the relevant accuracy, regression, provenance, and coverage gates are complete. `VERSION` at `0.0.0` is not a release request.
+> `VERSION` names the release being prepared or the last one published. A version in `VERSION` is not a release: the release exists when its annotated tag has passed the release workflow. Between releases, a `VERSION` of `0.0.0` means no release is being prepared.
 
 ## 🧭 Release profile
 

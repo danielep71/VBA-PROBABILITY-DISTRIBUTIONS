@@ -37,10 +37,9 @@ v1.0.0 is **not release-ready** (NO-GO).
   and the [README assurance block](../README.md#assurance-at-a-glance); the expected count is in
   [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json).
   The retained record does not certify the release commit.
-- **Coverage debt.** 27 main-grid rows have no disposition:
-  `F_InverseCumulative` 18 and `ChiSquare_InverseCumulative` 9, both
-  `envelope_domain` ([`coverage_summary.md`](../benchmark/coverage_summary.md)).
-- **No tag or GitHub Release exists.** `VERSION` is `0.0.0`.
+- **Coverage.** Complete since 2026-11-15: every main-grid row belongs to an
+  active contract ([`coverage_summary.md`](../benchmark/coverage_summary.md)).
+- **No tag or GitHub Release exists yet.** `VERSION` is `1.0.0` since the release preparation of 2026-11-15; the tag follows the certification of that commit.
 
 ## Remaining work
 
