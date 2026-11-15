@@ -97,6 +97,12 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### User manual (#263)
+
+- `docs/user-manual/v1.0.0/` holds the source of the first user manual: fourteen chapters, about 10,000 words, built into a 32-page PDF with `build_manual.py` (pandoc and Chromium). It covers installation, calling conventions, every distribution with its parameters and limits, the error convention, eight worked examples, the two accuracy tiers with the guarantee by family, and every recorded numerical limitation.
+- The build fails when a chapter names a function that `docs/PUBLIC_API.txt` does not declare or calls one with a number of arguments it does not accept; `tests/test_user_manual.py` runs the same check. `checks/example_values.py` recomputes every expected result with mpmath.
+- The PDF is built and attached at the release; it is not committed.
+
 ### Every main-grid row has a contract (#22)
 
 - The 27 main-grid rows without a contract are claimed: 18 F inverse and 9 Chi-square inverse rows of `envelope_domain`, by two contracts whose threshold is the 1E-12 inverse guarantee. Measured worst 2.15E-15 and 1.09E-15. `coverage_debt_v1_0_0.json` is deleted and the gate runs the coverage check in strict mode: zero rows without a disposition.
