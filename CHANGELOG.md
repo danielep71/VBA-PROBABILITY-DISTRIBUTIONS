@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Two limitations recorded for v1.0.0
+
+- `numerical_limitations.csv` gains `BetaInverse.FarSideTinyProbabilityPairMember` and `IncompleteBeta.StudentTBelowLargeDF`, with what is measured and what is not. Their correction, and the cost of the Beta and F inverses, are planned for v1.0.2. The README names both under Current boundaries.
+
 ### Gamma and Chi-square representability: the parent's inverse counterexamples (#11)
 
 - Three assertions hold the inverse counterexamples of the parent issue: `K_STATS_Gamma_InverseCumulative(0.912063476068496, 1E-4, 1E100)` returns 1.00000000000068E-300 and its cumulative returns the probability; `K_STATS_ChiSquare_InverseCumulative(0.92824867943255, 2E-4)` returns a positive subnormal, not zero. The forward counterexamples were already held. The regression has 1,955 assertions, the fast suite 1,011.
