@@ -164,6 +164,9 @@ def quantile_bound(p, q, df):
         return float((B + U52) * min(p, 1 - p) / (abs(q) * mp.e ** log_f) + 2 * U52)
 
 
+REMOVED_AFTER_FREEZE = {"probability_accuracy_grid.csv": 3}
+
+
 def predictions():
     records, unchanged = [], {}
     for grid in GRIDS:
@@ -191,6 +194,14 @@ def predictions():
                                     "bound": quantile_bound(a1, q, a2)})
                     continue
             unchanged[grid] = unchanged.get(grid, 0) + 1
+    # Rows that were in a grid when these predictions were frozen and were
+    # removed afterwards. They were predicted unchanged, and stay counted so
+    # that the frozen file reproduces. #22 removed three F inverse rows of the
+    # main grid, (0.5, 0.9, 0.99; 1E6, 3) in regime validated, because the
+    # same inputs are also envelope_domain rows.
+    for grid, removed in REMOVED_AFTER_FREEZE.items():
+        if grid in unchanged:
+            unchanged[grid] += removed
     return records, unchanged
 
 

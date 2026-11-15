@@ -63,8 +63,10 @@ READINESS = "benchmark/release_readiness.json"
 
 # Paths every render reads, for documentation and for test fixtures. The .bas
 # sources are read too, through the manifest bindings and the Excel record.
+# FINGERPRINT is not among them: #22 deleted the transition fingerprint, and
+# coverage_facts reads it only if a file is there.
 INPUTS = (README, PUBLIC_API, POLICY, EXCEL_RECORD, CONTRACTS, GRID, MAIN_MANIFEST,
-          SUMMARY, EXEMPTIONS, FINGERPRINT, HOLDOUT_GRID, HOLDOUT_MANIFEST,
+          SUMMARY, EXEMPTIONS, HOLDOUT_GRID, HOLDOUT_MANIFEST,
           HOLDOUT_SUMMARY, READINESS)
 
 GENERATOR = "benchmark/render_readme_assurance.py"
