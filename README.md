@@ -95,7 +95,7 @@
 - **Contract verdicts** — 179 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 2 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
 - **Independent holdout** — 84 PASS, 0 FAIL of 84 contracts on 659 observations bound to the current source.
 - **Holdout export certification** — certified by the retained Excel record.
-- **Release v1.0.0** — **not certified**. Open blockers registered in `release_readiness.json` (reviewed 2026-11-13); [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31) tracks the full release:
+- **Release v1.0.0** — **not certified**. No open blocker is registered in `release_readiness.json` (reviewed 2026-11-15); certification and publication remain, tracked in [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
 <!-- END generated: evidence state -->
 
 ## ✨ What this project is

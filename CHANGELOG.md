@@ -97,6 +97,11 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### README assurance block on the final evidence (#28)
+
+- With no open blocker registered, the release line of the generated block no longer announces a list that does not follow: it says that none is registered and that certification and publication remain. A test holds both wordings.
+- The readiness register is reviewed at 2026-11-15: every blocker resolved, release not certified.
+
 ### The reference generator and the main grid agree (#349)
 
 - 111 of the generator's 1,519 rows were not in `probability_accuracy_grid.csv` as the generator wrote them. Each group was settled by deciding which side was right; `benchmark/GENERATOR_GRID_RECONCILIATION.md` gives the cause of each and `benchmark/generator_grid_dispositions.csv` the rows.

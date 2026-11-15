@@ -721,6 +721,14 @@ def render_state(model):
     lines.append(export(HOLDOUT_GRID, "holdout_export", "Holdout"))
     if readiness["certified"]:
         lines.append(f"- **Release {readiness['release']}** — certified.")
+    elif not model["open_blockers"]:
+        # No list follows, so the sentence must not announce one. "Not
+        # certified" with no blocker means the certification itself is what
+        # remains: the tracker issue owns it.
+        lines.append(f"- **Release {readiness['release']}** — **not certified**. No open "
+                     f"blocker is registered in `release_readiness.json` (reviewed "
+                     f"{readiness['reviewed']}); certification and publication remain, "
+                     f"tracked in {_issue(readiness['tracker_issue'])}.")
     else:
         lines.append(f"- **Release {readiness['release']}** — **not certified**. Open "
                      f"blockers registered in `release_readiness.json` (reviewed "

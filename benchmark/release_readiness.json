@@ -2,7 +2,7 @@
   "schema_version": "release-readiness/v1",
   "release": "v1.0.0",
   "tracker_issue": 31,
-  "reviewed": "2026-11-13",
+  "reviewed": "2026-11-15",
   "certified": false,
   "blockers": [
     {

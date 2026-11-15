@@ -395,6 +395,22 @@ if OPEN_GATE is not None:
                    f"{OPEN_GATE} is incomplete")
 
 
+# #28: the release line announces a list only when one follows. With no open
+# blocker it says so; with one, the list is introduced and the blocker named.
+_model = R.build_model(REAL_ROOT)
+_blocker = dict(_model["readiness"]["blockers"][0], status="open", issue=999,
+                **{"class": "assurance"}, summary="fixture")
+for _open, _present, _absent in (
+        ([], "No open blocker is registered", "tracks the full release:"),
+        ([_blocker], "tracks the full release:", "No open blocker is registered")):
+    _state = R.render_state(dict(_model, open_blockers=_open,
+                                 readiness=dict(_model["readiness"], certified=False)))
+    _line = next(line for line in _state.splitlines() if line.startswith("- **Release"))
+    check(_present in _line and _absent not in _line,
+          f"release line with {len(_open)} open blocker(s) reads as it should")
+    check(("#999" in _state) == bool(_open), f"{len(_open)} open blocker(s) listed")
+
+
 def reopen_47(d):
     for blocker in d["blockers"]:
         if blocker["issue"] == 47:
