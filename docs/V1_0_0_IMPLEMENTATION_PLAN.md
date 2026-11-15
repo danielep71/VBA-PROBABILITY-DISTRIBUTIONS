@@ -114,6 +114,13 @@ worksheet error.
   `benchmark/coverage_debt_v1_0_0.json`, and strict mode must then report
   zero missing rows.
 
+  **Done 2026-11-15**, in the shorter form the replanning of 2026-11-13
+  allowed: the 27 remaining rows are claimed by two guarantee-tier contracts,
+  the fingerprint is deleted and strict mode reports zero missing rows. The
+  frozen fitting arm, the classifier and the threshold-selection rule above
+  were not needed and were not run; `benchmark/COVERAGE.md` lists what was
+  done to each row.
+
 ### C. Student-t inverse near |q| = 8: #213
 
 The #210 seam study (run 42281403598) measured 1.29E-12 relative error at
