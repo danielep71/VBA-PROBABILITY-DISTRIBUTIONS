@@ -104,6 +104,9 @@ Use only the categories needed by a release.
 - The four F `validated` contracts no longer say that the 1E5 bound is enforced by `PROB_F_ValidateEnvelope`; production accepts degrees of freedom up to 1E10. The Student-t and Chi-square inverse `all` contracts state their domains.
 - Seven exact-zero assertions on the Student-t median: the regression has 1,962 assertions, the fast suite 1,018.
 
+### Two limitations recorded for v1.0.0
+
+- `numerical_limitations.csv` gains `BetaInverse.FarSideTinyProbabilityPairMember` and `IncompleteBeta.StudentTBelowLargeDF`, with what is measured and what is not. Their correction, and the cost of the Beta and F inverses, are planned for v1.0.2. The README names both under Current boundaries.
 ### A pull request does not repeat a certified Excel run
 
 - `tools/select_excel_suite.py` chooses the fast level for a pull request whose head carries an Excel record for a candidate that is its ancestor, passed its complete regression with the policy's assertion count, and differs from the head in no path that can change the Excel run. Before, such a pull request ran the full suite a second time, 30 to 50 minutes on the one runner. Anything the record does not certify stays full, and the run after the merge is always full.
