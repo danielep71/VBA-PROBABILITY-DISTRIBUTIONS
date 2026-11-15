@@ -20,6 +20,12 @@ The survival definition uses a strict inequality. For a discrete distribution, t
 | $P(X > k)$ | `Survival` at $k$ |
 | $P(X \ge k)$ | `Survival` at $k - 1$ |
 
+The two rows that use $k - 1$ need $k$ to be at least 1. A negative count returns `#NUM!` (section 7.8), so at the lower end of the support give the answer directly: $P(X < 0) = 0$ and $P(X \ge 0) = 1$. In a formula whose threshold can reach zero:
+
+```text
+=IF(A2<=0,1,K_STATS_Poisson_Survival(A2-1,8.5))
+```
+
 ## 7.3 Why survival functions exist
 
 Mathematically, the survival probability is one minus the cumulative probability. Numerically, that subtraction can destroy the result. A Double carries about 16 significant digits, so a cumulative probability extremely close to 1 is stored as exactly 1. Subtracting it from 1 gives 0, although the true upper tail is a small positive number.

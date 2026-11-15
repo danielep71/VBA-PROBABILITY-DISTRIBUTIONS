@@ -48,6 +48,14 @@ These checks do not run Excel. The functions the examples call are covered by
 the Excel regression and the accuracy evidence of the release; the manual's
 own formulas were not typed into a workbook by a test.
 
+## Numbers in the text are read as data
+
+`benchmark/gamma_route_study/check_disjoint.py` parses every number in every
+tracked Markdown file and fails when one equals a holdout shape of that study.
+The seventh section of chapter 13 did: that chapter therefore has six numbered sections,
+and its naming rule is the chapter's opening text. If that check fails after
+an edit here, look for a section number or an example value first.
+
 ## Before the release
 
 - Rebuild on the release commit and read every page: clipping, broken

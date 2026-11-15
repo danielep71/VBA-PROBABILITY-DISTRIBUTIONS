@@ -2,8 +2,6 @@
 
 This chapter was produced from the frozen inventory [`docs/PUBLIC_API.txt`](../../PUBLIC_API.txt). For the full declarations, see the Public API reference.
 
-## 13.1 The naming rule
-
 Every function name is `K_STATS_` + family + `_` + kind. In the tables below, the column headings are the family names and the first column is the kind, both written exactly as they appear in the function name. "yes" means the function exists.
 
 Example: column `Gamma`, row `Survival` gives `K_STATS_Gamma_Survival`.
@@ -17,7 +15,7 @@ Arguments are the first argument, then the distribution parameters of chapter 6,
 | `InverseCumulative`, `InverseSurvival` | `Probability` |
 | `Mean`, `Variance`, `StdDev` | none |
 
-## 13.2 Normal family
+## 13.1 Normal family
 
 | Kind | `NormalStandard` | `Normal` | `Lognormal` |
 |---|:---:|:---:|:---:|
@@ -30,7 +28,7 @@ Arguments are the first argument, then the distribution parameters of chapter 6,
 | `Variance` | no | no | yes |
 | `StdDev` | no | no | yes |
 
-## 13.3 Test-statistic family
+## 13.2 Test-statistic family
 
 | Kind | `StudentT` | `ChiSquare` | `F` |
 |---|:---:|:---:|:---:|
@@ -39,7 +37,7 @@ Arguments are the first argument, then the distribution parameters of chapter 6,
 | `Survival` | yes | yes | yes |
 | `InverseCumulative` | yes | yes | yes |
 
-## 13.4 Other continuous distributions
+## 13.3 Other continuous distributions
 
 | Kind | `Gamma` | `Beta` | `Exponential` | `Weibull` | `Uniform` |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -51,7 +49,7 @@ Arguments are the first argument, then the distribution parameters of chapter 6,
 | `Variance` | yes | yes | no | yes | no |
 | `StdDev` | yes | yes | no | yes | no |
 
-## 13.5 Discrete distributions
+## 13.4 Discrete distributions
 
 All six families, `Binomial`, `Poisson`, `Geometric`, `NegativeBinomial`, `Hypergeometric` and `DiscreteUniform`, have the same eight kinds.
 
@@ -66,7 +64,7 @@ All six families, `Binomial`, `Poisson`, `Geometric`, `NegativeBinomial`, `Hyper
 | `Variance` | yes |
 | `StdDev` | yes |
 
-## 13.6 Functions outside the tables
+## 13.5 Functions outside the tables
 
 Five functions have a kind that is not a row above.
 
@@ -82,7 +80,7 @@ Five functions have a kind that is not a row above.
 
 The tables account for all 112 functions: 23 in the Normal family, 12 in the test-statistic family, 29 for the other continuous distributions and 48 for the discrete distributions.
 
-## 13.7 Rules to remember
+## 13.6 Rules to remember
 
 | Topic | Rule | Section |
 |---|---|---|
