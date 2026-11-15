@@ -383,12 +383,16 @@ expect_failure("registry claims certification with open blockers",
 # Which gates are incomplete changes with the evidence: a certified holdout
 # export satisfies holdout_export (#181). Drop the owner of whichever gate is
 # open in the committed registry.
-OPEN_GATE = next(b["gate"] for b in json.loads(read(REAL_ROOT, R.READINESS))["blockers"]
-                 if b["gate"] and b["status"] == "open")
-expect_failure("incomplete gate without an owner",
-               lambda r: edit_json(r, R.READINESS, lambda d: d.update(
-                   blockers=[b for b in d["blockers"] if b["gate"] != OPEN_GATE])),
-               f"{OPEN_GATE} is incomplete")
+# Since #22 closed, no gate is open in the committed registry; the case of an
+# incomplete gate whose owner is marked resolved stays covered below, by the
+# main grid restored to its uncertified state with #47 resolved.
+OPEN_GATE = next((b["gate"] for b in json.loads(read(REAL_ROOT, R.READINESS))["blockers"]
+                  if b["gate"] and b["status"] == "open"), None)
+if OPEN_GATE is not None:
+    expect_failure("incomplete gate without an owner",
+                   lambda r: edit_json(r, R.READINESS, lambda d: d.update(
+                       blockers=[b for b in d["blockers"] if b["gate"] != OPEN_GATE])),
+                   f"{OPEN_GATE} is incomplete")
 
 
 def reopen_47(d):

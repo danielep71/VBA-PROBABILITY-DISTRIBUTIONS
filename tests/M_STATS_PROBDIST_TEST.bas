@@ -3703,6 +3703,18 @@ Private Sub Test_TF_StudentTInverse()
         -2.84533970978611, TOL_ABS_TIGHT
     AssertClose "t inv(0.5,7)", K_STATS_StudentT_InverseCumulative(0.5, 7#), 0#, 0#
 
+    'The median is exactly zero at every df; the main grid holds these rows in
+    'the regime exact_median, where a relative error is undefined (#22)
+    AssertClose "t inv(0.5,1) is exactly 0", K_STATS_StudentT_InverseCumulative(0.5, 1#), 0#, 0#
+    AssertClose "t inv(0.5,2) is exactly 0", K_STATS_StudentT_InverseCumulative(0.5, 2#), 0#, 0#
+    AssertClose "t inv(0.5,5) is exactly 0", K_STATS_StudentT_InverseCumulative(0.5, 5#), 0#, 0#
+    AssertClose "t inv(0.5,30) is exactly 0", K_STATS_StudentT_InverseCumulative(0.5, 30#), 0#, 0#
+    AssertClose "t inv(0.5,1000) is exactly 0", K_STATS_StudentT_InverseCumulative(0.5, 1000#), 0#, 0#
+    AssertClose "t inv(0.5,1E+06) is exactly 0", _
+        K_STATS_StudentT_InverseCumulative(0.5, 1000000#), 0#, 0#
+    AssertClose "t inv(0.5,1E+07) is exactly 0", _
+        K_STATS_StudentT_InverseCumulative(0.5, 10000000#), 0#, 0#
+
     'REGRESSION T4: the old 1E+12 bracket cap returned CVErr(xlErrNum) here
     AssertRelClose "t inv(1e-14,1)", K_STATS_StudentT_InverseCumulative(0.00000000000001, 1#), _
         -31830988618379.1, TOL_REL_TIGHT

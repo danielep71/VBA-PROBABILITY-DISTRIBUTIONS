@@ -35,6 +35,7 @@ ChiSquare_Density.all.output_rel,1E-13,1E-13,"forward relative error: max(target
 ChiSquare_Density.large_shape.output_rel,1E-13,1E-13,"forward relative error: max(target, 1E-13)"
 ChiSquare_Density.positive_ratio_subnormal.output_rel,5E-13,5E-13,"forward relative error: max(target, 1E-13)"
 ChiSquare_InverseCumulative.all.output,4.7E-12,4.7E-12,"inverse: max(target, 1E-12)"
+ChiSquare_InverseCumulative.envelope_domain.quantile_rel,1E-12,1E-12,"inverse: max(target, 1E-12)"
 ChiSquare_InverseCumulative.scaled_quantile_from_underflowed_unit.quantile_rel,1E-14,1E-12,"inverse: max(target, 1E-12)"
 ChiSquare_InverseCumulative.scaled_quantile_from_underflowed_unit.tail_rel,1E-14,1E-14,absolute or residual metric: guarantee = target
 ChiSquare_Survival.all.output,2.6E-10,2.6E-10,"forward relative error: max(target, 1E-13)"
@@ -59,6 +60,7 @@ F_Density.all.output_rel,1E-13,1E-13,"forward relative error: max(target, 1E-13)
 F_Density.extreme_ratio.output_rel,5E-12,5E-12,"forward relative error: max(target, 1E-13)"
 F_Density.large_shape.output_rel,5E-5,5E-5,"forward relative error: max(target, 1E-13)"
 F_Density.tiny_unbalanced.output,5E-14,1E-13,"forward relative error: max(target, 1E-13)"
+F_InverseCumulative.envelope_domain.quantile_rel,1E-12,1E-12,"inverse: max(target, 1E-12)"
 F_InverseCumulative.tiny_unbalanced_representable.tail_rel,1E-13,1E-13,absolute or residual metric: guarantee = target
 F_InverseCumulative.validated.quantile_rel,2E-10,2E-10,"inverse: max(target, 1E-12)"
 F_InverseCumulative.validated.tail_rel,2E-10,2E-10,absolute or residual metric: guarantee = target
@@ -163,6 +165,7 @@ StudentT_Density.all.output,2E-14,1E-13,"forward relative error: max(target, 1E-
 StudentT_Density.large_df.output_rel,5E-12,5E-12,"forward relative error: max(target, 1E-13)"
 StudentT_InverseCumulative.all.output,3.0E-12,3.0E-12,"inverse: max(target, 1E-12)"
 StudentT_InverseCumulative.envelope_domain.quantile_rel,5E-15,1E-12,"inverse: max(target, 1E-12)"
+StudentT_InverseCumulative.exact_median.output_abs,0,0,absolute or residual metric: guarantee = target
 StudentT_Survival.all.output,1.3E-12,1.3E-12,"forward relative error: max(target, 1E-13)"
 StudentT_Survival.envelope_domain.output_rel,5E-15,1E-13,"forward relative error: max(target, 1E-13)"
 Uniform_Cumulative.all.output,5E-15,1E-13,"forward relative error: max(target, 1E-13)"

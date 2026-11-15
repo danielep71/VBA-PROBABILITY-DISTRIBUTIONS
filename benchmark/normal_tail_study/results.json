@@ -4,7 +4,7 @@
  "coefficients_sha256": "f4daabf0f643f786aaf8bf7a6052ec8a0246c642f5d413a7ba4d133068a6f11b",
  "status": "PASS",
  "problems": [],
- "generated_utc": "2026-11-14T10:25:22Z",
+ "generated_utc": "2026-11-15T06:47:20Z",
  "versions": {
   "python": "3.11.17",
   "mpmath": "1.3.0"
@@ -50,7 +50,7 @@
    },
    "accuracy_contracts.csv": {
     "role": "input: the P4 contracts",
-    "sha256": "ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90"
+    "sha256": "5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89"
    },
    "student_t_large_df_study/results.json": {
     "role": "input: the A7 route points",
@@ -3563,7 +3563,7 @@
   ]
  },
  "holdout_559_inspected": false,
- "runtime_s": 42.4,
+ "runtime_s": 40.2,
  "holdout_exposure": {
   "status": "EVALUATED",
   "exposures": 1,
@@ -3775,6 +3775,14 @@
    "holdout_evaluated": false,
    "identities_changed": [
     "accuracy_contracts.csv (input: the P4 contracts): recorded a24b6dc4302139136fd1ba6f7a2da9e51c2e7cc6cabce45129cc8b78af8c9d67, now ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90"
+   ]
+  },
+  {
+   "utc": "2026-11-15T06:46:40Z",
+   "reason": "#22: three contracts added to accuracy_contracts.csv (F and Chi-square inverse envelope_domain, Student-t exact_median) and domain strings of six contracts corrected; no P4 contract changed",
+   "holdout_evaluated": false,
+   "identities_changed": [
+    "accuracy_contracts.csv (input: the P4 contracts): recorded ea863e9e6e751478ba922fa8d6e2192b2a51082c8d1a138999240fbd0c9eeb90, now 5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89"
    ]
   }
  ]

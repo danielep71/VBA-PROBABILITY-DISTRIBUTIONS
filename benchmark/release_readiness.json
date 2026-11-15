@@ -39,8 +39,11 @@
       "issue": 22,
       "class": "assurance",
       "gate": "main_grid_coverage",
-      "status": "open",
-      "summary": "Main-grid rows without a contract or exemption disposition"
+      "status": "resolved",
+      "summary": "Main-grid rows without a contract or exemption disposition",
+      "resolution": {
+        "evidence": "check_grid_coverage.py runs in strict mode since coverage_debt_v1_0_0.json was deleted: 1,859 main-grid rows, all claimed, none exempt (#370). The 27 rows left of the 36-row baseline are claimed by F_InverseCumulative.envelope_domain.quantile_rel and ChiSquare_InverseCumulative.envelope_domain.quantile_rel at the 1E-12 inverse guarantee, measured worst 2.15E-15 and 1.09E-15. Excel run 43687485778 on 4f1e873: 1,962 of 1,962, no observation changed. tests/test_main_grid_strict_coverage.py fails if a governing contract is removed."
+      }
     },
     {
       "issue": 23,

@@ -174,6 +174,9 @@ def section6_rows():
     return {(fn, a1, a2) for fn, a1, a2 in generate_holdout.student_t_inverse_draws()}
 
 
+REMOVED_AFTER_FREEZE = {"probability_accuracy_grid.csv": 3}
+
+
 def predictions():
     records, unchanged = [], {}
     fresh = section6_rows()
@@ -200,6 +203,14 @@ def predictions():
                                         "worst_error": worst, "bound": bound})
                         continue
             unchanged[grid] = unchanged.get(grid, 0) + 1
+    # Rows that were in a grid when these predictions were frozen and were
+    # removed afterwards. They were predicted unchanged, and stay counted so
+    # that the frozen file reproduces. #22 removed three F inverse rows of the
+    # main grid, (0.5, 0.9, 0.99; 1E6, 3) in regime validated, because the
+    # same inputs are also envelope_domain rows.
+    for grid, removed in REMOVED_AFTER_FREEZE.items():
+        if grid in unchanged:
+            unchanged[grid] += removed
     return records, unchanged
 
 

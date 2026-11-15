@@ -97,6 +97,12 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Every main-grid row has a contract (#22)
+
+- The 27 main-grid rows without a contract are claimed: 18 F inverse and 9 Chi-square inverse rows of `envelope_domain`, by two contracts whose threshold is the 1E-12 inverse guarantee. Measured worst 2.15E-15 and 1.09E-15. `coverage_debt_v1_0_0.json` is deleted and the gate runs the coverage check in strict mode: zero rows without a disposition.
+- Main grid: three duplicated `validated` F rows removed, five `validated` F rows with a degree of freedom of 1E6 moved to `envelope_domain`, the eight Student-t medians moved to `exact_median` (absolute error, threshold zero). Consolidated holdout: eight F rows moved to `envelope_domain`. 180 contracts.
+- The four F `validated` contracts no longer say that the 1E5 bound is enforced by `PROB_F_ValidateEnvelope`; production accepts degrees of freedom up to 1E10. The Student-t and Chi-square inverse `all` contracts state their domains.
+- Seven exact-zero assertions on the Student-t median: the regression has 1,962 assertions, the fast suite 1,018.
 ### The workflows' rules are tested (#353)
 
 - `tests/test_workflow_controls.py` holds the rules the workflows follow, each with a fixture that breaks it: actions pinned to a commit, checkouts without persisted credentials, top-level permissions without write and a list of the jobs that may write, a timeout on every job, concurrency on every workflow, hashed `pip` installs, one exact runner image and exact Python versions, and no duplicate YAML key in the workflows, Dependabot's configuration and the issue forms.
