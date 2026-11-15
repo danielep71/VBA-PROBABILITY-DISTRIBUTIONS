@@ -33,7 +33,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `select_accuracy_checks.py` | Lets the Accuracy Gate skip the expensive proofs only for a positively identified metadata-only change |
 | `check_issues.py` | Read-only audit of open-issue metadata and dependency status that issue forms cannot enforce; run by `issue-triage.yml` |
 | `setup_repository.py` | Previews, applies or verifies the repository settings baseline through the `gh` CLI ([Repository settings](#repository-settings)) |
-| `requirements-lint-ci.txt` | Hash-locked Ruff and mypy, with mypy's dependencies, for the Static checks workflow ([Dependency updates](#dependency-updates)) |
+| `requirements-lint-ci.txt` | Hash-locked Ruff and mypy, with mypy's dependencies, and PyYAML for the workflow rule tests, for the Static checks workflow ([Dependency updates](#dependency-updates)) |
 | `vba_layout_baseline.json` | Modules still out of the VBA source layout, ratcheted by `format_vba.py` ([VBA source layout](#vba-source-layout)) |
 | `devbuild/` | Builds the Excel workbook under test from source and verifies its binding to a commit ([below](#building-the-workbook-under-test-devbuild)) |
 
@@ -561,7 +561,7 @@ python3 tools/check_links.py --external --repository danielep71/VBA-PROBABILITY-
 ## Dependency updates
 
 Dependabot checks the GitHub Actions pins, `benchmark/requirements-ci.txt`
-(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff, mypy and mypy's
+(mpmath and SymPy), and `tools/requirements-lint-ci.txt` (Ruff, mypy, PyYAML and mypy's
 dependencies, in one grouped pull request) weekly. Updates
 are assigned to the maintainer with priority P3 for initial triage; raise the
 priority when a security advisory or other material risk requires it. Review
