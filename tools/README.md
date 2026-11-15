@@ -304,7 +304,7 @@ What these checks cannot prove:
 
 ## Tracked binaries
 
-A binary file cannot be reviewed in a diff, and the demo workbook can carry VBA
+A binary file cannot be reviewed in a diff, and a workbook can carry VBA
 macros. `check_binaries.py` therefore admits a tracked binary only by an
 approved path or by a reviewed SHA-256:
 
@@ -332,9 +332,10 @@ The approved path is narrow on purpose: a `.png`, `.jpg` or `.jpeg` file
 directly in `assets/` (the README and social-preview images), whose bytes start
 with the signature of that format, so a renamed workbook or archive does not
 pass as an image. Every other binary needs an entry in
-[`.github/binary-allowlist.json`](../.github/binary-allowlist.json). I allow the
-demo workbook `examples/STATS-Distributions demo.xlsm` only there, by digest, so
-that any new version of it fails until someone reviews it.
+[`.github/binary-allowlist.json`](../.github/binary-allowlist.json), by digest,
+so that any new version of it fails until someone reviews it. The list is empty
+since v1.0.0: the demonstration workbook it held was removed before the
+release.
 
 The digest is the SHA-256 of the blob Git stores. Git applies no line-ending
 conversion to a file declared binary, so it equals the SHA-256 of the
@@ -628,7 +629,7 @@ layout; they are not verbatim copies.
 | `.github/workflows/pr-milestones.yml` | Pull-request milestone removal on `pull_request_target`, with this repository's workflow conventions, a job summary of each removal and a warning instead of a failure when a pull-request event gets a read-only token. |
 | `check_binaries.py` | The binary detection of `tools/check_binaries.py` (`text` unset in `.gitattributes`, or a NUL byte) and its allowlist schema. Here it reads the index rather than the working tree, admits only signature-checked images directly in `assets/`, prints the digest to record, and fails on a NUL-containing file that `.gitattributes` treats as text even when allowlisted. |
 | `tests/test_check_binaries.py` | The temporary-repository fixtures of the template's tests, extended to the digest-pinned demo workbook, the image signature, the stale entry and the unstaged allowlist. |
-| `.github/binary-allowlist.json` | The template's schema (`schema_version`, and a `sha256` and `reason` per path), holding this repository's demo workbook. |
+| `.github/binary-allowlist.json` | The template's schema (`schema_version`, and a `sha256` and `reason` per path), empty since the demonstration workbook was removed before v1.0.0. |
 | `format_vba.py` | `tools/format_vba.py`: the same five layout rules, kept because they match this repository's dominant layout; tracked modules in place of the template's source directories, a committed baseline with a two-way ratchet for modules bound to Excel evidence, `--no-baseline`, statement keywords excluded from labels, and continued comments left in place. |
 | `tests/test_format_vba.py` | `tests/test_format_vba.py`: its rule, literal and header cases, extended with token-stream, idempotence and drift-undo checks on every tracked module's text and the baseline ratchet in temporary Git repositories. |
 | `check_links.py` | `tools/check_links.py`: offline relative-link and GitHub-slug anchor check, and the `--external` request with warnings for 403, 429 and 5xx. This repository is public, so its own wiki pages (as raw Markdown) and issues are requested; only the pages in `UNCHECKED` are skipped. The parser, container and comment handling, and the reviewed exclusions file are this repository's own. |

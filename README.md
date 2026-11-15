@@ -42,7 +42,7 @@
 &nbsp;·&nbsp;
 [Inspect the accuracy summary](benchmark/accuracy_summary.md)
 &nbsp;·&nbsp;
-[Open the demo workbook](examples/STATS-Distributions%20demo.xlsm)
+[Read the user manual](docs/user-manual/v1.0.0/)
 &nbsp;·&nbsp;
 [View the Wiki](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki)
 
@@ -1076,22 +1076,17 @@ Examples of questions the benchmark framework is intended to answer:
 
 ---
 
-# 📦 Demo workbook
+# 📘 User manual
 
-The repository includes a macro-enabled demonstration workbook:
+The user manual for v1.0.0 is in
+[`docs/user-manual/v1.0.0/`](docs/user-manual/v1.0.0/): installation, calling
+conventions, every distribution with its parameters, the error convention,
+worked examples and the numerical limitations. Its PDF is attached to the
+release.
 
-[![Open demo workbook](https://img.shields.io/badge/Open-Demo_Workbook-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](examples/STATS-Distributions%20demo.xlsm)
-
-The workbook is intended to provide:
-
-- module-import guidance;
-- compilation and validation steps;
-- parameterization notes;
-- public API reference tables;
-- worksheet formulas;
-- family-specific examples;
-- comparisons with Excel and other numerical environments;
-- links to source and documentation.
+v1.0.0 does not include a demonstration workbook. The library is the six
+modules in [`src/`](src/); import them as
+[INSTALLATION.md](INSTALLATION.md) describes.
 
 > [!CAUTION]
 > Review source code before enabling macros. Use a reviewed repository version or tagged release and follow your organization's macro-security policy.
@@ -1137,8 +1132,6 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ PUBLIC_API.md
 │  ├─ PUBLIC_API.txt             # frozen K_STATS_* API inventory
 │  └─ VERIFICATION_DEPTH.md
-├─ examples/
-│  └─ STATS-Distributions demo.xlsm
 ├─ src/                          # the six production modules
 ├─ tests/
 │  ├─ M_STATS_PROBDIST_TEST.bas  # VBA regression harness
