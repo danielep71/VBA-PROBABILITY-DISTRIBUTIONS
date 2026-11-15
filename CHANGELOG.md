@@ -105,7 +105,7 @@ The first release. It ships the six production modules in `src/`: 112 worksheet 
 
 - The release attaches the source bundle, its checksum and build-provenance attestation, and the user manual as a PDF.
 - v1.0.0 includes no demonstration workbook. The one kept in `examples/` during development was removed: its embedded VBA was never checked against the released modules. The README and the landing page link the user manual in its place.
-- Tested environment: Excel 16.0, 64-bit, on Windows. 32-bit Office is untested.
+- Tested environment: Excel 16.0, 64-bit, on Windows. The retained record is from build 20710; build 20430, which produced the earlier evidence, gives identical exported observations. 32-bit Office is untested.
 
 ### The audit's open items, verified (#222)
 

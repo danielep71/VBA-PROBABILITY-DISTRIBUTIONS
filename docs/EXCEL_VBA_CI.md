@@ -265,12 +265,12 @@ four labels, so only one machine has the `excel` label at a time.
 
 Before the reference changed, the same commit was run on both. On
 `DESKTOP-UV7P4JQ` every assertion of the full regression passed, and the
-export of the main grid and the holdout is identical, byte for byte, to the
-one in the retained record from `ITPF545VX1`: no observation differs between
-the two builds.
+export of the main grid and the holdout was identical, byte for byte, to the
+one then retained from `ITPF545VX1`: no observation differs between the two
+builds.
 [`benchmark/excel_build_comparison_2026-11-15.json`](../benchmark/excel_build_comparison_2026-11-15.json)
-holds the run, the counts and the digests. It is an observation on a second
-build, not certification evidence.
+holds that run, the counts and the digests. The retained record of v1.0.0 was
+then produced on `DESKTOP-UV7P4JQ`, with the same raw digests.
 
 A record states the build that produced it. An export on a different build
 that changes an observation is not an error, but it is read row by row before
