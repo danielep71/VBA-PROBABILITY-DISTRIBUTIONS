@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
-  "candidate_sha": "4f1e87317b5e33fc9000480f634acdb196c1e068",
+  "candidate_sha": "0155f7aca7f7b2d78e537c38d3ee2f93683fb577",
   "execution": "automated",
-  "started_at": "2026-11-15T06:54:31.8619725Z",
-  "finished_at": "2026-11-15T07:01:13.2328059Z",
+  "started_at": "2026-11-15T08:34:50.6061820Z",
+  "finished_at": "2026-11-15T08:41:43.1520032Z",
   "runner": {
     "class": "self-hosted-excel",
     "identity": "ITPF545VX1",
     "workflow": {
       "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
       "path": ".github/workflows/excel-vba-regression.yml",
-      "sha": "4f1e87317b5e33fc9000480f634acdb196c1e068",
-      "run_id": 43687485778,
+      "sha": "0155f7aca7f7b2d78e537c38d3ee2f93683fb577",
+      "run_id": 43695101870,
       "run_attempt": 1
     }
   },
@@ -89,22 +89,22 @@
   },
   "log": {
     "path": "test-result.txt",
-    "sha256": "sha256:4e524730c59dc3c65d2d0d026e1d8ba67b1964d30256fee4e025672ee412715a"
+    "sha256": "sha256:894e502ceb71abbef87adb821c6a37e1696b9a68a9f20a9b054b29cab198b163"
   },
   "grids": {
     "benchmark/probability_accuracy_grid.csv": {
       "exported": true,
-      "sha256": "sha256:db84b8159a70ebf97bcb434d5ed6603fccdb668c6d58850278829b591eb3144e",
-      "raw_sha256": "sha256:c3767d7f8aec2040edb2cfd253d3fd732f468ea5f5bb5db3d9b0a77473ac9ba9",
+      "sha256": "sha256:5a12d346711af534825a5045aea7082b7760121b74605b0356aba6793d8f4fc7",
+      "raw_sha256": "sha256:6534f63aac38785ea9e51aa0e9fbc974c430d76e0318d46568c01a01440988de",
       "row_count": 2215,
-      "exported_utc": "2026-11-15T07:02:14Z"
+      "exported_utc": "2026-11-15T08:43:19Z"
     },
     "benchmark/holdout/holdout_grid.csv": {
       "exported": true,
       "sha256": "sha256:c474117500cc5d7ca45590fa4d5002b568ad4991457484b4fb449d50056177ed",
       "raw_sha256": "sha256:94c077cef22c42a3f5e834b4e40d3b3ab5a74f1545b2eed5ed0270d137c4829e",
       "row_count": 659,
-      "exported_utc": "2026-11-15T07:02:14Z"
+      "exported_utc": "2026-11-15T08:43:19Z"
     }
   }
 }
