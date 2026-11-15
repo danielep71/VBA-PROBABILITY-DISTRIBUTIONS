@@ -75,6 +75,40 @@ label/triage workflows, and unknown paths all trigger full proofs. Missing histo
 non-ancestral comparisons and empty change sets also run full proofs. A failure
 of the selection job itself blocks the required gate.
 
+### A tree verified once is not verified in full again
+
+A full run that succeeds leaves an attestation: the last step of the gate
+uploads an artifact named `accuracy-verified-<tree>`, where `<tree>` is the Git
+tree the run checked out. On a later push or pull request, the selection job
+looks for the attestation of the tree it has checked out. If it finds a valid
+one, it selects the same reduced level as for a metadata-only change: the live
+checks run, the fixture proofs and the study do not.
+
+An equal tree holds the same sources, tests, tools, pinned dependencies and
+workflow file, so those proofs would give the result they already gave. This
+covers the push that follows a merged pull request whose branch was up to date,
+and integration and sync pull requests between `main` and a release branch.
+
+The full proofs still run in every one of these cases:
+
+- no attestation exists for the tree: any tree no full run has succeeded on,
+  including a merge whose result differs from the pull request's head;
+- the attestation has expired (it is kept for 30 days);
+- its run failed, was cancelled, has not finished, or failed when it was re-run;
+- its run belongs to a fork, to another workflow, or to an event other than a
+  push or a pull request;
+- the lookup fails for any reason;
+- the run is manual or scheduled.
+
+A reduced run writes no attestation, so an attestation always names a run that
+executed the full proofs itself. The cases are held by
+`tests/test_select_accuracy_checks.py`.
+
+For one merged pull request whose branch was pushed three times (the change,
+the merge of the base branch, the evidence commit) this takes the full runs
+from four to three: the push after the merge is reduced. An integration pull
+request followed by a sync pull request goes from four full runs to none.
+
 Manual runs and the Monday 03:23 UTC schedule always run the full suite. This
 conservative policy deliberately reruns studies for some unrelated code changes;
 I only expand the skip list after verifying that the files are not proof inputs.

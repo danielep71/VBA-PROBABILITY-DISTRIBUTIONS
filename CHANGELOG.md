@@ -99,6 +99,7 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- The Accuracy Gate no longer repeats its full proofs on a tree that a full, successful run has already verified (#386). Such a run records the tree it checked out; the push after a merge, and integration and sync pull requests, then run the live checks only. Any doubt selects the full proofs. The rule and the cases that always run in full are in `docs/VERIFICATION_DEPTH.md`.
 - `release/1.0.1` is the active release branch after the v1.0.0 release: task pull requests and Dependabot updates target it. `release/1.0.0` stays as history.
 
 ## [1.0.0] - 2026-11-15
