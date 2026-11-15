@@ -112,10 +112,17 @@ jobs:
     name: Run Excel/VBA regression harness
     needs: select
 
+    # A pull request reaches this machine only from a branch of this
+    # repository that a person pushed. A fork is refused, and so is
+    # Dependabot: its branches live here, and a proposed action or package
+    # would otherwise run on the Excel host before anyone has read the bump.
+    # A skipped job leaves the required check satisfied; the bump is run on
+    # this machine by the push that follows its merge.
     if: >-
       !cancelled() &&
       (github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
 
     runs-on:
       - self-hosted
