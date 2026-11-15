@@ -97,6 +97,11 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### The manual's examples are asserted in Excel (#263)
+
+- `Test_DS_ManualExamples`: 45 assertions that call every formula the user manual shows in chapters 4, 5, 7, 8 and 9 and compare the result with the printed figure, to half a unit of its tenth digit; the three `#NUM!` cases, the two exact identities and the diagnostic message of section 9.5 are asserted as such. The regression has 2,007 assertions, the fast suite 1,063.
+- `tests/test_user_manual.py` checks that every figure asserted there is printed in a chapter.
+
 ### README assurance block on the final evidence (#28)
 
 - With no open blocker registered, the release line of the generated block no longer announces a list that does not follow: it says that none is registered and that certification and publication remain. A test holds both wordings.

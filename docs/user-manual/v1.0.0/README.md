@@ -44,9 +44,12 @@ of arguments its declaration does not accept.
 4, 7 and 8 with mpmath at 30 digits, independently of the library. It needs
 mpmath and exits 0 when it has printed every value.
 
-These checks do not run Excel. The functions the examples call are covered by
-the Excel regression and the accuracy evidence of the release; the manual's
-own formulas were not typed into a workbook by a test.
+The figures the manual prints are also asserted in Excel:
+`Test_DS_ManualExamples`, in `tests/M_STATS_PROBDIST_TEST.bas`, calls each
+formula of chapters 4, 5, 7, 8 and 9 in the regression and compares the result
+with the printed figure, to half a unit of its tenth digit. A unit test checks
+that every figure asserted there is printed in a chapter. When an example
+changes, change both.
 
 ## Numbers in the text are read as data
 

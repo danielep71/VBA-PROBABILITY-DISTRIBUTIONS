@@ -848,6 +848,8 @@ Private Sub RunDiscreteSuite()
     TimingLap "Test_DS_ErrorContract"
     Test_DS_SupportEdges
     TimingLap "Test_DS_SupportEdges"
+    Test_DS_ManualExamples
+    TimingLap "Test_DS_ManualExamples"
 End Sub
 
 
@@ -21876,4 +21878,158 @@ Private Sub Test_DS_SupportEdges()
     AssertClose "du one-point stddev=0", _
         K_STATS_DiscreteUniform_StdDev(7#, 7#), _
         0#, 0#
+End Sub
+
+Private Sub Test_DS_ManualExamples()
+'
+'==============================================================================
+' Test_DS_ManualExamples
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies in Excel every result the v1.0.0 user manual shows (#263).
+'
+' BEHAVIOR
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
+'
+' NOTES
+'   - Each label starts with the manual section the formula is in
+'     (docs/user-manual/v1.0.0).
+'   - An expected value is the figure the manual prints, at most 10
+'     significant digits, computed independently with mpmath at 30 digits
+'     (checks/example_values.py). The tolerance, 6E-10 relative, is half a
+'     unit of the tenth digit with a margin: it proves the printed figure,
+'     not the accuracy of the function, which the accuracy contracts cover.
+'   - Whole-number results and exact values are compared exactly.
+'   - The examples span every family; the section runs in the last suite,
+'     after all production modules are known to load.
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - Shared assertion helpers in this module
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-11-15
+'==============================================================================
+'
+    Const TOL_PRINTED       As Double = 0.0000000006    '6E-10 relative
+
+    Dim P                   As Variant         'Lognormal parameter conversion
+    Dim MeanLog             As Double          'First converted parameter
+    Dim StdDevLog           As Double          'Second converted parameter
+    Dim Status              As String          'Captured diagnostic message
+    Dim Result              As Variant         'Result that carries a Status
+
+    Debug.Print "-- User manual examples"
+
+    'Chapter 4: first formula and the five-minute check
+    AssertRelClose "4.3 Phi(1.64485362695147)", _
+        K_STATS_NormalStandard_Cumulative(1.64485362695147), 0.95, TOL_PRINTED
+    AssertRelClose "4.4 phi(0)", _
+        K_STATS_NormalStandard_Density(0#), 0.3989422804, TOL_PRINTED
+    AssertRelClose "4.4 normal sf(8)", _
+        K_STATS_NormalStandard_Survival(8#), 6.220960574E-16, TOL_PRINTED
+    AssertRelClose "4.4 InvPhi(0.975)", _
+        K_STATS_NormalStandard_InverseCumulative(0.975), 1.959963985, TOL_PRINTED
+    AssertExactlyEqual "4.4 Gamma mean(3,2)", K_STATS_Gamma_Mean(3#, 2#), 6#
+    AssertRelClose "4.4 Binomial pmf(7,20,0.35)", _
+        K_STATS_Binomial_PMF(7#, 20#, 0.35), 0.1844011864, TOL_PRINTED
+    AssertExactlyEqual "4.4 Poisson inv(0.99,25)", _
+        K_STATS_Poisson_InverseCumulative(0.99, 25#), 37#
+    AssertErrorCode "4.4 Normal inv(1.5,0,1) is #NUM", _
+        K_STATS_Normal_InverseCumulative(1.5, 0#, 1#), xlErrNum
+    AssertErrorCode "4.4 Gamma density(0,0.5,1) is #NUM", _
+        K_STATS_Gamma_Density(0#, 0.5, 1#), xlErrNum
+
+    'Chapter 5: the optional Normal parameters default to 0 and 1
+    AssertTrue "5.3 Normal cdf(1.5) equals cdf(1.5,0,1)", _
+        K_STATS_Normal_Cumulative(1.5) = K_STATS_Normal_Cumulative(1.5, 0#, 1#)
+
+    'Chapter 7: conventions
+    AssertErrorCode "7.2 Poisson sf(-1,8.5) is #NUM", _
+        K_STATS_Poisson_Survival(-1#, 8.5), xlErrNum
+    AssertRelClose "7.3 normal sf(15)", _
+        K_STATS_NormalStandard_Survival(15#), 3.670966199E-51, TOL_PRINTED
+    AssertExactlyEqual "7.3 1 - Phi(15) is 0", _
+        1# - K_STATS_NormalStandard_Cumulative(15#), 0#
+    AssertRelClose "7.4 normal isf(1E-18)", _
+        K_STATS_NormalStandard_InverseSurvival(1E-18), 8.757290349, TOL_PRINTED
+    AssertRelClose "7.5 Binomial cdf(3,10,0.3)", _
+        K_STATS_Binomial_Cumulative(3#, 10#, 0.3), 0.6496107184, TOL_PRINTED
+    AssertRelClose "7.5 Binomial cdf(4,10,0.3)", _
+        K_STATS_Binomial_Cumulative(4#, 10#, 0.3), 0.8497316674, TOL_PRINTED
+    AssertExactlyEqual "7.5 Binomial inv(0.8,10,0.3)", _
+        K_STATS_Binomial_InverseCumulative(0.8, 10#, 0.3), 4#
+    AssertRelClose "7.6 Discrete Uniform cdf(2.8,-3,5)", _
+        K_STATS_DiscreteUniform_Cumulative(2.8, -3#, 5#), 0.6666666667, TOL_PRINTED
+
+    'Chapter 8: worked examples
+    AssertRelClose "8.1 Normal inv(0.99,100,15)", _
+        K_STATS_Normal_InverseCumulative(0.99, 100#, 15#), 134.8952181, TOL_PRINTED
+    AssertRelClose "8.1 Normal sf(130,100,15)", _
+        K_STATS_Normal_Survival(130#, 100#, 15#), 0.02275013195, TOL_PRINTED
+    AssertRelClose "8.1 Normal interval(85,115,100,15)", _
+        K_STATS_Normal_IntervalProbability(85#, 115#, 100#, 15#), 0.6826894921, TOL_PRINTED
+    AssertRelClose "8.2 Normal isf(1E-6,0.0005,0.012)", _
+        K_STATS_Normal_InverseSurvival(0.000001, 0.0005, 0.012), 0.05754109171, TOL_PRINTED
+    AssertRelClose "8.3 two-sided t p-value(2.5,12)", _
+        2# * K_STATS_StudentT_Survival(2.5, 12#), 0.02791539957, TOL_PRINTED
+    AssertRelClose "8.3 t inv(0.975,12)", _
+        K_STATS_StudentT_InverseCumulative(0.975, 12#), 2.17881283, TOL_PRINTED
+    AssertRelClose "8.4 Chi-square sf(18.3,10)", _
+        K_STATS_ChiSquare_Survival(18.3, 10#), 0.05010906141, TOL_PRINTED
+    AssertRelClose "8.4 F sf(4.2,3,20)", _
+        K_STATS_F_Survival(4.2, 3#, 20#), 0.01855741983, TOL_PRINTED
+    AssertRelClose "8.4 F inv(0.95,3,20)", _
+        K_STATS_F_InverseCumulative(0.95, 3#, 20#), 3.098391212, TOL_PRINTED
+
+    P = K_STATS_Lognormal_ParametersFromMeanStdDev(100#, 30#)
+    If IsError(P) Then
+        RecordResult "8.5 Lognormal parameter conversion returned an error", False
+        Exit Sub
+    End If
+    MeanLog = P(1, 1)
+    StdDevLog = P(1, 2)
+    AssertRelClose "8.5 MeanLog(100,30)", MeanLog, 4.562081338, TOL_PRINTED
+    AssertRelClose "8.5 StdDevLog(100,30)", StdDevLog, 0.2935603792, TOL_PRINTED
+    AssertRelClose "8.5 Lognormal sf(200)", _
+        K_STATS_Lognormal_Survival(200#, MeanLog, StdDevLog), 0.006071617778, TOL_PRINTED
+    AssertRelClose "8.5 Lognormal inv(0.995)", _
+        K_STATS_Lognormal_InverseCumulative(0.995, MeanLog, StdDevLog), 204.0250469, TOL_PRINTED
+    AssertRelClose "8.5 Lognormal mean", _
+        K_STATS_Lognormal_Mean(MeanLog, StdDevLog), 100#, TOL_PRINTED
+
+    AssertRelClose "8.6 Gamma inv(0.99,3,2)", _
+        K_STATS_Gamma_InverseCumulative(0.99, 3#, 2#), 16.81189383, TOL_PRINTED
+    AssertRelClose "8.6 Gamma sf(15,3,2)", _
+        K_STATS_Gamma_Survival(15#, 3#, 2#), 0.02025671506, TOL_PRINTED
+    AssertRelClose "8.6 Weibull sf(1000,1.5,2000)", _
+        K_STATS_Weibull_Survival(1000#, 1.5, 2000#), 0.7021885013, TOL_PRINTED
+    AssertRelClose "8.7 Binomial sf(14,20,0.35)", _
+        K_STATS_Binomial_Survival(14#, 20#, 0.35), 0.0003105749704, TOL_PRINTED
+    AssertExactlyEqual "8.7 Binomial inv(0.99,100,0.02)", _
+        K_STATS_Binomial_InverseCumulative(0.99, 100#, 0.02), 6#
+    AssertRelClose "8.7 Binomial logpmf(7,20,0.35)", _
+        K_STATS_Binomial_LogPMF(7#, 20#, 0.35), -1.690641534, TOL_PRINTED
+    AssertRelClose "8.8 Poisson cdf(12,8.5)", _
+        K_STATS_Poisson_Cumulative(12#, 8.5), 0.9090829257, TOL_PRINTED
+    AssertRelClose "8.8 Poisson sf(60,2)", _
+        K_STATS_Poisson_Survival(60#, 2#), 6.352854125E-67, TOL_PRINTED
+    AssertRelClose "8.8 Geometric cdf(4,0.2)", _
+        K_STATS_Geometric_Cumulative(4#, 0.2), 0.67232, TOL_PRINTED
+    AssertRelClose "8.8 Negative Binomial cdf(5,3,0.4)", _
+        K_STATS_NegativeBinomial_Cumulative(5#, 3#, 0.4), 0.68460544, TOL_PRINTED
+    AssertRelClose "8.8 Hypergeometric pmf(4,10,20,100)", _
+        K_STATS_Hypergeometric_PMF(4#, 10#, 20#, 100#), 0.08410730453, TOL_PRINTED
+
+    'Chapter 9: the diagnostic message of section 9.5
+    Status = "sentinel"
+    Result = K_STATS_Binomial_Cumulative(12#, 20#, 1.35, Status)
+    AssertErrorCode "9.5 Binomial cdf(12,20,1.35) is #NUM", Result, xlErrNum
+    AssertTrue "9.5 Status names the argument", _
+        Status = "ProbSuccess must be between 0 and 1"
 End Sub
