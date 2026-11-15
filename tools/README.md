@@ -30,7 +30,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_ci_test_coverage.py` | Fails when a tracked `test_*.py` file is executed on no pull request ([CI test coverage](#ci-test-coverage)) |
 | `excel_runner_watch.py` | Decides whether a failed Excel run may be re-run once as an infrastructure failure, and what the scheduled runner check reports ([Excel/VBA CI](../docs/EXCEL_VBA_CI.md#hardened-runner-set-up)); tested by `tests/test_excel_runner_watch.py` |
 | `select_excel_suite.py` | Chooses the fast or full Excel suite level for a pull request, failing closed to full ([Excel/VBA CI](../docs/EXCEL_VBA_CI.md#suite-levels)); tested by `tests/test_select_excel_suite.py` |
-| `select_accuracy_checks.py` | Lets the Accuracy Gate skip the expensive proofs only for a positively identified metadata-only change |
+| `select_accuracy_checks.py` | Lets the Accuracy Gate skip the expensive proofs only for a positively identified metadata-only change, or for a tree that a full, successful run has already attested ([Verification depth](../docs/VERIFICATION_DEPTH.md)); tested by `tests/test_select_accuracy_checks.py` |
 | `check_issues.py` | Read-only audit of open-issue metadata and dependency status that issue forms cannot enforce; run by `issue-triage.yml` |
 | `setup_repository.py` | Previews, applies or verifies the repository settings baseline through the `gh` CLI ([Repository settings](#repository-settings)) |
 | `requirements-lint-ci.txt` | Hash-locked Ruff and mypy, with mypy's dependencies, and PyYAML for the workflow rule tests, for the Static checks workflow ([Dependency updates](#dependency-updates)) |

@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Changed
+
+- The Accuracy Gate no longer repeats its full proofs on a tree that a full, successful run has already verified (#386). Such a run records the tree it checked out; the push after a merge, and integration and sync pull requests, then run the live checks only. Any doubt selects the full proofs. The rule and the cases that always run in full are in `docs/VERIFICATION_DEPTH.md`.
+
 ## [1.0.0] - 2026-11-15
 
 The first release. It ships the six production modules in `src/`: 112 worksheet functions over seventeen distributions, each held to a published accuracy guarantee and verified in Excel on the exact released source. The sections below are the history of the work that led to it, newest first.
