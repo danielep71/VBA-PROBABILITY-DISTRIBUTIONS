@@ -36,7 +36,7 @@ Related to #
 ```
 
 Use `Related to #` by default. Task pull requests target the active release
-branch (`release/1.0.0`), where GitHub never closes an issue from a keyword; I
+branch (`release/1.0.1`), where GitHub never closes an issue from a keyword; I
 close the issue by hand with its *Resolution* section after the merge.
 Integration and sync pull requests between `main` and the release branch use
 `Refs #` and never a closing keyword. Use `Closes #` only for a pull request

@@ -37,8 +37,13 @@ jobs:
     name: Select accuracy proofs
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      # Reads the attestations of earlier runs: artifacts and their runs (#386).
+      actions: read
     outputs:
       full: ${{ steps.select.outputs.full }}
+      tree: ${{ steps.select.outputs.tree }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -61,6 +66,10 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+          # Full proofs are not repeated on a tree that a full, successful run
+          # of this workflow has attested; the rule and its limits are in
+          # tools/select_accuracy_checks.py and docs/VERIFICATION_DEPTH.md.
+          GH_TOKEN: ${{ github.token }}
         run: >-
           python tools/select_accuracy_checks.py --event "$EVENT_NAME"
           --base "$BASE_SHA" --output "$GITHUB_OUTPUT" --summary "$GITHUB_STEP_SUMMARY"
@@ -281,3 +290,20 @@ jobs:
             false) test "$STUDY" = skipped ;;
             *) exit 1 ;;
           esac
+      - name: Record the verified tree
+        # Reached only when every job above succeeded. With the full proofs
+        # selected, the artifact's name states the tree this run checked out;
+        # a later run on an equal tree does not repeat the full proofs (#386).
+        if: ${{ needs.select.outputs.full == 'true' && needs.select.outputs.tree != '' }}
+        env:
+          TREE: ${{ needs.select.outputs.tree }}
+        run: printf '{"tree":"%s","commit":"%s","run_id":"%s"}\n' "$TREE" "$GITHUB_SHA" "$GITHUB_RUN_ID" > accuracy-verified.json
+      - name: Upload the attestation of the verified tree
+        if: ${{ needs.select.outputs.full == 'true' && needs.select.outputs.tree != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: accuracy-verified-${{ needs.select.outputs.tree }}
+          path: accuracy-verified.json
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true

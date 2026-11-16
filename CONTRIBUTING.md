@@ -113,7 +113,7 @@ not present.
 ## 🌿 Development workflow
 
 1. Fork or clone the repository and start from the active release branch
-   (currently `release/1.0.0`), or from `main` when no release branch is
+   (currently `release/1.0.1`), or from `main` when no release branch is
    active.
 2. Create a short, focused branch such as `fix/clear-description`,
    `feat/clear-description`, `docs/clear-description`, or
@@ -131,7 +131,7 @@ not present.
 Every change, including mine, reaches `main` through a pull request; there is
 no direct-push path. Pull requests are merged with a merge commit, so every
 commit on the branch reaches `main`: keep each one focused and valid on its own.
-While a release branch such as `release/1.0.0` is active, open task pull
+While a release branch such as `release/1.0.1` is active, open task pull
 requests against it rather than `main`. The complete rules, including atomic
 evidence changes, release branches and certification after merge, are in the
 [merge convention](RELEASING.md#merge-convention).

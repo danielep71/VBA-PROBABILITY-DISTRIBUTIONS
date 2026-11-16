@@ -152,7 +152,7 @@ issue-only* removes it and records the removal in its job summary.
 Pull requests opened by Dependabot follow the same rule. During triage, link
 each one to an existing issue or a new tracking issue, and give that issue the
 milestone. While a release branch is active, `.github/dependabot.yml` targets
-it (`target-branch: "release/1.0.0"`), so *Keep milestones issue-only* runs
+it (`target-branch: "release/1.0.1"`), so *Keep milestones issue-only* runs
 from that branch; as a `pull_request_target` run it still receives the write
 permission. If a run ever gets a read-only token, it warns instead of failing,
 and the next daily scan removes the milestone.
