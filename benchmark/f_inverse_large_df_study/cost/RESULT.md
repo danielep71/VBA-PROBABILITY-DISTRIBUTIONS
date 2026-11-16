@@ -18,7 +18,7 @@ holdout nothing had seen; on the twelve other lines the cost is back to what
 it was before #35; and on the failing line the candidate is faster than
 v1.0.0, not slower. Rejecting it would keep the slower routine everywhere.
 The four pair lines are the open part of the problem and go to an issue of
-their own.
+their own, #411.
 
 The Excel regression passed in both runs, and the strict accuracy gate
 passes on the main grid and on the consolidated holdout with no contract
