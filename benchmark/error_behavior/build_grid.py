@@ -25,6 +25,7 @@ TYPE and a number when it returned something else.
 Run:
     python3 build_grid.py --write   (only when the file is absent)
     python3 build_grid.py --check   (the committed file is the design)
+    python3 build_grid.py --dispatch   (the generated cases of the exporter)
 """
 import argparse
 import os
@@ -87,6 +88,16 @@ def rows():
     return out
 
 
+def dispatch_lines():
+    """The cases of DirectCall in M_STATS_PROBDIST_ERB.bas, one per declaration."""
+    out = []
+    for name, parameters in declarations():
+        arguments = ", ".join(f"A({index})" for index in range(len(parameters)))
+        out.append(f'        Case "{name}"')
+        out.append(f"            DirectCall = {name}({arguments})")
+    return out
+
+
 def render():
     lines = [",".join(HEADER)]
     for number, (name, label, parameter, arguments) in enumerate(rows()):
@@ -103,7 +114,12 @@ def main(argv=None):
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check", action="store_true")
+    mode.add_argument("--dispatch", action="store_true",
+                      help="print the cases of DirectCall for the exporter")
     a = ap.parse_args(argv)
+    if a.dispatch:
+        print("\n".join(dispatch_lines()))
+        return 0
     text = render()
     if a.check:
         with open(FILE, encoding="utf-8") as handle:

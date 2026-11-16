@@ -36,9 +36,11 @@ Private Const ERB_EMPTY_CELL            As String = "XFD1048576"
 ' HOW A CALL IS MADE
 '   A call with TEXT or EMPTY among its arguments is built as a worksheet
 '   formula and evaluated as a cell would evaluate it, because only a cell
-'   passes a text or an empty cell. Every other call goes through
-'   Application.Run with Double arguments, which is how VBA code can pass
-'   a value no cell can hold.
+'   passes a text or an empty cell. Every other call is made directly, with
+'   Double arguments, through DirectCall, which is how VBA code can pass a
+'   value no cell can hold. A direct call lets an error the function raises
+'   reach this module's handler; through Application.Run it would stop Excel
+'   on a dialog.
 '
 ' WHAT IS RECORDED
 '   The 16 hexadecimal digits of a numeric result; the worksheet error
@@ -170,7 +172,7 @@ Private Function Observed(ByVal FunctionName As String, ByVal Stored As String) 
 '==============================================================================
 '
     Dim Tokens()            As String          'The stored arguments
-    Dim Target              As String          'The function, qualified by this workbook
+    Dim A(0 To 3)           As Double          'The arguments as Doubles
     Dim Formula             As String          'The call as a worksheet formula
     Dim AsCell              As Boolean         'TRUE when a text or an empty cell is passed
     Dim V                   As Variant         'Result of the call
@@ -196,22 +198,14 @@ Private Function Observed(ByVal FunctionName As String, ByVal Stored As String) 
         Next I
         V = ThisWorkbook.Worksheets(1).Evaluate(Formula & ")")
     Else
-        Target = "'" & ThisWorkbook.Name & "'!" & FunctionName
-        Select Case UBound(Tokens)
-            Case 0
-                V = Application.Run(Target, Argument(Tokens(0)))
-            Case 1
-                V = Application.Run(Target, Argument(Tokens(0)), Argument(Tokens(1)))
-            Case 2
-                V = Application.Run(Target, Argument(Tokens(0)), Argument(Tokens(1)), _
-                                    Argument(Tokens(2)))
-            Case 3
-                V = Application.Run(Target, Argument(Tokens(0)), Argument(Tokens(1)), _
-                                    Argument(Tokens(2)), Argument(Tokens(3)))
-            Case Else
-                Observed = "UNSUPPORTED"
-                Exit Function
-        End Select
+        If UBound(Tokens) > 3 Then
+            Observed = "UNSUPPORTED"
+            Exit Function
+        End If
+        For I = 0 To UBound(Tokens)
+            A(I) = Argument(Tokens(I))
+        Next I
+        V = DirectCall(FunctionName, A)
     End If
 
     Observed = Described(V)
@@ -219,6 +213,251 @@ Private Function Observed(ByVal FunctionName As String, ByVal Stored As String) 
 
 Raised:
     Observed = "RAISED" & CStr(Err.Number)
+End Function
+
+
+Private Function DirectCall(ByVal FunctionName As String, ByRef A() As Double) As Variant
+'
+'==============================================================================
+' DirectCall
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls one public function by name with the first of the four Doubles of
+'   A that it takes. An unknown name returns the text UNKNOWN.
+'
+' GENERATED
+'   benchmark/error_behavior/build_grid.py --dispatch, from
+'   docs/PUBLIC_API.txt. test_survey.py fails when the two differ.
+'==============================================================================
+'
+    Select Case FunctionName
+        Case "K_STATS_Beta_Cumulative"
+            DirectCall = K_STATS_Beta_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Beta_Density"
+            DirectCall = K_STATS_Beta_Density(A(0), A(1), A(2))
+        Case "K_STATS_Beta_InverseCumulative"
+            DirectCall = K_STATS_Beta_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Beta_Mean"
+            DirectCall = K_STATS_Beta_Mean(A(0), A(1))
+        Case "K_STATS_Beta_StdDev"
+            DirectCall = K_STATS_Beta_StdDev(A(0), A(1))
+        Case "K_STATS_Beta_Survival"
+            DirectCall = K_STATS_Beta_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Beta_Variance"
+            DirectCall = K_STATS_Beta_Variance(A(0), A(1))
+        Case "K_STATS_Exponential_Cumulative"
+            DirectCall = K_STATS_Exponential_Cumulative(A(0), A(1))
+        Case "K_STATS_Exponential_Density"
+            DirectCall = K_STATS_Exponential_Density(A(0), A(1))
+        Case "K_STATS_Exponential_InverseCumulative"
+            DirectCall = K_STATS_Exponential_InverseCumulative(A(0), A(1))
+        Case "K_STATS_Exponential_Survival"
+            DirectCall = K_STATS_Exponential_Survival(A(0), A(1))
+        Case "K_STATS_Gamma_Cumulative"
+            DirectCall = K_STATS_Gamma_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_Density"
+            DirectCall = K_STATS_Gamma_Density(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_InverseCumulative"
+            DirectCall = K_STATS_Gamma_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_Mean"
+            DirectCall = K_STATS_Gamma_Mean(A(0), A(1))
+        Case "K_STATS_Gamma_StdDev"
+            DirectCall = K_STATS_Gamma_StdDev(A(0), A(1))
+        Case "K_STATS_Gamma_Survival"
+            DirectCall = K_STATS_Gamma_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_Variance"
+            DirectCall = K_STATS_Gamma_Variance(A(0), A(1))
+        Case "K_STATS_Uniform_Cumulative"
+            DirectCall = K_STATS_Uniform_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Uniform_Density"
+            DirectCall = K_STATS_Uniform_Density(A(0), A(1), A(2))
+        Case "K_STATS_Uniform_InverseCumulative"
+            DirectCall = K_STATS_Uniform_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Uniform_Survival"
+            DirectCall = K_STATS_Uniform_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Cumulative"
+            DirectCall = K_STATS_Weibull_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Density"
+            DirectCall = K_STATS_Weibull_Density(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_InverseCumulative"
+            DirectCall = K_STATS_Weibull_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Mean"
+            DirectCall = K_STATS_Weibull_Mean(A(0), A(1))
+        Case "K_STATS_Weibull_StdDev"
+            DirectCall = K_STATS_Weibull_StdDev(A(0), A(1))
+        Case "K_STATS_Weibull_Survival"
+            DirectCall = K_STATS_Weibull_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Variance"
+            DirectCall = K_STATS_Weibull_Variance(A(0), A(1))
+        Case "K_STATS_Binomial_Cumulative"
+            DirectCall = K_STATS_Binomial_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_InverseCumulative"
+            DirectCall = K_STATS_Binomial_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_LogPMF"
+            DirectCall = K_STATS_Binomial_LogPMF(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_Mean"
+            DirectCall = K_STATS_Binomial_Mean(A(0), A(1))
+        Case "K_STATS_Binomial_PMF"
+            DirectCall = K_STATS_Binomial_PMF(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_StdDev"
+            DirectCall = K_STATS_Binomial_StdDev(A(0), A(1))
+        Case "K_STATS_Binomial_Survival"
+            DirectCall = K_STATS_Binomial_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_Variance"
+            DirectCall = K_STATS_Binomial_Variance(A(0), A(1))
+        Case "K_STATS_DiscreteUniform_Cumulative"
+            DirectCall = K_STATS_DiscreteUniform_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_InverseCumulative"
+            DirectCall = K_STATS_DiscreteUniform_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_LogPMF"
+            DirectCall = K_STATS_DiscreteUniform_LogPMF(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_Mean"
+            DirectCall = K_STATS_DiscreteUniform_Mean(A(0), A(1))
+        Case "K_STATS_DiscreteUniform_PMF"
+            DirectCall = K_STATS_DiscreteUniform_PMF(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_StdDev"
+            DirectCall = K_STATS_DiscreteUniform_StdDev(A(0), A(1))
+        Case "K_STATS_DiscreteUniform_Survival"
+            DirectCall = K_STATS_DiscreteUniform_Survival(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_Variance"
+            DirectCall = K_STATS_DiscreteUniform_Variance(A(0), A(1))
+        Case "K_STATS_Geometric_Cumulative"
+            DirectCall = K_STATS_Geometric_Cumulative(A(0), A(1))
+        Case "K_STATS_Geometric_InverseCumulative"
+            DirectCall = K_STATS_Geometric_InverseCumulative(A(0), A(1))
+        Case "K_STATS_Geometric_LogPMF"
+            DirectCall = K_STATS_Geometric_LogPMF(A(0), A(1))
+        Case "K_STATS_Geometric_Mean"
+            DirectCall = K_STATS_Geometric_Mean(A(0))
+        Case "K_STATS_Geometric_PMF"
+            DirectCall = K_STATS_Geometric_PMF(A(0), A(1))
+        Case "K_STATS_Geometric_StdDev"
+            DirectCall = K_STATS_Geometric_StdDev(A(0))
+        Case "K_STATS_Geometric_Survival"
+            DirectCall = K_STATS_Geometric_Survival(A(0), A(1))
+        Case "K_STATS_Geometric_Variance"
+            DirectCall = K_STATS_Geometric_Variance(A(0))
+        Case "K_STATS_Hypergeometric_Cumulative"
+            DirectCall = K_STATS_Hypergeometric_Cumulative(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_InverseCumulative"
+            DirectCall = K_STATS_Hypergeometric_InverseCumulative(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_LogPMF"
+            DirectCall = K_STATS_Hypergeometric_LogPMF(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_Mean"
+            DirectCall = K_STATS_Hypergeometric_Mean(A(0), A(1), A(2))
+        Case "K_STATS_Hypergeometric_PMF"
+            DirectCall = K_STATS_Hypergeometric_PMF(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_StdDev"
+            DirectCall = K_STATS_Hypergeometric_StdDev(A(0), A(1), A(2))
+        Case "K_STATS_Hypergeometric_Survival"
+            DirectCall = K_STATS_Hypergeometric_Survival(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_Variance"
+            DirectCall = K_STATS_Hypergeometric_Variance(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_Cumulative"
+            DirectCall = K_STATS_NegativeBinomial_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_InverseCumulative"
+            DirectCall = K_STATS_NegativeBinomial_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_LogPMF"
+            DirectCall = K_STATS_NegativeBinomial_LogPMF(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_Mean"
+            DirectCall = K_STATS_NegativeBinomial_Mean(A(0), A(1))
+        Case "K_STATS_NegativeBinomial_PMF"
+            DirectCall = K_STATS_NegativeBinomial_PMF(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_StdDev"
+            DirectCall = K_STATS_NegativeBinomial_StdDev(A(0), A(1))
+        Case "K_STATS_NegativeBinomial_Survival"
+            DirectCall = K_STATS_NegativeBinomial_Survival(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_Variance"
+            DirectCall = K_STATS_NegativeBinomial_Variance(A(0), A(1))
+        Case "K_STATS_Poisson_Cumulative"
+            DirectCall = K_STATS_Poisson_Cumulative(A(0), A(1))
+        Case "K_STATS_Poisson_InverseCumulative"
+            DirectCall = K_STATS_Poisson_InverseCumulative(A(0), A(1))
+        Case "K_STATS_Poisson_LogPMF"
+            DirectCall = K_STATS_Poisson_LogPMF(A(0), A(1))
+        Case "K_STATS_Poisson_Mean"
+            DirectCall = K_STATS_Poisson_Mean(A(0))
+        Case "K_STATS_Poisson_PMF"
+            DirectCall = K_STATS_Poisson_PMF(A(0), A(1))
+        Case "K_STATS_Poisson_StdDev"
+            DirectCall = K_STATS_Poisson_StdDev(A(0))
+        Case "K_STATS_Poisson_Survival"
+            DirectCall = K_STATS_Poisson_Survival(A(0), A(1))
+        Case "K_STATS_Poisson_Variance"
+            DirectCall = K_STATS_Poisson_Variance(A(0))
+        Case "K_STATS_Lognormal_Cumulative"
+            DirectCall = K_STATS_Lognormal_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_Density"
+            DirectCall = K_STATS_Lognormal_Density(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_InverseCumulative"
+            DirectCall = K_STATS_Lognormal_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_InverseSurvival"
+            DirectCall = K_STATS_Lognormal_InverseSurvival(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_Mean"
+            DirectCall = K_STATS_Lognormal_Mean(A(0), A(1))
+        Case "K_STATS_Lognormal_ParametersFromMeanStdDev"
+            DirectCall = K_STATS_Lognormal_ParametersFromMeanStdDev(A(0), A(1))
+        Case "K_STATS_Lognormal_StdDev"
+            DirectCall = K_STATS_Lognormal_StdDev(A(0), A(1))
+        Case "K_STATS_Lognormal_Survival"
+            DirectCall = K_STATS_Lognormal_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_Variance"
+            DirectCall = K_STATS_Lognormal_Variance(A(0), A(1))
+        Case "K_STATS_Normal_Cumulative"
+            DirectCall = K_STATS_Normal_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Normal_Density"
+            DirectCall = K_STATS_Normal_Density(A(0), A(1), A(2))
+        Case "K_STATS_Normal_IntervalProbability"
+            DirectCall = K_STATS_Normal_IntervalProbability(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Normal_InverseCumulative"
+            DirectCall = K_STATS_Normal_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Normal_InverseSurvival"
+            DirectCall = K_STATS_Normal_InverseSurvival(A(0), A(1), A(2))
+        Case "K_STATS_Normal_Survival"
+            DirectCall = K_STATS_Normal_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Normal_ZScore"
+            DirectCall = K_STATS_Normal_ZScore(A(0), A(1), A(2))
+        Case "K_STATS_NormalStandard_Cumulative"
+            DirectCall = K_STATS_NormalStandard_Cumulative(A(0))
+        Case "K_STATS_NormalStandard_Density"
+            DirectCall = K_STATS_NormalStandard_Density(A(0))
+        Case "K_STATS_NormalStandard_IntervalProbability"
+            DirectCall = K_STATS_NormalStandard_IntervalProbability(A(0), A(1))
+        Case "K_STATS_NormalStandard_InverseCumulative"
+            DirectCall = K_STATS_NormalStandard_InverseCumulative(A(0))
+        Case "K_STATS_NormalStandard_InverseCumulativeFast"
+            DirectCall = K_STATS_NormalStandard_InverseCumulativeFast(A(0))
+        Case "K_STATS_NormalStandard_InverseSurvival"
+            DirectCall = K_STATS_NormalStandard_InverseSurvival(A(0))
+        Case "K_STATS_NormalStandard_Survival"
+            DirectCall = K_STATS_NormalStandard_Survival(A(0))
+        Case "K_STATS_ChiSquare_Cumulative"
+            DirectCall = K_STATS_ChiSquare_Cumulative(A(0), A(1))
+        Case "K_STATS_ChiSquare_Density"
+            DirectCall = K_STATS_ChiSquare_Density(A(0), A(1))
+        Case "K_STATS_ChiSquare_InverseCumulative"
+            DirectCall = K_STATS_ChiSquare_InverseCumulative(A(0), A(1))
+        Case "K_STATS_ChiSquare_Survival"
+            DirectCall = K_STATS_ChiSquare_Survival(A(0), A(1))
+        Case "K_STATS_F_Cumulative"
+            DirectCall = K_STATS_F_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_F_Density"
+            DirectCall = K_STATS_F_Density(A(0), A(1), A(2))
+        Case "K_STATS_F_InverseCumulative"
+            DirectCall = K_STATS_F_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_F_Survival"
+            DirectCall = K_STATS_F_Survival(A(0), A(1), A(2))
+        Case "K_STATS_StudentT_Cumulative"
+            DirectCall = K_STATS_StudentT_Cumulative(A(0), A(1))
+        Case "K_STATS_StudentT_Density"
+            DirectCall = K_STATS_StudentT_Density(A(0), A(1))
+        Case "K_STATS_StudentT_InverseCumulative"
+            DirectCall = K_STATS_StudentT_InverseCumulative(A(0), A(1))
+        Case "K_STATS_StudentT_Survival"
+            DirectCall = K_STATS_StudentT_Survival(A(0), A(1))
+        Case Else
+            DirectCall = "UNKNOWN"
+    End Select
 End Function
 
 
