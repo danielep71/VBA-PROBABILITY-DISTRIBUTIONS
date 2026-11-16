@@ -32,6 +32,13 @@ TARGET_DATE_FORMS = ("bug.yml", "feature.yml", "documentation.yml")
 PLANNED_TARGET = re.compile(r"^[ \t]*[-*][ \t]*Target end date:[ \t]*(.*?)[ \t]*$", re.I | re.M)
 FORM_TARGET = re.compile(
     r"^###\s+(?:🗓️\s*)?Target end date(?:\s*\(Europe/Rome\))?\s*$\n\s*(.*?)[ \t]*$", re.I | re.M)
+# The start of the work, written by triage as "Planned start date" in a Planning
+# section or as "Start date" in a Schedule section. No issue form asks for it.
+PLANNED_START = re.compile(
+    r"^[ \t]*[-*][ \t]*(?:Planned[ \t]+)?start date:[ \t]*(.*?)[ \t]*$", re.I | re.M)
+# The zone or the clock the date was read on, e.g. "(Europe/Rome)" or the
+# "(UTC check date)" that the automatic alerts write.
+START_NOTE = re.compile(r"\s*\([^()]*\)$")
 ROME_SUFFIX = re.compile(r"\s*\(Europe/Rome\)$", re.I)
 DEPENDENCY_STATUS_WORDS = re.compile(r"block|ready|waiting|depend|on[ -]hold|prerequisite", re.I)
 HEADING = re.compile(r"^#{2,3}\s+(.*)$")
@@ -110,6 +117,12 @@ def target_end_date(body: str) -> str | None:
     return ROME_SUFFIX.sub("", match.group(1)) if match else None
 
 
+def start_date(body: str) -> str | None:
+    """Read the planning line for the start of the work without guessing a date."""
+    match = PLANNED_START.search(normalized(body))
+    return START_NOTE.sub("", match.group(1)) if match else None
+
+
 def iso_date(text: str | None) -> dt.date | None:
     if text is None or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return None
@@ -135,6 +148,20 @@ def target_date_findings(issue: Issue) -> list[Finding]:
     if target >= due:
         return [Finding(issue.number, "milestone-due",
                         f"target end date {target} must be before the milestone due date {due}")]
+    return []
+
+
+def start_date_findings(issue: Issue) -> list[Finding]:
+    """The start date must be a real ISO date, not later than the target end date."""
+    start = iso_date(start_date(issue.body))
+    if start is None:
+        return [Finding(issue.number, "start-date",
+                        "needs a valid ISO YYYY-MM-DD start date: "
+                        "'- Planned start date: YYYY-MM-DD (Europe/Rome)'")]
+    target = iso_date(target_end_date(issue.body))
+    if target is not None and start > target:
+        return [Finding(issue.number, "start-date",
+                        f"start date {start} is after the target end date {target}")]
     return []
 
 
@@ -197,6 +224,7 @@ def audit(issues: Sequence[Issue], states: Mapping[int, str], repository: str,
             continue
         findings += metadata_findings(issue, assignee)
         findings += target_date_findings(issue)
+        findings += start_date_findings(issue)
         findings += dependency_findings(issue, states, repository, pulls)
         if catalogue is not None:
             findings += [Finding(issue.number, "catalogue", f"has label {label!r}, "
