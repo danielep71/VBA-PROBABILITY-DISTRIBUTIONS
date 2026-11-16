@@ -99,6 +99,7 @@ Use only the categories needed by a release.
 
 ### Added
 
+- A map from Excel's distribution functions to the library's, in `docs/PUBLIC_API.md` and linked from the README's quick start (#330): for each Excel function, the `K_STATS_` call that replaces it, what differs in argument order, parameterization or tail, and an example. Both formulas of every example were evaluated in Excel and the library's value is checked against 60-digit arithmetic; the page is generated from those observations (`benchmark/excel_function_map/`, study export `xfm_examples`). Measured on the way: Excel rounds a fractional degree of freedom down in its Student t, chi-square and F functions, and the library uses the fraction.
 - A profile of the public Gamma call and of the Gamma inverse solver, measured in Excel (#348): `benchmark/gamma_call_profile/`, study export `gcp_profile`. A public Gamma, Chi-square or Poisson probability takes 0.006 to 0.09 ms on the runner, about a tenth of the figure the README carried from an earlier run; no layer between the wrapper and the series costs more than 8 microseconds. The inverse solver takes 20 to 53 iterations at shapes 0.01, 100 and 10,000, which is #415. No production source changes.
 - Two static checks of the VBA source, `check_vba_identifiers.py` and `check_vba_calls.py` (#291): an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong number of arguments and a qualified call to a `Private` procedure are now found before Excel compiles the project. Ported from K-TEMPLATE.
 

@@ -314,6 +314,8 @@ The catalogue is described by **capability**; the function count is in the [assu
 
 The current release is **[v1.0.0](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0)**. Download `VBA-Probability-Distributions-1.0.0.zip` from that page and verify it as [INSTALLATION.md](INSTALLATION.md#release-bundle) describes, or take the files from the `v1.0.0` tag. The `main` branch is development source.
 
+Coming from Excel's own functions? [The function map](docs/PUBLIC_API.md#coming-from-excels-functions) gives, for each of `NORM.DIST`, `T.INV`, `CHISQ.DIST.RT`, `GAMMA.DIST`, `BINOM.INV` and the others, the `K_STATS_` call that replaces it, what differs in argument order or parameterization, and an example evaluated on both sides.
+
 ## 1. Import the production modules
 
 Import the files in this order:
@@ -1182,7 +1184,7 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
 | [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
 | [Numerical research](docs/research/README.md) | Annotated bibliography, evaluation methodology and research-to-issue map |
-| [Public API](docs/PUBLIC_API.md) | Compatibility manifest and drift checks |
+| [Public API](docs/PUBLIC_API.md) | The map from Excel's functions, the compatibility manifest and its drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
 | [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture) | Layers, boundaries, and dependencies |
