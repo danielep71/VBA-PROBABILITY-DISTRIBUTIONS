@@ -169,5 +169,21 @@ class Cost(unittest.TestCase):
                                  ("t_inv", "3", "", "0.9"): (25.125, True)})
 
 
+class Record(unittest.TestCase):
+    """The committed files give the verdict RESULT.md records."""
+
+    def test_accuracy_rules_hold(self):
+        failures, report = analyze.analyze(analyze.read(analyze.BASELINE),
+                                           analyze.read(analyze.CANDIDATE))
+        self.assertEqual(failures, [])
+        self.assertEqual(report["counts"]["rows"], len(build_grid.points()))
+
+    def test_cost_fails_on_one_pair_line_only(self):
+        failures, _ = analyze.analyze_cost(analyze.read_cost(analyze.COST_BASELINE),
+                                           analyze.read_cost(analyze.COST_CANDIDATE))
+        self.assertEqual(len(failures), 1, failures)
+        self.assertTrue(failures[0].startswith("C2 beta_inv (0.7, 25) p=0.9"), failures)
+
+
 if __name__ == "__main__":
     unittest.main()
