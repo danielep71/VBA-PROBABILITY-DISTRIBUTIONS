@@ -96,6 +96,7 @@ commands = (
     ("gamma_call_profile/test_profile.py",),
     ("gamma_call_profile/build_grid.py", "--check"),
     ("gamma_call_profile/analyze.py", "--check"),
+    ("excel_function_map/build_grid.py", "--check"),
     ("gamma_cache_study/test_cache_vba.py",),
     ("gamma_recurrence_study/test_prepare.py",),
     ("gamma_route_study/analyze_b64_fit.py", "--check"),
