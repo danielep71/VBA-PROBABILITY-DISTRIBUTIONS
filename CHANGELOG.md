@@ -97,6 +97,10 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+### Added
+
+- Two static checks of the VBA source, `check_vba_identifiers.py` and `check_vba_calls.py` (#291): an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong number of arguments and a qualified call to a `Private` procedure are now found before Excel compiles the project. Ported from K-TEMPLATE.
+
 ### Changed
 
 - The Accuracy Gate no longer repeats its full proofs on a tree that a full, successful run has already verified (#386). Such a run records the tree it checked out; the push after a merge, and integration and sync pull requests, then run the live checks only. Any doubt selects the full proofs. The rule and the cases that always run in full are in `docs/VERIFICATION_DEPTH.md`.
