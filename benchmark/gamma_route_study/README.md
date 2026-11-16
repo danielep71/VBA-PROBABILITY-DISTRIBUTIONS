@@ -51,7 +51,7 @@ of the binary64 route, used as a fitting set.
 **Status: accepted and in production.** The routing holdout passed R1 to R6
 on all 371 rows; see [`HOLDOUT_ROUTE_RESULT.md`](HOLDOUT_ROUTE_RESULT.md).
 
-The study is open again under #314. The two-tier accuracy policy of #327 and
+The study was reopened under #314, which is now closed. The two-tier accuracy policy of #327 and
 the maintainer's decision of 2026-11-14 remove the two grounds on which the
 frozen rule was rejected, strict monotonicity between adjacent Doubles and a
 limit of 0.2 ms per call. That rule stays rejected; a new one is registered.

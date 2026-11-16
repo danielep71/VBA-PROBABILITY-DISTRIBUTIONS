@@ -67,8 +67,8 @@
 *.mde
 *.ade
 
-# Intentional repository packages:
-!/examples/STATS-Distributions demo.xlsm
+# Intentional repository packages: none. v1.0.0 ships no workbook; a workbook
+# added later needs an entry here and in .github/binary-allowlist.json.
 
 
 #------------------------------------------------------------------------------
@@ -242,7 +242,6 @@ renv/local/
 #   src/*.bas, tests/**, ci/*.ps1
 #   benchmark/**, docs/**
 #   *.py, *.R, *.r, *.csv, *.json
-#   /examples/STATS-Distributions demo.xlsm
 #   assets/**, .github/**
 #   .editorconfig, .gitattributes, .gitignore
 #

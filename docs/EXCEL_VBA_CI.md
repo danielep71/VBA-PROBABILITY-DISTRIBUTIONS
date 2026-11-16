@@ -65,8 +65,8 @@ The regression has two levels (#299).
 
 - **Full.** Every suite, held to `expected_assertions` in
   `.github/excel-evidence-policy.json`. Only a full run is certification
-  evidence. It runs on every push to `main` and `release/**` that changes VBA,
-  the runner or a policy, on every dispatch unless the fast level is asked
+  evidence. It runs on every push to `main` and `release/**` that changes `src/`,
+  `tests/`, `ci/`, the evidence policy or the workflow itself, on every dispatch unless the fast level is asked
   for, on every export, and on every pull request that could change what
   Excel executes.
 - **Fast.** The same run without the test procedures listed in
@@ -118,9 +118,10 @@ dispatched with export inputs uploads a second artifact,
 
 ## Unattended grid export
 
-A `workflow_dispatch` run of the Excel VBA Regression workflow takes seven
-inputs. They default to a regression-only run, so push and pull request runs,
-and a dispatch without inputs, behave as before.
+A `workflow_dispatch` run of the Excel VBA Regression workflow takes nine
+inputs. Their defaults export nothing: a dispatch without inputs runs the full
+regression and then the study batteries, and push and pull request runs behave
+as before.
 
 | Input | Values | Effect |
 | --- | --- | --- |
@@ -129,8 +130,9 @@ and a dispatch without inputs, behave as before.
 | `export_holdout_older` | `true`/`false` | Export `benchmark/holdout_older/holdout_older_grid.csv` |
 | `export_survival_boundary` | `true`/`false` | Export `benchmark/survival_boundary/survival_boundary_grid.csv` |
 | `export_tchi_large_df` | `true`/`false` | Export `benchmark/tchi_large_df/tchi_large_df_grid.csv` |
-| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid), `glq_lower_q` (the #24 holdout) and `gbr_binary64_map`, `prs_gamma_holdout2`, `prs_chisquare_holdout2`, `grh_route_holdout` (the #314 routing holdout), `gis_holdout` and `gis_holdout2` (the two #14 holdouts of the Gamma inverse at the final scale), `fip_baseline` and `fip_holdout` (the #35 production holdout of the beta inverse, before and after the change) (the #307 binary64 route map). The #307 fit set `gbf_b64_fit` is no longer exportable: the routines it calls left production after #307 closed |
+| `export_studies` | comma-separated names, default empty | Export these study grids (#225): `prs_gamma_probe`, `prs_chisquare_probe`, `prs_gamma_holdout`, `prs_chisquare_holdout`, `prs_gamma_q_complement` (the `benchmark/positive_ratio_subnormal/` CSVs), `gss_small_shape` (the #23 study grid), `glq_lower_q` (the #24 holdout) and `gbr_binary64_map` (the #307 binary64 route map), `prs_gamma_holdout2`, `prs_chisquare_holdout2`, `grh_route_holdout` (the #314 routing holdout), `gis_holdout` and `gis_holdout2` (the two #14 holdouts of the Gamma inverse at the final scale), `fip_baseline` and `fip_holdout` (the #35 production holdout of the beta inverse, before and after the change). The #307 fit set `gbf_b64_fit` is no longer exportable: the routines it calls left production after #307 closed |
 | `run_studies` | boolean, default `true` | Also run the study batteries of #300 and the slow production batteries of #13 (`Test_STATS_PROBDIST_RunStudies`, against `.github/excel-study-policy.json`) after a green regression. Always on when any grid is exported, and a failure stops the job before the export; pull-request runs never run them |
+| `suite` | `full`, `fast`; default `full` | The regression level of [Suite levels](#suite-levels). An export always runs the full level |
 | `main_mode` | `full`, `missing-only` | Main grid only: `Export_Accuracy_Observations` or `Export_Accuracy_MissingOnly`. The holdout exporters always fill every row |
 
 `export_studies` is one text input rather than one boolean per grid, so a new
@@ -381,8 +383,8 @@ if: >-
 
 Dependabot's branches live in this repository, so the fork check alone lets
 them through: a proposed action or package would run on the Excel host before
-anyone has read the bump. Its pull requests skip the job, which leaves the
-required check satisfied, and the bump first runs on this machine with the
+anyone has read the bump. Its pull requests skip the job, which reports success and blocks
+nothing (the job is not a required check), and the bump first runs on this machine with the
 push that follows its merge. `tests/test_workflow_controls.py` keeps both
 conditions on every job of this runner that a pull request can reach.
 

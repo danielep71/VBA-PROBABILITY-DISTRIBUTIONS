@@ -54,6 +54,9 @@ narrower scope, not by claiming an unperformed B5 production rollout. The other
 release blockers and all accuracy, monotonicity and certification requirements
 remain in force. No v1.0.0 release is published by this integration.
 
+Later note: v1.0.0 was released on 2026-11-15 with every blocker resolved. This
+page records the state at its own date.
+
 If B5 production promotion is resumed, independent timing confirmation,
 validation through public forward/inverse paths and boundary/fallback validation
 remain prerequisites. A new routing rule requires preregistration and its own

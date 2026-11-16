@@ -116,7 +116,7 @@ jobs:
     # repository that a person pushed. A fork is refused, and so is
     # Dependabot: its branches live here, and a proposed action or package
     # would otherwise run on the Excel host before anyone has read the bump.
-    # A skipped job leaves the required check satisfied; the bump is run on
+    # A skipped job reports success and blocks nothing; the bump is run on
     # this machine by the push that follows its merge.
     if: >-
       !cancelled() &&

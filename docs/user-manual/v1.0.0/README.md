@@ -65,4 +65,5 @@ an edit here, look for a section number or an example value first.
   formulas, a table split badly.
 - Compare chapter 10 with `benchmark/accuracy_guarantees.csv` and
   `benchmark/numerical_limitations.csv` as they are on that commit.
-- Attach the PDF to the release and add its SHA-256 to the checksum inventory.
+- Attach the PDF to the release and add its SHA-256 to the asset table of the
+  release notes. `SHA256SUMS` covers the source bundle only.

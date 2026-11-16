@@ -19,8 +19,10 @@ separately and neither transfers to the other.
 - **Post-#23 replay.** Run 42421734701 re-exported all four frozen arms from
   `f157e67`, with 955/955 regression assertions passing. The fitting crossovers
   remain 48/40/48/48 bits and all four holdout claims pass; see
-  `POST23_RESULT.md`. #13 stays open for production wiring, regressions and
-  contracts. These are replays of historically exposed holdouts, not new
+  `POST23_RESULT.md`. At that date #13 stayed open for production wiring,
+  regressions and contracts; it is now closed, the classifier is wired into
+  the public Gamma and Chi-square surfaces, and the outcome is in
+  `AMENDMENT_1_RESULT.md` and `POST_INTEGRATION_RESULT.md`. These are replays of historically exposed holdouts, not new
   untouched confirmation sets.
 
 The "Next" list near the end is the plan as Phase A left it.

@@ -14,7 +14,7 @@
       "live_command": "check_grid_coverage.py --mode auto --check-summary",
       "proof_command": "test_grid_coverage.py",
       "negative_claim": "missing/new/changed/deleted rows and corrupted fingerprints are rejected",
-      "current_state": "green_with_registered_transition_debt"
+      "current_state": "green"
     },
     {
       "id": "root-readme-integrity",

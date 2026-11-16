@@ -45,7 +45,8 @@ StudentT_InverseCumulative(p, df)  -> the same beta inverse with B = 1/2
 Both kernels take the probability **and its complement** as a pair, so neither
 input probability is reconstructed by subtraction. The beta inverse does form
 one member of its root pair as `1 - U`; when that member is tiny its relative
-accuracy is lost, which is open #35.
+accuracy is lost. That was #35, fixed before the v1.0.0 release by the pair
+reconstruction of the beta inverse.
 
 ## Mapping: beta shapes are df/2
 

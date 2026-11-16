@@ -130,7 +130,7 @@ The library is designed for:
 > A production-oriented numerical probability library for pure Excel VBA, designed for numerical reliability within explicitly tested domains. It emphasizes transparency, tail accuracy, auditability, consistent contracts, and reproducible validation rather than attempting to reproduce the full breadth or compiled performance of SciPy, R, Boost.Math, MATLAB, or commercial numerical platforms.
 
 > [!NOTE]
-> The public surface is described by capability rather than by a fixed distribution or UDF count. The library is expected to evolve without making its headline description obsolete.
+> The public surface is described here by capability. Its exact size is generated from the frozen inventory in the [assurance block](#assurance-at-a-glance), so this description does not go out of date as the library evolves.
 
 ---
 
@@ -172,10 +172,10 @@ This library is written entirely in VBA. Its modules travel inside the workbook,
 Binary64 (IEEE 754 `Double`) arithmetic is easy to get right in the centre of a distribution and hard in its tails, which is where risk figures come from. Three examples of defects found, studied and repaired here, each with a frozen design and Excel evidence:
 
 - **Normal upper tail beyond `z = 3`.** The former Hart/West kernel was accurate only in absolute terms: up to 2.9E-9 relative error between `z = 3` and 7.07. It was replaced by a rational approximation below 3, a continued fraction above, and an exactly split exponential. The standard normal survival now holds 5E-15 for `|z| <= 6` ([#72](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/72), [`benchmark/normal_tail_study/`](benchmark/normal_tail_study/)).
-- **Student t at large degrees of freedom.** The tails lost accuracy from `df = 1E5`. A large-df expansion and a polished inverse now hold 5E-15 for `df` from `1E5` to `1E8` and `|t| <= 8` ([#34](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/34), [`benchmark/student_t_large_df_study/`](benchmark/student_t_large_df_study/)). One defect of the inverse just inside `|q| = 8` is still open ([#213](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/213)).
+- **Student t at large degrees of freedom.** The tails lost accuracy from `df = 1E5`. A large-df expansion and a polished inverse now hold 5E-15 for `df` from `1E5` to `1E8` and `|t| <= 8` ([#34](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/34), [`benchmark/student_t_large_df_study/`](benchmark/student_t_large_df_study/)). A further defect of the inverse just inside `|q| = 8` was fixed afterwards ([#213](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/213)).
 - **Gamma and Chi-square at small, off-grid shapes.** The incomplete-gamma prefactor inherited about 1E-14 from its Stirling-error term, three times the 3E-15 contract. After the fix, the preregistered holdout measures at most 2.3E-15 ([#23](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/23), [`benchmark/gamma_series_small_shape/`](benchmark/gamma_series_small_shape/)).
 
-The [assurance block](#assurance-at-a-glance) at the top shows which contracts hold today and which release blockers are open.
+The [assurance block](#assurance-at-a-glance) at the top shows which contracts hold today and the state of the release.
 
 ### Trade-offs
 
@@ -245,7 +245,7 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 
 ![Distribution map: eleven continuous and six discrete API surfaces, with mathematical supports and illustrative use cases.](assets/distribution-map.png)
 
-*Implemented pre-release capabilities. Mathematical support is distinct from the validated numerical domain; examples do not establish model suitability.*
+*Capabilities released in v1.0.0. Mathematical support is distinct from the validated numerical domain; examples do not establish model suitability.*
 
 [Open editable SVG](assets/distribution-map.svg) · [Read the accessible map and parameter conventions](docs/visuals/distribution-map.md)
 
@@ -297,13 +297,15 @@ Import standard `.bas` modules, compile the VBA project, and use the functions. 
 - **Hypergeometric** — `SampleSuccesses`, `SampleSize`, `PopulationSuccesses`, `PopulationSize`; sampling is without replacement.
 - **Discrete Uniform** — `X`, `LowerBound`, `UpperBound`; the support contains every integer from the truncated lower bound through the truncated upper bound, inclusive.
 
-The catalogue is intentionally described by **capability**, not by a fixed UDF count.
+The catalogue is described by **capability**; the function count is in the [assurance block](#assurance-at-a-glance).
 
 ---
 
 <a id="installation"></a>
 
 # ⚡ Quick start
+
+The current release is **[v1.0.0](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0)**. Download `VBA-Probability-Distributions-1.0.0.zip` from that page and verify it as [INSTALLATION.md](INSTALLATION.md#release-bundle) describes, or take the files from the `v1.0.0` tag. The `main` branch is development source.
 
 ## 1. Import the production modules
 
@@ -1081,8 +1083,9 @@ Examples of questions the benchmark framework is intended to answer:
 The user manual for v1.0.0 is in
 [`docs/user-manual/v1.0.0/`](docs/user-manual/v1.0.0/): installation, calling
 conventions, every distribution with its parameters, the error convention,
-worked examples and the numerical limitations. Its PDF is attached to the
-release.
+worked examples and the numerical limitations. Its PDF,
+`VBA-Probability-Distributions-User-Manual-v1.0.0.pdf`, is attached to the
+[v1.0.0 release](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0).
 
 v1.0.0 does not include a demonstration workbook. The library is the six
 modules in [`src/`](src/); import them as
@@ -1119,7 +1122,7 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ excel_regression_record.json
 │  ├─ observation_manifest.json
 │  ├─ probability_accuracy_grid.csv
-│  ├─ release_readiness.json     # registered v1.0.0 release blockers
+│  ├─ release_readiness.json     # release blockers register (all resolved for v1.0.0)
 │  ├─ render_readme_assurance.py # generates this README's assurance block
 │  └─ README.md
 ├─ ci/
