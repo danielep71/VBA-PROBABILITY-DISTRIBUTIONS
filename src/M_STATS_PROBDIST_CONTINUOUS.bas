@@ -1646,9 +1646,8 @@ Public Function K_STATS_Beta_InverseCumulative( _
 '
 ' BEHAVIOR
 '   - Uses the paired beta-inverse kernel, which returns the quantile and its
-'     complement. The kernel solves for one member U and forms the other as
-'     1 - U, so when that reconstructed member is tiny it carries a large
-'     relative error (open #35).
+'     complement. The kernel solves for the member below 1/2 and forms the
+'     other as 1 - U, which loses nothing (#35).
 '
 ' ERROR POLICY
 '   - Invalid inputs or non-convergence return #NUM!.

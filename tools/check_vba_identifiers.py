@@ -163,7 +163,9 @@ KEYWORDS = frozenset("""
 ACCEPTED_KEYWORD_NAMES = {
     ("src/M_STATS_PROBDIST_SPECIALFUNCS.bas", "base"):
         "a local of the released v1.0.0 source, compiled and certified in Excel; Base is "
-        "reserved only after Option. Renamed in the next Excel wave (issue 400)",
+        "reserved only after Option. It is in the generated block of "
+        "benchmark/gamma_route_study/b64_route_vba.py, which a frozen study binds byte "
+        "for byte, so it is not renamed (issue 400)",
 }
 
 

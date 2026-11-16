@@ -157,3 +157,30 @@ up to 2.1E-14 and I widened it before this registration, on 2026-11-16.
 - The legacy regime, a lower-tail target that rounds to one.
 - The cost on other hosts, or on points outside the sixteen lines.
 - Shapes above 5E9 or probabilities beyond 1E-10 from 0 or 1.
+
+## Addendum 1 — 2026-11-16, with the candidate source, before its export
+
+Written after the baseline run and before the candidate has been run in
+Excel. No rule, bound or row changes. It records where the source differs
+from the sentence above or from the model, so that the verdict is read
+against what was built.
+
+- **The evaluation at 1/2.** The orientation is still decided by one
+  evaluation at 1/2, and that evaluation is now binary64, with the tight
+  stop. The model has it so; "keeps the orientation" above did not say it.
+  Near the boundary either member is close to 1/2 and either choice is
+  sound.
+- **A first loop that cannot evaluate.** Where the binary64 fraction does not
+  converge, the model raises. The source hands the iterate to the second
+  loop, as it does for an iterate that has not settled.
+- **The stop.** The constant is 8.9E-16, which admits the same last changes
+  as 4 * 2^-52 and does not depend on how a literal is parsed.
+- **Above the mean in the first loop.** The model forms the factor from
+  `1 - (1 - u)`; the source forms it from the iterate. Such an iterate is
+  never returned by the first loop.
+- **`Base` and one comment stay.** The registration says the pull request
+  renames the local `Base`. It does not: the routine is the generated block
+  of `../../gamma_route_study/b64_route_vba.py`, which a frozen study binds
+  byte for byte, as it binds the header that still calls #26 pending. Both
+  are left as they are and #400 records why. The comments that call #35 open
+  are corrected.
