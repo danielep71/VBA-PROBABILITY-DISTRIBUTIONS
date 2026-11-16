@@ -1734,7 +1734,7 @@ e1731,K_STATS_Lognormal_Cumulative,zero,MeanLog,3;0;0.8,3FED49083FE3AA64
 e1732,K_STATS_Lognormal_Cumulative,huge,MeanLog,3;1E308;0.8,#NUM!
 e1733,K_STATS_Lognormal_Cumulative,text,MeanLog,3;TEXT;0.8,#VALUE!
 e1734,K_STATS_Lognormal_Cumulative,empty,MeanLog,3;EMPTY;0.8,3FED49083FE3AA64
-e1735,K_STATS_Lognormal_Cumulative,nan,StdDevLog,3;0.5;NAN,#VALUE!
+e1735,K_STATS_Lognormal_Cumulative,nan,StdDevLog,3;0.5;NAN,#NUM!
 e1736,K_STATS_Lognormal_Cumulative,pinf,StdDevLog,3;0.5;PINF,#NUM!
 e1737,K_STATS_Lognormal_Cumulative,ninf,StdDevLog,3;0.5;NINF,#NUM!
 e1738,K_STATS_Lognormal_Cumulative,negative,StdDevLog,3;0.5;-1,#NUM!
@@ -1759,7 +1759,7 @@ e1756,K_STATS_Lognormal_Density,zero,MeanLog,3;0;0.8,3FB092F84909ADD3
 e1757,K_STATS_Lognormal_Density,huge,MeanLog,3;1E308;0.8,#NUM!
 e1758,K_STATS_Lognormal_Density,text,MeanLog,3;TEXT;0.8,#VALUE!
 e1759,K_STATS_Lognormal_Density,empty,MeanLog,3;EMPTY;0.8,3FB092F84909ADD3
-e1760,K_STATS_Lognormal_Density,nan,StdDevLog,3;0.5;NAN,#VALUE!
+e1760,K_STATS_Lognormal_Density,nan,StdDevLog,3;0.5;NAN,#NUM!
 e1761,K_STATS_Lognormal_Density,pinf,StdDevLog,3;0.5;PINF,#NUM!
 e1762,K_STATS_Lognormal_Density,ninf,StdDevLog,3;0.5;NINF,#NUM!
 e1763,K_STATS_Lognormal_Density,negative,StdDevLog,3;0.5;-1,#NUM!
@@ -1787,7 +1787,7 @@ e1784,K_STATS_Lognormal_InverseCumulative,zero,MeanLog,0.3;0;0.8,3FE5091C0CF1E19
 e1785,K_STATS_Lognormal_InverseCumulative,huge,MeanLog,0.3;1E308;0.8,#NUM!
 e1786,K_STATS_Lognormal_InverseCumulative,text,MeanLog,0.3;TEXT;0.8,#VALUE!
 e1787,K_STATS_Lognormal_InverseCumulative,empty,MeanLog,0.3;EMPTY;0.8,3FE5091C0CF1E194
-e1788,K_STATS_Lognormal_InverseCumulative,nan,StdDevLog,0.3;0.5;NAN,#VALUE!
+e1788,K_STATS_Lognormal_InverseCumulative,nan,StdDevLog,0.3;0.5;NAN,#NUM!
 e1789,K_STATS_Lognormal_InverseCumulative,pinf,StdDevLog,0.3;0.5;PINF,#NUM!
 e1790,K_STATS_Lognormal_InverseCumulative,ninf,StdDevLog,0.3;0.5;NINF,#NUM!
 e1791,K_STATS_Lognormal_InverseCumulative,negative,StdDevLog,0.3;0.5;-1,#NUM!
@@ -1815,7 +1815,7 @@ e1812,K_STATS_Lognormal_InverseSurvival,zero,MeanLog,0.3;0;0.8,3FF856F72B7E5419
 e1813,K_STATS_Lognormal_InverseSurvival,huge,MeanLog,0.3;1E308;0.8,#NUM!
 e1814,K_STATS_Lognormal_InverseSurvival,text,MeanLog,0.3;TEXT;0.8,#VALUE!
 e1815,K_STATS_Lognormal_InverseSurvival,empty,MeanLog,0.3;EMPTY;0.8,3FF856F72B7E5419
-e1816,K_STATS_Lognormal_InverseSurvival,nan,StdDevLog,0.3;0.5;NAN,#VALUE!
+e1816,K_STATS_Lognormal_InverseSurvival,nan,StdDevLog,0.3;0.5;NAN,#NUM!
 e1817,K_STATS_Lognormal_InverseSurvival,pinf,StdDevLog,0.3;0.5;PINF,#NUM!
 e1818,K_STATS_Lognormal_InverseSurvival,ninf,StdDevLog,0.3;0.5;NINF,#NUM!
 e1819,K_STATS_Lognormal_InverseSurvival,negative,StdDevLog,0.3;0.5;-1,#NUM!
@@ -1832,7 +1832,7 @@ e1829,K_STATS_Lognormal_Mean,zero,MeanLog,0;0.8,3FF608B71F63C8D5
 e1830,K_STATS_Lognormal_Mean,huge,MeanLog,1E308;0.8,#NUM!
 e1831,K_STATS_Lognormal_Mean,text,MeanLog,TEXT;0.8,#VALUE!
 e1832,K_STATS_Lognormal_Mean,empty,MeanLog,EMPTY;0.8,3FF608B71F63C8D5
-e1833,K_STATS_Lognormal_Mean,nan,StdDevLog,0.5;NAN,#VALUE!
+e1833,K_STATS_Lognormal_Mean,nan,StdDevLog,0.5;NAN,#NUM!
 e1834,K_STATS_Lognormal_Mean,pinf,StdDevLog,0.5;PINF,#NUM!
 e1835,K_STATS_Lognormal_Mean,ninf,StdDevLog,0.5;NINF,#NUM!
 e1836,K_STATS_Lognormal_Mean,negative,StdDevLog,0.5;-1,#NUM!
@@ -1841,7 +1841,7 @@ e1838,K_STATS_Lognormal_Mean,huge,StdDevLog,0.5;1E308,#NUM!
 e1839,K_STATS_Lognormal_Mean,text,StdDevLog,0.5;TEXT,#VALUE!
 e1840,K_STATS_Lognormal_Mean,empty,StdDevLog,0.5;EMPTY,#NUM!
 e1841,K_STATS_Lognormal_ParametersFromMeanStdDev,valid,,2;1.5,TYPE8197
-e1842,K_STATS_Lognormal_ParametersFromMeanStdDev,nan,Mean,NAN;1.5,#VALUE!
+e1842,K_STATS_Lognormal_ParametersFromMeanStdDev,nan,Mean,NAN;1.5,#NUM!
 e1843,K_STATS_Lognormal_ParametersFromMeanStdDev,pinf,Mean,PINF;1.5,#NUM!
 e1844,K_STATS_Lognormal_ParametersFromMeanStdDev,ninf,Mean,NINF;1.5,#NUM!
 e1845,K_STATS_Lognormal_ParametersFromMeanStdDev,negative,Mean,-1;1.5,#NUM!
@@ -1849,7 +1849,7 @@ e1846,K_STATS_Lognormal_ParametersFromMeanStdDev,zero,Mean,0;1.5,#NUM!
 e1847,K_STATS_Lognormal_ParametersFromMeanStdDev,huge,Mean,1E308;1.5,#NUM!
 e1848,K_STATS_Lognormal_ParametersFromMeanStdDev,text,Mean,TEXT;1.5,#VALUE!
 e1849,K_STATS_Lognormal_ParametersFromMeanStdDev,empty,Mean,EMPTY;1.5,#NUM!
-e1850,K_STATS_Lognormal_ParametersFromMeanStdDev,nan,StdDev,2;NAN,#VALUE!
+e1850,K_STATS_Lognormal_ParametersFromMeanStdDev,nan,StdDev,2;NAN,#NUM!
 e1851,K_STATS_Lognormal_ParametersFromMeanStdDev,pinf,StdDev,2;PINF,#NUM!
 e1852,K_STATS_Lognormal_ParametersFromMeanStdDev,ninf,StdDev,2;NINF,#NUM!
 e1853,K_STATS_Lognormal_ParametersFromMeanStdDev,negative,StdDev,2;-1,#NUM!
@@ -1866,7 +1866,7 @@ e1863,K_STATS_Lognormal_StdDev,zero,MeanLog,0;0.8,3FF4DCC7B5611669
 e1864,K_STATS_Lognormal_StdDev,huge,MeanLog,1E308;0.8,#NUM!
 e1865,K_STATS_Lognormal_StdDev,text,MeanLog,TEXT;0.8,#VALUE!
 e1866,K_STATS_Lognormal_StdDev,empty,MeanLog,EMPTY;0.8,3FF4DCC7B5611669
-e1867,K_STATS_Lognormal_StdDev,nan,StdDevLog,0.5;NAN,#VALUE!
+e1867,K_STATS_Lognormal_StdDev,nan,StdDevLog,0.5;NAN,#NUM!
 e1868,K_STATS_Lognormal_StdDev,pinf,StdDevLog,0.5;PINF,#NUM!
 e1869,K_STATS_Lognormal_StdDev,ninf,StdDevLog,0.5;NINF,#NUM!
 e1870,K_STATS_Lognormal_StdDev,negative,StdDevLog,0.5;-1,#NUM!
@@ -1891,7 +1891,7 @@ e1888,K_STATS_Lognormal_Survival,zero,MeanLog,3;0;0.8,3FB5B7BE00E2ACE0
 e1889,K_STATS_Lognormal_Survival,huge,MeanLog,3;1E308;0.8,#NUM!
 e1890,K_STATS_Lognormal_Survival,text,MeanLog,3;TEXT;0.8,#VALUE!
 e1891,K_STATS_Lognormal_Survival,empty,MeanLog,3;EMPTY;0.8,3FB5B7BE00E2ACE0
-e1892,K_STATS_Lognormal_Survival,nan,StdDevLog,3;0.5;NAN,#VALUE!
+e1892,K_STATS_Lognormal_Survival,nan,StdDevLog,3;0.5;NAN,#NUM!
 e1893,K_STATS_Lognormal_Survival,pinf,StdDevLog,3;0.5;PINF,#NUM!
 e1894,K_STATS_Lognormal_Survival,ninf,StdDevLog,3;0.5;NINF,#NUM!
 e1895,K_STATS_Lognormal_Survival,negative,StdDevLog,3;0.5;-1,#NUM!
@@ -1908,7 +1908,7 @@ e1905,K_STATS_Lognormal_Variance,zero,MeanLog,0;0.8,3FFB33D9C32B5DC5
 e1906,K_STATS_Lognormal_Variance,huge,MeanLog,1E308;0.8,#NUM!
 e1907,K_STATS_Lognormal_Variance,text,MeanLog,TEXT;0.8,#VALUE!
 e1908,K_STATS_Lognormal_Variance,empty,MeanLog,EMPTY;0.8,3FFB33D9C32B5DC5
-e1909,K_STATS_Lognormal_Variance,nan,StdDevLog,0.5;NAN,#VALUE!
+e1909,K_STATS_Lognormal_Variance,nan,StdDevLog,0.5;NAN,#NUM!
 e1910,K_STATS_Lognormal_Variance,pinf,StdDevLog,0.5;PINF,#NUM!
 e1911,K_STATS_Lognormal_Variance,ninf,StdDevLog,0.5;NINF,#NUM!
 e1912,K_STATS_Lognormal_Variance,negative,StdDevLog,0.5;-1,#NUM!
@@ -1933,7 +1933,7 @@ e1930,K_STATS_Normal_Cumulative,zero,Mean,3;0;1.5,3FEF45A183E9B13D
 e1931,K_STATS_Normal_Cumulative,huge,Mean,3;1E308;1.5,#NUM!
 e1932,K_STATS_Normal_Cumulative,text,Mean,3;TEXT;1.5,#VALUE!
 e1933,K_STATS_Normal_Cumulative,empty,Mean,3;EMPTY;1.5,3FEF45A183E9B13D
-e1934,K_STATS_Normal_Cumulative,nan,StdDev,3;2;NAN,#VALUE!
+e1934,K_STATS_Normal_Cumulative,nan,StdDev,3;2;NAN,#NUM!
 e1935,K_STATS_Normal_Cumulative,pinf,StdDev,3;2;PINF,#NUM!
 e1936,K_STATS_Normal_Cumulative,ninf,StdDev,3;2;NINF,#NUM!
 e1937,K_STATS_Normal_Cumulative,negative,StdDev,3;2;-1,#NUM!
@@ -1958,7 +1958,7 @@ e1955,K_STATS_Normal_Density,zero,Mean,3;0;1.5,3FA26DCD79F0273A
 e1956,K_STATS_Normal_Density,huge,Mean,3;1E308;1.5,#NUM!
 e1957,K_STATS_Normal_Density,text,Mean,3;TEXT;1.5,#VALUE!
 e1958,K_STATS_Normal_Density,empty,Mean,3;EMPTY;1.5,3FA26DCD79F0273A
-e1959,K_STATS_Normal_Density,nan,StdDev,3;2;NAN,#VALUE!
+e1959,K_STATS_Normal_Density,nan,StdDev,3;2;NAN,#NUM!
 e1960,K_STATS_Normal_Density,pinf,StdDev,3;2;PINF,#NUM!
 e1961,K_STATS_Normal_Density,ninf,StdDev,3;2;NINF,#NUM!
 e1962,K_STATS_Normal_Density,negative,StdDev,3;2;-1,#NUM!
@@ -1991,7 +1991,7 @@ e1988,K_STATS_Normal_IntervalProbability,zero,Mean,0;10;0;1.5,3FDFFFFFFFFC674D
 e1989,K_STATS_Normal_IntervalProbability,huge,Mean,0;10;1E308;1.5,#NUM!
 e1990,K_STATS_Normal_IntervalProbability,text,Mean,0;10;TEXT;1.5,#VALUE!
 e1991,K_STATS_Normal_IntervalProbability,empty,Mean,0;10;EMPTY;1.5,3FDFFFFFFFFC674D
-e1992,K_STATS_Normal_IntervalProbability,nan,StdDev,0;10;2;NAN,#VALUE!
+e1992,K_STATS_Normal_IntervalProbability,nan,StdDev,0;10;2;NAN,#NUM!
 e1993,K_STATS_Normal_IntervalProbability,pinf,StdDev,0;10;2;PINF,#NUM!
 e1994,K_STATS_Normal_IntervalProbability,ninf,StdDev,0;10;2;NINF,#NUM!
 e1995,K_STATS_Normal_IntervalProbability,negative,StdDev,0;10;2;-1,#NUM!
@@ -2019,7 +2019,7 @@ e2016,K_STATS_Normal_InverseCumulative,zero,Mean,0.3;0;1.5,BFE92BD5604428FA
 e2017,K_STATS_Normal_InverseCumulative,huge,Mean,0.3;1E308;1.5,#NUM!
 e2018,K_STATS_Normal_InverseCumulative,text,Mean,0.3;TEXT;1.5,#VALUE!
 e2019,K_STATS_Normal_InverseCumulative,empty,Mean,0.3;EMPTY;1.5,BFE92BD5604428FA
-e2020,K_STATS_Normal_InverseCumulative,nan,StdDev,0.3;2;NAN,#VALUE!
+e2020,K_STATS_Normal_InverseCumulative,nan,StdDev,0.3;2;NAN,#NUM!
 e2021,K_STATS_Normal_InverseCumulative,pinf,StdDev,0.3;2;PINF,#NUM!
 e2022,K_STATS_Normal_InverseCumulative,ninf,StdDev,0.3;2;NINF,#NUM!
 e2023,K_STATS_Normal_InverseCumulative,negative,StdDev,0.3;2;-1,#NUM!
@@ -2047,7 +2047,7 @@ e2044,K_STATS_Normal_InverseSurvival,zero,Mean,0.3;0;1.5,3FE92BD5604428FA
 e2045,K_STATS_Normal_InverseSurvival,huge,Mean,0.3;1E308;1.5,#NUM!
 e2046,K_STATS_Normal_InverseSurvival,text,Mean,0.3;TEXT;1.5,#VALUE!
 e2047,K_STATS_Normal_InverseSurvival,empty,Mean,0.3;EMPTY;1.5,3FE92BD5604428FA
-e2048,K_STATS_Normal_InverseSurvival,nan,StdDev,0.3;2;NAN,#VALUE!
+e2048,K_STATS_Normal_InverseSurvival,nan,StdDev,0.3;2;NAN,#NUM!
 e2049,K_STATS_Normal_InverseSurvival,pinf,StdDev,0.3;2;PINF,#NUM!
 e2050,K_STATS_Normal_InverseSurvival,ninf,StdDev,0.3;2;NINF,#NUM!
 e2051,K_STATS_Normal_InverseSurvival,negative,StdDev,0.3;2;-1,#NUM!
@@ -2072,7 +2072,7 @@ e2069,K_STATS_Normal_Survival,zero,Mean,3;0;1.5,3F974BCF82C9D85F
 e2070,K_STATS_Normal_Survival,huge,Mean,3;1E308;1.5,#NUM!
 e2071,K_STATS_Normal_Survival,text,Mean,3;TEXT;1.5,#VALUE!
 e2072,K_STATS_Normal_Survival,empty,Mean,3;EMPTY;1.5,3F974BCF82C9D85F
-e2073,K_STATS_Normal_Survival,nan,StdDev,3;2;NAN,#VALUE!
+e2073,K_STATS_Normal_Survival,nan,StdDev,3;2;NAN,#NUM!
 e2074,K_STATS_Normal_Survival,pinf,StdDev,3;2;PINF,#NUM!
 e2075,K_STATS_Normal_Survival,ninf,StdDev,3;2;NINF,#NUM!
 e2076,K_STATS_Normal_Survival,negative,StdDev,3;2;-1,#NUM!
@@ -2097,7 +2097,7 @@ e2094,K_STATS_Normal_ZScore,zero,Mean,3;0;1.5,4000000000000000
 e2095,K_STATS_Normal_ZScore,huge,Mean,3;1E308;1.5,#NUM!
 e2096,K_STATS_Normal_ZScore,text,Mean,3;TEXT;1.5,#VALUE!
 e2097,K_STATS_Normal_ZScore,empty,Mean,3;EMPTY;1.5,4000000000000000
-e2098,K_STATS_Normal_ZScore,nan,StdDev,3;2;NAN,#VALUE!
+e2098,K_STATS_Normal_ZScore,nan,StdDev,3;2;NAN,#NUM!
 e2099,K_STATS_Normal_ZScore,pinf,StdDev,3;2;PINF,#NUM!
 e2100,K_STATS_Normal_ZScore,ninf,StdDev,3;2;NINF,#NUM!
 e2101,K_STATS_Normal_ZScore,negative,StdDev,3;2;-1,#NUM!
