@@ -204,6 +204,25 @@ class IdentifierTest(unittest.TestCase):
                          [FIXTURE_PATH + ":6: Thing is called in Run but no procedure of that "
                           "name is reachable [vba6-win32, vba7-win32, vba7-win64]"])
 
+    def test_a_comma_inside_a_date_literal_separates_no_declaration(self) -> None:
+        # Valid VBA that the template's splitter reported as unreadable.
+        body = ("Private Const START_DAY As Date = #January 1, 2020#, LIMIT As Long = 3\n\n"
+                "Public Sub Run(Optional ByVal Stamp As Date = #January 1, 2020#, "
+                "Optional ByVal Count As Long = 2)\n"
+                "        Dim First As Date, Rate#, Total#\n"
+                "        First = #1/2/2020#: Rate# = 1#: Total# = Rate# + 2#\n"
+                "End Sub\n")
+        self.assertEqual(run_check(check_vba_identifiers.check, standalone(module(body))), [])
+        # The names after the literal are still declared, and still checked.
+        keyword = body.replace("Optional ByVal Count As Long = 2", "Optional ByVal Date As Long = 2")
+        findings = run_check(check_vba_identifiers.check, standalone(module(keyword)))
+        self.assertEqual(len(findings), 1, findings)
+        self.assertIn("parameter Date is named like the VBA keyword Date", findings[0])
+        undeclared = body.replace("Dim First As Date, ", "Dim ")
+        findings = run_check(check_vba_identifiers.check, standalone(module(undeclared)))
+        self.assertEqual(len(findings), 1, findings)
+        self.assertIn("First is assigned in Run but not declared", findings[0])
+
     def test_scale_is_refused_as_a_name(self) -> None:
         # The name that stopped the project from compiling in Excel (pull request 242).
         cases = {

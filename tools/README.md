@@ -733,6 +733,6 @@ Mozilla Public License 2.0.
 
 | File | Adaptation |
 | --- | --- |
-| `tools/check_vba_identifiers.py` | `tools/check_vba_identifiers.py`, unchanged in its rules, on this repository's `vba_lexer.py` and `check_vba_conditionals.py`, which already provide every function it imports. Added: `Scale` on the keyword list, and `ACCEPTED_KEYWORD_NAMES` for one local of the released source. The form, class and document-module rules are kept although no such module is tracked here |
+| `tools/check_vba_identifiers.py` | `tools/check_vba_identifiers.py`, with its rules unchanged and one correction (a comma inside a date literal no longer splits a declaration), on this repository's `vba_lexer.py` and `check_vba_conditionals.py`, which already provide every function it imports. Added: `Scale` on the keyword list, and `ACCEPTED_KEYWORD_NAMES` for one local of the released source. The form, class and document-module rules are kept although no such module is tracked here |
 | `tools/check_vba_calls.py` | `tools/check_vba_calls.py`, unchanged. Advisory in the template; blocking here, since the tracked source has no finding |
 | `tests/test_check_vba_names.py` | The identifier and call fixtures and cases of `tests/test_check_vba.py`, without the form, class and document-module cases; with cases for `Scale`, for the accepted name and for this repository's own source |

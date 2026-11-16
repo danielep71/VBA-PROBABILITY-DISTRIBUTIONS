@@ -51,6 +51,7 @@ from pathlib import Path
 from check_vba_conditionals import reachable_sources
 from vba_lexer import (
     Finding,
+    date_delimiter,
     logical_units,
     read_component,
     report,
@@ -210,11 +211,18 @@ class Module:
 
 
 def top_level_split(text: str, separator: str = ",") -> list[str]:
-    """Split at ``separator`` outside parentheses; strings are already blanked."""
+    """Split at ``separator`` outside parentheses and date literals; strings
+    are already blanked. The comma of ``#January 1, 2020#`` separates nothing
+    (this repository's correction; the template splits there)."""
     parts: list[str] = []
     depth = start = 0
+    in_date = False
     for index, char in enumerate(text):
-        if char == "(":
+        if char == "#" and date_delimiter(text, index, in_date):
+            in_date = not in_date
+        elif in_date:
+            continue
+        elif char == "(":
             depth += 1
         elif char == ")" and depth:
             depth -= 1
