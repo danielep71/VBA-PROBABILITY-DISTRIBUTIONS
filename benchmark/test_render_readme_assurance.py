@@ -180,7 +180,7 @@ try:
           "stale main-grid and holdout bindings show STALE badges")
     check("| **STALE** |" in text and "src/M_STATS_PROBDIST_CORE.bas" in text,
           "the table and state list name the stale evidence")
-    check("909_of_909" not in text, "stale evidence never keeps the previous figure")
+    check("909%2F909" not in text and "909_of_909" not in text, "stale evidence never keeps the previous figure")
     code, out = run(root, "--check")
     check(code == 1 and "stale evidence" in out, "stale source fails --check after --write")
 finally:

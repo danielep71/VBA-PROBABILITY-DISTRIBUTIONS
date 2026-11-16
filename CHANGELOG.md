@@ -101,6 +101,7 @@ Use only the categories needed by a release.
 
 - The Accuracy Gate no longer repeats its full proofs on a tree that a full, successful run has already verified (#386). Such a run records the tree it checked out; the push after a merge, and integration and sync pull requests, then run the live checks only. Any doubt selects the full proofs. The rule and the cases that always run in full are in `docs/VERIFICATION_DEPTH.md`.
 - `release/1.0.1` is the active release branch after the v1.0.0 release: task pull requests and Dependabot updates target it. `release/1.0.0` stays as history.
+- The README header follows the badge layout of my other repositories (#402): environment, release, evidence and license in the first row; activity, traffic, downloads, open issues by priority and stars in the second. The three evidence badges are still generated from committed records; they now read `N/N PASS` in one green.
 
 ### Fixed
 
