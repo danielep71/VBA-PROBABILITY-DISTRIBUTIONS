@@ -8,43 +8,50 @@
 
 <br>
 
-[![Excel VBA](https://img.shields.io/badge/Excel_VBA-Pure_VBA-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
-[![Pure VBA](https://img.shields.io/badge/Implementation-Pure_VBA-00599C?style=for-the-badge)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
-[![No WorksheetFunction](https://img.shields.io/badge/WorksheetFunction-Not_Required-8A2BE2?style=for-the-badge)](#why-not-worksheetfunction)
-[![No External DLL](https://img.shields.io/badge/External_DLL-None-555555?style=for-the-badge)](#installation)
-[![Tail Aware](https://img.shields.io/badge/Tail_API-Direct_Survival-c2185b?style=for-the-badge)](#why-direct-survival-functions-matter)
+[![Excel VBA](https://img.shields.io/badge/Excel_VBA-64--bit-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)](#installation)
+[![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](#installation)
+[![Tails](https://img.shields.io/badge/Tails-Direct_survival_%C2%B7_Inverse_survival-1f3a5f?style=for-the-badge)](#why-direct-survival-functions-matter)
+[![Release](https://img.shields.io/github/v/release/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=for-the-badge&label=Release&color=2ea44f)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/latest)
 <!-- BEGIN generated: assurance badges via benchmark/render_readme_assurance.py. Do not hand-edit. -->
-[![Excel CI](https://img.shields.io/badge/Excel_Regression-2007_of_2007_passed-d97706?style=for-the-badge&logo=githubactions&logoColor=white)](docs/EXCEL_VBA_CI.md)
-[![Accuracy Contracts](https://img.shields.io/badge/Accuracy_Contracts-179_of_179_PASS-0f766e?style=for-the-badge)](benchmark/accuracy_summary.md)
-[![Independent Holdout](https://img.shields.io/badge/Holdout-84_of_84_PASS-4c1d95?style=for-the-badge)](benchmark/holdout/holdout_summary.md)
+[![Excel CI](https://img.shields.io/badge/Excel_Regression-2007%2F2007_PASS-2ea44f?style=for-the-badge)](docs/EXCEL_VBA_CI.md)
+[![Accuracy Contracts](https://img.shields.io/badge/Accuracy_Contracts-179%2F179_PASS-2ea44f?style=for-the-badge)](benchmark/accuracy_summary.md)
+[![Independent Holdout](https://img.shields.io/badge/Holdout-84%2F84_PASS-2ea44f?style=for-the-badge)](benchmark/holdout/holdout_summary.md)
 <!-- END generated: assurance badges -->
+[![License](https://img.shields.io/badge/License-MPL_2.0-2ea44f?style=for-the-badge)](LICENSE)
 
 <br>
 
-[![License](https://img.shields.io/github/license/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=2ea44f)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=6f42c1)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
-[![Forks](https://img.shields.io/github/forks/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&logo=github&color=0969da)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/network/members)
-[![Clones](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdanielep71%2FVBA-PROBABILITY-DISTRIBUTIONS%2Ftraffic-history%2Fdata%2Fbadges%2Fclones.json&style=flat-square&label=clones)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/tree/traffic-history/data)
-[![Visitors](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdanielep71%2FVBA-PROBABILITY-DISTRIBUTIONS%2Ftraffic-history%2Fdata%2Fbadges%2Fvisitors.json&style=flat-square&label=visitors%20(14d))](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/tree/traffic-history/data)
-[![Visits](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdanielep71%2FVBA-PROBABILITY-DISTRIBUTIONS%2Ftraffic-history%2Fdata%2Fbadges%2Fvisits.json&style=flat-square&label=visits)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/tree/traffic-history/data)
-[![Issues](https://img.shields.io/github/issues/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=d73a49)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues)
-[![Last commit](https://img.shields.io/github/last-commit/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=orange)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/commits/main)
+[![Last commit](https://img.shields.io/github/last-commit/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/main?style=flat-square&label=last%20commit&color=217346)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/commits/main)
+[![Clones](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdanielep71%2FVBA-PROBABILITY-DISTRIBUTIONS%2Ftraffic-history%2Fdata%2Fbadges%2Fclones.json&style=flat-square&label=clones)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
+[![Visitors](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdanielep71%2FVBA-PROBABILITY-DISTRIBUTIONS%2Ftraffic-history%2Fdata%2Fbadges%2Fvisitors.json&style=flat-square&label=visitors%20(14d))](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
+[![Visits](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdanielep71%2FVBA-PROBABILITY-DISTRIBUTIONS%2Ftraffic-history%2Fdata%2Fbadges%2Fvisits.json&style=flat-square&label=visits)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS)
+[![Downloads](https://img.shields.io/github/downloads/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/total?style=flat-square&label=downloads&color=217346)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/latest)
+[![P1 issues](https://img.shields.io/github/issues/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/P1?style=flat-square&label=P1&color=B60205)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues?q=is%3Aissue%20is%3Aopen%20label%3AP1)
+[![P2 issues](https://img.shields.io/github/issues/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/P2?style=flat-square&label=P2&color=D93F0B)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues?q=is%3Aissue%20is%3Aopen%20label%3AP2)
+[![P3 issues](https://img.shields.io/github/issues/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/P3?style=flat-square&label=P3&color=FBCA04)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues?q=is%3Aissue%20is%3Aopen%20label%3AP3)
+[![Stars](https://img.shields.io/github/stars/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=flat-square&color=bf8700)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/stargazers)
 
 <br>
 
-**No add-in · No installer · No COM component · No external numerical runtime**
+**No add-in · No WorksheetFunction · No DLL · No installer · Reviewable source for every calculation**
 
 [Project website](https://danielep71.github.io/VBA-PROBABILITY-DISTRIBUTIONS/)
 &nbsp;·&nbsp;
-[Explore the API](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/API-Reference)
+[Quick start](#installation)
 &nbsp;·&nbsp;
-[Review numerical design](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Numerical-Accuracy-and-Design)
+[Distributions](#-distribution-catalogue)
 &nbsp;·&nbsp;
-[Inspect the accuracy summary](benchmark/accuracy_summary.md)
+[Direct tails](#why-direct-survival-functions-matter)
 &nbsp;·&nbsp;
-[Read the user manual](docs/user-manual/v1.0.0/)
+[Validation](#-validation-and-numerical-assurance)
 &nbsp;·&nbsp;
-[View the Wiki](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki)
+[Accuracy summary](benchmark/accuracy_summary.md)
+&nbsp;·&nbsp;
+[Limitations](#-scope-and-validation-boundary)
+&nbsp;·&nbsp;
+[User manual](docs/user-manual/v1.0.0/)
+&nbsp;·&nbsp;
+[Wiki](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki)
 
 </div>
 
@@ -548,16 +555,16 @@ The library therefore exposes direct survival functions for the relevant continu
 =K_STATS_StudentT_Survival(X,DegreesFreedom)
 =K_STATS_ChiSquare_Survival(X,DegreesFreedom)
 =K_STATS_F_Survival(X,DegreesFreedom1,DegreesFreedom2)
-=K_STATS_Gamma_Survival(X,Shape,Scale)
+=K_STATS_Gamma_Survival(X,Shape,ScaleParam)
 =K_STATS_Beta_Survival(X,Alpha,Beta)
 =K_STATS_Exponential_Survival(X,Lambda)
-=K_STATS_Weibull_Survival(X,Shape,Scale)
+=K_STATS_Weibull_Survival(X,Shape,ScaleParam)
 =K_STATS_Uniform_Survival(X,LowerBound,UpperBound)
-=K_STATS_Binomial_Survival(K,Trials,ProbSuccess)
-=K_STATS_Poisson_Survival(K,Mean)
-=K_STATS_Geometric_Survival(K,ProbSuccess)
-=K_STATS_NegativeBinomial_Survival(K,NumberSuccesses,ProbSuccess)
-=K_STATS_Hypergeometric_Survival(K,SampleSize,PopulationSuccesses,PopulationSize)
+=K_STATS_Binomial_Survival(NumberSuccesses,Trials,ProbSuccess)
+=K_STATS_Poisson_Survival(NumberEvents,Mean)
+=K_STATS_Geometric_Survival(NumberFailures,ProbSuccess)
+=K_STATS_NegativeBinomial_Survival(NumberFailures,NumberSuccesses,ProbSuccess)
+=K_STATS_Hypergeometric_Survival(SampleSuccesses,SampleSize,PopulationSuccesses,PopulationSize)
 =K_STATS_DiscreteUniform_Survival(X,LowerBound,UpperBound)
 ```
 

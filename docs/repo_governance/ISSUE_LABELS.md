@@ -61,6 +61,8 @@ calculation bugs producing wrong results for valid inputs. P2 covers material
 correctness, robustness or maintainability defects; P3 covers non-blocking work.
 
 Each issue has:
+- a start date (`- Planned start date: YYYY-MM-DD (Europe/Rome)`, or
+  `- Start date:` in a Schedule section), not later than its target end date;
 - a target end date (YYYY-MM-DD, Europe/Rome) strictly before its milestone's
   due date;
 - a Dependencies and blocking status section.
