@@ -107,6 +107,7 @@ Use only the categories needed by a release.
 - The documents, the site and two images described the state before the v1.0.0 release (#394). The site and the README now link the release; `SECURITY.md` names the supported version; `RELEASING.md` and the installation guide describe the user-manual PDF as a release asset whose checksum is in the release notes; the v1.0.0 implementation plan is marked as history; the distribution map and the decision guide say "released in v1.0.0".
 - The limitation "Student t just below 1E5" compared its measurements with a 1E-13 guarantee. The guarantee of that region is 1.3E-12: one of the three measured points is above it, the other two are within it. The released manual repeats the earlier wording in its section on recorded limitations.
 - `benchmark/verification_depth.json` recorded the grid coverage with a transition debt that no longer exists; `docs/VERIFICATION_DEPTH.md`, `docs/EXCEL_VBA_CI.md` and `tools/README.md` miscounted controls, dispatch inputs and workflows.
+- The README's list of direct survival functions used shorthand argument names; it now uses the declared ones (#399).
 
 ### Removed
 
