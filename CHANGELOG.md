@@ -99,6 +99,7 @@ Use only the categories needed by a release.
 
 ### Added
 
+- A profile of the public Gamma call and of the Gamma inverse solver, measured in Excel (#348): `benchmark/gamma_call_profile/`, study export `gcp_profile`. A public Gamma, Chi-square or Poisson probability takes 0.006 to 0.09 ms on the runner, about a tenth of the figure the README carried from an earlier run; no layer between the wrapper and the series costs more than 8 microseconds. The inverse solver takes 20 to 53 iterations at shapes 0.01, 100 and 10,000, which is #415. No production source changes.
 - Two static checks of the VBA source, `check_vba_identifiers.py` and `check_vba_calls.py` (#291): an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong number of arguments and a qualified call to a `Private` procedure are now found before Excel compiles the project. Ported from K-TEMPLATE.
 
 ### Changed
