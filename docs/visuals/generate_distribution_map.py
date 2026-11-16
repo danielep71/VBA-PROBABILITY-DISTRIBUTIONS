@@ -53,7 +53,7 @@ def validate_api():
 def build_svg():
     parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1530" viewBox="0 0 1200 1530" role="img" aria-labelledby="title desc">',
              '<title id="title">Distribution map — VBA Probability Distributions</title>',
-             '<desc id="desc">Seventeen current API surfaces: eleven continuous and six discrete. Each row gives mathematical support and an illustrative use case. Implemented pre-release capabilities are not release certification; numerical domains are narrower than mathematical support.</desc>',
+             '<desc id="desc">Seventeen current API surfaces: eleven continuous and six discrete. Each row gives mathematical support and an illustrative use case. Released in v1.0.0. The map is not an accuracy certificate; numerical domains are narrower than mathematical support.</desc>',
              '<rect width="1200" height="1530" fill="white"/>',
              '<g font-family="DejaVu Sans, Arial, sans-serif">']
 
@@ -67,7 +67,7 @@ def build_svg():
     text(36, 94, 'A map of the distributions', 40, NAVY, True)
     text(36, 132, '17 API surfaces · mathematical support · illustrative applications', 23)
     rect(36, 156, 1128, 40, '#EAF1FA')
-    text(52, 183, 'IMPLEMENTED / PRE-RELEASE    •    Standard Normal is a dedicated API surface.', 18, NAVY)
+    text(52, 183, 'RELEASED IN v1.0.0    •    Standard Normal is a dedicated API surface.', 18, NAVY)
 
     for x, label, rows, color in ((36, 'CONTINUOUS  /  11 surfaces', CONTINUOUS, BLUE),
                                    (612, 'DISCRETE  /  6 surfaces', DISCRETE, TEAL)):
@@ -104,7 +104,7 @@ def build_svg():
     text(56, 1365, 'Mathematical support is not a promise of numerical accuracy across the whole domain.', 20, 'white')
     text(36, 1421, 'Before use: check parameters, validated domains, error behavior and known limitations.', 22, NAVY, True)
     text(36, 1456, 'Current API only. Planned noncentral distributions and dependence extensions are not shown.', 20)
-    text(36, 1495, 'Companion: docs/visuals/distribution-map.md  •  No release certification is implied.', 17, '#465970')
+    text(36, 1495, 'Companion: docs/visuals/distribution-map.md  •  Not an accuracy certificate.', 17, '#465970')
     return '\n'.join(parts + ['</g>', '</svg>', ''])
 
 

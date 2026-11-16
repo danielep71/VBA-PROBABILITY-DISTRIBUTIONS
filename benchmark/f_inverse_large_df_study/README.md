@@ -12,6 +12,12 @@ in `FIX_COMPARISON_PREREGISTRATION.md`, frozen at `9fba175` (2026-09-02). It
 has not been executed: no `fix_comparison/` directory exists, no candidate has
 been evaluated, and #35 is open.
 
+*Status after the v1.0.0 release.* #35 is closed. The pair reconstruction of
+the beta inverse was registered, evaluated on an untouched holdout and taken to
+production; the record is in [`production/`](production/), with the outcome in
+[`production/PRODUCTION_RESULT.md`](production/PRODUCTION_RESULT.md). The
+status note above describes the study before that work.
+
 ## What was found
 
 `PROB_TryBetaInvRegularized` selects its solving variable by comparing `p`

@@ -5,7 +5,8 @@ numerical evidence machinery under [`benchmark/`](../benchmark/) and the Excel
 regression under [`ci/`](../ci/); they never prove compilation, regression or
 accuracy.
 
-The three checkers below are each proved by their own `--self-test` fixtures,
+Three of the checkers below (`check_committed_whitespace.py`, `check_vba_jumps.py`
+and `check_release_semantics.py`) are each proved by their own `--self-test` fixtures,
 which also run before the strict accuracy gate through
 [`benchmark/test_evidence_tools.py`](../benchmark/test_evidence_tools.py) and are
 registered in [`benchmark/verification_depth.json`](../benchmark/verification_depth.json).
@@ -16,7 +17,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_closing_keywords.py` | No commit message in the candidate range uses a closing keyword (`closes`, `fixes`, `resolves`) before an issue reference, unless the commit is recorded in `.github/closing-keyword-exceptions.json`; `--list` prints the table for an integration pull request |
 | `check_vba_jumps.py` | Every `GoTo`, `GoSub`, `Resume` and `On Error GoTo` target resolves inside its own procedure, across all tracked `.bas`/`.cls`/`.frm` modules |
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
-| `_gatelib.py` | Shared command-line and report helpers for the three checks above |
+| `_gatelib.py` | Shared command-line and report helpers for the checks above |
 | `check_binaries.py` | Every tracked binary is an approved `assets/` image or has a reviewed SHA-256 in [`.github/binary-allowlist.json`](../.github/binary-allowlist.json) ([below](#tracked-binaries)); tested by `tests/test_check_binaries.py` |
 | `format_vba.py` | Checks (`--check`) or applies (`--write`) the [VBA source layout](#vba-source-layout), ratcheting `vba_layout_baseline.json`; its fixtures are [`tests/test_format_vba.py`](../tests/test_format_vba.py) |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
@@ -388,9 +389,12 @@ it once, as `PYTHON_VERSION` in its top-level `env`, and every
 [`accuracy-gate.yml`](../.github/workflows/accuracy-gate.yml),
 [`release.yml`](../.github/workflows/release.yml),
 [`issue-triage.yml`](../.github/workflows/issue-triage.yml),
-[`link-check.yml`](../.github/workflows/link-check.yml) and
-[`daily-traffic.yml`](../.github/workflows/daily-traffic.yml) (its alert job).
-To move to a new patch release, change all six together; first confirm that
+[`link-check.yml`](../.github/workflows/link-check.yml),
+[`daily-traffic.yml`](../.github/workflows/daily-traffic.yml) (its alert job)
+and the five study workflows (`gamma-cache-study.yml`,
+`gamma-kernel-profile.yml`, `gamma-pair-study.yml`,
+`gamma-recurrence-study.yml` and `gamma-scalar-study.yml`).
+To move to a new patch release, change all eleven together; first confirm that
 [actions/python-versions](https://github.com/actions/python-versions) publishes
 it for `ubuntu-24.04` x64. The Accuracy Gate's reference wheels
 (`benchmark/requirements-ci.txt`) are pure Python, so a patch release does not
@@ -399,10 +403,13 @@ on a newer series, so the audited and the tested interpreter are the same.
 `tests/test_python_versions.py` fails if a workflow uses a floating or literal
 version, or if the workflows disagree.
 
-Two jobs run short inline scripts on the runner image's own `python3` and set
-up no Python: *Keep milestones issue-only* runs no action at all by design, and
-the traffic job of the daily traffic export keeps third-party code out of the
-job that holds its analytics token.
+Five jobs run on the runner image's own `python3` and set up no Python. Two run
+short inline scripts: *Keep milestones issue-only* runs no action at all by
+design, and the traffic job of the daily traffic export keeps third-party code
+out of the job that holds its analytics token. Three run a tracked tool that
+needs only the standard library: the suite selection of the Excel regression
+(`select_excel_suite.py`) and the two jobs of the Excel runner watch
+(`excel_runner_watch.py`).
 
 The minimum Python is **3.11**: every tool under `tools/` and `.github/scripts/`
 and every test under `tests/` runs on it, using the standard library only (the

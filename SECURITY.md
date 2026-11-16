@@ -57,14 +57,14 @@ A wrong density, probability, quantile, moment, error classification, or toleran
 
 | Source state | Security support |
 |---|---|
-| **Latest tagged functional release** | ✅ Supported |
+| **Latest tagged functional release** (currently `v1.0.0`) | ✅ Supported |
 | **Release candidate before publication** | ⚠️ Testing and best-effort remediation |
 | **main** | ⚠️ Development code; best effort |
 | **Older tagged releases** | ❌ Normally unsupported; upgrade first |
 | **Modified copies, unofficial forks, or mirrors** | ❌ Unsupported unless the issue reproduces in official supported source |
 
-If the project has not yet published a functional release, development code is
-pre-release and no production version is security-supported.
+The first functional release, `v1.0.0`, was published on 2026-11-15. Development
+code on **main** or on a release branch is not a release.
 
 Security fixes normally land on **main** and are included in a new tagged
 release. While a release branch such as `release/1.0.1` is active, they land on

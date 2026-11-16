@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1660" viewBox="0 0 1400 1660" role="img" aria-labelledby="title desc">
 <title id="title">Choosing a distribution</title>
-<desc id="desc">Start with the variable and its support. Follow discrete or continuous questions to candidate families, then check assumptions and fit. All seventeen implemented pre-release API surfaces are included. This is not automatic model selection.</desc>
+<desc id="desc">Start with the variable and its support. Follow discrete or continuous questions to candidate families, then check assumptions and fit. All seventeen API surfaces released in v1.0.0 are included. This is not automatic model selection.</desc>
 <rect width="1400" height="1660" fill="white"/>
 <g font-family="DejaVu Sans, Arial, sans-serif">
 <text x="40" y="42" font-size="18" fill="#1F5AA6" font-weight="bold">VBA PROBABILITY DISTRIBUTIONS</text>
@@ -83,9 +83,9 @@
 <text x="60" y="1411" font-size="25" fill="#096D72" font-weight="bold">4  CHECK THE IMPLEMENTATION AND ITS LIMITS</text>
 <text x="60" y="1444" font-size="22" fill="#2B3A4E" font-weight="normal">Confirm parameter conventions, supported operations, accuracy contracts and known limitations.</text>
 <text x="60" y="1473" font-size="21" fill="#2B3A4E" font-weight="normal">Geometric / Negative Binomial count failures, not trials. Beta has no point mass at 0 or 1.</text>
-<text x="40" y="1527" font-size="22" fill="#0B2A5B" font-weight="bold">CURRENT API / PRE-RELEASE · 17 surfaces, reconciled with the Distribution Map.</text>
+<text x="40" y="1527" font-size="22" fill="#0B2A5B" font-weight="bold">API RELEASED IN v1.0.0 · 17 surfaces, reconciled with the Distribution Map.</text>
 <text x="40" y="1562" font-size="22" fill="#2B3A4E" font-weight="normal">Planned noncentral distributions and dependence extensions are outside this guide.</text>
 <text x="40" y="1596" font-size="20" fill="#2B3A4E" font-weight="normal">Examples: defects in n items → Binomial; waiting with constant hazard → Exponential (if assumptions hold).</text>
-<text x="40" y="1630" font-size="19" fill="#2B3A4E" font-weight="normal">Companion: docs/visuals/choosing-distribution.md · No automatic selection or release certification.</text>
+<text x="40" y="1630" font-size="19" fill="#2B3A4E" font-weight="normal">Companion: docs/visuals/choosing-distribution.md · No automatic selection; not an accuracy certificate.</text>
 </g>
 </svg>

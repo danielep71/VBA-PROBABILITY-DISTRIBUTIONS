@@ -44,7 +44,7 @@ def build_svg():
         raise ValueError('Decision guide and Distribution Map inventories differ')
     parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1660" viewBox="0 0 1400 1660" role="img" aria-labelledby="title desc">',
              '<title id="title">Choosing a distribution</title>',
-             '<desc id="desc">Start with the variable and its support. Follow discrete or continuous questions to candidate families, then check assumptions and fit. All seventeen implemented pre-release API surfaces are included. This is not automatic model selection.</desc>',
+             '<desc id="desc">Start with the variable and its support. Follow discrete or continuous questions to candidate families, then check assumptions and fit. All seventeen API surfaces released in v1.0.0 are included. This is not automatic model selection.</desc>',
              '<rect width="1400" height="1660" fill="white"/>',
              '<g font-family="DejaVu Sans, Arial, sans-serif">']
 
@@ -84,10 +84,10 @@ def build_svg():
     text(60, 1411, '4  CHECK THE IMPLEMENTATION AND ITS LIMITS', 25, '#096D72', True)
     text(60, 1444, 'Confirm parameter conventions, supported operations, accuracy contracts and known limitations.', 22)
     text(60, 1473, 'Geometric / Negative Binomial count failures, not trials. Beta has no point mass at 0 or 1.', 21)
-    text(40, 1527, 'CURRENT API / PRE-RELEASE · 17 surfaces, reconciled with the Distribution Map.', 22, '#0B2A5B', True)
+    text(40, 1527, 'API RELEASED IN v1.0.0 · 17 surfaces, reconciled with the Distribution Map.', 22, '#0B2A5B', True)
     text(40, 1562, 'Planned noncentral distributions and dependence extensions are outside this guide.', 22)
     text(40, 1596, 'Examples: defects in n items → Binomial; waiting with constant hazard → Exponential (if assumptions hold).', 20)
-    text(40, 1630, 'Companion: docs/visuals/choosing-distribution.md · No automatic selection or release certification.', 19)
+    text(40, 1630, 'Companion: docs/visuals/choosing-distribution.md · No automatic selection; not an accuracy certificate.', 19)
     return '\n'.join(parts + ['</g>', '</svg>', ''])
 
 

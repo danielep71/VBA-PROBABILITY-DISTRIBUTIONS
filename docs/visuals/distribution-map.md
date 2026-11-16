@@ -4,8 +4,7 @@
 
 [Editable SVG](../../assets/distribution-map.svg) · [PNG](../../assets/distribution-map.png) · [README catalogue](../../README.md#-distribution-catalogue)
 
-The map describes the **implemented pre-release API**, not a published v1.0.1
-release. Standard Normal and Normal are separate API surfaces of the same
+The map describes the **API released in v1.0.0**. Standard Normal and Normal are separate API surfaces of the same
 mathematical family. Planned noncentral distributions and dependence extensions
 are deliberately absent. The detailed catalogue remains authoritative for
 additional helpers, moments and parameter conversions.
@@ -88,9 +87,7 @@ existing visual language. No external artwork or third-party data is embedded.
 ## Integration handoff
 
 - **README:** immediately below Distribution catalogue, before detailed tables.
-- **Initial manual (#263):** optional insertion in the opening distribution
-  overview if the reviewed asset is available before manual freeze; the manual
-  must remain deliverable independently of this v1.0.1 issue.
+- **Initial manual (#263):** delivered with v1.0.0 without this map.
 - **Manual update (#264):** include the approved map in the opening overview,
   followed by parameter conventions and validated-domain links. Reconcile the
   inventory against the actual release candidate before publication.
