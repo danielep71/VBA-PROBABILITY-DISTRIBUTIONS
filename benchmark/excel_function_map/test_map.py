@@ -72,6 +72,7 @@ class Map(unittest.TestCase):
         expressions = [row["kstats"] for row in function_map.ROWS]
         expressions += [row["example"][1] for row in function_map.ROWS]
         expressions += [p[key] for p in function_map.PROBES for key in ("kstats", "truncated")]
+        expressions += [edge["kstats"] for edge in function_map.EDGES]
         for expression in expressions:
             found = calls(expression)
             self.assertTrue(found, expression)
@@ -179,6 +180,14 @@ class Render(unittest.TestCase):
         self.assertEqual(render_map.probe_finding("ERROR", fraction, truncated), "refuses it")
         self.assertEqual(render_map.probe_finding(bits(0.44), truncated, truncated), "rounds it down")
         self.assertIn("neither", render_map.probe_finding(bits(0.5), fraction, truncated))
+
+    def test_edges_are_reported_as_measured(self):
+        rows = grid()
+        for row in rows:
+            if row["kind"] == "edge" and row["excel_formula"] == "GAUSS(-1.5)":
+                row["observed_kstats"] = "ERROR"
+        text = render_map.render(rows)
+        self.assertRegex(text, r"\| GAUSS at a negative z[^\n]*\| -0.433192798731 \|[^\n]*\| an error \|")
 
     def test_section_is_replaced_between_markers(self):
         page = f"a\n{render_map.BEGIN}\nold\n{render_map.END}\nb\n"

@@ -1,7 +1,7 @@
 """
 #330: the grid Excel evaluates for the function map (function_map.py).
 
-One file, excel_function_map_grid.csv, one row per example and per probe:
+One file, excel_function_map_grid.csv, one row per example, probe and edge:
 
     point_id, kind, excel_formula, kstats_call, reference,
     observed_excel, observed_kstats
@@ -43,6 +43,7 @@ def stored(formula):
 def rows():
     out = [("example", *row["example"]) for row in function_map.ROWS]
     out += [("probe", probe["excel"], probe["kstats"]) for probe in function_map.PROBES]
+    out += [("edge", edge["excel"], edge["kstats"]) for edge in function_map.EDGES]
     return out
 
 

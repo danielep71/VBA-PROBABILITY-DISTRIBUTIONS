@@ -18,6 +18,10 @@ A PROBE is a pair of formulas that settles a question the documentation
 leaves open, by measurement: what each side does with a fractional degree
 of freedom or count. `truncated` is the library expression at the argument
 rounded down, to recognise an Excel that truncates.
+
+An EDGE is an input where the replacement of a row stops applying. Both
+formulas are evaluated as they stand, to show what a reader who copied the
+row would get.
 """
 
 ROWS = [
@@ -50,8 +54,14 @@ ROWS = [
          example=("STANDARDIZE(12,10,2)", "K_STATS_Normal_ZScore(12,10,2)")),
     dict(family="Normal", excel="GAUSS(z)", legacy="",
          kstats="K_STATS_NormalStandard_IntervalProbability(0, z)",
-         notes="The probability between the mean and z.",
+         notes="The probability between the mean and z, for z of zero or more. The library "
+               "takes its two bounds in order and refuses an upper bound below the lower.",
          example=("GAUSS(1.5)", "K_STATS_NormalStandard_IntervalProbability(0,1.5)")),
+    dict(family="Normal", excel="GAUSS(z), z below zero", legacy="",
+         kstats="-K_STATS_NormalStandard_IntervalProbability(z, 0)",
+         notes="Excel returns a negative number for a negative z; put the bounds in order and "
+               "change the sign.",
+         example=("GAUSS(-1.5)", "-K_STATS_NormalStandard_IntervalProbability(-1.5,0)")),
     # --- Lognormal --------------------------------------------------------
     dict(family="Lognormal", excel="LOGNORM.DIST(x, mean, sd, TRUE)", legacy="LOGNORMDIST(x, mean, sd)",
          kstats="K_STATS_Lognormal_Cumulative(x, mean, sd)",
@@ -173,10 +183,15 @@ ROWS = [
          example=("BINOM.DIST(6,20,0.3,FALSE)", "K_STATS_Binomial_PMF(6,20,0.3)")),
     dict(family="Binomial", excel="BINOM.DIST.RANGE(n, p, k1, k2)", legacy="",
          kstats="K_STATS_Binomial_Cumulative(k2, n, p) - K_STATS_Binomial_Cumulative(k1 - 1, n, p)",
-         notes="**Different order**: Excel puts n and p first. With k2 omitted it is "
-               "`K_STATS_Binomial_PMF(k1, n, p)`.",
+         notes="**Different order**: Excel puts n and p first. For k1 of one or more. With k2 "
+               "omitted it is `K_STATS_Binomial_PMF(k1, n, p)`.",
          example=("BINOM.DIST.RANGE(20,0.3,4,8)",
                   "K_STATS_Binomial_Cumulative(8,20,0.3)-K_STATS_Binomial_Cumulative(3,20,0.3)")),
+    dict(family="Binomial", excel="BINOM.DIST.RANGE(n, p, 0, k2)", legacy="",
+         kstats="K_STATS_Binomial_Cumulative(k2, n, p)",
+         notes="With a lower bound of zero the range is the cumulative probability; the "
+               "difference above would ask the library for a count of -1.",
+         example=("BINOM.DIST.RANGE(20,0.3,0,8)", "K_STATS_Binomial_Cumulative(8,20,0.3)")),
     dict(family="Binomial", excel="BINOM.INV(n, p, alpha)", legacy="CRITBINOM(n, p, alpha)",
          kstats="K_STATS_Binomial_InverseCumulative(alpha, n, p)",
          notes="**Different order**: the library puts the probability first, as in every inverse.",
@@ -229,6 +244,15 @@ PROBES = [
     dict(topic="Negative binomial, f = 5.6", excel="NEGBINOM.DIST(5.6,3,0.4,TRUE)",
          kstats="K_STATS_NegativeBinomial_Cumulative(5.6,3,0.4)",
          truncated="K_STATS_NegativeBinomial_Cumulative(5,3,0.4)"),
+]
+
+# Where the replacement of a row above stops applying: the Excel formula and
+# the library expression that row would give, both evaluated as they stand.
+EDGES = [
+    dict(topic="GAUSS at a negative z, bounds not reordered", excel="GAUSS(-1.5)",
+         kstats="K_STATS_NormalStandard_IntervalProbability(0,-1.5)"),
+    dict(topic="Binomial range from zero, as a difference", excel="BINOM.DIST.RANGE(20,0.3,0,8)",
+         kstats="K_STATS_Binomial_Cumulative(8,20,0.3)-K_STATS_Binomial_Cumulative(-1,20,0.3)"),
 ]
 
 # Excel functions with no counterpart in the library, and why.

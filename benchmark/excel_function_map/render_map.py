@@ -163,6 +163,22 @@ def render(grid):
                    f"| {probe_finding(observed['observed_excel'], fraction, truncated)} "
                    f"| {probe_finding(observed['observed_kstats'], fraction, truncated)} |")
 
+    out += ["", "### Where a replacement stops applying", "",
+            "The Excel formula and the library expression a row above would give, both "
+            "evaluated as they stand. The rows above give the form to use instead.", "",
+            "| Case | Excel formula | Excel returns | Library expression | Library returns |",
+            "| --- | --- | --- | --- | --- |"]
+    for edge in function_map.EDGES:
+        observed = found.get((edge["excel"], edge["kstats"]))
+        if observed is None:
+            raise MapError(f"no grid row for {edge['excel']}")
+        cells = []
+        for key in ("observed_excel", "observed_kstats"):
+            number = value(observed[key])
+            cells.append("an error" if number is None else shown(number))
+        out.append(f"| {edge['topic']} | {code('=' + edge['excel'])} | {cells[0]} "
+                   f"| {code('=' + edge['kstats'])} | {cells[1]} |")
+
     out += ["", "### Excel functions the library does not replace", "",
             "| Excel | Why |", "| --- | --- |"]
     out += [f"| {names} | {why} |" for names, why in function_map.WITHOUT_COUNTERPART]
