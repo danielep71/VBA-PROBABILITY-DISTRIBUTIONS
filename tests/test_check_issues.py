@@ -22,13 +22,17 @@ REPOSITORY = "example-org/sample-project"
 BLOCKED_LABEL = check_issues.BLOCKED
 READY = "## Dependencies and blocking status\n\n**Ready to start**: none.\n"
 PLANNING = "## Planning\n- Target end date: {} (Europe/Rome)\n\n"
+START = "- Planned start date: {} (Europe/Rome)\n\n"
 
 
 def issue(number: int, *labels: str, state: str = "open", body: str = READY,
           assignees: tuple[str, ...] = ("triage-person",), milestone: str | None = "v0.1.0",
-          target: str | None = "2026-11-04", milestone_due: str | None = "2026-11-30") -> Issue:
-    """An issue whose body starts with a planning line for ``target`` unless it is None."""
-    planned = (PLANNING.format(target) if target is not None else "") + body
+          target: str | None = "2026-11-04", milestone_due: str | None = "2026-11-30",
+          start: str | None = "2026-11-02") -> Issue:
+    """An issue whose body starts with planning lines for ``target`` and ``start``;
+    either line is left out when its value is None."""
+    planned = ((PLANNING.format(target) if target is not None else "")
+               + (START.format(start) if start is not None else "") + body)
     return Issue(number, state, labels or ("P3",), assignees, milestone, planned, milestone_due)
 
 
@@ -67,6 +71,51 @@ class MetadataTests(unittest.TestCase):
         self.assertEqual([(f.number, f.rule) for f in findings], [(1, "catalogue")])
 
 
+class StartDateTests(unittest.TestCase):
+    def test_start_date_is_required(self) -> None:
+        self.assertEqual(rules([issue(1, start=None)]), [(1, "start-date")])
+
+    def test_start_date_must_be_a_real_iso_date(self) -> None:
+        for date in ("2026-02-30", "02/11/2026", "2026-11-2", "next week", ""):
+            with self.subTest(date=date):
+                self.assertEqual(rules([issue(1, start=date)]), [(1, "start-date")])
+
+    def test_start_date_may_equal_but_not_follow_the_target(self) -> None:
+        self.assertEqual(rules([issue(1, start="2026-11-04")]), [])
+        self.assertEqual(rules([issue(1, start="2026-11-05")]), [(1, "start-date")])
+
+    def test_both_spellings_and_the_zone_suffix_are_read(self) -> None:
+        for line in ("- Start date: 2026-11-02", "- Planned start date: 2026-11-02",
+                     "* start date: 2026-11-02 (Europe/Rome)",
+                     "  - Planned start date:   2026-11-02 (europe/rome)  ",
+                     "- Planned start date: 2026-11-02 (UTC check date)"):
+            with self.subTest(line=line):
+                self.assertEqual(rules([issue(1, body=line + "\n\n" + READY, start=None)]), [])
+
+    def test_a_note_does_not_rescue_a_bad_date(self) -> None:
+        for line in ("- Start date: (Europe/Rome)", "- Start date: soon (Europe/Rome)",
+                     "- Start date: 2026-11-02 (a) (b)", "- Start date: 2026-11-02 approx"):
+            with self.subTest(line=line):
+                self.assertEqual(rules([issue(1, body=line + "\n\n" + READY, start=None)]),
+                                 [(1, "start-date")])
+
+    def test_prose_that_mentions_a_start_date_is_not_a_planning_line(self) -> None:
+        body = "The start date: 2026-11-02 was agreed.\n\n" + READY
+        self.assertEqual(rules([issue(1, body=body, start=None)]), [(1, "start-date")])
+
+    def test_an_invalid_first_line_is_not_rescued_by_a_later_one(self) -> None:
+        body = "- Start date: soon\n- Planned start date: 2026-11-02\n\n" + READY
+        self.assertEqual(rules([issue(1, body=body, start=None)]), [(1, "start-date")])
+
+    def test_missing_target_does_not_hide_or_double_the_start_finding(self) -> None:
+        self.assertEqual(rules([issue(1, target=None)]), [(1, "target-date")])
+        self.assertEqual(rules([issue(1, target=None, start=None)]),
+                         [(1, "target-date"), (1, "start-date")])
+
+    def test_closed_issues_need_no_start_date(self) -> None:
+        self.assertEqual(rules([issue(1, state="closed", start=None)]), [])
+
+
 class TargetDateTests(unittest.TestCase):
     def test_target_end_date_must_be_a_real_iso_date(self) -> None:
         for date in ("2026-02-30", "04/11/2026", "2026-11-4", "soon"):
@@ -75,8 +124,10 @@ class TargetDateTests(unittest.TestCase):
         self.assertEqual(rules([issue(1, target=None)]), [(1, "target-date")])
 
     def test_crlf_bodies_are_read(self) -> None:
-        planned = PLANNING.format("2026-11-04").replace("\n", "\r\n") + READY.replace("\n", "\r\n")
+        planned = ((PLANNING.format("2026-11-04") + START.format("2026-11-02") + READY)
+                   .replace("\n", "\r\n"))
         self.assertEqual(check_issues.target_end_date(planned), "2026-11-04")
+        self.assertEqual(check_issues.start_date(planned), "2026-11-02")
         form = "### 🗓️ Target end date (Europe/Rome)\r\n\r\n2026-11-04\r\n\r\n" + READY.replace("\n", "\r\n")
         self.assertEqual(check_issues.target_end_date(form), "2026-11-04")
         item = {"number": 1, "state": "open", "labels": [{"name": "P3"}],
@@ -111,7 +162,8 @@ class TargetDateTests(unittest.TestCase):
 
     def test_open_issue_in_a_closed_milestone_is_reported(self) -> None:
         closed = Issue(1, "open", ("P3",), ("triage-person",), "v0.1.0",
-                       PLANNING.format("2026-11-04") + READY, "2026-11-30", "closed")
+                       PLANNING.format("2026-11-04") + START.format("2026-11-02") + READY,
+                       "2026-11-30", "closed")
         self.assertEqual(rules([closed]), [(1, "milestone")])
 
     def test_due_date_comes_from_the_api_milestone(self) -> None:
@@ -217,7 +269,8 @@ class MainTests(unittest.TestCase):
         items = [
             {"number": 1, "state": "open", "labels": [{"name": "P3"}],
              "assignees": [{"login": "triage-person"}], "milestone": None,
-             "body": PLANNING.format("2026-11-04") + READY + "Delivered in #2, a pull request.\n"},
+             "body": PLANNING.format("2026-11-04") + START.format("2026-11-02") + READY
+             + "Delivered in #2, a pull request.\n"},
             {"number": 2, "state": "open", "labels": [], "assignees": [],
              "milestone": None, "body": READY, "pull_request": {}},
         ]
