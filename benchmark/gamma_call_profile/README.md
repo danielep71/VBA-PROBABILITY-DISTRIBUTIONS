@@ -20,7 +20,7 @@ benchmark of #298:
 | `public_cdf`, `public_sf` | `K_STATS_Gamma_Cumulative`, `K_STATS_Gamma_Survival`, scale 1 |
 | `routed_p`, `routed_q` | `PROB_TryGammaRoutedP`, `PROB_TryGammaRoutedQ`: the route test and the routine it selects |
 | `b64_kernel` | The binary64 routine the route selects: the series below `X = A + 1`, the continued fraction from there, each with its prefactor |
-| `legacy_loop` | The series or continued fraction of before #242, stopped at 3E-14, with its own prefactor |
+| `legacy_loop` | The series or continued fraction of before #242, with its own prefactor. The series stops at machine precision; the continued fraction stops at 3E-14 for shapes above one |
 | `kernel_p`, `kernel_q` | The double-double entry points, for scale |
 | `log_pdf` | `PROB_TryGammaLogPdf`, which the inverse solver calls once per iteration |
 | `stirling` | `PROB_StirlingError`, for shapes above one |
@@ -141,14 +141,21 @@ repeat the old run, so the old figures are superseded, not explained.
 - the binary64 kernel over the loop of before #242, 1 to 7, and 34 at
   shape 10,000 below the seam; at shape 0.0001 the kernel is the faster
   of the two. For shapes above one the prefactor alone is
-  5 to 8, so it accounts for that difference everywhere but there; at
-  (10,000, 9,900) the rest is the series itself, which now runs to machine
-  precision with a compensated sum where the old one stopped at 3E-14;
+  5 to 8, so it accounts for that difference everywhere but there. At
+  (10,000, 9,900) both routines are series stopped at machine precision,
+  and the binary64 one takes 28 microseconds more than its prefactor
+  explains. I have not measured why: it carries a compensated sum and a
+  second test on the remainder, and I did not count its terms;
 - the old loop, 1.4 to 29.
 
 Nothing between the wrapper and the loop is large. At small shapes the
 wrapper and the kernel are comparable; at shape 10,000 the series is the
 call.
+
+Review of the pull request corrected this section and the table of parts
+above. I had written that the old loop stopped at 3E-14 everywhere and had
+put the difference at (10,000, 9,900) down to the stop. Only the old
+continued fraction stops there; the old series does not.
 
 **The solver.** The tail evaluations are 83 to 95 percent of an inverse and
 the density evaluations most of the rest. What is unexpected is the count:
@@ -169,8 +176,9 @@ a few times only.
 ### Decision
 
 - **The public call stays as it is.** No part of it is worth an Excel wave:
-  the largest single cost outside the series is a prefactor of 5 to 8
-  microseconds.
+  outside the series the largest single cost is a prefactor of 5 to 8
+  microseconds. The one unexplained figure, the series at shape 10,000
+  below the seam, is 28 microseconds in a call of 65.
 - **The solver's iteration count is worth a study**, and is issue 415. If
   it came down to the six of shape 100 at p = 0.9, an inverse at shape
   10,000 would take about a tenth of what it takes. The cause is not
