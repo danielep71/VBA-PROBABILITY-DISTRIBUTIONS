@@ -213,6 +213,8 @@ Private Const PROB_GAMMAINV_FAST_MIN_SHAPE As Double = 0.01 'Gamma inverse: the 
 'still inside its own 100000 cap; this binary64 series answers where it is not.
 Private Const PROB_GAMMA_SERIES_EPS    As Double = PROB_MACH_EPS 'Stop for the ascending gamma series only; see the note above
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
+Private Const PROB_BETAINV_FAST_ITER   As Long = 60       'Beta inverse: binary64 Newton iterations before the pair loop takes over (#359)
+Private Const PROB_BETAINV_FAST_EPS    As Double = 8.9E-16 'Beta inverse: stop of the binary64 fraction inside the Newton loop; admits a last change of up to 4 * 2^-52 (#359)
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
 Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y deviance argument is formed in log space to preserve the caller''s stable logs
 
@@ -490,8 +492,8 @@ Public Function PROB_TryLogGamma1p( _
 '   it is already worth a factor of four at X = 1E-14 and grows without limit as
 '   X falls. Callers that divide the result by X inherit the whole error, so a
 '   lost increment becomes a lost quantile. This kernel is provided for such
-'   callers, chiefly the scaled Gamma quantile seed in PROB_TryGammaInvP, which
-'   has not yet been rerouted onto it (#14). It evaluates the Maclaurin series
+'   callers: PROB_TryPositiveRatioTails and, since #14, the log-space Gamma
+'   quantile of PROB_TryGammaInvLogUnit. It evaluates the Maclaurin series
 '   in X directly, so the increment is never asked to survive an addition to
 '   one.
 '
@@ -1915,7 +1917,8 @@ Public Function PROB_TryBetaContinuedFraction( _
     ByVal B As Double, _
     ByVal X As Double, _
     ByRef Result As Double, _
-    ByRef FailMsg As String) _
+    ByRef FailMsg As String, _
+    Optional ByVal StopEps As Double = PROB_NUM_EPS) _
     As Boolean
 '
 '==============================================================================
@@ -1928,10 +1931,16 @@ Public Function PROB_TryBetaContinuedFraction( _
 ' PRECONDITION
 '   A > 0, B > 0, 0 < X < 1, and X < (A + 1) / (A + B + 2).
 '
+' INPUTS
+'   StopEps
+'     The fraction stops when a term changes it by at most this, relatively.
+'     Omitted, it is PROB_NUM_EPS; the beta inverse passes a tighter one
+'     (#359).
+'
 ' RETURNS
 '   Boolean
 '     TRUE  => Result holds the continued-fraction value.
-'     FALSE => PROB_BETA_MAX_ITER was exhausted without meeting PROB_NUM_EPS.
+'     FALSE => PROB_BETA_MAX_ITER was exhausted without meeting StopEps.
 '              Result is left unchanged; a partial sum is never returned.
 '==============================================================================
 '
@@ -1999,7 +2008,7 @@ Public Function PROB_TryBetaContinuedFraction( _
                 h = h * Del
 
             'Return on convergence
-                If Abs(Del - 1#) <= PROB_NUM_EPS Then
+                If Abs(Del - 1#) <= StopEps Then
                     Result = h
                     PROB_TryBetaContinuedFraction = True
                     Exit Function
@@ -2318,7 +2327,8 @@ Private Function PROB_TryBetaTailsPair( _
     ByVal B As Double, _
     ByRef LowerTail As Double, _
     ByRef UpperTail As Double, _
-    ByRef FailMsg As String) _
+    ByRef FailMsg As String, _
+    Optional ByVal Binary64 As Boolean = False) _
     As Boolean
 '
 '==============================================================================
@@ -2336,6 +2346,9 @@ Private Function PROB_TryBetaTailsPair( _
 '     pair of Doubles.
 '   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
 '     declines, the binary64 fraction answers as before #35.
+'   - With Binary64 the pair fraction is not tried: the binary64 fraction
+'     answers, stopped at PROB_BETAINV_FAST_EPS, at the rounded argument
+'     (#359). From the mean that argument, 1 - X, is no longer exact.
 '
 ' RETURNS
 '   Boolean
@@ -2387,7 +2400,10 @@ Private Function PROB_TryBetaTailsPair( _
     End If
 
     If X < (A + 1#) / (A + B + 2#) Then
-        If Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
+        If Binary64 Then
+            If Not PROB_TryBetaContinuedFraction( _
+                A, B, X, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
+        ElseIf Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
             If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
         End If
         Value = Bt * CFValue / A
@@ -2396,9 +2412,14 @@ Private Function PROB_TryBetaTailsPair( _
         LowerTail = Value
         UpperTail = 1# - Value
     Else
-        PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
-        If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
-            If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+        If Binary64 Then
+            If Not PROB_TryBetaContinuedFraction( _
+                B, A, Y, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
+        Else
+            PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
+            If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
+                If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+            End If
         End If
         Value = Bt * CFValue / B
         If Value < 0# Then Value = 0#
@@ -2492,7 +2513,8 @@ Private Function PROB_TryBetaInvResidual( _
     ByVal MatchLower As Boolean, _
     ByVal Target As Double, _
     ByRef Residual As Double, _
-    ByRef FailMsg As String) _
+    ByRef FailMsg As String, _
+    Optional ByVal Binary64 As Boolean = False) _
     As Boolean
 '
 '==============================================================================
@@ -2501,13 +2523,15 @@ Private Function PROB_TryBetaInvResidual( _
 ' PURPOSE
 '   The residual the beta inverse drives to zero at U (#35), formed on the
 '   smaller probability tail: the lower tail minus its target, or the upper
-'   tail's target minus the upper tail. Both grow with U.
+'   tail's target minus the upper tail. Both grow with U. Binary64 selects
+'   the binary64 fraction of PROB_TryBetaTailsPair (#359).
 '==============================================================================
 '
     Dim LowerTail           As Double          'I_U(Sa, Sb)
     Dim UpperTail           As Double          '1 - I_U(Sa, Sb)
 
-    If Not PROB_TryBetaTailsPair(U, Sa, Sb, LowerTail, UpperTail, FailMsg) Then Exit Function
+    If Not PROB_TryBetaTailsPair( _
+        U, Sa, Sb, LowerTail, UpperTail, FailMsg, Binary64) Then Exit Function
     If MatchLower Then
         Residual = LowerTail - Target
     Else
@@ -2582,15 +2606,25 @@ Public Function PROB_TryBetaInvRegularized( _
 '
 ' BEHAVIOR
 '   - Solves for the smaller member of the pair (X, Y): the member below 1/2,
-'     decided by one evaluation at 1/2. The other member is then 1 minus a
+'     decided by one binary64 evaluation at 1/2. The other member is then 1 minus a
 '     number below 1/2 and loses nothing (#35). Solving for the larger member
 '     left the small one as 1 - U, wrong by 2^-52 / U.
 '   - Forms the residual on whichever probability tail is the smaller, and
 '     computes that tail directly (PROB_TryBetaTailsPair). Without this the
 '     upper tail loses everything: I_X - Probability with both near 1 is pure
 '     cancellation.
-'   - A Newton step that returns the current iterate settles when the two
-'     adjacent Doubles bracket the root and neither has a smaller residual.
+'   - Two loops (#359). The first is Newton on the binary64 residual, its
+'     fraction stopped at PROB_BETAINV_FAST_EPS. An iterate it settles below
+'     the mean, (Sa + 1) / (Sa + Sb + 2), is compared with its two adjacent
+'     Doubles and the one with the smallest residual is returned: there the
+'     fraction's argument is the iterate itself and pair arithmetic adds
+'     nothing the result keeps. An iterate at or above the mean, where the
+'     argument is 1 - U, or one the first loop does not settle within
+'     PROB_BETAINV_FAST_ITER steps or cannot evaluate, goes to the second
+'     loop, which carries the fraction and its argument as pairs.
+'   - In the second loop a Newton step that returns the current iterate
+'     settles when the two adjacent Doubles bracket the root and neither has
+'     a smaller residual.
 '   - Where the lower-tail target of the member chosen that way rounds to
 '     one, or the evaluation at 1/2 fails, the routine before #35 answers
 '     unchanged: it solves on the smaller
@@ -2611,7 +2645,8 @@ Public Function PROB_TryBetaInvRegularized( _
 '
 ' METHOD
 '   Candidate P4 of benchmark/f_inverse_large_df_study/fix_comparison, under
-'   the accuracy tiers of #327.
+'   the accuracy tiers of #327, with the binary64 first loop of candidate S
+'   of benchmark/f_inverse_large_df_study/cost.
 '
 ' DEPENDENCIES
 '   - PROB_NormalInvCDFRaw, PROB_LogBeta, PROB_TryExp
@@ -2658,6 +2693,12 @@ Public Function PROB_TryBetaInvRegularized( _
     Dim ExpTwoW             As Double          'Exp(2 * W), overflow-guarded seed factor
     Dim Converged           As Boolean         'TRUE once the iterate has settled
     Dim IterIdx             As Long            'Iteration index
+    Dim Mean                As Double          '(Sa + 1) / (Sa + Sb + 2), where the forward function reflects
+    Dim MatchTarget         As Double          'Target of the matched tail
+    Dim FastSettled         As Boolean         'TRUE once the binary64 loop has settled
+    Dim FastFailed          As Boolean         'TRUE when the binary64 loop could not evaluate
+    Dim Best                As Double          'Smallest binary64 residual among U and its neighbours, in magnitude
+    Dim BestU               As Double          'Where it is attained
 
 '------------------------------------------------------------------------------
 ' HANDLE BOUNDARIES
@@ -2684,7 +2725,7 @@ Public Function PROB_TryBetaInvRegularized( _
     'for Y otherwise: the member solved for is the small one (#35)
     'An evaluation at 1/2 that fails decides nothing: the routine before #35
     'did not make it, and answers instead (below)
-        Legacy = Not PROB_TryBetaTailsPair(0.5, A, B, HalfLower, HalfUpper, FailMsg)
+        Legacy = Not PROB_TryBetaTailsPair(0.5, A, B, HalfLower, HalfUpper, FailMsg, True)
         If Legacy Then
             FailMsg = vbNullString
             HalfLower = 0#
@@ -2758,14 +2799,108 @@ Public Function PROB_TryBetaInvRegularized( _
         If U <= 0# Or U >= 1# Or Not PROB_IsFinite(U) Then U = 0.5 * Target + 0.25
 
 '------------------------------------------------------------------------------
+' BINARY64 NEWTON
+'------------------------------------------------------------------------------
+    'The first loop (#359): the residual from the binary64 fraction. A failed
+    'evaluation is not a failure of the call; the pair loop takes over
+        Mean = (Sa + 1#) / (Sa + Sb + 2#)
+        MatchTarget = TargetUpper
+        If MatchLower Then MatchTarget = TargetLower
+
+        If Not Legacy Then
+            Low = 0#
+            High = 1#
+
+            For IterIdx = 1 To PROB_BETAINV_FAST_ITER
+                If Not PROB_TryBetaInvResidual( _
+                    U, Sa, Sb, MatchLower, MatchTarget, Residual, FailMsg, True) Then
+                    FastFailed = True
+                    Exit For
+                End If
+
+                If Residual < 0# Then
+                    If U > Low Then Low = U
+                Else
+                    If U < High Then High = U
+                End If
+
+                Density = 0#
+                If U > 0# And U < 1# Then
+                    LogDensity = (Sa - 1#) * Log(U) + (Sb - 1#) * Log(1# - U) - LogBetaAB
+                    If Not PROB_TryExp(LogDensity, Density) Then Density = 0#
+                End If
+
+                If Density <= 0# Then
+                    UNew = 0.5 * (Low + High)
+                Else
+                    UNew = U - Residual / Density
+                    If UNew <= Low Or UNew >= High Then UNew = 0.5 * (Low + High)
+                End If
+
+                If Abs(UNew - U) <= PROB_MACH_EPS * Abs(UNew) Or UNew = U Then
+                    U = UNew
+                    FastSettled = True
+                    Exit For
+                End If
+
+                U = UNew
+            Next IterIdx
+
+    'Below the mean: keep the best of the settled Double and its neighbours
+            If FastSettled And U > 0# And U < Mean Then
+                BestU = U
+                Below = PROB_BP_Adjacent(U, False)
+                Above = PROB_BP_Adjacent(U, True)
+
+                If Not PROB_TryBetaInvResidual( _
+                    U, Sa, Sb, MatchLower, MatchTarget, Residual, FailMsg, True) Then
+                    FastFailed = True
+                Else
+                    Best = Abs(Residual)
+                End If
+
+                If Below > 0# And Not FastFailed Then
+                    If Not PROB_TryBetaInvResidual( _
+                        Below, Sa, Sb, MatchLower, MatchTarget, ResidualBelow, FailMsg, True) Then
+                        FastFailed = True
+                    ElseIf Abs(ResidualBelow) < Best Then
+                        BestU = Below
+                        Best = Abs(ResidualBelow)
+                    End If
+                End If
+
+                If Above < Mean And Not FastFailed Then
+                    If Not PROB_TryBetaInvResidual( _
+                        Above, Sa, Sb, MatchLower, MatchTarget, ResidualAbove, FailMsg, True) Then
+                        FastFailed = True
+                    ElseIf Abs(ResidualAbove) < Best Then
+                        BestU = Above
+                    End If
+                End If
+
+                If Not FastFailed Then
+                    U = BestU
+                    Converged = True
+                End If
+            End If
+
+            If FastFailed Then FailMsg = vbNullString
+            If U <= 0# Or U >= 1# Then U = 0.5 * Target + 0.25
+        End If
+
+'------------------------------------------------------------------------------
 ' SAFEGUARDED NEWTON
 '------------------------------------------------------------------------------
+    'The pair loop, from the iterate the first loop left; on the legacy path
+    'the only loop. Not entered when the first loop has answered
     'Initialize the bracket
         Low = 0#
         High = 1#
 
     'Iterate
         For IterIdx = 1 To PROB_INV_MAX_ITER
+            If Converged Then Exit For
+
             'Evaluate the objective on the matched tail
                 If Legacy Then
                     If Not PROB_TryBetaRegularized(U, 1# - U, Sa, Sb, Ibeta, FailMsg) Then Exit Function

@@ -313,9 +313,10 @@ active one.
 
 One name is accepted although it is on the keyword list: the local `Base` in
 `M_STATS_PROBDIST_SPECIALFUNCS`. It is in the released v1.0.0 source, which
-Excel compiled: VBA reserves `Base` only after `Option`. `ACCEPTED_KEYWORD_NAMES`
-names the file and the reason, a test fails when the name leaves the source, and
-the rename waits for the next Excel wave, because it changes certified source.
+Excel compiled: VBA reserves `Base` only after `Option`. It stays: the routine
+is the generated block of `benchmark/gamma_route_study/b64_route_vba.py`, which
+a frozen study binds byte for byte. `ACCEPTED_KEYWORD_NAMES` names the file and
+the reason, and a test fails when the name leaves the source.
 
 What the two cannot see:
 

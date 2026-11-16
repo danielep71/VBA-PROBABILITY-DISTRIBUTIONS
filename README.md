@@ -80,7 +80,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **2,007** | of 2,007 deterministic VBA assertions passed in the retained Excel run on `ad25997`; regression sources unchanged since |
+| **2,007** | of 2,007 deterministic VBA assertions passed in the retained Excel run on `15d8e28`; regression sources unchanged since |
 | **13,005** | further VBA assertions declared in 8 study and slow production batteries, run on the Excel runner apart from the pull-request regression; their result is in each run's log, not in the retained record |
 | **179** | active accuracy contracts (180 registry rows; 1 characterization-only): 179 PASS, 0 FAIL, 0 PENDING |
 | **2,215** | observation rows; main grid 1,859: 1,859 claimed, 0 exempt, 0 without a disposition |
@@ -95,8 +95,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 2,007/2,007 assertions passed on `ad25997` (Excel 16.0 build 20710, 64-bit; finished 2026-11-15). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `ad25997`).
+- **Excel regression** — 2,007/2,007 assertions passed on `15d8e28` (Excel 16.0 build 20710, 64-bit; finished 2026-11-16). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `15d8e28`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — complete: every one of 1,859 main-grid rows is claimed or exempt.
 - **Contract verdicts** — 179 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 2 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
@@ -1363,7 +1363,7 @@ The library is particularly suited to:
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
 - Gamma, Chi-square and Poisson probabilities take about 0.06 to 0.23 ms per call in the measured Excel run, for shapes from 0.0001 to 10,000, and are held to 1E-13 relative. Three cases still use double-double arithmetic: an upper tail below `X = Shape + 1` when the lower tail exceeds 0.9 and results below 1E-290, at 13 to 400 ms per call, and the inverses for shapes below 0.01 whose unit-scale quantile is above `exp(-40)`, at up to a second; a smaller quantile is formed in log space in about 0.02 ms (#14). Shapes above 1E15 use it too. A Gamma or Chi-square inverse takes 0.05 to 2 ms up to shape 100 and about 20 ms at shape 10,000. Timing is host-dependent; see the [measurements and their exceptions](benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md);
-- a Beta or F inverse takes 0.6 to 28 ms per call in the measured Excel run, 6 to 580 times what it took before the pair reconstruction of #35, which brought the F inverse with degrees of freedom far apart from 1E-8 to below 1E-14 relative. The balanced cases are the slowest. See the [measurements](benchmark/f_inverse_large_df_study/production/PRODUCTION_RESULT.md);
+- a Beta or F inverse takes about 0.03 to 0.12 ms per call in the measured Excel run where the member of the pair `(x, 1 - x)` it solves for settles below the mean of its distribution, which is what it took before the pair reconstruction of #35. Where it settles at or above the mean, as it does for an F inverse with degrees of freedom far apart, it still uses pair arithmetic and takes 0.4 to 6 ms, 2 to 3 times faster than v1.0.0. See the [measurements](benchmark/f_inverse_large_df_study/cost/RESULT.md);
 - two regimes are recorded as limitations and not yet measured across their range: the Beta and F inverses for a probability within 2^-53 of zero or one whose quantile is beyond 1/2, and the Student-t tail below df = 1E5 where it is off by up to 3.2E-12 just below that df. See the [limitation register](benchmark/numerical_limitations.csv);
 - every accuracy claim is limited to the documented numerical regime;
 - external benchmark coverage is broader for some families than others;
