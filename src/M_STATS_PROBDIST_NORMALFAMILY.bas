@@ -1630,7 +1630,7 @@ Public Function K_STATS_Normal_InverseCumulative( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDev, False) Then
             FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -1772,7 +1772,7 @@ Public Function K_STATS_Normal_InverseSurvival( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDev, False) Then
             FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -2036,7 +2036,7 @@ Public Function K_STATS_Normal_IntervalProbability( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDev, False) Then
             FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -2210,7 +2210,7 @@ Public Function K_STATS_Lognormal_Density( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDevLog, False) Then
             FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -2382,7 +2382,7 @@ Public Function K_STATS_Lognormal_Cumulative( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDevLog, False) Then
             FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -2542,7 +2542,7 @@ Public Function K_STATS_Lognormal_Survival( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDevLog, False) Then
             FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -2692,7 +2692,7 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDevLog, False) Then
             FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -2844,7 +2844,7 @@ Public Function K_STATS_Lognormal_InverseSurvival( _
             GoTo Fail_Num
         End If
 
-        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDevLog, False) Then
             FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -3334,12 +3334,12 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 ' VALIDATE INPUTS
 '------------------------------------------------------------------------------
     'Validate arithmetic mean
-        If Not PROB_IsWithinSupportedMagnitude(Mean) Or Mean <= 0# Then
+        If Not PROB_IsPositiveParameter(Mean, False) Then
             FailMsg = "Mean must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
     'Validate arithmetic standard deviation (non-negative)
-        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev < 0# Then
+        If Not PROB_IsPositiveParameter(StdDev, True) Then
             FailMsg = "StdDev must be non-negative and within the parameter-magnitude guard (< 1E100)"
             GoTo Fail_Num
         End If
@@ -3642,6 +3642,37 @@ End Function
 ' PRIVATE VALIDATION HELPERS
 '==============================================================================
 
+Private Function PROB_IsPositiveParameter( _
+    ByVal Value As Double, _
+    ByVal AllowZero As Boolean) _
+    As Boolean
+'
+'==============================================================================
+' PROB_IsPositiveParameter
+'------------------------------------------------------------------------------
+' PURPOSE
+'   TRUE when Value is finite, inside the parameter-magnitude guard and
+'   positive; with AllowZero, zero is accepted too.
+'
+' WHY NOT ONE CONDITION
+'   VBA evaluates both sides of Or, and comparing a value that is not a
+'   number raises a run-time error. Written as
+'   "Not PROB_IsWithinSupportedMagnitude(V) Or V <= 0#", the test sent a
+'   not-a-number standard deviation to the error handler, and the worksheet
+'   saw #VALUE! where every other invalid parameter gives #NUM! (#331). Here
+'   the sign is compared only once the value is known to be finite.
+'==============================================================================
+'
+    If Not PROB_IsWithinSupportedMagnitude(Value) Then Exit Function
+
+    If AllowZero Then
+        PROB_IsPositiveParameter = (Value >= 0#)
+    Else
+        PROB_IsPositiveParameter = (Value > 0#)
+    End If
+End Function
+
+
 Private Function PROB_ValidateNormalInputs( _
     ByVal X As Double, _
     ByVal Mean As Double, _
@@ -3670,7 +3701,7 @@ Private Function PROB_ValidateNormalInputs( _
             Exit Function
         End If
     'Validate standard deviation
-        If Not PROB_IsWithinSupportedMagnitude(StdDev) Or StdDev <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDev, False) Then
             FailMsg = "StdDev must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If
@@ -3719,7 +3750,7 @@ Private Function PROB_ValidateLogParameters( _
             Exit Function
         End If
     'Validate log standard deviation
-        If Not PROB_IsWithinSupportedMagnitude(StdDevLog) Or StdDevLog <= 0# Then
+        If Not PROB_IsPositiveParameter(StdDevLog, False) Then
             FailMsg = "StdDevLog must be strictly positive and within the parameter-magnitude guard (< 1E100)"
             Exit Function
         End If

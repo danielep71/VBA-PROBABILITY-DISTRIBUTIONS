@@ -543,6 +543,8 @@ Private Sub RunCoreSuite()
     TimingLap "Test_Core_ExpNegHalfSquare"
     Test_Core_Characterization
     TimingLap "Test_Core_Characterization"
+    Test_Core_ApiErrorContract
+    TimingLap "Test_Core_ApiErrorContract"
 End Sub
 
 
@@ -22032,4 +22034,569 @@ Private Sub Test_DS_ManualExamples()
     AssertErrorCode "9.5 Binomial cdf(12,20,1.35) is #NUM", Result, xlErrNum
     AssertTrue "9.5 Status names the argument", _
         Status = "ProbSuccess must be between 0 and 1"
+End Sub
+
+
+' BEGIN generated public API error contract (#331)
+Private Sub Test_Core_ApiErrorContract()
+'
+'==============================================================================
+' Test_Core_ApiErrorContract
+'------------------------------------------------------------------------------
+' PURPOSE
+'   One row for every public function (#331): a valid call returns no error,
+'   and each argument in turn set to not-a-number, +infinity and -infinity
+'   returns #NUM!. A function that raised instead of returning fails its row.
+'
+' EXCEPTION
+'   K_STATS_NormalStandard_InverseCumulativeFast returns a Double and
+'   validates nothing, by its documented contract; only its valid call is
+'   checked.
+'
+' GENERATED
+'   benchmark/error_behavior/build_grid.py --battery, from
+'   docs/PUBLIC_API.txt. Do not edit: test_survey.py fails when the two
+'   differ, so a new public function without a row fails the Python suite.
+'==============================================================================
+'
+    Debug.Print "-- Public API error contract (valid call; each argument non-finite is #NUM)"
+
+    ApiContractRow "K_STATS_Beta_Cumulative", 3, True, _
+        0.4, 2#, 3#, 0#
+    ApiContractRow "K_STATS_Beta_Density", 3, True, _
+        0.4, 2#, 3#, 0#
+    ApiContractRow "K_STATS_Beta_InverseCumulative", 3, True, _
+        0.3, 2#, 3#, 0#
+    ApiContractRow "K_STATS_Beta_Mean", 2, True, _
+        2#, 3#, 0#, 0#
+    ApiContractRow "K_STATS_Beta_StdDev", 2, True, _
+        2#, 3#, 0#, 0#
+    ApiContractRow "K_STATS_Beta_Survival", 3, True, _
+        0.4, 2#, 3#, 0#
+    ApiContractRow "K_STATS_Beta_Variance", 2, True, _
+        2#, 3#, 0#, 0#
+    ApiContractRow "K_STATS_Exponential_Cumulative", 2, True, _
+        3#, 0.7, 0#, 0#
+    ApiContractRow "K_STATS_Exponential_Density", 2, True, _
+        3#, 0.7, 0#, 0#
+    ApiContractRow "K_STATS_Exponential_InverseCumulative", 2, True, _
+        0.3, 0.7, 0#, 0#
+    ApiContractRow "K_STATS_Exponential_Survival", 2, True, _
+        3#, 0.7, 0#, 0#
+    ApiContractRow "K_STATS_Gamma_Cumulative", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Gamma_Density", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Gamma_InverseCumulative", 3, True, _
+        0.3, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Gamma_Mean", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Gamma_StdDev", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Gamma_Survival", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Gamma_Variance", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Uniform_Cumulative", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_Uniform_Density", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_Uniform_InverseCumulative", 3, True, _
+        0.3, 0#, 10#, 0#
+    ApiContractRow "K_STATS_Uniform_Survival", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_Weibull_Cumulative", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Weibull_Density", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Weibull_InverseCumulative", 3, True, _
+        0.3, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Weibull_Mean", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Weibull_StdDev", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Weibull_Survival", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Weibull_Variance", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Binomial_Cumulative", 3, True, _
+        3#, 10#, 0.3, 0#
+    ApiContractRow "K_STATS_Binomial_InverseCumulative", 3, True, _
+        0.3, 10#, 0.3, 0#
+    ApiContractRow "K_STATS_Binomial_LogPMF", 3, True, _
+        3#, 10#, 0.3, 0#
+    ApiContractRow "K_STATS_Binomial_Mean", 2, True, _
+        10#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Binomial_PMF", 3, True, _
+        3#, 10#, 0.3, 0#
+    ApiContractRow "K_STATS_Binomial_StdDev", 2, True, _
+        10#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Binomial_Survival", 3, True, _
+        3#, 10#, 0.3, 0#
+    ApiContractRow "K_STATS_Binomial_Variance", 2, True, _
+        10#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_Cumulative", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_InverseCumulative", 3, True, _
+        0.3, 0#, 10#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_LogPMF", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_Mean", 2, True, _
+        0#, 10#, 0#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_PMF", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_StdDev", 2, True, _
+        0#, 10#, 0#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_Survival", 3, True, _
+        3#, 0#, 10#, 0#
+    ApiContractRow "K_STATS_DiscreteUniform_Variance", 2, True, _
+        0#, 10#, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_Cumulative", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_InverseCumulative", 2, True, _
+        0.3, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_LogPMF", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_Mean", 1, True, _
+        0.3, 0#, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_PMF", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_StdDev", 1, True, _
+        0.3, 0#, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_Survival", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Geometric_Variance", 1, True, _
+        0.3, 0#, 0#, 0#
+    ApiContractRow "K_STATS_Hypergeometric_Cumulative", 4, True, _
+        2#, 10#, 8#, 40#
+    ApiContractRow "K_STATS_Hypergeometric_InverseCumulative", 4, True, _
+        0.3, 10#, 8#, 40#
+    ApiContractRow "K_STATS_Hypergeometric_LogPMF", 4, True, _
+        2#, 10#, 8#, 40#
+    ApiContractRow "K_STATS_Hypergeometric_Mean", 3, True, _
+        10#, 8#, 40#, 0#
+    ApiContractRow "K_STATS_Hypergeometric_PMF", 4, True, _
+        2#, 10#, 8#, 40#
+    ApiContractRow "K_STATS_Hypergeometric_StdDev", 3, True, _
+        10#, 8#, 40#, 0#
+    ApiContractRow "K_STATS_Hypergeometric_Survival", 4, True, _
+        2#, 10#, 8#, 40#
+    ApiContractRow "K_STATS_Hypergeometric_Variance", 3, True, _
+        10#, 8#, 40#, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_Cumulative", 3, True, _
+        3#, 3#, 0.3, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_InverseCumulative", 3, True, _
+        0.3, 3#, 0.3, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_LogPMF", 3, True, _
+        3#, 3#, 0.3, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_Mean", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_PMF", 3, True, _
+        3#, 3#, 0.3, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_StdDev", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_Survival", 3, True, _
+        3#, 3#, 0.3, 0#
+    ApiContractRow "K_STATS_NegativeBinomial_Variance", 2, True, _
+        3#, 0.3, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_Cumulative", 2, True, _
+        3#, 2#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_InverseCumulative", 2, True, _
+        0.3, 2#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_LogPMF", 2, True, _
+        3#, 2#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_Mean", 1, True, _
+        2#, 0#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_PMF", 2, True, _
+        3#, 2#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_StdDev", 1, True, _
+        2#, 0#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_Survival", 2, True, _
+        3#, 2#, 0#, 0#
+    ApiContractRow "K_STATS_Poisson_Variance", 1, True, _
+        2#, 0#, 0#, 0#
+    ApiContractRow "K_STATS_Lognormal_Cumulative", 3, True, _
+        3#, 0.5, 0.8, 0#
+    ApiContractRow "K_STATS_Lognormal_Density", 3, True, _
+        3#, 0.5, 0.8, 0#
+    ApiContractRow "K_STATS_Lognormal_InverseCumulative", 3, True, _
+        0.3, 0.5, 0.8, 0#
+    ApiContractRow "K_STATS_Lognormal_InverseSurvival", 3, True, _
+        0.3, 0.5, 0.8, 0#
+    ApiContractRow "K_STATS_Lognormal_Mean", 2, True, _
+        0.5, 0.8, 0#, 0#
+    ApiContractRow "K_STATS_Lognormal_ParametersFromMeanStdDev", 2, True, _
+        2#, 1.5, 0#, 0#
+    ApiContractRow "K_STATS_Lognormal_StdDev", 2, True, _
+        0.5, 0.8, 0#, 0#
+    ApiContractRow "K_STATS_Lognormal_Survival", 3, True, _
+        3#, 0.5, 0.8, 0#
+    ApiContractRow "K_STATS_Lognormal_Variance", 2, True, _
+        0.5, 0.8, 0#, 0#
+    ApiContractRow "K_STATS_Normal_Cumulative", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Normal_Density", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Normal_IntervalProbability", 4, True, _
+        0#, 10#, 2#, 1.5
+    ApiContractRow "K_STATS_Normal_InverseCumulative", 3, True, _
+        0.3, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Normal_InverseSurvival", 3, True, _
+        0.3, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Normal_Survival", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_Normal_ZScore", 3, True, _
+        3#, 2#, 1.5, 0#
+    ApiContractRow "K_STATS_NormalStandard_Cumulative", 1, True, _
+        0.5, 0#, 0#, 0#
+    ApiContractRow "K_STATS_NormalStandard_Density", 1, True, _
+        0.5, 0#, 0#, 0#
+    ApiContractRow "K_STATS_NormalStandard_IntervalProbability", 2, True, _
+        -1#, 1#, 0#, 0#
+    ApiContractRow "K_STATS_NormalStandard_InverseCumulative", 1, True, _
+        0.3, 0#, 0#, 0#
+    ApiContractRow "K_STATS_NormalStandard_InverseCumulativeFast", 1, False, _
+        0.3, 0#, 0#, 0#
+    ApiContractRow "K_STATS_NormalStandard_InverseSurvival", 1, True, _
+        0.3, 0#, 0#, 0#
+    ApiContractRow "K_STATS_NormalStandard_Survival", 1, True, _
+        0.5, 0#, 0#, 0#
+    ApiContractRow "K_STATS_ChiSquare_Cumulative", 2, True, _
+        3#, 5#, 0#, 0#
+    ApiContractRow "K_STATS_ChiSquare_Density", 2, True, _
+        3#, 5#, 0#, 0#
+    ApiContractRow "K_STATS_ChiSquare_InverseCumulative", 2, True, _
+        0.3, 5#, 0#, 0#
+    ApiContractRow "K_STATS_ChiSquare_Survival", 2, True, _
+        3#, 5#, 0#, 0#
+    ApiContractRow "K_STATS_F_Cumulative", 3, True, _
+        3#, 5#, 10#, 0#
+    ApiContractRow "K_STATS_F_Density", 3, True, _
+        3#, 5#, 10#, 0#
+    ApiContractRow "K_STATS_F_InverseCumulative", 3, True, _
+        0.3, 5#, 10#, 0#
+    ApiContractRow "K_STATS_F_Survival", 3, True, _
+        3#, 5#, 10#, 0#
+    ApiContractRow "K_STATS_StudentT_Cumulative", 2, True, _
+        3#, 5#, 0#, 0#
+    ApiContractRow "K_STATS_StudentT_Density", 2, True, _
+        3#, 5#, 0#, 0#
+    ApiContractRow "K_STATS_StudentT_InverseCumulative", 2, True, _
+        0.3, 5#, 0#, 0#
+    ApiContractRow "K_STATS_StudentT_Survival", 2, True, _
+        3#, 5#, 0#, 0#
+End Sub
+
+
+Private Function ApiContractCall(ByVal FunctionName As String, ByRef A() As Double) As Variant
+'
+'==============================================================================
+' ApiContractCall
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls one public function by name with the first of the four Doubles of
+'   A that it takes. A call that raises returns the text RAISED and the error
+'   number, which no assertion of the battery accepts.
+'
+' GENERATED
+'   benchmark/error_behavior/build_grid.py --battery. Do not edit.
+'==============================================================================
+'
+    On Error GoTo Raised
+
+    Select Case FunctionName
+        Case "K_STATS_Beta_Cumulative"
+            ApiContractCall = K_STATS_Beta_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Beta_Density"
+            ApiContractCall = K_STATS_Beta_Density(A(0), A(1), A(2))
+        Case "K_STATS_Beta_InverseCumulative"
+            ApiContractCall = K_STATS_Beta_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Beta_Mean"
+            ApiContractCall = K_STATS_Beta_Mean(A(0), A(1))
+        Case "K_STATS_Beta_StdDev"
+            ApiContractCall = K_STATS_Beta_StdDev(A(0), A(1))
+        Case "K_STATS_Beta_Survival"
+            ApiContractCall = K_STATS_Beta_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Beta_Variance"
+            ApiContractCall = K_STATS_Beta_Variance(A(0), A(1))
+        Case "K_STATS_Exponential_Cumulative"
+            ApiContractCall = K_STATS_Exponential_Cumulative(A(0), A(1))
+        Case "K_STATS_Exponential_Density"
+            ApiContractCall = K_STATS_Exponential_Density(A(0), A(1))
+        Case "K_STATS_Exponential_InverseCumulative"
+            ApiContractCall = K_STATS_Exponential_InverseCumulative(A(0), A(1))
+        Case "K_STATS_Exponential_Survival"
+            ApiContractCall = K_STATS_Exponential_Survival(A(0), A(1))
+        Case "K_STATS_Gamma_Cumulative"
+            ApiContractCall = K_STATS_Gamma_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_Density"
+            ApiContractCall = K_STATS_Gamma_Density(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_InverseCumulative"
+            ApiContractCall = K_STATS_Gamma_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_Mean"
+            ApiContractCall = K_STATS_Gamma_Mean(A(0), A(1))
+        Case "K_STATS_Gamma_StdDev"
+            ApiContractCall = K_STATS_Gamma_StdDev(A(0), A(1))
+        Case "K_STATS_Gamma_Survival"
+            ApiContractCall = K_STATS_Gamma_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Gamma_Variance"
+            ApiContractCall = K_STATS_Gamma_Variance(A(0), A(1))
+        Case "K_STATS_Uniform_Cumulative"
+            ApiContractCall = K_STATS_Uniform_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Uniform_Density"
+            ApiContractCall = K_STATS_Uniform_Density(A(0), A(1), A(2))
+        Case "K_STATS_Uniform_InverseCumulative"
+            ApiContractCall = K_STATS_Uniform_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Uniform_Survival"
+            ApiContractCall = K_STATS_Uniform_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Cumulative"
+            ApiContractCall = K_STATS_Weibull_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Density"
+            ApiContractCall = K_STATS_Weibull_Density(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_InverseCumulative"
+            ApiContractCall = K_STATS_Weibull_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Mean"
+            ApiContractCall = K_STATS_Weibull_Mean(A(0), A(1))
+        Case "K_STATS_Weibull_StdDev"
+            ApiContractCall = K_STATS_Weibull_StdDev(A(0), A(1))
+        Case "K_STATS_Weibull_Survival"
+            ApiContractCall = K_STATS_Weibull_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Weibull_Variance"
+            ApiContractCall = K_STATS_Weibull_Variance(A(0), A(1))
+        Case "K_STATS_Binomial_Cumulative"
+            ApiContractCall = K_STATS_Binomial_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_InverseCumulative"
+            ApiContractCall = K_STATS_Binomial_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_LogPMF"
+            ApiContractCall = K_STATS_Binomial_LogPMF(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_Mean"
+            ApiContractCall = K_STATS_Binomial_Mean(A(0), A(1))
+        Case "K_STATS_Binomial_PMF"
+            ApiContractCall = K_STATS_Binomial_PMF(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_StdDev"
+            ApiContractCall = K_STATS_Binomial_StdDev(A(0), A(1))
+        Case "K_STATS_Binomial_Survival"
+            ApiContractCall = K_STATS_Binomial_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Binomial_Variance"
+            ApiContractCall = K_STATS_Binomial_Variance(A(0), A(1))
+        Case "K_STATS_DiscreteUniform_Cumulative"
+            ApiContractCall = K_STATS_DiscreteUniform_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_InverseCumulative"
+            ApiContractCall = K_STATS_DiscreteUniform_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_LogPMF"
+            ApiContractCall = K_STATS_DiscreteUniform_LogPMF(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_Mean"
+            ApiContractCall = K_STATS_DiscreteUniform_Mean(A(0), A(1))
+        Case "K_STATS_DiscreteUniform_PMF"
+            ApiContractCall = K_STATS_DiscreteUniform_PMF(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_StdDev"
+            ApiContractCall = K_STATS_DiscreteUniform_StdDev(A(0), A(1))
+        Case "K_STATS_DiscreteUniform_Survival"
+            ApiContractCall = K_STATS_DiscreteUniform_Survival(A(0), A(1), A(2))
+        Case "K_STATS_DiscreteUniform_Variance"
+            ApiContractCall = K_STATS_DiscreteUniform_Variance(A(0), A(1))
+        Case "K_STATS_Geometric_Cumulative"
+            ApiContractCall = K_STATS_Geometric_Cumulative(A(0), A(1))
+        Case "K_STATS_Geometric_InverseCumulative"
+            ApiContractCall = K_STATS_Geometric_InverseCumulative(A(0), A(1))
+        Case "K_STATS_Geometric_LogPMF"
+            ApiContractCall = K_STATS_Geometric_LogPMF(A(0), A(1))
+        Case "K_STATS_Geometric_Mean"
+            ApiContractCall = K_STATS_Geometric_Mean(A(0))
+        Case "K_STATS_Geometric_PMF"
+            ApiContractCall = K_STATS_Geometric_PMF(A(0), A(1))
+        Case "K_STATS_Geometric_StdDev"
+            ApiContractCall = K_STATS_Geometric_StdDev(A(0))
+        Case "K_STATS_Geometric_Survival"
+            ApiContractCall = K_STATS_Geometric_Survival(A(0), A(1))
+        Case "K_STATS_Geometric_Variance"
+            ApiContractCall = K_STATS_Geometric_Variance(A(0))
+        Case "K_STATS_Hypergeometric_Cumulative"
+            ApiContractCall = K_STATS_Hypergeometric_Cumulative(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_InverseCumulative"
+            ApiContractCall = K_STATS_Hypergeometric_InverseCumulative(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_LogPMF"
+            ApiContractCall = K_STATS_Hypergeometric_LogPMF(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_Mean"
+            ApiContractCall = K_STATS_Hypergeometric_Mean(A(0), A(1), A(2))
+        Case "K_STATS_Hypergeometric_PMF"
+            ApiContractCall = K_STATS_Hypergeometric_PMF(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_StdDev"
+            ApiContractCall = K_STATS_Hypergeometric_StdDev(A(0), A(1), A(2))
+        Case "K_STATS_Hypergeometric_Survival"
+            ApiContractCall = K_STATS_Hypergeometric_Survival(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Hypergeometric_Variance"
+            ApiContractCall = K_STATS_Hypergeometric_Variance(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_Cumulative"
+            ApiContractCall = K_STATS_NegativeBinomial_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_InverseCumulative"
+            ApiContractCall = K_STATS_NegativeBinomial_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_LogPMF"
+            ApiContractCall = K_STATS_NegativeBinomial_LogPMF(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_Mean"
+            ApiContractCall = K_STATS_NegativeBinomial_Mean(A(0), A(1))
+        Case "K_STATS_NegativeBinomial_PMF"
+            ApiContractCall = K_STATS_NegativeBinomial_PMF(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_StdDev"
+            ApiContractCall = K_STATS_NegativeBinomial_StdDev(A(0), A(1))
+        Case "K_STATS_NegativeBinomial_Survival"
+            ApiContractCall = K_STATS_NegativeBinomial_Survival(A(0), A(1), A(2))
+        Case "K_STATS_NegativeBinomial_Variance"
+            ApiContractCall = K_STATS_NegativeBinomial_Variance(A(0), A(1))
+        Case "K_STATS_Poisson_Cumulative"
+            ApiContractCall = K_STATS_Poisson_Cumulative(A(0), A(1))
+        Case "K_STATS_Poisson_InverseCumulative"
+            ApiContractCall = K_STATS_Poisson_InverseCumulative(A(0), A(1))
+        Case "K_STATS_Poisson_LogPMF"
+            ApiContractCall = K_STATS_Poisson_LogPMF(A(0), A(1))
+        Case "K_STATS_Poisson_Mean"
+            ApiContractCall = K_STATS_Poisson_Mean(A(0))
+        Case "K_STATS_Poisson_PMF"
+            ApiContractCall = K_STATS_Poisson_PMF(A(0), A(1))
+        Case "K_STATS_Poisson_StdDev"
+            ApiContractCall = K_STATS_Poisson_StdDev(A(0))
+        Case "K_STATS_Poisson_Survival"
+            ApiContractCall = K_STATS_Poisson_Survival(A(0), A(1))
+        Case "K_STATS_Poisson_Variance"
+            ApiContractCall = K_STATS_Poisson_Variance(A(0))
+        Case "K_STATS_Lognormal_Cumulative"
+            ApiContractCall = K_STATS_Lognormal_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_Density"
+            ApiContractCall = K_STATS_Lognormal_Density(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_InverseCumulative"
+            ApiContractCall = K_STATS_Lognormal_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_InverseSurvival"
+            ApiContractCall = K_STATS_Lognormal_InverseSurvival(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_Mean"
+            ApiContractCall = K_STATS_Lognormal_Mean(A(0), A(1))
+        Case "K_STATS_Lognormal_ParametersFromMeanStdDev"
+            ApiContractCall = K_STATS_Lognormal_ParametersFromMeanStdDev(A(0), A(1))
+        Case "K_STATS_Lognormal_StdDev"
+            ApiContractCall = K_STATS_Lognormal_StdDev(A(0), A(1))
+        Case "K_STATS_Lognormal_Survival"
+            ApiContractCall = K_STATS_Lognormal_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Lognormal_Variance"
+            ApiContractCall = K_STATS_Lognormal_Variance(A(0), A(1))
+        Case "K_STATS_Normal_Cumulative"
+            ApiContractCall = K_STATS_Normal_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_Normal_Density"
+            ApiContractCall = K_STATS_Normal_Density(A(0), A(1), A(2))
+        Case "K_STATS_Normal_IntervalProbability"
+            ApiContractCall = K_STATS_Normal_IntervalProbability(A(0), A(1), A(2), A(3))
+        Case "K_STATS_Normal_InverseCumulative"
+            ApiContractCall = K_STATS_Normal_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_Normal_InverseSurvival"
+            ApiContractCall = K_STATS_Normal_InverseSurvival(A(0), A(1), A(2))
+        Case "K_STATS_Normal_Survival"
+            ApiContractCall = K_STATS_Normal_Survival(A(0), A(1), A(2))
+        Case "K_STATS_Normal_ZScore"
+            ApiContractCall = K_STATS_Normal_ZScore(A(0), A(1), A(2))
+        Case "K_STATS_NormalStandard_Cumulative"
+            ApiContractCall = K_STATS_NormalStandard_Cumulative(A(0))
+        Case "K_STATS_NormalStandard_Density"
+            ApiContractCall = K_STATS_NormalStandard_Density(A(0))
+        Case "K_STATS_NormalStandard_IntervalProbability"
+            ApiContractCall = K_STATS_NormalStandard_IntervalProbability(A(0), A(1))
+        Case "K_STATS_NormalStandard_InverseCumulative"
+            ApiContractCall = K_STATS_NormalStandard_InverseCumulative(A(0))
+        Case "K_STATS_NormalStandard_InverseCumulativeFast"
+            ApiContractCall = K_STATS_NormalStandard_InverseCumulativeFast(A(0))
+        Case "K_STATS_NormalStandard_InverseSurvival"
+            ApiContractCall = K_STATS_NormalStandard_InverseSurvival(A(0))
+        Case "K_STATS_NormalStandard_Survival"
+            ApiContractCall = K_STATS_NormalStandard_Survival(A(0))
+        Case "K_STATS_ChiSquare_Cumulative"
+            ApiContractCall = K_STATS_ChiSquare_Cumulative(A(0), A(1))
+        Case "K_STATS_ChiSquare_Density"
+            ApiContractCall = K_STATS_ChiSquare_Density(A(0), A(1))
+        Case "K_STATS_ChiSquare_InverseCumulative"
+            ApiContractCall = K_STATS_ChiSquare_InverseCumulative(A(0), A(1))
+        Case "K_STATS_ChiSquare_Survival"
+            ApiContractCall = K_STATS_ChiSquare_Survival(A(0), A(1))
+        Case "K_STATS_F_Cumulative"
+            ApiContractCall = K_STATS_F_Cumulative(A(0), A(1), A(2))
+        Case "K_STATS_F_Density"
+            ApiContractCall = K_STATS_F_Density(A(0), A(1), A(2))
+        Case "K_STATS_F_InverseCumulative"
+            ApiContractCall = K_STATS_F_InverseCumulative(A(0), A(1), A(2))
+        Case "K_STATS_F_Survival"
+            ApiContractCall = K_STATS_F_Survival(A(0), A(1), A(2))
+        Case "K_STATS_StudentT_Cumulative"
+            ApiContractCall = K_STATS_StudentT_Cumulative(A(0), A(1))
+        Case "K_STATS_StudentT_Density"
+            ApiContractCall = K_STATS_StudentT_Density(A(0), A(1))
+        Case "K_STATS_StudentT_InverseCumulative"
+            ApiContractCall = K_STATS_StudentT_InverseCumulative(A(0), A(1))
+        Case "K_STATS_StudentT_Survival"
+            ApiContractCall = K_STATS_StudentT_Survival(A(0), A(1))
+        Case Else
+            ApiContractCall = "UNKNOWN"
+    End Select
+    Exit Function
+
+Raised:
+    ApiContractCall = "RAISED " & CStr(Err.Number)
+End Function
+' END generated public API error contract (#331)
+
+Private Sub ApiContractRow( _
+    ByVal FunctionName As String, _
+    ByVal Count As Long, _
+    ByVal RejectsNonFinite As Boolean, _
+    ByVal A0 As Double, _
+    ByVal A1 As Double, _
+    ByVal A2 As Double, _
+    ByVal A3 As Double)
+'
+'==============================================================================
+' ApiContractRow
+'------------------------------------------------------------------------------
+' PURPOSE
+'   The assertions of one public function in Test_Core_ApiErrorContract: its
+'   valid call returns a value, and, where RejectsNonFinite, each of its Count
+'   arguments set in turn to not-a-number, +infinity and -infinity returns
+'   #NUM!.
+'==============================================================================
+'
+    Dim Valid(0 To 3)       As Double          'The valid arguments
+    Dim Args(0 To 3)        As Double          'The arguments of one call
+    Dim Labels              As Variant         'Names of the three values
+    Dim V                   As Variant         'Result of the valid call
+    Dim I                   As Long            'Argument index
+    Dim C                   As Long            'Value index
+    Dim K                   As Long            'Copy index
+
+    Valid(0) = A0
+    Valid(1) = A1
+    Valid(2) = A2
+    Valid(3) = A3
+
+    V = ApiContractCall(FunctionName, Valid)
+    If VarType(V) = vbString Then
+        RecordResult FunctionName & " valid call -> " & CStr(V), False
+    Else
+        AssertTrue FunctionName & " valid call returns no error", Not IsError(V)
+    End If
+
+    If Not RejectsNonFinite Then Exit Sub
+
+    Labels = Array("not a number", "+infinity", "-infinity")
+
+    For I = 0 To Count - 1
+        For C = 0 To 2
+            For K = 0 To 3
+                Args(K) = Valid(K)
+            Next K
+
+            Select Case C
+                Case 0: Args(I) = SP_FromWords(&H7FF80000, 0)
+                Case 1: Args(I) = SP_FromWords(&H7FF00000, 0)
+                Case Else: Args(I) = SP_FromWords(&HFFF00000, 0)
+            End Select
+
+            AssertErrorCode FunctionName & " argument " & CStr(I + 1) & " " & _
+                            CStr(Labels(C)) & " is #NUM", _
+                            ApiContractCall(FunctionName, Args), xlErrNum
+        Next C
+    Next I
 End Sub
