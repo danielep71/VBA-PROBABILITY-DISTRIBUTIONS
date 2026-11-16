@@ -4,7 +4,9 @@
 observation, reference, contract or threshold. It measures the error of the
 balanced `Beta_Survival` route against references taken at the binary64
 argument, finds the cause, and records what the evidence supports. The
-decision between a VBA repair and a contract recalibration is open in #163.
+decision between a VBA repair and a contract recalibration was taken with the
+two-tier accuracy policy: the guarantee for this region gates, and #163 stays
+open only for the measured target.
 
 ## Question
 

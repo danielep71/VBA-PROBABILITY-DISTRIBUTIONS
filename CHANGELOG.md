@@ -102,6 +102,16 @@ Use only the categories needed by a release.
 - The Accuracy Gate no longer repeats its full proofs on a tree that a full, successful run has already verified (#386). Such a run records the tree it checked out; the push after a merge, and integration and sync pull requests, then run the live checks only. Any doubt selects the full proofs. The rule and the cases that always run in full are in `docs/VERIFICATION_DEPTH.md`.
 - `release/1.0.1` is the active release branch after the v1.0.0 release: task pull requests and Dependabot updates target it. `release/1.0.0` stays as history.
 
+### Fixed
+
+- The documents, the site and two images described the state before the v1.0.0 release (#394). The site and the README now link the release; `SECURITY.md` names the supported version; `RELEASING.md` and the installation guide describe the user-manual PDF as a release asset whose checksum is in the release notes; the v1.0.0 implementation plan is marked as history; the distribution map and the decision guide say "released in v1.0.0".
+- The limitation "Student t just below 1E5" compared its measurements with a 1E-13 guarantee. The guarantee of that region is 1.3E-12: one of the three measured points is above it, the other two are within it. The released manual repeats the earlier wording in its section on recorded limitations.
+- `benchmark/verification_depth.json` recorded the grid coverage with a transition debt that no longer exists; `docs/VERIFICATION_DEPTH.md`, `docs/EXCEL_VBA_CI.md` and `tools/README.md` miscounted controls, dispatch inputs and workflows.
+
+### Removed
+
+- The `.gitignore` exception for the demonstration workbook, which v1.0.0 does not ship, and the empty `examples/` folder.
+
 ## [1.0.0] - 2026-11-15
 
 The first release. It ships the six production modules in `src/`: 112 worksheet functions over seventeen distributions, each held to a published accuracy guarantee and verified in Excel on the exact released source. The sections below are the history of the work that led to it, newest first.

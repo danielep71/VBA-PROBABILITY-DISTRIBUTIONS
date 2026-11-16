@@ -20,7 +20,7 @@ to days is not necessarily a count-generating process.
 
 ## 2. Identify candidate families
 
-All names below match the implemented **pre-release** Distribution Map. Standard
+All names below match the Distribution Map of the **v1.0.0 release**. Standard
 Normal and Normal are two API surfaces of one mathematical family. Planned
 noncentral distributions and dependence extensions are not implemented choices
 in this guide. Supports refer to ordinary nondegenerate parameters; endpoint
@@ -107,9 +107,7 @@ without `--png` validates the SVG and API inventory without CairoSVG.
 - **Wiki:** publish as “Choosing a distribution”; add a navigation link after
   Probability functions. Use immutable reviewed commit URLs for the PNG, SVG and
   this companion. Include the accessible table, caption and caveats as text.
-- **Initial manual (#263):** optional “Choosing a model” section after the
-  distribution overview, if the reviewed asset is available before manual freeze.
-  Initial manual delivery remains independent of this visual.
+- **Initial manual (#263):** delivered with v1.0.0 without this visual.
 - **Manual update (#264):** include the figure and accessible table after the
   overview, before parameter and worksheet examples; reconcile against that release.
 - **Demo overview (#254):** use these names and observation conventions in the

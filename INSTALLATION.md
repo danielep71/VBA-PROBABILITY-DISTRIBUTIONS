@@ -110,8 +110,11 @@ above for a fresh installation.
 
 ### Release bundle
 
+The current release is
+[v1.0.0](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0).
 Each GitHub Release attaches `VBA-Probability-Distributions-X.Y.Z.zip`, its
-`SHA256SUMS` and a build-provenance attestation. The bundle holds the production
+`SHA256SUMS` and a build-provenance attestation. The user manual is attached as
+a PDF; its SHA-256 is in the release notes, not in `SHA256SUMS`. The bundle holds the production
 modules and the regression harness with CRLF line endings, ready for **File →
 Import File…**, plus the licence and documentation. Verify it before importing:
 
@@ -247,8 +250,9 @@ owns and document anything intentionally retained.
 - Compare the selected tag, `VERSION`, release notes, and any published hash.
 - Review VBA before enabling macros.
 - Do not test with client, personal, regulated, or confidential workbooks.
-- Inspect example and release workbooks for links, connections, names,
-  properties, hidden content, and embedded code.
+- Inspect any workbook you receive with the library for links, connections,
+  names, properties, hidden content, and embedded code. The v1.0.0 release
+  contains no workbook.
 - Follow organizational macro, add-in, trusted-location, and signing policy.
 - Report vulnerabilities through [SECURITY.md](SECURITY.md), not publicly.
 

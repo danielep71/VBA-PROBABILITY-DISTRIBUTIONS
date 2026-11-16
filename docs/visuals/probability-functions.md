@@ -68,7 +68,7 @@ survival is also available for Standard Normal, Normal and Lognormal; this
 figure does not imply it is available for every distribution. Reconcile exact
 signatures and operation availability with [PUBLIC_API.txt](../PUBLIC_API.txt).
 
-These are implemented pre-release APIs. The figure does not certify numerical
+These APIs are released in v1.0.0. The figure does not certify numerical
 accuracy across their domains. See the [accuracy contracts](../../benchmark/accuracy_contracts.csv)
 and [known numerical limitations](../../benchmark/numerical_limitations.csv).
 
@@ -118,11 +118,11 @@ is embedded. API/source inspection baseline:
   delivery PR is merged; a branch preview is not a published release guide.
 - **Demo worksheets:** reproduce B2:B6 with ordinary cell references, six-decimal
   display formatting and the original stored p. Place the visual in the
-  probability-functions lesson within the approved Ribbon/vertical-navigation
-  template. The image does not itself deliver a demo workbook or its UI.
-- **User manual:** optional reusable figure for probability/tail/quantile
-  conventions in #263; drafting that initial manual must not depend on this
-  v1.0.1 asset. Reconcile it again for the release-stage update #264.
+  probability-functions lesson within the Ribbon and vertical-navigation
+  template planned for v1.0.1. The image does not itself deliver a demo workbook
+  or its UI; v1.0.0 ships neither.
+- **User manual:** the initial manual (#263) was delivered with v1.0.0 without
+  this figure. It is a candidate for the release-stage update #264.
 
 At narrow/mobile widths, use the accessible table or zoomable SVG. Suggested
 caption: “The same Standard Normal threshold read as density height, left-tail

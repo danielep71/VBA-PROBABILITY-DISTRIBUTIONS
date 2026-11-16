@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1530" viewBox="0 0 1200 1530" role="img" aria-labelledby="title desc">
 <title id="title">Distribution map — VBA Probability Distributions</title>
-<desc id="desc">Seventeen current API surfaces: eleven continuous and six discrete. Each row gives mathematical support and an illustrative use case. Implemented pre-release capabilities are not release certification; numerical domains are narrower than mathematical support.</desc>
+<desc id="desc">Seventeen current API surfaces: eleven continuous and six discrete. Each row gives mathematical support and an illustrative use case. Released in v1.0.0. The map is not an accuracy certificate; numerical domains are narrower than mathematical support.</desc>
 <rect width="1200" height="1530" fill="white"/>
 <g font-family="DejaVu Sans, Arial, sans-serif">
 <text x="36" y="43" font-size="17" fill="#1F5AA6" font-weight="bold">VBA PROBABILITY DISTRIBUTIONS</text>
 <text x="36" y="94" font-size="40" fill="#0B2A5B" font-weight="bold">A map of the distributions</text>
 <text x="36" y="132" font-size="23" fill="#2B3A4E" font-weight="normal">17 API surfaces · mathematical support · illustrative applications</text>
 <rect x="36" y="156" width="1128" height="40" rx="8" fill="#EAF1FA"/>
-<text x="52" y="183" font-size="18" fill="#0B2A5B" font-weight="normal">IMPLEMENTED / PRE-RELEASE    •    Standard Normal is a dedicated API surface.</text>
+<text x="52" y="183" font-size="18" fill="#0B2A5B" font-weight="normal">RELEASED IN v1.0.0    •    Standard Normal is a dedicated API surface.</text>
 <rect x="36" y="220" width="552" height="51" rx="8" fill="#1F5AA6"/>
 <text x="54" y="254" font-size="23" fill="white" font-weight="bold">CONTINUOUS  /  11 surfaces</text>
 <rect x="36" y="285" width="552" height="80" rx="8" fill="#F0F5FB"/>
@@ -99,6 +99,6 @@
 <text x="56" y="1365" font-size="20" fill="white" font-weight="normal">Mathematical support is not a promise of numerical accuracy across the whole domain.</text>
 <text x="36" y="1421" font-size="22" fill="#0B2A5B" font-weight="bold">Before use: check parameters, validated domains, error behavior and known limitations.</text>
 <text x="36" y="1456" font-size="20" fill="#2B3A4E" font-weight="normal">Current API only. Planned noncentral distributions and dependence extensions are not shown.</text>
-<text x="36" y="1495" font-size="17" fill="#465970" font-weight="normal">Companion: docs/visuals/distribution-map.md  •  No release certification is implied.</text>
+<text x="36" y="1495" font-size="17" fill="#465970" font-weight="normal">Companion: docs/visuals/distribution-map.md  •  Not an accuracy certificate.</text>
 </g>
 </svg>

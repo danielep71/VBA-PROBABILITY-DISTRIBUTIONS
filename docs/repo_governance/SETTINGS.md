@@ -21,7 +21,7 @@ not with individual checkboxes preselected inside the ruleset editor. In
 particular, deletion protection may be preselected when creating a ruleset;
 creating and activating that targeted ruleset is still a customization.
 
-Reference documentation checked: **2026-10-29**. I verified the repository settings on **2026-11-02**.
+Reference documentation checked: **2026-10-29**. I last verified the repository settings on **2026-11-15**; the record is [`evidence/settings-verify-2026-11-15.json`](evidence/settings-verify-2026-11-15.json).
 Copying this file does not apply settings or verify another repository.
 
 [General differences](#general) · [Security features](#security) · [Custom protection](#rulesets) · [Repository-specific](#repository-specific) · [Reuse](#reuse) · [Sources](#sources)

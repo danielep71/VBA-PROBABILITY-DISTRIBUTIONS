@@ -15,7 +15,7 @@ This maintainer guide turns a reviewed commit into a traceable VBA Probability D
 
 | Property | Requirement |
 | --- | --- |
-| Project maturity | Pre-1.0 accuracy-sensitive statistical library |
+| Project maturity | 1.x accuracy-sensitive statistical library; first release `v1.0.0` on 2026-11-15 |
 | Version source | [VERSION](VERSION) |
 | Version scheme | Semantic Versioning |
 | Tag format | Lower-case `vX.Y.Z` matching `VERSION` |
@@ -81,7 +81,7 @@ The Git tag adds the lower-case prefix: version `1.2.3` becomes annotated tag `v
 
 Bind numerical evidence to the exact candidate, reference implementation and version, grids, tolerances, and timestamp; a summary percentage alone is insufficient. Follow [exact-SHA certification](docs/EXCEL_CERTIFICATION.md) and [provenance](benchmark/PROVENANCE.md), including validation of both exported grids against the committed evidence. Finalizer success and green fixture tests alone are insufficient: the committed record must validate against the release commit, a green **Excel VBA Regression** run of the release commit itself must exist (see [exact-tag binding](#exact-tag-binding)), and every blocker in [`benchmark/release_readiness.json`](benchmark/release_readiness.json) must be resolved.
 
-**Enforcement baseline:** the repository settings, security features and rulesets, including the required checks `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` on `main`, are recorded in [`docs/repo_governance/repository-settings.json`](docs/repo_governance/repository-settings.json) and explained in [SETTINGS.md](docs/repo_governance/SETTINGS.md). `python3 tools/setup_repository.py --verify` compares them with GitHub and fails on drift; a prose statement of enforcement is not evidence. Required approvals remain zero. Exact-release Excel certification and the remaining release gates are tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31).
+**Enforcement baseline:** the repository settings, security features and rulesets, including the required checks `Repository integrity (static, no Excel)` and `Strict accuracy gate (pure Python, no Excel)` on `main`, are recorded in [`docs/repo_governance/repository-settings.json`](docs/repo_governance/repository-settings.json) and explained in [SETTINGS.md](docs/repo_governance/SETTINGS.md). `python3 tools/setup_repository.py --verify` compares them with GitHub and fails on drift; a prose statement of enforcement is not evidence. Required approvals remain zero. The exact-release Excel certification and the release gates of v1.0.0 were tracked under [#31](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/31); each later release has its own tracking issue.
 
 ## 1. Freeze and identify the candidate
 
@@ -99,7 +99,7 @@ git status --short
 git diff --stat <previous-tag>...HEAD
 ```
 
-For the first release there is no previous tag: omit the tag-diff command, review the entire tracked tree and its evidence, and do not fabricate a previous-release comparison link.
+The first release, `v1.0.0`, had no previous tag: its review covered the entire tracked tree and its evidence.
 
 A dirty tree, unknown generated file, or unreviewed binary delta is blocking.
 
@@ -193,6 +193,13 @@ builds the release outputs from the tagged commit:
 - `VBA-Probability-Distributions-X.Y.Z.intoto.jsonl`, a GitHub build-provenance
   attestation of both, signed in the workflow through GitHub's OIDC identity;
 - the source archive GitHub creates from the tag.
+
+The user manual is a fourth asset that the workflow does not build. Build its
+PDF from the tagged commit as
+[`docs/user-manual/`](docs/user-manual/) describes for that version, record its
+SHA-256, and attach it to the draft by hand in step 10. The build is not
+byte-reproducible, so the checksum is that of the attached file and goes in the
+asset table of the release notes; `SHA256SUMS` covers the bundle only.
 
 The bundle is built by `.github/scripts/build_release_bundle.py` from Git
 objects at the tag, never from a working tree, so the same commit always
@@ -432,8 +439,8 @@ A release note summarizes evidence; it does not replace it.
 
 ## 10. Publish the GitHub Release
 
-The release workflow creates a **draft** release for the tag, with the three
-assets above and notes made of the version's CHANGELOG section plus an asset
+The release workflow creates a **draft** release for the tag, with the bundle,
+`SHA256SUMS` and the attestation, and notes made of the version's CHANGELOG section plus an asset
 table with sizes and SHA-256. Review and complete the draft, then publish it.
 Before publishing, make sure it includes:
 
@@ -446,7 +453,9 @@ Before publishing, make sure it includes:
 7. Full changelog comparison link.
 8. Security-reporting link.
 
-Upload only the already-hashed artifacts the workflow attached. Do not rebuild between tagging and upload. If the workflow failed, fix the cause, delete the draft if one exists, and re-run the workflow; never edit an asset by hand.
+Attach the user-manual PDF and add its row, with size and SHA-256, to the asset
+table before publishing. Apart from it, the draft holds only the already-hashed
+artifacts the workflow attached. Do not rebuild between tagging and upload. If the workflow failed, fix the cause, delete the draft if one exists, and re-run the workflow; never edit an asset by hand.
 
 ## 11. Verify after publication
 

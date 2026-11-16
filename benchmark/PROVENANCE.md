@@ -261,8 +261,8 @@ enforces that the registry agrees with the evidence:
   incomplete, any evidence is stale, or any main or holdout verdict is not
   passing.
 
-The registry is maintained by hand: #31 remains the complete release tracker,
-and closing an issue on GitHub does not update the file.
+The registry is maintained by hand: #31 was the release tracker of v1.0.0 and each later
+release has its own, and closing an issue on GitHub does not update the file.
 
 **Regenerating.** `refresh_evidence.py` renders the block last, after every
 summary it reads, and verifies it with `--check` as the hosted Accuracy Gate

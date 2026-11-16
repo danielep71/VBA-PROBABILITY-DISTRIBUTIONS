@@ -1,5 +1,14 @@
 # v1.0.0 implementation and release-readiness plan
 
+> **Historical document.** v1.0.0 was released on 2026-11-15: tag `v1.0.0` at
+> `e5ee6f646f27cf992c11c2bcb69a959068366a5e`,
+> [release page](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0).
+> Every issue this plan lists for v1.0.0 is closed, and the issues it moved out
+> are in later milestones. The text below is the plan as it stood before the
+> release; it is kept for the decisions it records and is no longer updated.
+> Statements such as "NO-GO", "no tag exists" and the unchecked go/no-go list
+> describe that earlier state.
+
 Status date: 2026-11-11
 Repository: danielep71/VBA-PROBABILITY-DISTRIBUTIONS
 Base: `release/1.0.0` at `a9812c7`
