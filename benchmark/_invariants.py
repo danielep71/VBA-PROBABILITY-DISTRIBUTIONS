@@ -4,7 +4,7 @@ Always-gating invariants (#327), independent of the accuracy tiers.
 The guarantee/target split decides how close a value must be. These checks
 decide what may never happen, whatever a row's contract says, and they also
 reach rows that no gating contract scores (characterization-only contracts
-and rows still awaiting a disposition under #22):
+and any row without a gating contract; #22 left none in the main grid):
 
   * SILENT WRONG: a finite result whose relative error exceeds 1E-6 (or the
     row's own documented threshold, when that is looser), or an exact 0 or 1

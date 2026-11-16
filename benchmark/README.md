@@ -39,6 +39,10 @@ required, and they answer different questions.
 
 ## Files
 
+The table lists the files of the main pipeline, not every file in this
+folder: each `check_*.py` and `test_*.py` is described where the check it runs
+is described, and the registers and records have their own sections.
+
 | File | Role |
 |---|---|
 | `generate_reference_values.py` | Builds 50-digit mpmath reference rows. Report-only by default; never writes the committed grid (#17). |
