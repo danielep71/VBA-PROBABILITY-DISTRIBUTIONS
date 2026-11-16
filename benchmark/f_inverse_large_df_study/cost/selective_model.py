@@ -10,9 +10,11 @@ the member of the pair below 1/2, on the smaller probability tail. It changes
 which forward evaluation the Newton iteration uses:
 
 1. Phase A. Iterate with the binary64 forward function of the source,
-   unchanged, with the convergence rule of the source. The matched tail is
-   computed directly: the lower tail as I_u(sa, sb), the upper tail as
-   I_(1-u)(sb, sa).
+   unchanged, with the convergence rule of the source. The two tails are
+   formed as P4 forms them: below the mean the lower tail is the forward
+   function at u and the upper its complement; above it the upper tail is the
+   forward function at 1 - u with the shapes exchanged and the lower its
+   complement. Below the mean nothing is evaluated at 1 - u.
 2. Phase B, only when the iterate phase A settles on lies on the reflected
    branch of the forward function, u >= (sa + 1) / (sa + sb + 2): continue from
    it with P4's loop, pair fraction and guarded stagnation included. That
@@ -76,14 +78,22 @@ def density_at(u, sa, sb, lb):
     return p3.try_exp((sa - 1.0) * math.log(u) + (sb - 1.0) * math.log(1.0 - u) - lb) or 0.0
 
 
+def tails_binary64(u, sa, sb):
+    """(lower, upper) at u with the binary64 forward function, split as P4's
+    tails: the continued fraction is asked for the smaller-argument side."""
+    if not reflected(u, sa, sb):
+        lower = lower_binary64(u, sa, sb)
+        return lower, 1.0 - lower
+    upper = lower_binary64(1.0 - u, sb, sa)
+    return 1.0 - upper, upper
+
+
 def phase_a(u, sa, sb, lb, target_lower, target_upper, match_lower):
     """The Newton loop of the source before #35, on the matched tail."""
     low, high = 0.0, 1.0
     for _ in range(MAX_ITER):
-        if match_lower:
-            residual = lower_binary64(u, sa, sb) - target_lower
-        else:
-            residual = target_upper - lower_binary64(1.0 - u, sb, sa)
+        lower, upper = tails_binary64(u, sa, sb)
+        residual = lower - target_lower if match_lower else target_upper - upper
         if residual < 0:
             low = max(low, u)
         else:
