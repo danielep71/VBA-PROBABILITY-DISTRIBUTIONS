@@ -101,9 +101,10 @@ GATES = ("main_grid_coverage", "main_grid_export", "holdout_export")
 REQUIRED_BLOCKERS = {34: "silent_wrong", 35: "numerical_uncertainty",
                      163: "silent_wrong", 173: "silent_wrong"}
 
-EXCEL_COLOR = "d97706"
-CONTRACTS_COLOR = "0f766e"
-HOLDOUT_COLOR = "4c1d95"
+# One colour for every passing evidence badge; a problem shows ALERT_COLOR.
+EXCEL_COLOR = "2ea44f"
+CONTRACTS_COLOR = "2ea44f"
+HOLDOUT_COLOR = "2ea44f"
 ALERT_COLOR = "b91c1c"
 
 
@@ -560,23 +561,23 @@ def render_badges(model):
     if excel["stale"]:
         excel_message, excel_color = "STALE", ALERT_COLOR
     else:
-        excel_message = f"{excel['passed']} of {excel['assertions']} passed"
+        excel_message = f"{excel['passed']}/{excel['assertions']} PASS"
         excel_color = EXCEL_COLOR if excel["green"] else ALERT_COLOR
     blocking = verdicts["FAIL"] + verdicts["PENDING"] + verdicts["KNOWN LIMITATION"]
     if model["binding"]["problems"]:
         contracts_message, contracts_color = "STALE", ALERT_COLOR
     else:
-        contracts_message = f"{verdicts['PASS']} of {model['contracts']['active']} PASS"
+        contracts_message = f"{verdicts['PASS']}/{model['contracts']['active']} PASS"
         contracts_color = CONTRACTS_COLOR if not blocking else ALERT_COLOR
     if holdout["problems"]:
         holdout_message, holdout_color = "STALE", ALERT_COLOR
     else:
-        holdout_message = f"{holdout['pass']} of {holdout['contracts']} PASS"
+        holdout_message = f"{holdout['pass']}/{holdout['contracts']} PASS"
         holdout_color = (HOLDOUT_COLOR if not (holdout["fail"] or holdout["incomplete"])
                          else ALERT_COLOR)
     return "\n".join([
         _badge("Excel CI", "Excel Regression", excel_message, excel_color,
-               "docs/EXCEL_VBA_CI.md", "&logo=githubactions&logoColor=white"),
+               "docs/EXCEL_VBA_CI.md"),
         _badge("Accuracy Contracts", "Accuracy Contracts", contracts_message, contracts_color,
                "benchmark/accuracy_summary.md"),
         _badge("Independent Holdout", "Holdout", holdout_message, holdout_color,
