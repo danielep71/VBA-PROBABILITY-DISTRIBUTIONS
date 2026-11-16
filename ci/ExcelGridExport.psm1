@@ -47,7 +47,7 @@ $script:StudyGridNames = @(
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
     "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout",
-    "bic_baseline", "bic_holdout", "gcp_profile", "xfm_examples"
+    "bic_baseline", "bic_holdout", "gcp_profile", "xfm_examples", "erb_survey"
 )
 
 function Get-StudyGridNames {
@@ -116,7 +116,7 @@ function Get-ExportGridSpec {
                      "prs_chisquare_holdout2", "grh_route_holdout", "gis_holdout",
                      "gis_holdout2", "fip_baseline", "fip_holdout",
                      "bic_baseline", "bic_holdout", "gcp_profile",
-                     "xfm_examples")]
+                     "xfm_examples", "erb_survey")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -301,6 +301,12 @@ function Get-ExportGridSpec {
                 -FileName "excel_function_map_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_ExcelFunctionMap" `
                 -Columns 7 -KeyColumns 5 -SuccessPrefix "Excel function map complete: "
+        }
+        "erb_survey" {
+            return New-GeneratedGridSpec -Folder "error_behavior" -Name "erb_survey" `
+                -FileName "error_behavior_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_ERB.bas" -Macro "Export_ErrorBehavior" `
+                -Columns 6 -KeyColumns 5 -SuccessPrefix "Error behavior complete: "
         }
         "gbr_binary64_map" {
             return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "gbr_binary64_map" `
