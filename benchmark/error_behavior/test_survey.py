@@ -94,5 +94,67 @@ class Battery(unittest.TestCase):
         self.assertEqual(added, 928)
 
 
+class Rules(unittest.TestCase):
+    """check_rules.py on the committed survey and on rows changed here."""
+
+    @classmethod
+    def setUpClass(cls):
+        import check_rules
+        cls.rules = check_rules
+        cls.rows = check_rules.read_grid()
+
+    def changed(self, function, label, argument, observed):
+        rows = [dict(row) for row in self.rows]
+        for row in rows:
+            if (row["function"], row["class"], row["argument"]) == (function, label, argument):
+                row["observed"] = observed
+        return rows
+
+    def failed(self, rows):
+        return sorted({text.split()[0] for text in self.rules.rule_failures(rows)})
+
+    def test_committed_survey_holds_every_rule_and_edge(self):
+        self.assertEqual(self.rules.rule_failures(self.rows), [])
+        self.assertEqual(self.rules.edge_failures(self.rows), [])
+
+    def test_each_rule_fails_on_its_row(self):
+        name = "K_STATS_Gamma_Cumulative"
+        number = next(r["observed"] for r in self.rows if r["function"] == name and r["class"] == "valid")
+        self.assertEqual(self.failed(self.changed(name, "valid", "", "#NUM!")), ["R1"])
+        self.assertEqual(self.failed(self.changed(name, "nan", "Shape", "#VALUE!")), ["R2"])
+        self.assertEqual(self.failed(self.changed(name, "pinf", "X", number)), ["R2"])
+        self.assertEqual(self.failed(self.changed(name, "text", "X", "#NUM!")), ["R3"])
+        self.assertEqual(self.failed(self.changed(name, "empty", "X", "#NUM!")), ["R4"])
+        self.assertEqual(self.failed(self.changed(
+            "K_STATS_Gamma_InverseCumulative", "above", "Probability", number)), ["R5"])
+        self.assertEqual(self.failed(self.changed(name, "negative", "X", "RAISED6")), ["R6", "R7"])
+        self.assertEqual(self.failed(self.changed(name, "negative", "X", "7FF0000000000000")),
+                         ["R6", "R7"])
+        self.assertEqual(self.failed(self.changed(name, "negative", "X", "#DIV/0!")), ["R7"])
+        blank = self.rules.rule_failures(self.changed(name, "negative", "X", ""))
+        self.assertEqual(len(blank), 1)
+        self.assertIn("not exported", blank[0])
+
+    def test_the_exempt_function_is_not_judged_but_is_described(self):
+        fast = self.rules.FAST
+        self.assertEqual(self.failed(self.changed(fast, "above", "Probability", "#NUM!")), [])
+        with self.assertRaises(self.rules.RuleError):
+            self.rules.fast_statement(self.changed(fast, "above", "Probability", "#NUM!"))
+
+    def test_an_edge_that_moves_is_reported(self):
+        rows = self.changed("K_STATS_Binomial_InverseCumulative", "zero", "ProbSuccess",
+                            "0000000000000000")
+        self.assertEqual(len(self.rules.edge_failures(rows)), 1)
+        with self.assertRaises(self.rules.RuleError):
+            self.rules.render(rows)
+
+    def test_page_names_the_battery_and_the_issue(self):
+        text = self.rules.render(self.rows)
+        self.assertIn("Test_Core_ApiErrorContract", text)
+        self.assertIn("#418", text)
+        self.assertEqual(text.count("| Not settled."), 3)
+        self.assertEqual(text.count("| Kept:"), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

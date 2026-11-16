@@ -826,6 +826,8 @@ Worksheet-facing functions return `Variant` so they can return either a `Double`
 | Unexpected VBA runtime failure | `#VALUE!` | Unanticipated execution path |
 | Mathematically valid exponential underflow | `0` | Correct floating-point limiting result |
 
+What every public function returns on each kind of bad input (a value that is not a number, an infinity, a text, an empty cell, a probability outside 0 to 1) is stated once, in [docs/PUBLIC_API.md](docs/PUBLIC_API.md#what-a-function-returns-on-bad-input). That section is generated from a survey run in Excel and backed by a battery in the regression that covers every public function.
+
 Most worksheet-facing functions also support:
 
 ```vba
@@ -1184,7 +1186,7 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
 | [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
 | [Numerical research](docs/research/README.md) | Annotated bibliography, evaluation methodology and research-to-issue map |
-| [Public API](docs/PUBLIC_API.md) | The map from Excel's functions, the compatibility manifest and its drift checks |
+| [Public API](docs/PUBLIC_API.md) | The map from Excel's functions, what a function returns on bad input, the compatibility manifest and its drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
 | [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture) | Layers, boundaries, and dependencies |

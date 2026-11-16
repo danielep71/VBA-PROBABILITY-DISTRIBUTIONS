@@ -212,7 +212,7 @@ def render(rows):
            fast_statement(rows), "",
            "### Where functions answer the same input differently", "",
            "Read from the same survey. \"Kept\" is deliberate. \"Not settled\" is a difference "
-           "I found and have not decided; it is recorded in an issue and may change in a "
+           "I found and have not decided; it is recorded in #418 and may change in a "
            "later release.", "",
            "| What happens | Status |", "| --- | --- |"]
     out += [f"| {statement} | {reason} |" for statement, _, reason in EDGES]

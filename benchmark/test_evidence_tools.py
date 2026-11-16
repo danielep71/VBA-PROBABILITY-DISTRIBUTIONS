@@ -101,6 +101,7 @@ commands = (
     ("excel_function_map/render_map.py", "--check"),
     ("error_behavior/test_survey.py",),
     ("error_behavior/build_grid.py", "--check"),
+    ("error_behavior/check_rules.py", "--check"),
     ("gamma_cache_study/test_cache_vba.py",),
     ("gamma_recurrence_study/test_prepare.py",),
     ("gamma_route_study/analyze_b64_fit.py", "--check"),
