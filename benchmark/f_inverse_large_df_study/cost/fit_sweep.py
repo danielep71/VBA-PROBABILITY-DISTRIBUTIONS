@@ -13,7 +13,7 @@ import math
 import sys
 from pathlib import Path
 
-from mpmath import betainc, findroot, mp, mpf
+from mpmath import betainc, exp, log, loggamma, mp, mpf
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -31,13 +31,21 @@ PROBABILITIES = [1e-12, 1e-8, 1e-4, 0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1 - 1e-
 
 
 def reference(p, complement, a, b, start):
-    """x with I_x(a, b) = p, solved on the smaller tail."""
-    a, b = mpf(a), mpf(b)
-    if p <= complement:
-        function = lambda x: betainc(a, b, 0, x, regularized=True) - mpf(p)  # noqa: E731
-    else:
-        function = lambda x: mpf(complement) - betainc(a, b, x, 1, regularized=True)  # noqa: E731
-    return findroot(function, mpf(start), tol=mpf(10) ** -45, maxsteps=200)
+    """x with I_x(a, b) = p: Newton at 60 digits on the smaller tail, from the
+    model's own answer, which is already within about 1E-14 of the root."""
+    a, b, x = mpf(a), mpf(b), mpf(start)
+    log_beta = loggamma(a) + loggamma(b) - loggamma(a + b)
+    for _ in range(8):
+        if p <= complement:
+            value = betainc(a, b, 0, x, regularized=True) - mpf(p)
+        else:
+            value = mpf(complement) - betainc(a, b, x, 1, regularized=True)
+        density = exp((a - 1) * log(x) + (b - 1) * log(1 - x) - log_beta)
+        step = value / density
+        x -= step
+        if abs(step) <= abs(x) * mpf(10) ** -45:
+            return x
+    raise ValueError("reference did not converge")
 
 
 def measure(kind, p, s1, s2):
@@ -60,12 +68,23 @@ def measure(kind, p, s1, s2):
     except Exception as error:
         row["skipped"] = "S: " + str(error)[:80]
         return row
-    exact = reference(p, complement, a, b, x4)
+    # Solve for the member of the pair below 1/2, so that the other member is
+    # one minus a small number and keeps its digits at 60 dps.
+    try:
+        if x4 <= 0.5:
+            small = reference(p, complement, a, b, x4)
+            exact_x, exact_y = small, 1 - small
+        else:
+            small = reference(complement, p, b, a, y4)
+            exact_x, exact_y = 1 - small, small
+    except Exception as error:
+        row["skipped"] = "reference: " + str(error)[:80]
+        return row
     if kind == "F":
-        truth = mpf(s2) / mpf(s1) * exact / (1 - exact)
+        truth = mpf(s2) / mpf(s1) * exact_x / exact_y
         value4, value_s = S.f_quantile(p, s1, s2, x4, y4), S.f_quantile(p, s1, s2, xs, ys)
     else:
-        truth, value4, value_s = exact, x4, xs
+        truth, value4, value_s = exact_x, x4, xs
     row["p4_error"] = float(abs((mpf(value4) - truth) / truth))
     row["s_error"] = float(abs((mpf(value_s) - truth) / truth))
     row["same_double"] = value4 == value_s
