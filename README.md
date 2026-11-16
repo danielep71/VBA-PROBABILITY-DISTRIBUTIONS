@@ -80,7 +80,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **2,007** | of 2,007 deterministic VBA assertions passed in the retained Excel run on `f85b4bc`; regression sources unchanged since |
+| **2,007** | of 2,007 deterministic VBA assertions passed in the retained Excel run on `9c01494`; regression sources unchanged since |
 | **13,005** | further VBA assertions declared in 8 study and slow production batteries, run on the Excel runner apart from the pull-request regression; their result is in each run's log, not in the retained record |
 | **179** | active accuracy contracts (180 registry rows; 1 characterization-only): 179 PASS, 0 FAIL, 0 PENDING |
 | **2,215** | observation rows; main grid 1,859: 1,859 claimed, 0 exempt, 0 without a disposition |
@@ -95,8 +95,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 2,007/2,007 assertions passed on `f85b4bc` (Excel 16.0 build 20710, 64-bit; finished 2026-11-16). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `f85b4bc`).
+- **Excel regression** — 2,007/2,007 assertions passed on `9c01494` (Excel 16.0 build 20710, 64-bit; finished 2026-11-16). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `9c01494`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — complete: every one of 1,859 main-grid rows is claimed or exempt.
 - **Contract verdicts** — 179 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 2 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
@@ -313,6 +313,8 @@ The catalogue is described by **capability**; the function count is in the [assu
 # ⚡ Quick start
 
 The current release is **[v1.0.0](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0)**. Download `VBA-Probability-Distributions-1.0.0.zip` from that page and verify it as [INSTALLATION.md](INSTALLATION.md#release-bundle) describes, or take the files from the `v1.0.0` tag. The `main` branch is development source.
+
+Coming from Excel's own functions? [The function map](docs/PUBLIC_API.md#coming-from-excels-functions) gives, for each of `NORM.DIST`, `T.INV`, `CHISQ.DIST.RT`, `GAMMA.DIST`, `BINOM.INV` and the others, the `K_STATS_` call that replaces it, what differs in argument order or parameterization, and an example evaluated on both sides.
 
 ## 1. Import the production modules
 
@@ -1182,7 +1184,7 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
 | [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
 | [Numerical research](docs/research/README.md) | Annotated bibliography, evaluation methodology and research-to-issue map |
-| [Public API](docs/PUBLIC_API.md) | Compatibility manifest and drift checks |
+| [Public API](docs/PUBLIC_API.md) | The map from Excel's functions, the compatibility manifest and its drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
 | [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture) | Layers, boundaries, and dependencies |
