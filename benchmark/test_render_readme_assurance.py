@@ -48,6 +48,17 @@ def fixture():
     study = os.path.join(root, ".github", "excel-study-policy.json")
     if os.path.exists(study):
         os.remove(study)
+    # The snapshot's badges carry the wording and colours of its day (#402).
+    # Re-render that one region, so the controls below compare the snapshot's
+    # table and evidence state, which are unchanged, with the present renderer.
+    readme = os.path.join(root, *R.README.split("/"))
+    with open(readme, encoding="utf-8", newline="") as f:
+        text = f.read()
+    begin, end = R._markers("assurance badges")
+    badges = R.render_badges(R.build_model(root))
+    text = text[:text.index(begin)] + begin + "\n" + badges + "\n" + text[text.index(end):]
+    with open(readme, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
     return root
 
 
@@ -106,6 +117,8 @@ root = fixture()
 try:
     code, out = run(root, "--check")
     check(code == 0, f"committed README renders current: {out}")
+    check("%2F" in R.render_badges(R.build_model(root)) and "_PASS-2ea44f" in read(root, R.README),
+          "passing evidence badges read N/N PASS in the common green")
     before = read(root, R.README)
     code, _ = run(root, "--write")
     check(code == 0 and read(root, R.README) == before, "--write on a current README is a no-op")
