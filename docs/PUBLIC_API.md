@@ -23,7 +23,8 @@ The library's functions take no cumulative flag: the name says which function it
 | `NORM.DIST(x, mean, sd, FALSE)`<br>also `NORMDIST(x, mean, sd, FALSE)` | `K_STATS_Normal_Density(x, mean, sd)` | Same order; no cumulative flag. | `=NORM.DIST(12,10,2,FALSE)`<br>`=K_STATS_Normal_Density(12,10,2)` | 0.12098536226 | same |
 | `NORM.INV(p, mean, sd)`<br>also `NORMINV(p, mean, sd)` | `K_STATS_Normal_InverseCumulative(p, mean, sd)` | Same order. | `=NORM.INV(0.975,10,2)`<br>`=K_STATS_Normal_InverseCumulative(0.975,10,2)` | 13.9199279691 | same |
 | `STANDARDIZE(x, mean, sd)` | `K_STATS_Normal_ZScore(x, mean, sd)` | Same order. | `=STANDARDIZE(12,10,2)`<br>`=K_STATS_Normal_ZScore(12,10,2)` | 1 | same |
-| `GAUSS(z)` | `K_STATS_NormalStandard_IntervalProbability(0, z)` | The probability between the mean and z. | `=GAUSS(1.5)`<br>`=K_STATS_NormalStandard_IntervalProbability(0,1.5)` | 0.433192798731 | same |
+| `GAUSS(z)` | `K_STATS_NormalStandard_IntervalProbability(0, z)` | The probability between the mean and z, for z of zero or more. The library takes its two bounds in order and refuses an upper bound below the lower. | `=GAUSS(1.5)`<br>`=K_STATS_NormalStandard_IntervalProbability(0,1.5)` | 0.433192798731 | same |
+| `GAUSS(z), z below zero` | `-K_STATS_NormalStandard_IntervalProbability(z, 0)` | Excel returns a negative number for a negative z; put the bounds in order and change the sign. | `=GAUSS(-1.5)`<br>`=-K_STATS_NormalStandard_IntervalProbability(-1.5,0)` | -0.433192798731 | same |
 
 ### Lognormal
 
@@ -102,7 +103,8 @@ The library's functions take no cumulative flag: the name says which function it
 | --- | --- | --- | --- | ---: | --- |
 | `BINOM.DIST(k, n, p, TRUE)`<br>also `BINOMDIST(k, n, p, TRUE)` | `K_STATS_Binomial_Cumulative(k, n, p)` | Same order. | `=BINOM.DIST(6,20,0.3,TRUE)`<br>`=K_STATS_Binomial_Cumulative(6,20,0.3)` | 0.608009812201 | same |
 | `BINOM.DIST(k, n, p, FALSE)`<br>also `BINOMDIST(k, n, p, FALSE)` | `K_STATS_Binomial_PMF(k, n, p)` | Same order. | `=BINOM.DIST(6,20,0.3,FALSE)`<br>`=K_STATS_Binomial_PMF(6,20,0.3)` | 0.191638982753 | same |
-| `BINOM.DIST.RANGE(n, p, k1, k2)` | `K_STATS_Binomial_Cumulative(k2, n, p) - K_STATS_Binomial_Cumulative(k1 - 1, n, p)` | **Different order**: Excel puts n and p first. With k2 omitted it is `K_STATS_Binomial_PMF(k1, n, p)`. | `=BINOM.DIST.RANGE(20,0.3,4,8)`<br>`=K_STATS_Binomial_Cumulative(8,20,0.3)-K_STATS_Binomial_Cumulative(3,20,0.3)` | 0.779581732619 | same |
+| `BINOM.DIST.RANGE(n, p, k1, k2)` | `K_STATS_Binomial_Cumulative(k2, n, p) - K_STATS_Binomial_Cumulative(k1 - 1, n, p)` | **Different order**: Excel puts n and p first. For k1 of one or more. With k2 omitted it is `K_STATS_Binomial_PMF(k1, n, p)`. | `=BINOM.DIST.RANGE(20,0.3,4,8)`<br>`=K_STATS_Binomial_Cumulative(8,20,0.3)-K_STATS_Binomial_Cumulative(3,20,0.3)` | 0.779581732619 | same |
+| `BINOM.DIST.RANGE(n, p, 0, k2)` | `K_STATS_Binomial_Cumulative(k2, n, p)` | With a lower bound of zero the range is the cumulative probability; the difference above would ask the library for a count of -1. | `=BINOM.DIST.RANGE(20,0.3,0,8)`<br>`=K_STATS_Binomial_Cumulative(8,20,0.3)` | 0.886668537123 | same |
 | `BINOM.INV(n, p, alpha)`<br>also `CRITBINOM(n, p, alpha)` | `K_STATS_Binomial_InverseCumulative(alpha, n, p)` | **Different order**: the library puts the probability first, as in every inverse. | `=BINOM.INV(20,0.3,0.9)`<br>`=K_STATS_Binomial_InverseCumulative(0.9,20,0.3)` | 9 | same |
 
 ### Negative binomial
@@ -140,6 +142,15 @@ Measured, not taken from either documentation: the same call on both sides with 
 | Binomial, k = 6.6 | `=BINOM.DIST(6.6,20,0.3,TRUE)` | rounds it down | rounds it down |
 | Poisson, k = 4.6 | `=POISSON.DIST(4.6,2.5,TRUE)` | rounds it down | rounds it down |
 | Negative binomial, f = 5.6 | `=NEGBINOM.DIST(5.6,3,0.4,TRUE)` | rounds it down | rounds it down |
+
+### Where a replacement stops applying
+
+The Excel formula and the library expression a row above would give, both evaluated as they stand. The rows above give the form to use instead.
+
+| Case | Excel formula | Excel returns | Library expression | Library returns |
+| --- | --- | --- | --- | --- |
+| GAUSS at a negative z, bounds not reordered | `=GAUSS(-1.5)` | -0.433192798731 | `=K_STATS_NormalStandard_IntervalProbability(0,-1.5)` | an error |
+| Binomial range from zero, as a difference | `=BINOM.DIST.RANGE(20,0.3,0,8)` | 0.886668537123 | `=K_STATS_Binomial_Cumulative(8,20,0.3)-K_STATS_Binomial_Cumulative(-1,20,0.3)` | an error |
 
 ### Excel functions the library does not replace
 
