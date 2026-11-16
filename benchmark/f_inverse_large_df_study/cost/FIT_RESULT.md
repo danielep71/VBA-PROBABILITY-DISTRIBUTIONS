@@ -76,7 +76,7 @@ Both are below the mean, where the residual is a binary64 number.
 - Twenty-one points of the sweep are skipped: the reference did not converge
   on thirteen, and P4 reports no representable interior quantile on eight.
 
-## Decisions taken on this sweep, 2026-11-17
+## Decisions taken on this sweep, 2026-11-16
 
 - Candidate: S, version 3.
 - Cost target: on the benchmark points that make no pair evaluation, a call
