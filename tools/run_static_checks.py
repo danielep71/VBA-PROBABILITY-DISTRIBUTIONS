@@ -135,6 +135,9 @@ def checks(context: Context) -> list[Check]:
         Check("vba-source", [python, "tools/check_vba_source.py", "--root", "."]),
         Check("vba-conditionals", [python, "tools/check_vba_conditionals.py", "--root", "."]),
         Check("vba-visibility", [python, "tools/check_vba_visibility.py", "--root", "."]),
+        # Names and calls (#291); their fixtures are in tests/test_check_vba_names.py.
+        Check("vba-identifiers", [python, "tools/check_vba_identifiers.py", "--root", "."]),
+        Check("vba-calls", [python, "tools/check_vba_calls.py", "--root", "."]),
         # Ratchets tools/vba_layout_baseline.json; its fixtures run in python-tests.
         Check("vba-layout", [python, "tools/format_vba.py", "--check", "--root", "."]),
         Check("release-semantics-self-test",

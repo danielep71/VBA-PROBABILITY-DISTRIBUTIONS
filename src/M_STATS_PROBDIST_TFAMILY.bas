@@ -177,7 +177,7 @@ Option Explicit
 
 'Maximum safeguarded Newton iterations for the Student t quantile
 Private Const PROB_T_INV_MAX_ITER As Long = 500
-Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy envelope; both df must be <= this. Applies to the cumulative, survival AND inverse: benchmark/inverse_probe found no inverse refusals to df 2E10, including the unbalanced ratios that had been assumed to fail, but unbalanced and large-df inverse rows still lose relative accuracy (open #35) (measured, benchmark/envelope_probe + benchmark/inverse_probe)
+Private Const PROB_F_MAX_DF       As Double = 10000000000# 'Validated F accuracy envelope; both df must be <= this. Applies to the cumulative, survival AND inverse: benchmark/inverse_probe found no inverse refusals to df 2E10, including the unbalanced ratios that had been assumed to fail; unbalanced and large-df inverse rows lost relative accuracy until #35 (measured, benchmark/envelope_probe + benchmark/inverse_probe)
 Private Const PROB_T_MAX_DF       As Double = 100000000# 'Validated Student t accuracy envelope; df must be <= this (measured, benchmark/envelope_probe, 2026-07-29)
 Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; validated to 1E8 (measured, benchmark/envelope_probe, 2026-07-29). The incomplete-gamma iteration caps lie above it: near X = df the scaled pair (#26) caps from df of about 2.1E8 and its binary64 fallback from about 3.8E8
 
@@ -2072,16 +2072,14 @@ Public Function K_STATS_F_InverseCumulative( _
 '   Degrees of freedom beyond PROB_F_MAX_DF are REJECTED with CVErr(xlErrNum).
 '   The inverse shares the forward cap: benchmark/inverse_probe found no
 '   refusals across the forward domain, including the unbalanced ratios that
-'   had been assumed to fail, but unbalanced and large-df rows lose relative
-'   accuracy (open #35).
+'   had been assumed to fail. Unbalanced and large-df rows lost relative
+'   accuracy until #35.
 '   - Inverts the incomplete beta, then maps back with x = (df2/df1) * (Y / Z),
 '     where Y and Z are the beta root and its complement as returned by the
-'     solver. The solver orients on the smaller probability tail, solves for
-'     that root U, and forms the other member as 1 - U. When that reconstructed
-'     member is tiny it carries a large relative error, which the Y / Z ratio
-'     inherits (open #35). When the solved root is itself the tiny member, the
-'     far upper tail stays accurate: with df1 = df2 = 0.5 and Probability =
-'     1 - 1E-9 the quantile is 8.46E+34 to 14 digits.
+'     solver. The solver solves for the member of the pair below 1/2 and
+'     forms the other as 1 - U, which loses nothing (#35), so the Y / Z ratio
+'     keeps its relative accuracy in both tails: with df1 = df2 = 0.5 and
+'     Probability = 1 - 1E-9 the quantile is 8.46E+34 to 14 digits.
 '
 ' ERROR POLICY
 '   - Invalid numeric domains return CVErr(xlErrNum).
@@ -3565,8 +3563,8 @@ Private Function PROB_F_ValidateEnvelope( _
 '   original bound had been measuring (benchmark/envelope_probe;
 '   benchmark/f_envelope records the superseded boundary). The measured status
 '   inside the cap is in benchmark/accuracy_contracts.csv (F_* rows); the
-'   inverse also loses relative accuracy on unbalanced and large-df rows inside
-'   the cap (open #35). Beyond the cap the kernel is not validated
+'   inverse lost relative accuracy on unbalanced and large-df rows inside the
+'   cap until #35. Beyond the cap the kernel is not validated
 '   (benchmark/numerical_limitations.csv, IncompleteBeta.ExtremeShape). This
 '   restricts the public F surface to its validated domain and returns a clean
 '   CVErr rather than a silent inaccurate result. F_Density is not governed by

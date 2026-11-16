@@ -1,0 +1,19 @@
+COST beta_inv A=0.5 B=0.5 X=0.1 ok=1 calls=512 us_per_call=1937.866
+COST beta_inv A=0.5 B=0.5 X=0.9 ok=1 calls=512 us_per_call=1708.984
+COST beta_inv A=2 B=5 X=0.1 ok=1 calls=1024 us_per_call=839.233
+COST beta_inv A=2 B=5 X=0.9 ok=1 calls=1024 us_per_call=656.128
+COST beta_inv A=50 B=80 X=0.1 ok=1 calls=16 us_per_call=31738.281
+COST beta_inv A=50 B=80 X=0.9 ok=1 calls=128 us_per_call=7324.219
+COST beta_inv A=0.7 B=25 X=0.1 ok=1 calls=512 us_per_call=1571.655
+COST beta_inv A=0.7 B=25 X=0.9 ok=1 calls=64 us_per_call=11596.680
+COST f_inv A=5 B=10 X=0.1 ok=1 calls=256 us_per_call=2563.477
+COST f_inv A=5 B=10 X=0.9 ok=1 calls=256 us_per_call=3417.969
+COST f_inv A=100 B=100 X=0.1 ok=1 calls=32 us_per_call=27587.891
+COST f_inv A=100 B=100 X=0.9 ok=1 calls=64 us_per_call=8422.852
+COST f_inv A=50 B=100000000 X=0.1 ok=1 calls=128 us_per_call=5493.164
+COST f_inv A=50 B=100000000 X=0.9 ok=1 calls=128 us_per_call=6103.516
+COST f_inv A=100000 B=2 X=0.1 ok=1 calls=1024 us_per_call=892.639
+COST f_inv A=100000 B=2 X=0.9 ok=1 calls=1024 us_per_call=846.863
+COST t_inv A=3 X=0.9 ok=1 calls=32768 us_per_call=28.610
+COST t_inv A=10 X=0.9 ok=1 calls=32768 us_per_call=20.027
+COST t_inv A=30 X=0.9 ok=1 calls=4096 us_per_call=179.291

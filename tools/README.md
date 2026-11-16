@@ -21,6 +21,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_binaries.py` | Every tracked binary is an approved `assets/` image or has a reviewed SHA-256 in [`.github/binary-allowlist.json`](../.github/binary-allowlist.json) ([below](#tracked-binaries)); tested by `tests/test_check_binaries.py` |
 | `format_vba.py` | Checks (`--check`) or applies (`--write`) the [VBA source layout](#vba-source-layout), ratcheting `vba_layout_baseline.json`; its fixtures are [`tests/test_format_vba.py`](../tests/test_format_vba.py) |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
+| `check_vba_identifiers.py`, `check_vba_calls.py` | Names and calls, read without Excel: an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong argument count, a qualified call to a `Private` procedure ([VBA source checks](#vba-source-checks)); their fixtures are unit tests in [`tests/test_check_vba_names.py`](../tests/test_check_vba_names.py) |
 | `check_vba_source.py`, `check_vba_conditionals.py`, `check_vba_visibility.py` | The VBA source rules of [VBA source checks](#vba-source-checks); their fixtures are unit tests in [`tests/test_check_vba.py`](../tests/test_check_vba.py), not `--self-test` |
 | `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
@@ -58,6 +59,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `closing-keywords-self-test`, `closing-keywords` | `check_closing_keywords.py`: its fixtures, then the commit messages of the candidate range |
 | `vba-jumps` | `check_vba_jumps.py` on every tracked VBA module |
 | `vba-source`, `vba-conditionals`, `vba-visibility` | `check_vba_source.py`, `check_vba_conditionals.py` and `check_vba_visibility.py` on every tracked VBA module |
+| `vba-identifiers`, `vba-calls` | `check_vba_identifiers.py` and `check_vba_calls.py` on every tracked VBA module |
 | `vba-layout` | `format_vba.py --check` on every tracked VBA module, against `vba_layout_baseline.json` |
 | `release-semantics` | `check_release_semantics.py` |
 | `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
@@ -241,11 +243,13 @@ repository on 2026-11-02 and copies of them changed to show drift.
 
 ## VBA source checks
 
-Three checks read every tracked `.bas`, `.cls` and `.frm` file: the production
+Five checks read every tracked `.bas`, `.cls` and `.frm` file: the production
 modules in `src/`, the test module in `tests/`, and the exporters and probes
 under `benchmark/`. `run_static_checks.py` runs them; each also runs on its
 own, for example `python3 tools/check_vba_source.py`. Their positive and
-negative fixtures are in [`tests/test_check_vba.py`](../tests/test_check_vba.py).
+negative fixtures are in [`tests/test_check_vba.py`](../tests/test_check_vba.py)
+and, for the two checks of names and calls,
+[`tests/test_check_vba_names.py`](../tests/test_check_vba_names.py).
 They share the lexer in `vba_lexer.py`, so a keyword in a comment (`'Declare`,
 `Rem Public Sub`), in a continued comment or in a string literal is never read
 as code.
@@ -295,9 +299,40 @@ private names are not compared, and class-module members are not in the
 project's global namespace. `benchmark/check_public_api.py` remains the freeze
 of the `K_STATS_*` signatures; this check keeps no inventory of its own.
 
+**Names and calls.** These two checks find, without Excel, three kinds of
+error that otherwise appear only when Excel compiles the project on the runner:
+a misspelled or undeclared name, a call to a procedure that does not exist, and
+a call with the wrong arguments. Both read each module once per compilation
+environment, so a declaration in an inactive `#If` branch never satisfies an
+active one.
+
+| Check | Enforces |
+| --- | --- |
+| `check_vba_identifiers.py` | Every name a procedure assigns (`=`, `Set`, `For`, `For Each`, `LSet`, `RSet`) is declared: a parameter, a local, a module-level name, the procedure's own name or a public name of a standard module. Every statement call, `Name args` or `Call Name(args)`, names a procedure that exists. No procedure, parameter, variable, constant, `Enum`, `Type` or `Declare` is named like a VBA keyword; `Scale` is on that list because a parameter of that name once stopped the project from compiling. A statement the check cannot read is a finding |
+| `check_vba_calls.py` | For a call that resolves to a procedure of the project, as a statement or inside an expression: the number of arguments, counting `Optional` parameters, a `ParamArray` and arguments passed by name; a named argument the procedure does not declare; a qualified call, `Module.Name`, to a `Private` procedure of another module |
+
+One name is accepted although it is on the keyword list: the local `Base` in
+`M_STATS_PROBDIST_SPECIALFUNCS`. It is in the released v1.0.0 source, which
+Excel compiled: VBA reserves `Base` only after `Option`. It stays: the routine
+is the generated block of `benchmark/gamma_route_study/b64_route_vba.py`, which
+a frozen study binds byte for byte. `ACCEPTED_KEYWORD_NAMES` names the file and
+the reason, and a test fails when the name leaves the source.
+
+What the two cannot see:
+
+- a member call (`obj.Method`, `.Add x` in a `With` block), a call inside an
+  expression to a name that does not exist, a `Property` procedure, a
+  `Declare` and a built-in function are not resolved;
+- argument types are not checked, only their number and names;
+- every tracked module is read as one project, as for the collision group
+  below. A production module that called a procedure defined only in a
+  benchmark exporter would pass here and fail in Excel;
+- an expression's value, an overflow or a wrong formula: these remain the work
+  of the Excel regression.
+
 What these checks cannot prove:
 
-- they neither compile nor run VBA, and they resolve no call;
+- they neither compile nor run VBA; the first three resolve no call;
 - they model the three environments statically, not on a 32-bit or 64-bit
   host, and do not prove that a `Declare` uses the right argument widths;
 - `check_vba_jumps.py` keeps its own lexer and reads both branches of an `#If`
@@ -689,3 +724,16 @@ template skips those features with a note, and does not read Actions settings.
 | --- | --- |
 | `tools/setup_repository.py` | The template's handling of paused Dependabot security updates. `automated-security-fixes` is always read, and the feature counts as on only when it is enabled and not paused. Pause notes say how to resume the feature, the read-back fails while it stays paused, and turning it off still issues the DELETE. It is applied to this repository's observe, assess and plan steps and its JSON evidence (`"on (paused)"`, a `paused` field), with an unreadable endpoint falling back to `security_and_analysis` and stating that the paused state is unknown. |
 | `tests/test_setup_repository.py` | The template's paused-updates cases (paused is drift, enabled and not paused matches, an apply that does not resume fails), on this repository's recorded responses, plus the unreadable-endpoint and turn-off cases. |
+
+### Adapted from `danielep71/K-TEMPLATE` at `9fef90d`
+
+The checks of VBA names and calls (#291), adapted from template revision
+`9fef90ddd20b8f8c43b39b964a63ed186079b7a4`. The template was named `MyTemplate`
+when the sections above were written. Both repositories are licensed under the
+Mozilla Public License 2.0.
+
+| File | Adaptation |
+| --- | --- |
+| `tools/check_vba_identifiers.py` | `tools/check_vba_identifiers.py`, with its rules unchanged and one correction (a comma inside a date literal no longer splits a declaration), on this repository's `vba_lexer.py` and `check_vba_conditionals.py`, which already provide every function it imports. Added: `Scale` on the keyword list, and `ACCEPTED_KEYWORD_NAMES` for one local of the released source. The form, class and document-module rules are kept although no such module is tracked here |
+| `tools/check_vba_calls.py` | `tools/check_vba_calls.py`, unchanged. Advisory in the template; blocking here, since the tracked source has no finding |
+| `tests/test_check_vba_names.py` | The identifier and call fixtures and cases of `tests/test_check_vba.py`, without the form, class and document-module cases; with cases for `Scale`, for the accepted name and for this repository's own source |

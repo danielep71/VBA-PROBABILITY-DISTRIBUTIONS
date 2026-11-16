@@ -46,7 +46,8 @@ $script:StudyGridNames = @(
     "prs_gamma_probe", "prs_chisquare_probe", "prs_gamma_holdout",
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
-    "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout"
+    "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout",
+    "bic_baseline", "bic_holdout"
 )
 
 function Get-StudyGridNames {
@@ -113,7 +114,8 @@ function Get-ExportGridSpec {
                      "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
                      "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2",
                      "prs_chisquare_holdout2", "grh_route_holdout", "gis_holdout",
-                     "gis_holdout2", "fip_baseline", "fip_holdout")]
+                     "gis_holdout2", "fip_baseline", "fip_holdout",
+                     "bic_baseline", "bic_holdout")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -274,6 +276,18 @@ function Get-ExportGridSpec {
                 -FileName "f_inverse_pair_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_FIP.bas" -Macro "Export_FInversePair" `
                 -Columns 8 -KeyColumns 7 -SuccessPrefix "F inverse pair holdout complete: "
+        }
+        "bic_baseline" {
+            return New-GeneratedGridSpec -Folder "f_inverse_large_df_study/cost" -Name "bic_baseline" `
+                -FileName "beta_inverse_cost_baseline.csv" `
+                -Exporter "M_STATS_PROBDIST_BIC.bas" -Macro "Export_BetaInverseCostBaseline" `
+                -Columns 8 -KeyColumns 7 -SuccessPrefix "Beta inverse cost baseline complete: "
+        }
+        "bic_holdout" {
+            return New-GeneratedGridSpec -Folder "f_inverse_large_df_study/cost" -Name "bic_holdout" `
+                -FileName "beta_inverse_cost_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_BIC.bas" -Macro "Export_BetaInverseCost" `
+                -Columns 8 -KeyColumns 7 -SuccessPrefix "Beta inverse cost holdout complete: "
         }
         "gbr_binary64_map" {
             return New-GeneratedGridSpec -Folder "gamma_route_study" -Name "gbr_binary64_map" `
