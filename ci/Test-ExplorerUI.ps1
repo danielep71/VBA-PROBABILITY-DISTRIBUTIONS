@@ -74,25 +74,56 @@ try {
     # Resolve the real confirmation dialog by owned process, exact prompt and
     # standard button ID. Never send keystrokes to the foreground desktop.
     foreach ($choice in @('2','1')) {
+        $excel.EnableEvents = $false
+        $sheet.Range('D6').Value2 = 'Poisson'
+        $sheet.Range('D7').Value2 = 3.0
         $sheet.Range('D8').Value2 = 2.0
+        $sheet.Range('D9').Value2 = 2.0
+        $sheet.Range('D10').Value2 = 5.0
+        $excel.EnableEvents = $true
+        $sheet.Range('D11').Value2 = 2.0
         $before = (Read-Inputs $sheet) | ConvertTo-Json -Compress
-        $dialogJob = Start-Job -ArgumentList $excelProcessId,$choice -ScriptBlock {
-            param($OwnedProcessId,$ButtonId)
+        $dialogJob = Start-Job -ArgumentList $excelProcessId,$choice,([long]$excel.Hwnd) -ScriptBlock {
+            param($OwnedProcessId,$ButtonId,$OwnedWindowHandle)
             $ErrorActionPreference = 'Stop'
             Add-Type -AssemblyName UIAutomationClient
             Add-Type -AssemblyName UIAutomationTypes
-            $owned = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty,[int]$OwnedProcessId)
+            Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class ExplorerDialogNative {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetDlgItem(IntPtr parent, int id);
+    [DllImport("user32.dll", SetLastError=true)]
+    public static extern IntPtr SendMessageTimeout(IntPtr window, uint message,
+        UIntPtr wParam, IntPtr lParam, uint flags, uint timeout, out UIntPtr result);
+}
+'@
+            $ownedRoot = [Windows.Automation.AutomationElement]::FromHandle([IntPtr]$OwnedWindowHandle)
+            $named = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Distribution Explorer')
             $deadline = [DateTime]::UtcNow.AddSeconds(20)
             do {
-                $windows = [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$owned)
+                $windows = $ownedRoot.FindAll([Windows.Automation.TreeScope]::Descendants,$named)
                 foreach ($candidate in $windows) {
-                    if ($candidate.Current.Name -ne 'Distribution Explorer') { continue }
+                    if ($candidate.Current.ProcessId -ne $OwnedProcessId -or
+                        $candidate.Current.ControlType -ne [Windows.Automation.ControlType]::Window) { continue }
                     $prompt = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Reset only Explorer inputs to Normal(0,1)?')
                     if ($null -eq $candidate.FindFirst([Windows.Automation.TreeScope]::Descendants,$prompt)) { continue }
                     $id = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::AutomationIdProperty,[string]$ButtonId)
                     $button = $candidate.FindFirst([Windows.Automation.TreeScope]::Descendants,$id)
                     if ($null -eq $button) { throw 'Expected confirmation button missing' }
-                    $button.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
+                    $invoke = $null
+                    if ($button.TryGetCurrentPattern([Windows.Automation.InvokePattern]::Pattern,[ref]$invoke)) {
+                        $invoke.Invoke()
+                    } else {
+                        # This Excel build exposes the standard dialog buttons as
+                        # Pane controls. Address only the matched dialog's child.
+                        $handle = [ExplorerDialogNative]::GetDlgItem([IntPtr]$candidate.Current.NativeWindowHandle,[int]$ButtonId)
+                        if ($handle -eq [IntPtr]::Zero) { throw 'Matched dialog button has no HWND' }
+                        $result = [UIntPtr]::Zero
+                        $sent = [ExplorerDialogNative]::SendMessageTimeout($handle,0xF5,[UIntPtr]::Zero,[IntPtr]::Zero,2,5000,[ref]$result)
+                        if ($sent -eq [IntPtr]::Zero) { throw 'Matched dialog button did not respond' }
+                    }
                     return "Clicked confirmation button $ButtonId"
                 }
                 Start-Sleep -Milliseconds 100
@@ -101,7 +132,10 @@ try {
         }
         Invoke-Control (Find-Control 'Reset Explorer inputs')
         $completed = Wait-Job $dialogJob -Timeout 25
-        if ($null -eq $completed -or $dialogJob.State -ne 'Completed') { throw 'Confirmation worker failed or timed out' }
+        if ($null -eq $completed -or $dialogJob.State -ne 'Completed') {
+            $report.dialog_worker_errors = @($dialogJob.ChildJobs[0].Error | ForEach-Object { $_.Exception.Message })
+            throw 'Confirmation worker failed or timed out'
+        }
         $report['dialog_button_' + $choice] = Receive-Job $dialogJob -ErrorAction Stop
         Remove-Job $dialogJob
         $dialogJob = $null
@@ -110,7 +144,11 @@ try {
             if ($before -ne $after) { throw 'Cancel changed Explorer inputs' }
             $report.reset_cancel = 'PASS'
         } else {
-            if ($sheet.Range('D6').Value2 -ne 'Normal' -or $sheet.Range('D8').Value2 -ne 1.0) { throw 'Confirmed reset did not restore defaults' }
+            $actual = Read-Inputs $sheet
+            $expected = @('Normal',0.0,1.0,1.0,4.0,0.0)
+            for ($index=0; $index -lt $expected.Count; $index++) {
+                if ($actual[$index] -ne $expected[$index]) { throw "Confirmed reset did not restore input $index" }
+            }
             $report.reset_confirm = 'PASS'
         }
         if (-not $excel.EnableEvents -or -not $sheet.ProtectContents) { throw 'Ribbon reset leaked state or protection' }
