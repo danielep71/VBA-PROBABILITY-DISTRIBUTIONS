@@ -28,7 +28,8 @@ try {
     # Temporary style donor; deleted before saving. No independent visual theme.
     $sheet.Copy([Type]::Missing, $book.Worksheets.Item($book.Worksheets.Count))
     $donor = $book.Worksheets.Item($book.Worksheets.Count)
-    $sheet.UsedRange.Clear()
+    # Keep the template navigation background, including the frozen rows.
+    $sheet.Range('B1:P218').Clear()
     $sheet.Columns.Item('C').ColumnWidth = 26
     $sheet.Columns.Item('D').ColumnWidth = 18
     $sheet.Columns.Item('E').ColumnWidth = 3
@@ -66,7 +67,13 @@ try {
     # K-SACCR input palette; preserve the template's typeface and borders.
     $sheet.Range('D6:D11').Interior.Color = 0xCCF2FF
     $sheet.Range('D6:D11').NumberFormatLocal = '0' + $decimal + '0000'
-    $sheet.Range('D6').Validation.Add(3, 1, 1, 'Normal,Exponential,Poisson')
+    # Range-backed lists work with every Excel regional list separator.
+    $sheet.Range('Q1').Value2 = 'Normal'
+    $sheet.Range('Q2').Value2 = 'Exponential'
+    $sheet.Range('Q3').Value2 = 'Poisson'
+    $sheet.Columns.Item('Q').Hidden = $true
+    $sheet.Range('D6').Validation.Delete()
+    $sheet.Range('D6').Validation.Add(3, 1, 1, '=$Q$1:$Q$3')
     $sheet.Range('D6').Validation.ErrorTitle = 'Choose a listed family'
     $sheet.Range('D6').Validation.ShowError = $true
     $limits = @(@('D7',-1000000,1000000),@('D8',0.001,10000),@('D9',0.001,1000),@('D10',0.01,100),@('D11',-10000000,10000000))
@@ -78,7 +85,7 @@ try {
     $donor.Range('D6').Copy($sheet.Range('F6:H15'))
     $sheet.Range('F6:H15').ClearContents()
     $sheet.Range('G5:H5').Merge()
-    $sheet.Range('G5').Formula = '=IF(IFERROR(AND(ISNUMBER(D11),ABS(D11)<=10000000,OR(AND(D6="Normal",ISNUMBER(D7),ABS(D7)<=1000000,ISNUMBER(D8),D8>=0.001,D8<=10000),AND(D6="Exponential",ISNUMBER(D9),D9>=0.001,D9<=1000),AND(D6="Poisson",ISNUMBER(D10),D10>=0.01,D10<=100))),FALSE),"OK","Check inputs")'
+    $sheet.Range('G5').Formula2 = '=IF(IFERROR(AND(ISNUMBER(D11),ABS(D11)<=10000000,OR(AND(D6="Normal",ISNUMBER(D7),ABS(D7)<=1000000,ISNUMBER(D8),D8>=0.001,D8<=10000),AND(D6="Exponential",ISNUMBER(D9),D9>=0.001,D9<=1000),AND(D6="Poisson",ISNUMBER(D10),D10>=0.01,D10<=100))),FALSE),"OK","Check inputs")'
     $sheet.Range('F5').Value2 = 'Input status'
     $sheet.Range('F7').Value2 = 'PDF / PMF at x'
     $sheet.Range('F8').Value2 = 'CDF at x'
@@ -86,15 +93,15 @@ try {
     $sheet.Range('F10').Value2 = 'Plot lower bound'
     $sheet.Range('F11').Value2 = 'Plot upper bound'
     $sheet.Range('F12').Value2 = 'Right tail omitted'
-    $sheet.Range('G7').Formula = DistributionFormula 'density' '$D$11'
-    $sheet.Range('G8').Formula = DistributionFormula 'cdf' '$D$11'
-    $sheet.Range('G9').Formula = DistributionFormula 'survival' '$D$11'
-    $sheet.Range('G10').Formula = '=IF($G$5="OK",IF(D6="Normal",D7-4*D8,0),NA())'
-    $sheet.Range('G11').Formula = '=IF($G$5="OK",IF(D6="Normal",D7+4*D8,IF(D6="Exponential",8/D9,ROUNDUP(D10+8*SQRT(D10)+10,0))),NA())'
-    $sheet.Range('G12').Formula = DistributionFormula 'survival' '$G$11'
+    $sheet.Range('G7').Formula2 = DistributionFormula 'density' '$D$11'
+    $sheet.Range('G8').Formula2 = DistributionFormula 'cdf' '$D$11'
+    $sheet.Range('G9').Formula2 = DistributionFormula 'survival' '$D$11'
+    $sheet.Range('G10').Formula2 = '=IF($G$5="OK",IF(D6="Normal",D7-4*D8,0),NA())'
+    $sheet.Range('G11').Formula2 = '=IF($G$5="OK",IF(D6="Normal",D7+4*D8,IF(D6="Exponential",8/D9,ROUNDUP(D10+8*SQRT(D10)+10,0))),NA())'
+    $sheet.Range('G12').Formula2 = DistributionFormula 'survival' '$G$11'
     $sheet.Range('G7:G12').NumberFormatLocal = '0' + $decimal + '000000'
     $sheet.Range('F14:H15').Merge()
-    $sheet.Range('F14').Formula = '=IF(D6="Normal","Support: all real x. Parameters: mean, standard deviation.",IF(D6="Exponential","Support: x >= 0. Parameter: rate, not scale.","Support: integer k >= 0. Fractional probe k is truncated by the library."))'
+    $sheet.Range('F14').Formula2 = '=IF(D6="Normal","Support: all real x. Parameters: mean, standard deviation.",IF(D6="Exponential","Support: x >= 0. Parameter: rate, not scale.","Support: integer k >= 0. Fractional probe k is truncated by the library."))'
     $sheet.Range('F14').WrapText = $true
     $sheet.Range('C14:D14').Merge()
     $sheet.Range('C14').Value2 = 'Read the results'
@@ -114,9 +121,9 @@ try {
     $sheet.Range('F18:H218').NumberFormatLocal = '0' + $decimal + '000000'
     for ($row=18; $row -le 218; $row++) {
         $index = $row - 18
-        $sheet.Range("F$row").Formula = '=IF($G$5="OK",IF($D$6="Poisson",IF(' + $index + '<=$G$11,' + $index + ',NA()),$G$10+($G$11-$G$10)*' + $index + '/200),NA())'
-        $sheet.Range("G$row").Formula = DistributionFormula 'density' "F$row"
-        $sheet.Range("H$row").Formula = DistributionFormula 'cdf' "F$row"
+        $sheet.Range("F$row").Formula2 = '=IF($G$5="OK",IF($D$6="Poisson",IF(' + $index + '<=$G$11,' + $index + ',NA()),$G$10+($G$11-$G$10)*' + $index + '/200),NA())'
+        $sheet.Range("G$row").Formula2 = DistributionFormula 'density' "F$row"
+        $sheet.Range("H$row").Formula2 = DistributionFormula 'cdf' "F$row"
     }
     foreach ($spec in @(@('ExplorerDensity',5,'G'),@('ExplorerCDF',18,'H'))) {
         $anchor = $sheet.Range('J' + $spec[1])

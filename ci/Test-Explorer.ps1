@@ -21,6 +21,26 @@ try {
     if ($sheet.Range('D8').Text -ne ('1' + $decimal + '0000')) { throw 'Default sigma is formatted incorrectly' }
     if ($sheet.Range('G8').Text -ne ('0' + $decimal + '500000')) { throw 'Default CDF is formatted incorrectly' }
     if ($null -ne $sheet.UsedRange.Find('Under development')) { throw 'Placeholder text remains in Explorer' }
+    foreach ($cell in $sheet.Range('A1:A7').Cells) {
+        if ($cell.Interior.Color -ne $sheet.Range('A8').Interior.Color) { throw 'Navigation background differs in frozen/header rows' }
+    }
+    foreach ($cell in $sheet.UsedRange.SpecialCells(-4123).Cells) {
+        if ([string]$cell.Formula2 -match '@|_xlfn.SINGLE') { throw "Implicit intersection remains in $($cell.Address())" }
+    }
+    $validation = $sheet.Range('D6').Validation
+    if ($validation.Type -ne 3 -or $validation.Formula1 -ne '=$Q$1:$Q$3') { throw 'Distribution validation is not a range-backed list' }
+    $choices = @($sheet.Range('Q1:Q3').Cells | ForEach-Object { [string]$_.Value2 })
+    if (($choices -join '|') -ne 'Normal|Exponential|Poisson') { throw 'Distribution list does not have three separate choices' }
+    foreach ($choice in $choices) {
+        $sheet.Range('D6').Value2 = $choice
+        if (-not $validation.Value -or $sheet.Range('G5').Value2 -ne 'OK') { throw "Validation rejects $choice" }
+    }
+    $sheet.Range('D6').Value2 = 'Normal,Exponential,Poisson'
+    if ($validation.Value) { throw 'Validation accepts concatenated family list' }
+    $excel.Run($prefix + 'ResetExplorerInputs',$false)
+    $report.navigation_background = 'PASS'
+    $report.formula2_no_implicit_intersection = 'PASS'
+    $report.range_backed_family_validation = 'PASS'
     $report.display_formats = 'PASS'
     if ($sheet.Range('D6:D11').Locked) { throw 'Explorer inputs are locked' }
     if (-not $sheet.Range('G7').Locked -or -not $sheet.ProtectContents) { throw 'Results are not protected' }
