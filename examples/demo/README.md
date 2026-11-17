@@ -23,86 +23,99 @@ ignored. It uses the existing MS-OVBA/MS-CFB writer, without Office automation,
 external dependencies or p-code. Excel compilation of this new package remains
 unverified; #110's certified CI-workbook execution is separate work.
 
-`examples/demo/sheets.json` is the single map for tab order, document CodeNames,
-Ribbon destinations, defined-name hyperlinks and current-sheet highlighting.
-The workbook embeds the current production modules plus `M_STATS_PROBDIST_DEMO.bas`.
-Start Here shows the source commit and the library version separately from the
-development workbook version. The manifest is an inventory, not certification.
+`examples/demo/sheets.json` is the single map of sections, tab names, document
+CodeNames, tooltips and issues. The Go to menu of the Ribbon, the navigation
+bar of every sheet, the table of links on Home and the defined names of the
+link targets are all written from it. The workbook embeds the current
+production modules plus `M_STATS_PROBDIST_DEMO.bas`. README, the last sheet,
+shows the source commit and the library version. The manifest is an inventory,
+not certification.
 
-## Reference and migration
+## Reference: the K-SACCR workbook template
 
-Reference inspected: K-SACCR commit
-`963695e2a862647d9013814b5bc63df3489c387e`, especially
-`src/workbook/SACCR_Template.xlsx`, `customUI14.xml`, `M_Ribbon.bas` and
-`docs/workbook/RIBBON.md`. This implementation is original; it adapts the
-interaction contract and visual conventions, not the SA-CCR commands or code.
+Reference inspected: K-SACCR commit `400871e`, `src/workbook/SACCR_Template.xlsx`,
+`customUI14.xml`, `M_Ribbon.bas`, `M_Main.bas` (navigation bar),
+`tools/navigation_bar.py`, `docs/workbook/RIBBON.md` and
+`docs/workbook/sheet-style.json`. The demo takes these from it:
 
-The initial approximation was rejected in review. The builder now uses extracted
-Open XML parts from that exact template: the complete style table and theme,
-the Home sheet cell styles, row heights, column widths, panes and print settings,
-and the original navigation button shape as a prototype. Captions, sheet targets
-and project branding are adapted. The original dark sidebar and black/blue
-header bands are preserved. These parts live in `reference/` and are covered
-by the build manifest and template-fidelity tests.
+| Element | In the demo |
+| --- | --- |
+| Style table and theme | The template's own `xl/styles.xml` and `xl/theme/theme1.xml`, kept in `reference/` and written unchanged. |
+| Page | Black band with the project name, blue band with the sheet title, subtitle, section headings and bordered two-column tables: the template's cell styles, row heights and column widths. Rows 1 to 3 and column A frozen, no gridlines, landscape print setup. |
+| Navigation bar | Column A of every sheet: linked shapes in the sections of the Go to menu, the first section after Start in the frozen rows, the others below with Start last. The current sheet is highlighted and not linked; each button has a strip in its sheet's tab colour; the shapes are not printed. Same sizes, colours and shape names (`NavBarTop`, `NavBar`). |
+| Ribbon | One tab with a keytip; a Navigate group with a Go to split button (the button opens Home, the menu lists every sheet under section separators, with tooltips) and the Navigation bar toggle. Callbacks named as in the template: `RibbonOnLoad`, `RibbonAction`, `RibbonGoTo`, `RibbonGetEnabled`, `RibbonToggle`, `RibbonGetPressed`, with `RibbonSheet` mapping an entry to a CodeName. |
+| Home | First tab, last entry of the bar. Three tables: what the workbook shows, how to use it, and a link to every sheet with its section. |
+| Tab names and colours | Plain names without numbers; one colour per role, as the template's sheet-style contract gives them. |
+| Protection | Every sheet protected without a password; workbook structure locked. |
+| Saving | The workbook is always saved with the bar shown (`Workbook_BeforeSave`, `Workbook_AfterSave`). |
+
+Not taken, because the demo has nothing for them yet: the Calculation split
+button with its menu, CSV import, evidence export, the Status labels, and the
+stored Ribbon pointer that lets the template refresh its tab after a reset of
+the VBA state. After such a reset the demo's Navigation bar toggle keeps
+working, but its pressed state is refreshed only when the workbook is reopened.
 
 Adapted from K-SACCR, maintained by Daniele Penza, under MPL-2.0.
-Source: https://github.com/danielep71/K-SACCR/tree/963695e2a862647d9013814b5bc63df3489c387e/src/workbook
-The source license is retained with the extracted parts. The layout XML contains
-no SA-CCR cell content; navigation captions are replaced during generation.
+Source: https://github.com/danielep71/K-SACCR/tree/400871e/src/workbook
+The source license is retained with the extracted parts. No SA-CCR cell
+content, command or code is included.
 
 The old `examples/STATS-Distributions demo.xlsm` was removed intentionally by
 commit `6d919e97765b79085bfb6b2ffb23d0a8b753127f` for v1.0.0: its embedded VBA
-was not checked against the released modules. Its historical workbook was
-inspected: HOME, SETUP, NORMAL, LOGNORMAL and BENCHMARK_NORMALFAMILY. The new
-shell replaces that entry point rather than restoring uncertified embedded
-code. Relevant examples can be reviewed separately in the thematic issues.
+was not checked against the released modules. The new shell replaces that
+entry point rather than restoring uncertified embedded code.
 
 ## Controls and ownership
 
-- **Go to / Help:** `DemoGoTo`, with a sheet CodeName in the control tag.
-  Missing targets produce a clear message. Renamed tabs do not change CodeNames.
-- **Recalculate:** `DemoRecalculate`, worksheet calculation in ThisWorkbook only.
-- **Reset inputs:** statically disabled. There are no editable example inputs
-  in the shell. Future implementations must define bounded input ranges,
-  confirmation/cancellation and restoration of any owned Excel state.
-- No application state, timers, shortcuts or Ribbon pointers are retained.
-- Sheets are protected against unintended edits, without a password. This is
+- **Go to:** `RibbonGoTo` activates a sheet of this workbook by CodeName. A
+  missing target produces a clear message.
+- **Recalculate:** `RibbonAction` calls `RecalculateWorkbook`: worksheet
+  calculation in ThisWorkbook only.
+- **Reset inputs:** disabled through `RibbonGetEnabled`. There are no editable
+  example inputs in the shell. Future implementations must define bounded
+  input ranges, confirmation and restoration of any owned Excel state.
+- **Navigation bar:** `RibbonToggle` hides or shows column A and the two shape
+  groups on every sheet, for the session. The state is read from the workbook
+  (column A of the first sheet), not from a variable.
+- The module keeps the Ribbon object and one flag for a save in progress.
+  Screen updating and the Saved flag are put back on success and on failure.
+  No timer or shortcut is set.
+- Sheets are protected against unintended edits, without a password, and the
+  structure is locked so that tabs cannot be renamed under the links. This is
   an editing aid, not a security boundary. All cells are currently locked.
-- Defined names target sheet cells, so Excel can update the destinations on
-  tab rename. Names provide macro-disabled navigation independently of VBA.
+- The links of the bar and of Home target defined names (`nav_<CodeName>`), so
+  they work with macros disabled.
 
 ## Acceptance still required in desktop Excel
 
 Record the exact commit, workbook digest, Excel build and Office bitness.
 
 1. Open without repair messages and compile the embedded project.
-2. Exercise every Ribbon target, Help and worksheet link.
-3. Rename a tab, then repeat Ribbon and hyperlink navigation.
-4. In a disposable copy remove a sheet: its Ribbon target must report failure
-   without navigating to another workbook.
-5. Open a second workbook and confirm all actions stay in the demo.
-6. Open with macros disabled: all tabs and left links must remain usable.
-7. Save, close and reopen: verify RibbonX, hyperlinks and protection persist.
-8. Inspect every sheet at normal zoom and print preview for clipped text.
-9. Record tested environments only; do not infer 32-bit compatibility.
+2. Exercise Recalculate, every Go to entry and every link of the bar and of Home.
+3. Press Navigation bar: column A and the bar disappear on every sheet; press
+   again: they return. Hide the bar, save, close and reopen: the bar is shown.
+4. Open a second workbook and confirm all actions stay in the demo.
+5. Open with macros disabled: the bar and the Home links must remain usable.
+6. Save, close and reopen: verify RibbonX, links and protection persist.
+7. Inspect every sheet at normal zoom and print preview for clipped text; the
+   bar must not print.
+8. Record tested environments only; do not infer 32-bit compatibility.
 
 These checks are pending. The shell does not close #253. Integrated demo
 validation remains #262; screenshots remain #250.
 
 ## Visual review
 
-The revised package was rendered to PDF with LibreOffice and every worksheet
-was inspected. The navigation overlap found in that rendering was corrected.
-This verifies a rendered preview, not the desktop Excel Ribbon or save cycle.
-The reference retains its multi-page landscape print layout.
+The package was rendered to PDF with LibreOffice and compared, sheet by sheet,
+with the same rendering of the template. This verifies a rendered preview, not
+the desktop Excel Ribbon, the toggle or the save cycle.
 
-## Excel-open repair
+## Excel-open check
 
-The initial template serialization left `mc:Ignorable` naming namespace prefixes
-that ElementTree had renamed or dropped. Well-formed XML and LibreOffice did not
-detect this Excel compatibility defect. Optional revision/compatibility metadata
-is now removed from the layout snapshot without changing its styles or geometry.
-Package tests check namespace-valued compatibility attributes. The `excel-open`
-job opens the original XLSM with macros disabled, saves a copy, and reopens it
-using desktop Excel. The evidence records Excel version/build and input hash.
-This open test does not validate Ribbon callbacks or numerical execution.
+Every sheet and drawing is written as plain Open XML, with no optional
+revision or compatibility metadata of its own; the template's style table
+keeps its `mc:Ignorable` list, whose prefixes it declares. Package tests check
+namespace-valued compatibility attributes in every part. The `excel-open` job
+opens the XLSM with macros disabled, saves a copy, and reopens it using desktop
+Excel. The evidence records Excel version/build and input hash. This open test
+does not validate Ribbon callbacks or numerical execution.

@@ -15,7 +15,7 @@ try {
     $report.excel_build = $excel.Build
     # Normal open only: never request Excel's repair/extract-data modes.
     $book = $excel.Workbooks.Open($path, 0, $false)
-    if ($book.Worksheets.Count -ne 9) { throw 'Expected nine worksheets' }
+    if ($book.Worksheets.Count -ne 10) { throw 'Expected ten worksheets' }
     if ($book.HasVBProject -ne $true) { throw 'VBA project missing' }
     $report.open = 'PASS'
     $book.SaveCopyAs($copy)
@@ -23,7 +23,7 @@ try {
     [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book)
     $book = $null
     $book = $excel.Workbooks.Open($copy, 0, $true)
-    if ($book.Worksheets.Count -ne 9) { throw 'Round-trip lost worksheets' }
+    if ($book.Worksheets.Count -ne 10) { throw 'Round-trip lost worksheets' }
     if ($book.HasVBProject -ne $true) { throw 'Round-trip lost VBA project' }
     $report.roundtrip = 'PASS'
     $report.status = 'PASS'
