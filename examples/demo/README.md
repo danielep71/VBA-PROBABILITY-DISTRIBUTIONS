@@ -141,6 +141,15 @@ phase below additionally exercises the embedded VBA.
 
 ## Automated functional acceptance
 
+The runner records Excel's executable architecture from its PE header, rather
+than inferring Office bitness from PowerShell. After the native save cycle it
+also follows every Home table hyperlink through Excel's `Hyperlink.Follow`
+with macros disabled, then repeats after renaming Explorer in the read-only
+in-memory workbook. These assertions check actual hyperlink destinations;
+they do not certify physical mouse clicks, shape links or Ribbon callbacks.
+The rename is discarded on close. Missing-sheet callback handling remains an
+interactive check because it displays a modal message.
+
 The Excel package test also executes an embedded library function, checks every
 Ribbon destination and defined-name target against the sheet map, hides the
 navigation groups while a second workbook is active, verifies protection and

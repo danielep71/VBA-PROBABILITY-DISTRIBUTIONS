@@ -10,6 +10,26 @@ $report = @{ status = 'FAIL'; workbook = $path; sha256 = (Get-FileHash $path -Al
 $excel = $null
 $book = $null
 $other = $null
+function Test-HomeLinks($Workbook, $Application) {
+    $home = $Workbook.Worksheets.Item('Home')
+    $count = 0
+    foreach ($link in $home.Hyperlinks) {
+        # msoHyperlinkRange: the Home table, excluding drawing hyperlinks.
+        if ($link.Type -ne 0) { continue }
+        if ($link.Address) { throw 'Home contains an unexpected external hyperlink' }
+        $expected = $Workbook.Names.Item($link.SubAddress).RefersToRange.Worksheet.CodeName
+        $Workbook.Activate()
+        $home.Activate()
+        $link.Follow()
+        if ($Application.ActiveWorkbook.FullName -ne $Workbook.FullName -or
+            $Application.ActiveSheet.CodeName -ne $expected) {
+            throw "Home hyperlink reached the wrong workbook or sheet: $($link.SubAddress)"
+        }
+        $count++
+    }
+    if ($count -ne 9) { throw "Expected nine Home links, observed $count" }
+    return $count
+}
 try {
     $excel = New-Object -ComObject Excel.Application
     $excel.Visible = $false
@@ -17,6 +37,21 @@ try {
     $excel.AutomationSecurity = 3
     $report.excel_version = $excel.Version
     $report.excel_build = $excel.Build
+    # Read the executable PE machine field, not the PowerShell process bitness.
+    $reader = [IO.BinaryReader]::new([IO.File]::OpenRead((Join-Path $excel.Path 'EXCEL.EXE')))
+    try {
+        $reader.BaseStream.Position = 0x3c
+        $peOffset = $reader.ReadInt32()
+        $reader.BaseStream.Position = $peOffset
+        if ($reader.ReadUInt32() -ne 0x4550) { throw 'Invalid Excel PE signature' }
+        $machine = $reader.ReadUInt16()
+        $report.excel_architecture = switch ($machine) {
+            0x8664 { 'x64' }
+            0x014c { 'x86' }
+            0xaa64 { 'ARM64' }
+            default { throw "Unrecognized Excel machine type: $machine" }
+        }
+    } finally { $reader.Dispose() }
     # Normal open only: never request Excel's repair/extract-data modes.
     $book = $excel.Workbooks.Open($path, 0, $false)
     if ($book.Worksheets.Count -ne 10) { throw 'Expected ten worksheets' }
@@ -132,7 +167,20 @@ try {
     }
     $report.saved_navigation = 'PASS'
     $report.save_events = 'PASS'
-    $report.scope = 'Embedded VBA, navigation mapping, toggle, isolation, save events; Ribbon clicks remain manual.'
+    $report.macro_disabled_home_links = Test-HomeLinks $book $excel
+    # Mutations are confined to the in-memory, read-only copy and never saved.
+    $book.Unprotect()
+    $explorer = $book.Worksheets.Item('Explorer')
+    $originalName = $explorer.Name
+    $explorer.Name = 'Renamed Explorer'
+    if ($book.Names.Item('nav_shExplorer').RefersToRange.Worksheet.CodeName -ne 'shExplorer') {
+        throw 'Renaming broke the stable navigation target'
+    }
+    $report.renamed_tab_home_links = Test-HomeLinks $book $excel
+    $explorer.Name = $originalName
+    $book.Protect([Type]::Missing, $true)
+    if (-not $book.ProtectStructure) { throw 'Workbook structure protection was not restored' }
+    $report.scope = 'Embedded VBA, navigation mapping, toggle, isolation, save events, macro-disabled Home hyperlink Follow and renamed-tab targets; physical Ribbon/link clicks remain manual.'
     $report.status = 'PASS'
 } catch {
     $report.error = $_.Exception.Message
