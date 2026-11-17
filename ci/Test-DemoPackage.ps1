@@ -69,6 +69,21 @@ try {
     if ($other.Worksheets.Item(1).Range('A1').Value2 -ne 'isolation sentinel') { throw 'Other workbook changed' }
     $report.hide_and_isolation = 'PASS'
     $excel.Run($prefix + 'RecalculateWorkbook')
+    $report.events_enabled = $excel.EnableEvents
+    $report.workbook_codename = $book.CodeName
+    try {
+        $report.vba_references = @($book.VBProject.References | ForEach-Object { $_.Name + ':' + $_.Guid })
+        $component = $book.VBProject.VBComponents.Item('ThisWorkbook')
+        $report.workbook_module_type = $component.Type
+        $report.workbook_module_source = $component.CodeModule.Lines(1, $component.CodeModule.CountOfLines)
+    } catch {
+        $report.project_inspection = $_.Exception.Message
+    }
+    $excel.Run($prefix + 'NavigationBarBeforeSave')
+    if ($book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Before-save helper did not show the navigation' }
+    $excel.Run($prefix + 'NavigationBarAfterSave')
+    if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'After-save helper did not restore session state' }
+    $report.save_helpers = 'PASS'
     # Require an actual save even when the session-only toggle preserved Saved.
     $book.Saved = $false
     $book.Save()
@@ -105,4 +120,5 @@ try {
         [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel)
     }
     $report | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $directory 'excel-open-report.json')
+    $report | ConvertTo-Json | Write-Output
 }
