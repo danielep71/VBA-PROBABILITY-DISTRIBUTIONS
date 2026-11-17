@@ -3,9 +3,10 @@ Reference-only migration derived from reference_audit_post_canonicalisation.csv.
 
 Patches the `reference` column of probability_accuracy_grid.csv and NOTHING
 else. observed_vba is never touched, no row is added or removed, and no
-contract threshold is altered - what the library actually measured against
-correct references must be established before deciding what the contracts
-should be.
+contract threshold is altered: what the library measured against correct
+references had to be established before the contracts were decided. That
+migration is complete (reference_migration.csv) and the contracts are frozen;
+the tool is kept for a later audited replacement.
 
 The action per row comes from the audit's replacement_source, not from
 re-deriving policy here:

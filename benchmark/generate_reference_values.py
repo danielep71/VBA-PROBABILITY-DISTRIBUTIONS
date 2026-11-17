@@ -936,8 +936,9 @@ def build_discrete_rows():
 # ===========================================================================
 # DEEP-TAIL INVERSE NORMAL (regime "deep_tail")
 #   The central inverse contracts are tight but domain-restricted: beyond the
-#   z = PROB_CDF_SPLIT (7.07) branch the achievable RELATIVE accuracy is bounded
-#   by the relative accuracy of the normal CDF in its tail. These rows measure
+#   former PROB_CDF_SPLIT transition (q near 1E-12, z near 7.03; the constant
+#   left the source with #72) the achievable RELATIVE accuracy is bounded by
+#   the relative accuracy of the normal CDF in its tail. These rows measure
 #   what the kernels actually deliver where the README advertises them
 #   (K_STATS_NormalStandard_InverseSurvival(1E-18) and beyond), so the claim is
 #   evidence rather than a disclaimer.
@@ -977,8 +978,8 @@ def build_deep_tail_rows():
 
     def row(func, args, ref):
         # The deep_tail contracts hold q <= 1E-13. The first probe, q = 1E-12,
-        # sits on the other side of PROB_CDF_SPLIT and is committed under
-        # split_boundary (#349).
+        # sits on the other side of the former PROB_CDF_SPLIT transition and is
+        # committed under split_boundary (#349).
         regime = "deep_tail" if args[0] <= mp.mpf("1e-13") else "split_boundary"
         rows.append({
             "function": func, "vba_kernel": "K_STATS_" + func,
@@ -1292,7 +1293,7 @@ def build_gamma_inverse_scale_rows():
 #
 #   Both F shapes are large there, so the F references use the single-sourced
 #   continued fraction of benchmark/_ibeta.py on the side where it converges,
-#   rather than mpmath's hypergeometric betainc. The 36 envelope_domain inverse
+#   rather than mpmath's hypergeometric betainc. The envelope_domain inverse
 #   rows are not generated: they are not survival references, and solving them
 #   at these df costs minutes per row.
 # ===========================================================================
@@ -1429,9 +1430,8 @@ def build_rows():
     # claim is ill-conditioned by construction, and the reflection path it was
     # measured against was separately defective for subnormal Z. Its evidence is
     # replaced by the three regime contracts emitted below, whose points come
-    # from loggamma_regimes_study. Removing the block here and the 40 rows from
-    # the grid are the same decision and belong in the same commit; leaving
-    # either behind would produce evidence no contract claims.
+    # from loggamma_regimes_study. The block and its 40 rows left the generator
+    # and the grid together (#15).
 
     # --- PROB_LogGammaHalfDiff : Z > 0, rel <= 2E-14 (tested range) ---
     for z in logspace("1e-6", "1e12", 30):

@@ -6,6 +6,9 @@ random draw, so the sweep is reproducible without a seed. References are
 computed with mpmath at 60 digits by solving the regularized incomplete beta
 on the smaller probability tail.
 
+Candidate S was adopted on 2026-11-16 (RESULT.md); the names "candidate" and
+"accepted rule" here are those of the time of the sweep.
+
 Writes fit_result.json beside this file. Run: python fit_sweep.py
 """
 import json

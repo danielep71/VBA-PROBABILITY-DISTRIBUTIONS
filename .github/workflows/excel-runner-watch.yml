@@ -12,7 +12,8 @@ name: Excel runner watch
 #           closes the issue when the condition clears.
 #
 # tools/excel_runner_watch.py holds the rules; tests/test_excel_runner_watch.py
-# tests them. Both triggers run this file from the default branch only.
+# tests them. The workflow_run and schedule triggers run this file from the
+# default branch only; a manual dispatch runs the ref it is given.
 
 on:
   workflow_run:

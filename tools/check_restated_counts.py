@@ -11,7 +11,8 @@ Scope is the top-level guides, docs/*.md. Dated research records under
 docs/research/ and the CHANGELOG keep historical numbers on purpose.
 
 A finding is either:
-  * a current count from its record, written as a standalone number:
+  * a current count from its record, of 100 or more, written as a standalone
+    number:
       - expected_assertions in .github/excel-evidence-policy.json;
       - expected_assertions in .github/excel-study-policy.json;
       - expected_assertions in .github/excel-fast-policy.json;

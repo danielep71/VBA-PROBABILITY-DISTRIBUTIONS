@@ -15,8 +15,8 @@
 # TWO KINDS OF GRID
 #   observed   The exporter rewrites the observed_vba column of the rows it
 #              owns in a committed grid (the rules below).
-#   generated  A study probe writes its whole CSV afresh (#225): the
-#              positive_ratio_subnormal probes. The export must keep the
+#   generated  A study exporter writes its whole CSV afresh (#225): the
+#              grids of $script:StudyGridNames. The export must keep the
 #              committed header, line count and, row by row, the leading
 #              KeyColumns fields that identify each point; the remaining
 #              fields are the measurement and may change. Every row must have

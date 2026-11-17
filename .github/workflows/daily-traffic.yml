@@ -47,7 +47,7 @@ on:
     - cron: "0 6 * * *"
   workflow_dispatch:
 
-# Read-only by default; the one job below receives exactly what it uses.
+# Read-only by default; each job below receives exactly what it uses.
 permissions:
   contents: read
 

@@ -68,9 +68,12 @@ Option Explicit
 '     freedom do not subtract two nearly equal log-gamma values.
 '
 '   Student t cumulative and survival
-'     Use exact closed forms for one and two degrees of freedom. Other cases use
-'     the incomplete-beta transformation with both complementary beta arguments
-'     formed directly. Tiny arguments use a local central-mass expansion.
+'     Use exact closed forms for one and two degrees of freedom. From 1E5
+'     degrees of freedom the tail comes from an order-5 expansion up to
+'     Abs(t) = 8 (#34) and from a near-one incomplete-beta route above it
+'     (#213). Other cases use the incomplete-beta transformation with both
+'     complementary beta arguments formed directly. Tiny arguments use a local
+'     central-mass expansion.
 '
 '   Student t inverse
 '     Uses exact closed forms for one and two degrees of freedom. Very small
@@ -164,10 +167,6 @@ Option Explicit
 '     (PROB_DENSITY_SHAPE_MAX); the Student t density carries none
 '     (benchmark/t_density_large_df). None of the densities is governed by the
 '     df caps above.
-'
-' UPDATED
-'   2026-08-11 - Envelope references, dependency lists and dates brought
-'                current after three rounds of measured cap changes.
 '==============================================================================
 
 
@@ -422,9 +421,6 @@ Public Function K_STATS_StudentT_Cumulative( _
 '   - PROB_T_ValidateEnvelope
 '   - PROB_TryStudentTTail
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -554,9 +550,6 @@ Public Function K_STATS_StudentT_Survival( _
 '   - PROB_T_ValidateEnvelope
 '   - PROB_TryStudentTTail
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -698,9 +691,6 @@ Public Function K_STATS_StudentT_InverseCumulative( _
 '   - PROB_T_ValidateEnvelope
 '   - PROB_TryStudentTInvTail
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -852,9 +842,6 @@ Public Function K_STATS_ChiSquare_Density( _
 '   - PROB_TF_ValidateXAndDF
 '   - PROB_TryGammaLogPdf, PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1040,9 +1027,6 @@ Public Function K_STATS_ChiSquare_Cumulative( _
 '   - PROB_CHI_ValidateEnvelope
 '   - PROB_TryGammaRoutedP
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1210,9 +1194,6 @@ Public Function K_STATS_ChiSquare_Survival( _
 '   - PROB_CHI_ValidateEnvelope
 '   - PROB_TryGammaRoutedQ
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1756,9 +1737,6 @@ Public Function K_STATS_F_Cumulative( _
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1920,9 +1898,6 @@ Public Function K_STATS_F_Survival( _
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2077,7 +2052,8 @@ Public Function K_STATS_F_InverseCumulative( _
 '   - Inverts the incomplete beta, then maps back with x = (df2/df1) * (Y / Z),
 '     where Y and Z are the beta root and its complement as returned by the
 '     solver. The solver solves for the member of the pair below 1/2 and
-'     forms the other as 1 - U, which loses nothing (#35), so the Y / Z ratio
+'     forms the other as 1 - U, exact as a pair where the reconstruction of
+'     #35 answers, so the Y / Z ratio
 '     keeps its relative accuracy in both tails: with df1 = df2 = 0.5 and
 '     Probability = 1 - 1E-9 the quantile is 8.46E+34 to 14 digits.
 '
@@ -2096,9 +2072,6 @@ Public Function K_STATS_F_InverseCumulative( _
 '   - PROB_TryBetaInvRegularized
 '   - PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2345,7 +2318,11 @@ Private Function PROB_TryStudentTTail( _
 '   - Tiny AbsX: uses a local central-mass expansion.
 '   - DF = 1: uses stable central and reciprocal arctangent forms.
 '   - DF = 2: uses algebraic forms that avoid an overflowing square.
-'   - General DF: evaluates one half of the regularized incomplete beta.
+'   - DF >= PROB_T_LDF_MIN_DF and AbsX <= PROB_T_LDF_MAX_ABS_T: the order-5
+'     large-df expansion (#34).
+'   - DF >= PROB_T_LDF_MIN_DF above that: the incomplete beta with its small
+'     argument formed directly (#213).
+'   - Otherwise: one half of the regularized incomplete beta.
 '
 ' ERROR POLICY
 '   - Predictable numerical failure is reported through False and FailMsg.
@@ -2353,6 +2330,7 @@ Private Function PROB_TryStudentTTail( _
 '
 ' DEPENDENCIES
 '   - PROB_TF_TryStudentTCentralMass
+'   - PROB_TF_StudentTLargeDFTail
 '   - PROB_TF_TrySquareRatioPair
 '   - PROB_TryBetaRegularized
 '   - PROB_TryBetaLowerNearOne
@@ -2456,7 +2434,6 @@ Private Function PROB_TryStudentTTail( _
 '------------------------------------------------------------------------------
 ' GENERAL INCOMPLETE-BETA BRANCH
 '------------------------------------------------------------------------------
-    'Form DF / (DF + X squared) and its complement without squaring X
     'Use the large-df expansion near the body, where the incomplete-beta
     'continued fraction loses accuracy in binary64 (#34)
         If DegreesFreedom >= PROB_T_LDF_MIN_DF And AbsX <= PROB_T_LDF_MAX_ABS_T Then
@@ -2481,6 +2458,7 @@ Private Function PROB_TryStudentTTail( _
             End If
         End If
 
+    'Form DF / (DF + X squared) and its complement without squaring X
         If Not PROB_TF_TrySquareRatioPair( _
             AbsX, DegreesFreedom, BetaX, BetaY) Then
             FailMsg = "Student t beta arguments could not be represented"
@@ -2681,9 +2659,6 @@ Private Function PROB_TryStudentTInvTail( _
 '
 ' CALLED FROM
 '   - K_STATS_StudentT_InverseCumulative
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3573,11 +3548,6 @@ Private Function PROB_F_ValidateEnvelope( _
 ' RETURNS
 '   Boolean
 '     True when both degrees of freedom are within PROB_F_MAX_DF.
-'
-' UPDATED
-'   2026-07-19 - Strict validated-domain policy for the incomplete-beta F path.
-'   2026-07-29 - Cap raised from 1E5 to 1E10 after CR-P1-02
-'                (benchmark/envelope_probe).
 '==============================================================================
 '
     FailMsg = vbNullString
@@ -3608,10 +3578,11 @@ Private Function PROB_T_ValidateEnvelope( _
 '   the incomplete-beta tail behind StudentT_Cumulative, StudentT_Survival and
 '   StudentT_InverseCumulative. The cap was raised from 1E6 once CR-P1-02
 '   removed the prefactor cancellation that the original boundary had actually
-'   been measuring (benchmark/envelope_probe). Inside the cap the tail is not
-'   uniformly contract-grade: the upper tail degrades from about df 1E5 (open
-'   #34, benchmark/student_t_large_df_study), and the cumulative and survival
-'   are held to looser envelope_domain contracts at large df. The measured
+'   been measuring (benchmark/envelope_probe). Inside the cap the general
+'   incomplete-beta tail degrades from about df 1E5; there the upper tail
+'   comes from the order-5 expansion up to Abs(t) = 8 (#34,
+'   benchmark/student_t_large_df_study) and from the near-one route above it
+'   (#213). The measured
 '   status is in benchmark/accuracy_contracts.csv and
 '   benchmark/numerical_limitations.csv (IncompleteBeta.StudentTLargeDF).
 '   Beyond the cap this returns a clean CVErr rather than a silent inaccurate

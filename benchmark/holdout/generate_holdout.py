@@ -26,8 +26,8 @@ row's argument token parses to (survival_at). Before #159 the Beta and F
 survival references were taken as 1 - CDF at the unrounded design value, half
 an ulp from the Double the exporter passes. The committed holdout_grid.csv is
 bound by holdout_manifest.json, so its references change only together with a
-fresh Excel holdout export; until then check_survival_references.py registers
-the affected rows as debt.
+fresh Excel holdout export. The rows were re-based with such an export and the
+debt registry of check_survival_references.py is empty.
 """
 import argparse, csv, io
 import mpmath as mp

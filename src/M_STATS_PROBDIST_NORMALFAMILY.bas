@@ -164,18 +164,17 @@ Option Explicit
 '   reported as outside the supported magnitude, never as "not finite", because
 '   1E200 is a perfectly finite Double.
 '
-' STANDARDIZATION OVERFLOW (resolved)
+' STANDARDIZATION OVERFLOW
 '   Every standardization Z = (X - Mean) / StdDev and location-scale
-'   reconstruction Mean + StdDev * Z now routes through PROB_TryStandardize and
+'   reconstruction Mean + StdDev * Z routes through PROB_TryStandardize and
 '   PROB_TryAffineTransform. An overflow - for example X = 9E99 with
 '   StdDev = 1E-300 - is caught rather than falling through to the
 '   unexpected-error handler as CVErr(xlErrValue). A directional standardization
 '   overflow returns the exact limit (see STANDARDIZATION OVERFLOW RETURNS AN
 '   EXACT LIMIT below); an indeterminate one, a ZScore overflow or a quantile
 '   reconstruction overflow returns CVErr(xlErrNum) with a diagnostic. The 1E100
-'   bound on the general-normal arguments is now
-'   redundant for overflow protection and could be relaxed to PROB_IsFinite in a
-'   later pass; it is retained for now as a conservative, harmless restriction.
+'   bound on the general-normal arguments is redundant for overflow
+'   protection; it is retained as a conservative restriction.
 '
 ' NOTES
 '   - Lognormal parameters are the mean and standard deviation of Log(X), not of X.
@@ -221,15 +220,6 @@ Option Explicit
 '     scale, so a saturated exponent is re-inflated by 1 / StdDev: at StdDev
 '     1E-300 that yields ~1.5E-48 instead of 0. No finite saturation point can
 '     work, because the 1 / StdDev factor is unbounded.
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow documented;
-'                per-function BEHAVIOR notes and dates brought current.
-'   2026-10-13 - Upper tail moved to the repaired shared kernel
-'                PROB_NormalUpperTail, and the density to the split exponential
-'                PROB_ExpNegHalfSquare (#72). PROB_NormalUpperTailPositive,
-'                PROB_TAIL_UNDERFLOW_Z, PROB_NORMAL_TAIL_CF_TERMS and
-'                PROB_CDF_SPLIT removed.
 '==============================================================================
 
 '==============================================================================
@@ -316,7 +306,7 @@ Public Function K_STATS_NormalStandard_Density( _
 '
 ' DEPENDENCIES
 '   - PROB_IsFinite
-'   - PROB_TryExp
+'   - PROB_NormalPDF
 '   - PROB_SetStatus
 '
 ' CALLED FROM
@@ -431,8 +421,8 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 '
 ' BEHAVIOR
 '   - Validates that Z is finite.
-'   - Computes the cumulative probability using a double-precision rational
-'     approximation.
+'   - Computes the cumulative probability with the shared kernel
+'     PROB_NormalCDF.
 '
 ' ERROR POLICY
 '   - Non-finite inputs return CVErr(xlErrNum).
@@ -445,9 +435,6 @@ Public Function K_STATS_NormalStandard_Cumulative( _
 '   - PROB_IsFinite
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 
@@ -546,8 +533,8 @@ Public Function K_STATS_NormalStandard_Survival( _
 '   (SurvivalTailRel in benchmark/numerical_limitations.csv). The repaired
 '   kernel is designed for full relative precision across the representable
 '   tail; its binary64 measurements and the predictions for this function are
-'   in benchmark/normal_tail_study. The contracted domain and threshold in
-'   benchmark/accuracy_contracts.csv change only with Excel evidence.
+'   in benchmark/normal_tail_study. The Excel evidence came with #81; the
+'   contracted domain and threshold are in benchmark/accuracy_contracts.csv.
 '
 ' INPUTS
 '   Z
@@ -578,9 +565,6 @@ Public Function K_STATS_NormalStandard_Survival( _
 '   - PROB_IsFinite
 '   - PROB_NormalSurvival
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-23
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -696,9 +680,6 @@ Public Function K_STATS_NormalStandard_InverseCumulative( _
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_NormalInvCDF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -942,9 +923,6 @@ Public Function K_STATS_NormalStandard_IntervalProbability( _
 '   - PROB_IsFinite
 '   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1320,9 +1298,6 @@ Public Function K_STATS_Normal_Cumulative( _
 '   - PROB_ValidateNormalInputs
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1423,8 +1398,8 @@ Public Function K_STATS_Normal_Survival( _
 '   (SurvivalTailRel in benchmark/numerical_limitations.csv). The repaired
 '   kernel is designed for full relative precision across the representable
 '   tail; its binary64 measurements and the predictions for this function are
-'   in benchmark/normal_tail_study. The contracted domain and threshold in
-'   benchmark/accuracy_contracts.csv change only with Excel evidence.
+'   in benchmark/normal_tail_study. The Excel evidence came with #81; the
+'   contracted domain and threshold are in benchmark/accuracy_contracts.csv.
 '
 ' INPUTS
 '   X
@@ -1464,9 +1439,6 @@ Public Function K_STATS_Normal_Survival( _
 '   - PROB_ValidateNormalInputs
 '   - PROB_NormalSurvival
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1594,11 +1566,9 @@ Public Function K_STATS_Normal_InverseCumulative( _
 '   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalInvCDF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1736,11 +1706,9 @@ Public Function K_STATS_Normal_InverseSurvival( _
 '   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalInvSurvival
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-16
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1863,9 +1831,6 @@ Public Function K_STATS_Normal_ZScore( _
 '   - PROB_ValidateNormalInputs
 '   - PROB_TryStandardize
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1992,11 +1957,9 @@ Public Function K_STATS_Normal_IntervalProbability( _
 ' DEPENDENCIES
 '   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalIntervalProbability
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2174,11 +2137,9 @@ Public Function K_STATS_Lognormal_Density( _
 ' DEPENDENCIES
 '   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2346,11 +2307,9 @@ Public Function K_STATS_Lognormal_Cumulative( _
 ' DEPENDENCIES
 '   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalCDF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2470,8 +2429,8 @@ Public Function K_STATS_Lognormal_Survival( _
 '   (SurvivalTailRel in benchmark/numerical_limitations.csv). The repaired
 '   kernel is designed for full relative precision across the representable
 '   tail; its binary64 measurements and the predictions for this function are
-'   in benchmark/normal_tail_study. The contracted domain and threshold in
-'   benchmark/accuracy_contracts.csv change only with Excel evidence.
+'   in benchmark/normal_tail_study. The Excel evidence came with #81; the
+'   contracted domain and threshold are in benchmark/accuracy_contracts.csv.
 '
 ' INPUTS
 '   X
@@ -2506,11 +2465,9 @@ Public Function K_STATS_Lognormal_Survival( _
 ' DEPENDENCIES
 '   - PROB_TryStandardize
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalSurvival
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11 - Exact-limit recovery on standardization overflow
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2654,12 +2611,10 @@ Public Function K_STATS_Lognormal_InverseCumulative( _
 '   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalInvCDF
 '   - PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2806,12 +2761,10 @@ Public Function K_STATS_Lognormal_InverseSurvival( _
 '   - PROB_TryAffineTransform
 '   - PROB_IsValidProbabilityOpen
 '   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_NormalInvSurvival
 '   - PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-16
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3161,9 +3114,6 @@ Public Function K_STATS_Lognormal_StdDev( _
 '   - PROB_LogExpm1
 '   - PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3301,13 +3251,10 @@ Public Function K_STATS_Lognormal_ParametersFromMeanStdDev( _
 '     PROB_WRITE_STATUS_BAR is True).
 '
 ' DEPENDENCIES
-'   - PROB_IsWithinSupportedMagnitude
+'   - PROB_IsPositiveParameter
 '   - PROB_Log1p
 '   - PROB_TryExp
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -3569,8 +3516,8 @@ Private Function PROB_NormalInvCDF( _
 '   root. Until #72 the tail kernel was accurate in absolute terms only, which
 '   held tail quantiles near 1E-10 relative (the split_boundary contracts). The
 '   repaired kernel removes that limit; the predicted value of every committed
-'   inverse row is recorded in benchmark/normal_tail_study, and the contracts
-'   change only with Excel evidence.
+'   inverse row is recorded in benchmark/normal_tail_study. The Excel evidence
+'   came with #81; the contracts are in benchmark/accuracy_contracts.csv.
 '
 ' PRECONDITION
 '   Probability must be strictly between 0 and 1.

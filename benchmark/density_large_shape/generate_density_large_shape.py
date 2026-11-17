@@ -16,8 +16,8 @@ kernels now use the Loader decomposition (PROB_TryGammaLogPdf,
 PROB_TryBetaLogPdf); this study is the evidence for that repair and for
 PROB_DENSITY_SHAPE_MAX.
 
-References are self-checked TWO ways, which also validates the reviewer's Loader
-deviance formulas (15.2 / 15.3): the direct high-precision log-density and the
+References are self-checked TWO ways, which also validates the Loader
+deviance formulas: the direct high-precision log-density and the
 Loader form (stable deviance + StirlingError) must agree to 1E-40. A row whose
 two forms disagree, or whose density is not representable, is dropped rather than
 shipped. The stored reference is the density value; the analyzer forms the
@@ -52,7 +52,7 @@ def gamma_logpdf_loader(x, a, scale):
             - stirlerr(a) - mp.log(scale))
 
 
-# ---- Beta (reviewer 15.3) --------------------------------------------------
+# ---- Beta ------------------------------------------------------------------
 def beta_logpdf_direct(x, a, b):
     x = mp.mpf(x); a = mp.mpf(a); b = mp.mpf(b)
     return (a - 1) * mp.log(x) + (b - 1) * mp.log1p(-x) - (mp.loggamma(a) + mp.loggamma(b) - mp.loggamma(a + b))
@@ -65,7 +65,7 @@ def beta_logpdf_loader(x, a, b):
             - mp.log(2 * mp.pi) / 2 - stirlerr(a) - stirlerr(b) + stirlerr(n))
 
 
-# ---- F via Beta transform (reviewer 15.3) ----------------------------------
+# ---- F via Beta transform --------------------------------------------------
 def f_logpdf_direct(x, d1, d2):
     x = mp.mpf(x); d1 = mp.mpf(d1); d2 = mp.mpf(d2)
     return (d1 / 2 * mp.log(d1) + d2 / 2 * mp.log(d2) + (d1 / 2 - 1) * mp.log(x)

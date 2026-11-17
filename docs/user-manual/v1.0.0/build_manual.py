@@ -94,7 +94,7 @@ def html():
 def browser():
     """A Chromium or Chrome binary: $CHROME, or the first one found."""
     candidates = [os.environ.get("CHROME", ""), "chromium", "chromium-browser", "google-chrome",
-                  "chrome", "/opt/pw-browsers/chromium"]
+                  "chrome"]
     for name in candidates:
         path = shutil.which(name) if name else None
         if path:

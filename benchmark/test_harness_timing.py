@@ -9,6 +9,7 @@ Proofs for the harness timing of #298 (_harness_timing.py).
      second instrumentation are refused or detected.
   4. The CI bridge resets the record before the run, reads it after, and
      times the Gamma kernel only after a complete green regression.
+  5. The retained log is the certified one and holds the full record.
 
 Run: python3 test_harness_timing.py   (exit 0 = pass)
 """

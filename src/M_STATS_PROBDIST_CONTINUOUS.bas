@@ -168,9 +168,6 @@ Option Explicit
 '     range in benchmark/accuracy_contracts.csv carry no accuracy claim.
 '   - Evaluation points, rates, scales and Uniform bounds may use the full finite
 '     Double range where the implemented formula remains numerically meaningful.
-'
-' UPDATED
-'   2026-08-11 - Density envelope documented on the two affected surfaces.
 '==============================================================================
 
 
@@ -237,9 +234,6 @@ Public Function K_STATS_Gamma_Density( _
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-08-11 - Loader reroute (CR-P1-01) and density envelope documented
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -423,9 +417,6 @@ Public Function K_STATS_Gamma_Cumulative( _
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -594,9 +585,6 @@ Public Function K_STATS_Gamma_Survival( _
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -709,8 +697,8 @@ Public Function K_STATS_Gamma_InverseCumulative( _
 '   Returns the Gamma quantile for Probability, Shape and ScaleParam.
 '
 ' WHY THIS EXISTS
-'   The numerical inversion is performed once on the unit-scale Gamma and the
-'   result is rescaled under the shared multiplication Try-contract.
+'   The numerical inversion is performed once, in PROB_TryGammaInvPScaled,
+'   which returns the quantile at the final scale (#14).
 '
 ' WORKSHEET EQUIVALENT
 '   GAMMA.INV(Probability, Shape, ScaleParam)
@@ -1647,7 +1635,8 @@ Public Function K_STATS_Beta_InverseCumulative( _
 ' BEHAVIOR
 '   - Uses the paired beta-inverse kernel, which returns the quantile and its
 '     complement. The kernel solves for the member below 1/2 and forms the
-'     other as 1 - U, which loses nothing (#35).
+'     other as 1 - U, exact as a pair where the reconstruction of #35
+'     answers.
 '
 ' ERROR POLICY
 '   - Invalid inputs or non-convergence return #NUM!.
@@ -1662,9 +1651,6 @@ Public Function K_STATS_Beta_InverseCumulative( _
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
 '------------------------------------------------------------------------------

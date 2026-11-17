@@ -4,10 +4,10 @@ Symbolic derivation of the Student-t large-df upper-tail expansion (#34).
     S(t; nu) = Q(t) + phi(t) * sum_{k>=1} g_k(t) / nu^k
 
 Every g_k is DERIVED here from the exact density, as an exact rational
-polynomial in t. Nothing is copied from memory or from a reference table: an
-earlier attempt used recalled coefficients for g_2..g_4, and they were wrong
-in a way that made higher orders fail to improve on the leading term. That is
-why this file exists.
+polynomial in t. Nothing is copied from a reference table: an earlier attempt
+used underived coefficients for g_2..g_4, and they were wrong in a way that
+made higher orders fail to improve on the leading term. That is why this file
+exists.
 
 DERIVATION
 

@@ -68,8 +68,9 @@ Option Private Module
 '   - PROB_NormalInvCDFRaw:
 '       Peter J. Acklam's rational approximation, released freely for any use by
 '       the author. Published relative-error bound 1.15E-9; see the PUBLISHED
-'       ACCURACY block on that function. Used as a root-finder seed, not a final
-'       answer.
+'       ACCURACY block on that function. Used as a root-finder seed; only
+'       K_STATS_NormalStandard_InverseCumulativeFast returns it unrefined, at
+'       that documented accuracy.
 '   - PROB_ExpNegHalfSquare:
 '       Exp(-Z^2 / 2) with Z split at a multiple of 1/256, so that the dominant
 '       square is exact. W. J. Cody's ANORM (SPECFUN, 1993) uses the same
@@ -110,18 +111,6 @@ Option Private Module
 '     helpers. M_STATS_PROBDIST_SPECIALFUNCS owns reusable special-function
 '     kernels; distribution-family modules consume both layers without keeping
 '     private duplicate copies; M_STATS_PROBDIST_TEST owns regression coverage.
-'
-' UPDATED
-'   2026-08-11 - Surface list completed; convergence-range and helper-accuracy
-'                figures replaced by pointers to the measured registries.
-'   2026-08-13 - Design invariants stated explicitly. Dead constants
-'                PROB_MAX_EXP and PROB_MIN_EXP removed. PROB_WRITE_STATUS_BAR
-'                converted from a Public Const into a module-private
-'                conditional-compilation switch of the same name, leaving the
-'                module free of any Excel object-model reference. Accuracy of
-'                PROB_NormalInvCDFRaw recorded permanently. No executable
-'                behavior changed.
-'   2026-10-13 - PROB_ExpNegHalfSquare added for the normal-tail repair (#72).
 '==============================================================================
 
 '==============================================================================
@@ -252,7 +241,7 @@ Public Function PROB_IsWithinSupportedMagnitude( _
 '   benchmark/cdf_large_shape and the iteration-budget note in
 '   M_STATS_PROBDIST_SPECIALFUNCS. The specific ranges are deliberately not
 '   restated here: they have moved substantially as measurement improved (the
-'   incomplete-beta range in particular, after the CR-P1-02 prefactor repair),
+'   incomplete-beta range in particular, after the prefactor repair),
 '   and a number restated in prose is how a header drifts out of step with the
 '   code beside it.
 '
@@ -677,9 +666,6 @@ Public Function PROB_TryStandardize( _
 ' DEPENDENCIES
 '   - PROB_TryAdd
 '   - PROB_TryDivide
-'
-' UPDATED
-'   2026-07-29 - Overflow direction reported for exact-limit recovery
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -949,8 +935,9 @@ Public Function PROB_NormalInvCDFRaw( _
 ' WHY THIS EXISTS
 '   Root finders in this project need a cheap starting point that is already
 '   within a few units in the ninth digit. Refinement to machine precision is
-'   the caller's job, either by a Halley step (NORMALFAMILY) or by the Newton
-'   loop that is running anyway (TFAMILY quantiles).
+'   the caller's job, either by a Halley step (NORMALFAMILY) or by the loop
+'   that is running anyway (the TFAMILY quantiles, the Gamma and Beta inverses
+'   of SPECIALFUNCS and the DISCRETE inverse searches).
 '
 ' PUBLISHED ACCURACY - PERMANENT
 '   Invariant I7 forbids stating a measured accuracy figure in a comment. This
@@ -972,7 +959,9 @@ Public Function PROB_NormalInvCDFRaw( _
 '     than the approximation error it sits inside.
 '
 '   PRACTICAL MEANING
-'     Roughly nine correct significant digits. This is a seed, never an answer.
+'     Roughly nine correct significant digits. For a root finder this is a
+'     seed, not an answer; K_STATS_NormalStandard_InverseCumulativeFast alone
+'     returns it as it is.
 '     One Halley step cubes the seed error, so a single refinement removes the
 '     Acklam error entirely and no caller needs a second. The refined result is
 '     then limited by the accuracy of the CDF and density used in the step (see
