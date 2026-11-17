@@ -104,6 +104,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- Add the K-Pricing-style registration module and automatic Explorer startup, with complete worksheet function descriptions and argument help (Refs #329).
+
 - Added the source-built development demo shell (#253), with Home, reserved
   thematic sheets, README, workbook-scoped Ribbon navigation and macro-disabled
   links. Desktop Excel acceptance is pending; this is not a release asset.

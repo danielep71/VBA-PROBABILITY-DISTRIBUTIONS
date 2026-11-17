@@ -515,6 +515,7 @@ def build(explorer: bool = False) -> tuple[bytes, dict[str, str]]:
     sources = sorted((ROOT / "src").glob("*.bas")) + [DEMO / "M_STATS_PROBDIST_DEMO.bas"]
     if explorer:
         sources.append(DEMO / "M_STATS_PROBDIST_EXPLORER.bas")
+        sources.append(DEMO / "M_STATS_PROBDIST_REGISTER.bas")
     modules = [workbook_module()]
     modules += [document_module(sheet.code, False) for sheet in sheets]
     modules += [Module(path.stem, module_text(path.read_bytes())) for path in sources]
@@ -524,6 +525,7 @@ def build(explorer: bool = False) -> tuple[bytes, dict[str, str]]:
         for index, module in enumerate(modules):
             if module.name == "ThisWorkbook":
                 events = ('\r\nPrivate Sub Workbook_Open()\r\n'
+                          '    M_STATS_PROBDIST_REGISTER.PROB_Register_PublicUDFs\r\n'
                           '    M_STATS_PROBDIST_EXPLORER.ExplorerOpened\r\n'
                           'End Sub\r\n'
                           '\r\nPrivate Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)\r\n'
