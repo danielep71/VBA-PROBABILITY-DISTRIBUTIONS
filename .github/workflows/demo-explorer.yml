@@ -8,6 +8,7 @@ on:
       - "tools/devbuild/**"
       - "src/**"
       - "ci/Test-Explorer.ps1"
+      - "ci/Test-ExplorerUI.ps1"
       - "ci/Test-DemoPackage.ps1"
       - "tests/test_demo_explorer.py"
       - ".github/workflows/demo-explorer.yml"
@@ -58,6 +59,9 @@ jobs:
       - name: Verify references, edited inputs, charts and reset
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Explorer.ps1 -PackageDirectory test-results\demo
+      - name: Exercise the native Ribbon and reset confirmation dialog
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerUI.ps1 -PackageDirectory test-results\demo
       - name: Verify the completed workbook save and navigation contract
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-DemoPackage.ps1 -PackageDirectory test-results\demo

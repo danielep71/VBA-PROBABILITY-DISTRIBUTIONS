@@ -51,6 +51,14 @@ produce a validated updated chart.
 
 ## Evidence and remaining acceptance
 
+`ci/Test-ExplorerUI.ps1` exercises the real Ribbon through Windows UI
+Automation, scoped to the HWND/process of a newly created Excel instance.
+It invokes Recalculate and Go to, toggles the navigation bar, and handles
+the real reset dialog twice: Cancel must preserve all inputs; OK must restore
+the defaults. Dialog selection checks the owned process and exact prompt.
+No global mouse or keyboard input is sent. A runtime failure remains a
+failure; callback-only tests are not substituted for this UI evidence.
+
 `explorer_references.py` regenerates `explorer-references.json` using Python
 standard-library closed forms: Normal erfc, Exponential exp/expm1 and the
 finite defining Poisson sum. No expected value comes from the VBA being
