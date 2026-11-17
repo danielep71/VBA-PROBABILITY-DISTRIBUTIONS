@@ -483,8 +483,8 @@ Private Function ApplyNavigationBar( _
 '   Show or hide column A and the shape groups NAV_GROUP_TOP and
 '   NAV_GROUP_REST of every worksheet in one pass, with screen updating
 '   off, so the layout changes at once. A protected sheet is protected
-'   again for the user interface only, without a password, so that the
-'   macro can change it; an unprotected sheet stays unprotected. The
+'   for the user interface only when necessary, without a password, so
+'   that the macro can change it; an unprotected sheet stays unprotected. The
 '   workbook's Saved flag and screen updating are kept.
 '
 ' RETURNS
@@ -515,10 +515,13 @@ Private Function ApplyNavigationBar( _
         On Error GoTo Failed
         Application.ScreenUpdating = False
         For Each Sheet In ThisWorkbook.Worksheets
-            If Sheet.ProtectContents Then
+            If Sheet.ProtectContents And Not Sheet.ProtectionMode Then
                 Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
             End If
             Sheet.Columns(1).Hidden = Not Shown
+            If CBool(Sheet.Columns(1).Hidden) = Shown Then
+                Err.Raise vbObjectError + 513, "ApplyNavigationBar", "Column visibility did not change: " & Sheet.Name
+            End If
             For Each Item In Sheet.Shapes
                 If Item.Name = NAV_GROUP_TOP Or Item.Name = NAV_GROUP_REST Then
                     Item.Visible = IIf(Shown, msoTrue, msoFalse)
