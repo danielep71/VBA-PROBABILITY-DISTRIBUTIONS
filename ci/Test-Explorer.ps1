@@ -24,8 +24,9 @@ try {
     foreach ($cell in $sheet.Range('A1:A7').Cells) {
         if ($cell.Interior.Color -ne $sheet.Range('A8').Interior.Color) { throw 'Navigation background differs in frozen/header rows' }
     }
-    foreach ($cell in $sheet.UsedRange.SpecialCells(-4123).Cells) {
-        if ([string]$cell.Formula2 -match '@|_xlfn.SINGLE') { throw "Implicit intersection remains in $($cell.Address())" }
+    # Read the formula array directly; SpecialCells is unavailable on protected sheets.
+    foreach ($formula in $sheet.UsedRange.Formula2) {
+        if ([string]$formula -like '=*' -and [string]$formula -match '@|_xlfn.SINGLE') { throw "Implicit intersection remains: $formula" }
     }
     $validation = $sheet.Range('D6').Validation
     if ($validation.Type -ne 3 -or $validation.Formula1 -ne '=$Q$1:$Q$3') { throw 'Distribution validation is not a range-backed list' }
