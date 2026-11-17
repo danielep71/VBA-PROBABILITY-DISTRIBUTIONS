@@ -40,6 +40,7 @@ try {
     $excel.Visible = $false
     $excel.DisplayAlerts = $false
     # Macro execution is confined to this owned Excel process; Trust Center is unchanged.
+    $excel.Visible = ($SaveMode -eq 'NativeUI')
     $excel.AutomationSecurity = 1
     $book = $excel.Workbooks.Open($path, 0, $false)
     $prefix = "'" + $book.Name + "'!"
@@ -98,6 +99,8 @@ try {
     $book.Activate()
     $report.save_mode = $SaveMode
     if ($SaveMode -eq 'NativeUI') {
+        if (-not $excel.CommandBars.GetEnabledMso('FileSave')) { throw 'Native FileSave is not available' }
+        Write-Output 'Invoking native FileSave in the visible test instance.'
         $excel.CommandBars.ExecuteMso('FileSave')
     } else {
         $book.Save()
