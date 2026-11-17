@@ -52,6 +52,7 @@ Option Private Module
 '   Incomplete beta:
 '     - PROB_TryBetaRegularized
 '     - PROB_TryBetaContinuedFraction
+'     - PROB_TryBetaLowerNearOne
 '     - PROB_TryBetaInvRegularized
 '
 '   Incomplete gamma:
@@ -61,7 +62,11 @@ Option Private Module
 '     - PROB_TryGammaRegularizedQ
 '     - PROB_TryGammaSeriesP
 '     - PROB_TryGammaContinuedFractionQ
+'     - PROB_TryGammaB64SeriesP
+'     - PROB_TryGammaB64ContinuedFractionQ
 '     - PROB_TryGammaInvP
+'     - PROB_TryGammaInvPScaled
+'     - PROB_TryGammaInvLogUnit
 '
 '   Standard normal upper tail (#72):
 '     - PROB_NormalUpperTail
@@ -160,7 +165,9 @@ Option Private Module
 '     double-double pair behind the public P and Q (#26) stops more tightly and
 '     needs about 1.32 times the series' terms, so it reaches its own 100000 cap
 '     first (near x = a from a of about 1.07E8, where the series still converges
-'     to about 1.9E8); the public P and Q then fall back to the series.
+'     to about 1.9E8); the public P and Q then fall back to the series. Since
+'     #314 the binary64 route answers first wherever its tail can be trusted
+'     (PROB_TryGammaRoutedP and _Q), and the pair is what it delegates to.
 '
 '     THE REACHABLE RANGES ARE NOT RESTATED HERE. They follow from the budgets
 '     above and the Sqr(df) growth rule, they differ between the two kernels, and
@@ -180,13 +187,6 @@ Option Private Module
 '     still be outside its measured accuracy envelope. The distribution modules
 '     enforce that separately through PROB_*_MAX_DF and PROB_DENSITY_SHAPE_MAX.
 '   - PROB_LogGamma is recursive through its reflection branch, exactly once.
-'
-' UPDATED
-'   2026-08-11 - Surface list completed with the stable log-density kernels;
-'                LogGammaDelta accuracy figure re-measured and contracted.
-'   2026-10-13 - Standard normal upper tail added (#72).
-'   2026-11-09 - Regularized gamma P/Q through the scaled double-double pair,
-'                with the binary64 kernels as the fallback at its cap (#26).
 '==============================================================================
 
 '==============================================================================
@@ -208,9 +208,10 @@ Private Const PROB_GAMMAINV_FAST_MIN_SHAPE As Double = 0.01 'Gamma inverse: the 
 'terms at 3E-14 and 45946 here, both far inside PROB_GAMMA_MAX_ITER. The two
 'continued fractions gain nothing from the same change (the beta CF is limited
 'elsewhere and is unchanged above A = 1E6), so they keep PROB_NUM_EPS.
-'Since #26 the public P and Q try the scaled double-double pair first. Its
+'Since #314 the public P and Q try the binary64 route first; where it declines
+'they delegate to the scaled double-double pair (#26). The pair's
 'series stops at 2^-68 and needs about 1.32 times these terms (67921 at df 1E8),
-'still inside its own 100000 cap; this binary64 series answers where it is not.
+'still inside its own 100000 cap; this series answers where the pair is not.
 Private Const PROB_GAMMA_SERIES_EPS    As Double = PROB_MACH_EPS 'Stop for the ascending gamma series only; see the note above
 Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton iterations
 Private Const PROB_BETAINV_FAST_ITER   As Long = 60       'Beta inverse: binary64 Newton iterations before the pair loop takes over (#359)
@@ -954,7 +955,7 @@ End Function
 
 
 '==============================================================================
-' REGULARIZED INCOMPLETE BETA
+' POSITIVE-RATIO DISPATCH, STIRLING ERROR AND LOG-DENSITY KERNELS
 '==============================================================================
 
 Public Function PROB_ClassifyPositiveRatio( _
@@ -971,7 +972,8 @@ Public Function PROB_ClassifyPositiveRatio( _
 '   ICR-P1-01A (#13).
 '
 ' WHY THE DECISION LIVES AT THE CALLER
-'   PROB_TryGammaRegularizedP and _Q receive only the rounded StandardX. A
+'   PROB_TryGammaRoutedP and _Q, and the kernels behind them, receive only
+'   the rounded StandardX. A
 '   mathematically positive ratio that underflowed is indistinguishable there
 '   from a genuine support value of zero, so their boundary handling is
 '   CORRECT given what they are told and must not be made conditional. Only
@@ -1732,8 +1734,9 @@ Public Function PROB_LogChoose( _
 '
 ' WHY THIS EXISTS
 '   C(N, K) overflows a Double at N = 1030 while Log(C(N, K)) stays finite to
-'   N = 1E+308. Every discrete mass function, and the hypergeometric in
-'   particular, needs the logarithm rather than the coefficient.
+'   N = 1E+308. A discrete mass function such as the hypergeometric needs the
+'   logarithm rather than the coefficient. No production routine calls it at
+'   present.
 '
 ' PRECONDITION
 '   0 <= K <= N. Callers validate; this kernel does not.
@@ -1792,6 +1795,10 @@ Public Function PROB_LogChoose( _
                          PROB_StirlingError(n) - PROB_StirlingError(K) - PROB_StirlingError(j)
 End Function
 
+
+'==============================================================================
+' REGULARIZED INCOMPLETE BETA
+'==============================================================================
 
 Public Function PROB_TryBetaRegularized( _
     ByVal X As Double, _
@@ -2550,7 +2557,8 @@ Private Function PROB_BP_Adjacent( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   The Double next to a positive finite U, above or below it, by its bit
-'   pattern. Used by the stagnation guard of the beta inverse (#35).
+'   pattern. Used by the beta inverse: its stagnation guard (#35) and the
+'   neighbour comparison of its binary64 loop (#359).
 '==============================================================================
 '
     Dim Number              As PROB_DD_Number  'U as eight bytes
@@ -2786,7 +2794,7 @@ Public Function PROB_TryBetaInvRegularized( _
             S2 = 1# / (2# * Sb - 1#)
             HH = 2# / (S1 + S2)
             W = Z * Sqr(HH + R) / HH - (S2 - S1) * (R + 5# / 6# - 2# / (3# * HH))
-            'Guard the module's one raw exponential; the seed clamp below
+            'Guard this exponential; the seed clamp below
             'recovers U on any failure
             If PROB_TryExp(2# * W, ExpTwoW) Then U = Sa / (Sa + Sb * ExpTwoW)
     'Otherwise invert the leading series term I_U ~ U^Sa / (Sa * Beta(Sa, Sb))
@@ -3975,7 +3983,9 @@ Public Function PROB_TryGammaInvP( _
 '
 ' DEPENDENCIES
 '   - PROB_NormalInvCDFRaw, PROB_LogGamma, PROB_TryExp
-'   - PROB_TryGammaRegularizedP, PROB_TryGammaRegularizedQ
+'   - PROB_TryGammaRoutedP, PROB_TryGammaRoutedQ (from shape
+'     PROB_GAMMAINV_FAST_MIN_SHAPE)
+'   - PROB_TryGammaRegularizedP, PROB_TryGammaRegularizedQ (below it)
 '   - PROB_TryGammaLogPdf
 '==============================================================================
 '

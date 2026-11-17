@@ -37,6 +37,7 @@ Option Explicit
 '       Test_STATS_PROBDIST_RunTFamily
 '       Test_STATS_PROBDIST_RunContinuous
 '       Test_STATS_PROBDIST_RunDiscrete
+'       Test_STATS_PROBDIST_RunStudies    (study batteries, apart from RunAll)
 '
 '   Results are written with Debug.Print. Passing assertions are silent.
 '   Failures print one detailed line, followed by a consolidated summary.
@@ -73,6 +74,8 @@ Option Explicit
 '   - TOL_ABS_ULP and TOL_ABS_FEW_ULP are declared but not currently used;
 '     constant-level checks use exact binary equality.
 '   - TOL_REL_TIGHT, TOL_REL_LOOSE and TOL_REL_TAIL cover relative comparisons.
+'   - TOL_REL_GUARANTEE and TOL_REL_INV_GUARANTEE are the forward and inverse
+'     guarantees of #327, 1E-13 and 1E-12 relative.
 '   - TOL_REL_NORMAL_TAIL pins the repaired normal tail (#72). It is about twice
 '     the preregistered 2^-50 bound, which leaves room for VBA Exp differing
 '     from the study's model in the last bit, and it is far below the old
@@ -82,6 +85,7 @@ Option Explicit
 '     same 2E-15. TOL_REL_LDF_OUTSIDE_DF is the continued fraction's
 '     characterized accuracy just below df = 1E5: 3.16E-12 in Excel at t = 2,
 '     df = 1E5 (tchi_large_df base export; PRODUCTION_AMENDMENT_1.md).
+'     TOL_REL_LDF_QUANTILE pins the polished quantile of that route.
 '   - TOL_REL_ACKLAM is not a project tolerance. It is the published relative
 '     error bound of the Acklam inverse-normal approximation, asserted directly
 '     so that a mistyped coefficient fails a named check.
@@ -109,6 +113,8 @@ Option Explicit
 '     C8  The incomplete-gamma series-P prefactor must stay accurate at
 '         off-grid small shapes, which cannot use the stored Stirling table
 '         (#23).
+'     C9  Every public function must answer an invalid argument with the error
+'         its documented contract states (#331).
 '
 '   Normal Family
 '     N1  The raw Acklam inverse-normal kernel must return its computed value.
@@ -142,6 +148,10 @@ Option Explicit
 '     T10 The Student t quantile must reach the large-df tail's accuracy for
 '         df >= 1E5 and a tail of at most 0.4, not stop on the loop's 1E-15
 '         relative step several Doubles short (#34).
+'     T11 The Student t tail just above Abs(X) = 8 at df >= 1E5 must keep its
+'         relative precision, and the inverse at that seam with it (#213).
+'     T12 The F inverse must keep its relative accuracy where the degrees of
+'         freedom are far apart (#35).
 '
 '   Continuous Family
 '     D1  Gamma scale-ratio overflow must saturate to the mathematical limit.
@@ -152,6 +162,11 @@ Option Explicit
 '         policy.
 '     D6  Uniform calculations must support the full finite Double range,
 '         including opposite-sign bounds whose width exceeds Double maximum.
+'     D7  A Gamma or Chi-square ratio X / Scale that is positive but rounds
+'         below the Double range must return its limit, not the value at zero
+'         (#13).
+'     D8  A Gamma quantile whose unit-scale value is below the Double range
+'         must be formed at the final scale (#14).
 '
 '   Discrete Family
 '     DS1 Loader-style Binomial and Poisson mass kernels must remain stable near
@@ -186,6 +201,7 @@ Option Explicit
 '   - Test_STATS_PROBDIST_RunTFamily
 '   - Test_STATS_PROBDIST_RunContinuous
 '   - Test_STATS_PROBDIST_RunDiscrete
+'   - Test_STATS_PROBDIST_RunStudies
 '
 ' NOTES
 '   - Reference values were prepared with high-precision arithmetic and rounded
@@ -193,9 +209,6 @@ Option Explicit
 '   - The production harness does not force artificial iteration limits to test
 '     non-convergence. It verifies the public success path and failure
 '     classification through reachable numerical cases.
-'
-' UPDATED
-'   2026-07-23
 '==============================================================================
 
 '==============================================================================
@@ -502,7 +515,8 @@ Private Sub RunCoreSuite()
 ' RunCoreSuite
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the Core and Special Functions test sections.
+'   Runs the Core and Special Functions test sections, and the error contract
+'   of the public API (#331).
 '
 ' BEHAVIOR
 '   - Prints one section heading.
@@ -514,9 +528,6 @@ Private Sub RunCoreSuite()
 '
 ' CALLED FROM
 '   - Public test entry points
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_CORE + M_STATS_PROBDIST_SPECIALFUNCS"
@@ -566,9 +577,6 @@ Private Sub RunNormalFamilySuite()
 '
 ' CALLED FROM
 '   - Public test entry points
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_NORMALFAMILY"
@@ -634,9 +642,6 @@ Private Sub RunTFamilySuite()
 '
 ' CALLED FROM
 '   - Public test entry points
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_TFAMILY"
@@ -706,9 +711,6 @@ Private Sub RunContinuousSuite()
 '
 ' CALLED FROM
 '   - Public test entry points
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_CONTINUOUS"
@@ -781,7 +783,8 @@ Private Sub RunDiscreteSuite()
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Runs all discrete-family test sections in dependency order: mass functions,
-'   tails, inverses, moments, LogPMF behavior, errors and support edges.
+'   tails, inverses, moments, LogPMF behavior, errors, support edges and the
+'   examples printed in the user manual.
 '
 ' BEHAVIOR
 '   - Prints one section heading.
@@ -793,9 +796,6 @@ Private Sub RunDiscreteSuite()
 '
 ' CALLED FROM
 '   - Public test entry points
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "== SUITE: M_STATS_PROBDIST_DISCRETE"
@@ -1295,9 +1295,6 @@ Private Sub Test_Core_AffineAndStandardize()
 '
 ' CALLED FROM
 '   - RunCoreSuite
-'
-' UPDATED
-'   2026-07-17
 '==============================================================================
 '
     Dim R                   As Double          'Guarded result
@@ -1372,9 +1369,6 @@ Private Sub Test_Core_LogGamma()
 '
 ' CALLED FROM
 '   - RunCoreSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Core log-gamma"
@@ -1479,9 +1473,6 @@ Private Sub Test_Core_LogBetaTinyUnbalanced()
 '
 ' CALLED FROM
 '   - RunCoreSuite
-'
-' UPDATED
-'   2026-07-23
 '==============================================================================
 '
     Debug.Print "-- PROB_LogBeta, both shapes far below one"
@@ -1777,9 +1768,6 @@ Private Sub Test_Core_GammaSeriesPrefactorAccuracy()
 '
 ' CALLED FROM
 '   - RunCoreSuite
-'
-' UPDATED
-'   2026-08-28 - Added for #23 before production source changed.
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1969,9 +1957,6 @@ Private Sub Test_Core_Characterization()
 '
 ' CALLED FROM
 '   - RunCoreSuite
-'
-' UPDATED
-'   2026-08-13 - Section added
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -2261,9 +2246,6 @@ Private Sub Test_NF_StandardNormalCumulative()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Standard normal cumulative"
@@ -2354,9 +2336,6 @@ Private Sub Test_NF_InverseTails()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Standard normal inverse, deep tails"
@@ -2398,7 +2377,7 @@ Private Sub Test_NF_TailRelativeAccuracy()
 '   The former Hart/West kernel was accurate in absolute terms only: about
 '   1.5E-14 relative at Z = 3, 8.4E-10 at 6.25 and 2.9E-9 at 7.07, plus up to
 '   4.6E-14 anywhere Z * Z was not exact. Tail quantiles inherited it at about
-'   1E-10. Each assertion below names the old kernel's error at its point.
+'   1E-10. Most assertions below name the old kernel's error at their point.
 '
 ' BEHAVIOR
 '   - References are the correctly rounded Doubles of 60-digit values, restored
@@ -2670,9 +2649,6 @@ Private Sub Test_NF_IntervalProbability()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Interval probability"
@@ -2822,9 +2798,6 @@ Private Sub Test_NF_LognormalMoments()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Dim VarV As Variant
@@ -2879,9 +2852,6 @@ Private Sub Test_NF_LognormalUnderflow()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Lognormal underflow (REGRESSION N3)"
@@ -2976,9 +2946,6 @@ Private Sub Test_NF_ParameterRoundTrip()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Dim P As Variant
@@ -3051,9 +3018,6 @@ Private Sub Test_NF_ErrorContract()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Dim Diag As String
@@ -3192,9 +3156,6 @@ Private Sub Test_NF_MagnitudePolicy()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-17
 '==============================================================================
 '
     Debug.Print "-- Normal family magnitude policy (finite vs supported magnitude)"
@@ -3283,9 +3244,6 @@ Private Sub Test_NF_InverseSurvival()
 '
 ' CALLED FROM
 '   - RunNormalFamilySuite
-'
-' UPDATED
-'   2026-07-16
 '==============================================================================
 '
     Dim QValues             As Variant         'Exceedance probabilities
@@ -3517,9 +3475,6 @@ Private Sub Test_TF_StudentTCumulative()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t cumulative"
@@ -3542,9 +3497,10 @@ Private Sub Test_TF_StudentTCumulative()
         K_STATS_StudentT_Cumulative(0.0000000001, 0.1), _
         0.500000000014809, 0.000000000000002
     'Student t accuracy envelope (strict validated-domain policy): below / at /
-    'above PROB_T_MAX_DF = 1E8, raised from 1E6 after CR-P1-02 (see
-    'benchmark/envelope_probe). Beyond it the incomplete-beta tail degrades
-    '(benchmark/tchi_large_df) and the surface returns CVErr instead. Density
+    'above PROB_T_MAX_DF = 1E8, raised from 1E6 after the prefactor repair (see
+    'benchmark/envelope_probe). Beyond it the surface returns CVErr
+    '(benchmark/tchi_large_df); inside it, from df 1E5, the tail has its own
+    'routes (#34, #213). Density
     'is closed-form and unrestricted.
     AssertTrue "t cdf below envelope (1e7) accepted", _
         (Not IsError(K_STATS_StudentT_Cumulative(1#, 10000000#)))
@@ -3693,9 +3649,6 @@ Private Sub Test_TF_StudentTInverse()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Student t inverse"
@@ -3844,9 +3797,11 @@ Private Sub Test_TF_StudentTLargeDFTail()
 '     study's oracle, restored from split literals.
 '   - Inside the region the tolerance is TOL_REL_LARGE_DF_TAIL; the seam points
 '     df = 1E5 and Abs(X) = 8 are inside.
-'   - One ulp outside the region the continued fraction still serves, and the
-'     controls there use its characterized accuracy (PRODUCTION_PREREGISTRATION
-'     section 7), so they show which route serves the point.
+'   - One ulp below df = 1E5 the continued fraction still serves, and the
+'     control there uses its characterized accuracy (PRODUCTION_PREREGISTRATION
+'     section 7), so it shows which route serves the point. One ulp above
+'     Abs(X) = 8 the near-one route serves since #213; that control keeps
+'     TOL_REL_TAIL and no longer tells the routes apart.
 '   - The forward references are reproduced by the binary64 model in
 '     benchmark/student_t_large_df_study within the tolerance.
 '
@@ -3922,8 +3877,8 @@ Private Sub Test_TF_StudentTLargeDFTail()
     AssertClose "t inv(0.5, 1E+08) is exactly 0", _
         K_STATS_StudentT_InverseCumulative(0.5, 100000000#), 0#, 0#
 
-    'Just outside the region the continued fraction still serves; these
-    'controls use its characterized accuracy, not the expansion's
+    'Just outside the region. Below df = 1E5 the continued fraction serves, at
+    'its characterized accuracy; above Abs(X) = 8 the near-one route does (#213)
     AssertRelClose "t sf(2, 1E+05 - 1 ulp) on the continued fraction", _
         K_STATS_StudentT_Survival(2#, 100000# - 1.45519152283669E-11), _
         0.0227514817287532 + 3.12250225675825E-17, TOL_REL_LDF_OUTSIDE_DF
@@ -4008,9 +3963,6 @@ Private Sub Test_TF_ChiSquareDensity()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square density"
@@ -4094,9 +4046,6 @@ Private Sub Test_TF_ChiSquareLargeDF()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Chi-square, large degrees of freedom (REGRESSION T1)"
@@ -4245,9 +4194,6 @@ Private Sub Test_TF_FDensity()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F density"
@@ -4308,9 +4254,6 @@ Private Sub Test_TF_FCumulative()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F cumulative"
@@ -4378,9 +4321,6 @@ Private Sub Test_TF_FSurvival()
 '
 ' CALLED FROM
 '   - RunTFamilySuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- F survival"
@@ -4397,8 +4337,9 @@ Private Sub Test_TF_FSurvival()
     AssertIsError "F sf above envelope (2e10)", _
         K_STATS_F_Survival(1#, 10#, 20000000000#)
     'REGRESSION T8: this exact call returned #NUM! while the inverse carried its
-    'own lower cap. The inverse kernel converges here (measured 2.2E-16 in
-    'benchmark/inverse_probe); the refusal was the cap, not the numerics.
+    'own lower cap. The inverse kernel converges here: the refusal was the cap,
+    'not the numerics (benchmark/inverse_probe). Its accuracy where the degrees
+    'of freedom are far apart is the subject of T12.
     AssertTrue "F inverse unbalanced ratio (1e6,3) accepted", _
         (Not IsError(K_STATS_F_InverseCumulative(0.5, 1000000#, 3#)))
     AssertIsError "F inverse above envelope (2e10)", _
@@ -5337,9 +5278,6 @@ Private Sub Test_CN_GammaDensity()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Dim MinSubnormal        As Double          'Smallest positive Double, built by halving
@@ -5432,9 +5370,6 @@ Private Sub Test_CN_GammaCumulative()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma cumulative"
@@ -18283,8 +18218,6 @@ Private Sub Test_GammaCF_PrecisionCounterexample()
 '   Both points are above A+1; this is not independent holdout evidence.
 ' ERROR POLICY
 '   A wrong-direction step fails and retains full-precision diagnostics.
-' UPDATED
-'   2026-11-08
 '==============================================================================
     AssertTrue "Precision upper CF Cumulative" & _
         " left=" & GammaCF_FullPrecision(CDbl(K_STATS_Gamma_Cumulative((1.39000000000000E+00 + (8.88178419700125E-16)), (3.90000000000000E-01 + (0.00000000000000E+00)), 1#))) & _
@@ -18309,8 +18242,6 @@ Private Sub Test_GammaCF_CapAndXSeam()
 '   Reuses the frozen boundary coordinates; this is not a fresh holdout.
 ' ERROR POLICY
 '   Require False with a cap diagnostic in kernels and #NUM! in wrappers.
-' UPDATED
-'   2026-11-08
 '==============================================================================
     Dim A As Double
     Dim X As Double
@@ -18750,8 +18681,6 @@ Private Sub Test_GammaCF_AdditionalCallers()
 '   Frozen thresholds apply; subnormal outputs use a one-unit absolute bound.
 ' ERROR POLICY
 '   Failures remain recorded; do not retune the kernel from these cases.
-' UPDATED
-'   2026-11-08
 '==============================================================================
     Dim Small As Double
     Dim A As Double
@@ -19331,8 +19260,6 @@ Private Sub GammaCF_CoverageCase( _
 '   Numeric mismatches are recorded by the existing assertion harness.
 ' NOTES
 '   All references are positive normal values; normalize before comparing.
-' UPDATED
-'   2026-11-08
 '==============================================================================
     Dim P As Double
     Dim Q As Double
@@ -19374,9 +19301,6 @@ Private Sub Test_CN_GammaSurvival()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Gamma survival"
@@ -19654,9 +19578,6 @@ Private Sub Test_CN_GammaInverseFinalScale()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-11-14
 '==============================================================================
 '
     Const TOL_GIS           As Double = 0.000000000001  '1E-12 relative
@@ -19824,9 +19745,6 @@ Private Sub Test_CN_BetaDensity()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Beta density"
@@ -20056,9 +19974,6 @@ Private Sub Test_CN_ExponentialCumulative()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Exponential cumulative"
@@ -20214,9 +20129,6 @@ Private Sub Test_CN_WeibullCumulative()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull cumulative"
@@ -20327,9 +20239,6 @@ Private Sub Test_CN_WeibullMoments()
 '
 ' CALLED FROM
 '   - RunContinuousSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Weibull moments"
@@ -21352,9 +21261,6 @@ Private Sub Test_DS_Hypergeometric()
 '
 ' CALLED FROM
 '   - RunDiscreteSuite
-'
-' UPDATED
-'   2026-07-21
 '==============================================================================
 '
     Debug.Print "-- Hypergeometric mass and log-mass"

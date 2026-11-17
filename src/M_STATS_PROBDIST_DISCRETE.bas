@@ -219,9 +219,6 @@ Option Explicit
 '     Negative Binomial, Hypergeometric and Discrete Uniform surfaces.
 '   - Direct survival functions should be used for small right-tail
 '     probabilities; subtracting the CDF from one loses those tails.
-'
-' UPDATED
-'   2026-07-21 - Added production-hardened Discrete Uniform distribution.
 '==============================================================================
 
 
@@ -296,9 +293,6 @@ Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_PMF( _
@@ -347,9 +341,6 @@ Public Function K_STATS_Binomial_PMF( _
 '   - PROB_DS_ValidateBinomialMassInputs
 '   - PROB_DS_TryBinomialPMF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -589,9 +580,6 @@ End Function
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_Cumulative( _
@@ -641,9 +629,6 @@ Public Function K_STATS_Binomial_Cumulative( _
 '   - PROB_DS_ValidateBinomialKernelInputs
 '   - PROB_DS_TryBinomialCDF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -753,9 +738,6 @@ End Function
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_Survival( _
@@ -807,9 +789,6 @@ Public Function K_STATS_Binomial_Survival( _
 '   - PROB_DS_ValidateBinomialKernelInputs
 '   - PROB_DS_TryBinomialSF
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -920,9 +899,6 @@ End Function
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_InverseCumulative( _
@@ -975,9 +951,6 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 '   - PROB_DS_ValidateTrialsKernel
 '   - PROB_DS_TryBinomialInverse
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1089,9 +1062,6 @@ End Function
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_Mean( _
@@ -1137,9 +1107,6 @@ Public Function K_STATS_Binomial_Mean( _
 '   - PROB_DS_ValidateProbClosed
 '   - PROB_TryMultiply
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1247,9 +1214,6 @@ End Function
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_Variance( _
@@ -1295,9 +1259,6 @@ Public Function K_STATS_Binomial_Variance( _
 '   - PROB_DS_ValidateProbClosed
 '   - PROB_TryMultiply
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -1411,9 +1372,6 @@ End Function
 ' CALLED FROM
 '   - Worksheet formulas
 '   - M_STATS_PROBDIST_TEST
-'
-' UPDATED
-'   2026-07-19 - Full production-hardening rewrite.
 '==============================================================================
 '
 Public Function K_STATS_Binomial_StdDev( _
@@ -1459,9 +1417,6 @@ Public Function K_STATS_Binomial_StdDev( _
 '   - PROB_DS_ValidateProbClosed
 '   - PROB_TryMultiply
 '   - PROB_SetStatus
-'
-' UPDATED
-'   2026-08-11
 '==============================================================================
 '
 '------------------------------------------------------------------------------
@@ -5419,9 +5374,6 @@ Private Function PROB_DS_ValidatePoissonMeanKernel( _
 ' PURPOSE
 '   Validates a Poisson mean against the supported incomplete-gamma domain
 '   (PROB_DS_MAX_POISSON_KERNEL_MEAN).
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If Not PROB_DS_ValidateNonnegativeFinite(Mean, "Mean", FailMsg) Then Exit Function
@@ -5622,9 +5574,6 @@ Private Function PROB_DS_ValidatePoissonPMFInputs( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Validates Poisson PMF inputs in the Loader domain.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If Not PROB_DS_ValidateCount( _
@@ -5684,9 +5633,6 @@ Private Function PROB_DS_ValidateGeometricInputs( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Validates a Geometric failure count and success probability.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If Not PROB_DS_ValidateCount( _
@@ -6278,9 +6224,6 @@ Private Function PROB_DS_TryBinomialLogMass( _
 '
 '   PRECONDITION
 '     0 <= K <= N, N <= 2^53 - 1 and ProbSuccess in [0, 1].
-'
-' UPDATED
-'   2026-07-19 - Extracted shared log-mass; PMF now exponentiates it.
 '==============================================================================
 '
     Dim Q                   As Double          'Failure probability 1-p
@@ -6439,9 +6382,6 @@ Private Function PROB_DS_TryPoissonLogMass( _
 '
 '   PRECONDITION
 '     K is an exact non-negative integer and Mean is in [0, 2^53 - 1].
-'
-' UPDATED
-'   2026-07-19 - Extracted shared log-mass; PMF now exponentiates it.
 '==============================================================================
 '
     Dim Deviance            As Double          'bd0(K, Mean)
@@ -6728,9 +6668,6 @@ Private Function PROB_DS_TryBinomialCDF( _
 '
 ' PRECONDITION
 '   Validated Binomial kernel inputs.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If ProbSuccess <= 0# Then
@@ -6777,9 +6714,6 @@ Private Function PROB_DS_TryBinomialSF( _
 '
 ' PRECONDITION
 '   Validated Binomial kernel inputs.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If ProbSuccess <= 0# Then
@@ -6822,9 +6756,6 @@ Private Function PROB_DS_TryPoissonCDF( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Computes P(X <= K) = Q(K+1, Mean).
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If Mean <= 0# Then
@@ -6850,9 +6781,6 @@ Private Function PROB_DS_TryPoissonSF( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Computes P(X > K) = P(K+1, Mean) directly.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
         If Mean <= 0# Then
@@ -7375,9 +7303,6 @@ Private Function PROB_DS_TryBinomialQualifies( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Tests F(K) >= Probability using the smaller direct probability tail.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
     Dim TailValue           As Double          'CDF or SF at K
@@ -7679,9 +7604,6 @@ Private Function PROB_DS_TryPoissonInverse( _
 '   - Expands downward or upward until a failing/qualifying bracket is known.
 '   - Evaluates the configured ceiling before declaring failure.
 '   - Refines with smaller-tail integer bisection.
-'
-' UPDATED
-'   2026-07-19 - Replaces the unseeded powers-of-two search.
 '==============================================================================
 '
     Dim ComplementProbability As Double        '1 - target probability
@@ -7882,9 +7804,6 @@ Private Function PROB_DS_TryGeometricInverse( _
 ' METHOD
 '   Seeds the closed form, rejects an unrepresentable integer quantile and then
 '   performs a bounded monotone correction against the smaller direct tail.
-'
-' UPDATED
-'   2026-07-19
 '==============================================================================
 '
     Dim ComplementProbability As Double        '1 - target probability
