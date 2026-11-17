@@ -132,3 +132,14 @@ namespace-valued compatibility attributes in every part. The `excel-open` job
 opens the XLSM with macros disabled, saves a copy, and reopens it using desktop
 Excel. The evidence records Excel version/build and input hash. This open test
 does not validate Ribbon callbacks or numerical execution.
+
+## Automated functional acceptance
+
+The Excel package test also executes an embedded library function, checks every
+Ribbon destination and defined-name target against the sheet map, hides the
+navigation groups while a second workbook is active, verifies protection and
+state restoration, and exercises the workbook save events. Reopening with macros
+disabled must show the navigation again. This checks the production routines
+behind the controls; actual Ribbon clicks and interactive visual acceptance
+remain distinct manual checks. The original artifact is tested in a disposable
+runner directory and the input SHA-256 is retained in the report.
