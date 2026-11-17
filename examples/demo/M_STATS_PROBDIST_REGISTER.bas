@@ -63,8 +63,9 @@ Public Function PROB_Register_ClearPublicUDFs() As Long
 '   Best-effort removal of the Function Wizard metadata this module registers.
 '
 ' RETURNS
-'   The number of functions whose metadata Excel accepted a reset for: 22
-'   when all succeed. Failures are listed by PROB_Register_LastReport.
+'   The number of functions whose metadata Excel accepted a reset for,
+'   equal to the manifest count when all succeed. Failures are listed by
+'   PROB_Register_LastReport.
 '
 ' BEHAVIOR
 '   Blanks each description and argument description and moves the function
