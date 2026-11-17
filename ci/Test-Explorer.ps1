@@ -36,7 +36,7 @@ try {
             [Math]::Abs($cdf-$case.cdf) -gt $fixture.absolute_tolerance) {
             throw "Reference mismatch for $($case.family), x=$($case.x): $pdf / $cdf"
         }
-        $expectedType = if ($case.family -eq 'Poisson') { 51 } else { 74 }
+        $expectedType = if ($case.family -eq 'Poisson') { 51 } else { 75 }
         if ($sheet.ChartObjects('ExplorerDensity').Chart.ChartType -ne $expectedType) { throw 'Wrong density chart type' }
         if (-not $sheet.ProtectContents -or -not $excel.EnableEvents) { throw 'Refresh leaked Excel state' }
         $report.checks += @{family=$case.family;x=$case.x;density=$pdf;cdf=$cdf;status='PASS'}

@@ -63,6 +63,7 @@ HARNESS_STEPS = frozenset({
 # backlog elsewhere is not this runner's incident. A test holds the set equal
 # to the workflow files that name a self-hosted runner.
 RUNNER_WORKFLOWS = frozenset({
+    ".github/workflows/demo-explorer.yml",
     ".github/workflows/demo-shell.yml",
     ".github/workflows/excel-vba-regression.yml",
     ".github/workflows/gamma-cache-study.yml",

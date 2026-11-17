@@ -70,7 +70,7 @@ try {
     $limits = @(@('D7',-1000000,1000000),@('D8',0.001,10000),@('D9',0.001,1000),@('D10',0.01,100),@('D11',-10000000,10000000))
     foreach ($limit in $limits) {
         $inputCell = $sheet.Range($limit[0])
-        $inputCell.Validation.Add(2, 1, 1, [string]$limit[1], [string]$limit[2])
+        $inputCell.Validation.Add(2, 1, 1, [double]$limit[1], [double]$limit[2])
         $inputCell.Validation.ShowError = $true
     }
     $donor.Range('D6').Copy($sheet.Range('F6:H15'))
@@ -119,7 +119,7 @@ try {
         $anchor = $sheet.Range('J' + $spec[1])
         $chart = $sheet.ChartObjects().Add($anchor.Left,$anchor.Top,$sheet.Range('J:P').Width,300)
         $chart.Name = $spec[0]
-        $chart.Chart.ChartType = 74
+        $chart.Chart.ChartType = 75
         $series = $chart.Chart.SeriesCollection().NewSeries()
         $series.Name = $spec[0]
         $series.XValues = $sheet.Range('F18:F218')
@@ -154,6 +154,10 @@ try {
     [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book)
     $book = $null
     Write-Output ('Explorer built: ' + (Get-FileHash $path -Algorithm SHA256).Hash)
+} catch {
+    Write-Output $_.InvocationInfo.PositionMessage
+    Write-Output $_.ScriptStackTrace
+    throw
 } finally {
     if ($null -ne $book) { $book.Close($false); [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book) }
     if ($null -ne $excel) { $excel.Quit(); [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel) }
