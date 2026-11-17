@@ -1,7 +1,8 @@
 # Demo workbook shell
 
-Development work for #253. The workbook is not a release asset and has not
-been validated in Excel. The thematic sheets are explicitly marked as under
+Development work for #253. The workbook is not a release asset. Automated
+Excel checks cover the operations listed below; interactive acceptance remains
+incomplete. The thematic sheets are explicitly marked as under
 development; #254–#261 supply their content. No library kernel is changed.
 
 ## User-supplied baseline
@@ -33,8 +34,9 @@ checklist below; a successful package job does not certify Excel behavior.
 The builder writes `test-results/demo/Probability-Distributions-Demo.xlsm`,
 its SHA-256 manifest and the generated RibbonX source there. Outputs are
 ignored. It uses the existing MS-OVBA/MS-CFB writer, without Office automation,
-external dependencies or p-code. Excel compilation of this new package remains
-unverified; #110's certified CI-workbook execution is separate work.
+external dependencies or p-code. The package acceptance test executes an
+embedded library function in Excel; #110's certified CI-workbook execution is
+separate work.
 
 `examples/demo/sheets.json` is the single map of sections, tab names, document
 CodeNames, tooltips and issues. The Go to menu of the Ribbon, the navigation
@@ -99,7 +101,7 @@ entry point rather than restoring uncertified embedded code.
 - The links of the bar and of Home target defined names (`nav_<CodeName>`), so
   they work with macros disabled.
 
-## Acceptance still required in desktop Excel
+## Desktop Excel acceptance
 
 Record the exact commit, workbook digest, Excel build and Office bitness.
 
@@ -114,7 +116,10 @@ Record the exact commit, workbook digest, Excel build and Office bitness.
    bar must not print.
 8. Record tested environments only; do not infer 32-bit compatibility.
 
-These checks are pending. The shell does not close #253. Integrated demo
+The automated test covers opening, embedded VBA execution, mapped targets,
+navigation visibility, two-workbook isolation and save events. Actual Ribbon
+and hyperlink clicks, renamed/missing targets, visual/print review and
+screenshots remain pending. The shell does not close #253. Integrated demo
 validation remains #262; screenshots remain #250.
 
 ## Visual review
@@ -131,7 +136,8 @@ keeps its `mc:Ignorable` list, whose prefixes it declares. Package tests check
 namespace-valued compatibility attributes in every part. The `excel-open` job
 opens the XLSM with macros disabled, saves a copy, and reopens it using desktop
 Excel. The evidence records Excel version/build and input hash. This open test
-does not validate Ribbon callbacks or numerical execution.
+alone does not validate Ribbon callbacks or numerical execution; the functional
+phase below additionally exercises the embedded VBA.
 
 ## Automated functional acceptance
 

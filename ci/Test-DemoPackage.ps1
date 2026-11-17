@@ -30,6 +30,12 @@ try {
     $book.Close($false)
     [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book)
     $book = $null
+    # Do not reuse a VBA project first loaded with macros forcibly disabled.
+    $excel.Quit()
+    [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel)
+    $excel = New-Object -ComObject Excel.Application
+    $excel.Visible = $false
+    $excel.DisplayAlerts = $false
     # Macro execution is confined to this owned Excel process; Trust Center is unchanged.
     $excel.AutomationSecurity = 1
     $book = $excel.Workbooks.Open($path, 0, $false)
@@ -88,10 +94,18 @@ try {
     $book.Saved = $false
     $book.Save()
     if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Save did not restore session-hidden bar' }
-    $report.save_events = 'PASS'
+    $report.session_state_after_save = 'PASS'
     $book.Close($false)
     [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book)
     $book = $null
+    $other.Close($false)
+    [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($other)
+    $other = $null
+    $excel.Quit()
+    [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel)
+    $excel = New-Object -ComObject Excel.Application
+    $excel.Visible = $false
+    $excel.DisplayAlerts = $false
     $excel.AutomationSecurity = 3
     $book = $excel.Workbooks.Open($path, 0, $true)
     foreach ($sheet in $book.Worksheets) {
@@ -101,6 +115,7 @@ try {
         }
     }
     $report.saved_navigation = 'PASS'
+    $report.save_events = 'PASS'
     $report.scope = 'Embedded VBA, navigation mapping, toggle, isolation, save events; Ribbon clicks remain manual.'
     $report.status = 'PASS'
 } catch {
