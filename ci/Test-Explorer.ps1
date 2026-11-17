@@ -17,6 +17,11 @@ try {
     $prefix = "'" + $book.Name + "'!"
     $report.excel_version = $excel.Version
     $report.excel_build = $excel.Build
+    $decimal = [string]$excel.International(3)
+    if ($sheet.Range('D8').Text -ne ('1' + $decimal + '0000')) { throw 'Default sigma is formatted incorrectly' }
+    if ($sheet.Range('G8').Text -ne ('0' + $decimal + '500000')) { throw 'Default CDF is formatted incorrectly' }
+    if ($null -ne $sheet.UsedRange.Find('Under development')) { throw 'Placeholder text remains in Explorer' }
+    $report.display_formats = 'PASS'
     if ($sheet.Range('D6:D11').Locked) { throw 'Explorer inputs are locked' }
     if (-not $sheet.Range('G7').Locked -or -not $sheet.ProtectContents) { throw 'Results are not protected' }
     foreach ($case in $fixture.cases) {

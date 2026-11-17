@@ -79,6 +79,7 @@ Public Sub RefreshExplorer()
     Dim WasProtected As Boolean
     Dim Item As ChartObject
     Dim Failure As String
+    Dim DecimalSeparator As String
     SavedEvents = Application.EnableEvents
     On Error GoTo Failed
     Set Sheet = ExplorerSheet()
@@ -88,6 +89,7 @@ Public Sub RefreshExplorer()
     Sheet.Unprotect
     Sheet.Calculate
     Discrete = (CStr(Sheet.Range("D6").Value2) = "Poisson")
+    DecimalSeparator = CStr(Application.International(xlDecimalSeparator))
     For Each Item In Sheet.ChartObjects
         If Discrete Then
             If Item.Name = "ExplorerDensity" Then
@@ -106,6 +108,11 @@ Public Sub RefreshExplorer()
             Item.Chart.SeriesCollection(1).Values = Sheet.Range("H18:H" & ExplorerLastRow(Sheet))
             Item.Chart.ChartTitle.Text = "Cumulative probability P(X <= x)"
         End If
+        Item.Chart.Axes(xlCategory).TickLabels.NumberFormatLocal = "0" & DecimalSeparator & "##"
+        Item.Chart.Axes(xlValue).TickLabels.NumberFormatLocal = "0" & DecimalSeparator & "###"
+        Item.Chart.Axes(xlCategory).TickLabelPosition = xlTickLabelPositionLow
+        Item.Chart.Axes(xlValue).MinimumScale = 0#
+        If Item.Name = "ExplorerCDF" Then Item.Chart.Axes(xlValue).MaximumScale = 1#
     Next Item
     If WasProtected Then Sheet.Protect
     Application.EnableEvents = SavedEvents
