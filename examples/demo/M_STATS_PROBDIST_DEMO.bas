@@ -52,6 +52,7 @@ Option Explicit
         Private mSaveError          As String       'Last navigation save error
         Private mBeforeSaveShown    As Boolean      'Navigation just before disk save
         Private mAfterSaveShown     As Boolean      'Navigation before session restore
+        Private mSaveSheetsChanged  As Long         'Worksheets prepared for saving
 
 '------------------------------------------------------------------------------
 ' RIBBON CALLBACKS
@@ -415,8 +416,8 @@ Public Sub NavigationBarBeforeSave()
         mBeforeSaveCalls = mBeforeSaveCalls + 1
         mSaveError = vbNullString
         On Error GoTo Failed
-        mBarHiddenForSave = Not NavigationBarShown()
-        If mBarHiddenForSave Then ApplyNavigationBar True
+        mBarHiddenForSave = CBool(ThisWorkbook.Worksheets(1).Columns(1).Hidden)
+        mSaveSheetsChanged = ApplyNavigationBar(True)
         mBeforeSaveShown = NavigationBarShown()
         Exit Sub
 
@@ -462,6 +463,8 @@ Public Function NavigationBarSaveStatus() As String
 '
         NavigationBarSaveStatus = "before=" & CStr(mBeforeSaveCalls) & _
                                   "; after=" & CStr(mAfterSaveCalls) & _
+                                  "; restoreHidden=" & CStr(mBarHiddenForSave) & _
+                                  "; changed=" & CStr(mSaveSheetsChanged) & _
                                   "; beforeShown=" & CStr(mBeforeSaveShown) & _
                                   "; afterShown=" & CStr(mAfterSaveShown) & _
                                   "; error=" & mSaveError
