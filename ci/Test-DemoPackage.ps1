@@ -11,15 +11,15 @@ $excel = $null
 $book = $null
 $other = $null
 function Test-HomeLinks($Workbook, $Application) {
-    $home = $Workbook.Worksheets.Item('Home')
+    $homeSheet = $Workbook.Worksheets.Item('Home')
     $count = 0
-    foreach ($link in $home.Hyperlinks) {
+    foreach ($link in $homeSheet.Hyperlinks) {
         # msoHyperlinkRange: the Home table, excluding drawing hyperlinks.
         if ($link.Type -ne 0) { continue }
         if ($link.Address) { throw 'Home contains an unexpected external hyperlink' }
         $expected = $Workbook.Names.Item($link.SubAddress).RefersToRange.Worksheet.CodeName
         $Workbook.Activate()
-        $home.Activate()
+        $homeSheet.Activate()
         $link.Follow()
         if ($Application.ActiveWorkbook.FullName -ne $Workbook.FullName -or
             $Application.ActiveSheet.CodeName -ne $expected) {
