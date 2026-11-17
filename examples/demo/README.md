@@ -4,6 +4,19 @@ Development work for #253. The workbook is not a release asset and has not
 been validated in Excel. The thematic sheets are explicitly marked as under
 development; #254–#261 supply their content. No library kernel is changed.
 
+## User-supplied baseline
+
+On 2026-11-17 the user supplied `Probability-Distributions-Demo.xlsm` and
+instructed us to use it. A fresh build at commit
+`2da91db696da6fa45509eeb5ed21ee1385d5886e` is byte-identical to that file.
+The exact digest and comparison record are in
+[reference/user-workbook.json](reference/user-workbook.json).
+
+Preserve this workbook's presentation, sheet structure and navigation when
+adding the thematic examples. The supplied file is already represented by
+the committed sources; no binary replacement or reverse-engineered override
+is needed. This selection does not close the outstanding runtime checks.
+
 ## Build
 
 From the repository root, with Python 3.11 or later:
