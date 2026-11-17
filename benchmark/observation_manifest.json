@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-16T22:20:57Z",
-  "commit_sha": "7601df2",
+  "generated_utc": "2026-11-17T07:00:17Z",
+  "commit_sha": "6d5c66e",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -64,13 +64,13 @@
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:5bfc37ba05afe07e6a0456515b6e8c9dbf2e5cea028e454bff2cd1c135c658e6",
     "benchmark/t_density_large_df/M_STATS_PROBDIST_TDENS.bas": "sha256:27ad78c1e271cc7086fb92139e2a5f4b82092658482ba8e1927ebaf40915d03e",
     "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:6ea76d1463a56ff0f84f5106293f463a03df1fda7535e8f3e78ef371c46ca73f",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:a72aa9b8622a03c9a742e30b90f9308a18f0dbd82cc3685aba03d308e862b3fb",
-    "src/M_STATS_PROBDIST_CORE.bas": "sha256:906337fd0438c9a20eb47a1ffae8546293cb02d30eb5976fceedf6b74dad44c5",
-    "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:77b3e344b7048246643a212fd39d21a39b34bb0444b07f045bedcfac37a3a87f",
-    "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:11c55369f7215b1f6e13de630d85ec26e3cb405e83b82159f6dd042c8d3188c4",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:aa0ee31df6be002f1d30701c1aa3de3cfa8b908348b9b167626e4fea10021ff6",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:ef274b62cdc11b38a5978b1c2de92d057314d7000e2933a5f2bd7f72f4bb5b5d",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:5da560673ef9833b939cd48f608e9292623b3cd698a7b5e12e5cd758be58f685"
+    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:a8c0fdc466ade29cedecb71e09cccf48c2ddb95ba7d45940c7e61305190d0c1a",
+    "src/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
+    "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:67096992c6e86e143863c3f940cca523ae0a80e8629e8af64e8b0d824325b8c6",
+    "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:4a5ebe5bce5f9e3d4e9e2b6c7d02b5cb3f4af0c915043646068ada245e8847ee",
+    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:c425b92caa37e326e366dd7ff1b614d987bf8ffcf3bf8fe919ff906400a28208",
+    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:04975c94a90390563c3668d72b930cf094b188c3d4990bbe187b545bfe540088",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:e4dd2548b2d344850d491b69b6c844569d56501e522dfa602539daec826548f0"
   },
   "contract_registry_sha256": "sha256:5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89",
   "environment": {
