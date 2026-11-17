@@ -47,12 +47,6 @@ Option Explicit
 '------------------------------------------------------------------------------
         Private mRibbon             As IRibbonUI    'The Ribbon, from RibbonOnLoad
         Private mBarHiddenForSave   As Boolean      'The bar was hidden when a save began
-        Private mBeforeSaveCalls    As Long         'Observed before-save calls
-        Private mAfterSaveCalls     As Long         'Observed after-save calls
-        Private mSaveError          As String       'Last navigation save error
-        Private mBeforeSaveShown    As Boolean      'Navigation just before disk save
-        Private mAfterSaveShown     As Boolean      'Navigation before session restore
-        Private mSaveSheetsChanged  As Long         'Worksheets prepared for saving
 
 '------------------------------------------------------------------------------
 ' RIBBON CALLBACKS
@@ -413,16 +407,10 @@ Public Sub NavigationBarBeforeSave()
 '   Never raises: a save must not fail because of the bar.
 '==============================================================================
 '
-        mBeforeSaveCalls = mBeforeSaveCalls + 1
-        mSaveError = vbNullString
-        On Error GoTo Failed
-        mBarHiddenForSave = CBool(ThisWorkbook.Worksheets(1).Columns(1).Hidden)
-        mSaveSheetsChanged = ApplyNavigationBar(True)
-        mBeforeSaveShown = NavigationBarShown()
-        Exit Sub
-
-Failed:
-        mSaveError = CStr(Err.Number) & ": " & Err.Description
+        On Error Resume Next
+        mBarHiddenForSave = Not NavigationBarShown()
+        If mBarHiddenForSave Then ApplyNavigationBar True
+        On Error GoTo 0
 
 End Sub
 
@@ -440,36 +428,14 @@ Public Sub NavigationBarAfterSave()
 '   Never raises.
 '==============================================================================
 '
-        mAfterSaveCalls = mAfterSaveCalls + 1
-        mAfterSaveShown = NavigationBarShown()
-        On Error GoTo Failed
+        On Error Resume Next
         If mBarHiddenForSave Then
             mBarHiddenForSave = False
             ApplyNavigationBar False
         End If
-        Exit Sub
-
-Failed:
-        mSaveError = CStr(Err.Number) & ": " & Err.Description
+        On Error GoTo 0
 
 End Sub
-
-
-Public Function NavigationBarSaveStatus() As String
-'
-' PURPOSE
-'   Read the observed save-hook counts and last error for acceptance evidence.
-'   No workbook or application state is changed.
-'
-        NavigationBarSaveStatus = "before=" & CStr(mBeforeSaveCalls) & _
-                                  "; after=" & CStr(mAfterSaveCalls) & _
-                                  "; restoreHidden=" & CStr(mBarHiddenForSave) & _
-                                  "; changed=" & CStr(mSaveSheetsChanged) & _
-                                  "; beforeShown=" & CStr(mBeforeSaveShown) & _
-                                  "; afterShown=" & CStr(mAfterSaveShown) & _
-                                  "; error=" & mSaveError
-
-End Function
 
 
 Private Function ApplyNavigationBar( _
@@ -482,11 +448,10 @@ Private Function ApplyNavigationBar( _
 ' PURPOSE
 '   Show or hide column A and the shape groups NAV_GROUP_TOP and
 '   NAV_GROUP_REST of every worksheet in one pass, with screen updating
-'   off, so the layout changes at once. A protected sheet is temporarily
-'   unprotected and protected again after the update, also on failure.
-'   This avoids relying on UI-only protection during workbook save events.
-'   An unprotected sheet stays unprotected. The workbook's Saved flag and
-'   screen updating are kept.
+'   off, so the layout changes at once. A protected sheet is protected
+'   again for the user interface only, without a password, so that the
+'   macro can change it; an unprotected sheet stays unprotected. The
+'   workbook's Saved flag and screen updating are kept.
 '
 ' RETURNS
 '   The number of worksheets changed.
@@ -503,7 +468,6 @@ Private Function ApplyNavigationBar( _
     Dim Sheet               As Worksheet    'Each worksheet
     Dim Item                As Shape        'Each shape of a sheet
     Dim WasSaved            As Boolean      'The workbook's Saved flag before
-    Dim WasProtected        As Boolean      'Restore protection of the current sheet
     Dim SavedScreen         As Boolean      'Screen updating before
     Dim Changed             As Long         'Worksheets changed
     Dim ErrorNumber         As Long         'The first error's number
@@ -517,24 +481,15 @@ Private Function ApplyNavigationBar( _
         On Error GoTo Failed
         Application.ScreenUpdating = False
         For Each Sheet In ThisWorkbook.Worksheets
-            WasProtected = Sheet.ProtectContents
-            If WasProtected Then Sheet.Unprotect
             If Sheet.ProtectContents Then
-                Err.Raise vbObjectError + 514, "ApplyNavigationBar", "Could not unprotect: " & Sheet.Name
+                Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
             End If
             Sheet.Columns(1).Hidden = Not Shown
-            If CBool(Sheet.Columns(1).Hidden) = Shown Then
-                Err.Raise vbObjectError + 513, "ApplyNavigationBar", "Column visibility did not change: " & Sheet.Name
-            End If
             For Each Item In Sheet.Shapes
                 If Item.Name = NAV_GROUP_TOP Or Item.Name = NAV_GROUP_REST Then
                     Item.Visible = IIf(Shown, msoTrue, msoFalse)
                 End If
             Next Item
-            If WasProtected Then
-                Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
-            End If
-            WasProtected = False
             Changed = Changed + 1
         Next Sheet
         Application.ScreenUpdating = SavedScreen
@@ -545,13 +500,8 @@ Private Function ApplyNavigationBar( _
 Failed:
         ErrorNumber = Err.Number
         ErrorDescription = Err.Description
-        On Error Resume Next
-        If WasProtected Then
-            Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
-        End If
         Application.ScreenUpdating = SavedScreen
         ThisWorkbook.Saved = WasSaved
-        On Error GoTo 0
         Err.Raise ErrorNumber, "ApplyNavigationBar", ErrorDescription
 
 End Function

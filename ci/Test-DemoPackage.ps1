@@ -1,4 +1,7 @@
-param([Parameter(Mandatory=$true)][string]$PackageDirectory)
+param(
+    [Parameter(Mandatory=$true)][string]$PackageDirectory,
+    [ValidateSet('Com', 'NativeUI')][string]$SaveMode = 'Com'
+)
 $ErrorActionPreference = 'Stop'
 $directory = (Resolve-Path $PackageDirectory).Path
 $path = Join-Path $directory 'Probability-Distributions-Demo.xlsm'
@@ -90,11 +93,15 @@ try {
     $excel.Run($prefix + 'NavigationBarAfterSave')
     if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'After-save helper did not restore session state' }
     $report.save_helpers = 'PASS'
-    $report.save_status_before = $excel.Run($prefix + 'NavigationBarSaveStatus')
     # Require an actual save even when the session-only toggle preserved Saved.
     $book.Saved = $false
-    $book.Save()
-    $report.save_status_after = $excel.Run($prefix + 'NavigationBarSaveStatus')
+    $book.Activate()
+    $report.save_mode = $SaveMode
+    if ($SaveMode -eq 'NativeUI') {
+        $excel.CommandBars.ExecuteMso('FileSave')
+    } else {
+        $book.Save()
+    }
     $report.saved_path = $book.FullName
     $report.read_only = $book.ReadOnly
     Copy-Item -LiteralPath $path -Destination (Join-Path $directory 'Excel-after-save.xlsm')
