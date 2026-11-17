@@ -99,7 +99,8 @@ HOLDOUT_BINDING = (
 # compute_errors.py run, test_gate_degradation.py, check_source_thresholds.py,
 # test_analyze_holdout.py, analyze_holdout.py, check_excel_certification.py
 # and render_readme_assurance.py --check. Gate steps NOT run here: the #13
-# positive-ratio study-analyzer step, and the `git diff --exit-code` checks on
+# positive-ratio study-analyzer step, the accuracy_tiers.py currency check
+# (#327), and the `git diff --exit-code` checks on
 # accuracy_summary.md, README.md (after render_contract_table.py --write) and
 # holdout_summary.md; main() lists changed artifacts afterwards but does not
 # fail on them. test_manifest.py is an extra entry: the gate runs it only

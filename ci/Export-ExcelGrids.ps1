@@ -81,8 +81,9 @@ param(
 
     [Parameter(Mandatory = $false)]
     # Four macros at this limit plus the regression stay inside the workflow's
-    # 120-minute export timeout, so the watchdog, not the job timeout, stops a
-    # hung Excel (a job timeout would leave it running).
+    # 120-minute export timeout, so for a run of four macros or fewer the
+    # watchdog, not the job timeout, stops a hung Excel (a job timeout would
+    # leave it running). A run that selects more grids has no such margin.
     [ValidateRange(1, 240)]
     [int]$MacroTimeoutMinutes = 20
 )

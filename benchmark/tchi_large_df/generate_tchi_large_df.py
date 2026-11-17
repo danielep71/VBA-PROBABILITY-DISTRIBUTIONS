@@ -23,7 +23,9 @@ Regime structure (why references need care):
     below against the exact gammainc at low df). The Chi-square CENTRAL band
     1E5..1E16 is reference-limited and deliberately omitted (needs a Temme
     uniform-asymptotic reference - a scoped follow-up), rather than shipped at
-    under-precision.
+    under-precision. (Since #159 the CDF and survival references at df >= 1E16
+    come from Temme's expansion, described below; Wilson-Hilferty remains for
+    the inverse rows, and the central band is still omitted.)
 
 Every reference is self-consistency-checked; a row that cannot be made solid is
 dropped, never shipped. Output: tchi_large_df_grid.csv (observed_vba empty).

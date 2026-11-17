@@ -2,6 +2,9 @@
 Re-base the survival references registered as debt in survival_reference_debt.json
 (#159), once the bindings that blocked them are rebuilt (#81).
 
+It ran in the #81 wave. The registry is empty since, so a run reports nothing
+to re-base; the tool is kept for a later debt entry.
+
 Every debt entry names one cell: the grid, the function, the argument tokens and
 the committed reference text. For each one this tool takes the new reference
 from the source that owns the row, never from the audit's own oracle:
@@ -105,12 +108,13 @@ def source_rows(grid):
     raise RebaseError(f"no source is known for {grid}")
 
 
-# Main-grid rows whose arguments the generator no longer emits bit for bit: the
-# four tiny_unbalanced F_Survival rows carry arguments one ulp from what
-# build_tiny_unbalanced_rows computes today. Their observations were taken at the
-# committed arguments, so the reference is the generator's own function, at 50
-# digits, evaluated at those arguments' binary64 values, and written as the
-# generator writes it.
+# Main-grid rows whose arguments the generator did not emit bit for bit when
+# this tool ran: four tiny_unbalanced F_Survival rows carried arguments one ulp
+# from what build_tiny_unbalanced_rows computed. Their observations were taken
+# at the committed arguments, so the reference is the generator's own function,
+# at 50 digits, evaluated at those arguments' binary64 values, and written as
+# the generator writes it. Since #349 the generator emits the committed Doubles
+# and the branch is not reached.
 AT_GRID_ARGUMENTS = {("F_Survival", "tiny_unbalanced"): "_tu_f_sf"}
 
 

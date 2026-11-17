@@ -9,7 +9,8 @@ Proofs for the #23 study grid and its analyzer.
   3. It fails a result 1E-14 off, an ERROR result and an echo that differs from
      the reference input, and counts the routes that disagree. The ladder rules
      (B1, B3, B4X) refuse a result lost to ERROR instead of scoring it as zero.
-  4. It reports "no observations" for the committed, unexported grid.
+  4. The committed grid holds no observation or a full set; with none the
+     analyzer reports "no observations".
 
 Run: python3 test_gamma_series_small_shape.py   (exit 0 = pass)
 """

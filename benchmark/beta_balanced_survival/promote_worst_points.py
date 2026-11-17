@@ -23,7 +23,8 @@ sweep's x values are its own six-decimal tokens. References are certified at
 the exact binary64 arguments: the survival by _survival_oracle.certify, the
 CDF by the same construction (measure_balanced_survival.cdf_reference).
 
-Use with benchmark/promote_grid_rows.py --generator; never copy observations.
+Use with benchmark/promote_grid_rows.py --generator <path of this file>; never
+copy observations.
 
 Run: python3 promote_worst_points.py   (prints the rows and modelled errors)
 """

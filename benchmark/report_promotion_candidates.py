@@ -1,7 +1,9 @@
 """
 Candidate row report for the #12/#15 promotion. Report only; writes nothing.
 
-Answers, before promote_grid_rows.py --allow-add is run:
+Historical: the promotion is done and the rows are in the main grid, so a run
+now reports every candidate as already there. It answered, before
+promote_grid_rows.py --allow-add was run:
   * which rows would be added, by contract regime;
   * whether every candidate reference matches the Step-2-audited study
     reference at the same binary64 key;

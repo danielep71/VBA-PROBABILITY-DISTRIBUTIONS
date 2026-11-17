@@ -13,11 +13,14 @@ applies before it writes anything:
     any other file that already carries observations.
 
 The argument bit pattern is _binary64.double_key, shared with the reference
-generator (#32). reconcile_grid.py, promote_grid_rows.py, migrate_references.py,
-check_promotion.py, report_promotion_candidates.py, check_grid_coverage.py and
-audit_references.py import canonical_key and double_key instead of keeping
-copies (#90); test_binary64.py pins that they do and that none of them
-reintroduces a private bit-pattern helper.
+generator (#32). The grid tools import canonical_key, double_key or both
+instead of keeping copies (#90): reconcile_grid.py, promote_grid_rows.py,
+migrate_references.py, check_promotion.py, check_grid_coverage.py,
+audit_references.py, check_generator_grid.py, generate_reference_values.py
+and _row_binding.py use canonical_key; report_promotion_candidates.py takes
+double_key alone.
+test_binary64.py pins the bindings and that no tool reintroduces a private
+bit-pattern helper.
 """
 import csv
 import os

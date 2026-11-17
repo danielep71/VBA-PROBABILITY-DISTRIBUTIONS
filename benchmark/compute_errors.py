@@ -218,10 +218,10 @@ def main():
             print("      - " + _p)
         sys.exit(1)
 
-    # ROW-DISPOSITION GATE: while the reviewed v1.0.0 debt fingerprint exists,
-    # permit only its still-present unresolved subset and name it as KNOWN
-    # COVERAGE DEBT.  Once #22 deletes the fingerprint, strict zero-missing mode
-    # becomes authoritative automatically.
+    # ROW-DISPOSITION GATE: strict zero-missing mode. #22 deleted the reviewed
+    # v1.0.0 debt fingerprint; the transition branch below runs only if such a
+    # file is present again, and then permits only its still-present unresolved
+    # subset, named as KNOWN COVERAGE DEBT.
     from check_grid_coverage import (evaluate_paths as _evaluate_coverage,
                                      validate_transition as _validate_transition,
                                      validate_strict as _validate_coverage_strict,

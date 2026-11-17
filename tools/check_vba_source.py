@@ -2,10 +2,12 @@
 """Check the placement, names, encoding, options, storage and layout of VBA source.
 
 For every tracked .bas, .cls and .frm file: it sits in src/ or tests/ (flat)
-or under benchmark/; its file name starts with M_STATS_PROBDIST_, has at most
-31 characters and equals its one Attribute VB_Name, unique ignoring case;
-ASCII only; Option Explicit; Option Private Module in the modules of
-OPTION_PRIVATE_REQUIRED and never in a module that declares a Public K_STATS_
+or under benchmark/; its file name starts with M_STATS_PROBDIST_, uses
+letters, digits and underscores only, has at most 31 characters and equals its
+one Attribute VB_Name, unique ignoring case; a .bas export starts with that
+line; ASCII only, with no byte-order mark; Option Explicit; Option Private
+Module in the modules of OPTION_PRIVATE_REQUIRED, each of which must be a
+tracked component, and never in a module that declares a Public K_STATS_
 worksheet function; no Option Base, tab or trailing white space; string
 literals closed; LF storage in Git with CRLF checkout (.gitattributes).
 tools/README.md, "VBA source checks", gives the reasons.

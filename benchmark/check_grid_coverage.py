@@ -3,9 +3,11 @@ Fail-closed disposition checker for the main accuracy grid (issue #22).
 
 Every `evidence_set = main grid` row must be claimed by an active or
 characterization contract, or by a final explicit row exemption.  Strict mode
-fails on any missing disposition.  During the v1.0.0 transition only, transition
-mode permits the unresolved subset of one frozen binary64 fingerprint and
-reports it as KNOWN COVERAGE DEBT; it rejects new, changed, or removed debt rows.
+fails on any missing disposition.  Transition mode permitted the unresolved
+subset of one frozen binary64 fingerprint during the v1.0.0 transition and
+reported it as KNOWN COVERAGE DEBT.  That transition ended with #22, which
+deleted the fingerprint: transition mode now fails on the missing file, and
+auto mode, the default, is strict whenever no fingerprint is present.
 
 Row identity is the one every grid tool shares (#90): _grid_safety.canonical_key,
 built on _binary64.double_key. A main-grid row that this key cannot place as a
@@ -15,7 +17,7 @@ blocking error, not a row with a private identity of its own.
 
 Run:
     python check_grid_coverage.py --mode strict
-    python check_grid_coverage.py --mode transition --check-summary
+    python check_grid_coverage.py --mode auto --check-summary   (what the gate runs)
 """
 import argparse
 import csv
