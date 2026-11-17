@@ -23,7 +23,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `run_static_checks.py` | Runs every static check with one command and records the run |
 | `check_vba_identifiers.py`, `check_vba_calls.py` | Names and calls, read without Excel: an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong argument count, a qualified call to a `Private` procedure ([VBA source checks](#vba-source-checks)); their fixtures are unit tests in [`tests/test_check_vba_names.py`](../tests/test_check_vba_names.py) |
 | `check_vba_source.py`, `check_vba_conditionals.py`, `check_vba_visibility.py` | The VBA source rules of [VBA source checks](#vba-source-checks); their fixtures are unit tests in [`tests/test_check_vba.py`](../tests/test_check_vba.py), not `--self-test` |
-| `vba_lexer.py` | Shared comment, string, continuation and statement lexing for those three checks |
+| `vba_lexer.py` | Shared comment, string, continuation and statement lexing for the VBA source checks other than `check_vba_jumps.py` |
 | `probe_actionlint.py` | Proves that an actionlint command passes a valid workflow and rejects an invalid one |
 | `check_links.py` | Relative links and anchors in every tracked Markdown file (offline); external links with `--external` ([Markdown links](#markdown-links)) |
 | `check_restated_counts.py` | Fails when `docs/*.md` restates a count held by a record, or when the evidence-rules tables of `CONTRIBUTING.md` and `docs/EXCEL_CERTIFICATION.md` differ (#328); tested by `tests/test_check_restated_counts.py` |

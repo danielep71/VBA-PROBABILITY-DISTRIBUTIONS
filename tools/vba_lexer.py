@@ -5,8 +5,10 @@ continuations joined, string literals kept or blanked. It is not a VBA
 parser or compiler. tools/README.md, "VBA source checks", lists the rules the
 checks enforce and what they cannot see.
 
-check_vba_source.py, check_vba_conditionals.py and check_vba_visibility.py use
-it. check_vba_jumps.py keeps its own lexer.
+The five VBA source checks use it: check_vba_source.py,
+check_vba_conditionals.py, check_vba_visibility.py, check_vba_identifiers.py
+and check_vba_calls.py; so do benchmark/vba_code_identity.py and
+benchmark/check_df_cap_mirrors.py. check_vba_jumps.py keeps its own lexer.
 """
 
 from __future__ import annotations

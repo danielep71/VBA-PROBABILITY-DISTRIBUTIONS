@@ -9,8 +9,9 @@
 #
 # REPOSITORY POLICY
 #   - Exported VBA, Python and R tooling, PowerShell CI, and benchmark evidence are source.
-#   - The demonstration workbook is an intentional, exact-path repository artifact.
-#   - All other Office packages remain generated or local.
+#   - No Office package is tracked. An intentional one needs an exact rooted
+#     path here and an entry in .github/binary-allowlist.json.
+#   - Every other Office package remains generated or local.
 #   - Benchmark CSV/JSON data and published evidence must never be hidden.
 #
 # SAFETY RULE

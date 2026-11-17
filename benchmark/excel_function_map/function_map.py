@@ -11,8 +11,8 @@ A ROW is one Excel function in one of its modes:
   kstats    the library expression that replaces it, in the same names;
   notes     what differs: argument order, parameterization, tail;
   example   (Excel formula, library expression) with numbers. Excel
-            evaluates both; the library side is also computed here from
-            120-digit arithmetic.
+            evaluates both; the library side is also computed in
+            references.py from 60-digit arithmetic.
 
 A PROBE is a pair of formulas that settles a question the documentation
 leaves open, by measurement: what each side does with a fractional degree

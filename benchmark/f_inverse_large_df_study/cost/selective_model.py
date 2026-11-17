@@ -23,7 +23,8 @@ which forward evaluation the Newton iteration uses:
    phase A has not settled within PHASE_A_ITER iterations: continue from
    it with P4's loop, pair fraction and guarded stagnation included. That
    branch evaluates the fraction at 1 - u, which is exact only as a pair; it
-   is where the second loss of #35 was found (RESIDUAL_DIAGNOSIS.md).
+   is where the second loss of #35 was found
+   (../fix_comparison/RESIDUAL_DIAGNOSIS.md).
 
 On the direct branch the argument of the fraction is u itself, an exact Double,
 and no pair arithmetic is used at all.

@@ -5,8 +5,8 @@ The inventory is intentionally about assurance controls, not every benchmark
 utility. Each listed control must name a live checker, an executable proof
 command that contains meaningful negative cases, and its current repository
 state. Proof commands must also be wired into test_evidence_tools.py so they run
-*before* the strict numerical gate; otherwise an intentionally red Phase-0 gate
-could skip the very tests meant to establish that the gate machinery works.
+*before* the strict numerical gate; otherwise a red numerical gate could skip
+the very tests meant to establish that the gate machinery works.
 """
 from __future__ import annotations
 

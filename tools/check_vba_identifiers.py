@@ -30,8 +30,8 @@ split, or a single-line If without Then, is a finding, not a silent pass.
 tools/README.md, "VBA source checks", lists what the rules cannot see.
 
 A name of ACCEPTED_KEYWORD_NAMES is not reported: it is in a released module
-that Excel compiled, and a rename changes certified source, so it waits for the
-next Excel wave. Each entry names its file and its reason.
+that Excel compiled, and it is not renamed. Each entry names its file and its
+reason.
 
 Ported from tools/check_vba_identifiers.py of danielep71/K-TEMPLATE at
 9fef90ddd20b8f8c43b39b964a63ed186079b7a4 (MPL-2.0, as this repository). The form,
@@ -159,7 +159,7 @@ KEYWORDS = frozenset("""
     rem resume return rset scale select set single static step stop string sub then
     time to true type typeof until variant wend while with withevents xor
 """.split())
-# (path, name in lower case) -> why the name stays for now.
+# (path, name in lower case) -> why the name stays.
 ACCEPTED_KEYWORD_NAMES = {
     ("src/M_STATS_PROBDIST_SPECIALFUNCS.bas", "base"):
         "a local of the released v1.0.0 source, compiled and certified in Excel; Base is "

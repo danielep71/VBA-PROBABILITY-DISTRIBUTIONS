@@ -144,7 +144,8 @@ jobs:
                   # A read-only token cannot remove a milestone. On
                   # pull_request_target GitHub issues one only to a Dependabot
                   # run whose base branch Dependabot created; Dependabot pull
-                  # requests here target main, so their runs get write access.
+                  # requests here target the active release branch, which
+                  # Dependabot did not create, so their runs get write access.
                   # Should it happen, the next scheduled scan removes the milestone.
                   if error.code == 403 and "pull_request" in event:
                       message = (f"The workflow token cannot change {scope} (HTTP 403, read-only token). "

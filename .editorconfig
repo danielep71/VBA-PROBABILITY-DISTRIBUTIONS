@@ -112,8 +112,8 @@ tab_width = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Other Windows-native scripts. Matches the CRLF rules in .gitattributes, so
-# the editor and Git agree if such a file is ever added.
+# Other Windows-native files. Matches the CRLF rules in .gitattributes, so
+# the editor and Git agree. mypy.ini is the one such file tracked today.
 [*.{bat,cmd,vbs,reg,ini}]
 end_of_line = crlf
 insert_final_newline = true

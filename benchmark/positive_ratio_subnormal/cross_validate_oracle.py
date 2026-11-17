@@ -20,7 +20,7 @@ itself is not.
 
 R IS AN OPTIONAL DEPENDENCY
 ---------------------------
-The hosted gate and the Windows workstation do not have R, and this must not
+The hosted gate and the Excel runner do not have R, and this must not
 become a hard requirement. The script therefore emits a committed record that
 downstream readers cite, rather than recomputing at gate time. When R is
 absent it says so and exits 0, leaving the existing record in place.

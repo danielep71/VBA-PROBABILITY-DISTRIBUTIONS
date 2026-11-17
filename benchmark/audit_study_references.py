@@ -5,8 +5,8 @@ characterization-only LogGamma1p.series_seam).
 The main grid's 658 stale references were not the product of sloppy formulas.
 They were computed at the intended decimal rather than at the Double the
 exporter delivers, and that distinction was invisible until it was measured.
-These two studies were written before that lesson, so their references get the
-same treatment before anything is promoted:
+These two studies were written before that lesson, so their references got the
+same treatment before their rows were promoted (#12, #15):
 
   * every reference recomputed at the exact Val(token) Double, obtained as an
     exact rational via float.as_integer_ratio(), so no decimal conversion

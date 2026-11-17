@@ -19,6 +19,8 @@ Proofs for the separated study batteries of #300 (_harness_studies.py).
   6. The slow production batteries (#13) are a class of their own: each is
      called once, from RunSlowProductionBatteries; each calls production
      code, and the policy declares them apart from the six studies.
+  7. The retained log of run 42775390763 is the certified one and shows both
+     parts passing.
 
 Run: python3 test_harness_studies.py   (exit 0 = pass)
 """
@@ -169,7 +171,7 @@ def main():
     except S.StudiesError:
         pass
 
-    # 6. The retained log of run 42775390763 is the certified one and shows
+    # 7. The retained log of run 42775390763 is the certified one and shows
     #    both parts passing with the declared counts.
     import hashlib
     log = os.path.join(HERE, "harness_timing", "run_42775390763_log.txt")
