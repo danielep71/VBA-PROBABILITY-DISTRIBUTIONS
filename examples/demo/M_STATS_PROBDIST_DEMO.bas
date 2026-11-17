@@ -50,6 +50,8 @@ Option Explicit
         Private mBeforeSaveCalls    As Long         'Observed before-save calls
         Private mAfterSaveCalls     As Long         'Observed after-save calls
         Private mSaveError          As String       'Last navigation save error
+        Private mBeforeSaveShown    As Boolean      'Navigation just before disk save
+        Private mAfterSaveShown     As Boolean      'Navigation before session restore
 
 '------------------------------------------------------------------------------
 ' RIBBON CALLBACKS
@@ -415,6 +417,7 @@ Public Sub NavigationBarBeforeSave()
         On Error GoTo Failed
         mBarHiddenForSave = Not NavigationBarShown()
         If mBarHiddenForSave Then ApplyNavigationBar True
+        mBeforeSaveShown = NavigationBarShown()
         Exit Sub
 
 Failed:
@@ -437,6 +440,7 @@ Public Sub NavigationBarAfterSave()
 '==============================================================================
 '
         mAfterSaveCalls = mAfterSaveCalls + 1
+        mAfterSaveShown = NavigationBarShown()
         On Error GoTo Failed
         If mBarHiddenForSave Then
             mBarHiddenForSave = False
@@ -458,6 +462,8 @@ Public Function NavigationBarSaveStatus() As String
 '
         NavigationBarSaveStatus = "before=" & CStr(mBeforeSaveCalls) & _
                                   "; after=" & CStr(mAfterSaveCalls) & _
+                                  "; beforeShown=" & CStr(mBeforeSaveShown) & _
+                                  "; afterShown=" & CStr(mAfterSaveShown) & _
                                   "; error=" & mSaveError
 
 End Function

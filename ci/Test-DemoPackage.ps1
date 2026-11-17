@@ -95,9 +95,13 @@ try {
     $book.Saved = $false
     $book.Save()
     $report.save_status_after = $excel.Run($prefix + 'NavigationBarSaveStatus')
+    $report.saved_path = $book.FullName
+    $report.read_only = $book.ReadOnly
+    Copy-Item -LiteralPath $path -Destination (Join-Path $directory 'Excel-after-save.xlsm')
     if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Save did not restore session-hidden bar' }
     $report.session_state_after_save = 'PASS'
     $book.Close($false)
+    Copy-Item -LiteralPath $path -Destination (Join-Path $directory 'Excel-after-close.xlsm')
     [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book)
     $book = $null
     $other.Close($false)
