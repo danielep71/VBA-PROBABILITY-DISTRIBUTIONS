@@ -44,6 +44,36 @@ Failed:
 End Sub
 
 
+Public Sub ExplorerInputsChanged(ByVal Target As Range)
+    ' Called by Workbook_SheetChange. Only an edit of the six inputs refreshes
+    ' the charts, and a failure is reported once, in words, instead of leaving
+    ' the user in the VBA debugger.
+    Dim Sheet As Worksheet
+    On Error GoTo Failed
+    Set Sheet = ExplorerSheet()
+    If Not Target.Worksheet Is Sheet Then Exit Sub
+    If Application.Intersect(Target, Sheet.Range("D6:D11")) Is Nothing Then Exit Sub
+    RefreshExplorer
+    Exit Sub
+Failed:
+    MsgBox "The Explorer charts could not be refreshed: " & Err.Description, vbExclamation, _
+           "Distribution Explorer"
+End Sub
+
+
+Public Sub ExplorerOpened()
+    ' Called by Workbook_Open. A file saved while macros were off, or with a
+    ' family other than the one its charts show, opens with stale charts:
+    ' recalculate and redraw, and leave the workbook's Saved flag as it was.
+    Dim WasSaved As Boolean
+    On Error Resume Next
+    WasSaved = ThisWorkbook.Saved
+    RefreshExplorer
+    ThisWorkbook.Saved = WasSaved
+    On Error GoTo 0
+End Sub
+
+
 Public Sub ResetExplorerInputs(Optional ByVal Confirm As Boolean = True)
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
@@ -79,7 +109,6 @@ Public Sub RefreshExplorer()
     Dim WasProtected As Boolean
     Dim Item As ChartObject
     Dim Failure As String
-    Dim DecimalSeparator As String
     SavedEvents = Application.EnableEvents
     On Error GoTo Failed
     Set Sheet = ExplorerSheet()
@@ -89,7 +118,6 @@ Public Sub RefreshExplorer()
     Sheet.Unprotect
     Sheet.Calculate
     Discrete = (CStr(Sheet.Range("D6").Value2) = "Poisson")
-    DecimalSeparator = CStr(Application.International(xlDecimalSeparator))
     For Each Item In Sheet.ChartObjects
         If Discrete Then
             If Item.Name = "ExplorerDensity" Then
@@ -108,8 +136,10 @@ Public Sub RefreshExplorer()
             Item.Chart.SeriesCollection(1).Values = Sheet.Range("H18:H" & ExplorerLastRow(Sheet))
             Item.Chart.ChartTitle.Text = "Cumulative probability P(X <= x)"
         End If
-        Item.Chart.Axes(xlCategory).TickLabels.NumberFormatLocal = "0" & DecimalSeparator & "##"
-        Item.Chart.Axes(xlValue).TickLabels.NumberFormatLocal = "0" & DecimalSeparator & "###"
+        ' General shows 5 as 5 and 0.25 as 0,25 or 0.25 by locale; a format with
+        ' optional decimals leaves a bare separator after every whole number.
+        Item.Chart.Axes(xlCategory).TickLabels.NumberFormat = "General"
+        Item.Chart.Axes(xlValue).TickLabels.NumberFormat = "General"
         Item.Chart.Axes(xlCategory).TickLabelPosition = xlTickLabelPositionLow
         Item.Chart.Axes(xlValue).MinimumScale = 0#
         If Item.Name = "ExplorerCDF" Then Item.Chart.Axes(xlValue).MaximumScale = 1#

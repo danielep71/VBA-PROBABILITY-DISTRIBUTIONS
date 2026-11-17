@@ -523,8 +523,11 @@ def build(explorer: bool = False) -> tuple[bytes, dict[str, str]]:
         # Explorer variant binds its own reset/refresh callbacks explicitly.
         for index, module in enumerate(modules):
             if module.name == "ThisWorkbook":
-                events = ('\r\nPrivate Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)\r\n'
-                          '    If Sh.CodeName = "shExplorer" Then M_STATS_PROBDIST_EXPLORER.RefreshExplorer\r\n'
+                events = ('\r\nPrivate Sub Workbook_Open()\r\n'
+                          '    M_STATS_PROBDIST_EXPLORER.ExplorerOpened\r\n'
+                          'End Sub\r\n'
+                          '\r\nPrivate Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)\r\n'
+                          '    If Sh.CodeName = "shExplorer" Then M_STATS_PROBDIST_EXPLORER.ExplorerInputsChanged Target\r\n'
                           'End Sub\r\n')
                 modules[index] = Module(module.name, module.source + events, module.kind)
 

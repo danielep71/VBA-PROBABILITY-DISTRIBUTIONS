@@ -9,6 +9,7 @@ on:
       - "src/**"
       - "ci/Test-Explorer.ps1"
       - "ci/Test-ExplorerUI.ps1"
+      - "ci/Test-ExplorerStates.ps1"
       - "ci/Test-DemoPackage.ps1"
       - "tests/test_demo_explorer.py"
       - ".github/workflows/demo-explorer.yml"
@@ -56,6 +57,9 @@ jobs:
       - name: Build the Explorer using native Excel objects
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Build-Explorer.ps1 -PackageDirectory test-results\demo
+      - name: Verify every family through single edits, macros off, and a stale file
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerStates.ps1 -PackageDirectory test-results\demo
       - name: Verify references, edited inputs, charts and reset
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Explorer.ps1 -PackageDirectory test-results\demo

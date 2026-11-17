@@ -49,6 +49,32 @@ Macros are required for editing/recalculation. With macros disabled, the
 saved results and navigation remain available; changing inputs then does not
 produce a validated updated chart.
 
+## When macros are not running
+
+Every result on the sheet is a call to the embedded VBA, and the charts follow
+the inputs through a workbook event. With macros off nothing is live: the file
+opens showing the values it was saved with, and the first edit turns the
+results into `#NAME?` while the charts stay as they were. A file that came by
+download or mail opens this way until it is unblocked (file Properties,
+Unblock) or its content is enabled.
+
+The sheet states this itself. The Macros cell (G6) calls one library function
+and reads `Enabled` or `DISABLED`; a red line above the tables appears when it
+is disabled. The cell depends on the six inputs, so it is evaluated again at
+the first edit, which is when the results break; it is not volatile, so
+opening the workbook does not mark it as changed.
+
+`Workbook_Open` recalculates the sheet and redraws the charts, keeping the
+Saved flag, so a file saved with macros off, or saved while its charts showed
+another family, is right as soon as macros run. An edit redraws the charts
+only when it touches the inputs D6:D11, and a failure to redraw is reported in
+a message instead of stopping in the VBA debugger. Grid rows beyond a Poisson
+domain show `#N/A`, not `#VALUE!`. Chart axes use the General number format.
+
+`ci/Test-ExplorerStates.ps1` checks these states in desktop Excel: every
+family through single edits with events on, the statement with macros off, and
+the recovery of a file saved in that state.
+
 ## Evidence and remaining acceptance
 
 `ci/Test-ExplorerUI.ps1` exercises the real Ribbon through Windows UI

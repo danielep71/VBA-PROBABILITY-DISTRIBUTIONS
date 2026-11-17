@@ -14,6 +14,11 @@ function DistributionFormula([string]$Operation, [string]$Point) {
     }
     return '=IF($G$5="OK",' + $expression + ',NA())'
 }
+# A grid row outside the plotted domain (Poisson beyond its last count) holds
+# #N/A in column F; give the same #N/A, not the #VALUE! of a call on an error.
+function GridFormula([string]$Operation, [string]$Point) {
+    return '=IF(ISNUMBER(' + $Point + '),' + (DistributionFormula $Operation $Point).Substring(1) + ',NA())'
+}
 try {
     $excel = New-Object -ComObject Excel.Application
     $excel.Visible = $true
@@ -87,6 +92,18 @@ try {
     $sheet.Range('G5:H5').Merge()
     $sheet.Range('G5').Formula2 = '=IF(IFERROR(AND(ISNUMBER(D11),ABS(D11)<=10000000,OR(AND(D6="Normal",ISNUMBER(D7),ABS(D7)<=1000000,ISNUMBER(D8),D8>=0.001,D8<=10000),AND(D6="Exponential",ISNUMBER(D9),D9>=0.001,D9<=1000),AND(D6="Poisson",ISNUMBER(D10),D10>=0.01,D10<=100))),FALSE),"OK","Check inputs")'
     $sheet.Range('F5').Value2 = 'Input status'
+    # With macros off every result is #NAME? and the charts do not follow the
+    # inputs. Say so on the sheet: the formula depends on the six inputs, so it
+    # is evaluated again at the first edit, which is when the results break.
+    $sheet.Range('F6').Value2 = 'Macros'
+    $sheet.Range('G6:H6').Merge()
+    $sheet.Range('G6').Formula2 = '=IF(ISERROR(K_STATS_NormalStandard_Cumulative(0)+0*COUNTA($D$6:$D$11)),"DISABLED","Enabled")'
+    # A line in the gap above the tables, empty while macros run. Its red bold
+    # font is static: no conditional format is needed.
+    $sheet.Range('F4:H4').Merge()
+    $sheet.Range('F4').Formula2 = '=IF($G$6="Enabled","","MACROS ARE DISABLED: the results are not live")'
+    $sheet.Range('F4').Font.Bold = $true
+    $sheet.Range('F4').Font.Color = 0x0000C0
     $sheet.Range('F7').Value2 = 'PDF / PMF at x'
     $sheet.Range('F8').Value2 = 'CDF at x'
     $sheet.Range('F9').Value2 = 'P(X > x)'
@@ -105,11 +122,16 @@ try {
     $sheet.Range('F14').WrapText = $true
     $sheet.Range('C14:D14').Merge()
     $sheet.Range('C14').Value2 = 'Read the results'
-    $notes = @('Yellow cells are editable; only the selected family uses its parameters. Results are protected.','Select a result or grid cell to inspect its formula. Continuous plots use 201 points.','Normal: mean +/- 4 SD. Exponential: 0 to 8/rate. Poisson: integer bars and CDF points.','Reset Explorer inputs on the Ribbon restores Normal(0,1), after confirmation.','This is an educational demo, not accuracy certification. Other families and quantiles are not offered here.','Macros are required to edit inputs. With macros disabled, navigation and the last saved results remain available.')
+    # Excel turns alerts back on once a worksheet function of the VBA project has run.
+    $excel.DisplayAlerts = $false
+    $notes = @('Yellow cells are editable; only the selected family uses its parameters. Results are protected.','Select a result or grid cell to inspect its formula. Continuous plots use 201 points.','Normal: mean +/- 4 SD. Exponential: 0 to 8/rate. Poisson: integer bars and CDF points.','Reset Explorer inputs on the Ribbon restores Normal(0,1), after confirmation.','This is an educational demo, not accuracy certification. Other families and quantiles are not offered here.','Needs macros. If Macros says DISABLED: unblock the file or enable content, then reopen.')
     for ($i=0; $i -lt $notes.Count; $i++) {
         $row = 15 + $i*2
         $area = $sheet.Range("C${row}:D$($row+1)")
         $donor.Range('D6').Copy($area)
+        # The copy fills every cell of the area. Empty them first: merging
+        # cells that hold values asks for confirmation when alerts are on.
+        $area.ClearContents()
         $area.Merge()
         $area.Value2 = $notes[$i]
         $area.WrapText = $true
@@ -122,8 +144,8 @@ try {
     for ($row=18; $row -le 218; $row++) {
         $index = $row - 18
         $sheet.Range("F$row").Formula2 = '=IF($G$5="OK",IF($D$6="Poisson",IF(' + $index + '<=$G$11,' + $index + ',NA()),$G$10+($G$11-$G$10)*' + $index + '/200),NA())'
-        $sheet.Range("G$row").Formula2 = DistributionFormula 'density' "F$row"
-        $sheet.Range("H$row").Formula2 = DistributionFormula 'cdf' "F$row"
+        $sheet.Range("G$row").Formula2 = GridFormula 'density' "F$row"
+        $sheet.Range("H$row").Formula2 = GridFormula 'cdf' "F$row"
     }
     foreach ($spec in @(@('ExplorerDensity',5,'G'),@('ExplorerCDF',18,'H'))) {
         $anchor = $sheet.Range('J' + $spec[1])
