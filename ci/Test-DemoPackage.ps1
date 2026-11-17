@@ -47,7 +47,9 @@ try {
             if ($target.Worksheet.CodeName -ne $entry.code) { throw "Wrong navigation name: $control" }
         }
     }
-    if ($excel.Run($prefix + 'RibbonSheet', 'unknown-control') -ne '') { throw 'Unknown control has a destination' }
+    # COM marshals VBA vbNullString as $null, rather than an empty .NET string.
+    $unknownTarget = $excel.Run($prefix + 'RibbonSheet', 'unknown-control')
+    if (-not [string]::IsNullOrEmpty([string]$unknownTarget)) { throw "Unknown control has a destination: $unknownTarget" }
     $report.navigation_targets = 'PASS'
     $other = $excel.Workbooks.Add()
     $other.Worksheets.Item(1).Range('A1').Value2 = 'isolation sentinel'
@@ -67,6 +69,8 @@ try {
     if ($other.Worksheets.Item(1).Range('A1').Value2 -ne 'isolation sentinel') { throw 'Other workbook changed' }
     $report.hide_and_isolation = 'PASS'
     $excel.Run($prefix + 'RecalculateWorkbook')
+    # Require an actual save even when the session-only toggle preserved Saved.
+    $book.Saved = $false
     $book.Save()
     if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Save did not restore session-hidden bar' }
     $report.save_events = 'PASS'
