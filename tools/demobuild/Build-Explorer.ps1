@@ -38,7 +38,7 @@ try {
     $sheet.Columns.Item('I').ColumnWidth = 3
     $sheet.Columns.Item('J:P').Hidden = $false
     $sheet.Columns.Item('J:P').ColumnWidth = 12
-    $sheet.Rows.Item('1:218').RowHeight = 18
+    $sheet.Rows.Item('1:218').RowHeight = 16
     $donor.Range('B1:D3').Copy($sheet.Range('B1'))
     $sheet.Range('B1:P1').Merge()
     $sheet.Range('B2:P2').Merge()
@@ -120,7 +120,7 @@ try {
     }
     foreach ($spec in @(@('ExplorerDensity',5,'G'),@('ExplorerCDF',18,'H'))) {
         $anchor = $sheet.Range('J' + $spec[1])
-        $chart = $sheet.ChartObjects().Add($anchor.Left,$anchor.Top,$sheet.Range('J:P').Width,220)
+        $chart = $sheet.ChartObjects().Add($anchor.Left,$anchor.Top,$sheet.Range('J:P').Width,205)
         $chart.Name = $spec[0]
         $chart.Chart.ChartType = 75
         $series = $chart.Chart.SeriesCollection().NewSeries()
@@ -141,10 +141,10 @@ try {
     $excel.Run($prefix + 'ResetExplorerInputs', $false)
     $sheet.Protect()
     $book.Protect([Type]::Missing,$true)
-    $sheet.PageSetup.PrintArea = '$B$1:$P$32'
+    $sheet.PageSetup.PrintArea = '$B$1:$P$30'
     $sheet.PageSetup.Zoom = $false
     $sheet.PageSetup.FitToPagesWide = 1
-    $sheet.PageSetup.FitToPagesTall = 0
+    $sheet.PageSetup.FitToPagesTall = $false
     $sheet.PageSetup.Orientation = 2
     $sheet.Activate()
     $excel.ActiveWindow.Zoom = 85
