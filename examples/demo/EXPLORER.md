@@ -53,10 +53,12 @@ produce a validated updated chart.
 
 `ci/Test-ExplorerUI.ps1` exercises the real Ribbon through Windows UI
 Automation, scoped to the HWND/process of a newly created Excel instance.
-It invokes Recalculate and Go to, toggles the navigation bar, and handles
+It invokes Recalculate, Home and every Go to menu destination, toggles the navigation bar, and handles
 the real reset dialog twice: Cancel must preserve all inputs; OK must restore
 the defaults. Dialog selection checks the owned process and exact prompt.
-No global mouse or keyboard input is sent. A runtime failure remains a
+Excel exposes its dialog buttons as native child controls on the tested host;
+the adapter uses their matched dialog HWND and button IDs when InvokePattern
+is unavailable. No global mouse or keyboard input is sent. A runtime failure remains a
 failure; callback-only tests are not substituted for this UI evidence.
 
 `explorer_references.py` regenerates `explorer-references.json` using Python
@@ -67,6 +69,17 @@ changes inputs, checks chart values/domain/type, rejects an invalid sigma,
 and verifies reset isolation. This is demonstration coverage, not a new
 accuracy certification.
 
-Actual Ribbon clicks, reset cancellation, screenshots and visual/print
-acceptance remain distinct from automation. Do not infer compatibility with
-untested Office architectures or close #254 solely from package checks.
+The native Ribbon and reset-dialog checks passed on source
+`d46c1f6d8e7f2646c6b547e6746fbf698f6b7479` in
+[run 44137767519](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/44137767519),
+Excel 16.0 build 20710, x64. All six inputs were changed before each dialog:
+Cancel preserved them all; OK restored every default. Every Go to destination,
+Home, Recalculate, navigation toggle, reference cases and save/reopen passed.
+The input workbook SHA-256 was
+`93fa6263c1b54cee262ca5ecab3e763ad0477426e39b9e85eb6af2f770ccda9d`.
+
+This is native UI automation evidence, not a human usability review.
+Visual review of every family, missing-sheet callback handling and the shared
+shell's remaining acceptance are still open. The Normal print preview was
+reviewed separately. Do not infer compatibility with untested Office
+architectures or close #254 solely from package checks.
