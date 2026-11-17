@@ -1,0 +1,57 @@
+{
+  "recorded_date": "2026-11-17",
+  "source_head": "d63bd113a0ab9dc853549cfa85ea060147e91f84",
+  "ci_merge_commit": "bed4e83bbbd36509ad6138a2e005df6a19cd6c01",
+  "workflow_run": "https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/44086506959",
+  "evidence_artifact": 14328969490,
+  "baseline_source": "2da91db696da6fa45509eeb5ed21ee1385d5886e",
+  "scope": "Shell acceptance only; the baseline workbook VBA, builder, map and presentation are unchanged. Headless COM Save and visible native FileSave are separate tested paths.",
+  "reports": [
+    {
+      "excel_version": "16.0",
+      "session_state_after_save": "PASS",
+      "events_enabled": true,
+      "excel_build": 20710,
+      "navigation_targets": "PASS",
+      "embedded_vba": "PASS",
+      "workbook_module_type": 100,
+      "hide_and_isolation": "PASS",
+      "workbook_codename": "ThisWorkbook",
+      "open": "PASS",
+      "save_mode": "Com",
+      "roundtrip": "PASS",
+      "save_helpers": "PASS",
+      "error": "Saved file hides its navigation with macros disabled",
+      "read_only": false,
+      "status": "FAIL",
+      "sha256": "F5C7E23889A69393EFEAFFFD177CFBDEAE085850160F3CACB91C8E66C487BE9C"
+    },
+    {
+      "excel_version": "16.0",
+      "session_state_after_save": "PASS",
+      "events_enabled": true,
+      "excel_build": 20710,
+      "navigation_targets": "PASS",
+      "embedded_vba": "PASS",
+      "workbook_module_type": 100,
+      "hide_and_isolation": "PASS",
+      "workbook_codename": "ThisWorkbook",
+      "saved_navigation": "PASS",
+      "open": "PASS",
+      "save_mode": "NativeUI",
+      "roundtrip": "PASS",
+      "save_helpers": "PASS",
+      "scope": "Embedded VBA, navigation mapping, toggle, isolation, save events; Ribbon clicks remain manual.",
+      "save_events": "PASS",
+      "read_only": false,
+      "status": "PASS",
+      "sha256": "F5C7E23889A69393EFEAFFFD177CFBDEAE085850160F3CACB91C8E66C487BE9C"
+    }
+  ],
+  "remaining": [
+    "Headless Workbook.Save automation limitation (#253).",
+    "Actual custom Ribbon and hyperlink clicks, renamed/missing targets, screenshots and print review.",
+    "Office bitness was not recorded; no inference of 32-bit compatibility.",
+    "Thematic examples and integrated numerical demo acceptance (#254-#262)."
+  ]
+}

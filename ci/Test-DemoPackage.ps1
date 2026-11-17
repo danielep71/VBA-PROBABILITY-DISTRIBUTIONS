@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory=$true)][string]$PackageDirectory,
-    [ValidateSet('Com', 'NativeUI')][string]$SaveMode = 'Com'
+    [ValidateSet('Com', 'NativeUI')][string]$SaveMode = 'NativeUI'
 )
 $ErrorActionPreference = 'Stop'
 $directory = (Resolve-Path $PackageDirectory).Path

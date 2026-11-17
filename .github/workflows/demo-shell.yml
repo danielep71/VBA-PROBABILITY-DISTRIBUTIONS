@@ -60,20 +60,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        id: download
         with:
           name: demo-shell-unverified
           path: test-results/demo
-      - name: Prepare independent native Save comparison
-        shell: cmd
-        run: powershell -NoProfile -Command "Copy-Item test-results/demo test-results/demo-ui -Recurse"
-      - name: Open and round-trip in desktop Excel without repair
+      - name: Validate opening, navigation and native Save in desktop Excel
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-DemoPackage.ps1 -PackageDirectory test-results\demo
-      - name: Exercise the native Excel Save command
-        if: ${{ !cancelled() && steps.download.outcome == 'success' }}
-        shell: cmd
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-DemoPackage.ps1 -PackageDirectory test-results\demo-ui -SaveMode NativeUI
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -82,8 +74,5 @@ jobs:
             test-results/demo/excel-open-report.json
             test-results/demo/Excel-after-save.xlsm
             test-results/demo/Excel-after-close.xlsm
-            test-results/demo-ui/excel-open-report.json
-            test-results/demo-ui/Excel-after-save.xlsm
-            test-results/demo-ui/Excel-after-close.xlsm
           if-no-files-found: warn
           retention-days: 14

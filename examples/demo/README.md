@@ -149,3 +149,17 @@ disabled must show the navigation again. This checks the production routines
 behind the controls; actual Ribbon clicks and interactive visual acceptance
 remain distinct manual checks. The original artifact is tested in a disposable
 runner directory and the input SHA-256 is retained in the report.
+
+The required save check uses Excel's native `FileSave` command in a visible,
+owned test instance, with the demo active. On Excel 16.0 build 20710 this path
+passes the complete save/reopen check with the user-supplied VBA unchanged.
+The observed comparison is retained in
+[reference/excel-acceptance-2026-11-17.json](reference/excel-acceptance-2026-11-17.json).
+
+The distinct headless `Workbook.Save` COM path did **not** pass: its save
+callbacks ran, but navigation visibility/protection writes within them were
+ignored and the saved file retained a hidden bar. This remains an automation
+limitation under #253; do not infer support for that path from the native Save
+result. It can be reproduced explicitly with `-SaveMode Com`; the diagnostic
+still exits unsuccessfully on a failed assertion. The required workflow tests
+the supported native Save interaction and does not suppress a failing result.
