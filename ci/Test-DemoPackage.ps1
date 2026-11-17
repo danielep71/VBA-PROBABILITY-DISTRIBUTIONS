@@ -90,9 +90,11 @@ try {
     $excel.Run($prefix + 'NavigationBarAfterSave')
     if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'After-save helper did not restore session state' }
     $report.save_helpers = 'PASS'
+    $report.save_status_before = $excel.Run($prefix + 'NavigationBarSaveStatus')
     # Require an actual save even when the session-only toggle preserved Saved.
     $book.Saved = $false
     $book.Save()
+    $report.save_status_after = $excel.Run($prefix + 'NavigationBarSaveStatus')
     if (-not $book.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Save did not restore session-hidden bar' }
     $report.session_state_after_save = 'PASS'
     $book.Close($false)

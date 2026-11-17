@@ -47,6 +47,9 @@ Option Explicit
 '------------------------------------------------------------------------------
         Private mRibbon             As IRibbonUI    'The Ribbon, from RibbonOnLoad
         Private mBarHiddenForSave   As Boolean      'The bar was hidden when a save began
+        Private mBeforeSaveCalls    As Long         'Observed before-save calls
+        Private mAfterSaveCalls     As Long         'Observed after-save calls
+        Private mSaveError          As String       'Last navigation save error
 
 '------------------------------------------------------------------------------
 ' RIBBON CALLBACKS
@@ -407,10 +410,15 @@ Public Sub NavigationBarBeforeSave()
 '   Never raises: a save must not fail because of the bar.
 '==============================================================================
 '
-        On Error Resume Next
+        mBeforeSaveCalls = mBeforeSaveCalls + 1
+        mSaveError = vbNullString
+        On Error GoTo Failed
         mBarHiddenForSave = Not NavigationBarShown()
         If mBarHiddenForSave Then ApplyNavigationBar True
-        On Error GoTo 0
+        Exit Sub
+
+Failed:
+        mSaveError = CStr(Err.Number) & ": " & Err.Description
 
 End Sub
 
@@ -428,14 +436,31 @@ Public Sub NavigationBarAfterSave()
 '   Never raises.
 '==============================================================================
 '
-        On Error Resume Next
+        mAfterSaveCalls = mAfterSaveCalls + 1
+        On Error GoTo Failed
         If mBarHiddenForSave Then
             mBarHiddenForSave = False
             ApplyNavigationBar False
         End If
-        On Error GoTo 0
+        Exit Sub
+
+Failed:
+        mSaveError = CStr(Err.Number) & ": " & Err.Description
 
 End Sub
+
+
+Public Function NavigationBarSaveStatus() As String
+'
+' PURPOSE
+'   Read the observed save-hook counts and last error for acceptance evidence.
+'   No workbook or application state is changed.
+'
+        NavigationBarSaveStatus = "before=" & CStr(mBeforeSaveCalls) & _
+                                  "; after=" & CStr(mAfterSaveCalls) & _
+                                  "; error=" & mSaveError
+
+End Function
 
 
 Private Function ApplyNavigationBar( _
