@@ -45,7 +45,14 @@ class DemoShellTests(unittest.TestCase):
             for i,item in enumerate(sheets,1):
                 sheet = ET.fromstring(package.read(f'xl/worksheets/sheet{i}.xml'))
                 self.assertEqual(sheet.find('s:sheetPr',ns).attrib['codeName'],item['code'])
-                self.assertEqual({x.attrib['location'] for x in sheet.findall('s:hyperlinks/s:hyperlink',ns)},targets)
+                self.assertEqual({x.attrib['location'] for x in sheet.findall('s:hyperlinks/s:hyperlink',ns)},targets - {'nav_shHome'})
+            self.assertEqual(package.read('xl/styles.xml'), (ROOT/'examples/demo/reference/styles.xml').read_bytes())
+            self.assertEqual(package.read('xl/theme/theme1.xml'), (ROOT/'examples/demo/reference/theme.xml').read_bytes())
+            layout = ET.parse(ROOT/'examples/demo/reference/home-layout.xml').getroot()
+            for i in range(1, len(sheets)+1):
+                page = ET.fromstring(package.read(f'xl/worksheets/sheet{i}.xml'))
+                for tag in ['cols', 'sheetFormatPr', 'pageMargins', 'pageSetup', 'sheetViews']:
+                    self.assertEqual(ET.tostring(page.find('s:'+tag,ns)), ET.tostring(layout.find('s:'+tag,ns)))
             ui = ET.fromstring(package.read('customUI/customUI14.xml'))
             buttons = list(ui.iter('{http://schemas.microsoft.com/office/2009/07/customui}button'))
             self.assertEqual({b.attrib['tag'] for b in buttons if 'tag' in b.attrib},

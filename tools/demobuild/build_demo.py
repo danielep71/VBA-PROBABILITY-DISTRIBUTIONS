@@ -41,80 +41,113 @@ def ribbon(sheets: list[dict[str, str | int]]) -> str:
         f'tag="{item["code"]}" onAction="DemoGoTo"/>' for item in sheets)
     return (XML_HEADER + '<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui">'
             '<ribbon><tabs><tab id="pdDemo" label="Probability Distributions">'
-            '<group id="pdNavigation" label="Navigate"><menu id="pdGo" label="Go to">'
+            '<group id="pdNavigation" label="Navigate"><menu id="pdGo" label="Go to" size="large" imageMso="GoTo">'
             + buttons + '</menu></group><group id="pdActions" label="Demo">'
-            '<button id="pdRecalculate" label="Recalculate" onAction="DemoRecalculate"/>'
+            '<button id="pdRecalculate" label="Recalculate" size="large" imageMso="CalculateNow" onAction="DemoRecalculate"/>'
             '<button id="pdReset" label="Reset inputs" enabled="false" '
             'screentip="Available when the thematic demos provide editable inputs"/>'
-            '<button id="pdHelp" label="Help" tag="shHome" onAction="DemoGoTo"/>'
+            '<button id="pdHelp" label="Help" imageMso="Help" tag="shHome" onAction="DemoGoTo"/>'
             '</group></tab></tabs></ribbon></customUI>')
 
 
 def styles() -> str:
-    fonts = ''.join(f'<font><sz val="{size}"/><color rgb="{color}"/>'
-                    '<name val="Aptos"/>' + ('<b/>' if bold else '') + '</font>'
-                    for size, color, bold in [(11,'FF253858',False), (18,'FFFFFFFF',True),
-                                              (11,'FFFFFFFF',True), (14,'FF265A99',True)])
-    fills = '<fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
-    fills += ''.join(f'<fill><patternFill patternType="solid"><fgColor rgb="{color}"/>'
-                     '<bgColor indexed="64"/></patternFill></fill>'
-                     for color in ['FF265A99','FFEAF1F8','FF00838F','FFFFF2CC'])
-    xfs = ''.join(f'<xf numFmtId="0" fontId="{font}" fillId="{fill}" borderId="0" xfId="0" '
-                  'applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
-                  for font, fill in [(0,0),(1,2),(2,2),(0,3),(3,0),(2,4),(0,5)])
-    return (XML_HEADER + f'<styleSheet xmlns="{MAIN}"><fonts count="4">{fonts}</fonts>'
-            f'<fills count="6">{fills}</fills><borders count="1"><border/></borders>'
-            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-            f'<cellXfs count="7">{xfs}</cellXfs><cellStyles count="1">'
-            '<cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>')
+    return (DEMO/'reference/styles.xml').read_text(encoding='utf-8')
 
 
 def worksheet(item: dict[str, str | int], sheets: list[dict[str, str | int]], commit: str) -> str:
-    cells: dict[int, list[str]] = {}
-    def put(row: int, col: str, value: str, style: int = 0) -> None:
-        cells.setdefault(row, []).append(f'<c r="{col}{row}" s="{style}" t="inlineStr">'
-                                         f'<is><t>{escape(value)}</t></is></c>')
-    put(1,'C','Probability Distributions',1)
-    put(2,'C',str(item['title']),4)
-    for row, entry in enumerate(sheets, 5):
-        put(row,'A',str(entry['title']),5 if entry == item else 3)
-    put(4,'C','Start here' if item['code']=='shHome' else 'Worksheet under development',2)
-    if item['code']=='shHome':
-        lines = [
-            ('Purpose','Explore probability distributions in Excel. Demonstrations are educational examples, not numerical certification.'),
-            ('Installation','Open in desktop Excel for Windows. Enable macros only after reviewing the source and trusting this workbook.'),
-            ('Navigate','Use the left navigation, worksheet tabs or the Probability Distributions Ribbon. Help returns here.'),
-            ('Macros disabled','Navigation links and tabs remain usable. VBA functions and Ribbon actions require macros.'),
-            ('Inputs','Yellow cells will hold editable example inputs. Blue sections identify formulas and results; references are labelled separately.'),
-            ('Reset','Reset is disabled in this shell. Each thematic demo will define its inputs and safe reset behavior.'),
-            ('Availability','The eight thematic worksheets are reserved for the linked issues; no calculations are delivered in this shell.'),
-            ('Workbook version','v1.0.1 development shell; not a published release.'),
-            ('Library version',(ROOT/'VERSION').read_text().strip()),
-            ('Source commit',commit),
-            ('Validation','Excel open/save/reopen, Ribbon and navigation acceptance is pending. See examples/demo/README.md.'),
-        ]
-    else:
-        lines = [('Scope',str(item['title'])),('Implementation',f'Content tracked in issue #{item["issue"]}.'),
-                 ('Inputs','Reserved for editable example inputs.'),('Results','Reserved for visible formulas and charts.'),
-                 ('References','Reserved for independently sourced reference values.'),
-                 ('Navigation','Use the left navigation or Help on the Ribbon to return to Start Here.')]
-    for row,(label,value) in enumerate(lines,6):
-        put(row,'C',label,3)
-        put(row,'D',value,6 if label=='Inputs' else 0)
-    rows = ''.join(f'<row r="{r}" ht="{42 if r>3 else 34}" customHeight="1">{"".join(cells[r])}</row>' for r in sorted(cells))
-    links = ''.join(f'<hyperlink ref="A{r}" location="nav_{entry["code"]}" display={quoteattr(str(entry["title"]))}/>'
-                    for r,entry in enumerate(sheets,5))
-    return (XML_HEADER+f'<worksheet xmlns="{MAIN}"><sheetPr codeName="{item["code"]}"><pageSetUpPr fitToPage="1"/></sheetPr>'
-            '<sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane xSplit="2" ySplit="3" '
-            'topLeftCell="C4" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>'
-            '<sheetFormatPr defaultRowHeight="24"/><cols><col min="1" max="1" width="29" customWidth="1"/>'
-            '<col min="2" max="2" width="4" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/>'
-            '<col min="4" max="4" width="88" customWidth="1"/></cols>'
-            f'<sheetData>{rows}</sheetData><sheetProtection sheet="1" objects="1" scenarios="1" '
-            'selectLockedCells="0" selectUnlockedCells="0"/>'
-            '<mergeCells count="3"><mergeCell ref="C1:D1"/><mergeCell ref="C2:D2"/><mergeCell ref="C4:D4"/></mergeCells>'
-            f'<hyperlinks>{links}</hyperlinks><pageMargins left="0.25" right="0.25" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>'
-            '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="1"/></worksheet>')
+    ns = {'s': MAIN}
+    sheet = ET.parse(DEMO/'reference/home-layout.xml').getroot()
+    prop = sheet.find('s:sheetPr',ns)
+    assert prop is not None
+    prop.set('codeName',str(item['code']))
+    data = sheet.find('s:sheetData',ns)
+    assert data is not None
+    values = {
+        'B1':'Probability Distributions', 'B2':str(item['title']),
+        'C3':'Explore the library: select a worksheet on the left or use Go to on the Probability Distributions Ribbon.',
+        'C5':'About this workbook',
+        'C6':'Purpose', 'D6':'Explore distributions, probabilities and quantiles with the K_STATS_ library in Excel.',
+        'C7':'Development version', 'D7':'This workbook provides the navigation shell. The thematic examples are under development.',
+        'C8':'Library', 'D8':'Version '+(ROOT/'VERSION').read_text().strip(),
+        'C10':'Getting started',
+        'C11':'1. Choose a worksheet', 'D11':'Use the navigation bar or the sheet links below. The selected worksheet is highlighted on the left.',
+        'C12':'2. Enable macros', 'D12':'Ribbon commands and library functions require macros. Worksheet links remain available without macros.',
+        'C13':'3. Read the example', 'D13':'Thematic examples will distinguish inputs, formulas, results and independent references.',
+        'C14':'4. Recalculate', 'D14':'Recalculate on the Ribbon updates this workbook only.',
+        'C15':'Reset inputs', 'D15':'Disabled until the thematic examples define their editable inputs.',
+        'C16':'Build', 'D16':'v1.0.1 development shell. Source: '+commit,
+        'C17':'Validation', 'D17':'Educational workbook. Desktop Excel acceptance is pending; numerical certification is maintained separately.',
+        'C19':'Worksheets',
+    }
+    if item['code'] != 'shHome':
+        values.update({'C5':str(item['title']), 'D6':'Thematic worksheet: '+str(item['title'])+'.',
+                       'D7':'Content is being prepared under issue #'+str(item['issue'])+'.'})
+    for r,entry in enumerate(sheets[1:],20):
+        values['C'+str(r)] = str(entry['title'])
+        values['D'+str(r)] = 'Example under development — issue #'+str(entry['issue'])+'.'
+    for row in list(data):
+        if int(row.get('r','0'))>27:
+            data.remove(row)
+            continue
+        for c in row:
+            value=values.get(c.get('r',''))
+            if value is not None:
+                c.set('t','inlineStr')
+                ET.SubElement(ET.SubElement(c,'{'+MAIN+'}is'),'{'+MAIN+'}t').text=value
+    dimension=sheet.find('s:dimension',ns)
+    assert dimension is not None
+    dimension.set('ref','A1:S27')
+    links=ET.Element('{'+MAIN+'}hyperlinks')
+    for r,entry in enumerate(sheets[1:],20):
+        ET.SubElement(links,'{'+MAIN+'}hyperlink',ref='C'+str(r),location='nav_'+str(entry['code']))
+    # Keep the template schema ordering: hyperlinks precede page margins.
+    margins=sheet.find('s:pageMargins',ns)
+    assert margins is not None
+    sheet.insert(list(sheet).index(margins),links)
+    ET.SubElement(sheet,'{'+MAIN+'}drawing',{'{'+RELATIONSHIPS+'}id':'demoNavigation'})
+    return ET.tostring(sheet,encoding='unicode')
+
+
+def navigation(item: dict[str, str | int], sheets: list[dict[str, str | int]]) -> str:
+    from copy import deepcopy
+    xdr='http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing'
+    art='http://schemas.openxmlformats.org/drawingml/2006/main'
+    ns={'x':xdr,'a':art}
+    source=ET.parse(DEMO/'reference/navigation.xml').getroot()
+    button=next(sp for sp in source.findall('.//x:sp',ns)
+                if (pr := sp.find('x:nvSpPr/x:cNvPr',ns)) is not None and pr.get('name')=='Nav_Params')
+    drawing=ET.Element('{'+xdr+'}wsDr')
+    labels=['Start Here','01  Explorer','02  Probabilities','03  Parameters','04  Comparison',
+            '05  Extreme tails','06  Discrete','07  Risk','08  Diagnostics']
+    layout = ET.parse(DEMO/'reference/home-layout.xml').getroot()
+    heights = {int(row.get('r','0'))-1: float(row.get('ht','15'))*12700 for row in layout.findall('{'+MAIN+'}sheetData/{'+MAIN+'}row')}
+    for i,entry in enumerate(sheets):
+        anchor=ET.SubElement(drawing,'{'+xdr+'}oneCellAnchor')
+        pos=ET.SubElement(anchor,'{'+xdr+'}from')
+        row_index = 3
+        offset = 127000 + i * 300000
+        while offset >= heights.get(row_index,190500):
+            offset -= int(heights.get(row_index,190500))
+            row_index += 1
+        for tag,val in [('col',0),('colOff',76200),('row',row_index),('rowOff',offset)]:
+            ET.SubElement(pos,'{'+xdr+'}'+tag).text=str(val)
+        ET.SubElement(anchor,'{'+xdr+'}ext',cx='1343025',cy='254000')
+        sp=deepcopy(button)
+        props=sp.find('x:nvSpPr/x:cNvPr',ns)
+        assert props is not None
+        props.set('id',str(i+2));props.set('name','Nav_'+str(entry['code']))
+        link=props.find('a:hlinkClick',ns)
+        assert link is not None
+        link.set('{'+RELATIONSHIPS+'}id','nav'+str(i));link.set('tooltip',str(entry['title']))
+        text=sp.find('.//a:t',ns)
+        assert text is not None
+        text.text=labels[i]
+        fill=sp.find('x:spPr/a:solidFill/a:srgbClr',ns)
+        assert fill is not None
+        fill.set('val','7F6000' if entry==item else '262626')
+        anchor.append(sp)
+        ET.SubElement(anchor,'{'+xdr+'}clientData')
+    return ET.tostring(drawing,encoding='unicode')
 
 
 def build() -> tuple[bytes, dict[str, str]]:
@@ -136,8 +169,12 @@ def build() -> tuple[bytes, dict[str, str]]:
     rels = ''.join(f'<Relationship Id="sheet{i}" Type="{RELATIONSHIPS}/worksheet" Target="worksheets/sheet{i}.xml"/>' for i in range(1,len(sheets)+1))
     setpart('xl/_rels/workbook.xml.rels',XML_HEADER+f'<Relationships xmlns="{PACKAGE_RELATIONSHIPS}">{rels}'
             f'<Relationship Id="styles" Type="{RELATIONSHIPS}/styles" Target="styles.xml"/>'
+            f'<Relationship Id="theme" Type="{RELATIONSHIPS}/theme" Target="theme/theme1.xml"/>'
             '<Relationship Id="vba" Type="http://schemas.microsoft.com/office/2006/relationships/vbaProject" Target="vbaProject.bin"/></Relationships>')
     ct = ET.fromstring(parts['[Content_Types].xml'])
+    ET.SubElement(ct,'{http://schemas.openxmlformats.org/package/2006/content-types}Override',PartName='/xl/theme/theme1.xml',ContentType='application/vnd.openxmlformats-officedocument.theme+xml')
+    for i in range(1,len(sheets)+1):
+        ET.SubElement(ct,'{http://schemas.openxmlformats.org/package/2006/content-types}Override',PartName=f'/xl/drawings/drawing{i}.xml',ContentType='application/vnd.openxmlformats-officedocument.drawing+xml')
     for i in range(2,len(sheets)+1):
         ET.SubElement(ct,'{http://schemas.openxmlformats.org/package/2006/content-types}Override',PartName=f'/xl/worksheets/sheet{i}.xml',ContentType='application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml')
     parts['[Content_Types].xml'] = ET.tostring(ct,encoding='utf-8',xml_declaration=True)
@@ -146,15 +183,20 @@ def build() -> tuple[bytes, dict[str, str]]:
     parts['_rels/.rels'] = ET.tostring(rel,encoding='utf-8',xml_declaration=True)
     setpart('customUI/customUI14.xml',ribbon(sheets))
     setpart('xl/styles.xml',styles())
+    parts['xl/theme/theme1.xml']=(DEMO/'reference/theme.xml').read_bytes()
     for i,s in enumerate(sheets,1):
         setpart(f'xl/worksheets/sheet{i}.xml',worksheet(s,sheets,commit))
+        setpart(f'xl/drawings/drawing{i}.xml',navigation(s,sheets))
+        setpart(f'xl/worksheets/_rels/sheet{i}.xml.rels',f'<Relationships xmlns="{PACKAGE_RELATIONSHIPS}"><Relationship Id="demoNavigation" Type="{RELATIONSHIPS}/drawing" Target="../drawings/drawing{i}.xml"/></Relationships>')
+        links=''.join(f'<Relationship Id="nav{j}" Type="{RELATIONSHIPS}/hyperlink" Target="#nav_{e["code"]}"/>' for j,e in enumerate(sheets))
+        setpart(f'xl/drawings/_rels/drawing{i}.xml.rels',f'<Relationships xmlns="{PACKAGE_RELATIONSHIPS}">{links}</Relationships>')
     out = io.BytesIO()
     with zipfile.ZipFile(out,'w') as archive:
         for name,data in sorted(parts.items()):
             info = zipfile.ZipInfo(name,ZIP_TIME)
             info.create_system = 0
             archive.writestr(info,data)
-    inputs = paths + [DEMO/'sheets.json', Path(__file__), ROOT/'tools/devbuild/vba_project.py', ROOT/'tools/devbuild/build_workbook.py', ROOT/'VERSION']
+    inputs = paths + sorted((DEMO/'reference').glob('*.xml')) + [DEMO/'sheets.json', Path(__file__), ROOT/'tools/devbuild/vba_project.py', ROOT/'tools/devbuild/build_workbook.py', ROOT/'VERSION']
     hashes = {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     return out.getvalue(), hashes
 

@@ -37,19 +37,18 @@ Reference inspected: K-SACCR commit
 `docs/workbook/RIBBON.md`. This implementation is original; it adapts the
 interaction contract and visual conventions, not the SA-CCR commands or code.
 
-| Reference element inspected | Adaptation |
-| --- | --- |
-| Aptos typography, blue `265A99` title band | Aptos body and blue title/section bands |
-| Home navigation at left, narrow separator | Persistent left links on every sheet, teal current destination |
-| Home label and description columns | Labels in C, wrapped guidance in D |
-| Input/output/reference conventions | Yellow input legend; explicit result/reference sections |
-| Header panes and hidden gridlines | Freeze first three rows and navigation columns; hide gridlines |
-| Large Home description column | Narrower wrapped description column to fit the demo |
-| Print layout | Landscape A4, one-page fit requested |
-| Ribbon CodeName navigation | Callback resolves CodeName only inside ThisWorkbook |
-| Macro-disabled navigation | Defined-name links and visible tabs |
-| Reset and calculation commands | Workbook-only recalculation; reset disabled until input contracts exist |
-| Numerical tables, formats and charts | Deferred to the thematic sheets, not invented by the shell |
+The initial approximation was rejected in review. The builder now uses extracted
+Open XML parts from that exact template: the complete style table and theme,
+the Home sheet cell styles, row heights, column widths, panes and print settings,
+and the original navigation button shape as a prototype. Captions, sheet targets
+and project branding are adapted. The original dark sidebar and black/blue
+header bands are preserved. These parts live in `reference/` and are covered
+by the build manifest and template-fidelity tests.
+
+Adapted from K-SACCR, maintained by Daniele Penza, under MPL-2.0.
+Source: https://github.com/danielep71/K-SACCR/tree/963695e2a862647d9013814b5bc63df3489c387e/src/workbook
+The source license is retained with the extracted parts. The layout XML contains
+no SA-CCR cell content; navigation captions are replaced during generation.
 
 The old `examples/STATS-Distributions demo.xlsm` was removed intentionally by
 commit `6d919e97765b79085bfb6b2ffb23d0a8b753127f` for v1.0.0: its embedded VBA
@@ -89,3 +88,10 @@ Record the exact commit, workbook digest, Excel build and Office bitness.
 
 These checks are pending. The shell does not close #253. Integrated demo
 validation remains #262; screenshots remain #250.
+
+## Visual review
+
+The revised package was rendered to PDF with LibreOffice and every worksheet
+was inspected. The navigation overlap found in that rendering was corrected.
+This verifies a rendered preview, not the desktop Excel Ribbon or save cycle.
+The reference retains its multi-page landscape print layout.
