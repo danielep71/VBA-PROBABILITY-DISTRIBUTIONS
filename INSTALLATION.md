@@ -261,6 +261,7 @@ owns and document anything intentionally retained.
 ## 📚 Related documentation
 
 - [README.md](README.md) — capabilities, requirements, and public API
+- [docs/PUBLIC_API.md](docs/PUBLIC_API.md#coming-from-excels-functions) — the `K_STATS_` call that replaces each Excel distribution function
 - [CHANGELOG.md](CHANGELOG.md) — version history and compatibility
 - [CONTRIBUTING.md](CONTRIBUTING.md) — source and validation standards
 - [RELEASING.md](RELEASING.md) — maintainer release and provenance procedure

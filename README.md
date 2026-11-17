@@ -13,7 +13,7 @@
 [![Tails](https://img.shields.io/badge/Tails-Direct_survival_%C2%B7_Inverse_survival-1f3a5f?style=for-the-badge)](#why-direct-survival-functions-matter)
 [![Release](https://img.shields.io/github/v/release/danielep71/VBA-PROBABILITY-DISTRIBUTIONS?style=for-the-badge&label=Release&color=2ea44f)](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/latest)
 <!-- BEGIN generated: assurance badges via benchmark/render_readme_assurance.py. Do not hand-edit. -->
-[![Excel CI](https://img.shields.io/badge/Excel_Regression-2007%2F2007_PASS-2ea44f?style=for-the-badge)](docs/EXCEL_VBA_CI.md)
+[![Excel CI](https://img.shields.io/badge/Excel_Regression-2935%2F2935_PASS-2ea44f?style=for-the-badge)](docs/EXCEL_VBA_CI.md)
 [![Accuracy Contracts](https://img.shields.io/badge/Accuracy_Contracts-179%2F179_PASS-2ea44f?style=for-the-badge)](benchmark/accuracy_summary.md)
 [![Independent Holdout](https://img.shields.io/badge/Holdout-84%2F84_PASS-2ea44f?style=for-the-badge)](benchmark/holdout/holdout_summary.md)
 <!-- END generated: assurance badges -->
@@ -80,7 +80,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **2,007** | of 2,007 deterministic VBA assertions passed in the retained Excel run on `15d8e28`; regression sources unchanged since |
+| **2,935** | of 2,935 deterministic VBA assertions passed in the retained Excel run on `7601df2`; regression sources unchanged since |
 | **13,005** | further VBA assertions declared in 8 study and slow production batteries, run on the Excel runner apart from the pull-request regression; their result is in each run's log, not in the retained record |
 | **179** | active accuracy contracts (180 registry rows; 1 characterization-only): 179 PASS, 0 FAIL, 0 PENDING |
 | **2,215** | observation rows; main grid 1,859: 1,859 claimed, 0 exempt, 0 without a disposition |
@@ -95,8 +95,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 2,007/2,007 assertions passed on `15d8e28` (Excel 16.0 build 20710, 64-bit; finished 2026-11-16). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `15d8e28`).
+- **Excel regression** — 2,935/2,935 assertions passed on `7601df2` (Excel 16.0 build 20710, 64-bit; finished 2026-11-16). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `7601df2`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — complete: every one of 1,859 main-grid rows is claimed or exempt.
 - **Contract verdicts** — 179 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 2 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
@@ -313,6 +313,8 @@ The catalogue is described by **capability**; the function count is in the [assu
 # ⚡ Quick start
 
 The current release is **[v1.0.0](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0)**. Download `VBA-Probability-Distributions-1.0.0.zip` from that page and verify it as [INSTALLATION.md](INSTALLATION.md#release-bundle) describes, or take the files from the `v1.0.0` tag. The `main` branch is development source.
+
+Coming from Excel's own functions? [The function map](docs/PUBLIC_API.md#coming-from-excels-functions) gives, for each of `NORM.DIST`, `T.INV`, `CHISQ.DIST.RT`, `GAMMA.DIST`, `BINOM.INV` and the others, the `K_STATS_` call that replaces it, what differs in argument order or parameterization, and an example evaluated on both sides.
 
 ## 1. Import the production modules
 
@@ -824,6 +826,8 @@ Worksheet-facing functions return `Variant` so they can return either a `Double`
 | Unexpected VBA runtime failure | `#VALUE!` | Unanticipated execution path |
 | Mathematically valid exponential underflow | `0` | Correct floating-point limiting result |
 
+What every public function returns on each kind of bad input (a value that is not a number, an infinity, a text, an empty cell, a probability outside 0 to 1) is stated once, in [docs/PUBLIC_API.md](docs/PUBLIC_API.md#what-a-function-returns-on-bad-input). That section is generated from a survey run in Excel and backed by a battery in the regression that covers every public function.
+
 Most worksheet-facing functions also support:
 
 ```vba
@@ -1182,7 +1186,7 @@ The Wiki is maintained separately through the repository's Wiki interface.
 | [Provenance](benchmark/PROVENANCE.md) | Source/grid binding and fresh-export procedure |
 | [Verification depth](docs/VERIFICATION_DEPTH.md) | Required controls and negative proofs |
 | [Numerical research](docs/research/README.md) | Annotated bibliography, evaluation methodology and research-to-issue map |
-| [Public API](docs/PUBLIC_API.md) | Compatibility manifest and drift checks |
+| [Public API](docs/PUBLIC_API.md) | The map from Excel's functions, what a function returns on bad input, the compatibility manifest and its drift checks |
 | [Wiki Home](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki) | Documentation index |
 | [Getting Started](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Getting-Started) | Installation and first calls |
 | [Architecture](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/wiki/Architecture) | Layers, boundaries, and dependencies |
@@ -1362,7 +1366,7 @@ The library is particularly suited to:
 ## Current boundaries
 
 - floating-point behavior remains subject to IEEE-754 `Double`;
-- Gamma, Chi-square and Poisson probabilities take about 0.06 to 0.23 ms per call in the measured Excel run, for shapes from 0.0001 to 10,000, and are held to 1E-13 relative. Three cases still use double-double arithmetic: an upper tail below `X = Shape + 1` when the lower tail exceeds 0.9 and results below 1E-290, at 13 to 400 ms per call, and the inverses for shapes below 0.01 whose unit-scale quantile is above `exp(-40)`, at up to a second; a smaller quantile is formed in log space in about 0.02 ms (#14). Shapes above 1E15 use it too. A Gamma or Chi-square inverse takes 0.05 to 2 ms up to shape 100 and about 20 ms at shape 10,000. Timing is host-dependent; see the [measurements and their exceptions](benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md);
+- Gamma, Chi-square and Poisson probabilities take about 0.006 to 0.09 ms per call in the measured Excel run, for shapes from 0.0001 to 10,000, and are held to 1E-13 relative. Three cases still use double-double arithmetic: an upper tail below `X = Shape + 1` when the lower tail exceeds 0.9 and results below 1E-290, at 5 to 160 ms per call in that run, and the inverses for shapes below 0.01 whose unit-scale quantile is above `exp(-40)`, at up to a second in an earlier run; a smaller quantile is formed in log space in about 0.01 ms (#14). Shapes above 1E15 use it too. A Gamma or Chi-square inverse takes 0.01 to 0.4 ms up to shape 100, 30 ms at shape 0.01 and probability 0.9, where nine of its evaluations fall to double-double arithmetic, and about 6 ms at shape 10,000, where the solver takes some fifty iterations (#415). Timing is host-dependent, and an earlier run gave figures up to ten times higher; see the [profile](benchmark/gamma_call_profile/README.md) and the [earlier measurements and their exceptions](benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md);
 - a Beta or F inverse takes about 0.03 to 0.12 ms per call in the measured Excel run where the member of the pair `(x, 1 - x)` it solves for settles below the mean of its distribution, which is what it took before the pair reconstruction of #35. Where it settles at or above the mean, as it does for an F inverse with degrees of freedom far apart, it still uses pair arithmetic and takes 0.4 to 6 ms, 2 to 3 times faster than v1.0.0. See the [measurements](benchmark/f_inverse_large_df_study/cost/RESULT.md);
 - two regimes are recorded as limitations and not yet measured across their range: the Beta and F inverses for a probability within 2^-53 of zero or one whose quantile is beyond 1/2, and the Student-t tail below df = 1E5 where it is off by up to 3.2E-12 just below that df. See the [limitation register](benchmark/numerical_limitations.csv);
 - every accuracy claim is limited to the documented numerical regime;
