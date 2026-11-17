@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # exporter and study modules together (benchmark/PROVENANCE.md). One group is
 # the superset of every import set, so no combination can be ambiguous.
 COLLISION_GROUPS: dict[str, tuple[str, ...]] = {
-    "one VBA project": ("src/", "tests/", "benchmark/"),
+    "one VBA project": ("src/", "tests/", "benchmark/", "examples/demo/"),
 }
 PROPERTY_KINDS = frozenset({"property get", "property let", "property set"})
 

@@ -1,0 +1,56 @@
+[
+  {
+    "tab": "Start Here",
+    "code": "shHome",
+    "title": "Start Here",
+    "issue": 253
+  },
+  {
+    "tab": "01 Explorer",
+    "code": "shExplorer",
+    "title": "Distribution Explorer",
+    "issue": 254
+  },
+  {
+    "tab": "02 Probabilities",
+    "code": "shProbability",
+    "title": "Probabilities & Quantiles",
+    "issue": 255
+  },
+  {
+    "tab": "03 Parameters",
+    "code": "shParameters",
+    "title": "Parameter Effects",
+    "issue": 256
+  },
+  {
+    "tab": "04 Comparison",
+    "code": "shComparison",
+    "title": "Excel vs VBA vs Python",
+    "issue": 257
+  },
+  {
+    "tab": "05 Tails",
+    "code": "shTails",
+    "title": "Extreme Tails & Numerical Limits",
+    "issue": 258
+  },
+  {
+    "tab": "06 Discrete",
+    "code": "shDiscrete",
+    "title": "Discrete Distributions",
+    "issue": 259
+  },
+  {
+    "tab": "07 Risk",
+    "code": "shRisk",
+    "title": "Risk Applications",
+    "issue": 260
+  },
+  {
+    "tab": "08 Diagnostics",
+    "code": "shDiagnostics",
+    "title": "Errors & Diagnostics",
+    "issue": 261
+  }
+]

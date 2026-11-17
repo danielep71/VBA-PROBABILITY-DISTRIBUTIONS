@@ -1,0 +1,47 @@
+name: Demo shell package
+
+on:
+  pull_request:
+    branches: [main, "release/**"]
+    paths:
+      - "examples/demo/**"
+      - "tools/demobuild/**"
+      - "tools/devbuild/**"
+      - "src/**"
+      - "VERSION"
+      - "tests/test_demo_shell.py"
+      - ".github/workflows/demo-shell.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12.16"
+
+concurrency:
+  group: demo-shell-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Test reproducibility and package controls
+        run: python -m unittest discover -s tests -p test_demo_shell.py -v
+      - name: Build development shell
+        run: python tools/demobuild/build_demo.py
+      - name: Upload shell for desktop Excel acceptance
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: demo-shell-unverified
+          path: test-results/demo/
+          if-no-files-found: error
+          retention-days: 14
