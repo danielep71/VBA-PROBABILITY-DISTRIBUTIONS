@@ -69,6 +69,38 @@ try {
     Invoke-Control (Find-Control 'Go to')
     if ($excel.ActiveSheet.CodeName -ne 'shHome') { throw 'Ribbon Go to did not open Home' }
     $report.ribbon_home = 'PASS'
+    $sheetMap = Get-Content (Join-Path $PSScriptRoot '../examples/demo/sheets.json') -Raw | ConvertFrom-Json
+    $visited = @()
+    foreach ($section in $sheetMap.sections) {
+        foreach ($entry in $section.sheets) {
+            $split = Find-Control 'Go to'
+            $expand = $split.GetCurrentPattern([Windows.Automation.ExpandCollapsePattern]::Pattern)
+            $expand.Expand()
+            # Office may host the drop-down in a separate popup HWND in the
+            # same owned process. Exclude worksheet tabs with matching labels.
+            $owned = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty,[int]$excelProcessId)
+            $roots = [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$owned)
+            $named = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,[string]$entry.tab)
+            $target = $null
+            foreach ($root in $roots) {
+                foreach ($item in $root.FindAll([Windows.Automation.TreeScope]::Descendants,$named)) {
+                    if (-not $item.Current.IsOffscreen -and $item.Current.IsEnabled -and
+                        $item.Current.ControlType -in @([Windows.Automation.ControlType]::MenuItem,[Windows.Automation.ControlType]::Button)) {
+                        $target = $item
+                        break
+                    }
+                }
+                if ($null -ne $target) { break }
+            }
+            if ($null -eq $target) { throw "Ribbon menu target not found: $($entry.tab)" }
+            Invoke-Control $target
+            if ($excel.ActiveWorkbook.FullName -ne $book.FullName -or $excel.ActiveSheet.CodeName -ne $entry.code) {
+                throw "Ribbon menu reached the wrong target: $($entry.tab)"
+            }
+            $visited += $entry.code
+        }
+    }
+    $report.ribbon_menu_targets = $visited
     $sheet.Activate()
 
     # Resolve the real confirmation dialog by owned process, exact prompt and
