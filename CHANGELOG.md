@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 30057)
-Total output lines: 786
-
 <div align="center">
 
 # 📜 Changelog
@@ -336,7 +333,390 @@ The first release. It ships the six production modules in `src/`: 112 worksheet 
   binary64 route wherever its result can be trusted, and from the
   double-double kernel elsewhere. A cumulative or survival that took 13 to
   400 ms takes 0.06 to 0.23 ms for shapes up to 10,000, in the measured
-  Excel run (`benchmark/g…15057 tokens truncated…e re-referenced without touching an observation. The new release-blocking check `benchmark/check_survival_references.py` recomputes all 948 survival references at their binary64 arguments and fails below the floor, with negative fixtures in `test_survival_references.py`. 73 references stay registered as debt in `benchmark/survival_reference_debt.json` and are re-based with the #81 wave: 49 in the main grid and 15 in the holdout, whose manifest bindings block the change until a fresh Excel export, and 9 that the #72 normal-tail record reads, re-based when that kernel evidence is redone. The main generator does not yet emit the main-grid copies of the `beta_f_unbalanced` and `cdf_large_shape` rows; that gap must be closed in the same wave. The strict gate and the independent-holdout verdicts are unchanged, and the normal-tail record was regenerated and records the same values. One study verdict moves: on `holdout_older`, the corrected reference raises the measured `Beta_Survival` error at (0.82, 2.7, 3.4) from 4.34E-15 to 5.45E-15, above the 5E-15 `Beta_Survival.balanced.output_rel` threshold. The corrected references reveal that breach; #163 tracks it, and #164 owns the stale `holdout_older_summary.md`, which this change does not regenerate. `benchmark/cross_check_scipy.md` was regenerated for the re-referenced `beta_f_unbalanced` grid: the same 655 rows are confirmed, and SciPy's worst difference on Beta survival falls from 1.3E-12 to 5.9E-15.
+  Excel run (`benchmark/gamma_route_study/HOLDOUT_ROUTE_RESULT.md`).
+- The routing holdout is accepted: its six rules hold on all 371 rows, with
+  a worst relative error of 4.33E-15 against a bound of 1E-13.
+- Accuracy is held to the guarantee tier: 1E-13 relative for the tails and
+  1E-12 for the inverses. The route measured a few 1E-15 on its fit set. A
+  result may differ from the previous one by a few units in the last place,
+  and two results at adjacent arguments may be out of order by that much.
+- Still served by the kernel, at its cost: an upper tail below the argument
+  `Shape + 1` when the lower tail exceeds 0.9, results below 1E-290, the
+  inverses for shapes below 0.01, shapes above 1E15, and shapes whose
+  series needs more than 100,000 terms.
+- The Excel assertions on the public tails are held to the guarantee tier.
+  The assertions on the kernel's own entry points stay bit for bit.
+
+### Fast Gamma route: registration (#314)
+
+- A new routing rule for Gamma and Chi-square P and Q is registered in
+  `benchmark/gamma_route_study/FAST_ROUTE_PREREGISTRATION.md`, before its
+  holdout is evaluated: binary64 wherever its directly computed tail can be
+  trusted, the double-double kernel elsewhere, with no shape ceiling. It is
+  held to the guarantee tier of #327, including that policy's monotonicity
+  invariant. No production source changes yet.
+
+### Accuracy contracts for the positive-ratio regimes (#13)
+
+- Six contracts make the region repaired by #13 visible to the accuracy gate:
+  `positive_ratio_subnormal` for the Gamma and Chi-square densities and
+  cumulatives, and `positive_ratio_hard_underflow` for the two survivals.
+  Each is held to 5E-13 relative, registered before the Excel export.
+- The main grid gains 54 rows in those regimes. No existing row changes.
+
+### Slow production batteries apart from the pull-request regression
+
+- `Test_PublicGamma_Integration`, the bit-level regression of the public
+  Gamma and Chi-square surfaces, and `Test_GammaCF_CapAndXSeam`, the
+  iteration cap and seams of the incomplete-gamma kernel, took 349 of the
+  Excel regression's 383 seconds. They no longer run on a pull-request run.
+  They run with the study batteries on every dispatched run and every export
+  wave, as a declared class of their own (`production_batteries` in
+  `.github/excel-study-policy.json`), and a failure stops the job before any
+  grid is exported. A VBA change still cannot reach a release branch without
+  them, because it needs an export wave.
+- The regression policy therefore counts fewer assertions; the difference is
+  the two batteries' count in the study policy.
+
+### Harness timing of the Gamma sub-batteries
+
+- `Test_CN_GammaSurvival` chains five batteries and took about 90% of the
+  regression time as one line. Each battery now has its own `TIMING` line in
+  the Excel log; the line of `Test_CN_GammaSurvival` holds only its direct
+  assertions.
+
+### Positive-ratio study: Amendment 1 (#13)
+
+- The cumulative's precision recovery was registered again for the current
+  incomplete-gamma kernel: recover only where the standardized argument was
+  rounded, at 40 retained bits or fewer. A second holdout, with points never
+  used before, confirmed all four registered claims. No production source
+  changes yet; see `benchmark/positive_ratio_subnormal/AMENDMENT_1_RESULT.md`.
+
+### Gamma and Chi-square: positive arguments that underflow (#13)
+
+- `K_STATS_Gamma_Density`, `K_STATS_Gamma_Cumulative`,
+  `K_STATS_Gamma_Survival` and the three Chi-square equivalents no longer
+  treat a positive `X` as the support origin when `X / ScaleParam`, or `X / 2`,
+  is too small for a Double. Example: `K_STATS_Gamma_Cumulative(1E-300, 1E-4,
+  1E+100)` returned 0 and now returns 0.912063476068496; the density at the
+  same point returned `#VALUE!` and now returns 9.12063476068505E+295.
+- The two densities also recover precision where the standardized argument
+  is a subnormal below 2^-1026, the cutoff measured and preregistered in
+  `benchmark/positive_ratio_subnormal`.
+- The two cumulatives recover precision where the standardized argument is a
+  subnormal below 2^-1034 and its transform rounded: a quotient that does
+  not multiply back to `X` for Gamma, an odd last bit of `X` for Chi-square.
+  Example:
+  `K_STATS_Gamma_Cumulative` at a ratio with 11 significant bits was off by
+  1.6E-4 relative and is now within 1.5E-13. An exact transform keeps the
+  direct path, which is exact for it. The rule is Amendment 1 of the study,
+  confirmed on a second holdout (`AMENDMENT_1_RESULT.md`).
+- Remaining limit: a rounded standardized argument between 2^-1034 and the
+  smallest normal Double stays on the direct path and carries the rounding of
+  the ratio, at most 5E-13 relative.
+- Results that binary64 cannot hold keep the documented policy: zero for an
+  underflow, `#NUM!` for a density overflow. Arguments above the cutoffs take
+  the same path as before.
+
+### Closed studies read pinned sources (#338)
+
+- The replay fixtures and preparation checks of the Gamma continued-fraction,
+  cache and recurrence studies read the production modules from a pinned
+  commit, not from the working tree. A production change, a comment included,
+  no longer needs an inverse added to those studies' tooling. One check still
+  follows the working tree: the generated public Gamma block must keep the
+  studied code until the study declares that production has moved on.
+
+### Excel runner watch (#295)
+
+- A failed Excel run is re-run once, automatically, when the failure is
+  infrastructure: job set-up, checkout, or a lost runner. A failure of the
+  regression or export step is never re-run automatically.
+- A scheduled check opens one issue when a run sits queued with no job, or a
+  job waits too long for the self-hosted runner, and closes it on recovery.
+- `docs/EXCEL_VBA_CI.md` describes a hardened runner set-up: automatic logon,
+  a self-restarting runner task, no standby, update hours and runner updates.
+
+### Carried certification (#301)
+
+- A VBA change that alters only comments and whitespace keeps the Excel
+  certification and the grid bindings of the commit Excel executed, without a
+  new wave. `benchmark/vba_code_identity.py` proves the code identical from
+  Git and refuses on any doubt. The accuracy summary and the README assurance
+  block label the evidence as carried from that commit and list the modules.
+  A release is never certified on a carried binding.
+### Excel suite levels (#299)
+
+- A pull request that cannot change what Excel executes now runs a fast level
+  of the Excel regression: the full suite without the two test procedures
+  that drive the double-double Gamma kernel, which take almost all of its
+  time. Pull requests that change VBA, the runner or an Excel policy, every
+  push to a protected branch and every export still run the full suite. A
+  fast run is never certification evidence.
+- The runner retries a log write that another process blocks for an instant;
+  one such collision failed a run whose assertions were all green.
+### Studies bound to their rows (#302)
+
+- The normal-tail study record binds the grid rows its predictions read, not
+  the three grid files (preregistration Amendment 4). Promoting rows for
+  another function no longer forces a metadata-only regeneration of that
+  record; a change to a row it reads still makes it stale.
+- A check in the Accuracy Gate fails when a study file hashes or compares a
+  whole live grid without a declared reason.
+
+### Proportionate evidence (#328)
+
+- `CONTRIBUTING.md` and `docs/EXCEL_CERTIFICATION.md` state what evidence each
+  kind of change needs: a preregistration and untouched holdout only for a new
+  numerical claim; a regression test and the next batch Excel wave for a
+  defect fix; reused certification for VBA changes with identical code; static
+  checks and the evidence-tool suite for Python, CI and documentation. Excel
+  waves certify batches of merged changes. The pull request template asks
+  which row applies.
+- Counts held by a record are no longer copied into `docs/*.md`; the guides
+  link the record or the README assurance block. The new static check
+  `restated-counts` fails on a copy, and found a stale assertion count in
+  `docs/VERIFICATION_DEPTH.md`.
+
+### Accuracy tiers (#327)
+
+- Every accuracy contract now has a **guarantee**, which gates the release,
+  and a **measured target**, the registry threshold, reported beside it. The
+  guarantee is the target or a floor, whichever is looser: 1E-13 relative
+  error for densities, CDFs and survivals; 1E-12 for inverses; 2E-13 for the
+  balanced Beta CDF and survival. Absolute and residual metrics keep their
+  thresholds. A result inside its guarantee but above its target is reported
+  as "PASS · target missed" and does not block a release. No production code
+  and no registry threshold changed.
+- Silent wrong values, monotonicity reversals and `P + Q` mismatches fail the
+  gate whatever the tier, on every row of each grid; wrong worksheet errors
+  already did.
+- Excel confirmed the balanced Beta guarantee at the six points where the
+  route model is worst, now twelve main-grid rows: every value equals the
+  model bit for bit, worst 1.38E-13 (run 43423207780, 5,987/5,987
+  assertions, no other observation changed). #163 and #173 are no longer
+  release blockers; meeting their targets is v1.0.2 work.
+
+### Gamma performance study closure (#307)
+
+- Retain the recurrence-reuse experiment, residual-preserving B4 and scalar-pair
+  B5 prototypes, their measurement tools and complete available evidence. B5
+  reduced warm pair cost versus B4 by 21.5–82.9% at the eight measured points;
+  production functions are unchanged by this integration.
+- Close the performance blocker by explicit maintainer acceptance of the
+  delivered LogGamma cache and development results. Further optimization and
+  ultrafast routing are deferred; eight other release blockers remain. B5 is
+  not deployed in public functions, and its 3.343–28.137 ms paired timings do
+  not satisfy the 100-us experimental target. Numerical contracts and frozen
+  study outcomes are unchanged. See the
+  [current disposition](docs/research/GAMMA_PERFORMANCE_STATUS.md).
+
+### Public Gamma P/Q (#26)
+
+- Regularized Gamma P and Q, and through them the Gamma, Chi-square and
+  Poisson CDF, survival and inverse, use the scaled double-double kernel
+  (#242). Lower Q comes from log P before rounding. The 41 public failures
+  the study retained are resolved without changing a tolerance. The
+  14,878-assertion suite passed in Excel (run 42529642623), and the fresh
+  main and holdout exports pass 166/166 and 83/83 contracts.
+- Where the double-double pair reaches its 100,000-iteration cap, the binary64
+  series or continued fraction answers instead. The pair's tighter stopping
+  rules would otherwise have returned `#NUM!` near `X = A` for shapes from
+  about 1.07E8 to 1.9E8, and just above `X = A + 1` from about 3.3E11 to
+  1.7E12, inside the `extreme_shape` domain, where the previous kernel
+  answered. Found in review; `Test_PublicGamma_Reach` checks both regions
+  against quadrature references. Excel run 42670065251 passed all 14,886
+  assertions, and its exports changed no main or holdout observation.
+- The main grid now covers the repaired path: the twelve shapes of the frozen
+  `X = 2` survival ladder, from 1E-6 to 0.5, each as `Gamma_Survival(2, A, 1)`
+  and the exact doubling `ChiSquare_Survival(4, 2A)`, claim `5E-15`. Before
+  #26 these points were off by 3.5E-14 to 4.5E-14. Excel run 42679149964
+  returned the predicted model value at all 24, worst 7.2E-17, and changed no
+  other main or holdout observation.
+- #26 is marked resolved in `benchmark/release_readiness.json`, so the README
+  lists 9 open release blockers instead of 10.
+- #24: below `X = A + 1`, Gamma Q is no longer `1 - P`. Since #242 it comes
+  from log P before rounding, and #24 proves it in Excel. An untouched holdout
+  of 168 rows (`benchmark/gamma_lower_q/`, 7 new shapes from 1.7E-7 to 0.465,
+  the seam at `A + 1`, Gamma and Chi-square, P and Q) passes every frozen
+  rule, worst survival 8.0E-17. The re-exported fitting ladder, which reached
+  1.6E-9, now peaks at 8.9E-17. 22 main-grid rows cover `X = 0.5` from shape
+  1E-6 to 0.1, including the issue's `Gamma_Survival(0.5, 0.0001, 1)`. Excel
+  run 42702557548 passed 14,888 assertions.
+- The binary64 fallback at the double-double pair's iteration cap still forms
+  the complement. It runs only for shapes above about 1.07E8, where both tails
+  are near 0.5, so it adds no amplification; the headers document why, and
+  two assertions check it.
+- #24 is marked resolved in `benchmark/release_readiness.json`: 8 open release
+  blockers remain.
+- #298: the Excel log records the seconds of each of the 103 test procedures
+  (TIMING lines) and, after a green run, the cost per call of the Gamma kernel
+  (COST lines). The instrumentation of `tests/M_STATS_PROBDIST_TEST.bas` is
+  generated by `benchmark/_harness_timing.py`; studies that compare the module
+  with frozen versions ignore it. Results and the retained log:
+  `benchmark/harness_timing/`.
+- #307 was initially registered as a v1.0.0 release blocker under the
+  `performance` class. Its accepted scope and closure are documented above.
+- #307: a repaired binary64 Gamma route, `PROB_TryGammaB64SeriesP` and
+  `PROB_TryGammaB64ContinuedFractionQ`, was generated into the internal layer for its
+  fit set (`benchmark/gamma_route_study/FIT_DESIGN.md`, #312). It has an accurate
+  deviance, an exponent kept as a pair, a compensated and properly stopped lower series,
+  and a continued fraction stopped at machine epsilon. Excel matched the Python model
+  bit for bit at all 392 fit points and fixed the shape ceiling A2 = 10,000. The routing
+  rule frozen at that ceiling was rejected by its seam preflight, and no public function
+  ever called the routines. After #307 closed they left production again (about 670
+  lines); `b64_route_vba.py` still reproduces them as the fit candidate `88ff6ba`
+  carried them, and the fit grid is no longer registered for export.
+- #300: the six study batteries that compare private ports of the #26
+  arithmetic with their Python models (Precision v2, scaled product, scaled
+  double-double, scaled, extended and wide Gamma; 8,901 assertions) leave the
+  regression. They test no production code. `Test_STATS_PROBDIST_RunStudies`
+  runs them on dispatched and export waves, against
+  `.github/excel-study-policy.json`; a failure fails the job. The regression
+  that every pull request runs drops to 5,987 assertions, in about 7.5 minutes
+  instead of 10. The batteries took only 70 s: the rest of the time is the
+  production kernel's cost (#307). The separation is generated by
+  `benchmark/_harness_studies.py`, which the frozen-study comparisons strip
+  first.
+- An unexpected runtime error inside the new kernel propagates again, so the
+  public function returns `#VALUE!` as documented. The kernel's own domain
+  and cap failures (VBA error 5) still return `#NUM!` with a diagnostic.
+- About 370 lines of unreachable Precision v2 code are no longer generated
+  into production: a name in a comment had pulled them into the extraction.
+  The remaining Precision v2 arithmetic is labelled as the production core
+  it is.
+- Each Gamma P/Q call now runs double-double arithmetic. Measured under #298
+  in Excel 16.0, 64-bit, a call takes from about 5 ms to 170 ms, 1,000 to
+  30,000 times the binary64 routine it replaced (2 to 39 microseconds). The
+  Excel regression suite takes about 10 minutes, up from about 10 seconds;
+  94% of that is `Test_CN_GammaSurvival`, mostly its calls to the kernel.
+  Exact LogGamma reuse (#313) later cut repeated shape-100 calls to about
+  10–14 ms; cold calls and large shapes remain slow (see the #307 closure
+  above).
+- The private-experiment entries below record the study's stages. Their
+  statements that public routing is unchanged describe each stage at the
+  time.
+
+### Distribution guide
+
+- Added calculated Standard Normal density, CDF, survival and quantile panels with shared parameters, probability areas, accessible explanations and worksheet mappings; editable SVG/PNG generation includes independent high-precision checks (#245).
+
+- Add a reproducible SVG/PNG map of the 17 current distribution API surfaces, with mathematical supports, illustrative use cases and an accessible companion linked from the README (issue #244).
+
+### Added
+
+- Add a private VBA port of the bounded scaled Gamma P/Q experiment with 475 model-fidelity, monotonicity, refusal and exact-normalization assertions (#24/#26). Public kernels and prior Excel evidence are unchanged; host results and failed diagnostic attempts are recorded separately.
+- Extend the private Gamma candidate to shapes through 128 and arguments through 1024, retaining the 220-point model screen and an additional subnormal counterexample. A separate shape-two product correction passes exact rational checks and all 1,772 new assertions pass in exact-source Excel execution (#24/#26). Public routing and its 41 failures remain unchanged.
+
+- Expand the scaled Gamma development screen to 69 in-domain B6 reference points and 24 adjacent routing-boundary points, with monotonicity checks and oracle precision stability at 160/320 digits (#24/#26). Twenty out-of-domain B6 points remain explicitly excluded; public VBA acceptance is unchanged.
+
+- Add a private scaled-arithmetic Gamma P/Q integration experiment for positive binary64 shapes up to one and arguments up to 32, including subnormal inputs (#24/#26). This revealed Python screen does not change public VBA or release acceptance.
+
+- Add a private VBA port of the exponent-separated two-Double operations and 611 model-fidelity assertions (#24/#26), with independent rational checks and preservation of the earlier test suite. All 611 assertions pass in exact-source Excel run 42494438289 (7,715 total, 7,674 PASS, the same 41 public failures); public Gamma acceptance remains blocked.
+
+- Extend the private Gamma arithmetic study with exponent-separated two-Double addition, subtraction, multiplication and division (#24/#26). Exact-rational regression covers cancellation, alignment and accumulated operations. This Python study is not a new public kernel or Excel-certified candidate.
+
+- Study-only exponent-separated multiplication and subnormal rounding fixtures for the Gamma precision work (#24/#26). Exact-rational checks cover finite binary64 operand exponents and halfway cases. The generated private VBA port passes all 4,657 new arithmetic assertions in exact-source Excel run 42476278844 (7,104 total, 7,063 PASS, 41 retained public failures). Public VBA kernels and their retained failures are unchanged.
+- Distribution decision guide: editable SVG, matching PNG, reproducible generator and accessible modelling assumptions for all 17 current API surfaces (#246).
+
+- Added a numerical research index under `docs/research/`, with twenty-six annotated source records covering 2000–2026, an evaluation protocol, an issue map and an article-review template (#265). Research candidates are distinguished from validated VBA results; numerical behavior and contracts are unchanged.
+
+- `tools/setup_repository.py` reads the GitHub Actions settings that `SETTINGS.md` documents, without writing them (#208): Actions enabled, full-SHA pinning, read-only default token permissions, no pull request approval by Actions, the outside-contributor approval policy and 90-day retention. The values live in a new `actions` block of `repository-settings.json` (schema 2). Drift is reported in the preview, `--verify` and the evidence (schema 2); an unreadable endpoint is a note, not drift.
+- Project website with a searchable distribution catalogue, English/Italian Excel formula examples, installation guidance and links to current numerical evidence, using the K-repository portfolio design (#187).
+
+- Added an unattended Excel grid export on the self-hosted runner (#181). A dispatch of **Excel VBA Regression** with `export_main`, `export_holdout` or `export_holdout_older` set (and `main_mode` full or missing-only) runs the regression and then `ci/Export-ExcelGrids.ps1` in the same job. The adapter refuses unless that run's regression record is green for the checked-out commit. It then runs the unchanged exporter modules from a workbook saved beside staged copies of the grids, under a watchdog that kills only its own Excel process on a dialog or a timeout, and checks each grid against the checkout. The artifact `excel-grid-export-<run id>` holds the grids as Excel wrote them, the environment file with the new `commit_sha` field, the regression record and log and `export-manifest.json`. `benchmark/apply_excel_export.py` applies a downloaded artifact to the exact commit: it refuses a SHA mismatch, a red regression, a missing grid or a digest mismatch, then finalizes the record, binds the manifests and validates the record against the bytes to be committed. The runner reads the repository and never writes to it. Push, pull request and plain dispatch runs are unchanged. The finalizer now refuses an environment file whose `commit_sha` is not the candidate. Three controls in `test_render_readme_assurance.py` pinned the current evidence state (the manifest commit, the #47 correction entry and the open holdout gate) and would have failed on the first export wave; they now read that state from the committed files.
+- Added a release-blocking check that the Accuracy Gate's df caps match the library's (#86). `benchmark/check_df_cap_mirrors.py` reads `PROB_F_MAX_DF`, `PROB_T_MAX_DF` and `PROB_CHI_MAX_DF` from `src/M_STATS_PROBDIST_TFAMILY.bas`, converts each literal (type suffixes, exponent forms and line continuations included) to its binary64 Double, and fails unless `F_MAX_DF`, `T_MAX_DF` and `CHI_MAX_DF` in `benchmark/_contract_eval.py` are bit-identical. A missing, renamed or duplicate constant on either side, a declaration in a form it cannot verify, and a literal that is not exactly representable as a Double fail; the last avoids depending on VBA's decimal rounding, which is still unproven (#32). `test_df_cap_mirrors.py` holds the negative fixtures. Both run in `test_evidence_tools.py`, and the control is registered in `verification_depth.json`. The caps are unchanged.
+- Traffic alerts now pass Issue triage and no longer fire on CI clones (#129). The alert logic moved from inline Python in the token-holding traffic job to `tools/traffic_alert.py`, run by a separate alert job of `daily-traffic.yml` with no environment and only `issues: write`. The traffic job keeps only `contents: write`. Each alert issue gets the issue form's assignee, `P3` and `repository`, the earliest open milestone, a target end date before its due date and a dependency section. Clones are still shown, but only a views spike, more stars or forks, or a new referrer raises an alert.
+- Added `tests/test_release_history_scope.py` (#100). It pins that the release history policy of `tools/check_release_semantics.py`, which reports unreviewed multi-parent commits, stays disabled in this repository, so pull request merge commits pass the release check after a release tag. It also confirms that the same history is still rejected under the template profile. The merge convention in `RELEASING.md` no longer says each merge commit in a release range needs a reviewed exception.
+- Added three VBA source checks to **Static checks** (#101), run on every tracked `.bas`, `.cls` and `.frm` file: component placement and `M_STATS_PROBDIST_` names equal to `VB_Name`, ASCII only, `Option Explicit`, `Option Private Module` in the core and special-function layers and never beside `K_STATS_` worksheet functions, no `Option Base`, tab or trailing white space, closed string literals and LF storage with CRLF checkout; `#If`/`#Const` blocks evaluated for VBA6 Win32, VBA7 Win32 and VBA7 Win64 with `PtrSafe` required on every `Declare` reachable under VBA7; explicit visibility on every procedure and module-level declaration, and no public name declared in two standard modules. The current source passes unchanged; positive and negative fixtures run with the Python tests.
+
+- Added a tracked-binary check to **Static checks** (#107). A tracked file that `.gitattributes` declares binary, or that contains a NUL byte, passes only as a `.png`/`.jpg`/`.jpeg` image directly in `assets/` with a matching file signature, or through an entry in `.github/binary-allowlist.json` that records its SHA-256 and a reason. The demo workbook `examples/STATS-Distributions demo.xlsm` is allowed only by digest, so any new version fails until the allowlist is updated after review. Stale entries and NUL-containing files that `.gitattributes` treats as text also fail. `tools/README.md` describes the review and update steps.
+
+- Added Python quality gates to **Static checks** (#105): mypy in strict mode on `tools/` and `.github/scripts/` (configured in `mypy.ini`, installed hash-locked with its full dependency closure), a probe that proves the actionlint invocation rejects a deliberately invalid workflow, and a non-required *Minimum Python (3.11)* job that runs every tool-free check and the Python tests on the documented minimum Python. Every workflow that sets up Python now uses one exact version, `3.12.16`, defined once per workflow file; the issue-triage workflow moves from 3.13.18 to it.
+
+- Added an offline builder of the Excel workbook under test (#110, first part). `tools/devbuild/build_workbook.py` writes an `.xlsm` whose VBA project holds exactly the policy's `regression_sources`, stored as compressed source without p-code so that Excel compiles it on open, with no VBE access and no change to any tracked module. The commit is stamped under the defined name `build_commit`, a rebuild is byte-identical, and a manifest records the SHA-256 of every module and of the workbook. `tools/devbuild/verify_workbook.py` reports the binding as `VERIFIED`, `FAIL` or `UNVERIFIED`. A missing or unlisted module stops the build. Offline fixtures cover the [MS-OVBA] compression examples, the compound-file layout, the `dir` stream and the bindings. The Excel job still imports through the VBE; running the built workbook there, and its first certified run, remain open.
+- Added a VBA layout check (#102, first part). `tools/format_vba.py --check` runs in **Static checks** on every tracked module: CRLF endings, no trailing white space or tab indentation, procedure, `End` and label lines in column one, exactly two blank lines after each `End` and none at the end of the file. The rules follow the modules' dominant layout; indented comment headings, continuation lines, literals and comments are untouched. 17 modules differ today only in blank lines, and the committed `tools/vba_layout_baseline.json` lists them: the check fails on any other module out of layout and on any listed module back in layout. No module is rewritten; `--write` is for the reformat that lands with an Excel evidence wave.
+
+- Added a Markdown link check (#108). On every change, **Static checks** verifies that each relative link in every tracked Markdown file names an existing file inside the repository and that each anchor exists in its target under GitHub's heading-slug rules; links in code are ignored. A weekly, non-required *Link check* workflow requests the external links, including the wiki pages and issues, and treats rate limits and outages as warnings. No existing link was broken.
+- Added a *Keep milestones issue-only* workflow (#109). Milestones belong to issues; on `pull_request_target`, a daily scan and manual runs it removes any milestone set on a pull request and lists each removal in the job summary. It checks out nothing, runs no pull-request code and holds only `pull-requests: write` (plus `issues: read`). Offline tests of its shape and script run in **Static checks**.
+- Added a release workflow (#31). Pushing an annotated `vX.Y.Z` tag verifies the release: the tag must equal `VERSION` and be on `main`, release semantics must validate, the retained Excel record must validate at the tagged commit, the README assurance block must be current, and `benchmark/release_readiness.json` must declare the version certified. The workflow then builds a reproducible source bundle (modules with CRLF line endings, licence, documentation and a member manifest) with `SHA256SUMS`, attests both with GitHub build provenance, and drafts a GitHub Release with the changelog section and an asset table for the maintainer to publish. A manual run rehearses the checks and the build without attesting or releasing. The bundle builder's self-test runs in Static checks.
+- Added a machine-readable repository settings baseline (#111), `docs/repo_governance/repository-settings.json`: visibility, merge methods and repository features, the five security features and the five branch and tag rulesets, with the two required checks on `main`. `tools/setup_repository.py` previews the differences, applies the baseline only with `--apply`, verifies it read-only with `--verify` (exit 1 on drift) and writes a dated JSON evidence record. Its fixtures run in Static checks against API responses recorded from this repository, without network access. A distribution review checklist with a pinned full-history Gitleaks scan, `docs/repo_governance/DISTRIBUTION.md`, is now a release step.
+- Extended weekly Dependabot updates to the benchmark and lint Python requirements, with maintainer assignment and an initial priority label. mpmath 1.4 is held back: no SymPy release accepts it yet, and a change of the reference library is a deliberate evidence change, not a routine update.
+
+- Added exact-SHA Excel certification records binding the candidate commit, imported VBA source hashes, Excel environment, regression totals, cleanup status, and retained log digest.
+- Added a machine-readable verification-depth inventory of the v1.0.0 release-blocking assurance controls, with explicit live command, negative proof, and current expected evidence state.
+- Added mutation controls proving that incomplete-gamma dispatch drift, Student-t coefficient corruption, stale generated contract tables, and duplicated source-threshold claims are rejected.
+- Added a generated 112-function `K_STATS_*` public-API manifest and a declaration-aware drift gate that blocks accidental additions, removals, renames, module moves, or compatibility-significant signature changes.
+- Bound the hard-coded module lists to the tracked files (#103). The public-API gate now derives its production modules from the `.bas` files Git tracks under `src/`, and a new release-blocking check fails when `regression_sources` in `.github/excel-evidence-policy.json` differs from the tracked `src/` and `tests/` modules or a module there is present but untracked. A new module can no longer escape the API freeze or the Excel evidence binding. Both lists and the public-API manifest are unchanged.
+- Added a standardized installation and maintainer release documentation set with project-specific deployment, certification, provenance, recovery, and post-publication controls.
+- Added a **Static checks** workflow for committed whitespace, procedure-scoped VBA jumps, release semantics (SemVer, `VERSION`/`CHANGELOG.md` agreement, dated releases, comparison links) and workflow validation with a version- and hash-pinned actionlint. The checkers are imported verbatim from the portfolio template into `tools/`, with their source revision and SHA-256 recorded in `tools/README.md`.
+- Added Dependabot for GitHub Actions, proposing weekly reviewed pull requests that move each pinned action SHA and its version comment together.
+- Added CodeQL security analysis (`security-extended`) of the Python tooling, the JavaScript workflow scripts and the GitHub Actions workflows. Pushes and a weekly schedule publish to code scanning; pull requests are analyzed read-only, without write permission. CodeQL does not analyze VBA.
+- Added OpenSSF Scorecard for the default branch, published to the public Scorecard service and to code scanning.
+- Added a daily, read-only label drift check that reports any difference between `.github/labels.json` and the live repository labels, using the same comparison rules as label sync but without write permission.
+- Added a generated root README assurance block (#28). `benchmark/render_readme_assurance.py` renders the three evidence badges, the "Assurance at a glance" table and a new evidence-state list from one data model built from committed records: the public API manifest, the Excel regression record and policy, the contract registry, the accuracy and holdout summaries, both manifests, the coverage evaluation and a new committed `benchmark/release_readiness.json` registry of release blockers. Inputs are cross-checked; a missing, malformed or contradictory input writes nothing. Stale Excel, main-grid or holdout evidence is rendered as STALE and blocks. Incomplete export certification (#47, #29) and coverage debt (#22) stay visible and must be owned by an open blocker, and #34 and #35 cannot leave the registry without recorded evidence. The Accuracy Gate and `refresh_evidence.py` fail on any difference from a fresh render. The hand-verified figures and the hand-written evidence snapshot are replaced.
+- Added a daily traffic export. GitHub keeps traffic data for 14 days only; the export appends views, clones, stars, forks, top referrers and popular paths to CSV files on the data-only `traffic-history` branch, writes the shields.io endpoints behind new README clones, visitors (14-day) and visits badges, and opens an alert issue on a traffic spike, a new star or fork, or a new referrer. Its read token lives in a dedicated `analytics` environment and the job runs no repository code; `SECURITY.md` documents the credential, its 90-day rotation and what the public branch contains.
+- Added a correctness-only Python lint (Ruff, syntax errors and pyflakes rules via `ruff.toml`) to the **Static checks** workflow, installed from a hash-locked requirements file.
+- Replaced the Markdown bug and feature templates with GitHub issue forms, and added a documentation form. Defect class, source identity (tag or full commit SHA), exact call, runnable example, independent reference, environment and whether the regression harness detects the defect are now required fields; all existing guidance, including bit-exact `hi;lo` arguments, boundary localisation and contract coverage, is retained.
+
+- Added this changelog and the portfolio-standard release-history policy for
+  VBA Probability Distributions.
+- Added a root `VERSION` marker at `0.0.0`. This is a neutral pre-release
+  baseline and does not claim that a functional release has been published.
+
+### Changed
+
+- The #23 study grid exists (`benchmark/gamma_series_small_shape/`): the 44-row holdout, the 3 scope probes and the 2-row counterexample of the frozen `HOLDOUT_DESIGN.md`, with references at the binary64 inputs. The design's own scope references were evaluated at the decimal inputs and differ by up to 3.2E-16 at `(1.0, 5.3)`; the generator records both readings. `Export_GammaSeriesSmallShape` fills it and echoes the inputs it parsed, the runner exports it as the study grid `gss_small_shape`, and `analyze_gamma_series_small_shape.py` scores it at 3E-15 and checks the fitting ladder's movement against `MOVEMENT_MANIFEST.md`.
+- The unattended Excel export now covers the `positive_ratio_subnormal` study grids (#225). One new dispatch input, `export_studies`, names study grids, so a later study needs only an export spec, not another workflow input. It reaches the adapter through the environment and is never expanded by `cmd`, and an unknown or repeated name is refused. The five probe modules gain `Export_` entry points that write their CSV beside the workbook with no dialog, through the same private writer as the interactive `Probe_` macros, so what they compute is unchanged. A probe CSV is written whole, so the runner and `apply_excel_export.py` check it as a *generated* grid: the same header and line count, each row with the header's field count, and each row's key fields unchanged. `tests/test_excel_grid_export.py` binds the PowerShell and Python specs, the entry points and the workflow wiring, and runs the module's checks against Python's when `pwsh` is available. These tests failed on the previous code.
+- The release-blocker registry now lists #163 and #173 as open silent-wrong blockers. The balanced `Beta_Survival` and `Beta_Cumulative` contracts (5E-15 and 2E-14) are exceeded: 5.45E-15 in Excel on `holdout_older`, and up to 1.4E-13 and 1.3E-13 in the binary64 route model (`benchmark/beta_balanced_survival`). #31 already counted them as release blockers; the registry did not. Neither measurement is scored by the hosted gate, so `render_readme_assurance.py` now requires both entries, as it does #34 and #35, and a test fails if either is dropped. The README assurance block is regenerated.
+- One command, `python3 tools/run_static_checks.py`, now runs every static check locally and in the **Static checks** workflow (#106), replacing the workflow's per-check steps and its enforcement step. Every check runs even when an earlier one fails. The run writes one log per check, a `report.json` recording the commit, the dirty state, the pull request head, the Python version and platform, the SHA-256 of every tracked file and each check's command, status and exit code, and a Markdown summary for the job page. A check whose tool is not installed is skipped locally; `--strict`, which CI passes, fails it. The run also executes every Python unit test under `tests/`.
+- The static checks, Accuracy Gate, CodeQL and Excel regression now also run on pushes and pull requests for `release/**` branches, and Dependabot targets `release/1.0.0` while that branch is active. The `Protect release branches` ruleset requires `Repository integrity (static, no Excel)` on pull requests into a release branch, and that check had no trigger there (#112).
+- Argument identity for the accuracy grids now has one shared definition (#32, first part). `benchmark/_binary64.py` provides `double_key`, `as_reference_arg` and `format_double_arg`; the reference generator and the five grid tools that kept byte-identical copies of the key code now import them. Generator output (1,404 reference rows) and the reports of all five tools are byte-identical before and after. `double_key` now marks non-finite tokens such as `1e999` or `inf` as unparsable instead of keying them as infinity, because VBA `Val()` never yields them; no committed argument is affected. `test_binary64.py` proves the Python side of parser parity over 34 edge values (ordinary decimals, 17-digit round trips, the normal/subnormal boundary, subnormals, the minimum subnormal, one-ulp seams, the maximum finite Double and negatives), checks every committed main and holdout argument, and pins every tool to the shared helpers. The note on double rounding above 2^52 is corrected: Doubles there are the integers, so a `.5` token is a tie that rounds half to even. VBA `Val()` parity and the rest of #32 remain open.
+- The coverage gate and the reference audit now use the shared argument identity too (#90). `check_grid_coverage.py` builds its row identity from `_grid_safety.canonical_key` and `audit_references.py` imports `canonical_key` and `double_key`, replacing their private `struct.pack` copies. Those copies disagreed with the shared key on edge rows: the audit keyed `inf` as the infinity bit pattern, and the gate read a blank regime as `all`. The gate now keys every row as the other grid tools do, then refuses a main-grid row with a non-finite or unparsable argument, a blank function or regime, or surrounding whitespace in a key field, instead of giving it an identity of its own. `-0` and `+0` stay two identities, as in `double_key`. On the committed grids the coverage verdicts and counts (2,088 rows, 1,732 main, 1,696 claimed, 36 known debt), the coverage summary and both audit reports are byte-identical before and after. `test_binary64.py` pins both tools, checks that seven key functions agree on non-finite tokens in Python and VBA spellings, a blank regime, signed zeros and subnormals, and fails if a grid script imports `struct` again.
+- Clarified PR-head versus synthetic-merge validation, required post-merge release artifact rebuild/retest/hash generation, and recorded the active branch/tag protections after PR #51 review.
+
+- **Licence changed from MIT to the Mozilla Public License 2.0 (MPL-2.0).** `LICENSE` now holds the unmodified MPL 2.0 text. MPL 2.0 is a file-level copyleft: the library can still be used in proprietary and commercial workbooks and add-ins, but distributed modifications of files from this repository must stay under MPL 2.0 with their source available. The Exhibit A notice is given once in the README licence section rather than in each VBA module, so the certified source bytes are unchanged. Earlier revisions remain available under the MIT terms they were published with. README, INSTALLATION, CONTRIBUTING and RELEASING references and badges are updated.
+- Aligned the issue labels with the portfolio template. The template's 20 core labels are adopted with its exact names, colors and descriptions, adding `behavior-change`, `security`, `repository`, `question`, `duplicate`, `invalid` and `wontfix`. `CI` becomes `ci`, and `testing` is renamed `tests` in place, so it stays on existing issues and pull requests. The nine distribution-domain labels were kept at the time; `core` is recolored so that it no longer shares the template's `repository` color. The label manifest now meets the template's format rules (uppercase colors, sorted names, single-line descriptions of at most 100 characters), which the drift check enforces. Label sync supports declared renames and stops before any write if both the old and the new name exist. **Later change (2026-11-02, `529f4ba`):** the `discrete` label was removed, so 8 area labels remain and the discrete distributions have none.
+- Hash-locked the existing mpmath/SymPy benchmark wheels and require binary, hash-verified installs in the Accuracy Gate.
+
+- Moved all verification-depth proofs into the pre-gate evidence-tool shim so an intentionally red strict numerical gate cannot skip tests of the assurance machinery itself.
+- Defined the product API explicitly as worksheet-facing `K_STATS_*` declarations; project-scoped `PROB_*` helpers and benchmark/test exporters remain outside the compatibility manifest.
+- Standardized the pull-request review contract around exact-candidate evidence, compatibility, risk and recovery, security and provenance, and project-specific validation gates.
+- `promote_grid_rows.py` now requires `--accept-reference-changes COUNT --reason` for any change to an existing reference, with COUNT matching the reviewed list exactly, and refuses to run on a grid containing any duplicate canonical key (#17).
+- Pinned every GitHub Action to a full commit SHA with its release as a trailing comment, resolved from each action's own repository; each pin is the commit its floating major tag already referenced, so no executed code changed.
+- Release guide steps 3 and 5 now name the concrete release-semantics command and require a green **Static checks** run on the exact candidate.
+- Fixed 41 lint findings across the benchmark tooling: unused or redundant imports, unused variables (including two vestigial claim constants in the reference generator) and placeholder-free f-string prefixes. The generator's 1,404 rows are unchanged.
+- `.editorconfig` now covers JavaScript workflow scripts (2-space indentation) and the Windows script types that `.gitattributes` already checks out with CRLF.
+- Adopted a pull-request-only merge convention: every change, including mine, reaches `main` through a pull request. Pull requests were squash-merged until 2026-11-02 and are merged with a merge commit since then, when `Protect main` began allowing merge commits only; while `release/1.0.0` is active, task pull requests target it and reach `main` through an integration pull request (#100). Evidence changes stay in one commit, and certification binds the final merged commit. Initially policy-only, this is now backed by the required-PR and up-to-date hosted-check controls verified on 2026-09-30 and rechecked on 2026-10-29. Exact-release Excel certification remains a separate gate (#31).
+
+- Future material changes must be staged here before release and describe
+  observable behavior, compatibility, evidence, and known limitations.
+
+### Fixed
+
+- Make Excel evidence tooling handle mixed exports and missing certified commit objects, while retaining source/grid validation; isolate positive tooling fixtures from pending live exports (extracted from #241/#242).
+
+- `benchmark/tchi_large_df/generate_tchi_large_df.py --merge-references` works again. The #210 seam rows that #214 appended to the grid were not produced by the generator, so the documented re-reference command refused the whole grid. The generator now takes those rows from `student_t_large_df_study/seam_study.py`, which owns them, and reports no reference change on the committed grid. `tchi_large_df/test_tchi_merge.py` runs the command in the evidence suite, and it failed before the fix.
+- `tools/setup_repository.py` no longer reports paused Dependabot security updates as on (#206). GitHub pauses them when Dependabot pull requests go unanswered, and only `GET automated-security-fixes` says so. The tool now always reads that endpoint, counts the feature as on only when it is enabled and not paused, reports a pause as drift with a note on resuming it, and records `"on (paused)"` in the evidence. `--apply` fails its read-back while the feature stays paused. When the endpoint is unreadable, the record keeps the `security_and_analysis` state and says the paused state is unknown.
+- `tools/setup_repository.py` refuses a private baseline that turns on private vulnerability reporting, secret scanning or push protection, which GitHub offers free only on public repositories, instead of planning writes GitHub would refuse (#207).
+- The Student-t large-df contracts are adopted (#34). `StudentT_Survival` and `StudentT_Cumulative` are now held to 5E-15 relative for `df` from 1E5 to 1E8 and `|t| <= 8`, and `StudentT_InverseCumulative` to 5E-15 on the quantile for `|p - 0.5| >= 0.1` and `|q| <= 8`. Before, they were 5E-9 and 2E-10 on a narrower domain, and the inverse had no contract. `PROB_TryStudentTInvTail` now polishes its result with up to three plain Newton steps on the large-df tail, for `df >= 1E5` and a target tail of at most 0.4, so a quantile no longer stops several Doubles short of the root. Under `INVERSE_PREREGISTRATION.md`, the Excel wave at `9cbe5d9` (955/955) met every prediction: all 30 polished rows fell in their predicted outcome sets (worst 2.8E-16), 616 other Student-t, density and F rows were bit-identical, and 56 untouched holdout rows passed (worst 2.5E-16). `INVERSE_WAVE_RESULT.md` records the wave, and the #34 release blocker is resolved. The new regression `Test_TF_StudentTLargeDFQuantile` pins the five quantiles the first wave missed at 5E-16 against correctly rounded references, so the Excel evidence policy now expects 955 assertions, up from 950.
+- Label synchronization no longer deletes labels that issues or pull requests still carry (#201). With `prune: true`, every live label outside `.github/labels.json` was deleted, removing it from every issue and pull request, closed ones included. Reconcile mode now checks each label it would delete against all issues and pull requests, open and closed, and stops with no change applied if one is in use, naming the labels. A name containing a comma is checked by reading every issue and pull request, at most 10,000, and the run stops on a malformed response or at the limit. The reconcile job gains `pull-requests: read`, without which the issues API omits pull requests. `tests/test_labels_sync.py` runs the real script against a local stand-in for the GitHub API.
+- The label synchronization and drift summaries no longer break on a backtick, a pipe or a line break in a label name, colour, description or API message (#202). Every value is rendered as code whose delimiter the value cannot close, with line breaks turned into spaces and pipes escaped in table cells.
+- The Student-t quantile repair that lets the #34 contracts be adopted is preregistered before any VBA. `benchmark/student_t_large_df_study/INVERSE_PREREGISTRATION.md` freezes up to three plain Newton steps on the large-df route after the inverse's existing loop converges, for `df >= 1E5` and a target tail of at most 0.4. Those steps remove the 3 to 6 ulps the loop's 1E-15 stopping step left. `predict_inverse.py` models it: on 72 validation points every possible outcome stays within the quantile bound (worst 0.51 of it), and it records the outcome set of each of the 30 committed rows it reaches, with every other Student-t and F row predicted bit-identical. The file also fixes a fresh seeded holdout and adopts, if the predictions hold, the three 5E-15 contracts frozen in `PRODUCTION_PREREGISTRATION.md`. `test_inverse_polish.py` keeps the model reproducible in CI. No `.bas` file, contract, grid or observation changes.
+- `StudentT_Survival`, `StudentT_Cumulative` and `StudentT_InverseCumulative` are now accurate to better than 1E-15 relative for `df` from 1E5 to 1E8 and `|t| <= 8` (#34). Before, the incomplete-beta continued fraction erred by up to 4.2E-9 there, and the quantile by up to 1.8E-10. `PROB_TF_StudentTLargeDFTail` evaluates the preregistered order-5 large-df expansion statement by statement. `test_vba_large_df_source.py` binds its coefficients, arithmetic and dispatch to the preregistration. Nineteen new regressions bring the suite to 950. In the Excel wave, 58 forward rows and 44 untouched holdout rows met their predictions (worst 1.9E-16 and 7.1E-16), and every other Student-t and F row stayed bit-identical. The inverse prediction failed at 7 of 18 rows: errors of 6.9E-16 to 9.5E-16 against bounds near 6E-16, caused by the existing inverse stopping rule (`PROB_EPS = 1E-15`), not the route. Under the preregistration, no contract is tightened yet: a new preregistration will fix the stopping rule and adopt them. `benchmark/student_t_large_df_study/EXCEL_WAVE_RESULT.md` records the wave, `PRODUCTION_AMENDMENT_1.md` corrects one outside-region control tolerance taken from the model instead of Excel, and `numerical_limitations.csv` records `|t| > 8` at these df as a characterized limitation.
+- The production route for the Student-t large-df tail (#34) is preregistered before any VBA, now that #72 repaired the normal kernel it needs. `benchmark/student_t_large_df_study/PRODUCTION_PREREGISTRATION.md` freezes the study's order-5 expansion for `df >= 1E5` and `|t| <= 8`: where it sits in `PROB_TryStudentTTail`, the VBA arithmetic statement by statement and the coefficients as exact literal pairs. It also fixes the predictions the Excel wave must meet (58 forward rows within 4 ulps and 2^-50, 18 inverse rows within a conditioning bound, every other Student-t, density and F row unchanged), a seeded untouched holdout and the contracts that follow if the predictions hold. `production_route_model.py` models the route on the repaired kernel; on 1670 validation points it is within 4.32E-16 of the oracle, and it is more accurate than the current continued fraction at every study fitting point where that misses 2^-50. `predict_production.py` records this in `production_predictions.json`, and `test_production_route.py` keeps it reproducible in CI. No `.bas` file, contract, grid or observation changes.
+- `M_STATS_PROBDIST_ACCURACYEXPORT` now resets its four argument variables for every row. Before, an empty argument cell passed the previous row's value instead of 0, contrary to its comments. No committed row was affected, because every row supplies each argument its function uses.
+- Replaced the standard normal upper-tail kernel (#72). `PROB_NormalUpperTailPositive` (a Hart rational approximation below 7.07 and a 16-level continued fraction above) was accurate in absolute terms only: up to 2.9E-9 relative error below 7.07, and up to 5.7E-14 in the far tail because it rounded `z²` before the exponential. The new `PROB_NormalUpperTail` in `M_STATS_PROBDIST_SPECIALFUNCS` implements the validated design of `benchmark/normal_tail_study`: a degree-(7, 7) rational on `[0, 3)`, a 60-level continued fraction above, and the split exponential `PROB_ExpNegHalfSquare` in `M_STATS_PROBDIST_CORE`, which `PROB_NormalPDF` also uses now. In the binary64 model its worst relative error is 5.5E-16. It feeds the Normal, Lognormal and Standard Normal cumulative, survival and interval functions, `NormalStandard_Density`, and the Halley step of the normal inverses; `Normal_Density` and `Lognormal_Density` are unchanged. New regression sections `Test_Core_ExpNegHalfSquare` and `Test_NF_TailRelativeAccuracy` pin 21 points at 2E-15 relative. `test_vba_kernel_source.py` checks that every VBA constant, the order of the arithmetic, the wiring and every new test reference match the validated model. The public API is unchanged. The main and holdout grids were then re-exported against this source, as recorded below.
+  - With the repaired kernel measured in Excel, the survival contracts are widened as far as the evidence supports. `NormalStandard_Survival` becomes 5E-15 for |Z| <= 6, instead of 2E-14 for |Z| <= 3.25; Excel measures at most 2.56E-16 over 23 points. `Normal_Survival` keeps 5E-15, now for |z| <= 4, where the first-order bound including the rounding of the standardized argument stays below it (4.64E-15). `Lognormal_Survival` keeps 5E-15, now for |z| <= 3.5, the range Excel measured (at most 1.9E-16); its domain notes that a large |MeanLog|/StdDevLog adds rounding independent of the kernel. `SurvivalTailRel` in `numerical_limitations.csv` is resolved, with its old figures kept as history. `survival_boundary_summary.md` records the re-export.
+  - The 73 survival references held as debt under #159 are re-based in the same wave, from the source that owns each row: the `beta_f_unbalanced` and `cdf_large_shape` study grids for the main-grid copies, `generate_reference_values.py` (which now evaluates the 1.96 normal survival rows and the tiny_unbalanced F survival rows at the Double the exporter passes), `holdout/generate_holdout.py`, and the `holdout_older` and `survival_boundary` generators. `benchmark/rebase_survival_debt.py` requires one source row per cell and agreement with the independent oracle to the 25-digit floor, changes only the reference cell, and records every old and new value in `study_reference_rebase.csv`. `check_survival_references.py` now finds 948 of 948 references at the floor and an empty debt registry. No observation changed for this; the main grid and the holdout were re-exported to rebind them.
+  - The Excel evidence policy now expects 931 assertions, the 909 before plus the 22 of `Test_Core_ExpNegHalfSquare` and `Test_NF_TailRelativeAccuracy`.
+  - Finding F1 of `benchmark/student_t_large_df_study` measured the kernel this replaces, so it stays bound to that kernel: a verbatim copy of `src/M_STATS_PROBDIST_NORMALFAMILY.bas` at `495d0cf` and the 12 Excel observations of that kernel, both under `f1_frozen/`. `source_binding.json` records their origin, and `model_fidelity.origin_problems` checks it, rebuilding both copies from that commit where the clone has it. Amendment 2 of `PRODUCTION_FEASIBILITY.md` records the change; F1's conclusions are unchanged.
+  - `benchmark/beta_balanced_survival/results.json` is re-measured because the comment corrections changed the text of six procedures it binds. Only their binding hashes changed; every measured value is identical.
+- The three `LogGamma` rows of `benchmark/holdout_older` are scored again, by `LogGamma.general.output_rel` (#171). `1fac483` retired `LogGamma.all.output`, and since then no contract had the rows' `all` label. Their arguments, 0.65, 3.7 and 12.3, are in the `general` domain, so I changed their three `regime` cells to `general`, the main grid's label; no argument, reference or observation changed. The observations still represent today's `PROB_LogGamma`: since the 2026-07-21 export, the only change to it added the Z <= 0.25 branch, and a binary64 replay of the Lanczos branch reproduces these three observations and all 27 main-grid ones bit for bit. Measured against references recomputed at 70 digits by two routes, the worst error is 1.30E-14 relative against the 5E-13 threshold. The summary now records 60 PASS and 3 FAIL across 63 contracts and no unscored row. `check_holdout_older_summary.py` now also fails when a row is neither scored nor covered by a `characterization_only` contract, and `test_analyze_holdout_older.py` proves it. The grid's SHA-256 is bound by `benchmark/normal_tail_study/results.json`, which is regenerated with no recorded value changed.
+- `benchmark/holdout_older/holdout_older_summary.md` now matches a re-run of its analyzer, and a check fails when it does not (#164). The committed summary dated from `ecf3e45` (2026-07-21) and still reported 63 PASS after `43d2415` retightened `Gamma_Cumulative.all.output` and `Gamma_Survival.all.output`, `1fac483` retired `LogGamma.all.output` and #159 re-based the references. The regenerated summary records 59 PASS and 3 FAIL across 62 contracts. The three are `Gamma_Cumulative.all.output` (1.45E-14 against 3E-15), `Gamma_Survival.all.output` (2.16E-14 against 5E-15) and `Beta_Survival.balanced.output_rel` (5.45E-15 against 5E-15, tracked in #163). The analyzer now lists every failing row with its arguments and contract, and every row no contract scores. The new `holdout_older/check_holdout_older_summary.py` re-renders the summary and fails when the committed file differs; `holdout_older/test_analyze_holdout_older.py` proves that a tightened or retired contract, a hand-edited verdict and a missing file fail it. Both run in `benchmark/test_evidence_tools.py` (49 commands, up from 47), and the check is registered as the `older-holdout-summary-currency` release-blocking control. A bare `refresh_evidence.py` now regenerates the summary. No grid, reference, observation, contract or threshold changed. `benchmark/holdout_older/README.md` records the per-row evidence: the Gamma observations predate the 2026-07-29, 2026-08-06 and 2026-08-27 incomplete-gamma source changes and have not been re-exported since.
+- The large-shape CDF generator no longer accepts a value from a series or continued fraction that reached its iteration cap (#167). It certified each reference by agreement between two precisions, but at A = X = 1E12 the Gamma series stops at 3,000,000 terms and both precisions return the same truncated sum (0.49865 instead of 0.5000001). Each routine now raises `NotConverged` at its cap, and the generator drops that point. The committed grid never contained such a point, and its references are unchanged. `cdf_large_shape/test_generate_cdf_large_shape.py` covers the caps and the reported case.
+- Survival references are now evaluated at the binary64 argument and checked against a direct upper tail (#159). 395 committed survival references agreed with a direct recomputation to fewer than the 25 digits the reference audits require. Three generator causes are fixed: references taken at the decimal token or the unrounded design value instead of the Double the exporter passes; a fixed 30-digit precision in `cdf_large_shape`; and `1 - CDF` at 53 bits in `tchi_large_df`, whose Chi-square rows also move from the Wilson-Hilferty limit to Temme's uniform expansion. The `envelope_domain` probability rows and `survival_boundary` now have committed generators. Every study generator gained `--merge-references`, which changes reference cells only and records each change in `benchmark/study_reference_rebase.csv`; with it, `beta_f_unbalanced`, `cdf_large_shape`, the three `f_envelope` sweeps, `tchi_large_df`, `holdout_older` and `excel_comparison` were re-referenced without touching an observation. The new release-blocking check `benchmark/check_survival_references.py` recomputes all 948 survival references at their binary64 arguments and fails below the floor, with negative fixtures in `test_survival_references.py`. 73 references stay registered as debt in `benchmark/survival_reference_debt.json` and are re-based with the #81 wave: 49 in the main grid and 15 in the holdout, whose manifest bindings block the change until a fresh Excel export, and 9 that the #72 normal-tail record reads, re-based when that kernel evidence is redone. The main generator does not yet emit the main-grid copies of the `beta_f_unbalanced` and `cdf_large_shape` rows; that gap must be closed in the same wave. The strict gate and the independent-holdout verdicts are unchanged, and the normal-tail record was regenerated and records the same values. One study verdict moves: on `holdout_older`, the corrected reference raises the measured `Beta_Survival` error at (0.82, 2.7, 3.4) from 4.34E-15 to 5.45E-15, above the 5E-15 `Beta_Survival.balanced.output_rel` threshold. The corrected references reveal that breach; #163 tracks it, and #164 owns the stale `holdout_older_summary.md`, which this change does not regenerate. `benchmark/cross_check_scipy.md` was regenerated for the re-referenced `beta_f_unbalanced` grid: the same 655 rows are confirmed, and SciPy's worst difference on Beta survival falls from 1.3E-12 to 5.9E-15.
 - `benchmark/cross_check_scipy.py` no longer counts functions it has no SciPy mapping for as beyond SciPy's range (#154). On the grids at `release/1.0.0` commit `c9b1819` it reported 321 confirmed and 316 "beyond range", and silently dropped 38 rows with an empty argument. 308 of the 316 were Binomial, Poisson and other functions it never compared. Every row is now in exactly one class: confirmed, beyond SciPy's range with the reason, or not mapped with the function's row count and reason. I added exact SciPy mappings for every Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric and Discrete Uniform function in the grids, the chi-square and F densities, and the normal and lognormal inverses. The parameterisation is stated in the script: Geometric counts failures, so it maps to `geom` with `loc=-1`; Negative Binomial counts failures, like `nbinom`; Hypergeometric takes (k, sample size, population successes, population size); the discrete uniform's upper bound is inclusive, SciPy's is not. `Normal_IntervalProbability` and `Lognormal_ParametersFromMeanStdDev` stay unmapped because SciPy has no exact equivalent. The tolerance logic is unchanged. The committed `cross_check_scipy.md` is regenerated from the three grids at `c9b1819`, with their SHA-256 and the SciPy 1.17.1, NumPy 2.4.6 and mpmath 1.3.0 versions: of 675 rows, 655 are confirmed (worst relative difference 2.3E-10, `Binomial_LogPMF` at n = 5E6), 8 are beyond range (the same `F_Cumulative`/`F_Survival` points at df2 = 1E8 and 1E10) and 12 are not mapped. The largest relative differences of the new mappings are `Binomial_LogPMF` 2.3E-10, `Poisson_PMF` 1.6E-10, `Poisson_LogPMF` 1.9E-11 and `Hypergeometric_LogPMF` 1.5E-11; every other new mapping agrees within 3E-13. No reference or grid changed. On the grids of `0e1cfe7` the new script reproduces the previous record's 242 confirmed and 8 beyond, function by function. The "Reference integrity" section of `benchmark/README.md` states this coverage. The new `benchmark/test_cross_check_scipy.py` shows on a fixture that an unmapped function is reported as not mapped, never as beyond range, even with shape parameters above the limit; with SciPy installed it checks every mapping against hand-computed and mpmath values, chosen so a wrong convention fails. CI has no SciPy, so there it runs the fixture and skips the known-value part.
 - `benchmark/generate_reference_values.py` no longer contains a `Lognormal_ParametersFromMeanStdDev` loop that computed reference values and emitted no row (#89). The 10 committed rows for that function come from the `density_helpers` evidence set, so I removed the loop and its now-unused `_lognorm_params` helper instead of generating duplicates of those rows. The generator's reference rows and report are byte-identical before and after, and no committed grid or manifest changed. `benchmark/test_grid_regeneration.py` now fails if any `for` loop in a `build_*` generator function computes values without emitting a row, and pins the committed rows to the 10 `density_helpers` rows; it detects the removed loop.
 - `benchmark/refresh_evidence.py --check` no longer rewrites the tracked `benchmark/accuracy_summary.md` (#88). Its strict gate step ran `compute_errors.py` with the default `--out`, so a run documented as "verify only, change nothing" could leave a modified evidence file. Every verify step now writes its output to a temporary directory, as the hosted Accuracy Gate writes its strict run to `${RUNNER_TEMP}`: `compute_errors.py` and `analyze_holdout.py`, which gains an `--out` option, get temporary paths. The save-and-restore of `holdout_summary.md` is removed. `--check` also compares the Git working tree before and after verification and fails on any change. The default refresh mode still writes both committed summaries. `benchmark/test_refresh_evidence.py` runs both modes in a clean clone with stale committed summaries: `--check` must leave `git status` and every tracked file unchanged, a verify step that writes a tracked file must fail `--check`, and the default mode must regenerate both summaries. The first case fails on the previous code.
