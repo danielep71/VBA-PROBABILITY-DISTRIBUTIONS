@@ -95,3 +95,14 @@ The revised package was rendered to PDF with LibreOffice and every worksheet
 was inspected. The navigation overlap found in that rendering was corrected.
 This verifies a rendered preview, not the desktop Excel Ribbon or save cycle.
 The reference retains its multi-page landscape print layout.
+
+## Excel-open repair
+
+The initial template serialization left `mc:Ignorable` naming namespace prefixes
+that ElementTree had renamed or dropped. Well-formed XML and LibreOffice did not
+detect this Excel compatibility defect. Optional revision/compatibility metadata
+is now removed from the layout snapshot without changing its styles or geometry.
+Package tests check namespace-valued compatibility attributes. The `excel-open`
+job opens the original XLSM with macros disabled, saves a copy, and reopens it
+using desktop Excel. The evidence records Excel version/build and input hash.
+This open test does not validate Ribbon callbacks or numerical execution.

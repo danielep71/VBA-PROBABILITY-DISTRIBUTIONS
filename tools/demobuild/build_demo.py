@@ -60,6 +60,9 @@ def worksheet(item: dict[str, str | int], sheets: list[dict[str, str | int]], co
     prop = sheet.find('s:sheetPr',ns)
     assert prop is not None
     prop.set('codeName',str(item['code']))
+    view = sheet.find('s:sheetViews/s:sheetView',ns)
+    assert view is not None
+    view.set('tabSelected', '1' if item['code']=='shHome' else '0')
     data = sheet.find('s:sheetData',ns)
     assert data is not None
     values = {

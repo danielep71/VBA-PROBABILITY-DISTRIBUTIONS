@@ -51,8 +51,27 @@ class DemoShellTests(unittest.TestCase):
             layout = ET.parse(ROOT/'examples/demo/reference/home-layout.xml').getroot()
             for i in range(1, len(sheets)+1):
                 page = ET.fromstring(package.read(f'xl/worksheets/sheet{i}.xml'))
-                for tag in ['cols', 'sheetFormatPr', 'pageMargins', 'pageSetup', 'sheetViews']:
+                for tag in ['cols', 'sheetFormatPr', 'pageMargins', 'pageSetup']:
                     self.assertEqual(ET.tostring(page.find('s:'+tag,ns)), ET.tostring(layout.find('s:'+tag,ns)))
+            # ElementTree accepts dangling prefixes inside attribute VALUES.
+            # Excel's markup-compatibility reader does not. Check each scope.
+            for name in names:
+                if not name.endswith('.xml'):
+                    continue
+                scopes = [{}]
+                pending = {}
+                for event, node in ET.iterparse(io.BytesIO(package.read(name)), events=('start-ns','start','end')):
+                    if event == 'start-ns':
+                        prefix, uri = node
+                        pending[prefix] = uri
+                    elif event == 'start':
+                        scope = dict(scopes[-1]); scope.update(pending); pending.clear()
+                        scopes.append(scope)
+                        for attribute in ('Ignorable', 'MustUnderstand'):
+                            for prefix in node.get('{http://schemas.openxmlformats.org/markup-compatibility/2006}'+attribute, '').split():
+                                self.assertIn(prefix, scope, name+' has undeclared '+prefix)
+                    else:
+                        scopes.pop()
             ui = ET.fromstring(package.read('customUI/customUI14.xml'))
             buttons = list(ui.iter('{http://schemas.microsoft.com/office/2009/07/customui}button'))
             self.assertEqual({b.attrib['tag'] for b in buttons if 'tag' in b.attrib},
