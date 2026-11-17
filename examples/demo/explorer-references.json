@@ -1,0 +1,210 @@
+{
+  "method": "Regenerate small independent Explorer fixtures using Python's standard library.\n\nNormal uses erf/erfc; Exponential uses exp/expm1; Poisson uses its defining\nfinite mass sum. No production VBA, Excel or builder evaluation is used.\nThis educational fixture does not replace the library's accuracy contracts.\n",
+  "absolute_tolerance": 1e-12,
+  "cases": [
+    {
+      "family": "Normal",
+      "mean": 0,
+      "sigma": 1,
+      "x": -2,
+      "density": 0.05399096651318806,
+      "cdf": 0.02275013194817922
+    },
+    {
+      "family": "Normal",
+      "mean": 0,
+      "sigma": 1,
+      "x": 0,
+      "density": 0.3989422804014327,
+      "cdf": 0.5
+    },
+    {
+      "family": "Normal",
+      "mean": 0,
+      "sigma": 1,
+      "x": 1,
+      "density": 0.24197072451914337,
+      "cdf": 0.8413447460685429
+    },
+    {
+      "family": "Normal",
+      "mean": 0,
+      "sigma": 1,
+      "x": 3,
+      "density": 0.0044318484119380075,
+      "cdf": 0.9986501019683699
+    },
+    {
+      "family": "Normal",
+      "mean": 2,
+      "sigma": 3,
+      "x": -4,
+      "density": 0.017996988837729353,
+      "cdf": 0.02275013194817922
+    },
+    {
+      "family": "Normal",
+      "mean": 2,
+      "sigma": 3,
+      "x": 2,
+      "density": 0.1329807601338109,
+      "cdf": 0.5
+    },
+    {
+      "family": "Normal",
+      "mean": 2,
+      "sigma": 3,
+      "x": 5,
+      "density": 0.08065690817304778,
+      "cdf": 0.8413447460685429
+    },
+    {
+      "family": "Normal",
+      "mean": 2,
+      "sigma": 3,
+      "x": 11,
+      "density": 0.0014772828039793357,
+      "cdf": 0.9986501019683699
+    },
+    {
+      "family": "Exponential",
+      "rate": 0.5,
+      "x": 0,
+      "density": 0.5,
+      "cdf": 0.0
+    },
+    {
+      "family": "Exponential",
+      "rate": 0.5,
+      "x": 0.5,
+      "density": 0.38940039153570244,
+      "cdf": 0.22119921692859512
+    },
+    {
+      "family": "Exponential",
+      "rate": 0.5,
+      "x": 2,
+      "density": 0.18393972058572117,
+      "cdf": 0.6321205588285577
+    },
+    {
+      "family": "Exponential",
+      "rate": 0.5,
+      "x": 4,
+      "density": 0.06766764161830635,
+      "cdf": 0.8646647167633873
+    },
+    {
+      "family": "Exponential",
+      "rate": 2,
+      "x": 0,
+      "density": 2.0,
+      "cdf": -0.0
+    },
+    {
+      "family": "Exponential",
+      "rate": 2,
+      "x": 0.5,
+      "density": 0.7357588823428847,
+      "cdf": 0.6321205588285577
+    },
+    {
+      "family": "Exponential",
+      "rate": 2,
+      "x": 2,
+      "density": 0.03663127777746836,
+      "cdf": 0.9816843611112658
+    },
+    {
+      "family": "Exponential",
+      "rate": 2,
+      "x": 4,
+      "density": 0.0006709252558050237,
+      "cdf": 0.9996645373720975
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 1,
+      "x": 0,
+      "density": 0.36787944117144233,
+      "cdf": 0.36787944117144233
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 1,
+      "x": 1,
+      "density": 0.36787944117144233,
+      "cdf": 0.7357588823428847
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 1,
+      "x": 4,
+      "density": 0.015328310048810098,
+      "cdf": 0.9963401531726563
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 1,
+      "x": 20,
+      "density": 1.5121013503012103e-19,
+      "cdf": 1.0
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 4,
+      "x": 0,
+      "density": 0.01831563888873418,
+      "cdf": 0.01831563888873418
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 4,
+      "x": 1,
+      "density": 0.07326255555493671,
+      "cdf": 0.0915781944436709
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 4,
+      "x": 4,
+      "density": 0.19536681481316456,
+      "cdf": 0.6288369351798735
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 4,
+      "x": 20,
+      "density": 8.277463646553656e-09,
+      "cdf": 0.9999999980769414
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 20,
+      "x": 0,
+      "density": 2.061153622438558e-09,
+      "cdf": 2.061153622438558e-09
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 20,
+      "x": 1,
+      "density": 4.122307244877116e-08,
+      "cdf": 4.3284226071209714e-08
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 20,
+      "x": 4,
+      "density": 1.3741024149590386e-05,
+      "cdf": 1.6944743930067385e-05
+    },
+    {
+      "family": "Poisson",
+      "poisson_mean": 20,
+      "x": 20,
+      "density": 0.08883531739208521,
+      "cdf": 0.5590925842313252
+    }
+  ]
+}

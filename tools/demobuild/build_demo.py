@@ -508,14 +508,25 @@ def workbook_module() -> Module:
     return Module("ThisWorkbook", empty.source + events, DOCUMENT)
 
 
-def build() -> tuple[bytes, dict[str, str]]:
+def build(explorer: bool = False) -> tuple[bytes, dict[str, str]]:
     menu = sections()
     sheets = [sheet for _, items in menu for sheet in items]
     commit = git(ROOT, "rev-parse", "HEAD")
     sources = sorted((ROOT / "src").glob("*.bas")) + [DEMO / "M_STATS_PROBDIST_DEMO.bas"]
+    if explorer:
+        sources.append(DEMO / "M_STATS_PROBDIST_EXPLORER.bas")
     modules = [workbook_module()]
     modules += [document_module(sheet.code, False) for sheet in sheets]
     modules += [Module(path.stem, module_text(path.read_bytes())) for path in sources]
+    if explorer:
+        # Keep the accepted shell byte-for-byte reproducible by default. The
+        # Explorer variant binds its own reset/refresh callbacks explicitly.
+        for index, module in enumerate(modules):
+            if module.name == "ThisWorkbook":
+                events = ('\r\nPrivate Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)\r\n'
+                          '    If Sh.CodeName = "shExplorer" Then M_STATS_PROBDIST_EXPLORER.RefreshExplorer\r\n'
+                          'End Sub\r\n')
+                modules[index] = Module(module.name, module.source + events, module.kind)
 
     parts: dict[str, bytes] = {}
 
@@ -569,7 +580,12 @@ def build() -> tuple[bytes, dict[str, str]]:
         f'<Relationship Id="rIdStyles" Type="{RELATIONSHIPS}/styles" Target="styles.xml"/>'
         f'<Relationship Id="rIdTheme" Type="{RELATIONSHIPS}/theme" Target="theme/theme1.xml"/>'
         f'<Relationship Id="rIdVBA" Type="{VBA_TYPE}" Target="vbaProject.bin"/></Relationships>')
-    put("customUI/customUI14.xml", ribbon(menu))
+    ribbon_xml = ribbon(menu)
+    if explorer:
+        ribbon_xml = ribbon_xml.replace('onAction="RibbonAction"', 'onAction="ExplorerAction"')
+        ribbon_xml = ribbon_xml.replace('getEnabled="RibbonGetEnabled"', 'getEnabled="ExplorerEnabled"')
+        ribbon_xml = ribbon_xml.replace('label="Reset inputs"', 'label="Reset Explorer inputs"')
+    put("customUI/customUI14.xml", ribbon_xml)
     parts["xl/styles.xml"] = (DEMO / "reference" / "styles.xml").read_bytes()
     parts["xl/theme/theme1.xml"] = (DEMO / "reference" / "theme.xml").read_bytes()
     parts["xl/vbaProject.bin"] = build_vba_project(modules, project_id(commit))
@@ -592,9 +608,10 @@ def build() -> tuple[bytes, dict[str, str]]:
 def main() -> int:
     output = ROOT / "test-results" / "demo"
     output.mkdir(parents=True, exist_ok=True)
-    data, hashes = build()
+    data, hashes = build(explorer="--explorer" in sys.argv[1:])
     (output / WORKBOOK_NAME).write_bytes(data)
-    (output / "customUI14.xml").write_text(ribbon(sections()), encoding="utf-8")
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        (output / "customUI14.xml").write_bytes(archive.read("customUI/customUI14.xml"))
     manifest = {"commit": git(ROOT, "rev-parse", "HEAD"), "status": "UNVERIFIED IN EXCEL",
                 "dirty": bool(git(ROOT, "status", "--porcelain")),
                 "workbook_sha256": hashlib.sha256(data).hexdigest(), "inputs": hashes}

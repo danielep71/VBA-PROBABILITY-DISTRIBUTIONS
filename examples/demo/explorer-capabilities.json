@@ -1,0 +1,8 @@
+{
+  "scope": "Initial Explorer subset; other library families and operations are not exposed here.",
+  "families": [
+    {"name": "Normal", "kind": "continuous", "support": "All real x; mean mu, standard deviation sigma (not variance).", "density": "K_STATS_Normal_Density", "cdf": "K_STATS_Normal_Cumulative", "survival": "K_STATS_Normal_Survival", "arguments": "$D$7,$D$8"},
+    {"name": "Exponential", "kind": "continuous", "support": "x >= 0; lambda is a rate in inverse x units (not a scale).", "density": "K_STATS_Exponential_Density", "cdf": "K_STATS_Exponential_Cumulative", "survival": "K_STATS_Exponential_Survival", "arguments": "$D$9"},
+    {"name": "Poisson", "kind": "discrete", "support": "Integers k >= 0; lambda is the expected count per interval.", "density": "K_STATS_Poisson_PMF", "cdf": "K_STATS_Poisson_Cumulative", "survival": "K_STATS_Poisson_Survival", "arguments": "$D$10"}
+  ]
+}
