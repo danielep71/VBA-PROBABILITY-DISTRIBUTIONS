@@ -482,10 +482,11 @@ Private Function ApplyNavigationBar( _
 ' PURPOSE
 '   Show or hide column A and the shape groups NAV_GROUP_TOP and
 '   NAV_GROUP_REST of every worksheet in one pass, with screen updating
-'   off, so the layout changes at once. A protected sheet is protected
-'   for the user interface only when necessary, without a password, so
-'   that the macro can change it; an unprotected sheet stays unprotected. The
-'   workbook's Saved flag and screen updating are kept.
+'   off, so the layout changes at once. A protected sheet is temporarily
+'   unprotected and protected again after the update, also on failure.
+'   This avoids relying on UI-only protection during workbook save events.
+'   An unprotected sheet stays unprotected. The workbook's Saved flag and
+'   screen updating are kept.
 '
 ' RETURNS
 '   The number of worksheets changed.
@@ -502,6 +503,7 @@ Private Function ApplyNavigationBar( _
     Dim Sheet               As Worksheet    'Each worksheet
     Dim Item                As Shape        'Each shape of a sheet
     Dim WasSaved            As Boolean      'The workbook's Saved flag before
+    Dim WasProtected        As Boolean      'Restore protection of the current sheet
     Dim SavedScreen         As Boolean      'Screen updating before
     Dim Changed             As Long         'Worksheets changed
     Dim ErrorNumber         As Long         'The first error's number
@@ -515,8 +517,10 @@ Private Function ApplyNavigationBar( _
         On Error GoTo Failed
         Application.ScreenUpdating = False
         For Each Sheet In ThisWorkbook.Worksheets
-            If Sheet.ProtectContents And Not Sheet.ProtectionMode Then
-                Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
+            WasProtected = Sheet.ProtectContents
+            If WasProtected Then Sheet.Unprotect
+            If Sheet.ProtectContents Then
+                Err.Raise vbObjectError + 514, "ApplyNavigationBar", "Could not unprotect: " & Sheet.Name
             End If
             Sheet.Columns(1).Hidden = Not Shown
             If CBool(Sheet.Columns(1).Hidden) = Shown Then
@@ -527,6 +531,10 @@ Private Function ApplyNavigationBar( _
                     Item.Visible = IIf(Shown, msoTrue, msoFalse)
                 End If
             Next Item
+            If WasProtected Then
+                Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
+            End If
+            WasProtected = False
             Changed = Changed + 1
         Next Sheet
         Application.ScreenUpdating = SavedScreen
@@ -537,8 +545,13 @@ Private Function ApplyNavigationBar( _
 Failed:
         ErrorNumber = Err.Number
         ErrorDescription = Err.Description
+        On Error Resume Next
+        If WasProtected Then
+            Sheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True, UserInterfaceOnly:=True
+        End If
         Application.ScreenUpdating = SavedScreen
         ThisWorkbook.Saved = WasSaved
+        On Error GoTo 0
         Err.Raise ErrorNumber, "ApplyNavigationBar", ErrorDescription
 
 End Function
