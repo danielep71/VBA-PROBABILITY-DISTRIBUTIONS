@@ -126,7 +126,9 @@ try {
         if ($cell.value -is [string]) { $target.Value2 = [string]$cell.value }
         else { $target.Value2 = [double]$cell.value }
     }
-    foreach ($item in $plan.names) { try { $book.Names.Item($item.name).Delete() } catch { } }
+    # Names.Add redefines a name that exists in place. Deleting it first would
+    # leave the chart series that use it without a reference for a moment,
+    # and Excel then stops on a modal warning about broken references.
     # A name of an earlier plan that the sheet no longer uses.
     try { $book.Names.Item('ExplorerGridDiscrete').Delete() } catch { }
     $failed = @()
@@ -197,7 +199,7 @@ try {
     $sheet.Rows.Item("${first}:$last").RowHeight = 20.1
     foreach ($item in $plan.formulas) {
         $target = $sheet.Range($item.address)
-        Invoke-Excel { $target.Formula2 = [string]$item.formula }
+        Invoke-Excel { $excel.DisplayAlerts = $false; $target.Formula2 = [string]$item.formula }
     }
     Wait-Excel
 
