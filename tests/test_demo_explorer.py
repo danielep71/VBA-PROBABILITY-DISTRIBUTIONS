@@ -106,6 +106,12 @@ class PlanTests(unittest.TestCase):
         for formula in by_address.values():
             self.assertNotRegex(formula, r"[A-Z]+\$?(18|218)\b", "a row of the old fixed grid")
 
+    def test_discrete_grid_starts_at_the_ceiling_of_a_negative_bound(self):
+        by_address = {item["address"]: item["formula"] for item in self.plan["formulas"]}
+        self.assertNotIn("ROUNDUP($G$10", by_address["F19"] + by_address["G5"])
+        self.assertIn("-INT(-$G$10)", by_address["F19"])
+        self.assertIn("-INT(-$G$10)", by_address["G5"])
+
     def test_texts_fit_the_template_cells(self):
         for text in self.plan["texts"]:
             if text["address"].startswith("C") and text["address"] != "C3":

@@ -142,7 +142,7 @@ def check_formula(index: int, family: dict[str, Any]) -> str:
 def x_grid_formula() -> str:
     return (
         '=IF($G$5="OK",IF(INDEX(ExplorerKind,ExplorerRow)="Discrete",'
-        'LET(first,ROUNDUP($G$10,0),SEQUENCE(INT($G$11)-first+1,,first)),'
+        'LET(first,-INT(-$G$10),SEQUENCE(INT($G$11)-first+1,,first)),'
         'LET(i,SEQUENCE($G$12,,0),$G$10+($G$11-$G$10)*i/($G$12-1))),NA())'
     )
 
@@ -167,7 +167,7 @@ def status_formula(defaults: dict[str, Any]) -> str:
         f'IF(NOT(AND(ISNUMBER($D$11),ABS($D$11)<={x_limit})),"Check: evaluation point",'
         f'IF(NOT(AND(ISNUMBER($G$10),ISNUMBER($G$11),ABS($G$10)<={bound},ABS($G$11)<={bound})),"Check: plot window",'
         'IF(INDEX(ExplorerKind,ExplorerRow)="Discrete",'
-        f'IF(AND($G$11>=$G$10,INT($G$11)>=ROUNDUP($G$10,0),INT($G$11)-ROUNDUP($G$10,0)<={max_discrete}),"OK","Check: plot window"),'
+        f'IF(AND($G$11>=$G$10,INT($G$11)>=-INT(-$G$10),INT($G$11)--INT(-$G$10)<={max_discrete}),"OK","Check: plot window"),'
         f'IF($G$10>=$G$11,"Check: plot window",IF(NOT(AND(ISNUMBER($G$12),$G$12=INT($G$12),$G$12>=2,$G$12<={max_points})),'
         '"Check: number of points","OK"))))))),"Check: distribution")'
     )

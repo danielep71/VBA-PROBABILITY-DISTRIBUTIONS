@@ -124,6 +124,18 @@ try {
         if (-not (Near $survival $case.survival)) { throw "$label survival $($sheet.Range('G9').Value2), expected $($case.survival)" }
         $report.cases++
     }
+    # A negative fractional lower bound of a discrete grid starts at the next integer up.
+    Set-Text $sheet 'D6' 'Discrete uniform'
+    Set-Number $sheet 'D7' -5.0
+    Set-Number $sheet 'D8' 5.0
+    Set-Number $sheet 'G10' -2.5
+    Set-Number $sheet 'G11' 2.0
+    $excel.Calculate()
+    if ((Read-Number $sheet 'F19') -ne -2.0 -or (Grid-Rows $sheet) -ne 5) { throw "Discrete window -2.5 to 2 starts at $($sheet.Range('F19').Value2) with $(Grid-Rows $sheet) rows" }
+    Set-Number $sheet 'G10' -0.5
+    Set-Number $sheet 'G11' -0.1
+    $excel.Calculate()
+    if ([string]$sheet.Range('G5').Value2 -ne 'Check: plot window') { throw 'A discrete window with no integer is accepted' }
     $excel.EnableEvents = $true
 
     # The input event: a parameter edit moves the plot window and the spilled grid with it.
