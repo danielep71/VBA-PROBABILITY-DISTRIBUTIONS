@@ -97,10 +97,12 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
-- Development Distribution Explorer for Normal, Exponential and Poisson:
-  editable parameters, public-API worksheet formulas, native charts, bounded
-  reset and independent reference checks. Requires desktop Excel with macros;
-  interactive and visual acceptance remain pending (#254).
+- Development Distribution Explorer for 16 distributions, built from the
+  hand-formatted workbook: dynamic-array outputs (spilled grid, results and
+  charts that follow the plot window), a family table with per-parameter
+  validation, public-API worksheet formulas and mpmath reference checks.
+  Requires desktop Excel 365 or 2024 with macros; interactive and visual
+  acceptance remain pending (#254).
 
 ### Added
 

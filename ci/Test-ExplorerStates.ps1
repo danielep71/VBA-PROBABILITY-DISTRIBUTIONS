@@ -15,7 +15,6 @@ $source = Join-Path $directory 'Probability-Distributions-Demo.xlsm'
 $copy = Join-Path $directory 'Explorer-states.xlsm'
 $dialogFile = Join-Path $directory 'explorer-states-dialog.json'
 $report = [ordered]@{ status = 'FAIL'; sha256 = (Get-FileHash $source -Algorithm SHA256).Hash }
-$xlErrNA = -2146826246
 $watch = {
     param($OwnedProcessId,$OutFile)
     Add-Type -AssemblyName UIAutomationClient
@@ -65,12 +64,18 @@ function Number($Sheet, [string]$Address) { return [double]$Sheet.Range($Address
 function Assert-Near([double]$Actual, [double]$Expected, [string]$What) {
     if ([Math]::Abs($Actual - $Expected) -gt 1e-12) { throw "${What}: $Actual, expected $Expected" }
 }
-function Assert-Charts($Sheet, [int]$DensityType, [int]$CdfType, [int]$Points, [string]$What) {
+function Grid-Rows($Sheet) {
+    $spill = $Sheet.Range('F19').SpillingToRange
+    if ($null -eq $spill) { return 0 }
+    return [int]$spill.Rows.Count
+}
+function Assert-Charts($Sheet, [int]$DensityType, [int]$CdfType, [string]$What) {
+    $points = Grid-Rows $Sheet
     foreach ($pair in @(@('ExplorerDensity',$DensityType),@('ExplorerCDF',$CdfType))) {
         $chart = $Sheet.ChartObjects($pair[0]).Chart
         if ($chart.ChartType -ne $pair[1]) { throw "${What}: $($pair[0]) has chart type $($chart.ChartType), expected $($pair[1])" }
         $count = @($chart.SeriesCollection(1).Values).Count
-        if ($count -ne $Points) { throw "${What}: $($pair[0]) plots $count points, expected $Points" }
+        if ($count -ne $points) { throw "${What}: $($pair[0]) plots $count points, the grid has $points" }
     }
 }
 $excel = $null
@@ -87,30 +92,37 @@ try {
     $book = $excel.Workbooks.Open($copy, 0, $false)
     $sheet = $book.Worksheets.Item('Explorer')
     $sheet.Activate()
-    if ([string]$sheet.Range('G6').Value2 -ne 'Enabled') { throw 'Macros cell does not say Enabled with macros on' }
+    if ([string]$sheet.Range('G6').Value2 -ne 'ENABLED') { throw 'Macros cell does not say ENABLED with macros on' }
     if ([string]$sheet.Range('F4').Value2 -ne '') { throw 'The warning line is not empty with macros on' }
     if (-not $book.Saved) { throw 'Opening the workbook left it marked as changed' }
-    Assert-Charts $sheet 75 75 201 'Normal at open'
+    Assert-Charts $sheet 75 75 'Normal at open'
+    if ((Grid-Rows $sheet) -ne 201) { throw 'The Normal grid does not have 201 points' }
     Set-Text $sheet 'D6' 'Exponential'
-    Assert-Near (Number $sheet 'G7') 1.0 'Exponential density at 0, rate 1'
-    Assert-Charts $sheet 75 75 201 'Exponential'
-    Set-Number $sheet 'D9' 2.0
-    Assert-Near (Number $sheet 'G7') 2.0 'Exponential density at 0, rate 2'
+    Assert-Near (Number $sheet 'G7') ([Math]::Exp(-1.0)) 'Exponential density at 1, rate 1'
+    Assert-Charts $sheet 75 75 'Exponential'
+    Set-Number $sheet 'D7' 2.0
+    Assert-Near (Number $sheet 'G7') (2.0*[Math]::Exp(-2.0)) 'Exponential density at 1, rate 2'
     Assert-Near (Number $sheet 'G11') 4.0 'Exponential plot upper bound, rate 2'
-    Assert-Near (Number $sheet 'G118') (2.0*[Math]::Exp(-4.0)) 'Exponential grid midpoint'
+    Assert-Near (Number $sheet 'G119') (2.0*[Math]::Exp(-4.0)) 'Exponential grid midpoint'
     Set-Text $sheet 'D6' 'Poisson'
-    Assert-Charts $sheet 51 -4169 31 'Poisson'
-    Assert-Near (Number $sheet 'G7') ([Math]::Exp(-4.0)) 'Poisson mass at 0, mean 4'
-    foreach ($address in @('F118','G118','H118','G218')) {
-        if ($sheet.Range($address).Value2 -ne $xlErrNA) { throw "Poisson grid cell $address beyond the domain is not #N/A" }
-    }
-    Set-Number $sheet 'D11' 3.0
+    Assert-Charts $sheet 51 -4169 'Poisson'
+    if ((Grid-Rows $sheet) -ne 31) { throw 'The Poisson grid is not the integers 0 to 30' }
     Assert-Near (Number $sheet 'G7') (64.0*[Math]::Exp(-4.0)/6.0) 'Poisson mass at 3, mean 4'
-    # An edit outside the inputs must not redraw or fail; the sheet is protected, so use an unlocked input's neighbour state.
+    if ($null -ne $sheet.Range('F50').Value2) { throw 'The Poisson grid spills past its last integer' }
+    Set-Number $sheet 'D11' 0.0
+    Assert-Near (Number $sheet 'G7') ([Math]::Exp(-4.0)) 'Poisson mass at 0, mean 4'
     Set-Text $sheet 'D6' 'Normal'
-    Assert-Charts $sheet 75 75 201 'Normal again'
-    Assert-Near (Number $sheet 'G8') 0.99865010196836990 'Normal CDF at 3'
-    if (-not $sheet.ProtectContents -or -not $excel.EnableEvents) { throw 'Edits left the sheet unprotected or events off' }
+    Assert-Charts $sheet 75 75 'Normal again'
+    Assert-Near (Number $sheet 'G8') 0.5 'Normal CDF at 0'
+    # Every family, chosen the way a user chooses it: status OK, a grid, charts that match it.
+    foreach ($family in @($sheet.Range('ExplorerFamily').Cells | ForEach-Object { [string]$_.Value2 })) {
+        Set-Text $sheet 'D6' $family
+        if ([string]$sheet.Range('G5').Value2 -ne 'OK') { throw "${family}: status is $($sheet.Range('G5').Value2)" }
+        if ((Grid-Rows $sheet) -lt 2) { throw "${family}: the grid is empty" }
+        $discrete = ([string]$sheet.Range('ExplorerKind').Cells.Item([int]$sheet.Evaluate('ExplorerRow'), 1).Value2) -eq 'Discrete'
+        if ($discrete) { Assert-Charts $sheet 51 -4169 $family } else { Assert-Charts $sheet 75 75 $family }
+    }
+    if (-not $excel.EnableEvents) { throw 'Edits left events off' }
     $book.Close($false)
     Close-OwnedExcel $excel; $excel = $null
     $report.every_family_through_events = 'PASS'
@@ -121,6 +133,8 @@ try {
     $book = $excel.Workbooks.Open($copy, 0, $false)
     $sheet = $book.Worksheets.Item('Explorer')
     Set-Text $sheet 'D6' 'Poisson'
+    Set-Number $sheet 'D7' 4.0
+    Set-Number $sheet 'D11' 0.0
     if ([string]$sheet.Range('G6').Value2 -notlike 'DISABLED*') { throw 'Macros cell does not say DISABLED with macros off' }
     if ([string]$sheet.Range('F4').Value2 -notlike 'MACROS ARE DISABLED*') { throw 'The warning line is empty with macros off' }
     if ($sheet.Range('G7').Value2 -isnot [int]) { throw 'A result is still a number with macros off' }
@@ -133,9 +147,9 @@ try {
     $excel = Start-OwnedExcel 1
     $book = $excel.Workbooks.Open($copy, 0, $false)
     $sheet = $book.Worksheets.Item('Explorer')
-    if ([string]$sheet.Range('G6').Value2 -ne 'Enabled') { throw 'Macros cell stays DISABLED after macros are enabled' }
+    if ([string]$sheet.Range('G6').Value2 -ne 'ENABLED') { throw 'Macros cell stays DISABLED after macros are enabled' }
     Assert-Near (Number $sheet 'G7') ([Math]::Exp(-4.0)) 'Poisson mass after reopening'
-    Assert-Charts $sheet 51 -4169 31 'Poisson after reopening'
+    Assert-Charts $sheet 51 -4169 'Poisson after reopening'
     $book.Close($false)
     Close-OwnedExcel $excel; $excel = $null
     $report.stale_file_recovers_at_open = 'PASS'

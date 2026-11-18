@@ -1,4 +1,9 @@
 {
   "schema_version": 1,
-  "files": {}
+  "files": {
+    "examples/demo/baseline/Explorer-baseline.xlsm": {
+      "sha256": "a26b6a436b334e618691e1372140169ead958211ec432a9e2608502ba49773ee",
+      "reason": "Hand-formatted Explorer workbook the demo package starts from (layout, charts, Ribbon, navigation). tools/demobuild/explorer_build.py keeps every part but its VBA project, which it rebuilds from the sources of the commit; the embedded VBA is never run. A new version needs review before its digest changes."
+    }
+  }
 }

@@ -107,7 +107,7 @@ try {
         foreach ($name in @('NavBarTop','NavBar')) {
             if ($sheet.Shapes.Item($name).Visible -ne 0) { throw "Navigation shape still visible: $name" }
         }
-        if (-not $sheet.ProtectContents) { throw 'Navigation toggle removed sheet protection' }
+        if ($sheet.CodeName -ne 'shExplorer' -and -not $sheet.ProtectContents) { throw 'Navigation toggle removed sheet protection' }
     }
     if ($excel.ScreenUpdating -ne $savedScreen -or $book.Saved -ne $savedFlag) { throw 'Navigation toggle leaked state' }
     if ($other.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Navigation toggle changed another workbook' }

@@ -1,10 +1,20 @@
 Attribute VB_Name = "M_STATS_PROBDIST_EXPLORER"
 '==============================================================================
 ' MODULE: M_STATS_PROBDIST_EXPLORER
-' PURPOSE: Workbook-owned Explorer chart refresh and bounded input reset.
-' Numerical results remain visible worksheet calls to the production API.
+' PURPOSE: The Distribution Explorer's inputs and charts. The numbers on the
+' sheet are worksheet formulas that call the production API and spill as
+' dynamic arrays; this module loads a family's defaults, refits the plot
+' window, and sets the chart types. It computes nothing.
+' The family table (defaults, limits, plot windows) is on the sheet, in the
+' hidden columns from MA, and is read through the Explorer* names.
 '==============================================================================
 Option Explicit
+
+Private Const FAMILY_CELL As String = "D6"
+Private Const FIRST_PARAMETER_ROW As Long = 7
+Private Const PARAMETER_COUNT As Long = 4
+Private Const DEFAULT_FAMILY As String = "Normal"
+Private Const DEFAULT_POINTS As Long = 201
 
 Public Function ExplorerSheet() As Worksheet
     Dim Candidate As Worksheet
@@ -44,36 +54,6 @@ Failed:
 End Sub
 
 
-Public Sub ExplorerInputsChanged(ByVal Target As Range)
-    ' Called by Workbook_SheetChange. Only an edit of the six inputs refreshes
-    ' the charts, and a failure is reported once, in words, instead of leaving
-    ' the user in the VBA debugger.
-    Dim Sheet As Worksheet
-    On Error GoTo Failed
-    Set Sheet = ExplorerSheet()
-    If Not Target.Worksheet Is Sheet Then Exit Sub
-    If Application.Intersect(Target, Sheet.Range("D6:D11")) Is Nothing Then Exit Sub
-    RefreshExplorer
-    Exit Sub
-Failed:
-    MsgBox "The Explorer charts could not be refreshed: " & Err.Description, vbExclamation, _
-           "Distribution Explorer"
-End Sub
-
-
-Public Sub ExplorerOpened()
-    ' Called by Workbook_Open. A file saved while macros were off, or with a
-    ' family other than the one its charts show, opens with stale charts:
-    ' recalculate and redraw, and leave the workbook's Saved flag as it was.
-    Dim WasSaved As Boolean
-    On Error Resume Next
-    WasSaved = ThisWorkbook.Saved
-    RefreshExplorer
-    ThisWorkbook.Saved = WasSaved
-    On Error GoTo 0
-End Sub
-
-
 Public Sub ResetExplorerInputs(Optional ByVal Confirm As Boolean = True)
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
@@ -86,12 +66,8 @@ Public Sub ResetExplorerInputs(Optional ByVal Confirm As Boolean = True)
     SavedEvents = Application.EnableEvents
     On Error GoTo Failed
     Application.EnableEvents = False
-    Sheet.Range("D6").Value2 = "Normal"
-    Sheet.Range("D7").Value2 = 0#
-    Sheet.Range("D8").Value2 = 1#
-    Sheet.Range("D9").Value2 = 1#
-    Sheet.Range("D10").Value2 = 4#
-    Sheet.Range("D11").Value2 = 0#
+    Sheet.Range(FAMILY_CELL).Value2 = DEFAULT_FAMILY
+    LoadFamilyDefaults Sheet
     Application.EnableEvents = SavedEvents
     RefreshExplorer
     Exit Sub
@@ -102,12 +78,60 @@ Failed:
 End Sub
 
 
-Public Sub RefreshExplorer()
+Public Sub ExplorerInputsChanged(ByVal Target As Range)
+    ' Called by Workbook_SheetChange. Choosing a family loads its parameters,
+    ' probe point and plot window; editing a parameter refits the plot window;
+    ' any other edit changes nothing here, because the grid and the charts
+    ' follow the sheet's own formulas. A failure is reported once, in words,
+    ' instead of leaving the user in the VBA debugger.
     Dim Sheet As Worksheet
+    Dim SavedEvents As Boolean
+    Dim Failure As String
+    On Error GoTo Failed
+    Set Sheet = ExplorerSheet()
+    If Not Target.Worksheet Is Sheet Then Exit Sub
+    If Application.Intersect(Target, Sheet.Range("D6:D10")) Is Nothing Then Exit Sub
+    SavedEvents = Application.EnableEvents
+    Application.EnableEvents = False
+    If Target.Cells.CountLarge = 1 And Target.Address(False, False) = FAMILY_CELL Then
+        LoadFamilyDefaults Sheet
+    Else
+        If Not Application.Intersect(Target, Sheet.Range("D7:D10")) Is Nothing Then RefitPlotWindow Sheet
+    End If
+    Application.EnableEvents = SavedEvents
+    RefreshExplorer
+    Exit Sub
+Failed:
+    Failure = Err.Description
+    Application.EnableEvents = SavedEvents
+    MsgBox "The Explorer could not follow that change: " & Failure, vbExclamation, _
+           "Distribution Explorer"
+End Sub
+
+
+Public Sub ExplorerOpened()
+    ' Called by Workbook_Open. A file saved while macros were off, or with
+    ' another family's chart types, opens with stale charts: recalculate and
+    ' set them again, and leave the workbook's Saved flag as it was.
+    Dim WasSaved As Boolean
+    On Error Resume Next
+    WasSaved = ThisWorkbook.Saved
+    RefreshExplorer
+    ThisWorkbook.Saved = WasSaved
+    On Error GoTo 0
+End Sub
+
+
+Public Sub RefreshExplorer()
+    ' Recalculates the sheet and sets the two charts for the family's kind:
+    ' a discrete family plots its mass as columns and its cumulative as
+    ' points, a continuous one plots both as lines. The series follow the
+    ' spilled grid through workbook names, so no range is set here.
+    Dim Sheet As Worksheet
+    Dim Item As ChartObject
     Dim Discrete As Boolean
     Dim SavedEvents As Boolean
     Dim WasProtected As Boolean
-    Dim Item As ChartObject
     Dim Failure As String
     SavedEvents = Application.EnableEvents
     On Error GoTo Failed
@@ -115,9 +139,9 @@ Public Sub RefreshExplorer()
     If Sheet.ChartObjects.Count <> 2 Then Exit Sub
     WasProtected = Sheet.ProtectContents
     Application.EnableEvents = False
-    Sheet.Unprotect
+    If WasProtected Then Sheet.Unprotect
     Sheet.Calculate
-    Discrete = (CStr(Sheet.Range("D6").Value2) = "Poisson")
+    Discrete = IsDiscrete(Sheet)
     For Each Item In Sheet.ChartObjects
         If Discrete Then
             If Item.Name = "ExplorerDensity" Then
@@ -128,21 +152,20 @@ Public Sub RefreshExplorer()
         Else
             Item.Chart.ChartType = xlXYScatterLinesNoMarkers
         End If
-        Item.Chart.SeriesCollection(1).XValues = Sheet.Range("F18:F" & ExplorerLastRow(Sheet))
         If Item.Name = "ExplorerDensity" Then
-            Item.Chart.SeriesCollection(1).Values = Sheet.Range("G18:G" & ExplorerLastRow(Sheet))
-            Item.Chart.ChartTitle.Text = "Density / probability mass"
+            Item.Chart.ChartTitle.Text = IIf(Discrete, "Probability mass P(X = k)", "Density f(x)")
+            Item.Chart.Axes(xlValue).MinimumScale = 0#
+            Item.Chart.Axes(xlValue).MaximumScaleIsAuto = True
         Else
-            Item.Chart.SeriesCollection(1).Values = Sheet.Range("H18:H" & ExplorerLastRow(Sheet))
             Item.Chart.ChartTitle.Text = "Cumulative probability P(X <= x)"
+            Item.Chart.Axes(xlValue).MinimumScale = 0#
+            Item.Chart.Axes(xlValue).MaximumScale = 1#
         End If
-        ' General shows 5 as 5 and 0.25 as 0,25 or 0.25 by locale; a format with
-        ' optional decimals leaves a bare separator after every whole number.
+        ' General shows 5 as 5 and 0.25 as 0,25 or 0.25 by locale; a format
+        ' with optional decimals leaves a bare separator after whole numbers.
         Item.Chart.Axes(xlCategory).TickLabels.NumberFormat = "General"
         Item.Chart.Axes(xlValue).TickLabels.NumberFormat = "General"
         Item.Chart.Axes(xlCategory).TickLabelPosition = xlTickLabelPositionLow
-        Item.Chart.Axes(xlValue).MinimumScale = 0#
-        If Item.Name = "ExplorerCDF" Then Item.Chart.Axes(xlValue).MaximumScale = 1#
     Next Item
     If WasProtected Then Sheet.Protect
     Application.EnableEvents = SavedEvents
@@ -157,11 +180,56 @@ Failed:
 End Sub
 
 
-Private Function ExplorerLastRow(ByVal Sheet As Worksheet) As Long
-    ExplorerLastRow = 218
-    If CStr(Sheet.Range("D6").Value2) = "Poisson" Then
-        If CStr(Sheet.Range("G5").Value2) = "OK" Then
-            ExplorerLastRow = 18 + CLng(Sheet.Range("G11").Value2)
+Private Function FamilyRow(ByVal Sheet As Worksheet) As Long
+    ' Row of the selected family in the table, or 0 when D6 is not a family.
+    Dim Position As Variant
+    Position = Application.Match(Sheet.Range(FAMILY_CELL).Value2, Sheet.Range("ExplorerFamily"), 0)
+    If IsError(Position) Then FamilyRow = 0 Else FamilyRow = CLng(Position)
+End Function
+
+
+Private Function IsDiscrete(ByVal Sheet As Worksheet) As Boolean
+    Dim Row As Long
+    Row = FamilyRow(Sheet)
+    If Row > 0 Then IsDiscrete = (CStr(Sheet.Range("ExplorerKind").Cells(Row, 1).Value2) = "Discrete")
+End Function
+
+
+Private Sub LoadFamilyDefaults(ByVal Sheet As Worksheet)
+    ' Writes the family's parameters, probe point and plot window. The caller
+    ' has switched events off, so these writes do not re-enter the handler.
+    Dim Row As Long
+    Dim Slot As Long
+    Row = FamilyRow(Sheet)
+    If Row = 0 Then Exit Sub
+    For Slot = 1 To PARAMETER_COUNT
+        Sheet.Cells(FIRST_PARAMETER_ROW + Slot - 1, 4).Value2 = _
+            Sheet.Range("ExplorerDefaults").Cells(Row, Slot).Value2
+    Next Slot
+    Sheet.Range("D11").Value2 = Sheet.Range("ExplorerX0").Cells(Row, 1).Value2
+    Sheet.Range("G12").Value2 = DEFAULT_POINTS
+    RefitPlotWindow Sheet
+End Sub
+
+
+Private Sub RefitPlotWindow(ByVal Sheet As Worksheet)
+    ' Sets the plot window to the family's suggestion for the current
+    ' parameters. A suggestion that cannot be computed, because a parameter
+    ' is not a number, leaves the window as it is.
+    Dim Row As Long
+    Dim Lower As Variant
+    Dim Upper As Variant
+    Row = FamilyRow(Sheet)
+    If Row = 0 Then Exit Sub
+    Sheet.Calculate
+    Lower = Sheet.Range("ExplorerSuggestLower").Cells(Row, 1).Value2
+    Upper = Sheet.Range("ExplorerSuggestUpper").Cells(Row, 1).Value2
+    If IsNumeric(Lower) And IsNumeric(Upper) Then
+        If Not IsError(Lower) And Not IsError(Upper) Then
+            If Len(CStr(Lower)) > 0 And Len(CStr(Upper)) > 0 Then
+                Sheet.Range("G10").Value2 = CDbl(Lower)
+                Sheet.Range("G11").Value2 = CDbl(Upper)
+            End If
         End If
     End If
-End Function
+End Sub

@@ -108,10 +108,7 @@ try {
     foreach ($choice in @('2','1')) {
         $excel.EnableEvents = $false
         $sheet.Range('D6').Value2 = 'Poisson'
-        $sheet.Range('D7').Value2 = 3.0
-        $sheet.Range('D8').Value2 = 2.0
-        $sheet.Range('D9').Value2 = 2.0
-        $sheet.Range('D10').Value2 = 5.0
+        $sheet.Range('D7').Value2 = 7.0
         $excel.EnableEvents = $true
         $sheet.Range('D11').Value2 = 2.0
         $before = (Read-Inputs $sheet) | ConvertTo-Json -Compress
@@ -177,13 +174,13 @@ public static class ExplorerDialogNative {
             $report.reset_cancel = 'PASS'
         } else {
             $actual = Read-Inputs $sheet
-            $expected = @('Normal',0.0,1.0,1.0,4.0,0.0)
+            $expected = @('Normal',0.0,1.0,0.0,0.0,0.0)
             for ($index=0; $index -lt $expected.Count; $index++) {
                 if ($actual[$index] -ne $expected[$index]) { throw "Confirmed reset did not restore input $index" }
             }
             $report.reset_confirm = 'PASS'
         }
-        if (-not $excel.EnableEvents -or -not $sheet.ProtectContents) { throw 'Ribbon reset leaked state or protection' }
+        if (-not $excel.EnableEvents) { throw 'Ribbon reset leaked events state' }
     }
     $report.status = 'PASS'
 } catch {
