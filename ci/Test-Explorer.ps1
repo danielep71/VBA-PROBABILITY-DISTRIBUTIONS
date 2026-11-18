@@ -57,7 +57,7 @@ try {
     foreach ($address in @('D6:D16')) {
         if ($sheet.Range($address).Locked) { throw "$address must be editable" }
     }
-    foreach ($address in @('D19:D25', 'F20:I1019')) {
+    foreach ($address in @('D19:D25', 'F20:I1020')) {
         if (-not $sheet.Range($address).Locked) { throw "$address must be locked" }
     }
     if ($sheet.Range('C26').MergeArea.Address($false, $false) -ne 'C26:D27') { throw "The support text is not one cell over C26:D27: $($sheet.Range('C26').MergeArea.Address($false, $false))" }
@@ -214,6 +214,11 @@ try {
     if ([string]$sheet.Range('F20').Text -ne ('-4' + $dec + '00') -or [string]$sheet.Range('H120').Text -ne ('0' + $dec + '50')) { throw "The grid does not follow the decimals: $($sheet.Range('F20').Text), $($sheet.Range('H120').Text)" }
     Set-Text $sheet 'D6' 'Poisson'
     if ([string]$sheet.Range('F21').Text -ne '1') { throw "A discrete x shows $($sheet.Range('F21').Text), not a whole number" }
+    # The largest discrete window, 1,001 integers, fills the grid to row 1020: formats reach it.
+    Set-Text $sheet 'D6' 'Binomial'
+    Set-Number $sheet 'D7' 1000.0
+    if ((Grid-Rows $sheet) -ne 1001) { throw "Binomial(1000) gives $(Grid-Rows $sheet) grid rows, expected 1001" }
+    if ($sheet.Range('I1020').NumberFormat -ne $sheet.Range('I20').NumberFormat -or $sheet.Range('G1020').FormatConditions.Count -lt 1) { throw 'The last row of the largest grid is not formatted like the first' }
     $report.decimals = 'PASS'
 
     # The reset restores Normal(0,1) and touches no other workbook.

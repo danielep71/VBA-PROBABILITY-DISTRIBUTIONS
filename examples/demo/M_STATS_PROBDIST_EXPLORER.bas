@@ -24,8 +24,8 @@ Private Const UPPER_CELL As String = "D14"
 Private Const POINTS_CELL As String = "D15"
 Private Const DECIMALS_CELL As String = "D16"
 Private Const MAX_DECIMALS As Long = 15
-Private Const FORMATTED_CELLS As String = "D21:D25,G20:I1019"
-Private Const X_CELLS As String = "F20:F1019"
+Private Const FORMATTED_CELLS As String = "D21:D25,G20:I1020"
+Private Const X_CELLS As String = "F20:F1020"
 
 Public Function ExplorerSheet() As Worksheet
     Dim Candidate As Worksheet
