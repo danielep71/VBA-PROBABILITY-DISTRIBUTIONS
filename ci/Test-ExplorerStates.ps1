@@ -102,7 +102,7 @@ try {
     Assert-Charts $sheet 75 75 'Exponential'
     Set-Number $sheet 'D7' 2.0
     Assert-Near (Number $sheet 'G7') (2.0*[Math]::Exp(-2.0)) 'Exponential density at 1, rate 2'
-    Assert-Near (Number $sheet 'G11') 4.0 'Exponential plot upper bound, rate 2'
+    Assert-Near (Number $sheet 'G12') 4.0 'Exponential plot upper bound, rate 2'
     Assert-Near (Number $sheet 'G119') (2.0*[Math]::Exp(-4.0)) 'Exponential grid midpoint'
     Set-Text $sheet 'D6' 'Poisson'
     Assert-Charts $sheet 51 -4169 'Poisson'

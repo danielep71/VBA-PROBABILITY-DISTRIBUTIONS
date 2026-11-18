@@ -1,5 +1,5 @@
 {
- "method": "Regenerate the independent Explorer reference values with mpmath.\n\nEvery value is computed from the definition of the distribution at 60 digits,\nby formulas written here, with no call to the library, the builder or Excel:\ndensities from the closed forms, continuous cumulative functions from the\nregularized incomplete gamma and beta functions, discrete ones from the finite\nsums or the closed forms. Survival is P(X > x), taken from the complement\nfunction when there is one, so a tail is not computed as 1 - CDF.\n\nEach case carries the parameters in the order of the Explorer's four input\ncells and the probe point. Each family also carries its default plot window,\nwritten out here, and five points of its default grid, so a test can check the\nspilled x column and the density and CDF columns. This fixture checks the demo's\nwiring and arithmetic; it does not replace the library's accuracy contracts.\n\nRun with mpmath installed: python examples/demo/explorer_references.py\n",
+ "method": "Regenerate the independent Explorer reference values with mpmath.\n\nEvery value is computed from the definition of the distribution at 60 digits,\nby formulas written here, with no call to the library, the builder or Excel:\ndensities from the closed forms, continuous cumulative functions from the\nregularized incomplete gamma and beta functions, discrete ones from the finite\nsums or the closed forms. Survival is P(X > x), taken from the complement\nfunction when there is one, so a tail is not computed as 1 - CDF.\n\nEach case carries the parameters in the order of the Explorer's four input\ncells and the probe point. Each family also carries its default plot window,\nwritten out here, and five points of its default grid, so a test can check the\nspilled x column and the density, survival and CDF columns. Quantiles are the\nsmallest x with CDF(x) >= p: a 400-step bisection of the CDF above for a\ncontinuous family, a scan of the cumulative sums for a discrete one. This fixture checks the demo's\nwiring and arithmetic; it does not replace the library's accuracy contracts.\n\nRun with mpmath installed: python examples/demo/explorer_references.py\n",
  "absolute_tolerance": 1e-12,
  "relative_tolerance": 1e-09,
  "cases": [
@@ -1555,31 +1555,36 @@
      "index": 0,
      "x": -4.0,
      "density": 0.00013383022576488534,
-     "cdf": 3.1671241833119924e-05
+     "cdf": 3.1671241833119924e-05,
+     "survival": 0.9999683287581669
     },
     {
      "index": 50,
      "x": -2.0,
      "density": 0.05399096651318805,
-     "cdf": 0.02275013194817921
+     "cdf": 0.02275013194817921,
+     "survival": 0.9772498680518208
     },
     {
      "index": 100,
      "x": 0.0,
      "density": 0.3989422804014327,
-     "cdf": 0.5
+     "cdf": 0.5,
+     "survival": 0.5
     },
     {
      "index": 150,
      "x": 2.0,
      "density": 0.05399096651318805,
-     "cdf": 0.9772498680518208
+     "cdf": 0.9772498680518208,
+     "survival": 0.02275013194817921
     },
     {
      "index": 200,
      "x": 4.0,
      "density": 0.00013383022576488534,
-     "cdf": 0.9999683287581669
+     "cdf": 0.9999683287581669,
+     "survival": 3.1671241833119924e-05
     }
    ]
   },
@@ -1597,31 +1602,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 1.1204222675845161,
      "density": 0.6939502991127666,
-     "cdf": 0.5899480241893272
+     "cdf": 0.5899480241893272,
+     "survival": 0.4100519758106728
     },
     {
      "index": 100,
      "x": 2.2408445351690323,
      "density": 0.0968427144972122,
-     "cdf": 0.9467043548667075
+     "cdf": 0.9467043548667075,
+     "survival": 0.05329564513329255
     },
     {
      "index": 150,
      "x": 3.361266802753548,
      "density": 0.012556224062561903,
-     "cdf": 0.9923381256792279
+     "cdf": 0.9923381256792279,
+     "survival": 0.007661874320772159
     },
     {
      "index": 200,
      "x": 4.4816890703380645,
      "density": 0.001977758091818585,
-     "cdf": 0.9986501019683699
+     "cdf": 0.9986501019683699,
+     "survival": 0.0013498980316300952
     }
    ]
   },
@@ -1638,31 +1648,36 @@
      "index": 0,
      "x": -6.0,
      "density": 0.0006884815401374299,
-     "cdf": 0.0009230691447970072
+     "cdf": 0.0009230691447970072,
+     "survival": 0.999076930855203
     },
     {
      "index": 50,
      "x": -3.0,
      "density": 0.01729257880022296,
-     "cdf": 0.015049623948731286
+     "cdf": 0.015049623948731286,
+     "survival": 0.9849503760512687
     },
     {
      "index": 100,
      "x": 0.0,
      "density": 0.37960668982249446,
-     "cdf": 0.5
+     "cdf": 0.5,
+     "survival": 0.5
     },
     {
      "index": 150,
      "x": 3.0,
      "density": 0.01729257880022296,
-     "cdf": 0.9849503760512687
+     "cdf": 0.9849503760512687,
+     "survival": 0.015049623948731286
     },
     {
      "index": 200,
      "x": 6.0,
      "density": 0.0006884815401374299,
-     "cdf": 0.999076930855203
+     "cdf": 0.999076930855203,
+     "survival": 0.0009230691447970072
     }
    ]
   },
@@ -1679,31 +1694,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 5.035533905932738,
      "density": 0.1015157058915362,
-     "cdf": 0.7163291106259353
+     "cdf": 0.7163291106259353,
+     "survival": 0.28367088937406465
     },
     {
      "index": 100,
      "x": 10.071067811865476,
      "density": 0.016372346980748593,
-     "cdf": 0.9607525806923547
+     "cdf": 0.9607525806923547,
+     "survival": 0.03924741930764533
     },
     {
      "index": 150,
      "x": 15.106601717798211,
      "density": 0.0019803862611990405,
-     "cdf": 0.9955148511027708
+     "cdf": 0.9955148511027708,
+     "survival": 0.0044851488972291725
     },
     {
      "index": 200,
      "x": 20.14213562373095,
      "density": 0.00021292975137529184,
-     "cdf": 0.9995318550603219
+     "cdf": 0.9995318550603219,
+     "survival": 0.0004681449396780212
     }
    ]
   },
@@ -1721,31 +1741,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 1.25,
      "density": 0.3799051332188321,
-     "cdf": 0.6439069510127529
+     "cdf": 0.6439069510127529,
+     "survival": 0.35609304898724714
     },
     {
      "index": 100,
      "x": 2.5,
      "density": 0.09359475444968551,
-     "cdf": 0.8979977233557302
+     "cdf": 0.8979977233557302,
+     "survival": 0.1020022766442698
     },
     {
      "index": 150,
      "x": 3.75,
      "density": 0.027351013001380053,
-     "cdf": 0.9641976546787061
+     "cdf": 0.9641976546787061,
+     "survival": 0.03580234532129389
     },
     {
      "index": 200,
      "x": 5.0,
      "density": 0.009630637937810075,
-     "cdf": 0.985131199591887
+     "cdf": 0.985131199591887,
+     "survival": 0.014868800408112984
     }
    ]
   },
@@ -1763,31 +1788,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 2.267766952966369,
      "density": 0.23481170841164606,
-     "cdf": 0.6616451527730983
+     "cdf": 0.6616451527730983,
+     "survival": 0.3383548472269017
     },
     {
      "index": 100,
      "x": 4.535533905932738,
      "density": 0.0486262826390288,
-     "cdf": 0.9406525357652559
+     "cdf": 0.9406525357652559,
+     "survival": 0.0593474642347441
     },
     {
      "index": 150,
      "x": 6.803300858899106,
      "density": 0.007552376900044228,
-     "cdf": 0.991337518305727
+     "cdf": 0.991337518305727,
+     "survival": 0.008662481694272943
     },
     {
      "index": 200,
      "x": 9.071067811865476,
      "density": 0.001042662412995212,
-     "cdf": 0.9988423938521965
+     "cdf": 0.9988423938521965,
+     "survival": 0.0011576061478035164
     }
    ]
   },
@@ -1805,31 +1835,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 0.25,
      "density": 2.373046875,
-     "cdf": 0.466064453125
+     "cdf": 0.466064453125,
+     "survival": 0.533935546875
     },
     {
      "index": 100,
      "x": 0.5,
      "density": 0.9375,
-     "cdf": 0.890625
+     "cdf": 0.890625,
+     "survival": 0.109375
     },
     {
      "index": 150,
      "x": 0.75,
      "density": 0.087890625,
-     "cdf": 0.995361328125
+     "cdf": 0.995361328125,
+     "survival": 0.004638671875
     },
     {
      "index": 200,
      "x": 1.0,
      "density": 0.0,
-     "cdf": 1.0
+     "cdf": 1.0,
+     "survival": 0.0
     }
    ]
   },
@@ -1846,31 +1881,36 @@
      "index": 0,
      "x": 0.0,
      "density": 1.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 2.0,
      "density": 0.1353352832366127,
-     "cdf": 0.8646647167633873
+     "cdf": 0.8646647167633873,
+     "survival": 0.1353352832366127
     },
     {
      "index": 100,
      "x": 4.0,
      "density": 0.01831563888873418,
-     "cdf": 0.9816843611112658
+     "cdf": 0.9816843611112658,
+     "survival": 0.01831563888873418
     },
     {
      "index": 150,
      "x": 6.0,
      "density": 0.0024787521766663585,
-     "cdf": 0.9975212478233336
+     "cdf": 0.9975212478233336,
+     "survival": 0.0024787521766663585
     },
     {
      "index": 200,
      "x": 8.0,
      "density": 0.00033546262790251185,
-     "cdf": 0.9996645373720975
+     "cdf": 0.9996645373720975,
+     "survival": 0.00033546262790251185
     }
    ]
   },
@@ -1888,31 +1928,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 0.906771728084869,
      "density": 0.6023379749552701,
-     "cdf": 0.5783034965714177
+     "cdf": 0.5783034965714177,
+     "survival": 0.4216965034285823
     },
     {
      "index": 100,
      "x": 1.813543456169738,
      "density": 0.17566897634186304,
-     "cdf": 0.9130359357514711
+     "cdf": 0.9130359357514711,
+     "survival": 0.08696406424852884
     },
     {
      "index": 150,
      "x": 2.7203151842546074,
      "density": 0.027851187263928052,
-     "cdf": 0.988742477037546
+     "cdf": 0.988742477037546,
+     "survival": 0.011257522962453914
     },
     {
      "index": 200,
      "x": 3.627086912339476,
      "density": 0.0028567368714608353,
-     "cdf": 0.999
+     "cdf": 0.999,
+     "survival": 0.001000000000000001
     }
    ]
   },
@@ -1930,31 +1975,36 @@
      "index": 0,
      "x": -0.1,
      "density": 0.0,
-     "cdf": 0.0
+     "cdf": 0.0,
+     "survival": 1.0
     },
     {
      "index": 50,
      "x": 0.20000000000000004,
      "density": 1.0,
-     "cdf": 0.20000000000000004
+     "cdf": 0.20000000000000004,
+     "survival": 0.7999999999999999
     },
     {
      "index": 100,
      "x": 0.5000000000000001,
      "density": 1.0,
-     "cdf": 0.5000000000000001
+     "cdf": 0.5000000000000001,
+     "survival": 0.4999999999999999
     },
     {
      "index": 150,
      "x": 0.8000000000000002,
      "density": 1.0,
-     "cdf": 0.8000000000000002
+     "cdf": 0.8000000000000002,
+     "survival": 0.19999999999999984
     },
     {
      "index": 200,
      "x": 1.1,
      "density": 0.0,
-     "cdf": 1.0
+     "cdf": 1.0,
+     "survival": 0.0
     }
    ]
   },
@@ -1972,31 +2022,36 @@
      "index": 0,
      "x": 0.0,
      "density": 3.6561584400629733e-05,
-     "cdf": 3.6561584400629733e-05
+     "cdf": 3.6561584400629733e-05,
+     "survival": 0.9999634384155993
     },
     {
      "index": 5,
      "x": 5.0,
      "density": 0.07464701952887093,
-     "cdf": 0.12559897272303744
+     "cdf": 0.12559897272303744,
+     "survival": 0.8744010272769626
     },
     {
      "index": 10,
      "x": 10.0,
      "density": 0.11714155053639011,
-     "cdf": 0.8724787538527833
+     "cdf": 0.8724787538527833,
+     "survival": 0.12752124614721672
     },
     {
      "index": 15,
      "x": 15.0,
      "density": 0.0012944935222876579,
-     "cdf": 0.9996829688788313
+     "cdf": 0.9996829688788313,
+     "survival": 0.00031703112116863
     },
     {
      "index": 20,
      "x": 20.0,
      "density": 1.0995116277760013e-08,
-     "cdf": 1.0
+     "cdf": 1.0,
+     "survival": 0.0
     }
    ]
   },
@@ -2013,31 +2068,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.01831563888873418,
-     "cdf": 0.01831563888873418
+     "cdf": 0.01831563888873418,
+     "survival": 0.9816843611112658
     },
     {
      "index": 8,
      "x": 8.0,
      "density": 0.029770181304863176,
-     "cdf": 0.9786365655120158
+     "cdf": 0.9786365655120158,
+     "survival": 0.021363434487984164
     },
     {
      "index": 15,
      "x": 15.0,
      "density": 1.5039116762832175e-05,
-     "cdf": 0.9999951073892801
+     "cdf": 0.9999951073892801,
+     "survival": 4.892610719877852e-06
     },
     {
      "index": 22,
      "x": 22.0,
      "density": 2.8666540767285393e-10,
-     "cdf": 0.9999999999402667
+     "cdf": 0.9999999999402667,
+     "survival": 5.973330954114481e-11
     },
     {
      "index": 30,
      "x": 30.0,
      "density": 7.960892093825626e-17,
-     "cdf": 1.0
+     "cdf": 1.0,
+     "survival": 1.1732435431464345e-17
     }
    ]
   },
@@ -2054,31 +2114,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.3,
-     "cdf": 0.3
+     "cdf": 0.3,
+     "survival": 0.7
     },
     {
      "index": 5,
      "x": 5.0,
      "density": 0.050421,
-     "cdf": 0.882351
+     "cdf": 0.882351,
+     "survival": 0.11764900000000002
     },
     {
      "index": 10,
      "x": 10.0,
      "density": 0.008474257470000001,
-     "cdf": 0.98022673257
+     "cdf": 0.98022673257,
+     "survival": 0.019773267430000005
     },
     {
      "index": 15,
      "x": 15.0,
      "density": 0.0014242684529829003,
-     "cdf": 0.9966767069430399
+     "cdf": 0.9966767069430399,
+     "survival": 0.003323293056960101
     },
     {
      "index": 20,
      "x": 20.0,
      "density": 0.00023937679889283607,
-     "cdf": 0.9994414541359167
+     "cdf": 0.9994414541359167,
+     "survival": 0.0005585458640832842
     }
    ]
   },
@@ -2096,31 +2161,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.06400000000000002,
-     "cdf": 0.06400000000000002
+     "cdf": 0.06400000000000002,
+     "survival": 0.9359999999999999
     },
     {
      "index": 9,
      "x": 9.0,
      "density": 0.03547348992,
-     "cdf": 0.91655667712
+     "cdf": 0.91655667712,
+     "survival": 0.08344332287999998
     },
     {
      "index": 18,
      "x": 18.0,
      "density": 0.0012349690730879379,
-     "cdf": 0.997623497013959
+     "cdf": 0.997623497013959,
+     "survival": 0.002376502986040933
     },
     {
      "index": 26,
      "x": 26.0,
      "density": 4.126713168120353e-05,
-     "cdf": 0.999926022116123
+     "cdf": 0.999926022116123,
+     "survival": 7.397788387691941e-05
     },
     {
      "index": 35,
      "x": 35.0,
      "density": 7.327367376847668e-07,
-     "cdf": 0.9999987420527515
+     "cdf": 0.9999987420527515,
+     "survival": 1.2579472484239041e-06
     }
    ]
   },
@@ -2139,31 +2209,36 @@
      "index": 0,
      "x": 0.0,
      "density": 0.022917240458021564,
-     "cdf": 0.022917240458021564
+     "cdf": 0.022917240458021564,
+     "survival": 0.9770827595419784
     },
     {
      "index": 2,
      "x": 2.0,
      "density": 0.23723161394276682,
-     "cdf": 0.3728565943582715
+     "cdf": 0.3728565943582715,
+     "survival": 0.6271434056417285
     },
     {
      "index": 5,
      "x": 5.0,
      "density": 0.09963727785596206,
-     "cdf": 0.961234928716693
+     "cdf": 0.961234928716693,
+     "survival": 0.03876507128330701
     },
     {
      "index": 8,
      "x": 8.0,
      "density": 0.0008165546612883566,
-     "cdf": 0.9999404086034628
+     "cdf": 0.9999404086034628,
+     "survival": 5.959139653717926e-05
     },
     {
      "index": 10,
      "x": 10.0,
      "density": 1.7356717438013377e-06,
-     "cdf": 1.0
+     "cdf": 1.0,
+     "survival": 0.0
     }
    ]
   },
@@ -2181,33 +2256,740 @@
      "index": 0,
      "x": 1.0,
      "density": 0.16666666666666666,
-     "cdf": 0.16666666666666666
+     "cdf": 0.16666666666666666,
+     "survival": 0.8333333333333334
     },
     {
      "index": 1,
      "x": 2.0,
      "density": 0.16666666666666666,
-     "cdf": 0.3333333333333333
+     "cdf": 0.3333333333333333,
+     "survival": 0.6666666666666666
     },
     {
      "index": 2,
      "x": 3.0,
      "density": 0.16666666666666666,
-     "cdf": 0.5
+     "cdf": 0.5,
+     "survival": 0.5
     },
     {
      "index": 4,
      "x": 5.0,
      "density": 0.16666666666666666,
-     "cdf": 0.8333333333333334
+     "cdf": 0.8333333333333334,
+     "survival": 0.16666666666666666
     },
     {
      "index": 5,
      "x": 6.0,
      "density": 0.16666666666666666,
-     "cdf": 1.0
+     "cdf": 1.0,
+     "survival": 0.0
     }
    ]
+  }
+ ],
+ "quantiles": [
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.05,
+   "quantile": -1.6448536269514726
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.5,
+   "quantile": -4.874620640296072e-62
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 1.6448536269514722
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "p": 0.01,
+   "quantile": -5.58158696851021
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "p": 0.99,
+   "quantile": -4.41841303148979
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "p": 0.05,
+   "quantile": 0.4393641049274924
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "p": 0.5,
+   "quantile": 1.0
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "p": 0.95,
+   "quantile": 2.276016608514317
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "p": 0.01,
+   "quantile": 0.26544493152262744
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "p": 0.99,
+   "quantile": 27.836493454766828
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "p": 0.05,
+   "quantile": -2.0150483733330242
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "p": 0.5,
+   "quantile": -5.578088954947358e-31
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "p": 0.95,
+   "quantile": 2.0150483733330233
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    2.5
+   ],
+   "p": 0.01,
+   "quantile": -5.353111173030874
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    2.5
+   ],
+   "p": 0.99,
+   "quantile": 5.3531111730308725
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "p": 0.05,
+   "quantile": 0.7107230213973241
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "p": 0.5,
+   "quantile": 3.356693980033321
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "p": 0.95,
+   "quantile": 9.487729036781154
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "p": 0.01,
+   "quantile": 14.953456528455439
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "p": 0.99,
+   "quantile": 50.892181311517085
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "p": 0.05,
+   "quantile": 0.21119042878234492
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "p": 0.5,
+   "quantile": 0.9319331608510479
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "p": 0.95,
+   "quantile": 3.325834530413011
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "p": 0.01,
+   "quantile": 0.22569847214852332
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "p": 0.99,
+   "quantile": 14.019608680826575
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.35536151069866206
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "p": 0.5,
+   "quantile": 1.6783469900166605
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 4.743864518390577
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "p": 0.01,
+   "quantile": 5.54106531324379
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "p": 0.99,
+   "quantile": 15.922684937891114
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "p": 0.05,
+   "quantile": 0.06284989170835438
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "p": 0.5,
+   "quantile": 0.26444998329565994
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "p": 0.95,
+   "quantile": 0.5818034092520258
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "p": 0.01,
+   "quantile": 0.2961130991964492
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "p": 0.99,
+   "quantile": 0.566988552275062
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.051293294387550536
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "p": 0.5,
+   "quantile": 0.6931471805599453
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "p": 0.95,
+   "quantile": 2.99573227355399
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "p": 0.01,
+   "quantile": 0.04020134341400577
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "p": 0.99,
+   "quantile": 18.420680743952364
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.13805126655628416
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "p": 0.5,
+   "quantile": 0.7832197687746514
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 2.0781106375345564
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "p": 0.01,
+   "quantile": 1.1955214419588616
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "p": 0.99,
+   "quantile": 4.07164955669648
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.05
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.5,
+   "quantile": 0.5
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 0.95
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "p": 0.01,
+   "quantile": -1.92
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "p": 0.99,
+   "quantile": 5.92
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "p": 0.05,
+   "quantile": 4.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "p": 0.5,
+   "quantile": 8.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "p": 0.95,
+   "quantile": 12.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "p": 0.01,
+   "quantile": 0.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "p": 0.99,
+   "quantile": 6.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "p": 0.05,
+   "quantile": 1.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "p": 0.5,
+   "quantile": 4.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "p": 0.95,
+   "quantile": 8.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "p": 0.01,
+   "quantile": 43.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "p": 0.99,
+   "quantile": 79.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "p": 0.05,
+   "quantile": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "p": 0.5,
+   "quantile": 1.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "p": 0.95,
+   "quantile": 8.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    1
+   ],
+   "p": 0.01,
+   "quantile": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    1
+   ],
+   "p": 0.99,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "p": 0.05,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "p": 0.5,
+   "quantile": 4.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "p": 0.95,
+   "quantile": 11.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "p": 0.01,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "p": 0.99,
+   "quantile": 11.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "p": 0.05,
+   "quantile": 1.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "p": 0.5,
+   "quantile": 3.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "p": 0.95,
+   "quantile": 5.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "p": 0.01,
+   "quantile": 1.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "p": 0.99,
+   "quantile": 9.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "p": 0.05,
+   "quantile": 1.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "p": 0.5,
+   "quantile": 3.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "p": 0.95,
+   "quantile": 6.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "p": 0.01,
+   "quantile": -3.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "p": 0.99,
+   "quantile": 4.0
   }
  ]
 }

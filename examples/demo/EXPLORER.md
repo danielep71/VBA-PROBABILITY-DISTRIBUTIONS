@@ -5,8 +5,8 @@ The Explorer offers 16 distributions: Normal, Lognormal, Student t, Chi-square,
 F, Gamma, Beta, Exponential, Weibull and Uniform (continuous), and Binomial,
 Poisson, Geometric, Negative binomial, Hypergeometric and Discrete uniform
 (discrete). Each shows its density or mass, cumulative probability and
-survival probability P(X > x) at a probe point, and plots the first two.
-Quantiles and moments are not offered here.
+survival probability P(X > x) at a probe point, the quantile at a probability
+p, and plots the density and the cumulative. Moments are not offered here.
 
 It needs desktop Excel with dynamic arrays (Microsoft 365 or Excel 2024) and
 macros: every number is a call to the library's public `K_STATS_` functions.
@@ -40,8 +40,9 @@ one entry there and a reference case in `explorer_references.py`.
 
 ## How the sheet works
 
-Inputs are D6:D11 (distribution, up to four parameters, probe point x or k)
-and the plot window G10:G12 (lower bound, upper bound, number of points). The
+Inputs are D6:D12 (distribution, up to four parameters, probe point x or k,
+probability p), the plot window G11:G13 (lower bound, upper bound, number of
+points) and the number of decimals G14. The
 family table lives in the hidden columns from MA, read through the `Explorer*`
 workbook names. Picking a distribution in D6 loads its default parameters,
 probe point and plot window; editing a parameter refits the window.
@@ -51,11 +52,13 @@ Outputs are dynamic arrays, one formula each:
 | Cell | Spills | Formula |
 | --- | --- | --- |
 | `F19` | the x column | `SEQUENCE` between the bounds, or every integer for a discrete family |
-| `G19`, `H19` | density or mass, cumulative | `MAP` over the x column, one `SWITCH` on the distribution |
+| `G19`, `H19`, `I19` | density or mass, survival, cumulative | `MAP` over the x column, one `SWITCH` on the distribution |
 | `G7` | the three results | `VSTACK` of density, cumulative, survival at the probe |
+| `G10` | the quantile | the smallest x with CDF(x) >= p |
 
-The names `ExplorerX`, `ExplorerPDF` and `ExplorerCDF` refer to those spills
-(`F19#`, `G19#`, `H19#`); both charts take their series from them, so the grid
+The names `ExplorerX`, `ExplorerPDF`, `ExplorerSurvival` and `ExplorerCDF`
+refer to those spills (`F19#`, `G19#`, `H19#`, `I19#`); both charts take their
+series from them, so the grid
 and the charts follow the plot window and the number of points with no fixed
 rows. The `K_STATS_` functions do not accept arrays, hence `MAP` over the x
 column rather than passing it whole.
@@ -63,7 +66,16 @@ column rather than passing it whole.
 Status (G5) says `OK` or names the first parameter that is out of range, the
 unmet constraint (for example, a hypergeometric sample larger than its
 population), the probe point, the plot window or the number of points. Until
-it says `OK` the outputs are `#N/A`. A density that is undefined at a grid
+it says `OK` the outputs are `#N/A`. The quantile depends only on p as well:
+a p outside 0 to 1 leaves it `#N/A` and the other results as they are.
+
+The survival column is the library's own survival function, not 1 - CDF, so
+the right tail keeps its digits where the cumulative is 1 to double precision.
+The number of decimals (0 to 15, a list in G14) formats the results and the
+grid: the Explorer module sets their number format when G14 changes, so it
+needs macros like the rest of the sheet. A discrete x column stays in whole
+numbers. Conditional formats, one per value, were tried first and rejected:
+each rule over the spilled grid took Excel 40 to 80 seconds to add. A density that is undefined at a grid
 point (a pole) is `#N/A` by the library's design.
 
 Parameters are validated by named rules, one per slot, that read the limits
@@ -76,7 +88,7 @@ size, the successes in the population and the population size.
 
 The Explorer sheet is unprotected, as in the baseline; the result cells are
 locked and the inputs are not. Reset on the Ribbon asks for confirmation and
-restores Normal(0,1), probe 0 and 201 points. Cancelling changes nothing.
+restores Normal(0,1), probe 0, p = 0.95, 201 points and 6 decimals. Cancelling changes nothing.
 
 ## When macros are not running
 
@@ -94,11 +106,13 @@ as soon as macros run.
 60 digits, from the definitions: closed-form densities, incomplete gamma and
 beta functions, finite sums, and complement functions for the tails. It needs
 mpmath; without it the unit tests check the stored file only. The file holds
-143 probe cases (several parameter sets per family, with absolute tolerance
+80 quantile cases and 143 probe cases (several parameter sets per family, with absolute tolerance
 1e-12 plus relative 1e-9) and, for each family at its defaults, the plot
-window, the number of grid rows and five grid points.
+window, the number of grid rows and five grid points with density, survival
+and cumulative.
 
-`ci/Test-Explorer.ps1` checks, in desktop Excel, every probe case; every
+`ci/Test-Explorer.ps1` checks, in desktop Excel, every probe and quantile case;
+the decimals; every
 family's default window, spilled row count, five grid points and chart series
 and type; that an edit moves the grid and the charts; the parameter rules; an
 invalid input; and the reset. `ci/Test-ExplorerStates.ps1` does each family

@@ -15,7 +15,8 @@
    "functions": {
     "density": "K_STATS_Normal_Density",
     "cdf": "K_STATS_Normal_Cumulative",
-    "survival": "K_STATS_Normal_Survival"
+    "survival": "K_STATS_Normal_Survival",
+    "quantile": "K_STATS_Normal_InverseCumulative"
    },
    "parameters": [
     {
@@ -47,7 +48,8 @@
    "functions": {
     "density": "K_STATS_Lognormal_Density",
     "cdf": "K_STATS_Lognormal_Cumulative",
-    "survival": "K_STATS_Lognormal_Survival"
+    "survival": "K_STATS_Lognormal_Survival",
+    "quantile": "K_STATS_Lognormal_InverseCumulative"
    },
    "parameters": [
     {
@@ -79,7 +81,8 @@
    "functions": {
     "density": "K_STATS_StudentT_Density",
     "cdf": "K_STATS_StudentT_Cumulative",
-    "survival": "K_STATS_StudentT_Survival"
+    "survival": "K_STATS_StudentT_Survival",
+    "quantile": "K_STATS_StudentT_InverseCumulative"
    },
    "parameters": [
     {
@@ -104,7 +107,8 @@
    "functions": {
     "density": "K_STATS_ChiSquare_Density",
     "cdf": "K_STATS_ChiSquare_Cumulative",
-    "survival": "K_STATS_ChiSquare_Survival"
+    "survival": "K_STATS_ChiSquare_Survival",
+    "quantile": "K_STATS_ChiSquare_InverseCumulative"
    },
    "parameters": [
     {
@@ -129,7 +133,8 @@
    "functions": {
     "density": "K_STATS_F_Density",
     "cdf": "K_STATS_F_Cumulative",
-    "survival": "K_STATS_F_Survival"
+    "survival": "K_STATS_F_Survival",
+    "quantile": "K_STATS_F_InverseCumulative"
    },
    "parameters": [
     {
@@ -161,7 +166,8 @@
    "functions": {
     "density": "K_STATS_Gamma_Density",
     "cdf": "K_STATS_Gamma_Cumulative",
-    "survival": "K_STATS_Gamma_Survival"
+    "survival": "K_STATS_Gamma_Survival",
+    "quantile": "K_STATS_Gamma_InverseCumulative"
    },
    "parameters": [
     {
@@ -193,7 +199,8 @@
    "functions": {
     "density": "K_STATS_Beta_Density",
     "cdf": "K_STATS_Beta_Cumulative",
-    "survival": "K_STATS_Beta_Survival"
+    "survival": "K_STATS_Beta_Survival",
+    "quantile": "K_STATS_Beta_InverseCumulative"
    },
    "parameters": [
     {
@@ -225,7 +232,8 @@
    "functions": {
     "density": "K_STATS_Exponential_Density",
     "cdf": "K_STATS_Exponential_Cumulative",
-    "survival": "K_STATS_Exponential_Survival"
+    "survival": "K_STATS_Exponential_Survival",
+    "quantile": "K_STATS_Exponential_InverseCumulative"
    },
    "parameters": [
     {
@@ -250,7 +258,8 @@
    "functions": {
     "density": "K_STATS_Weibull_Density",
     "cdf": "K_STATS_Weibull_Cumulative",
-    "survival": "K_STATS_Weibull_Survival"
+    "survival": "K_STATS_Weibull_Survival",
+    "quantile": "K_STATS_Weibull_InverseCumulative"
    },
    "parameters": [
     {
@@ -282,7 +291,8 @@
    "functions": {
     "density": "K_STATS_Uniform_Density",
     "cdf": "K_STATS_Uniform_Cumulative",
-    "survival": "K_STATS_Uniform_Survival"
+    "survival": "K_STATS_Uniform_Survival",
+    "quantile": "K_STATS_Uniform_InverseCumulative"
    },
    "parameters": [
     {
@@ -314,7 +324,8 @@
    "functions": {
     "density": "K_STATS_Binomial_PMF",
     "cdf": "K_STATS_Binomial_Cumulative",
-    "survival": "K_STATS_Binomial_Survival"
+    "survival": "K_STATS_Binomial_Survival",
+    "quantile": "K_STATS_Binomial_InverseCumulative"
    },
    "parameters": [
     {
@@ -346,7 +357,8 @@
    "functions": {
     "density": "K_STATS_Poisson_PMF",
     "cdf": "K_STATS_Poisson_Cumulative",
-    "survival": "K_STATS_Poisson_Survival"
+    "survival": "K_STATS_Poisson_Survival",
+    "quantile": "K_STATS_Poisson_InverseCumulative"
    },
    "parameters": [
     {
@@ -371,7 +383,8 @@
    "functions": {
     "density": "K_STATS_Geometric_PMF",
     "cdf": "K_STATS_Geometric_Cumulative",
-    "survival": "K_STATS_Geometric_Survival"
+    "survival": "K_STATS_Geometric_Survival",
+    "quantile": "K_STATS_Geometric_InverseCumulative"
    },
    "parameters": [
     {
@@ -396,7 +409,8 @@
    "functions": {
     "density": "K_STATS_NegativeBinomial_PMF",
     "cdf": "K_STATS_NegativeBinomial_Cumulative",
-    "survival": "K_STATS_NegativeBinomial_Survival"
+    "survival": "K_STATS_NegativeBinomial_Survival",
+    "quantile": "K_STATS_NegativeBinomial_InverseCumulative"
    },
    "parameters": [
     {
@@ -428,7 +442,8 @@
    "functions": {
     "density": "K_STATS_Hypergeometric_PMF",
     "cdf": "K_STATS_Hypergeometric_Cumulative",
-    "survival": "K_STATS_Hypergeometric_Survival"
+    "survival": "K_STATS_Hypergeometric_Survival",
+    "quantile": "K_STATS_Hypergeometric_InverseCumulative"
    },
    "parameters": [
     {
@@ -467,7 +482,8 @@
    "functions": {
     "density": "K_STATS_DiscreteUniform_PMF",
     "cdf": "K_STATS_DiscreteUniform_Cumulative",
-    "survival": "K_STATS_DiscreteUniform_Survival"
+    "survival": "K_STATS_DiscreteUniform_Survival",
+    "quantile": "K_STATS_DiscreteUniform_InverseCumulative"
    },
    "parameters": [
     {

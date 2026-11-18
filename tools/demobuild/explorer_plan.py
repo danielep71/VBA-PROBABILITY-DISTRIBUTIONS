@@ -6,10 +6,12 @@ and the unit tests check the same plan against the library's public API. A cell
 of the sheet is therefore never typed twice: the family table, the dispatch
 formulas, the input checks and the plot window all come from the same rows.
 
-Layout (the user's workbook, v1): inputs D6:D11 (distribution, up to four
-parameters, evaluation point), plot window G10:G12, results G7:G9 and G13, the
-x / density / cumulative grid in F19:H19 with one dynamic-array formula per
-column. The family table sits in hidden columns from MA.
+Layout (the user's workbook, v2): inputs D6:D12 (distribution, up to four
+parameters, evaluation point, probability p), results G7:G10 (density,
+cumulative and survival at x, quantile at p), plot window G11:G13, decimals
+G14, right tail G15, support text F16, and the x / density / survival /
+cumulative grid in F19:I19 with one dynamic-array formula per column. The
+family table sits in hidden columns from MA.
 """
 from __future__ import annotations
 
@@ -27,6 +29,10 @@ GRID_FIRST_ROW = 19
 GRID_MAX_ROWS = 1000                # the largest plot window: points and discrete counts
 PARAMETER_CELLS = ["$D$7", "$D$8", "$D$9", "$D$10"]
 LETTERS = "abcd"
+PROBABILITY = "$D$12"
+LOWER, UPPER, POINTS, DECIMALS = "$G$11", "$G$12", "$G$13", "$G$14"
+MAX_DECIMALS = 15
+DECIMALS_COLUMN = "NC"              # 0 to 15, the list behind the decimals cell
 UNUSED_LABEL = "(not used)"
 UNUSED_MIN, UNUSED_MAX = -1e15, 1e15
 
@@ -142,8 +148,8 @@ def check_formula(index: int, family: dict[str, Any]) -> str:
 def x_grid_formula() -> str:
     return (
         '=IF($G$5="OK",IF(INDEX(ExplorerKind,ExplorerRow)="Discrete",'
-        'LET(first,-INT(-$G$10),SEQUENCE(INT($G$11)-first+1,,first)),'
-        'LET(i,SEQUENCE($G$12,,0),$G$10+($G$11-$G$10)*i/($G$12-1))),NA())'
+        f'LET(first,-INT(-{LOWER}),SEQUENCE(INT({UPPER})-first+1,,first)),'
+        f'LET(i,SEQUENCE({POINTS},,0),{LOWER}+({UPPER}-{LOWER})*i/({POINTS}-1))),NA())'
     )
 
 
@@ -156,6 +162,12 @@ def results_formula(families: list[dict[str, Any]]) -> str:
     return f'=IF($G$5="OK",VSTACK({stack}),EXPAND(NA(),3,,NA()))'
 
 
+def quantile_formula(families: list[dict[str, Any]]) -> str:
+    """The quantile at p: only p is checked here, so a bad p leaves the other results alone."""
+    return (f'=IF(AND($G$5="OK",ISNUMBER({PROBABILITY}),{PROBABILITY}>=0,{PROBABILITY}<=1),'
+            f'{dispatch(families, "quantile", PROBABILITY)},NA())')
+
+
 def status_formula(defaults: dict[str, Any]) -> str:
     x_limit = number(defaults["x_limit"])
     bound = number(defaults["bound_limit"])
@@ -165,10 +177,10 @@ def status_formula(defaults: dict[str, Any]) -> str:
         '=IFERROR(LET(message,INDEX(ExplorerCheck,ExplorerRow),'
         'IF(message<>"","Check: "&message,'
         f'IF(NOT(AND(ISNUMBER($D$11),ABS($D$11)<={x_limit})),"Check: evaluation point",'
-        f'IF(NOT(AND(ISNUMBER($G$10),ISNUMBER($G$11),ABS($G$10)<={bound},ABS($G$11)<={bound})),"Check: plot window",'
+        f'IF(NOT(AND(ISNUMBER({LOWER}),ISNUMBER({UPPER}),ABS({LOWER})<={bound},ABS({UPPER})<={bound})),"Check: plot window",'
         'IF(INDEX(ExplorerKind,ExplorerRow)="Discrete",'
-        f'IF(AND($G$11>=$G$10,INT($G$11)>=-INT(-$G$10),INT($G$11)--INT(-$G$10)<={max_discrete}),"OK","Check: plot window"),'
-        f'IF($G$10>=$G$11,"Check: plot window",IF(NOT(AND(ISNUMBER($G$12),$G$12=INT($G$12),$G$12>=2,$G$12<={max_points})),'
+        f'IF(AND({UPPER}>={LOWER},INT({UPPER})>=-INT(-{LOWER}),INT({UPPER})--INT(-{LOWER})<={max_discrete}),"OK","Check: plot window"),'
+        f'IF({LOWER}>={UPPER},"Check: plot window",IF(NOT(AND(ISNUMBER({POINTS}),{POINTS}=INT({POINTS}),{POINTS}>=2,{POINTS}<={max_points})),'
         '"Check: number of points","OK"))))))),"Check: distribution")'
     )
 
@@ -186,7 +198,10 @@ def plan() -> dict[str, Any]:
         {"name": "ExplorerRow", "refers": f"=MATCH({SHEET}!$D$6,ExplorerFamily,0)"},
         {"name": "ExplorerX", "refers": f"={SHEET}!$F${GRID_FIRST_ROW}#"},
         {"name": "ExplorerPDF", "refers": f"={SHEET}!$G${GRID_FIRST_ROW}#"},
-        {"name": "ExplorerCDF", "refers": f"={SHEET}!$H${GRID_FIRST_ROW}#"},
+        {"name": "ExplorerSurvival", "refers": f"={SHEET}!$H${GRID_FIRST_ROW}#"},
+        {"name": "ExplorerCDF", "refers": f"={SHEET}!$I${GRID_FIRST_ROW}#"},
+        {"name": "ExplorerDecimals",
+         "refers": f"={SHEET}!${DECIMALS_COLUMN}$1:${DECIMALS_COLUMN}${MAX_DECIMALS + 1}"},
     ]
     # The rules of validation and conditional formats are named formulas: a
     # formula passed to Excel through COM is read in the user's list separator
@@ -202,18 +217,19 @@ def plan() -> dict[str, Any]:
         ]
     names += [
         {"name": "ExplorerStatusBad", "refers": f'={SHEET}!$G$5<>"OK"'},
-        {"name": "ExplorerGridDiscrete", "refers": '=INDEX(ExplorerKind,ExplorerRow)="Discrete"'},
     ]
     last_row = GRID_FIRST_ROW + GRID_MAX_ROWS - 1
     formulas = [
         {"address": "G5", "formula": status_formula(defaults)},
-        {"address": "G6", "formula": '=IF(ISERROR(K_STATS_NormalStandard_Cumulative(0)+0*COUNTA($D$6:$D$11)),"DISABLED","ENABLED")'},
+        {"address": "G6", "formula": '=IF(ISERROR(K_STATS_NormalStandard_Cumulative(0)+0*COUNTA($D$6:$D$12)),"DISABLED","ENABLED")'},
         {"address": "G7", "formula": results_formula(families)},
-        {"address": "G13", "formula": f'=IF($G$5="OK",{dispatch(families, "survival", "$G$11")},NA())'},
-        {"address": "F14", "formula": '=IFERROR(INDEX(ExplorerSupport,ExplorerRow),"")'},
+        {"address": "G10", "formula": quantile_formula(families)},
+        {"address": "G15", "formula": f'=IF($G$5="OK",{dispatch(families, "survival", UPPER)},NA())'},
+        {"address": "F16", "formula": '=IFERROR(INDEX(ExplorerSupport,ExplorerRow),"")'},
         {"address": f"F{GRID_FIRST_ROW}", "formula": x_grid_formula()},
         {"address": f"G{GRID_FIRST_ROW}", "formula": grid_formula(families, "density")},
-        {"address": f"H{GRID_FIRST_ROW}", "formula": grid_formula(families, "cdf")},
+        {"address": f"H{GRID_FIRST_ROW}", "formula": grid_formula(families, "survival")},
+        {"address": f"I{GRID_FIRST_ROW}", "formula": grid_formula(families, "cdf")},
     ]
     for slot in range(4):
         formulas.append({"address": f"C{7 + slot}", "formula": f'=IFERROR(INDEX(ExplorerLabels,ExplorerRow,{slot + 1}),"")'})
@@ -223,15 +239,22 @@ def plan() -> dict[str, Any]:
         {"address": "F7", "value": "PDF / PMF at x"},
         {"address": "F8", "value": "CDF at x"},
         {"address": "F9", "value": "P(X > x)"},
-        {"address": "F10", "value": "Plot lower bound"},
-        {"address": "F11", "value": "Plot upper bound"},
-        {"address": "F12", "value": "Number of points"},
-        {"address": "F13", "value": "P(X > upper bound)"},
+        {"address": "F10", "value": "Quantile at p"},
+        {"address": "F11", "value": "Plot lower bound"},
+        {"address": "F12", "value": "Plot upper bound"},
+        {"address": "F13", "value": "Number of points"},
+        {"address": "F14", "value": "Number of decimals"},
+        {"address": "F15", "value": "P(X > upper bound)"},
+        {"address": "C12", "value": "Probability p"},
+        {"address": "F18", "value": "x / integer k"},
+        {"address": "G18", "value": "PDF / PMF"},
+        {"address": "H18", "value": "P(X > x)"},
+        {"address": "I18", "value": "CDF"},
         {"address": "C19", "value": "Yellow cells are editable. A new distribution loads its parameters and plot window."},
         {"address": "C21", "value": "Select a result or grid cell to read its formula: each grid column is one spilled formula."},
         {"address": "C23", "value": "Continuous: Number of points between the bounds. Discrete: every integer between them."},
         {"address": "C25", "value": "Reset Explorer inputs on the Ribbon restores Normal(0,1), after confirmation."},
-        {"address": "C27", "value": "Educational demo, not an accuracy certification. Quantiles are not offered here."},
+        {"address": "C27", "value": "Educational demo, not an accuracy certification. The quantile is the smallest x with CDF >= p."},
         {"address": "C29", "value": "Needs macros and Excel 365 or 2024. If Macros says DISABLED, unblock the file and reopen."},
     ]
     return {
@@ -239,21 +262,29 @@ def plan() -> dict[str, Any]:
         "sheet": SHEET,
         "families": families,
         "defaults": defaults,
-        "table": {"cells": table_cells(families), "rows": rows, "first_column": FIRST_TABLE_COLUMN},
+        "table": {"cells": table_cells(families) + [{"address": f"{DECIMALS_COLUMN}{n + 1}", "value": n}
+                                                    for n in range(MAX_DECIMALS + 1)],
+                  "rows": rows, "first_column": FIRST_TABLE_COLUMN},
         "names": names,
         "formulas": formulas,
         "texts": texts,
-        "grid": {"first_row": GRID_FIRST_ROW, "last_row": last_row, "columns": ["F", "G", "H"]},
+        "grid": {"first_row": GRID_FIRST_ROW, "last_row": last_row, "columns": ["F", "G", "H", "I"], "cleared": "J"},
+        # Applied by ApplyDecimals in the Explorer module, which names the same cells.
+        "decimals": {"cell": DECIMALS, "default": 6, "max": MAX_DECIMALS, "column": DECIMALS_COLUMN,
+                     "cells": f"G7:G10,G15,G{GRID_FIRST_ROW}:I{last_row}",
+                     "x_cells": f"F{GRID_FIRST_ROW}:F{last_row}"},
+        "probability": {"cell": PROBABILITY, "default": 0.95},
         "validation": {
             "family_list": "=ExplorerFamily",
             "parameter": "=ExplorerParameterOk{slot}",
             "x_limit": defaults["x_limit"], "bound_limit": defaults["bound_limit"],
             "points": [2, defaults["max_points"]],
+            "decimals_list": "=ExplorerDecimals",
+            "probability": [0, 1],
         },
         "conditional": {
             "unused_parameter": "=ExplorerParameterUnused{slot}",
             "status_bad": "=ExplorerStatusBad",
-            "grid_discrete": "=ExplorerGridDiscrete",
             "grid_inside": f"=ROW()-{GRID_FIRST_ROW - 1}<=ROWS(ExplorerX)",
         },
     }

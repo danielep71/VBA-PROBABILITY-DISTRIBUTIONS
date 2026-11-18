@@ -15,6 +15,17 @@ Private Const FIRST_PARAMETER_ROW As Long = 7
 Private Const PARAMETER_COUNT As Long = 4
 Private Const DEFAULT_FAMILY As String = "Normal"
 Private Const DEFAULT_POINTS As Long = 201
+Private Const DEFAULT_PROBABILITY As Double = 0.95
+Private Const DEFAULT_DECIMALS As Long = 6
+' Inputs D6:D12 (distribution, parameters, x, p); plot window G11:G13;
+' decimals G14, applied by ApplyDecimals to the results and the grid.
+Private Const LOWER_CELL As String = "G11"
+Private Const UPPER_CELL As String = "G12"
+Private Const POINTS_CELL As String = "G13"
+Private Const DECIMALS_CELL As String = "G14"
+Private Const MAX_DECIMALS As Long = 15
+Private Const FORMATTED_CELLS As String = "G7:G10,G15,G19:I1018"
+Private Const X_CELLS As String = "F19:F1018"
 
 Public Function ExplorerSheet() As Worksheet
     Dim Candidate As Worksheet
@@ -68,6 +79,9 @@ Public Sub ResetExplorerInputs(Optional ByVal Confirm As Boolean = True)
     Application.EnableEvents = False
     Sheet.Range(FAMILY_CELL).Value2 = DEFAULT_FAMILY
     LoadFamilyDefaults Sheet
+    Sheet.Range("D12").Value2 = DEFAULT_PROBABILITY
+    Sheet.Range(DECIMALS_CELL).Value2 = DEFAULT_DECIMALS
+    ApplyDecimals Sheet
     Application.EnableEvents = SavedEvents
     RefreshExplorer
     Exit Sub
@@ -90,6 +104,7 @@ Public Sub ExplorerInputsChanged(ByVal Target As Range)
     On Error GoTo Failed
     Set Sheet = ExplorerSheet()
     If Not Target.Worksheet Is Sheet Then Exit Sub
+    If Not Application.Intersect(Target, Sheet.Range(DECIMALS_CELL)) Is Nothing Then ApplyDecimals Sheet
     If Application.Intersect(Target, Sheet.Range("D6:D10")) Is Nothing Then Exit Sub
     SavedEvents = Application.EnableEvents
     Application.EnableEvents = False
@@ -180,6 +195,30 @@ Failed:
 End Sub
 
 
+Public Sub ApplyDecimals(ByVal Sheet As Worksheet)
+    ' Formats the results and the grid with the number of decimals in G14. A
+    ' value that is not a whole number from 0 to 15 leaves the formats as they
+    ' are. The x column of a discrete family is shown in whole numbers.
+    Dim Places As Variant
+    Dim WasProtected As Boolean
+    Dim Pattern As String
+    Places = Sheet.Range(DECIMALS_CELL).Value2
+    If IsError(Places) Then Exit Sub
+    If Not IsNumeric(Places) Or IsEmpty(Places) Then Exit Sub
+    If CDbl(Places) <> Int(CDbl(Places)) Or CDbl(Places) < 0 Or CDbl(Places) > MAX_DECIMALS Then Exit Sub
+    WasProtected = Sheet.ProtectContents
+    If WasProtected Then Sheet.Unprotect
+    If CLng(Places) = 0 Then Pattern = "0" Else Pattern = "0." & String$(CLng(Places), "0")
+    Sheet.Range(FORMATTED_CELLS).NumberFormat = Pattern
+    If IsDiscrete(Sheet) Then
+        Sheet.Range(X_CELLS).NumberFormat = "0"
+    Else
+        Sheet.Range(X_CELLS).NumberFormat = Pattern
+    End If
+    If WasProtected Then Sheet.Protect
+End Sub
+
+
 Private Function FamilyRow(ByVal Sheet As Worksheet) As Long
     ' Row of the selected family in the table, or 0 when D6 is not a family.
     Dim Position As Variant
@@ -207,8 +246,9 @@ Private Sub LoadFamilyDefaults(ByVal Sheet As Worksheet)
             Sheet.Range("ExplorerDefaults").Cells(Row, Slot).Value2
     Next Slot
     Sheet.Range("D11").Value2 = Sheet.Range("ExplorerX0").Cells(Row, 1).Value2
-    Sheet.Range("G12").Value2 = DEFAULT_POINTS
+    Sheet.Range(POINTS_CELL).Value2 = DEFAULT_POINTS
     RefitPlotWindow Sheet
+    ApplyDecimals Sheet
 End Sub
 
 
@@ -227,8 +267,8 @@ Private Sub RefitPlotWindow(ByVal Sheet As Worksheet)
     If IsNumeric(Lower) And IsNumeric(Upper) Then
         If Not IsError(Lower) And Not IsError(Upper) Then
             If Len(CStr(Lower)) > 0 And Len(CStr(Upper)) > 0 Then
-                Sheet.Range("G10").Value2 = CDbl(Lower)
-                Sheet.Range("G11").Value2 = CDbl(Upper)
+                Sheet.Range(LOWER_CELL).Value2 = CDbl(Lower)
+                Sheet.Range(UPPER_CELL).Value2 = CDbl(Upper)
             End If
         End If
     End If

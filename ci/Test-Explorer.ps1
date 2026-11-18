@@ -7,7 +7,7 @@ $directory = (Resolve-Path $PackageDirectory).Path
 $path = Join-Path $directory 'Probability-Distributions-Demo.xlsm'
 $fixture = Get-Content (Join-Path $PSScriptRoot '../examples/demo/explorer-references.json') -Raw | ConvertFrom-Json
 $plan = Get-Content (Join-Path $directory 'explorer-plan.json') -Raw | ConvertFrom-Json
-$report = [ordered]@{ status = 'FAIL'; sha256 = (Get-FileHash $path -Algorithm SHA256).Hash; cases = 0; grids = @(); notes = @() }
+$report = [ordered]@{ status = 'FAIL'; sha256 = (Get-FileHash $path -Algorithm SHA256).Hash; cases = 0; quantiles = 0; grids = @(); notes = @() }
 $excel = $null
 $book = $null
 $other = $null
@@ -54,12 +54,14 @@ try {
     if ($validation.Type -ne 3 -or $validation.Formula1 -ne '=ExplorerFamily') { throw 'The distribution list is not backed by the family table' }
     $listed = @($sheet.Range('ExplorerFamily').Cells | ForEach-Object { [string]$_.Value2 })
     if (($listed -join '|') -ne ($families -join '|')) { throw 'The family table does not match the plan' }
-    foreach ($address in @('D6:D11', 'G10:G12')) {
+    foreach ($address in @('D6:D12', 'G11:G14')) {
         if ($sheet.Range($address).Locked) { throw "$address must be editable" }
     }
-    foreach ($address in @('G5:G9', 'G13', 'F19:H1018')) {
+    foreach ($address in @('G5:G10', 'G15', 'F19:I1018')) {
         if (-not $sheet.Range($address).Locked) { throw "$address must be locked" }
     }
+    if ($sheet.Range('F16').MergeArea.Address($false, $false) -ne 'F16:H17' -or -not $sheet.Range('F16').WrapText) { throw "The support text is not one wrapped cell over F16:H17: $($sheet.Range('F16').MergeArea.Address($false, $false))" }
+    if ([string]$sheet.Range('J18').Value2 -ne '' -or $sheet.Range('J19').HasFormula) { throw 'Column J still holds the Python columns' }
     $report.structure = 'PASS'
 
     # Every family at its defaults: window, spilled grid, sample points, charts.
@@ -72,12 +74,12 @@ try {
         for ($slot = 0; $slot -lt $grid.parameters.Count; $slot++) {
             if ((Read-Number $sheet ('D' + (7 + $slot))) -ne [double]$grid.parameters[$slot]) { throw "$($grid.family): default parameter $($slot + 1) differs from the reference set" }
         }
-        if (-not (Near (Read-Number $sheet 'G10') $grid.lower) -or -not (Near (Read-Number $sheet 'G11') $grid.upper)) {
-            throw "$($grid.family): plot window $($sheet.Range('G10').Value2) .. $($sheet.Range('G11').Value2), expected $($grid.lower) .. $($grid.upper)"
+        if (-not (Near (Read-Number $sheet 'G11') $grid.lower) -or -not (Near (Read-Number $sheet 'G12') $grid.upper)) {
+            throw "$($grid.family): plot window $($sheet.Range('G11').Value2) .. $($sheet.Range('G12').Value2), expected $($grid.lower) .. $($grid.upper)"
         }
         $rows = Grid-Rows $sheet
         if ($rows -ne [int]$grid.rows) { throw "$($grid.family): the grid has $rows rows, expected $($grid.rows)" }
-        foreach ($column in @('G', 'H')) {
+        foreach ($column in @('G', 'H', 'I')) {
             $spill = $sheet.Range($column + '19').SpillingToRange
             if ($null -eq $spill -or [int]$spill.Rows.Count -ne $rows) { throw "$($grid.family): column $column does not spill over the same rows as x" }
         }
@@ -90,7 +92,8 @@ try {
             if (-not (Near (Read-Number $sheet "F$address") $sample.x)) { throw "$($grid.family): grid x at row $address is $($sheet.Range("F$address").Value2), expected $($sample.x)" }
             if ($null -eq $sample.density) { continue }
             if (-not (Near (Read-Number $sheet "G$address") $sample.density)) { throw "$($grid.family): grid density at x=$($sample.x) is $($sheet.Range("G$address").Value2), expected $($sample.density)" }
-            if (-not (Near (Read-Number $sheet "H$address") $sample.cdf)) { throw "$($grid.family): grid CDF at x=$($sample.x) is $($sheet.Range("H$address").Value2), expected $($sample.cdf)" }
+            if (-not (Near (Read-Number $sheet "I$address") $sample.cdf)) { throw "$($grid.family): grid CDF at x=$($sample.x) is $($sheet.Range("I$address").Value2), expected $($sample.cdf)" }
+            if (-not (Near (Read-Number $sheet "H$address") $sample.survival)) { throw "$($grid.family): grid survival at x=$($sample.x) is $($sheet.Range("H$address").Value2), expected $($sample.survival)" }
         }
         $discrete = ([string]$sheet.Range('ExplorerKind').Cells($families.IndexOf($grid.family) + 1, 1).Value2) -eq 'Discrete'
         $types = if ($discrete) { @(51, -4169) } else { @(75, 75) }
@@ -106,9 +109,9 @@ try {
 
     # Probe values: every case of the fixture, several parameter sets per family.
     $excel.EnableEvents = $false
-    Set-Number $sheet 'G12' 2.0
-    Set-Number $sheet 'G10' 0.0
-    Set-Number $sheet 'G11' 3.0
+    Set-Number $sheet 'G13' 2.0
+    Set-Number $sheet 'G11' 0.0
+    Set-Number $sheet 'G12' 3.0
     foreach ($case in $fixture.cases) {
         Set-Text $sheet 'D6' $case.family
         for ($slot = 0; $slot -lt $case.parameters.Count; $slot++) { Set-Number $sheet ('D' + (7 + $slot)) ([double]$case.parameters[$slot]) }
@@ -124,16 +127,29 @@ try {
         if (-not (Near $survival $case.survival)) { throw "$label survival $($sheet.Range('G9').Value2), expected $($case.survival)" }
         $report.cases++
     }
+    foreach ($case in $fixture.quantiles) {
+        Set-Text $sheet 'D6' $case.family
+        for ($slot = 0; $slot -lt $case.parameters.Count; $slot++) { Set-Number $sheet ('D' + (7 + $slot)) ([double]$case.parameters[$slot]) }
+        Set-Number $sheet 'D12' ([double]$case.p)
+        $excel.Calculate()
+        $quantile = Read-Number $sheet 'G10'
+        if (-not (Near $quantile $case.quantile)) { throw "$($case.family)($($case.parameters -join ',')) quantile at $($case.p) is $($sheet.Range('G10').Value2), expected $($case.quantile)" }
+        $report.quantiles++
+    }
+    Set-Number $sheet 'D12' 1.5
+    $excel.Calculate()
+    if (-not (Is-Error $sheet.Range('G10').Value2) -or [string]$sheet.Range('G5').Value2 -ne 'OK') { throw 'A probability above 1 gives a quantile, or stops the other results' }
+    Set-Number $sheet 'D12' 0.5
     # A negative fractional lower bound of a discrete grid starts at the next integer up.
     Set-Text $sheet 'D6' 'Discrete uniform'
     Set-Number $sheet 'D7' -5.0
     Set-Number $sheet 'D8' 5.0
-    Set-Number $sheet 'G10' -2.5
-    Set-Number $sheet 'G11' 2.0
+    Set-Number $sheet 'G11' -2.5
+    Set-Number $sheet 'G12' 2.0
     $excel.Calculate()
     if ((Read-Number $sheet 'F19') -ne -2.0 -or (Grid-Rows $sheet) -ne 5) { throw "Discrete window -2.5 to 2 starts at $($sheet.Range('F19').Value2) with $(Grid-Rows $sheet) rows" }
-    Set-Number $sheet 'G10' -0.5
-    Set-Number $sheet 'G11' -0.1
+    Set-Number $sheet 'G11' -0.5
+    Set-Number $sheet 'G12' -0.1
     $excel.Calculate()
     if ([string]$sheet.Range('G5').Value2 -ne 'Check: plot window') { throw 'A discrete window with no integer is accepted' }
     $excel.EnableEvents = $true
@@ -142,11 +158,11 @@ try {
     [void]$excel.Run($prefix + 'ResetExplorerInputs', $false)
     Set-Number $sheet 'D8' 2.0
     if ([Math]::Abs((Read-Number $sheet 'G7') - 0.19947114020071635) -gt 1e-12) { throw 'Input event did not recalculate the Normal density' }
-    if ((Read-Number $sheet 'G10') -ne -8.0 -or (Read-Number $sheet 'G11') -ne 8.0) { throw 'The plot window did not follow sigma' }
+    if ((Read-Number $sheet 'G11') -ne -8.0 -or (Read-Number $sheet 'G12') -ne 8.0) { throw 'The plot window did not follow sigma' }
     if ((Read-Number $sheet 'F19') -ne -8.0 -or (Read-Number $sheet 'F219') -ne 8.0) { throw 'The grid did not follow the plot window' }
     $values = @($sheet.ChartObjects('ExplorerDensity').Chart.SeriesCollection(1).Values)
     if ([Math]::Abs([double]$values[100] - (Read-Number $sheet 'G119')) -gt 1e-12) { throw 'The density chart did not follow the grid' }
-    Set-Number $sheet 'G12' 50.0
+    Set-Number $sheet 'G13' 50.0
     if ((Grid-Rows $sheet) -ne 50 -or (Chart-Points $sheet 'ExplorerCDF') -ne 50) { throw 'The grid and the charts did not follow the number of points' }
     $report.edits_move_grid_and_charts = 'PASS'
 
@@ -187,6 +203,19 @@ try {
     if ($sheet.Range('D6').Validation.Value) { throw 'The validation accepts a made-up distribution name' }
     $report.invalid_input = 'PASS'
 
+    # The number of decimals sets the format of the results and the grid, through conditional formats.
+    [void]$excel.Run($prefix + 'ResetExplorerInputs', $false)
+    $dec = [string]$excel.International(3)
+    foreach ($test in @(@(3.0, ('0' + $dec + '399')), @(0.0, '0'), @(10.0, ('0' + $dec + '3989422804')))) {
+        Set-Number $sheet 'G14' $test[0]
+        if ([string]$sheet.Range('G7').Text -ne $test[1]) { throw "With $($test[0]) decimals G7 shows $($sheet.Range('G7').Text), expected $($test[1])" }
+    }
+    Set-Number $sheet 'G14' 2.0
+    if ([string]$sheet.Range('F19').Text -ne ('-4' + $dec + '00') -or [string]$sheet.Range('H119').Text -ne ('0' + $dec + '50')) { throw "The grid does not follow the decimals: $($sheet.Range('F19').Text), $($sheet.Range('H119').Text)" }
+    Set-Text $sheet 'D6' 'Poisson'
+    if ([string]$sheet.Range('F20').Text -ne '1') { throw "A discrete x shows $($sheet.Range('F20').Text), not a whole number" }
+    $report.decimals = 'PASS'
+
     # The reset restores Normal(0,1) and touches no other workbook.
     $other = $excel.Workbooks.Add()
     $other.Worksheets.Item(1).Range('D6').Value2 = 'sentinel'
@@ -194,7 +223,7 @@ try {
     [void]$excel.Run($prefix + 'ResetExplorerInputs', $false)
     if ($other.Worksheets.Item(1).Range('D6').Value2 -ne 'sentinel') { throw 'Reset changed another workbook' }
     $sheet = $book.Worksheets.Item('Explorer')
-    if ($sheet.Range('D6').Value2 -ne 'Normal' -or $sheet.Range('D8').Value2 -ne 1.0 -or (Read-Number $sheet 'G12') -ne 201.0) { throw 'Reset did not restore the defaults' }
+    if ($sheet.Range('D6').Value2 -ne 'Normal' -or $sheet.Range('D8').Value2 -ne 1.0 -or (Read-Number $sheet 'G13') -ne 201.0 -or (Read-Number $sheet 'G14') -ne 6.0 -or (Read-Number $sheet 'D12') -ne 0.95) { throw 'Reset did not restore the defaults' }
     if ((Grid-Rows $sheet) -ne 201) { throw 'Reset did not restore the grid' }
     $report.reset_isolation = 'PASS'
     if (-not $excel.EnableEvents) { throw 'Events were left off' }

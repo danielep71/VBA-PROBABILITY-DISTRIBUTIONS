@@ -10,7 +10,9 @@ function when there is one, so a tail is not computed as 1 - CDF.
 Each case carries the parameters in the order of the Explorer's four input
 cells and the probe point. Each family also carries its default plot window,
 written out here, and five points of its default grid, so a test can check the
-spilled x column and the density and CDF columns. This fixture checks the demo's
+spilled x column and the density, survival and CDF columns. Quantiles are the
+smallest x with CDF(x) >= p: a 400-step bisection of the CDF above for a
+continuous family, a scan of the cumulative sums for a discrete one. This fixture checks the demo's
 wiring and arithmetic; it does not replace the library's accuracy contracts.
 
 Run with mpmath installed: python examples/demo/explorer_references.py
@@ -145,6 +147,34 @@ FAMILIES = {
 }
 
 
+def quantile(family, kind, params, p):
+    """Smallest x with CDF(x) >= p: bisection on the continuous CDF, a scan of the discrete one."""
+    p = mpf(p)
+    if kind == "discrete":
+        k = int(default_window(family, params)[0]) if family in ("Hypergeometric", "Discrete uniform") else 0
+        while discrete(family, params, k)[1] < p:
+            k += 1
+        return mpf(k)
+    low, high = {"Beta": (0, 1)}.get(family, (None, None))
+    if family == "Uniform":
+        low, high = params[0], params[1]
+    if low is None:
+        positive = family not in ("Normal", "Student t")
+        low, high = (mpf(0), mpf(1)) if positive else (mpf(-1), mpf(1))
+        while continuous(family, params, high)[1] < p:
+            high *= 2
+        while not positive and continuous(family, params, low)[1] > p:
+            low *= 2
+    low, high = mpf(low), mpf(high)
+    for _ in range(400):
+        middle = (low + high) / 2
+        if continuous(family, params, middle)[1] < p:
+            low = middle
+        else:
+            high = middle
+    return high
+
+
 def default_window(family, params):
     """Plot window the Explorer proposes for the default parameters."""
     a = params
@@ -190,7 +220,7 @@ def number(value):
 
 def references():
     mp.dps = 60
-    cases, grids = [], []
+    cases, grids, quantiles = [], [], []
     for family, (kind, sets) in FAMILIES.items():
         evaluate = continuous if kind == "continuous" else discrete
         for params, points in sets:
@@ -211,14 +241,19 @@ def references():
         sample = []
         for index, x in zip(indexes, xs):
             try:
-                density, cdf, _ = evaluate(family, defaults, x)
-                sample.append({"index": index, "x": number(x), "density": number(density), "cdf": number(cdf)})
+                density, cdf, survival = evaluate(family, defaults, x)
+                sample.append({"index": index, "x": number(x), "density": number(density), "cdf": number(cdf),
+                               "survival": number(survival)})
             except (ValueError, ZeroDivisionError):
-                sample.append({"index": index, "x": number(x), "density": None, "cdf": None})
+                sample.append({"index": index, "x": number(x), "density": None, "cdf": None, "survival": None})
+        for params, probabilities in ((defaults, (0.05, 0.5, 0.95)), (sets[-1][0], (0.01, 0.99))):
+            for p in probabilities:
+                quantiles.append({"family": family, "parameters": params, "p": p,
+                                  "quantile": number(quantile(family, kind, params, p))})
         grids.append({"family": family, "parameters": defaults, "lower": number(low), "upper": number(high),
                       "rows": count, "sample": sample})
     return {"method": __doc__, "absolute_tolerance": 1e-12, "relative_tolerance": 1e-9,
-            "cases": cases, "grids": grids}
+            "cases": cases, "grids": grids, "quantiles": quantiles}
 
 
 if __name__ == "__main__":

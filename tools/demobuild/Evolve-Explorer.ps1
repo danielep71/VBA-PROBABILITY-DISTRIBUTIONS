@@ -23,7 +23,24 @@ function Localize-Formula([string]$Formula, [string]$Separator) {
     return $builder.ToString()
 }
 
-function Step([string]$Text) { Write-Output ('[' + (Get-Date -Format 'HH:mm:ss') + '] ' + $Text) }
+# Excel turns alerts back on once a worksheet function of the VBA project has
+# run, and a hidden confirmation would wait for ever; switch them off at each step.
+# Excel rejects a COM call while it is busy (RPC_E_CALL_REJECTED); wait and retry.
+function Invoke-Excel([scriptblock]$Action) {
+    for ($attempt = 1; ; $attempt++) {
+        try { return & $Action }
+        catch {
+            $busy = $_.Exception.HResult -eq -2147418111 -or $_.Exception.Message -match '0x80010001'
+            if (-not $busy -or $attempt -ge 40) { throw }
+            Start-Sleep -Milliseconds 500
+        }
+    }
+}
+
+function Step([string]$Text) {
+    if ($null -ne $excel) { $excel.DisplayAlerts = $false }
+    Write-Output ('[' + (Get-Date -Format 'HH:mm:ss') + '] ' + $Text)
+}
 
 try {
     $excel = New-Object -ComObject Excel.Application
@@ -31,6 +48,7 @@ try {
     $excel.DisplayAlerts = $false
     $excel.EnableEvents = $false
     $excel.AutomationSecurity = 1
+    $excel.ScreenUpdating = $false
     $book = $excel.Workbooks.Open($path, 0, $false)
     try { $book.Unprotect() } catch { }
     $sheet = $book.Worksheets.Item($plan.sheet)
@@ -39,12 +57,31 @@ try {
     $first = [int]$plan.grid.first_row
     $last = [int]$plan.grid.last_row
 
-    Step 'clear the old fixed grid and result formulas'
+    $dec = [string]$excel.International(3)
+    Step 'clear the old result and grid formulas'
     $sheet.Range('G7:G9').ClearContents() | Out-Null
-    $sheet.Range('G13').ClearContents() | Out-Null
-    $sheet.Range("F${first}:H$last").ClearContents() | Out-Null
-    $sheet.Range("F${first}:H$last").Validation.Delete()
-    $sheet.Range("F${first}:H$last").FormatConditions.Delete()
+    $sheet.Range('G14').ClearContents() | Out-Null
+    $sheet.Range("F${first}:J$last").ClearContents() | Out-Null
+    $sheet.Range("F${first}:J$last").Validation.Delete()
+    $sheet.Range("F${first}:J$last").FormatConditions.Delete()
+
+    # The workbook this starts from (v2) has the plot window in G10:G12, the
+    # decimals in G13, the right tail in G14 and the support text in F15:H16.
+    # Move that block down one row, inside F:H only, to make room for the
+    # quantile in row 10; the grid stays at row 19.
+    Step 'room for the quantile and the probability input'
+    [void]$sheet.Range('F10:H16').Cut($sheet.Range('F11'))
+    [void]$sheet.Range('F9:H9').Copy($sheet.Range('F10'))
+    [void]$sheet.Range('C11:D11').Copy($sheet.Range('C12'))
+    $sheet.Range('G10').ClearContents() | Out-Null
+    $sheet.Range("J18:J$last").Clear() | Out-Null
+    [void]$sheet.Range('G18').Copy($sheet.Range('H18'))
+    $support = $sheet.Range('F16:H17')
+    $support.UnMerge()
+    $sheet.Range('F17:H17').ClearContents() | Out-Null
+    $support.Merge()
+    $support.WrapText = $true
+    $support.VerticalAlignment = -4160
 
     Step 'family table'
     foreach ($cell in $plan.table.cells) {
@@ -54,6 +91,8 @@ try {
         else { $target.Value2 = [double]$cell.value }
     }
     foreach ($item in $plan.names) { try { $book.Names.Item($item.name).Delete() } catch { } }
+    # A name of the earlier plan that the sheet no longer uses.
+    try { $book.Names.Item('ExplorerGridDiscrete').Delete() } catch { }
     $failed = @()
     foreach ($item in $plan.names) {
         try { [void]$book.Names.Add($item.name, (Localize-Formula $item.refers ([string]$excel.International(5)))) }
@@ -66,10 +105,8 @@ try {
 
     Step 'texts and validation'
     foreach ($text in $plan.texts) { $sheet.Range($text.address).Value2 = [string]$text.value }
-    $sheet.Range('F14:H17').ClearContents() | Out-Null
-    $sheet.Range('F14:H17').Merge()
-    $sheet.Range('F14').WrapText = $true
-    $sheet.Range('F14').VerticalAlignment = -4160
+    $sheet.Range('D12').Value2 = [double]$plan.probability.default
+    $sheet.Range('G14').Value2 = [double]$plan.decimals.default
     $family = $sheet.Range('D6')
     $family.Validation.Delete()
     $family.Validation.Add(3, 1, 1, $plan.validation.family_list)
@@ -86,41 +123,46 @@ try {
     }
     $limit = [double]$plan.validation.x_limit
     $bound = [double]$plan.validation.bound_limit
-    $rules = @(@('D11', -$limit, $limit), @('G10', -$bound, $bound), @('G11', -$bound, $bound))
+    $rules = @(@('D11', -$limit, $limit), @('D12', 0, 1), @('G11', -$bound, $bound), @('G12', -$bound, $bound))
     foreach ($rule in $rules) {
         $cell = $sheet.Range($rule[0])
         $cell.Validation.Delete()
         $cell.Validation.Add(2, 1, 1, [string]$rule[1], [string]$rule[2])
         $cell.Validation.ShowError = $true
     }
-    $points = $sheet.Range('G12')
+    $sheet.Range('D12').Validation.ErrorTitle = 'Probability p'
+    $sheet.Range('D12').Validation.ErrorMessage = 'Enter a probability from 0 to 1.'
+    $points = $sheet.Range('G13')
     $points.Validation.Delete()
     $points.Validation.Add(1, 1, 1, [string]$plan.validation.points[0], [string]$plan.validation.points[1])
     $points.Validation.ErrorTitle = 'Number of points'
     $points.Validation.ErrorMessage = 'Enter a whole number from 2 to ' + $plan.validation.points[1] + '.'
     $points.Validation.ShowError = $true
+    $decimals = $sheet.Range('G14')
+    $decimals.Validation.Delete()
+    $decimals.Validation.Add(3, 1, 1, $plan.validation.decimals_list)
+    $decimals.Validation.ErrorTitle = 'Number of decimals'
+    $decimals.Validation.ErrorMessage = 'Pick a number of decimals from 0 to ' + $plan.decimals.max + '.'
+    $decimals.Validation.ShowError = $true
 
     Step 'result formulas and the spilled grid'
     $donor = $sheet.Range('F20')
-    $body = $sheet.Range("F${first}:H$last")
-    $body.Font.Name = $donor.Font.Name
-    $body.Font.Size = $donor.Font.Size
-    $body.Font.Bold = $false
-    $body.Interior.Pattern = -4142
-    $body.VerticalAlignment = -4108
-    $sheet.Range("F${first}:H$last").Borders.LineStyle = -4142
+    $grid = $sheet.Range("F${first}:I$last")
+    $grid.Font.Name = $donor.Font.Name
+    $grid.Font.Size = $donor.Font.Size
+    $grid.Font.Bold = $false
+    $grid.Interior.Pattern = -4142
+    $grid.VerticalAlignment = -4108
+    $grid.Borders.LineStyle = -4142
     # NumberFormat is read with the regional decimal separator here, so write the local form.
-    $sheet.Range("F${first}:H$last").NumberFormatLocal = '0' + [string]$excel.International(3) + '000000'
-    $sheet.Range("F${first}:H$last").WrapText = $false
-    $sheet.Range("F${first}:H$last").Locked = $true
+    $grid.NumberFormatLocal = '0' + $dec + '000000'
+    $grid.WrapText = $false
+    $grid.Locked = $true
     $sheet.Rows.Item("${first}:$last").RowHeight = 20.1
-    foreach ($item in $plan.formulas) {
-        $address = $item.address
-        if ($address -in @('G5', 'F14', 'G6', 'C7', 'C8', 'C9', 'C10')) { $sheet.Range($address).Formula2 = [string]$item.formula }
-    }
-    foreach ($address in @('F19', 'G19', 'H19', 'G7', 'G13')) {
+    foreach ($address in @('G5', 'G6', 'C7', 'C8', 'C9', 'C10', 'F16', 'F19', 'G19', 'H19', 'I19', 'G7', 'G10', 'G15')) {
         $item = $plan.formulas | Where-Object { $_.address -eq $address }
-        $sheet.Range($address).Formula2 = [string]$item.formula
+        if ($null -eq $item) { throw "The plan has no formula for $address" }
+        Invoke-Excel { $sheet.Range($address).Formula2 = [string]$item.formula }
     }
 
     Step 'conditional formats'
@@ -132,18 +174,17 @@ try {
     $bad = $sheet.Range('G5').FormatConditions.Add(2, 0, $plan.conditional.status_bad)
     $bad.Font.Color = 0x0000C0
     $bad.Interior.Color = 0xCEC7FF
-    $inside = $sheet.Range("F${first}:H$last").FormatConditions.Add(2, 0, $plan.conditional.grid_inside)
+    Step 'grid borders'
+    $inside = $grid.FormatConditions.Add(2, 0, $plan.conditional.grid_inside)
     foreach ($edge in @(@(-4131, -4115), @(-4152, 1), @(-4160, 1), @(-4107, -4115))) {
         try { $inside.Borders.Item($edge[0]).LineStyle = $edge[1] } catch { $inside.Borders.Item($edge[0]).LineStyle = 1 }
     }
-    $integer = $sheet.Range("F${first}:F$last").FormatConditions.Add(2, 0, $plan.conditional.grid_discrete)
-    $integer.NumberFormat = '0'
 
     Step 'inputs unlocked, outputs locked'
-    $sheet.Range('D6:D11').Locked = $false
-    $sheet.Range('G10:G12').Locked = $false
-    $sheet.Range('G5:G9').Locked = $true
-    $sheet.Range('G13').Locked = $true
+    $sheet.Range('D6:D12').Locked = $false
+    $sheet.Range('G11:G14').Locked = $false
+    $sheet.Range('G5:G10').Locked = $true
+    $sheet.Range('G15').Locked = $true
 
     Step 'charts follow the spilled columns through their names'
     $prefix = "'" + $book.Name + "'!"
@@ -157,6 +198,7 @@ try {
     $excel.Calculation = -4105
     $excel.Calculate()
     $excel.CalculateFull()
+    $excel.ScreenUpdating = $true
     Step 'defaults and charts through the Explorer module'
     [void]$excel.Run($prefix + 'ResetExplorerInputs', $false)
     [void]$excel.Run($prefix + 'RefreshExplorer')
