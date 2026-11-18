@@ -51,7 +51,7 @@ try {
         Invoke-Control $tab
     }
     Invoke-Control (Find-Control 'Recalculate')
-    if ([Math]::Abs([double]$sheet.Range('G8').Value2-0.5) -gt 1e-12) { throw 'Ribbon recalculate result differs' }
+    if ([Math]::Abs([double]$sheet.Range('D22').Value2-0.5) -gt 1e-12) { throw 'Ribbon recalculate result differs' }
     $report.ribbon_recalculate = 'PASS'
 
     $toggle = Find-Control 'Navigation bar'

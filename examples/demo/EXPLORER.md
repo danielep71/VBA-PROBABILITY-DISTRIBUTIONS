@@ -40,10 +40,11 @@ one entry there and a reference case in `explorer_references.py`.
 
 ## How the sheet works
 
-Inputs are D6:D12 (distribution, up to four parameters, probe point x or k,
-probability p), the plot window G11:G13 (lower bound, upper bound, number of
-points) and the number of decimals G14. The
-family table lives in the hidden columns from MA, read through the `Explorer*`
+Inputs are D6:D16: distribution, up to four parameters, probe point x or k,
+probability p, plot lower and upper bounds, number of points and number of
+decimals. The status (D19), the macros cell (D20) and the results (D21:D25)
+sit below them, the notes in F5:I17 and the grid from F20. The
+family table lives in the hidden columns from LZ, read through the `Explorer*`
 workbook names. Picking a distribution in D6 loads its default parameters,
 probe point and plot window; editing a parameter refits the window.
 
@@ -51,19 +52,19 @@ Outputs are dynamic arrays, one formula each:
 
 | Cell | Spills | Formula |
 | --- | --- | --- |
-| `F19` | the x column | `SEQUENCE` between the bounds, or every integer for a discrete family |
-| `G19`, `H19`, `I19` | density or mass, survival, cumulative | `MAP` over the x column, one `SWITCH` on the distribution |
-| `G7` | the three results | `VSTACK` of density, cumulative, survival at the probe |
-| `G10` | the quantile | the smallest x with CDF(x) >= p |
+| `F20` | the x column | `SEQUENCE` between the bounds, or every integer for a discrete family |
+| `G20`, `H20`, `I20` | density or mass, survival, cumulative | `MAP` over the x column, one `SWITCH` on the distribution |
+| `D21` | the three results | `VSTACK` of density, cumulative, survival at the probe |
+| `D24` | the quantile | the smallest x with CDF(x) >= p |
 
 The names `ExplorerX`, `ExplorerPDF`, `ExplorerSurvival` and `ExplorerCDF`
-refer to those spills (`F19#`, `G19#`, `H19#`, `I19#`); both charts take their
+refer to those spills (`F20#`, `G20#`, `H20#`, `I20#`); both charts take their
 series from them, so the grid
 and the charts follow the plot window and the number of points with no fixed
 rows. The `K_STATS_` functions do not accept arrays, hence `MAP` over the x
 column rather than passing it whole.
 
-Status (G5) says `OK` or names the first parameter that is out of range, the
+Status (D19) says `OK` or names the first parameter that is out of range, the
 unmet constraint (for example, a hypergeometric sample larger than its
 population), the probe point, the plot window or the number of points. Until
 it says `OK` the outputs are `#N/A`. The quantile depends only on p as well:
@@ -71,8 +72,8 @@ a p outside 0 to 1 leaves it `#N/A` and the other results as they are.
 
 The survival column is the library's own survival function, not 1 - CDF, so
 the right tail keeps its digits where the cumulative is 1 to double precision.
-The number of decimals (0 to 15, a list in G14) formats the results and the
-grid: the Explorer module sets their number format when G14 changes, so it
+The number of decimals (0 to 15, a list in D16) formats the results and the
+grid: the Explorer module sets their number format when D16 changes, so it
 needs macros like the rest of the sheet. A discrete x column stays in whole
 numbers. Conditional formats, one per value, were tried first and rejected:
 each rule over the spilled grid took Excel 40 to 80 seconds to add. A density that is undefined at a grid
@@ -95,7 +96,7 @@ restores Normal(0,1), probe 0, p = 0.95, 201 points and 6 decimals. Cancelling c
 With macros off nothing is live: the file shows the values it was saved with,
 and an edit turns the results into `#NAME?`. A downloaded file opens this way
 until it is unblocked (file Properties, Unblock) or its content is enabled.
-The Macros cell (G6) reads `ENABLED` or `DISABLED`, and a red line above the
+The Macros cell (D20) reads `ENABLED` or `DISABLED`, and a red line above the
 tables appears when it is disabled. `Workbook_Open` recalculates and redraws
 the charts, keeping the Saved flag, so a file saved with macros off is right
 as soon as macros run.

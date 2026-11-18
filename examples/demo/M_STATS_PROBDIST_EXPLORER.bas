@@ -17,15 +17,15 @@ Private Const DEFAULT_FAMILY As String = "Normal"
 Private Const DEFAULT_POINTS As Long = 201
 Private Const DEFAULT_PROBABILITY As Double = 0.95
 Private Const DEFAULT_DECIMALS As Long = 6
-' Inputs D6:D12 (distribution, parameters, x, p); plot window G11:G13;
-' decimals G14, applied by ApplyDecimals to the results and the grid.
-Private Const LOWER_CELL As String = "G11"
-Private Const UPPER_CELL As String = "G12"
-Private Const POINTS_CELL As String = "G13"
-Private Const DECIMALS_CELL As String = "G14"
+' Inputs D6:D12 (distribution, parameters, x, p); plot window D13:D15;
+' decimals D16, applied by ApplyDecimals to the results and the grid.
+Private Const LOWER_CELL As String = "D13"
+Private Const UPPER_CELL As String = "D14"
+Private Const POINTS_CELL As String = "D15"
+Private Const DECIMALS_CELL As String = "D16"
 Private Const MAX_DECIMALS As Long = 15
-Private Const FORMATTED_CELLS As String = "G7:G10,G15,G19:I1018"
-Private Const X_CELLS As String = "F19:F1018"
+Private Const FORMATTED_CELLS As String = "D21:D25,G20:I1019"
+Private Const X_CELLS As String = "F20:F1019"
 
 Public Function ExplorerSheet() As Worksheet
     Dim Candidate As Worksheet
@@ -196,7 +196,7 @@ End Sub
 
 
 Public Sub ApplyDecimals(ByVal Sheet As Worksheet)
-    ' Formats the results and the grid with the number of decimals in G14. A
+    ' Formats the results and the grid with the number of decimals in D16. A
     ' value that is not a whole number from 0 to 15 leaves the formats as they
     ' are. The x column of a discrete family is shown in whole numbers.
     Dim Places As Variant

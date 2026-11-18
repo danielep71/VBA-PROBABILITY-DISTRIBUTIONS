@@ -58,30 +58,22 @@ try {
     $last = [int]$plan.grid.last_row
 
     $dec = [string]$excel.International(3)
+    $at = $plan.layout
+    # The workbook this starts from has the user's layout already, with the
+    # formulas of an earlier build in it: every output, rule and format the
+    # plan owns is cleared here and written again, nothing is moved.
     Step 'clear the old result and grid formulas'
-    $sheet.Range('G7:G9').ClearContents() | Out-Null
-    $sheet.Range('G14').ClearContents() | Out-Null
-    $sheet.Range("F${first}:J$last").ClearContents() | Out-Null
-    $sheet.Range("F${first}:J$last").Validation.Delete()
-    $sheet.Range("F${first}:J$last").FormatConditions.Delete()
-
-    # The workbook this starts from (v2) has the plot window in G10:G12, the
-    # decimals in G13, the right tail in G14 and the support text in F15:H16.
-    # Move that block down one row, inside F:H only, to make room for the
-    # quantile in row 10; the grid stays at row 19.
-    Step 'room for the quantile and the probability input'
-    [void]$sheet.Range('F10:H16').Cut($sheet.Range('F11'))
-    [void]$sheet.Range('F9:H9').Copy($sheet.Range('F10'))
-    [void]$sheet.Range('C11:D11').Copy($sheet.Range('C12'))
-    $sheet.Range('G10').ClearContents() | Out-Null
-    $sheet.Range("J18:J$last").Clear() | Out-Null
-    [void]$sheet.Range('G18').Copy($sheet.Range('H18'))
-    $support = $sheet.Range('F16:H17')
-    $support.UnMerge()
-    $sheet.Range('F17:H17').ClearContents() | Out-Null
-    $support.Merge()
-    $support.WrapText = $true
-    $support.VerticalAlignment = -4160
+    foreach ($address in @($at.status, $at.macros, $at.quantile, $at.tail, $at.support)) { $sheet.Range($address).MergeArea.ClearContents() | Out-Null }
+    $sheet.Range($at.results).Resize(3, 1).ClearContents() | Out-Null
+    $sheet.Range("F${first}:I$last").ClearContents() | Out-Null
+    $sheet.Range("F${first}:I$last").Validation.Delete()
+    $sheet.Range("F${first}:I$last").FormatConditions.Delete()
+    $sheet.Range('D7:D10').FormatConditions.Delete()
+    # Keep the user's own "OK" format on the status cell; drop the plan's rules.
+    $status = $sheet.Range($at.status)
+    for ($index = $status.FormatConditions.Count; $index -ge 1; $index--) {
+        if ($status.FormatConditions.Item($index).Type -eq 2) { $status.FormatConditions.Item($index).Delete() }
+    }
 
     Step 'family table'
     foreach ($cell in $plan.table.cells) {
@@ -91,7 +83,7 @@ try {
         else { $target.Value2 = [double]$cell.value }
     }
     foreach ($item in $plan.names) { try { $book.Names.Item($item.name).Delete() } catch { } }
-    # A name of the earlier plan that the sheet no longer uses.
+    # A name of an earlier plan that the sheet no longer uses.
     try { $book.Names.Item('ExplorerGridDiscrete').Delete() } catch { }
     $failed = @()
     foreach ($item in $plan.names) {
@@ -105,9 +97,9 @@ try {
 
     Step 'texts and validation'
     foreach ($text in $plan.texts) { $sheet.Range($text.address).Value2 = [string]$text.value }
-    $sheet.Range('D12').Value2 = [double]$plan.probability.default
-    $sheet.Range('G14').Value2 = [double]$plan.decimals.default
-    $family = $sheet.Range('D6')
+    $sheet.Range($at.probability).Value2 = [double]$plan.probability.default
+    $sheet.Range($at.decimals).Value2 = [double]$plan.decimals.default
+    $family = $sheet.Range($at.family)
     $family.Validation.Delete()
     $family.Validation.Add(3, 1, 1, $plan.validation.family_list)
     $family.Validation.ErrorTitle = 'Choose a listed distribution'
@@ -123,22 +115,22 @@ try {
     }
     $limit = [double]$plan.validation.x_limit
     $bound = [double]$plan.validation.bound_limit
-    $rules = @(@('D11', -$limit, $limit), @('D12', 0, 1), @('G11', -$bound, $bound), @('G12', -$bound, $bound))
+    $rules = @(@($at.x, -$limit, $limit), @($at.probability, 0, 1), @($at.lower, -$bound, $bound), @($at.upper, -$bound, $bound))
     foreach ($rule in $rules) {
         $cell = $sheet.Range($rule[0])
         $cell.Validation.Delete()
         $cell.Validation.Add(2, 1, 1, [string]$rule[1], [string]$rule[2])
         $cell.Validation.ShowError = $true
     }
-    $sheet.Range('D12').Validation.ErrorTitle = 'Probability p'
-    $sheet.Range('D12').Validation.ErrorMessage = 'Enter a probability from 0 to 1.'
-    $points = $sheet.Range('G13')
+    $sheet.Range($at.probability).Validation.ErrorTitle = 'Probability p'
+    $sheet.Range($at.probability).Validation.ErrorMessage = 'Enter a probability from 0 to 1.'
+    $points = $sheet.Range($at.points)
     $points.Validation.Delete()
     $points.Validation.Add(1, 1, 1, [string]$plan.validation.points[0], [string]$plan.validation.points[1])
     $points.Validation.ErrorTitle = 'Number of points'
     $points.Validation.ErrorMessage = 'Enter a whole number from 2 to ' + $plan.validation.points[1] + '.'
     $points.Validation.ShowError = $true
-    $decimals = $sheet.Range('G14')
+    $decimals = $sheet.Range($at.decimals)
     $decimals.Validation.Delete()
     $decimals.Validation.Add(3, 1, 1, $plan.validation.decimals_list)
     $decimals.Validation.ErrorTitle = 'Number of decimals'
@@ -146,7 +138,7 @@ try {
     $decimals.Validation.ShowError = $true
 
     Step 'result formulas and the spilled grid'
-    $donor = $sheet.Range('F20')
+    $donor = $sheet.Range('F' + ($first + 1))
     $grid = $sheet.Range("F${first}:I$last")
     $grid.Font.Name = $donor.Font.Name
     $grid.Font.Size = $donor.Font.Size
@@ -159,10 +151,9 @@ try {
     $grid.WrapText = $false
     $grid.Locked = $true
     $sheet.Rows.Item("${first}:$last").RowHeight = 20.1
-    foreach ($address in @('G5', 'G6', 'C7', 'C8', 'C9', 'C10', 'F16', 'F19', 'G19', 'H19', 'I19', 'G7', 'G10', 'G15')) {
-        $item = $plan.formulas | Where-Object { $_.address -eq $address }
-        if ($null -eq $item) { throw "The plan has no formula for $address" }
-        Invoke-Excel { $sheet.Range($address).Formula2 = [string]$item.formula }
+    foreach ($item in $plan.formulas) {
+        $target = $sheet.Range($item.address)
+        Invoke-Excel { $target.Formula2 = [string]$item.formula }
     }
 
     Step 'conditional formats'
@@ -171,7 +162,7 @@ try {
         $unused.Font.Color = 0x808080
         $unused.Interior.Color = 0xF2F2F2
     }
-    $bad = $sheet.Range('G5').FormatConditions.Add(2, 0, $plan.conditional.status_bad)
+    $bad = $status.FormatConditions.Add(2, 0, $plan.conditional.status_bad)
     $bad.Font.Color = 0x0000C0
     $bad.Interior.Color = 0xCEC7FF
     Step 'grid borders'
@@ -181,10 +172,8 @@ try {
     }
 
     Step 'inputs unlocked, outputs locked'
-    $sheet.Range('D6:D12').Locked = $false
-    $sheet.Range('G11:G14').Locked = $false
-    $sheet.Range('G5:G10').Locked = $true
-    $sheet.Range('G15').Locked = $true
+    $sheet.Range($at.inputs).Locked = $false
+    foreach ($address in $at.outputs) { $sheet.Range($address).Locked = $true }
 
     Step 'charts follow the spilled columns through their names'
     $prefix = "'" + $book.Name + "'!"

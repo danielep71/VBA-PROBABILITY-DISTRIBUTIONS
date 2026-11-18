@@ -89,51 +89,51 @@ class PlanTests(unittest.TestCase):
 
     def test_output_formulas_spill_from_one_cell_each(self):
         by_address = {item["address"]: item["formula"] for item in self.plan["formulas"]}
-        for address in ("F19", "G19", "H19", "I19"):
+        for address in ("F20", "G20", "H20", "I20"):
             self.assertIn(address, by_address)
-        for address in ("G19", "H19", "I19"):
+        for address in ("G20", "H20", "I20"):
             self.assertIn("MAP(ExplorerX", by_address[address])
-        self.assertIn("_Survival(x,", by_address["H19"])
-        self.assertIn("_Cumulative(x,", by_address["I19"])
-        self.assertIn("VSTACK", by_address["G7"])
+        self.assertIn("_Survival(x,", by_address["H20"])
+        self.assertIn("_Cumulative(x,", by_address["I20"])
+        self.assertIn("VSTACK", by_address["D21"])
         names = {item["name"]: item["refers"] for item in self.plan["names"]}
-        self.assertEqual(names["ExplorerX"], "=Explorer!$F$19#")
-        self.assertEqual(names["ExplorerPDF"], "=Explorer!$G$19#")
-        self.assertEqual(names["ExplorerSurvival"], "=Explorer!$H$19#")
-        self.assertEqual(names["ExplorerCDF"], "=Explorer!$I$19#")
+        self.assertEqual(names["ExplorerX"], "=Explorer!$F$20#")
+        self.assertEqual(names["ExplorerPDF"], "=Explorer!$G$20#")
+        self.assertEqual(names["ExplorerSurvival"], "=Explorer!$H$20#")
+        self.assertEqual(names["ExplorerCDF"], "=Explorer!$I$20#")
 
     def test_dispatch_names_every_family_and_never_a_row_number(self):
         by_address = {item["address"]: item["formula"] for item in self.plan["formulas"]}
         for family in FAMILIES["families"]:
-            self.assertIn(f'"{family["name"]}"', by_address["G19"])
-            self.assertIn(family["functions"]["cdf"], by_address["I19"])
-            self.assertIn(family["functions"]["quantile"], by_address["G10"])
+            self.assertIn(f'"{family["name"]}"', by_address["G20"])
+            self.assertIn(family["functions"]["cdf"], by_address["I20"])
+            self.assertIn(family["functions"]["quantile"], by_address["D24"])
         for formula in by_address.values():
             self.assertNotRegex(formula, r"[A-Z]+\$?(18|218)\b", "a row of the old fixed grid")
 
     def test_quantile_reads_only_p_and_the_status(self):
         by_address = {item["address"]: item["formula"] for item in self.plan["formulas"]}
-        self.assertTrue(by_address["G10"].startswith('=IF(AND($G$5="OK",ISNUMBER($D$12),$D$12>=0,$D$12<=1),'))
-        self.assertNotIn("$D$12", by_address["G5"], "a bad p must not stop the other results")
+        self.assertTrue(by_address["D24"].startswith('=IF(AND($D$19="OK",ISNUMBER($D$12),$D$12>=0,$D$12<=1),'))
+        self.assertNotIn("$D$12", by_address["D19"], "a bad p must not stop the other results")
 
     def test_plot_window_and_decimals_cells(self):
         by_address = {item["address"]: item["formula"] for item in self.plan["formulas"]}
-        self.assertIn("SEQUENCE($G$13,,0)", by_address["F19"])
-        self.assertIn("-INT(-$G$11)", by_address["F19"])
-        self.assertEqual(self.plan["decimals"]["cell"], "$G$14")
+        self.assertIn("SEQUENCE($D$15,,0)", by_address["F20"])
+        self.assertIn("-INT(-$D$13)", by_address["F20"])
+        self.assertEqual(self.plan["decimals"]["cell"], "$D$16")
         self.assertEqual(self.plan["validation"]["decimals_list"], "=ExplorerDecimals")
         module = (DEMO / "M_STATS_PROBDIST_EXPLORER.bas").read_text(encoding="latin-1")
         self.assertIn(f'FORMATTED_CELLS As String = "{self.plan["decimals"]["cells"]}"', module)
-        self.assertIn('DECIMALS_CELL As String = "G14"', module)
+        self.assertIn('DECIMALS_CELL As String = "D16"', module)
         self.assertIn(f'X_CELLS As String = "{self.plan["decimals"]["x_cells"]}"', module)
-        values = [cell["value"] for cell in self.plan["table"]["cells"] if cell["address"].startswith("NC")]
+        values = [cell["value"] for cell in self.plan["table"]["cells"] if cell["address"].startswith("NB")]
         self.assertEqual(values, list(range(16)))
 
     def test_discrete_grid_starts_at_the_ceiling_of_a_negative_bound(self):
         by_address = {item["address"]: item["formula"] for item in self.plan["formulas"]}
-        self.assertNotIn("ROUNDUP($G$11", by_address["F19"] + by_address["G5"])
-        self.assertIn("-INT(-$G$11)", by_address["F19"])
-        self.assertIn("-INT(-$G$11)", by_address["G5"])
+        self.assertNotIn("ROUNDUP($D$13", by_address["F20"] + by_address["D19"])
+        self.assertIn("-INT(-$D$13)", by_address["F20"])
+        self.assertIn("-INT(-$D$13)", by_address["D19"])
 
     def test_texts_fit_the_template_cells(self):
         for text in self.plan["texts"]:
@@ -144,8 +144,8 @@ class PlanTests(unittest.TestCase):
         cells = {cell["address"]: cell for cell in self.plan["table"]["cells"]}
         self.assertEqual(self.plan["table"]["rows"], 16)
         for index, family in enumerate(FAMILIES["families"], 1):
-            self.assertEqual(cells[f"MA{index}"]["value"], family["name"])
-        self.assertEqual(self.plan["table"]["first_column"], 339, "column MA, hidden in the baseline")
+            self.assertEqual(cells[f"LZ{index}"]["value"], family["name"])
+        self.assertEqual(self.plan["table"]["first_column"], 338, "column LZ, hidden in the baseline")
         for rule in ("ExplorerParameterOk1", "ExplorerParameterOk4", "ExplorerParameterUnused1", "ExplorerStatusBad"):
             self.assertIn(rule, {item["name"] for item in self.plan["names"]})
 

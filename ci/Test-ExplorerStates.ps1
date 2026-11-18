@@ -65,7 +65,7 @@ function Assert-Near([double]$Actual, [double]$Expected, [string]$What) {
     if ([Math]::Abs($Actual - $Expected) -gt 1e-12) { throw "${What}: $Actual, expected $Expected" }
 }
 function Grid-Rows($Sheet) {
-    $spill = $Sheet.Range('F19').SpillingToRange
+    $spill = $Sheet.Range('F20').SpillingToRange
     if ($null -eq $spill) { return 0 }
     return [int]$spill.Rows.Count
 }
@@ -92,32 +92,32 @@ try {
     $book = $excel.Workbooks.Open($copy, 0, $false)
     $sheet = $book.Worksheets.Item('Explorer')
     $sheet.Activate()
-    if ([string]$sheet.Range('G6').Value2 -ne 'ENABLED') { throw 'Macros cell does not say ENABLED with macros on' }
+    if ([string]$sheet.Range('D20').Value2 -ne 'ENABLED') { throw 'Macros cell does not say ENABLED with macros on' }
     if ([string]$sheet.Range('F4').Value2 -ne '') { throw 'The warning line is not empty with macros on' }
     if (-not $book.Saved) { throw 'Opening the workbook left it marked as changed' }
     Assert-Charts $sheet 75 75 'Normal at open'
     if ((Grid-Rows $sheet) -ne 201) { throw 'The Normal grid does not have 201 points' }
     Set-Text $sheet 'D6' 'Exponential'
-    Assert-Near (Number $sheet 'G7') ([Math]::Exp(-1.0)) 'Exponential density at 1, rate 1'
+    Assert-Near (Number $sheet 'D21') ([Math]::Exp(-1.0)) 'Exponential density at 1, rate 1'
     Assert-Charts $sheet 75 75 'Exponential'
     Set-Number $sheet 'D7' 2.0
-    Assert-Near (Number $sheet 'G7') (2.0*[Math]::Exp(-2.0)) 'Exponential density at 1, rate 2'
-    Assert-Near (Number $sheet 'G12') 4.0 'Exponential plot upper bound, rate 2'
-    Assert-Near (Number $sheet 'G119') (2.0*[Math]::Exp(-4.0)) 'Exponential grid midpoint'
+    Assert-Near (Number $sheet 'D21') (2.0*[Math]::Exp(-2.0)) 'Exponential density at 1, rate 2'
+    Assert-Near (Number $sheet 'D14') 4.0 'Exponential plot upper bound, rate 2'
+    Assert-Near (Number $sheet 'G120') (2.0*[Math]::Exp(-4.0)) 'Exponential grid midpoint'
     Set-Text $sheet 'D6' 'Poisson'
     Assert-Charts $sheet 51 -4169 'Poisson'
     if ((Grid-Rows $sheet) -ne 31) { throw 'The Poisson grid is not the integers 0 to 30' }
-    Assert-Near (Number $sheet 'G7') (64.0*[Math]::Exp(-4.0)/6.0) 'Poisson mass at 3, mean 4'
-    if ($null -ne $sheet.Range('F50').Value2) { throw 'The Poisson grid spills past its last integer' }
+    Assert-Near (Number $sheet 'D21') (64.0*[Math]::Exp(-4.0)/6.0) 'Poisson mass at 3, mean 4'
+    if ($null -ne $sheet.Range('F51').Value2) { throw 'The Poisson grid spills past its last integer' }
     Set-Number $sheet 'D11' 0.0
-    Assert-Near (Number $sheet 'G7') ([Math]::Exp(-4.0)) 'Poisson mass at 0, mean 4'
+    Assert-Near (Number $sheet 'D21') ([Math]::Exp(-4.0)) 'Poisson mass at 0, mean 4'
     Set-Text $sheet 'D6' 'Normal'
     Assert-Charts $sheet 75 75 'Normal again'
-    Assert-Near (Number $sheet 'G8') 0.5 'Normal CDF at 0'
+    Assert-Near (Number $sheet 'D22') 0.5 'Normal CDF at 0'
     # Every family, chosen the way a user chooses it: status OK, a grid, charts that match it.
     foreach ($family in @($sheet.Range('ExplorerFamily').Cells | ForEach-Object { [string]$_.Value2 })) {
         Set-Text $sheet 'D6' $family
-        if ([string]$sheet.Range('G5').Value2 -ne 'OK') { throw "${family}: status is $($sheet.Range('G5').Value2)" }
+        if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "${family}: status is $($sheet.Range('D19').Value2)" }
         if ((Grid-Rows $sheet) -lt 2) { throw "${family}: the grid is empty" }
         $discrete = ([string]$sheet.Range('ExplorerKind').Cells.Item([int]$sheet.Evaluate('ExplorerRow'), 1).Value2) -eq 'Discrete'
         if ($discrete) { Assert-Charts $sheet 51 -4169 $family } else { Assert-Charts $sheet 75 75 $family }
@@ -135,9 +135,9 @@ try {
     Set-Text $sheet 'D6' 'Poisson'
     Set-Number $sheet 'D7' 4.0
     Set-Number $sheet 'D11' 0.0
-    if ([string]$sheet.Range('G6').Value2 -notlike 'DISABLED*') { throw 'Macros cell does not say DISABLED with macros off' }
+    if ([string]$sheet.Range('D20').Value2 -notlike 'DISABLED*') { throw 'Macros cell does not say DISABLED with macros off' }
     if ([string]$sheet.Range('F4').Value2 -notlike 'MACROS ARE DISABLED*') { throw 'The warning line is empty with macros off' }
-    if ($sheet.Range('G7').Value2 -isnot [int]) { throw 'A result is still a number with macros off' }
+    if ($sheet.Range('D21').Value2 -isnot [int]) { throw 'A result is still a number with macros off' }
     $book.Save()
     $book.Close($false)
     Close-OwnedExcel $excel; $excel = $null
@@ -147,8 +147,8 @@ try {
     $excel = Start-OwnedExcel 1
     $book = $excel.Workbooks.Open($copy, 0, $false)
     $sheet = $book.Worksheets.Item('Explorer')
-    if ([string]$sheet.Range('G6').Value2 -ne 'ENABLED') { throw 'Macros cell stays DISABLED after macros are enabled' }
-    Assert-Near (Number $sheet 'G7') ([Math]::Exp(-4.0)) 'Poisson mass after reopening'
+    if ([string]$sheet.Range('D20').Value2 -ne 'ENABLED') { throw 'Macros cell stays DISABLED after macros are enabled' }
+    Assert-Near (Number $sheet 'D21') ([Math]::Exp(-4.0)) 'Poisson mass after reopening'
     Assert-Charts $sheet 51 -4169 'Poisson after reopening'
     $book.Close($false)
     Close-OwnedExcel $excel; $excel = $null
