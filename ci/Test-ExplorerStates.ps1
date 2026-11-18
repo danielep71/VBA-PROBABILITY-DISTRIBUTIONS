@@ -135,6 +135,7 @@ try {
     Set-Text $sheet 'D6' 'Poisson'
     Set-Number $sheet 'D7' 4.0
     Set-Number $sheet 'D11' 0.0
+    Set-Number $sheet 'D16' 2.0
     if ([string]$sheet.Range('D20').Value2 -notlike 'DISABLED*') { throw 'Macros cell does not say DISABLED with macros off' }
     if ([string]$sheet.Range('F4').Value2 -notlike 'MACROS ARE DISABLED*') { throw 'The warning line is empty with macros off' }
     if ($sheet.Range('D21').Value2 -isnot [int]) { throw 'A result is still a number with macros off' }
@@ -149,6 +150,8 @@ try {
     $sheet = $book.Worksheets.Item('Explorer')
     if ([string]$sheet.Range('D20').Value2 -ne 'ENABLED') { throw 'Macros cell stays DISABLED after macros are enabled' }
     Assert-Near (Number $sheet 'D21') ([Math]::Exp(-4.0)) 'Poisson mass after reopening'
+    $dec = [string]$excel.International(3)
+    if ([string]$sheet.Range('D21').Text -ne ('0' + $dec + '02')) { throw "Decimals set with macros off are not applied at open: $($sheet.Range('D21').Text)" }
     Assert-Charts $sheet 51 -4169 'Poisson after reopening'
     $book.Close($false)
     Close-OwnedExcel $excel; $excel = $null
