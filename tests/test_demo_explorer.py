@@ -135,6 +135,42 @@ class PlanTests(unittest.TestCase):
         self.assertIn("-INT(-$D$13)", by_address["F20"])
         self.assertIn("-INT(-$D$13)", by_address["D19"])
 
+    def test_every_input_has_messages_within_excel_limits(self):
+        messages = self.plan["messages"]
+        self.assertEqual(set(messages), {"D6", "D11", "D12", "D13", "D14", "D15", "D16"})
+        for cell, (title, prompt, error_title, error) in messages.items():
+            self.assertTrue(title and prompt and error_title and error, cell)
+            self.assertLessEqual(len(title), explorer_plan.TITLE_LIMIT, cell)
+            self.assertLessEqual(len(error_title), explorer_plan.TITLE_LIMIT, cell)
+            self.assertLessEqual(len(prompt), explorer_plan.PROMPT_LIMIT, cell)
+            self.assertLessEqual(len(error), explorer_plan.ERROR_LIMIT, cell)
+
+    def test_every_parameter_has_its_own_messages(self):
+        cells = {cell["address"]: cell for cell in self.plan["table"]["cells"]}
+        for index, family in enumerate(FAMILIES["families"], 1):
+            for slot in range(4):
+                prompt = cells[f"{explorer_plan.column_letters(338 + 29 + slot)}{index}"]["value"]
+                title = cells[f"{explorer_plan.column_letters(338 + 33 + slot)}{index}"]["value"]
+                error = cells[f"{explorer_plan.column_letters(338 + 37 + slot)}{index}"]["value"]
+                self.assertLessEqual(len(prompt), explorer_plan.PROMPT_LIMIT)
+                self.assertLessEqual(len(title), explorer_plan.TITLE_LIMIT)
+                self.assertLessEqual(len(error), explorer_plan.ERROR_LIMIT)
+                if slot < len(family["parameters"]):
+                    parameter = family["parameters"][slot]
+                    self.assertLessEqual(len(parameter["label"]), explorer_plan.TITLE_LIMIT)
+                    self.assertIn(explorer_plan.shown(parameter["min"]), prompt, family["name"])
+                    self.assertIn(explorer_plan.shown(parameter["max"]), error, family["name"])
+                    self.assertTrue(title.startswith("Invalid "), title)
+                    if parameter.get("note"):
+                        self.assertIn(parameter["note"], error)
+                else:
+                    self.assertIn("Not used", prompt)
+
+    def test_constraints_are_named_where_they_apply(self):
+        for family in FAMILIES["families"]:
+            if family["constraint"] != "TRUE":
+                self.assertTrue(any(p.get("note") for p in family["parameters"]), family["name"])
+
     def test_texts_fit_the_template_cells(self):
         for text in self.plan["texts"]:
             if text["address"].startswith("C") and text["address"] != "C3":
