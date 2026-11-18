@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "files": {
-    "examples/demo/baseline/Explorer-baseline.xlsm": {
-      "sha256": "ec6975508d6c80e29e107a32c2bd3405ddd50aad37acf48c6822837470a81299",
-      "reason": "Hand-formatted Explorer workbook the demo package starts from (layout, charts, Ribbon, navigation). tools/demobuild/explorer_build.py keeps every part but its VBA project, which it rebuilds from the sources of the commit; the embedded VBA is never run. A new version needs review before its digest changes."
+    "src/workbook/PROBDIST_Template.xlsx": {
+      "sha256": "61a48ceddbd2dd37db07e916ea81e343de815971e5a033cacc356f0a3f769f89",
+      "reason": "Macro-free template of the Explorer workbook (sheets, formulas, names, validation, charts, Ribbon, navigation), made by tools/demobuild/explorer_template.py from a workbook the Distribution Explorer workflow verified. It holds no VBA project: tools/demobuild/explorer_build.py and tools/Sync-PROBDIST-VBA.ps1 add the code from the sources of the commit. A new version needs review before its digest changes."
     }
   }
 }

@@ -96,6 +96,17 @@ try:
     shutil.rmtree(root / "src" / "sub")
     expect(root, "nested module removed again", True)
 
+    # The Explorer workbook's modules, in src/workbook/, are neither
+    # production nor regression modules, tracked or only on disk.
+    write(root, "src/workbook/W.bas")
+    check(T.present_modules(root, T.REGRESSION_DIRS) == SOURCES, "src/workbook/ is not on disk scope")
+    git(root, "add", "--", "src/workbook/W.bas")
+    check(T.regression_modules(root) == SOURCES, "src/workbook/ is not a regression source")
+    check(T.production_modules(root) == ["src/A.bas", "src/B.bas"], "src/workbook/ is not production")
+    expect(root, "workbook module beside an exact list", True)
+    git(root, "rm", "-q", "--cached", "--", "src/workbook/W.bas")
+    shutil.rmtree(root / "src" / "workbook")
+
     # An extra listed module that is not tracked.
     write_policy(root, SOURCES + ["src/Ghost.bas"])
     expect(root, "listed module that does not exist", False,

@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools/demobuild"))
 import explorer_build
 import explorer_plan
+import explorer_template
 
 DEMO = ROOT / "examples/demo"
+WORKBOOK = ROOT / "src/workbook"
 FAMILIES = json.loads((DEMO / "explorer-families.json").read_text())
 REFERENCES = json.loads((DEMO / "explorer-references.json").read_text())
 
@@ -122,7 +124,7 @@ class PlanTests(unittest.TestCase):
         self.assertIn("-INT(-$D$13)", by_address["F20"])
         self.assertEqual(self.plan["decimals"]["cell"], "$D$16")
         self.assertEqual(self.plan["validation"]["decimals_list"], "=ExplorerDecimals")
-        module = (DEMO / "M_STATS_PROBDIST_EXPLORER.bas").read_text(encoding="latin-1")
+        module = (WORKBOOK / "M_STATS_PROBDIST_EXPLORER.bas").read_text(encoding="latin-1")
         self.assertIn(f'FORMATTED_CELLS As String = "{self.plan["decimals"]["cells"]}"', module)
         self.assertIn('DECIMALS_CELL As String = "D16"', module)
         self.assertIn(f'X_CELLS As String = "{self.plan["decimals"]["x_cells"]}"', module)
@@ -189,35 +191,102 @@ class PlanTests(unittest.TestCase):
 class PackageTests(unittest.TestCase):
     data, plan, hashes = explorer_build.build()
 
-    def test_only_the_vba_project_changes_in_the_baseline(self):
+    def test_the_template_is_macro_free(self):
+        template = zipfile.ZipFile(explorer_build.TEMPLATE)
+        self.assertNotIn("xl/vbaProject.bin", template.namelist())
+        types = template.read("[Content_Types].xml").decode()
+        self.assertIn(explorer_template.PLAIN_MAIN, types)
+        self.assertNotIn("vbaProject", types + template.read("xl/_rels/workbook.xml.rels").decode())
+
+    def test_the_template_holds_no_macro_content_excel_refuses(self):
+        template = zipfile.ZipFile(explorer_build.TEMPLATE)
+        self.assertNotIn(b"xlm=", template.read("xl/workbook.xml"))
+        parts = {name: template.read(name) for name in template.namelist()}
+        parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace(
+            b"<definedNames>", b'<definedNames><definedName name="_xlpm.x" hidden="1" xlm="1">#NAME?</definedName>')
+        stripped = explorer_template.strip_macros(explorer_template.enable_macros(parts, b"project"))
+        self.assertNotIn(b"xlm=", stripped["xl/workbook.xml"])
+
+    def test_the_template_carries_no_sensitivity_label(self):
+        template = zipfile.ZipFile(explorer_build.TEMPLATE)
+        self.assertNotIn(explorer_template.LABEL_PART, template.namelist())
+        self.assertNotIn("LabelInfo", template.read("[Content_Types].xml").decode())
+        self.assertNotIn("LabelInfo", template.read("_rels/.rels").decode())
+        # strip_macros removes a label that Office stored, with its relationship and content type.
+        parts = {name: template.read(name) for name in template.namelist()}
+        labelled = explorer_template.enable_macros(parts, b"project")
+        labelled[explorer_template.LABEL_PART] = b"<label/>"
+        labelled["[Content_Types].xml"] = labelled["[Content_Types].xml"].replace(
+            b"</Types>", b'<Override PartName="/docMetadata/LabelInfo.xml" ContentType="x"/></Types>')
+        labelled["_rels/.rels"] = labelled["_rels/.rels"].replace(
+            b"</Relationships>", b'<Relationship Id="rId9" Type="t" Target="docMetadata/LabelInfo.xml"/></Relationships>')
+        stripped = explorer_template.strip_macros(labelled)
+        self.assertNotIn(explorer_template.LABEL_PART, stripped)
+        self.assertNotIn(b"LabelInfo", stripped["[Content_Types].xml"] + stripped["_rels/.rels"])
+
+    def test_only_the_code_is_added_to_the_template(self):
         built = zipfile.ZipFile(io.BytesIO(self.data))
-        baseline = zipfile.ZipFile(explorer_build.BASELINE)
-        self.assertEqual(sorted(built.namelist()), sorted(baseline.namelist()))
-        for name in baseline.namelist():
-            if name != "xl/vbaProject.bin":
-                self.assertEqual(built.read(name), baseline.read(name), name)
-        self.assertNotEqual(built.read("xl/vbaProject.bin"), baseline.read("xl/vbaProject.bin"))
+        template = zipfile.ZipFile(explorer_build.TEMPLATE)
+        self.assertEqual(built.namelist(), template.namelist() + ["xl/vbaProject.bin"])
+        changed = {"[Content_Types].xml", "xl/_rels/workbook.xml.rels"}
+        for name in template.namelist():
+            if name not in changed:
+                self.assertEqual(built.read(name), template.read(name), name)
+        types = built.read("[Content_Types].xml").decode()
+        self.assertIn(explorer_template.MACRO_MAIN, types)
+        self.assertIn(explorer_template.VBA_TYPE, types)
+        self.assertIn(explorer_template.VBA_RELATIONSHIP, built.read("xl/_rels/workbook.xml.rels").decode())
+        # Taking the code out again gives the template back.
+        parts = {name: built.read(name) for name in built.namelist()}
+        stripped = explorer_template.strip_macros(parts)
+        for name in changed:
+            self.assertEqual(stripped[name], template.read(name), name)
+
+    def test_the_ribbon_source_is_the_template_part(self):
+        template = zipfile.ZipFile(explorer_build.TEMPLATE)
+        self.assertEqual(template.read(explorer_build.RIBBON_PART), explorer_build.RIBBON.read_bytes())
+
+    def test_template_tools_refuse_the_wrong_package(self):
+        parts = {name: zipfile.ZipFile(explorer_build.TEMPLATE).read(name)
+                 for name in zipfile.ZipFile(explorer_build.TEMPLATE).namelist()}
+        with self.assertRaises(explorer_template.TemplateError):
+            explorer_template.strip_macros(parts)
+        built = explorer_template.enable_macros(parts, b"project")
+        with self.assertRaises(explorer_template.TemplateError):
+            explorer_template.enable_macros(built, b"project")
+
+    def test_the_workbook_modules_are_all_built_in(self):
+        modules, sources = explorer_build.vba_modules()
+        names = [module.name for module in modules]
+        for path in sorted(WORKBOOK.glob("*.bas")):
+            self.assertIn(path.stem, names)
+        self.assertEqual(names[0], "ThisWorkbook")
+        self.assertTrue(modules[0].source.startswith('Attribute VB_Name = "ThisWorkbook"'))
+        self.assertNotIn("VERSION 1.0 CLASS", modules[0].source)
 
     def test_build_is_reproducible(self):
         self.assertEqual(explorer_build.build()[0], self.data)
 
     def test_ribbon_callbacks_exist_in_the_modules(self):
-        ribbon = zipfile.ZipFile(explorer_build.BASELINE).read("customUI/customUI14.xml").decode()
+        ribbon = explorer_build.RIBBON.read_text(encoding="utf-8")
         callbacks = set(re.findall(r'(?:onAction|getEnabled|getPressed|onLoad)="(\w+)"', ribbon))
         source = "\n".join(path.read_text(encoding="latin-1") for path in
-                           (DEMO / "M_STATS_PROBDIST_DEMO.bas", DEMO / "M_STATS_PROBDIST_EXPLORER.bas"))
+                           (WORKBOOK / "M_STATS_PROBDIST_DEMO.bas", WORKBOOK / "M_STATS_PROBDIST_EXPLORER.bas"))
         for callback in callbacks:
             self.assertRegex(source, rf"Public Sub {callback}\(", callback)
 
     def test_explorer_module_holds_no_fixed_layout_or_numbers(self):
-        text = (DEMO / "M_STATS_PROBDIST_EXPLORER.bas").read_text(encoding="latin-1")
+        text = (WORKBOOK / "M_STATS_PROBDIST_EXPLORER.bas").read_text(encoding="latin-1")
         for stale in ("F18", "218", "K_STATS_", "G11 + ", "$MA$1"):
             self.assertNotIn(stale, text)
         self.assertIn('Range("ExplorerFamily")', text)
 
     def test_workbook_events_route_to_the_explorer_module(self):
-        self.assertIn("M_STATS_PROBDIST_EXPLORER.ExplorerInputsChanged Target", explorer_build.EXPLORER_EVENTS)
-        self.assertIn("M_STATS_PROBDIST_EXPLORER.ExplorerOpened", explorer_build.EXPLORER_EVENTS)
+        events = (WORKBOOK / "ThisWorkbook.cls").read_text(encoding="latin-1")
+        self.assertIn("M_STATS_PROBDIST_EXPLORER.ExplorerInputsChanged Target", events)
+        self.assertIn("M_STATS_PROBDIST_EXPLORER.ExplorerOpened", events)
+        self.assertIn("M_STATS_PROBDIST_REGISTER.PROB_Register_PublicUDFs", events)
+        self.assertIn("M_STATS_PROBDIST_DEMO.NavigationBarBeforeSave", events)
 
 
 if __name__ == "__main__":

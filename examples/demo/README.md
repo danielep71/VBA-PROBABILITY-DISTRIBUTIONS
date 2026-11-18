@@ -42,7 +42,7 @@ separate work.
 CodeNames, tooltips and issues. The Go to menu of the Ribbon, the navigation
 bar of every sheet, the table of links on Home and the defined names of the
 link targets are all written from it. The workbook embeds the current
-production modules plus `M_STATS_PROBDIST_DEMO.bas`. README, the last sheet,
+production modules plus `src/workbook/M_STATS_PROBDIST_DEMO.bas`. README, the last sheet,
 shows the source commit and the library version. The manifest is an inventory,
 not certification.
 

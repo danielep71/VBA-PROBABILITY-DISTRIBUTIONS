@@ -219,10 +219,27 @@ class SourceTest(Assertions):
     def test_component_outside_its_homes(self) -> None:
         source = renamed(TEST, "M_STATS_PROBDIST_STRAY")
         for path in ("M_STATS_PROBDIST_STRAY.bas", "tools/M_STATS_PROBDIST_STRAY.bas",
-                     "src/sub/M_STATS_PROBDIST_STRAY.bas", "tests/x/M_STATS_PROBDIST_STRAY.bas"):
+                     "src/sub/M_STATS_PROBDIST_STRAY.bas", "tests/x/M_STATS_PROBDIST_STRAY.bas",
+                     "src/workbook/x/M_STATS_PROBDIST_STRAY.bas",
+                     "examples/demo/M_STATS_PROBDIST_STRAY.bas"):
             with self.subTest(path=path):
-                self.assertFinding({**VALID, path: source}, "outside src/ and tests/")
+                self.assertFinding({**VALID, path: source}, "outside src/, src/workbook/ and tests/")
+        self.assertClean({**VALID, "src/workbook/M_STATS_PROBDIST_STRAY.bas": source})
         self.assertClean({**VALID, "benchmark/a/b/M_STATS_PROBDIST_STRAY.bas": source})
+
+    def test_workbook_modules(self) -> None:
+        # A document module keeps its Excel name, only in src/workbook/.
+        document = ('VERSION 1.0 CLASS\nBEGIN\n  MultiUse = -1  \'True\nEND\n'
+                    'Attribute VB_Name = "ThisWorkbook"\nOption Explicit\n')
+        self.assertClean({**VALID, "src/workbook/ThisWorkbook.cls": document})
+        for path in ("src/ThisWorkbook.cls", "tests/ThisWorkbook.cls"):
+            with self.subTest(path=path):
+                self.assertFinding({**VALID, path: document}, "must start with M_STATS_PROBDIST_")
+        # The public-API freeze does not read src/workbook/: no worksheet function there.
+        exposed = renamed(TEST, "M_STATS_PROBDIST_SHOW") + (
+            "\nPublic Function K_STATS_SHOW() As Long\nEnd Function\n")
+        self.assertFinding({**VALID, "src/workbook/M_STATS_PROBDIST_SHOW.bas": exposed},
+                           "worksheet functions belong to the library modules")
 
     def test_name_prefix_and_length(self) -> None:
         self.assertFinding({**VALID, "tests/M_TEST.bas": renamed(TEST, "M_TEST")},
@@ -688,9 +705,11 @@ class VisibilityTest(Assertions):
                            f"{TEST_PATH}:4: public name 'Test_RunAll' declared also in "
                            f"{EXPORT_PATH} (one VBA project)")
         self.assertEqual(check_vba_visibility.COLLISION_GROUPS,
-                         {"one VBA project": ("src/", "tests/", "benchmark/", "examples/demo/")})
-        homes = check_vba_source.FLAT_HOMES + check_vba_source.NESTED_HOMES
-        self.assertEqual(sorted(homes), sorted(*check_vba_visibility.COLLISION_GROUPS.values()))
+                         {"one VBA project": ("src/", "tests/", "benchmark/")})
+        # Every home, src/workbook/ included, is inside the one group.
+        group = check_vba_visibility.COLLISION_GROUPS["one VBA project"]
+        for home in check_vba_source.FLAT_HOMES + check_vba_source.NESTED_HOMES:
+            self.assertTrue(home.startswith(group), home)
 
     def test_same_module_twice(self) -> None:
         self.assertFinding(changed(TEST_PATH, "Private Function Helper", "Public Sub Test_RunAll"),

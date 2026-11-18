@@ -95,7 +95,8 @@ with tempfile.TemporaryDirectory(prefix="frozen-sources-clone-") as clone:
             shutil.copyfile(source, target)
 
     # 2. Change every production module and the test module, comment and code.
-    modules = sorted(os.listdir(os.path.join(clone, "src")))
+    modules = sorted(name for name in os.listdir(os.path.join(clone, "src"))
+                     if name.endswith(".bas"))
     for index, name in enumerate(modules + ["../tests/M_STATS_PROBDIST_TEST.bas"]):
         path = os.path.join(clone, "src", name)
         mutate(path, b"Option Explicit",

@@ -1,6 +1,8 @@
 """Tracked VBA module inventory shared by the module-list checks.
 
-The production modules live in src/ and the regression harness in tests/. Any
+The production modules live in src/ and the regression harness in tests/; the
+modules of the Explorer workbook in src/workbook/ belong to neither, since no
+regression or evidence workbook imports them, and are left out. Any
 check that needs "the production modules" or "the regression sources" derives
 them from the files Git tracks there, so a new module cannot escape the
 public-API freeze or the Excel evidence binding by being missing from a
@@ -19,6 +21,7 @@ from pathlib import Path
 
 PRODUCTION_DIR = "src"
 REGRESSION_DIRS = ("src", "tests")
+WORKBOOK_DIR = "src/workbook"
 MODULE_SUFFIX = ".bas"
 
 
@@ -52,11 +55,14 @@ def _require_top_level(root: Path) -> None:
 
 
 def is_module(path: str) -> bool:
-    return Path(path).suffix.lower() == MODULE_SUFFIX
+    """A library or test module: a `.bas` file outside the workbook modules."""
+    return (Path(path).suffix.lower() == MODULE_SUFFIX
+            and not path.startswith(WORKBOOK_DIR + "/"))
 
 
 def tracked_modules(root: Path, directories: tuple[str, ...]) -> list[str]:
-    """Tracked `.bas` files at any depth under `directories`, sorted, "/"-separated."""
+    """Tracked library and test modules (`.bas` files) at any depth under
+    `directories`, sorted, "/"-separated."""
     _require_top_level(root)
     raw = _git(root, "ls-files", "-z", "--", *directories)
     names = (item.decode("utf-8", errors="surrogateescape") for item in raw.split(b"\0") if item)
@@ -64,16 +70,18 @@ def tracked_modules(root: Path, directories: tuple[str, ...]) -> list[str]:
 
 
 def present_modules(root: Path, directories: tuple[str, ...]) -> list[str]:
-    """`.bas` files on disk at any depth under `directories`, sorted, "/"-separated."""
+    """Library and test modules (`.bas` files) on disk at any depth under
+    `directories`, sorted, "/"-separated."""
     found: list[str] = []
     for directory in directories:
         base = root / directory
         if not base.is_dir():
             continue
         found.extend(
-            path.relative_to(root).as_posix()
-            for path in base.rglob("*")
-            if path.is_file() and is_module(path.name)
+            relative
+            for relative in (path.relative_to(root).as_posix()
+                             for path in base.rglob("*") if path.is_file())
+            if is_module(relative)
         )
     return sorted(found)
 

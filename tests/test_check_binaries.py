@@ -54,11 +54,11 @@ class BinaryCheckTest(unittest.TestCase):
     def test_repository_passes(self) -> None:
         findings, passed = check_binaries.check(ROOT)
         self.assertEqual(findings, [])
-        # The tracked binaries are the images and the one workbook the demo
-        # package starts from, pinned by its digest in the allowlist.
+        # The tracked binaries are the images and the template of the Explorer
+        # workbook, pinned by its digest in the allowlist.
         self.assertTrue(passed)
         workbooks = sorted(binary.path for binary in passed if not binary.path.startswith("assets/"))
-        self.assertEqual(workbooks, ["examples/demo/baseline/Explorer-baseline.xlsm"])
+        self.assertEqual(workbooks, ["src/workbook/PROBDIST_Template.xlsx"])
 
     def test_text_files_pass(self) -> None:
         self.assertEqual(self.repository({
@@ -177,7 +177,7 @@ class BinaryCheckTest(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as printed:
             self.assertEqual(check_binaries.main(["--root", str(ROOT)]), 0)
         self.assertIn("ok: assets/", printed.getvalue())
-        self.assertIn("ok: examples/demo/baseline/Explorer-baseline.xlsm", printed.getvalue())
+        self.assertIn("ok: src/workbook/PROBDIST_Template.xlsx", printed.getvalue())
         self.assertNotIn("a.xlsm", printed.getvalue())
         self.assertIn("binaries: PASS", printed.getvalue())
 

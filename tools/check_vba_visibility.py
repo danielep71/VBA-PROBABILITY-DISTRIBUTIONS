@@ -31,10 +31,11 @@ ROOT = Path(__file__).resolve().parents[1]
 # (.github/excel-evidence-policy.json, regression_sources), and every exporter
 # and probe under benchmark/ is imported into a workbook that already holds
 # the production modules, where the main-grid evidence binds production, test,
-# exporter and study modules together (benchmark/PROVENANCE.md). One group is
+# exporter and study modules together (benchmark/PROVENANCE.md). The Explorer
+# workbook holds the library and src/workbook/, both under "src/". One group is
 # the superset of every import set, so no combination can be ambiguous.
 COLLISION_GROUPS: dict[str, tuple[str, ...]] = {
-    "one VBA project": ("src/", "tests/", "benchmark/", "examples/demo/"),
+    "one VBA project": ("src/", "tests/", "benchmark/"),
 }
 PROPERTY_KINDS = frozenset({"property get", "property let", "property set"})
 

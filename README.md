@@ -1099,7 +1099,8 @@ worked examples and the numerical limitations. Its PDF,
 [v1.0.0 release](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0).
 
 v1.0.0 does not include a demonstration workbook. The library is the six
-modules in [`src/`](src/); import them as
+modules in [`src/`](src/) (not the `src/workbook/` folder, which belongs to the
+Explorer workbook under development); import them as
 [INSTALLATION.md](INSTALLATION.md) describes.
 
 > [!CAUTION]
@@ -1147,11 +1148,13 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ PUBLIC_API.txt             # frozen K_STATS_* API inventory
 │  └─ VERIFICATION_DEPTH.md
 ├─ src/                          # the six production modules
+│  └─ workbook/                  # Explorer workbook: template, Ribbon, workbook modules
 ├─ tests/
 │  ├─ M_STATS_PROBDIST_TEST.bas  # VBA regression harness
 │  └─ test_*.py                  # Python tests of the repository tooling
-├─ tools/                        # static repository checks
+├─ tools/                        # static repository checks and VBA synchronization
 │  ├─ run_static_checks.py
+│  ├─ Sync-PROBDIST-VBA.ps1      # import the VBA source into a workbook (also .cmd)
 │  └─ README.md
 ├─ index.html                    # project website
 ├─ CHANGELOG.md

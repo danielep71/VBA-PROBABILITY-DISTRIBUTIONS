@@ -48,7 +48,7 @@
 *.xlsx
 *.xlsm
 *.xlsb
-!/examples/demo/baseline/Explorer-baseline.xlsm
+!/src/workbook/PROBDIST_Template.xlsx
 *.xlt
 *.xltx
 *.xltm
