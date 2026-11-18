@@ -23,20 +23,63 @@ function Localize-Formula([string]$Formula, [string]$Separator) {
     return $builder.ToString()
 }
 
-# Excel turns alerts back on once a worksheet function of the VBA project has
-# run, and a hidden confirmation would wait for ever; switch them off at each step.
-# Excel rejects a COM call while it is busy (RPC_E_CALL_REJECTED); wait and retry.
+# Excel rejects a COM call while it is busy (RPC_E_CALL_REJECTED), for
+# instance while it computes a spilled grid it was just given; wait and retry,
+# for up to five minutes, and say so in the log. The log goes to the host, not
+# the output stream, so it never becomes part of the value returned.
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class EvolveNative {
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+}
+'@
+$script:excelProcessId = 0
+
+# Names the dialogs the owned Excel process shows: a call Excel keeps
+# rejecting means a modal window is waiting for an answer.
+function Show-Dialogs {
+    try {
+        Add-Type -AssemblyName UIAutomationClient
+        Add-Type -AssemblyName UIAutomationTypes
+        $root = [Windows.Automation.AutomationElement]::RootElement
+        $byPid = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$script:excelProcessId)
+        foreach ($top in $root.FindAll([Windows.Automation.TreeScope]::Children, $byPid)) {
+            $windows = @($top) + @($top.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition) |
+                Where-Object { $_.Current.ControlType -eq [Windows.Automation.ControlType]::Window })
+            foreach ($window in $windows) {
+                $texts = @($window.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition) |
+                    ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -First 25)
+                Write-Host ("  window: [" + $window.Current.ClassName + "] " + $window.Current.Name + " :: " + ($texts -join ' | '))
+            }
+        }
+    } catch { Write-Host ('  could not list the windows: ' + $_.Exception.Message) }
+}
+
 function Invoke-Excel([scriptblock]$Action) {
     for ($attempt = 1; ; $attempt++) {
         try { return & $Action }
         catch {
-            $busy = $_.Exception.HResult -eq -2147418111 -or $_.Exception.Message -match '0x80010001'
-            if (-not $busy -or $attempt -ge 40) { throw }
+            $text = [string]$_.Exception + ' ' + [string]$_.Exception.InnerException
+            $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
+            if (-not $busy -or $attempt -ge 600) { throw }
+            if ($attempt % 20 -eq 1) { Write-Host "  Excel is busy; waiting (attempt $attempt)" }
+            if ($attempt -eq 40) { Show-Dialogs }
             Start-Sleep -Milliseconds 500
         }
     }
 }
 
+function Wait-Excel {
+    for ($wait = 0; $wait -lt 600; $wait++) {
+        if (Invoke-Excel { $excel.Ready }) { return }
+        Start-Sleep -Milliseconds 500
+    }
+    throw 'Excel stayed busy for five minutes'
+}
+
+# Excel turns alerts back on once a worksheet function of the VBA project has
+# run, and a hidden confirmation would wait for ever; switch them off at each step.
 function Step([string]$Text) {
     if ($null -ne $excel) { $excel.DisplayAlerts = $false }
     Write-Output ('[' + (Get-Date -Format 'HH:mm:ss') + '] ' + $Text)
@@ -49,6 +92,7 @@ try {
     $excel.EnableEvents = $false
     $excel.AutomationSecurity = 1
     $excel.ScreenUpdating = $false
+    [void][EvolveNative]::GetWindowThreadProcessId([IntPtr][long]$excel.Hwnd, [ref]$script:excelProcessId)
     $book = $excel.Workbooks.Open($path, 0, $false)
     try { $book.Unprotect() } catch { }
     $sheet = $book.Worksheets.Item($plan.sheet)
@@ -82,7 +126,9 @@ try {
         if ($cell.value -is [string]) { $target.Value2 = [string]$cell.value }
         else { $target.Value2 = [double]$cell.value }
     }
-    foreach ($item in $plan.names) { try { $book.Names.Item($item.name).Delete() } catch { } }
+    # Names.Add redefines a name that exists in place. Deleting it first would
+    # leave the chart series that use it without a reference for a moment,
+    # and Excel then stops on a modal warning about broken references.
     # A name of an earlier plan that the sheet no longer uses.
     try { $book.Names.Item('ExplorerGridDiscrete').Delete() } catch { }
     $failed = @()
@@ -153,8 +199,9 @@ try {
     $sheet.Rows.Item("${first}:$last").RowHeight = 20.1
     foreach ($item in $plan.formulas) {
         $target = $sheet.Range($item.address)
-        Invoke-Excel { $target.Formula2 = [string]$item.formula }
+        Invoke-Excel { $excel.DisplayAlerts = $false; $target.Formula2 = [string]$item.formula }
     }
+    Wait-Excel
 
     Step 'conditional formats'
     for ($row = 7; $row -le 10; $row++) {
@@ -185,8 +232,9 @@ try {
     }
 
     $excel.Calculation = -4105
-    $excel.Calculate()
-    $excel.CalculateFull()
+    Invoke-Excel { $excel.Calculate() }
+    Invoke-Excel { $excel.CalculateFull() }
+    Wait-Excel
     $excel.ScreenUpdating = $true
     Step 'defaults and charts through the Explorer module'
     [void]$excel.Run($prefix + 'ResetExplorerInputs', $false)
