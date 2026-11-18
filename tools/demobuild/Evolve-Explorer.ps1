@@ -23,20 +23,32 @@ function Localize-Formula([string]$Formula, [string]$Separator) {
     return $builder.ToString()
 }
 
-# Excel turns alerts back on once a worksheet function of the VBA project has
-# run, and a hidden confirmation would wait for ever; switch them off at each step.
-# Excel rejects a COM call while it is busy (RPC_E_CALL_REJECTED); wait and retry.
+# Excel rejects a COM call while it is busy (RPC_E_CALL_REJECTED), for
+# instance while it computes a spilled grid it was just given; wait and retry,
+# for up to five minutes, and say so in the log.
 function Invoke-Excel([scriptblock]$Action) {
     for ($attempt = 1; ; $attempt++) {
         try { return & $Action }
         catch {
-            $busy = $_.Exception.HResult -eq -2147418111 -or $_.Exception.Message -match '0x80010001'
-            if (-not $busy -or $attempt -ge 40) { throw }
+            $text = [string]$_.Exception + ' ' + [string]$_.Exception.InnerException
+            $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
+            if (-not $busy -or $attempt -ge 600) { throw }
+            if ($attempt % 20 -eq 1) { Write-Output "  Excel is busy; waiting (attempt $attempt)" }
             Start-Sleep -Milliseconds 500
         }
     }
 }
 
+function Wait-Excel {
+    for ($wait = 0; $wait -lt 600; $wait++) {
+        if (Invoke-Excel { $excel.Ready }) { return }
+        Start-Sleep -Milliseconds 500
+    }
+    throw 'Excel stayed busy for five minutes'
+}
+
+# Excel turns alerts back on once a worksheet function of the VBA project has
+# run, and a hidden confirmation would wait for ever; switch them off at each step.
 function Step([string]$Text) {
     if ($null -ne $excel) { $excel.DisplayAlerts = $false }
     Write-Output ('[' + (Get-Date -Format 'HH:mm:ss') + '] ' + $Text)
@@ -155,6 +167,7 @@ try {
         $target = $sheet.Range($item.address)
         Invoke-Excel { $target.Formula2 = [string]$item.formula }
     }
+    Wait-Excel
 
     Step 'conditional formats'
     for ($row = 7; $row -le 10; $row++) {
@@ -185,8 +198,9 @@ try {
     }
 
     $excel.Calculation = -4105
-    $excel.Calculate()
-    $excel.CalculateFull()
+    Invoke-Excel { $excel.Calculate() }
+    Invoke-Excel { $excel.CalculateFull() }
+    Wait-Excel
     $excel.ScreenUpdating = $true
     Step 'defaults and charts through the Explorer module'
     [void]$excel.Run($prefix + 'ResetExplorerInputs', $false)
