@@ -79,6 +79,14 @@ numbers. Conditional formats, one per value, were tried first and rejected:
 each rule over the spilled grid took Excel 40 to 80 seconds to add. A density that is undefined at a grid
 point (a pole) is `#N/A` by the library's design.
 
+Every input cell has an input message and an error alert, in the style of
+the K-SACCR template: a title and a text that say what the cell holds, its
+unit and its limits, and an error that says what to enter instead. The
+parameter cells D7:D10 take the messages of the selected family's parameters,
+written in `explorer-families.json` (`help`, and `note` for a constraint
+between parameters); the Explorer module sets them when a family loads and
+when the workbook opens.
+
 Parameters are validated by named rules, one per slot, that read the limits
 from the family table. Limits: continuous grids up to 1,000 points; discrete
 grids up to 1,001 integers; probe point and bounds within +/-10,000,000. A

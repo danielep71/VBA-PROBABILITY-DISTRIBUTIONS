@@ -126,14 +126,15 @@ End Sub
 
 Public Sub ExplorerOpened()
     ' Called by Workbook_Open. A file saved while macros were off, or with
-    ' another family's chart types, opens with stale charts and number
-    ' formats that do not follow the decimals cell: recalculate, set them
-    ' again, and leave the workbook's Saved flag as it was.
+    ' another family's chart types, opens with stale charts, number formats
+    ' that do not follow the decimals cell and parameter messages of another
+    ' family: recalculate, set them again, and leave the Saved flag as it was.
     Dim WasSaved As Boolean
     On Error Resume Next
     WasSaved = ThisWorkbook.Saved
     RefreshExplorer
     ApplyDecimals ExplorerSheet()
+    ApplyParameterMessages ExplorerSheet()
     ThisWorkbook.Saved = WasSaved
     On Error GoTo 0
 End Sub
@@ -221,6 +222,32 @@ Public Sub ApplyDecimals(ByVal Sheet As Worksheet)
 End Sub
 
 
+Public Sub ApplyParameterMessages(ByVal Sheet As Worksheet)
+    ' Gives the parameter cells D7:D10 the input and error messages of the
+    ' selected family's parameters: name, meaning, unit and limits, as the
+    ' family table holds them. A name that is not a family leaves them as
+    ' they are.
+    Dim Row As Long
+    Dim Slot As Long
+    Dim WasProtected As Boolean
+    Row = FamilyRow(Sheet)
+    If Row = 0 Then Exit Sub
+    WasProtected = Sheet.ProtectContents
+    If WasProtected Then Sheet.Unprotect
+    For Slot = 1 To PARAMETER_COUNT
+        With Sheet.Cells(FIRST_PARAMETER_ROW + Slot - 1, 4).Validation
+            .InputTitle = Left$(CStr(Sheet.Range("ExplorerLabels").Cells(Row, Slot).Value2), 32)
+            .InputMessage = Left$(CStr(Sheet.Range("ExplorerPrompts").Cells(Row, Slot).Value2), 255)
+            .ErrorTitle = Left$(CStr(Sheet.Range("ExplorerErrorTitles").Cells(Row, Slot).Value2), 32)
+            .ErrorMessage = Left$(CStr(Sheet.Range("ExplorerErrors").Cells(Row, Slot).Value2), 225)
+            .ShowInput = True
+            .ShowError = True
+        End With
+    Next Slot
+    If WasProtected Then Sheet.Protect
+End Sub
+
+
 Private Function FamilyRow(ByVal Sheet As Worksheet) As Long
     ' Row of the selected family in the table, or 0 when D6 is not a family.
     Dim Position As Variant
@@ -251,6 +278,7 @@ Private Sub LoadFamilyDefaults(ByVal Sheet As Worksheet)
     Sheet.Range(POINTS_CELL).Value2 = DEFAULT_POINTS
     RefitPlotWindow Sheet
     ApplyDecimals Sheet
+    ApplyParameterMessages Sheet
 End Sub
 
 

@@ -148,8 +148,6 @@ try {
     $family = $sheet.Range($at.family)
     $family.Validation.Delete()
     $family.Validation.Add(3, 1, 1, $plan.validation.family_list)
-    $family.Validation.ErrorTitle = 'Choose a listed distribution'
-    $family.Validation.ErrorMessage = 'Pick a name from the list.'
     $family.Validation.ShowError = $true
     for ($row = 7; $row -le 10; $row++) {
         $cell = $sheet.Range("D$row")
@@ -168,20 +166,25 @@ try {
         $cell.Validation.Add(2, 1, 1, [string]$rule[1], [string]$rule[2])
         $cell.Validation.ShowError = $true
     }
-    $sheet.Range($at.probability).Validation.ErrorTitle = 'Probability p'
-    $sheet.Range($at.probability).Validation.ErrorMessage = 'Enter a probability from 0 to 1.'
     $points = $sheet.Range($at.points)
     $points.Validation.Delete()
     $points.Validation.Add(1, 1, 1, [string]$plan.validation.points[0], [string]$plan.validation.points[1])
-    $points.Validation.ErrorTitle = 'Number of points'
-    $points.Validation.ErrorMessage = 'Enter a whole number from 2 to ' + $plan.validation.points[1] + '.'
     $points.Validation.ShowError = $true
     $decimals = $sheet.Range($at.decimals)
     $decimals.Validation.Delete()
     $decimals.Validation.Add(3, 1, 1, $plan.validation.decimals_list)
-    $decimals.Validation.ErrorTitle = 'Number of decimals'
-    $decimals.Validation.ErrorMessage = 'Pick a number of decimals from 0 to ' + $plan.decimals.max + '.'
     $decimals.Validation.ShowError = $true
+    # Input and error messages of the fixed inputs, in the K-SACCR style; the
+    # parameter cells get theirs from the Explorer module when a family loads.
+    foreach ($entry in $plan.messages.PSObject.Properties) {
+        $rule = $sheet.Range($entry.Name).Validation
+        $rule.InputTitle = [string]$entry.Value[0]
+        $rule.InputMessage = [string]$entry.Value[1]
+        $rule.ErrorTitle = [string]$entry.Value[2]
+        $rule.ErrorMessage = [string]$entry.Value[3]
+        $rule.ShowInput = $true
+        $rule.ShowError = $true
+    }
 
     Step 'result formulas and the spilled grid'
     $donor = $sheet.Range('F' + ($first + 1))

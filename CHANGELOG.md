@@ -97,14 +97,14 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
-- Development Distribution Explorer for 16 distributions, built from the
-  hand-formatted workbook: dynamic-array outputs (spilled grid of density,
-  survival and cumulative, results and charts that follow the plot window),
-  the quantile at a probability p, a selectable number of decimals, a family
-  table with per-parameter validation, public-API worksheet formulas and
-  mpmath reference checks.
-  Requires desktop Excel 365 or 2024 with macros; interactive and visual
-  acceptance remain pending (#254).
+- Distribution Explorer for 16 distributions, built from the hand-formatted
+  workbook: dynamic-array outputs (spilled grid of density, survival and
+  cumulative, results and charts that follow the plot window), the quantile
+  at a probability p, a selectable number of decimals, a family table with
+  per-parameter validation, public-API worksheet formulas and mpmath
+  reference checks (#254). Every input cell has an input message and an
+  error alert in the K-SACCR style; the parameter cells follow the selected
+  family (#435). Requires desktop Excel 365 or 2024 with macros.
 
 ### Added
 

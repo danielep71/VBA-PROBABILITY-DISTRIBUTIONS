@@ -44,6 +44,8 @@ COLUMNS = {
     "family": 0, "kind": 1, "count": 2,
     "label": 3, "min": 7, "max": 11, "integer": 15, "default": 19,
     "x_default": 23, "suggest_lower": 24, "suggest_upper": 25, "check": 26, "support": 27,
+    # 28 is the list of decimals (DECIMALS_COLUMN); the messages of the parameter cells follow.
+    "prompt": 29, "error_title": 33, "error": 37,
 }
 NAMES = {
     "ExplorerFamily": ("family", 1), "ExplorerKind": ("kind", 1), "ExplorerNP": ("count", 1),
@@ -51,7 +53,12 @@ NAMES = {
     "ExplorerInt": ("integer", 4), "ExplorerDefaults": ("default", 4), "ExplorerX0": ("x_default", 1),
     "ExplorerSuggestLower": ("suggest_lower", 1), "ExplorerSuggestUpper": ("suggest_upper", 1),
     "ExplorerCheck": ("check", 1), "ExplorerSupport": ("support", 1),
+    "ExplorerPrompts": ("prompt", 4), "ExplorerErrorTitles": ("error_title", 4), "ExplorerErrors": ("error", 4),
 }
+# Excel's limits for the messages of a data validation rule.
+TITLE_LIMIT, PROMPT_LIMIT, ERROR_LIMIT = 32, 255, 225
+UNUSED_MESSAGES = ("Not used by this distribution: the value is ignored.", "Not used",
+                   "This distribution has no parameter here: the value is ignored.")
 
 
 def column_letters(number: int) -> str:
@@ -90,6 +97,52 @@ def number(value: float) -> str:
     return repr(int(value)) if float(value).is_integer() else repr(value)
 
 
+def shown(value: float) -> str:
+    """A limit as the messages show it: 10,000 and 0.001, never 10000.0."""
+    return f"{int(value):,}" if float(value).is_integer() else f"{value:g}"
+
+
+def parameter_messages(parameter: dict[str, Any]) -> tuple[str, str, str]:
+    """Input message, error title and error message of one parameter, in the K-SACCR style:
+    what the value is and its unit, its limits, and what to enter instead."""
+    kind = "a whole number" if parameter["integer"] else "a number"
+    limits = f'from {shown(parameter["min"])} to {shown(parameter["max"])}'
+    note = f' {parameter["note"]}' if parameter.get("note") else ""
+    prompt = f'{parameter["help"]} From {limits.split(" ", 1)[1]}' + (", a whole number." if parameter["integer"] else ".") + note
+    label = parameter["label"]
+    title = "Invalid " + (label if label[:2].isupper() else label[0].lower() + label[1:])
+    return prompt, title, f"Enter {kind} {limits}.{note}"
+
+
+def static_messages(defaults: dict[str, Any]) -> dict[str, list[str]]:
+    """Input title, input message, error title and error message of the fixed input cells."""
+    bound = shown(defaults["bound_limit"])
+    x_limit = shown(defaults["x_limit"])
+    points = shown(defaults["max_points"])
+    return {
+        "D6": ["Distribution", "Choose one of the 16 distributions. Its parameters, probe point and plot window "
+               "are loaded with it.", "Unknown distribution", "Choose a distribution from the list."],
+        "D11": ["Evaluation point x / k", "Point where the density or mass, the CDF and P(X > x) are evaluated, "
+                f"in units of x. A discrete family truncates it to a whole number. From -{x_limit} to {x_limit}.",
+                "Invalid evaluation point", f"Enter a number from -{x_limit} to {x_limit}."],
+        "D12": ["Probability p", "Probability for the quantile: the result is the smallest x with CDF(x) >= p. "
+                "From 0 to 1; 0 and 1 give the ends of the support.",
+                "Invalid probability", "Enter a probability from 0 to 1."],
+        "D13": ["Plot lower bound", "Left end of the grid and the charts, in units of x. Reset when the "
+                f"distribution or a parameter changes. From -{bound} to {bound}, below the upper bound.",
+                "Invalid lower bound", f"Enter a number from -{bound} to {bound}."],
+        "D14": ["Plot upper bound", "Right end of the grid and the charts, in units of x. Reset when the "
+                f"distribution or a parameter changes. From -{bound} to {bound}, above the lower bound.",
+                "Invalid upper bound", f"Enter a number from -{bound} to {bound}."],
+        "D15": ["Number of points", f"Points of a continuous grid, evenly spaced between the bounds, from 2 to "
+                f"{points}. A discrete family plots every integer between the bounds and ignores this value.",
+                "Invalid number of points", f"Enter a whole number from 2 to {points}."],
+        "D16": ["Number of decimals", "Decimals shown in the results and the grid, from 0 to 15. Display only: "
+                "the values keep their full precision.",
+                "Invalid number of decimals", "Choose a number of decimals from 0 to 15."],
+    }
+
+
 def call(family: dict[str, Any], operation: str, point: str) -> str:
     arguments = [point] + [PARAMETER_CELLS[LETTERS.index(letter)] for letter in family["call"].split(",")]
     return f'{family["functions"][operation]}({",".join(arguments)})'
@@ -122,6 +175,10 @@ def table_cells(families: list[dict[str, Any]]) -> list[dict[str, Any]]:
             put(index, "max", slot, parameter["max"] if used else UNUSED_MAX)
             put(index, "integer", slot, int(parameter["integer"]) if used else 0)
             put(index, "default", slot, parameter["default"] if used else 0)
+            prompt, error_title, error = parameter_messages(parameter) if used else UNUSED_MESSAGES
+            put(index, "prompt", slot, prompt)
+            put(index, "error_title", slot, error_title)
+            put(index, "error", slot, error)
         put(index, "x_default", 0, family["x_default"])
         put(index, "suggest_lower", 0, formula=f'=IFERROR({sheet_expression(family["plot_lower"])},"")')
         put(index, "suggest_upper", 0, formula=f'=IFERROR({sheet_expression(family["plot_upper"])},"")')
@@ -284,6 +341,7 @@ def plan() -> dict[str, Any]:
                      "cells": f"{RESULTS}:{TAIL},G{GRID_FIRST_ROW}:I{last_row}",
                      "x_cells": f"F{GRID_FIRST_ROW}:F{last_row}"},
         "probability": {"cell": PROBABILITY, "default": 0.95},
+        "messages": static_messages(defaults),
         "layout": {"family": "D6", "x": "D11", "probability": PROBABILITY.replace("$", ""),
                    "lower": LOWER.replace("$", ""), "upper": UPPER.replace("$", ""),
                    "points": POINTS.replace("$", ""), "decimals": DECIMALS.replace("$", ""),
