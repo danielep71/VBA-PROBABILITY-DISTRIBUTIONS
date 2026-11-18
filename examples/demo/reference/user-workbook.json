@@ -1,0 +1,9 @@
+{
+  "file": "Probability-Distributions-Demo.xlsm",
+  "received_on": "2026-11-17",
+  "sha256": "9af0421c8b1c99092fb2b278ddfda46d18b97ba0b718fdd53889c9372d29724e",
+  "source_commit": "2da91db696da6fa45509eeb5ed21ee1385d5886e",
+  "verification": "Fresh build at source_commit is byte-identical to the workbook supplied by the user.",
+  "instruction": "Use this workbook as the presentation and navigation baseline for subsequent demo work.",
+  "scope": "Baseline selection only; this is not evidence that all runtime acceptance criteria have passed."
+}

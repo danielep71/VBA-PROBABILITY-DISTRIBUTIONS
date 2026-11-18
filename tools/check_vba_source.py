@@ -2,7 +2,7 @@
 """Check the placement, names, encoding, options, storage and layout of VBA source.
 
 For every tracked .bas, .cls and .frm file: it sits in src/ or tests/ (flat)
-or under benchmark/; its file name starts with M_STATS_PROBDIST_, uses
+or under benchmark/ or examples/demo/; its file name starts with M_STATS_PROBDIST_, uses
 letters, digits and underscores only, has at most 31 characters and equals its
 one Attribute VB_Name, unique ignoring case; a .bas export starts with that
 line; ASCII only, with no byte-order mark; Option Explicit; Option Private
@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # Where components live: the production and test modules flat in src/ and
 # tests/, the exporters and probes of each study anywhere under benchmark/.
 FLAT_HOMES = ("src/", "tests/")
-NESTED_HOMES = ("benchmark/",)
+NESTED_HOMES = ("benchmark/", "examples/demo/")
 NAME_PREFIX = "M_STATS_PROBDIST_"
 NAME = re.compile(rf"{NAME_PREFIX}[A-Za-z0-9_]+")
 MAX_NAME = 31  # the VBE rejects a longer component name
@@ -66,7 +66,7 @@ def placement(path: str) -> list[Finding]:
     flat = next((home for home in FLAT_HOMES if path.startswith(home)), None)
     if (flat is None or "/" in path[len(flat):]) and not path.startswith(NESTED_HOMES):
         findings.append(Finding(path, None, "VBA component outside src/ and tests/ (no "
-                                            "subdirectories) and benchmark/"))
+                                            "subdirectories) and benchmark/ or examples/demo/"))
     name = Path(path).stem
     if not NAME.fullmatch(name):
         findings.append(Finding(path, None, f"component name must start with {NAME_PREFIX} "

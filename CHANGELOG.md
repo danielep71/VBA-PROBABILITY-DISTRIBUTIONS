@@ -97,7 +97,22 @@ Use only the categories needed by a release.
 
 ## [Unreleased]
 
+- Development Distribution Explorer for 16 distributions, built from the
+  hand-formatted workbook: dynamic-array outputs (spilled grid of density,
+  survival and cumulative, results and charts that follow the plot window),
+  the quantile at a probability p, a selectable number of decimals, a family
+  table with per-parameter validation, public-API worksheet formulas and
+  mpmath reference checks.
+  Requires desktop Excel 365 or 2024 with macros; interactive and visual
+  acceptance remain pending (#254).
+
 ### Added
+
+- Add the K-Pricing-style registration module and automatic Explorer startup, with complete worksheet function descriptions and argument help (Refs #329).
+
+- Added the source-built development demo shell (#253), with Home, reserved
+  thematic sheets, README, workbook-scoped Ribbon navigation and macro-disabled
+  links. Desktop Excel acceptance is pending; this is not a release asset.
 
 - One statement of what every public function returns on bad input, in `docs/PUBLIC_API.md` (#331), generated from a survey that calls each function with each kind of input in Excel (`benchmark/error_behavior/`, study export `erb_survey`): `#NUM!` for a parameter outside its domain or a value that is not a finite number, `#VALUE!` for a text, zero for an empty cell. A generated battery in the VBA suite, `Test_Core_ApiErrorContract`, checks every public function at every regression, and a Python test fails when a new public function has no row. Three differences between functions that the survey found are listed as not settled (#418).
 - A map from Excel's distribution functions to the library's, in `docs/PUBLIC_API.md` and linked from the README's quick start (#330): for each Excel function, the `K_STATS_` call that replaces it, what differs in argument order, parameterization or tail, and an example. Both formulas of every example were evaluated in Excel and the library's value is checked against 60-digit arithmetic; the page is generated from those observations (`benchmark/excel_function_map/`, study export `xfm_examples`). Measured on the way: Excel rounds a fractional degree of freedom down in its Student t, chi-square and F functions, and the library uses the fraction.
@@ -105,6 +120,11 @@ Use only the categories needed by a release.
 - Two static checks of the VBA source, `check_vba_identifiers.py` and `check_vba_calls.py` (#291): an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong number of arguments and a qualified call to a `Private` procedure are now found before Excel compiles the project. Ported from K-TEMPLATE.
 
 ### Changed
+
+- Aligned the demo with the K-SACCR workbook template: its style table and
+  theme, its page, its sectioned navigation bar with the Navigation bar toggle,
+  its Go to split button and callback names, tab colours per role, sheet
+  protection and a locked workbook structure.
 
 - The Beta and F inverses are 7 to 528 times faster where the member of the pair `(x, 1 - x)` they solve for settles below the mean of its distribution: 0.03 to 0.12 ms per call in the measured Excel run, which is what they took before #35 (#359). `PROB_TryBetaInvRegularized` first runs Newton on the binary64 residual and compares the settled Double with its two neighbours; the pair loop of v1.0.0 answers only where the iterate is at or above the mean, or where the first loop does not settle. There, which includes an F inverse with degrees of freedom far apart, a call is 2 to 3 times faster and still takes 0.4 to 6 ms. On the reserved holdout no row moves away from its reference by more than 1.9E-15, and every contract of the main grid and of the consolidated holdout holds unchanged. One of the three registered cost rules failed, on one benchmark line, by 5%: the candidate is rejected by its own registration and adopted by a written decision, both in `benchmark/f_inverse_large_df_study/cost/RESULT.md`.
 - `PROB_TryBetaContinuedFraction` takes its stop as an optional argument; omitted, it is the stop it had.
