@@ -62,6 +62,13 @@ try {
     }
     if ($sheet.Range('C26').MergeArea.Address($false, $false) -ne 'C26:D27') { throw "The support text is not one cell over C26:D27: $($sheet.Range('C26').MergeArea.Address($false, $false))" }
     if ($sheet.Range('D20').FormatConditions.Count -ne 1 -or $sheet.Range('D19').FormatConditions.Count -ne 2) { throw 'The status or macros cell has duplicated conditional formats' }
+    foreach ($row in 6..16) {
+        $rule = $sheet.Range("D$row").Validation
+        foreach ($text in @($rule.InputTitle, $rule.InputMessage, $rule.ErrorTitle, $rule.ErrorMessage)) {
+            if ([string]::IsNullOrWhiteSpace([string]$text)) { throw "D$row lacks an input or error message" }
+        }
+        if (-not $rule.ShowInput -or -not $rule.ShowError) { throw "D$row does not show its messages" }
+    }
     $report.structure = 'PASS'
 
     # Every family at its defaults: window, spilled grid, sample points, charts.
@@ -76,6 +83,16 @@ try {
         }
         if (-not (Near (Read-Number $sheet 'D13') $grid.lower) -or -not (Near (Read-Number $sheet 'D14') $grid.upper)) {
             throw "$($grid.family): plot window $($sheet.Range('D13').Value2) .. $($sheet.Range('D14').Value2), expected $($grid.lower) .. $($grid.upper)"
+        }
+        # The parameter cells carry the messages of this family's parameters.
+        $family = $plan.families | Where-Object { $_.name -eq $grid.family }
+        for ($slot = 0; $slot -lt 4; $slot++) {
+            $rule = $sheet.Range('D' + (7 + $slot)).Validation
+            if ($slot -lt $family.parameters.Count) {
+                $parameter = $family.parameters[$slot]
+                if ($rule.InputTitle -ne $parameter.label -or -not ([string]$rule.InputMessage).StartsWith([string]$parameter.help)) { throw "$($grid.family): D$(7 + $slot) shows '$($rule.InputTitle)': $($rule.InputMessage)" }
+                if ($null -ne $parameter.PSObject.Properties['note'] -and -not ([string]$rule.ErrorMessage).Contains([string]$parameter.note)) { throw "$($grid.family): the error of D$(7 + $slot) does not name its constraint" }
+            } elseif (-not ([string]$rule.InputMessage).StartsWith('Not used')) { throw "$($grid.family): unused D$(7 + $slot) shows: $($rule.InputMessage)" }
         }
         $rows = Grid-Rows $sheet
         if ($rows -ne [int]$grid.rows) { throw "$($grid.family): the grid has $rows rows, expected $($grid.rows)" }

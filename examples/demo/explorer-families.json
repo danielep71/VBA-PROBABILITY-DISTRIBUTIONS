@@ -24,14 +24,16 @@
      "default": 0,
      "min": -1000000.0,
      "max": 1000000.0,
-     "integer": false
+     "integer": false,
+     "help": "Centre of the distribution (mu), in units of x."
     },
     {
      "label": "Standard deviation",
      "default": 1,
      "min": 0.001,
      "max": 10000.0,
-     "integer": false
+     "integer": false,
+     "help": "Spread (sigma), in units of x; not the variance."
     }
    ],
    "call": "a,b",
@@ -57,14 +59,16 @@
      "default": 0,
      "min": -50,
      "max": 50,
-     "integer": false
+     "integer": false,
+     "help": "Mean (mu) of ln X, not of X; the median of X is exp(mu)."
     },
     {
      "label": "Std deviation of ln X",
      "default": 0.5,
      "min": 0.01,
      "max": 10,
-     "integer": false
+     "integer": false,
+     "help": "Standard deviation (sigma) of ln X, not of X."
     }
    ],
    "call": "a,b",
@@ -90,7 +94,8 @@
      "default": 5,
      "min": 0.5,
      "max": 100000,
-     "integer": false
+     "integer": false,
+     "help": "Degrees of freedom (nu); need not be a whole number. Large values approach the standard normal."
     }
    ],
    "call": "a",
@@ -116,7 +121,8 @@
      "default": 4,
      "min": 0.5,
      "max": 10000,
-     "integer": false
+     "integer": false,
+     "help": "Degrees of freedom (k); need not be a whole number. The mean is k."
     }
    ],
    "call": "a",
@@ -142,14 +148,16 @@
      "default": 5,
      "min": 0.5,
      "max": 10000,
-     "integer": false
+     "integer": false,
+     "help": "Degrees of freedom of the numerator (d1); need not be a whole number."
     },
     {
      "label": "Denominator df",
      "default": 10,
      "min": 0.5,
      "max": 10000,
-     "integer": false
+     "integer": false,
+     "help": "Degrees of freedom of the denominator (d2); need not be a whole number."
     }
    ],
    "call": "a,b",
@@ -175,14 +183,16 @@
      "default": 2,
      "min": 0.1,
      "max": 1000,
-     "integer": false
+     "integer": false,
+     "help": "Shape (k), no unit. Shape 1 is the exponential."
     },
     {
      "label": "Scale",
      "default": 1,
      "min": 0.001,
      "max": 1000,
-     "integer": false
+     "integer": false,
+     "help": "Scale (theta), in units of x; not the rate. The mean is shape times scale."
     }
    ],
    "call": "a,b",
@@ -208,14 +218,16 @@
      "default": 2,
      "min": 0.1,
      "max": 1000,
-     "integer": false
+     "integer": false,
+     "help": "First shape (alpha), no unit. Support is 0 to 1."
     },
     {
      "label": "Beta",
      "default": 5,
      "min": 0.1,
      "max": 1000,
-     "integer": false
+     "integer": false,
+     "help": "Second shape (beta), no unit. The mean is alpha / (alpha + beta)."
     }
    ],
    "call": "a,b",
@@ -241,7 +253,8 @@
      "default": 1,
      "min": 0.001,
      "max": 1000,
-     "integer": false
+     "integer": false,
+     "help": "Rate (lambda), events per unit of x; not the scale. The mean is 1 / rate."
     }
    ],
    "call": "a",
@@ -267,14 +280,16 @@
      "default": 1.5,
      "min": 0.1,
      "max": 100,
-     "integer": false
+     "integer": false,
+     "help": "Shape (k), no unit. Shape 1 is the exponential."
     },
     {
      "label": "Scale",
      "default": 1,
      "min": 0.001,
      "max": 1000,
-     "integer": false
+     "integer": false,
+     "help": "Scale (lambda), in units of x."
     }
    ],
    "call": "a,b",
@@ -300,14 +315,18 @@
      "default": 0,
      "min": -1000000.0,
      "max": 1000000.0,
-     "integer": false
+     "integer": false,
+     "help": "Left end of the support, in units of x.",
+     "note": "It must be below the upper bound."
     },
     {
      "label": "Upper bound",
      "default": 1,
      "min": -1000000.0,
      "max": 1000000.0,
-     "integer": false
+     "integer": false,
+     "help": "Right end of the support, in units of x.",
+     "note": "It must be above the lower bound."
     }
    ],
    "call": "a,b",
@@ -333,14 +352,16 @@
      "default": 20,
      "min": 1,
      "max": 1000,
-     "integer": true
+     "integer": true,
+     "help": "Number of independent trials (n)."
     },
     {
      "label": "Probability of success",
      "default": 0.4,
      "min": 0,
      "max": 1,
-     "integer": false
+     "integer": false,
+     "help": "Probability of success on each trial (p)."
     }
    ],
    "call": "a,b",
@@ -366,7 +387,8 @@
      "default": 4,
      "min": 0.01,
      "max": 500,
-     "integer": false
+     "integer": false,
+     "help": "Expected number of events (lambda); also the variance."
     }
    ],
    "call": "a",
@@ -392,7 +414,8 @@
      "default": 0.3,
      "min": 0.01,
      "max": 1,
-     "integer": false
+     "integer": false,
+     "help": "Probability of success on each trial (p). X counts the failures before the first success."
     }
    ],
    "call": "a",
@@ -418,14 +441,16 @@
      "default": 3,
      "min": 1,
      "max": 500,
-     "integer": true
+     "integer": true,
+     "help": "Number of successes to reach (r). X counts the failures before the r-th success."
     },
     {
      "label": "Probability of success",
      "default": 0.4,
      "min": 0.01,
      "max": 1,
-     "integer": false
+     "integer": false,
+     "help": "Probability of success on each trial (p)."
     }
    ],
    "call": "a,b",
@@ -451,21 +476,27 @@
      "default": 10,
      "min": 1,
      "max": 1000,
-     "integer": true
+     "integer": true,
+     "help": "Number of items drawn without replacement (n).",
+     "note": "It cannot exceed the population size."
     },
     {
      "label": "Population successes",
      "default": 30,
      "min": 0,
      "max": 10000,
-     "integer": true
+     "integer": true,
+     "help": "Number of successes in the population (K).",
+     "note": "It cannot exceed the population size."
     },
     {
      "label": "Population size",
      "default": 100,
      "min": 1,
      "max": 10000,
-     "integer": true
+     "integer": true,
+     "help": "Number of items in the population (N).",
+     "note": "It must be at least the sample size and the population successes."
     }
    ],
    "call": "a,b,c",
@@ -491,14 +522,18 @@
      "default": 1,
      "min": -1000000.0,
      "max": 1000000.0,
-     "integer": true
+     "integer": true,
+     "help": "Smallest value of the support, a whole number.",
+     "note": "It must not exceed the upper bound."
     },
     {
      "label": "Upper bound",
      "default": 6,
      "min": -1000000.0,
      "max": 1000000.0,
-     "integer": true
+     "integer": true,
+     "help": "Largest value of the support, a whole number.",
+     "note": "At least the lower bound and at most 1,000 above it."
     }
    ],
    "call": "a,b",
