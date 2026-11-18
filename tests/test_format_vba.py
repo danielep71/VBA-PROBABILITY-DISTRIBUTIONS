@@ -273,7 +273,12 @@ def deform(text: str) -> str:
     """Real module text with every kind of drift the formatter must undo."""
     out: list[str] = []
     previous = ""
-    for line in text.split("\r\n")[:-1]:
+    lines = text.split("\r\n")[:-1]
+    # The header the VBE writes (VERSION, BEGIN ... END, Attribute) is kept
+    # byte for byte, so it is not deformed.
+    header = format_vba.header_length(lines)
+    out.extend(lines[:header])
+    for line in lines[header:]:
         code = line.strip()
         if format_vba.outer_level(line) and not previous.endswith(" _"):
             line = "  " + line                          # outer-level line indented

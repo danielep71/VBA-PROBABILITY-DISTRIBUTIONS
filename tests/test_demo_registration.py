@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class RegistrationTests(unittest.TestCase):
     def test_manifest_covers_public_signatures_and_argument_order(self):
-        text = (ROOT / 'examples/demo/M_STATS_PROBDIST_REGISTER.bas').read_text()
+        text = (ROOT / 'src/workbook/M_STATS_PROBDIST_REGISTER.bas').read_text()
         logical = re.sub(r' _\n\s*', ' ', text)
         records = {}
         for line in logical.splitlines():

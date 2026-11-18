@@ -178,6 +178,17 @@ check(sorted(M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS)) ==
       ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/a.bas"],
       "holdout binding scope is exactly production source plus the exporter")
 
+# 17b. the Explorer workbook's modules (src/workbook/) are in no binding: no
+# evidence workbook imports them.
+os.makedirs(os.path.join(hd, "src", "workbook"))
+hworkbook = os.path.join(hd, "src", "workbook", "M_STATS_PROBDIST_W.bas")
+open(hworkbook, "wb").write(b"Attribute VB_Name = \"w\"\r\n")
+check(sorted(M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS)) ==
+      ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/a.bas"]
+      and not any(k.startswith("src/workbook/") for k in M.source_hashes(hd)),
+      "src/workbook/ is outside the main and holdout bindings")
+os.remove(hworkbook)
+
 hextra = os.path.join(hd, "benchmark", "holdout", "M_STATS_PROBDIST_HOLDOUT2.bas")
 open(hextra, "wb").write(b"Attribute VB_Name = \"h2\"\r\nSub Export2()\r\nEnd Sub\r\n")
 probs = M.verify_holdout_binding(hd, hman, hgrid, hcontracts)

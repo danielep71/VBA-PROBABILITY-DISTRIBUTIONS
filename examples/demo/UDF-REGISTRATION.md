@@ -1,6 +1,6 @@
 # Function Wizard registration
 
-`M_STATS_PROBDIST_REGISTER.bas` adds descriptions and argument help for the
+`src/workbook/M_STATS_PROBDIST_REGISTER.bas` adds descriptions and argument help for the
 complete worksheet surface in `docs/PUBLIC_API.txt`, under the Excel category
 **Probability Distributions**. It adapts the lifecycle of
 [K-PRICING's registration module](https://github.com/danielep71/K-PRICING/blob/main/src/modules/KPR_REGISTER_PUBLIC_UDFS.bas).

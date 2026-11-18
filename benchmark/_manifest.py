@@ -36,6 +36,8 @@ MANIFEST_VERSION = 1
 # test harness (tests). Any .bas change must invalidate the binding until the
 # observations are re-exported.
 _BAS_GLOBS = ("src/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
+# The modules of the Explorer workbook, outside every binding.
+WORKBOOK_DIR = "src/workbook/"
 
 # The independent holdout is produced by the six public source modules and its
 # dedicated exporter.  Study macros and the regression harness do not produce
@@ -74,11 +76,16 @@ def _rel(root, path):
 
 
 def source_hashes(root, patterns=_BAS_GLOBS):
-    """Map every tracked .bas path (repo-relative) to its normalized hash."""
+    """Map every tracked .bas path (repo-relative) outside src/workbook/ to its
+    normalized hash."""
     out = {}
     for pattern in patterns:
         for p in glob.glob(os.path.join(root, pattern), recursive=True):
-            out[_rel(root, p)] = normalized_hash(p)
+            rel = _rel(root, p)
+            # The Explorer workbook's modules return no value an observation
+            # records: no evidence workbook imports them.
+            if not rel.startswith(WORKBOOK_DIR):
+                out[rel] = normalized_hash(p)
     return dict(sorted(out.items()))
 
 
