@@ -126,12 +126,14 @@ End Sub
 
 Public Sub ExplorerOpened()
     ' Called by Workbook_Open. A file saved while macros were off, or with
-    ' another family's chart types, opens with stale charts: recalculate and
-    ' set them again, and leave the workbook's Saved flag as it was.
+    ' another family's chart types, opens with stale charts and number
+    ' formats that do not follow the decimals cell: recalculate, set them
+    ' again, and leave the workbook's Saved flag as it was.
     Dim WasSaved As Boolean
     On Error Resume Next
     WasSaved = ThisWorkbook.Saved
     RefreshExplorer
+    ApplyDecimals ExplorerSheet()
     ThisWorkbook.Saved = WasSaved
     On Error GoTo 0
 End Sub
