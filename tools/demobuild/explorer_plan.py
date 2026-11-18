@@ -28,7 +28,6 @@ FAMILIES_FILE = ROOT / "examples" / "demo" / "explorer-families.json"
 SHEET = "Explorer"
 FIRST_TABLE_COLUMN = 338            # LZ
 GRID_FIRST_ROW = 20
-GRID_MAX_ROWS = 1000                # the largest plot window: points and discrete counts
 PARAMETER_CELLS = ["$D$7", "$D$8", "$D$9", "$D$10"]
 LETTERS = "abcd"
 PROBABILITY = "$D$12"
@@ -222,7 +221,9 @@ def plan() -> dict[str, Any]:
     names += [
         {"name": "ExplorerStatusBad", "refers": f'={SHEET}!{STATUS}<>"OK"'},
     ]
-    last_row = GRID_FIRST_ROW + GRID_MAX_ROWS - 1
+    # The grid holds the larger plot window: continuous points or discrete integers.
+    grid_rows = max(int(defaults["max_points"]), int(defaults["max_discrete_points"]))
+    last_row = GRID_FIRST_ROW + grid_rows - 1
     formulas = [
         {"address": STATUS.replace("$", ""), "formula": status_formula(defaults)},
         {"address": MACROS, "formula": '=IF(ISERROR(K_STATS_NormalStandard_Cumulative(0)+0*COUNTA($D$6:$D$12)),"DISABLED","ENABLED")'},
