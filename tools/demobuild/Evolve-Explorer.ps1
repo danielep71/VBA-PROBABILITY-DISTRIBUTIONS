@@ -25,7 +25,8 @@ function Localize-Formula([string]$Formula, [string]$Separator) {
 
 # Excel rejects a COM call while it is busy (RPC_E_CALL_REJECTED), for
 # instance while it computes a spilled grid it was just given; wait and retry,
-# for up to five minutes, and say so in the log.
+# for up to five minutes, and say so in the log. The log goes to the host, not
+# the output stream, so it never becomes part of the value returned.
 function Invoke-Excel([scriptblock]$Action) {
     for ($attempt = 1; ; $attempt++) {
         try { return & $Action }
@@ -33,7 +34,7 @@ function Invoke-Excel([scriptblock]$Action) {
             $text = [string]$_.Exception + ' ' + [string]$_.Exception.InnerException
             $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
             if (-not $busy -or $attempt -ge 600) { throw }
-            if ($attempt % 20 -eq 1) { Write-Output "  Excel is busy; waiting (attempt $attempt)" }
+            if ($attempt % 20 -eq 1) { Write-Host "  Excel is busy; waiting (attempt $attempt)" }
             Start-Sleep -Milliseconds 500
         }
     }
