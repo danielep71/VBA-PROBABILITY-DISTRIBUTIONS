@@ -1,0 +1,81 @@
+name: Distribution Explorer
+on:
+  pull_request:
+    branches: [main, "release/**"]
+    paths:
+      - "examples/demo/**"
+      - "tools/demobuild/**"
+      - "tools/devbuild/**"
+      - "src/**"
+      - "ci/Test-Explorer.ps1"
+      - "ci/Test-UdfRegistration.ps1"
+      - "ci/Test-ExplorerUI.ps1"
+      - "ci/Test-ExplorerStates.ps1"
+      - "ci/Test-DemoPackage.ps1"
+      - "tests/test_demo_explorer.py"
+      - ".github/workflows/demo-explorer.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHON_VERSION: "3.12.16"
+concurrency:
+  group: demo-explorer-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: python -m unittest discover -s tests -p 'test_demo_*.py' -v
+      - run: python tools/demobuild/explorer_build.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: explorer-source-package
+          path: test-results/demo/
+  excel:
+    needs: package
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: [self-hosted, Windows, X64, excel]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: explorer-source-package
+          path: test-results/demo
+      - name: Apply the Explorer plan with native Excel objects
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Explorer.ps1 -PackageDirectory test-results\demo
+      - name: Verify Function Wizard registration lifecycle
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-UdfRegistration.ps1 -PackageDirectory test-results\demo
+      - name: Verify every family through single edits, macros off, and a stale file
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerStates.ps1 -PackageDirectory test-results\demo
+      - name: Verify references, edited inputs, charts and reset
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Explorer.ps1 -PackageDirectory test-results\demo
+      - name: Exercise the native Ribbon and reset confirmation dialog
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerUI.ps1 -PackageDirectory test-results\demo
+      - name: Verify the completed workbook save and navigation contract
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-DemoPackage.ps1 -PackageDirectory test-results\demo
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: explorer-workbook-and-evidence
+          path: test-results/demo/
+          retention-days: 14

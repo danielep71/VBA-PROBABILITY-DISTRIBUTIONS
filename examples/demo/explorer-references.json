@@ -1,0 +1,2995 @@
+{
+ "method": "Regenerate the independent Explorer reference values with mpmath.\n\nEvery value is computed from the definition of the distribution at 60 digits,\nby formulas written here, with no call to the library, the builder or Excel:\ndensities from the closed forms, continuous cumulative functions from the\nregularized incomplete gamma and beta functions, discrete ones from the finite\nsums or the closed forms. Survival is P(X > x), taken from the complement\nfunction when there is one, so a tail is not computed as 1 - CDF.\n\nEach case carries the parameters in the order of the Explorer's four input\ncells and the probe point. Each family also carries its default plot window,\nwritten out here, and five points of its default grid, so a test can check the\nspilled x column and the density, survival and CDF columns. Quantiles are the\nsmallest x with CDF(x) >= p: a 400-step bisection of the CDF above for a\ncontinuous family, a scan of the cumulative sums for a discrete one. This fixture checks the demo's\nwiring and arithmetic; it does not replace the library's accuracy contracts.\n\nRun with mpmath installed: python examples/demo/explorer_references.py\n",
+ "absolute_tolerance": 1e-12,
+ "relative_tolerance": 1e-09,
+ "cases": [
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": -3,
+   "density": 0.0044318484119380075,
+   "cdf": 0.0013498980316300946,
+   "survival": 0.9986501019683699
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": -1,
+   "density": 0.24197072451914334,
+   "cdf": 0.15865525393145705,
+   "survival": 0.8413447460685429
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 0,
+   "density": 0.3989422804014327,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 0.5,
+   "density": 0.35206532676429947,
+   "cdf": 0.6914624612740131,
+   "survival": 0.3085375387259869
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 2,
+   "density": 0.05399096651318805,
+   "cdf": 0.9772498680518208,
+   "survival": 0.02275013194817921
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    2,
+    3
+   ],
+   "x": -4,
+   "density": 0.01799698883772935,
+   "cdf": 0.02275013194817921,
+   "survival": 0.9772498680518208
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    2,
+    3
+   ],
+   "x": 2,
+   "density": 0.13298076013381088,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    2,
+    3
+   ],
+   "x": 5,
+   "density": 0.08065690817304778,
+   "cdf": 0.8413447460685429,
+   "survival": 0.15865525393145705
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    2,
+    3
+   ],
+   "x": 11,
+   "density": 0.0014772828039793357,
+   "cdf": 0.9986501019683699,
+   "survival": 0.0013498980316300946
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "x": -5.5,
+   "density": 0.2159638660527522,
+   "cdf": 0.02275013194817921,
+   "survival": 0.9772498680518208
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "x": -5,
+   "density": 1.5957691216057308,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "x": -4.75,
+   "density": 0.9678828980765734,
+   "cdf": 0.8413447460685429,
+   "survival": 0.15865525393145705
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "x": 0.2,
+   "density": 0.02243946077679162,
+   "cdf": 0.0006434710129138761,
+   "survival": 0.9993565289870862
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "x": 1,
+   "density": 0.7978845608028654,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "x": 2,
+   "density": 0.15261382604754578,
+   "cdf": 0.9171714809983015,
+   "survival": 0.08282851900169849
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "x": 5,
+   "density": 0.0008975784310716644,
+   "cdf": 0.9993565289870862,
+   "survival": 0.0006434710129138759
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "x": 0.5,
+   "density": 0.19029780481010555,
+   "cdf": 0.04521372779022414,
+   "survival": 0.9547862722097759
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "x": 2.718281828459045,
+   "density": 0.1467626631737399,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "x": 20,
+   "density": 0.0027226640152717948,
+   "cdf": 0.9770184639124578,
+   "survival": 0.02298153608754214
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "x": -4,
+   "density": 0.005123727051917914,
+   "cdf": 0.005161707740415727,
+   "survival": 0.9948382922595843
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "x": -1,
+   "density": 0.21967979735098056,
+   "cdf": 0.1816087338245613,
+   "survival": 0.8183912661754387
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "x": 0,
+   "density": 0.37960668982249446,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "x": 1,
+   "density": 0.21967979735098056,
+   "cdf": 0.8183912661754387,
+   "survival": 0.1816087338245613
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "x": 3,
+   "density": 0.01729257880022296,
+   "cdf": 0.9849503760512687,
+   "survival": 0.015049623948731286
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    1
+   ],
+   "x": -10,
+   "density": 0.0031515830315226798,
+   "cdf": 0.03172551743055357,
+   "survival": 0.9682744825694465
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    1
+   ],
+   "x": 0.5,
+   "density": 0.25464790894703254,
+   "cdf": 0.6475836176504333,
+   "survival": 0.35241638234956674
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    1
+   ],
+   "x": 6,
+   "density": 0.008602969896859207,
+   "cdf": 0.9474315432887466,
+   "survival": 0.05256845671125343
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    30
+   ],
+   "x": -2,
+   "density": 0.05685227504719796,
+   "cdf": 0.02731252248149155,
+   "survival": 0.9726874775185085
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    30
+   ],
+   "x": 2.5,
+   "density": 0.021057019220621632,
+   "cdf": 0.9909421754659666,
+   "survival": 0.009057824534033348
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    2.5
+   ],
+   "x": -0.3,
+   "density": 0.3400943856052356,
+   "cdf": 0.39367118574759863,
+   "survival": 0.6063288142524014
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    2.5
+   ],
+   "x": 7,
+   "density": 0.0018163996051834175,
+   "cdf": 0.9947138152362043,
+   "survival": 0.005286184763795705
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "x": 0.5,
+   "density": 0.09735009788392561,
+   "cdf": 0.026499021160743916,
+   "survival": 0.9735009788392561
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "x": 3,
+   "density": 0.16734762011132237,
+   "cdf": 0.4421745996289254,
+   "survival": 0.5578254003710745
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "x": 8,
+   "density": 0.03663127777746836,
+   "cdf": 0.9084218055563291,
+   "survival": 0.09157819444367091
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "x": 15,
+   "density": 0.002074066388054376,
+   "cdf": 0.9952987828537434,
+   "survival": 0.0047012171462565856
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    1
+   ],
+   "x": 0.1,
+   "density": 1.200038948430136,
+   "cdf": 0.24817036595415073,
+   "survival": 0.7518296340458492
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    1
+   ],
+   "x": 1,
+   "density": 0.24197072451914334,
+   "cdf": 0.6826894921370859,
+   "survival": 0.3173105078629141
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    1
+   ],
+   "x": 4,
+   "density": 0.026995483256594024,
+   "cdf": 0.9544997361036416,
+   "survival": 0.04550026389635842
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "x": 20,
+   "density": 0.02603855222301309,
+   "cdf": 0.08345847293466283,
+   "survival": 0.9165415270653372
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "x": 30,
+   "density": 0.051217933332267096,
+   "cdf": 0.5343462910559904,
+   "survival": 0.46565370894400965
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "x": 50,
+   "density": 0.0029672881765394205,
+   "cdf": 0.9875979392810994,
+   "survival": 0.01240206071890058
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "x": 0.3,
+   "density": 0.5972531672320932,
+   "cdf": 0.0980420183689326,
+   "survival": 0.9019579816310674
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "x": 1,
+   "density": 0.49547978348663874,
+   "cdf": 0.5348805734621996,
+   "survival": 0.4651194265378004
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "x": 3,
+   "density": 0.05582673114557219,
+   "cdf": 0.9344424379061559,
+   "survival": 0.06555756209384411
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "x": 8,
+   "density": 0.0013429824272863738,
+   "cdf": 0.9971432096143462,
+   "survival": 0.002856790385653782
+  },
+  {
+   "family": "F",
+   "parameters": [
+    1,
+    1
+   ],
+   "x": 0.5,
+   "density": 0.30010543871903533,
+   "cdf": 0.3918265520306073,
+   "survival": 0.6081734479693928
+  },
+  {
+   "family": "F",
+   "parameters": [
+    1,
+    1
+   ],
+   "x": 2,
+   "density": 0.07502635967975883,
+   "cdf": 0.6081734479693928,
+   "survival": 0.3918265520306073
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "x": 0.7,
+   "density": 0.628673165747113,
+   "cdf": 0.2610422440499944,
+   "survival": 0.7389577559500056
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "x": 2.5,
+   "density": 0.11182723443471121,
+   "cdf": 0.8062997755548211,
+   "survival": 0.19370022444517887
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "x": 6,
+   "density": 0.013744016123156297,
+   "cdf": 0.9528351541380902,
+   "survival": 0.04716484586190983
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "x": 0.5,
+   "density": 0.3032653298563167,
+   "cdf": 0.09020401043104986,
+   "survival": 0.9097959895689501
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "x": 2,
+   "density": 0.2706705664732254,
+   "cdf": 0.5939941502901619,
+   "survival": 0.40600584970983805
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "x": 6,
+   "density": 0.014872513059998151,
+   "cdf": 0.9826487347633355,
+   "survival": 0.01735126523666451
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    0.5,
+    2
+   ],
+   "x": 0.2,
+   "density": 0.8071711293576809,
+   "cdf": 0.345279153981423,
+   "survival": 0.654720846018577
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    0.5,
+    2
+   ],
+   "x": 1,
+   "density": 0.24197072451914334,
+   "cdf": 0.6826894921370859,
+   "survival": 0.3173105078629141
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    0.5,
+    2
+   ],
+   "x": 5,
+   "density": 0.014644982561926487,
+   "cdf": 0.9746526813225317,
+   "survival": 0.025347318677468263
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "x": 6,
+   "density": 0.03227344056073056,
+   "cdf": 0.021279769383026628,
+   "survival": 0.9787202306169733
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "x": 10,
+   "density": 0.17767063478417044,
+   "cdf": 0.52974273316076,
+   "survival": 0.47025726683923996
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "x": 15,
+   "density": 0.017881533350450386,
+   "cdf": 0.9781265315586092,
+   "survival": 0.021873468441390854
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "x": 0.05,
+   "density": 1.221759375,
+   "cdf": 0.032773828125,
+   "survival": 0.967226171875
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "x": 0.3,
+   "density": 2.1609000000000003,
+   "cdf": 0.5798249999999999,
+   "survival": 0.420175
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "x": 0.8,
+   "density": 0.03839999999999997,
+   "cdf": 0.9984,
+   "survival": 0.0015999999999999983
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    0.5,
+    0.5
+   ],
+   "x": 0.1,
+   "density": 1.0610329539459689,
+   "cdf": 0.20483276469913345,
+   "survival": 0.7951672353008665
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    0.5,
+    0.5
+   ],
+   "x": 0.5,
+   "density": 0.6366197723675814,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    0.5,
+    0.5
+   ],
+   "x": 0.9,
+   "density": 1.061032953945969,
+   "cdf": 0.7951672353008665,
+   "survival": 0.20483276469913342
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "x": 0.3,
+   "density": 0.5922745153911989,
+   "cdf": 0.012126160623329713,
+   "survival": 0.9878738393766703
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "x": 0.43,
+   "density": 6.712552287569403,
+   "cdf": 0.5141931195427436,
+   "survival": 0.4858068804572564
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "x": 0.6,
+   "density": 0.10565961443218187,
+   "cdf": 0.998074111202461,
+   "survival": 0.0019258887975389803
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "x": 0,
+   "density": 1.0,
+   "cdf": 0.0,
+   "survival": 1.0
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "x": 0.5,
+   "density": 0.6065306597126334,
+   "cdf": 0.3934693402873666,
+   "survival": 0.6065306597126334
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "x": 3,
+   "density": 0.049787068367863944,
+   "cdf": 0.950212931632136,
+   "survival": 0.049787068367863944
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "x": 1,
+   "density": 0.19470019576785122,
+   "cdf": 0.22119921692859512,
+   "survival": 0.7788007830714049
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "x": 8,
+   "density": 0.033833820809153176,
+   "cdf": 0.8646647167633873,
+   "survival": 0.1353352832366127
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "x": 30,
+   "density": 0.0001382710925369584,
+   "cdf": 0.9994469156298522,
+   "survival": 0.0005530843701478336
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "x": 0.2,
+   "density": 0.6134254321483188,
+   "cdf": 0.08555935639278299,
+   "survival": 0.914440643607217
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "x": 1,
+   "density": 0.5518191617571635,
+   "cdf": 0.6321205588285577,
+   "survival": 0.36787944117144233
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "x": 3,
+   "density": 0.014387706241538843,
+   "cdf": 0.9944621692856175,
+   "survival": 0.005537830714382473
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    0.7,
+    2
+   ],
+   "x": 0.5,
+   "density": 0.36317772724852615,
+   "cdf": 0.3154058798272132,
+   "survival": 0.6845941201727868
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    0.7,
+    2
+   ],
+   "x": 4,
+   "density": 0.05600742143632179,
+   "cdf": 0.8029907885509089,
+   "survival": 0.19700921144909112
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    0.7,
+    2
+   ],
+   "x": 12,
+   "density": 0.006142680603792939,
+   "cdf": 0.9699575556755619,
+   "survival": 0.03004244432443818
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "x": 2,
+   "density": 0.2885975703380095,
+   "cdf": 0.12338488009829626,
+   "survival": 0.8766151199017037
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "x": 3,
+   "density": 0.6131324019524038,
+   "cdf": 0.6321205588285577,
+   "survival": 0.36787944117144233
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "x": 4,
+   "density": 0.07789154598198736,
+   "cdf": 0.9852127768174821,
+   "survival": 0.014787223182517913
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": -0.5,
+   "density": 0.0,
+   "cdf": 0.0,
+   "survival": 1.0
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 0,
+   "density": 1.0,
+   "cdf": 0.0,
+   "survival": 1.0
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 0.5,
+   "density": 1.0,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 1,
+   "density": 1.0,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "x": 2,
+   "density": 0.0,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "x": -3,
+   "density": 0.0,
+   "cdf": 0.0,
+   "survival": 1.0
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "x": 0,
+   "density": 0.125,
+   "cdf": 0.25,
+   "survival": 0.75
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "x": 5.9,
+   "density": 0.125,
+   "cdf": 0.9875,
+   "survival": 0.012499999999999956
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "x": 0,
+   "density": 3.6561584400629733e-05,
+   "cdf": 3.6561584400629733e-05,
+   "survival": 0.9999634384155993
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "x": 3,
+   "density": 0.01234969073087938,
+   "cdf": 0.01596116279000825,
+   "survival": 0.9840388372099917
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "x": 8,
+   "density": 0.17970578775468934,
+   "cdf": 0.5955987253122249,
+   "survival": 0.40440127468777515
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "x": 12,
+   "density": 0.03549743955648186,
+   "cdf": 0.9789710725222288,
+   "survival": 0.021028927477771152
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "x": 20,
+   "density": 1.0995116277760013e-08,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    1,
+    0.5
+   ],
+   "x": 0,
+   "density": 0.5,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    1,
+    0.5
+   ],
+   "x": 1,
+   "density": 0.5,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "x": 0,
+   "density": 0.1326195558947532,
+   "cdf": 0.1326195558947532,
+   "survival": 0.8673804441052468
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "x": 2,
+   "density": 0.2734139115697744,
+   "cdf": 0.676685622351779,
+   "survival": 0.323314377648221
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "x": 6,
+   "density": 0.011421586561678534,
+   "cdf": 0.9959379459198991,
+   "survival": 0.004062054080100842
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "x": 0,
+   "density": 0.01831563888873418,
+   "cdf": 0.01831563888873418,
+   "survival": 0.9816843611112658
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "x": 3,
+   "density": 0.1953668148131646,
+   "cdf": 0.43347012036670896,
+   "survival": 0.566529879633291
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "x": 9,
+   "density": 0.0132311916910503,
+   "cdf": 0.9918677572030662,
+   "survival": 0.008132242796933864
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    0.5
+   ],
+   "x": 0,
+   "density": 0.6065306597126334,
+   "cdf": 0.6065306597126334,
+   "survival": 0.3934693402873666
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    0.5
+   ],
+   "x": 1,
+   "density": 0.3032653298563167,
+   "cdf": 0.9097959895689501,
+   "survival": 0.09020401043104986
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    0.5
+   ],
+   "x": 4,
+   "density": 0.001579506926334983,
+   "cdf": 0.9998278843700441,
+   "survival": 0.00017211562995584078
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "x": 40,
+   "density": 0.0014346171986596833,
+   "cdf": 0.003982809502273006,
+   "survival": 0.996017190497727
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "x": 60,
+   "density": 0.051431744990345855,
+   "cdf": 0.5342624723609586,
+   "survival": 0.46573752763904136
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "x": 80,
+   "density": 0.002186267979150761,
+   "cdf": 0.9943683498401055,
+   "survival": 0.005631650159894541
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "x": 0,
+   "density": 0.3,
+   "cdf": 0.3,
+   "survival": 0.7
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "x": 2,
+   "density": 0.147,
+   "cdf": 0.657,
+   "survival": 0.343
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "x": 10,
+   "density": 0.008474257470000001,
+   "cdf": 0.98022673257,
+   "survival": 0.019773267430000005
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.05
+   ],
+   "x": 0,
+   "density": 0.05,
+   "cdf": 0.05,
+   "survival": 0.95
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.05
+   ],
+   "x": 20,
+   "density": 0.017924296120427112,
+   "cdf": 0.6594383737118849,
+   "survival": 0.3405616262881151
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.05
+   ],
+   "x": 60,
+   "density": 0.0023034899493476037,
+   "cdf": 0.9562336909623955,
+   "survival": 0.043766309037604464
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    1
+   ],
+   "x": 0,
+   "density": 1.0,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    1
+   ],
+   "x": 1,
+   "density": 0.0,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "x": 0,
+   "density": 0.06400000000000002,
+   "cdf": 0.06400000000000002,
+   "survival": 0.9359999999999999
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "x": 4,
+   "density": 0.124416,
+   "cdf": 0.5800960000000001,
+   "survival": 0.41990399999999994
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "x": 12,
+   "density": 0.012677580324863996,
+   "cdf": 0.972885999222784,
+   "survival": 0.02711400077721599
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    1,
+    0.5
+   ],
+   "x": 0,
+   "density": 0.5,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    1,
+    0.5
+   ],
+   "x": 3,
+   "density": 0.0625,
+   "cdf": 0.9375,
+   "survival": 0.0625
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "x": 2,
+   "density": 0.13982524825499995,
+   "cdf": 0.2528153478549999,
+   "survival": 0.7471846521450001
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "x": 4,
+   "density": 0.16359554045834998,
+   "cdf": 0.5842011862193498,
+   "survival": 0.41579881378065014
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "x": 9,
+   "density": 0.027032527105337774,
+   "cdf": 0.967446643118699,
+   "survival": 0.03255335688130099
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "x": 0,
+   "density": 0.022917240458021564,
+   "cdf": 0.022917240458021564,
+   "survival": 0.9770827595419784
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "x": 3,
+   "density": 0.28116339430253845,
+   "cdf": 0.6540199886608099,
+   "survival": 0.34598001133919004
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "x": 7,
+   "density": 0.006437764286099507,
+   "cdf": 0.9991238539421745,
+   "survival": 0.0008761460578255359
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "x": 10,
+   "density": 1.7356717438013377e-06,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    5,
+    5,
+    10
+   ],
+   "x": 5,
+   "density": 0.003968253968253968,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "x": 2,
+   "density": 0.060583937806920916,
+   "cdf": 0.08001400707237921,
+   "survival": 0.9199859929276207
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "x": 5,
+   "density": 0.21323297977773772,
+   "cdf": 0.619996403413984,
+   "survival": 0.380003596586016
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "x": 9,
+   "density": 0.023112453809375395,
+   "cdf": 0.9901648928343727,
+   "survival": 0.009835107165627247
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "x": 0,
+   "density": 0.0,
+   "cdf": 0.0,
+   "survival": 1.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "x": 1,
+   "density": 0.16666666666666666,
+   "cdf": 0.16666666666666666,
+   "survival": 0.8333333333333334
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "x": 3,
+   "density": 0.16666666666666666,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "x": 6,
+   "density": 0.16666666666666666,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "x": 7,
+   "density": 0.0,
+   "cdf": 1.0,
+   "survival": 0.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "x": -4,
+   "density": 0.0,
+   "cdf": 0.0,
+   "survival": 1.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "x": -3,
+   "density": 0.125,
+   "cdf": 0.125,
+   "survival": 0.875
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "x": 0,
+   "density": 0.125,
+   "cdf": 0.5,
+   "survival": 0.5
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "x": 4,
+   "density": 0.125,
+   "cdf": 1.0,
+   "survival": 0.0
+  }
+ ],
+ "grids": [
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "lower": -4.0,
+   "upper": 4.0,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": -4.0,
+     "density": 0.00013383022576488534,
+     "cdf": 3.1671241833119924e-05,
+     "survival": 0.9999683287581669
+    },
+    {
+     "index": 50,
+     "x": -2.0,
+     "density": 0.05399096651318805,
+     "cdf": 0.02275013194817921,
+     "survival": 0.9772498680518208
+    },
+    {
+     "index": 100,
+     "x": 0.0,
+     "density": 0.3989422804014327,
+     "cdf": 0.5,
+     "survival": 0.5
+    },
+    {
+     "index": 150,
+     "x": 2.0,
+     "density": 0.05399096651318805,
+     "cdf": 0.9772498680518208,
+     "survival": 0.02275013194817921
+    },
+    {
+     "index": 200,
+     "x": 4.0,
+     "density": 0.00013383022576488534,
+     "cdf": 0.9999683287581669,
+     "survival": 3.1671241833119924e-05
+    }
+   ]
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "lower": 0.0,
+   "upper": 4.4816890703380645,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 1.1204222675845161,
+     "density": 0.6939502991127666,
+     "cdf": 0.5899480241893272,
+     "survival": 0.4100519758106728
+    },
+    {
+     "index": 100,
+     "x": 2.2408445351690323,
+     "density": 0.0968427144972122,
+     "cdf": 0.9467043548667075,
+     "survival": 0.05329564513329255
+    },
+    {
+     "index": 150,
+     "x": 3.361266802753548,
+     "density": 0.012556224062561903,
+     "cdf": 0.9923381256792279,
+     "survival": 0.007661874320772159
+    },
+    {
+     "index": 200,
+     "x": 4.4816890703380645,
+     "density": 0.001977758091818585,
+     "cdf": 0.9986501019683699,
+     "survival": 0.0013498980316300952
+    }
+   ]
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "lower": -6.0,
+   "upper": 6.0,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": -6.0,
+     "density": 0.0006884815401374299,
+     "cdf": 0.0009230691447970072,
+     "survival": 0.999076930855203
+    },
+    {
+     "index": 50,
+     "x": -3.0,
+     "density": 0.01729257880022296,
+     "cdf": 0.015049623948731286,
+     "survival": 0.9849503760512687
+    },
+    {
+     "index": 100,
+     "x": 0.0,
+     "density": 0.37960668982249446,
+     "cdf": 0.5,
+     "survival": 0.5
+    },
+    {
+     "index": 150,
+     "x": 3.0,
+     "density": 0.01729257880022296,
+     "cdf": 0.9849503760512687,
+     "survival": 0.015049623948731286
+    },
+    {
+     "index": 200,
+     "x": 6.0,
+     "density": 0.0006884815401374299,
+     "cdf": 0.999076930855203,
+     "survival": 0.0009230691447970072
+    }
+   ]
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "lower": 0.0,
+   "upper": 20.14213562373095,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 5.035533905932738,
+     "density": 0.1015157058915362,
+     "cdf": 0.7163291106259353,
+     "survival": 0.28367088937406465
+    },
+    {
+     "index": 100,
+     "x": 10.071067811865476,
+     "density": 0.016372346980748593,
+     "cdf": 0.9607525806923547,
+     "survival": 0.03924741930764533
+    },
+    {
+     "index": 150,
+     "x": 15.106601717798211,
+     "density": 0.0019803862611990405,
+     "cdf": 0.9955148511027708,
+     "survival": 0.0044851488972291725
+    },
+    {
+     "index": 200,
+     "x": 20.14213562373095,
+     "density": 0.00021292975137529184,
+     "cdf": 0.9995318550603219,
+     "survival": 0.0004681449396780212
+    }
+   ]
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "lower": 0.0,
+   "upper": 5.0,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 1.25,
+     "density": 0.3799051332188321,
+     "cdf": 0.6439069510127529,
+     "survival": 0.35609304898724714
+    },
+    {
+     "index": 100,
+     "x": 2.5,
+     "density": 0.09359475444968551,
+     "cdf": 0.8979977233557302,
+     "survival": 0.1020022766442698
+    },
+    {
+     "index": 150,
+     "x": 3.75,
+     "density": 0.027351013001380053,
+     "cdf": 0.9641976546787061,
+     "survival": 0.03580234532129389
+    },
+    {
+     "index": 200,
+     "x": 5.0,
+     "density": 0.009630637937810075,
+     "cdf": 0.985131199591887,
+     "survival": 0.014868800408112984
+    }
+   ]
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "lower": 0.0,
+   "upper": 9.071067811865476,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 2.267766952966369,
+     "density": 0.23481170841164606,
+     "cdf": 0.6616451527730983,
+     "survival": 0.3383548472269017
+    },
+    {
+     "index": 100,
+     "x": 4.535533905932738,
+     "density": 0.0486262826390288,
+     "cdf": 0.9406525357652559,
+     "survival": 0.0593474642347441
+    },
+    {
+     "index": 150,
+     "x": 6.803300858899106,
+     "density": 0.007552376900044228,
+     "cdf": 0.991337518305727,
+     "survival": 0.008662481694272943
+    },
+    {
+     "index": 200,
+     "x": 9.071067811865476,
+     "density": 0.001042662412995212,
+     "cdf": 0.9988423938521965,
+     "survival": 0.0011576061478035164
+    }
+   ]
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "lower": 0.0,
+   "upper": 1.0,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 0.25,
+     "density": 2.373046875,
+     "cdf": 0.466064453125,
+     "survival": 0.533935546875
+    },
+    {
+     "index": 100,
+     "x": 0.5,
+     "density": 0.9375,
+     "cdf": 0.890625,
+     "survival": 0.109375
+    },
+    {
+     "index": 150,
+     "x": 0.75,
+     "density": 0.087890625,
+     "cdf": 0.995361328125,
+     "survival": 0.004638671875
+    },
+    {
+     "index": 200,
+     "x": 1.0,
+     "density": 0.0,
+     "cdf": 1.0,
+     "survival": 0.0
+    }
+   ]
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "lower": 0.0,
+   "upper": 8.0,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 1.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 2.0,
+     "density": 0.1353352832366127,
+     "cdf": 0.8646647167633873,
+     "survival": 0.1353352832366127
+    },
+    {
+     "index": 100,
+     "x": 4.0,
+     "density": 0.01831563888873418,
+     "cdf": 0.9816843611112658,
+     "survival": 0.01831563888873418
+    },
+    {
+     "index": 150,
+     "x": 6.0,
+     "density": 0.0024787521766663585,
+     "cdf": 0.9975212478233336,
+     "survival": 0.0024787521766663585
+    },
+    {
+     "index": 200,
+     "x": 8.0,
+     "density": 0.00033546262790251185,
+     "cdf": 0.9996645373720975,
+     "survival": 0.00033546262790251185
+    }
+   ]
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "lower": 0.0,
+   "upper": 3.627086912339476,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 0.906771728084869,
+     "density": 0.6023379749552701,
+     "cdf": 0.5783034965714177,
+     "survival": 0.4216965034285823
+    },
+    {
+     "index": 100,
+     "x": 1.813543456169738,
+     "density": 0.17566897634186304,
+     "cdf": 0.9130359357514711,
+     "survival": 0.08696406424852884
+    },
+    {
+     "index": 150,
+     "x": 2.7203151842546074,
+     "density": 0.027851187263928052,
+     "cdf": 0.988742477037546,
+     "survival": 0.011257522962453914
+    },
+    {
+     "index": 200,
+     "x": 3.627086912339476,
+     "density": 0.0028567368714608353,
+     "cdf": 0.999,
+     "survival": 0.001000000000000001
+    }
+   ]
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "lower": -0.1,
+   "upper": 1.1,
+   "rows": 201,
+   "sample": [
+    {
+     "index": 0,
+     "x": -0.1,
+     "density": 0.0,
+     "cdf": 0.0,
+     "survival": 1.0
+    },
+    {
+     "index": 50,
+     "x": 0.20000000000000004,
+     "density": 1.0,
+     "cdf": 0.20000000000000004,
+     "survival": 0.7999999999999999
+    },
+    {
+     "index": 100,
+     "x": 0.5000000000000001,
+     "density": 1.0,
+     "cdf": 0.5000000000000001,
+     "survival": 0.4999999999999999
+    },
+    {
+     "index": 150,
+     "x": 0.8000000000000002,
+     "density": 1.0,
+     "cdf": 0.8000000000000002,
+     "survival": 0.19999999999999984
+    },
+    {
+     "index": 200,
+     "x": 1.1,
+     "density": 0.0,
+     "cdf": 1.0,
+     "survival": 0.0
+    }
+   ]
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "lower": 0.0,
+   "upper": 20.0,
+   "rows": 21,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 3.6561584400629733e-05,
+     "cdf": 3.6561584400629733e-05,
+     "survival": 0.9999634384155993
+    },
+    {
+     "index": 5,
+     "x": 5.0,
+     "density": 0.07464701952887093,
+     "cdf": 0.12559897272303744,
+     "survival": 0.8744010272769626
+    },
+    {
+     "index": 10,
+     "x": 10.0,
+     "density": 0.11714155053639011,
+     "cdf": 0.8724787538527833,
+     "survival": 0.12752124614721672
+    },
+    {
+     "index": 15,
+     "x": 15.0,
+     "density": 0.0012944935222876579,
+     "cdf": 0.9996829688788313,
+     "survival": 0.00031703112116863
+    },
+    {
+     "index": 20,
+     "x": 20.0,
+     "density": 1.0995116277760013e-08,
+     "cdf": 1.0,
+     "survival": 0.0
+    }
+   ]
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "lower": 0.0,
+   "upper": 30.0,
+   "rows": 31,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.01831563888873418,
+     "cdf": 0.01831563888873418,
+     "survival": 0.9816843611112658
+    },
+    {
+     "index": 8,
+     "x": 8.0,
+     "density": 0.029770181304863176,
+     "cdf": 0.9786365655120158,
+     "survival": 0.021363434487984164
+    },
+    {
+     "index": 15,
+     "x": 15.0,
+     "density": 1.5039116762832175e-05,
+     "cdf": 0.9999951073892801,
+     "survival": 4.892610719877852e-06
+    },
+    {
+     "index": 22,
+     "x": 22.0,
+     "density": 2.8666540767285393e-10,
+     "cdf": 0.9999999999402667,
+     "survival": 5.973330954114481e-11
+    },
+    {
+     "index": 30,
+     "x": 30.0,
+     "density": 7.960892093825626e-17,
+     "cdf": 1.0,
+     "survival": 1.1732435431464345e-17
+    }
+   ]
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "lower": 0.0,
+   "upper": 20.0,
+   "rows": 21,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.3,
+     "cdf": 0.3,
+     "survival": 0.7
+    },
+    {
+     "index": 5,
+     "x": 5.0,
+     "density": 0.050421,
+     "cdf": 0.882351,
+     "survival": 0.11764900000000002
+    },
+    {
+     "index": 10,
+     "x": 10.0,
+     "density": 0.008474257470000001,
+     "cdf": 0.98022673257,
+     "survival": 0.019773267430000005
+    },
+    {
+     "index": 15,
+     "x": 15.0,
+     "density": 0.0014242684529829003,
+     "cdf": 0.9966767069430399,
+     "survival": 0.003323293056960101
+    },
+    {
+     "index": 20,
+     "x": 20.0,
+     "density": 0.00023937679889283607,
+     "cdf": 0.9994414541359167,
+     "survival": 0.0005585458640832842
+    }
+   ]
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "lower": 0.0,
+   "upper": 35.0,
+   "rows": 36,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.06400000000000002,
+     "cdf": 0.06400000000000002,
+     "survival": 0.9359999999999999
+    },
+    {
+     "index": 9,
+     "x": 9.0,
+     "density": 0.03547348992,
+     "cdf": 0.91655667712,
+     "survival": 0.08344332287999998
+    },
+    {
+     "index": 18,
+     "x": 18.0,
+     "density": 0.0012349690730879379,
+     "cdf": 0.997623497013959,
+     "survival": 0.002376502986040933
+    },
+    {
+     "index": 26,
+     "x": 26.0,
+     "density": 4.126713168120353e-05,
+     "cdf": 0.999926022116123,
+     "survival": 7.397788387691941e-05
+    },
+    {
+     "index": 35,
+     "x": 35.0,
+     "density": 7.327367376847668e-07,
+     "cdf": 0.9999987420527515,
+     "survival": 1.2579472484239041e-06
+    }
+   ]
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "lower": 0.0,
+   "upper": 10.0,
+   "rows": 11,
+   "sample": [
+    {
+     "index": 0,
+     "x": 0.0,
+     "density": 0.022917240458021564,
+     "cdf": 0.022917240458021564,
+     "survival": 0.9770827595419784
+    },
+    {
+     "index": 2,
+     "x": 2.0,
+     "density": 0.23723161394276682,
+     "cdf": 0.3728565943582715,
+     "survival": 0.6271434056417285
+    },
+    {
+     "index": 5,
+     "x": 5.0,
+     "density": 0.09963727785596206,
+     "cdf": 0.961234928716693,
+     "survival": 0.03876507128330701
+    },
+    {
+     "index": 8,
+     "x": 8.0,
+     "density": 0.0008165546612883566,
+     "cdf": 0.9999404086034628,
+     "survival": 5.959139653717926e-05
+    },
+    {
+     "index": 10,
+     "x": 10.0,
+     "density": 1.7356717438013377e-06,
+     "cdf": 1.0,
+     "survival": 0.0
+    }
+   ]
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "lower": 1.0,
+   "upper": 6.0,
+   "rows": 6,
+   "sample": [
+    {
+     "index": 0,
+     "x": 1.0,
+     "density": 0.16666666666666666,
+     "cdf": 0.16666666666666666,
+     "survival": 0.8333333333333334
+    },
+    {
+     "index": 1,
+     "x": 2.0,
+     "density": 0.16666666666666666,
+     "cdf": 0.3333333333333333,
+     "survival": 0.6666666666666666
+    },
+    {
+     "index": 2,
+     "x": 3.0,
+     "density": 0.16666666666666666,
+     "cdf": 0.5,
+     "survival": 0.5
+    },
+    {
+     "index": 4,
+     "x": 5.0,
+     "density": 0.16666666666666666,
+     "cdf": 0.8333333333333334,
+     "survival": 0.16666666666666666
+    },
+    {
+     "index": 5,
+     "x": 6.0,
+     "density": 0.16666666666666666,
+     "cdf": 1.0,
+     "survival": 0.0
+    }
+   ]
+  }
+ ],
+ "quantiles": [
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.05,
+   "quantile": -1.6448536269514726
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.5,
+   "quantile": -4.874620640296072e-62
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 1.6448536269514722
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "p": 0.01,
+   "quantile": -5.58158696851021
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    -5,
+    0.25
+   ],
+   "p": 0.99,
+   "quantile": -4.41841303148979
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "p": 0.05,
+   "quantile": 0.4393641049274924
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "p": 0.5,
+   "quantile": 1.0
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "p": 0.95,
+   "quantile": 2.276016608514317
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "p": 0.01,
+   "quantile": 0.26544493152262744
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    1,
+    1
+   ],
+   "p": 0.99,
+   "quantile": 27.836493454766828
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "p": 0.05,
+   "quantile": -2.0150483733330242
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "p": 0.5,
+   "quantile": -5.578088954947358e-31
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "p": 0.95,
+   "quantile": 2.0150483733330233
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    2.5
+   ],
+   "p": 0.01,
+   "quantile": -5.353111173030874
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    2.5
+   ],
+   "p": 0.99,
+   "quantile": 5.3531111730308725
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "p": 0.05,
+   "quantile": 0.7107230213973241
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "p": 0.5,
+   "quantile": 3.356693980033321
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "p": 0.95,
+   "quantile": 9.487729036781154
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "p": 0.01,
+   "quantile": 14.953456528455439
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    30
+   ],
+   "p": 0.99,
+   "quantile": 50.892181311517085
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "p": 0.05,
+   "quantile": 0.21119042878234492
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "p": 0.5,
+   "quantile": 0.9319331608510479
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "p": 0.95,
+   "quantile": 3.325834530413011
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "p": 0.01,
+   "quantile": 0.22569847214852332
+  },
+  {
+   "family": "F",
+   "parameters": [
+    20,
+    4
+   ],
+   "p": 0.99,
+   "quantile": 14.019608680826575
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.35536151069866206
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "p": 0.5,
+   "quantile": 1.6783469900166605
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 4.743864518390577
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "p": 0.01,
+   "quantile": 5.54106531324379
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    20,
+    0.5
+   ],
+   "p": 0.99,
+   "quantile": 15.922684937891114
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "p": 0.05,
+   "quantile": 0.06284989170835438
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "p": 0.5,
+   "quantile": 0.26444998329565994
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "p": 0.95,
+   "quantile": 0.5818034092520258
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "p": 0.01,
+   "quantile": 0.2961130991964492
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    30,
+    40
+   ],
+   "p": 0.99,
+   "quantile": 0.566988552275062
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.051293294387550536
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "p": 0.5,
+   "quantile": 0.6931471805599453
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "p": 0.95,
+   "quantile": 2.99573227355399
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "p": 0.01,
+   "quantile": 0.04020134341400577
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    0.25
+   ],
+   "p": 0.99,
+   "quantile": 18.420680743952364
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.13805126655628416
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "p": 0.5,
+   "quantile": 0.7832197687746514
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 2.0781106375345564
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "p": 0.01,
+   "quantile": 1.1955214419588616
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    5,
+    3
+   ],
+   "p": 0.99,
+   "quantile": 4.07164955669648
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.05,
+   "quantile": 0.05
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.5,
+   "quantile": 0.5
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "p": 0.95,
+   "quantile": 0.95
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "p": 0.01,
+   "quantile": -1.92
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    -2,
+    6
+   ],
+   "p": 0.99,
+   "quantile": 5.92
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "p": 0.05,
+   "quantile": 4.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "p": 0.5,
+   "quantile": 8.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "p": 0.95,
+   "quantile": 12.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "p": 0.01,
+   "quantile": 0.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    100,
+    0.02
+   ],
+   "p": 0.99,
+   "quantile": 6.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "p": 0.05,
+   "quantile": 1.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "p": 0.5,
+   "quantile": 4.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "p": 0.95,
+   "quantile": 8.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "p": 0.01,
+   "quantile": 43.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    60
+   ],
+   "p": 0.99,
+   "quantile": 79.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "p": 0.05,
+   "quantile": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "p": 0.5,
+   "quantile": 1.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "p": 0.95,
+   "quantile": 8.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    1
+   ],
+   "p": 0.01,
+   "quantile": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    1
+   ],
+   "p": 0.99,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "p": 0.05,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "p": 0.5,
+   "quantile": 4.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "p": 0.95,
+   "quantile": 11.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "p": 0.01,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    10,
+    0.7
+   ],
+   "p": 0.99,
+   "quantile": 11.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "p": 0.05,
+   "quantile": 1.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "p": 0.5,
+   "quantile": 3.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "p": 0.95,
+   "quantile": 5.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "p": 0.01,
+   "quantile": 1.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    20,
+    50,
+    200
+   ],
+   "p": 0.99,
+   "quantile": 9.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "p": 0.05,
+   "quantile": 1.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "p": 0.5,
+   "quantile": 3.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "p": 0.95,
+   "quantile": 6.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "p": 0.01,
+   "quantile": -3.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    -3,
+    4
+   ],
+   "p": 0.99,
+   "quantile": 4.0
+  }
+ ]
+}

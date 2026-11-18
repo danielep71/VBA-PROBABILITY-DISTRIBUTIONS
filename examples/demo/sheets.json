@@ -1,0 +1,109 @@
+{
+  "reference": {
+    "repository": "https://github.com/danielep71/K-SACCR",
+    "commit": "400871e",
+    "parts": "src/workbook/SACCR_Template.xlsx: xl/styles.xml, xl/theme/theme1.xml"
+  },
+  "sections": [
+    {
+      "title": "Start",
+      "role": "Instructions",
+      "sheets": [
+        {
+          "tab": "Home",
+          "code": "shHome",
+          "title": "Home",
+          "tip": "The starting page: scope, how to use the workbook and links.",
+          "issue": 253
+        }
+      ]
+    },
+    {
+      "title": "Explore",
+      "role": "Input",
+      "sheets": [
+        {
+          "tab": "Explorer",
+          "code": "shExplorer",
+          "title": "Distribution Explorer",
+          "tip": "One distribution at a time: density, probabilities and moments.",
+          "issue": 254
+        },
+        {
+          "tab": "Probabilities",
+          "code": "shProbability",
+          "title": "Probabilities and Quantiles",
+          "tip": "Cumulative, survival and interval probabilities, and their inverses.",
+          "issue": 255
+        },
+        {
+          "tab": "Parameters",
+          "code": "shParameters",
+          "title": "Parameter Effects",
+          "tip": "How each parameter moves a distribution.",
+          "issue": 256
+        }
+      ]
+    },
+    {
+      "title": "Accuracy",
+      "role": "Test",
+      "sheets": [
+        {
+          "tab": "Comparison",
+          "code": "shComparison",
+          "title": "Excel vs VBA vs Python",
+          "tip": "The library against Excel's own functions and an independent reference.",
+          "issue": 257
+        },
+        {
+          "tab": "Tails",
+          "code": "shTails",
+          "title": "Extreme Tails and Numerical Limits",
+          "tip": "Far tails, tiny probabilities and the limits of the Double range.",
+          "issue": 258
+        }
+      ]
+    },
+    {
+      "title": "Applications",
+      "role": "Output",
+      "sheets": [
+        {
+          "tab": "Discrete",
+          "code": "shDiscrete",
+          "title": "Discrete Distributions",
+          "tip": "Binomial, Poisson, Geometric and the other discrete families.",
+          "issue": 259
+        },
+        {
+          "tab": "Risk",
+          "code": "shRisk",
+          "title": "Risk Applications",
+          "tip": "Worked examples from risk management.",
+          "issue": 260
+        }
+      ]
+    },
+    {
+      "title": "Reference",
+      "role": "Reference",
+      "sheets": [
+        {
+          "tab": "Diagnostics",
+          "code": "shDiagnostics",
+          "title": "Errors and Diagnostics",
+          "tip": "What each function returns on bad input, and how to read the status.",
+          "issue": 261
+        },
+        {
+          "tab": "README",
+          "code": "shReadme",
+          "title": "README",
+          "tip": "Conventions, build, validation status and limits.",
+          "issue": 253
+        }
+      ]
+    }
+  ]
+}

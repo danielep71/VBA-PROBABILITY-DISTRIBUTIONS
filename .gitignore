@@ -48,6 +48,7 @@
 *.xlsx
 *.xlsm
 *.xlsb
+!/examples/demo/baseline/Explorer-baseline.xlsm
 *.xlt
 *.xltx
 *.xltm

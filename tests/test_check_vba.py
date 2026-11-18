@@ -688,7 +688,7 @@ class VisibilityTest(Assertions):
                            f"{TEST_PATH}:4: public name 'Test_RunAll' declared also in "
                            f"{EXPORT_PATH} (one VBA project)")
         self.assertEqual(check_vba_visibility.COLLISION_GROUPS,
-                         {"one VBA project": ("src/", "tests/", "benchmark/")})
+                         {"one VBA project": ("src/", "tests/", "benchmark/", "examples/demo/")})
         homes = check_vba_source.FLAT_HOMES + check_vba_source.NESTED_HOMES
         self.assertEqual(sorted(homes), sorted(*check_vba_visibility.COLLISION_GROUPS.values()))
 

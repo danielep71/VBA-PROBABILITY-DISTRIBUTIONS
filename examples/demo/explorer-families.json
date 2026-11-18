@@ -1,0 +1,513 @@
+{
+ "schema": "explorer-families-1",
+ "note": "Single source of the Explorer's families: the table on the sheet, the formulas, the validation and the tests are all written from it. call lists the arguments after x, as a, b, c, d for the parameters in order.",
+ "defaults": {
+  "points": 201,
+  "max_points": 1000,
+  "max_discrete_points": 1001,
+  "x_limit": 10000000.0,
+  "bound_limit": 10000000.0
+ },
+ "families": [
+  {
+   "name": "Normal",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Normal_Density",
+    "cdf": "K_STATS_Normal_Cumulative",
+    "survival": "K_STATS_Normal_Survival",
+    "quantile": "K_STATS_Normal_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Mean",
+     "default": 0,
+     "min": -1000000.0,
+     "max": 1000000.0,
+     "integer": false
+    },
+    {
+     "label": "Standard deviation",
+     "default": 1,
+     "min": 0.001,
+     "max": 10000.0,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 0,
+   "plot_lower": "a-4*b",
+   "plot_upper": "a+4*b",
+   "support": "Support: all real x. Parameters: mean and standard deviation (not variance).",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Lognormal",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Lognormal_Density",
+    "cdf": "K_STATS_Lognormal_Cumulative",
+    "survival": "K_STATS_Lognormal_Survival",
+    "quantile": "K_STATS_Lognormal_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Mean of ln X",
+     "default": 0,
+     "min": -50,
+     "max": 50,
+     "integer": false
+    },
+    {
+     "label": "Std deviation of ln X",
+     "default": 0.5,
+     "min": 0.01,
+     "max": 10,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 1,
+   "plot_lower": "0",
+   "plot_upper": "EXP(a+3*b)",
+   "support": "Support: x > 0. Parameters: mean and standard deviation of ln X.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Student t",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_StudentT_Density",
+    "cdf": "K_STATS_StudentT_Cumulative",
+    "survival": "K_STATS_StudentT_Survival",
+    "quantile": "K_STATS_StudentT_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Degrees of freedom",
+     "default": 5,
+     "min": 0.5,
+     "max": 100000,
+     "integer": false
+    }
+   ],
+   "call": "a",
+   "x_default": 1,
+   "plot_lower": "-6",
+   "plot_upper": "6",
+   "support": "Support: all real x. Parameter: degrees of freedom.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Chi-square",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_ChiSquare_Density",
+    "cdf": "K_STATS_ChiSquare_Cumulative",
+    "survival": "K_STATS_ChiSquare_Survival",
+    "quantile": "K_STATS_ChiSquare_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Degrees of freedom",
+     "default": 4,
+     "min": 0.5,
+     "max": 10000,
+     "integer": false
+    }
+   ],
+   "call": "a",
+   "x_default": 3,
+   "plot_lower": "0",
+   "plot_upper": "a+5*SQRT(2*a)+2",
+   "support": "Support: x >= 0. Parameter: degrees of freedom. The density has a pole at 0 below 2 degrees of freedom.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "F",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_F_Density",
+    "cdf": "K_STATS_F_Cumulative",
+    "survival": "K_STATS_F_Survival",
+    "quantile": "K_STATS_F_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Numerator df",
+     "default": 5,
+     "min": 0.5,
+     "max": 10000,
+     "integer": false
+    },
+    {
+     "label": "Denominator df",
+     "default": 10,
+     "min": 0.5,
+     "max": 10000,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 1,
+   "plot_lower": "0",
+   "plot_upper": "5",
+   "support": "Support: x >= 0. Parameters: numerator and denominator degrees of freedom.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Gamma",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Gamma_Density",
+    "cdf": "K_STATS_Gamma_Cumulative",
+    "survival": "K_STATS_Gamma_Survival",
+    "quantile": "K_STATS_Gamma_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Shape",
+     "default": 2,
+     "min": 0.1,
+     "max": 1000,
+     "integer": false
+    },
+    {
+     "label": "Scale",
+     "default": 1,
+     "min": 0.001,
+     "max": 1000,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 2,
+   "plot_lower": "0",
+   "plot_upper": "(a+5*SQRT(a))*b",
+   "support": "Support: x >= 0. Parameters: shape and scale (not rate).",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Beta",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Beta_Density",
+    "cdf": "K_STATS_Beta_Cumulative",
+    "survival": "K_STATS_Beta_Survival",
+    "quantile": "K_STATS_Beta_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Alpha",
+     "default": 2,
+     "min": 0.1,
+     "max": 1000,
+     "integer": false
+    },
+    {
+     "label": "Beta",
+     "default": 5,
+     "min": 0.1,
+     "max": 1000,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 0.3,
+   "plot_lower": "0",
+   "plot_upper": "1",
+   "support": "Support: 0 <= x <= 1. Parameters: alpha and beta. The density has poles at 0 or 1 below shape 1.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Exponential",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Exponential_Density",
+    "cdf": "K_STATS_Exponential_Cumulative",
+    "survival": "K_STATS_Exponential_Survival",
+    "quantile": "K_STATS_Exponential_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Rate",
+     "default": 1,
+     "min": 0.001,
+     "max": 1000,
+     "integer": false
+    }
+   ],
+   "call": "a",
+   "x_default": 1,
+   "plot_lower": "0",
+   "plot_upper": "8/a",
+   "support": "Support: x >= 0. Parameter: rate, not scale.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Weibull",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Weibull_Density",
+    "cdf": "K_STATS_Weibull_Cumulative",
+    "survival": "K_STATS_Weibull_Survival",
+    "quantile": "K_STATS_Weibull_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Shape",
+     "default": 1.5,
+     "min": 0.1,
+     "max": 100,
+     "integer": false
+    },
+    {
+     "label": "Scale",
+     "default": 1,
+     "min": 0.001,
+     "max": 1000,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 1,
+   "plot_lower": "0",
+   "plot_upper": "b*LN(1000)^(1/a)",
+   "support": "Support: x >= 0. Parameters: shape and scale.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Uniform",
+   "kind": "continuous",
+   "functions": {
+    "density": "K_STATS_Uniform_Density",
+    "cdf": "K_STATS_Uniform_Cumulative",
+    "survival": "K_STATS_Uniform_Survival",
+    "quantile": "K_STATS_Uniform_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Lower bound",
+     "default": 0,
+     "min": -1000000.0,
+     "max": 1000000.0,
+     "integer": false
+    },
+    {
+     "label": "Upper bound",
+     "default": 1,
+     "min": -1000000.0,
+     "max": 1000000.0,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 0.5,
+   "plot_lower": "a-0.1*(b-a)",
+   "plot_upper": "b+0.1*(b-a)",
+   "support": "Support: lower bound <= x <= upper bound.",
+   "constraint": "b>a",
+   "constraint_text": "Upper bound must exceed lower bound"
+  },
+  {
+   "name": "Binomial",
+   "kind": "discrete",
+   "functions": {
+    "density": "K_STATS_Binomial_PMF",
+    "cdf": "K_STATS_Binomial_Cumulative",
+    "survival": "K_STATS_Binomial_Survival",
+    "quantile": "K_STATS_Binomial_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Trials",
+     "default": 20,
+     "min": 1,
+     "max": 1000,
+     "integer": true
+    },
+    {
+     "label": "Probability of success",
+     "default": 0.4,
+     "min": 0,
+     "max": 1,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 8,
+   "plot_lower": "0",
+   "plot_upper": "a",
+   "support": "Support: integers 0 <= k <= trials. Fractional k is truncated by the library.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Poisson",
+   "kind": "discrete",
+   "functions": {
+    "density": "K_STATS_Poisson_PMF",
+    "cdf": "K_STATS_Poisson_Cumulative",
+    "survival": "K_STATS_Poisson_Survival",
+    "quantile": "K_STATS_Poisson_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Mean",
+     "default": 4,
+     "min": 0.01,
+     "max": 500,
+     "integer": false
+    }
+   ],
+   "call": "a",
+   "x_default": 3,
+   "plot_lower": "0",
+   "plot_upper": "ROUNDUP(a+8*SQRT(a)+10,0)",
+   "support": "Support: integers k >= 0. Fractional k is truncated by the library.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Geometric",
+   "kind": "discrete",
+   "functions": {
+    "density": "K_STATS_Geometric_PMF",
+    "cdf": "K_STATS_Geometric_Cumulative",
+    "survival": "K_STATS_Geometric_Survival",
+    "quantile": "K_STATS_Geometric_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Probability of success",
+     "default": 0.3,
+     "min": 0.01,
+     "max": 1,
+     "integer": false
+    }
+   ],
+   "call": "a",
+   "x_default": 2,
+   "plot_lower": "0",
+   "plot_upper": "IF(a>=1,1,MIN(500,ROUNDUP(LN(0.001)/LN(1-a),0)))",
+   "support": "Support: integers k >= 0 failures before the first success.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Negative binomial",
+   "kind": "discrete",
+   "functions": {
+    "density": "K_STATS_NegativeBinomial_PMF",
+    "cdf": "K_STATS_NegativeBinomial_Cumulative",
+    "survival": "K_STATS_NegativeBinomial_Survival",
+    "quantile": "K_STATS_NegativeBinomial_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Target successes",
+     "default": 3,
+     "min": 1,
+     "max": 500,
+     "integer": true
+    },
+    {
+     "label": "Probability of success",
+     "default": 0.4,
+     "min": 0.01,
+     "max": 1,
+     "integer": false
+    }
+   ],
+   "call": "a,b",
+   "x_default": 4,
+   "plot_lower": "0",
+   "plot_upper": "MIN(1000,ROUNDUP(a*(1-b)/b+6*SQRT(a*(1-b))/b+10,0))",
+   "support": "Support: integers k >= 0 failures before the target number of successes.",
+   "constraint": "TRUE",
+   "constraint_text": ""
+  },
+  {
+   "name": "Hypergeometric",
+   "kind": "discrete",
+   "functions": {
+    "density": "K_STATS_Hypergeometric_PMF",
+    "cdf": "K_STATS_Hypergeometric_Cumulative",
+    "survival": "K_STATS_Hypergeometric_Survival",
+    "quantile": "K_STATS_Hypergeometric_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Sample size",
+     "default": 10,
+     "min": 1,
+     "max": 1000,
+     "integer": true
+    },
+    {
+     "label": "Population successes",
+     "default": 30,
+     "min": 0,
+     "max": 10000,
+     "integer": true
+    },
+    {
+     "label": "Population size",
+     "default": 100,
+     "min": 1,
+     "max": 10000,
+     "integer": true
+    }
+   ],
+   "call": "a,b,c",
+   "x_default": 3,
+   "plot_lower": "MAX(0,a-(c-b))",
+   "plot_upper": "MIN(a,b)",
+   "support": "Support: integers from max(0, n-(N-K)) to min(n, K): successes in a sample drawn without replacement.",
+   "constraint": "AND(a<=c,b<=c)",
+   "constraint_text": "Sample size and population successes cannot exceed the population size"
+  },
+  {
+   "name": "Discrete uniform",
+   "kind": "discrete",
+   "functions": {
+    "density": "K_STATS_DiscreteUniform_PMF",
+    "cdf": "K_STATS_DiscreteUniform_Cumulative",
+    "survival": "K_STATS_DiscreteUniform_Survival",
+    "quantile": "K_STATS_DiscreteUniform_InverseCumulative"
+   },
+   "parameters": [
+    {
+     "label": "Lower bound",
+     "default": 1,
+     "min": -1000000.0,
+     "max": 1000000.0,
+     "integer": true
+    },
+    {
+     "label": "Upper bound",
+     "default": 6,
+     "min": -1000000.0,
+     "max": 1000000.0,
+     "integer": true
+    }
+   ],
+   "call": "a,b",
+   "x_default": 3,
+   "plot_lower": "a",
+   "plot_upper": "b",
+   "support": "Support: integers from the lower to the upper bound.",
+   "constraint": "AND(b>=a,b-a<=1000)",
+   "constraint_text": "Upper bound must be at least the lower bound, within 1000"
+  }
+ ]
+}
