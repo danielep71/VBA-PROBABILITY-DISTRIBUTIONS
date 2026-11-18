@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Check the placement, names, encoding, options, storage and layout of VBA source.
 
-For every tracked .bas, .cls and .frm file: it sits in src/, src/workbook/ or
-tests/ (flat) or under benchmark/; its file name starts with M_STATS_PROBDIST_
+For every tracked .bas, .cls and .frm file: it sits in src/modules/, src/workbook/
+or tests/ (flat) or under benchmark/; its file name starts with M_STATS_PROBDIST_
 (a document module of src/workbook/ keeps its Excel name), uses letters, digits and underscores only, has at most 31 characters and equals its
 one Attribute VB_Name, unique ignoring case; a .bas export starts with that
 line; ASCII only, with no byte-order mark; Option Explicit; Option Private
@@ -32,12 +32,11 @@ from vba_lexer import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-# Where components live: the library and test modules flat in src/ and
-# tests/, the modules of the Explorer workbook flat in src/workbook/, the
-# exporters and probes of each study anywhere under benchmark/. The workbook
-# home comes first, so that src/workbook/ is not read as a subdirectory of src/.
+# Where components live: the library modules flat in src/modules/, the
+# modules of the Explorer workbook flat in src/workbook/, the test module flat
+# in tests/, the exporters and probes of each study anywhere under benchmark/.
 WORKBOOK_HOME = "src/workbook/"
-FLAT_HOMES = (WORKBOOK_HOME, "src/", "tests/")
+FLAT_HOMES = (WORKBOOK_HOME, "src/modules/", "tests/")
 NESTED_HOMES = ("benchmark/",)
 # A document module keeps the name Excel gives it: ThisWorkbook, or the code
 # name of a sheet, which starts with "sh". It lives only in src/workbook/.
@@ -49,8 +48,8 @@ MAX_NAME = 31  # the VBE rejects a longer component name
 # PROB_* routines inside the VBA project and out of the worksheet Function
 # Wizard (README, "Layer 1" and "Layer 2"; docs/PUBLIC_API.md).
 OPTION_PRIVATE_REQUIRED = frozenset({
-    "src/M_STATS_PROBDIST_CORE.bas",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/modules/M_STATS_PROBDIST_CORE.bas",
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas",
 })
 # A module that declares a Public K_STATS_ procedure exposes worksheet
 # functions; Option Private Module would hide them, so it is forbidden there.
@@ -72,8 +71,8 @@ def placement(path: str) -> list[Finding]:
     findings: list[Finding] = []
     flat = next((home for home in FLAT_HOMES if path.startswith(home)), None)
     if (flat is None or "/" in path[len(flat):]) and not path.startswith(NESTED_HOMES):
-        findings.append(Finding(path, None, "VBA component outside src/, src/workbook/ and "
-                                            "tests/ (no subdirectories) and benchmark/"))
+        findings.append(Finding(path, None, "VBA component outside src/modules/, src/workbook/ "
+                                            "and tests/ (no subdirectories) and benchmark/"))
     name = Path(path).stem
     document = (flat == WORKBOOK_HOME and Path(path).suffix.lower() == ".cls"
                 and DOCUMENT_NAME.fullmatch(name) is not None)

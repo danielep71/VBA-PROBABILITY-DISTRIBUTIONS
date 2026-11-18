@@ -21,8 +21,8 @@ def text_of(*parts):
 
 
 EXPORTER = text_of("benchmark", "gamma_call_profile", "M_STATS_PROBDIST_GCP.bas")
-SPECIAL = text_of("src", "M_STATS_PROBDIST_SPECIALFUNCS.bas")
-CONTINUOUS = text_of("src", "M_STATS_PROBDIST_CONTINUOUS.bas")
+SPECIAL = text_of("src/modules", "M_STATS_PROBDIST_SPECIALFUNCS.bas")
+CONTINUOUS = text_of("src/modules", "M_STATS_PROBDIST_CONTINUOUS.bas")
 
 
 def constant(text, name):

@@ -7,7 +7,7 @@ checkout settings cannot change the result and the same revision always yields
 byte-identical output with the same Python and zlib.
 
 Bundle  dist/VBA-Probability-Distributions-<version>.zip
-        <prefix>/src/*.bas       production modules, CRLF (the VBE import form)
+        <prefix>/src/modules/*.bas library modules, CRLF (the VBE import form)
         <prefix>/tests/*.bas     regression harness, CRLF
         <prefix>/<documents>     LICENSE, README, INSTALLATION, CHANGELOG,
                                  SECURITY and VERSION, as committed
@@ -39,7 +39,7 @@ from collections.abc import Callable, Sequence
 NAME = "VBA-Probability-Distributions"
 DOCUMENTS = ("CHANGELOG.md", "INSTALLATION.md", "LICENSE", "README.md", "SECURITY.md",
              "VERSION")
-MODULE_DIRS = ("src", "tests")
+MODULE_DIRS = ("src/modules", "tests")
 FIXED_TIME = (1980, 1, 1, 0, 0, 0)
 SEMVER = re.compile(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)")
 HEADING = re.compile(r"^## \[([^\]]+)\] - (\d{4}-\d{2}-\d{2})\s*$")
@@ -69,8 +69,8 @@ def module_paths(root: str, ref: str) -> list[str]:
     for directory in MODULE_DIRS:
         listing = git(root, "ls-tree", "--name-only", f"{ref}:{directory}").decode()
         paths += [f"{directory}/{name}" for name in listing.split() if name.endswith(".bas")]
-    if not any(p.startswith("src/") for p in paths):
-        raise BundleError(f"no production modules under src/ at {ref}")
+    if not any(p.startswith("src/modules/") for p in paths):
+        raise BundleError(f"no library modules under src/modules/ at {ref}")
     return sorted(paths)
 
 
@@ -188,8 +188,8 @@ def self_test() -> int:
                 f.write(text)
 
         git(tmp, "init", "-q")
-        put("src/A.bas", 'Attribute VB_Name = "A"\nPublic Function K_STATS_A() As Double\nEnd Function\n')
-        put("src/notes.txt", "not a module\n")
+        put("src/modules/A.bas", 'Attribute VB_Name = "A"\nPublic Function K_STATS_A() As Double\nEnd Function\n')
+        put("src/modules/notes.txt", "not a module\n")
         put("tests/T.bas", 'Attribute VB_Name = "T"\n')
         for document in DOCUMENTS:
             put(document, "1.2.3\n" if document == "VERSION" else f"{document}\n")
@@ -209,9 +209,9 @@ def self_test() -> int:
             names = archive.namelist()
             check(names == sorted(names), "entries are sorted")
             expected = sorted(f"{NAME}-1.2.3/{p}" for p in
-                              ("src/A.bas", "tests/T.bas", "MANIFEST.sha256", *DOCUMENTS))
+                              ("src/modules/A.bas", "tests/T.bas", "MANIFEST.sha256", *DOCUMENTS))
             check(names == expected, f"bundle holds exactly the declared members: {names}")
-            module = archive.read(f"{NAME}-1.2.3/src/A.bas")
+            module = archive.read(f"{NAME}-1.2.3/src/modules/A.bas")
             check(module.count(b"\r\n") == 3 and b"\n" not in module.replace(b"\r\n", b""),
                   ".bas members are CRLF")
             check(archive.read(f"{NAME}-1.2.3/README.md") == b"README.md\n",
@@ -219,7 +219,7 @@ def self_test() -> int:
             check(all(i.date_time == FIXED_TIME for i in archive.infolist()),
                   "timestamps are fixed")
             manifest = archive.read(f"{NAME}-1.2.3/MANIFEST.sha256").decode()
-            check(f"{sha256(module)}  src/A.bas" in manifest, "manifest hashes the CRLF module")
+            check(f"{sha256(module)}  src/modules/A.bas" in manifest, "manifest hashes the CRLF module")
         sums = open(os.path.join(out1, "SHA256SUMS"), encoding="utf-8").read()
         check(sums == f"{sha256(first)}  {name}\n", "SHA256SUMS names the bundle digest")
         text = open(notes, encoding="utf-8").read()

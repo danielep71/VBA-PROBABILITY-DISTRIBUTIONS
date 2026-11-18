@@ -22,7 +22,7 @@ REFERENCES = json.loads((DEMO / "explorer-references.json").read_text())
 
 def library_signatures():
     """Public K_STATS_ functions and the number of arguments before Status."""
-    source = "\n".join(p.read_text(encoding="latin-1") for p in (ROOT / "src").glob("*.bas"))
+    source = "\n".join(p.read_text(encoding="latin-1") for p in (ROOT / "src" / "modules").glob("*.bas"))
     source = re.sub(r"_\s*\n\s*", "", source)
     found = {}
     for name, arguments in re.findall(r"Public Function (K_STATS_\w+)\((.*?)\)", source):

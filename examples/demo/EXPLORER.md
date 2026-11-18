@@ -23,7 +23,7 @@ new template from a verified workbook when the layout changes.
 
 1. `python tools/demobuild/explorer_build.py` copies every part of the
    template, writes the Ribbon from `src/workbook/customUI14.xml`, adds a VBA
-   project built from the sources of the commit (the library of `src/`, the
+   project built from the sources of the commit (the library of `src/modules/`, the
    modules of `src/workbook/` and the workbook events of
    `src/workbook/ThisWorkbook.cls`), and writes `explorer-plan.json`.
 2. In desktop Excel, `tools/demobuild/Evolve-Explorer.ps1 -PackageDirectory

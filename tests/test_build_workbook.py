@@ -89,7 +89,7 @@ class CompressionTest(unittest.TestCase):
         rng = random.Random(8)
         samples = [b"", b"a", b"abc", b"abc" * 3000, bytes(rng.randrange(256) for _ in range(9000)),
                    b"Option Explicit\r\n" * 700, bytes(range(256)) * 40, b"x" * 4096,
-                   b"x" * 4097, (ROOT / "src/M_STATS_PROBDIST_CORE.bas").read_bytes()]
+                   b"x" * 4097, (ROOT / "src/modules/M_STATS_PROBDIST_CORE.bas").read_bytes()]
         for data in samples:
             with self.subTest(length=len(data)):
                 packed = V.compress(data)
@@ -298,12 +298,12 @@ class ProjectStreamsTest(unittest.TestCase):
 
 
 # ============================================================================ builds
-FIXTURE_POLICY = {"schema_version": 1, "regression_sources": ["src/M_STATS_PROBDIST_A.bas",
+FIXTURE_POLICY = {"schema_version": 1, "regression_sources": ["src/modules/M_STATS_PROBDIST_A.bas",
                                                              "tests/M_STATS_PROBDIST_TEST.bas"]}
 FIXTURE_FILES: dict[str, bytes] = {
     ".gitattributes": b"*.bas text eol=crlf\n",
     B.POLICY: json.dumps(FIXTURE_POLICY, indent=2).encode() + b"\n",
-    "src/M_STATS_PROBDIST_A.bas": (b'Attribute VB_Name = "M_STATS_PROBDIST_A"\r\nOption Explicit\r\n'
+    "src/modules/M_STATS_PROBDIST_A.bas": (b'Attribute VB_Name = "M_STATS_PROBDIST_A"\r\nOption Explicit\r\n'
                                    b"Public Function K_STATS_A() As Double\r\n    K_STATS_A = 1\r\n"
                                    b"End Function\r\n"),
     "tests/M_STATS_PROBDIST_TEST.bas": (b'Attribute VB_Name = "M_STATS_PROBDIST_TEST"\r\n'
@@ -403,7 +403,7 @@ class BuildTest(unittest.TestCase):
 
     def test_a_dirty_tree_is_stamped_and_unverified(self) -> None:
         with git_tree() as root:
-            path = root / "src/M_STATS_PROBDIST_A.bas"
+            path = root / "src/modules/M_STATS_PROBDIST_A.bas"
             path.write_bytes(path.read_bytes() + b"' changed\r\n")
             workbook, manifest, result = self.build(root)
             self.assertFalse(result.clean)
@@ -421,17 +421,17 @@ class BuildTest(unittest.TestCase):
     def test_missing_and_extra_modules_stop_the_build(self) -> None:
         cases = {
             "not found": {"tests/M_STATS_PROBDIST_TEST.bas": None},
-            "not listed": {"src/M_STATS_PROBDIST_EXTRA.bas":
+            "not listed": {"src/modules/M_STATS_PROBDIST_EXTRA.bas":
                            b'Attribute VB_Name = "M_STATS_PROBDIST_EXTRA"\r\n'},
-            "must be Attribute VB_Name": {"src/M_STATS_PROBDIST_A.bas":
+            "must be Attribute VB_Name": {"src/modules/M_STATS_PROBDIST_A.bas":
                                           b'Attribute VB_Name = "M_OTHER"\r\n'},
             "directly under": {B.POLICY: json.dumps(
                 {"regression_sources": ["benchmark/M_X.bas"]}).encode()},
             "lists a module twice": {B.POLICY: json.dumps(
-                {"regression_sources": ["src/M_STATS_PROBDIST_A.bas",
-                                        "src/M_STATS_PROBDIST_A.bas"]}).encode()},
+                {"regression_sources": ["src/modules/M_STATS_PROBDIST_A.bas",
+                                        "src/modules/M_STATS_PROBDIST_A.bas"]}).encode()},
             "non-empty list": {B.POLICY: json.dumps({"regression_sources": []}).encode()},
-            "not cp1252 text": {"src/M_STATS_PROBDIST_A.bas":
+            "not cp1252 text": {"src/modules/M_STATS_PROBDIST_A.bas":
                                 b'Attribute VB_Name = "M_STATS_PROBDIST_A"\r\n\x81\r\n'},
         }
         for expected, files in cases.items():
@@ -516,7 +516,7 @@ class VerifyTest(unittest.TestCase):
 
     def test_an_extra_module_fails(self) -> None:
         extra = {**self.data["modules"][0], "name": "M_STATS_PROBDIST_B",
-                 "path": "src/M_STATS_PROBDIST_B.bas"}
+                 "path": "src/modules/M_STATS_PROBDIST_B.bas"}
         self.rewrite({**self.data, "modules": [*self.data["modules"], extra]})
         self.assert_fails("not in regression_sources")
 

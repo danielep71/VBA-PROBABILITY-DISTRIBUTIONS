@@ -23,7 +23,7 @@ def frozen_source():
     import sys
     sys.path.insert(0, str(ROOT / 'benchmark'))
     from _frozen_sources import text
-    return text('src/M_STATS_PROBDIST_SPECIALFUNCS.bas')
+    return text('src/M_STATS_PROBDIST_SPECIALFUNCS.bas')  # the pin predates #438
 
 
 def measured_source():
@@ -31,7 +31,7 @@ def measured_source():
     the binary64 route block of #312, which left production after #307 closed."""
     return _route_block().as_measured(frozen_source())
 
-SOURCE = ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
+SOURCE = ROOT / 'src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas'
 BASELINE = 'f568e3a3d3e3517d5c66294d980f411e711188a2df40f2b608ace267b041fb6e'
 LOWER = [
     ('    Stage = "lower geometric remainder"\n',

@@ -20,7 +20,7 @@ function Invoke-Sync([string[]]$Arguments) {
 }
 
 function Get-Components([string]$Mode) {
-    $folders = @('src', 'src\workbook')
+    $folders = @('src\modules', 'src\workbook')
     if ($Mode -eq 'Development') { $folders += 'tests' }
     $names = foreach ($folder in $folders) {
         Get-ChildItem -LiteralPath (Join-Path $root $folder) -File -Filter '*.bas' | ForEach-Object { $_.BaseName }

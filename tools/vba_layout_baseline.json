@@ -14,10 +14,10 @@
     "benchmark/holdout_older/M_STATS_PROBDIST_HOLDOUTOLDER.bas",
     "benchmark/logbeta_study/M_STATS_PROBDIST_LOGBETA_STUDY.bas",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas",
-    "src/M_STATS_PROBDIST_CORE.bas",
-    "src/M_STATS_PROBDIST_DISCRETE.bas",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
-    "src/M_STATS_PROBDIST_TFAMILY.bas",
+    "src/modules/M_STATS_PROBDIST_CORE.bas",
+    "src/modules/M_STATS_PROBDIST_DISCRETE.bas",
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/modules/M_STATS_PROBDIST_TFAMILY.bas",
     "tests/M_STATS_PROBDIST_TEST.bas"
   ]
 }

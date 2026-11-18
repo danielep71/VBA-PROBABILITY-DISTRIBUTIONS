@@ -7,7 +7,7 @@ Synchronize the repository's VBA source into a local Probability Distributions
 Updates VBA code only. A full synchronization imports the components of one
 of two workbooks, and asks which one unless -Mode gives the answer:
 
-- Production: the library modules (src\*.bas) and the modules of the
+- Production: the library modules (src\modules\*.bas) and the modules of the
   Explorer workbook (src\workbook\*.bas), with the code of ThisWorkbook
   (src\workbook\ThisWorkbook.cls), for a workbook that is used to calculate.
 - Development: the production components and the regression module
@@ -382,7 +382,7 @@ function ConvertTo-SyncMode {
 }
 
 function Get-ModeSources {
-    # The components of one workbook: the library modules (src), the modules
+    # The components of one workbook: the library modules (src\modules), the modules
     # and the ThisWorkbook code of the Explorer workbook (src\workbook) and,
     # for a development workbook, the regression module (tests). Sorted by
     # path.
@@ -391,7 +391,7 @@ function Get-ModeSources {
         [Parameter(Mandatory = $true)][ValidateSet("Production", "Development")][string]$Mode
     )
 
-    $folders = @("src", "src\workbook")
+    $folders = @("src\modules", "src\workbook")
     if ($Mode -eq "Development") { $folders += "tests" }
     $files = @(
         foreach ($folder in $folders) {
@@ -617,7 +617,7 @@ try {
     }
 
     $sourceRoots = @(
-        (Join-Path $repoFullPath "src"),
+        (Join-Path $repoFullPath "src\modules"),
         (Join-Path $repoFullPath "src\workbook"),
         (Join-Path $repoFullPath "tests")
     )

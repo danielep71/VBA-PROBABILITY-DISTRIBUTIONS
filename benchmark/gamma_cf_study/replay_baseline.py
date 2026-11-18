@@ -36,7 +36,11 @@ def main():
         shutil.copytree(HERE, bench / HERE.name, ignore=shutil.ignore_patterns("__pycache__"))
         helper = bench / "beta_balanced_survival"
         helper.mkdir()
-        shutil.copy2(ROOT / "benchmark/beta_balanced_survival/beta_route_model.py", helper)
+        # The helper as it stood at the baseline, which reads src/ as that commit
+        # laid it out; the working tree's copy reads src/modules/ since #438.
+        (helper / "beta_route_model.py").write_bytes(subprocess.check_output(
+            ["git", "show", f"{BASELINE}:benchmark/beta_balanced_survival/beta_route_model.py"],
+            cwd=ROOT))
         grid = bench / "positive_ratio_subnormal"
         grid.mkdir()
         (grid / "gamma_q_complement.csv").write_bytes(subprocess.check_output(

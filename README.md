@@ -321,12 +321,12 @@ Coming from Excel's own functions? [The function map](docs/PUBLIC_API.md#coming-
 Import the files in this order:
 
 ```text
-src/M_STATS_PROBDIST_CORE.bas
-src/M_STATS_PROBDIST_SPECIALFUNCS.bas
-src/M_STATS_PROBDIST_NORMALFAMILY.bas
-src/M_STATS_PROBDIST_TFAMILY.bas
-src/M_STATS_PROBDIST_CONTINUOUS.bas
-src/M_STATS_PROBDIST_DISCRETE.bas
+src/modules/M_STATS_PROBDIST_CORE.bas
+src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas
+src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas
+src/modules/M_STATS_PROBDIST_TFAMILY.bas
+src/modules/M_STATS_PROBDIST_CONTINUOUS.bas
+src/modules/M_STATS_PROBDIST_DISCRETE.bas
 ```
 
 Then choose:
@@ -1099,8 +1099,8 @@ worked examples and the numerical limitations. Its PDF,
 [v1.0.0 release](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/releases/tag/v1.0.0).
 
 v1.0.0 does not include a demonstration workbook. The library is the six
-modules in [`src/`](src/) (not the `src/workbook/` folder, which belongs to the
-Explorer workbook under development); import them as
+modules in [`src/modules/`](src/modules/) (not the `src/workbook/` folder, which
+belongs to the Explorer workbook under development); import them as
 [INSTALLATION.md](INSTALLATION.md) describes.
 
 > [!CAUTION]
@@ -1147,7 +1147,8 @@ VBA-PROBABILITY-DISTRIBUTIONS/
 │  ├─ PUBLIC_API.md
 │  ├─ PUBLIC_API.txt             # frozen K_STATS_* API inventory
 │  └─ VERIFICATION_DEPTH.md
-├─ src/                          # the six production modules
+├─ src/
+│  ├─ modules/                   # the six production modules
 │  └─ workbook/                  # Explorer workbook: template, Ribbon, workbook modules
 ├─ tests/
 │  ├─ M_STATS_PROBDIST_TEST.bas  # VBA regression harness

@@ -17,11 +17,11 @@ def check(cond, msg):
 
 
 def _tree():
-    """A tiny fake repo: root/src/a.bas, root/benchmark/{grid,contracts}."""
+    """A tiny fake repo: root/src/modules/a.bas, root/benchmark/{grid,contracts}."""
     d = tempfile.mkdtemp()
-    os.makedirs(os.path.join(d, "src"))
+    os.makedirs(os.path.join(d, "src", "modules"))
     os.makedirs(os.path.join(d, "benchmark"))
-    open(os.path.join(d, "src", "a.bas"), "wb").write(b"Attribute VB_Name = \"a\"\r\nSub X()\r\nEnd Sub\r\n")
+    open(os.path.join(d, "src", "modules", "a.bas"), "wb").write(b"Attribute VB_Name = \"a\"\r\nSub X()\r\nEnd Sub\r\n")
     grid = os.path.join(d, "benchmark", "probability_accuracy_grid.csv")
     open(grid, "w", newline="\n").write("function,arg1,reference,observed_vba,regime,expected_error\n")
     contracts = os.path.join(d, "benchmark", "accuracy_contracts.csv")
@@ -36,7 +36,7 @@ man = M.build_manifest(d, grid, contracts, generated_utc="t0")
 check(M.verify_source_binding(d, man, grid, contracts) == [], "clean tree verifies")
 
 # 2. CRLF vs LF must hash identically (content binding, not line endings)
-p = os.path.join(d, "src", "a.bas")
+p = os.path.join(d, "src", "modules", "a.bas")
 raw = open(p, "rb").read()
 open(p, "wb").write(raw.replace(b"\r\n", b"\n"))            # rewrite as LF
 check(M.verify_source_binding(d, man, grid, contracts) == [], "LF vs CRLF hashes identically")
@@ -48,7 +48,7 @@ check(any("a.bas" in x and "changed" in x for x in probs), "content change detec
 open(p, "wb").write(raw)                                    # restore
 
 # 4. an added module (not in manifest) is caught
-extra = os.path.join(d, "src", "b.bas")
+extra = os.path.join(d, "src", "modules", "b.bas")
 open(extra, "wb").write(b"Attribute VB_Name = \"b\"\r\n")
 probs = M.verify_source_binding(d, man, grid, contracts)
 check(any("b.bas" in x and "absent from the manifest" in x for x in probs), "added module detected")
@@ -88,9 +88,9 @@ check(any("predates observation-content binding" in x for x in probs), "pre-bind
 def _holdout_tree():
     """A tiny fake repo with the exact source classes a holdout depends on."""
     d = tempfile.mkdtemp()
-    os.makedirs(os.path.join(d, "src"))
+    os.makedirs(os.path.join(d, "src", "modules"))
     os.makedirs(os.path.join(d, "benchmark", "holdout"))
-    src = os.path.join(d, "src", "a.bas")
+    src = os.path.join(d, "src", "modules", "a.bas")
     exporter = os.path.join(d, "benchmark", "holdout", "M_STATS_PROBDIST_HOLDOUT.bas")
     open(src, "wb").write(b"Attribute VB_Name = \"a\"\r\nSub X()\r\nEnd Sub\r\n")
     open(exporter, "wb").write(b"Attribute VB_Name = \"h\"\r\nSub Export()\r\nEnd Sub\r\n")
@@ -131,7 +131,7 @@ open(hexporter, "wb").write(hexporter_raw)
 # 13. a production-source or exporter change invalidates the binding
 open(hsrc, "wb").write(hsrc_raw.replace(b"Sub X()", b"Sub X() 'changed"))
 probs = M.verify_holdout_binding(hd, hman, hgrid, hcontracts)
-check(any("src/a.bas" in x and "source changed" in x for x in probs),
+check(any("src/modules/a.bas" in x and "source changed" in x for x in probs),
       "holdout production-source change detected")
 open(hsrc, "wb").write(hsrc_raw)
 open(hexporter, "wb").write(hexporter_raw.replace(b"Sub Export()", b"Sub Export() 'changed"))
@@ -175,7 +175,7 @@ check(any("malformed" in x for x in probs), "malformed holdout manifest rejected
 # clean while a second module beside it produced part of the observations.
 # Nesting is covered too, so a subdirectory cannot reintroduce the gap.
 check(sorted(M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS)) ==
-      ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/a.bas"],
+      ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/modules/a.bas"],
       "holdout binding scope is exactly production source plus the exporter")
 
 # 17b. the Explorer workbook's modules (src/workbook/) are in no binding: no
@@ -184,7 +184,7 @@ os.makedirs(os.path.join(hd, "src", "workbook"))
 hworkbook = os.path.join(hd, "src", "workbook", "M_STATS_PROBDIST_W.bas")
 open(hworkbook, "wb").write(b"Attribute VB_Name = \"w\"\r\n")
 check(sorted(M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS)) ==
-      ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/a.bas"]
+      ["benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas", "src/modules/a.bas"]
       and not any(k.startswith("src/workbook/") for k in M.source_hashes(hd)),
       "src/workbook/ is outside the main and holdout bindings")
 os.remove(hworkbook)

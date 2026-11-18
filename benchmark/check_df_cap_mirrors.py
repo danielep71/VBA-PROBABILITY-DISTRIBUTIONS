@@ -4,7 +4,7 @@
 The Accuracy Gate decides whether a Student-t, chi-square or F row lies in an
 envelope-reject region from F_MAX_DF, T_MAX_DF and CHI_MAX_DF in
 _contract_eval.py. The library enforces the same caps with PROB_F_MAX_DF,
-PROB_T_MAX_DF and PROB_CHI_MAX_DF in src/M_STATS_PROBDIST_TFAMILY.bas. If one
+PROB_T_MAX_DF and PROB_CHI_MAX_DF in src/modules/M_STATS_PROBDIST_TFAMILY.bas. If one
 side changes alone, the gate scores rows the library refuses, or skips rows it
 now accepts. This check reads both sides and compares the binary64 bit patterns.
 
@@ -56,7 +56,7 @@ ROOT = HERE.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import vba_lexer  # noqa: E402
 
-SOURCE = "src/M_STATS_PROBDIST_TFAMILY.bas"
+SOURCE = "src/modules/M_STATS_PROBDIST_TFAMILY.bas"
 PYTHON = HERE / "_contract_eval.py"
 # (VBA constant, Python mirror)
 PAIRS = (
@@ -219,7 +219,7 @@ def vba_caps(root: Path) -> tuple[dict[str, float], list[str]]:
             values[name] = vba_double(literal)
         except CapError as exc:
             failures.append(f"{SOURCE} line {line}: {name}: {exc}")
-    for other in sorted((root / "src").glob("*.bas")):
+    for other in sorted((root / "src" / "modules").glob("*.bas")):
         relative = other.relative_to(root).as_posix()
         if relative == SOURCE:
             continue

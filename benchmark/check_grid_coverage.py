@@ -203,10 +203,10 @@ def build_fingerprint(root, grid_path, result, source_commit, owner, issue,
                       milestone_expiry):
     """Build the one-time reviewed v1.0.0 transition fingerprint."""
     src = {}
-    src_dir = os.path.join(root, "src")
+    src_dir = os.path.join(root, "src", "modules")
     for name in sorted(os.listdir(src_dir)):
         if name.lower().endswith(".bas"):
-            rel = "src/" + name
+            rel = "src/modules/" + name
             src[rel] = normalized_hash(os.path.join(src_dir, name))
     rows = sorted(result["missing_identity_objects"], key=identity_key)
     return {

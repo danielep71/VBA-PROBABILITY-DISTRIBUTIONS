@@ -130,13 +130,13 @@ class Fixture:
         self.policy = {
             "schema_version": 1, "repository": "owner/repo",
             "workflow": ".github/workflows/excel.yml", "entry_point": "RunAll_CI",
-            "expected_assertions": 3, "regression_sources": ["src/A.bas", "tests/T.bas"],
+            "expected_assertions": 3, "regression_sources": ["src/modules/A.bas", "tests/T.bas"],
             "grid_exporters": {MAIN: A.GRIDS["main"].exporter,
                                HOLDOUT: A.GRIDS["holdout"].exporter},
         }
         write(root, ".gitattributes", "*.csv text eol=lf\n*.json text eol=lf\n")
         write(root, E.POLICY_PATH, json.dumps(self.policy, indent=2) + "\n")
-        for rel in ["src/A.bas", "tests/T.bas"] + [s.exporter for s in A.GRIDS.values()]:
+        for rel in ["src/modules/A.bas", "tests/T.bas"] + [s.exporter for s in A.GRIDS.values()]:
             write(root, rel, 'Attribute VB_Name = "%s"\n' % os.path.basename(rel)[:-4])
         for rel, text in GRID_TEXT.items():
             write(root, rel, text)
@@ -196,7 +196,7 @@ class Fixture:
                '  "commit_sha_recorded_by": "%s"\n}\n' % (head, A.ADAPTER)).encode()
         write(out, A.EXCEL_WRITTEN_ENVIRONMENT, excel_env)
         write(out, A.ENVIRONMENT, env)
-        grids, sources = [], ["src/A.bas"]
+        grids, sources = [], ["src/modules/A.bas"]
         for n in names:
             spec = A.GRIDS[n]
             grid_mode = mode if n == "main" else "full"
@@ -473,10 +473,10 @@ class ApplyExcelExportTests(unittest.TestCase):
 
     def test_missing_only_after_a_vba_change_is_refused(self):
         fx = self.fx
-        write(fx.root, "src/A.bas", 'Attribute VB_Name = "A"\n\' a numerical change\n')
+        write(fx.root, "src/modules/A.bas", 'Attribute VB_Name = "A"\n\' a numerical change\n')
         fx.head = fx.commit("change a kernel")
         out = fx.artifact(names=("main",), mode="missing-only")
-        self.refused(out, "differ from the source they were bound to: src/A.bas")
+        self.refused(out, "differ from the source they were bound to: src/modules/A.bas")
         code, output, _ = fx.apply(fx.artifact(names=("main",), name="full"))
         self.assertEqual(code, 0, "a full export after the change is accepted:\n" + output)
 

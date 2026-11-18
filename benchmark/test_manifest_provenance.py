@@ -67,7 +67,7 @@ POLICY = {
     "workflow": ".github/workflows/excel.yml",
     "entry_point": "RunAll_CI",
     "expected_assertions": 3,
-    "regression_sources": ["src/A.bas", "tests/T.bas"],
+    "regression_sources": ["src/modules/A.bas", "tests/T.bas"],
     "grid_exporters": {
         MAIN_G: "benchmark/MainExport.bas",
         HOLD_G: "benchmark/holdout/HoldoutExport.bas",
@@ -85,7 +85,7 @@ def build_repo(tmp):
     run(tmp, "git", "config", "user.email", "t@t")
     run(tmp, "git", "config", "user.name", "t")
     write(tmp, E.POLICY_PATH, json.dumps(POLICY, indent=2) + "\n")
-    write(tmp, "src/A.bas", "Attribute VB_Name = \"A\"\n")
+    write(tmp, "src/modules/A.bas", "Attribute VB_Name = \"A\"\n")
     write(tmp, "tests/T.bas", "Attribute VB_Name = \"T\"\n")
     write(tmp, "benchmark/MainExport.bas", "Attribute VB_Name = \"MainExport\"\n")
     write(tmp, "benchmark/holdout/HoldoutExport.bas", "Attribute VB_Name = \"HoldoutExport\"\n")
@@ -390,7 +390,7 @@ def case_helper_mixed_export(tmp, corrupt_grid=False, drift_source=False):
     if corrupt_grid:
         write(tmp, MAIN_G, "function,arg1\nA,1\nB,999\n")
     if drift_source:
-        write(tmp, "src/A.bas", "changed after export\n")
+        write(tmp, "src/modules/A.bas", "changed after export\n")
     return W._grid_unchanged_since_head(tmp, os.path.join(tmp, HOLD_G))
 
 

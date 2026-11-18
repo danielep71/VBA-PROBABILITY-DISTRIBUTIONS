@@ -3,9 +3,11 @@ Observation-provenance manifest: bind the committed accuracy evidence to the
 exact source that produced it.
 
 The observations in probability_accuracy_grid.csv are produced by VBA (the
-library kernels in src/, plus the export/study macros) running inside Excel.
+library kernels in src/modules/, plus the export/study macros) running
+inside Excel.
 Nothing in the grid records WHICH source produced them, so an algorithm can
-change in src/** while the committed observations - and therefore the green
+change in src/modules/** while the committed observations - and therefore
+the green
 accuracy summary - stay put. This module records a content hash of every .bas
 file (algorithms, exporters, tests) plus the grid schema and environment, and
 the gate refuses to certify a summary whose recorded source no longer matches
@@ -32,23 +34,22 @@ HOLDOUT_MANIFEST_NAME = "holdout_manifest.json"
 MANIFEST_VERSION = 1
 
 # The observations depend on every piece of VBA that can change a returned
-# value: the kernels (src), the exporters and study macros (benchmark), and the
-# test harness (tests). Any .bas change must invalidate the binding until the
+# value: the kernels (src/modules), the exporters and study macros
+# (benchmark), and the test harness (tests). Any .bas change must invalidate the binding until the
 # observations are re-exported.
-_BAS_GLOBS = ("src/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
-# The modules of the Explorer workbook, outside every binding.
-WORKBOOK_DIR = "src/workbook/"
+_BAS_GLOBS = ("src/modules/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
 
 # The independent holdout is produced by the six public source modules and its
 # dedicated exporter.  Study macros and the regression harness do not produce
 # holdout observations, so binding them would invalidate this evidence for a
 # change that cannot affect it.
 _HOLDOUT_BAS_GLOBS = (
-    "src/**/*.bas",
+    "src/modules/**/*.bas",
     # Recursive, not a literal exporter path. A literal path binds only the file
     # named here, so a SECOND module added beside it would produce holdout
     # observations from source no manifest records - the exact fail-open class
-    # this binding exists to prevent. src/**/*.bas already detects additions;
+    # this binding exists to prevent. src/modules/**/*.bas already
+    # detects additions;
     # this makes the holdout directory symmetric with it.
     "benchmark/holdout/**/*.bas",
 )
@@ -76,16 +77,11 @@ def _rel(root, path):
 
 
 def source_hashes(root, patterns=_BAS_GLOBS):
-    """Map every tracked .bas path (repo-relative) outside src/workbook/ to its
-    normalized hash."""
+    """Map every tracked .bas path (repo-relative) to its normalized hash."""
     out = {}
     for pattern in patterns:
         for p in glob.glob(os.path.join(root, pattern), recursive=True):
-            rel = _rel(root, p)
-            # The Explorer workbook's modules return no value an observation
-            # records: no evidence workbook imports them.
-            if not rel.startswith(WORKBOOK_DIR):
-                out[rel] = normalized_hash(p)
+            out[_rel(root, p)] = normalized_hash(p)
     return dict(sorted(out.items()))
 
 

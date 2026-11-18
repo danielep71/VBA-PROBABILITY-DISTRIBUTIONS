@@ -57,7 +57,7 @@ def git(root, *args):
 
 
 # 1.
-for rel in ("src/M_STATS_PROBDIST_CORE.bas", ".github/excel-evidence-policy.json"):
+for rel in ("src/M_STATS_PROBDIST_CORE.bas", ".github/excel-evidence-policy.json"):  # the pin predates #438
     shown = git(ROOT, "show", f"{F.GAMMA_STUDY_PIN}:{rel}")
     check(F.blob(rel) == shown, f"1: blob({rel}) is the pinned blob")
     check(F.text(rel) == shown.decode().replace("\r\n", "\n"), f"1: text({rel}) has LF line ends")
@@ -95,10 +95,9 @@ with tempfile.TemporaryDirectory(prefix="frozen-sources-clone-") as clone:
             shutil.copyfile(source, target)
 
     # 2. Change every production module and the test module, comment and code.
-    modules = sorted(name for name in os.listdir(os.path.join(clone, "src"))
-                     if name.endswith(".bas"))
-    for index, name in enumerate(modules + ["../tests/M_STATS_PROBDIST_TEST.bas"]):
-        path = os.path.join(clone, "src", name)
+    modules = sorted(os.listdir(os.path.join(clone, "src", "modules")))
+    for index, name in enumerate(modules + ["../../tests/M_STATS_PROBDIST_TEST.bas"]):
+        path = os.path.join(clone, "src", "modules", name)
         mutate(path, b"Option Explicit",
                b"Option Explicit\r\n' fixture comment (#338)\r\n"
                + f"Private Const FIXTURE_338_{index} As Long = 1".encode())
@@ -120,7 +119,7 @@ with tempfile.TemporaryDirectory(prefix="frozen-sources-clone-") as clone:
           "3: the live check declares PRODUCTION_FOLLOWS_STUDY and MOVED_ON as single assignments")
     with open(live_check, "w", encoding="utf-8") as f:
         f.write(check_text)
-    special = os.path.join(clone, "src", "M_STATS_PROBDIST_SPECIALFUNCS.bas")
+    special = os.path.join(clone, "src", "modules", "M_STATS_PROBDIST_SPECIALFUNCS.bas")
     code, tail = run(clone, LIVE_CHECK)
     check(code == 0, f"3: changes outside the generated block leave the live check green\n{tail}")
     mutate(special, BLOCK, BLOCK + b"\r\n' a comment inside the block")

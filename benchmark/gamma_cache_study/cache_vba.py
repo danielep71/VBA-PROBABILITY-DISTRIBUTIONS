@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
+SRC = ROOT / 'src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas'
 
 
 def frozen_source():
@@ -12,7 +12,7 @@ def frozen_source():
     import sys
     sys.path.insert(0, str(ROOT / 'benchmark'))
     from _frozen_sources import text
-    return text('src/M_STATS_PROBDIST_SPECIALFUNCS.bas')
+    return text('src/M_STATS_PROBDIST_SPECIALFUNCS.bas')  # the pin predates #438
 NAME = 'PROB_DD_EG_LogGamma'
 SLOW = NAME + 'Uncached'
 WRAPPER = '''Private Function PROB_DD_EG_LogGamma(ByVal A As Variant) As Variant

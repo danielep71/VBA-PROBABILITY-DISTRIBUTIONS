@@ -14,7 +14,7 @@
 #      into a private work folder, and saves a fresh macro-enabled workbook in
 #      that folder. The exporters look for their grid in the workbook's folder,
 #      so they resolve it with no dialog and no change to their source.
-#   3. Imports the exact src/ modules and the unchanged exporter modules, plus a
+#   3. Imports the exact src/modules/ modules and the unchanged exporter modules, plus a
 #      CI-only bridge module that is never committed. The bridge defines a
 #      Public MsgBox, which takes precedence over VBA.MsgBox for unqualified
 #      calls in the project, so the exporters' notifications are recorded
@@ -591,7 +591,7 @@ try {
         Stop-Export "Excel denied programmatic access to the VBA project object model (Trust Center): $($_.Exception.Message)"
     }
 
-    $modules = @($policy.regression_sources | ForEach-Object { [string]$_ } | Where-Object { $_.StartsWith("src/") })
+    $modules = @($policy.regression_sources | ForEach-Object { [string]$_ } | Where-Object { $_.StartsWith("src/modules/") })
     $modules += (Get-ExportGridSpec -Name "main").Exporter
     foreach ($spec in $selected) {
         if ($modules -notcontains $spec.Exporter) { $modules += $spec.Exporter }

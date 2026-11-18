@@ -29,9 +29,9 @@ import check_vba_source  # noqa: E402
 import check_vba_visibility  # noqa: E402
 from vba_lexer import logical_units, split_statements, strip_code  # noqa: E402
 
-CORE_PATH = "src/M_STATS_PROBDIST_CORE.bas"
-SPECIAL_PATH = "src/M_STATS_PROBDIST_SPECIALFUNCS.bas"
-FAMILY_PATH = "src/M_STATS_PROBDIST_NORMALFAMILY.bas"
+CORE_PATH = "src/modules/M_STATS_PROBDIST_CORE.bas"
+SPECIAL_PATH = "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas"
+FAMILY_PATH = "src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas"
 TEST_PATH = "tests/M_STATS_PROBDIST_TEST.bas"
 EXPORT_PATH = "benchmark/study/M_STATS_PROBDIST_EXPORT.bas"
 
@@ -220,10 +220,10 @@ class SourceTest(Assertions):
         source = renamed(TEST, "M_STATS_PROBDIST_STRAY")
         for path in ("M_STATS_PROBDIST_STRAY.bas", "tools/M_STATS_PROBDIST_STRAY.bas",
                      "src/sub/M_STATS_PROBDIST_STRAY.bas", "tests/x/M_STATS_PROBDIST_STRAY.bas",
-                     "src/workbook/x/M_STATS_PROBDIST_STRAY.bas",
+                     "src/workbook/x/M_STATS_PROBDIST_STRAY.bas", "src/M_STATS_PROBDIST_STRAY.bas",
                      "examples/demo/M_STATS_PROBDIST_STRAY.bas"):
             with self.subTest(path=path):
-                self.assertFinding({**VALID, path: source}, "outside src/, src/workbook/ and tests/")
+                self.assertFinding({**VALID, path: source}, "outside src/modules/, src/workbook/ and tests/")
         self.assertClean({**VALID, "src/workbook/M_STATS_PROBDIST_STRAY.bas": source})
         self.assertClean({**VALID, "benchmark/a/b/M_STATS_PROBDIST_STRAY.bas": source})
 

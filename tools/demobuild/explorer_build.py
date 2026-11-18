@@ -13,7 +13,7 @@ The template, src/workbook/PROBDIST_Template.xlsx, is the Explorer workbook
 without its code (explorer_template.py): every part is kept byte for byte,
 except the Ribbon, written from src/workbook/customUI14.xml, so sheets,
 styles, charts and the navigation bar stay as the user left them. The VBA
-project holds the library modules of src/, the modules of src/workbook/ (the
+project holds the library modules of src/modules/, the modules of src/workbook/ (the
 demo module, the Explorer module and the Function Wizard registration) and
 the workbook's event code, src/workbook/ThisWorkbook.cls; the sheet modules
 hold no code. Evolve-Explorer.ps1 then writes the formulas, names and
@@ -59,7 +59,7 @@ def document_source(path: Path) -> str:
 
 def vba_modules() -> tuple[list[Module], list[Path]]:
     sheets = build_demo.sheet_map()
-    sources = sorted((ROOT / "src").glob("*.bas")) + sorted(WORKBOOK.glob("*.bas"))
+    sources = sorted((ROOT / "src" / "modules").glob("*.bas")) + sorted(WORKBOOK.glob("*.bas"))
     modules = [Module("ThisWorkbook", document_source(THIS_WORKBOOK), DOCUMENT)]
     modules += [document_module(sheet.code, False) for sheet in sheets]
     modules += [Module(path.stem, module_text(path.read_bytes())) for path in sources]

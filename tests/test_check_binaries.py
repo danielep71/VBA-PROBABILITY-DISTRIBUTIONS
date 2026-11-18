@@ -63,7 +63,7 @@ class BinaryCheckTest(unittest.TestCase):
     def test_text_files_pass(self) -> None:
         self.assertEqual(self.repository({
             "README.md": b"# Title\n", "data.csv": b"a,b\n1,2\n",
-            "src/M_STATS_PROBDIST_Demo.bas": b'Attribute VB_Name = "M_STATS_PROBDIST_Demo"\r\n',
+            "src/modules/M_STATS_PROBDIST_Demo.bas": b'Attribute VB_Name = "M_STATS_PROBDIST_Demo"\r\n',
             "assets/diagram.svg": b"<svg/>\n"}), [])
 
     def test_approved_images_pass(self) -> None:

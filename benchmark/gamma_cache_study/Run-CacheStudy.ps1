@@ -8,7 +8,7 @@ $report = [ordered]@{ status = 'FAIL'; candidate_sha = ''; excel_version = ''; e
 $invariant = [Globalization.CultureInfo]::InvariantCulture
 try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
-    & git -C $RepositoryRoot diff --exit-code HEAD -- src benchmark/gamma_cache_study
+    & git -C $RepositoryRoot diff --exit-code HEAD -- src/modules benchmark/gamma_cache_study
     if ($LASTEXITCODE -ne 0) { throw 'Dirty study inputs' }
     $excel = New-Object -ComObject Excel.Application
     $excel.Visible = $false
@@ -19,7 +19,7 @@ try {
     $workbook = $excel.Workbooks.Add()
     $workbook.SaveAs((Join-Path $out 'cache-study.xlsm'), 52)
     $project = $workbook.VBProject
-    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\*.bas') | Sort-Object Name)) {
+    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\modules\*.bas') | Sort-Object Name)) {
         [void]$project.VBComponents.Import($file.FullName)
     }
     [void]$project.VBComponents.Import((Join-Path $PSScriptRoot 'M_STATS_PROBDIST_GCACHE.bas'))

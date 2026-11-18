@@ -143,7 +143,7 @@ or unzip the `.xlsm` and read its parts. Look for:
 | Values left in cells, rows or columns outside the visible range | the sheet parts under `xl/worksheets/` |
 
 The VBA project inside a workbook can differ from the exported modules in
-`src/` and `tests/`. Export the modules from the workbook itself and read
+`src/modules/` and `tests/`. Export the modules from the workbook itself and read
 them too.
 
 ## 🧹 Handling a finding

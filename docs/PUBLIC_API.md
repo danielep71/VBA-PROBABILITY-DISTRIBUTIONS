@@ -214,7 +214,7 @@ Read from the same survey. "Kept" is deliberate. "Not settled" is a difference I
 ## Scope
 
 The product API is the set of `Public K_STATS_*` declarations in the
-production modules: every `.bas` file Git tracks under `src/`. Today these are:
+production modules: every `.bas` file Git tracks under `src/modules/`. Today these are:
 
 - `M_STATS_PROBDIST_CORE.bas`
 - `M_STATS_PROBDIST_SPECIALFUNCS.bas`
@@ -225,10 +225,10 @@ production modules: every `.bas` file Git tracks under `src/`. Today these are:
 
 The checker derives this list from `git ls-files`; it keeps no list of its own.
 A new production module is therefore frozen as soon as it is committed, and a
-`.bas` file present under `src/` but not tracked is ignored. Run the checker
+`.bas` file present under `src/modules/` but not tracked is ignored. Run the checker
 from a Git work tree: without one it cannot tell committed modules from local
 files and fails closed. `benchmark/check_module_lists.py` separately reports an
-untracked `.bas` file under `src/` or `tests/`, and binds the Excel evidence
+untracked `.bas` file under `src/modules/` or `tests/`, and binds the Excel evidence
 policy to the same tracked modules.
 
 The v1.0.0 baseline contains **112 declarations**.
