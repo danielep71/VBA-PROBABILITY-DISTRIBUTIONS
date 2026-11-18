@@ -27,6 +27,35 @@ function Localize-Formula([string]$Formula, [string]$Separator) {
 # instance while it computes a spilled grid it was just given; wait and retry,
 # for up to five minutes, and say so in the log. The log goes to the host, not
 # the output stream, so it never becomes part of the value returned.
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class EvolveNative {
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+}
+'@
+$script:excelProcessId = 0
+
+# Names the dialogs the owned Excel process shows: a call Excel keeps
+# rejecting means a modal window is waiting for an answer.
+function Show-Dialogs {
+    try {
+        Add-Type -AssemblyName UIAutomationClient
+        Add-Type -AssemblyName UIAutomationTypes
+        $root = [Windows.Automation.AutomationElement]::RootElement
+        $byPid = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$script:excelProcessId)
+        foreach ($top in $root.FindAll([Windows.Automation.TreeScope]::Children, $byPid)) {
+            $windows = @($top) + @($top.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition) |
+                Where-Object { $_.Current.ControlType -eq [Windows.Automation.ControlType]::Window })
+            foreach ($window in $windows) {
+                $texts = @($window.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition) |
+                    ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -First 25)
+                Write-Host ("  window: [" + $window.Current.ClassName + "] " + $window.Current.Name + " :: " + ($texts -join ' | '))
+            }
+        }
+    } catch { Write-Host ('  could not list the windows: ' + $_.Exception.Message) }
+}
+
 function Invoke-Excel([scriptblock]$Action) {
     for ($attempt = 1; ; $attempt++) {
         try { return & $Action }
@@ -35,6 +64,7 @@ function Invoke-Excel([scriptblock]$Action) {
             $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
             if (-not $busy -or $attempt -ge 600) { throw }
             if ($attempt % 20 -eq 1) { Write-Host "  Excel is busy; waiting (attempt $attempt)" }
+            if ($attempt -eq 40) { Show-Dialogs }
             Start-Sleep -Milliseconds 500
         }
     }
@@ -62,6 +92,7 @@ try {
     $excel.EnableEvents = $false
     $excel.AutomationSecurity = 1
     $excel.ScreenUpdating = $false
+    [void][EvolveNative]::GetWindowThreadProcessId([IntPtr][long]$excel.Hwnd, [ref]$script:excelProcessId)
     $book = $excel.Workbooks.Open($path, 0, $false)
     try { $book.Unprotect() } catch { }
     $sheet = $book.Worksheets.Item($plan.sheet)
