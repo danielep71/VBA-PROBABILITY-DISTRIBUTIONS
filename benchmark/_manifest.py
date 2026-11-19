@@ -37,7 +37,11 @@ MANIFEST_VERSION = 1
 # value: the kernels (src/modules), the exporters and study macros
 # (benchmark), and the test harness (tests). Any .bas change must invalidate the binding until the
 # observations are re-exported.
-_BAS_GLOBS = ("src/modules/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
+# "src/*.bas" is the layout before #438 moved the library to src/modules/. The
+# repository has no module there now, so it matches nothing; it keeps the
+# bindings of an older tree, such as the evidence snapshots the fixtures check
+# out, verifiable.
+_BAS_GLOBS = ("src/modules/**/*.bas", "src/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
 
 # The independent holdout is produced by the six public source modules and its
 # dedicated exporter.  Study macros and the regression harness do not produce
@@ -45,6 +49,7 @@ _BAS_GLOBS = ("src/modules/**/*.bas", "tests/**/*.bas", "benchmark/**/*.bas")
 # change that cannot affect it.
 _HOLDOUT_BAS_GLOBS = (
     "src/modules/**/*.bas",
+    "src/*.bas",  # the layout before #438; see _BAS_GLOBS
     # Recursive, not a literal exporter path. A literal path binds only the file
     # named here, so a SECOND module added beside it would produce holdout
     # observations from source no manifest records - the exact fail-open class

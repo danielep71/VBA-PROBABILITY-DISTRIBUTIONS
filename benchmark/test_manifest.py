@@ -189,6 +189,15 @@ check(sorted(M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS)) ==
       "src/workbook/ is outside the main and holdout bindings")
 os.remove(hworkbook)
 
+# 17c. a tree in the layout before #438 (modules directly in src/) is still
+# bound, so that an older evidence snapshot can be verified; the repository
+# itself has no module there.
+hlegacy = os.path.join(hd, "src", "legacy.bas")
+open(hlegacy, "wb").write(b"Attribute VB_Name = \"legacy\"\r\n")
+check("src/legacy.bas" in M.source_hashes(hd) and "src/legacy.bas" in M.source_hashes(hd, M._HOLDOUT_BAS_GLOBS),
+      "a module directly in src/ (the layout before #438) is still bound")
+os.remove(hlegacy)
+
 hextra = os.path.join(hd, "benchmark", "holdout", "M_STATS_PROBDIST_HOLDOUT2.bas")
 open(hextra, "wb").write(b"Attribute VB_Name = \"h2\"\r\nSub Export2()\r\nEnd Sub\r\n")
 probs = M.verify_holdout_binding(hd, hman, hgrid, hcontracts)
