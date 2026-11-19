@@ -305,7 +305,7 @@ class RealModuleTest(unittest.TestCase):
 
     def test_modules_are_found(self) -> None:
         names = set(self.modules)
-        self.assertIn("src/M_STATS_PROBDIST_CORE.bas", names)
+        self.assertIn("src/modules/M_STATS_PROBDIST_CORE.bas", names)
         self.assertIn("tests/M_STATS_PROBDIST_TEST.bas", names)
         self.assertTrue(any(name.startswith("benchmark/") for name in names))
 

@@ -1,17 +1,18 @@
 # Source
 
 The VBA source of the library and of the Explorer workbook. The layout
-follows the K-SACCR repository: the library modules, and a `workbook/`
-folder with what one workbook needs besides them.
+follows the K-SACCR repository: `modules/` for the library, and `workbook/`
+for what one workbook needs besides it.
 
 ```text
 src/
-├─ M_STATS_PROBDIST_CORE.bas           # the six library modules: import these
-├─ M_STATS_PROBDIST_SPECIALFUNCS.bas   #   into any workbook to use the
-├─ M_STATS_PROBDIST_NORMALFAMILY.bas   #   K_STATS_ worksheet functions
-├─ M_STATS_PROBDIST_TFAMILY.bas
-├─ M_STATS_PROBDIST_CONTINUOUS.bas
-├─ M_STATS_PROBDIST_DISCRETE.bas
+├─ modules/                            # the library: import these into any
+│  ├─ M_STATS_PROBDIST_CORE.bas        #   workbook to use the K_STATS_
+│  ├─ M_STATS_PROBDIST_SPECIALFUNCS.bas#   worksheet functions
+│  ├─ M_STATS_PROBDIST_NORMALFAMILY.bas
+│  ├─ M_STATS_PROBDIST_TFAMILY.bas
+│  ├─ M_STATS_PROBDIST_CONTINUOUS.bas
+│  └─ M_STATS_PROBDIST_DISCRETE.bas
 └─ workbook/                           # the Explorer workbook
    ├─ PROBDIST_Template.xlsx           # its sheets, formulas, names, validation, charts; no code
    ├─ customUI14.xml                   # its Ribbon
@@ -23,7 +24,7 @@ src/
 
 ## The library
 
-The six modules of `src/` are the library. They are what the
+The six modules of `src/modules/` are the library. They are what the
 [installation guide](../INSTALLATION.md) imports, what the release bundle
 ships, and what the Excel regression and the accuracy evidence bind
 (`.github/excel-evidence-policy.json`, `benchmark/observation_manifest.json`).

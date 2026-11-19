@@ -512,7 +512,7 @@ def build() -> tuple[bytes, dict[str, str]]:
     menu = sections()
     sheets = [sheet for _, items in menu for sheet in items]
     commit = git(ROOT, "rev-parse", "HEAD")
-    sources = sorted((ROOT / "src").glob("*.bas")) + [ROOT / "src/workbook/M_STATS_PROBDIST_DEMO.bas"]
+    sources = sorted((ROOT / "src" / "modules").glob("*.bas")) + [ROOT / "src/workbook/M_STATS_PROBDIST_DEMO.bas"]
     modules = [workbook_module()]
     modules += [document_module(sheet.code, False) for sheet in sheets]
     modules += [Module(path.stem, module_text(path.read_bytes())) for path in sources]

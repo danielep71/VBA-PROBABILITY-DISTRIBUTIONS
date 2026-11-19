@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Negative and positive fixtures for check_df_cap_mirrors.py (#86).
 
-Each fixture copies the live src/M_STATS_PROBDIST_TFAMILY.bas and
+Each fixture copies the live src/modules/M_STATS_PROBDIST_TFAMILY.bas and
 _contract_eval.py into a temporary root, applies one mutation and requires the
 checker to fail with the expected reason: a changed VBA value (including a
 one-ulp change), a changed Python value (including a one-ulp change), a missing
@@ -57,10 +57,10 @@ def run(bas: str = BAS, py: str = PY, others: dict[str, str] | None = None
         ) -> tuple[int, str]:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        (root / "src").mkdir()
+        (root / "src" / "modules").mkdir(parents=True)
         (root / C.SOURCE).write_bytes(bas.replace("\n", "\r\n").encode("ascii"))
         for name, text in (others or {}).items():
-            (root / "src" / name).write_bytes(text.replace("\n", "\r\n").encode("ascii"))
+            (root / "src" / "modules" / name).write_bytes(text.replace("\n", "\r\n").encode("ascii"))
         python = root / "_contract_eval.py"
         python.write_text(py, encoding="utf-8")
         output = io.StringIO()
@@ -144,7 +144,7 @@ expect_fail("Python F mirror deleted", "F_MAX_DF is not assigned",
 expect_fail("Python CHI mirror renamed", "CHI_MAX_DF is not assigned",
             py=python("CHI_MAX_DF = 100000000.0", "CHI_MAX_DF_V2 = 100000000.0"))
 with tempfile.TemporaryDirectory() as empty:
-    (Path(empty) / "src").mkdir()
+    (Path(empty) / "src" / "modules").mkdir(parents=True)
     output = io.StringIO()
     with contextlib.redirect_stdout(output):
         if C.main(["--root", empty]) != 1 or "not found" not in output.getvalue():

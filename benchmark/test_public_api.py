@@ -14,12 +14,12 @@ import check_public_api as A
 
 FAILS: list[str] = []
 FIXTURE_MODULES = (
-    "src/M_STATS_PROBDIST_CORE.bas",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
-    "src/M_STATS_PROBDIST_NORMALFAMILY.bas",
-    "src/M_STATS_PROBDIST_TFAMILY.bas",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas",
-    "src/M_STATS_PROBDIST_DISCRETE.bas",
+    "src/modules/M_STATS_PROBDIST_CORE.bas",
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas",
+    "src/modules/M_STATS_PROBDIST_TFAMILY.bas",
+    "src/modules/M_STATS_PROBDIST_CONTINUOUS.bas",
+    "src/modules/M_STATS_PROBDIST_DISCRETE.bas",
 )
 
 
@@ -158,16 +158,16 @@ try:
         "Public Function K_STATS_Extra(ByVal X As Double) As Double\n"
         "    K_STATS_Extra = X\nEnd Function\n"
     )
-    untracked = root / "src" / "M_STATS_PROBDIST_EXTRA.bas"
+    untracked = root / "src" / "modules" / "M_STATS_PROBDIST_EXTRA.bas"
     untracked.write_text(extra_api, encoding="utf-8")
     check(
-        "src/M_STATS_PROBDIST_EXTRA.bas" not in A.production_modules(root),
+        "src/modules/M_STATS_PROBDIST_EXTRA.bas" not in A.production_modules(root),
         "present-but-untracked src module must not be picked up",
     )
     expect_pass(root, manifest, "present-but-untracked src module")
     git(root, "add", "--", str(untracked.relative_to(root)))
     check(
-        "src/M_STATS_PROBDIST_EXTRA.bas" in A.production_modules(root),
+        "src/modules/M_STATS_PROBDIST_EXTRA.bas" in A.production_modules(root),
         "newly tracked src module must be picked up",
     )
     expect_fail(root, manifest, "newly tracked src module with K_STATS API")
@@ -175,7 +175,7 @@ try:
     untracked.unlink()
     expect_pass(root, manifest, "untracked module removed again")
 
-    nested = root / "src" / "sub" / "M_STATS_PROBDIST_NESTED.bas"
+    nested = root / "src" / "modules" / "sub" / "M_STATS_PROBDIST_NESTED.bas"
     nested.parent.mkdir(parents=True, exist_ok=True)
     nested.write_text(extra_api.replace("Extra", "Nested"), encoding="utf-8")
     git(root, "add", "--", str(nested.relative_to(root)))

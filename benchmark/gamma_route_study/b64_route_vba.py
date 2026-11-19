@@ -1,6 +1,6 @@
 """
 The #307 binary64 Gamma route as it was generated into
-src/M_STATS_PROBDIST_SPECIALFUNCS.bas, for the fit wave of FIT_DESIGN.md.
+src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas, for the fit wave of FIT_DESIGN.md.
 
 The VBA is written here, one arithmetic statement per line where the rounding
 matters, so that route_model.py can mirror it statement by statement. The
@@ -34,7 +34,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import route_model as RM  # noqa: E402
 
-SRC = "src/M_STATS_PROBDIST_SPECIALFUNCS.bas"
+SRC = "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas"
 # The fit candidate of #312 (FIT_DESIGN.md), the only source that carried the block.
 FIT_CANDIDATE = "88ff6bae3cbcfb393eb9b6153c7c7cfbf3bf2fbc"
 BEGIN = "' BEGIN generated binary64 Gamma route (#307)"
@@ -423,7 +423,10 @@ def as_measured(text):
 
 def read(path, revision=None):
     if revision:
-        raw = subprocess.check_output(["git", "show", f"{revision}:{path}"], cwd=ROOT)
+        # Every revision of this study predates #438, which moved the library
+        # from src/ to src/modules/.
+        legacy = path.replace("src/modules/", "src/", 1)
+        raw = subprocess.check_output(["git", "show", f"{revision}:{legacy}"], cwd=ROOT)
     else:
         with open(os.path.join(ROOT, path), "rb") as f:
             raw = f.read()

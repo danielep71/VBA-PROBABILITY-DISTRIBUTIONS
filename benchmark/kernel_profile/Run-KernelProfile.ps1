@@ -11,7 +11,7 @@ $report = [ordered]@{
 $invariant = [Globalization.CultureInfo]::InvariantCulture
 try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
-    & git -C $RepositoryRoot diff --exit-code HEAD -- src benchmark/kernel_profile
+    & git -C $RepositoryRoot diff --exit-code HEAD -- src/modules benchmark/kernel_profile
     if ($LASTEXITCODE -ne 0) { throw 'Dirty profile inputs' }
     $excel = New-Object -ComObject Excel.Application
     $excel.Visible = $false
@@ -22,7 +22,7 @@ try {
     $workbook = $excel.Workbooks.Add()
     $workbook.SaveAs((Join-Path $out 'profile.xlsm'), 52)
     $project = $workbook.VBProject
-    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\*.bas') | Sort-Object Name)) {
+    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\modules\*.bas') | Sort-Object Name)) {
         [void]$project.VBComponents.Import($file.FullName)
     }
     [void]$project.VBComponents.Import((Join-Path $PSScriptRoot 'M_STATS_PROBDIST_KPROFILE.bas'))

@@ -243,8 +243,8 @@ repository on 2026-11-02 and copies of them changed to show drift.
 
 ## VBA source checks
 
-Five checks read every tracked `.bas`, `.cls` and `.frm` file: the production
-modules in `src/`, the modules of the Explorer workbook in `src/workbook/`,
+Five checks read every tracked `.bas`, `.cls` and `.frm` file: the library
+modules in `src/modules/`, the modules of the Explorer workbook in `src/workbook/`,
 the test module in `tests/`, and the exporters and probes under `benchmark/`. `run_static_checks.py` runs them; each also runs on its
 own, for example `python3 tools/check_vba_source.py`. Their positive and
 negative fixtures are in [`tests/test_check_vba.py`](../tests/test_check_vba.py)
@@ -256,7 +256,7 @@ as code.
 
 | Check | Enforces |
 | --- | --- |
-| `check_vba_source.py` | Each component in `src/`, `src/workbook/` or `tests/` (no subdirectories) or under `benchmark/`; its file name starts with `M_STATS_PROBDIST_` (a document module of `src/workbook/` keeps its Excel name: `ThisWorkbook` or a sheet code name starting with `sh`), has at most 31 characters and equals its one `Attribute VB_Name`, unique ignoring case; a `.bas` export starts with that line; ASCII only; `Option Explicit`; `Option Private Module` in the modules of `OPTION_PRIVATE_REQUIRED` and never in a module that declares a `Public K_STATS_` procedure; no `Public K_STATS_` procedure in `src/workbook/`, which the public-API freeze does not read; no `Option Base`, tab or trailing white space; closed string literals; LF in the Git index with CRLF checkout (`git ls-files --eol` and the `vba-source` attribute of `.gitattributes`) |
+| `check_vba_source.py` | Each component in `src/modules/`, `src/workbook/` or `tests/` (no subdirectories) or under `benchmark/`; its file name starts with `M_STATS_PROBDIST_` (a document module of `src/workbook/` keeps its Excel name: `ThisWorkbook` or a sheet code name starting with `sh`), has at most 31 characters and equals its one `Attribute VB_Name`, unique ignoring case; a `.bas` export starts with that line; ASCII only; `Option Explicit`; `Option Private Module` in the modules of `OPTION_PRIVATE_REQUIRED` and never in a module that declares a `Public K_STATS_` procedure; no `Public K_STATS_` procedure in `src/workbook/`, which the public-API freeze does not read; no `Option Base`, tab or trailing white space; closed string literals; LF in the Git index with CRLF checkout (`git ls-files --eol` and the `vba-source` attribute of `.gitattributes`) |
 | `check_vba_conditionals.py` | `#If`, `#ElseIf`, `#Else`, `#End If` and module `#Const` evaluated in three compilation environments: VBA6 Win32, VBA7 Win32 and VBA7 Win64. An unknown symbol, an unbalanced block, or a malformed, duplicate or non-Boolean `#Const` fails. Every `Declare` reachable under VBA7 is `PtrSafe` |
 | `check_vba_visibility.py` | Every procedure and module-level declaration states `Public` or `Private` (`Global` counts as `Public`), and `Friend` appears only in a class module. No public name (procedure, `Const`, `Enum`, `Type`, variable or `Declare`) is declared twice in one standard module or in two standard modules of a collision group, in an environment they share |
 
@@ -287,7 +287,8 @@ module, and the check fails closed rather than guess.
 contains a `Declare` statement today.
 
 **Collision groups.** One group, `one VBA project` (`COLLISION_GROUPS`), holds
-every standard module under `src/`, `tests/` and `benchmark/`. The Excel
+every standard module under `src/modules/`, `src/workbook/`, `tests/` and
+`benchmark/`. The Excel
 regression imports the production and test modules into one workbook
 (`regression_sources` in
 [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json)),
@@ -474,7 +475,7 @@ is not password-locked. Its comment-based help (`Get-Help
 
 The components come from the folders, not from a list:
 
-- **Production**: the library modules `src/*.bas`, the modules of the
+- **Production**: the library modules `src/modules/*.bas`, the modules of the
   Explorer workbook `src/workbook/*.bas`, and the code of ThisWorkbook,
   `src/workbook/ThisWorkbook.cls`.
 - **Development**: the production components and the regression module,
@@ -516,7 +517,8 @@ fixtures, and the `python-tests` check runs them.
 ## VBA source layout
 
 [`format_vba.py`](format_vba.py) states the layout of every tracked `.bas`,
-`.cls` and `.frm` module under `src/`, `tests/` and `benchmark/`:
+`.cls` and `.frm` module under `src/modules/`, `src/workbook/`, `tests/` and
+`benchmark/`:
 
 1. CRLF line endings, one final line ending and no blank lines at the end of the
    file;
@@ -555,7 +557,7 @@ LF-only line ending, or a procedure, `End` or label line out of column one.
 ```bash
 python3 tools/format_vba.py --check            # every tracked module, with the baseline
 python3 tools/format_vba.py --check --no-baseline
-python3 tools/format_vba.py --write src/M_STATS_PROBDIST_CORE.bas
+python3 tools/format_vba.py --write src/modules/M_STATS_PROBDIST_CORE.bas
 ```
 
 Every module is bound by hash to the Excel certification record or the
@@ -722,7 +724,7 @@ layout; they are not verbatim copies.
 | `docs/repo_governance/repository-settings.json` | The template's settings configuration format, filled with this repository's live settings |
 | `docs/repo_governance/DISTRIBUTION.md` | The template's distribution review, adapted to a public repository and given a pinned Gitleaks history scan |
 | `vba_lexer.py` | The shared lexer of `tools/vba_lexer.py`, without the facade-prefix and house-style lookups. |
-| `check_vba_source.py` | `tools/check_vba_source.py`: this repository's flat `src/` and `tests/` and nested `benchmark/` homes and `M_STATS_PROBDIST_` names in place of role homes and prefixes; `Option Private Module` required in a named set of modules and forbidden beside `K_STATS_` worksheet functions; no form or workbook rules. |
+| `check_vba_source.py` | `tools/check_vba_source.py`: this repository's flat `src/modules/`, `src/workbook/` and `tests/` and nested `benchmark/` homes and `M_STATS_PROBDIST_` names in place of role homes and prefixes; `Option Private Module` required in a named set of modules and forbidden beside `K_STATS_` worksheet functions; no form or workbook rules. |
 | `check_vba_conditionals.py` | `tools/check_vba_conditionals.py`, extended to module `#Const` symbols and to the `Win16` and `Mac` constants, with one directive walk shared by the reachable-source model and the `PtrSafe` rule. |
 | `check_vba_visibility.py` | The visibility and collision parts of `tools/check_vba_public_api.py`, without its inventory, signature and public-variable rules; multi-identifier `Const` and variable statements are read name by name, and collisions are evaluated per collision group. |
 | `tests/test_check_vba.py` | The fixture repositories and the source, conditional, public-API and lexer cases of `tests/test_check_vba.py`, rewritten for this repository's modules and rules. |

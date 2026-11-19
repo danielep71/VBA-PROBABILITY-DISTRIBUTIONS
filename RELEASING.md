@@ -185,7 +185,7 @@ Certification rules:
 Pushing the annotated tag (step 9) runs `.github/workflows/release.yml`, which
 builds the release outputs from the tagged commit:
 
-- `VBA-Probability-Distributions-X.Y.Z.zip`: the production modules in `src/`
+- `VBA-Probability-Distributions-X.Y.Z.zip`: the production modules in `src/modules/`
   and the regression harness in `tests/` with CRLF line endings for VBE import,
   plus `LICENSE`, `README.md`, `INSTALLATION.md`, `CHANGELOG.md`, `SECURITY.md`,
   `VERSION` and a `MANIFEST.sha256` of every member;

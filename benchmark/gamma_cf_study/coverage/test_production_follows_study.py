@@ -23,6 +23,8 @@ from frozen_tree import FROZEN  # noqa: E402
 from public_integration import BEGIN, END, ROOT, SRC  # noqa: E402
 import vba_code_identity as V  # noqa: E402
 
+# The pin predates #438: FROZEN holds the module at src/, the working tree at src/modules/.
+LIVE_SRC = SRC.replace("src/", "src/modules/", 1)
 PRODUCTION_FOLLOWS_STUDY = True
 MOVED_ON = ""
 
@@ -42,7 +44,7 @@ class ProductionFollowsStudy(unittest.TestCase):
         if not PRODUCTION_FOLLOWS_STUDY:
             self.skipTest("production moved on: " + MOVED_ON)
         studied = block((FROZEN / SRC).read_text()).encode("ascii")
-        live = block((ROOT / SRC).read_text()).encode("ascii")
+        live = block((ROOT / LIVE_SRC).read_text()).encode("ascii")
         self.assertIsNone(V.first_difference(studied, live),
                           "the generated public Gamma block changed in code; if that is "
                           "deliberate, set PRODUCTION_FOLLOWS_STUDY = False and fill MOVED_ON")

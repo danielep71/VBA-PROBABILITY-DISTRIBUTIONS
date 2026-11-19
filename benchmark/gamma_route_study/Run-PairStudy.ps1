@@ -13,7 +13,7 @@ function ConvertFrom-DoubleBits([string]$Hex) {
 }
 try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
-    & git -C $RepositoryRoot diff --exit-code HEAD -- src benchmark/gamma_route_study
+    & git -C $RepositoryRoot diff --exit-code HEAD -- src/modules benchmark/gamma_route_study
     if ($LASTEXITCODE -ne 0) { throw 'Dirty study inputs' }
     $inputData = Get-Content (Join-Path $out 'inputs.json') -Raw | ConvertFrom-Json
     $excel = New-Object -ComObject Excel.Application
@@ -24,7 +24,7 @@ try {
     $report.excel_build = [string]$excel.Build
     $book = $excel.Workbooks.Add()
     $book.SaveAs((Join-Path $out 'pair-study.xlsm'), 52)
-    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\*.bas') | Sort-Object Name)) {
+    foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\modules\*.bas') | Sort-Object Name)) {
         [void]$book.VBProject.VBComponents.Import($file.FullName)
     }
     $module = $book.VBProject.VBComponents.Item('M_STATS_PROBDIST_SPECIALFUNCS').CodeModule

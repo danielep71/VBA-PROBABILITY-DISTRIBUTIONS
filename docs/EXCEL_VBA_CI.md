@@ -65,7 +65,7 @@ The regression has two levels (#299).
 
 - **Full.** Every suite, held to `expected_assertions` in
   `.github/excel-evidence-policy.json`. Only a full run is certification
-  evidence. It runs on every push to `main` and `release/**` that changes `src/`,
+  evidence. It runs on every push to `main` and `release/**` that changes `src/modules/`,
   `tests/`, `ci/`, the evidence policy or the workflow itself, on every dispatch unless the fast level is asked
   for, on every export, and on every pull request that could change what
   Excel executes.
@@ -173,7 +173,7 @@ before it merges.
 4. starts its own Excel instance and refuses unless its version, build and
    bitness equal the regression record's. It notes the process ID and checks
    that no Excel process had that ID before it started;
-5. imports the `src/` modules, the exporter modules and a CI-only bridge
+5. imports the `src/modules/` modules, the exporter modules and a CI-only bridge
    module, `M_CI_EXPORT_DIALOG_BRIDGE`, which is never committed. The bridge
    defines a public `MsgBox`, which takes precedence over `VBA.MsgBox` for
    unqualified calls in the project, so each exporter's closing message is
@@ -470,7 +470,7 @@ beside it, `probdist-regression.manifest.json`:
 - **Modules.** The VBA project holds exactly the modules listed in
   `regression_sources` of `.github/excel-evidence-policy.json`, in that order,
   plus empty `ThisWorkbook` and `shBuild` document modules. A listed module that
-  is missing, a `.bas` under `src/` or `tests/` that is not listed, or a module
+  is missing, a `.bas` under `src/modules/` or `tests/` that is not listed, or a module
   whose `VB_Name` differs from its file name stops the build. Every module is
   embedded as it is, with CRLF line endings; no tracked file is changed.
 - **Compiled on open.** The source is stored compressed as [MS-OVBA]

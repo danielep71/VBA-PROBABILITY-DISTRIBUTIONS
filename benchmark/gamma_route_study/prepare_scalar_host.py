@@ -21,7 +21,7 @@ def digest(text):
 
 
 def prepare():
-    source = (ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas').read_text()
+    source = (ROOT / 'src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas').read_text()
     if digest(source) != SOURCE_SHA256:
         raise RuntimeError('production source drift: review before regenerating')
     rows = inputs()  # Unchanged B4 Python graph; never use B5 to generate expectations.

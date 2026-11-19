@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-17T07:00:17Z",
-  "commit_sha": "6d5c66e",
+  "generated_utc": "2026-11-18T22:12:20Z",
+  "commit_sha": "9536aa4",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -23,12 +23,12 @@
   "observation_grid_sha256": "sha256:c513fd9e2caf75b25090710b1dfb166bb7afd6cd63f4330adbacc4edbc74b5b6",
   "source_binding": {
     "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:914a68538334c0fa127eb4f88cfa8301ce8862d53ee3b093f88d5cbd84f251f5",
-    "src/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:a8c0fdc466ade29cedecb71e09cccf48c2ddb95ba7d45940c7e61305190d0c1a",
-    "src/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
-    "src/M_STATS_PROBDIST_DISCRETE.bas": "sha256:67096992c6e86e143863c3f940cca523ae0a80e8629e8af64e8b0d824325b8c6",
-    "src/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:4a5ebe5bce5f9e3d4e9e2b6c7d02b5cb3f4af0c915043646068ada245e8847ee",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:c425b92caa37e326e366dd7ff1b614d987bf8ffcf3bf8fe919ff906400a28208",
-    "src/M_STATS_PROBDIST_TFAMILY.bas": "sha256:04975c94a90390563c3668d72b930cf094b188c3d4990bbe187b545bfe540088"
+    "src/modules/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:a8c0fdc466ade29cedecb71e09cccf48c2ddb95ba7d45940c7e61305190d0c1a",
+    "src/modules/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
+    "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:67096992c6e86e143863c3f940cca523ae0a80e8629e8af64e8b0d824325b8c6",
+    "src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:4a5ebe5bce5f9e3d4e9e2b6c7d02b5cb3f4af0c915043646068ada245e8847ee",
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:c425b92caa37e326e366dd7ff1b614d987bf8ffcf3bf8fe919ff906400a28208",
+    "src/modules/M_STATS_PROBDIST_TFAMILY.bas": "sha256:04975c94a90390563c3668d72b930cf094b188c3d4990bbe187b545bfe540088"
   },
   "contract_registry_sha256": "sha256:5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89",
   "environment": {

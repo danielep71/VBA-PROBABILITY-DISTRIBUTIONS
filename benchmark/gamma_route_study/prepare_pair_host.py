@@ -44,7 +44,7 @@ def inputs():
 
 
 if __name__ == '__main__':
-    source = (ROOT/'src/M_STATS_PROBDIST_SPECIALFUNCS.bas').read_text()
+    source = (ROOT/'src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas').read_text()
     if hashlib.sha256(source.encode()).hexdigest() != SOURCE_SHA256:
         raise RuntimeError('production source drift: review before regenerating')
     OUT.mkdir(parents=True, exist_ok=True)

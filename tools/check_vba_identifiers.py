@@ -161,7 +161,7 @@ KEYWORDS = frozenset("""
 """.split())
 # (path, name in lower case) -> why the name stays.
 ACCEPTED_KEYWORD_NAMES = {
-    ("src/M_STATS_PROBDIST_SPECIALFUNCS.bas", "base"):
+    ("src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas", "base"):
         "a local of the released v1.0.0 source, compiled and certified in Excel; Base is "
         "reserved only after Option. It is in the generated block of "
         "benchmark/gamma_route_study/b64_route_vba.py, which a frozen study binds byte "

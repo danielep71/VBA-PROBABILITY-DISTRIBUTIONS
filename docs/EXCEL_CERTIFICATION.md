@@ -10,7 +10,7 @@ The self-hosted workflow emits `artifacts/excel-vba-ci/excel-certification.json`
 
 The policy's `regression_sources` stays an explicit list, because the Excel
 runner reads it and imports the modules in list order. `benchmark/check_module_lists.py`
-fails when that list differs from the `.bas` files Git tracks under `src/` and
+fails when that list differs from the `.bas` files Git tracks under `src/modules/` and
 `tests/`, in either direction, or when such a file is present but untracked, so
 a new module cannot escape the evidence binding. The comparison ignores order.
 

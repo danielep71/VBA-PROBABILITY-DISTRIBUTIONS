@@ -70,7 +70,7 @@ def main():
     check(S.CALLS + S.FOLLOWER in original, "strip() does not restore the contiguous calls")
 
     # 2. The batteries test private ports, not production.
-    src = "".join(read(f"src/{n}") for n in sorted(os.listdir(os.path.join(ROOT, "src")))
+    src = "".join(read(f"src/modules/{n}") for n in sorted(os.listdir(os.path.join(ROOT, "src", "modules")))
                   if n.endswith(".bas"))
     production = set(re.findall(r"^Public (?:Function|Sub) (\w+)", src, re.M))
 
