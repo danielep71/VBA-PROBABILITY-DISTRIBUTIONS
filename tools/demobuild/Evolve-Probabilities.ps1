@@ -13,13 +13,21 @@ $excel = $null
 $book = $null
 
 # Names.Add reads its RefersTo with English function names but the list
-# separator of the user's regional settings.
-function Localize-Formula([string]$Formula, [string]$Separator) {
+# separator and the decimal separator of the user's regional settings (a
+# semicolon and a comma in many locales): both are converted outside the quotes.
+function Localize-Formula([string]$Formula, [string]$Separator, [string]$Decimal) {
     $builder = New-Object System.Text.StringBuilder
     $quoted = $false
-    foreach ($character in $Formula.ToCharArray()) {
+    $characters = $Formula.ToCharArray()
+    for ($index = 0; $index -lt $characters.Length; $index++) {
+        $character = $characters[$index]
         if ($character -eq '"') { $quoted = -not $quoted }
-        if ($character -eq ',' -and -not $quoted) { [void]$builder.Append($Separator) } else { [void]$builder.Append($character) }
+        if ($quoted) { [void]$builder.Append($character); continue }
+        $isPoint = $character -eq '.' -and $index -gt 0 -and $index -lt $characters.Length - 1 -and
+            [char]::IsDigit($characters[$index - 1]) -and [char]::IsDigit($characters[$index + 1])
+        if ($character -eq ',') { [void]$builder.Append($Separator) }
+        elseif ($isPoint) { [void]$builder.Append($Decimal) }
+        else { [void]$builder.Append($character) }
     }
     return $builder.ToString()
 }
@@ -105,7 +113,7 @@ try {
     Step 'names'
     $failed = @()
     foreach ($item in $plan.names) {
-        try { [void]$book.Names.Add($item.name, (Localize-Formula $item.refers ([string]$excel.International(5)))) }
+        try { [void]$book.Names.Add($item.name, (Localize-Formula $item.refers ([string]$excel.International(5)) $dec)) }
         catch { $failed += ($item.name + ' = ' + $item.refers + ' -> ' + $_.Exception.Message) }
     }
     if ($failed.Count -gt 0) { throw ("Names rejected:`n" + ($failed -join "`n")) }
