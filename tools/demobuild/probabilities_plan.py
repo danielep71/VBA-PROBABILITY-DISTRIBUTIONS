@@ -58,11 +58,6 @@ def ref(address: str) -> str:
     return f"{SHEET}!{address}"
 
 
-def table(name: str, slot: str = "") -> str:
-    """A name of the Explorer family table."""
-    return name + slot
-
-
 def dispatch(families: list[dict[str, Any]], operation: str, point: str) -> str:
     """The selected family's call, as one SWITCH over the distribution cell."""
     return E.dispatch(families, operation, point)
@@ -148,8 +143,13 @@ def shade_second_formula() -> str:
 
 def results_formulas(families: list[dict[str, Any]]) -> list[dict[str, str]]:
     ok = f'{STATUS}="OK"'
-    cdf = lambda point: dispatch(families, "cdf", point)            # noqa: E731
-    survival = lambda point: dispatch(families, "survival", point)  # noqa: E731
+
+    def cdf(point: str) -> str:
+        return dispatch(families, "cdf", point)
+
+    def survival(point: str) -> str:
+        return dispatch(families, "survival", point)
+
     quantile = dispatch(families, "quantile", PROBABILITY)
     good_p = f"AND(ISNUMBER({PROBABILITY}),{PROBABILITY}>=0,{PROBABILITY}<=1)"
     discrete = 'INDEX(ExplorerKind,ProbabilitiesRow)="Discrete"'
