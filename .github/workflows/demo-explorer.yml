@@ -10,6 +10,7 @@ on:
       - "tools/Sync-PROBDIST-VBA.ps1"
       - "ci/Test-SyncWorkbook.ps1"
       - "ci/Test-Explorer.ps1"
+      - "ci/Test-Probabilities.ps1"
       - "ci/Test-UdfRegistration.ps1"
       - "ci/Test-ExplorerUI.ps1"
       - "ci/Test-ExplorerStates.ps1"
@@ -60,6 +61,9 @@ jobs:
       - name: Apply the Explorer plan with native Excel objects
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Explorer.ps1 -PackageDirectory test-results\demo
+      - name: Apply the Probabilities plan with native Excel objects
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Probabilities.ps1 -PackageDirectory test-results\demo
       - name: Verify Function Wizard registration lifecycle
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-UdfRegistration.ps1 -PackageDirectory test-results\demo
@@ -69,6 +73,9 @@ jobs:
       - name: Verify references, edited inputs, charts and reset
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Explorer.ps1 -PackageDirectory test-results\demo
+      - name: Verify the Probabilities sheet against the mpmath references
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Probabilities.ps1 -PackageDirectory test-results\demo
       - name: Exercise the native Ribbon and reset confirmation dialog
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerUI.ps1 -PackageDirectory test-results\demo

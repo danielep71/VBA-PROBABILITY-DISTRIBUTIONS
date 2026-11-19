@@ -14,8 +14,8 @@ Attribute VB_Customizable = True
 ' MODULE: ThisWorkbook
 ' PURPOSE: The workbook events of the Explorer workbook. They only call the
 ' modules of src/workbook/: the Function Wizard registration and the
-' Explorer's refresh when the workbook opens, the Explorer's input handling
-' when a cell of its sheet changes, and the navigation bar around a save.
+' Explorer's and the Probabilities sheet's refresh when the workbook opens,
+' their input handling when a cell of their sheet changes, and the navigation bar around a save.
 ' tools/demobuild/explorer_build.py and tools/Sync-PROBDIST-VBA.ps1 write
 ' this code into the workbook's ThisWorkbook module.
 '==============================================================================
@@ -24,11 +24,13 @@ Option Explicit
 Private Sub Workbook_Open()
     M_STATS_PROBDIST_REGISTER.PROB_Register_PublicUDFs
     M_STATS_PROBDIST_EXPLORER.ExplorerOpened
+    M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesOpened
 End Sub
 
 
 Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     If Sh.CodeName = "shExplorer" Then M_STATS_PROBDIST_EXPLORER.ExplorerInputsChanged Target
+    If Sh.CodeName = "shProbability" Then M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesInputsChanged Target
 End Sub
 
 
