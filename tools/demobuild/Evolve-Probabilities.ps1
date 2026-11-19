@@ -171,7 +171,6 @@ try {
     $grid.NumberFormatLocal = '0' + $dec + '000000'
     $grid.WrapText = $false
     $sheet.Range("D20:D27").NumberFormatLocal = '0' + $dec + '000000'
-    $sheet.Range('D28').NumberFormat = 'General'
     $sheet.Range('D28').HorizontalAlignment = -4131
     foreach ($item in $plan.formulas) {
         $target = $sheet.Range($item.address)
