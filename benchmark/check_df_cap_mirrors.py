@@ -17,7 +17,7 @@ compilation, in the form
 Any other statement that declares the name, or mentions it inside a declaration
 (Const, Dim, Static, ReDim, Private, Public, Global, Friend, Sub, Function,
 Property, Declare, Enum, Type or Event, or an Enum member), in that module or in
-any other src/*.bas module, fails: it is either a duplicate or a form this check
+any other src/modules/*.bas module, fails: it is either a duplicate or a form this check
 cannot verify. An expression, a reference to another constant, a string, a
 hexadecimal or octal literal, or a declared type other than Double also fails.
 
