@@ -18,8 +18,8 @@ decimals), the status D17, the macros cell D18, then the results D20:D28:
 
 The notes are in F5:I17. The grid starts at F20 under its headings in row 19:
 x (or the integer k), the density or mass, and two columns that keep the density
-where the first region (x <= a) and the second (a < x <= b) are, for the shaded
-chart areas; one dynamic-array formula per column.
+where the first region (x <= a) and the second (a < x <= b) are and hold 0
+elsewhere, for the shaded chart areas; one dynamic-array formula per column.
 
 The interval is computed in the tail that avoids cancellation: S(a) - S(b) when
 F(a) is above one half, F(b) - F(a) otherwise. The round trip compares F(Q(p))
@@ -133,12 +133,13 @@ def density_formula(families: list[dict[str, Any]]) -> str:
 
 
 def shade_first_formula() -> str:
-    return (f'=IF({STATUS}="OK",IF(ProbabilitiesX<={effective(A)},ProbabilitiesDensity,NA()),NA())')
+    """The density where x <= a, and 0 elsewhere: an area chart draws nothing at 0."""
+    return (f'=IF({STATUS}="OK",IF(ProbabilitiesX<={effective(A)},ProbabilitiesDensity,0),NA())')
 
 
 def shade_second_formula() -> str:
     return (f'=IF({STATUS}="OK",IF((ProbabilitiesX>{effective(A)})*(ProbabilitiesX<={effective(B)}),'
-            f'ProbabilitiesDensity,NA()),NA())')
+            f'ProbabilitiesDensity,0),NA())')
 
 
 def results_formulas(families: list[dict[str, Any]]) -> list[dict[str, str]]:
