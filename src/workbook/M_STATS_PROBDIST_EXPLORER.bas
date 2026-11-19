@@ -43,10 +43,15 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
     On Error GoTo Failed
     Select Case Control.Id
         Case "pdResetInputs"
-            ResetExplorerInputs
+            If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesIsActive() Then
+                M_STATS_PROBDIST_PROBABILITIES.ResetProbabilitiesInputs
+            Else
+                ResetExplorerInputs
+            End If
         Case "pdRecalculate"
             RecalculateWorkbook
             RefreshExplorer
+            If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady() Then M_STATS_PROBDIST_PROBABILITIES.RefreshProbabilities
     End Select
     Exit Sub
 Failed:
@@ -57,6 +62,10 @@ End Sub
 Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As Variant)
     Dim Target As Worksheet
     On Error GoTo Failed
+    If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesIsActive() Then
+        ReturnedVal = M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady()
+        Exit Sub
+    End If
     Set Target = ExplorerSheet()
     ReturnedVal = (Target.ChartObjects.Count = 2)
     Exit Sub

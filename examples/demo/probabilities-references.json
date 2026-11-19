@@ -1,0 +1,1884 @@
+{
+ "method": "Regenerate the independent reference values of the Probabilities sheet with mpmath.\n\nSame method as explorer_references.py, whose 60-digit definitions of the 16\nfamilies it reuses, and no call to the library, the builder or Excel. Each case\nis one setting of the inputs of the sheet: the family and its parameters, the\npoints a and b and the probability p, with F(a), S(a) = P(X > a), F(b), S(b),\nP(a < X <= b) = S(a) - S(b) and the quantile Q(p), the smallest x with\nF(x) >= p. The interval is the difference of two survival values taken at 60\ndigits, so it carries no cancellation.\n\nThe cases are, for every family: the sheet's defaults (a and b at 35 % and 65 %\nof the plot window, rounded down for a discrete family) with the probabilities\n0.05, 0.5, 0.95; a case in each tail (a and b at the 1E-6 and 1E-3 quantiles,\nand at the 0.999 and 1 - 1E-6 quantiles); a discrete family also gets a\nfractional a and b, which the library truncates; and the probabilities at the\nends of the support, 1E-12 and 1 - 1E-12.\n\nRun with mpmath installed: python examples/demo/probabilities_references.py\n",
+ "absolute_tolerance": 1e-12,
+ "relative_tolerance": 1e-09,
+ "roundtrip_tolerance": 1e-08,
+ "cases": [
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "default",
+   "a": -1.2000000000000002,
+   "b": 1.2000000000000002,
+   "p": 0.05,
+   "cdf_a": 0.11506967022170823,
+   "survival_a": 0.8849303297782918,
+   "cdf_b": 0.8849303297782918,
+   "survival_b": 0.11506967022170823,
+   "interval": 0.7698606595565836,
+   "quantile": -1.6448536269514726
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "default",
+   "a": -1.2000000000000002,
+   "b": 1.2000000000000002,
+   "p": 0.5,
+   "cdf_a": 0.11506967022170823,
+   "survival_a": 0.8849303297782918,
+   "cdf_b": 0.8849303297782918,
+   "survival_b": 0.11506967022170823,
+   "interval": 0.7698606595565836,
+   "quantile": -4.874620640296072e-62
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "default",
+   "a": -1.2000000000000002,
+   "b": 1.2000000000000002,
+   "p": 0.95,
+   "cdf_a": 0.11506967022170823,
+   "survival_a": 0.8849303297782918,
+   "cdf_b": 0.8849303297782918,
+   "survival_b": 0.11506967022170823,
+   "interval": 0.7698606595565836,
+   "quantile": 1.6448536269514722
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "lower tail",
+   "a": -4.753424308822899,
+   "b": -3.0902323061678136,
+   "p": 1e-06,
+   "cdf_a": 1.0000000000000012e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.0009999999999999996,
+   "survival_b": 0.999,
+   "interval": 0.0009989999999999997,
+   "quantile": -4.753424308822899
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "upper tail",
+   "a": 3.090232306167813,
+   "b": 4.753424308817087,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.001000000000000001,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287578e-06,
+   "interval": 0.0009989999999999723,
+   "quantile": 3.090232306167813
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "probability near an end",
+   "a": -1.2000000000000002,
+   "b": 1.2000000000000002,
+   "p": 1e-12,
+   "cdf_a": 0.11506967022170823,
+   "survival_a": 0.8849303297782918,
+   "cdf_b": 0.8849303297782918,
+   "survival_b": 0.11506967022170823,
+   "interval": 0.7698606595565836,
+   "quantile": -7.034483825301132
+  },
+  {
+   "family": "Normal",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "probability near an end",
+   "a": -1.2000000000000002,
+   "b": 1.2000000000000002,
+   "p": 0.999999999999,
+   "cdf_a": 0.11506967022170823,
+   "survival_a": 0.8849303297782918,
+   "cdf_b": 0.8849303297782918,
+   "survival_b": 0.11506967022170823,
+   "interval": 0.7698606595565836,
+   "quantile": 7.0344869100478356
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "default",
+   "a": 1.5685911746183225,
+   "b": 2.913097895719742,
+   "p": 0.05,
+   "cdf_a": 0.8160345195933613,
+   "survival_a": 0.1839654804066387,
+   "cdf_b": 0.9837592390792594,
+   "survival_b": 0.016240760920740505,
+   "interval": 0.1677247194858982,
+   "quantile": 0.4393641049274924
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "default",
+   "a": 1.5685911746183225,
+   "b": 2.913097895719742,
+   "p": 0.5,
+   "cdf_a": 0.8160345195933613,
+   "survival_a": 0.1839654804066387,
+   "cdf_b": 0.9837592390792594,
+   "survival_b": 0.016240760920740505,
+   "interval": 0.1677247194858982,
+   "quantile": 1.0
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "default",
+   "a": 1.5685911746183225,
+   "b": 2.913097895719742,
+   "p": 0.95,
+   "cdf_a": 0.8160345195933613,
+   "survival_a": 0.1839654804066387,
+   "cdf_b": 0.9837592390792594,
+   "survival_b": 0.016240760920740505,
+   "interval": 0.1677247194858982,
+   "quantile": 2.276016608514317
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "lower tail",
+   "a": 0.09285537029957656,
+   "b": 0.21328709583013575,
+   "p": 1e-06,
+   "cdf_a": 9.999999999999993e-07,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.000999,
+   "quantile": 0.09285537029957656
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "upper tail",
+   "a": 4.688516181008959,
+   "b": 10.76943634784745,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.0010000000000000009,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287555e-06,
+   "interval": 0.0009989999999999721,
+   "quantile": 4.688516181008959
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "probability near an end",
+   "a": 1.5685911746183225,
+   "b": 2.913097895719742,
+   "p": 1e-12,
+   "cdf_a": 0.8160345195933613,
+   "survival_a": 0.1839654804066387,
+   "cdf_b": 0.9837592390792594,
+   "survival_b": 0.016240760920740505,
+   "interval": 0.1677247194858982,
+   "quantile": 0.029681185681284035
+  },
+  {
+   "family": "Lognormal",
+   "parameters": [
+    0,
+    0.5
+   ],
+   "label": "probability near an end",
+   "a": 1.5685911746183225,
+   "b": 2.913097895719742,
+   "p": 0.999999999999,
+   "cdf_a": 0.8160345195933613,
+   "survival_a": 0.1839654804066387,
+   "cdf_b": 0.9837592390792594,
+   "survival_b": 0.016240760920740505,
+   "interval": 0.1677247194858982,
+   "quantile": 33.69142840560809
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "default",
+   "a": -1.8000000000000007,
+   "b": 1.8000000000000007,
+   "p": 0.05,
+   "cdf_a": 0.06587879163544604,
+   "survival_a": 0.9341212083645539,
+   "cdf_b": 0.9341212083645539,
+   "survival_b": 0.06587879163544604,
+   "interval": 0.868242416729108,
+   "quantile": -2.0150483733330242
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "default",
+   "a": -1.8000000000000007,
+   "b": 1.8000000000000007,
+   "p": 0.5,
+   "cdf_a": 0.06587879163544604,
+   "survival_a": 0.9341212083645539,
+   "cdf_b": 0.9341212083645539,
+   "survival_b": 0.06587879163544604,
+   "interval": 0.868242416729108,
+   "quantile": -5.578088954947358e-31
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "default",
+   "a": -1.8000000000000007,
+   "b": 1.8000000000000007,
+   "p": 0.95,
+   "cdf_a": 0.06587879163544604,
+   "survival_a": 0.9341212083645539,
+   "cdf_b": 0.9341212083645539,
+   "survival_b": 0.06587879163544604,
+   "interval": 0.868242416729108,
+   "quantile": 2.0150483733330233
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "lower tail",
+   "a": -24.771029720515944,
+   "b": -5.89342953135601,
+   "p": 1e-06,
+   "cdf_a": 1e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.000999,
+   "quantile": -24.771029720515944
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "upper tail",
+   "a": 5.893429531356009,
+   "b": 24.77102972037249,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.0010000000000000007,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287555e-06,
+   "interval": 0.000998999999999972,
+   "quantile": 5.893429531356009
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "probability near an end",
+   "a": -1.8000000000000007,
+   "b": 1.8000000000000007,
+   "p": 1e-12,
+   "cdf_a": 0.06587879163544604,
+   "survival_a": 0.9341212083645539,
+   "cdf_b": 0.9341212083645539,
+   "survival_b": 0.06587879163544604,
+   "interval": 0.868242416729108,
+   "quantile": -393.95695957760375
+  },
+  {
+   "family": "Student t",
+   "parameters": [
+    5
+   ],
+   "label": "probability near an end",
+   "a": -1.8000000000000007,
+   "b": 1.8000000000000007,
+   "p": 0.999999999999,
+   "cdf_a": 0.06587879163544604,
+   "survival_a": 0.9341212083645539,
+   "cdf_b": 0.9341212083645539,
+   "survival_b": 0.06587879163544604,
+   "interval": 0.868242416729108,
+   "quantile": 393.9587026499902
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "default",
+   "a": 7.049747468305832,
+   "b": 13.092388155425118,
+   "p": 0.05,
+   "cdf_a": 0.8667174624421102,
+   "survival_a": 0.1332825375578898,
+   "cdf_b": 0.9891669186351879,
+   "survival_b": 0.01083308136481208,
+   "interval": 0.12244945619307772,
+   "quantile": 0.7107230213973241
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "default",
+   "a": 7.049747468305832,
+   "b": 13.092388155425118,
+   "p": 0.5,
+   "cdf_a": 0.8667174624421102,
+   "survival_a": 0.1332825375578898,
+   "cdf_b": 0.9891669186351879,
+   "survival_b": 0.01083308136481208,
+   "interval": 0.12244945619307772,
+   "quantile": 3.356693980033321
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "default",
+   "a": 7.049747468305832,
+   "b": 13.092388155425118,
+   "p": 0.95,
+   "cdf_a": 0.8667174624421102,
+   "survival_a": 0.1332825375578898,
+   "cdf_b": 0.9891669186351879,
+   "survival_b": 0.01083308136481208,
+   "interval": 0.12244945619307772,
+   "quantile": 9.487729036781154
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "lower tail",
+   "a": 0.002829761322958686,
+   "b": 0.09080403553897912,
+   "p": 1e-06,
+   "cdf_a": 1.0000000000000002e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.000999,
+   "quantile": 0.002829761322958686
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "upper tail",
+   "a": 18.46682695290317,
+   "b": 33.37684158165888,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.001000000000000001,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287565e-06,
+   "interval": 0.0009989999999999723,
+   "quantile": 18.46682695290317
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "probability near an end",
+   "a": 7.049747468305832,
+   "b": 13.092388155425118,
+   "p": 1e-12,
+   "cdf_a": 0.8667174624421102,
+   "survival_a": 0.1332825375578898,
+   "cdf_b": 0.9891669186351879,
+   "survival_b": 0.01083308136481208,
+   "interval": 0.12244945619307772,
+   "quantile": 2.8284284580803877e-06
+  },
+  {
+   "family": "Chi-square",
+   "parameters": [
+    4
+   ],
+   "label": "probability near an end",
+   "a": 7.049747468305832,
+   "b": 13.092388155425118,
+   "p": 0.999999999999,
+   "cdf_a": 0.8667174624421102,
+   "survival_a": 0.1332825375578898,
+   "cdf_b": 0.9891669186351879,
+   "survival_b": 0.01083308136481208,
+   "interval": 0.12244945619307772,
+   "quantile": 62.19979205810759
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "default",
+   "a": 1.75,
+   "b": 3.25,
+   "p": 0.05,
+   "cdf_a": 0.7889908074610157,
+   "survival_a": 0.2110091925389843,
+   "cdf_b": 0.9468072965129548,
+   "survival_b": 0.05319270348704524,
+   "interval": 0.1578164890519391,
+   "quantile": 0.21119042878234492
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "default",
+   "a": 1.75,
+   "b": 3.25,
+   "p": 0.5,
+   "cdf_a": 0.7889908074610157,
+   "survival_a": 0.2110091925389843,
+   "cdf_b": 0.9468072965129548,
+   "survival_b": 0.05319270348704524,
+   "interval": 0.1578164890519391,
+   "quantile": 0.9319331608510479
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "default",
+   "a": 1.75,
+   "b": 3.25,
+   "p": 0.95,
+   "cdf_a": 0.7889908074610157,
+   "survival_a": 0.2110091925389843,
+   "cdf_b": 0.9468072965129548,
+   "survival_b": 0.05319270348704524,
+   "interval": 0.1578164890519391,
+   "quantile": 3.325834530413011
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "lower tail",
+   "a": 0.002259135695039481,
+   "b": 0.03715183953766964,
+   "p": 1e-06,
+   "cdf_a": 1.0000000000000002e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.0009999999999999998,
+   "survival_b": 0.999,
+   "interval": 0.0009989999999999999,
+   "quantile": 0.002259135695039481
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "upper tail",
+   "a": 10.480722468097891,
+   "b": 49.35653976659309,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.001000000000000001,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287555e-06,
+   "interval": 0.0009989999999999723,
+   "quantile": 10.480722468097891
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "probability near an end",
+   "a": 1.75,
+   "b": 3.25,
+   "p": 1e-12,
+   "cdf_a": 0.7889908074610157,
+   "survival_a": 0.2110091925389843,
+   "cdf_b": 0.9468072965129548,
+   "survival_b": 0.05319270348704524,
+   "interval": 0.1578164890519391,
+   "quantile": 8.972139666857213e-06
+  },
+  {
+   "family": "F",
+   "parameters": [
+    5,
+    10
+   ],
+   "label": "probability near an end",
+   "a": 1.75,
+   "b": 3.25,
+   "p": 0.999999999999,
+   "cdf_a": 0.7889908074610157,
+   "survival_a": 0.2110091925389843,
+   "cdf_b": 0.9468072965129548,
+   "survival_b": 0.05319270348704524,
+   "interval": 0.1578164890519391,
+   "quantile": 819.5432081912619
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "default",
+   "a": 3.174873734152916,
+   "b": 5.896194077712559,
+   "p": 0.05,
+   "cdf_a": 0.8254928597125549,
+   "survival_a": 0.1745071402874451,
+   "cdf_b": 0.9810362193607264,
+   "survival_b": 0.01896378063927367,
+   "interval": 0.15554335964817143,
+   "quantile": 0.35536151069866206
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "default",
+   "a": 3.174873734152916,
+   "b": 5.896194077712559,
+   "p": 0.5,
+   "cdf_a": 0.8254928597125549,
+   "survival_a": 0.1745071402874451,
+   "cdf_b": 0.9810362193607264,
+   "survival_b": 0.01896378063927367,
+   "interval": 0.15554335964817143,
+   "quantile": 1.6783469900166605
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "default",
+   "a": 3.174873734152916,
+   "b": 5.896194077712559,
+   "p": 0.95,
+   "cdf_a": 0.8254928597125549,
+   "survival_a": 0.1745071402874451,
+   "cdf_b": 0.9810362193607264,
+   "survival_b": 0.01896378063927367,
+   "interval": 0.15554335964817143,
+   "quantile": 4.743864518390577
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "lower tail",
+   "a": 0.001414880661479343,
+   "b": 0.04540201776948956,
+   "p": 1e-06,
+   "cdf_a": 1.0000000000000002e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.000999,
+   "quantile": 0.001414880661479343
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "upper tail",
+   "a": 9.233413476451585,
+   "b": 16.68842079082944,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.001000000000000001,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287565e-06,
+   "interval": 0.0009989999999999723,
+   "quantile": 9.233413476451585
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "probability near an end",
+   "a": 3.174873734152916,
+   "b": 5.896194077712559,
+   "p": 1e-12,
+   "cdf_a": 0.8254928597125549,
+   "survival_a": 0.1745071402874451,
+   "cdf_b": 0.9810362193607264,
+   "survival_b": 0.01896378063927367,
+   "interval": 0.15554335964817143,
+   "quantile": 1.4142142290401938e-06
+  },
+  {
+   "family": "Gamma",
+   "parameters": [
+    2,
+    1
+   ],
+   "label": "probability near an end",
+   "a": 3.174873734152916,
+   "b": 5.896194077712559,
+   "p": 0.999999999999,
+   "cdf_a": 0.8254928597125549,
+   "survival_a": 0.1745071402874451,
+   "cdf_b": 0.9810362193607264,
+   "survival_b": 0.01896378063927367,
+   "interval": 0.15554335964817143,
+   "quantile": 31.099896029053795
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "default",
+   "a": 0.35,
+   "b": 0.65,
+   "p": 0.05,
+   "cdf_a": 0.680920078125,
+   "survival_a": 0.31907992187500006,
+   "cdf_b": 0.977678203125,
+   "survival_b": 0.022321796874999994,
+   "interval": 0.29675812500000004,
+   "quantile": 0.06284989170835438
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "default",
+   "a": 0.35,
+   "b": 0.65,
+   "p": 0.5,
+   "cdf_a": 0.680920078125,
+   "survival_a": 0.31907992187500006,
+   "cdf_b": 0.977678203125,
+   "survival_b": 0.022321796874999994,
+   "interval": 0.29675812500000004,
+   "quantile": 0.26444998329565994
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "default",
+   "a": 0.35,
+   "b": 0.65,
+   "p": 0.95,
+   "cdf_a": 0.680920078125,
+   "survival_a": 0.31907992187500006,
+   "cdf_b": 0.977678203125,
+   "survival_b": 0.022321796874999994,
+   "interval": 0.29675812500000004,
+   "quantile": 0.5818034092520258
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "lower tail",
+   "a": 0.0002582878293540636,
+   "b": 0.008255492787746678,
+   "p": 1e-06,
+   "cdf_a": 1.0000000000000002e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.0010000000000000002,
+   "survival_b": 0.999,
+   "interval": 0.000999,
+   "quantile": 0.0002582878293540636
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "upper tail",
+   "a": 0.818613866919134,
+   "b": 0.9555730480299243,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.0010000000000000005,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287504e-06,
+   "interval": 0.0009989999999999717,
+   "quantile": 0.818613866919134
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "probability near an end",
+   "a": 0.35,
+   "b": 0.65,
+   "p": 1e-12,
+   "cdf_a": 0.680920078125,
+   "survival_a": 0.31907992187500006,
+   "cdf_b": 0.977678203125,
+   "survival_b": 0.022321796874999994,
+   "interval": 0.29675812500000004,
+   "quantile": 2.581989786361007e-07
+  },
+  {
+   "family": "Beta",
+   "parameters": [
+    2,
+    5
+   ],
+   "label": "probability near an end",
+   "a": 0.35,
+   "b": 0.65,
+   "p": 0.999999999999,
+   "cdf_a": 0.680920078125,
+   "survival_a": 0.31907992187500006,
+   "cdf_b": 0.977678203125,
+   "survival_b": 0.022321796874999994,
+   "interval": 0.29675812500000004,
+   "quantile": 0.9972166390567536
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "default",
+   "a": 2.8,
+   "b": 5.2,
+   "p": 0.05,
+   "cdf_a": 0.9391899373747821,
+   "survival_a": 0.06081006262521797,
+   "cdf_b": 0.9944834355792392,
+   "survival_b": 0.0055165644207607716,
+   "interval": 0.055293498204457205,
+   "quantile": 0.051293294387550536
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "default",
+   "a": 2.8,
+   "b": 5.2,
+   "p": 0.5,
+   "cdf_a": 0.9391899373747821,
+   "survival_a": 0.06081006262521797,
+   "cdf_b": 0.9944834355792392,
+   "survival_b": 0.0055165644207607716,
+   "interval": 0.055293498204457205,
+   "quantile": 0.6931471805599453
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "default",
+   "a": 2.8,
+   "b": 5.2,
+   "p": 0.95,
+   "cdf_a": 0.9391899373747821,
+   "survival_a": 0.06081006262521797,
+   "cdf_b": 0.9944834355792392,
+   "survival_b": 0.0055165644207607716,
+   "interval": 0.055293498204457205,
+   "quantile": 2.99573227355399
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "lower tail",
+   "a": 1.0000005000003334e-06,
+   "b": 0.0010005003335835335,
+   "p": 1e-06,
+   "cdf_a": 1e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.0009989999999999999,
+   "quantile": 1.0000005000003334e-06
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "upper tail",
+   "a": 6.907755278982136,
+   "b": 13.815510557935518,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.001000000000000001,
+   "cdf_b": 0.999999,
+   "survival_b": 1.000000000028756e-06,
+   "interval": 0.0009989999999999723,
+   "quantile": 6.907755278982136
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "probability near an end",
+   "a": 2.8,
+   "b": 5.2,
+   "p": 1e-12,
+   "cdf_a": 0.9391899373747821,
+   "survival_a": 0.06081006262521797,
+   "cdf_b": 0.9944834355792392,
+   "survival_b": 0.0055165644207607716,
+   "interval": 0.055293498204457205,
+   "quantile": 1.0000000000005e-12
+  },
+  {
+   "family": "Exponential",
+   "parameters": [
+    1
+   ],
+   "label": "probability near an end",
+   "a": 2.8,
+   "b": 5.2,
+   "p": 0.999999999999,
+   "cdf_a": 0.9391899373747821,
+   "survival_a": 0.06081006262521797,
+   "cdf_b": 0.9944834355792392,
+   "survival_b": 0.0055165644207607716,
+   "interval": 0.055293498204457205,
+   "quantile": 27.63104323789336
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "default",
+   "a": 1.2694804193188165,
+   "b": 2.3576064930206595,
+   "p": 0.05,
+   "cdf_a": 0.7607722130181842,
+   "survival_a": 0.23922778698181582,
+   "cdf_b": 0.9732169680690518,
+   "survival_b": 0.02678303193094817,
+   "interval": 0.21244475505086763,
+   "quantile": 0.13805126655628416
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "default",
+   "a": 1.2694804193188165,
+   "b": 2.3576064930206595,
+   "p": 0.5,
+   "cdf_a": 0.7607722130181842,
+   "survival_a": 0.23922778698181582,
+   "cdf_b": 0.9732169680690518,
+   "survival_b": 0.02678303193094817,
+   "interval": 0.21244475505086763,
+   "quantile": 0.7832197687746514
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "default",
+   "a": 1.2694804193188165,
+   "b": 2.3576064930206595,
+   "p": 0.95,
+   "cdf_a": 0.7607722130181842,
+   "survival_a": 0.23922778698181582,
+   "cdf_b": 0.9732169680690518,
+   "survival_b": 0.02678303193094817,
+   "interval": 0.21244475505086763,
+   "quantile": 2.0781106375345564
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "lower tail",
+   "a": 0.00010000003333335278,
+   "b": 0.01000333527913684,
+   "p": 1e-06,
+   "cdf_a": 1e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.0009989999999999999,
+   "quantile": 0.00010000003333335278
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "upper tail",
+   "a": 3.627086912339476,
+   "b": 5.757641580219785,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.001000000000000001,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287546e-06,
+   "interval": 0.0009989999999999723,
+   "quantile": 3.627086912339476
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "probability near an end",
+   "a": 1.2694804193188165,
+   "b": 2.3576064930206595,
+   "p": 1e-12,
+   "cdf_a": 0.7607722130181842,
+   "survival_a": 0.23922778698181582,
+   "cdf_b": 0.9732169680690518,
+   "survival_b": 0.02678303193094817,
+   "interval": 0.21244475505086763,
+   "quantile": 1.0000000000003334e-08
+  },
+  {
+   "family": "Weibull",
+   "parameters": [
+    1.5,
+    1
+   ],
+   "label": "probability near an end",
+   "a": 1.2694804193188165,
+   "b": 2.3576064930206595,
+   "p": 0.999999999999,
+   "cdf_a": 0.7607722130181842,
+   "survival_a": 0.23922778698181582,
+   "cdf_b": 0.9732169680690518,
+   "survival_b": 0.02678303193094817,
+   "interval": 0.21244475505086763,
+   "quantile": 9.13969117958954
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "default",
+   "a": 0.32000000000000006,
+   "b": 0.6800000000000002,
+   "p": 0.05,
+   "cdf_a": 0.32000000000000006,
+   "survival_a": 0.6799999999999999,
+   "cdf_b": 0.6800000000000002,
+   "survival_b": 0.31999999999999984,
+   "interval": 0.3600000000000001,
+   "quantile": 0.05
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "default",
+   "a": 0.32000000000000006,
+   "b": 0.6800000000000002,
+   "p": 0.5,
+   "cdf_a": 0.32000000000000006,
+   "survival_a": 0.6799999999999999,
+   "cdf_b": 0.6800000000000002,
+   "survival_b": 0.31999999999999984,
+   "interval": 0.3600000000000001,
+   "quantile": 0.5
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "default",
+   "a": 0.32000000000000006,
+   "b": 0.6800000000000002,
+   "p": 0.95,
+   "cdf_a": 0.32000000000000006,
+   "survival_a": 0.6799999999999999,
+   "cdf_b": 0.6800000000000002,
+   "survival_b": 0.31999999999999984,
+   "interval": 0.3600000000000001,
+   "quantile": 0.95
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "lower tail",
+   "a": 1e-06,
+   "b": 0.001,
+   "p": 1e-06,
+   "cdf_a": 1e-06,
+   "survival_a": 0.999999,
+   "cdf_b": 0.001,
+   "survival_b": 0.999,
+   "interval": 0.000999,
+   "quantile": 1e-06
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "upper tail",
+   "a": 0.999,
+   "b": 0.999999,
+   "p": 0.999,
+   "cdf_a": 0.999,
+   "survival_a": 0.0010000000000000009,
+   "cdf_b": 0.999999,
+   "survival_b": 1.0000000000287557e-06,
+   "interval": 0.0009989999999999721,
+   "quantile": 0.999
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "probability near an end",
+   "a": 0.32000000000000006,
+   "b": 0.6800000000000002,
+   "p": 1e-12,
+   "cdf_a": 0.32000000000000006,
+   "survival_a": 0.6799999999999999,
+   "cdf_b": 0.6800000000000002,
+   "survival_b": 0.31999999999999984,
+   "interval": 0.3600000000000001,
+   "quantile": 1e-12
+  },
+  {
+   "family": "Uniform",
+   "parameters": [
+    0,
+    1
+   ],
+   "label": "probability near an end",
+   "a": 0.32000000000000006,
+   "b": 0.6800000000000002,
+   "p": 0.999999999999,
+   "cdf_a": 0.32000000000000006,
+   "survival_a": 0.6799999999999999,
+   "cdf_b": 0.6800000000000002,
+   "survival_b": 0.31999999999999984,
+   "interval": 0.3600000000000001,
+   "quantile": 0.999999999999
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "default",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.05,
+   "cdf_a": 0.41589293755753554,
+   "survival_a": 0.5841070624424645,
+   "cdf_b": 0.993534124647965,
+   "survival_b": 0.006465875352035004,
+   "interval": 0.5776411870904294,
+   "quantile": 4.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "default",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.5,
+   "cdf_a": 0.41589293755753554,
+   "survival_a": 0.5841070624424645,
+   "cdf_b": 0.993534124647965,
+   "survival_b": 0.006465875352035004,
+   "interval": 0.5776411870904294,
+   "quantile": 8.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "default",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.95,
+   "cdf_a": 0.41589293755753554,
+   "survival_a": 0.5841070624424645,
+   "cdf_b": 0.993534124647965,
+   "survival_b": 0.006465875352035004,
+   "interval": 0.5776411870904294,
+   "quantile": 12.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "lower tail",
+   "a": 0,
+   "b": 2,
+   "p": 1e-06,
+   "cdf_a": 3.6561584400629733e-05,
+   "survival_a": 0.9999634384155993,
+   "cdf_b": 0.0036114720591288708,
+   "survival_b": 0.9963885279408712,
+   "interval": 0.0035749104747282412,
+   "quantile": 0.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "upper tail",
+   "a": 15,
+   "b": 18,
+   "p": 0.999,
+   "cdf_a": 0.9996829688788313,
+   "survival_a": 0.00031703112116863,
+   "cdf_b": 0.9999996591513954,
+   "survival_b": 3.4084860461056036e-07,
+   "interval": 0.00031669027256401943,
+   "quantile": 15.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "probability near an end",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 1e-12,
+   "cdf_a": 0.41589293755753554,
+   "survival_a": 0.5841070624424645,
+   "cdf_b": 0.993534124647965,
+   "survival_b": 0.006465875352035004,
+   "interval": 0.5776411870904294,
+   "quantile": 0.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "probability near an end",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.999999999999,
+   "cdf_a": 0.41589293755753554,
+   "survival_a": 0.5841070624424645,
+   "cdf_b": 0.993534124647965,
+   "survival_b": 0.006465875352035004,
+   "interval": 0.5776411870904294,
+   "quantile": 20.0
+  },
+  {
+   "family": "Binomial",
+   "parameters": [
+    20,
+    0.4
+   ],
+   "label": "fractional points",
+   "a": 7.7,
+   "b": 13.2,
+   "p": 0.5,
+   "cdf_a": 0.41589293755753554,
+   "survival_a": 0.5841070624424645,
+   "cdf_b": 0.993534124647965,
+   "survival_b": 0.006465875352035004,
+   "interval": 0.5776411870904294,
+   "quantile": 8.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "default",
+   "a": 10.0,
+   "b": 19.0,
+   "p": 0.05,
+   "cdf_a": 0.9971602338794863,
+   "survival_a": 0.002839766120513743,
+   "cdf_b": 0.9999999897994779,
+   "survival_b": 1.0200522105968353e-08,
+   "interval": 0.002839755919991637,
+   "quantile": 1.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "default",
+   "a": 10.0,
+   "b": 19.0,
+   "p": 0.5,
+   "cdf_a": 0.9971602338794863,
+   "survival_a": 0.002839766120513743,
+   "cdf_b": 0.9999999897994779,
+   "survival_b": 1.0200522105968353e-08,
+   "interval": 0.002839755919991637,
+   "quantile": 4.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "default",
+   "a": 10.0,
+   "b": 19.0,
+   "p": 0.95,
+   "cdf_a": 0.9971602338794863,
+   "survival_a": 0.002839766120513743,
+   "cdf_b": 0.9999999897994779,
+   "survival_b": 1.0200522105968353e-08,
+   "interval": 0.002839755919991637,
+   "quantile": 8.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "upper tail",
+   "a": 11,
+   "b": 17,
+   "p": 0.999,
+   "cdf_a": 0.99908477085273,
+   "survival_a": 0.000915229147270063,
+   "cdf_b": 0.9999997518223981,
+   "survival_b": 2.48177601944386e-07,
+   "interval": 0.0009149809696681186,
+   "quantile": 11.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "probability near an end",
+   "a": 10.0,
+   "b": 19.0,
+   "p": 1e-12,
+   "cdf_a": 0.9971602338794863,
+   "survival_a": 0.002839766120513743,
+   "cdf_b": 0.9999999897994779,
+   "survival_b": 1.0200522105968353e-08,
+   "interval": 0.002839755919991637,
+   "quantile": 0.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "probability near an end",
+   "a": 10.0,
+   "b": 19.0,
+   "p": 0.999999999999,
+   "cdf_a": 0.9971602338794863,
+   "survival_a": 0.002839766120513743,
+   "cdf_b": 0.9999999897994779,
+   "survival_b": 1.0200522105968353e-08,
+   "interval": 0.002839755919991637,
+   "quantile": 25.0
+  },
+  {
+   "family": "Poisson",
+   "parameters": [
+    4
+   ],
+   "label": "fractional points",
+   "a": 10.7,
+   "b": 19.2,
+   "p": 0.5,
+   "cdf_a": 0.9971602338794863,
+   "survival_a": 0.002839766120513743,
+   "cdf_b": 0.9999999897994779,
+   "survival_b": 1.0200522105968353e-08,
+   "interval": 0.002839755919991637,
+   "quantile": 4.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "default",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.05,
+   "cdf_a": 0.94235199,
+   "survival_a": 0.057648010000000006,
+   "cdf_b": 0.99321776927151,
+   "survival_b": 0.006782230728490001,
+   "interval": 0.05086577927151001,
+   "quantile": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "default",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.5,
+   "cdf_a": 0.94235199,
+   "survival_a": 0.057648010000000006,
+   "cdf_b": 0.99321776927151,
+   "survival_b": 0.006782230728490001,
+   "interval": 0.05086577927151001,
+   "quantile": 1.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "default",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.95,
+   "cdf_a": 0.94235199,
+   "survival_a": 0.057648010000000006,
+   "cdf_b": 0.99321776927151,
+   "survival_b": 0.006782230728490001,
+   "interval": 0.05086577927151001,
+   "quantile": 8.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "upper tail",
+   "a": 19,
+   "b": 38,
+   "p": 0.999,
+   "cdf_a": 0.9992020773370239,
+   "survival_a": 0.0007979226629761202,
+   "cdf_b": 0.9999990904563199,
+   "survival_b": 9.095436801298617e-07,
+   "interval": 0.0007970131192959904,
+   "quantile": 19.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "probability near an end",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 1e-12,
+   "cdf_a": 0.94235199,
+   "survival_a": 0.057648010000000006,
+   "cdf_b": 0.99321776927151,
+   "survival_b": 0.006782230728490001,
+   "interval": 0.05086577927151001,
+   "quantile": 0.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "probability near an end",
+   "a": 7.0,
+   "b": 13.0,
+   "p": 0.999999999999,
+   "cdf_a": 0.94235199,
+   "survival_a": 0.057648010000000006,
+   "cdf_b": 0.99321776927151,
+   "survival_b": 0.006782230728490001,
+   "interval": 0.05086577927151001,
+   "quantile": 77.0
+  },
+  {
+   "family": "Geometric",
+   "parameters": [
+    0.3
+   ],
+   "label": "fractional points",
+   "a": 7.7,
+   "b": 13.2,
+   "p": 0.5,
+   "cdf_a": 0.94235199,
+   "survival_a": 0.057648010000000006,
+   "cdf_b": 0.99321776927151,
+   "survival_b": 0.006782230728490001,
+   "interval": 0.05086577927151001,
+   "quantile": 1.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "default",
+   "a": 12.0,
+   "b": 22.0,
+   "p": 0.05,
+   "cdf_a": 0.972885999222784,
+   "survival_a": 0.02711400077721599,
+   "cdf_b": 0.9995707026507481,
+   "survival_b": 0.00042929734925193817,
+   "interval": 0.02668470342796405,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "default",
+   "a": 12.0,
+   "b": 22.0,
+   "p": 0.5,
+   "cdf_a": 0.972885999222784,
+   "survival_a": 0.02711400077721599,
+   "cdf_b": 0.9995707026507481,
+   "survival_b": 0.00042929734925193817,
+   "interval": 0.02668470342796405,
+   "quantile": 4.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "default",
+   "a": 12.0,
+   "b": 22.0,
+   "p": 0.95,
+   "cdf_a": 0.972885999222784,
+   "survival_a": 0.02711400077721599,
+   "cdf_b": 0.9995707026507481,
+   "survival_b": 0.00042929734925193817,
+   "interval": 0.02668470342796405,
+   "quantile": 11.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "upper tail",
+   "a": 21,
+   "b": 36,
+   "p": 0.999,
+   "cdf_a": 0.9993382060730811,
+   "survival_a": 0.0006617939269189187,
+   "cdf_b": 0.9999992061193521,
+   "survival_b": 7.938806478902185e-07,
+   "interval": 0.0006610000462710285,
+   "quantile": 21.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "probability near an end",
+   "a": 12.0,
+   "b": 22.0,
+   "p": 1e-12,
+   "cdf_a": 0.972885999222784,
+   "survival_a": 0.02711400077721599,
+   "cdf_b": 0.9995707026507481,
+   "survival_b": 0.00042929734925193817,
+   "interval": 0.02668470342796405,
+   "quantile": 0.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "probability near an end",
+   "a": 12.0,
+   "b": 22.0,
+   "p": 0.999999999999,
+   "cdf_a": 0.972885999222784,
+   "survival_a": 0.02711400077721599,
+   "cdf_b": 0.9995707026507481,
+   "survival_b": 0.00042929734925193817,
+   "interval": 0.02668470342796405,
+   "quantile": 65.0
+  },
+  {
+   "family": "Negative binomial",
+   "parameters": [
+    3,
+    0.4
+   ],
+   "label": "fractional points",
+   "a": 12.7,
+   "b": 22.2,
+   "p": 0.5,
+   "cdf_a": 0.972885999222784,
+   "survival_a": 0.02711400077721599,
+   "cdf_b": 0.9995707026507481,
+   "survival_b": 0.00042929734925193817,
+   "interval": 0.02668470342796405,
+   "quantile": 4.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "default",
+   "a": 3.0,
+   "b": 6.0,
+   "p": 0.05,
+   "cdf_a": 0.6540199886608099,
+   "survival_a": 0.34598001133919004,
+   "cdf_b": 0.992686089656075,
+   "survival_b": 0.007313910343925043,
+   "interval": 0.338666100995265,
+   "quantile": 1.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "default",
+   "a": 3.0,
+   "b": 6.0,
+   "p": 0.5,
+   "cdf_a": 0.6540199886608099,
+   "survival_a": 0.34598001133919004,
+   "cdf_b": 0.992686089656075,
+   "survival_b": 0.007313910343925043,
+   "interval": 0.338666100995265,
+   "quantile": 3.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "default",
+   "a": 3.0,
+   "b": 6.0,
+   "p": 0.95,
+   "cdf_a": 0.6540199886608099,
+   "survival_a": 0.34598001133919004,
+   "cdf_b": 0.992686089656075,
+   "survival_b": 0.007313910343925043,
+   "interval": 0.338666100995265,
+   "quantile": 5.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "upper tail",
+   "a": 7,
+   "b": 10,
+   "p": 0.999,
+   "cdf_a": 0.9991238539421745,
+   "survival_a": 0.0008761460578255359,
+   "cdf_b": 1.0,
+   "survival_b": 0.0,
+   "interval": 0.0008761460578255359,
+   "quantile": 7.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "probability near an end",
+   "a": 3.0,
+   "b": 6.0,
+   "p": 1e-12,
+   "cdf_a": 0.6540199886608099,
+   "survival_a": 0.34598001133919004,
+   "cdf_b": 0.992686089656075,
+   "survival_b": 0.007313910343925043,
+   "interval": 0.338666100995265,
+   "quantile": 0.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "probability near an end",
+   "a": 3.0,
+   "b": 6.0,
+   "p": 0.999999999999,
+   "cdf_a": 0.6540199886608099,
+   "survival_a": 0.34598001133919004,
+   "cdf_b": 0.992686089656075,
+   "survival_b": 0.007313910343925043,
+   "interval": 0.338666100995265,
+   "quantile": 10.0
+  },
+  {
+   "family": "Hypergeometric",
+   "parameters": [
+    10,
+    30,
+    100
+   ],
+   "label": "fractional points",
+   "a": 3.7,
+   "b": 6.2,
+   "p": 0.5,
+   "cdf_a": 0.6540199886608099,
+   "survival_a": 0.34598001133919004,
+   "cdf_b": 0.992686089656075,
+   "survival_b": 0.007313910343925043,
+   "interval": 0.338666100995265,
+   "quantile": 3.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "label": "default",
+   "a": 2.0,
+   "b": 4.0,
+   "p": 0.05,
+   "cdf_a": 0.3333333333333333,
+   "survival_a": 0.6666666666666666,
+   "cdf_b": 0.6666666666666666,
+   "survival_b": 0.3333333333333333,
+   "interval": 0.3333333333333333,
+   "quantile": 1.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "label": "default",
+   "a": 2.0,
+   "b": 4.0,
+   "p": 0.5,
+   "cdf_a": 0.3333333333333333,
+   "survival_a": 0.6666666666666666,
+   "cdf_b": 0.6666666666666666,
+   "survival_b": 0.3333333333333333,
+   "interval": 0.3333333333333333,
+   "quantile": 3.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "label": "default",
+   "a": 2.0,
+   "b": 4.0,
+   "p": 0.95,
+   "cdf_a": 0.3333333333333333,
+   "survival_a": 0.6666666666666666,
+   "cdf_b": 0.6666666666666666,
+   "survival_b": 0.3333333333333333,
+   "interval": 0.3333333333333333,
+   "quantile": 6.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "label": "probability near an end",
+   "a": 2.0,
+   "b": 4.0,
+   "p": 1e-12,
+   "cdf_a": 0.3333333333333333,
+   "survival_a": 0.6666666666666666,
+   "cdf_b": 0.6666666666666666,
+   "survival_b": 0.3333333333333333,
+   "interval": 0.3333333333333333,
+   "quantile": 1.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "label": "probability near an end",
+   "a": 2.0,
+   "b": 4.0,
+   "p": 0.999999999999,
+   "cdf_a": 0.3333333333333333,
+   "survival_a": 0.6666666666666666,
+   "cdf_b": 0.6666666666666666,
+   "survival_b": 0.3333333333333333,
+   "interval": 0.3333333333333333,
+   "quantile": 6.0
+  },
+  {
+   "family": "Discrete uniform",
+   "parameters": [
+    1,
+    6
+   ],
+   "label": "fractional points",
+   "a": 2.7,
+   "b": 4.2,
+   "p": 0.5,
+   "cdf_a": 0.3333333333333333,
+   "survival_a": 0.6666666666666666,
+   "cdf_b": 0.6666666666666666,
+   "survival_b": 0.3333333333333333,
+   "interval": 0.3333333333333333,
+   "quantile": 3.0
+  }
+ ]
+}

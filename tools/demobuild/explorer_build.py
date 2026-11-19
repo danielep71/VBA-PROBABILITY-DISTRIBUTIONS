@@ -7,6 +7,7 @@ Output (ignored by Git) in test-results/demo/:
   Probability-Distributions-Demo.xlsm   the template with a VBA project built
                                         from the sources of this commit
   explorer-plan.json                    what Evolve-Explorer.ps1 applies in Excel
+  probabilities-plan.json               what Evolve-Probabilities.ps1 applies in Excel
   manifest.json                         inputs and digests
 
 The template, src/workbook/PROBDIST_Template.xlsx, is the Explorer workbook
@@ -37,6 +38,7 @@ from vba_project import DOCUMENT, Module, build_vba_project, document_module  # 
 import build_demo  # noqa: E402
 import explorer_plan  # noqa: E402
 import explorer_template  # noqa: E402
+import probabilities_plan  # noqa: E402
 
 DEMO = ROOT / "examples" / "demo"
 WORKBOOK = ROOT / "src" / "workbook"
@@ -75,7 +77,7 @@ def build() -> tuple[bytes, dict[str, Any], dict[str, str]]:
     data = explorer_template.write_package(infos, parts)
     plan = explorer_plan.plan()
     inputs = sources + [TEMPLATE, RIBBON, DEMO / "explorer-families.json", Path(__file__),
-                        Path(explorer_plan.__file__), Path(explorer_template.__file__),
+                        Path(explorer_plan.__file__), Path(probabilities_plan.__file__), Path(explorer_template.__file__),
                         Path(build_demo.__file__),
                         ROOT / "tools/devbuild/vba_project.py", ROOT / "tools/devbuild/build_workbook.py",
                         ROOT / "VERSION"]
@@ -89,6 +91,7 @@ def main() -> int:
     data, plan, hashes = build()
     (output / WORKBOOK_NAME).write_bytes(data)
     (output / "explorer-plan.json").write_text(json.dumps(plan, indent=1), encoding="utf-8")
+    (output / "probabilities-plan.json").write_text(json.dumps(probabilities_plan.plan(), indent=1), encoding="utf-8")
     manifest = {"commit": git(ROOT, "rev-parse", "HEAD"), "status": "UNVERIFIED IN EXCEL",
                 "dirty": bool(git(ROOT, "status", "--porcelain")),
                 "workbook_sha256": hashlib.sha256(data).hexdigest(), "inputs": hashes}
