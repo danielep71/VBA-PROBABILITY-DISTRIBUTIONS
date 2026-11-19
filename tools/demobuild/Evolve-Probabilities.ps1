@@ -11,6 +11,14 @@ $path = Join-Path $directory 'Probability-Distributions-Demo.xlsm'
 $plan = Get-Content (Join-Path $directory 'probabilities-plan.json') -Raw | ConvertFrom-Json
 $excel = $null
 $book = $null
+Remove-Item (Join-Path $env:TEMP 'probabilities-watchdog.txt') -ErrorAction SilentlyContinue
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class EvolveNative {
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+}
+'@
 
 # Names.Add reads its RefersTo with English function names but the list
 # separator and the decimal separator of the user's regional settings (a
@@ -52,6 +60,30 @@ function Wait-Excel {
         Start-Sleep -Milliseconds 500
     }
     throw 'Excel stayed busy for five minutes'
+}
+
+# A macro that stops on a hidden dialog would hold the step for ever: a watchdog
+# lists the windows of the owned Excel process and ends it after two minutes, so
+# the step fails with the text of the dialog instead of timing out.
+function Start-Watchdog([int]$ProcessId, [int]$Seconds) {
+    return Start-Job -ArgumentList $ProcessId, $Seconds -ScriptBlock {
+        param($ProcessId, $Seconds)
+        Start-Sleep -Seconds $Seconds
+        $text = @("watchdog: Excel (pid $ProcessId) is still busy after $Seconds s")
+        try {
+            Add-Type -AssemblyName UIAutomationClient
+            Add-Type -AssemblyName UIAutomationTypes
+            $root = [Windows.Automation.AutomationElement]::RootElement
+            $byPid = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
+            foreach ($top in $root.FindAll([Windows.Automation.TreeScope]::Children, $byPid)) {
+                $names = @($top.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition) |
+                    ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -First 30)
+                $text += ("  window: [" + $top.Current.ClassName + "] " + $top.Current.Name + " :: " + ($names -join ' | '))
+            }
+        } catch { $text += ('  could not list the windows: ' + $_.Exception.Message) }
+        $text | Out-File -FilePath (Join-Path $env:TEMP 'probabilities-watchdog.txt') -Encoding UTF8
+        Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Step([string]$Text) {
@@ -228,8 +260,13 @@ try {
     Wait-Excel
     $excel.ScreenUpdating = $true
     Step 'defaults and chart through the Probabilities module'
+    $processId = 0
+    [void][EvolveNative]::GetWindowThreadProcessId([IntPtr][long]$excel.Hwnd, [ref]$processId)
+    $watchdog = Start-Watchdog $processId 120
     [void]$excel.Run($prefix + 'ResetProbabilitiesInputs', $false)
     [void]$excel.Run($prefix + 'RefreshProbabilities')
+    Stop-Job $watchdog -ErrorAction SilentlyContinue
+    Remove-Job $watchdog -Force -ErrorAction SilentlyContinue
     $sheet.Activate()
     $excel.ActiveWindow.DisplayGridlines = $false
     $sheet.Range('D6').Select()
@@ -244,6 +281,8 @@ try {
     $book = $null
     Write-Output ('Probabilities evolved: ' + (Get-FileHash $path -Algorithm SHA256).Hash)
 } catch {
+    $note = Join-Path $env:TEMP 'probabilities-watchdog.txt'
+    if (Test-Path $note) { Get-Content $note | Write-Output }
     Write-Output $_.InvocationInfo.PositionMessage
     Write-Output $_.ScriptStackTrace
     throw

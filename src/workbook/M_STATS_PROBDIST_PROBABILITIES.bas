@@ -237,10 +237,10 @@ Public Sub ApplyProbabilitiesMessages(ByVal Sheet As Worksheet)
     If WasProtected Then Sheet.Unprotect
     For Slot = 1 To PARAMETER_COUNT
         With Sheet.Cells(FIRST_PARAMETER_ROW + Slot - 1, 4).Validation
-            .InputTitle = Left$(CStr(Sheet.Range("ExplorerLabels").Cells(Row, Slot).Value2), 32)
-            .InputMessage = Left$(CStr(Sheet.Range("ExplorerPrompts").Cells(Row, Slot).Value2), 255)
-            .ErrorTitle = Left$(CStr(Sheet.Range("ExplorerErrorTitles").Cells(Row, Slot).Value2), 32)
-            .ErrorMessage = Left$(CStr(Sheet.Range("ExplorerErrors").Cells(Row, Slot).Value2), 225)
+            .InputTitle = Left$(CStr(TableRange("ExplorerLabels").Cells(Row, Slot).Value2), 32)
+            .InputMessage = Left$(CStr(TableRange("ExplorerPrompts").Cells(Row, Slot).Value2), 255)
+            .ErrorTitle = Left$(CStr(TableRange("ExplorerErrorTitles").Cells(Row, Slot).Value2), 32)
+            .ErrorMessage = Left$(CStr(TableRange("ExplorerErrors").Cells(Row, Slot).Value2), 225)
             .ShowInput = True
             .ShowError = True
         End With
@@ -249,10 +249,17 @@ Public Sub ApplyProbabilitiesMessages(ByVal Sheet As Worksheet)
 End Sub
 
 
+Private Function TableRange(ByVal TableName As String) As Range
+    ' A range of the Explorer's family table, by its workbook name: the names
+    ' refer to another sheet, which a sheet's own Range(Name) does not follow.
+    Set TableRange = ThisWorkbook.Names.Item(TableName).RefersToRange
+End Function
+
+
 Private Function FamilyRow(ByVal Sheet As Worksheet) As Long
     ' Row of the selected family in the table, or 0 when D6 is not a family.
     Dim Position As Variant
-    Position = Application.Match(Sheet.Range(FAMILY_CELL).Value2, Sheet.Range("ExplorerFamily"), 0)
+    Position = Application.Match(Sheet.Range(FAMILY_CELL).Value2, TableRange("ExplorerFamily"), 0)
     If IsError(Position) Then FamilyRow = 0 Else FamilyRow = CLng(Position)
 End Function
 
@@ -260,7 +267,7 @@ End Function
 Private Function IsDiscrete(ByVal Sheet As Worksheet) As Boolean
     Dim Row As Long
     Row = FamilyRow(Sheet)
-    If Row > 0 Then IsDiscrete = (CStr(Sheet.Range("ExplorerKind").Cells(Row, 1).Value2) = "Discrete")
+    If Row > 0 Then IsDiscrete = (CStr(TableRange("ExplorerKind").Cells(Row, 1).Value2) = "Discrete")
 End Function
 
 
@@ -273,7 +280,7 @@ Private Sub LoadFamilyDefaults(ByVal Sheet As Worksheet)
     If Row = 0 Then Exit Sub
     For Slot = 1 To PARAMETER_COUNT
         Sheet.Cells(FIRST_PARAMETER_ROW + Slot - 1, 4).Value2 = _
-            Sheet.Range("ExplorerDefaults").Cells(Row, Slot).Value2
+            TableRange("ExplorerDefaults").Cells(Row, Slot).Value2
     Next Slot
     SetDefaultPoints Sheet
     ApplyProbabilitiesDecimals Sheet
