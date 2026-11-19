@@ -119,11 +119,19 @@ try {
         $b = [double]$sheet.Range('D12').Value2
         if ($kind[0] -eq 'Binomial') { $a = [Math]::Floor($a); $b = [Math]::Floor($b) }
         for ($k = 1; $k -le $rows; $k++) {
-            $inFirst = [double]$x[$k, 1] -le $a
-            $inSecond = ([double]$x[$k, 1] -gt $a) -and ([double]$x[$k, 1] -le $b)
-            $wantFirst = if ($inFirst) { [double]$f[$k, 1] } else { 0.0 }
-            $wantSecond = if ($inSecond) { [double]$f[$k, 1] } else { 0.0 }
-            if ([Math]::Abs([double]$h[$k, 1] - $wantFirst) -gt 1e-15 -or [Math]::Abs([double]$i[$k, 1] - $wantSecond) -gt 1e-15) { throw "$($kind[0]): the shaded columns are wrong at x=$($x[$k, 1])" }
+            $xk = [double]$x[$k, 1]
+            $fk = [double]$f[$k, 1]
+            $hk = [double]$h[$k, 1]
+            $ik = [double]$i[$k, 1]
+            $inFirst = $xk -le $a
+            $inSecond = ($xk -gt $a) -and ($xk -le $b)
+            $wantFirst = 0.0
+            $wantSecond = 0.0
+            if ($inFirst) { $wantFirst = $fk }
+            if ($inSecond) { $wantSecond = $fk }
+            $offFirst = [Math]::Abs($hk - $wantFirst)
+            $offSecond = [Math]::Abs($ik - $wantSecond)
+            if ($offFirst -gt 1e-15 -or $offSecond -gt 1e-15) { throw "$($kind[0]): the shaded columns are wrong at x=$xk" }
         }
         Set-Number $sheet 'D14' 3
         $excel.Calculate()
