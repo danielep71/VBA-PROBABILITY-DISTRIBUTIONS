@@ -150,7 +150,7 @@ try {
         }
         Set-Number $sheet 'D14' 3
         $excel.Calculate()
-        if ($sheet.Range('D20').NumberFormat -ne '0.000') { throw "Three decimals give the format $($sheet.Range('D20').NumberFormat)" }
+        if (([string]$sheet.Range('D20').Text) -notmatch '^-?[0-9]+[.,][0-9]{3}$') { throw "Three decimals show D20 as '$($sheet.Range('D20').Text)'" }
         Set-Number $sheet 'D14' 6
     }
     $report.charts = 'PASS'
