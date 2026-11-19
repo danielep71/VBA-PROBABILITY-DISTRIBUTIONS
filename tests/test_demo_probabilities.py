@@ -66,6 +66,12 @@ class PlanTests(unittest.TestCase):
         self.assertIn("1E-08", verdict.upper())
         self.assertEqual(PLAN["roundtrip_tolerance"], 1e-8)
 
+    def test_the_discrete_verdict_survives_a_quantile_on_the_lower_support_boundary(self):
+        # Geometric(0.3) at p = 0.05 has Q = 0: F(Q - 1) asks the library for a count it refuses,
+        # which must read as 0, not turn the verdict into #N/A.
+        verdict = next(item["formula"] for item in PLAN["formulas"] if item["address"] == P.VERDICT)
+        self.assertRegex(verdict, r"IFERROR\(SWITCH\(.*?D25-1.*?NA\(\)\),0\)<\$D\$13")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -103,6 +103,7 @@ try {
                 $report.notes += "$where : quantile $quantile, reference $($case.quantile)"
             }
         }
+        if (Is-Error $sheet.Range('D28').Value2) { throw "${where}: the round-trip verdict is an error ($($sheet.Range('D28').Text))" }
         $verdict = [string]$sheet.Range('D28').Value2
         if (-not $upperEnd -and ($verdict -like 'OUTSIDE*' -or $verdict -like 'CHECK*')) { throw "${where}: round-trip verdict is '$verdict' (difference $($sheet.Range('D27').Value2))" }
         if ($upperEnd -and $verdict -like 'OUTSIDE*') { $report.notes += "$where : verdict $verdict" }
