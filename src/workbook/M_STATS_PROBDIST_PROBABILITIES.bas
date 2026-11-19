@@ -88,10 +88,13 @@ End Sub
 
 
 Public Sub ProbabilitiesInputsChanged(ByVal Target As Range)
-    ' Called by Workbook_SheetChange. Choosing a family loads its parameters
-    ' and the points a and b; the decimals cell sets the number formats; any
-    ' other edit changes nothing here, because the results, the grid and the
-    ' chart follow the sheet's own formulas.
+    ' Called by Workbook_SheetChange. Choosing a family in D6 loads its
+    ' parameters and the points a and b; a paste over several cells that
+    ' includes D6 keeps the pasted values and only brings the chart, the
+    ' number formats and the parameter messages to the pasted family; the
+    ' decimals cell sets the number formats; any other edit changes nothing
+    ' here, because the results, the grid and the chart follow the sheet's own
+    ' formulas.
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
     Dim Failure As String
@@ -99,11 +102,15 @@ Public Sub ProbabilitiesInputsChanged(ByVal Target As Range)
     Set Sheet = ProbabilitiesSheet()
     If Not Target.Worksheet Is Sheet Then Exit Sub
     If Not Application.Intersect(Target, Sheet.Range(DECIMALS_CELL)) Is Nothing Then ApplyProbabilitiesDecimals Sheet
-    If Target.Cells.CountLarge <> 1 Then Exit Sub
-    If Target.Address(False, False) <> FAMILY_CELL Then Exit Sub
+    If Application.Intersect(Target, Sheet.Range(FAMILY_CELL)) Is Nothing Then Exit Sub
     SavedEvents = Application.EnableEvents
     Application.EnableEvents = False
-    LoadFamilyDefaults Sheet
+    If Target.Cells.CountLarge = 1 Then
+        LoadFamilyDefaults Sheet
+    Else
+        ApplyProbabilitiesDecimals Sheet
+        ApplyProbabilitiesMessages Sheet
+    End If
     Application.EnableEvents = SavedEvents
     RefreshProbabilities
     Exit Sub

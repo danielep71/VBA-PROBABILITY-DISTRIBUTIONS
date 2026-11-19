@@ -155,6 +155,24 @@ try {
     }
     $report.charts = 'PASS'
 
+    # A paste over several cells that includes D6 keeps the pasted values and brings the
+    # chart, the number formats and the parameter messages to the pasted family.
+    $excel.EnableEvents = $true
+    Set-Text $sheet 'D6' 'Normal'
+    $excel.Calculate()
+    $normalTitle = [string]$sheet.Range('D7').Validation.InputTitle
+    $block = New-Object 'object[,]' 3, 1
+    $block[0, 0] = 'Binomial'
+    $block[1, 0] = [double]12
+    $block[2, 0] = [double]0.25
+    $sheet.Range('D6:D8').Value2 = $block
+    $excel.Calculate()
+    if ([double]$sheet.Range('D7').Value2 -ne 12 -or [double]$sheet.Range('D8').Value2 -ne 0.25) { throw 'A paste over D6:D8 lost the pasted parameters' }
+    if ($sheet.ChartObjects($plan.chart.name).Chart.SeriesCollection(1).ChartType -ne 51) { throw 'A paste of a discrete family left the continuous chart' }
+    if ([string]$sheet.Range('D7').Validation.InputTitle -eq $normalTitle) { throw 'A paste of another family left the parameter messages of the old one' }
+    if ($sheet.Range('F20').NumberFormat -ne '0') { throw 'A paste of a discrete family left the continuous x format' }
+    $report.paste = 'PASS'
+
     # An invalid parameter and an interval the wrong way round: the status names the first one to check.
     Set-Text $sheet 'D6' 'Normal'
     Set-Number $sheet 'D8' -1
