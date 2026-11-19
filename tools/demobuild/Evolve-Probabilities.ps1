@@ -84,7 +84,7 @@ try {
     $sheet.Range("F${first}:I1100").FormatConditions.Delete()
     $sheet.Range('D6:D18').FormatConditions.Delete()
     Copy-Format $explorer.Range('A1:P18') $sheet.Range('A1')
-    $excel.CutCopyMode = 0
+    try { $excel.CutCopyMode = $false } catch { }
     # The inputs are D6:D14 here: the rows the Explorer keeps for its other inputs are spacers.
     Copy-Format $explorer.Range('C17:D18') $sheet.Range('C15:D16')
     Copy-Format $explorer.Range('C19:D20') $sheet.Range('C17:D18')
@@ -98,7 +98,7 @@ try {
     foreach ($row in 1..18) { $sheet.Rows.Item($row).RowHeight = $explorer.Rows.Item($row).RowHeight }
     $sheet.Rows.Item(19).RowHeight = $explorer.Rows.Item(19).RowHeight
     $sheet.Tab.Color = $explorer.Tab.Color
-    $excel.CutCopyMode = 0
+    try { $excel.CutCopyMode = $false } catch { }
     # The plain-text titles and the "Inputs" heading of the Explorer.
     $sheet.Range('C5').Value2 = [string]$explorer.Range('C5').Value2
 
