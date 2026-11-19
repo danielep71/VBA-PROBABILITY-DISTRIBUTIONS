@@ -145,3 +145,11 @@ review. Not checked: Office architectures and regional settings other than
 the runner's, and typing an out-of-range value into a validated cell (a write
 through COM bypasses data validation, so the rules are checked as formulas).
 Do not close #254 solely from package checks.
+
+## The Probabilities sheet
+
+The Probabilities sheet (#255) reads the Explorer's family table, so the 16 distributions, their limits and their input messages are defined once. Its plan is `tools/demobuild/probabilities_plan.py`, applied by `Evolve-Probabilities.ps1` after the Explorer's; its VBA is `src/workbook/M_STATS_PROBDIST_PROBABILITIES.bas`. Inputs are D6:D14 (distribution, up to four parameters, the points a and b, the probability p, the number of decimals); the status is D17, the macros cell D18 and the results D20:D28: P(X <= a), P(X > a), P(X <= b), P(X > b), P(a < X <= b), the quantile Q(p), F(Q(p)), the round-trip difference and its verdict. The grid is F20:I1020: x (or the integer k), the density or mass, and two columns that keep it where x <= a and where a < x <= b and hold 0 elsewhere, for the shaded chart areas.
+
+A discrete family truncates a and b to whole numbers, P(X <= a) includes a, and its quantile is the smallest k with F(k) >= p. The interval is S(a) - S(b) when F(a) is above one half and F(b) - F(a) otherwise. The round trip compares F(Q(p)) with p, relative to min(p, 1 - p), within 1E-8; a discrete family has no exact round trip and the verdict states the definition. The library's quantile contract covers p from 0.01 to 0.999 and the deep lower tail (`benchmark/accuracy_contracts.csv`); above 0.999 the verdict may say OUTSIDE.
+
+`probabilities_references.py` regenerates `probabilities-references.json` with mpmath (112 cases: each family at its defaults with three probabilities, both tails, fractional points for the discrete families and probabilities at the ends of the support). `ci/Test-Probabilities.ps1` sets each case through the sheet's cells with events on and compares the results, then checks the chart of each kind, the shaded columns, an invalid input and the reset.

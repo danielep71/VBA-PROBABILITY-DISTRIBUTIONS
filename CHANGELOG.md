@@ -108,6 +108,8 @@ Use only the categories needed by a release.
 
 ### Added
 
+- The Probabilities and Quantiles sheet (#255), built on the Explorer's family table: for any of the 16 distributions, P(X <= a), P(X > a), P(X <= b), P(X > b), P(a < X <= b) (taken in the tail that keeps its digits), the quantile at p, F(Q(p)) with a round-trip verdict and a chart that shades the two regions (columns for a discrete family, whose conventions are stated on the sheet). `ci/Test-Probabilities.ps1` checks 112 mpmath cases in Excel. Above p = 0.999 the library's quantile contract has ended and the sheet says so: the Normal and Lognormal quantiles at p = 1 - 1E-12 differ from the reference by about 1E-9 relative.
+
 - Add the K-Pricing-style registration module and automatic Explorer startup, with complete worksheet function descriptions and argument help (Refs #329).
 
 - Added the source-built development demo shell (#253), with Home, reserved

@@ -19,6 +19,7 @@ src/
    ├─ ThisWorkbook.cls                 # its workbook events
    ├─ M_STATS_PROBDIST_DEMO.bas        # navigation bar and Ribbon callbacks
    ├─ M_STATS_PROBDIST_EXPLORER.bas    # the Explorer's inputs and charts
+   ├─ M_STATS_PROBDIST_PROBABILITIES.bas # the Probabilities sheet's inputs and chart
    └─ M_STATS_PROBDIST_REGISTER.bas    # Function Wizard descriptions
 ```
 
