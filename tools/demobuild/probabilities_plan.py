@@ -269,7 +269,8 @@ def plan() -> dict[str, Any]:
         {"address": "F10", "value": "P(a < X <= b) is S(a) - S(b) when F(a) > 0.5 and F(b) - F(a) otherwise: the tail that "
                                     "keeps its digits."},
         {"address": "F12", "value": "Round trip: F(Q(p)) against p, relative to min(p, 1 - p), within "
-                                    f"{E.number(ROUNDTRIP_TOLERANCE).upper()}. A discrete quantile is the smallest k with F(k) >= p."},
+                                    f"{E.number(ROUNDTRIP_TOLERANCE).upper()}. A discrete quantile is the smallest k with F(k) >= p. "
+                                    "Above p = 0.999 the library's quantile contract has ended: the verdict may say OUTSIDE."},
         {"address": "F14", "value": "Educational demo, not an accuracy certification. The library's guarantees are in docs/."},
         {"address": "F16", "value": "Needs macros and Excel 365 or 2024. If Macros says DISABLED, unblock the file and reopen."},
         {"address": "B1", "value": "Probabilities and Quantiles"},

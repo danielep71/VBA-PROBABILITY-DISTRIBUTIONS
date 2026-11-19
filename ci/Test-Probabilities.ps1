@@ -83,14 +83,29 @@ try {
         $excel.Calculate()
         $where = "$($case.family) [$($case.label)] a=$($case.a) b=$($case.b) p=$($case.p)"
         if ([string]$sheet.Range('D17').Value2 -ne 'OK') { throw "${where}: status is $($sheet.Range('D17').Value2)" }
-        $pairs = @(@('D20', $case.cdf_a), @('D21', $case.survival_a), @('D22', $case.cdf_b), @('D23', $case.survival_b), @('D24', $case.interval), @('D25', $case.quantile))
+        $pairs = @(@('D20', $case.cdf_a), @('D21', $case.survival_a), @('D22', $case.cdf_b), @('D23', $case.survival_b), @('D24', $case.interval))
         foreach ($pair in $pairs) {
             if ($null -eq $pair[1]) { continue }
             $actual = Read-Number $sheet $pair[0]
             if (-not (Near $actual ([double]$pair[1]))) { throw "${where}: $($pair[0]) is $($sheet.Range($pair[0]).Value2), expected $($pair[1])" }
         }
+        # The library's quantile contract covers p from 0.01 to 0.999 and the deep lower tail
+        # (benchmark/accuracy_contracts.csv): above 0.999 the quantile is compared loosely and
+        # the round-trip verdict is not asserted, only recorded.
+        $upperEnd = [double]$case.p -gt 0.999
+        $quantile = Read-Number $sheet 'D25'
+        if ($null -ne $case.quantile) {
+            $tolerance = if ($upperEnd) { 1e-6 } else { [double]$fixture.relative_tolerance }
+            if ($null -eq $quantile -or [Math]::Abs($quantile - [double]$case.quantile) -gt ([double]$fixture.absolute_tolerance + $tolerance * [Math]::Abs([double]$case.quantile))) {
+                throw "${where}: D25 is $($sheet.Range('D25').Value2), expected $($case.quantile)"
+            }
+            if ($upperEnd -and $quantile -ne [double]$case.quantile) {
+                $report.notes += "$where : quantile $quantile, reference $($case.quantile)"
+            }
+        }
         $verdict = [string]$sheet.Range('D28').Value2
-        if ($verdict -like 'OUTSIDE*' -or $verdict -like 'CHECK*') { throw "${where}: round-trip verdict is '$verdict' (difference $($sheet.Range('D27').Value2))" }
+        if (-not $upperEnd -and ($verdict -like 'OUTSIDE*' -or $verdict -like 'CHECK*')) { throw "${where}: round-trip verdict is '$verdict' (difference $($sheet.Range('D27').Value2))" }
+        if ($upperEnd -and $verdict -like 'OUTSIDE*') { $report.notes += "$where : verdict $verdict" }
         if ($sheet.Range('D27').Value2 -is [double]) { $report.roundtrips++ }
         $report.cases++
     }
