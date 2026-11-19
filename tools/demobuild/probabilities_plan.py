@@ -155,6 +155,11 @@ def results_formulas(families: list[dict[str, Any]]) -> list[dict[str, str]]:
     good_p = f"AND(ISNUMBER({PROBABILITY}),{PROBABILITY}>=0,{PROBABILITY}<=1)"
     discrete = 'INDEX(ExplorerKind,ProbabilitiesRow)="Discrete"'
     tolerance = E.number(ROUNDTRIP_TOLERANCE)
+
+    def below_support(call: str) -> str:
+        """F one step under the quantile: 0 when that count is outside the support, where the library refuses it."""
+        return f"IFERROR({call},0)"
+
     return [
         {"address": F_A, "formula": f"=IF({ok},{cdf(A)},NA())"},
         {"address": S_A, "formula": f"=IF({ok},{survival(A)},NA())"},
@@ -171,7 +176,7 @@ def results_formulas(families: list[dict[str, Any]]) -> list[dict[str, str]]:
                      f'ABS({survival(QUANTILE)}-(1-{PROBABILITY}))/(1-{PROBABILITY})))),NA())')},
         {"address": VERDICT,
          "formula": (f'=IFERROR(IF(OR({PROBABILITY}<=0,{PROBABILITY}>=1),"End of the support",'
-                     f'IF({discrete},IF(AND({F_Q}>={PROBABILITY},{cdf(QUANTILE + "-1")}<{PROBABILITY}),'
+                     f'IF({discrete},IF(AND({F_Q}>={PROBABILITY},{below_support(cdf(QUANTILE + "-1"))}<{PROBABILITY}),'
                      f'"Q is the smallest k with F(k) >= p","CHECK: Q is not the smallest k"),'
                      f'IF({DIFFERENCE}<={tolerance},"Within the tolerance of {tolerance.upper()}",'
                      f'"OUTSIDE the tolerance of {tolerance.upper()}"))),NA())')},
