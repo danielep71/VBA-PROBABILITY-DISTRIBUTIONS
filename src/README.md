@@ -30,6 +30,16 @@ ships, and what the Excel regression and the accuracy evidence bind
 (`.github/excel-evidence-policy.json`, `benchmark/observation_manifest.json`).
 The worksheet functions are listed in [docs/PUBLIC_API.txt](../docs/PUBLIC_API.txt).
 
+## Frozen records keep the old path
+
+The library was in `src/` until #438 moved it to `src/modules/`. A closed study
+keeps the paths of the commit it measured: its records, its protocol files and
+its replays name `src/M_STATS_PROBDIST_*.bas`, and the replays read pinned
+commits that predate the move (`benchmark/_frozen_sources.py`). Nothing current
+reads that path, with one exception on purpose: the binding globs of
+`benchmark/_manifest.py` also take `src/*.bas`, which matches nothing in the
+repository and keeps the evidence snapshots of older trees verifiable.
+
 ## The workbook
 
 `workbook/` holds the Explorer workbook (`examples/demo/EXPLORER.md`). Its
