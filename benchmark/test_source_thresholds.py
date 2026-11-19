@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -37,9 +38,31 @@ proc = subprocess.run([sys.executable, "check_source_thresholds.py"], cwd=HERE,
 if proc.returncode != 0:
     failures.append("live repository check did not pass: " + (proc.stdout + proc.stderr).strip())
 
+# The scan reads the modules where the repository keeps them: a claim in a
+# module of src/modules/ is found, a tree with no module there fails closed
+# instead of passing on an empty set (#438), and the legacy flat src/ is not
+# scanned.
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    (root / "src" / "modules").mkdir(parents=True)
+    module = root / "src" / "modules" / "M_STATS_PROBDIST_FIXTURE.bas"
+    module.write_text("Attribute VB_Name = \"M_STATS_PROBDIST_FIXTURE\"\n' CDF <= 5E-15 relative\n",
+                      encoding="ascii")
+    code = C.main(["--root", str(root)])
+    if code != 1:
+        failures.append("a threshold claim in src/modules/ must fail the scan")
+    module.write_text("Attribute VB_Name = \"M_STATS_PROBDIST_FIXTURE\"\n' see accuracy_contracts.csv\n",
+                      encoding="ascii")
+    if C.main(["--root", str(root)]) != 0:
+        failures.append("a clean module in src/modules/ must pass the scan")
+    module.unlink()
+    (root / "src" / "M_STATS_PROBDIST_FLAT.bas").write_text("' CDF <= 5E-15 relative\n", encoding="ascii")
+    if C.main(["--root", str(root)]) != 1:
+        failures.append("a scan that finds no module under src/modules/ must fail, not pass")
+
 if failures:
     print("FAIL: source-threshold checker fixtures")
     for failure in failures:
         print("  - " + failure)
     raise SystemExit(1)
-print("PASS: source-threshold checker fixtures (threshold/accuracy/cap/envelope claims fail; authoritative and unrelated text pass)")
+print("PASS: source-threshold checker fixtures (threshold/accuracy/cap/envelope claims fail; authoritative and unrelated text pass; a claim in src/modules/ fails and an empty scan fails)")

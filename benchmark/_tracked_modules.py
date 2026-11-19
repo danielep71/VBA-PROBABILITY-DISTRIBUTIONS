@@ -1,6 +1,8 @@
 """Tracked VBA module inventory shared by the module-list checks.
 
-The production modules live in src/ and the regression harness in tests/. Any
+The production modules live in src/modules/ and the regression harness in
+tests/; the modules of the Explorer workbook in src/workbook/ belong to
+neither, since no regression or evidence workbook imports them. Any
 check that needs "the production modules" or "the regression sources" derives
 them from the files Git tracks there, so a new module cannot escape the
 public-API freeze or the Excel evidence binding by being missing from a
@@ -17,8 +19,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-PRODUCTION_DIR = "src"
-REGRESSION_DIRS = ("src", "tests")
+PRODUCTION_DIR = "src/modules"
+REGRESSION_DIRS = ("src/modules", "tests")
 MODULE_SUFFIX = ".bas"
 
 

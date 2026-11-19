@@ -34,7 +34,7 @@ def fingerprint_for(result):
         "milestone_expiry": "v1.0.0",
         "source_identity": {
             "commit_sha": "b" * 40,
-            "production_modules": {"src/a.bas": "sha256:" + "a" * 64},
+            "production_modules": {"src/modules/a.bas": "sha256:" + "a" * 64},
             "grid_sha256": "sha256:" + "b" * 64,
         },
         "initial_audit_baseline_count": result["missing_rows"],

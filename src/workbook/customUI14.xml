@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  The Ribbon of the Explorer workbook. explorer_build.py writes this file into
+  the package, and src/workbook/PROBDIST_Template.xlsx holds the same part. It
+  started as the demo Ribbon of tools/demobuild/build_demo.py; the structure
+  follows the K-SACCR tab. The callbacks hold no numerical logic: those of
+  src/workbook/M_STATS_PROBDIST_EXPLORER.bas recalculate the Explorer
+  (ExplorerAction) and reset its inputs (ExplorerEnabled tells whether they
+  can run); those of src/workbook/M_STATS_PROBDIST_DEMO.bas open a sheet by
+  its CodeName (RibbonGoTo), show or hide the navigation bar (RibbonToggle)
+  and only read the workbook (RibbonOnLoad, RibbonGetPressed).
+-->
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" onLoad="RibbonOnLoad">
+  <ribbon>
+    <tabs>
+      <tab id="pdTab" label="Probability Distributions" keytip="PD">
+
+        <group id="pdGrpCalculation" label="Calculation">
+          <button id="pdRecalculate" label="Recalculate" size="large" imageMso="CalculateNow" keytip="R"
+                  screentip="Recalculate"
+                  supertip="Recalculate every sheet of this workbook. No other open workbook is recalculated."
+                  onAction="ExplorerAction" getEnabled="ExplorerEnabled"/>
+          <button id="pdResetInputs" label="Reset Explorer inputs" imageMso="Undo" keytip="A"
+                  screentip="Reset inputs"
+                  supertip="Put the example inputs back to their defaults. Not available until the thematic sheets define editable inputs."
+                  onAction="ExplorerAction" getEnabled="ExplorerEnabled"/>
+        </group>
+
+        <group id="pdGrpNavigate" label="Navigate">
+          <splitButton id="pdGoSplit" size="large" keytip="G">
+            <button id="pdGo" label="Go to" imageMso="FileOpen"
+                    screentip="Go to"
+                    supertip="Open Home. The arrow lists every sheet."
+                    onAction="RibbonGoTo"/>
+            <menu id="pdGoMenu" itemSize="normal">
+              <menuSeparator id="pdGoSepStart" title="Start"/>
+              <button id="pdGoHome" label="Home" onAction="RibbonGoTo" supertip="The starting page: scope, how to use the workbook and links."/>
+              <menuSeparator id="pdGoSepExplore" title="Explore"/>
+              <button id="pdGoExplorer" label="Explorer" onAction="RibbonGoTo" supertip="One distribution at a time: density, probabilities and moments."/>
+              <button id="pdGoProbability" label="Probabilities" onAction="RibbonGoTo" supertip="Cumulative, survival and interval probabilities, and their inverses."/>
+              <button id="pdGoParameters" label="Parameters" onAction="RibbonGoTo" supertip="How each parameter moves a distribution."/>
+              <menuSeparator id="pdGoSepAccuracy" title="Accuracy"/>
+              <button id="pdGoComparison" label="Comparison" onAction="RibbonGoTo" supertip="The library against Excel's own functions and an independent reference."/>
+              <button id="pdGoTails" label="Tails" onAction="RibbonGoTo" supertip="Far tails, tiny probabilities and the limits of the Double range."/>
+              <menuSeparator id="pdGoSepApplications" title="Applications"/>
+              <button id="pdGoDiscrete" label="Discrete" onAction="RibbonGoTo" supertip="Binomial, Poisson, Geometric and the other discrete families."/>
+              <button id="pdGoRisk" label="Risk" onAction="RibbonGoTo" supertip="Worked examples from risk management."/>
+              <menuSeparator id="pdGoSepReference" title="Reference"/>
+              <button id="pdGoDiagnostics" label="Diagnostics" onAction="RibbonGoTo" supertip="What each function returns on bad input, and how to read the status."/>
+              <button id="pdGoReadme" label="README" onAction="RibbonGoTo" supertip="Conventions, build, validation status and limits."/>
+            </menu>
+          </splitButton>
+          <toggleButton id="pdNavigationBar" label="Navigation bar" keytip="B"
+                        screentip="Navigation bar"
+                        supertip="Show or hide the bar of sheet links on the left of every sheet, for this session. The workbook is always saved with the bar shown."
+                        getPressed="RibbonGetPressed" onAction="RibbonToggle"
+                        getEnabled="ExplorerEnabled"/>
+        </group>
+
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

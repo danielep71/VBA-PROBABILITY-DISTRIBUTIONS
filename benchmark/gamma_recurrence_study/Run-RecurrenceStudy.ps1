@@ -8,7 +8,7 @@ $report = [ordered]@{ status = 'FAIL'; candidate_sha = ''; excel_version = ''; e
 $invariant = [Globalization.CultureInfo]::InvariantCulture
 try {
     $report.candidate_sha = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
-    & git -C $RepositoryRoot diff --exit-code HEAD -- src benchmark/gamma_cache_study benchmark/gamma_recurrence_study
+    & git -C $RepositoryRoot diff --exit-code HEAD -- src/modules benchmark/gamma_cache_study benchmark/gamma_recurrence_study
     if ($LASTEXITCODE -ne 0) { throw 'Dirty study inputs' }
     $points = @(@(0.0001, 0.5), @(0.5, 0.25), @(2.5, 1.0), @(2.5, 6.0),
                 @(100.0, 90.0), @(100.0, 110.0), @(10000.0, 9900.0), @(10000.0, 10100.0))
@@ -29,7 +29,7 @@ try {
         $workbook = $excel.Workbooks.Add()
         $workbook.SaveAs((Join-Path $out "recurrence-study-$sample.xlsm"), 52)
         $project = $workbook.VBProject
-        foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\*.bas') | Sort-Object Name)) {
+        foreach ($file in (Get-ChildItem (Join-Path $RepositoryRoot 'src\modules\*.bas') | Sort-Object Name)) {
             [void]$project.VBComponents.Import($file.FullName)
         }
         [void]$project.VBComponents.Import((Join-Path $RepositoryRoot 'benchmark\gamma_cache_study\M_STATS_PROBDIST_GCACHE.bas'))

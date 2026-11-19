@@ -172,7 +172,7 @@ def refused(root, path, recorded, commit):
 
 with tempfile.TemporaryDirectory(prefix="carried-") as root:
     git(root, "init", "-q")
-    SRC, EXPORTER = "src/M_FIXTURE.bas", "benchmark/holdout/M_HOLDOUT.bas"
+    SRC, EXPORTER = "src/modules/M_FIXTURE.bas", "benchmark/holdout/M_HOLDOUT.bas"
     write(root, SRC, BASE)
     write(root, EXPORTER, BASE.replace("M_FIXTURE", "M_HOLDOUT"))
     write(root, "benchmark/grid.csv", "function,arg1\nF,1\n")
@@ -221,7 +221,7 @@ with tempfile.TemporaryDirectory(prefix="carried-") as root:
               and "X * 3#" in problems[0],
               f"5: {label}: a code edit stays a mismatch and names the statement: {problems}")
 
-    os.unlink(os.path.join(root, "src", "M_FIXTURE.bas"))
+    os.unlink(os.path.join(root, "src", "modules", "M_FIXTURE.bas"))
     check("cannot read" in (refused(root, SRC, recorded, commit) or ""),
           "4: a deleted module is refused")
 

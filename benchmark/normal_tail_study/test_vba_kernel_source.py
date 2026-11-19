@@ -79,9 +79,9 @@ def vba_constant(expr):
     return value
 
 
-sf = joined(source("src/M_STATS_PROBDIST_SPECIALFUNCS.bas"))
-core = joined(source("src/M_STATS_PROBDIST_CORE.bas"))
-nf = joined(source("src/M_STATS_PROBDIST_NORMALFAMILY.bas"))
+sf = joined(source("src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas"))
+core = joined(source("src/modules/M_STATS_PROBDIST_CORE.bas"))
+nf = joined(source("src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas"))
 tests = joined(source("tests/M_STATS_PROBDIST_TEST.bas"))
 
 # 1. Constants ---------------------------------------------------------------

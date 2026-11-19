@@ -72,9 +72,9 @@ or copied workbooks.
 
 | Order | Repository source | VBE component | Responsibility |
 |---:|---|---|---|
-| 1 | `src/M_STATS_PROBDIST_CORE.bas` | `M_STATS_PROBDIST_CORE` | Shared constants, predicates, guarded arithmetic, and diagnostics |
-| 2 | `src/M_STATS_PROBDIST_SPECIALFUNCS.bas` | `M_STATS_PROBDIST_SPECIALFUNCS` | Gamma/beta functions, series, fractions, and inverse kernels |
-| 3 | remaining `src/M_STATS_PROBDIST_*.bas` files | matching family modules | Worksheet-visible distribution functions |
+| 1 | `src/modules/M_STATS_PROBDIST_CORE.bas` | `M_STATS_PROBDIST_CORE` | Shared constants, predicates, guarded arithmetic, and diagnostics |
+| 2 | `src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas` | `M_STATS_PROBDIST_SPECIALFUNCS` | Gamma/beta functions, series, fractions, and inverse kernels |
+| 3 | remaining `src/modules/M_STATS_PROBDIST_*.bas` files | matching family modules | Worksheet-visible distribution functions |
 
 Optional material is not part of the normal runtime unless stated otherwise:
 

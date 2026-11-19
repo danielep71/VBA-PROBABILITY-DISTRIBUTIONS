@@ -45,7 +45,7 @@ import predict_inverse as PI  # noqa: E402
 import production_route_model as P  # noqa: E402
 import validate_expansion as V  # noqa: E402
 
-SOURCE = "src/M_STATS_PROBDIST_TFAMILY.bas"
+SOURCE = "src/modules/M_STATS_PROBDIST_TFAMILY.bas"
 TESTS = "tests/M_STATS_PROBDIST_TEST.bas"
 LITERAL = r"\d+(?:\.\d+)?(?:E[-+]\d{2,3})?#?"
 TOLERANCES = {"TOL_REL_LDF_QUANTILE": 5e-16, "TOL_REL_LARGE_DF_TAIL": 2e-15, "TOL_REL_LDF_OUTSIDE_DF": 5e-12, "TOL_REL_TAIL": 1e-9}

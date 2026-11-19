@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Check the placement, names, encoding, options, storage and layout of VBA source.
 
-For every tracked .bas, .cls and .frm file: it sits in src/ or tests/ (flat)
-or under benchmark/ or examples/demo/; its file name starts with M_STATS_PROBDIST_, uses
-letters, digits and underscores only, has at most 31 characters and equals its
+For every tracked .bas, .cls and .frm file: it sits in src/modules/, src/workbook/
+or tests/ (flat) or under benchmark/; its file name starts with M_STATS_PROBDIST_
+(a document module of src/workbook/ keeps its Excel name), uses letters, digits and underscores only, has at most 31 characters and equals its
 one Attribute VB_Name, unique ignoring case; a .bas export starts with that
 line; ASCII only, with no byte-order mark; Option Explicit; Option Private
 Module in the modules of OPTION_PRIVATE_REQUIRED, each of which must be a
 tracked component, and never in a module that declares a Public K_STATS_
-worksheet function; no Option Base, tab or trailing white space; string
+worksheet function; no K_STATS_ worksheet function in src/workbook/, which
+the public-API freeze does not read; no Option Base, tab or trailing white space; string
 literals closed; LF storage in Git with CRLF checkout (.gitattributes).
 tools/README.md, "VBA source checks", gives the reasons.
 """
@@ -31,10 +32,15 @@ from vba_lexer import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-# Where components live: the production and test modules flat in src/ and
-# tests/, the exporters and probes of each study anywhere under benchmark/.
-FLAT_HOMES = ("src/", "tests/")
-NESTED_HOMES = ("benchmark/", "examples/demo/")
+# Where components live: the library modules flat in src/modules/, the
+# modules of the Explorer workbook flat in src/workbook/, the test module flat
+# in tests/, the exporters and probes of each study anywhere under benchmark/.
+WORKBOOK_HOME = "src/workbook/"
+FLAT_HOMES = (WORKBOOK_HOME, "src/modules/", "tests/")
+NESTED_HOMES = ("benchmark/",)
+# A document module keeps the name Excel gives it: ThisWorkbook, or the code
+# name of a sheet, which starts with "sh". It lives only in src/workbook/.
+DOCUMENT_NAME = re.compile(r"ThisWorkbook|sh[A-Z][A-Za-z0-9]*")
 NAME_PREFIX = "M_STATS_PROBDIST_"
 NAME = re.compile(rf"{NAME_PREFIX}[A-Za-z0-9_]+")
 MAX_NAME = 31  # the VBE rejects a longer component name
@@ -42,8 +48,8 @@ MAX_NAME = 31  # the VBE rejects a longer component name
 # PROB_* routines inside the VBA project and out of the worksheet Function
 # Wizard (README, "Layer 1" and "Layer 2"; docs/PUBLIC_API.md).
 OPTION_PRIVATE_REQUIRED = frozenset({
-    "src/M_STATS_PROBDIST_CORE.bas",
-    "src/M_STATS_PROBDIST_SPECIALFUNCS.bas",
+    "src/modules/M_STATS_PROBDIST_CORE.bas",
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas",
 })
 # A module that declares a Public K_STATS_ procedure exposes worksheet
 # functions; Option Private Module would hide them, so it is forbidden there.
@@ -65,10 +71,12 @@ def placement(path: str) -> list[Finding]:
     findings: list[Finding] = []
     flat = next((home for home in FLAT_HOMES if path.startswith(home)), None)
     if (flat is None or "/" in path[len(flat):]) and not path.startswith(NESTED_HOMES):
-        findings.append(Finding(path, None, "VBA component outside src/ and tests/ (no "
-                                            "subdirectories) and benchmark/ or examples/demo/"))
+        findings.append(Finding(path, None, "VBA component outside src/modules/, src/workbook/ "
+                                            "and tests/ (no subdirectories) and benchmark/"))
     name = Path(path).stem
-    if not NAME.fullmatch(name):
+    document = (flat == WORKBOOK_HOME and Path(path).suffix.lower() == ".cls"
+                and DOCUMENT_NAME.fullmatch(name) is not None)
+    if not document and not NAME.fullmatch(name):
         findings.append(Finding(path, None, f"component name must start with {NAME_PREFIX} "
                                             "and use letters, digits and underscores only"))
     if len(name) > MAX_NAME:
@@ -147,6 +155,10 @@ def options(path: str, text: str, required: frozenset[str]) -> list[Finding]:
                                             "module keeps its Public routines project-scoped"))
     worksheet = next((line for line, statement in items if WORKSHEET_FUNCTION.match(statement)),
                      None)
+    if worksheet is not None and path.startswith(WORKBOOK_HOME):
+        findings.append(Finding(path, worksheet, "Public K_STATS_ worksheet function in "
+                                                 f"{WORKBOOK_HOME}; worksheet functions belong "
+                                                 "to the library modules of src/"))
     if private and worksheet is not None:
         findings.append(Finding(path, private[0], "Option Private Module in a module that "
                                                   "declares Public K_STATS_ worksheet functions "

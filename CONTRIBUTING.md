@@ -95,7 +95,8 @@ the review artifact.
 
 | Location | Purpose |
 |---|---|
-| `src/` | Authoritative exported distribution and numerical-kernel modules |
+| `src/modules/` | Authoritative exported distribution and numerical-kernel modules |
+| `src/workbook/` | The Explorer workbook: macro-free template, Ribbon, workbook events and its own modules (see [src/README.md](src/README.md)) |
 | `tests/` | Fast deterministic VBA regression and contract tests |
 | `benchmark/` | High-precision external accuracy gate and evidence |
 | `docs/` and wiki | API, architecture, accuracy, and diagnostics |

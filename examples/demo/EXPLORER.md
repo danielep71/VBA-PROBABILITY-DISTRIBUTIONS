@@ -13,20 +13,26 @@ macros: every number is a call to the library's public `K_STATS_` functions.
 
 ## How the workbook is made
 
-The package starts from a workbook formatted by hand, kept in
-`examples/demo/baseline/` and pinned by its SHA-256 in
-`.github/binary-allowlist.json`. Its layout, styles, charts, Ribbon and
-navigation bar are the presentation baseline and are not redrawn.
+The package starts from the template
+[`src/workbook/PROBDIST_Template.xlsx`](../../src/README.md#the-workbook): the
+workbook the user formatted by hand, as the workflow last verified it, without
+its VBA project, pinned by its SHA-256 in `.github/binary-allowlist.json`. Its
+layout, styles, charts, Ribbon and navigation bar are the presentation
+baseline and are not redrawn. `tools/demobuild/explorer_template.py` makes a
+new template from a verified workbook when the layout changes.
 
-1. `python tools/demobuild/explorer_build.py` copies every part of the baseline
-   except `xl/vbaProject.bin`, which it rebuilds from the sources of the
-   commit (library, demo, Explorer and registration modules, workbook events),
-   and writes `explorer-plan.json`.
+1. `python tools/demobuild/explorer_build.py` copies every part of the
+   template, writes the Ribbon from `src/workbook/customUI14.xml`, adds a VBA
+   project built from the sources of the commit (the library of `src/modules/`, the
+   modules of `src/workbook/` and the workbook events of
+   `src/workbook/ThisWorkbook.cls`), and writes `explorer-plan.json`.
 2. In desktop Excel, `tools/demobuild/Evolve-Explorer.ps1 -PackageDirectory
    test-results/demo` applies the plan: the family table, the workbook names,
    the formulas, the validation and conditional formats, and the two charts.
 3. `ci/Test-Explorer.ps1`, `ci/Test-ExplorerStates.ps1`,
-   `ci/Test-ExplorerUI.ps1` and `ci/Test-DemoPackage.ps1` check the result.
+   `ci/Test-ExplorerUI.ps1` and `ci/Test-DemoPackage.ps1` check the result;
+   `ci/Test-SyncWorkbook.ps1` builds a second workbook from the template with
+   `tools/Sync-PROBDIST-VBA.ps1` and checks it.
    The `Distribution Explorer` workflow runs all of it and keeps the workbook,
    a PDF preview and the JSON evidence.
 
@@ -95,7 +101,7 @@ continuous one plots lines. Geometric and negative binomial count failures,
 not trials, and say so in their support text. Hypergeometric takes the sample
 size, the successes in the population and the population size.
 
-The Explorer sheet is unprotected, as in the baseline; the result cells are
+The Explorer sheet is unprotected, as in the template; the result cells are
 locked and the inputs are not. Reset on the Ribbon asks for confirmation and
 restores Normal(0,1), probe 0, p = 0.95, 201 points and 6 decimals. Cancelling changes nothing.
 

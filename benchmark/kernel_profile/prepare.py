@@ -57,7 +57,7 @@ def instrument(source, names):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    path = ROOT / 'src/M_STATS_PROBDIST_SPECIALFUNCS.bas'
+    path = ROOT / 'src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas'
     source = path.read_text(encoding='utf-8')
     inventory = {}
     for group, suffixes in GROUPS.items():

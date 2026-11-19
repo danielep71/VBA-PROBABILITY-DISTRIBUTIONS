@@ -6,7 +6,7 @@ once read 5.9E-13 while the frozen contract was 2E-10, because the number was
 restated in source instead of referenced.
 
 Public source headers should point to accuracy_contracts.csv rather than restate
-a threshold. This check scans src/*.bas for threshold and CAP claims and exits
+a threshold. This check scans src/modules/*.bas for threshold and CAP claims and exits
 non-zero if any remain, listing them.
 
 WHY THERE IS MORE THAN ONE PATTERN
@@ -25,8 +25,14 @@ WHY THERE IS MORE THAN ONE PATTERN
     assurance. The patterns below therefore cover caps and accuracy claims in
     the phrasings that actually occurred, not just the canonical one.
 
-Run: python3 check_source_thresholds.py   (exit 0 = clean, 1 = drift risk found)
+A scan that finds no module fails: after #438 moved the library from src/ to
+src/modules/, the scan of the old glob passed on an empty set, which is a check
+that guards nothing.
+
+Run: python3 check_source_thresholds.py [--root DIR]
+     (exit 0 = clean, 1 = drift risk found or no module to scan)
 """
+import argparse
 import glob
 import os
 import re
@@ -78,16 +84,23 @@ CLAIMS = [
 AUTHORITATIVE = re.compile(r"^\s*(?:Private|Public)\s+Const\b", re.IGNORECASE)
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
+    parser.add_argument("--root", default=ROOT, help="repository root holding src/modules/")
+    args = parser.parse_args(argv)
     offenders = []
-    for path in sorted(glob.glob(os.path.join(ROOT, "src", "*.bas"))):
+    paths = sorted(glob.glob(os.path.join(args.root, "src", "modules", "*.bas")))
+    if not paths:
+        print("No module found under src/modules/: nothing was checked.")
+        return 1
+    for path in paths:
         with open(path, encoding="utf-8", errors="replace") as f:
             for lineno, line in enumerate(f, 1):
                 if AUTHORITATIVE.match(line):
                     continue
                 for kind, pattern in CLAIMS:
                     if pattern.search(line):
-                        offenders.append((os.path.relpath(path, ROOT).replace(os.sep, "/"),
+                        offenders.append((os.path.relpath(path, args.root).replace(os.sep, "/"),
                                           lineno, kind, line.strip()))
                         break
     if offenders:
@@ -95,11 +108,12 @@ def main():
               "accuracy_contracts.csv and reference it instead:")
         for rel, lineno, kind, text in offenders:
             print(f"  {rel}:{lineno} [{kind}]: {text}")
-        sys.exit(1)
-    print("OK: no measured thresholds or public caps duplicated in src/*.bas "
+        return 1
+    print("OK: no measured thresholds or public caps duplicated in src/modules/*.bas "
           "(accuracy_contracts.csv and numerical_limitations.csv are "
           "authoritative).")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

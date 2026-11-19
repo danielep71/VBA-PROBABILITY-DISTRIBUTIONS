@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
-"""Build the Explorer package from the user's workbook, without Excel.
+"""Build the Explorer package from the template, without Excel.
 
 Run from the repository: python tools/demobuild/explorer_build.py
 Output (ignored by Git) in test-results/demo/:
 
-  Probability-Distributions-Demo.xlsm   the baseline, with its VBA project
-                                        rebuilt from the sources of this commit
+  Probability-Distributions-Demo.xlsm   the template with a VBA project built
+                                        from the sources of this commit
   explorer-plan.json                    what Evolve-Explorer.ps1 applies in Excel
   manifest.json                         inputs and digests
 
-The baseline, examples/demo/baseline/, is the workbook the user formatted by
-hand: every part except xl/vbaProject.bin is kept byte for byte, so sheets,
-styles, charts, the Ribbon and the navigation bar stay as the user left them.
-The VBA project holds the library modules of src/, the demo module, the
-Explorer module and the Function Wizard registration, plus the workbook's event
-code. Evolve-Explorer.ps1 then writes the formulas, names and validation in
-desktop Excel. Excel compiles the project when the workbook opens; nothing here
-runs it.
+The template, src/workbook/PROBDIST_Template.xlsx, is the Explorer workbook
+without its code (explorer_template.py): every part is kept byte for byte,
+except the Ribbon, written from src/workbook/customUI14.xml, so sheets,
+styles, charts and the navigation bar stay as the user left them. The VBA
+project holds the library modules of src/modules/, the modules of src/workbook/ (the
+demo module, the Explorer module and the Function Wizard registration) and
+the workbook's event code, src/workbook/ThisWorkbook.cls; the sheet modules
+hold no code. Evolve-Explorer.ps1 then writes the formulas, names and
+validation in desktop Excel. Excel compiles the project when the workbook
+opens; nothing here runs it.
 """
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import sys
-import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -36,58 +36,51 @@ from vba_project import DOCUMENT, Module, build_vba_project, document_module  # 
 
 import build_demo  # noqa: E402
 import explorer_plan  # noqa: E402
+import explorer_template  # noqa: E402
 
 DEMO = ROOT / "examples" / "demo"
-BASELINE = DEMO / "baseline" / "Explorer-baseline.xlsm"
+WORKBOOK = ROOT / "src" / "workbook"
+TEMPLATE = explorer_template.TEMPLATE
+RIBBON = explorer_template.RIBBON
+RIBBON_PART = explorer_template.RIBBON_PART
+THIS_WORKBOOK = WORKBOOK / "ThisWorkbook.cls"
 WORKBOOK_NAME = "Probability-Distributions-Demo.xlsm"
 
-EXPLORER_EVENTS = (
-    "\r\nPrivate Sub Workbook_Open()\r\n"
-    "    M_STATS_PROBDIST_REGISTER.PROB_Register_PublicUDFs\r\n"
-    "    M_STATS_PROBDIST_EXPLORER.ExplorerOpened\r\n"
-    "End Sub\r\n"
-    "\r\nPrivate Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)\r\n"
-    '    If Sh.CodeName = "shExplorer" Then M_STATS_PROBDIST_EXPLORER.ExplorerInputsChanged Target\r\n'
-    "End Sub\r\n"
-)
+
+def document_source(path: Path) -> str:
+    """A document module's code as the VBE stores it: the exported .cls without
+    the VERSION 1.0 CLASS block that comes before its attributes."""
+    text = module_text(path.read_bytes())
+    start = text.find('Attribute VB_Name = "')
+    if start < 0:
+        raise ValueError(f"{path}: no Attribute VB_Name line")
+    return text[start:]
 
 
 def vba_modules() -> tuple[list[Module], list[Path]]:
     sheets = build_demo.sheet_map()
-    sources = sorted((ROOT / "src").glob("*.bas")) + [
-        DEMO / "M_STATS_PROBDIST_DEMO.bas", DEMO / "M_STATS_PROBDIST_EXPLORER.bas",
-        DEMO / "M_STATS_PROBDIST_REGISTER.bas"]
-    base = build_demo.workbook_module()
-    modules = [Module(base.name, base.source + EXPLORER_EVENTS, DOCUMENT)]
+    sources = sorted((ROOT / "src" / "modules").glob("*.bas")) + sorted(WORKBOOK.glob("*.bas"))
+    modules = [Module("ThisWorkbook", document_source(THIS_WORKBOOK), DOCUMENT)]
     modules += [document_module(sheet.code, False) for sheet in sheets]
     modules += [Module(path.stem, module_text(path.read_bytes())) for path in sources]
-    return modules, sources
+    return modules, sources + [THIS_WORKBOOK]
 
 
 def build() -> tuple[bytes, dict[str, Any], dict[str, str]]:
     commit = git(ROOT, "rev-parse", "HEAD")
     modules, sources = vba_modules()
-    with zipfile.ZipFile(BASELINE) as package:
-        infos = package.infolist()
-        parts = {info.filename: package.read(info.filename) for info in infos}
-    if "xl/vbaProject.bin" not in parts:
-        raise ValueError("the baseline has no VBA project")
-    parts["xl/vbaProject.bin"] = build_vba_project(modules, project_id(commit))
-    out = io.BytesIO()
-    with zipfile.ZipFile(out, "w") as archive:
-        for info in infos:
-            copy = zipfile.ZipInfo(info.filename, info.date_time)
-            copy.compress_type = zipfile.ZIP_DEFLATED
-            copy.create_system = 0
-            copy.external_attr = 0
-            archive.writestr(copy, parts[info.filename])
+    infos, parts = explorer_template.read_package(TEMPLATE)
+    parts[RIBBON_PART] = RIBBON.read_bytes()
+    parts = explorer_template.enable_macros(parts, build_vba_project(modules, project_id(commit)))
+    data = explorer_template.write_package(infos, parts)
     plan = explorer_plan.plan()
-    inputs = sources + [BASELINE, DEMO / "explorer-families.json", Path(__file__),
-                        Path(explorer_plan.__file__), Path(build_demo.__file__),
+    inputs = sources + [TEMPLATE, RIBBON, DEMO / "explorer-families.json", Path(__file__),
+                        Path(explorer_plan.__file__), Path(explorer_template.__file__),
+                        Path(build_demo.__file__),
                         ROOT / "tools/devbuild/vba_project.py", ROOT / "tools/devbuild/build_workbook.py",
                         ROOT / "VERSION"]
     hashes = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs}
-    return out.getvalue(), plan, hashes
+    return data, plan, hashes
 
 
 def main() -> int:

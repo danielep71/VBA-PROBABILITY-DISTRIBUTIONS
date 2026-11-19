@@ -47,14 +47,14 @@ def base_repo():
         "workflow": ".github/workflows/excel.yml",
         "entry_point": "RunAll_CI",
         "expected_assertions": 3,
-        "regression_sources": ["src/A.bas", "tests/T.bas"],
+        "regression_sources": ["src/modules/A.bas", "tests/T.bas"],
         "grid_exporters": {
             "benchmark/main.csv": "benchmark/MainExport.bas",
             "benchmark/holdout/holdout.csv": "benchmark/holdout/HoldoutExport.bas",
         },
     }
     write(root, E.POLICY_PATH, json.dumps(policy, indent=2) + "\n")
-    write(root, "src/A.bas", "Attribute VB_Name = \"A\"\n")
+    write(root, "src/modules/A.bas", "Attribute VB_Name = \"A\"\n")
     write(root, "tests/T.bas", "Attribute VB_Name = \"T\"\n")
     write(root, "benchmark/MainExport.bas", "Attribute VB_Name = \"MainExport\"\n")
     write(root, "benchmark/holdout/HoldoutExport.bas", "Attribute VB_Name = \"HoldoutExport\"\n")
@@ -265,7 +265,7 @@ try:
                 policy_ref=evidence_sha, evidence_ref=evidence_sha,
                 expected_candidate_sha=evidence_sha, require_pass=True)
 
-    write(root, "src/A.bas", "Attribute VB_Name = \"A\"\n' drift\n")
+    write(root, "src/modules/A.bas", "Attribute VB_Name = \"A\"\n' drift\n")
     drift_sha = commit(root, "source drift")
     expect_fail(root, record, "later source drift must invalidate retained record",
                 policy_ref=drift_sha, evidence_ref=drift_sha, require_pass=True)
@@ -277,11 +277,11 @@ try:
     seen = []
     E.validate_record(record, root, policy_ref=drift_sha, evidence_ref=drift_sha,
                       require_pass=True, carried=seen)
-    check(seen == ["src/A.bas"], f"a comment-only drift is carried and named, got {seen}")
+    check(seen == ["src/modules/A.bas"], f"a comment-only drift is carried and named, got {seen}")
     expect_fail(root, record, "a carried source must not certify the exact evidence commit",
                 policy_ref=drift_sha, evidence_ref=drift_sha, carried=[],
                 expected_candidate_sha=drift_sha, require_pass=True)
-    write(root, "src/A.bas", "Attribute VB_Name = \"A\"\nPublic Const CHANGED As Long = 1\n")
+    write(root, "src/modules/A.bas", "Attribute VB_Name = \"A\"\nPublic Const CHANGED As Long = 1\n")
     code_sha = commit(root, "code drift")
     expect_fail(root, record, "a code drift must invalidate the record even with a carried list",
                 policy_ref=code_sha, evidence_ref=code_sha, require_pass=True, carried=[])

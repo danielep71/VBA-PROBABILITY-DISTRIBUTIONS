@@ -243,9 +243,9 @@ repository on 2026-11-02 and copies of them changed to show drift.
 
 ## VBA source checks
 
-Five checks read every tracked `.bas`, `.cls` and `.frm` file: the production
-modules in `src/`, the test module in `tests/`, and the exporters and probes
-under `benchmark/`. `run_static_checks.py` runs them; each also runs on its
+Five checks read every tracked `.bas`, `.cls` and `.frm` file: the library
+modules in `src/modules/`, the modules of the Explorer workbook in `src/workbook/`,
+the test module in `tests/`, and the exporters and probes under `benchmark/`. `run_static_checks.py` runs them; each also runs on its
 own, for example `python3 tools/check_vba_source.py`. Their positive and
 negative fixtures are in [`tests/test_check_vba.py`](../tests/test_check_vba.py)
 and, for the two checks of names and calls,
@@ -256,7 +256,7 @@ as code.
 
 | Check | Enforces |
 | --- | --- |
-| `check_vba_source.py` | Each component in `src/` or `tests/` (no subdirectories) or under `benchmark/`; its file name starts with `M_STATS_PROBDIST_`, has at most 31 characters and equals its one `Attribute VB_Name`, unique ignoring case; a `.bas` export starts with that line; ASCII only; `Option Explicit`; `Option Private Module` in the modules of `OPTION_PRIVATE_REQUIRED` and never in a module that declares a `Public K_STATS_` procedure; no `Option Base`, tab or trailing white space; closed string literals; LF in the Git index with CRLF checkout (`git ls-files --eol` and the `vba-source` attribute of `.gitattributes`) |
+| `check_vba_source.py` | Each component in `src/modules/`, `src/workbook/` or `tests/` (no subdirectories) or under `benchmark/`; its file name starts with `M_STATS_PROBDIST_` (a document module of `src/workbook/` keeps its Excel name: `ThisWorkbook` or a sheet code name starting with `sh`), has at most 31 characters and equals its one `Attribute VB_Name`, unique ignoring case; a `.bas` export starts with that line; ASCII only; `Option Explicit`; `Option Private Module` in the modules of `OPTION_PRIVATE_REQUIRED` and never in a module that declares a `Public K_STATS_` procedure; no `Public K_STATS_` procedure in `src/workbook/`, which the public-API freeze does not read; no `Option Base`, tab or trailing white space; closed string literals; LF in the Git index with CRLF checkout (`git ls-files --eol` and the `vba-source` attribute of `.gitattributes`) |
 | `check_vba_conditionals.py` | `#If`, `#ElseIf`, `#Else`, `#End If` and module `#Const` evaluated in three compilation environments: VBA6 Win32, VBA7 Win32 and VBA7 Win64. An unknown symbol, an unbalanced block, or a malformed, duplicate or non-Boolean `#Const` fails. Every `Declare` reachable under VBA7 is `PtrSafe` |
 | `check_vba_visibility.py` | Every procedure and module-level declaration states `Public` or `Private` (`Global` counts as `Public`), and `Friend` appears only in a class module. No public name (procedure, `Const`, `Enum`, `Type`, variable or `Declare`) is declared twice in one standard module or in two standard modules of a collision group, in an environment they share |
 
@@ -287,7 +287,8 @@ module, and the check fails closed rather than guess.
 contains a `Declare` statement today.
 
 **Collision groups.** One group, `one VBA project` (`COLLISION_GROUPS`), holds
-every standard module under `src/`, `tests/` and `benchmark/`. The Excel
+every standard module under `src/modules/`, `src/workbook/`, `tests/` and
+`benchmark/`. The Excel
 regression imports the production and test modules into one workbook
 (`regression_sources` in
 [`.github/excel-evidence-policy.json`](../.github/excel-evidence-policy.json)),
@@ -456,6 +457,45 @@ fixes; 3.10 reached end of life in October 2026. The non-required job
 needs no installed tool, the unit tests included. `mypy.ini` (`python_version`)
 and `ruff.toml` (`target-version`) check the code against the same floor.
 
+## VBA synchronization
+
+`Sync-PROBDIST-VBA.ps1` imports the VBA source into a workbook in desktop
+Excel, through the VBA project object model. It changes code only: it writes
+no cell, formula, name, format or sheet. It needs Windows desktop Excel with
+*Trust access to the VBA project object model* enabled (File > Options >
+Trust Center > Trust Center Settings > Macro Settings) and a VBA project that
+is not password-locked. Its comment-based help (`Get-Help
+.\tools\Sync-PROBDIST-VBA.ps1 -Full`) gives every option.
+
+| Start | Does |
+| --- | --- |
+| Double-click `Sync-PROBDIST-VBA.cmd` | Saves [`src/workbook/PROBDIST_Template.xlsx`](../src/README.md) as `test-results/Probability-Distributions-Development.xlsm`, replacing it, and imports the development components into it |
+| Drop a workbook on `Sync-PROBDIST-VBA.cmd` | Synchronizes that workbook as it is; asks production or development, and whether to replace the ThisWorkbook code |
+| Drop a workbook on `Sync-PROBDIST-VBA-Downloads.cmd` | Asks for a folder (default: Downloads) and imports only the modules found there, for example modules downloaded to test a pull request; the repository is not changed |
+
+The components come from the folders, not from a list:
+
+- **Production**: the library modules `src/modules/*.bas`, the modules of the
+  Explorer workbook `src/workbook/*.bas`, and the code of ThisWorkbook,
+  `src/workbook/ThisWorkbook.cls`.
+- **Development**: the production components and the regression module,
+  `tests/M_STATS_PROBDIST_TEST.bas`.
+
+A standard module is removed and imported again; a document module keeps its
+workbook object and only its code is replaced. A file from a folder is
+identified by the `Attribute VB_Name` it declares, never by its file name; a
+standard module that the repository does not have is imported when its name
+starts with `M_STATS_PROBDIST_`. Before it changes an existing workbook the
+script saves a copy beside it and removes the copy after a successful save.
+Exit codes: 0 synchronized, 2 cancelled or nothing to import (the workbook
+is not changed), 1 failed (the workbook is closed without saving).
+
+The `Distribution Explorer` workflow runs `ci/Test-SyncWorkbook.ps1` on the
+Excel runner: it builds a production workbook from the template, opens it with
+macros enabled and checks its modules, the function registration and an
+Explorer result, then synchronizes the same workbook as a development
+workbook and checks that the regression module was added.
+
 ## Building the workbook under test (`devbuild/`)
 
 `devbuild/` builds the Excel workbook under test from the modules that
@@ -477,7 +517,8 @@ fixtures, and the `python-tests` check runs them.
 ## VBA source layout
 
 [`format_vba.py`](format_vba.py) states the layout of every tracked `.bas`,
-`.cls` and `.frm` module under `src/`, `tests/` and `benchmark/`:
+`.cls` and `.frm` module under `src/modules/`, `src/workbook/`, `tests/` and
+`benchmark/`:
 
 1. CRLF line endings, one final line ending and no blank lines at the end of the
    file;
@@ -516,7 +557,7 @@ LF-only line ending, or a procedure, `End` or label line out of column one.
 ```bash
 python3 tools/format_vba.py --check            # every tracked module, with the baseline
 python3 tools/format_vba.py --check --no-baseline
-python3 tools/format_vba.py --write src/M_STATS_PROBDIST_CORE.bas
+python3 tools/format_vba.py --write src/modules/M_STATS_PROBDIST_CORE.bas
 ```
 
 Every module is bound by hash to the Excel certification record or the
@@ -683,7 +724,7 @@ layout; they are not verbatim copies.
 | `docs/repo_governance/repository-settings.json` | The template's settings configuration format, filled with this repository's live settings |
 | `docs/repo_governance/DISTRIBUTION.md` | The template's distribution review, adapted to a public repository and given a pinned Gitleaks history scan |
 | `vba_lexer.py` | The shared lexer of `tools/vba_lexer.py`, without the facade-prefix and house-style lookups. |
-| `check_vba_source.py` | `tools/check_vba_source.py`: this repository's flat `src/` and `tests/` and nested `benchmark/` homes and `M_STATS_PROBDIST_` names in place of role homes and prefixes; `Option Private Module` required in a named set of modules and forbidden beside `K_STATS_` worksheet functions; no form or workbook rules. |
+| `check_vba_source.py` | `tools/check_vba_source.py`: this repository's flat `src/modules/`, `src/workbook/` and `tests/` and nested `benchmark/` homes and `M_STATS_PROBDIST_` names in place of role homes and prefixes; `Option Private Module` required in a named set of modules and forbidden beside `K_STATS_` worksheet functions; no form or workbook rules. |
 | `check_vba_conditionals.py` | `tools/check_vba_conditionals.py`, extended to module `#Const` symbols and to the `Win16` and `Mac` constants, with one directive walk shared by the reachable-source model and the `PtrSafe` rule. |
 | `check_vba_visibility.py` | The visibility and collision parts of `tools/check_vba_public_api.py`, without its inventory, signature and public-variable rules; multi-identifier `Const` and variable statements are read name by name, and collisions are evaluated per collision group. |
 | `tests/test_check_vba.py` | The fixture repositories and the source, conditional, public-API and lexer cases of `tests/test_check_vba.py`, rewritten for this repository's modules and rules. |
@@ -734,6 +775,17 @@ Mozilla Public License 2.0.
 
 | File | Adaptation |
 | --- | --- |
-| `tools/check_vba_identifiers.py` | `tools/check_vba_identifiers.py`, with its rules unchanged and one correction (a comma inside a date literal no longer splits a declaration), on this repository's `vba_lexer.py` and `check_vba_conditionals.py`, which already provide every function it imports. Added: `Scale` on the keyword list, and `ACCEPTED_KEYWORD_NAMES` for one local of the released source. The form, class and document-module rules are kept although no such module is tracked here |
+| `tools/check_vba_identifiers.py` | `tools/check_vba_identifiers.py`, with its rules unchanged and one correction (a comma inside a date literal no longer splits a declaration), on this repository's `vba_lexer.py` and `check_vba_conditionals.py`, which already provide every function it imports. Added: `Scale` on the keyword list, and `ACCEPTED_KEYWORD_NAMES` for one local of the released source. The form, class and document-module rules are kept; `src/workbook/ThisWorkbook.cls` is the one document module tracked here |
 | `tools/check_vba_calls.py` | `tools/check_vba_calls.py`, unchanged. Advisory in the template; blocking here, since the tracked source has no finding |
 | `tests/test_check_vba_names.py` | The identifier and call fixtures and cases of `tests/test_check_vba.py`, without the form, class and document-module cases; with cases for `Scale`, for the accepted name and for this repository's own source |
+
+### Adapted from `danielep71/k-saccr` at `400871e`
+
+The VBA synchronization (#438), adapted from revision
+`400871e` of the K-SACCR repository, by the same author.
+
+| File | Adaptation |
+| --- | --- |
+| `tools/Sync-PROBDIST-VBA.ps1` | `tools/Sync-SACCR-VBA.ps1`: the same functions for names, encodings, document modules, folder imports and the template, with the components read from `src/`, `src/workbook/` and `tests/` instead of a manifest, the project prefix `M_STATS_PROBDIST_`, the template `src/workbook/PROBDIST_Template.xlsx`, and without the list of retired K-SACCR components |
+| `tools/Sync-PROBDIST-VBA.cmd` | `tools/Sync-SACCR-VBA.cmd`, with this repository's names and development workbook |
+| `tools/Sync-PROBDIST-VBA-Downloads.cmd` | `tools/Sync-SACCR-VBA-Downloads.cmd`, with this repository's names |

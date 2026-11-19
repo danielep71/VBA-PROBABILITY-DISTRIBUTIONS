@@ -17,7 +17,7 @@ import _tracked_modules as T  # noqa: E402
 import check_module_lists as M  # noqa: E402
 
 FAILS: list[str] = []
-SOURCES = ["src/A.bas", "src/B.bas", "tests/T.bas"]
+SOURCES = ["src/modules/A.bas", "src/modules/B.bas", "tests/T.bas"]
 
 
 def check(condition: bool, message: str) -> None:
@@ -73,36 +73,47 @@ root = make_repo()
 try:
     expect(root, "baseline", True)
     check(T.regression_modules(root) == SOURCES, "regression modules must be the tracked src/tests .bas files")
-    check(T.production_modules(root) == ["src/A.bas", "src/B.bas"], "production modules must be the tracked src .bas files")
+    check(T.production_modules(root) == ["src/modules/A.bas", "src/modules/B.bas"], "production modules must be the tracked src .bas files")
 
     write_policy(root, list(reversed(SOURCES)))
     expect(root, "same list in another order", True)
 
     # A tracked module missing from the list.
-    write_policy(root, ["src/A.bas", "tests/T.bas"])
+    write_policy(root, ["src/modules/A.bas", "tests/T.bas"])
     expect(root, "tracked src module missing from the list", False,
-           "tracked module src/B.bas is missing from regression_sources")
-    write_policy(root, ["src/A.bas", "src/B.bas"])
+           "tracked module src/modules/B.bas is missing from regression_sources")
+    write_policy(root, ["src/modules/A.bas", "src/modules/B.bas"])
     expect(root, "tracked tests module missing from the list", False,
            "tracked module tests/T.bas is missing from regression_sources")
 
     # A tracked module in a nested directory is still in scope.
-    write(root, "src/sub/N.bas")
-    git(root, "add", "--", "src/sub/N.bas")
+    write(root, "src/modules/sub/N.bas")
+    git(root, "add", "--", "src/modules/sub/N.bas")
     write_policy(root, SOURCES)
     expect(root, "tracked nested module missing from the list", False,
-           "tracked module src/sub/N.bas is missing from regression_sources")
-    git(root, "rm", "-q", "--cached", "--", "src/sub/N.bas")
-    shutil.rmtree(root / "src" / "sub")
+           "tracked module src/modules/sub/N.bas is missing from regression_sources")
+    git(root, "rm", "-q", "--cached", "--", "src/modules/sub/N.bas")
+    shutil.rmtree(root / "src" / "modules" / "sub")
     expect(root, "nested module removed again", True)
 
+    # The Explorer workbook's modules, in src/workbook/, are neither
+    # production nor regression modules, tracked or only on disk.
+    write(root, "src/workbook/W.bas")
+    check(T.present_modules(root, T.REGRESSION_DIRS) == SOURCES, "src/workbook/ is not on disk scope")
+    git(root, "add", "--", "src/workbook/W.bas")
+    check(T.regression_modules(root) == SOURCES, "src/workbook/ is not a regression source")
+    check(T.production_modules(root) == ["src/modules/A.bas", "src/modules/B.bas"], "src/workbook/ is not production")
+    expect(root, "workbook module beside an exact list", True)
+    git(root, "rm", "-q", "--cached", "--", "src/workbook/W.bas")
+    shutil.rmtree(root / "src" / "workbook")
+
     # An extra listed module that is not tracked.
-    write_policy(root, SOURCES + ["src/Ghost.bas"])
+    write_policy(root, SOURCES + ["src/modules/Ghost.bas"])
     expect(root, "listed module that does not exist", False,
-           "regression_sources lists src/Ghost.bas, which is not a tracked .bas module")
-    write(root, "src/Ghost.bas")
+           "regression_sources lists src/modules/Ghost.bas, which is not a tracked .bas module")
+    write(root, "src/modules/Ghost.bas")
     expect(root, "listed module present but untracked", False, "(present but not tracked)")
-    (root / "src" / "Ghost.bas").unlink()
+    (root / "src" / "modules" / "Ghost.bas").unlink()
 
     # A tracked module outside src/ and tests/ must not be listed.
     write_policy(root, SOURCES + ["benchmark/Exporter.bas"])
@@ -122,16 +133,16 @@ try:
     (root / "tests" / "Scratch.bas").unlink()
 
     # Upper-case extensions are modules too.
-    write(root, "src/Upper.BAS")
-    git(root, "add", "--", "src/Upper.BAS")
+    write(root, "src/modules/Upper.BAS")
+    git(root, "add", "--", "src/modules/Upper.BAS")
     expect(root, "tracked .BAS module missing from the list", False,
-           "tracked module src/Upper.BAS is missing from regression_sources")
-    git(root, "rm", "-q", "--cached", "--", "src/Upper.BAS")
-    (root / "src" / "Upper.BAS").unlink()
+           "tracked module src/modules/Upper.BAS is missing from regression_sources")
+    git(root, "rm", "-q", "--cached", "--", "src/modules/Upper.BAS")
+    (root / "src" / "modules" / "Upper.BAS").unlink()
 
     # Malformed lists.
-    write_policy(root, SOURCES + ["src/A.bas"])
-    expect(root, "duplicate listed module", False, "lists src/A.bas more than once")
+    write_policy(root, SOURCES + ["src/modules/A.bas"])
+    expect(root, "duplicate listed module", False, "lists src/modules/A.bas more than once")
     write_policy(root, [])
     expect(root, "empty list", False, "regression_sources must be a non-empty array")
     write(root, M.POLICY_PATH, "{not json")

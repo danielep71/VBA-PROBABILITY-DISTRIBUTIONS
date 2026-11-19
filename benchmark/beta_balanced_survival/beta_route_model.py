@@ -56,9 +56,9 @@ import mpmath as mp
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SOURCES = {
-    "core": os.path.join(ROOT, "src", "M_STATS_PROBDIST_CORE.bas"),
-    "special": os.path.join(ROOT, "src", "M_STATS_PROBDIST_SPECIALFUNCS.bas"),
-    "continuous": os.path.join(ROOT, "src", "M_STATS_PROBDIST_CONTINUOUS.bas"),
+    "core": os.path.join(ROOT, "src", "modules", "M_STATS_PROBDIST_CORE.bas"),
+    "special": os.path.join(ROOT, "src", "modules", "M_STATS_PROBDIST_SPECIALFUNCS.bas"),
+    "continuous": os.path.join(ROOT, "src", "modules", "M_STATS_PROBDIST_CONTINUOUS.bas"),
 }
 
 # Procedures the model ports, by source file. Their text is hashed into

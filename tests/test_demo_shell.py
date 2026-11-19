@@ -21,7 +21,7 @@ ART = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
 REL = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 PKG = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 NS = {"s": DEMO.MAIN}
-MODULE = ROOT / "examples/demo/M_STATS_PROBDIST_DEMO.bas"
+MODULE = ROOT / "src/workbook/M_STATS_PROBDIST_DEMO.bas"
 
 
 class DemoShellTests(unittest.TestCase):
@@ -43,9 +43,15 @@ class DemoShellTests(unittest.TestCase):
     def test_demo_source_placement_is_narrow(self):
         sys.path.insert(0, str(ROOT / "tools"))
         from check_vba_source import placement
-        self.assertEqual(placement("examples/demo/M_STATS_PROBDIST_DEMO.bas"), [])
-        self.assertTrue(placement("examples/other/M_STATS_PROBDIST_DEMO.bas"))
-        self.assertTrue(placement("examples/demo/Arbitrary.bas"))
+        self.assertEqual(placement("src/workbook/M_STATS_PROBDIST_DEMO.bas"), [])
+        self.assertEqual(placement("src/workbook/ThisWorkbook.cls"), [])
+        self.assertEqual(placement("src/workbook/shExplorer.cls"), [])
+        self.assertTrue(placement("examples/demo/M_STATS_PROBDIST_DEMO.bas"))
+        self.assertTrue(placement("src/workbook/sub/M_STATS_PROBDIST_DEMO.bas"))
+        self.assertTrue(placement("src/workbook/Arbitrary.bas"))
+        self.assertTrue(placement("src/workbook/ThisWorkbook.bas"))
+        self.assertTrue(placement("src/ThisWorkbook.cls"))
+        self.assertTrue(placement("tests/shExplorer.cls"))
 
     def test_rebuild_is_byte_identical(self):
         self.assertEqual(self.data, DEMO.build()[0])

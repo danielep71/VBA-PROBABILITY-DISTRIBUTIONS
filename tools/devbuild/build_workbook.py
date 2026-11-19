@@ -7,9 +7,9 @@ probdist-regression.manifest.json. Git ignores test-results/.
 
 The workbook's VBA project holds exactly the modules that
 .github/excel-evidence-policy.json lists in regression_sources (the library
-modules under src/ and the regression harness under tests/), in that order,
+modules under src/modules/ and the regression harness under tests/), in that order,
 plus the empty document modules of the workbook and its one sheet. A listed
-module that is missing, a .bas under src/ or tests/ that is not listed, and a
+module that is missing, a .bas under src/modules/ or tests/ that is not listed, and a
 module whose VB_Name differs from its file name stop the build. vba_project.py
 writes the project from the [MS-OVBA] and [MS-CFB] specifications with
 compressed source and no p-code cache, so Excel compiles it from source on
@@ -60,7 +60,7 @@ from vba_project import (  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = "tools/devbuild/build_workbook.py"
 POLICY = ".github/excel-evidence-policy.json"
-SOURCE_DIRECTORIES = ("src", "tests")
+SOURCE_DIRECTORIES = ("src/modules", "tests")
 DEFAULT_OUTPUT = "test-results/workbook-build/probdist-regression.xlsm"
 MANIFEST_SUFFIX = ".manifest.json"
 FORMAT = "probdist-workbook-build-1"
@@ -126,14 +126,14 @@ def git_bytes(root: Path, *args: str) -> bytes:
 
 def regression_sources(policy: dict[str, Any]) -> list[str]:
     """The policy's regression_sources, checked: unique .bas files directly under
-    src/ or tests/."""
+    src/modules/ or tests/."""
     listed = policy.get("regression_sources")
     if not isinstance(listed, list) or not listed \
             or not all(isinstance(item, str) for item in listed):
         raise BuildError(f"{POLICY}: regression_sources must be a non-empty list of paths")
     for item in listed:
-        parts = item.split("/")
-        if len(parts) != 2 or parts[0] not in SOURCE_DIRECTORIES or not item.endswith(".bas"):
+        directory, _, name = item.rpartition("/")
+        if directory not in SOURCE_DIRECTORIES or not name.endswith(".bas"):
             raise BuildError(f"{POLICY}: {item} is not a .bas file directly under "
                              f"{' or '.join(d + '/' for d in SOURCE_DIRECTORIES)}")
     stems = [Path(item).stem.casefold() for item in listed]
@@ -174,7 +174,7 @@ def read_sources(root: Path, listed: Sequence[str]) -> list[Source]:
     extra = [item for item in present if item not in listed]
     if extra:
         raise BuildError(f"{', '.join(extra)}: not listed in {POLICY} regression_sources; "
-                         "list it there, or move it out of src/ and tests/")
+                         "list it there, or move it out of src/modules/ and tests/")
     sources = []
     for item in listed:
         name = Path(item).stem

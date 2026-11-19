@@ -69,7 +69,7 @@ class Rule(unittest.TestCase):
                 self.assertEqual(F.paths(a, x), ("dd", "dd"))
 
     def test_production_has_the_same_ceiling(self):
-        with open(os.path.join(HERE, "..", "..", "src", "M_STATS_PROBDIST_SPECIALFUNCS.bas"),
+        with open(os.path.join(HERE, "..", "..", "src", "modules", "M_STATS_PROBDIST_SPECIALFUNCS.bas"),
                   encoding="latin-1") as handle:
             source = handle.read()
         self.assertIn("PROB_GAMMA_FAST_MAX_SHAPE As Double = 1E+15", source)
