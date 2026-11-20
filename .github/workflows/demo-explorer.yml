@@ -52,7 +52,9 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: [self-hosted, Windows, X64, excel]
-    timeout-minutes: 15
+    # The job builds the workbook and runs the Excel checks of seven sheets: 13 to 15 minutes with the Tails
+    # sheet, so 15 was the limit and a slower runner cancelled the job in the last UI step.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
