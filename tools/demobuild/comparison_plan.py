@@ -247,7 +247,7 @@ def plan() -> dict[str, Any]:
         {"address": "C28", "value": "Excel against the reference"},
         {"address": "C29", "value": "Library against the reference"},
         {"address": "C30", "value": "SciPy against the reference"},
-        {"address": "C31", "value": "=PY() against the reference"},
+        {"address": "C31", "value": "Your =PY() against the reference"},
         {"address": "C32", "value": "Why this case"},
         {"address": "C34", "value": "Computed by"},
         {"address": "C35", "value": "Provenance"},

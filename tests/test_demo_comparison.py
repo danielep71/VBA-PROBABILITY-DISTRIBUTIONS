@@ -93,6 +93,12 @@ class PlanTests(unittest.TestCase):
         used = set(re.findall(r"\bComparison[A-Z][A-Za-z]*\b", " ".join(item["formula"] for item in PLAN["formulas"])))
         self.assertLessEqual(used, sheet, "a formula reads a name the plan does not define")
 
+    def test_no_text_or_value_reads_as_a_formula(self):
+        # A text that starts with =, +, - or @ is written by Value2 as a formula; the reference
+        # texts keep the apostrophe of a text constant.
+        for item in PLAN["texts"] + [cell for cell in PLAN["cells"] if isinstance(cell["value"], str)]:
+            self.assertNotIn(item["value"][:1], "=+-@", item["address"])
+
     def test_every_case_has_its_live_formulas(self):
         formulas = {item["address"]: item["formula"] for item in PLAN["formulas"]}
         cells = {item["address"]: item["value"] for item in PLAN["cells"]}
