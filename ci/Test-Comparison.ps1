@@ -30,6 +30,9 @@ function Digits($Value, [double]$Reference) {
     if ($relative -eq 0) { return $full }
     return [Math]::Min($full, [Math]::Max(0.0, -[Math]::Log10($relative)))
 }
+function Close([double]$Actual, [double]$Expected) {
+    return [Math]::Abs($Actual - $Expected) -le 1E-15 * [Math]::Abs($Expected)
+}
 function Grade($Value, $Digits, [double]$ReferenceGrade, [double]$ReportGrade) {
     if ($Value -is [string]) { return 'no function' }
     if (Is-Error $Value) { return 'error' }
@@ -98,9 +101,12 @@ try {
         $row = $first + $index
         $where = "$($case.label) (row $row)"
         if ([string]$sheet.Range("C$row").Value2 -ne [string]$case.label) { throw "${where}: the label reads $($sheet.Range("C$row").Value2)" }
-        $reference = [double]::Parse([string]$case.reference, $invariant)
-        if ([double]$sheet.Range("D$row").Value2 -ne $reference) { throw "${where}: the reference is $($sheet.Range("D$row").Value2), expected $reference" }
-        if ([double]$sheet.Range("H$row").Value2 -ne [double]::Parse([string]$case.scipy, $invariant)) { throw "${where}: the SciPy value is $($sheet.Range("H$row").Value2)" }
+        # The stored numbers may differ from the decimal texts in their last bit (the JSON and the
+        # parsing of PowerShell 5): within 1E-15. The digits are then computed, as on the sheet,
+        # against the reference held in the cell.
+        $reference = [double]$sheet.Range("D$row").Value2
+        if (-not (Close $reference ([double]::Parse([string]$case.reference, $invariant)))) { throw "${where}: the reference is $reference, expected $($case.reference)" }
+        if (-not (Close ([double]$sheet.Range("H$row").Value2) ([double]::Parse([string]$case.scipy, $invariant)))) { throw "${where}: the SciPy value is $($sheet.Range("H$row").Value2), expected $($case.scipy)" }
         if ([string]$sheet.Range("G$row").Formula2 -ne ('=' + $case.library)) { throw "${where}: the library formula is $($sheet.Range("G$row").Formula2)" }
         if ($null -eq $case.excel) {
             if ([string]$sheet.Range("F$row").Value2 -ne 'none') { throw "${where}: Excel has no function, the cell reads $($sheet.Range("F$row").Value2)" }
