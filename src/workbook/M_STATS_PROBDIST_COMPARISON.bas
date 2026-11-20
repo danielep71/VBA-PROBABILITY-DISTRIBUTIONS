@@ -141,7 +141,9 @@ Public Sub RefreshComparison()
     WasProtected = Sheet.ProtectContents
     Application.EnableEvents = False
     If WasProtected Then Sheet.Unprotect
-    Sheet.Range(BUILD_CELL).Value2 = ComparisonExcelBuild()
+    ' Written only when another Excel opens the file: a write at every opening
+    ' would leave the workbook marked as changed.
+    If CStr(Sheet.Range(BUILD_CELL).Value2) <> ComparisonExcelBuild() Then Sheet.Range(BUILD_CELL).Value2 = ComparisonExcelBuild()
     Sheet.Calculate
     If Sheet.ChartObjects.Count = 1 Then
         Set Item = Sheet.ChartObjects(CHART_NAME)
