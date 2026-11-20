@@ -55,6 +55,7 @@ try {
     foreach ($address in @('D17:D18', 'D20:D28', 'F20:I1020')) {
         if (-not $sheet.Range($address).Locked) { throw "$address must be locked" }
     }
+    if ([double]$sheet.Range('D28').Font.Size -ne 8) { throw "The verdict cell has font size $($sheet.Range('D28').Font.Size), expected 8" }
     foreach ($row in @(6, 7, 8, 9, 10, 11, 12, 13, 14)) {
         $rule = $sheet.Range("D$row").Validation
         foreach ($text in @($rule.InputTitle, $rule.InputMessage, $rule.ErrorTitle, $rule.ErrorMessage)) {
