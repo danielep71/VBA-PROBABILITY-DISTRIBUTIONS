@@ -98,13 +98,19 @@ End Sub
 
 
 Public Sub ComparisonOpened()
-    ' Called by Workbook_Open: names the Excel that now computes the sheet and
-    ' sets the chart, and leaves the Saved flag as it was.
+    ' Called by Workbook_Open: names the Excel that now computes the sheet,
+    ' when it is not the one that saved it. The chart keeps the type and title
+    ' it was saved with, so nothing else is set here: a chart formatted at
+    ' every opening would leave the workbook marked as changed.
+    Dim Sheet As Worksheet
     Dim WasSaved As Boolean
     On Error Resume Next
     WasSaved = ThisWorkbook.Saved
-    RefreshComparison
-    ThisWorkbook.Saved = WasSaved
+    Set Sheet = ComparisonSheet()
+    If CStr(Sheet.Range(BUILD_CELL).Value2) <> ComparisonExcelBuild() Then
+        Sheet.Range(BUILD_CELL).Value2 = ComparisonExcelBuild()
+        ThisWorkbook.Saved = WasSaved
+    End If
     On Error GoTo 0
 End Sub
 
