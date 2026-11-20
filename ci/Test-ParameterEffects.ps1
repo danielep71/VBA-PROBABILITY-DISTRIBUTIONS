@@ -174,6 +174,31 @@ try {
     Set-Number $sheet 'D7' 0
     $report.invalid = 'PASS'
 
+    # A hypergeometric population of 1 or 2 items: the general moments would divide by zero. With
+    # one draw and one success, a population of 1 is degenerate (X = 1: sd 0, skewness undefined),
+    # one of 2 is a fair Bernoulli (mean 0.5, sd 0.5, skewness 0) and one of 3 a Bernoulli(1/3).
+    Set-Text $sheet 'D6' 'Hypergeometric'
+    Set-Number $sheet 'D7' 1
+    Set-Number $sheet 'D8' 1
+    Set-Text $sheet 'D11' 'Population size'
+    for ($k = 0; $k -lt 4; $k++) { Set-Number $sheet ('D' + (12 + $k)) ($k + 1) }
+    $excel.Calculate()
+    if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "Small populations give the status $($sheet.Range('D19').Value2)" }
+    $small = @(@(1.0, 0.0, 'undefined'), @(0.5, 0.5, 0.0), @((1.0 / 3.0), [Math]::Sqrt(2.0) / 3.0, [Math]::Sqrt(0.5)))
+    for ($k = 0; $k -lt 3; $k++) {
+        $row = $first + $k
+        foreach ($pair in @(@('F', $small[$k][0]), @('G', $small[$k][1]), @('H', $small[$k][2]))) {
+            $cell = $pair[0] + $row
+            $expected = $pair[1]
+            if ($expected -is [string]) {
+                if ([string]$sheet.Range($cell).Value2 -ne $expected) { throw "Population of $($k + 1): $cell reads '$($sheet.Range($cell).Value2)', expected '$expected'" }
+            } elseif ($null -eq (Read-Number $sheet $cell) -or [Math]::Abs((Read-Number $sheet $cell) - $expected) -gt 1E-12) {
+                throw "Population of $($k + 1): $cell is $($sheet.Range($cell).Value2), expected $expected"
+            }
+        }
+    }
+    $report.small_population = 'PASS'
+
     # A paste over several cells that includes D6 keeps the pasted values and follows the family.
     $excel.EnableEvents = $true
     Set-Text $sheet 'D6' 'Normal'

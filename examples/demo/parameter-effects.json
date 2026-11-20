@@ -383,8 +383,8 @@
    ],
    "moments": {
     "mean": "a*b/c",
-    "variance": "a*(b/c)*(1-b/c)*(c-a)/(c-1)",
-    "skewness": "(c-2*b)*SQRT(c-1)*(c-2*a)/(SQRT(a*b*(c-b)*(c-a))*(c-2))"
+    "variance": "IF(c=1,0,a*(b/c)*(1-b/c)*(c-a)/(c-1))",
+    "skewness": "IF(c<=2,IF(a*b*(c-b)*(c-a)>0,0,NA()),(c-2*b)*SQRT(c-1)*(c-2*a)/(SQRT(a*b*(c-b)*(c-a))*(c-2)))"
    }
   },
   "Discrete uniform": {
