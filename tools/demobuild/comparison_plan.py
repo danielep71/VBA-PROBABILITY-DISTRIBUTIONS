@@ -270,7 +270,7 @@ def plan() -> dict[str, Any]:
         {"address": "F14", "value": "A grade below reference is a difference from this reference, not a certified defect. "
                                     "The library's contracts are in docs/."},
         {"address": "F16", "value": "Needs macros and Excel 365 or 2024. If Macros says DISABLED, unblock the file and reopen."},
-        {"address": f"C{HEADER_ROW - 1}", "value": "Every case: values, correct digits and grades"},
+        {"address": f"C{HEADER_ROW - 1}", "value": "Every case against the reference"},
         {"address": f"C{HEADER_ROW}", "value": "Case"},
         {"address": f"D{HEADER_ROW}", "value": "Reference (mpmath)"},
         {"address": f"F{HEADER_ROW}", "value": "Excel"},

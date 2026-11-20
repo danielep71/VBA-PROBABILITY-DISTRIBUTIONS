@@ -172,6 +172,7 @@ Public Sub RefreshComparison()
                 .Axes(xlValue).MinimumScale = 0#
                 .Axes(xlValue).MaximumScale = FULL_DIGITS
                 .Axes(xlValue).MajorUnit = 2#
+                .Axes(xlValue).TickLabels.NumberFormat = "0"
                 .Axes(xlCategory).ReversePlotOrder = True
                 .Axes(xlCategory).TickLabels.Font.Size = 7
                 .Axes(xlCategory).TickLabelSpacing = 1

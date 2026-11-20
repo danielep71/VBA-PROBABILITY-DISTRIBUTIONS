@@ -171,15 +171,22 @@ try {
     $sheet.Range("C${header}:O$header").WrapText = $true
     $table = $sheet.Range("C${first}:O$last")
     $table.Font.Size = 9
-    # A union address takes the regional list separator: each block is formatted on its own.
+    # A union address takes the regional list separator: each block is formatted on its own. The
+    # formats are written in the regional language (NumberFormat through COM is read that way too).
     foreach ($address in ([string]$at.values).Split(',')) {
-        $sheet.Range($address).NumberFormat = '0.000000E+00'
+        $sheet.Range($address).NumberFormatLocal = '0' + $dec + '000000E+00'
         $sheet.Range($address).HorizontalAlignment = -4152
     }
     foreach ($address in ([string]$at.digits).Split(',')) {
-        $sheet.Range($address).NumberFormat = '0.0'
+        $sheet.Range($address).NumberFormatLocal = '0' + $dec + '0'
         $sheet.Range($address).HorizontalAlignment = -4108
     }
+    # The values of the selected case keep every digit a Double shows; the thresholds are whole numbers.
+    foreach ($key in @('excel_value', 'library_value', 'scipy_value')) {
+        $row = [int]$at.detail_rows.$key
+        $sheet.Range("D${row}:I$row").NumberFormatLocal = '0' + $dec + '000000000000000E+00'
+    }
+    $sheet.Range("$($at.reference_grade):$($at.report_grade)").NumberFormatLocal = '0'
     $sheet.Range($at.grades).HorizontalAlignment = -4108
     $sheet.Range("C${first}:C$last").HorizontalAlignment = -4131
     $sheet.Tab.Color = $explorer.Tab.Color
