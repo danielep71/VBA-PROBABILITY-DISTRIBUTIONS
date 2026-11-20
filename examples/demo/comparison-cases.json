@@ -1,0 +1,282 @@
+{
+ "schema": "comparison-cases-1",
+ "source": "benchmark/excel_comparison/excel_comparison_grid.csv",
+ "default_case": "normal survival, z = 8",
+ "reference": {
+  "method": "mpmath at 50 significant digits, benchmark/excel_comparison/generate_excel_comparison.py",
+  "digits": 50
+ },
+ "scipy": {
+  "python": "3.11.17",
+  "numpy": "2.4.6",
+  "scipy": "1.17.1",
+  "mpmath": "1.3.0"
+ },
+ "grades": {
+  "reference": 12,
+  "report": 6
+ },
+ "cases": [
+  {
+   "label": "normal cdf, body",
+   "excel": "NORM.S.DIST(1.5,TRUE)",
+   "library": "K_STATS_NormalStandard_Cumulative(1.5)",
+   "reference": "0.9331927987311419339955059590201139",
+   "python": "from scipy.stats import norm; norm.cdf(1.5)",
+   "scipy": "0.9331927987311419",
+   "why": "body: both should be exact"
+  },
+  {
+   "label": "normal survival, z = 8",
+   "excel": "1-NORM.S.DIST(8,TRUE)",
+   "library": "K_STATS_NormalStandard_Survival(8)",
+   "reference": "6.220960574271784123515995172588188e-16",
+   "python": "from scipy.stats import norm; norm.sf(8)",
+   "scipy": "6.22096057427174e-16",
+   "why": "no direct survival in Excel; 1-CDF loses the tail"
+  },
+  {
+   "label": "normal survival, z = 15",
+   "excel": "1-NORM.S.DIST(15,TRUE)",
+   "library": "K_STATS_NormalStandard_Survival(15)",
+   "reference": "3.670966199312750885786089655334743e-51",
+   "python": "from scipy.stats import norm; norm.sf(15)",
+   "scipy": "3.6709661993126986e-51",
+   "why": "1-CDF is exactly 0 in Double here"
+  },
+  {
+   "label": "normal inverse survival",
+   "excel": null,
+   "library": "K_STATS_NormalStandard_InverseSurvival(1E-15)",
+   "reference": "7.941345326170996780966743572293613",
+   "python": "from scipy.stats import norm; norm.isf(1e-15)",
+   "scipy": "7.941345326170998",
+   "why": "Excel has no inverse survival; NORM.S.INV(1-1E-15) loses the argument"
+  },
+  {
+   "label": "lognormal cdf, body",
+   "excel": "LOGNORM.DIST(2,0,1,TRUE)",
+   "library": "K_STATS_Lognormal_Cumulative(2,0,1)",
+   "reference": "0.7558914042144172659949606935210557",
+   "python": "from scipy.stats import lognorm; import math; lognorm.cdf(2, s=1, scale=math.exp(0))",
+   "scipy": "0.7558914042144173",
+   "why": "body"
+  },
+  {
+   "label": "lognormal survival, deep",
+   "excel": "1-LOGNORM.DIST(2981,0,1,TRUE)",
+   "library": "K_STATS_Lognormal_Survival(2981,0,1)",
+   "reference": "6.220248563590148946223944925456155e-16",
+   "python": "from scipy.stats import lognorm; import math; lognorm.sf(2981, s=1, scale=math.exp(0))",
+   "scipy": "6.220248563590113e-16",
+   "why": "no direct survival; log(2981) is about 8"
+  },
+  {
+   "label": "t survival, body",
+   "excel": "T.DIST.RT(1.5,10)",
+   "library": "K_STATS_StudentT_Survival(1.5,10)",
+   "reference": "0.08225366322272009042463044257728931",
+   "python": "from scipy.stats import t; t.sf(1.5, 10)",
+   "scipy": "0.08225366322272007",
+   "why": "body; Excel has a direct upper tail here"
+  },
+  {
+   "label": "t survival, deep tail",
+   "excel": "T.DIST.RT(30,10)",
+   "library": "K_STATS_StudentT_Survival(30,10)",
+   "reference": "1.98089617101566213523459402465448e-11",
+   "python": "from scipy.stats import t; t.sf(30, 10)",
+   "scipy": "1.9808961710156623e-11",
+   "why": "deep tail with a direct Excel function"
+  },
+  {
+   "label": "t survival, large df",
+   "excel": "T.DIST.RT(2,1E7)",
+   "library": "K_STATS_StudentT_Survival(2,1E7)",
+   "reference": "0.02275014544592147663979041412022321",
+   "python": "from scipy.stats import t; t.sf(2, 1e7)",
+   "scipy": "0.02275014544592148",
+   "why": "large df: known library weakness, incomplete-beta CF conditioning"
+  },
+  {
+   "label": "chi-square sf, deep tail",
+   "excel": "CHISQ.DIST.RT(200,3)",
+   "library": "K_STATS_ChiSquare_Survival(200,3)",
+   "reference": "4.218541107192042337657127819318896e-43",
+   "python": "from scipy.stats import chi2; chi2.sf(200, 3)",
+   "scipy": "4.218541107192018e-43",
+   "why": "deep tail with a direct Excel function"
+  },
+  {
+   "label": "chi-square cdf, large df",
+   "excel": "CHISQ.DIST(1E6,1E6,TRUE)",
+   "library": "K_STATS_ChiSquare_Cumulative(1E6,1E6)",
+   "reference": "0.5001880631966055004839584963926819",
+   "python": "from scipy.stats import chi2; chi2.cdf(1e6, 1e6)",
+   "scipy": "0.5001880631966055",
+   "why": "large df"
+  },
+  {
+   "label": "F survival, deep tail",
+   "excel": "F.DIST.RT(100,5,10)",
+   "library": "K_STATS_F_Survival(100,5,10)",
+   "reference": "0.00000003316907599210093871736298342951957",
+   "python": "from scipy.stats import f; f.sf(100, 5, 10)",
+   "scipy": "3.316907599210092e-08",
+   "why": "deep tail with a direct Excel function"
+  },
+  {
+   "label": "F survival, extreme ratio",
+   "excel": "F.DIST.RT(1,1E6,3)",
+   "library": "K_STATS_F_Survival(1,1E6,3)",
+   "reference": "0.6083743611885768984023075102239227",
+   "python": "from scipy.stats import f; f.sf(1, 1e6, 3)",
+   "scipy": "0.6083743611885765",
+   "why": "extreme degree ratio"
+  },
+  {
+   "label": "gamma cdf, body",
+   "excel": "GAMMA.DIST(3,2,1,TRUE)",
+   "library": "K_STATS_Gamma_Cumulative(3,2,1)",
+   "reference": "0.8008517265285442280826303373997529",
+   "python": "from scipy.stats import gamma; gamma.cdf(3, 2, scale=1)",
+   "scipy": "0.8008517265285442",
+   "why": "body"
+  },
+  {
+   "label": "gamma survival, deep",
+   "excel": "1-GAMMA.DIST(60,2,1,TRUE)",
+   "library": "K_STATS_Gamma_Survival(60,2,1)",
+   "reference": "5.341471565244877406478127008450891e-25",
+   "python": "from scipy.stats import gamma; gamma.sf(60, 2, scale=1)",
+   "scipy": "5.341471565244885e-25",
+   "why": "no direct survival; true value is about 5E-25"
+  },
+  {
+   "label": "gamma cdf, large shape",
+   "excel": "GAMMA.DIST(1E6,1E6,1,TRUE)",
+   "library": "K_STATS_Gamma_Cumulative(1E6,1E6,1)",
+   "reference": "0.5001329807608725912443228175032067",
+   "python": "from scipy.stats import gamma; gamma.cdf(1e6, 1e6, scale=1)",
+   "scipy": "0.5001329807608725",
+   "why": "large shape"
+  },
+  {
+   "label": "beta cdf, body",
+   "excel": "BETA.DIST(0.3,2,3,TRUE)",
+   "library": "K_STATS_Beta_Cumulative(0.3,2,3)",
+   "reference": "0.3482999999999999804156658456122387",
+   "python": "from scipy.stats import beta; beta.cdf(0.3, 2, 3)",
+   "scipy": "0.34829999999999994",
+   "why": "body"
+  },
+  {
+   "label": "beta survival, near 1",
+   "excel": "1-BETA.DIST(0.999,2,3,TRUE)",
+   "library": "K_STATS_Beta_Survival(0.999,2,3)",
+   "reference": "0.000000003997000000000010647482895365110737",
+   "python": "from scipy.stats import beta; beta.sf(0.999, 2, 3)",
+   "scipy": "3.997000000000011e-09",
+   "why": "no direct survival; true value is about 4E-9"
+  },
+  {
+   "label": "exponential survival, deep",
+   "excel": "1-EXPON.DIST(50,1,TRUE)",
+   "library": "K_STATS_Exponential_Survival(50,1)",
+   "reference": "1.928749847963917783017342816527013e-22",
+   "python": "from scipy.stats import expon; expon.sf(50, scale=1/1)",
+   "scipy": "1.9287498479639178e-22",
+   "why": "no direct survival; true value e^-50, about 2E-22"
+  },
+  {
+   "label": "weibull survival, deep",
+   "excel": "1-WEIBULL.DIST(10,2,1,TRUE)",
+   "library": "K_STATS_Weibull_Survival(10,2,1)",
+   "reference": "3.720075976020835962959695803863118e-44",
+   "python": "from scipy.stats import weibull_min; weibull_min.sf(10, 2, scale=1)",
+   "scipy": "3.720075976020836e-44",
+   "why": "no direct survival; true value e^-100, about 4E-44"
+  },
+  {
+   "label": "uniform cdf",
+   "excel": null,
+   "library": "K_STATS_Uniform_Cumulative(0.3,0,1)",
+   "reference": "0.3",
+   "python": "from scipy.stats import uniform; uniform.cdf(0.3, loc=0, scale=1)",
+   "scipy": "0.3",
+   "why": "Excel has no uniform distribution function"
+  },
+  {
+   "label": "binomial cdf, body",
+   "excel": "BINOM.DIST(5,10,0.5,TRUE)",
+   "library": "K_STATS_Binomial_Cumulative(5,10,0.5)",
+   "reference": "0.623046875",
+   "python": "from scipy.stats import binom; binom.cdf(5, 10, 0.5)",
+   "scipy": "0.623046875",
+   "why": "body"
+  },
+  {
+   "label": "binomial survival, deep",
+   "excel": "1-BINOM.DIST(90,100,0.5,TRUE)",
+   "library": "K_STATS_Binomial_Survival(90,100,0.5)",
+   "reference": "1.661024489726826441638003058049787e-18",
+   "python": "from scipy.stats import binom; binom.sf(90, 100, 0.5)",
+   "scipy": "1.6610244897268262e-18",
+   "why": "no direct survival; true value about 2E-17"
+  },
+  {
+   "label": "binomial log-pmf",
+   "excel": null,
+   "library": "K_STATS_Binomial_LogPMF(900,1000,0.5)",
+   "reference": "-371.2338931266807367433805885443131",
+   "python": "from scipy.stats import binom; binom.logpmf(900, 1000, 0.5)",
+   "scipy": "-371.2338931266799",
+   "why": "Excel has no log-mass; BINOM.DIST underflows to 0 here"
+  },
+  {
+   "label": "poisson cdf, body",
+   "excel": "POISSON.DIST(3,2,TRUE)",
+   "library": "K_STATS_Poisson_Cumulative(3,2)",
+   "reference": "0.8571234604985470486619968014924012",
+   "python": "from scipy.stats import poisson; poisson.cdf(3, 2)",
+   "scipy": "0.857123460498547",
+   "why": "body"
+  },
+  {
+   "label": "poisson survival, deep",
+   "excel": "1-POISSON.DIST(60,2,TRUE)",
+   "library": "K_STATS_Poisson_Survival(60,2)",
+   "reference": "6.352854124984688322777361338674513e-67",
+   "python": "from scipy.stats import poisson; poisson.sf(60, 2)",
+   "scipy": "6.352854124984465e-67",
+   "why": "no direct survival; true value about 6E-67"
+  },
+  {
+   "label": "negative binomial cdf",
+   "excel": "NEGBINOM.DIST(5,3,0.5,TRUE)",
+   "library": "K_STATS_NegativeBinomial_Cumulative(5,3,0.5)",
+   "reference": "0.85546875",
+   "python": "from scipy.stats import nbinom; nbinom.cdf(5, 3, 0.5)",
+   "scipy": "0.85546875",
+   "why": "body"
+  },
+  {
+   "label": "hypergeometric pmf",
+   "excel": "HYPGEOM.DIST(2,5,10,50,FALSE)",
+   "library": "K_STATS_Hypergeometric_PMF(2,5,10,50)",
+   "reference": "0.209839717570654533783911344371236",
+   "python": "from scipy.stats import hypergeom; hypergeom.pmf(2, M=50, n=10, N=5)",
+   "scipy": "0.2098397175706545",
+   "why": "body"
+  },
+  {
+   "label": "discrete uniform cdf",
+   "excel": null,
+   "library": "K_STATS_DiscreteUniform_Cumulative(3,1,10)",
+   "reference": "0.3",
+   "python": "from scipy.stats import randint; randint.cdf(3, 1, 10 + 1)",
+   "scipy": "0.3",
+   "why": "Excel has no discrete uniform distribution function"
+  }
+ ]
+}
