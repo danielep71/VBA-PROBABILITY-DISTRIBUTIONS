@@ -212,6 +212,8 @@ try {
     $grid.WrapText = $false
     $sheet.Range("D20:D27").NumberFormatLocal = '0' + $dec + '000000'
     $sheet.Range('D28').HorizontalAlignment = -4131
+    # The verdict is a sentence, not a number: it takes a smaller font than the results above it.
+    $sheet.Range('D28').Font.Size = 8
     foreach ($item in $plan.formulas) {
         $target = $sheet.Range($item.address)
         Invoke-Excel { $excel.DisplayAlerts = $false; $target.Formula2 = [string]$item.formula }
