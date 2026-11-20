@@ -422,6 +422,7 @@ def plan() -> dict[str, Any]:
         ],
         "full_digits": FULL_DIGITS,
         "smallest_normal": SMALLEST_NORMAL,
+        "helper_reference_value": HELPERS["reference_value"],
     }
 
 

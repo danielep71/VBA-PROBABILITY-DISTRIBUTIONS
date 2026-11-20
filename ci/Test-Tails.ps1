@@ -56,6 +56,12 @@ function Status($Value, [double]$Reference, $Digits, [bool]$Alternative, [double
     if ($digs -ge $Report) { return 'report grade' }
     return 'inadequate'
 }
+# The stored numbers may differ from the decimal texts of the JSON in their last bit (PowerShell 5 parses
+# them less exactly than Excel reads them): within 1E-15. The digits are graded, as on the sheet, against
+# the reference value the sheet holds.
+function Close([double]$Actual, [double]$Expected) {
+    return [Math]::Abs($Actual - $Expected) -le 1E-15 * [Math]::Abs($Expected)
+}
 function Shown($Value) {
     if ($Value -is [double]) { return $Value.ToString('R', $invariant) }
     if (Is-Error $Value) { return 'error ' + $Value }
@@ -131,6 +137,8 @@ try {
         $directStatus = @(Spill-Values $sheet "K$first")
         $alternativeStatus = @(Spill-Values $sheet "L$first")
         $depth = @(Spill-Values $sheet "M$first")
+        $held = @(Spill-Values $sheet "$($plan.helper_reference_value)$first")
+        if ($held.Count -ne $points.Count) { throw "${where}: the reference values have $($held.Count) rows, expected $($points.Count)" }
         foreach ($name in @('x', 'referenceText', 'direct', 'alternative', 'directDigits', 'alternativeDigits', 'directStatus', 'alternativeStatus', 'depth')) {
             $count = @((Get-Variable $name).Value).Count
             if ($count -ne $points.Count) { throw "${where}: column $name has $count rows, expected $($points.Count)" }
@@ -156,7 +164,8 @@ try {
             $expectedAlternative = $sheet.Range("AR$($index + 1)").Value2
             if (-not (Same-Value $direct[$index] $expectedDirect)) { throw "${label}: the direct path shows $(Shown $direct[$index]), the formula written out gives $(Shown $expectedDirect)" }
             if (-not (Same-Value $alternative[$index] $expectedAlternative)) { throw "${label}: the alternative path shows $(Shown $alternative[$index]), the formula written out gives $(Shown $expectedAlternative)" }
-            $truth = [double]$point.reference_value
+            $truth = [double]$held[$index]
+            if (-not (Close $truth ([double]$point.reference_value))) { throw "${label}: the reference value is $truth, expected $($point.reference_value)" }
             $observation = [ordered]@{ scenario = $where; x = Shown $x[$index]; reference = [string]$point.reference }
             foreach ($walk in @(@('direct', $direct, $directDigits, $directStatus, $false), @('alternative', $alternative, $alternativeDigits, $alternativeStatus, $true))) {
                 $value = $walk[1][$index]
@@ -178,7 +187,7 @@ try {
         }
         $sheet.Range("AQ1:AR$($points.Count)").ClearContents() | Out-Null
         # The body of every scenario is graded by the sheet: the first point is a probability of about 0.1 to 1.
-        $bodyDigits = Digits $direct[0] ([double]$points[0].reference_value)
+        $bodyDigits = Digits $direct[0] ([double]$held[0])
         if ($null -eq $bodyDigits -or $bodyDigits -lt $reportGrade) { throw "${where}: the direct path at the body point has $bodyDigits correct digits" }
         # The colours Excel displays: red for wrong or cancellation, amber for an underflow, none for a grade.
         for ($index = 0; $index -lt $points.Count; $index++) {
@@ -220,11 +229,13 @@ try {
     $excel.Calculate()
     $statusNow = @(Spill-Values $sheet "K$first")
     $valuesNow = @(Spill-Values $sheet "F$first")
+    $heldNow = @(Spill-Values $sheet "$($plan.helper_reference_value)$first")
     $normalScenario = $fixture.scenarios | Where-Object { $_.name -eq 'Standard Normal' }
     for ($index = 0; $index -lt @($normalScenario.points).Count; $index++) {
         $point = @($normalScenario.points)[$index]
         $value = $valuesNow[$index]
-        $expected = Status $value ([double]$point.reference_value) (Digits $value ([double]$point.reference_value)) $false 15 14
+        $truthNow = [double]$heldNow[$index]
+        $expected = Status $value $truthNow (Digits $value $truthNow) $false 15 14
         if ([string]$statusNow[$index] -cne $expected) { throw "Thresholds 15 and 14: z = $($point.x) is '$($statusNow[$index])', expected '$expected'" }
     }
     if (-not ([string]$sheet.ChartObjects('TailsDigits').Chart.ChartTitle.Text).Contains('15')) { throw "The chart's title does not follow the threshold: $($sheet.ChartObjects('TailsDigits').Chart.ChartTitle.Text)" }
