@@ -45,6 +45,8 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
         Case "pdResetInputs"
             If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesIsActive() Then
                 M_STATS_PROBDIST_PROBABILITIES.ResetProbabilitiesInputs
+            ElseIf M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
+                M_STATS_PROBDIST_PARAMETERS.ResetParameterEffectsInputs
             Else
                 ResetExplorerInputs
             End If
@@ -52,6 +54,7 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
             RecalculateWorkbook
             RefreshExplorer
             If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady() Then M_STATS_PROBDIST_PROBABILITIES.RefreshProbabilities
+            If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady() Then M_STATS_PROBDIST_PARAMETERS.RefreshParameterEffects
     End Select
     Exit Sub
 Failed:
@@ -64,6 +67,10 @@ Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As
     On Error GoTo Failed
     If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesIsActive() Then
         ReturnedVal = M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady()
+        Exit Sub
+    End If
+    If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
+        ReturnedVal = M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady()
         Exit Sub
     End If
     Set Target = ExplorerSheet()

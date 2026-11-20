@@ -10,7 +10,7 @@ Layout, in the style of the Explorer: in C:D the inputs D6:D16 (distribution, up
 parameters, the parameter to vary, the four values it takes, the number of decimals), the status
 D19, the macros cell D20; the four curves in rows 22 to 25 (C and D name each curve and its
 value, F:I give its mean, standard deviation, skewness and the probability beyond three standard
-deviations, under their headings in row 21); the line on what the parameter does in C27:D30.
+deviations, under their headings in row 21); the line on what the parameter does in C27:D32.
 The notes are in F5:I17. The curves are drawn from hidden columns: x in R, the four densities in
 S:V, the four cumulative functions in W:Z, the table of the families from AB, the window and the
 legend texts in AX:AZ. The two charts, in K:O, follow them through workbook names.
@@ -44,7 +44,7 @@ STATUS = "$D$19"
 MACROS = "D20"
 HEADER_ROW = 21
 FIRST_CURVE_ROW = 22                 # rows 22 to 25
-EFFECT_CELL = "C27"                  # merged C27:D30
+EFFECT_CELL = "C27"                  # merged C27:D32
 GRID_FIRST_ROW = 20
 X_COLUMN = "R"
 DENSITY_COLUMNS = ["S", "T", "U", "V"]
@@ -347,8 +347,8 @@ def plan() -> dict[str, Any]:
         "layout": {"family": "D6", "vary": VARY.replace("$", ""), "curve_values": [v.replace("$", "") for v in CURVE_VALUES],
                    "decimals": DECIMALS.replace("$", ""), "status": STATUS.replace("$", ""), "macros": MACROS,
                    "inputs": "D6:D16", "outputs": [f"{STATUS.replace('$', '')}:{MACROS}", f"C{FIRST_CURVE_ROW}:I{FIRST_CURVE_ROW + CURVES - 1}",
-                                                    f"{EFFECT_CELL}:D30", f"{X_COLUMN}{GRID_FIRST_ROW}:{LEGEND_COLUMN}{last_row}"],
-                   "header_row": HEADER_ROW, "first_curve_row": FIRST_CURVE_ROW, "effect": "C27:D30",
+                                                    f"{EFFECT_CELL}:D32", f"{X_COLUMN}{GRID_FIRST_ROW}:{LEGEND_COLUMN}{last_row}"],
+                   "header_row": HEADER_ROW, "first_curve_row": FIRST_CURVE_ROW, "effect": "C27:D32",
                    "hidden_from": "Q"},
         "validation": {
             "family_list": "=ExplorerFamily",

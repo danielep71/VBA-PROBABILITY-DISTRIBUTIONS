@@ -122,5 +122,49 @@ class PlanTests(unittest.TestCase):
         self.assertIn("K_STATS_Normal_Survival(F22+3*G22,pa,pb)", tail)
 
 
+REFERENCES = json.loads((ROOT / "examples/demo/parameter-effects-references.json").read_text(encoding="utf-8"))
+
+
+class ReferenceTests(unittest.TestCase):
+    def test_every_family_and_every_parameter_has_a_case_with_the_default_values(self):
+        effects = PP.load()["families"]
+        wanted = {(name, slot + 1) for name, entry in effects.items() for slot in range(len(entry["parameters"]))}
+        found = {(case["family"], case["vary"]) for case in REFERENCES["cases"] if case["label"] == "default values"}
+        self.assertEqual(wanted, found)
+        for case in REFERENCES["cases"]:
+            if case["label"] == "default values":
+                self.assertEqual(case["values"], effects[case["family"]]["parameters"][case["vary"] - 1]["curves"])
+
+    def test_a_case_has_four_curves_and_five_grid_points_of_four_curves(self):
+        for case in REFERENCES["cases"]:
+            self.assertEqual(len(case["curves"]), 4)
+            self.assertEqual(len(case["sample"]), 5)
+            for row in case["sample"]:
+                self.assertEqual(len(row["density"]), 4)
+                self.assertEqual(len(row["cdf"]), 4)
+            self.assertLess(case["lower"], case["upper"])
+
+    def test_moments_that_do_not_exist_read_as_the_sheet_shows_them(self):
+        texts = {value for case in REFERENCES["cases"] for curve in case["curves"]
+                 for key in ("mean", "sd", "skewness", "tail") for value in [curve[key]] if isinstance(value, str)}
+        self.assertEqual(texts, {"undefined", "infinite", "n/a"})
+        student = [curve for case in REFERENCES["cases"] if case["family"] == "Student t" for curve in case["curves"]]
+        self.assertTrue(any(curve["mean"] == "undefined" for curve in student), "no t curve at 1 degree of freedom")
+        self.assertTrue(any(curve["sd"] == "infinite" for curve in student), "no t curve at 2 degrees of freedom")
+
+    def test_a_normal_curve_has_the_moments_of_its_parameters(self):
+        case = next(c for c in REFERENCES["cases"] if c["family"] == "Normal" and c["vary"] == 2 and c["label"] == "default values")
+        for curve in case["curves"]:
+            self.assertAlmostEqual(curve["mean"], 0.0, places=9)
+            self.assertAlmostEqual(curve["sd"], curve["value"], places=9)
+            self.assertAlmostEqual(curve["skewness"], 0.0, places=8)
+            self.assertAlmostEqual(curve["tail"], 0.0013498980316301, places=9)
+
+    def test_the_window_is_the_union_of_the_curve_windows(self):
+        case = next(c for c in REFERENCES["cases"] if c["family"] == "Normal" and c["vary"] == 2 and c["label"] == "default values")
+        self.assertAlmostEqual(case["lower"], -4 * 2.0)
+        self.assertAlmostEqual(case["upper"], 4 * 2.0)
+
+
 if __name__ == "__main__":
     unittest.main()
