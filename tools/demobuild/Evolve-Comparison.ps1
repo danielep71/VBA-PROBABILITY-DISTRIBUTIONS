@@ -125,7 +125,7 @@ try {
     $sheet.Range('A1:Z200').UnMerge()
     $sheet.Range('A1:Z200').ClearContents() | Out-Null
     $sheet.Range('B1:Z200').ClearFormats() | Out-Null
-    $sheet.Range('A1:Z200').Validation.Delete()
+    $sheet.Range('A1:Z200').Validation.Delete() | Out-Null
     Copy-Format $explorer.Range('A1:P20') $sheet.Range('A1')
     try { $excel.CutCopyMode = $false } catch { }
     # The inputs are D6:D9 here: the rows the Explorer keeps for its other inputs are spacers.
@@ -171,10 +171,15 @@ try {
     $sheet.Range("C${header}:O$header").WrapText = $true
     $table = $sheet.Range("C${first}:O$last")
     $table.Font.Size = 9
-    $sheet.Range($at.values).NumberFormatLocal = '0' + $dec + '000000E+00'
-    $sheet.Range($at.values).HorizontalAlignment = -4152
-    $sheet.Range($at.digits).NumberFormatLocal = '0' + $dec + '0'
-    $sheet.Range($at.digits).HorizontalAlignment = -4108
+    # A union address takes the regional list separator: each block is formatted on its own.
+    foreach ($address in ([string]$at.values).Split(',')) {
+        $sheet.Range($address).NumberFormat = '0.000000E+00'
+        $sheet.Range($address).HorizontalAlignment = -4152
+    }
+    foreach ($address in ([string]$at.digits).Split(',')) {
+        $sheet.Range($address).NumberFormat = '0.0'
+        $sheet.Range($address).HorizontalAlignment = -4108
+    }
     $sheet.Range($at.grades).HorizontalAlignment = -4108
     $sheet.Range("C${first}:C$last").HorizontalAlignment = -4131
     $sheet.Tab.Color = $explorer.Tab.Color
