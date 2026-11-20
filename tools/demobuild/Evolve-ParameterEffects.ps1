@@ -148,6 +148,14 @@ try {
     $effect.Font.Size = 9
     $sheet.Range('C5').Value2 = [string]$explorer.Range('C5').Value2
 
+    # The copied formats bring the Explorer's conditional rules, whose formulas read the Explorer's
+    # inputs (ExplorerParameterUnused*, ExplorerStatusBad, the grid borders): remove every formula
+    # rule here; the sheet's own are added below. A rule on a cell's value (the green OK) is kept.
+    $rules = $sheet.Cells.FormatConditions
+    for ($index = $rules.Count; $index -ge 1; $index--) {
+        if ($rules.Item($index).Type -eq 2) { $rules.Item($index).Delete() }
+    }
+
     Step 'names'
     $failed = @()
     foreach ($item in $plan.names) {

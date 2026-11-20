@@ -75,6 +75,9 @@ try {
         if ($sheet.ChartObjects($name).Chart.SeriesCollection().Count -ne 4) { throw "$name does not have four series" }
     }
     if ($explorer.ChartObjects().Count -ne 2) { throw 'The Explorer lost a chart' }
+    foreach ($rule in @($sheet.Cells.FormatConditions)) {
+        if ($rule.Type -eq 2 -and [string]$rule.Formula1 -match 'Explorer') { throw "A conditional rule reads the Explorer: $($rule.Formula1) on $($rule.AppliesTo.Address($false, $false))" }
+    }
     if ([double]$book.Worksheets.Item('Probabilities').ChartObjects().Count -ne 1) { throw 'The Probabilities sheet lost its chart' }
     $report.structure = 'PASS'
 
