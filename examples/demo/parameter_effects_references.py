@@ -129,7 +129,9 @@ def moments(family, kind, params):
     if rules[0] is True and rules[1] is True:
         point = mean + 3 * sd
         if kind == "discrete":
-            point = int(mp.floor(point))
+            # A point that is an integer up to the rounding of the sums (Poisson(1): 1 + 3 = 4) is that
+            # integer, as it is in the sheet's double arithmetic.
+            point = int(mp.floor(mpf(mp.nstr(point, 12))))
         evaluate = R.continuous if kind == "continuous" else R.discrete
         top = support(family, params)[1] if kind == "continuous" else None
         if top is not None and point >= top:
