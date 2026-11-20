@@ -30,6 +30,13 @@ function Digits($Value, [double]$Reference) {
     if ($relative -eq 0) { return $full }
     return [Math]::Min($full, [Math]::Max(0.0, -[Math]::Log10($relative)))
 }
+# Excel rewrites the numbers of a formula (1E-15 becomes 0.000000000000001): formulas are
+# compared with every number written as its value.
+function Same-Formula([string]$Actual, [string]$Expected) {
+    $pattern = '(?<![A-Za-z_.\d])\d+(\.\d+)?(E[+-]?\d+)?'
+    $evaluator = { param($found) [double]::Parse($found.Value, $invariant).ToString('R', $invariant) }
+    return ([regex]::Replace($Actual, $pattern, $evaluator) -eq [regex]::Replace($Expected, $pattern, $evaluator))
+}
 function Close([double]$Actual, [double]$Expected) {
     return [Math]::Abs($Actual - $Expected) -le 1E-15 * [Math]::Abs($Expected)
 }
@@ -107,10 +114,10 @@ try {
         $reference = [double]$sheet.Range("D$row").Value2
         if (-not (Close $reference ([double]::Parse([string]$case.reference, $invariant)))) { throw "${where}: the reference is $reference, expected $($case.reference)" }
         if (-not (Close ([double]$sheet.Range("H$row").Value2) ([double]::Parse([string]$case.scipy, $invariant)))) { throw "${where}: the SciPy value is $($sheet.Range("H$row").Value2), expected $($case.scipy)" }
-        if ([string]$sheet.Range("G$row").Formula2 -ne ('=' + $case.library)) { throw "${where}: the library formula is $($sheet.Range("G$row").Formula2)" }
+        if (-not (Same-Formula ([string]$sheet.Range("G$row").Formula2) ('=' + $case.library))) { throw "${where}: the library formula is $($sheet.Range("G$row").Formula2)" }
         if ($null -eq $case.excel) {
             if ([string]$sheet.Range("F$row").Value2 -ne 'none') { throw "${where}: Excel has no function, the cell reads $($sheet.Range("F$row").Value2)" }
-        } elseif ([string]$sheet.Range("F$row").Formula2 -ne ('=' + $case.excel)) { throw "${where}: the Excel formula is $($sheet.Range("F$row").Formula2)" }
+        } elseif (-not (Same-Formula ([string]$sheet.Range("F$row").Formula2) ('=' + $case.excel))) { throw "${where}: the Excel formula is $($sheet.Range("F$row").Formula2)" }
         $observation = [ordered]@{ label = [string]$case.label }
         foreach ($side in @(@('excel', 'F', 'I', 'M'), @('library', 'G', 'K', 'N'), @('scipy', 'H', 'L', 'O'))) {
             $value = $sheet.Range($side[1] + $row).Value2
