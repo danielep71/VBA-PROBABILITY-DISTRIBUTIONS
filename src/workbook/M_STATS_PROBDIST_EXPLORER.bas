@@ -47,6 +47,8 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
                 M_STATS_PROBDIST_PROBABILITIES.ResetProbabilitiesInputs
             ElseIf M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
                 M_STATS_PROBDIST_PARAMETERS.ResetParameterEffectsInputs
+            ElseIf M_STATS_PROBDIST_COMPARISON.ComparisonIsActive() Then
+                M_STATS_PROBDIST_COMPARISON.ResetComparisonInputs
             Else
                 ResetExplorerInputs
             End If
@@ -55,6 +57,7 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
             RefreshExplorer
             If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady() Then M_STATS_PROBDIST_PROBABILITIES.RefreshProbabilities
             If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady() Then M_STATS_PROBDIST_PARAMETERS.RefreshParameterEffects
+            If M_STATS_PROBDIST_COMPARISON.ComparisonReady() Then M_STATS_PROBDIST_COMPARISON.RefreshComparison
     End Select
     Exit Sub
 Failed:
@@ -71,6 +74,10 @@ Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As
     End If
     If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
         ReturnedVal = M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady()
+        Exit Sub
+    End If
+    If M_STATS_PROBDIST_COMPARISON.ComparisonIsActive() Then
+        ReturnedVal = M_STATS_PROBDIST_COMPARISON.ComparisonReady()
         Exit Sub
     End If
     Set Target = ExplorerSheet()

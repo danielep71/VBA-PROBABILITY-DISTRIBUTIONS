@@ -12,6 +12,7 @@ on:
       - "ci/Test-Explorer.ps1"
       - "ci/Test-Probabilities.ps1"
       - "ci/Test-ParameterEffects.ps1"
+      - "ci/Test-Comparison.ps1"
       - "ci/Test-UdfRegistration.ps1"
       - "ci/Test-ExplorerUI.ps1"
       - "ci/Test-ExplorerStates.ps1"
@@ -68,6 +69,9 @@ jobs:
       - name: Apply the Parameter Effects plan with native Excel objects
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-ParameterEffects.ps1 -PackageDirectory test-results\demo
+      - name: Apply the Comparison plan with native Excel objects
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Comparison.ps1 -PackageDirectory test-results\demo
       - name: Verify Function Wizard registration lifecycle
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-UdfRegistration.ps1 -PackageDirectory test-results\demo
@@ -83,6 +87,9 @@ jobs:
       - name: Verify the Parameter Effects sheet against the mpmath references
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ParameterEffects.ps1 -PackageDirectory test-results\demo
+      - name: Verify the Comparison sheet against the study's references
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Comparison.ps1 -PackageDirectory test-results\demo
       - name: Exercise the native Ribbon and reset confirmation dialog
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerUI.ps1 -PackageDirectory test-results\demo
