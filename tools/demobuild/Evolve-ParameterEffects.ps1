@@ -234,6 +234,8 @@ try {
         $item.Name = $spec.name
         $chart = $item.Chart
         $chart.ChartType = 4
+        # The data sit in hidden columns: with the default, Excel drops a series whose cells are all hidden.
+        $chart.PlotVisibleOnly = $false
         while ($chart.SeriesCollection().Count -gt 0) { $chart.SeriesCollection(1).Delete() }
         $order = 1
         foreach ($series in $spec.series) {
