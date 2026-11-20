@@ -54,6 +54,8 @@ try {
     } finally { $reader.Dispose() }
     # Normal open only: never request Excel's repair/extract-data modes.
     $book = $excel.Workbooks.Open($path, 0, $false)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     if ($book.Worksheets.Count -ne 10) { throw 'Expected ten worksheets' }
     if ($book.HasVBProject -ne $true) { throw 'VBA project missing' }
     $report.open = 'PASS'
@@ -62,6 +64,8 @@ try {
     [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($book)
     $book = $null
     $book = $excel.Workbooks.Open($copy, 0, $true)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     if ($book.Worksheets.Count -ne 10) { throw 'Round-trip lost worksheets' }
     if ($book.HasVBProject -ne $true) { throw 'Round-trip lost VBA project' }
     $report.roundtrip = 'PASS'
@@ -78,6 +82,8 @@ try {
     $excel.Visible = ($SaveMode -eq 'NativeUI')
     $excel.AutomationSecurity = 1
     $book = $excel.Workbooks.Open($path, 0, $false)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     $prefix = "'" + $book.Name + "'!"
     $value = $excel.Run($prefix + 'K_STATS_NormalStandard_Cumulative', 0.0)
     if ([Math]::Abs([double]$value - 0.5) -gt 1e-15) { throw 'Embedded VBA smoke result differs from 0.5' }
@@ -159,6 +165,8 @@ try {
     $excel.DisplayAlerts = $false
     $excel.AutomationSecurity = 3
     $book = $excel.Workbooks.Open($path, 0, $true)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     foreach ($sheet in $book.Worksheets) {
         if ($sheet.Columns.Item(1).Hidden) { throw 'Saved file hides its navigation with macros disabled' }
         foreach ($name in @('NavBarTop','NavBar')) {

@@ -41,6 +41,8 @@ function Test-Workbook([string]$Mode) {
         $excel.DisplayAlerts = $false
         $excel.AutomationSecurity = 1
         $book = $excel.Workbooks.Open($path, 0, $true)
+        # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+        for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
         $prefix = "'" + $book.Name.Replace("'", "''") + "'!"
         $present = @($book.VBProject.VBComponents | Where-Object { $_.Type -eq 1 } | ForEach-Object { $_.Name } | Sort-Object)
         $expected = Get-Components $Mode
@@ -110,6 +112,8 @@ function Test-SourceDir {
         $excel.DisplayAlerts = $false
         $excel.AutomationSecurity = 1
         $book = $excel.Workbooks.Open($path, 0, $true)
+        # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+        for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
         $prefix = "'" + $book.Name.Replace("'", "''") + "'!"
         $present = @($book.VBProject.VBComponents | Where-Object { $_.Type -eq 1 } | ForEach-Object { $_.Name } | Sort-Object)
         $expected = @(@(Get-Components 'Development') + @('M_STATS_PROBDIST_SRCDIRPROBE') | Sort-Object)
