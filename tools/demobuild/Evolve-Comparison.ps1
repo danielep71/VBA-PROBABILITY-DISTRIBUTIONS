@@ -256,6 +256,18 @@ try {
     $bad = $status.FormatConditions.Add(2, 0, $plan.conditional.status_bad)
     $bad.Font.Color = 0x0000C0
     $bad.Interior.Color = 0xCEC7FF
+    # Excel grade "wrong" or "no function": the grade cell of every case and the Excel line of the
+    # selected case. A cell-value rule has no relative reference; the line's rule reads its own cell.
+    foreach ($rule in $plan.conditional.grade_rules) {
+        $cell = $sheet.Range($at.excel_grades).FormatConditions.Add(1, 3, '="' + [string]$rule.text + '"')
+        $cell.Font.Color = [int]$rule.font
+        $cell.Font.Bold = $true
+        $cell.Interior.Color = [int]$rule.fill
+        $line = $sheet.Range($at.excel_line).FormatConditions.Add(2, 0, '=ISNUMBER(SEARCH("' + [string]$rule.text + '",$' + ([string]$at.excel_line).Substring(0, 1) + '$' + ([string]$at.excel_line).Substring(1) + '))')
+        $line.Font.Color = [int]$rule.font
+        $line.Font.Bold = $true
+        $line.Interior.Color = [int]$rule.fill
+    }
 
     Step 'inputs unlocked, outputs locked'
     $sheet.Range($at.inputs).Locked = $false

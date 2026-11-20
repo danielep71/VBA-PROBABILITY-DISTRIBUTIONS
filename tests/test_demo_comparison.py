@@ -141,6 +141,16 @@ class PlanTests(unittest.TestCase):
         self.assertIn(f'BUILD_CELL As String = "D{C.DETAIL_ROWS["excel_build"]}"', MODULE)
         self.assertIn(f'CHART_NAME As String = "{PLAN["chart"]["name"]}"', MODULE)
 
+    def test_the_excel_grades_that_are_not_usable_are_highlighted(self):
+        rules = {rule["text"]: rule for rule in PLAN["conditional"]["grade_rules"]}
+        self.assertEqual(set(rules), {"wrong", "no function"})
+        self.assertNotEqual(rules["wrong"]["fill"], rules["no function"]["fill"])
+        grade_words = re.findall(r'"([a-z ]+)"', next(item["formula"] for item in PLAN["formulas"]
+                                                       if item["address"] == f"M{C.FIRST_ROW}"))
+        self.assertLessEqual(set(rules), set(grade_words), "a rule for a grade the sheet never writes")
+        self.assertEqual(PLAN["layout"]["excel_grades"], f"M{C.FIRST_ROW}:M{PLAN['layout']['last_row']}")
+        self.assertEqual(PLAN["layout"]["excel_line"], f"D{C.DETAIL_ROWS['excel_grade']}")
+
     def test_the_python_route_is_optional(self):
         formulas = {item["address"]: item["formula"] for item in PLAN["formulas"]}
         line = formulas[f"D{C.DETAIL_ROWS['python_grade']}"]

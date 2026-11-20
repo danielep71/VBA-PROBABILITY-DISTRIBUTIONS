@@ -301,10 +301,17 @@ def plan() -> dict[str, Any]:
                    "table": f"C{HEADER_ROW}:O{end}", "values": f"D{FIRST_ROW}:D{end},F{FIRST_ROW}:H{end}",
                    "digits": f"I{FIRST_ROW}:I{end},K{FIRST_ROW}:L{end}", "grades": f"M{FIRST_ROW}:O{end}",
                    "hidden_texts": f"R{FIRST_ROW}:V{end}", "chart": "K5:O35",
+                   "excel_grades": f"M{FIRST_ROW}:M{end}",
+                   "excel_line": f"D{DETAIL_ROWS['excel_grade']}",
                    "outputs": ["D19:D20", "D21:I35", f"C{HEADER_ROW}:O{end}"], "detail": detail,
                    "spacers": ["C10:D11", "C12:D13", "C14:D15", "C16:D16"]},
         "validation": {"case_list": "=ComparisonLabels", "digits": [1, FULL_DIGITS]},
-        "conditional": {"status_bad": "=ComparisonStatusBad"},
+        # Where Excel has no usable value: the Excel grade column and the Excel line of the selected case
+        # take the colour of the grade (BGR, as Excel's Color property reads them).
+        "conditional": {"status_bad": "=ComparisonStatusBad",
+                        "grade_rules": [
+                            {"text": "wrong", "font": 0x0000C0, "fill": 0xCEC7FF},
+                            {"text": "no function", "font": 0x00579C, "fill": 0x9CEBFF}]},
         "chart": {"name": "ComparisonDigits", "title": "Correct digits against the 50-digit reference",
                   "categories": "ComparisonLabels",
                   "series": [{"name": f"I{HEADER_ROW}", "values": "ComparisonExcelDigits"},

@@ -85,6 +85,18 @@ try {
             if ([string]::IsNullOrWhiteSpace([string]$text)) { throw "D$row lacks an input message" }
         }
     }
+    # The conditional format on the Excel grade: red for wrong, amber for no function, nothing else.
+    $sheet.Activate()
+    $gradeRules = $sheet.Range([string]$plan.layout.excel_grades).FormatConditions
+    if ($gradeRules.Count -ne 2) { throw "The Excel grade column has $($gradeRules.Count) conditional rules, expected 2" }
+    for ($index = 0; $index -lt $fixture.cases.Count; $index++) {
+        $row = $first + $index
+        $shown = [int]$sheet.Range("M$row").DisplayFormat.Interior.Color
+        $grade = [string]$sheet.Range("M$row").Value2
+        $expectedFill = switch ($grade) { 'wrong' { 0xCEC7FF } 'no function' { 0x9CEBFF } default { $null } }
+        if ($null -ne $expectedFill -and $shown -ne $expectedFill) { throw "Excel grade '$grade' in M$row shows the fill $shown, expected $expectedFill" }
+        if ($null -eq $expectedFill -and ($shown -eq 0xCEC7FF -or $shown -eq 0x9CEBFF)) { throw "Excel grade '$grade' in M$row is highlighted" }
+    }
     if ($sheet.ChartObjects().Count -ne 1) { throw "The sheet has $($sheet.ChartObjects().Count) charts, expected 1" }
     $chart = $sheet.ChartObjects([string]$plan.chart.name).Chart
     if ($chart.SeriesCollection().Count -ne 3) { throw 'The chart does not have three series' }
