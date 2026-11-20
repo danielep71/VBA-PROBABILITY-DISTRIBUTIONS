@@ -141,6 +141,11 @@ try {
     foreach ($row in 1..20) { $sheet.Rows.Item($row).RowHeight = $explorer.Rows.Item($row).RowHeight }
     $sheet.Tab.Color = $explorer.Tab.Color
     try { $excel.CutCopyMode = $false } catch { }
+    # Rows 19 and 20 of the Explorer carry its grid headings and first grid row in F:I; here
+    # the table starts at row 21, so those cells are left plain.
+    $sheet.Range('F19:I20').ClearFormats()
+    $sheet.Range("C${headerRow}:I$headerRow").WrapText = $true
+    $sheet.Rows.Item($headerRow).RowHeight = 30
     $effect = $sheet.Range($at.effect)
     $effect.Merge()
     $effect.WrapText = $true
