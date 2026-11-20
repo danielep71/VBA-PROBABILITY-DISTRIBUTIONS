@@ -184,7 +184,7 @@ try {
     for ($k = 0; $k -lt 4; $k++) { Set-Number $sheet ('D' + (12 + $k)) ($k + 1) }
     $excel.Calculate()
     if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "Small populations give the status $($sheet.Range('D19').Value2)" }
-    $small = @(@(1.0, 0.0, 'undefined'), @(0.5, 0.5, 0.0), @((1.0 / 3.0), [Math]::Sqrt(2.0) / 3.0, [Math]::Sqrt(0.5)))
+    $small = @(@(1.0, 0.0, 'undefined'), @(0.5, 0.5, 0.0), @((1.0 / 3.0), ([Math]::Sqrt(2.0) / 3.0), ([Math]::Sqrt(0.5))))
     for ($k = 0; $k -lt 3; $k++) {
         $row = $first + $k
         foreach ($pair in @(@('F', $small[$k][0]), @('G', $small[$k][1]), @('H', $small[$k][2]))) {
