@@ -185,7 +185,7 @@ try {
                         @('direct_usable', 26), @('limit', 38), @('count', 26), @('provenance', 36))) {
         $sheet.Rows.Item([int]$at.detail_rows.($pair[0])).RowHeight = [double]$pair[1]
     }
-    $sheet.Rows.Item($header).RowHeight = 30
+    $sheet.Rows.Item($header).RowHeight = 36
     $sheet.Range("C${header}:M$header").WrapText = $true
     $table = $sheet.Range("C${first}:M$last")
     $table.Font.Size = 9
