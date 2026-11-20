@@ -113,8 +113,10 @@ def column(letter: str, data: dict[str, Any], rows: int) -> str:
 def digits_formula(value: str, truth: str) -> str:
     """Correct digits of a value against the reference, 0 to 16; #N/A where there is nothing to grade
     (not a number, or a reference that no Double can hold)."""
-    return (f"IF(OR(NOT(ISNUMBER({value})),{truth}=0),NA(),IF({value}={truth},{FULL_DIGITS},"
-            f"MIN({FULL_DIGITS},MAX(0,-LOG10(ABS({value}-{truth})/ABS({truth}))))))")
+    # The relative difference is computed, never a comparison with =: Excel treats two numbers equal to
+    # 15 digits as equal, which would show 16 digits for a value that has 14.6.
+    return (f"IF(OR(NOT(ISNUMBER({value})),{truth}=0),NA(),LET(rel,ABS({value}-{truth})/ABS({truth}),"
+            f"IF(rel=0,{FULL_DIGITS},MIN({FULL_DIGITS},MAX(0,-LOG10(rel))))))")
 
 
 def status_formula(alternative: bool) -> str:
