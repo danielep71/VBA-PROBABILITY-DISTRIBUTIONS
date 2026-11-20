@@ -189,4 +189,3 @@ Inputs are D6:D8: the scenario and the two grade thresholds in correct digits (1
 - The scenario is chosen from a list because Excel cannot compute a 50-digit reference: the references are stored, and the sheet works without Python. The calls of the two paths are live formulas of the library.
 
 `ci/Test-Tails.ps1` checks in Excel, for every scenario, the ladder the sheet spills, both paths against the formula written out in a scratch cell, the digits and statuses recomputed from the values, the colour Excel displays for each status, the two charts, other and contradictory thresholds, an unknown scenario and the reset. Its report, `tails-report.json`, records what that Excel returned at every point, with its build.
-
