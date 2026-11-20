@@ -149,8 +149,11 @@ try {
     Set-Text $sheet 'D6' 'Normal'
     Set-Text $sheet 'D11' 'Mean'
     $excel.Calculate()
-    $loaded = @(12..15 | ForEach-Object { [double]$sheet.Range("D$_").Value2 })
-    if (($loaded -join '|') -ne '-2|-1|0|1') { throw "The four values of the Normal mean are $($loaded -join ', '), expected -2, -1, 0, 1" }
+    $expectedMean = @(-2.0, -1.0, 0.0, 1.0)
+    for ($k = 0; $k -lt 4; $k++) {
+        $value = [double]$sheet.Range('D' + (12 + $k)).Value2
+        if ($value -ne $expectedMean[$k]) { throw "The value of curve $($k + 1) for the Normal mean is $value, expected $($expectedMean[$k])" }
+    }
     if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "Status after choosing the mean: $($sheet.Range('D19').Value2)" }
     if (-not ([string]$sheet.Range('C27').Value2).StartsWith('Location')) { throw "The line on the mean reads: $($sheet.Range('C27').Value2)" }
     $report.vary = 'PASS'
@@ -188,8 +191,12 @@ try {
     [void]$excel.Run($prefix + 'ResetParameterEffectsInputs', $false)
     $excel.Calculate()
     if ([string]$sheet.Range('D6').Value2 -ne 'Normal' -or [string]$sheet.Range('D11').Value2 -ne 'Standard deviation' -or [string]$sheet.Range('D19').Value2 -ne 'OK') { throw 'The reset did not restore the defaults' }
-    $values = @(12..15 | ForEach-Object { [double]$sheet.Range("D$_").Value2 })
-    if (($values -join '|') -ne '0.5|1|1.5|2') { throw "The reset curve values are $($values -join ', ')" }
+    # Compared as numbers: joined as text they would follow the regional decimal separator.
+    $expectedReset = @(0.5, 1.0, 1.5, 2.0)
+    for ($k = 0; $k -lt 4; $k++) {
+        $value = [double]$sheet.Range('D' + (12 + $k)).Value2
+        if ($value -ne $expectedReset[$k]) { throw "The reset value of curve $($k + 1) is $value, expected $($expectedReset[$k])" }
+    }
     $report.reset = 'PASS'
     $report.status = 'PASS'
 } catch {
