@@ -148,6 +148,9 @@ class PlanTests(unittest.TestCase):
         grade_words = re.findall(r'"([a-z ]+)"', next(item["formula"] for item in PLAN["formulas"]
                                                        if item["address"] == f"M{C.FIRST_ROW}"))
         self.assertLessEqual(set(rules), set(grade_words), "a rule for a grade the sheet never writes")
+        defined = {item["name"]: item["refers"] for item in PLAN["names"]}
+        for rule in rules.values():
+            self.assertIn(f'="{rule["text"]}"', defined[rule["name"]])
         self.assertEqual(PLAN["layout"]["excel_grades"], f"M{C.FIRST_ROW}:M{PLAN['layout']['last_row']}")
         self.assertEqual(PLAN["layout"]["excel_line"], f"D{C.DETAIL_ROWS['excel_grade']}")
 

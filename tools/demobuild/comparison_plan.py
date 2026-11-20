@@ -221,6 +221,11 @@ def plan() -> dict[str, Any]:
     names += [
         {"name": "ComparisonRow", "refers": f"=IFERROR(MATCH({ref(CASE)},ComparisonLabels,0),NA())"},
         {"name": "ComparisonStatusBad", "refers": f'={ref(STATUS)}<>"OK"'},
+        # The grade of Excel on the selected case, for the rules of its line: a name, because the
+        # formula of a conditional rule is read with the regional list separator.
+        {"name": "ComparisonExcelGradeWrong", "refers": '=INDEX(ComparisonExcelGrade,ComparisonRow)="wrong"'},
+        {"name": "ComparisonExcelGradeNoFunction",
+         "refers": '=INDEX(ComparisonExcelGrade,ComparisonRow)="no function"'},
     ]
     formulas = [
         {"address": STATUS.replace("$", ""), "formula": status_formula()},
@@ -310,8 +315,10 @@ def plan() -> dict[str, Any]:
         # take the colour of the grade (BGR, as Excel's Color property reads them).
         "conditional": {"status_bad": "=ComparisonStatusBad",
                         "grade_rules": [
-                            {"text": "wrong", "font": 0x0000C0, "fill": 0xCEC7FF},
-                            {"text": "no function", "font": 0x00579C, "fill": 0x9CEBFF}]},
+                            {"text": "wrong", "name": "ComparisonExcelGradeWrong",
+                             "font": 0x0000C0, "fill": 0xCEC7FF},
+                            {"text": "no function", "name": "ComparisonExcelGradeNoFunction",
+                             "font": 0x00579C, "fill": 0x9CEBFF}]},
         "chart": {"name": "ComparisonDigits", "title": "Correct digits against the 50-digit reference",
                   "categories": "ComparisonLabels",
                   "series": [{"name": f"I{HEADER_ROW}", "values": "ComparisonExcelDigits"},
