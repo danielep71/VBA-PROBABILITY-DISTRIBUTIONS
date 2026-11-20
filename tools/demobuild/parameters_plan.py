@@ -192,8 +192,11 @@ def stat_formulas(families: list[dict[str, Any]], data: dict[str, Any], k: int) 
         {"address": f"F{row}", "formula": f'=IF({ok},IFERROR({mean},"undefined"),NA())'},
         {"address": f"G{row}", "formula": f'=IF({ok},IFERROR({deviation},"undefined"),NA())'},
         {"address": f"H{row}", "formula": f'=IF({ok},IFERROR({skewness},"undefined"),NA())'},
+        # Beyond a bounded discrete support the library refuses the point, where the tail is 0 above and 1 below.
         {"address": f"I{row}",
-         "formula": f'=IF({ok},IF(AND(ISNUMBER(F{row}),ISNUMBER(G{row})),IFERROR({tail},NA()),"n/a"),NA())'},
+         "formula": (f'=IF({ok},IF(AND(ISNUMBER(F{row}),ISNUMBER(G{row})),IFERROR({tail},'
+                     f'IF(F{row}+{TAIL_SIGMAS}*G{row}>${WINDOW_COLUMNS[1]}${row},0,'
+                     f'IF(F{row}+{TAIL_SIGMAS}*G{row}<${WINDOW_COLUMNS[0]}${row},1,NA()))),"n/a"),NA())')},
     ]
 
 
