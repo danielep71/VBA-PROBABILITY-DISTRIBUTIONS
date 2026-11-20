@@ -16,7 +16,9 @@ Layout, in the style of the Explorer:
               is in the study, the Excel that computed the sheet and the provenance
     F5:I17    the notes; K5:O35 a bar chart of the correct digits of each case
     C37:O66   every case: the reference, the three values, their correct digits and grades
-    R:T       hidden: the reference as 50-digit text, the Python code and the reason for the case
+    R:V       hidden: the reference as 50-digit text, the Python code, the reason for the case and the
+              texts of the Excel and library formulas, which the detail rows show (FORMULATEXT would
+              be recalculated at every opening and leave the workbook marked as changed)
 
 Each implementation is graded against the mpmath reference only: Excel is one of the three, never
 the yardstick. Correct digits are -log10 of the relative difference, capped at 16 (a Double holds
@@ -57,14 +59,17 @@ DETAIL_ROWS = {
 COLUMNS = {"label": "C", "reference": "D", "excel": "F", "library": "G", "scipy": "H",
            "excel_digits": "I", "library_digits": "K", "scipy_digits": "L",
            "excel_grade": "M", "library_grade": "N", "scipy_grade": "O",
-           "reference_text": "R", "python": "S", "why": "T"}
+           "reference_text": "R", "python": "S", "why": "T",
+           "excel_text": "U", "library_text": "V"}
 NAMES = {"label": "ComparisonLabels", "reference": "ComparisonReference", "excel": "ComparisonExcel",
          "library": "ComparisonLibrary", "scipy": "ComparisonSciPy",
          "excel_digits": "ComparisonExcelDigits", "library_digits": "ComparisonLibraryDigits",
          "scipy_digits": "ComparisonSciPyDigits", "excel_grade": "ComparisonExcelGrade",
          "library_grade": "ComparisonLibraryGrade", "scipy_grade": "ComparisonSciPyGrade",
-         "reference_text": "ComparisonReferenceText", "python": "ComparisonPython", "why": "ComparisonWhy"}
+         "reference_text": "ComparisonReferenceText", "python": "ComparisonPython", "why": "ComparisonWhy",
+         "excel_text": "ComparisonExcelText", "library_text": "ComparisonLibraryText"}
 NONE_TEXT = "none"
+NO_EXCEL_TEXT = "none: the study lists no equivalent Excel function"
 
 
 def load() -> dict[str, Any]:
@@ -128,10 +133,9 @@ def detail_formulas() -> list[dict[str, str]]:
     at = {key: f"D{number}" for key, number in DETAIL_ROWS.items()}
     return [
         {"address": at["excel_formula"],
-         "formula": (f'=IFERROR(IF(ISTEXT({pick("excel")}),"none: the study lists no equivalent Excel function",'
-                     f'FORMULATEXT({pick("excel")})),"")')},
+         "formula": f'=IFERROR({pick("excel_text")},"")'},
         {"address": at["excel_value"], "formula": f'=IFERROR({pick("excel")},"")'},
-        {"address": at["library_formula"], "formula": f'=IFERROR(FORMULATEXT({pick("library")}),"")'},
+        {"address": at["library_formula"], "formula": f'=IFERROR({pick("library_text")},"")'},
         {"address": at["library_value"], "formula": f'=IFERROR({pick("library")},"")'},
         {"address": at["reference"], "formula": f'=IFERROR({pick("reference_text")},"")'},
         {"address": at["python_code"], "formula": f'=IFERROR({pick("python")},"")'},
@@ -166,6 +170,8 @@ def table(data: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, st
             {"address": at["reference_text"], "value": "'" + case["reference"]},
             {"address": at["python"], "value": case["python"]},
             {"address": at["why"], "value": case["why"]},
+            {"address": at["excel_text"], "value": NO_EXCEL_TEXT if case["excel"] is None else "'=" + case["excel"]},
+            {"address": at["library_text"], "value": "'=" + case["library"]},
         ]
         if case["excel"] is None:
             cells.append({"address": at["excel"], "value": NONE_TEXT})
@@ -294,7 +300,7 @@ def plan() -> dict[str, Any]:
                    "header_row": HEADER_ROW, "first_row": FIRST_ROW, "last_row": end,
                    "table": f"C{HEADER_ROW}:O{end}", "values": f"D{FIRST_ROW}:D{end},F{FIRST_ROW}:H{end}",
                    "digits": f"I{FIRST_ROW}:I{end},K{FIRST_ROW}:L{end}", "grades": f"M{FIRST_ROW}:O{end}",
-                   "hidden_texts": f"R{FIRST_ROW}:T{end}", "chart": "K5:O35",
+                   "hidden_texts": f"R{FIRST_ROW}:V{end}", "chart": "K5:O35",
                    "outputs": ["D19:D20", "D21:I35", f"C{HEADER_ROW}:O{end}"], "detail": detail,
                    "spacers": ["C10:D11", "C12:D13", "C14:D15", "C16:D16"]},
         "validation": {"case_list": "=ComparisonLabels", "digits": [1, FULL_DIGITS]},

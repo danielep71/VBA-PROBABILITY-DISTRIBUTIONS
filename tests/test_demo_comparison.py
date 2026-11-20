@@ -112,6 +112,9 @@ class PlanTests(unittest.TestCase):
             for column in "IKLMNO":
                 self.assertIn(f"{column}{row}", formulas)
             self.assertEqual(cells[f"R{row}"], "'" + case["reference"])
+            # The detail rows show these texts: they are the live formulas, written as text.
+            self.assertEqual(cells[f"V{row}"], "'" + formulas[f"G{row}"])
+            self.assertEqual(cells[f"U{row}"], "'" + formulas[f"F{row}"] if case["excel"] else C.NO_EXCEL_TEXT)
 
     def test_digits_and_grades_follow_the_study(self):
         formulas = {item["address"]: item["formula"] for item in PLAN["formulas"]}
@@ -144,6 +147,7 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(line.startswith(f"=IF(ISBLANK({C.PYTHON_VALUE}),"))
         code = re.sub(r'"[^"]*"', '""', " ".join(formulas.values()))
         self.assertNotIn("PY(", code, "no cell may need Python in Excel")
+        self.assertNotIn("FORMULATEXT(", code, "recalculated at every opening, it leaves the workbook changed")
 
 
 if __name__ == "__main__":
