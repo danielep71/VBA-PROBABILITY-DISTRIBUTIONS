@@ -23,7 +23,8 @@ Layout, in the style of the Explorer:
     K5:O35    two charts: the correct digits against the depth of the tail, and log10 of the values
               against it, with the limit of the Double range drawn
     C37:M..   the ladder: point, reference, the two values, their correct digits and statuses, the depth
-    R:V       hidden: every point of every scenario (scenario, x, reference text, reference value, depth)
+    R:W       hidden: every point of every scenario (scenario, x, reference text, reference value, depth,
+              the reference with ten digits, which is what the ladder shows)
     X:AE      hidden: the scenarios (name, kind, title, parameters, the two formulas as text, guarantee, method)
     AG:AJ     hidden: spilled helpers for the second chart; AL:AO the two lines of the Double limit
 
@@ -55,7 +56,7 @@ DETAIL_ROWS = {
 }
 STATUSES_MERGE = "D31:I33"
 # Hidden storage: one row per point, one row per scenario, spilled helpers, the two lines of the limit.
-STORE = {"scenario": "R", "x": "S", "reference_text": "T", "reference_value": "U", "depth": "V"}
+STORE = {"scenario": "R", "x": "S", "reference_text": "T", "reference_value": "U", "depth": "V", "reference_short": "W"}
 SCENARIOS = {"name": "X", "kind": "Y", "title": "Z", "parameters": "AA", "direct": "AB", "alternative": "AC",
              "contract": "AD", "method": "AE"}
 HELPERS = {"reference_value": "AG", "direct_log": "AH", "alternative_log": "AI", "reference_log": "AJ"}
@@ -151,7 +152,7 @@ def ladder_formulas(data: dict[str, Any]) -> list[dict[str, str]]:
 
     return [
         {"address": f"C{row}", "formula": spill(pick("TailsStoreX"))},
-        {"address": f"D{row}", "formula": spill(pick("TailsStoreReferenceText"))},
+        {"address": f"D{row}", "formula": spill(pick("TailsStoreReferenceShort"))},
         {"address": f"F{row}", "formula": spill(f"MAP(TailsX,LAMBDA(x,{direct}))")},
         {"address": f"G{row}", "formula": spill(f"MAP(TailsX,LAMBDA(x,{alternative}))")},
         {"address": f"H{row}", "formula": spill(
@@ -248,6 +249,8 @@ def columns_to_write(data: dict[str, Any]) -> list[dict[str, Any]]:
          "values": [float(point["reference_value"]) for _, point in points]},
         {"address": f"{STORE['depth']}{FIRST_ROW}:{STORE['depth']}{end}", "kind": "number",
          "values": [float(point["depth"]) for _, point in points]},
+        {"address": f"{STORE['reference_short']}{FIRST_ROW}:{STORE['reference_short']}{end}", "kind": "text",
+         "values": [point["reference_short"] for _, point in points]},
     ]
     scenarios = data["scenarios"]
     finish = FIRST_ROW + len(scenarios) - 1
@@ -274,6 +277,7 @@ def plan() -> dict[str, Any]:
         {"name": "TailsStoreReferenceText", "refers": "=" + ref(column(STORE["reference_text"], data, store_rows))},
         {"name": "TailsStoreReferenceValue", "refers": "=" + ref(column(STORE["reference_value"], data, store_rows))},
         {"name": "TailsStoreDepth", "refers": "=" + ref(column(STORE["depth"], data, store_rows))},
+        {"name": "TailsStoreReferenceShort", "refers": "=" + ref(column(STORE["reference_short"], data, store_rows))},
         {"name": "TailsScenarioNames", "refers": "=" + ref(column(SCENARIOS["name"], data, scenario_count))},
         {"name": "TailsScenarioKind", "refers": "=" + ref(column(SCENARIOS["kind"], data, scenario_count))},
         {"name": "TailsScenarioTitle", "refers": "=" + ref(column(SCENARIOS["title"], data, scenario_count))},
@@ -350,13 +354,13 @@ def plan() -> dict[str, Any]:
         {"address": "F14", "value": "A point far in the tail is a demonstration, not a certified guarantee: the library's contracts are in docs/. "
                                     "Where the sheet shows an error or a zero, that is what this Excel returned."},
         {"address": "F16", "value": "Needs macros and Excel 365 or 2024. If Macros says DISABLED, unblock the file and reopen."},
-        {"address": f"C{HEADER_ROW - 1}", "value": "The ladder of the scenario against the reference"},
+        {"address": f"C{HEADER_ROW - 1}", "value": "The ladder against the reference"},
         {"address": f"C{HEADER_ROW}", "value": "Point (x, z, t or k)"},
         {"address": f"D{HEADER_ROW}", "value": "Reference (mpmath)"},
-        {"address": f"F{HEADER_ROW}", "value": "Direct (survival or LogPMF)"},
+        {"address": f"F{HEADER_ROW}", "value": "Direct (library)"},
         {"address": f"G{HEADER_ROW}", "value": "1 - CDF or LN(PMF)"},
         {"address": f"H{HEADER_ROW}", "value": "Direct digits"},
-        {"address": f"I{HEADER_ROW}", "value": "Alternative digits"},
+        {"address": f"I{HEADER_ROW}", "value": "Alt. digits"},
         {"address": f"K{HEADER_ROW}", "value": "Direct status"},
         {"address": f"L{HEADER_ROW}", "value": "Alternative status"},
         {"address": f"M{HEADER_ROW}", "value": "Depth, -log10"},
@@ -398,6 +402,7 @@ def plan() -> dict[str, Any]:
                    "points": f"C{FIRST_ROW}:C{end}", "reference_column": f"D{FIRST_ROW}:D{end}",
                    "text_columns": [f"{STORE['scenario']}{FIRST_ROW}:{STORE['scenario']}{store_last_row(data)}",
                                     f"{STORE['reference_text']}{FIRST_ROW}:{STORE['reference_text']}{store_last_row(data)}",
+                                    f"{STORE['reference_short']}{FIRST_ROW}:{STORE['reference_short']}{store_last_row(data)}",
                                     f"{SCENARIOS['name']}{FIRST_ROW}:{SCENARIOS['alternative']}{FIRST_ROW + scenario_count - 1}",
                                     f"{SCENARIOS['contract']}{FIRST_ROW}:{SCENARIOS['method']}{FIRST_ROW + scenario_count - 1}"],
                    "hidden_from": "Q",

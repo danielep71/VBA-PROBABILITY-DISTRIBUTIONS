@@ -158,7 +158,7 @@ try {
             $point = $points[$index]
             $label = "$where point $($point.x)"
             if (([double]$x[$index]) -ne [double]$point.x) { throw "${label}: the ladder holds x = $($x[$index])" }
-            if ([string]$referenceText[$index] -cne [string]$point.reference) { throw "${label}: the reference reads $($referenceText[$index])" }
+            if ([string]$referenceText[$index] -cne [string]$point.reference_short) { throw "${label}: the reference reads $($referenceText[$index])" }
             if ([Math]::Abs([double]$depth[$index] - [double]$point.depth) -gt 1E-9) { throw "${label}: the depth is $($depth[$index]), expected $($point.depth)" }
             $expectedDirect = $sheet.Range("AQ$($index + 1)").Value2
             $expectedAlternative = $sheet.Range("AR$($index + 1)").Value2

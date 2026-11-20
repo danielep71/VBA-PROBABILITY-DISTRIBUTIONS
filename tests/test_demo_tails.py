@@ -91,6 +91,13 @@ class ScenarioTests(unittest.TestCase):
                     self.assertEqual(point["reference_value"], float(point["reference"]))
                     self.assertAlmostEqual(point["depth"], -point["reference_value"] / LN10, places=9)
 
+    def test_the_short_reference_is_the_first_ten_digits_of_the_stored_one(self):
+        for item in DATA["scenarios"]:
+            for point in item["points"]:
+                self.assertLess(len(point["reference_short"]), 20, f"{item['name']} {point['x']}")
+                full, short = Decimal(point["reference"]), Decimal(point["reference_short"])
+                self.assertLess(abs(short - full) / abs(full), Decimal("1e-9"), f"{item['name']} {point['x']}")
+
     def test_the_provenance_is_recorded(self):
         for key in ("python", "mpmath"):
             self.assertRegex(DATA["environment"][key], r"^\d+\.\d+")

@@ -18,7 +18,7 @@ Two kinds of scenario:
          LN(PMF), which is an error where the mass underflows to 0.
 
 The reference of every point is computed with mpmath at 60 digits and stored with 34: the value
-itself as text (a tail below 1E-308 cannot be a Double), and its depth, -log10 of the probability
+itself as text (a tail below 1E-308 cannot be a Double; ten digits of it are what the ladder shows), and its depth, -log10 of the probability
 (of the mass, for a log scenario), which is a Double. The sheet grades the values of Excel against it.
 A tail is never referenced by 1 - CDF.
 
@@ -37,6 +37,8 @@ HERE = Path(__file__).resolve().parent
 OUTPUT = HERE / "tails-cases.json"
 DIGITS = 60
 SHOWN = 34
+# The ladder of the sheet shows the reference with ten digits; the 34 digits are kept in the hidden storage.
+SHORT = 10
 # The smallest positive normal Double: below it an Excel cell holds 0.
 SMALLEST_NORMAL = 2.2250738585072014e-308
 
@@ -203,7 +205,7 @@ def point(scenario, x):
     depth = float(-mp.log10(value)) if scenario["kind"] == "tail" else float(-value / mp.log(10))
     stored = float(value)
     representable = scenario["kind"] == "log" or stored >= SMALLEST_NORMAL
-    return {"x": x, "reference": mp.nstr(value, SHOWN),
+    return {"x": x, "reference": mp.nstr(value, SHOWN), "reference_short": mp.nstr(value, SHORT),
             "reference_value": stored if representable else 0.0,
             "depth": depth}
 
