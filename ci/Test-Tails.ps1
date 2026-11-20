@@ -173,7 +173,11 @@ try {
                 $shownDigits = $walk[2][$index]
                 if ($null -eq $expectedDigits) {
                     if (-not (Is-Error $shownDigits)) { throw "${label}: the $($walk[0]) path has nothing to grade but shows $shownDigits digits" }
-                } elseif (-not ($shownDigits -is [double]) -or [Math]::Abs([double]$shownDigits - $expectedDigits) -gt 1E-9) {
+                } elseif (-not ($shownDigits -is [double])) {
+                    throw "${label}: the $($walk[0]) path shows $shownDigits digits, expected $expectedDigits"
+                } elseif ([Math]::Abs([double]$shownDigits - $expectedDigits) -gt 1E-9 -and -not ([double]$shownDigits -ge 15 -and $expectedDigits -ge 15)) {
+                    # Excel's comparison and subtraction treat two numbers equal to 15 digits as equal, so a value
+                    # one or two bits from the reference shows 16 digits there: both are at the end of the scale.
                     throw "${label}: the $($walk[0]) path shows $shownDigits digits, expected $expectedDigits"
                 }
                 $expectedStatus = Status $value $truth $expectedDigits $walk[4] $referenceGrade $reportGrade
