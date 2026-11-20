@@ -90,6 +90,8 @@ try {
     [void][ExplorerStatesNative]::GetWindowThreadProcessId([IntPtr][long]$excel.Hwnd, [ref]$processId)
     $job = Start-Job -ArgumentList $processId,$dialogFile -ScriptBlock $watch
     $book = $excel.Workbooks.Open($copy, 0, $false)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     $sheet = $book.Worksheets.Item('Explorer')
     $sheet.Activate()
     if ([string]$sheet.Range('D20').Value2 -ne 'ENABLED') { throw 'Macros cell does not say ENABLED with macros on' }
@@ -131,6 +133,8 @@ try {
     Copy-Item $source $copy -Force
     $excel = Start-OwnedExcel 3
     $book = $excel.Workbooks.Open($copy, 0, $false)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     $sheet = $book.Worksheets.Item('Explorer')
     Set-Text $sheet 'D6' 'Poisson'
     Set-Number $sheet 'D7' 4.0
@@ -147,6 +151,8 @@ try {
     # 3. That file, opened with macros on: results and charts must be right at once.
     $excel = Start-OwnedExcel 1
     $book = $excel.Workbooks.Open($copy, 0, $false)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     $sheet = $book.Worksheets.Item('Explorer')
     if ([string]$sheet.Range('D20').Value2 -ne 'ENABLED') { throw 'Macros cell stays DISABLED after macros are enabled' }
     Assert-Near (Number $sheet 'D21') ([Math]::Exp(-4.0)) 'Poisson mass after reopening'

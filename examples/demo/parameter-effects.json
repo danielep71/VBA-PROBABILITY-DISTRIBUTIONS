@@ -1,0 +1,419 @@
+{
+ "schema": "parameter-effects-1",
+ "note": "Four curve values per parameter (the defaults of the sheet), the parameter that is varied first, a line on what the parameter does, and the first three moments as expressions in the parameters a, b, c, d of explorer-families.json. A moment that does not exist reads \"undefined\" or \"infinite\".",
+ "curves": 4,
+ "families": {
+  "Normal": {
+   "vary": 2,
+   "parameters": [
+    {
+     "curves": [
+      -2,
+      -1,
+      0,
+      1
+     ],
+     "effect": "Location: slides the whole curve along x. Its shape, spread and tails do not change."
+    },
+    {
+     "curves": [
+      0.5,
+      1,
+      1.5,
+      2
+     ],
+     "effect": "Scale: the standard deviation. A larger value spreads the curve, lowers its peak and fattens both tails; the area stays 1."
+    }
+   ],
+   "moments": {
+    "mean": "a",
+    "variance": "b^2",
+    "skewness": "0"
+   }
+  },
+  "Lognormal": {
+   "vary": 2,
+   "parameters": [
+    {
+     "curves": [
+      -0.5,
+      0,
+      0.5,
+      1
+     ],
+     "effect": "Location of ln X: multiplies the whole curve by exp(value), so it moves right and spreads, with the same shape."
+    },
+    {
+     "curves": [
+      0.25,
+      0.5,
+      0.75,
+      1
+     ],
+     "effect": "Dispersion of ln X: a larger value skews the curve to the right and thickens the right tail sharply."
+    }
+   ],
+   "moments": {
+    "mean": "EXP(a+b^2/2)",
+    "variance": "(EXP(b^2)-1)*EXP(2*a+b^2)",
+    "skewness": "(EXP(b^2)+2)*SQRT(EXP(b^2)-1)"
+   }
+  },
+  "Student t": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      1,
+      2,
+      5,
+      30
+     ],
+     "effect": "Degrees of freedom: few degrees give heavy tails and a sharp centre; many approach the Normal. The mean needs more than 1, the variance more than 2."
+    }
+   ],
+   "moments": {
+    "mean": "IF(a>1,0,\"undefined\")",
+    "variance": "IF(a>2,a/(a-2),IF(a>1,\"infinite\",\"undefined\"))",
+    "skewness": "IF(a>3,0,\"undefined\")"
+   }
+  },
+  "Chi-square": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      2,
+      4,
+      8,
+      16
+     ],
+     "effect": "Degrees of freedom: the mean equals the value and the variance twice it; the curve moves right, spreads and becomes more symmetric."
+    }
+   ],
+   "moments": {
+    "mean": "a",
+    "variance": "2*a",
+    "skewness": "SQRT(8/a)"
+   }
+  },
+  "F": {
+   "vary": 2,
+   "parameters": [
+    {
+     "curves": [
+      2,
+      5,
+      10,
+      20
+     ],
+     "effect": "Numerator degrees of freedom: more degrees narrow the curve around 1 and lighten the right tail."
+    },
+    {
+     "curves": [
+      5,
+      10,
+      20,
+      50
+     ],
+     "effect": "Denominator degrees of freedom: few degrees give a heavy right tail; the mean needs more than 2, the variance more than 4."
+    }
+   ],
+   "moments": {
+    "mean": "IF(b>2,b/(b-2),\"undefined\")",
+    "variance": "IF(b>4,2*b^2*(a+b-2)/(a*(b-2)^2*(b-4)),IF(b>2,\"infinite\",\"undefined\"))",
+    "skewness": "IF(b>6,(2*a+b-2)*SQRT(8*(b-4))/((b-6)*SQRT(a*(a+b-2))),\"undefined\")"
+   }
+  },
+  "Gamma": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      1,
+      2,
+      4,
+      8
+     ],
+     "effect": "Shape: below 1 the density is unbounded at 0; at 1 it is the exponential; larger values give a bell-like, less skewed curve."
+    },
+    {
+     "curves": [
+      0.5,
+      1,
+      2,
+      4
+     ],
+     "effect": "Scale: stretches the curve along x without changing its shape; the mean and the standard deviation grow in proportion."
+    }
+   ],
+   "moments": {
+    "mean": "a*b",
+    "variance": "a*b^2",
+    "skewness": "2/SQRT(a)"
+   }
+  },
+  "Beta": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      0.5,
+      1,
+      2,
+      5
+     ],
+     "effect": "Alpha: larger values move the mass towards 1; below 1 the density is unbounded at 0."
+    },
+    {
+     "curves": [
+      0.5,
+      1,
+      2,
+      5
+     ],
+     "effect": "Beta: larger values move the mass towards 0; below 1 the density is unbounded at 1."
+    }
+   ],
+   "moments": {
+    "mean": "a/(a+b)",
+    "variance": "a*b/((a+b)^2*(a+b+1))",
+    "skewness": "2*(b-a)*SQRT(a+b+1)/((a+b+2)*SQRT(a*b))"
+   }
+  },
+  "Exponential": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      0.5,
+      1,
+      2,
+      4
+     ],
+     "effect": "Rate: the mean is 1/rate. A larger rate concentrates the mass near 0 and shortens the right tail."
+    }
+   ],
+   "moments": {
+    "mean": "1/a",
+    "variance": "1/a^2",
+    "skewness": "2"
+   }
+  },
+  "Weibull": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      0.5,
+      1,
+      1.5,
+      3
+     ],
+     "effect": "Shape: below 1 the hazard falls and the tail is heavy; at 1 it is the exponential; above 1 the curve is bell-like and the tail lightens."
+    },
+    {
+     "curves": [
+      0.5,
+      1,
+      2,
+      3
+     ],
+     "effect": "Scale: stretches the curve along x; about 63% of the mass lies below the value."
+    }
+   ],
+   "moments": {
+    "mean": "b*GAMMA(1+1/a)",
+    "variance": "b^2*(GAMMA(1+2/a)-GAMMA(1+1/a)^2)",
+    "skewness": "(GAMMA(1+3/a)-3*GAMMA(1+1/a)*GAMMA(1+2/a)+2*GAMMA(1+1/a)^3)/(GAMMA(1+2/a)-GAMMA(1+1/a)^2)^1.5"
+   }
+  },
+  "Uniform": {
+   "vary": 2,
+   "parameters": [
+    {
+     "curves": [
+      -1,
+      -0.5,
+      0,
+      0.5
+     ],
+     "effect": "Lower bound: moves the left end; the height is 1/(upper - lower), so the curve gets taller as the interval narrows."
+    },
+    {
+     "curves": [
+      1,
+      1.5,
+      2,
+      3
+     ],
+     "effect": "Upper bound: moves the right end; a longer interval lowers the curve and raises the variance."
+    }
+   ],
+   "moments": {
+    "mean": "(a+b)/2",
+    "variance": "(b-a)^2/12",
+    "skewness": "0"
+   }
+  },
+  "Binomial": {
+   "vary": 2,
+   "parameters": [
+    {
+     "curves": [
+      5,
+      10,
+      20,
+      40
+     ],
+     "effect": "Trials: the mean grows with the number of trials and the distribution becomes more symmetric."
+    },
+    {
+     "curves": [
+      0.1,
+      0.25,
+      0.4,
+      0.6
+     ],
+     "effect": "Probability of success: moves the mean and sets the skew; below 0.5 the right tail is longer, above 0.5 the left."
+    }
+   ],
+   "moments": {
+    "mean": "a*b",
+    "variance": "a*b*(1-b)",
+    "skewness": "(1-2*b)/SQRT(a*b*(1-b))"
+   }
+  },
+  "Poisson": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      1,
+      2,
+      4,
+      8
+     ],
+     "effect": "Mean: also the variance. A larger mean moves the mass right, spreads it and makes it more symmetric."
+    }
+   ],
+   "moments": {
+    "mean": "a",
+    "variance": "a",
+    "skewness": "1/SQRT(a)"
+   }
+  },
+  "Geometric": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      0.1,
+      0.2,
+      0.3,
+      0.6
+     ],
+     "effect": "Probability of success: a smaller value lengthens the right tail; the count is the failures before the first success."
+    }
+   ],
+   "moments": {
+    "mean": "(1-a)/a",
+    "variance": "(1-a)/a^2",
+    "skewness": "(2-a)/SQRT(1-a)"
+   }
+  },
+  "Negative binomial": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      1,
+      3,
+      6,
+      10
+     ],
+     "effect": "Target successes: more successes move the mean right and make the distribution more symmetric."
+    },
+    {
+     "curves": [
+      0.2,
+      0.4,
+      0.6,
+      0.8
+     ],
+     "effect": "Probability of success: a smaller value lengthens the right tail and raises the variance."
+    }
+   ],
+   "moments": {
+    "mean": "a*(1-b)/b",
+    "variance": "a*(1-b)/b^2",
+    "skewness": "(2-b)/SQRT(a*(1-b))"
+   }
+  },
+  "Hypergeometric": {
+   "vary": 1,
+   "parameters": [
+    {
+     "curves": [
+      5,
+      10,
+      20,
+      40
+     ],
+     "effect": "Sample size: a larger sample moves the mean right and, relative to the binomial, reduces the variance by the finite-population factor."
+    },
+    {
+     "curves": [
+      10,
+      30,
+      50,
+      70
+     ],
+     "effect": "Population successes: moves the mean right; the distribution is symmetric when successes are half the population."
+    },
+    {
+     "curves": [
+      60,
+      100,
+      200,
+      400
+     ],
+     "effect": "Population size: a larger population with the same successes lowers the success share, so the mean falls and the curve approaches the binomial."
+    }
+   ],
+   "moments": {
+    "mean": "a*b/c",
+    "variance": "IF(c=1,0,a*(b/c)*(1-b/c)*(c-a)/(c-1))",
+    "skewness": "IF(c<=2,IF(a*b*(c-b)*(c-a)>0,0,NA()),(c-2*b)*SQRT(c-1)*(c-2*a)/(SQRT(a*b*(c-b)*(c-a))*(c-2)))"
+   }
+  },
+  "Discrete uniform": {
+   "vary": 2,
+   "parameters": [
+    {
+     "curves": [
+      -2,
+      0,
+      1,
+      3
+     ],
+     "effect": "Lower bound: moves the left end; a longer range lowers every probability, 1/(upper - lower + 1)."
+    },
+    {
+     "curves": [
+      4,
+      6,
+      10,
+      20
+     ],
+     "effect": "Upper bound: moves the right end; a longer range lowers every probability and raises the variance."
+    }
+   ],
+   "moments": {
+    "mean": "(a+b)/2",
+    "variance": "((b-a+1)^2-1)/12",
+    "skewness": "0"
+   }
+  }
+ }
+}

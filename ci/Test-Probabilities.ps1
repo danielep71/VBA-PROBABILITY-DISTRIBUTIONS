@@ -39,6 +39,8 @@ try {
     $excel.DisplayAlerts = $false
     $excel.AutomationSecurity = 1
     $book = $excel.Workbooks.Open($path, 0, $false)
+    # Excel may still be loading or calculating the sheets after the workbook opens: a COM call is rejected until it is ready.
+    for ($wait = 0; $wait -lt 240; $wait++) { try { if ($excel.Ready) { break } } catch { }; Start-Sleep -Milliseconds 500 }
     $sheet = $book.Worksheets.Item('Probabilities')
     $explorer = $book.Worksheets.Item('Explorer')
     $prefix = "'" + $book.Name + "'!"
@@ -66,6 +68,9 @@ try {
     $chart = $sheet.ChartObjects($plan.chart.name).Chart
     if ($chart.SeriesCollection().Count -ne 3) { throw "The chart has $($chart.SeriesCollection().Count) series, expected 3" }
     if ($explorer.ChartObjects().Count -ne 2) { throw 'The Explorer lost a chart' }
+    foreach ($rule in @($sheet.Cells.FormatConditions)) {
+        if ($rule.Type -eq 2 -and [string]$rule.Formula1 -match 'Explorer') { throw "A conditional rule reads the Explorer: $($rule.Formula1) on $($rule.AppliesTo.Address($false, $false))" }
+    }
     $report.structure = 'PASS'
 
     # Every case: the results of the sheet against the references.
