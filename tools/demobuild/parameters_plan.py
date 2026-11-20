@@ -135,8 +135,17 @@ def x_grid_formula() -> str:
 
 
 def grid_formula(families: list[dict[str, Any]], k: int, operation: str) -> str:
+    """One curve over the shared x. A discrete family with a bounded support (Binomial, Hypergeometric,
+    Discrete uniform) is refused by the library outside it, where the mass is 0 and the cumulative
+    function 0 below and 1 above: a curve with a shorter support must still draw them."""
     call = dispatch(families, operation, "x")
-    return f'=IF({STATUS}="OK",MAP(ParameterEffectsX,LAMBDA(x,{curve(k, f"IFERROR({call},NA())")})),NA())'
+    row = FIRST_CURVE_ROW + k - 1
+    low, high = f"${WINDOW_COLUMNS[0]}${row}", f"${WINDOW_COLUMNS[1]}${row}"
+    if operation == "density":
+        outside = f"IF(OR(x<{low},x>{high}),0,NA())"
+    else:
+        outside = f"IF(x<{low},0,IF(x>{high},1,NA()))"
+    return f'=IF({STATUS}="OK",MAP(ParameterEffectsX,LAMBDA(x,{curve(k, f"IFERROR({call},{outside})")})),NA())'
 
 
 def window_formula(families: list[dict[str, Any]], k: int, key: str) -> str:
