@@ -342,8 +342,8 @@ End Function
 
 Public Sub RefreshDiagnostics()
     ' Recalculates the sheet, writes the Excel that computed it and sets the
-    ' chart: the function across the sweep of argument 1, each error a red
-    ' mark at 0.
+    ' chart: the function across the sweep of argument 1, with a gap in the
+    ' line at each error.
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
     Dim WasProtected As Boolean
@@ -360,7 +360,7 @@ Public Sub RefreshDiagnostics()
     End If
     Sheet.Calculate
     Title = CStr(Sheet.Range(FUNCTION_CELL).Value2) & " across " & ArgumentName(Sheet) & " from " & _
-            CellText(Sheet, SWEEP_FROM_CELL) & " to " & CellText(Sheet, SWEEP_TO_CELL) & "; errors in red at 0"
+            CellText(Sheet, SWEEP_FROM_CELL) & " to " & CellText(Sheet, SWEEP_TO_CELL) & "; a gap at each error"
     If Sheet.ChartObjects.Count = 1 Then FormatSweepChart Sheet.ChartObjects(SWEEP_CHART).Chart, Title, _
                                                          ArgumentName(Sheet)
     If WasProtected Then Sheet.Protect
@@ -401,17 +401,12 @@ End Function
 
 
 Private Sub FormatSweepChart(ByVal Chart As Chart, ByVal Title As String, ByVal XTitle As String)
-    ' Series: the value returned, a line; the errors, red marks at 0.
+    ' One series, the value returned, a line with a gap at each error. A
+    ' second series of markers in another chart type made Excel stop in the
+    ' chart macros of other sheets.
     With Chart
         .ChartType = xlXYScatterLinesNoMarkers
         .SeriesCollection(1).Format.Line.ForeColor.RGB = RGB(68, 114, 196)
-        With .SeriesCollection(2)
-            .ChartType = xlXYScatter
-            .MarkerStyle = xlMarkerStyleX
-            .MarkerSize = 7
-            .MarkerForegroundColor = RGB(192, 0, 0)
-            .MarkerBackgroundColor = RGB(192, 0, 0)
-        End With
         .HasTitle = True
         .ChartTitle.Text = Title
         .ChartTitle.Format.TextFrame2.TextRange.Font.Size = 10

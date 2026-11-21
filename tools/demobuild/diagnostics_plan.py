@@ -16,7 +16,7 @@ Layout, in the style of the Explorer:
               that value, the Status the library wrote, what they mean and what to do, the domain of the
               function, the arguments Excel converted before the call, the sweep, the case table in one line,
               what the sheet does not show, the Excel that computed it and the provenance
-    K5:O35    one chart: the function across the sweep of argument 1, each error drawn as a red mark at 0
+    K5:O35    one chart: the function across the sweep of argument 1, a gap in the line at each error
     C40:O70   the case table: per call, the call as written, what it returns, what the documentation says it
               returns, a check (As documented or UNEXPECTED), the Status and the cause with its correction
     AE:AX     hidden: an empty cell, the index of the function, the spilled sweep and the catalogue
@@ -51,7 +51,7 @@ TABLE_MERGES = ("D{row}:G{row}", "L{row}:M{row}", "N{row}:O{row}")
 EMPTY_CELL = "AE1"
 INDEX_CELL = "AE6"
 ARITY_CELL = "AE7"
-HELPERS = {"x": "AF", "raw": "AG", "value": "AH", "error": "AI"}
+HELPERS = {"x": "AF", "raw": "AG", "value": "AH"}
 CATALOGUE_FIRST = 6
 CATALOGUE: dict[str, str] = {"name": "AL", "arity": "AM", "sweep_from": "AV", "sweep_to": "AW", "domain": "AX"}
 CATALOGUE_PARAMS = ("AN", "AO", "AP", "AQ")
@@ -234,8 +234,8 @@ def sweep_formula(points: int) -> str:
     return (f'=IF({ok()},LET(n,ROWS(DiagSweepRaw),e,SUM(--ISTEXT(DiagSweepRaw)),'
             f'm,SUM(--(DiagSweepRaw="#NUM!")),'
             f'"Over "&n&" values of "&{parameter(1)}&" from "&{low}&" to "&{high}&": "&(n-e)&" numbers, "&m&'
-            f'" #NUM!"&IF(e>m," and "&(e-m)&" other errors","")&IF(e>0,"; each error is a red mark at 0 on the '
-            f'chart.",".")),"")')
+            f'" #NUM!"&IF(e>m," and "&(e-m)&" other errors","")&IF(e>0,"; the chart leaves a gap at each '
+            f'error.",".")),"")')
 
 
 def case_formulas(cases: list[dict[str, Any]]) -> list[dict[str, str]]:
@@ -308,7 +308,6 @@ def try_formulas(data: dict[str, Any]) -> list[dict[str, str]]:
          "formula": (f"=IF({ok()},MAP(DiagSweepX,LAMBDA(xv,LET(v,{dispatch(functions, sweep_args)},"
                      f"IF(ISNUMBER(v),v,{error_name('v')})))),NA())")},
         {"address": f"{HELPERS['value']}{row}", "formula": "=IF(ISNUMBER(DiagSweepRaw),DiagSweepRaw,NA())"},
-        {"address": f"{HELPERS['error']}{row}", "formula": "=IF(ISNUMBER(DiagSweepRaw),NA(),0)"},
     ]
 
 
@@ -370,8 +369,7 @@ def plan() -> dict[str, Any]:
         *check_names(),
         {"name": "DiagStatusBad", "refers": f'={ref(STATUS.replace("$", ""))}<>"OK"'},
     ]
-    spills = {"DiagSweepX": HELPERS["x"], "DiagSweepRaw": HELPERS["raw"], "DiagSweepValue": HELPERS["value"],
-              "DiagSweepError": HELPERS["error"]}
+    spills = {"DiagSweepX": HELPERS["x"], "DiagSweepRaw": HELPERS["raw"], "DiagSweepValue": HELPERS["value"]}
     names += [{"name": name, "refers": f"={SHEET}!${letter}${FIRST_ROW}#"} for name, letter in spills.items()]
     formulas = [
         {"address": STATUS.replace("$", ""), "formula": status_cell_formula()},
@@ -435,7 +433,6 @@ def plan() -> dict[str, Any]:
         {"address": f"{HELPERS['x']}{HEADER_ROW}", "value": "Argument 1"},
         {"address": f"{HELPERS['raw']}{HEADER_ROW}", "value": "Returned"},
         {"address": f"{HELPERS['value']}{HEADER_ROW}", "value": "Number"},
-        {"address": f"{HELPERS['error']}{HEADER_ROW}", "value": "Error at 0"},
         {"address": f"{CATALOGUE['name']}{CATALOGUE_FIRST - 1}", "value": "Function"},
         *catalogue_texts(functions),
     ]
@@ -462,9 +459,10 @@ def plan() -> dict[str, Any]:
                         "check_rules": [{"text": "As documented", "font": 0x006100, "fill": 0xCEEFC6},
                                         {"text": "UNEXPECTED", "font": 0x0000C0, "fill": 0xCEC7FF}]},
         "charts": [
-            {"name": "DiagSweep", "title": "The function across the sweep of argument 1; errors in red at 0",
-             "series": [{"name": "Returned value", "x": "DiagSweepX", "y": "DiagSweepValue"},
-                        {"name": "Error (#NUM! or other), drawn at 0", "x": "DiagSweepX", "y": "DiagSweepError"}]},
+            # One series, a line: an error leaves a gap. A second series of markers at each error, drawn over the
+            # line in another chart type, made Excel stop (access violation) in other sheets' chart macros.
+            {"name": "DiagSweep", "title": "The function across the sweep of argument 1; a gap at each error",
+             "series": [{"name": "Returned value", "x": "DiagSweepX", "y": "DiagSweepValue"}]},
         ],
     }
 

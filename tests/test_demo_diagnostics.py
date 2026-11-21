@@ -345,6 +345,9 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(all(21 <= row <= 33 for row in P.RESULT_ROWS.values()))
         self.assertEqual(PLAN["layout"]["chart_area"], "K5:O35")
         self.assertEqual(len(PLAN["charts"]), 1)
+        # One series: a second one, of markers in another chart type, made Excel stop in other sheets' chart macros.
+        self.assertEqual(len(PLAN["charts"][0]["series"]), 1)
+        self.assertNotIn(".SeriesCollection(2)", MODULE)
         self.assertEqual(json.loads(json.dumps(PLAN))["schema"], "diagnostics-plan-1")
         sheets = json.loads((ROOT / "examples/demo/sheets.json").read_text(encoding="utf-8"))
         entry = [sheet for section in sheets["sections"] for sheet in section["sheets"] if sheet["issue"] == 261][0]

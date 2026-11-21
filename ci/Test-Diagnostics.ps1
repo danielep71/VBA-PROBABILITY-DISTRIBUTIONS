@@ -123,7 +123,7 @@ try {
     }
     if ($sheet.ChartObjects().Count -ne 1) { throw "The sheet has $($sheet.ChartObjects().Count) charts, expected 1" }
     $chart = $sheet.ChartObjects('DiagSweep').Chart
-    if ($chart.SeriesCollection().Count -ne 2) { throw "The chart has $($chart.SeriesCollection().Count) series, expected 2" }
+    if ($chart.SeriesCollection().Count -ne @($plan.charts[0].series).Count) { throw "The chart has $($chart.SeriesCollection().Count) series, expected $(@($plan.charts[0].series).Count)" }
     foreach ($rule in @($sheet.Cells.FormatConditions)) {
         if ($rule.Type -eq 2 -and [string]$rule.Formula1 -match 'Explorer') { throw "A conditional rule reads the Explorer: $($rule.Formula1)" }
     }
