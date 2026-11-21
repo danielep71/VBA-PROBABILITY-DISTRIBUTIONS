@@ -262,6 +262,13 @@ class PlanTests(unittest.TestCase):
         self.assertIn(f'SWEEP_CHART As String = "{PLAN["charts"][0]["name"]}"', MODULE)
         self.assertIn('Range("C7")', MODULE)
 
+    def test_function_names_match_without_regard_to_case(self):
+        # Excel's list validation, MATCH and formulas accept a function name in any case: the module's Select
+        # Case and catalogue lookup must too, or an accepted name gives a contradictory Status.
+        self.assertIn("Option Compare Text", MODULE)
+        self.assertIn("MatchCase:=False", MODULE)
+        self.assertNotIn("MatchCase:=True", MODULE)
+
     def test_the_status_is_the_librarys_text(self):
         # DiagnosticsStatus returns the Status the call wrote; its own lines all start "Not called", and the
         # sheet tells them apart by those words.

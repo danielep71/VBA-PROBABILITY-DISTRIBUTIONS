@@ -9,8 +9,13 @@ Attribute VB_Name = "M_STATS_PROBDIST_DIAGNOSTICS"
 ' text the library wrote there, unchanged. The values on the sheet are
 ' worksheet formulas that call the production API directly; this module
 ' computes none of them.
+'
+' Function names compare without regard to case, as Excel's list validation,
+' MATCH and formulas read them: k_stats_gamma_inversecumulative is the
+' function K_STATS_Gamma_InverseCumulative here too.
 '==============================================================================
 Option Explicit
+Option Compare Text
 
 Private Const FUNCTION_CELL As String = "D6"
 Private Const FIRST_ARGUMENT_CELL As String = "D7"
@@ -260,7 +265,7 @@ Private Sub LoadDiagnosticsExample(ByVal Sheet As Worksheet)
     Dim Value As Variant
     Set Names = Sheet.Parent.Names(CATALOGUE_NAMES).RefersToRange
     Set Found = Names.Find(What:=CStr(Sheet.Range(FUNCTION_CELL).Value2), LookIn:=xlValues, _
-                           LookAt:=xlWhole, MatchCase:=True)
+                           LookAt:=xlWhole, MatchCase:=False)
     If Found Is Nothing Then Exit Sub
     For Slot = 1 To ARGUMENT_COUNT
         Value = Found.Offset(0, 5 + Slot).Value2

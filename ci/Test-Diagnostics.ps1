@@ -231,6 +231,20 @@ try {
     if (-not (Is-Error $raw[1, 1]) -or -not (Is-Error $raw[[int]$at.sweep_points, 1]) -or (Is-Error $raw[2, 1])) { throw 'The default sweep is not refused at 0 and 1 only' }
     $report.sweep = 'PASS'
 
+    # A function name typed in another case is the same function: Excel accepts it, and so do the example
+    # loader and the Status reader.
+    $lower = ([string]$plan.defaults.function).ToLowerInvariant()
+    Set-Text $sheet $at.function $lower
+    Set-Number $sheet ([string]$at.arguments[0]) 1
+    $excel.Calculate()
+    if ([string]$sheet.Range($at.status).Value2 -ne 'OK') { throw "The name $lower gives the status $($sheet.Range($at.status).Value2)" }
+    if ([double]$sheet.Range([string]$at.arguments[1]).Value2 -ne [double]$plan.defaults.args[1]) { throw "The name $lower did not load its example" }
+    $status = [string]$sheet.Range("D$($rows.status)").Value2
+    if (-not $status.Contains('Probability')) { throw "The name $lower gives the Status '$status'" }
+    [void]$excel.Run($prefix + 'ResetDiagnosticsInputs', $false)
+    $excel.Calculate()
+    $report.case_insensitive = 'PASS'
+
     # Invalid inputs, one at a time from the default example: the status names the input, nothing is shown,
     # the Excel state is unchanged and the sheet can still be left and reached.
     $state = Excel-State
