@@ -184,11 +184,13 @@ try {
     $sheet.Range("C${header}:I$header").WrapText = $true
     $table = $sheet.Range("C${first}:I$last")
     $table.Font.Size = 9
-    # General keeps every digit a cell can show and needs no decimal separator.
-    $sheet.Range($at.probabilities).NumberFormat = 'General'
-    $sheet.Range($at.results).NumberFormat = 'General'
-    $sheet.Range($at.counts).NumberFormat = '0'
-    $sheet.Range("D$($rows.quantile)").NumberFormat = '0'
+    # General keeps every digit a cell can show and needs no decimal separator. Through COM the format is
+    # read in the language of Excel ("General", "Standard", ...): it is taken from a cell that has none.
+    $general = [string]$sheet.Range('AZ1').NumberFormatLocal
+    $sheet.Range($at.probabilities).NumberFormatLocal = $general
+    $sheet.Range($at.results).NumberFormatLocal = $general
+    $sheet.Range($at.counts).NumberFormatLocal = '0'
+    $sheet.Range("D$($rows.quantile)").NumberFormatLocal = '0'
     $sheet.Range($at.probabilities).HorizontalAlignment = -4152
     $sheet.Range($at.counts).HorizontalAlignment = -4108
     $sheet.Tab.Color = $explorer.Tab.Color
