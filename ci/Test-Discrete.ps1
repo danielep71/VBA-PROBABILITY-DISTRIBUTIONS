@@ -25,9 +25,22 @@ $green = 0xCEEFC6
 $grey = 0xF2F2F2
 
 function Is-Error($Value) { return ($Value -is [int]) -and ($Value -lt -2146820000) }
+# Each write runs the sheet's macro and recalculates; Excel rejects a COM call while it is still busy
+# (RPC_E_CALL_REJECTED). A write is retried until Excel accepts it, for up to five minutes.
+function Invoke-WhenReady([scriptblock]$Action) {
+    for ($attempt = 1; ; $attempt++) {
+        try { return & $Action }
+        catch {
+            $text = [string]$_.Exception + ' ' + [string]$_.Exception.InnerException
+            $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
+            if (-not $busy -or $attempt -ge 600) { throw }
+            Start-Sleep -Milliseconds 500
+        }
+    }
+}
 # One call site per value type: PowerShell binds a COM setter to the first type it sees.
-function Set-Text($Sheet, [string]$Address, [string]$Value) { $Sheet.Range($Address).Value2 = $Value }
-function Set-Number($Sheet, [string]$Address, [double]$Value) { $Sheet.Range($Address).Value2 = $Value }
+function Set-Text($Sheet, [string]$Address, [string]$Value) { Invoke-WhenReady { $Sheet.Range($Address).Value2 = $Value } }
+function Set-Number($Sheet, [string]$Address, [double]$Value) { Invoke-WhenReady { $Sheet.Range($Address).Value2 = $Value } }
 # The values a spilled formula holds, one per row (or the single value when it does not spill).
 function Spill-Values($Sheet, [string]$Address) {
     $spill = $Sheet.Range($Address).SpillingToRange

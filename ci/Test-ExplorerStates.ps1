@@ -57,9 +57,22 @@ function Close-OwnedExcel($Instance) {
         try { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($Instance) } catch {}
     }
 }
+# Each write runs the sheet's macro and recalculates; Excel rejects a COM call while it is still busy
+# (RPC_E_CALL_REJECTED). A write is retried until Excel accepts it, for up to five minutes.
+function Invoke-WhenReady([scriptblock]$Action) {
+    for ($attempt = 1; ; $attempt++) {
+        try { return & $Action }
+        catch {
+            $text = [string]$_.Exception + ' ' + [string]$_.Exception.InnerException
+            $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
+            if (-not $busy -or $attempt -ge 600) { throw }
+            Start-Sleep -Milliseconds 500
+        }
+    }
+}
 # One call site per value type: PowerShell binds a COM setter to the first type it sees.
-function Set-Text($Sheet, [string]$Address, [string]$Value) { $Sheet.Range($Address).Value2 = $Value }
-function Set-Number($Sheet, [string]$Address, [double]$Value) { $Sheet.Range($Address).Value2 = $Value }
+function Set-Text($Sheet, [string]$Address, [string]$Value) { Invoke-WhenReady { $Sheet.Range($Address).Value2 = $Value } }
+function Set-Number($Sheet, [string]$Address, [double]$Value) { Invoke-WhenReady { $Sheet.Range($Address).Value2 = $Value } }
 function Number($Sheet, [string]$Address) { return [double]$Sheet.Range($Address).Value2 }
 function Assert-Near([double]$Actual, [double]$Expected, [string]$What) {
     if ([Math]::Abs($Actual - $Expected) -gt 1e-12) { throw "${What}: $Actual, expected $Expected" }
