@@ -180,8 +180,10 @@ def label_formula(slot: int) -> str:
 
 
 def shown_argument(cell: str) -> str:
-    """An argument as the call with its values shows it: a text in quotes, an empty cell named."""
-    return f'IF(ISBLANK({cell}),"[empty cell]",IF(ISTEXT({cell}),""""&{cell}&"""",{cell}&""))'
+    """An argument as the call with its values shows it: a text in quotes, an empty cell and an error value
+    named."""
+    return (f'IF(ISBLANK({cell}),"[empty cell]",IF(ISERROR({cell}),"[error value]",'
+            f'IF(ISTEXT({cell}),""""&{cell}&"""",{cell}&"")))')
 
 
 MEANING = {
@@ -216,7 +218,8 @@ def by_kind(texts: dict[str, str]) -> str:
 
 
 def converted_formula() -> str:
-    """The arguments Excel converts before the call: an empty cell becomes 0, a text stops the call."""
+    """The arguments Excel converts before the call: an empty cell becomes 0, a text or an error value stops
+    the call."""
     parts = []
     for slot, cell in enumerate(ARG_CELLS, 1):
         name = absolute(cell)
@@ -225,6 +228,8 @@ def converted_formula() -> str:
                      f'passes it as 0. ","")')
         parts.append(f'IF(AND({used},ISTEXT({name})),"Argument {slot} ("&{parameter(slot)}&") is text: unless VBA '
                      f'reads it as a number, the function never runs and Excel returns #VALUE!. ","")')
+        parts.append(f'IF(AND({used},ISERROR({name})),"Argument {slot} ("&{parameter(slot)}&") holds an error '
+                     f'value: Excel cannot pass it as a number, so the function never runs. ","")')
     joined = "&".join(parts)
     return f'=IF({ok()},LET(t,{joined},IF(t="","None: every argument is a number.",TRIM(t))),"")'
 

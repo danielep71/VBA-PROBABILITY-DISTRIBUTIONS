@@ -249,6 +249,23 @@ try {
     $excel.Calculate()
     $report.case_insensitive = 'PASS'
 
+    # An argument that holds an error value: the function never runs, and the three lines that read the
+    # arguments say so alike.
+    $sheet.Range([string]$at.arguments[0]).Formula2 = '=NA()'
+    $excel.Calculate()
+    $status = [string]$sheet.Range("D$($rows.status)").Value2
+    $converted = [string]$sheet.Range("D$($rows.converted)").Value2
+    $call = [string]$sheet.Range("D$($rows.call)").Value2
+    if (-not $status.StartsWith('Not called')) { throw "An error value as argument 1 gives the Status '$status'" }
+    if (-not $converted.Contains('holds an error value')) { throw "An error value as argument 1 gives the converted arguments '$converted'" }
+    if (-not $call.Contains('[error value]')) { throw "An error value as argument 1 gives the call '$call'" }
+    if (-not (Is-Error $sheet.Range("D$($rows.returned)").Value2)) { throw 'An error value as argument 1 returns a number' }
+    $report.observations += [ordered]@{ trial = 'an error value'; call = $call; returned = (Shown $sheet.Range("D$($rows.returned)").Value2);
+                                        kind = [string]$sheet.Range("D$($rows.kind)").Value2; status = $status }
+    [void]$excel.Run($prefix + 'ResetDiagnosticsInputs', $false)
+    $excel.Calculate()
+    $report.error_value = 'PASS'
+
     # Invalid inputs, one at a time from the default example: the status names the input, nothing is shown,
     # the Excel state is unchanged and the sheet can still be left and reached.
     $state = Excel-State

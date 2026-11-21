@@ -303,6 +303,14 @@ class PlanTests(unittest.TestCase):
         self.assertIn('LET(sep,IF(MID(1/2&"",2,1)=",",";",",")', call)
         self.assertNotIn('&","&', call)
 
+    def test_an_error_value_is_named_where_the_arguments_are_read(self):
+        # An argument holding an error value stops the call: the converted arguments and the call with its
+        # values say so, as DiagnosticsStatus does, instead of reading it as a number.
+        formulas = self.formulas()
+        self.assertEqual(formulas[P.result("converted")].count("holds an error value"), len(P.ARG_CELLS))
+        self.assertIn('IF(ISERROR($D$7),"[error value]"', formulas[P.result("call")])
+        self.assertIn("ERROR_ARGUMENT", MODULE)
+
     def test_numbers_are_written_to_give_back_the_same_double(self):
         for value in (1e-300, 1e100, 0.9331927987311419, 7.619853024160525e-24, 2.9, -0.5, 95, 1e9):
             self.assertEqual(float(P.number_text(value)), value)
