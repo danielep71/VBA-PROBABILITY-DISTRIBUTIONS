@@ -251,6 +251,24 @@ Private Const PROB_DS_MAX_NEGBINOM_KERNEL_COUNT As Double = 20000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_POP As Double = 100000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
 
+'Step tie of the discrete inverses (#467). The searches compare the computed
+'tail with the target strictly, so a target equal to a step value F(k) can
+'compare one ulp on the wrong side and return k + 1. Once the search ends, the
+'count below is taken when the target lies within a window of its tail value:
+'a relative 1E-12 of the target (the computed tails carry errors of a few ulps,
+'up to about 3E-13 on the accuracy grid), but never more than 2^-10 of the step
+'between the two tail values, so a distribution whose steps are finer than the
+'window keeps the strict answer.
+Private Const PROB_DS_STEP_TIE_REL As Double = 0.000000000001     '1E-12
+Private Const PROB_DS_STEP_TIE_SHARE As Double = 0.0009765625     '2^-10
+
+'Family codes of the step-tie check.
+Private Const PROB_DS_FAMILY_BINOMIAL As Long = 1
+Private Const PROB_DS_FAMILY_POISSON As Long = 2
+Private Const PROB_DS_FAMILY_GEOMETRIC As Long = 3
+Private Const PROB_DS_FAMILY_NEGBINOM As Long = 4
+Private Const PROB_DS_FAMILY_HYPERGEOMETRIC As Long = 5
+
 
 '==============================================================================
 ' K_STATS_Binomial_PMF
@@ -937,6 +955,9 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 ' BEHAVIOR
 '   - Returns the LEAST qualifying integer, matching Excel's BINOM.INV
 '     convention.
+'   - A Probability on a step, F(k) = Probability, returns k: a target within
+'     a relative 1E-12 of a step value counts as on it, unless the steps are
+'     finer than that (#467).
 '   - The open interval is deliberate: 0 and 1 have no least qualifying integer
 '     distinguishable from the support boundary.
 '
@@ -1943,6 +1964,7 @@ End Function
 '   Uses the direct SF when Probability > 0.5.
 '   Evaluates the configured quantile ceiling before reporting failure.
 '   Every bracket and bisection loop has an explicit iteration guard.
+'   A Probability on a step, F(k) = Probability, returns k (#467).
 '
 ' ERROR POLICY
 '   Invalid domains, unsupported magnitudes or numerical failure return #NUM!.
@@ -2780,6 +2802,7 @@ End Function
 '   Uses ceil(Log1p(-Probability)/Log1p(-p)) - 1 as the seed.
 '   Rejects a quantile above 2^53 - 1.
 '   Uses the direct SF when Probability > 0.5.
+'   A Probability on a step, F(k) = Probability, returns k (#467).
 '
 ' ERROR POLICY
 '   Invalid domains, unsupported magnitudes or numerical failure return #NUM!.
@@ -7288,6 +7311,144 @@ End Function
 '==============================================================================
 
 
+Private Function PROB_DS_TryFamilyTail( _
+    ByVal Family As Long, _
+    ByVal K As Double, _
+    ByVal UseLower As Boolean, _
+    ByVal P1 As Double, _
+    ByVal P2 As Double, _
+    ByVal P3 As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryFamilyTail
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the CDF (UseLower) or the direct SF at K of one discrete family,
+'   through the kernel its inverse compares.
+'
+' INPUTS
+'   Family   A PROB_DS_FAMILY_ code.
+'   P1-P3    Binomial (n, p), Poisson (mean), Geometric (p), Negative
+'            Binomial (r, p), Hypergeometric (n, K, N); unused ones are zero.
+'
+' UPDATED
+'   2026-11-21 - Added for the step-tie check (#467).
+'==============================================================================
+'
+        Select Case Family
+            Case PROB_DS_FAMILY_BINOMIAL
+                If UseLower Then
+                    PROB_DS_TryFamilyTail = PROB_DS_TryBinomialCDF(K, P1, P2, Result, FailMsg)
+                Else
+                    PROB_DS_TryFamilyTail = PROB_DS_TryBinomialSF(K, P1, P2, Result, FailMsg)
+                End If
+            Case PROB_DS_FAMILY_POISSON
+                If UseLower Then
+                    PROB_DS_TryFamilyTail = PROB_DS_TryPoissonCDF(K, P1, Result, FailMsg)
+                Else
+                    PROB_DS_TryFamilyTail = PROB_DS_TryPoissonSF(K, P1, Result, FailMsg)
+                End If
+            Case PROB_DS_FAMILY_GEOMETRIC
+                If UseLower Then
+                    PROB_DS_TryFamilyTail = PROB_DS_TryGeometricCDF(K, P1, Result, FailMsg)
+                Else
+                    PROB_DS_TryFamilyTail = PROB_DS_TryGeometricSF(K, P1, Result, FailMsg)
+                End If
+            Case PROB_DS_FAMILY_NEGBINOM
+                If UseLower Then
+                    PROB_DS_TryFamilyTail = PROB_DS_TryNegativeBinomialCDF(K, P1, P2, Result, FailMsg)
+                Else
+                    PROB_DS_TryFamilyTail = PROB_DS_TryNegativeBinomialSF(K, P1, P2, Result, FailMsg)
+                End If
+            Case PROB_DS_FAMILY_HYPERGEOMETRIC
+                If UseLower Then
+                    PROB_DS_TryFamilyTail = PROB_DS_TryHypergeometricCDF(K, P1, P2, P3, Result, FailMsg)
+                Else
+                    PROB_DS_TryFamilyTail = PROB_DS_TryHypergeometricSF(K, P1, P2, P3, Result, FailMsg)
+                End If
+            Case Else
+                FailMsg = "Unknown discrete family code " & CStr(Family)
+        End Select
+End Function
+
+
+Private Function PROB_DS_TryStepTie( _
+    ByVal Family As Long, _
+    ByVal Hi As Double, _
+    ByVal LowerBound As Double, _
+    ByVal Probability As Double, _
+    ByVal ComplementProbability As Double, _
+    ByVal P1 As Double, _
+    ByVal P2 As Double, _
+    ByVal P3 As Double, _
+    ByRef Result As Double, _
+    ByRef FailMsg As String) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TryStepTie
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Finishes a discrete inverse: Hi is the least count that qualified under
+'   the strict comparison; Hi - 1 is returned instead when the target lies on
+'   its step, F(Hi - 1) = Probability, to within the step-tie window (#467).
+'
+' INPUTS
+'   Family                 A PROB_DS_FAMILY_ code.
+'   Hi                     Least strictly qualifying count.
+'   LowerBound             Lowest count of the support.
+'   Probability            Target cumulative probability.
+'   ComplementProbability  1 - Probability.
+'   P1-P3                  Family parameters, as for PROB_DS_TryFamilyTail.
+'
+' BEHAVIOR
+'   - Compares on the same smaller tail as the search: the CDF when
+'     Probability <= 0.5, else the SF against 1 - Probability.
+'   - The window is PROB_DS_STEP_TIE_REL times the target, capped at
+'     PROB_DS_STEP_TIE_SHARE times the step between the tail values at Hi - 1
+'     and Hi. It moves the answer by one count at most.
+'
+' UPDATED
+'   2026-11-21 - Added for #467.
+'==============================================================================
+'
+    Dim UseLower            As Boolean         'TRUE compares the CDF
+    Dim Target              As Double          'Probability or its complement
+    Dim TailAt              As Double          'Tail value at Hi
+    Dim TailBelow           As Double          'Tail value at Hi - 1
+    Dim StepWidth           As Double          'Step between the two tail values
+    Dim Window              As Double          'Tie window around the step value
+
+        Result = Hi
+
+        If Hi <= LowerBound Then
+            PROB_DS_TryStepTie = True
+            Exit Function
+        End If
+
+        UseLower = (Probability <= 0.5)
+        If UseLower Then Target = Probability Else Target = ComplementProbability
+
+        If Not PROB_DS_TryFamilyTail( _
+            Family, Hi, UseLower, P1, P2, P3, TailAt, FailMsg) Then Exit Function
+        If Not PROB_DS_TryFamilyTail( _
+            Family, Hi - 1#, UseLower, P1, P2, P3, TailBelow, FailMsg) Then Exit Function
+
+        StepWidth = Abs(TailAt - TailBelow)
+        Window = PROB_DS_STEP_TIE_REL * Target
+        If Window > PROB_DS_STEP_TIE_SHARE * StepWidth Then
+            Window = PROB_DS_STEP_TIE_SHARE * StepWidth
+        End If
+
+        If Abs(TailBelow - Target) <= Window Then Result = Hi - 1#
+
+        PROB_DS_TryStepTie = True
+End Function
+
+
 Private Function PROB_DS_TryBinomialQualifies( _
     ByVal K As Double, _
     ByVal Probability As Double, _
@@ -7420,6 +7581,7 @@ Private Function PROB_DS_TryBinomialInverse( _
 '
 ' UPDATED
 '   2026-07-19 - Cornish-Fisher seed replaces the full-range bisection.
+'   2026-11-21 - Finished by PROB_DS_TryStepTie (#467).
 '==============================================================================
 '
     Dim ComplementProbability   As Double      '1 - target probability
@@ -7563,7 +7725,11 @@ Private Function PROB_DS_TryBinomialInverse( _
 '------------------------------------------------------------------------------
         For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
             If Hi - Lo <= 1# Then
-                Result = Hi
+                'Take the count below when the target lies on its step (#467)
+                If Not PROB_DS_TryStepTie( _
+                    PROB_DS_FAMILY_BINOMIAL, Hi, 0#, Probability, ComplementProbability, _
+                    n, ProbSuccess, 0#, Result, FailMsg) Then Exit Function
+
                 PROB_DS_TryBinomialInverse = True
                 Exit Function
             End If
@@ -7604,6 +7770,9 @@ Private Function PROB_DS_TryPoissonInverse( _
 '   - Expands downward or upward until a failing/qualifying bracket is known.
 '   - Evaluates the configured ceiling before declaring failure.
 '   - Refines with smaller-tail integer bisection.
+'
+' UPDATED
+'   2026-11-21 - Finished by PROB_DS_TryStepTie (#467).
 '==============================================================================
 '
     Dim ComplementProbability As Double        '1 - target probability
@@ -7760,7 +7929,11 @@ Private Function PROB_DS_TryPoissonInverse( _
 '------------------------------------------------------------------------------
         For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
             If Hi - Lo <= 1# Then
-                Result = Hi
+                'Take the count below when the target lies on its step (#467)
+                If Not PROB_DS_TryStepTie( _
+                    PROB_DS_FAMILY_POISSON, Hi, 0#, Probability, ComplementProbability, _
+                    Mean, 0#, 0#, Result, FailMsg) Then Exit Function
+
                 PROB_DS_TryPoissonInverse = True
                 Exit Function
             End If
@@ -7804,6 +7977,9 @@ Private Function PROB_DS_TryGeometricInverse( _
 ' METHOD
 '   Seeds the closed form, rejects an unrepresentable integer quantile and then
 '   performs a bounded monotone correction against the smaller direct tail.
+'
+' UPDATED
+'   2026-11-21 - Finished by PROB_DS_TryStepTie (#467).
 '==============================================================================
 '
     Dim ComplementProbability As Double        '1 - target probability
@@ -7877,7 +8053,11 @@ Private Function PROB_DS_TryGeometricInverse( _
                 FailMsg) Then Exit Function
 
             If Qualifies Then
-                Result = Seed
+                'Take the count below when the target lies on its step (#467)
+                If Not PROB_DS_TryStepTie( _
+                    PROB_DS_FAMILY_GEOMETRIC, Seed, 0#, Probability, ComplementProbability, _
+                    ProbSuccess, 0#, 0#, Result, FailMsg) Then Exit Function
+
                 PROB_DS_TryGeometricInverse = True
                 Exit Function
             End If
@@ -7950,6 +8130,7 @@ Private Function PROB_DS_TryNegativeBinomialInverse( _
 '
 ' UPDATED
 '   2026-07-21
+'   2026-11-21 - Finished by PROB_DS_TryStepTie (#467).
 '==============================================================================
 '
     Dim ComplementProbability As Double        '1 - target probability
@@ -8080,7 +8261,11 @@ Private Function PROB_DS_TryNegativeBinomialInverse( _
 
         For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
             If Hi - Lo <= 1# Then
-                Result = Hi
+                'Take the count below when the target lies on its step (#467)
+                If Not PROB_DS_TryStepTie( _
+                    PROB_DS_FAMILY_NEGBINOM, Hi, 0#, Probability, ComplementProbability, _
+                    R, ProbSuccess, 0#, Result, FailMsg) Then Exit Function
+
                 PROB_DS_TryNegativeBinomialInverse = True
                 Exit Function
             End If
@@ -8160,6 +8345,7 @@ Private Function PROB_DS_TryHypergeometricInverse( _
 '
 ' UPDATED
 '   2026-07-21
+'   2026-11-21 - Finished by PROB_DS_TryStepTie (#467).
 '==============================================================================
 '
     Dim ComplementProbability As Double        '1 - target probability
@@ -8296,7 +8482,11 @@ Private Function PROB_DS_TryHypergeometricInverse( _
 
         For IterIdx = 1 To PROB_DS_MAX_INVERSE_ITER
             If Hi - Lo <= 1# Then
-                Result = Hi
+                'Take the count below when the target lies on its step (#467)
+                If Not PROB_DS_TryStepTie( _
+                    PROB_DS_FAMILY_HYPERGEOMETRIC, Hi, KMin, Probability, ComplementProbability, _
+                    n, Kp, Np, Result, FailMsg) Then Exit Function
+
                 PROB_DS_TryHypergeometricInverse = True
                 Exit Function
             End If
