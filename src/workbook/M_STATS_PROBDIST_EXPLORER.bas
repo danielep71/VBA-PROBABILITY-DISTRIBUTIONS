@@ -51,6 +51,8 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
                 M_STATS_PROBDIST_COMPARISON.ResetComparisonInputs
             ElseIf M_STATS_PROBDIST_TAILS.TailsIsActive() Then
                 M_STATS_PROBDIST_TAILS.ResetTailsInputs
+            ElseIf M_STATS_PROBDIST_DISCRETESHEET.DiscreteIsActive() Then
+                M_STATS_PROBDIST_DISCRETESHEET.ResetDiscreteInputs
             Else
                 ResetExplorerInputs
             End If
@@ -61,6 +63,7 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
             If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady() Then M_STATS_PROBDIST_PARAMETERS.RefreshParameterEffects
             If M_STATS_PROBDIST_COMPARISON.ComparisonReady() Then M_STATS_PROBDIST_COMPARISON.RefreshComparison
             If M_STATS_PROBDIST_TAILS.TailsReady() Then M_STATS_PROBDIST_TAILS.RefreshTails
+            If M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady() Then M_STATS_PROBDIST_DISCRETESHEET.RefreshDiscrete
     End Select
     Exit Sub
 Failed:
@@ -85,6 +88,10 @@ Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As
     End If
     If M_STATS_PROBDIST_TAILS.TailsIsActive() Then
         ReturnedVal = M_STATS_PROBDIST_TAILS.TailsReady()
+        Exit Sub
+    End If
+    If M_STATS_PROBDIST_DISCRETESHEET.DiscreteIsActive() Then
+        ReturnedVal = M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady()
         Exit Sub
     End If
     Set Target = ExplorerSheet()

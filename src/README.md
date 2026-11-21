@@ -23,6 +23,7 @@ src/
    ├─ M_STATS_PROBDIST_PARAMETERS.bas  # the Parameter Effects sheet's inputs and charts
    ├─ M_STATS_PROBDIST_COMPARISON.bas  # the Comparison sheet's reset, chart and Excel build
    ├─ M_STATS_PROBDIST_TAILS.bas       # the Tails sheet's reset, charts and Excel build
+   ├─ M_STATS_PROBDIST_DISCRETESHEET.bas # the Discrete sheet's reset, charts and Excel build
    └─ M_STATS_PROBDIST_REGISTER.bas    # Function Wizard descriptions
 ```
 
