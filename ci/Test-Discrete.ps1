@@ -114,10 +114,9 @@ try {
     foreach ($other in @(@('Explorer', 2), @('Probabilities', 1), @('Parameters', 2), @('Comparison', 1))) {
         if ($book.Worksheets.Item($other[0]).ChartObjects().Count -ne $other[1]) { throw "The $($other[0]) sheet lost a chart" }
     }
-    # The Tails sheet is built only in the integration into main and in a manual run: it has its two
-    # charts, or none when its plan was not applied.
+    # Every run builds the Tails sheet, a change to the release branch too: it has its two charts.
     $tailsCharts = $book.Worksheets.Item('Tails').ChartObjects().Count
-    if ($tailsCharts -ne 2 -and $tailsCharts -ne 0) { throw "The Tails sheet has $tailsCharts charts" }
+    if ($tailsCharts -ne 2) { throw "The Tails sheet has $tailsCharts charts, expected 2" }
     if (-not ([string]$sheet.Range("D$($rows.excel_build)").Value2).Contains('build')) { throw "The Excel build reads: $($sheet.Range("D$($rows.excel_build)").Value2)" }
     if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "Status at the defaults: $($sheet.Range('D19').Value2)" }
     if ([string]$sheet.Range('D6').Value2 -ne [string]$plan.defaults.model -or [double]$sheet.Range('D7').Value2 -ne [double]$plan.defaults.trials -or
