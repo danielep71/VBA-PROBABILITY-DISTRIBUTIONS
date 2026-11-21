@@ -137,9 +137,10 @@ try {
     Copy-Format $explorer.Range('A1:P20') $sheet.Range('A1')
     try { $excel.CutCopyMode = $false } catch { }
     # The inputs are D6:D12 here: the rows the Explorer keeps for its other inputs are spacers.
+    # Each spacer row takes the format of the Explorer's empty row 17, one row at a time: a range of several
+    # rows copied from C17 would bring the status heading of row 19 with it.
     foreach ($address in $at.spacers) {
-        $target = $sheet.Range($address)
-        Copy-Format $explorer.Range('C17').Resize($target.Rows.Count, 2) $target
+        foreach ($row in @($sheet.Range($address).Rows)) { Copy-Format $explorer.Range('C17:D17') $row }
     }
     # Rows 19 and 20 of the Explorer carry its grid headings and first grid row in F:I.
     $sheet.Range('F19:I20').ClearFormats()
@@ -181,6 +182,11 @@ try {
                         @('converted', 30), @('sweep', 30), @('not_shown', 66), @('provenance', 40))) {
         $sheet.Rows.Item([int]$rows.($pair[0])).RowHeight = [double]$pair[1]
     }
+    # A function name is longer than the column: a smaller font, wrapped over a taller row.
+    $choice = $sheet.Range($at.function)
+    $choice.Font.Size = 8
+    $choice.WrapText = $true
+    $sheet.Rows.Item($choice.Row).RowHeight = 24
     $sheet.Rows.Item($header).RowHeight = 30
     $sheet.Range("C${header}:O$header").WrapText = $true
     $table = $sheet.Range("C${first}:O$last")

@@ -293,6 +293,12 @@ class PlanTests(unittest.TestCase):
             self.assertIn(f'DiagnosticsStatus("{case["function"]}"', formulas[f"L{row}"])
         self.assertEqual(PLAN["layout"]["last_row"], P.FIRST_ROW + len(DATA["cases"]) - 1)
 
+    def test_the_call_with_its_values_uses_the_local_list_separator(self):
+        # With a decimal comma, 0,95 and 2 joined by commas would read as four numbers.
+        call = self.formulas()[P.result("call")]
+        self.assertIn('LET(sep,IF(MID(1/2&"",2,1)=",",";",",")', call)
+        self.assertNotIn('&","&', call)
+
     def test_numbers_are_written_to_give_back_the_same_double(self):
         for value in (1e-300, 1e100, 0.9331927987311419, 7.619853024160525e-24, 2.9, -0.5, 95, 1e9):
             self.assertEqual(float(P.number_text(value)), value)

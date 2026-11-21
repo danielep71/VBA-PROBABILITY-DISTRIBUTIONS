@@ -270,7 +270,9 @@ def try_formulas(data: dict[str, Any]) -> list[dict[str, str]]:
     low, high = (absolute(cell) for cell in SWEEP_CELLS)
     points = data["sweep_points"]
     shown = [shown_argument(cell) for cell in args]
-    values = "CHOOSE(DiagArity," + ",".join('&","&'.join(shown[:count]) for count in range(1, 5)) + ")"
+    # The arguments are joined by the list separator a user of this Excel would type: a semicolon where the
+    # decimal separator is a comma, so that 0,95 reads as one number.
+    values = "CHOOSE(DiagArity," + ",".join('&sep&'.join(shown[:count]) for count in range(1, 5)) + ")"
     refs = 'CHOOSE(DiagArity,"D7","D7,D8","D7,D8,D9","D7,D8,D9,D10")'
     row = str(FIRST_ROW)
     sweep_args = ("xv",) + args[1:]
@@ -279,7 +281,9 @@ def try_formulas(data: dict[str, Any]) -> list[dict[str, str]]:
         {"address": INDEX_CELL, "formula": f"=MATCH({absolute(FUNCTION_CELL)},DiagFunctionList,0)"},
         {"address": ARITY_CELL, "formula": "=IFERROR(INDEX(DiagArityList,DiagIndex),0)"},
         *({"address": f"C{7 + slot - 1}", "formula": label_formula(slot)} for slot in range(1, 5)),
-        {"address": result("call"), "formula": f'=IF({ok()},"="&{absolute(FUNCTION_CELL)}&"("&{values}&")","")'},
+        {"address": result("call"),
+         "formula": (f'=IF({ok()},LET(sep,IF(MID(1/2&"",2,1)=",",";",","),'
+                     f'"="&{absolute(FUNCTION_CELL)}&"("&{values}&")"),"")')},
         {"address": returned, "formula": f"=IF({ok()},{dispatch(functions, args)},NA())"},
         {"address": f"F{RESULT_ROWS['returned']}", "formula": f'=IF({ok()},"="&{absolute(FUNCTION_CELL)}&"("&{refs}&")","")'},
         {"address": result("kind"), "formula": f'=IF({ok()},{kind_of(returned)},"")'},
