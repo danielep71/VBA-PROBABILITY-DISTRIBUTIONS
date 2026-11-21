@@ -25,6 +25,7 @@ src/
    ├─ M_STATS_PROBDIST_TAILS.bas       # the Tails sheet's reset, charts and Excel build
    ├─ M_STATS_PROBDIST_DISCRETESHEET.bas # the Discrete sheet's reset, charts and Excel build
    ├─ M_STATS_PROBDIST_RISK.bas        # the Risk sheet's reset, charts and Excel build
+   ├─ M_STATS_PROBDIST_DIAGNOSTICS.bas # the Diagnostics sheet's reset, chart, Excel build and Status reader
    └─ M_STATS_PROBDIST_REGISTER.bas    # Function Wizard descriptions
 ```
 
