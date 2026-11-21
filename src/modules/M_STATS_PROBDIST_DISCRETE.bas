@@ -251,6 +251,14 @@ Private Const PROB_DS_MAX_NEGBINOM_KERNEL_COUNT As Double = 20000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_POP As Double = 100000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
 
+'Relative tolerance under which an inverse target is taken to lie ON a step of
+'the cumulative distribution (#467). The computed tails carry relative errors
+'of a few units in the last place, and up to about 3E-13 on the accuracy grid,
+'so a target equal to a step value F(k) can compare one ulp on the wrong side
+'and move the quantile to k + 1. A target within this relative distance of
+'F(k) returns k; any farther target is decided by the plain comparison.
+Private Const PROB_DS_STEP_TIE_REL As Double = 0.000000000001 '1E-12
+
 
 '==============================================================================
 ' K_STATS_Binomial_PMF
@@ -937,6 +945,8 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 ' BEHAVIOR
 '   - Returns the LEAST qualifying integer, matching Excel's BINOM.INV
 '     convention.
+'   - A Probability on a step, F(k) = Probability, returns k: a target within
+'     a relative 1E-12 of a step value counts as on it (#467).
 '   - The open interval is deliberate: 0 and 1 have no least qualifying integer
 '     distinguishable from the support boundary.
 '
@@ -1943,6 +1953,7 @@ End Function
 '   Uses the direct SF when Probability > 0.5.
 '   Evaluates the configured quantile ceiling before reporting failure.
 '   Every bracket and bisection loop has an explicit iteration guard.
+'   A Probability on a step, F(k) = Probability, returns k (#467).
 '
 ' ERROR POLICY
 '   Invalid domains, unsupported magnitudes or numerical failure return #NUM!.
@@ -2780,6 +2791,7 @@ End Function
 '   Uses ceil(Log1p(-Probability)/Log1p(-p)) - 1 as the seed.
 '   Rejects a quantile above 2^53 - 1.
 '   Uses the direct SF when Probability > 0.5.
+'   A Probability on a step, F(k) = Probability, returns k (#467).
 '
 ' ERROR POLICY
 '   Invalid domains, unsupported magnitudes or numerical failure return #NUM!.
@@ -7288,6 +7300,44 @@ End Function
 '==============================================================================
 
 
+Private Function PROB_DS_TailQualifies( _
+    ByVal TailValue As Double, _
+    ByVal Probability As Double, _
+    ByVal ComplementProbability As Double) _
+    As Boolean
+'
+'==============================================================================
+' PROB_DS_TailQualifies
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Decides F(K) >= Probability from the smaller direct tail at K, taking a
+'   target that lies on a step as qualifying.
+'
+' INPUTS
+'   TailValue              CDF at K when Probability <= 0.5, else SF at K.
+'   Probability            Target cumulative probability.
+'   ComplementProbability  1 - Probability, exact for Probability >= 0.5.
+'
+' BEHAVIOR
+'   - Lower branch: F(K) >= Probability * (1 - PROB_DS_STEP_TIE_REL).
+'   - Upper branch: SF(K) <= ComplementProbability * (1 + PROB_DS_STEP_TIE_REL).
+'   - Both tests are monotone in K, so the bracketing and bisection callers
+'     still return the least qualifying integer.
+'
+' UPDATED
+'   2026-11-21 - Step-tie tolerance shared by the discrete inverses (#467).
+'==============================================================================
+'
+        If Probability <= 0.5 Then
+            PROB_DS_TailQualifies = (TailValue >= _
+                Probability - Probability * PROB_DS_STEP_TIE_REL)
+        Else
+            PROB_DS_TailQualifies = (TailValue <= _
+                ComplementProbability + ComplementProbability * PROB_DS_STEP_TIE_REL)
+        End If
+End Function
+
+
 Private Function PROB_DS_TryBinomialQualifies( _
     ByVal K As Double, _
     ByVal Probability As Double, _
@@ -7303,6 +7353,11 @@ Private Function PROB_DS_TryBinomialQualifies( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Tests F(K) >= Probability using the smaller direct probability tail.
+'   PROB_DS_TailQualifies makes the comparison, taking a target on a step as
+'   qualifying (#467).
+'
+' UPDATED
+'   2026-11-21 - Comparison moved to PROB_DS_TailQualifies (#467).
 '==============================================================================
 '
     Dim TailValue           As Double          'CDF or SF at K
@@ -7310,14 +7365,13 @@ Private Function PROB_DS_TryBinomialQualifies( _
         If Probability <= 0.5 Then
             If Not PROB_DS_TryBinomialCDF( _
                 K, n, ProbSuccess, TailValue, FailMsg) Then Exit Function
-
-            Qualifies = (TailValue >= Probability)
         Else
             If Not PROB_DS_TryBinomialSF( _
                 K, n, ProbSuccess, TailValue, FailMsg) Then Exit Function
-
-            Qualifies = (TailValue <= ComplementProbability)
         End If
+
+        Qualifies = PROB_DS_TailQualifies( _
+            TailValue, Probability, ComplementProbability)
 
         PROB_DS_TryBinomialQualifies = True
 End Function
@@ -7337,9 +7391,12 @@ Private Function PROB_DS_TryPoissonQualifies( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Tests F(K) >= Probability using the smaller direct probability tail.
+'   PROB_DS_TailQualifies makes the comparison, taking a target on a step as
+'   qualifying (#467).
 '
 ' UPDATED
 '   2026-07-19
+'   2026-11-21 - Comparison moved to PROB_DS_TailQualifies (#467).
 '==============================================================================
 '
     Dim TailValue           As Double          'CDF or SF at K
@@ -7347,14 +7404,13 @@ Private Function PROB_DS_TryPoissonQualifies( _
         If Probability <= 0.5 Then
             If Not PROB_DS_TryPoissonCDF( _
                 K, Mean, TailValue, FailMsg) Then Exit Function
-
-            Qualifies = (TailValue >= Probability)
         Else
             If Not PROB_DS_TryPoissonSF( _
                 K, Mean, TailValue, FailMsg) Then Exit Function
-
-            Qualifies = (TailValue <= ComplementProbability)
         End If
+
+        Qualifies = PROB_DS_TailQualifies( _
+            TailValue, Probability, ComplementProbability)
 
         PROB_DS_TryPoissonQualifies = True
 End Function
@@ -7374,9 +7430,12 @@ Private Function PROB_DS_TryGeometricQualifies( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Tests F(K) >= Probability using the smaller direct probability tail.
+'   PROB_DS_TailQualifies makes the comparison, taking a target on a step as
+'   qualifying (#467).
 '
 ' UPDATED
 '   2026-07-19
+'   2026-11-21 - Comparison moved to PROB_DS_TailQualifies (#467).
 '==============================================================================
 '
     Dim TailValue           As Double          'CDF or SF at K
@@ -7384,14 +7443,13 @@ Private Function PROB_DS_TryGeometricQualifies( _
         If Probability <= 0.5 Then
             If Not PROB_DS_TryGeometricCDF( _
                 K, ProbSuccess, TailValue, FailMsg) Then Exit Function
-
-            Qualifies = (TailValue >= Probability)
         Else
             If Not PROB_DS_TryGeometricSF( _
                 K, ProbSuccess, TailValue, FailMsg) Then Exit Function
-
-            Qualifies = (TailValue <= ComplementProbability)
         End If
+
+        Qualifies = PROB_DS_TailQualifies( _
+            TailValue, Probability, ComplementProbability)
 
         PROB_DS_TryGeometricQualifies = True
 End Function
@@ -7910,9 +7968,12 @@ Private Function PROB_DS_TryNegativeBinomialQualifies( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Tests F(K) >= Probability using the smaller direct probability tail.
+'   PROB_DS_TailQualifies makes the comparison, taking a target on a step as
+'   qualifying (#467).
 '
 ' UPDATED
 '   2026-07-21
+'   2026-11-21 - Comparison moved to PROB_DS_TailQualifies (#467).
 '==============================================================================
 '
     Dim TailValue           As Double          'CDF or SF at K
@@ -7920,12 +7981,13 @@ Private Function PROB_DS_TryNegativeBinomialQualifies( _
         If Probability <= 0.5 Then
             If Not PROB_DS_TryNegativeBinomialCDF( _
                 K, R, ProbSuccess, TailValue, FailMsg) Then Exit Function
-            Qualifies = (TailValue >= Probability)
         Else
             If Not PROB_DS_TryNegativeBinomialSF( _
                 K, R, ProbSuccess, TailValue, FailMsg) Then Exit Function
-            Qualifies = (TailValue <= ComplementProbability)
         End If
+
+        Qualifies = PROB_DS_TailQualifies( _
+            TailValue, Probability, ComplementProbability)
 
         PROB_DS_TryNegativeBinomialQualifies = True
 End Function
@@ -8119,9 +8181,12 @@ Private Function PROB_DS_TryHypergeometricQualifies( _
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Tests F(K) >= Probability using the smaller direct probability tail.
+'   PROB_DS_TailQualifies makes the comparison, taking a target on a step as
+'   qualifying (#467).
 '
 ' UPDATED
 '   2026-07-21
+'   2026-11-21 - Comparison moved to PROB_DS_TailQualifies (#467).
 '==============================================================================
 '
     Dim TailValue           As Double          'CDF or SF at K
@@ -8129,12 +8194,13 @@ Private Function PROB_DS_TryHypergeometricQualifies( _
         If Probability <= 0.5 Then
             If Not PROB_DS_TryHypergeometricCDF( _
                 K, n, Kp, Np, TailValue, FailMsg) Then Exit Function
-            Qualifies = (TailValue >= Probability)
         Else
             If Not PROB_DS_TryHypergeometricSF( _
                 K, n, Kp, Np, TailValue, FailMsg) Then Exit Function
-            Qualifies = (TailValue <= ComplementProbability)
         End If
+
+        Qualifies = PROB_DS_TailQualifies( _
+            TailValue, Probability, ComplementProbability)
 
         PROB_DS_TryHypergeometricQualifies = True
 End Function

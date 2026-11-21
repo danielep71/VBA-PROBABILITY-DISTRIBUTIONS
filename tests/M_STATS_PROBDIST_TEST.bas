@@ -834,6 +834,8 @@ Private Sub RunDiscreteSuite()
     TimingLap "Test_DS_NegativeBinomial"
     Test_DS_Hypergeometric
     TimingLap "Test_DS_Hypergeometric"
+    Test_DS_InverseStepTies
+    TimingLap "Test_DS_InverseStepTies"
     Test_DS_DiscreteUniformPMF
     TimingLap "Test_DS_DiscreteUniformPMF"
     Test_DS_DiscreteUniformCumulative
@@ -21304,6 +21306,163 @@ Private Sub Test_DS_Hypergeometric()
     AssertIsError "hyp population < 1", K_STATS_Hypergeometric_PMF(0#, 0#, 0#, 0#)
 End Sub
 
+
+
+Private Sub Test_DS_InverseStepTies()
+'
+'==============================================================================
+' Test_DS_InverseStepTies
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies that a discrete quantile returns k when the target probability
+'   lies exactly on the step F(k) (#467).
+'
+' BEHAVIOR
+'   - Exact steps: targets that are binary64 values of F(k), on both sides of
+'     0.5, so both the cumulative and the survival comparisons are exercised.
+'   - Round trips: InverseCumulative(Cumulative(k)) = k for the Binomial,
+'     Poisson, Geometric, Negative Binomial and Hypergeometric, with every
+'     target at most 0.999 so that 1 - q keeps its relative precision.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-11-21 - Added for #467.
+'==============================================================================
+'
+    Dim Count               As Long            'Round-trip count
+
+    Debug.Print "-- Discrete inverse at an exact step"
+    'Binomial(2, 0.5): F(0) = 0.25, F(1) = 0.75 (the case of #467)
+    AssertClose "binom inv(.75,2,.5)=1", K_STATS_Binomial_InverseCumulative(0.75, 2#, 0.5), _
+        1#, 0#
+    AssertClose "binom inv(.25,2,.5)=0", K_STATS_Binomial_InverseCumulative(0.25, 2#, 0.5), _
+        0#, 0#
+    AssertClose "binom inv(.5,1,.5)=0", K_STATS_Binomial_InverseCumulative(0.5, 1#, 0.5), _
+        0#, 0#
+    AssertClose "binom inv(.875,3,.5)=2", K_STATS_Binomial_InverseCumulative(0.875, 3#, 0.5), _
+        2#, 0#
+    AssertClose "binom inv(.9375,4,.5)=3", K_STATS_Binomial_InverseCumulative(0.9375, 4#, 0.5), _
+        3#, 0#
+    AssertClose "binom inv(.0625,4,.5)=0", K_STATS_Binomial_InverseCumulative(0.0625, 4#, 0.5), _
+        0#, 0#
+    'Geometric: F(k) = 1 - (1 - p)^(k + 1)
+    AssertClose "geo inv(.5,.5)=0", K_STATS_Geometric_InverseCumulative(0.5, 0.5), 0#, 0#
+    AssertClose "geo inv(.75,.5)=1", K_STATS_Geometric_InverseCumulative(0.75, 0.5), 1#, 0#
+    AssertClose "geo inv(.875,.5)=2", K_STATS_Geometric_InverseCumulative(0.875, 0.5), 2#, 0#
+    AssertClose "geo inv(.9375,.5)=3", K_STATS_Geometric_InverseCumulative(0.9375, 0.5), 3#, 0#
+    AssertClose "geo inv(.4375,.25)=1", K_STATS_Geometric_InverseCumulative(0.4375, 0.25), 1#, 0#
+    'Negative Binomial: r = 1 is the Geometric; r = 2, p = 0.5 has F(1) = 0.5, F(2) = 0.6875
+    AssertClose "nb inv(.75,1,.5)=1", K_STATS_NegativeBinomial_InverseCumulative(0.75, 1#, 0.5), _
+        1#, 0#
+    AssertClose "nb inv(.5,2,.5)=1", K_STATS_NegativeBinomial_InverseCumulative(0.5, 2#, 0.5), _
+        1#, 0#
+    AssertClose "nb inv(.6875,2,.5)=2", K_STATS_NegativeBinomial_InverseCumulative(0.6875, 2#, 0.5), _
+        2#, 0#
+    'Hypergeometric: one draw from four, P(X = 0) = 3/4 and 2/4
+    AssertClose "hyp inv(.75,1,1,4)=0", K_STATS_Hypergeometric_InverseCumulative(0.75, 1#, 1#, 4#), _
+        0#, 0#
+    AssertClose "hyp inv(.5,1,2,4)=0", K_STATS_Hypergeometric_InverseCumulative(0.5, 1#, 2#, 4#), _
+        0#, 0#
+
+    Debug.Print "-- Discrete inverse of the computed cumulative"
+    For Count = 0 To 10
+        AssertDiscreteRoundTrip "Binomial", Count, 20#, 0.35, 0#
+    Next Count
+    For Count = 480 To 520 Step 5
+        AssertDiscreteRoundTrip "Binomial", Count, 1000#, 0.5, 0#
+    Next Count
+    For Count = 0 To 7
+        AssertDiscreteRoundTrip "Poisson", Count, 3#, 0#, 0#
+    Next Count
+    For Count = 130 To 170 Step 5
+        AssertDiscreteRoundTrip "Poisson", Count, 150#, 0#, 0#
+    Next Count
+    For Count = 0 To 12
+        AssertDiscreteRoundTrip "Geometric", Count, 0.3, 0#, 0#
+    Next Count
+    For Count = 0 To 10
+        AssertDiscreteRoundTrip "NegativeBinomial", Count, 3#, 0.4, 0#
+    Next Count
+    For Count = 0 To 7
+        AssertDiscreteRoundTrip "Hypergeometric", Count, 10#, 20#, 50#
+    Next Count
+End Sub
+
+
+Private Sub AssertDiscreteRoundTrip( _
+    ByVal Family As String, _
+    ByVal Count As Long, _
+    ByVal A1 As Double, _
+    ByVal A2 As Double, _
+    ByVal A3 As Double)
+'
+'==============================================================================
+' AssertDiscreteRoundTrip
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Passes when InverseCumulative(Cumulative(Count)) returns Count, the target
+'   being the computed cumulative, a value on the step F(Count).
+'
+' INPUTS
+'   Family  Binomial, Poisson, Geometric, NegativeBinomial or Hypergeometric.
+'   Count   Count at which the cumulative is taken.
+'   A1-A3   The family parameters in the order of the public functions.
+'
+' BEHAVIOR
+'   - Records exactly one assertion, so the suite count stays fixed.
+'   - A worksheet error from the cumulative fails the assertion.
+'
+' CALLED FROM
+'   - Test_DS_InverseStepTies
+'
+' UPDATED
+'   2026-11-21 - Added for #467.
+'==============================================================================
+'
+    Dim Target              As Variant         'Computed cumulative at Count
+    Dim Label               As String          'Assertion label
+
+        Label = Family & " inv(cdf(" & CStr(Count) & ")) = " & CStr(Count) & _
+                " [" & CStr(A1) & ", " & CStr(A2) & ", " & CStr(A3) & "]"
+
+        Select Case Family
+            Case "Binomial"
+                Target = K_STATS_Binomial_Cumulative(CDbl(Count), A1, A2)
+            Case "Poisson"
+                Target = K_STATS_Poisson_Cumulative(CDbl(Count), A1)
+            Case "Geometric"
+                Target = K_STATS_Geometric_Cumulative(CDbl(Count), A1)
+            Case "NegativeBinomial"
+                Target = K_STATS_NegativeBinomial_Cumulative(CDbl(Count), A1, A2)
+            Case Else
+                Target = K_STATS_Hypergeometric_Cumulative(CDbl(Count), A1, A2, A3)
+        End Select
+
+        If IsError(Target) Then
+            AssertTrue Label & " (cumulative is an error)", False
+            Exit Sub
+        End If
+
+        Select Case Family
+            Case "Binomial"
+                AssertClose Label, K_STATS_Binomial_InverseCumulative(CDbl(Target), A1, A2), _
+                    CDbl(Count), 0#
+            Case "Poisson"
+                AssertClose Label, K_STATS_Poisson_InverseCumulative(CDbl(Target), A1), _
+                    CDbl(Count), 0#
+            Case "Geometric"
+                AssertClose Label, K_STATS_Geometric_InverseCumulative(CDbl(Target), A1), _
+                    CDbl(Count), 0#
+            Case "NegativeBinomial"
+                AssertClose Label, K_STATS_NegativeBinomial_InverseCumulative(CDbl(Target), A1, A2), _
+                    CDbl(Count), 0#
+            Case Else
+                AssertClose Label, K_STATS_Hypergeometric_InverseCumulative(CDbl(Target), A1, A2, A3), _
+                    CDbl(Count), 0#
+        End Select
+End Sub
 
 
 Private Sub Test_DS_DiscreteUniformPMF()
