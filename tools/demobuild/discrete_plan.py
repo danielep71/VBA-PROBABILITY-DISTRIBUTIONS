@@ -211,8 +211,23 @@ ASSUMPTIONS = {
 }
 
 
+LITERAL_LIMIT = 255     # Excel's longest string constant inside a formula
+
+
+def literal(text: str) -> str:
+    """A text as formula constants of at most LITERAL_LIMIT characters, joined with &, cut at spaces."""
+    pieces, rest = [], text
+    while len(rest) > LITERAL_LIMIT:
+        cut = rest.rfind(" ", 0, LITERAL_LIMIT)
+        pieces.append(rest[:cut])
+        rest = rest[cut:]
+    pieces.append(rest)
+    return "&".join(f'"{piece}"' for piece in pieces)
+
+
 def assumptions_formula() -> str:
-    return f'=IF({MODEL}="Binomial","{ASSUMPTIONS["Binomial"]}",IF({MODEL}="Poisson","{ASSUMPTIONS["Poisson"]}",""))'
+    return (f'=IF({MODEL}="Binomial",{literal(ASSUMPTIONS["Binomial"])},'
+            f'IF({MODEL}="Poisson",{literal(ASSUMPTIONS["Poisson"])},""))')
 
 
 def shown_formulas() -> list[dict[str, str]]:

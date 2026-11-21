@@ -294,6 +294,18 @@ class PlanTests(unittest.TestCase):
         for item in PLAN["texts"]:
             self.assertNotIn(item["value"][:1], "=+-@", item["address"])
 
+    def test_every_quoted_constant_fits_excels_limit(self):
+        # Excel refuses a string constant longer than 255 characters inside a formula.
+        for item in PLAN["formulas"]:
+            for constant in re.findall(r'"((?:[^"]|"")*)"', item["formula"]):
+                self.assertLessEqual(len(constant), 255, item["address"])
+
+    def test_the_assumptions_read_whole(self):
+        formula = self.formulas()[f"D{D.RESULT_ROWS['assumptions']}"]
+        for model, text in D.ASSUMPTIONS.items():
+            joined = "".join(re.findall(r'"((?:[^"]|"")*)"', formula))
+            self.assertIn(text, joined, model)
+
     def test_no_cell_needs_formulatext_or_python(self):
         code = re.sub(r'"[^"]*"', '""', " ".join(self.formulas().values()))
         self.assertNotIn("FORMULATEXT(", code)
