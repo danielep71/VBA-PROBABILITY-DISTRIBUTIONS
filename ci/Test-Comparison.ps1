@@ -184,6 +184,7 @@ try {
     $excel.Calculate()
     $line = [string]$sheet.Range("D$($rows.python_grade)").Value2
     if (-not $line.EndsWith('reference') -or -not $line.StartsWith('difference')) { throw "A =PY() value equal to SciPy's reads: $line" }
+    Write-Output 'step: =PY() text'
     Set-Text $sheet 'D9' 'abc'
     $excel.Calculate()
     if (-not ([string]$sheet.Range("D$($rows.python_grade)").Value2).StartsWith('D9 is not a number')) { throw "Text in D9 reads: $($sheet.Range("D$($rows.python_grade)").Value2)" }
@@ -191,8 +192,11 @@ try {
     $report.python = 'PASS'
 
     # Other thresholds change the grades and the chart's title; contradictory ones are refused.
+    Write-Output 'step: reference threshold 15'
     Set-Number $sheet 'D7' 15
+    Write-Output 'step: report threshold 14'
     Set-Number $sheet 'D8' 14
+    Write-Output 'step: calculate'
     $excel.Calculate()
     for ($index = 0; $index -lt $fixture.cases.Count; $index++) {
         $row = $first + $index
@@ -201,16 +205,19 @@ try {
         if ([string]$sheet.Range("N$row").Value2 -ne $expected) { throw "Thresholds 15 and 14: $($fixture.cases[$index].label) is $($sheet.Range("N$row").Value2), expected $expected" }
     }
     if (-not ([string]$chart.ChartTitle.Text).Contains('15')) { throw "The chart's title does not follow the threshold: $($chart.ChartTitle.Text)" }
+    Write-Output 'step: report threshold 16'
     Set-Number $sheet 'D8' 16
     $excel.Calculate()
     if ([string]$sheet.Range('D19').Value2 -ne 'Check: grade thresholds') { throw "A report threshold above the reference one gives: $($sheet.Range('D19').Value2)" }
     if ([string]$sheet.Range("N$first").Value2 -ne '-') { throw 'A grade is shown with contradictory thresholds' }
+    Write-Output 'step: unknown case'
     Set-Text $sheet 'D6' 'no such case'
     $excel.Calculate()
     if ([string]$sheet.Range('D19').Value2 -ne 'Check: case') { throw "An unknown case gives: $($sheet.Range('D19').Value2)" }
     $report.thresholds = 'PASS'
 
     # Reset.
+    Write-Output 'step: reset'
     [void]$excel.Run($prefix + 'ResetComparisonInputs', $false)
     $excel.Calculate()
     if ([string]$sheet.Range('D6').Value2 -ne [string]$fixture.default_case -or [double]$sheet.Range('D7').Value2 -ne 12 -or
@@ -221,6 +228,17 @@ try {
     $report.status = 'PASS'
 } catch {
     $report.error = $_.Exception.Message
+    # When Excel itself stops (the RPC server is unavailable), Windows records why: the faulting module and
+    # the exception code of EXCEL.EXE in the Application log.
+    if ($_.Exception.Message -match '0x800706B[AE]') {
+        try {
+            $crashes = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-10) } -ErrorAction Stop |
+                Where-Object { $_.ProviderName -in @('Application Error', 'Windows Error Reporting', 'Application Hang') -and $_.Message -match 'EXCEL' } |
+                Select-Object -First 3 | ForEach-Object { ($_.TimeCreated.ToString('s') + ' ' + $_.ProviderName + ': ' + ($_.Message -replace '\s+', ' ')) })
+            $report.notes += $crashes
+            $crashes | Write-Output
+        } catch { Write-Output ('could not read the Application log: ' + $_.Exception.Message) }
+    }
     throw
 } finally {
     $report | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $directory 'comparison-report.json')
