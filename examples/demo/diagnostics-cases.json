@@ -1,0 +1,1173 @@
+{
+ "schema": "diagnostics-cases-1",
+ "default_function": "K_STATS_Gamma_InverseCumulative",
+ "sweep_points": 101,
+ "reference": {
+  "method": "the outcome each rule of the documentation gives; a number computed with mpmath at 50 significant digits (the Binomial by exact fractions)",
+  "sources": [
+   "docs/user-manual/v1.0.0/06-distribution-families.md",
+   "docs/user-manual/v1.0.0/07-conventions.md",
+   "docs/user-manual/v1.0.0/09-errors-and-diagnostics.md",
+   "docs/PUBLIC_API.md"
+  ],
+  "digits": 17
+ },
+ "environment": {
+  "python": "3.11.17",
+  "mpmath": "1.3.0"
+ },
+ "functions": [
+  {
+   "name": "K_STATS_NormalStandard_Cumulative",
+   "params": [
+    "Z"
+   ],
+   "example": [
+    1.5
+   ],
+   "sweep": [
+    -10,
+    10
+   ],
+   "domain": "Any finite Z. Far in the upper tail the result is 1: the tail is below Double resolution, use Survival."
+  },
+  {
+   "name": "K_STATS_NormalStandard_Survival",
+   "params": [
+    "Z"
+   ],
+   "example": [
+    3
+   ],
+   "sweep": [
+    -10,
+    40
+   ],
+   "domain": "Any finite Z. The upper tail is computed directly, never as 1 - Cumulative; beyond about Z = 38 it is below the Double range and returns 0."
+  },
+  {
+   "name": "K_STATS_NormalStandard_InverseCumulative",
+   "params": [
+    "Probability"
+   ],
+   "example": [
+    0.975
+   ],
+   "sweep": [
+    0,
+    1
+   ],
+   "domain": "Probability strictly between 0 and 1: 0 and 1 return #NUM!."
+  },
+  {
+   "name": "K_STATS_NormalStandard_IntervalProbability",
+   "params": [
+    "LowerZ",
+    "UpperZ"
+   ],
+   "example": [
+    -1,
+    1
+   ],
+   "sweep": [
+    -3,
+    3
+   ],
+   "domain": "UpperZ not below LowerZ: bounds in the wrong order return #NUM!."
+  },
+  {
+   "name": "K_STATS_Normal_Density",
+   "params": [
+    "X",
+    "Mean",
+    "StdDev"
+   ],
+   "example": [
+    1,
+    0,
+    1
+   ],
+   "sweep": [
+    -40,
+    40
+   ],
+   "domain": "StdDev > 0; |X|, |Mean| and StdDev below 1E100. A density too small for a Double is 0."
+  },
+  {
+   "name": "K_STATS_Normal_Cumulative",
+   "params": [
+    "X",
+    "Mean",
+    "StdDev"
+   ],
+   "example": [
+    1.5,
+    0,
+    1
+   ],
+   "sweep": [
+    -5,
+    5
+   ],
+   "domain": "StdDev > 0; |X|, |Mean| and StdDev below 1E100. Outside these: #NUM!."
+  },
+  {
+   "name": "K_STATS_Normal_InverseCumulative",
+   "params": [
+    "Probability",
+    "Mean",
+    "StdDev"
+   ],
+   "example": [
+    0.975,
+    0,
+    1
+   ],
+   "sweep": [
+    0,
+    1
+   ],
+   "domain": "Probability strictly between 0 and 1 (0.95, not 95); StdDev > 0; |Mean| and StdDev below 1E100."
+  },
+  {
+   "name": "K_STATS_Lognormal_Mean",
+   "params": [
+    "MeanLog",
+    "StdDevLog"
+   ],
+   "example": [
+    0.5,
+    0.8
+   ],
+   "sweep": [
+    0,
+    800
+   ],
+   "domain": "StdDevLog > 0; |MeanLog| and StdDevLog below 1E100. A mean beyond the largest Double returns #NUM!."
+  },
+  {
+   "name": "K_STATS_StudentT_Cumulative",
+   "params": [
+    "X",
+    "DegreesFreedom"
+   ],
+   "example": [
+    1.5,
+    10
+   ],
+   "sweep": [
+    -6,
+    6
+   ],
+   "domain": "DegreesFreedom > 0 and at most 1E8; it need not be a whole number."
+  },
+  {
+   "name": "K_STATS_StudentT_InverseCumulative",
+   "params": [
+    "Probability",
+    "DegreesFreedom"
+   ],
+   "example": [
+    0.975,
+    5
+   ],
+   "sweep": [
+    0,
+    1
+   ],
+   "domain": "Probability strictly between 0 and 1; DegreesFreedom > 0 and at most 1E8."
+  },
+  {
+   "name": "K_STATS_ChiSquare_Density",
+   "params": [
+    "X",
+    "DegreesFreedom"
+   ],
+   "example": [
+    3,
+    4
+   ],
+   "sweep": [
+    -1,
+    10
+   ],
+   "domain": "DegreesFreedom > 0. Below 0 the density is 0; at X = 0 it is unbounded, #NUM!, when DegreesFreedom < 2."
+  },
+  {
+   "name": "K_STATS_Gamma_Density",
+   "params": [
+    "X",
+    "Shape",
+    "ScaleParam"
+   ],
+   "example": [
+    1,
+    0.5,
+    1
+   ],
+   "sweep": [
+    -1,
+    5
+   ],
+   "domain": "Shape > 0 and at most 1E20, ScaleParam > 0 (a scale, not a rate). At X = 0 unbounded, #NUM!, when Shape < 1."
+  },
+  {
+   "name": "K_STATS_Gamma_Cumulative",
+   "params": [
+    "X",
+    "Shape",
+    "ScaleParam"
+   ],
+   "example": [
+    3,
+    2,
+    1.5
+   ],
+   "sweep": [
+    -2,
+    15
+   ],
+   "domain": "Shape > 0 and ScaleParam > 0 (a scale, not a rate). Below 0 the result is 0."
+  },
+  {
+   "name": "K_STATS_Gamma_InverseCumulative",
+   "params": [
+    "Probability",
+    "Shape",
+    "ScaleParam"
+   ],
+   "example": [
+    0.95,
+    2,
+    1.5
+   ],
+   "sweep": [
+    0,
+    1
+   ],
+   "domain": "Probability strictly between 0 and 1; Shape > 0; ScaleParam > 0. A quantile below the Double range is 0."
+  },
+  {
+   "name": "K_STATS_Beta_Density",
+   "params": [
+    "X",
+    "Alpha",
+    "Beta"
+   ],
+   "example": [
+    0.3,
+    0.5,
+    2
+   ],
+   "sweep": [
+    -0.5,
+    1.5
+   ],
+   "domain": "Alpha > 0 and Beta > 0. Unbounded, #NUM!, at X = 0 when Alpha < 1 and at X = 1 when Beta < 1."
+  },
+  {
+   "name": "K_STATS_Beta_Cumulative",
+   "params": [
+    "X",
+    "Alpha",
+    "Beta"
+   ],
+   "example": [
+    0.3,
+    2,
+    3
+   ],
+   "sweep": [
+    -0.5,
+    1.5
+   ],
+   "domain": "Alpha > 0 and Beta > 0. Below 0 the result is 0 and above 1 it is 1: the natural limits, not errors."
+  },
+  {
+   "name": "K_STATS_Exponential_Density",
+   "params": [
+    "X",
+    "Lambda"
+   ],
+   "example": [
+    2,
+    0.7
+   ],
+   "sweep": [
+    -2,
+    10
+   ],
+   "domain": "Lambda > 0 (a rate, not a scale). Below 0 the density is 0."
+  },
+  {
+   "name": "K_STATS_Exponential_Survival",
+   "params": [
+    "X",
+    "Lambda"
+   ],
+   "example": [
+    2,
+    0.7
+   ],
+   "sweep": [
+    -2,
+    10
+   ],
+   "domain": "Lambda > 0 (a rate, not a scale). Below 0 the result is 1."
+  },
+  {
+   "name": "K_STATS_Uniform_Cumulative",
+   "params": [
+    "X",
+    "LowerBound",
+    "UpperBound"
+   ],
+   "example": [
+    3,
+    0,
+    10
+   ],
+   "sweep": [
+    -5,
+    15
+   ],
+   "domain": "LowerBound < UpperBound. Outside the bounds the result is 0 or 1."
+  },
+  {
+   "name": "K_STATS_Binomial_PMF",
+   "params": [
+    "NumberSuccesses",
+    "Trials",
+    "ProbSuccess"
+   ],
+   "example": [
+    3,
+    10,
+    0.3
+   ],
+   "sweep": [
+    -2,
+    12
+   ],
+   "domain": "Counts are truncated toward zero. NumberSuccesses from 0 to Trials; ProbSuccess from 0 to 1."
+  },
+  {
+   "name": "K_STATS_Binomial_Cumulative",
+   "params": [
+    "NumberSuccesses",
+    "Trials",
+    "ProbSuccess"
+   ],
+   "example": [
+    3,
+    10,
+    0.3
+   ],
+   "sweep": [
+    -2,
+    12
+   ],
+   "domain": "Counts are truncated toward zero. NumberSuccesses from 0 to Trials; ProbSuccess from 0 to 1; Trials up to 10,000,000."
+  },
+  {
+   "name": "K_STATS_Binomial_InverseCumulative",
+   "params": [
+    "Probability",
+    "Trials",
+    "ProbSuccess"
+   ],
+   "example": [
+    0.8,
+    10,
+    0.3
+   ],
+   "sweep": [
+    0,
+    1
+   ],
+   "domain": "Probability strictly between 0 and 1; ProbSuccess strictly between 0 and 1; Trials up to 10,000,000."
+  },
+  {
+   "name": "K_STATS_Poisson_PMF",
+   "params": [
+    "NumberEvents",
+    "Mean"
+   ],
+   "example": [
+    3,
+    2.5
+   ],
+   "sweep": [
+    -2,
+    12
+   ],
+   "domain": "NumberEvents from 0, truncated toward zero; Mean not negative."
+  },
+  {
+   "name": "K_STATS_Poisson_Cumulative",
+   "params": [
+    "NumberEvents",
+    "Mean"
+   ],
+   "example": [
+    3,
+    2.5
+   ],
+   "sweep": [
+    -2,
+    12
+   ],
+   "domain": "NumberEvents from 0, truncated toward zero; Mean not negative and at most 10,000,000."
+  },
+  {
+   "name": "K_STATS_Hypergeometric_PMF",
+   "params": [
+    "SampleSuccesses",
+    "SampleSize",
+    "PopulationSuccesses",
+    "PopulationSize"
+   ],
+   "example": [
+    2,
+    10,
+    8,
+    40
+   ],
+   "sweep": [
+    -2,
+    12
+   ],
+   "domain": "SampleSize and PopulationSuccesses at most PopulationSize. A count the population makes impossible returns #NUM!."
+  },
+  {
+   "name": "K_STATS_DiscreteUniform_PMF",
+   "params": [
+    "X",
+    "LowerBound",
+    "UpperBound"
+   ],
+   "example": [
+    3,
+    0,
+    10
+   ],
+   "sweep": [
+    -5,
+    15
+   ],
+   "domain": "LowerBound not above UpperBound. Outside the support, or at a value that is not whole, the mass is 0."
+  },
+  {
+   "name": "K_STATS_DiscreteUniform_LogPMF",
+   "params": [
+    "X",
+    "LowerBound",
+    "UpperBound"
+   ],
+   "example": [
+    3,
+    0,
+    10
+   ],
+   "sweep": [
+    -5,
+    15
+   ],
+   "domain": "LowerBound not above UpperBound. Where the mass is 0 its logarithm is undefined: #NUM!."
+  },
+  {
+   "name": "K_STATS_DiscreteUniform_Cumulative",
+   "params": [
+    "X",
+    "LowerBound",
+    "UpperBound"
+   ],
+   "example": [
+    2.8,
+    -3,
+    5
+   ],
+   "sweep": [
+    -6,
+    8
+   ],
+   "domain": "LowerBound not above UpperBound. Any real X: a step function, 0 below the support and 1 above it."
+  }
+ ],
+ "cases": [
+  {
+   "id": "c01",
+   "group": "valid",
+   "title": "A valid call",
+   "function": "K_STATS_Normal_Cumulative",
+   "args": [
+    1.5,
+    0,
+    1
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.9331927987311419,
+    "text": "0.93319279873114193"
+   },
+   "status_contains": null,
+   "rule": "9.1: a call that succeeds returns a number.",
+   "cause": "P(X <= 1.5) for a standard Normal.",
+   "action": "Nothing to correct."
+  },
+  {
+   "id": "c02",
+   "group": "limit",
+   "title": "Below a continuous support",
+   "function": "K_STATS_Beta_Cumulative",
+   "args": [
+    -0.5,
+    2,
+    3
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.0,
+    "text": "0.0"
+   },
+   "status_contains": null,
+   "rule": "7.8: continuous distributions return the natural limit and no error.",
+   "cause": "The Beta lives on 0 to 1: no mass lies below -0.5.",
+   "action": "Nothing to correct: 0 is the answer, not an error."
+  },
+  {
+   "id": "c03",
+   "group": "limit",
+   "title": "Above a continuous support",
+   "function": "K_STATS_Uniform_Cumulative",
+   "args": [
+    12,
+    0,
+    10
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 1.0,
+    "text": "1.0"
+   },
+   "status_contains": null,
+   "rule": "7.8: above the support the cumulative probability is 1.",
+   "cause": "All of the Uniform(0, 10) lies below 12.",
+   "action": "Nothing to correct."
+  },
+  {
+   "id": "c04",
+   "group": "limit",
+   "title": "A density outside the support",
+   "function": "K_STATS_Exponential_Density",
+   "args": [
+    -1,
+    0.7
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.0,
+    "text": "0.0"
+   },
+   "status_contains": null,
+   "rule": "7.8: below the support the density is 0.",
+   "cause": "The Exponential has no mass below 0.",
+   "action": "Nothing to correct."
+  },
+  {
+   "id": "c05",
+   "group": "limit",
+   "title": "The top of a discrete support",
+   "function": "K_STATS_Binomial_Cumulative",
+   "args": [
+    10,
+    10,
+    0.3
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 1.0,
+    "text": "1.0"
+   },
+   "status_contains": null,
+   "rule": "7.8: k = n is in the Binomial support; P(X <= n) = 1.",
+   "cause": "Ten successes in ten trials is the largest count.",
+   "action": "Nothing to correct."
+  },
+  {
+   "id": "c06",
+   "group": "limit",
+   "title": "A count truncated toward zero",
+   "function": "K_STATS_Poisson_PMF",
+   "args": [
+    2.9,
+    3
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.22404180765538775,
+    "text": "0.22404180765538774"
+   },
+   "status_contains": null,
+   "rule": "7.6: count arguments are truncated toward zero, 2.9 is read as 2.",
+   "cause": "The mass of 2 events, not of 2.9.",
+   "action": "Pass whole counts to avoid the surprise."
+  },
+  {
+   "id": "c07",
+   "group": "limit",
+   "title": "A Discrete Uniform at a real X",
+   "function": "K_STATS_DiscreteUniform_Cumulative",
+   "args": [
+    2.8,
+    -3,
+    5
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.6666666666666666,
+    "text": "0.66666666666666667"
+   },
+   "status_contains": null,
+   "rule": "7.6: the Discrete Uniform cumulative accepts any real X, a step function.",
+   "cause": "Six of the nine integers from -3 to 5 are at most 2.8.",
+   "action": "Nothing to correct."
+  },
+  {
+   "id": "c08",
+   "group": "limit",
+   "title": "A Discrete Uniform outside its support",
+   "function": "K_STATS_DiscreteUniform_PMF",
+   "args": [
+    20,
+    0,
+    10
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.0,
+    "text": "0.0"
+   },
+   "status_contains": null,
+   "rule": "7.6: the Discrete Uniform PMF returns 0 outside the support.",
+   "cause": "20 is not one of the integers from 0 to 10.",
+   "action": "Nothing to correct; its LogPMF is #NUM! (below)."
+  },
+  {
+   "id": "c09",
+   "group": "underflow",
+   "title": "A density too small for a Double",
+   "function": "K_STATS_Normal_Density",
+   "args": [
+    40,
+    0,
+    1
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.0,
+    "text": "1.4632702508383032e-348"
+   },
+   "status_contains": null,
+   "rule": "9.4: 0 for a density far in a tail, the true value is too small for a Double.",
+   "cause": "The true value, about 1.5E-348, is below the smallest Double.",
+   "action": "Work with logarithms if the size matters."
+  },
+  {
+   "id": "c10",
+   "group": "underflow",
+   "title": "A cumulative probability rounded to 1",
+   "function": "K_STATS_NormalStandard_Cumulative",
+   "args": [
+    10
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 1.0,
+    "text": "1.0"
+   },
+   "status_contains": null,
+   "rule": "9.4: 1 for a cumulative probability whose upper tail is below Double resolution.",
+   "cause": "The true value is 1 - 7.6E-24, stored as 1.",
+   "action": "For the upper tail call Survival, as in the next case."
+  },
+  {
+   "id": "c11",
+   "group": "underflow",
+   "title": "The same tail, kept by Survival",
+   "function": "K_STATS_NormalStandard_Survival",
+   "args": [
+    10
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 7.619853024160525e-24,
+    "text": "7.6198530241605261e-24"
+   },
+   "status_contains": null,
+   "rule": "7.3: every distribution has a Survival function that computes the upper tail directly.",
+   "cause": "P(Z > 10) about 7.6E-24, which 1 - Cumulative loses.",
+   "action": "Use Survival for a small upper tail."
+  },
+  {
+   "id": "c12",
+   "group": "underflow",
+   "title": "A Gamma quantile below the Double range",
+   "function": "K_STATS_Gamma_InverseCumulative",
+   "args": [
+    1e-300,
+    0.01,
+    1
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.0,
+    "text": "5.6607381470700354e-30001"
+   },
+   "status_contains": null,
+   "rule": "9.4: 0 for a Gamma quantile whose true value is below the Double range.",
+   "cause": "With Shape 0.01 the 1E-300 quantile is about 1E-30000.",
+   "action": "Nothing to correct: 0 is the nearest Double."
+  },
+  {
+   "id": "c13",
+   "group": "invalid",
+   "title": "Probability 0 in an inverse",
+   "function": "K_STATS_NormalStandard_InverseCumulative",
+   "args": [
+    0
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Probability",
+   "rule": "7.5: every inverse requires a probability strictly between 0 and 1.",
+   "cause": "The 0-quantile of the Normal is minus infinity.",
+   "action": "Pass a probability strictly between 0 and 1."
+  },
+  {
+   "id": "c14",
+   "group": "invalid",
+   "title": "Probability 1 in an inverse",
+   "function": "K_STATS_StudentT_InverseCumulative",
+   "args": [
+    1,
+    5
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Probability",
+   "rule": "7.5: the values 0 and 1 return #NUM!.",
+   "cause": "The 1-quantile of a Student t is plus infinity.",
+   "action": "Pass a probability strictly between 0 and 1."
+  },
+  {
+   "id": "c15",
+   "group": "invalid",
+   "title": "A probability typed as a percentage",
+   "function": "K_STATS_Normal_InverseCumulative",
+   "args": [
+    95,
+    0,
+    1
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Probability",
+   "rule": "7.1: enter 5 percent as 0.05, not as 5.",
+   "cause": "95 is not a probability: 95% is 0.95.",
+   "action": "Divide by 100: pass 0.95."
+  },
+  {
+   "id": "c16",
+   "group": "invalid",
+   "title": "A zero standard deviation",
+   "function": "K_STATS_Normal_Cumulative",
+   "args": [
+    1,
+    0,
+    0
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "StdDev",
+   "rule": "6.1: StdDev must be strictly positive.",
+   "cause": "A Normal with no spread has no density.",
+   "action": "Pass a positive StdDev."
+  },
+  {
+   "id": "c17",
+   "group": "invalid",
+   "title": "A negative shape",
+   "function": "K_STATS_Gamma_Cumulative",
+   "args": [
+    1,
+    -2,
+    1.5
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Shape",
+   "rule": "6.3: shape, scale and rate parameters must be strictly positive.",
+   "cause": "No Gamma has a negative shape.",
+   "action": "Pass a positive Shape."
+  },
+  {
+   "id": "c18",
+   "group": "invalid",
+   "title": "Uniform bounds in the wrong order",
+   "function": "K_STATS_Uniform_Cumulative",
+   "args": [
+    5,
+    10,
+    0
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": null,
+   "rule": "6.3: LowerBound must be less than UpperBound.",
+   "cause": "The bounds are swapped: 10 is not below 0.",
+   "action": "Swap the bounds: Uniform_Cumulative(5,0,10)."
+  },
+  {
+   "id": "c19",
+   "group": "invalid",
+   "title": "An interval with its bounds swapped",
+   "function": "K_STATS_NormalStandard_IntervalProbability",
+   "args": [
+    1,
+    -1
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "UpperZ",
+   "rule": "9.2: an interval with the upper bound below the lower bound.",
+   "cause": "The upper bound -1 is below the lower bound 1.",
+   "action": "Pass the bounds in order: (-1, 1)."
+  },
+  {
+   "id": "c20",
+   "group": "invalid",
+   "title": "A negative count",
+   "function": "K_STATS_Poisson_Cumulative",
+   "args": [
+    -1,
+    3
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": null,
+   "rule": "7.8: discrete distributions are stricter, a negative count returns #NUM!.",
+   "cause": "A count of events cannot be negative.",
+   "action": "For P(X < 0) = 0 give the answer directly, as in 7.2."
+  },
+  {
+   "id": "c21",
+   "group": "invalid",
+   "title": "A count above the number of trials",
+   "function": "K_STATS_Binomial_PMF",
+   "args": [
+    12,
+    10,
+    0.3
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Trials",
+   "rule": "7.8: a Binomial count above Trials returns #NUM!.",
+   "cause": "Twelve successes cannot occur in ten trials.",
+   "action": "Keep NumberSuccesses from 0 to Trials."
+  },
+  {
+   "id": "c22",
+   "group": "invalid",
+   "title": "A success probability above 1",
+   "function": "K_STATS_Binomial_Cumulative",
+   "args": [
+    12,
+    20,
+    1.35
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "ProbSuccess",
+   "rule": "9.5: ProbSuccess must be between 0 and 1.",
+   "cause": "1.35 is not a probability.",
+   "action": "Pass ProbSuccess from 0 to 1."
+  },
+  {
+   "id": "c23",
+   "group": "invalid",
+   "title": "An unbounded density at an endpoint",
+   "function": "K_STATS_Beta_Density",
+   "args": [
+    0,
+    0.5,
+    2
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "unbounded",
+   "rule": "6.3: the Beta density at X = 0 returns #NUM! when Alpha < 1.",
+   "cause": "The density grows without bound as X falls to 0.",
+   "action": "Ask for a probability (Cumulative) instead."
+  },
+  {
+   "id": "c24",
+   "group": "invalid",
+   "title": "The logarithm of a zero mass",
+   "function": "K_STATS_DiscreteUniform_LogPMF",
+   "args": [
+    20,
+    0,
+    10
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Log-mass",
+   "rule": "7.6: when the outcome has probability exactly zero, LogPMF returns #NUM!.",
+   "cause": "The mass of 20 is 0, and ln(0) has no finite value.",
+   "action": "Check the support first; the PMF gives 0."
+  },
+  {
+   "id": "c25",
+   "group": "invalid",
+   "title": "Degrees of freedom above the limit",
+   "function": "K_STATS_StudentT_Cumulative",
+   "args": [
+    1,
+    1000000000.0
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": null,
+   "rule": "6.2: Student t cumulative degrees of freedom above 1E8 return #NUM!.",
+   "cause": "1E9 is above the tested limit of 1E8.",
+   "action": "Use the Normal, which the t approaches."
+  },
+  {
+   "id": "c26",
+   "group": "invalid",
+   "title": "A location of 1E100 or more",
+   "function": "K_STATS_Normal_Cumulative",
+   "args": [
+    0,
+    1e+100,
+    1
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Mean",
+   "rule": "9.2: location, scale or shape of size 1E100 or more, where checked.",
+   "cause": "Mean = 1E100 is outside the supported magnitude.",
+   "action": "Rescale the problem."
+  },
+  {
+   "id": "c27",
+   "group": "invalid",
+   "title": "A moment beyond the largest Double",
+   "function": "K_STATS_Lognormal_Mean",
+   "args": [
+    800,
+    1
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "overflow",
+   "rule": "9.2: a quantile or moment beyond the largest Double.",
+   "cause": "exp(800.5) is above 1.8E308.",
+   "action": "Work with MeanLog: ln of the mean is MeanLog + StdDevLog^2 / 2."
+  },
+  {
+   "id": "c28",
+   "group": "excel",
+   "title": "A text argument",
+   "function": "K_STATS_Normal_Cumulative",
+   "args": [
+    {
+     "text": "abc"
+    },
+    0,
+    1
+   ],
+   "expected": {
+    "kind": "#VALUE!"
+   },
+   "status_contains": null,
+   "rule": "PUBLIC_API.md: a text returns #VALUE!; Excel refuses to convert it before the function is called.",
+   "cause": "The function never runs; Excel gives #VALUE!.",
+   "action": "Enter a number, not text."
+  },
+  {
+   "id": "c29",
+   "group": "excel",
+   "title": "An empty cell read as 0",
+   "function": "K_STATS_Normal_Cumulative",
+   "args": [
+    {
+     "empty": true
+    },
+    0,
+    1
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.5,
+    "text": "0.5"
+   },
+   "status_contains": null,
+   "rule": "PUBLIC_API.md: an empty cell returns what 0 returns.",
+   "cause": "The empty X is read as 0, so the answer is P(X <= 0) = 0.5.",
+   "action": "Fill the cell: an empty input gives no error."
+  },
+  {
+   "id": "c30",
+   "group": "excel",
+   "title": "An empty cell as a probability",
+   "function": "K_STATS_NormalStandard_InverseCumulative",
+   "args": [
+    {
+     "empty": true
+    }
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Probability",
+   "rule": "PUBLIC_API.md: an empty cell returns what 0 returns; 7.5: a probability of 0 returns #NUM!.",
+   "cause": "The empty cell is read as probability 0.",
+   "action": "Fill the cell with a probability."
+  }
+ ],
+ "trials": [
+  {
+   "name": "the default example",
+   "function": "K_STATS_Gamma_InverseCumulative",
+   "args": [
+    0.95,
+    2,
+    1.5
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 7.115796777585866,
+    "text": "7.115796777585866"
+   },
+   "status_contains": ""
+  },
+  {
+   "name": "probability 1",
+   "function": "K_STATS_Gamma_InverseCumulative",
+   "args": [
+    1,
+    2,
+    1.5
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Probability"
+  },
+  {
+   "name": "a negative shape",
+   "function": "K_STATS_Gamma_InverseCumulative",
+   "args": [
+    0.95,
+    -2,
+    1.5
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "Shape"
+  },
+  {
+   "name": "a text probability",
+   "function": "K_STATS_Gamma_InverseCumulative",
+   "args": [
+    {
+     "text": "high"
+    },
+    2,
+    1.5
+   ],
+   "expected": {
+    "kind": "#VALUE!"
+   },
+   "status_contains": "Not called"
+  },
+  {
+   "name": "an empty X",
+   "function": "K_STATS_Normal_Cumulative",
+   "args": [
+    {
+     "empty": true
+    },
+    0,
+    1
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 0.5,
+    "text": "0.5"
+   },
+   "status_contains": ""
+  },
+  {
+   "name": "an unbounded density",
+   "function": "K_STATS_Beta_Density",
+   "args": [
+    0,
+    0.5,
+    2
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": "unbounded"
+  },
+  {
+   "name": "an impossible count, four arguments",
+   "function": "K_STATS_Hypergeometric_PMF",
+   "args": [
+    9,
+    10,
+    8,
+    40
+   ],
+   "expected": {
+    "kind": "#NUM!"
+   },
+   "status_contains": null
+  },
+  {
+   "name": "a discrete quantile",
+   "function": "K_STATS_Binomial_InverseCumulative",
+   "args": [
+    0.8,
+    10,
+    0.3
+   ],
+   "expected": {
+    "kind": "number",
+    "value": 4.0,
+    "text": "4.0"
+   },
+   "status_contains": ""
+  }
+ ]
+}

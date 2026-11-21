@@ -113,7 +113,7 @@ try {
         foreach ($name in @('NavBarTop','NavBar')) {
             if ($sheet.Shapes.Item($name).Visible -ne 0) { throw "Navigation shape still visible: $name" }
         }
-        if (@('shExplorer', 'shProbability', 'shParameters', 'shComparison', 'shTails', 'shDiscrete', 'shRisk') -notcontains $sheet.CodeName -and -not $sheet.ProtectContents) { throw 'Navigation toggle removed sheet protection' }
+        if (@('shExplorer', 'shProbability', 'shParameters', 'shComparison', 'shTails', 'shDiscrete', 'shRisk', 'shDiagnostics') -notcontains $sheet.CodeName -and -not $sheet.ProtectContents) { throw 'Navigation toggle removed sheet protection' }
     }
     if ($excel.ScreenUpdating -ne $savedScreen -or $book.Saved -ne $savedFlag) { throw 'Navigation toggle leaked state' }
     if ($other.Worksheets.Item(1).Columns.Item(1).Hidden) { throw 'Navigation toggle changed another workbook' }

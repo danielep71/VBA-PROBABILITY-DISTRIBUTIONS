@@ -16,6 +16,7 @@ on:
       - "ci/Test-Tails.ps1"
       - "ci/Test-Discrete.ps1"
       - "ci/Test-Risk.ps1"
+      - "ci/Test-Diagnostics.ps1"
       - "ci/Test-UdfRegistration.ps1"
       - "ci/Test-ExplorerUI.ps1"
       - "ci/Test-ExplorerStates.ps1"
@@ -54,7 +55,7 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: [self-hosted, Windows, X64, excel]
-    # The job builds the workbook and runs the Excel checks of nine sheets: 13 to 15 minutes with the Tails
+    # The job builds the workbook and runs the Excel checks of ten sheets: 13 to 15 minutes with the Tails
     # sheet, so 15 was the limit and a slower runner cancelled the job in the last UI step.
     timeout-minutes: 30
     steps:
@@ -90,6 +91,9 @@ jobs:
       - name: Apply the Risk plan with native Excel objects
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Risk.ps1 -PackageDirectory test-results\demo
+      - name: Apply the Diagnostics plan with native Excel objects
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Diagnostics.ps1 -PackageDirectory test-results\demo
       - name: Verify Function Wizard registration lifecycle
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-UdfRegistration.ps1 -PackageDirectory test-results\demo
@@ -121,6 +125,9 @@ jobs:
       - name: Verify the Risk sheet against the mpmath references
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Risk.ps1 -PackageDirectory test-results\demo
+      - name: Verify the Diagnostics sheet against its documented outcomes
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Diagnostics.ps1 -PackageDirectory test-results\demo
       - name: Exercise the native Ribbon and reset confirmation dialog
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerUI.ps1 -PackageDirectory test-results\demo
