@@ -228,7 +228,12 @@ try {
     $inside = [int]$at.sweep_points - 2
     if (-not $sweep.Contains(": $inside numbers, 2 #NUM!")) { throw "The default sweep reads '$sweep'" }
     $raw = $sheet.Range('AG' + $first).SpillingToRange.Value2
-    if (-not (Is-Error $raw[1, 1]) -or -not (Is-Error $raw[[int]$at.sweep_points, 1]) -or (Is-Error $raw[2, 1])) { throw 'The default sweep is not refused at 0 and 1 only' }
+    # The sweep holds a number, or the name of the error as a text: the LAMBDA returns no error value.
+    for ($k = 1; $k -le [int]$at.sweep_points; $k++) {
+        $refused = ($k -eq 1) -or ($k -eq [int]$at.sweep_points)
+        if ($refused -and [string]$raw[$k, 1] -ne '#NUM!') { throw "Sweep row ${k}: $(Shown $raw[$k, 1]), expected the text #NUM!" }
+        if (-not $refused -and -not ($raw[$k, 1] -is [double])) { throw "Sweep row ${k}: $(Shown $raw[$k, 1]), expected a number" }
+    }
     $report.sweep = 'PASS'
 
     # A function name typed in another case is the same function: Excel accepts it, and so do the example

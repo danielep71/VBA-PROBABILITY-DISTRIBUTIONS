@@ -218,6 +218,8 @@ class PlanTests(unittest.TestCase):
         for name, arguments in calls:
             self.assertEqual(len(arguments.split(",")), len(CATALOGUE[name]["params"]), name)
         sweep = self.formulas()[f"{P.HELPERS['raw']}{P.FIRST_ROW}"]
+        # The LAMBDA returns a number or the name of an error, never an error value.
+        self.assertIn("IF(ISNUMBER(v),v,IFERROR(CHOOSE(ERROR.TYPE(v),", sweep)
         self.assertEqual(re.findall(r"(K_STATS_\w+)\(xv", sweep), [item["name"] for item in DATA["functions"]])
 
     def test_the_status_reader_covers_the_catalogue(self):
@@ -266,8 +268,10 @@ class PlanTests(unittest.TestCase):
         # Excel's list validation, MATCH and formulas accept a function name in any case: the module's Select
         # Case and catalogue lookup must too, or an accepted name gives a contradictory Status.
         self.assertIn("Option Compare Text", MODULE)
-        self.assertIn("MatchCase:=False", MODULE)
-        self.assertNotIn("MatchCase:=True", MODULE)
+        # The catalogue is found with MATCH, which ignores case and, unlike Range.Find with xlValues, reads
+        # the hidden columns the catalogue sits in.
+        self.assertIn("Application.Match(CStr(Sheet.Range(FUNCTION_CELL).Value2), Names, 0)", MODULE)
+        self.assertNotIn(".Find(", MODULE)
 
     def test_the_status_is_the_librarys_text(self):
         # DiagnosticsStatus returns the Status the call wrote; its own lines all start "Not called", and the

@@ -261,12 +261,16 @@ Private Sub LoadDiagnosticsExample(ByVal Sheet As Worksheet)
     ' the list leaves the inputs as they are.
     Dim Names As Range
     Dim Found As Range
+    Dim Position As Variant
     Dim Slot As Long
     Dim Value As Variant
     Set Names = Sheet.Parent.Names(CATALOGUE_NAMES).RefersToRange
-    Set Found = Names.Find(What:=CStr(Sheet.Range(FUNCTION_CELL).Value2), LookIn:=xlValues, _
-                           LookAt:=xlWhole, MatchCase:=False)
-    If Found Is Nothing Then Exit Sub
+    ' MATCH, not Range.Find: Find with LookIn:=xlValues skips hidden cells, and
+    ' the catalogue sits in hidden columns. MATCH ignores case, as the list
+    ' validation does.
+    Position = Application.Match(CStr(Sheet.Range(FUNCTION_CELL).Value2), Names, 0)
+    If IsError(Position) Then Exit Sub
+    Set Found = Names.Cells(CLng(Position), 1)
     For Slot = 1 To ARGUMENT_COUNT
         Value = Found.Offset(0, 5 + Slot).Value2
         If IsEmpty(Value) Then

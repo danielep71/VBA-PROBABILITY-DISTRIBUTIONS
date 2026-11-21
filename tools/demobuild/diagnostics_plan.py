@@ -119,10 +119,15 @@ def call_text(function: str, args: list[Any]) -> str:
     return f"{function}({','.join(argument_text(value) for value in args)})"
 
 
+def error_name(cell: str) -> str:
+    """The name of the worksheet error a cell or a LET name holds, as a text."""
+    names = ",".join(f'"{name}"' for name in ERROR_NAMES)
+    return f'IFERROR(CHOOSE(ERROR.TYPE({cell}),{names}),"another error")'
+
+
 def kind_of(cell: str) -> str:
     """The kind of a value: "a number", or the name of the worksheet error."""
-    names = ",".join(f'"{name}"' for name in ERROR_NAMES)
-    return f'IF(ISERROR({cell}),IFERROR(CHOOSE(ERROR.TYPE({cell}),{names}),"another error"),"a number")'
+    return f'IF(ISERROR({cell}),{error_name(cell)},"a number")'
 
 
 def dispatch(functions: list[dict[str, Any]], arguments: tuple[str, ...]) -> str:
@@ -226,8 +231,8 @@ def converted_formula() -> str:
 
 def sweep_formula(points: int) -> str:
     low, high = (absolute(cell) for cell in SWEEP_CELLS)
-    return (f'=IF({ok()},LET(n,ROWS(DiagSweepRaw),e,SUM(--ISERROR(DiagSweepRaw)),'
-            f'm,SUM(--IFERROR(ERROR.TYPE(DiagSweepRaw)=6,FALSE)),'
+    return (f'=IF({ok()},LET(n,ROWS(DiagSweepRaw),e,SUM(--ISTEXT(DiagSweepRaw)),'
+            f'm,SUM(--(DiagSweepRaw="#NUM!")),'
             f'"Over "&n&" values of "&{parameter(1)}&" from "&{low}&" to "&{high}&": "&(n-e)&" numbers, "&m&'
             f'" #NUM!"&IF(e>m," and "&(e-m)&" other errors","")&IF(e>0,"; each error is a red mark at 0 on the '
             f'chart.",".")),"")')
@@ -297,10 +302,13 @@ def try_formulas(data: dict[str, Any]) -> list[dict[str, str]]:
         {"address": result("sweep"), "formula": sweep_formula(points)},
         {"address": f"{HELPERS['x']}{row}",
          "formula": f"=IF({ok()},{low}+({high}-{low})*SEQUENCE({points},1,0,1)/{points - 1},NA())"},
+        # The LAMBDA never returns an error value: an error of the library comes back as its name, a text, as
+        # every LAMBDA of the other sheets catches its errors. The chart's helpers then tell numbers from names.
         {"address": f"{HELPERS['raw']}{row}",
-         "formula": f"=IF({ok()},MAP(DiagSweepX,LAMBDA(xv,{dispatch(functions, sweep_args)})),NA())"},
-        {"address": f"{HELPERS['value']}{row}", "formula": "=IF(ISERROR(DiagSweepRaw),NA(),DiagSweepRaw)"},
-        {"address": f"{HELPERS['error']}{row}", "formula": "=IF(ISERROR(DiagSweepRaw),0,NA())"},
+         "formula": (f"=IF({ok()},MAP(DiagSweepX,LAMBDA(xv,LET(v,{dispatch(functions, sweep_args)},"
+                     f"IF(ISNUMBER(v),v,{error_name('v')})))),NA())")},
+        {"address": f"{HELPERS['value']}{row}", "formula": "=IF(ISNUMBER(DiagSweepRaw),DiagSweepRaw,NA())"},
+        {"address": f"{HELPERS['error']}{row}", "formula": "=IF(ISNUMBER(DiagSweepRaw),NA(),0)"},
     ]
 
 
