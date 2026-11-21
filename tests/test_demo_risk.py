@@ -280,6 +280,14 @@ class PlanTests(unittest.TestCase):
         self.assertNotRegex(code, r"1-K_STATS_")
         self.assertNotIn("_Cumulative(", code.replace("_InverseCumulative(", ""))
 
+    def test_the_reading_survives_a_zero_normal_value(self):
+        # At confidence 0.5 with a zero mean return the Normal VaR is 0: no ratio divides by it.
+        reading = self.formulas()[P.result("reading")]
+        for normal, student in (("$D$23", "$D$26"), ("$D$24", "$D$27")):
+            self.assertIn(f"IF({normal}=0,", reading)
+            self.assertIn(f"ROUND({student}/{normal},3)", reading)
+            self.assertLess(reading.index(f"IF({normal}=0,"), reading.index(f"ROUND({student}/{normal},3)"))
+
     def test_the_degrees_of_freedom_must_give_a_variance(self):
         names = {item["name"]: item["refers"] for item in PLAN["names"]}
         self.assertIn("Risk!$D$11>2", names["RiskDfOk"])

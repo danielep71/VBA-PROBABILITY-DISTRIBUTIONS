@@ -190,8 +190,14 @@ def reading_formula() -> str:
     n_var, n_es, t_var, t_es = (f"$D${RESULT_ROWS[key]}" for key in ("normal_var", "normal_es", "t_var", "t_es"))
     exceed = f"$D${RESULT_ROWS['default_exceed']}"
     level = absolute(cell("confidence"))
-    return (f'=IFERROR(IF({ok()},"At the same mean and variance, the Student t gives a VaR "&ROUND({t_var}/{n_var},3)'
-            f'&" times the Normal VaR and an ES "&ROUND({t_es}/{n_es},3)&" times the Normal ES. ES is at least the '
+    # A ratio over a zero Normal value (a zero mean loss at confidence 0.5) is undefined: the two values are
+    # then given side by side, and the rest of the reading stays.
+    def ratio(student: str, normal: str, what: str) -> str:
+        return (f'IF({normal}=0," {what} of "&ROUND({student},2)&" against a Normal {what} of 0",'
+                f'" {what} "&ROUND({student}/{normal},3)&" times the Normal {what}")')
+
+    return (f'=IFERROR(IF({ok()},"At the same mean and variance, the Student t gives a"&{ratio(t_var, n_var, "VaR")}'
+            f'&" and an"&{ratio(t_es, n_es, "ES")}&". ES is at least the '
             f'VaR in both models: "&IF(AND({n_es}>={n_var},{t_es}>={t_var}),"yes","NO")&". P(defaults > Q) = "'
             f'&ROUND({exceed},6)&IF({exceed}<=1-{level}," <= 1 - confidence."," CHECK: above 1 - confidence."),""),"")')
 

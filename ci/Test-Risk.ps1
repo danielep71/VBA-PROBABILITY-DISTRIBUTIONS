@@ -236,6 +236,17 @@ try {
     }
     $report.invalid = 'PASS'
 
+    # A zero mean return at confidence 0.5 gives a Normal VaR of 0: the reading states the two VaRs instead of
+    # a ratio, and keeps the rest.
+    Set-Number $sheet 'D7' 0
+    Set-Number $sheet 'D10' 0.5
+    $excel.Calculate()
+    if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "A zero mean at 0.5 gives the status $($sheet.Range('D19').Value2)" }
+    if ([double]$sheet.Range("D$($rows.normal_var)").Value2 -ne 0) { throw "The Normal VaR at 0.5 with a zero mean is $($sheet.Range("D$($rows.normal_var)").Value2)" }
+    $reading = [string]$sheet.Range("D$($rows.reading)").Value2
+    if (-not $reading.Contains('against a Normal VaR of 0') -or -not $reading.Contains('ES is at least the VaR in both models: yes')) { throw "The reading with a Normal VaR of 0 is '$reading'" }
+    $report.zero_var = 'PASS'
+
     # Reset.
     Set-Number $sheet 'D11' 30
     Set-Number $sheet 'D10' 0.95
