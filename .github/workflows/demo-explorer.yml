@@ -76,6 +76,10 @@ jobs:
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Comparison.ps1 -PackageDirectory test-results\demo
       - name: Apply the Tails plan with native Excel objects
+        # The Tails sheet is the longest of the Excel checks (13 scenarios, 219 points). A change to the
+        # release branch does not run it; the integration into main does, and so does a manual run on a
+        # branch, which is how a change to the Tails sheet itself is verified.
+        if: ${{ github.event_name == 'workflow_dispatch' || github.base_ref == 'main' }}
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Tails.ps1 -PackageDirectory test-results\demo
       - name: Verify Function Wizard registration lifecycle
@@ -97,6 +101,10 @@ jobs:
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Comparison.ps1 -PackageDirectory test-results\demo
       - name: Verify the Tails sheet against the mpmath references
+        # The Tails sheet is the longest of the Excel checks (13 scenarios, 219 points). A change to the
+        # release branch does not run it; the integration into main does, and so does a manual run on a
+        # branch, which is how a change to the Tails sheet itself is verified.
+        if: ${{ github.event_name == 'workflow_dispatch' || github.base_ref == 'main' }}
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-Tails.ps1 -PackageDirectory test-results\demo
       - name: Exercise the native Ribbon and reset confirmation dialog
