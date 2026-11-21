@@ -108,10 +108,10 @@ class CaseTests(unittest.TestCase):
         self.assertEqual((zero["fewer_than"], zero["at_least"]), (0.0, 1.0))
         at_n = CASES["Threshold at n"]["results"]
         self.assertEqual((at_n["at_most"], at_n["more_than"]), (1.0, 0.0))
-        # A step boundary: q is exactly F(1), so the quantile is 1 and F(Q) = q.
+        # A step boundary: q lies just below the step F(1) = 0.75, so the quantile is 1.
         step = CASES["Step boundary"]
         self.assertEqual(step["results"]["quantile"], 1)
-        self.assertEqual(step["results"]["at_quantile"], step["inputs"]["level"])
+        self.assertEqual((step["results"]["before_quantile"], step["results"]["at_quantile"]), (0.25, 0.75))
         # The far quantile lies beyond mean + 5 standard deviations: the window widens to hold it.
         far = CASES["Far quantile"]
         mean, sd = R.model_mean_sd({"model": far["model"], **far["inputs"]})

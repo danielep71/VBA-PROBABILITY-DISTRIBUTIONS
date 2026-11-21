@@ -56,8 +56,10 @@ CASES = [
      "rate": 0.02, "exposure": 100, "threshold": 10, "level": 0.5,
      "purpose": "A symmetric Binomial: the median is the quantile of 0.5."},
     {"name": "Step boundary", "model": "Binomial", "trials": 2, "probability": 0.5,
-     "rate": 0.02, "exposure": 100, "threshold": 1, "level": 0.75,
-     "purpose": "q equals F(1) = 0.75 exactly: the smallest k with F(k) >= q is 1, not 2."},
+     "rate": 0.02, "exposure": 100, "threshold": 1, "level": 0.74,
+     "purpose": "q = 0.74 lies just below the step F(1) = 0.75: F(0) = 0.25 < q <= F(1), so the "
+                "quantile is 1 and F(Q) is above q. A q exactly on the step would leave the answer "
+                "to the last bit of the computed tail."},
     {"name": "Threshold zero", "model": "Poisson", "trials": 100, "probability": 0.02,
      "rate": 1.5, "exposure": 2, "threshold": 0, "level": 0.05,
      "purpose": "k = 0: fewer than 0 is impossible and at least 0 is certain; F(0) = exp(-3) is just below q."},

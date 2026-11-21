@@ -435,14 +435,14 @@
   {
    "name": "Step boundary",
    "model": "Binomial",
-   "purpose": "q equals F(1) = 0.75 exactly: the smallest k with F(k) >= q is 1, not 2.",
+   "purpose": "q = 0.74 lies just below the step F(1) = 0.75: F(0) = 0.25 < q <= F(1), so the quantile is 1 and F(Q) is above q. A q exactly on the step would leave the answer to the last bit of the computed tail.",
    "inputs": {
     "trials": 2,
     "probability": 0.5,
     "rate": 0.02,
     "exposure": 100,
     "threshold": 1,
-    "level": 0.75
+    "level": 0.74
    },
    "results": {
     "mean": 1.0,
