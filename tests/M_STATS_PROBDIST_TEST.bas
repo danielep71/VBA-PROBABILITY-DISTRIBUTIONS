@@ -21320,6 +21320,8 @@ Private Sub Test_DS_InverseStepTies()
 ' BEHAVIOR
 '   - Exact steps: targets that are binary64 values of F(k), on both sides of
 '     0.5, so both the cumulative and the survival comparisons are exercised.
+'   - Fine steps: a Geometric with p down to 1E-14, whose steps are narrower
+'     than a relative 1E-12, keeps the answer of the strict comparison.
 '   - Round trips: InverseCumulative(Cumulative(k)) = k for the Binomial,
 '     Poisson, Geometric, Negative Binomial and Hypergeometric, with every
 '     target at most 0.999 so that 1 - q keeps its relative precision.
@@ -21365,6 +21367,15 @@ Private Sub Test_DS_InverseStepTies()
         0#, 0#
     AssertClose "hyp inv(.5,1,2,4)=0", K_STATS_Hypergeometric_InverseCumulative(0.5, 1#, 2#, 4#), _
         0#, 0#
+
+    'Steps finer than the tie window keep the strict answer: with p = 1E-14 a
+    'relative 1E-12 spans about 100 counts (mpmath: fractional parts .37, .51, .11)
+    AssertClose "geo inv(.75,1e-14)=138629436111988", _
+        K_STATS_Geometric_InverseCumulative(0.75, 0.00000000000001), 138629436111988#, 0#
+    AssertClose "geo inv(.75,1e-10)=13862943610", _
+        K_STATS_Geometric_InverseCumulative(0.75, 0.0000000001), 13862943610#, 0#
+    AssertClose "geo inv(.5,1e-13)=6931471805599", _
+        K_STATS_Geometric_InverseCumulative(0.5, 0.0000000000001), 6931471805599#, 0#
 
     Debug.Print "-- Discrete inverse of the computed cumulative"
     For Count = 0 To 10
