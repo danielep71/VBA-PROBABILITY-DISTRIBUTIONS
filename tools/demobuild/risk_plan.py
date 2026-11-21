@@ -212,10 +212,6 @@ ASSUMPTIONS = (
 )
 
 
-def assumptions_formula() -> str:
-    return f'="{ASSUMPTIONS}"'
-
-
 def table_formulas() -> list[dict[str, str]]:
     row = str(FIRST_ROW)
     mean, sd, scale = (absolute(result(key)) for key in ("mean_loss", "sd_loss", "t_scale"))
@@ -297,7 +293,6 @@ def plan() -> dict[str, Any]:
         *result_formulas(),
         *shown_formulas(),
         {"address": result("reading"), "formula": reading_formula()},
-        {"address": result("assumptions"), "formula": assumptions_formula()},
         *table_formulas(),
     ]
     environment = data["environment"]
@@ -333,6 +328,8 @@ def plan() -> dict[str, Any]:
         {"address": "C20", "value": "Macros"},
         *({"address": f"C{RESULT_ROWS[key]}", "value": label} for key, label in labels.items()),
         {"address": f"D{RESULT_ROWS['provenance']}", "value": provenance},
+        # Static text is a value, not a formula: a quoted constant in a formula holds at most 255 characters.
+        {"address": result("assumptions"), "value": ASSUMPTIONS},
         {"address": "F5", "value": "Read the results"},
         {"address": "F6", "value": "Losses are positive amounts in the currency of V. The horizon scales the mean by h "
                                    "and the volatility by sqrt(h)."},
