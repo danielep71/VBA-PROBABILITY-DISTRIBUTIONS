@@ -14,7 +14,7 @@ Attribute VB_Customizable = True
 ' MODULE: ThisWorkbook
 ' PURPOSE: The workbook events of the Explorer workbook. They only call the
 ' modules of src/workbook/: the Function Wizard registration and the
-' Explorer's, the Probabilities, the Parameter Effects and the Comparison sheets' refresh when the workbook opens,
+' Explorer's, the Probabilities, the Parameter Effects, the Comparison and the Tails sheets' refresh when the workbook opens,
 ' their input handling when a cell of their sheet changes, and the navigation bar around a save.
 ' tools/demobuild/explorer_build.py and tools/Sync-PROBDIST-VBA.ps1 write
 ' this code into the workbook's ThisWorkbook module.
@@ -27,6 +27,7 @@ Private Sub Workbook_Open()
     M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesOpened
     M_STATS_PROBDIST_PARAMETERS.ParameterEffectsOpened
     M_STATS_PROBDIST_COMPARISON.ComparisonOpened
+    M_STATS_PROBDIST_TAILS.TailsOpened
 End Sub
 
 
@@ -35,6 +36,7 @@ Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     If Sh.CodeName = "shProbability" Then M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesInputsChanged Target
     If Sh.CodeName = "shParameters" Then M_STATS_PROBDIST_PARAMETERS.ParameterEffectsInputsChanged Target
     If Sh.CodeName = "shComparison" Then M_STATS_PROBDIST_COMPARISON.ComparisonInputsChanged Target
+    If Sh.CodeName = "shTails" Then M_STATS_PROBDIST_TAILS.TailsInputsChanged Target
 End Sub
 
 

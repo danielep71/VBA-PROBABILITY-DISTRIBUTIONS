@@ -10,6 +10,7 @@ Output (ignored by Git) in test-results/demo/:
   probabilities-plan.json               what Evolve-Probabilities.ps1 applies in Excel
   parameters-plan.json                  what Evolve-ParameterEffects.ps1 applies in Excel
   comparison-plan.json                  what Evolve-Comparison.ps1 applies in Excel
+  tails-plan.json                       what Evolve-Tails.ps1 applies in Excel
   manifest.json                         inputs and digests
 
 The template, src/workbook/PROBDIST_Template.xlsx, is the Explorer workbook
@@ -43,6 +44,7 @@ import explorer_plan  # noqa: E402
 import explorer_template  # noqa: E402
 import parameters_plan  # noqa: E402
 import probabilities_plan  # noqa: E402
+import tails_plan  # noqa: E402
 
 DEMO = ROOT / "examples" / "demo"
 WORKBOOK = ROOT / "src" / "workbook"
@@ -82,7 +84,7 @@ def build() -> tuple[bytes, dict[str, Any], dict[str, str]]:
     plan = explorer_plan.plan()
     inputs = sources + [TEMPLATE, RIBBON, DEMO / "explorer-families.json", Path(__file__),
                         Path(explorer_plan.__file__), Path(probabilities_plan.__file__), Path(parameters_plan.__file__), Path(comparison_plan.__file__),
-                        DEMO / "comparison-cases.json", Path(explorer_template.__file__),
+                        DEMO / "comparison-cases.json", Path(tails_plan.__file__), DEMO / "tails-cases.json", Path(explorer_template.__file__),
                         Path(build_demo.__file__),
                         ROOT / "tools/devbuild/vba_project.py", ROOT / "tools/devbuild/build_workbook.py",
                         ROOT / "VERSION"]
@@ -99,6 +101,7 @@ def main() -> int:
     (output / "probabilities-plan.json").write_text(json.dumps(probabilities_plan.plan(), indent=1), encoding="utf-8")
     (output / "parameters-plan.json").write_text(json.dumps(parameters_plan.plan(), indent=1), encoding="utf-8")
     (output / "comparison-plan.json").write_text(json.dumps(comparison_plan.plan(), indent=1), encoding="utf-8")
+    (output / "tails-plan.json").write_text(json.dumps(tails_plan.plan(), indent=1), encoding="utf-8")
     manifest = {"commit": git(ROOT, "rev-parse", "HEAD"), "status": "UNVERIFIED IN EXCEL",
                 "dirty": bool(git(ROOT, "status", "--porcelain")),
                 "workbook_sha256": hashlib.sha256(data).hexdigest(), "inputs": hashes}
