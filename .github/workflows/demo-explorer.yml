@@ -17,6 +17,7 @@ on:
       - "ci/Test-Discrete.ps1"
       - "ci/Test-Risk.ps1"
       - "ci/Test-Diagnostics.ps1"
+      - "ci/Show-ExcelCrash.ps1"
       - "ci/Test-UdfRegistration.ps1"
       - "ci/Test-ExplorerUI.ps1"
       - "ci/Test-ExplorerStates.ps1"
@@ -137,6 +138,10 @@ jobs:
       - name: Build a workbook from the template with the sync script and synchronize it again
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-SyncWorkbook.ps1 -OutputDirectory test-results\demo\sync
+      - name: Show what Windows recorded about an Excel crash
+        if: failure()
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Show-ExcelCrash.ps1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
