@@ -26,21 +26,23 @@ function Near($Actual, $Expected) {
     return [Math]::Abs($Actual - $Expected) -le ([double]$fixture.absolute_tolerance + [double]$fixture.relative_tolerance * [Math]::Abs($Expected))
 }
 # Each write runs the sheet's macro and recalculates; Excel rejects a COM call while it is still busy
-# (RPC_E_CALL_REJECTED). A write is retried until Excel accepts it, for up to five minutes.
-function Invoke-WhenReady([scriptblock]$Action) {
-    for ($attempt = 1; ; $attempt++) {
-        try { return & $Action }
-        catch {
-            $text = [string]$_.Exception + ' ' + [string]$_.Exception.InnerException
-            $busy = $_.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
-            if (-not $busy -or $attempt -ge 600) { throw }
-            Start-Sleep -Milliseconds 500
-        }
-    }
+# (RPC_E_CALL_REJECTED). A rejected write is tried again every half second, for up to five minutes.
+# True when the error is that rejection and the write may be tried again, after a pause.
+function Wait-IfBusy($ErrorRecord, [int]$Attempt) {
+    $text = [string]$ErrorRecord.Exception + ' ' + [string]$ErrorRecord.Exception.InnerException
+    $busy = $ErrorRecord.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
+    if (-not $busy -or $Attempt -ge 600) { return $false }
+    Start-Sleep -Milliseconds 500
+    return $true
 }
-# One call site per value type: PowerShell binds a COM setter to the first type it sees.
-function Set-Text($Sheet, [string]$Address, [string]$Value) { Invoke-WhenReady { $Sheet.Range($Address).Value2 = $Value } }
-function Set-Number($Sheet, [string]$Address, [double]$Value) { Invoke-WhenReady { $Sheet.Range($Address).Value2 = $Value } }
+# One call site per value type: PowerShell binds a COM setter to the first type it sees. The assignment
+# stays in each function's own body: two script blocks with the same text would share one call site.
+function Set-Text($Sheet, [string]$Address, [string]$Value) {
+    for ($attempt = 1; ; $attempt++) { try { $Sheet.Range($Address).Value2 = $Value; return } catch { if (-not (Wait-IfBusy $_ $attempt)) { throw } } }
+}
+function Set-Number($Sheet, [string]$Address, [double]$Value) {
+    for ($attempt = 1; ; $attempt++) { try { $Sheet.Range($Address).Value2 = $Value; return } catch { if (-not (Wait-IfBusy $_ $attempt)) { throw } } }
+}
 function Grid-Rows($Sheet) {
     $spill = $Sheet.Range('F20').SpillingToRange
     if ($null -eq $spill) { return 0 }
