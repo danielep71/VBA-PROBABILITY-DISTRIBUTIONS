@@ -25,9 +25,24 @@ $green = 0xCEEFC6
 $grey = 0xF2F2F2
 
 function Is-Error($Value) { return ($Value -is [int]) -and ($Value -lt -2146820000) }
-# One call site per value type: PowerShell binds a COM setter to the first type it sees.
-function Set-Text($Sheet, [string]$Address, [string]$Value) { $Sheet.Range($Address).Value2 = $Value }
-function Set-Number($Sheet, [string]$Address, [double]$Value) { $Sheet.Range($Address).Value2 = $Value }
+# Each write runs the sheet's macro and recalculates; Excel rejects a COM call while it is still busy
+# (RPC_E_CALL_REJECTED). A rejected write is tried again every half second, for up to five minutes.
+# True when the error is that rejection and the write may be tried again, after a pause.
+function Wait-IfBusy($ErrorRecord, [int]$Attempt) {
+    $text = [string]$ErrorRecord.Exception + ' ' + [string]$ErrorRecord.Exception.InnerException
+    $busy = $ErrorRecord.Exception.HResult -eq -2147418111 -or $text -match '0x80010001|RPC_E_CALL_REJECTED'
+    if (-not $busy -or $Attempt -ge 600) { return $false }
+    Start-Sleep -Milliseconds 500
+    return $true
+}
+# One call site per value type: PowerShell binds a COM setter to the first type it sees. The assignment
+# stays in each function's own body: two script blocks with the same text would share one call site.
+function Set-Text($Sheet, [string]$Address, [string]$Value) {
+    for ($attempt = 1; ; $attempt++) { try { $Sheet.Range($Address).Value2 = $Value; return } catch { if (-not (Wait-IfBusy $_ $attempt)) { throw } } }
+}
+function Set-Number($Sheet, [string]$Address, [double]$Value) {
+    for ($attempt = 1; ; $attempt++) { try { $Sheet.Range($Address).Value2 = $Value; return } catch { if (-not (Wait-IfBusy $_ $attempt)) { throw } } }
+}
 # The values a spilled formula holds, one per row (or the single value when it does not spill).
 function Spill-Values($Sheet, [string]$Address) {
     $spill = $Sheet.Range($Address).SpillingToRange
@@ -114,10 +129,9 @@ try {
     foreach ($other in @(@('Explorer', 2), @('Probabilities', 1), @('Parameters', 2), @('Comparison', 1))) {
         if ($book.Worksheets.Item($other[0]).ChartObjects().Count -ne $other[1]) { throw "The $($other[0]) sheet lost a chart" }
     }
-    # The Tails sheet is built only in the integration into main and in a manual run: it has its two
-    # charts, or none when its plan was not applied.
+    # Every run builds the Tails sheet, a change to the release branch too: it has its two charts.
     $tailsCharts = $book.Worksheets.Item('Tails').ChartObjects().Count
-    if ($tailsCharts -ne 2 -and $tailsCharts -ne 0) { throw "The Tails sheet has $tailsCharts charts" }
+    if ($tailsCharts -ne 2) { throw "The Tails sheet has $tailsCharts charts, expected 2" }
     if (-not ([string]$sheet.Range("D$($rows.excel_build)").Value2).Contains('build')) { throw "The Excel build reads: $($sheet.Range("D$($rows.excel_build)").Value2)" }
     if ([string]$sheet.Range('D19').Value2 -ne 'OK') { throw "Status at the defaults: $($sheet.Range('D19').Value2)" }
     if ([string]$sheet.Range('D6').Value2 -ne [string]$plan.defaults.model -or [double]$sheet.Range('D7').Value2 -ne [double]$plan.defaults.trials -or

@@ -55,6 +55,8 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
                 M_STATS_PROBDIST_DISCRETESHEET.ResetDiscreteInputs
             ElseIf M_STATS_PROBDIST_RISK.RiskIsActive() Then
                 M_STATS_PROBDIST_RISK.ResetRiskInputs
+            ElseIf M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
+                M_STATS_PROBDIST_DIAGNOSTICS.ResetDiagnosticsInputs
             Else
                 ResetExplorerInputs
             End If
@@ -67,6 +69,7 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
             If M_STATS_PROBDIST_TAILS.TailsReady() Then M_STATS_PROBDIST_TAILS.RefreshTails
             If M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady() Then M_STATS_PROBDIST_DISCRETESHEET.RefreshDiscrete
             If M_STATS_PROBDIST_RISK.RiskReady() Then M_STATS_PROBDIST_RISK.RefreshRisk
+            If M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsReady() Then M_STATS_PROBDIST_DIAGNOSTICS.RefreshDiagnostics
     End Select
     Exit Sub
 Failed:
@@ -99,6 +102,10 @@ Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As
     End If
     If M_STATS_PROBDIST_RISK.RiskIsActive() Then
         ReturnedVal = M_STATS_PROBDIST_RISK.RiskReady()
+        Exit Sub
+    End If
+    If M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
+        ReturnedVal = M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsReady()
         Exit Sub
     End If
     Set Target = ExplorerSheet()
