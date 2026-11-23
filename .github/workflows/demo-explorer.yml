@@ -20,6 +20,7 @@ on:
       - "ci/Show-ExcelCrash.ps1"
       - "ci/Test-UdfRegistration.ps1"
       - "ci/Test-ExplorerUI.ps1"
+      - "ci/Test-HandlerErrors.ps1"
       - "ci/Test-ExplorerStates.ps1"
       - "ci/Test-DemoPackage.ps1"
       - "tests/test_demo_explorer.py"
@@ -129,6 +130,9 @@ jobs:
       - name: Exercise the native Ribbon and reset confirmation dialog
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-ExplorerUI.ps1 -PackageDirectory test-results\demo
+      - name: Induce errors in a demo handler with another workbook open
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-HandlerErrors.ps1 -PackageDirectory test-results\demo
       - name: Verify the completed workbook save and navigation contract
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-DemoPackage.ps1 -PackageDirectory test-results\demo
