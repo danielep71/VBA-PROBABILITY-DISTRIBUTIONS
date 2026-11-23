@@ -140,7 +140,8 @@ in an owned Excel process: Recalculate, Home, the Go to destinations, the
 navigation toggle, Reset inputs disabled on Home and README, the reset dialog,
 Cancel and OK, a renamed tab and a deleted sheet.
 `ci/Test-HandlerErrors.ps1` induces two errors in the Explorer's input handler with a
-second workbook open, one before and one after the sheet is unprotected, and checks that
+second workbook open, each after a routine has unprotected the sheet (the input messages,
+then the number formats, where the handler used to fail before saving the events state), and checks that
 events, screen updating, calculation, the sheet's protection and the other workbook are
 as they were, with one message shown (#482).
 

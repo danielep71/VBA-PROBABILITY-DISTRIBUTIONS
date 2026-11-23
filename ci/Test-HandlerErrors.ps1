@@ -1,11 +1,13 @@
 param([Parameter(Mandatory=$true)][string]$PackageDirectory)
 # A demo handler that fails leaves Excel as it found it (#482). With a second
 # workbook open, two errors are induced in the Explorer's input handler, in a
-# copy opened read-only that is never saved:
-#   1. before anything is unprotected: the sheet is protected with a password,
-#      so the decimals routine cannot unprotect it;
-#   2. after the sheet is unprotected: a named range the parameter messages read
-#      is deleted, and a new family is chosen.
+# copy opened read-only that is never saved, each after a routine has
+# unprotected the sheet:
+#   1. a new family is chosen once a named range the parameter messages read is
+#      deleted: the error comes after the handler has saved the events state;
+#   2. the number of decimals is changed once the family table's name is
+#      deleted: the error comes before the old handler saved the events state.
+# No password is used: Unprotect without one would prompt for it.
 # Each time the handler must show one message (answered here through Windows UI
 # Automation, in the owned Excel process only), leave events, screen updating
 # and calculation as they were, leave the sheet protected as it was, and leave
@@ -105,28 +107,28 @@ try {
     $excel.EnableEvents = $true
     $before = Read-State
 
-    # 1. The sheet cannot be unprotected: the error comes before the handler of the decimals routine.
-    $sheet.Protect('handler-test')
-    $dialogJob = Start-DialogWorker 'Distribution Explorer' 'The Explorer could not follow that change:'
-    $sheet.Range('D16').Value2 = 3.0
-    $report.error_before_unprotect_message = Complete-DialogWorker $dialogJob
-    $dialogJob = $null
-    if ((Read-State) -ne $before) { throw "The state changed after an error before the unprotect: $(Read-State), was $before" }
-    if (-not $sheet.ProtectContents) { throw 'The sheet lost its protection after an error before the unprotect' }
-    $report.error_before_unprotect = 'PASS'
-
-    # 2. The sheet is unprotected, then a named range the messages read is missing.
-    $sheet.Unprotect('handler-test')
+    # 1. A new family, once the input messages cannot be read: the error comes after the unprotect.
     $sheet.Protect()
     $book.Unprotect()
     $book.Names.Item('ExplorerLabels').Delete()
     $dialogJob = Start-DialogWorker 'Distribution Explorer' 'The Explorer could not follow that change:'
     $sheet.Range('D6').Value2 = 'Gamma'
-    $report.error_after_unprotect_message = Complete-DialogWorker $dialogJob
+    $report.error_in_messages_message = Complete-DialogWorker $dialogJob
     $dialogJob = $null
-    if ((Read-State) -ne $before) { throw "The state changed after an error after the unprotect: $(Read-State), was $before" }
-    if (-not $sheet.ProtectContents) { throw 'The sheet was left unprotected after an error' }
-    $report.error_after_unprotect = 'PASS'
+    if ((Read-State) -ne $before) { throw "The state changed after an error in the input messages: $(Read-State), was $before" }
+    if (-not $sheet.ProtectContents) { throw 'The sheet was left unprotected after an error in the input messages' }
+    $report.error_in_messages = 'PASS'
+
+    # 2. New decimals, once the family table cannot be read: the decimals routine fails after its unprotect,
+    #    and the handler fails before the point where it used to save the events state.
+    $book.Names.Item('ExplorerFamily').Delete()
+    $dialogJob = Start-DialogWorker 'Distribution Explorer' 'The Explorer could not follow that change:'
+    $sheet.Range('D16').Value2 = 3.0
+    $report.error_in_decimals_message = Complete-DialogWorker $dialogJob
+    $dialogJob = $null
+    if ((Read-State) -ne $before) { throw "The state changed after an error in the decimals: $(Read-State), was $before" }
+    if (-not $sheet.ProtectContents) { throw 'The sheet was left unprotected after an error in the decimals' }
+    $report.error_in_decimals = 'PASS'
 
     $report.state = $before
     $report.scope = 'Errors induced in the Explorer input handler, with a second workbook open, in a read-only copy never saved; message boxes answered through Windows UI Automation in the owned Excel process.'
