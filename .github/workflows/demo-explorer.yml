@@ -96,6 +96,9 @@ jobs:
       - name: Apply the Diagnostics plan with native Excel objects
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Diagnostics.ps1 -PackageDirectory test-results\demo
+      - name: Apply the Home and README plan with native Excel objects
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\demobuild\Evolve-Home.ps1 -PackageDirectory test-results\demo
       - name: Verify Function Wizard registration lifecycle
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File ci\Test-UdfRegistration.ps1 -PackageDirectory test-results\demo

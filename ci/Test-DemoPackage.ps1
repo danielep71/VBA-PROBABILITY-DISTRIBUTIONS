@@ -88,6 +88,21 @@ try {
     $value = $excel.Run($prefix + 'K_STATS_NormalStandard_Cumulative', 0.0)
     if ([Math]::Abs([double]$value - 0.5) -gt 1e-15) { throw 'Embedded VBA smoke result differs from 0.5' }
     $report.embedded_vba = 'PASS'
+    # Home and README as Evolve-Home.ps1 writes them in the demo workbook (not in the shell that
+    # build_demo.py makes, which has no home-plan.json): the build record of this package, every field filled.
+    if (Test-Path (Join-Path $directory 'home-plan.json')) {
+        $manifest = Get-Content (Join-Path $directory 'manifest.json') -Raw | ConvertFrom-Json
+        $readme = $book.Worksheets.Item('README')
+        $commitRow = $excel.WorksheetFunction.Match('Source commit', $readme.Range('C1:C60'), 0)
+        if ([string]$readme.Range('D' + $commitRow).Value2 -ne [string]$manifest.commit) { throw 'README does not give the source commit of this package' }
+        foreach ($name in @('Home', 'README')) {
+            foreach ($cell in $book.Worksheets.Item($name).UsedRange.Cells) {
+                if ([string]$cell.Value2 -match '\{(version|commit|excel)\}') { throw "An unfilled field remains in $name" }
+            }
+        }
+        if ([string]$book.Worksheets.Item('Home').Range('C5').Value2 -ne 'What this workbook shows') { throw 'Home is not the planned page' }
+        $report.home_and_readme = 'PASS'
+    }
     $sheetMap = Get-Content (Join-Path $PSScriptRoot '..\examples\demo\sheets.json') -Raw | ConvertFrom-Json
     foreach ($section in $sheetMap.sections) {
         foreach ($entry in $section.sheets) {

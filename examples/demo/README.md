@@ -1,9 +1,12 @@
 # Demo workbook shell
 
-Development work for #253. The workbook is not a release asset. Automated
-Excel checks cover the operations listed below; interactive acceptance remains
-incomplete. The thematic sheets are explicitly marked as under
-development; #254–#261 supply their content. No library kernel is changed.
+The shell of #253: the page, the navigation bar, the Ribbon and the sheet map
+that the demo workbook keeps. `tools/demobuild/build_demo.py` builds this shell
+alone, with placeholder sheets. It is not a release asset. The demo workbook
+itself, with the eight thematic sheets (#254–#261) and Home and README written
+at build time, is built from `src/workbook/PROBDIST_Template.xlsx` as
+[EXPLORER.md](EXPLORER.md) describes. Its Ribbon is documented in
+[RIBBON.md](RIBBON.md). No library kernel is changed.
 
 ## User-supplied baseline
 
