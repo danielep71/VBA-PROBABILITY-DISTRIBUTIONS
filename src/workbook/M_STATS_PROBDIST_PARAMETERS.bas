@@ -97,12 +97,13 @@ Public Sub ParameterEffectsInputsChanged(ByVal Target As Range)
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
     Dim Failure As String
+    ' Save the state first: the handler below restores it, whatever fails.
+    SavedEvents = Application.EnableEvents
     On Error GoTo Failed
     Set Sheet = ParameterEffectsSheet()
     If Not Target.Worksheet Is Sheet Then Exit Sub
     If Not Application.Intersect(Target, Sheet.Range(DECIMALS_CELL)) Is Nothing Then ApplyParameterEffectsDecimals Sheet
     If Not Application.Intersect(Target, Sheet.Range(FAMILY_CELL)) Is Nothing Then
-        SavedEvents = Application.EnableEvents
         Application.EnableEvents = False
         If Target.Cells.CountLarge = 1 Then
             LoadFamilyDefaults Sheet
@@ -114,7 +115,6 @@ Public Sub ParameterEffectsInputsChanged(ByVal Target As Range)
         Application.EnableEvents = SavedEvents
         RefreshParameterEffects
     ElseIf Target.Cells.CountLarge = 1 And Target.Address(False, False) = VARY_CELL Then
-        SavedEvents = Application.EnableEvents
         Application.EnableEvents = False
         LoadCurveValues Sheet
         ApplyParameterEffectsMessages Sheet
@@ -241,6 +241,7 @@ Public Sub ApplyParameterEffectsDecimals(ByVal Sheet As Worksheet)
     ' whole number from 0 to 15 leaves the formats as they are.
     Dim Places As Variant
     Dim WasProtected As Boolean
+    Dim Failure As String
     Dim Pattern As String
     Places = Sheet.Range(DECIMALS_CELL).Value2
     If IsError(Places) Then Exit Sub
@@ -248,9 +249,18 @@ Public Sub ApplyParameterEffectsDecimals(ByVal Sheet As Worksheet)
     If CDbl(Places) <> Int(CDbl(Places)) Or CDbl(Places) < 0 Or CDbl(Places) > MAX_DECIMALS Then Exit Sub
     WasProtected = Sheet.ProtectContents
     If WasProtected Then Sheet.Unprotect
+    On Error GoTo Failed
     If CLng(Places) = 0 Then Pattern = "0" Else Pattern = "0." & String$(CLng(Places), "0")
     Sheet.Range(FORMATTED_CELLS).NumberFormat = Pattern
     If WasProtected Then Sheet.Protect
+    Exit Sub
+Failed:
+    ' Protect the sheet again as it was found, then pass the error to the caller.
+    Failure = Err.Description
+    On Error Resume Next
+    If WasProtected Then Sheet.Protect
+    On Error GoTo 0
+    Err.Raise vbObjectError + 264, "ApplyParameterEffectsDecimals", Failure
 End Sub
 
 
@@ -263,10 +273,12 @@ Public Sub ApplyParameterEffectsMessages(ByVal Sheet As Worksheet)
     Dim Slot As Long
     Dim Curve As Long
     Dim WasProtected As Boolean
+    Dim Failure As String
     Row = FamilyRow(Sheet)
     If Row = 0 Then Exit Sub
     WasProtected = Sheet.ProtectContents
     If WasProtected Then Sheet.Unprotect
+    On Error GoTo Failed
     For Slot = 1 To PARAMETER_COUNT
         With Sheet.Cells(FIRST_PARAMETER_ROW + Slot - 1, 4).Validation
             .InputTitle = Left$(CStr(TableRange("ExplorerLabels").Cells(Row, Slot).Value2), 32)
@@ -293,6 +305,14 @@ Public Sub ApplyParameterEffectsMessages(ByVal Sheet As Worksheet)
         Next Curve
     End If
     If WasProtected Then Sheet.Protect
+    Exit Sub
+Failed:
+    ' Protect the sheet again as it was found, then pass the error to the caller.
+    Failure = Err.Description
+    On Error Resume Next
+    If WasProtected Then Sheet.Protect
+    On Error GoTo 0
+    Err.Raise vbObjectError + 265, "ApplyParameterEffectsMessages", Failure
 End Sub
 
 

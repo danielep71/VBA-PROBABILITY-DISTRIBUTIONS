@@ -1,9 +1,12 @@
 # Demo workbook shell
 
-Development work for #253. The workbook is not a release asset. Automated
-Excel checks cover the operations listed below; interactive acceptance remains
-incomplete. The thematic sheets are explicitly marked as under
-development; #254–#261 supply their content. No library kernel is changed.
+The shell of #253: the page, the navigation bar, the Ribbon and the sheet map
+that the demo workbook keeps. `tools/demobuild/build_demo.py` builds this shell
+alone, with placeholder sheets. It is not a release asset. The demo workbook
+itself, with the eight thematic sheets (#254–#261) and Home and README written
+at build time, is built from `src/workbook/PROBDIST_Template.xlsx` as
+[EXPLORER.md](EXPLORER.md) describes. Its Ribbon is documented in
+[RIBBON.md](RIBBON.md). No library kernel is changed.
 
 ## User-supplied baseline
 
@@ -86,9 +89,11 @@ entry point rather than restoring uncertified embedded code.
   missing target produces a clear message.
 - **Recalculate:** `RibbonAction` calls `RecalculateWorkbook`: worksheet
   calculation in ThisWorkbook only.
-- **Reset inputs:** disabled through `RibbonGetEnabled`. There are no editable
-  example inputs in the shell. Future implementations must define bounded
-  input ranges, confirmation and restoration of any owned Excel state.
+- **Reset inputs:** in the shell built by `build_demo.py`, disabled through
+  `RibbonGetEnabled`: the shell has no inputs. In the demo workbook built by
+  `explorer_build.py`, it resets the inputs of the active sheet after a
+  confirmation, and is disabled on Home and README. [RIBBON.md](RIBBON.md)
+  documents every control of that workbook's Ribbon.
 - **Navigation bar:** `RibbonToggle` hides or shows column A and the two shape
   groups on every sheet, for the session. The state is read from the workbook
   (column A of the first sheet), not from a variable.

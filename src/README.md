@@ -62,6 +62,7 @@ workbook imports them and no evidence binding records them; a public
   changes; a change to the code needs no new template.
 - `customUI14.xml` is the Ribbon. The build writes it into the workbook, and
   the template holds the same part (`tests/test_demo_explorer.py`).
+  `examples/demo/RIBBON.md` documents every control, callback and enabled state.
 - `ThisWorkbook.cls` is the code of the ThisWorkbook module, exported as the
   VBE exports it. The sheet modules hold no code, so they have no file.
   A document module keeps the name Excel gives it (ThisWorkbook, or a sheet

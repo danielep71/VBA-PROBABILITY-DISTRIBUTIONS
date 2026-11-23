@@ -6,7 +6,8 @@
   follows the K-SACCR tab. The callbacks hold no numerical logic: those of
   src/workbook/M_STATS_PROBDIST_EXPLORER.bas recalculate the Explorer
   (ExplorerAction) and reset its inputs (ExplorerEnabled tells whether they
-  can run); those of src/workbook/M_STATS_PROBDIST_DEMO.bas open a sheet by
+  can run: Reset inputs acts on the active sheet only, and is disabled on
+  Home and README); those of src/workbook/M_STATS_PROBDIST_DEMO.bas open a sheet by
   its CodeName (RibbonGoTo), show or hide the navigation bar (RibbonToggle)
   and only read the workbook (RibbonOnLoad, RibbonGetPressed).
 -->
@@ -20,9 +21,9 @@
                   screentip="Recalculate"
                   supertip="Recalculate every sheet of this workbook. No other open workbook is recalculated."
                   onAction="ExplorerAction" getEnabled="ExplorerEnabled"/>
-          <button id="pdResetInputs" label="Reset Explorer inputs" imageMso="Undo" keytip="A"
+          <button id="pdResetInputs" label="Reset inputs" imageMso="Undo" keytip="A"
                   screentip="Reset inputs"
-                  supertip="Put the example inputs back to their defaults. Not available until the thematic sheets define editable inputs."
+                  supertip="Put the inputs of the active sheet back to its example, after a confirmation. The other sheets are not changed. Not available on Home and README, which have no inputs."
                   onAction="ExplorerAction" getEnabled="ExplorerEnabled"/>
         </group>
 

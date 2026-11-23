@@ -39,7 +39,19 @@ Public Function ExplorerSheet() As Worksheet
 End Function
 
 
+Public Function ExplorerIsActive() As Boolean
+    ' True when this workbook's active sheet is the Explorer.
+    On Error Resume Next
+    If ActiveWorkbook Is ThisWorkbook Then
+        ExplorerIsActive = (ActiveSheet.CodeName = "shExplorer")
+    End If
+End Function
+
+
 Public Sub ExplorerAction(ByVal Control As IRibbonControl)
+    ' Recalculate refreshes every built sheet. Reset inputs acts on the active
+    ' sheet only, after its own confirmation; Home and README have no inputs,
+    ' and there the button is disabled (ExplorerEnabled).
     On Error GoTo Failed
     Select Case Control.Id
         Case "pdResetInputs"
@@ -57,8 +69,10 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
                 M_STATS_PROBDIST_RISK.ResetRiskInputs
             ElseIf M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
                 M_STATS_PROBDIST_DIAGNOSTICS.ResetDiagnosticsInputs
-            Else
+            ElseIf ExplorerIsActive() Then
                 ResetExplorerInputs
+            Else
+                MsgBox "This sheet has no inputs to reset.", vbInformation, "Probability Distributions"
             End If
         Case "pdRecalculate"
             RecalculateWorkbook
@@ -78,38 +92,37 @@ End Sub
 
 
 Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As Variant)
-    Dim Target As Worksheet
+    ' Whether a control can run. On a sheet with inputs, every control follows
+    ' that sheet's readiness. Elsewhere (Home, README) Reset inputs is disabled,
+    ' and the other controls follow the Explorer's readiness. Workbook_SheetActivate
+    ' asks the Ribbon to read this again whenever the active sheet changes.
+    Dim Ready As Boolean
+    Dim HasInputs As Boolean
     On Error GoTo Failed
+    HasInputs = True
     If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady()
-        Exit Sub
+        Ready = M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady()
+    ElseIf M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
+        Ready = M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady()
+    ElseIf M_STATS_PROBDIST_COMPARISON.ComparisonIsActive() Then
+        Ready = M_STATS_PROBDIST_COMPARISON.ComparisonReady()
+    ElseIf M_STATS_PROBDIST_TAILS.TailsIsActive() Then
+        Ready = M_STATS_PROBDIST_TAILS.TailsReady()
+    ElseIf M_STATS_PROBDIST_DISCRETESHEET.DiscreteIsActive() Then
+        Ready = M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady()
+    ElseIf M_STATS_PROBDIST_RISK.RiskIsActive() Then
+        Ready = M_STATS_PROBDIST_RISK.RiskReady()
+    ElseIf M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
+        Ready = M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsReady()
+    Else
+        HasInputs = ExplorerIsActive()
+        Ready = (ExplorerSheet().ChartObjects.Count = 2)
     End If
-    If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady()
-        Exit Sub
+    If Control.Id = "pdResetInputs" Then
+        ReturnedVal = HasInputs And Ready
+    Else
+        ReturnedVal = Ready
     End If
-    If M_STATS_PROBDIST_COMPARISON.ComparisonIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_COMPARISON.ComparisonReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_TAILS.TailsIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_TAILS.TailsReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_DISCRETESHEET.DiscreteIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_RISK.RiskIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_RISK.RiskReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsReady()
-        Exit Sub
-    End If
-    Set Target = ExplorerSheet()
-    ReturnedVal = (Target.ChartObjects.Count = 2)
     Exit Sub
 Failed:
     ReturnedVal = False
@@ -152,12 +165,13 @@ Public Sub ExplorerInputsChanged(ByVal Target As Range)
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
     Dim Failure As String
+    ' Save the state first: the handler below restores it, whatever fails.
+    SavedEvents = Application.EnableEvents
     On Error GoTo Failed
     Set Sheet = ExplorerSheet()
     If Not Target.Worksheet Is Sheet Then Exit Sub
     If Not Application.Intersect(Target, Sheet.Range(DECIMALS_CELL)) Is Nothing Then ApplyDecimals Sheet
     If Application.Intersect(Target, Sheet.Range("D6:D10")) Is Nothing Then Exit Sub
-    SavedEvents = Application.EnableEvents
     Application.EnableEvents = False
     If Target.Cells.CountLarge = 1 And Target.Address(False, False) = FAMILY_CELL Then
         LoadFamilyDefaults Sheet
@@ -255,6 +269,7 @@ Public Sub ApplyDecimals(ByVal Sheet As Worksheet)
     ' are. The x column of a discrete family is shown in whole numbers.
     Dim Places As Variant
     Dim WasProtected As Boolean
+    Dim Failure As String
     Dim Pattern As String
     Places = Sheet.Range(DECIMALS_CELL).Value2
     If IsError(Places) Then Exit Sub
@@ -262,6 +277,7 @@ Public Sub ApplyDecimals(ByVal Sheet As Worksheet)
     If CDbl(Places) <> Int(CDbl(Places)) Or CDbl(Places) < 0 Or CDbl(Places) > MAX_DECIMALS Then Exit Sub
     WasProtected = Sheet.ProtectContents
     If WasProtected Then Sheet.Unprotect
+    On Error GoTo Failed
     If CLng(Places) = 0 Then Pattern = "0" Else Pattern = "0." & String$(CLng(Places), "0")
     Sheet.Range(FORMATTED_CELLS).NumberFormat = Pattern
     If IsDiscrete(Sheet) Then
@@ -270,6 +286,14 @@ Public Sub ApplyDecimals(ByVal Sheet As Worksheet)
         Sheet.Range(X_CELLS).NumberFormat = Pattern
     End If
     If WasProtected Then Sheet.Protect
+    Exit Sub
+Failed:
+    ' Protect the sheet again as it was found, then pass the error to the caller.
+    Failure = Err.Description
+    On Error Resume Next
+    If WasProtected Then Sheet.Protect
+    On Error GoTo 0
+    Err.Raise vbObjectError + 260, "ApplyDecimals", Failure
 End Sub
 
 
@@ -281,10 +305,12 @@ Public Sub ApplyParameterMessages(ByVal Sheet As Worksheet)
     Dim Row As Long
     Dim Slot As Long
     Dim WasProtected As Boolean
+    Dim Failure As String
     Row = FamilyRow(Sheet)
     If Row = 0 Then Exit Sub
     WasProtected = Sheet.ProtectContents
     If WasProtected Then Sheet.Unprotect
+    On Error GoTo Failed
     For Slot = 1 To PARAMETER_COUNT
         With Sheet.Cells(FIRST_PARAMETER_ROW + Slot - 1, 4).Validation
             .InputTitle = Left$(CStr(Sheet.Range("ExplorerLabels").Cells(Row, Slot).Value2), 32)
@@ -296,6 +322,14 @@ Public Sub ApplyParameterMessages(ByVal Sheet As Worksheet)
         End With
     Next Slot
     If WasProtected Then Sheet.Protect
+    Exit Sub
+Failed:
+    ' Protect the sheet again as it was found, then pass the error to the caller.
+    Failure = Err.Description
+    On Error Resume Next
+    If WasProtected Then Sheet.Protect
+    On Error GoTo 0
+    Err.Raise vbObjectError + 261, "ApplyParameterMessages", Failure
 End Sub
 
 
