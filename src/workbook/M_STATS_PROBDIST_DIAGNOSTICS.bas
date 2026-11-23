@@ -289,12 +289,13 @@ Public Sub DiagnosticsInputsChanged(ByVal Target As Range)
     ' arguments and sweep; any input refreshes the chart's title.
     Dim Sheet As Worksheet
     Dim SavedEvents As Boolean
+    ' Save the state first: the handler below restores it, whatever fails.
+    SavedEvents = Application.EnableEvents
     On Error GoTo Failed
     Set Sheet = DiagnosticsSheet()
     If Not Target.Worksheet Is Sheet Then Exit Sub
     If Application.Intersect(Target, Sheet.Range(FUNCTION_CELL & ":" & SWEEP_TO_CELL)) Is Nothing Then Exit Sub
     If Not Application.Intersect(Target, Sheet.Range(FUNCTION_CELL)) Is Nothing Then
-        SavedEvents = Application.EnableEvents
         Application.EnableEvents = False
         LoadDiagnosticsExample Sheet
         Application.EnableEvents = SavedEvents
@@ -302,7 +303,7 @@ Public Sub DiagnosticsInputsChanged(ByVal Target As Range)
     RefreshDiagnostics
     Exit Sub
 Failed:
-    Application.EnableEvents = True
+    Application.EnableEvents = SavedEvents
     MsgBox "The Diagnostics sheet could not follow that change: " & Err.Description, vbExclamation, _
            "Errors and Diagnostics"
 End Sub
