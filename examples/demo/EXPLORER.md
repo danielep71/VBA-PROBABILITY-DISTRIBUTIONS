@@ -236,3 +236,24 @@ Rows 21 to 33 give the call with its values, the value returned (and beside it, 
 - **Not shown.** Non-convergence returns `#NUM!` with a Status that says so, but no input of the library's survey of bad input produces it. `K_STATS_NormalStandard_InverseCumulativeFast` validates nothing and is left out; so are the differences between functions recorded as not settled in #418, and more than one wrong argument at a time.
 
 `ci/Test-Diagnostics.ps1` checks in Excel every call of the case table against its documented outcome (a number within 1E-12 relative of an mpmath reference, or the documented error), its green check, its Status (empty for a number; for an error, a fragment of the library's message where the case names one), and the call as written entered again in a scratch cell. It types eight trials into the try-it area with events on: the default, a probability of 1, a negative shape, a text, an empty X, an unbounded density, an impossible count of four arguments and a discrete quantile; for each, the example the function loads, the value, its kind, the Status, the meaning, the arguments Excel converted, the formula beside the value and the chart. Then the default sweep refused at 0 and 1 only, five invalid inputs, the Excel state and the navigation after them, and the reset. Its report, `diagnostics-report.json`, records what that Excel returned for every call, with its build. The unit tests check that every rule a case cites is a section of the manual, that every fragment of a Status is in the library's messages, and recompute the numbers with SciPy and closed forms.
+
+## Home and README
+
+Home is the start page (#253), and README is the build record. Both are written in desktop Excel by `tools/demobuild/Evolve-Home.ps1`, after every other sheet, from `home-plan.json`. The plan is made by `tools/demobuild/home_plan.py`. Each sheet keeps its two title bands. Its tables are rewritten from row 5, in the template's own table styles.
+
+- **Home** has five tables:
+  - *What this workbook shows*, with the line between these worked examples and the library's validation, and the version and commit of the package;
+  - *What it needs*: the Excel versions, macros, a downloaded file to unblock, and Python, which is not needed;
+  - *How to use*, with Reset inputs, which acts on the active sheet only;
+  - a *Colour legend*, whose labels are formatted as the role they name: an input and a result of the Explorer, its heading, and the green, amber and red of the checks;
+  - a link to every other sheet. The links target the defined names `nav_<CodeName>`, so they work with macros disabled.
+- **README** gives the conventions and the build: the library version, the source commit, how the package is made, and the Excel that wrote it. It then gives the validation and limits: what the workflow checks, where the library's certification is, and which Excel was tested.
+
+The Excel line (version, build and bitness from the header of `EXCEL.EXE`) is the Excel that applied the plan, the one the workflow then tests. Nothing else is claimed: other builds, 32-bit Excel and Excel for Mac are stated as not tested.
+
+`ci/Test-DemoPackage.ps1` checks that README gives the commit of the package's manifest, that no field is left unfilled, and that the nine links of Home reach their sheets, with macros disabled and after a tab is renamed. The unit tests of `tests/test_demo_home.py` check:
+
+- that the links follow `examples/demo/sheets.json`;
+- that every text fits its row;
+- that the files Home and README cite exist;
+- that the Excel functions Home names are the ones the sheets use.
