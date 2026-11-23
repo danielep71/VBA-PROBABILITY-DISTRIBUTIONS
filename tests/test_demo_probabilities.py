@@ -1,4 +1,5 @@
 """The Probabilities sheet's plan: its formulas, names and texts, against the Explorer's table and the library."""
+import json
 import re
 import sys
 import unittest
@@ -86,13 +87,25 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(order, sorted(order))
         self.assertIn('IF(OR($D$13=0,$D$13=1),"End of the support"', verdict)
 
-    def test_the_lowest_count_is_decided_from_the_quantile_at_zero(self):
-        # Q - 1 is below the support exactly when Q is the quantile at 0; F(Q - 1) is not computed there.
+    def test_the_lowest_count_is_decided_from_the_support(self):
+        # Q - 1 is below the support exactly when Q is the lowest count; F(Q - 1) is not computed there. The
+        # library's discrete quantiles refuse p = 0, so the lowest count comes from the family table.
         verdict = self.verdict()
         lowest = verdict.index("Q is the smallest k with F(k) >= p: the lowest count")
         below = verdict.index("LET(below,")
         self.assertLess(lowest, below)
-        self.assertRegex(verdict, r"IF\(D25=SWITCH\(.*?InverseCumulative\(0,")
+        self.assertNotIn("InverseCumulative(0,", verdict)
+        self.assertIn('IF(D25=SWITCH($D$6,"Binomial",0,', verdict)
+
+    def test_the_lowest_count_of_each_discrete_family_is_its_support_bound(self):
+        families = {f["name"]: f for f in json.loads((ROOT / "examples/demo/explorer-families.json").read_text(encoding="utf-8"))["families"]}
+        expected = {"Binomial": "0", "Poisson": "0", "Geometric": "0", "Negative binomial": "0",
+                    "Hypergeometric": "MAX(0,a-(c-b))", "Discrete uniform": "a"}
+        discrete = {name: f["plot_lower"] for name, f in families.items() if f["kind"] == "discrete"}
+        self.assertEqual(discrete, expected)
+        # The support texts state the same bounds.
+        self.assertIn("max(0, n-(N-K))", families["Hypergeometric"]["support"])
+        self.assertIn("from the lower", families["Discrete uniform"]["support"])
 
 
 if __name__ == "__main__":
