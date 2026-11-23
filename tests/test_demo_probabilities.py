@@ -1,4 +1,5 @@
 """The Probabilities sheet's plan: its formulas, names and texts, against the Explorer's table and the library."""
+import json
 import re
 import sys
 import unittest
@@ -66,11 +67,45 @@ class PlanTests(unittest.TestCase):
         self.assertIn("1E-08", verdict.upper())
         self.assertEqual(PLAN["roundtrip_tolerance"], 1e-8)
 
-    def test_the_discrete_verdict_survives_a_quantile_on_the_lower_support_boundary(self):
-        # Geometric(0.3) at p = 0.05 has Q = 0: F(Q - 1) asks the library for a count it refuses,
-        # which must read as 0, not turn the verdict into #N/A.
-        verdict = next(item["formula"] for item in PLAN["formulas"] if item["address"] == P.VERDICT)
-        self.assertRegex(verdict, r"IFERROR\(SWITCH\(.*?D25-1.*?NA\(\)\),0\)<\$D\$13")
+    def verdict(self) -> str:
+        return next(item["formula"] for item in PLAN["formulas"] if item["address"] == P.VERDICT)
+
+    def test_the_verdict_never_reads_an_error_as_a_confirmation(self):
+        # #483: F(Q - 1) was read through IFERROR(..., 0), so an error could confirm the quantile.
+        verdict = self.verdict()
+        self.assertNotRegex(verdict, r"IFERROR\([^()]*(\([^()]*\))*[^()]*,0\)")
+        self.assertNotIn(",0)<$D$13", verdict)
+        for guard in ("NOT(ISNUMBER(D25))", "NOT(ISNUMBER(D26))", "NOT(ISNUMBER(below))", "NOT(ISNUMBER(D27))"):
+            self.assertIn(guard, verdict)
+        self.assertTrue(verdict.endswith('"ERROR: the verdict could not be computed")'))
+
+    def test_the_verdict_tells_invalid_input_from_the_ends_of_the_support(self):
+        verdict = self.verdict()
+        order = [verdict.index(text) for text in (
+            "Invalid input: see the status", "Invalid input: p must be a number from 0 to 1", "End of the support",
+            "ERROR: the quantile could not be computed")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn('IF(OR($D$13=0,$D$13=1),"End of the support"', verdict)
+
+    def test_the_lowest_count_is_decided_from_the_support(self):
+        # Q - 1 is below the support exactly when Q is the lowest count; F(Q - 1) is not computed there. The
+        # library's discrete quantiles refuse p = 0, so the lowest count comes from the family table.
+        verdict = self.verdict()
+        lowest = verdict.index("Q is the smallest k with F(k) >= p: the lowest count")
+        below = verdict.index("LET(below,")
+        self.assertLess(lowest, below)
+        self.assertNotIn("InverseCumulative(0,", verdict)
+        self.assertIn('IF(D25=SWITCH($D$6,"Binomial",0,', verdict)
+
+    def test_the_lowest_count_of_each_discrete_family_is_its_support_bound(self):
+        families = {f["name"]: f for f in json.loads((ROOT / "examples/demo/explorer-families.json").read_text(encoding="utf-8"))["families"]}
+        expected = {"Binomial": "0", "Poisson": "0", "Geometric": "0", "Negative binomial": "0",
+                    "Hypergeometric": "MAX(0,a-(c-b))", "Discrete uniform": "a"}
+        discrete = {name: f["plot_lower"] for name, f in families.items() if f["kind"] == "discrete"}
+        self.assertEqual(discrete, expected)
+        # The support texts state the same bounds.
+        self.assertIn("max(0, n-(N-K))", families["Hypergeometric"]["support"])
+        self.assertIn("from the lower", families["Discrete uniform"]["support"])
 
 
 if __name__ == "__main__":
