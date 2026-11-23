@@ -39,7 +39,19 @@ Public Function ExplorerSheet() As Worksheet
 End Function
 
 
+Public Function ExplorerIsActive() As Boolean
+    ' True when this workbook's active sheet is the Explorer.
+    On Error Resume Next
+    If ActiveWorkbook Is ThisWorkbook Then
+        ExplorerIsActive = (ActiveSheet.CodeName = "shExplorer")
+    End If
+End Function
+
+
 Public Sub ExplorerAction(ByVal Control As IRibbonControl)
+    ' Recalculate refreshes every built sheet. Reset inputs acts on the active
+    ' sheet only, after its own confirmation; Home and README have no inputs,
+    ' and there the button is disabled (ExplorerEnabled).
     On Error GoTo Failed
     Select Case Control.Id
         Case "pdResetInputs"
@@ -57,8 +69,10 @@ Public Sub ExplorerAction(ByVal Control As IRibbonControl)
                 M_STATS_PROBDIST_RISK.ResetRiskInputs
             ElseIf M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
                 M_STATS_PROBDIST_DIAGNOSTICS.ResetDiagnosticsInputs
-            Else
+            ElseIf ExplorerIsActive() Then
                 ResetExplorerInputs
+            Else
+                MsgBox "This sheet has no inputs to reset.", vbInformation, "Probability Distributions"
             End If
         Case "pdRecalculate"
             RecalculateWorkbook
@@ -78,38 +92,37 @@ End Sub
 
 
 Public Sub ExplorerEnabled(ByVal Control As IRibbonControl, ByRef ReturnedVal As Variant)
-    Dim Target As Worksheet
+    ' Whether a control can run. On a sheet with inputs, every control follows
+    ' that sheet's readiness. Elsewhere (Home, README) Reset inputs is disabled,
+    ' and the other controls follow the Explorer's readiness. Workbook_SheetActivate
+    ' asks the Ribbon to read this again whenever the active sheet changes.
+    Dim Ready As Boolean
+    Dim HasInputs As Boolean
     On Error GoTo Failed
+    HasInputs = True
     If M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady()
-        Exit Sub
+        Ready = M_STATS_PROBDIST_PROBABILITIES.ProbabilitiesReady()
+    ElseIf M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
+        Ready = M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady()
+    ElseIf M_STATS_PROBDIST_COMPARISON.ComparisonIsActive() Then
+        Ready = M_STATS_PROBDIST_COMPARISON.ComparisonReady()
+    ElseIf M_STATS_PROBDIST_TAILS.TailsIsActive() Then
+        Ready = M_STATS_PROBDIST_TAILS.TailsReady()
+    ElseIf M_STATS_PROBDIST_DISCRETESHEET.DiscreteIsActive() Then
+        Ready = M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady()
+    ElseIf M_STATS_PROBDIST_RISK.RiskIsActive() Then
+        Ready = M_STATS_PROBDIST_RISK.RiskReady()
+    ElseIf M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
+        Ready = M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsReady()
+    Else
+        HasInputs = ExplorerIsActive()
+        Ready = (ExplorerSheet().ChartObjects.Count = 2)
     End If
-    If M_STATS_PROBDIST_PARAMETERS.ParameterEffectsIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_PARAMETERS.ParameterEffectsReady()
-        Exit Sub
+    If Control.Id = "pdResetInputs" Then
+        ReturnedVal = HasInputs And Ready
+    Else
+        ReturnedVal = Ready
     End If
-    If M_STATS_PROBDIST_COMPARISON.ComparisonIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_COMPARISON.ComparisonReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_TAILS.TailsIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_TAILS.TailsReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_DISCRETESHEET.DiscreteIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_DISCRETESHEET.DiscreteReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_RISK.RiskIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_RISK.RiskReady()
-        Exit Sub
-    End If
-    If M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsIsActive() Then
-        ReturnedVal = M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsReady()
-        Exit Sub
-    End If
-    Set Target = ExplorerSheet()
-    ReturnedVal = (Target.ChartObjects.Count = 2)
     Exit Sub
 Failed:
     ReturnedVal = False

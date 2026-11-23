@@ -102,8 +102,10 @@ not trials, and say so in their support text. Hypergeometric takes the sample
 size, the successes in the population and the population size.
 
 The Explorer sheet is unprotected, as in the template; the result cells are
-locked and the inputs are not. Reset on the Ribbon asks for confirmation and
+locked and the inputs are not. Reset inputs on the Ribbon asks for confirmation and
 restores Normal(0,1), probe 0, p = 0.95, 201 points and 6 decimals. Cancelling changes nothing.
+On every sheet with inputs the button resets that sheet only; on Home and README it is
+disabled. [RIBBON.md](RIBBON.md) documents every control of the Ribbon.
 
 ## When macros are not running
 
@@ -135,7 +137,8 @@ through single edits with events on, the state with macros off, and the
 recovery of a file saved in that state, while watching for any dialog.
 `ci/Test-ExplorerUI.ps1` drives the real Ribbon through Windows UI Automation
 in an owned Excel process: Recalculate, Home, the Go to destinations, the
-navigation toggle and the reset dialog, Cancel and OK.
+navigation toggle, Reset inputs disabled on Home and README, the reset dialog,
+Cancel and OK, a renamed tab and a deleted sheet.
 
 These checks passed on source `45289de7b6faca8c6cd21d1ed6231556016b2f3f` in
 [run 44264560770](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/44264560770),

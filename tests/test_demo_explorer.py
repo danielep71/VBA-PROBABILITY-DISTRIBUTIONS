@@ -287,6 +287,29 @@ class PackageTests(unittest.TestCase):
         self.assertIn("M_STATS_PROBDIST_EXPLORER.ExplorerOpened", events)
         self.assertIn("M_STATS_PROBDIST_REGISTER.PROB_Register_PublicUDFs", events)
         self.assertIn("M_STATS_PROBDIST_DEMO.NavigationBarBeforeSave", events)
+        self.assertIn("Private Sub Workbook_SheetActivate(ByVal Sh As Object)", events)
+        self.assertIn("M_STATS_PROBDIST_DEMO.RefreshRibbon", events)
+
+
+    def test_the_ribbon_reference_documents_every_control(self):
+        ui = (WORKBOOK / "customUI14.xml").read_text(encoding="utf-8")
+        reference = (DEMO / "RIBBON.md").read_text(encoding="utf-8")
+        ids = re.findall(r'<(?:button|splitButton|toggleButton|menu) id="(pd\w+)"', ui)
+        self.assertGreater(len(ids), 10)
+        for control in ids:
+            if control == "pdGoSplit":
+                continue
+            self.assertIn(f"`{control}`", reference)
+        for callback in set(re.findall(r'(?:onAction|getEnabled|getPressed|onLoad)="(\w+)"', ui)):
+            self.assertIn(f"`{callback}`", reference)
+
+    def test_reset_acts_on_the_active_sheet_only(self):
+        ui = (WORKBOOK / "customUI14.xml").read_text(encoding="utf-8")
+        self.assertIn('id="pdResetInputs" label="Reset inputs"', ui)
+        self.assertNotIn("Not available until", ui)
+        module = (WORKBOOK / "M_STATS_PROBDIST_EXPLORER.bas").read_text(encoding="latin-1")
+        self.assertIn("ElseIf ExplorerIsActive() Then\n                ResetExplorerInputs", module)
+        self.assertIn('ReturnedVal = HasInputs And Ready', module)
 
 
 if __name__ == "__main__":

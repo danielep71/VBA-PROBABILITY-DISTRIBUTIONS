@@ -86,9 +86,11 @@ entry point rather than restoring uncertified embedded code.
   missing target produces a clear message.
 - **Recalculate:** `RibbonAction` calls `RecalculateWorkbook`: worksheet
   calculation in ThisWorkbook only.
-- **Reset inputs:** disabled through `RibbonGetEnabled`. There are no editable
-  example inputs in the shell. Future implementations must define bounded
-  input ranges, confirmation and restoration of any owned Excel state.
+- **Reset inputs:** in the shell built by `build_demo.py`, disabled through
+  `RibbonGetEnabled`: the shell has no inputs. In the demo workbook built by
+  `explorer_build.py`, it resets the inputs of the active sheet after a
+  confirmation, and is disabled on Home and README. [RIBBON.md](RIBBON.md)
+  documents every control of that workbook's Ribbon.
 - **Navigation bar:** `RibbonToggle` hides or shows column A and the two shape
   groups on every sheet, for the session. The state is read from the workbook
   (column A of the first sheet), not from a variable.

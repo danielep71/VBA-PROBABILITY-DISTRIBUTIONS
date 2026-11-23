@@ -2,7 +2,7 @@
   "schema_version": 1,
   "files": {
     "src/workbook/PROBDIST_Template.xlsx": {
-      "sha256": "61a48ceddbd2dd37db07e916ea81e343de815971e5a033cacc356f0a3f769f89",
+      "sha256": "a95705823818228f117f030e5ff3fd87bea44f91a43aabf44ad95c0be80650ad",
       "reason": "Macro-free template of the Explorer workbook (sheets, formulas, names, validation, charts, Ribbon, navigation), made by tools/demobuild/explorer_template.py from a workbook the Distribution Explorer workflow verified. It holds no VBA project: tools/demobuild/explorer_build.py and tools/Sync-PROBDIST-VBA.ps1 add the code from the sources of the commit. A new version needs review before its digest changes."
     }
   }

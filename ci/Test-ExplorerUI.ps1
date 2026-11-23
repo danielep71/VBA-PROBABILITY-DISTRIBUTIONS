@@ -24,6 +24,99 @@ function Invoke-Control($Element) {
     $pattern.Invoke()
 }
 
+# A control that is shown, enabled or not: used to read the enabled state of a button.
+function Find-Shown([string]$Name) {
+    $condition = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,$Name)
+    foreach ($item in $window.FindAll([Windows.Automation.TreeScope]::Descendants,$condition)) {
+        if (-not $item.Current.IsOffscreen) { return $item }
+    }
+    throw "Visible control not found in the owned Excel window: $Name"
+}
+
+# Open the Go to menu and choose the entry of a sheet. Office may host the drop-down in a separate popup HWND
+# in the same owned process; worksheet tabs with the same label are excluded by control type.
+function Invoke-GoTo([string]$Tab) {
+    $split = Find-Control 'Go to'
+    $expand = $split.GetCurrentPattern([Windows.Automation.ExpandCollapsePattern]::Pattern)
+    $expand.Expand()
+    $owned = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty,[int]$excelProcessId)
+    $roots = [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$owned)
+    $named = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,$Tab)
+    foreach ($root in $roots) {
+        foreach ($item in $root.FindAll([Windows.Automation.TreeScope]::Descendants,$named)) {
+            if (-not $item.Current.IsOffscreen -and $item.Current.IsEnabled -and
+                $item.Current.ControlType -in @([Windows.Automation.ControlType]::MenuItem,[Windows.Automation.ControlType]::Button)) {
+                Invoke-Control $item
+                return
+            }
+        }
+    }
+    throw "Ribbon menu target not found: $Tab"
+}
+
+# A worker that waits for the owned dialog with this title and prompt and presses the first of the button IDs
+# it has (1 OK, 2 Cancel). It never sends keystrokes to the foreground desktop.
+function Start-DialogWorker([string]$Title, [string]$Prompt, [int[]]$ButtonIds) {
+    return Start-Job -ArgumentList $excelProcessId,([long]$excel.Hwnd),$Title,$Prompt,$ButtonIds -ScriptBlock {
+        param($OwnedProcessId,$OwnedWindowHandle,$Title,$Prompt,$ButtonIds)
+        $ErrorActionPreference = 'Stop'
+        Add-Type -AssemblyName UIAutomationClient
+        Add-Type -AssemblyName UIAutomationTypes
+        Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class ExplorerDialogNative {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetDlgItem(IntPtr parent, int id);
+    [DllImport("user32.dll", SetLastError=true)]
+    public static extern IntPtr SendMessageTimeout(IntPtr window, uint message,
+        UIntPtr wParam, IntPtr lParam, uint flags, uint timeout, out UIntPtr result);
+}
+'@
+        $ownedRoot = [Windows.Automation.AutomationElement]::FromHandle([IntPtr]$OwnedWindowHandle)
+        $named = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,$Title)
+        $deadline = [DateTime]::UtcNow.AddSeconds(20)
+        do {
+            foreach ($candidate in $ownedRoot.FindAll([Windows.Automation.TreeScope]::Descendants,$named)) {
+                if ($candidate.Current.ProcessId -ne $OwnedProcessId -or
+                    $candidate.Current.ControlType -ne [Windows.Automation.ControlType]::Window) { continue }
+                $text = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,$Prompt)
+                if ($null -eq $candidate.FindFirst([Windows.Automation.TreeScope]::Descendants,$text)) { continue }
+                foreach ($buttonId in $ButtonIds) {
+                    $id = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::AutomationIdProperty,[string]$buttonId)
+                    $button = $candidate.FindFirst([Windows.Automation.TreeScope]::Descendants,$id)
+                    $invoke = $null
+                    if ($null -ne $button -and $button.TryGetCurrentPattern([Windows.Automation.InvokePattern]::Pattern,[ref]$invoke)) {
+                        $invoke.Invoke()
+                        return "Clicked button $buttonId"
+                    }
+                    # This Excel build exposes the standard dialog buttons as Pane controls. Address only the
+                    # matched dialog's child.
+                    $handle = [ExplorerDialogNative]::GetDlgItem([IntPtr]$candidate.Current.NativeWindowHandle,[int]$buttonId)
+                    if ($handle -eq [IntPtr]::Zero) { continue }
+                    $result = [UIntPtr]::Zero
+                    $sent = [ExplorerDialogNative]::SendMessageTimeout($handle,0xF5,[UIntPtr]::Zero,[IntPtr]::Zero,2,5000,[ref]$result)
+                    if ($sent -eq [IntPtr]::Zero) { throw 'Matched dialog button did not respond' }
+                    return "Clicked button $buttonId"
+                }
+                throw 'Expected dialog button missing'
+            }
+            Start-Sleep -Milliseconds 100
+        } while ([DateTime]::UtcNow -lt $deadline)
+        throw "The owned dialog was not observed: $Title / $Prompt"
+    }
+}
+
+# Wait for a dialog worker and return what it did.
+function Complete-DialogWorker($Job) {
+    $completed = Wait-Job $Job -Timeout 25
+    if ($null -eq $completed -or $Job.State -ne 'Completed') {
+        $report.dialog_worker_errors = @($Job.ChildJobs[0].Error | ForEach-Object { $_.Exception.Message })
+        throw 'Dialog worker failed or timed out'
+    }
+    return (Receive-Job $Job -ErrorAction Stop)
+}
+
 function Read-Inputs($Sheet) {
     return @(6..11 | ForEach-Object { $Sheet.Range('D' + $_).Value2 })
 }
@@ -75,27 +168,7 @@ try {
     $visited = @()
     foreach ($section in $sheetMap.sections) {
         foreach ($entry in $section.sheets) {
-            $split = Find-Control 'Go to'
-            $expand = $split.GetCurrentPattern([Windows.Automation.ExpandCollapsePattern]::Pattern)
-            $expand.Expand()
-            # Office may host the drop-down in a separate popup HWND in the
-            # same owned process. Exclude worksheet tabs with matching labels.
-            $owned = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty,[int]$excelProcessId)
-            $roots = [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$owned)
-            $named = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,[string]$entry.tab)
-            $target = $null
-            foreach ($root in $roots) {
-                foreach ($item in $root.FindAll([Windows.Automation.TreeScope]::Descendants,$named)) {
-                    if (-not $item.Current.IsOffscreen -and $item.Current.IsEnabled -and
-                        $item.Current.ControlType -in @([Windows.Automation.ControlType]::MenuItem,[Windows.Automation.ControlType]::Button)) {
-                        $target = $item
-                        break
-                    }
-                }
-                if ($null -ne $target) { break }
-            }
-            if ($null -eq $target) { throw "Ribbon menu target not found: $($entry.tab)" }
-            Invoke-Control $target
+            Invoke-GoTo ([string]$entry.tab)
             if ($excel.ActiveWorkbook.FullName -ne $book.FullName -or $excel.ActiveSheet.CodeName -ne $entry.code) {
                 throw "Ribbon menu reached the wrong target: $($entry.tab)"
             }
@@ -103,6 +176,22 @@ try {
         }
     }
     $report.ribbon_menu_targets = $visited
+
+    # Reset inputs acts on the active sheet: disabled on Home and README, which have no inputs, enabled on a
+    # sheet with inputs. Activating a sheet makes the Ribbon read the state again (Workbook_SheetActivate).
+    $states = [ordered]@{}
+    foreach ($pair in @(@('Home', $false), @('README', $false), @('Probabilities', $true), @('Explorer', $true))) {
+        $book.Worksheets.Item($pair[0]).Activate()
+        $enabled = $false
+        for ($wait = 0; $wait -lt 20; $wait++) {
+            $enabled = (Find-Shown 'Reset inputs').Current.IsEnabled
+            if ($enabled -eq $pair[1]) { break }
+            Start-Sleep -Milliseconds 250
+        }
+        if ($enabled -ne $pair[1]) { throw "Reset inputs is enabled=$enabled on $($pair[0]), expected $($pair[1])" }
+        $states[$pair[0]] = $enabled
+    }
+    $report.reset_enabled_by_sheet = $states
     $sheet.Activate()
 
     # Resolve the real confirmation dialog by owned process, exact prompt and
@@ -114,60 +203,9 @@ try {
         $excel.EnableEvents = $true
         $sheet.Range('D11').Value2 = 2.0
         $before = (Read-Inputs $sheet) | ConvertTo-Json -Compress
-        $dialogJob = Start-Job -ArgumentList $excelProcessId,$choice,([long]$excel.Hwnd) -ScriptBlock {
-            param($OwnedProcessId,$ButtonId,$OwnedWindowHandle)
-            $ErrorActionPreference = 'Stop'
-            Add-Type -AssemblyName UIAutomationClient
-            Add-Type -AssemblyName UIAutomationTypes
-            Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-public static class ExplorerDialogNative {
-    [DllImport("user32.dll")]
-    public static extern IntPtr GetDlgItem(IntPtr parent, int id);
-    [DllImport("user32.dll", SetLastError=true)]
-    public static extern IntPtr SendMessageTimeout(IntPtr window, uint message,
-        UIntPtr wParam, IntPtr lParam, uint flags, uint timeout, out UIntPtr result);
-}
-'@
-            $ownedRoot = [Windows.Automation.AutomationElement]::FromHandle([IntPtr]$OwnedWindowHandle)
-            $named = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Distribution Explorer')
-            $deadline = [DateTime]::UtcNow.AddSeconds(20)
-            do {
-                $windows = $ownedRoot.FindAll([Windows.Automation.TreeScope]::Descendants,$named)
-                foreach ($candidate in $windows) {
-                    if ($candidate.Current.ProcessId -ne $OwnedProcessId -or
-                        $candidate.Current.ControlType -ne [Windows.Automation.ControlType]::Window) { continue }
-                    $prompt = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Reset only Explorer inputs to Normal(0,1)?')
-                    if ($null -eq $candidate.FindFirst([Windows.Automation.TreeScope]::Descendants,$prompt)) { continue }
-                    $id = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::AutomationIdProperty,[string]$ButtonId)
-                    $button = $candidate.FindFirst([Windows.Automation.TreeScope]::Descendants,$id)
-                    if ($null -eq $button) { throw 'Expected confirmation button missing' }
-                    $invoke = $null
-                    if ($button.TryGetCurrentPattern([Windows.Automation.InvokePattern]::Pattern,[ref]$invoke)) {
-                        $invoke.Invoke()
-                    } else {
-                        # This Excel build exposes the standard dialog buttons as
-                        # Pane controls. Address only the matched dialog's child.
-                        $handle = [ExplorerDialogNative]::GetDlgItem([IntPtr]$candidate.Current.NativeWindowHandle,[int]$ButtonId)
-                        if ($handle -eq [IntPtr]::Zero) { throw 'Matched dialog button has no HWND' }
-                        $result = [UIntPtr]::Zero
-                        $sent = [ExplorerDialogNative]::SendMessageTimeout($handle,0xF5,[UIntPtr]::Zero,[IntPtr]::Zero,2,5000,[ref]$result)
-                        if ($sent -eq [IntPtr]::Zero) { throw 'Matched dialog button did not respond' }
-                    }
-                    return "Clicked confirmation button $ButtonId"
-                }
-                Start-Sleep -Milliseconds 100
-            } while ([DateTime]::UtcNow -lt $deadline)
-            throw 'The owned Explorer confirmation dialog was not observed'
-        }
-        Invoke-Control (Find-Control 'Reset Explorer inputs')
-        $completed = Wait-Job $dialogJob -Timeout 25
-        if ($null -eq $completed -or $dialogJob.State -ne 'Completed') {
-            $report.dialog_worker_errors = @($dialogJob.ChildJobs[0].Error | ForEach-Object { $_.Exception.Message })
-            throw 'Confirmation worker failed or timed out'
-        }
-        $report['dialog_button_' + $choice] = Receive-Job $dialogJob -ErrorAction Stop
+        $dialogJob = Start-DialogWorker 'Distribution Explorer' 'Reset only Explorer inputs to Normal(0,1)?' @([int]$choice)
+        Invoke-Control (Find-Control 'Reset inputs')
+        $report['dialog_button_' + $choice] = Complete-DialogWorker $dialogJob
         Remove-Job $dialogJob
         $dialogJob = $null
         $after = (Read-Inputs $sheet) | ConvertTo-Json -Compress
@@ -184,6 +222,29 @@ public static class ExplorerDialogNative {
         }
         if (-not $excel.EnableEvents) { throw 'Ribbon reset leaked events state' }
     }
+
+    # A renamed tab and a missing sheet, in this read-only copy (nothing is saved). Go to opens a sheet by its
+    # CodeName, so the renamed tab is still reached; an entry whose sheet is gone shows a message and changes
+    # nothing.
+    $book.Unprotect()
+    $excel.DisplayAlerts = $false
+    $book.Worksheets.Item('Tails').Name = 'Tails renamed'
+    Invoke-GoTo 'Tails'
+    if ($excel.ActiveWorkbook.FullName -ne $book.FullName -or $excel.ActiveSheet.CodeName -ne 'shTails') {
+        throw 'Go to did not reach the renamed Tails sheet'
+    }
+    $report.goto_renamed_tab = 'PASS'
+    $book.Worksheets.Item('Risk').Delete()
+    $sheet.Activate()
+    $dialogJob = Start-DialogWorker 'Probability Distributions' 'This workbook has no sheet for the Ribbon entry pdGoRisk.' @(2, 1)
+    Invoke-GoTo 'Risk'
+    $report.goto_missing_sheet_dialog = Complete-DialogWorker $dialogJob
+    Remove-Job $dialogJob
+    $dialogJob = $null
+    if ($excel.ActiveWorkbook.FullName -ne $book.FullName -or $excel.ActiveSheet.CodeName -ne 'shExplorer') {
+        throw 'Go to a missing sheet changed the active sheet'
+    }
+    $report.goto_missing_sheet = 'PASS'
     $report.status = 'PASS'
 } catch {
     $report.error = $_.Exception.Message
