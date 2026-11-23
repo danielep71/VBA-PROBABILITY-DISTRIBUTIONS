@@ -126,7 +126,7 @@ try {
         }
         if (Is-Error $sheet.Range('D28').Value2) { throw "${where}: the round-trip verdict is an error ($($sheet.Range('D28').Text))" }
         $verdict = [string]$sheet.Range('D28').Value2
-        if (-not $upperEnd -and ($verdict -like 'OUTSIDE*' -or $verdict -like 'CHECK*')) { throw "${where}: round-trip verdict is '$verdict' (difference $($sheet.Range('D27').Value2))" }
+        if (-not $upperEnd -and ($verdict -like 'OUTSIDE*' -or $verdict -like 'CHECK*' -or $verdict -like 'ERROR*' -or $verdict -like 'Invalid*')) { throw "${where}: round-trip verdict is '$verdict' (difference $($sheet.Range('D27').Value2))" }
         if ($upperEnd -and $verdict -like 'OUTSIDE*') { $report.notes += "$where : verdict $verdict" }
         if ($sheet.Range('D27').Value2 -is [double]) { $report.roundtrips++ }
         $report.cases++
@@ -207,6 +207,43 @@ try {
     $excel.Calculate()
     if (([string]$sheet.Range('D17').Value2) -ne 'Check: a must not exceed b') { throw "a above b gives: $($sheet.Range('D17').Value2)" }
     $report.invalid = 'PASS'
+
+    # The round-trip verdict (#483): an input the status refuses, a p that is not a number from 0 to 1, the
+    # ends of the support and the lowest count of a discrete family each read as such, never as a confirmation.
+    [void]$excel.Run($prefix + 'ResetProbabilitiesInputs', $false)
+    $verdicts = [ordered]@{}
+    function Verdict-Of([string]$What) {
+        $excel.Calculate()
+        $text = [string]$sheet.Range('D28').Text
+        $verdicts[$What] = $text
+        return $text
+    }
+    foreach ($value in @(1.1, -0.1)) {
+        Set-Number $sheet 'D13' $value
+        if ((Verdict-Of "p=$value") -ne 'Invalid input: p must be a number from 0 to 1') { throw "p = $value gives the verdict '$($sheet.Range('D28').Text)'" }
+    }
+    Set-Text $sheet 'D13' 'abc'
+    if ((Verdict-Of 'p=text') -ne 'Invalid input: p must be a number from 0 to 1') { throw "A text p gives the verdict '$($sheet.Range('D28').Text)'" }
+    foreach ($value in @(0.0, 1.0)) {
+        Set-Number $sheet 'D13' $value
+        if ((Verdict-Of "p=$value") -ne 'End of the support') { throw "p = $value gives the verdict '$($sheet.Range('D28').Text)'" }
+    }
+    Set-Number $sheet 'D13' 0.5
+    Set-Number $sheet 'D8' -1
+    if ((Verdict-Of 'invalid scale') -ne 'Invalid input: see the status') { throw "An invalid scale gives the verdict '$($sheet.Range('D28').Text)'" }
+    Set-Number $sheet 'D8' 1
+    # Geometric(0.3): F(0) = 0.3, F(1) = 0.51. At p = 0.05 the quantile is 0, the lowest count, whose F(Q - 1) is 0
+    # by definition; at p = 0.5 it is 1, and F(0) < p confirms it.
+    Set-Text $sheet 'D6' 'Geometric'
+    Set-Number $sheet 'D7' 0.3
+    Set-Number $sheet 'D13' 0.05
+    if ((Verdict-Of 'Geometric(0.3) p=0.05') -ne 'Q is the smallest k with F(k) >= p: the lowest count') { throw "Geometric(0.3) at 0.05 gives the verdict '$($sheet.Range('D28').Text)'" }
+    if ([double]$sheet.Range('D25').Value2 -ne 0) { throw "Geometric(0.3) at 0.05 gives the quantile $($sheet.Range('D25').Value2)" }
+    Set-Number $sheet 'D13' 0.5
+    if ((Verdict-Of 'Geometric(0.3) p=0.5') -ne 'Q is the smallest k with F(k) >= p') { throw "Geometric(0.3) at 0.5 gives the verdict '$($sheet.Range('D28').Text)'" }
+    if ([double]$sheet.Range('D25').Value2 -ne 1) { throw "Geometric(0.3) at 0.5 gives the quantile $($sheet.Range('D25').Value2)" }
+    $report.verdicts = $verdicts
+    $report.verdict_outcomes = 'PASS'
 
     # Reset.
     [void]$excel.Run($prefix + 'ResetProbabilitiesInputs', $false)

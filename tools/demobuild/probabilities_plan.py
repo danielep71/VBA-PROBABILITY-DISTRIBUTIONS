@@ -26,6 +26,8 @@ F(a) is above one half, F(b) - F(a) otherwise. The round trip compares F(Q(p))
 with p relative to min(p, 1 - p), within ROUNDTRIP_TOLERANCE. A discrete family
 has no exact round trip; the verdict states the definition of its quantile,
 F(Q - 1) < p <= F(Q).
+The verdict names an invalid input, the ends of the support and a value the library
+could not compute before any of these checks, and never reads an error as a confirmation.
 """
 from __future__ import annotations
 
@@ -156,9 +158,12 @@ def results_formulas(families: list[dict[str, Any]]) -> list[dict[str, str]]:
     discrete = 'INDEX(ExplorerKind,ProbabilitiesRow)="Discrete"'
     tolerance = E.number(ROUNDTRIP_TOLERANCE)
 
-    def below_support(call: str) -> str:
-        """F one step under the quantile: 0 when that count is outside the support, where the library refuses it."""
-        return f"IFERROR({call},0)"
+    # The verdict tells apart, in this order: inputs the status refuses; a p that is not a number from 0
+    # to 1; p at 0 or 1, the ends of the support; a quantile, F(Q) or F(Q - 1) the library could not
+    # compute, reported as an error and never as a confirmation (#483). For a discrete family, Q - 1 is
+    # below the support exactly when Q is the quantile at 0, the lowest count, so F(Q - 1) is 0 by
+    # definition there and is never computed.
+    lowest = dispatch(families, "quantile", "0")
 
     return [
         {"address": F_A, "formula": f"=IF({ok},{cdf(A)},NA())"},
@@ -175,11 +180,19 @@ def results_formulas(families: list[dict[str, Any]]) -> list[dict[str, str]]:
                      f'IF({PROBABILITY}<=0.5,ABS({F_Q}-{PROBABILITY})/{PROBABILITY},'
                      f'ABS({survival(QUANTILE)}-(1-{PROBABILITY}))/(1-{PROBABILITY})))),NA())')},
         {"address": VERDICT,
-         "formula": (f'=IFERROR(IF(OR({PROBABILITY}<=0,{PROBABILITY}>=1),"End of the support",'
-                     f'IF({discrete},IF(AND({F_Q}>={PROBABILITY},{below_support(cdf(QUANTILE + "-1"))}<{PROBABILITY}),'
-                     f'"Q is the smallest k with F(k) >= p","CHECK: Q is not the smallest k"),'
+         "formula": (f'=IFERROR(IF(NOT({ok}),"Invalid input: see the status",'
+                     f'IF(NOT({good_p}),"Invalid input: p must be a number from 0 to 1",'
+                     f'IF(OR({PROBABILITY}=0,{PROBABILITY}=1),"End of the support",'
+                     f'IF(NOT(ISNUMBER({QUANTILE})),"ERROR: the quantile could not be computed",'
+                     f'IF({discrete},IF(NOT(ISNUMBER({F_Q})),"ERROR: F(Q) could not be computed",'
+                     f'IF({F_Q}<{PROBABILITY},"CHECK: F(Q) < p",'
+                     f'IF({QUANTILE}={lowest},"Q is the smallest k with F(k) >= p: the lowest count",'
+                     f'LET(below,{cdf(QUANTILE + "-1")},IF(NOT(ISNUMBER(below)),"ERROR: F(Q - 1) could not be computed",'
+                     f'IF(below<{PROBABILITY},"Q is the smallest k with F(k) >= p","CHECK: Q is not the smallest k")))))),'
+                     f'IF(NOT(ISNUMBER({DIFFERENCE})),"ERROR: the round trip could not be computed",'
                      f'IF({DIFFERENCE}<={tolerance},"Within the tolerance of {tolerance.upper()}",'
-                     f'"OUTSIDE the tolerance of {tolerance.upper()}"))),NA())')},
+                     f'"OUTSIDE the tolerance of {tolerance.upper()}"))))))),'
+                     f'"ERROR: the verdict could not be computed")')},
     ]
 
 
