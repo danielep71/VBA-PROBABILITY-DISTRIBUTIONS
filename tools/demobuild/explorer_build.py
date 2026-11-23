@@ -14,6 +14,7 @@ Output (ignored by Git) in test-results/demo/:
   discrete-plan.json                    what Evolve-Discrete.ps1 applies in Excel
   risk-plan.json                        what Evolve-Risk.ps1 applies in Excel
   diagnostics-plan.json                 what Evolve-Diagnostics.ps1 applies in Excel
+  home-plan.json                        what Evolve-Home.ps1 applies in Excel (Home, README)
   manifest.json                         inputs and digests
 
 The template, src/workbook/PROBDIST_Template.xlsx, is the Explorer workbook
@@ -47,6 +48,7 @@ import diagnostics_plan  # noqa: E402
 import discrete_plan  # noqa: E402
 import explorer_plan  # noqa: E402
 import explorer_template  # noqa: E402
+import home_plan  # noqa: E402
 import parameters_plan  # noqa: E402
 import probabilities_plan  # noqa: E402
 import risk_plan  # noqa: E402
@@ -93,6 +95,7 @@ def build() -> tuple[bytes, dict[str, Any], dict[str, str]]:
                         DEMO / "comparison-cases.json", Path(tails_plan.__file__), DEMO / "tails-cases.json", Path(discrete_plan.__file__), DEMO / "discrete-cases.json",
                         Path(risk_plan.__file__), DEMO / "risk-cases.json",
                         Path(diagnostics_plan.__file__), DEMO / "diagnostics-cases.json",
+                        Path(home_plan.__file__), DEMO / "sheets.json",
                         Path(explorer_template.__file__),
                         Path(build_demo.__file__),
                         ROOT / "tools/devbuild/vba_project.py", ROOT / "tools/devbuild/build_workbook.py",
@@ -114,6 +117,7 @@ def main() -> int:
     (output / "discrete-plan.json").write_text(json.dumps(discrete_plan.plan(), indent=1), encoding="utf-8")
     (output / "risk-plan.json").write_text(json.dumps(risk_plan.plan(), indent=1), encoding="utf-8")
     (output / "diagnostics-plan.json").write_text(json.dumps(diagnostics_plan.plan(), indent=1), encoding="utf-8")
+    (output / "home-plan.json").write_text(json.dumps(home_plan.plan(), indent=1), encoding="utf-8")
     manifest = {"commit": git(ROOT, "rev-parse", "HEAD"), "status": "UNVERIFIED IN EXCEL",
                 "dirty": bool(git(ROOT, "status", "--porcelain")),
                 "workbook_sha256": hashlib.sha256(data).hexdigest(), "inputs": hashes}
