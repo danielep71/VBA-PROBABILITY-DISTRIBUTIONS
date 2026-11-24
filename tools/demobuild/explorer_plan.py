@@ -316,7 +316,7 @@ def plan() -> dict[str, Any]:
         {"address": "F6", "value": "Yellow cells are editable. A new distribution loads its parameters and plot window."},
         {"address": "F8", "value": "Select a result or grid cell to read its formula: each grid column is one spilled formula."},
         {"address": "F10", "value": "Continuous: Number of points between the bounds. Discrete: every integer between them."},
-        {"address": "F12", "value": "Reset Explorer inputs on the Ribbon restores Normal(0,1), after confirmation."},
+        {"address": "F12", "value": "Reset inputs on the Ribbon restores Normal(0,1) on this sheet, after confirmation."},
         {"address": "F14", "value": "Educational demo, not an accuracy certification. The quantile is the smallest x with CDF >= p."},
         {"address": "F16", "value": "Needs macros and Excel 365 or 2024. If Macros says DISABLED, unblock the file and reopen."},
         {"address": f"F{GRID_FIRST_ROW - 1}", "value": "x / integer k"},

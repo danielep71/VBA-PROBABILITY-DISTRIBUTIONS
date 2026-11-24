@@ -15,7 +15,8 @@ Attribute VB_Customizable = True
 ' PURPOSE: The workbook events of the Explorer workbook. They only call the
 ' modules of src/workbook/: the Function Wizard registration and the
 ' Explorer's, the Probabilities, the Parameter Effects, the Comparison, the Tails, the Discrete, the Risk and the Diagnostics sheets' refresh when the workbook opens,
-' their input handling when a cell of their sheet changes, and the navigation bar around a save.
+' their input handling when a cell of their sheet changes, the Ribbon's state when another sheet is
+' activated, and the navigation bar around a save.
 ' tools/demobuild/explorer_build.py and tools/Sync-PROBDIST-VBA.ps1 write
 ' this code into the workbook's ThisWorkbook module.
 '==============================================================================
@@ -43,6 +44,12 @@ Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     If Sh.CodeName = "shDiscrete" Then M_STATS_PROBDIST_DISCRETESHEET.DiscreteInputsChanged Target
     If Sh.CodeName = "shRisk" Then M_STATS_PROBDIST_RISK.RiskInputsChanged Target
     If Sh.CodeName = "shDiagnostics" Then M_STATS_PROBDIST_DIAGNOSTICS.DiagnosticsInputsChanged Target
+End Sub
+
+
+Private Sub Workbook_SheetActivate(ByVal Sh As Object)
+    ' Reset inputs is enabled only on a sheet with inputs: the Ribbon reads its state again.
+    M_STATS_PROBDIST_DEMO.RefreshRibbon
 End Sub
 
 

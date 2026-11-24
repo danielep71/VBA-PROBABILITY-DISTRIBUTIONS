@@ -95,8 +95,19 @@ function Step([string]$Text) {
 # Copies the formats (and merges) of one Explorer range onto a range of the
 # Comparison sheet.
 function Copy-Format($Source, $Target) {
-    [void]$Source.Copy()
-    [void]$Target.PasteSpecial(-4122)
+    # The Windows clipboard is shared with every program on the machine: another one can take it between the
+    # copy and the paste, which Excel then refuses. Copy again and retry, up to five times.
+    for ($attempt = 1; ; $attempt++) {
+        try {
+            [void]$Source.Copy()
+            [void]$Target.PasteSpecial(-4122)
+            return
+        } catch {
+            if ($attempt -ge 5) { throw }
+            Write-Host "  the paste of formats was refused (attempt $attempt); copying again"
+            Start-Sleep -Milliseconds 500
+        }
+    }
 }
 
 try {

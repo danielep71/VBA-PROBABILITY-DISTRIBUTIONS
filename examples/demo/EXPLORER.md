@@ -102,8 +102,10 @@ not trials, and say so in their support text. Hypergeometric takes the sample
 size, the successes in the population and the population size.
 
 The Explorer sheet is unprotected, as in the template; the result cells are
-locked and the inputs are not. Reset on the Ribbon asks for confirmation and
+locked and the inputs are not. Reset inputs on the Ribbon asks for confirmation and
 restores Normal(0,1), probe 0, p = 0.95, 201 points and 6 decimals. Cancelling changes nothing.
+On every sheet with inputs the button resets that sheet only; on Home and README it is
+disabled. [RIBBON.md](RIBBON.md) documents every control of the Ribbon.
 
 ## When macros are not running
 
@@ -135,7 +137,13 @@ through single edits with events on, the state with macros off, and the
 recovery of a file saved in that state, while watching for any dialog.
 `ci/Test-ExplorerUI.ps1` drives the real Ribbon through Windows UI Automation
 in an owned Excel process: Recalculate, Home, the Go to destinations, the
-navigation toggle and the reset dialog, Cancel and OK.
+navigation toggle, Reset inputs disabled on Home and README, the reset dialog,
+Cancel and OK, a renamed tab and a deleted sheet.
+`ci/Test-HandlerErrors.ps1` induces two errors in the Explorer's input handler with a
+second workbook open, each after a routine has unprotected the sheet (the input messages,
+then the number formats, where the handler used to fail before saving the events state), and checks that
+events, screen updating, calculation, the sheet's protection and the other workbook are
+as they were, with one message shown (#482).
 
 These checks passed on source `45289de7b6faca8c6cd21d1ed6231556016b2f3f` in
 [run 44264560770](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/actions/runs/44264560770),
@@ -150,7 +158,7 @@ Do not close #254 solely from package checks.
 
 The Probabilities sheet (#255) reads the Explorer's family table, so the 16 distributions, their limits and their input messages are defined once. Its plan is `tools/demobuild/probabilities_plan.py`, applied by `Evolve-Probabilities.ps1` after the Explorer's; its VBA is `src/workbook/M_STATS_PROBDIST_PROBABILITIES.bas`. Inputs are D6:D14 (distribution, up to four parameters, the points a and b, the probability p, the number of decimals); the status is D17, the macros cell D18 and the results D20:D28: P(X <= a), P(X > a), P(X <= b), P(X > b), P(a < X <= b), the quantile Q(p), F(Q(p)), the round-trip difference and its verdict. The grid is F20:I1020: x (or the integer k), the density or mass, and two columns that keep it where x <= a and where a < x <= b and hold 0 elsewhere, for the shaded chart areas.
 
-A discrete family truncates a and b to whole numbers, P(X <= a) includes a, and its quantile is the smallest k with F(k) >= p. The interval is S(a) - S(b) when F(a) is above one half and F(b) - F(a) otherwise. The round trip compares F(Q(p)) with p, relative to min(p, 1 - p), within 1E-8; a discrete family has no exact round trip and the verdict states the definition. The library's quantile contract covers p from 0.01 to 0.999 and the deep lower tail (`benchmark/accuracy_contracts.csv`); above 0.999 the verdict may say OUTSIDE.
+A discrete family truncates a and b to whole numbers, P(X <= a) includes a, and its quantile is the smallest k with F(k) >= p. The interval is S(a) - S(b) when F(a) is above one half and F(b) - F(a) otherwise. The round trip compares F(Q(p)) with p, relative to min(p, 1 - p), within 1E-8; a discrete family has no exact round trip and the verdict states the definition. The verdict tells apart, in this order: an input the status refuses; a p that is not a number from 0 to 1 ("Invalid input"); p at 0 or 1 ("End of the support"); and a quantile, F(Q) or F(Q - 1) the library could not compute ("ERROR"), never read as a confirmation (#483). The note in F12 says so, and `ci/Test-Probabilities.ps1` induces each error branch in Excel by putting #N/A in place of the quantile, F(Q) or the round-trip difference. For a discrete family, Q - 1 is below the support exactly when Q is the lowest count of the support, which the family table gives as the lower end of its plot; there F(Q - 1) is 0 by definition and is not computed. The library's quantile contract covers p from 0.01 to 0.999 and the deep lower tail (`benchmark/accuracy_contracts.csv`); above 0.999 the verdict may say OUTSIDE.
 
 `probabilities_references.py` regenerates `probabilities-references.json` with mpmath (112 cases: each family at its defaults with three probabilities, both tails, fractional points for the discrete families and probabilities at the ends of the support). `ci/Test-Probabilities.ps1` sets each case through the sheet's cells with events on and compares the results, then checks the chart of each kind, the shaded columns, an invalid input and the reset.
 
@@ -233,3 +241,24 @@ Rows 21 to 33 give the call with its values, the value returned (and beside it, 
 - **Not shown.** Non-convergence returns `#NUM!` with a Status that says so, but no input of the library's survey of bad input produces it. `K_STATS_NormalStandard_InverseCumulativeFast` validates nothing and is left out; so are the differences between functions recorded as not settled in #418, and more than one wrong argument at a time.
 
 `ci/Test-Diagnostics.ps1` checks in Excel every call of the case table against its documented outcome (a number within 1E-12 relative of an mpmath reference, or the documented error), its green check, its Status (empty for a number; for an error, a fragment of the library's message where the case names one), and the call as written entered again in a scratch cell. It types eight trials into the try-it area with events on: the default, a probability of 1, a negative shape, a text, an empty X, an unbounded density, an impossible count of four arguments and a discrete quantile; for each, the example the function loads, the value, its kind, the Status, the meaning, the arguments Excel converted, the formula beside the value and the chart. Then the default sweep refused at 0 and 1 only, five invalid inputs, the Excel state and the navigation after them, and the reset. Its report, `diagnostics-report.json`, records what that Excel returned for every call, with its build. The unit tests check that every rule a case cites is a section of the manual, that every fragment of a Status is in the library's messages, and recompute the numbers with SciPy and closed forms.
+
+## Home and README
+
+Home is the start page (#253), and README is the build record. Both are written in desktop Excel by `tools/demobuild/Evolve-Home.ps1`, after every other sheet, from `home-plan.json`. The plan is made by `tools/demobuild/home_plan.py`. Each sheet keeps its two title bands. Its tables are rewritten from row 5, in the template's own table styles.
+
+- **Home** has five tables:
+  - *What this workbook shows*, with the line between these worked examples and the library's validation, and the version and commit of the package;
+  - *What it needs*: the Excel versions, macros, a downloaded file to unblock, and Python, which is not needed;
+  - *How to use*, with Reset inputs, which acts on the active sheet only;
+  - a *Colour legend*, whose labels are formatted as the role they name: an input and a result of the Explorer, its heading, and the green, amber and red of the checks;
+  - a link to every other sheet. The links target the defined names `nav_<CodeName>`, so they work with macros disabled.
+- **README** gives the conventions and the build: the library version, the source commit, how the package is made, and the Excel that wrote it. It then gives the validation and limits: what the workflow checks, where the library's certification is, and which Excel was tested.
+
+The Excel line (version, build and bitness from the header of `EXCEL.EXE`) is the Excel that applied the plan, the one the workflow then tests. Nothing else is claimed: other builds, 32-bit Excel and Excel for Mac are stated as not tested.
+
+`ci/Test-DemoPackage.ps1` checks that README gives the commit of the package's manifest, that no field is left unfilled, and that the nine links of Home reach their sheets, with macros disabled and after a tab is renamed. The unit tests of `tests/test_demo_home.py` check:
+
+- that the links follow `examples/demo/sheets.json`;
+- that every text fits its row;
+- that the files Home and README cite exist;
+- that the Excel functions Home names are the ones the sheets use.
