@@ -738,12 +738,21 @@ try {
         }
     }
 
+    # RuntimeInformation needs .NET Framework 4.7.1 or later. On an older host
+    # the property is missing and Set-StrictMode makes reading it fail, so the
+    # record falls back to the 64-bit flag, which gives the same names.
+    try {
+        $osArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+    } catch {
+        if ([System.Environment]::Is64BitOperatingSystem) { $osArchitecture = "X64" } else { $osArchitecture = "X86" }
+    }
+
     $environment = [ordered]@{
         excel_version = $excelVersion
         excel_build = $excelBuild
         office_bitness = $officeBitness
         windows = [System.Environment]::OSVersion.VersionString
-        os_architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+        os_architecture = $osArchitecture
         automation_security = "msoAutomationSecurityLow=1 in isolated Excel process; persistent Trust Center settings unchanged"
         vba_project_access = "preconfigured runner setting; script does not modify Trust Center access"
     }

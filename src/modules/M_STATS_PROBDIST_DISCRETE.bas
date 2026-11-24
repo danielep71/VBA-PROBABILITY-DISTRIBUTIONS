@@ -256,14 +256,17 @@ Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
 'can compare one ulp on the wrong side and return k + 1. Once the search ends,
 'the count below is taken when the target lies within a window of its tail
 'value. The window is the error of the comparison, not a share of the target:
-'PROB_DS_STEP_TIE_ULPS machine epsilons on the scale of the probability. Above
-'0.5 the survival value is compared with 1 - q, and on the accuracy grid the
-'computed CDF and SF add up to 1 within 1.75 epsilons, even where each carries
-'an error of about 2200 (#484); below 0.5 the tail is the CDF itself. The window
-'is never more than 2^-10 of the step between the two tail values, so a
-'distribution whose steps are finer than the window keeps the strict answer.
-'A target distinct from the step by more than the window, such as 1E-13 above
-'F(k) = 0.5, keeps the strict answer k + 1.
+'PROB_DS_STEP_TIE_ULPS machine epsilons on the scale of the probability. Below
+'0.5 the tail compared is the CDF itself. Above 0.5 the search compares the
+'survival value with 1 - q, and the tie is taken when either the SF lies within
+'the window of 1 - q or the CDF lies within it of q. The CDF test is the one a
+'round trip needs: the computed CDF and SF add up to 1 within 1.75 epsilons on
+'the accuracy grid, but not everywhere: where 1 - p is rounded, as for a
+'Negative Binomial with p = 0.4, the two kernels see different arguments (#484).
+'The window is never more than 2^-10 of the step between the two tail values,
+'so a distribution whose steps are finer than the window keeps the strict
+'answer. A target distinct from the step by more than the window, such as
+'1E-13 above F(k) = 0.5, keeps the strict answer k + 1.
 Private Const PROB_DS_STEP_TIE_ULPS As Double = 16#               'Epsilons of q
 Private Const PROB_DS_STEP_TIE_SHARE As Double = 0.0009765625     '2^-10
 
@@ -7413,6 +7416,10 @@ Private Function PROB_DS_TryStepTie( _
 ' BEHAVIOR
 '   - Compares on the same smaller tail as the search: the CDF when
 '     Probability <= 0.5, else the SF against 1 - Probability.
+'   - Above 0.5, when the SF is outside the window, also compares the CDF at
+'     Hi - 1 with Probability itself, so a target taken from the CDF returns
+'     its own count even where the CDF and SF are not complementary to the
+'     last ulps.
 '   - The window is PROB_DS_STEP_TIE_ULPS * PROB_MACH_EPS * Probability: the
 '     error of the comparison on the scale of q, the same in both branches
 '     because 1 - q is exact above 0.5. It is capped at PROB_DS_STEP_TIE_SHARE
@@ -7422,13 +7429,14 @@ Private Function PROB_DS_TryStepTie( _
 ' UPDATED
 '   2026-11-21 - Added for #467.
 '   2026-11-24 - Window from the error of the comparison, not 1E-12 of the
-'                target (#484).
+'                target; the CDF check above 0.5 (#484).
 '==============================================================================
 '
     Dim UseLower            As Boolean         'TRUE compares the CDF
     Dim Target              As Double          'Probability or its complement
     Dim TailAt              As Double          'Tail value at Hi
     Dim TailBelow           As Double          'Tail value at Hi - 1
+    Dim CdfBelow            As Double          'CDF at Hi - 1, above 0.5 only
     Dim StepWidth           As Double          'Step between the two tail values
     Dim Window              As Double          'Tie window around the step value
 
@@ -7453,7 +7461,18 @@ Private Function PROB_DS_TryStepTie( _
             Window = PROB_DS_STEP_TIE_SHARE * StepWidth
         End If
 
-        If Abs(TailBelow - Target) <= Window Then Result = Hi - 1#
+        If Abs(TailBelow - Target) <= Window Then
+            Result = Hi - 1#
+            PROB_DS_TryStepTie = True
+            Exit Function
+        End If
+
+    'Above 0.5, also the CDF against q: the scale on which q was given
+        If Not UseLower Then
+            If Not PROB_DS_TryFamilyTail( _
+                Family, Hi - 1#, True, P1, P2, P3, CdfBelow, FailMsg) Then Exit Function
+            If Abs(CdfBelow - Probability) <= Window Then Result = Hi - 1#
+        End If
 
         PROB_DS_TryStepTie = True
 End Function
