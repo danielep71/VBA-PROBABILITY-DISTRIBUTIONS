@@ -251,15 +251,20 @@ Private Const PROB_DS_MAX_NEGBINOM_KERNEL_COUNT As Double = 20000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_POP As Double = 100000000#
 Private Const PROB_DS_MAX_HYPERGEOMETRIC_SUM_ITER As Long = 200000
 
-'Step tie of the discrete inverses (#467). The searches compare the computed
-'tail with the target strictly, so a target equal to a step value F(k) can
-'compare one ulp on the wrong side and return k + 1. Once the search ends, the
-'count below is taken when the target lies within a window of its tail value:
-'a relative 1E-12 of the target (the computed tails carry errors of a few ulps,
-'up to about 3E-13 on the accuracy grid), but never more than 2^-10 of the step
-'between the two tail values, so a distribution whose steps are finer than the
-'window keeps the strict answer.
-Private Const PROB_DS_STEP_TIE_REL As Double = 0.000000000001     '1E-12
+'Step tie of the discrete inverses (#467, #484). The searches compare the
+'computed tail with the target strictly, so a target equal to a step value F(k)
+'can compare one ulp on the wrong side and return k + 1. Once the search ends,
+'the count below is taken when the target lies within a window of its tail
+'value. The window is the error of the comparison, not a share of the target:
+'PROB_DS_STEP_TIE_ULPS machine epsilons on the scale of the probability. Above
+'0.5 the survival value is compared with 1 - q, and on the accuracy grid the
+'computed CDF and SF add up to 1 within 1.75 epsilons, even where each carries
+'an error of about 2200 (#484); below 0.5 the tail is the CDF itself. The window
+'is never more than 2^-10 of the step between the two tail values, so a
+'distribution whose steps are finer than the window keeps the strict answer.
+'A target distinct from the step by more than the window, such as 1E-13 above
+'F(k) = 0.5, keeps the strict answer k + 1.
+Private Const PROB_DS_STEP_TIE_ULPS As Double = 16#               'Epsilons of q
 Private Const PROB_DS_STEP_TIE_SHARE As Double = 0.0009765625     '2^-10
 
 'Family codes of the step-tie check.
@@ -956,8 +961,8 @@ Public Function K_STATS_Binomial_InverseCumulative( _
 '   - Returns the LEAST qualifying integer, matching Excel's BINOM.INV
 '     convention.
 '   - A Probability on a step, F(k) = Probability, returns k: a target within
-'     a relative 1E-12 of a step value counts as on it, unless the steps are
-'     finer than that (#467).
+'     16 machine epsilons of Probability from a computed step value counts as on
+'     it, unless the steps are finer than that (#467, #484).
 '   - The open interval is deliberate: 0 and 1 have no least qualifying integer
 '     distinguishable from the support boundary.
 '
@@ -7394,7 +7399,8 @@ Private Function PROB_DS_TryStepTie( _
 ' PURPOSE
 '   Finishes a discrete inverse: Hi is the least count that qualified under
 '   the strict comparison; Hi - 1 is returned instead when the target lies on
-'   its step, F(Hi - 1) = Probability, to within the step-tie window (#467).
+'   its step, F(Hi - 1) = Probability, to within the step-tie window (#467,
+'   #484).
 '
 ' INPUTS
 '   Family                 A PROB_DS_FAMILY_ code.
@@ -7407,12 +7413,16 @@ Private Function PROB_DS_TryStepTie( _
 ' BEHAVIOR
 '   - Compares on the same smaller tail as the search: the CDF when
 '     Probability <= 0.5, else the SF against 1 - Probability.
-'   - The window is PROB_DS_STEP_TIE_REL times the target, capped at
-'     PROB_DS_STEP_TIE_SHARE times the step between the tail values at Hi - 1
-'     and Hi. It moves the answer by one count at most.
+'   - The window is PROB_DS_STEP_TIE_ULPS * PROB_MACH_EPS * Probability: the
+'     error of the comparison on the scale of q, the same in both branches
+'     because 1 - q is exact above 0.5. It is capped at PROB_DS_STEP_TIE_SHARE
+'     times the step between the tail values at Hi - 1 and Hi, and moves the
+'     answer by one count at most.
 '
 ' UPDATED
 '   2026-11-21 - Added for #467.
+'   2026-11-24 - Window from the error of the comparison, not 1E-12 of the
+'                target (#484).
 '==============================================================================
 '
     Dim UseLower            As Boolean         'TRUE compares the CDF
@@ -7438,7 +7448,7 @@ Private Function PROB_DS_TryStepTie( _
             Family, Hi - 1#, UseLower, P1, P2, P3, TailBelow, FailMsg) Then Exit Function
 
         StepWidth = Abs(TailAt - TailBelow)
-        Window = PROB_DS_STEP_TIE_REL * Target
+        Window = PROB_DS_STEP_TIE_ULPS * PROB_MACH_EPS * Probability
         If Window > PROB_DS_STEP_TIE_SHARE * StepWidth Then
             Window = PROB_DS_STEP_TIE_SHARE * StepWidth
         End If

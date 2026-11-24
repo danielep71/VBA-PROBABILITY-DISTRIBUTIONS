@@ -836,6 +836,8 @@ Private Sub RunDiscreteSuite()
     TimingLap "Test_DS_Hypergeometric"
     Test_DS_InverseStepTies
     TimingLap "Test_DS_InverseStepTies"
+    Test_DS_InverseStepWindow
+    TimingLap "Test_DS_InverseStepWindow"
     Test_DS_DiscreteUniformPMF
     TimingLap "Test_DS_DiscreteUniformPMF"
     Test_DS_DiscreteUniformCumulative
@@ -21321,7 +21323,7 @@ Private Sub Test_DS_InverseStepTies()
 '   - Exact steps: targets that are binary64 values of F(k), on both sides of
 '     0.5, so both the cumulative and the survival comparisons are exercised.
 '   - Fine steps: a Geometric with p down to 1E-14, whose steps are narrower
-'     than a relative 1E-12, keeps the answer of the strict comparison.
+'     than the tie window, keeps the answer of the strict comparison.
 '   - Round trips: InverseCumulative(Cumulative(k)) = k for the Binomial,
 '     Poisson, Geometric, Negative Binomial and Hypergeometric, with every
 '     target at most 0.999 so that 1 - q keeps its relative precision.
@@ -21368,8 +21370,8 @@ Private Sub Test_DS_InverseStepTies()
     AssertClose "hyp inv(.5,1,2,4)=0", K_STATS_Hypergeometric_InverseCumulative(0.5, 1#, 2#, 4#), _
         0#, 0#
 
-    'Steps finer than the tie window keep the strict answer: with p = 1E-14 a
-    'relative 1E-12 spans about 100 counts (mpmath: fractional parts .37, .51, .11)
+    'Steps finer than the tie window keep the strict answer: with p = 1E-14 the
+    'steps are about 2.5E-15 wide (mpmath: fractional parts .37, .51, .11)
     AssertClose "geo inv(.75,1e-14)=138629436111988", _
         K_STATS_Geometric_InverseCumulative(0.75, 0.00000000000001), 138629436111988#, 0#
     AssertClose "geo inv(.75,1e-10)=13862943610", _
@@ -21474,6 +21476,160 @@ Private Sub AssertDiscreteRoundTrip( _
                     CDbl(Count), 0#
         End Select
 End Sub
+
+
+Private Sub Test_DS_InverseStepWindow()
+'
+'==============================================================================
+' Test_DS_InverseStepWindow
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Verifies the width of the step-tie window of the discrete inverses (#484):
+'   a target on a step, or within a few ulps of it, returns k; a target 1E-13
+'   above a step returns k + 1.
+'
+' BEHAVIOR
+'   - The case of #484: Geometric(0.5) at 0.5 + 1E-13 returns 1.
+'   - Each of the five inverses on a step below 0.5 (the cumulative branch)
+'     and on a step above 0.5 (the survival branch). The steps are exact
+'     binary64 values except the Poisson, whose targets are the computed
+'     cumulative values.
+'   - Records 41 assertions.
+'
+' CALLED FROM
+'   - RunDiscreteSuite
+'
+' UPDATED
+'   2026-11-24 - Added for #484.
+'==============================================================================
+'
+        Debug.Print "-- Discrete inverse near a step (#484)"
+
+    'Geometric(0.5): F(0) = 0.5, F(1) = 0.75; the target lies 1E-13 above F(0)
+        AssertClose "geo inv(.5000000000001,.5)=1", _
+            K_STATS_Geometric_InverseCumulative(0.5000000000001, 0.5), 1#, 0#
+
+    'Binomial(2, 0.5): F(0) = 0.25, F(1) = 0.75
+        AssertStepWindow "Binomial", 0.25, 0, 2#, 0.5, 0#
+        AssertStepWindow "Binomial", 0.75, 1, 2#, 0.5, 0#
+
+    'Poisson(3): the computed F(1) (about 0.199) and F(4) (about 0.815)
+        AssertStepWindow "Poisson", CDbl(K_STATS_Poisson_Cumulative(1#, 3#)), 1, 3#, 0#, 0#
+        AssertStepWindow "Poisson", CDbl(K_STATS_Poisson_Cumulative(4#, 3#)), 4, 3#, 0#, 0#
+
+    'Geometric: F(1) = 0.4375 for p = 0.25, F(1) = 0.75 for p = 0.5
+        AssertStepWindow "Geometric", 0.4375, 1, 0.25, 0#, 0#
+        AssertStepWindow "Geometric", 0.75, 1, 0.5, 0#, 0#
+
+    'Negative Binomial(2, 0.5): F(0) = 0.25, F(2) = 0.6875
+        AssertStepWindow "NegativeBinomial", 0.25, 0, 2#, 0.5, 0#
+        AssertStepWindow "NegativeBinomial", 0.6875, 2, 2#, 0.5, 0#
+
+    'Hypergeometric, one draw: P(X = 0) = 3/8 with five successes in eight,
+    '3/4 with one success in four
+        AssertStepWindow "Hypergeometric", 0.375, 0, 1#, 5#, 8#
+        AssertStepWindow "Hypergeometric", 0.75, 0, 1#, 1#, 4#
+End Sub
+
+
+Private Sub AssertStepWindow( _
+    ByVal Family As String, _
+    ByVal StepValue As Double, _
+    ByVal Count As Long, _
+    ByVal A1 As Double, _
+    ByVal A2 As Double, _
+    ByVal A3 As Double)
+'
+'==============================================================================
+' AssertStepWindow
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Checks one step F(Count) = StepValue of a discrete inverse from both sides.
+'
+' INPUTS
+'   Family     Binomial, Poisson, Geometric, NegativeBinomial or
+'              Hypergeometric.
+'   StepValue  The step value F(Count).
+'   Count      The count of the step.
+'   A1-A3      The family parameters in the order of the public functions.
+'
+' BEHAVIOR
+'   - Records exactly four assertions: the step and its two adjacent Doubles
+'     return Count; the step plus 1E-13 returns Count + 1.
+'
+' CALLED FROM
+'   - Test_DS_InverseStepWindow
+'
+' UPDATED
+'   2026-11-24 - Added for #484.
+'==============================================================================
+'
+    Dim Label               As String          'Assertion label prefix
+    Dim Mantissa            As Double          'Fraction of StepValue in [0.5, 1)
+    Dim Exponent            As Long            'Binary exponent of StepValue
+    Dim UlpAbove            As Double          'Gap to the next Double up
+    Dim UlpBelow            As Double          'Gap to the next Double down
+
+    'Gaps to the adjacent Doubles: half as wide below a power of two
+        SP_Frexp StepValue, Mantissa, Exponent
+        UlpAbove = SP_Shift(1#, Exponent - 53)
+        If Mantissa = 0.5 Then UlpBelow = UlpAbove / 2# Else UlpBelow = UlpAbove
+
+        Label = Family & " step " & CStr(Count) & " [" & CStr(A1) & ", " & _
+                CStr(A2) & ", " & CStr(A3) & "]"
+
+        AssertClose Label & " on the step", _
+            DS_FamilyInverse(Family, StepValue, A1, A2, A3), CDbl(Count), 0#
+        AssertClose Label & " one ulp above", _
+            DS_FamilyInverse(Family, StepValue + UlpAbove, A1, A2, A3), CDbl(Count), 0#
+        AssertClose Label & " one ulp below", _
+            DS_FamilyInverse(Family, StepValue - UlpBelow, A1, A2, A3), CDbl(Count), 0#
+        AssertClose Label & " 1E-13 above", _
+            DS_FamilyInverse(Family, StepValue + 0.0000000000001, A1, A2, A3), _
+            CDbl(Count + 1), 0#
+End Sub
+
+
+Private Function DS_FamilyInverse( _
+    ByVal Family As String, _
+    ByVal Probability As Double, _
+    ByVal A1 As Double, _
+    ByVal A2 As Double, _
+    ByVal A3 As Double) _
+    As Variant
+'
+'==============================================================================
+' DS_FamilyInverse
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Calls the public discrete inverse of Family.
+'
+' INPUTS
+'   Family       Binomial, Poisson, Geometric, NegativeBinomial or
+'                Hypergeometric.
+'   Probability  Target cumulative probability.
+'   A1-A3        The family parameters in the order of the public functions.
+'
+' CALLED FROM
+'   - AssertStepWindow
+'
+' UPDATED
+'   2026-11-24 - Added for #484.
+'==============================================================================
+'
+        Select Case Family
+            Case "Binomial"
+                DS_FamilyInverse = K_STATS_Binomial_InverseCumulative(Probability, A1, A2)
+            Case "Poisson"
+                DS_FamilyInverse = K_STATS_Poisson_InverseCumulative(Probability, A1)
+            Case "Geometric"
+                DS_FamilyInverse = K_STATS_Geometric_InverseCumulative(Probability, A1)
+            Case "NegativeBinomial"
+                DS_FamilyInverse = K_STATS_NegativeBinomial_InverseCumulative(Probability, A1, A2)
+            Case Else
+                DS_FamilyInverse = K_STATS_Hypergeometric_InverseCumulative(Probability, A1, A2, A3)
+        End Select
+End Function
 
 
 Private Sub Test_DS_DiscreteUniformPMF()
@@ -22042,6 +22198,10 @@ Private Sub Test_DS_ManualExamples()
         K_STATS_Binomial_Cumulative(4#, 10#, 0.3), 0.8497316674, TOL_PRINTED
     AssertExactlyEqual "7.5 Binomial inv(0.8,10,0.3)", _
         K_STATS_Binomial_InverseCumulative(0.8, 10#, 0.3), 4#
+    AssertExactlyEqual "7.5 Binomial inv(0.75,2,0.5)", _
+        K_STATS_Binomial_InverseCumulative(0.75, 2#, 0.5), 1#
+    AssertExactlyEqual "7.5 Geometric inv(0.5000000000001,0.5)", _
+        K_STATS_Geometric_InverseCumulative(0.5000000000001, 0.5), 1#
     AssertRelClose "7.6 Discrete Uniform cdf(2.8,-3,5)", _
         K_STATS_DiscreteUniform_Cumulative(2.8, -3#, 5#), 0.6666666667, TOL_PRINTED
 
