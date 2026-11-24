@@ -21494,7 +21494,9 @@ Private Sub Test_DS_InverseStepWindow()
 '     and on a step above 0.5 (the survival branch). The steps are exact
 '     binary64 values except the Poisson, whose targets are the computed
 '     cumulative values.
-'   - Records 41 assertions.
+'   - A Geometric whose steps near 1 are finer than the window keeps the
+'     strict answer though the CDF rounds onto the target.
+'   - Records 42 assertions.
 '
 ' CALLED FROM
 '   - RunDiscreteSuite
@@ -21529,6 +21531,11 @@ Private Sub Test_DS_InverseStepWindow()
     '3/4 with one success in four
         AssertStepWindow "Hypergeometric", 0.375, 0, 1#, 5#, 8#
         AssertStepWindow "Hypergeometric", 0.75, 0, 1#, 1#, 4#
+
+    'Steps of about 1E-16 near q = 0.999999: the CDF rounds onto q at the count
+    'below, so only the SF may decide (mpmath: 138155105572.447 - 1)
+        AssertClose "geo inv(.999999,1e-10)=138155105572", _
+            K_STATS_Geometric_InverseCumulative(0.999999, 0.0000000001), 138155105572#, 0#
 End Sub
 
 

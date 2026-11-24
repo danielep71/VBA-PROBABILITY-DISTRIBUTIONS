@@ -7419,7 +7419,9 @@ Private Function PROB_DS_TryStepTie( _
 '   - Above 0.5, when the SF is outside the window, also compares the CDF at
 '     Hi - 1 with Probability itself, so a target taken from the CDF returns
 '     its own count even where the CDF and SF are not complementary to the
-'     last ulps.
+'     last ulps. Only when the window is not capped: where the steps are finer
+'     than the window, the CDF near 1 cannot resolve them, and its rounding
+'     would take a count that the SF rejects.
 '   - The window is PROB_DS_STEP_TIE_ULPS * PROB_MACH_EPS * Probability: the
 '     error of the comparison on the scale of q, the same in both branches
 '     because 1 - q is exact above 0.5. It is capped at PROB_DS_STEP_TIE_SHARE
@@ -7439,6 +7441,7 @@ Private Function PROB_DS_TryStepTie( _
     Dim CdfBelow            As Double          'CDF at Hi - 1, above 0.5 only
     Dim StepWidth           As Double          'Step between the two tail values
     Dim Window              As Double          'Tie window around the step value
+    Dim Capped              As Boolean         'TRUE when the step caps the window
 
         Result = Hi
 
@@ -7459,6 +7462,7 @@ Private Function PROB_DS_TryStepTie( _
         Window = PROB_DS_STEP_TIE_ULPS * PROB_MACH_EPS * Probability
         If Window > PROB_DS_STEP_TIE_SHARE * StepWidth Then
             Window = PROB_DS_STEP_TIE_SHARE * StepWidth
+            Capped = True
         End If
 
         If Abs(TailBelow - Target) <= Window Then
@@ -7467,8 +7471,9 @@ Private Function PROB_DS_TryStepTie( _
             Exit Function
         End If
 
-    'Above 0.5, also the CDF against q: the scale on which q was given
-        If Not UseLower Then
+    'Above 0.5, also the CDF against q, the scale on which q was given; not
+    'for steps finer than the window, which the CDF near 1 cannot resolve
+        If Not UseLower And Not Capped Then
             If Not PROB_DS_TryFamilyTail( _
                 Family, Hi - 1#, True, P1, P2, P3, CdfBelow, FailMsg) Then Exit Function
             If Abs(CdfBelow - Probability) <= Window Then Result = Hi - 1#
