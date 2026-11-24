@@ -107,8 +107,6 @@ The library's functions take no cumulative flag: the name says which function it
 | `BINOM.DIST.RANGE(n, p, 0, k2)` | `K_STATS_Binomial_Cumulative(k2, n, p)` | With a lower bound of zero the range is the cumulative probability; the difference above would ask the library for a count of -1. | `=BINOM.DIST.RANGE(20,0.3,0,8)`<br>`=K_STATS_Binomial_Cumulative(8,20,0.3)` | 0.886668537123 | same |
 | `BINOM.INV(n, p, alpha)`<br>also `CRITBINOM(n, p, alpha)` | `K_STATS_Binomial_InverseCumulative(alpha, n, p)` | **Different order**: the library puts the probability first, as in every inverse. | `=BINOM.INV(20,0.3,0.9)`<br>`=K_STATS_Binomial_InverseCumulative(0.9,20,0.3)` | 9 | same |
 
-A probability exactly on a step, F(k) = q, returns k in all five discrete inverses (#467). A probability within 16 machine epsilons times q of the computed step value counts as on it; one further away, such as 1E-13 above the step, returns k + 1 (#484). `BINOM.INV` gives the same answer wherever its cumulative value and the library's are both exact, as on the dyadic steps of p = 0.5; a step value copied from `BINOM.DIST` that differs from the library's by more than the window can return the next count.
-
 ### Negative binomial
 
 | Excel | Library | What differs | Example | Value | Excel returns |
@@ -212,6 +210,12 @@ Read from the same survey. "Kept" is deliberate. "Not settled" is a difference I
 | The Poisson probabilities refuse a mean of 1E308; the Poisson moments return a value. | Kept: the probabilities have a tested range of means and the moments are closed forms. |
 
 <!-- END error-behavior -->
+
+## Discrete quantiles on a step
+
+A probability exactly on a step, F(k) = q, returns k in all five discrete inverses (Binomial, Poisson, Geometric, Negative Binomial, Hypergeometric; #467). A probability within 16 machine epsilons times q of the computed step value counts as on it: below 0.5 against the cumulative value, above 0.5 against the survival value and 1 - q or, where the step is wider than the window, against the cumulative value and q. A probability further away, such as 1E-13 above the step, returns k + 1 (#484). Steps finer than the window keep the answer of the strict comparison.
+
+`BINOM.INV` gives the same answer wherever its cumulative value and the library's are both exact, as on the dyadic steps of p = 0.5. A step value copied from `BINOM.DIST` that differs from the library's by more than the window can return the next count; the library's own `K_STATS_Binomial_Cumulative` returns its count.
 
 ## Scope
 
