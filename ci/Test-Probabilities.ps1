@@ -4,7 +4,8 @@ param([Parameter(Mandatory=$true)][string]$PackageDirectory)
 # the family, its parameters and the points a and b and the probability p through
 # the sheet's own cells, with events on, and reads the results. Also: the layout
 # the plan promises, the chart of each kind, the shaded columns, an invalid
-# input, the number of decimals and the reset.
+# input, the round-trip verdict of each case and its error branches (induced
+# with #N/A in place of a result), the number of decimals and the reset.
 $ErrorActionPreference = 'Stop'
 $directory = (Resolve-Path $PackageDirectory).Path
 $path = Join-Path $directory 'Probability-Distributions-Demo.xlsm'
@@ -42,6 +43,9 @@ function Set-Text($Sheet, [string]$Address, [string]$Value) {
 }
 function Set-Number($Sheet, [string]$Address, [double]$Value) {
     for ($attempt = 1; ; $attempt++) { try { $Sheet.Range($Address).Value2 = $Value; return } catch { if (-not (Wait-IfBusy $_ $attempt)) { throw } } }
+}
+function Set-Formula($Sheet, [string]$Address, [string]$Formula) {
+    for ($attempt = 1; ; $attempt++) { try { $Sheet.Range($Address).Formula2 = $Formula; return } catch { if (-not (Wait-IfBusy $_ $attempt)) { throw } } }
 }
 function Grid-Rows($Sheet) {
     $spill = $Sheet.Range('F20').SpillingToRange
@@ -242,6 +246,30 @@ try {
     Set-Number $sheet 'D13' 0.5
     if ((Verdict-Of 'Geometric(0.3) p=0.5') -ne 'Q is the smallest k with F(k) >= p') { throw "Geometric(0.3) at 0.5 gives the verdict '$($sheet.Range('D28').Text)'" }
     if ([double]$sheet.Range('D25').Value2 -ne 1) { throw "Geometric(0.3) at 0.5 gives the quantile $($sheet.Range('D25').Value2)" }
+    # An error in a result the verdict reads, induced by putting #N/A in place of its formula (this copy is never
+    # saved), reads as an ERROR and never as a confirmation: the quantile and F(Q) of a discrete family, and the
+    # round-trip difference of a continuous one. The sheet has no password; it is protected again as the demo does.
+    $induced = @(
+        @{ family = 'Geometric'; cell = 'D26'; expected = 'ERROR: F(Q) could not be computed' },
+        @{ family = 'Geometric'; cell = 'D25'; expected = 'ERROR: the quantile could not be computed' },
+        @{ family = 'Normal'; cell = 'D27'; expected = 'ERROR: the round trip could not be computed' })
+    foreach ($case in $induced) {
+        if ([string]$sheet.Range('D6').Value2 -ne $case.family) { Set-Text $sheet 'D6' $case.family }
+        Set-Number $sheet 'D13' 0.5
+        $excel.Calculate()
+        $kept = [string]$sheet.Range($case.cell).Formula2
+        $sheet.Unprotect()
+        try {
+            Set-Formula $sheet $case.cell '=NA()'
+            $what = "$($case.family) with $($case.cell) = #N/A"
+            if ((Verdict-Of $what) -ne $case.expected) { throw "$what gives the verdict '$($sheet.Range('D28').Text)'" }
+        } finally {
+            Set-Formula $sheet $case.cell $kept
+            $sheet.Protect([Type]::Missing, $true, $true, $true, $true)
+        }
+        $excel.Calculate()
+        if ((Is-Error $sheet.Range($case.cell).Value2) -or ([string]$sheet.Range('D28').Text) -like 'ERROR*') { throw "$($case.cell) did not recover its formula" }
+    }
     $report.verdicts = $verdicts
     $report.verdict_outcomes = 'PASS'
 
