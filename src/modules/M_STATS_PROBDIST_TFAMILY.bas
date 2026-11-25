@@ -2286,7 +2286,6 @@ Private Function PROB_TryStudentTPDF( _
         PROB_TryStudentTPDF = True
 End Function
 
-
 Private Function PROB_TryStudentTTail( _
     ByVal AbsX As Double, _
     ByVal DegreesFreedom As Double, _
@@ -2294,39 +2293,51 @@ Private Function PROB_TryStudentTTail( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_TryStudentTTail
+'------------------------------------------------------------------------------
+'                             STUDENT T UPPER TAIL
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Student t right-tail probability at a non-negative argument.
+'   Returns the Student t right-tail probability at a non-negative argument
+'
+' WHY THIS EXISTS
+'   The cumulative, the survival and the inverse all need the small tail
+'   P(T > AbsX) computed directly, so that none of them forms it as one minus
+'   a probability near one
 '
 ' INPUTS
-'   AbsX              Absolute evaluation point; must be non-negative.
-'   DegreesFreedom    Supported positive degrees of freedom.
+'   AbsX
+'     Absolute evaluation point; must be non-negative
 '
-' OUTPUTS
-'   Result    Right-tail probability P(T > AbsX).
-'   FailMsg   Detailed numerical failure message on failure.
+'   DegreesFreedom
+'     Supported positive degrees of freedom
+'
+'   Result
+'     Receives the right-tail probability P(T > AbsX)
+'
+'   FailMsg
+'     Receives the detailed numerical failure message on failure
 '
 ' RETURNS
 '   Boolean
-'     True  => Result contains a valid probability.
-'     False => A beta argument or special-function evaluation failed.
+'     True  => Result contains a valid probability
+'     False => A beta argument or special-function evaluation failed
 '
-' NUMERICAL METHOD
-'   - AbsX = 0: returns one half exactly.
-'   - Tiny AbsX: uses a local central-mass expansion.
-'   - DF = 1: uses stable central and reciprocal arctangent forms.
-'   - DF = 2: uses algebraic forms that avoid an overflowing square.
-'   - DF >= PROB_T_LDF_MIN_DF and AbsX <= PROB_T_LDF_MAX_ABS_T: the order-5
-'     large-df expansion (#34).
-'   - DF >= PROB_T_LDF_MIN_DF above that: the incomplete beta with its small
-'     argument formed directly (#213).
-'   - Otherwise: one half of the regularized incomplete beta.
+' BEHAVIOR
+'   The first case that applies answers:
+'     - AbsX = 0: returns one half exactly
+'     - Tiny AbsX: uses a local central-mass expansion
+'     - DF = 1: uses stable central and reciprocal arctangent forms
+'     - DF = 2: uses algebraic forms that avoid an overflowing square
+'     - DF >= PROB_T_LDF_MIN_DF and AbsX <= PROB_T_LDF_MAX_ABS_T: the order-5
+'       large-df expansion (#34)
+'     - DF >= PROB_T_LDF_MIN_DF above that: the incomplete beta with its
+'       small argument formed directly (#213)
+'     - Otherwise: one half of the regularized incomplete beta
 '
 ' ERROR POLICY
-'   - Predictable numerical failure is reported through False and FailMsg.
-'   - A mathematically valid far-tail underflow returns zero and True.
+'   - Predictable numerical failure is reported through False and FailMsg
+'   - A mathematically valid far-tail underflow returns zero and True
+'   - No error handler is installed: the procedure raises nothing of its own
 '
 ' DEPENDENCIES
 '   - PROB_TF_TryStudentTCentralMass
@@ -2337,6 +2348,9 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TryDivide
 '   - PROB_PI
 '
+' NOTES
+'   None
+'
 ' CALLED FROM
 '   - K_STATS_StudentT_Cumulative
 '   - K_STATS_StudentT_Survival
@@ -2344,8 +2358,8 @@ Private Function PROB_TryStudentTTail( _
 '
 ' UPDATED
 '   2026-11-14
-'==============================================================================
-'
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -2372,20 +2386,15 @@ Private Function PROB_TryStudentTTail( _
             PROB_TryStudentTTail = True
             Exit Function
         End If
-
     'Use the local expansion when it is accurate enough
         If PROB_TF_TryStudentTCentralMass( _
             AbsX, DegreesFreedom, CentralMass, FailMsg) Then
-
             If CentralMass >= 0# Then
                 Result = 0.5 - CentralMass
-
                 If Result < 0# Then Result = 0#
-
                 PROB_TryStudentTTail = True
                 Exit Function
             End If
-
         ElseIf Len(FailMsg) > 0 Then
             Exit Function
         End If
@@ -2393,12 +2402,11 @@ Private Function PROB_TryStudentTTail( _
 '------------------------------------------------------------------------------
 ' CAUCHY CLOSED FORM
 '------------------------------------------------------------------------------
-    'Use the central arctangent form near zero
+    'Use the central arctangent form near zero and the reciprocal arctangent
+    'form in the far tail
         If DegreesFreedom = 1# Then
             If AbsX <= 1# Then
                 Result = 0.5 - Atn(AbsX) / PROB_PI
-
-    'Use the reciprocal arctangent form in the far tail
             Else
                 If Not PROB_TryDivide(1#, AbsX, InverseX) Then
                     Result = 0#
@@ -2406,7 +2414,6 @@ Private Function PROB_TryStudentTTail( _
                     Result = Atn(InverseX) / PROB_PI
                 End If
             End If
-
             PROB_TryStudentTTail = True
             Exit Function
         End If
@@ -2414,19 +2421,17 @@ Private Function PROB_TryStudentTTail( _
 '------------------------------------------------------------------------------
 ' TWO-DEGREE CLOSED FORM
 '------------------------------------------------------------------------------
-    'Use the direct form while the square is harmless
+    'Use the direct form while the square is harmless, and scale by the
+    'reciprocal in the far tail so AbsX squared is never formed
         If DegreesFreedom = 2# Then
             If AbsX <= 1# Then
                 S = Sqr(2# + AbsX * AbsX)
                 Result = 1# / (S * (S + AbsX))
-
-    'Scale by the reciprocal in the far tail so AbsX squared is never formed
             Else
                 InverseX = 1# / AbsX
                 S = Sqr(1# + 2# * InverseX * InverseX)
                 Result = InverseX * InverseX / (S * (S + 1#))
             End If
-
             PROB_TryStudentTTail = True
             Exit Function
         End If
@@ -2441,7 +2446,6 @@ Private Function PROB_TryStudentTTail( _
             PROB_TryStudentTTail = True
             Exit Function
         End If
-
     'Above the expansion's range at large df the beta argument is within
     '1E-5 of one, and the continued fraction at a rounded argument loses up
     'to 8E-10 relative there (#213). Form the small member directly - the
@@ -2457,14 +2461,12 @@ Private Function PROB_TryStudentTTail( _
                 Exit Function
             End If
         End If
-
     'Form DF / (DF + X squared) and its complement without squaring X
         If Not PROB_TF_TrySquareRatioPair( _
             AbsX, DegreesFreedom, BetaX, BetaY) Then
             FailMsg = "Student t beta arguments could not be represented"
             Exit Function
         End If
-
     'Evaluate the regularized incomplete beta transformation
         If Not PROB_TryBetaRegularized( _
             BetaX, _
@@ -2475,7 +2477,6 @@ Private Function PROB_TryStudentTTail( _
             FailMsg) Then
             Exit Function
         End If
-
     'Convert the beta result into the one-sided Student t tail
         Result = 0.5 * Ibeta
 
@@ -2484,6 +2485,7 @@ Private Function PROB_TryStudentTTail( _
 '------------------------------------------------------------------------------
     'Report a valid probability
         PROB_TryStudentTTail = True
+
 End Function
 
 
