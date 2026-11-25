@@ -168,7 +168,7 @@ def points():
                 skipped["over_15_digits"] += 1
                 continue
             args = {f"a{i}": t for i, t in enumerate(toks)}
-            kind = f"{source}:{number}:{fn}"
+            kind = f"{source}:L{number}:{fn}"     # "L": no bare number
             call = f"K_STATS_{fn}(" + ";".join(toks) + ")"
             for j, form in enumerate(forms):
                 pid = f"{prefix}{number:05d}{chr(97 + j)}"

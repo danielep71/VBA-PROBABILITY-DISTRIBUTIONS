@@ -64,7 +64,7 @@ def judge(rows):
             v = value(r["observed_excel"])
             if v is not None:
                 excel.append((r["excel_formula"], v))
-        p = {"source": source, "line": int(line), "function": fn,
+        p = {"source": source, "line": int(line.lstrip("L")), "function": fn,
              "kstats_call": group[0]["kstats_call"], "reference": ref}
         if not excel:
             p["verdict"] = "not compared"
