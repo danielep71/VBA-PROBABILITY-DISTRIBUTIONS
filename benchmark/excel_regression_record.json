@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
-  "candidate_sha": "bb2702aff94644a6b6132ad65a5482f628894625",
+  "candidate_sha": "e81a4d5a695897467e5cd637940c5ebdd8b6a932",
   "execution": "automated",
-  "started_at": "2026-11-24T21:19:16.8118687Z",
-  "finished_at": "2026-11-24T21:26:19.8516787Z",
+  "started_at": "2026-11-25T11:58:08.2696645Z",
+  "finished_at": "2026-11-25T12:06:01.1564445Z",
   "runner": {
     "class": "self-hosted-excel",
-    "identity": "DESKTOP-UV7P4JQ",
+    "identity": "self-hosted-excel",
     "workflow": {
       "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
       "path": ".github/workflows/excel-vba-regression.yml",
-      "sha": "bb2702aff94644a6b6132ad65a5482f628894625",
-      "run_id": 45487489347,
+      "sha": "e81a4d5a695897467e5cd637940c5ebdd8b6a932",
+      "run_id": 45609216139,
       "run_attempt": 1
     }
   },
@@ -89,7 +89,7 @@
   },
   "log": {
     "path": "test-result.txt",
-    "sha256": "sha256:4e7770fab7c84ccd53473db85e0ef6eafbf999463f783cc04f503719e0e1e285"
+    "sha256": "sha256:99a20f2d6abdf56897cfe900b0f254e7e1711f3cb4ad65d9382edc10ff476fe2"
   },
   "grids": {
     "benchmark/probability_accuracy_grid.csv": {
@@ -97,14 +97,14 @@
       "sha256": "sha256:ad5e23297c60de978277f5694279e2b679190e61804245ba6a00b212bdd930e2",
       "raw_sha256": "sha256:3a23901480f6242d35a749f934d4070027c86a9482ba7db157b4b590266028f4",
       "row_count": 2215,
-      "exported_utc": "2026-11-24T21:36:05Z"
+      "exported_utc": "2026-11-25T12:21:28Z"
     },
     "benchmark/holdout/holdout_grid.csv": {
       "exported": true,
       "sha256": "sha256:c513fd9e2caf75b25090710b1dfb166bb7afd6cd63f4330adbacc4edbc74b5b6",
       "raw_sha256": "sha256:b5efd98026eafc610c726fbb970d3086af148fe614e1df738dbc8e28c7293f77",
       "row_count": 659,
-      "exported_utc": "2026-11-24T21:36:05Z"
+      "exported_utc": "2026-11-25T12:21:28Z"
     }
   }
 }
