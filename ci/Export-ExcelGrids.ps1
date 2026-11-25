@@ -825,7 +825,7 @@ try {
             ref = $env:GITHUB_REF
             run_id = [Int64]$env:GITHUB_RUN_ID
             run_attempt = [Int64]$env:GITHUB_RUN_ATTEMPT
-            runner = $env:RUNNER_NAME
+            runner = if ([string]::IsNullOrWhiteSpace($env:RUNNER_NAME) -or ($env:RUNNER_NAME -ieq [Environment]::MachineName)) { "self-hosted-excel" } else { $env:RUNNER_NAME }
         }
     }
     $manifest = [ordered]@{

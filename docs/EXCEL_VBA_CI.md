@@ -262,17 +262,27 @@ four labels, so only one machine has the `excel` label at a time.
 
 | Runner | Excel | Role |
 | --- | --- | --- |
-| `DESKTOP-UV7P4JQ` | 16.0 build 20710, 64-bit | Reference from 2026-11-15: a desktop that stays on |
-| `ITPF545VX1` | 16.0 build 20430, 64-bit | Produced every record up to the integration of 2026-11-15. A spare: its `excel` label was removed on 2026-11-15, and adding it back in the runner's settings returns it to service |
+| `excel-runner-b` | 16.0 build 20710, 64-bit | Reference from 2026-11-15: a desktop that stays on |
+| `excel-runner-a` | 16.0 build 20430, 64-bit | Produced every record up to the integration of 2026-11-15. A spare: its `excel` label was removed on 2026-11-15, and adding it back in the runner's settings returns it to service |
+
+The names in the table are aliases. The repository is public, so no record,
+manifest or document names a machine: `ci/Run-ExcelVbaTests.ps1` and
+`ci/Export-ExcelGrids.ps1` write the name the runner is registered under only
+when it differs from the machine name, and `self-hosted-excel` otherwise. A
+manual run writes `local`. Register a runner under its alias
+(`config.cmd --name excel-runner-b`), so that the workflow logs carry the alias
+too. Which machine is behind an alias is kept by the maintainer, outside the
+repository. `tools/check_machine_names.py`, one of the static checks, fails
+when a tracked file holds a machine name.
 
 Before the reference changed, the same commit was run on both. On
-`DESKTOP-UV7P4JQ` every assertion of the full regression passed, and the
+`excel-runner-b` every assertion of the full regression passed, and the
 export of the main grid and the holdout was identical, byte for byte, to the
-one then retained from `ITPF545VX1`: no observation differs between the two
+one then retained from `excel-runner-a`: no observation differs between the two
 builds.
 [`benchmark/excel_build_comparison_2026-11-15.json`](../benchmark/excel_build_comparison_2026-11-15.json)
 holds that run, the counts and the digests. The retained record of v1.0.0 was
-then produced on `DESKTOP-UV7P4JQ`, with the same raw digests.
+then produced on `excel-runner-b`, with the same raw digests.
 
 A record states the build that produced it. An export on a different build
 that changes an observation is not an error, but it is read row by row before
@@ -286,7 +296,7 @@ out, the checkout could not resolve `github.com`, and the machine went to
 standby (#295). The set-up below removes the causes that are on the machine.
 It keeps the interactive session that Excel COM needs.
 
-**Status: applied and tested on `DESKTOP-UV7P4JQ` on 2026-11-15, except
+**Status: applied and tested on `excel-runner-b` on 2026-11-15, except
 step 1.** Steps 2 and 3 are in place: the logon task, and no standby or
 hibernation on mains power. Automatic logon is not set up, by choice: after a
 restart someone signs in, and the runner then starts by itself.

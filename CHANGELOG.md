@@ -139,6 +139,7 @@ Use only the categories needed by a release.
 
 ### Changed
 
+- The Excel record, the export manifest and the documents name an Excel runner by an alias, `excel-runner-a` or `excel-runner-b`, never by its machine name (#491). `ci/Run-ExcelVbaTests.ps1` and `ci/Export-ExcelGrids.ps1` write the name the runner is registered under only when it differs from the machine name, and `self-hosted-excel` otherwise; a manual run writes `local`. A new static check, `tools/check_machine_names.py`, fails when a tracked file holds a machine name.
 - Aligned the demo with the K-SACCR workbook template: its style table and
   theme, its page, its sectioned navigation bar with the Navigation bar toggle,
   its Go to split button and callback names, tab colours per role, sheet
@@ -184,7 +185,7 @@ The first release. It ships the six production modules in `src/`: 112 worksheet 
 
 ### A second Excel runner, and the same results on a second build (#295)
 
-- `DESKTOP-UV7P4JQ` (Excel 16.0 build 20710, 64-bit) is the reference Excel runner from 2026-11-15; `ITPF545VX1` (build 20430) stays as a spare. `docs/EXCEL_VBA_CI.md` lists both; only one carries the `excel` label at a time.
+- `excel-runner-b` (Excel 16.0 build 20710, 64-bit) is the reference Excel runner from 2026-11-15; `excel-runner-a` (build 20430) stays as a spare. `docs/EXCEL_VBA_CI.md` lists both; only one carries the `excel` label at a time.
 - Before the change the same commit was run on both: 2,007 of 2,007 assertions on build 20710, and an export of the main grid and the holdout identical, byte for byte, to the retained one from build 20430. `benchmark/excel_build_comparison_2026-11-15.json` records it as an observation, not as certification evidence. The user manual's environment chapter mentions it.
 - The hardened set-up is applied on the new runner and tested by a restart with a job waiting: the logon task brought the runner back and the job ran. Automatic logon is not set up, so a restart needs one sign-in; the guide says so.
 - Git for Windows is now among the runner's requirements, with a troubleshooting entry: without it the checkout downloads an archive that leaves out `.github`, and the run stops before Excel starts.

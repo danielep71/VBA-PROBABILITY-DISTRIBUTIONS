@@ -4,7 +4,7 @@
  "purpose": "The same candidate run on a second Excel build. An observation, not certification evidence: the retained record of the release is benchmark/excel_regression_record.json.",
  "candidate_sha": "3573a3550dcf3907f67fc35a3b7b4b1a61d30d83",
  "reference": {
-  "runner": "ITPF545VX1",
+  "runner": "excel-runner-a",
   "excel_version": "16.0",
   "excel_build": "20430",
   "office_bitness": "64-bit",
@@ -12,7 +12,7 @@
   "note": "the run of the retained record, on the candidate 1766c81 that the compared commit merges"
  },
  "compared": {
-  "runner": "DESKTOP-UV7P4JQ",
+  "runner": "excel-runner-b",
   "excel_version": "16.0",
   "excel_build": "20710",
   "office_bitness": "64-bit",

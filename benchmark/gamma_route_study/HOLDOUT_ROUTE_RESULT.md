@@ -7,7 +7,7 @@ result was exported from that commit.
 
 ## Evidence
 
-- Excel run 43569839650 on `c7042c5`, runner `ITPF545VX1`, Excel 16.0 build
+- Excel run 43569839650 on `c7042c5`, runner `excel-runner-a`, Excel 16.0 build
   20430, 64-bit: 1,922 of 1,922 regression assertions and 13,005 of 13,005
   in the study and slow production batteries; evidence commit `3a56c8d`, the
   direct child of the candidate.

@@ -48,8 +48,8 @@ They were read in the settings page, not by `setup_repository.py`, whose
 record of the same day covers the settings its token could read.
 
 The runner host changed on 2026-11-15. The reference Excel runner is
-`DESKTOP-UV7P4JQ`, a desktop owned and used by the maintainer alone, set up as
-`docs/EXCEL_VBA_CI.md` describes; `ITPF545VX1` stays registered without the
+`excel-runner-b`, a desktop owned and used by the maintainer alone, set up as
+`docs/EXCEL_VBA_CI.md` describes; `excel-runner-a` stays registered without the
 `excel` label. The host's own configuration beyond that guide was not
 inspected.
 

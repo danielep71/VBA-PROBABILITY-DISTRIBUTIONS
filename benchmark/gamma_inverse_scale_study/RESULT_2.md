@@ -7,7 +7,7 @@ pushed at `901174a`, with every observed field of
 
 ## Evidence
 
-- Excel run 43592089271 on `664cd48`, runner `ITPF545VX1`, Excel 16.0 build
+- Excel run 43592089271 on `664cd48`, runner `excel-runner-a`, Excel 16.0 build
   20430, 64-bit: 1,933 of 1,933 regression assertions and 13,005 of 13,005
   in the study and slow production batteries; evidence commit `6d85020`, the
   direct child of the candidate.

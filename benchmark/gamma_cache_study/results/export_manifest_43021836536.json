@@ -17,7 +17,7 @@
     "ref": "refs/heads/study/307-loggamma-cache",
     "run_id": 43021836536,
     "run_attempt": 1,
-    "runner": "ITPF545VX1"
+    "runner": "excel-runner-a"
   },
   "regression": {
     "record": "excel-certification.json",

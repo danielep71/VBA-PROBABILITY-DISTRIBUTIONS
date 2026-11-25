@@ -708,7 +708,9 @@ try {
     $isActions = -not [string]::IsNullOrWhiteSpace($env:GITHUB_ACTIONS)
     if ($isActions) {
         $runnerClass = "self-hosted-excel"
-        $runnerIdentity = if ([string]::IsNullOrWhiteSpace($env:RUNNER_NAME)) { [Environment]::MachineName } else { $env:RUNNER_NAME }
+        # The record is public: it carries the runner's registered name only when
+        # that is an alias, never the machine name (#491).
+        $runnerIdentity = if ([string]::IsNullOrWhiteSpace($env:RUNNER_NAME) -or ($env:RUNNER_NAME -ieq [Environment]::MachineName)) { "self-hosted-excel" } else { $env:RUNNER_NAME }
         $workflowRepository = if ([string]::IsNullOrWhiteSpace($env:GITHUB_REPOSITORY)) { [string]$policy.repository } else { $env:GITHUB_REPOSITORY }
         $runId = [Int64]$env:GITHUB_RUN_ID
         $runAttempt = [Int64]$env:GITHUB_RUN_ATTEMPT
@@ -723,7 +725,7 @@ try {
     }
     else {
         $runnerClass = "manual-interactive"
-        $runnerIdentity = [Environment]::MachineName
+        $runnerIdentity = "local"
         $workflow = $null
         $execution = "manual"
     }
