@@ -20,6 +20,7 @@ list cannot outlive what it excuses.
 
     python floor_check.py            report; write floor_results.json; exit 0 when nowhere inferior
     python floor_check.py --grid G   judge another copy of the grid (an artifact)
+    python floor_check.py --check    judge without writing floor_results.json (the evidence suite)
 """
 import argparse
 import csv
@@ -81,8 +82,8 @@ def judge(rows):
     """(points, blank) from the grid rows; points holds one verdict per point."""
     groups, blank = defaultdict(list), 0
     for r in rows:
-        if not r["observed_kstats"].strip() and not r["observed_excel"].strip():
-            blank += 1
+        if not r["observed_kstats"].strip() or not r["observed_excel"].strip():
+            blank += 1      # unexported; ERROR is the only Excel error
         groups[r["kind"]].append(r)
     points = []
     for kind, group in groups.items():
@@ -127,6 +128,7 @@ def main(argv=None):
     ap.add_argument("--grid", default=B.GRID)
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--dispositions", default=DISPOSITIONS)
+    ap.add_argument("--check", action="store_true", help="write nothing")
     a = ap.parse_args(argv)
     with open(a.grid, encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
@@ -149,9 +151,10 @@ def main(argv=None):
               "inferior": inferior,
               "library_error": [p for p in points if p["verdict"] == "library error"],
               "not_compared": [p for p in points if p["verdict"] == "not compared"]}
-    with open(a.out, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(result, f, indent=1)
-        f.write("\n")
+    if not a.check:
+        with open(a.out, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(result, f, indent=1)
+            f.write("\n")
     print(f"  points                {len(points)}")
     for k in ("not inferior", "inferior", "library error", "not compared"):
         print(f"  {k:<21} {count.get(k, 0)}")

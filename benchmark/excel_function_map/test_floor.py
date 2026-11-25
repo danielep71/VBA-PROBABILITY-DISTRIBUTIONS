@@ -92,6 +92,11 @@ class Judge(unittest.TestCase):
             self.assertIn(kind.split(":")[2], B.EXCEL)
             self.assertTrue(entry["issue"].startswith("#"))
 
+    def test_a_blank_excel_observation_is_incomplete_not_an_error(self):
+        r = row("m:L2:X", 0.25, 0.25, 0.25)
+        r["observed_excel"] = ""
+        self.assertEqual(C.judge([r])[1], 1)
+
     def test_blank_rows_are_counted(self):
         r = row("m:L2:X", 0.25, 0.25, 0.25)
         r["observed_excel"] = r["observed_kstats"] = ""

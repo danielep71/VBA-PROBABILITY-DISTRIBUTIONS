@@ -213,7 +213,7 @@
    "not inferior": 5
   }
  },
- "undisposed": 30,
+ "undisposed": 0,
  "stale_dispositions": [],
  "inferior": [
   {
@@ -228,7 +228,8 @@
    "excel_rel": 2.3748107791963613e-08,
    "library": 24560848003.134815,
    "library_rel": 2.4651109137229057e-08,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "holdout_older:L23:NormalStandard_InverseCumulativeFast",
@@ -347,7 +348,8 @@
    "excel_rel": 3.894779589406261e-12,
    "library": 0.15865525393042046,
    "library_rel": 1.1240911360942665e-11,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1714:Beta_Cumulative",
@@ -361,7 +363,8 @@
    "excel_rel": 7.345178784423995e-13,
    "library": 0.8413447460695795,
    "library_rel": 2.11973706696202e-12,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1764:F_Cumulative",
@@ -375,7 +378,8 @@
    "excel_rel": 0.0,
    "library": 0.4999999999996117,
    "library_rel": 7.76601005725297e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1765:F_Survival",
@@ -389,7 +393,8 @@
    "excel_rel": 0.0,
    "library": 0.4999999999996117,
    "library_rel": 7.76601005725297e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1144:NegativeBinomial_Survival",
@@ -403,7 +408,8 @@
    "excel_rel": 3.208468220977897e-14,
    "library": 0.002401764598009878,
    "library_rel": 4.883790071644246e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L826:Binomial_Survival",
@@ -417,7 +423,8 @@
    "excel_rel": 1.5344907339210537e-16,
    "library": 0.49987384337721125,
    "library_rel": 3.167579168949649e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L825:Binomial_Cumulative",
@@ -431,7 +438,8 @@
    "excel_rel": 1.5337165845734482e-16,
    "library": 0.5001261566227887,
    "library_rel": 3.1670910707644225e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L844:Binomial_Survival",
@@ -445,7 +453,8 @@
    "excel_rel": 1.170143252600383e-13,
    "library": 0.0013428209990197148,
    "library_rel": 2.946437175029424e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "holdout:L256:NegativeBinomial_Survival",
@@ -459,7 +468,8 @@
    "excel_rel": 9.38092675397321e-16,
    "library": 0.027098115056724173,
    "library_rel": 2.2183894121648433e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L1140:NegativeBinomial_Survival",
@@ -473,7 +483,8 @@
    "excel_rel": 1.5216248859508036e-15,
    "library": 0.48081212865084244,
    "library_rel": 1.9705735103484513e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L788:Binomial_Survival",
@@ -487,7 +498,8 @@
    "excel_rel": 2.886711347338813e-17,
    "library": 0.0013454639783655284,
    "library_rel": 1.8520636962816905e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1139:NegativeBinomial_Cumulative",
@@ -501,7 +513,8 @@
    "excel_rel": 1.4091540669481601e-15,
    "library": 0.5191878713491576,
    "library_rel": 1.8249186786878116e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L1701:Beta_Survival",
@@ -515,7 +528,8 @@
    "excel_rel": 0.0,
    "library": 0.4999999999999153,
    "library_rel": 1.694200335577989e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1700:Beta_Cumulative",
@@ -529,7 +543,8 @@
    "excel_rel": 1.6283445924e-24,
    "library": 0.4999999999999153,
    "library_rel": 1.6942003355617055e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L129:StudentT_Survival",
@@ -543,7 +558,8 @@
    "excel_rel": 6.483033443050296e-17,
    "library": 0.1587762090423115,
    "library_rel": 1.5534073622444124e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L1070:NegativeBinomial_Survival",
@@ -557,7 +573,8 @@
    "excel_rel": 1.7415330198318917e-15,
    "library": 0.4747826270597918,
    "library_rel": 1.5467169868352308e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L840:Binomial_Survival",
@@ -571,7 +588,8 @@
    "excel_rel": 2.8726196727971355e-14,
    "library": 0.49984580856953614,
    "library_rel": 1.4840900115881016e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L839:Binomial_Cumulative",
@@ -585,7 +603,8 @@
    "excel_rel": 2.8708484856556366e-14,
    "library": 0.5001541914304638,
    "library_rel": 1.4820650771716893e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L784:Binomial_Survival",
@@ -599,7 +618,8 @@
    "excel_rel": 9.241960584553819e-17,
    "library": 0.49960105781926234,
    "library_rel": 1.4368515766106115e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L783:Binomial_Cumulative",
@@ -613,7 +633,8 @@
    "excel_rel": 9.227224310759304e-17,
    "library": 0.5003989421807377,
    "library_rel": 1.434560521802349e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1069:NegativeBinomial_Cumulative",
@@ -627,7 +648,8 @@
    "excel_rel": 1.5742998325400875e-15,
    "library": 0.5252173729402082,
    "library_rel": 1.3981912864314568e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L2145:Beta_Survival",
@@ -641,7 +663,8 @@
    "excel_rel": 3.7659021127378194e-15,
    "library": 0.025639016702797116,
    "library_rel": 1.38273021095393e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L2147:Beta_Survival",
@@ -655,7 +678,8 @@
    "excel_rel": 3.772015109256728e-16,
    "library": 0.49231806137154427,
    "library_rel": 1.3421697234513947e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L2148:Beta_Cumulative",
@@ -669,7 +693,8 @@
    "excel_rel": 3.772015109256728e-16,
    "library": 0.49231806137154427,
    "library_rel": 1.3421697234513947e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L2146:Beta_Cumulative",
@@ -683,7 +708,8 @@
    "excel_rel": 3.657863368292905e-16,
    "library": 0.5076819386284557,
    "library_rel": 1.302645332587458e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "main:L2149:Beta_Survival",
@@ -697,7 +723,8 @@
    "excel_rel": 3.657863368292905e-16,
    "library": 0.5076819386284557,
    "library_rel": 1.302645332587458e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #175"
   },
   {
    "kind": "holdout:L309:Hypergeometric_PMF",
@@ -711,7 +738,8 @@
    "excel_rel": 1.854409922416638e-14,
    "library": 2.6613667658927464e-84,
    "library_rel": 1.2009005471294002e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #496"
   },
   {
    "kind": "main:L1758:F_Cumulative",
@@ -725,7 +753,8 @@
    "excel_rel": 0.0,
    "library": 0.500000000000054,
    "library_rel": 1.0791367799356522e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L1759:F_Survival",
@@ -739,7 +768,8 @@
    "excel_rel": 0.0,
    "library": 0.500000000000054,
    "library_rel": 1.0791367799356522e-13,
-   "verdict": "inferior"
+   "verdict": "inferior",
+   "disposition": "issue #495"
   },
   {
    "kind": "main:L142:StudentT_InverseCumulative",
