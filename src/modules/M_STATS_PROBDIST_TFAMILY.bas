@@ -193,6 +193,7 @@ Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; v
 Private Const PROB_T_LDF_MIN_DF   As Double = 100000#  'Smallest df the expansion serves
 Private Const PROB_T_LDF_MAX_ABS_T As Double = 8#      'Largest Abs(X) the expansion serves
 Private Const PROB_T_NEAR_ONE_MAX_ABS_T As Double = 1E+100 'Largest Abs(X) squared directly above it (#213)
+Private Const PROB_T_NEAR_ONE_BELOW_MAX_ABS_T As Double = 16# 'Largest Abs(X) squared directly below that df (#365)
 Private Const PROB_T_INV_SQRT_TWO_PI As Double = _
     0.398942280401433 - 2.77555756156289E-16
 Private Const PROB_T_LDF_G1_0 As Double = 0.25
@@ -2332,6 +2333,8 @@ Private Function PROB_TryStudentTTail( _
 '       large-df expansion (#34)
 '     - DF >= PROB_T_LDF_MIN_DF above that: the incomplete beta with its
 '       small argument formed directly (#213)
+'     - DF < PROB_T_LDF_MIN_DF and AbsX <= PROB_T_NEAR_ONE_BELOW_MAX_ABS_T:
+'       the same form, where PROB_TryBetaLowerNearOne serves it (#365)
 '     - Otherwise: one half of the regularized incomplete beta
 '
 ' ERROR POLICY
@@ -2357,13 +2360,14 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TryStudentTInvTail
 '
 ' UPDATED
-'   2026-11-14
+'   2026-11-25
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
     Dim S                   As Double          'Auxiliary square-root term
+    Dim NearOneMaxAbsT      As Double          'Largest AbsX squared directly at this df
     Dim InverseX            As Double          'Reciprocal absolute argument
     Dim BetaX               As Double          'Incomplete-beta left argument
     Dim BetaY               As Double          'Incomplete-beta complement
@@ -2450,9 +2454,16 @@ Private Function PROB_TryStudentTTail( _
     '1E-5 of one, and the continued fraction at a rounded argument loses up
     'to 8E-10 relative there (#213). Form the small member directly - the
     'square is harmless at this size - and let the fraction take its
-    'complement as an exact pair. Where that route declines, the general
-    'route below answers as before
-        If DegreesFreedom >= PROB_T_LDF_MIN_DF And AbsX <= PROB_T_NEAR_ONE_MAX_ABS_T Then
+    'complement as an exact pair. Below that df the same loss reaches
+    '3.2E-12 (#365), and the same form answers up to a smaller AbsX: beyond
+    'it the final exponential sets the error and the form gains nothing.
+    'Where that route declines, the general route below answers as before
+        If DegreesFreedom >= PROB_T_LDF_MIN_DF Then
+            NearOneMaxAbsT = PROB_T_NEAR_ONE_MAX_ABS_T
+        Else
+            NearOneMaxAbsT = PROB_T_NEAR_ONE_BELOW_MAX_ABS_T
+        End If
+        If AbsX <= NearOneMaxAbsT Then
             BetaY = AbsX * AbsX
             BetaY = BetaY / (DegreesFreedom + BetaY)
             If PROB_TryBetaLowerNearOne(BetaY, 0.5 * DegreesFreedom, 0.5, Ibeta) Then
