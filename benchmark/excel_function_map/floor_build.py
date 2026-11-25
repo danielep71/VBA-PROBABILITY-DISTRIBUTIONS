@@ -98,7 +98,7 @@ EXCEL = {
     "Weibull_Density": (3, (), ["WEIBULL.DIST({a0};{a1};{a2};FALSE)"]),
     "Weibull_Cumulative": (3, (), ["WEIBULL.DIST({a0};{a1};{a2};TRUE)"]),
     "Weibull_Survival": (3, (), ["1-WEIBULL.DIST({a0};{a1};{a2};TRUE)",
-                                 "EXP(-({a0}/{a2})^{a1})"]),
+                                 "EXP(-(({a0}/{a2})^{a1}))"]),
     "Binomial_PMF": (3, (0, 1), ["BINOM.DIST({a0};{a1};{a2};FALSE)"]),
     "Binomial_Cumulative": (3, (0, 1), ["BINOM.DIST({a0};{a1};{a2};TRUE)"]),
     "Binomial_Survival": (3, (0, 1), ["1-BINOM.DIST({a0};{a1};{a2};TRUE)",

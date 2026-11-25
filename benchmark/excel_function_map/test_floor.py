@@ -38,6 +38,13 @@ class Build(unittest.TestCase):
             for form in forms:
                 form.format(**{f"a{i}": "1" for i in range(arity)})
 
+    def test_no_formulation_negates_a_power(self):
+        # Excel applies a unary minus before ^: -(x)^a raises the negated value.
+        import re
+        for fn, (_, _, forms) in B.EXCEL.items():
+            for form in forms:
+                self.assertIsNone(re.search(r"-\([^()]*\)\^", form), (fn, form))
+
     def test_committed_grid_matches_the_generator(self):
         self.assertEqual(B.main(["--check"]), 0)
 
