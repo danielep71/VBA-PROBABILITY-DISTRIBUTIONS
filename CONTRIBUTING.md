@@ -272,6 +272,26 @@ or an exact 0 or 1 where the reference differs), a monotonicity reversal, a
 `P + Q` mismatch or a wrong worksheet error always fails. Design a numerical
 change against the guarantee; spend effort on the target only when it is cheap.
 
+### Excel as the floor
+
+The library must not be less accurate than Excel anywhere the two can be
+compared. This is a release rule, and it works in two steps.
+
+- **For a release.** Where a function has a native Excel counterpart and
+  Excel's result is closer to the high-precision reference than the library's,
+  the library is corrected. The cost per call does not decide: an accuracy
+  below Excel's is fixed whatever it costs. A result inside its guarantee is
+  still a defect if Excel does better at that point.
+- **Beyond Excel.** Where the library is already at least as accurate as
+  Excel, more accuracy is not required for the release. A further improvement
+  is weighed against its cost in time and complexity, case by case.
+
+Compare like with like: the same arguments (Excel truncates some, such as
+degrees of freedom, to integers), the best direct Excel formula for the
+quantity (a right-tail function where one exists, not `1 - CDF`), and the
+same reference. A point where Excel returns an error or has no counterpart
+is not a comparison.
+
 ### Evidence by kind of change
 
 The evidence a change needs depends on what it can break (#328):
