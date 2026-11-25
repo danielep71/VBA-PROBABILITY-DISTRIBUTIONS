@@ -3,9 +3,9 @@
  "pairs": 140,
  "compared": 140,
  "excel_unusable": [],
- "ulp": 2.220446049250313e-16,
+ "floor": 1e-14,
  "excel_closer": 91,
- "excel_closer_beyond_one_ulp": 87,
+ "library_inferior": 61,
  "library_worst": 6.232435146855884e-13,
  "excel_worst": 7.210646395462469e-13,
  "points": [

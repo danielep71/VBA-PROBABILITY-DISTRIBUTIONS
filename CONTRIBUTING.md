@@ -286,6 +286,11 @@ compared. This is a release rule, and it works in two steps.
   Excel, more accuracy is not required for the release. A further improvement
   is weighed against its cost in time and complexity, case by case.
 
+The library is **inferior** at a point when Excel's relative error is smaller
+than the library's and the library's is above **1E-14**. Below that floor the
+two differ by a few units in the last place, and winning each of them would
+mean a correctly rounded result everywhere, which the rule does not ask.
+
 Compare like with like: the same arguments (Excel truncates some, such as
 degrees of freedom, to integers), the best direct Excel formula for the
 quantity (a right-tail function where one exists, not `1 - CDF`), and the

@@ -40,14 +40,15 @@ The comparison with Excel (CONTRIBUTING.md, "Excel as the floor"). Rows of
 regime "below1e5_excel" hold, at 12 integer df (Excel truncates df) and 12 t,
 the library's StudentT_Survival and Excel's own T.DIST.RT, written in the
 grid as the function Excel_T_DIST_RT, against the same reference. --compare
-lists every point where Excel is closer to the reference than the library.
+lists every point where the library is inferior: Excel is closer to the
+reference and the library's error is above FLOOR.
 
     python below1e5_study.py --append            add the map rows, once (step 1)
     python below1e5_study.py --append-holdout    add the holdout and seam rows, once
     python below1e5_study.py --map               report the map rows against the model
     python below1e5_study.py --check             judge the exported rows; exit 0 when G1-G5 hold
     python below1e5_study.py --append-excel      add the comparison rows, once
-    python below1e5_study.py --compare           library against Excel; exit 0 when Excel is nowhere closer
+    python below1e5_study.py --compare           library against Excel; exit 0 when it is nowhere inferior
 """
 import argparse
 import csv
@@ -94,7 +95,7 @@ EXCEL_OUT = os.path.join(HERE, "below1e5_excel.json")
 EXCEL_DF = (100.0, 316.0, 562.0, 1000.0, 1778.0, 1998.0, 1999.0, 2371.0, 5623.0, 10000.0,
             42170.0, 99999.0)
 EXCEL_T = (0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 8.0, 12.0, 16.0, 17.0, 24.0, 40.0)
-ULP = 2.0 ** -52         # one unit in the last place, relative: the rounding of a comparison
+FLOOR = 1e-14            # CONTRIBUTING.md: a library error at or below it is never inferior
 FORWARD = 1e-13          # G1
 SEAM_STEP = 1e-13        # G3
 INVERSE = 1e-12          # G4, the inverse guarantee of #327
@@ -304,7 +305,7 @@ def check():
 
 
 def compare():
-    """Library against Excel on the comparison rows; exit 0 when Excel is nowhere closer."""
+    """Library against Excel on the comparison rows; exit 0 when it is nowhere inferior."""
     found = grid_rows(EXCEL)
     if not found:
         print("FAIL: the grid holds no comparison rows; run --append-excel")
@@ -331,10 +332,10 @@ def compare():
         print(f"FAIL: {len(blank)} pair(s) hold no observation, first {blank[0]}: export the grid first")
         return 1
     closer = [p for p in points if p["excel_rel"] < p["library_rel"]]
-    beyond = [p for p in closer if p["library_rel"] - p["excel_rel"] > ULP]
+    beyond = [p for p in closer if p["library_rel"] > FLOOR]
     result = {"issue": "#365", "pairs": len(pairs), "compared": len(points),
-              "excel_unusable": unusable, "ulp": ULP,
-              "excel_closer": len(closer), "excel_closer_beyond_one_ulp": len(beyond),
+              "excel_unusable": unusable, "floor": FLOOR,
+              "excel_closer": len(closer), "library_inferior": len(beyond),
               "library_worst": max(p["library_rel"] for p in points),
               "excel_worst": max(p["excel_rel"] for p in points), "points": points}
     with open(EXCEL_OUT, "w", encoding="utf-8", newline="\n") as f:
@@ -344,14 +345,14 @@ def compare():
           f"Excel unusable {len(unusable)}")
     print(f"  library worst                       {result['library_worst']:.3g}")
     print(f"  Excel worst                         {result['excel_worst']:.3g}")
-    print(f"  Excel closer                        {len(closer)}, by more than one ulp {len(beyond)}")
+    print(f"  Excel closer                        {len(closer)}, library inferior {len(beyond)}")
     for p in beyond:
         print(f"    df = {p['df']:<8g} t = {p['t']:<5g} library {p['library_rel']:.3g}  "
               f"Excel {p['excel_rel']:.3g}  served {p['served']}")
     if beyond:
-        print(f"EXCEL CLOSER at {len(beyond)} point(s)")
+        print(f"INFERIOR TO EXCEL at {len(beyond)} point(s)")
         return 1
-    print("PASS: Excel is nowhere closer than the library by more than one ulp")
+    print(f"PASS: the library is nowhere inferior to Excel (floor {FLOOR:g})")
     return 0
 
 
