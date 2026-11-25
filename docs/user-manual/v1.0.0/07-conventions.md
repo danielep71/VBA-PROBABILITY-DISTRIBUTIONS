@@ -72,6 +72,8 @@ Example, Binomial with 10 trials and success probability 0.3:
 
 The smallest count whose cumulative probability reaches 0.8 is 4. Applying `Cumulative` to a returned quantile therefore gives a probability at least as large as the one you started with, usually not equal to it.
 
+A probability that lies exactly on a step returns that step's count: `=K_STATS_Binomial_InverseCumulative(0.75,2,0.5)` returns 1, because $P(X \le 1) = 0.75$. The computed cumulative value can differ from the exact one in the last binary digits, so a probability within 16 machine epsilons of a computed step value (about 3.6E-15 for a probability near 1) counts as on it. A probability further away keeps the strict rule: `=K_STATS_Geometric_InverseCumulative(0.5000000000001,0.5)` returns 1, not 0. Feeding back the value of the library's own `Cumulative` returns the count it came from; a step value taken from another program, such as Excel's `BINOM.DIST`, may differ by more than the window and return the next count.
+
 ## 7.6 Discrete parameterization
 
 **Counts.** Count arguments are truncated toward zero: `7.9` is treated as `7`. A negative count returns `#NUM!`.

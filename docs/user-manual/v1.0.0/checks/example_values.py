@@ -172,6 +172,10 @@ def build():
     add("7.5-b", "K_STATS_Binomial_Cumulative(4,10,0.3)", binom_cdf(4, 10, "0.3"))
     add("7.5-c", "K_STATS_Binomial_InverseCumulative(0.8,10,0.3)",
         least_k(lambda k: binom_cdf(k, 10, "0.3"), "0.8"))
+    add("7.5-d", "K_STATS_Binomial_InverseCumulative(0.75,2,0.5)",
+        least_k(lambda k: binom_cdf(k, 2, "0.5"), "0.75"))
+    add("7.5-e", "K_STATS_Geometric_InverseCumulative(0.5000000000001,0.5)",
+        least_k(lambda k: geom_cdf(k, "0.5"), "0.5000000000001"))
     add("7.6-a", "K_STATS_DiscreteUniform_Cumulative(2.8,-3,5)", mpf(6) / 9)
 
     # 8.1 A threshold and a tail from a Normal model
