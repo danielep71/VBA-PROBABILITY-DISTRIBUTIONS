@@ -13,6 +13,7 @@ is generated here, from a list of functions and from what Excel returned.
 | `test_map.py` | The map against the public surface, the references against known values, the renderer on made-up observations |
 | `floor_build.py` | #493: writes `excel_floor_grid.csv`, the library call and every Excel formulation at each comparable point of the main grid and the two holdouts; `--check` fails when the committed grid is not current |
 | `floor_check.py` | #493: judges the exported floor grid against the rule of `CONTRIBUTING.md` ("Excel as the floor") and writes `floor_results.json` |
+| `floor_dispositions.json` | #493: the inferior points not fixed now, each against an issue, and the functions excluded by decision; `floor_check.py` fails on an inferior point without one and on a disposition that is no longer needed |
 | `test_floor.py` | The floor tools on made-up rows, and the committed grid against its generator |
 
 ## What is checked and what is not

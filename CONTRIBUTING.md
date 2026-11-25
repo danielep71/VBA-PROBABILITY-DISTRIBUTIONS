@@ -297,6 +297,12 @@ quantity (a right-tail function where one exists, not `1 - CDF`), and the
 same reference. A point where Excel returns an error or has no counterpart
 is not a comparison.
 
+Functions that are approximations by design, such as the fast inverses, are
+outside the rule: they trade accuracy for speed on purpose and say so. A point
+that is inferior but is not corrected for the release is recorded against an
+issue in `benchmark/excel_function_map/floor_dispositions.json`; the check
+fails on an inferior point without such a record.
+
 ### Evidence by kind of change
 
 The evidence a change needs depends on what it can break (#328):

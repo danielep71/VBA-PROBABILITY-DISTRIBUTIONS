@@ -12,6 +12,12 @@ A point is NOT COMPARED when no Excel formulation returned a number. A library
 side that returned ERROR where Excel returned a number is reported apart: it
 is not an accuracy comparison, and it says so.
 
+floor_dispositions.json disposes of inferior points that are not to be fixed
+now: a function excluded by decision (an approximation by design), or a point
+recorded against an issue. The check fails on an inferior point without a
+disposition, and on a disposition whose point is no longer inferior, so the
+list cannot outlive what it excuses.
+
     python floor_check.py            report; write floor_results.json; exit 0 when nowhere inferior
     python floor_check.py --grid G   judge another copy of the grid (an artifact)
 """
@@ -31,6 +37,30 @@ import floor_build as B  # noqa: E402
 
 FLOOR = 1e-14
 OUT = os.path.join(HERE, "floor_results.json")
+DISPOSITIONS = os.path.join(HERE, "floor_dispositions.json")
+
+
+def load_dispositions(path=DISPOSITIONS):
+    with open(path, encoding="utf-8") as f:
+        d = json.load(f)
+    return d.get("functions", {}), {e["point"]: e for e in d.get("points", [])}
+
+
+def dispose(points, functions, recorded):
+    """(undisposed inferior points, stale dispositions); marks each point's disposition."""
+    open_, stale = [], []
+    inferior = {p["kind"] for p in points if p["verdict"] == "inferior"}
+    for p in points:
+        if p["verdict"] != "inferior":
+            continue
+        if p["function"] in functions:
+            p["disposition"] = "function: " + functions[p["function"]]
+        elif p["kind"] in recorded:
+            p["disposition"] = f"issue {recorded[p['kind']]['issue']}"
+        else:
+            open_.append(p)
+    stale = sorted(k for k in recorded if k not in inferior)
+    return open_, stale
 
 
 def value(bits):
@@ -64,7 +94,7 @@ def judge(rows):
             v = value(r["observed_excel"])
             if v is not None:
                 excel.append((r["excel_formula"], v))
-        p = {"source": source, "line": int(line.lstrip("L")), "function": fn,
+        p = {"kind": kind, "source": source, "line": int(line.lstrip("L")), "function": fn,
              "kstats_call": group[0]["kstats_call"], "reference": ref}
         if not excel:
             p["verdict"] = "not compared"
@@ -96,6 +126,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     ap.add_argument("--grid", default=B.GRID)
     ap.add_argument("--out", default=OUT)
+    ap.add_argument("--dispositions", default=DISPOSITIONS)
     a = ap.parse_args(argv)
     with open(a.grid, encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
@@ -108,10 +139,13 @@ def main(argv=None):
     for p in points:
         count[p["verdict"]] += 1
         by_function[p["function"]][p["verdict"]] += 1
+    functions, recorded = load_dispositions(a.dispositions)
+    open_, stale = dispose(points, functions, recorded)
     inferior = sorted((p for p in points if p["verdict"] == "inferior"),
                       key=lambda p: -p.get("library_rel", 1.0))
     result = {"issue": "#493", "floor": FLOOR, "points": len(points), "verdicts": dict(count),
               "by_function": {k: dict(v) for k, v in sorted(by_function.items())},
+              "undisposed": len(open_), "stale_dispositions": stale,
               "inferior": inferior,
               "library_error": [p for p in points if p["verdict"] == "library error"],
               "not_compared": [p for p in points if p["verdict"] == "not compared"]}
@@ -125,11 +159,19 @@ def main(argv=None):
         if v.get("inferior") or v.get("library error"):
             print(f"    {fn:<38} inferior {v.get('inferior', 0):>3} of "
                   f"{sum(v.values()):>3}; library error {v.get('library error', 0)}")
-    if inferior or count.get("library error"):
-        print(f"INFERIOR TO EXCEL at {len(inferior)} point(s); "
-              f"library error at {count.get('library error', 0)}")
+    print(f"  inferior, disposed    {len(inferior) - len(open_)}")
+    print(f"  inferior, open        {len(open_)}")
+    for p in open_:
+        print(f"    {p['kstats_call']}  library {p.get('library_rel', 1.0):.3g}  "
+              f"Excel {p.get('excel_rel', 0.0):.3g}")
+    for k in stale:
+        print(f"  stale disposition     {k}: no longer inferior; remove it")
+    if open_ or stale or count.get("library error"):
+        print(f"FAIL: {len(open_)} inferior point(s) without a disposition, {len(stale)} stale "
+              f"disposition(s), library error at {count.get('library error', 0)}")
         return 1
-    print(f"PASS: the library is nowhere inferior to Excel (floor {FLOOR:g})")
+    print(f"PASS: no inferior point without a disposition (floor {FLOOR:g}; "
+          f"{len(inferior)} disposed)")
     return 0
 
 

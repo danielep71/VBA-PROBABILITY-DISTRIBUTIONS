@@ -50,32 +50,50 @@ class Judge(unittest.TestCase):
 
     def test_inferior_needs_excel_closer_and_the_library_above_the_floor(self):
         ref = 0.25
-        self.assertEqual(self.verdict([row("m:2:X", ref, ref * (1 + 1e-13), ref)]), "inferior")
-        self.assertEqual(self.verdict([row("m:2:X", ref, ref * (1 + 5e-15), ref)]),
+        self.assertEqual(self.verdict([row("m:L2:X", ref, ref * (1 + 1e-13), ref)]), "inferior")
+        self.assertEqual(self.verdict([row("m:L2:X", ref, ref * (1 + 5e-15), ref)]),
                          "not inferior")
-        self.assertEqual(self.verdict([row("m:2:X", ref * (1 + 1e-12), ref * (1 + 1e-13), ref)]),
+        self.assertEqual(self.verdict([row("m:L2:X", ref * (1 + 1e-12), ref * (1 + 1e-13), ref)]),
                          "not inferior")
 
     def test_the_most_accurate_excel_formulation_is_used(self):
         ref = 0.25
-        rows = [row("m:2:X", ref * (1 + 1e-10), ref * (1 + 1e-13), ref, "A"),
-                row("m:2:X", ref, ref * (1 + 1e-13), ref, "B")]
+        rows = [row("m:L2:X", ref * (1 + 1e-10), ref * (1 + 1e-13), ref, "A"),
+                row("m:L2:X", ref, ref * (1 + 1e-13), ref, "B")]
         points, _ = C.judge(rows)
         self.assertEqual(points[0]["verdict"], "inferior")
         self.assertEqual(points[0]["excel_formula"], "B")
 
     def test_errors_are_not_comparisons(self):
-        self.assertEqual(self.verdict([row("m:2:X", None, 0.25, 0.25)]), "not compared")
-        self.assertEqual(self.verdict([row("m:2:X", 0.25, None, 0.25)]), "library error")
+        self.assertEqual(self.verdict([row("m:L2:X", None, 0.25, 0.25)]), "not compared")
+        self.assertEqual(self.verdict([row("m:L2:X", 0.25, None, 0.25)]), "library error")
 
     def test_discrete_inverse_compares_counts(self):
-        kind = "m:2:Binomial_InverseCumulative"
+        kind = "m:L2:Binomial_InverseCumulative"
         self.assertEqual(self.verdict([row(kind, 3.0, 4.0, 3.0)]), "inferior")
         self.assertEqual(self.verdict([row(kind, 3.0, 3.0, 3.0)]), "not inferior")
         self.assertEqual(self.verdict([row(kind, 4.0, 3.0, 3.0)]), "not inferior")
 
+    def test_dispositions_cover_functions_and_points_and_go_stale(self):
+        ref = 0.25
+        rows = [row("m:L2:A", ref, ref * (1 + 1e-13), ref), row("m:L3:B", ref, ref * (1 + 1e-13), ref),
+                row("m:L4:C", ref, ref * (1 + 1e-13), ref), row("m:L5:D", ref, ref, ref)]
+        points, _ = C.judge(rows)
+        open_, stale = C.dispose(points, {"A": "by design"},
+                                 {"m:L3:B": {"issue": "#1"}, "m:L5:D": {"issue": "#1"}})
+        self.assertEqual([p["kind"] for p in open_], ["m:L4:C"])
+        self.assertEqual(stale, ["m:L5:D"])
+
+    def test_committed_dispositions_name_known_functions(self):
+        functions, recorded = C.load_dispositions()
+        for fn in functions:
+            self.assertIn(fn, B.EXCEL)
+        for kind, entry in recorded.items():
+            self.assertIn(kind.split(":")[2], B.EXCEL)
+            self.assertTrue(entry["issue"].startswith("#"))
+
     def test_blank_rows_are_counted(self):
-        r = row("m:2:X", 0.25, 0.25, 0.25)
+        r = row("m:L2:X", 0.25, 0.25, 0.25)
         r["observed_excel"] = r["observed_kstats"] = ""
         self.assertEqual(C.judge([r])[1], 1)
 
