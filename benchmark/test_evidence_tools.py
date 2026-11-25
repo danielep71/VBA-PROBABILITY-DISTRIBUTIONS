@@ -51,6 +51,7 @@ commands = (
     ("student_t_large_df_study/above8_study.py", "--check"),
     ("student_t_large_df_study/test_below1e5.py",),
     ("student_t_large_df_study/below1e5_study.py", "--check"),
+    ("excel_function_map/test_floor.py",),
     ("tchi_large_df/test_tchi_merge.py",),
     ("gamma_cf_study/coverage/test_precision_probe.py",),
     ("gamma_cf_study/coverage/test_precision_v2.py",),

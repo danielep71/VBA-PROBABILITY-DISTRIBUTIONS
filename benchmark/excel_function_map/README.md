@@ -11,6 +11,9 @@ is generated here, from a list of functions and from what Excel returned.
 | `M_STATS_PROBDIST_XFM.bas` | Evaluates both formulas of every row in Excel, as a cell would, and records each result as the bits of its Double (study export `xfm_examples`) |
 | `render_map.py` | Writes the section of `docs/PUBLIC_API.md` between its two markers; `--check` fails when the page is not current |
 | `test_map.py` | The map against the public surface, the references against known values, the renderer on made-up observations |
+| `floor_build.py` | #493: writes `excel_floor_grid.csv`, the library call and every Excel formulation at each comparable point of the main grid and the two holdouts; `--check` fails when the committed grid is not current |
+| `floor_check.py` | #493: judges the exported floor grid against the rule of `CONTRIBUTING.md` ("Excel as the floor") and writes `floor_results.json` |
+| `test_floor.py` | The floor tools on made-up rows, and the committed grid against its generator |
 
 ## What is checked and what is not
 

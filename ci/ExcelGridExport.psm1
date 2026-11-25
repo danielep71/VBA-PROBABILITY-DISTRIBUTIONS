@@ -47,7 +47,8 @@ $script:StudyGridNames = @(
     "prs_chisquare_holdout", "prs_gamma_q_complement", "gss_small_shape",
     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
     "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout",
-    "bic_baseline", "bic_holdout", "gcp_profile", "xfm_examples", "erb_survey"
+    "bic_baseline", "bic_holdout", "gcp_profile", "xfm_examples", "erb_survey",
+    "xfl_floor"
 )
 
 function Get-StudyGridNames {
@@ -116,7 +117,7 @@ function Get-ExportGridSpec {
                      "prs_chisquare_holdout2", "grh_route_holdout", "gis_holdout",
                      "gis_holdout2", "fip_baseline", "fip_holdout",
                      "bic_baseline", "bic_holdout", "gcp_profile",
-                     "xfm_examples", "erb_survey")]
+                     "xfm_examples", "erb_survey", "xfl_floor")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -301,6 +302,12 @@ function Get-ExportGridSpec {
                 -FileName "excel_function_map_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_ExcelFunctionMap" `
                 -Columns 7 -KeyColumns 5 -SuccessPrefix "Excel function map complete: "
+        }
+        "xfl_floor" {
+            return New-GeneratedGridSpec -Folder "excel_function_map" -Name "xfl_floor" `
+                -FileName "excel_floor_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_ExcelFloor" `
+                -Columns 7 -KeyColumns 5 -SuccessPrefix "Excel floor complete: "
         }
         "erb_survey" {
             return New-GeneratedGridSpec -Folder "error_behavior" -Name "erb_survey" `
