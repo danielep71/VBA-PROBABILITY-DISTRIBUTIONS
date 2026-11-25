@@ -156,6 +156,9 @@ def checks(context: Context) -> list[Check]:
               + (["--base", context.base] if context.base else [])),
         # Tracked binaries: approved assets/ images, or a reviewed SHA-256 in the allowlist.
         Check("binaries", [python, "tools/check_binaries.py", "--root", "."]),
+        # No tracked file names a machine (#491); runners go by their alias.
+        Check("machine-names-self-test", [python, "tools/check_machine_names.py", "--self-test"]),
+        Check("machine-names", [python, "tools/check_machine_names.py", "--root", "."]),
         Check("release-bundle-self-test",
               [python, ".github/scripts/build_release_bundle.py", "--self-test"]),
         # Relative links and anchors only; external links: .github/workflows/link-check.yml.

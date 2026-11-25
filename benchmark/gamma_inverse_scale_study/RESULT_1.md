@@ -7,7 +7,7 @@ field of `gamma_inverse_scale_grid.csv` blank. The rule was wired at
 
 ## Evidence
 
-- Excel run 43585348023 on `9e1e531`, runner `ITPF545VX1`, Excel 16.0 build
+- Excel run 43585348023 on `9e1e531`, runner `excel-runner-a`, Excel 16.0 build
   20430, 64-bit: 1,933 of 1,933 regression assertions and 13,005 of 13,005
   in the study and slow production batteries; evidence commit `ffad5ec`, the
   direct child of the candidate.

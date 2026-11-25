@@ -7,7 +7,10 @@ first Excel wave, run under `PRODUCTION_AMENDMENT_1.md`, falsified PT2
 the survival, cumulative and quantile `envelope_domain` contracts at 5E-15
 (`INVERSE_WAVE_RESULT.md`); #34 is closed. The seam study (`SEAM_STUDY.md`)
 closed #210. #213, the inverse 1.29E-12 off near `|q| = 8` at `df = 1E7`, is
-resolved by the rule of `ABOVE8_PREREGISTRATION.md` (`ABOVE8_RESULT.md`). The Defect, Result and Corrections sections record the
+resolved by the rule of `ABOVE8_PREREGISTRATION.md` (`ABOVE8_RESULT.md`). #365,
+the same loss below `df = 1E5`, is mapped in Excel (`below1e5_results.json`)
+and corrected for df from 1999 and `|t|` up to 16 by the rule of
+`BELOW1E5_PREREGISTRATION.md` (`BELOW1E5_RESULT.md`). The Defect, Result and Corrections sections record the
 derivation as it was done, before any VBA existed; see
 [Outcomes](#outcomes-2026-11-07) for what followed.
 

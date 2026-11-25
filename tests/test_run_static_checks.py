@@ -288,6 +288,7 @@ class CheckListTest(unittest.TestCase):
             "vba-identifiers", "vba-calls", "vba-layout",
             "release-semantics-self-test", "release-semantics",
             "closing-keywords-self-test", "closing-keywords", "binaries",
+            "machine-names-self-test", "machine-names",
             "release-bundle-self-test", "markdown-links", "restated-counts", "python-tests", "ruff", "mypy",
             "actionlint", "actionlint-probe"])
         for check in checks.values():

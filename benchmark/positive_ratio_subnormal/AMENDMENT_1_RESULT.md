@@ -5,7 +5,7 @@ at `1c20ef9` with blank baselines; this result was exported from that commit.
 
 ## Evidence
 
-- Excel run 43499940834 on `1c20ef9`, runner `ITPF545VX1`, Excel 16.0 build
+- Excel run 43499940834 on `1c20ef9`, runner `excel-runner-a`, Excel 16.0 build
   20430, 64-bit: 6,018 of 6,018 regression assertions; evidence commit
   `56ca24f`. The main grid and the holdout were exported in the same run and
   no observation changed.

@@ -19,6 +19,7 @@ registered in [`benchmark/verification_depth.json`](../benchmark/verification_de
 | `check_release_semantics.py` | `VERSION` is strict SemVer, `CHANGELOG.md` has exactly one `[Unreleased]`, release headings are ordered and dated, and comparison links match the repository |
 | `_gatelib.py` | Shared command-line and report helpers for the checks above |
 | `check_binaries.py` | Every tracked binary is an approved `assets/` image or has a reviewed SHA-256 in [`.github/binary-allowlist.json`](../.github/binary-allowlist.json) ([below](#tracked-binaries)); tested by `tests/test_check_binaries.py` |
+| `check_machine_names.py` | No tracked file names a machine: a default Windows name, or a line of the local, untracked deny list `.git/info/machine-names` ([#491](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/491)) |
 | `format_vba.py` | Checks (`--check`) or applies (`--write`) the [VBA source layout](#vba-source-layout), ratcheting `vba_layout_baseline.json`; its fixtures are [`tests/test_format_vba.py`](../tests/test_format_vba.py) |
 | `run_static_checks.py` | Runs every static check with one command and records the run |
 | `check_vba_identifiers.py`, `check_vba_calls.py` | Names and calls, read without Excel: an undeclared assignment, a call to a missing procedure, a keyword used as a name, a wrong argument count, a qualified call to a `Private` procedure ([VBA source checks](#vba-source-checks)); their fixtures are unit tests in [`tests/test_check_vba_names.py`](../tests/test_check_vba_names.py) |
@@ -63,6 +64,7 @@ It works on the repository that contains it, from any directory. It runs:
 | `vba-layout` | `format_vba.py --check` on every tracked VBA module, against `vba_layout_baseline.json` |
 | `release-semantics` | `check_release_semantics.py` |
 | `binaries` | `check_binaries.py` on every tracked file ([tracked binaries](#tracked-binaries)) |
+| `machine-names-self-test`, `machine-names` | `check_machine_names.py` on made-up names, then on every tracked file |
 | `release-bundle-self-test` | `.github/scripts/build_release_bundle.py --self-test` |
 | `markdown-links` | `check_links.py`: relative links and anchors in every tracked Markdown file |
 | `restated-counts` | `check_restated_counts.py`: no record-held count copied into `docs/*.md` |

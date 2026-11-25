@@ -1,0 +1,2215 @@
+{
+ "issue": "#365",
+ "rows": 314,
+ "bound": 1e-13,
+ "worst": {
+  "t": 2.0,
+  "df": 99999.99999999999,
+  "excel_rel": 3.158734730945536e-12,
+  "model_rel": 6.970913005131342e-12,
+  "excel_equals_model": false
+ },
+ "above_bound": 60,
+ "smallest_df_above_bound": 562.341325,
+ "bit_identical_to_model": 14,
+ "points": [
+  {
+   "t": 0.5,
+   "df": 100.0,
+   "excel_rel": 1.4526245767577167e-15,
+   "model_rel": 1.6322218753146206e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 100.0,
+   "excel_rel": 5.090897411332806e-16,
+   "model_rel": 5.090897411332806e-16,
+   "excel_equals_model": true
+  },
+  {
+   "t": 1.0,
+   "df": 100.0,
+   "excel_rel": 2.340950932716576e-15,
+   "model_rel": 1.1255968483002224e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 100.0,
+   "excel_rel": 1.881195001525895e-14,
+   "model_rel": 2.1856102081167933e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 100.0,
+   "excel_rel": 1.6630067747220675e-14,
+   "model_rel": 1.8357156815550128e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 100.0,
+   "excel_rel": 1.1821735261417096e-14,
+   "model_rel": 1.1058193637926226e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 100.0,
+   "excel_rel": 2.9011263311268595e-15,
+   "model_rel": 2.6780828693536537e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 100.0,
+   "excel_rel": 1.5591642796418987e-15,
+   "model_rel": 3.853635166021128e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 100.0,
+   "excel_rel": 1.6547189578740897e-14,
+   "model_rel": 1.636948574783118e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 100.0,
+   "excel_rel": 5.497039618877289e-15,
+   "model_rel": 5.668211716729905e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 100.0,
+   "excel_rel": 2.604056246731159e-14,
+   "model_rel": 2.626457849584733e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 100.0,
+   "excel_rel": 2.4631859242788124e-16,
+   "model_rel": 3.9174234251418984e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 100.0,
+   "excel_rel": 2.9404874242863703e-14,
+   "model_rel": 9.053604729734754e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 133.352143,
+   "excel_rel": 3.926071863119067e-15,
+   "model_rel": 3.926071863119067e-15,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 133.352143,
+   "excel_rel": 4.902523594381226e-15,
+   "model_rel": 5.7573380930415054e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 133.352143,
+   "excel_rel": 1.6170382700088079e-15,
+   "model_rel": 1.2691386188861602e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 133.352143,
+   "excel_rel": 2.6489189064580905e-15,
+   "model_rel": 4.0362367692652595e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 133.352143,
+   "excel_rel": 3.6554978915877684e-14,
+   "model_rel": 3.3051346513625385e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 133.352143,
+   "excel_rel": 8.35019786608003e-15,
+   "model_rel": 9.830469190080386e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 133.352143,
+   "excel_rel": 3.193463377343158e-15,
+   "model_rel": 6.307620234165882e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 133.352143,
+   "excel_rel": 6.241008842821432e-15,
+   "model_rel": 6.99676444554158e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 133.352143,
+   "excel_rel": 1.3610099051162021e-14,
+   "model_rel": 1.3230267698725374e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 133.352143,
+   "excel_rel": 4.918888743088949e-15,
+   "model_rel": 9.753731103656678e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 133.352143,
+   "excel_rel": 2.0056184746975475e-15,
+   "model_rel": 2.671146504346937e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 133.352143,
+   "excel_rel": 4.9725306493742095e-15,
+   "model_rel": 1.9409866202440068e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 133.352143,
+   "excel_rel": 2.2086037717818374e-14,
+   "model_rel": 5.073029920362048e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 177.827941,
+   "excel_rel": 3.939875748924042e-15,
+   "model_rel": 4.119612708307363e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 177.827941,
+   "excel_rel": 5.291388718933096e-15,
+   "model_rel": 5.535798895652527e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 177.827941,
+   "excel_rel": 2.3694026220670417e-15,
+   "model_rel": 3.240386306226445e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 177.827941,
+   "excel_rel": 1.747553845164279e-14,
+   "model_rel": 1.6040481868945808e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 177.827941,
+   "excel_rel": 3.4966401387461737e-14,
+   "model_rel": 4.0721475805376593e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 177.827941,
+   "excel_rel": 1.7161093308182818e-14,
+   "model_rel": 1.6037336213606343e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 177.827941,
+   "excel_rel": 7.547779673646811e-15,
+   "model_rel": 7.40172889388972e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 177.827941,
+   "excel_rel": 9.147824543052364e-16,
+   "model_rel": 4.746733807762975e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 177.827941,
+   "excel_rel": 1.8253693013242405e-14,
+   "model_rel": 1.6779809873501075e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 177.827941,
+   "excel_rel": 9.435735471919431e-15,
+   "model_rel": 9.936329156863927e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 177.827941,
+   "excel_rel": 2.951186901365188e-14,
+   "model_rel": 2.939367298975983e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 177.827941,
+   "excel_rel": 2.6748432655558106e-15,
+   "model_rel": 2.428793051139007e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 177.827941,
+   "excel_rel": 6.523658034851171e-14,
+   "model_rel": 3.676479228006259e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 237.137371,
+   "excel_rel": 6.143371073641538e-16,
+   "model_rel": 1.153682889839765e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 237.137371,
+   "excel_rel": 1.8591546852391823e-14,
+   "model_rel": 1.8102459826997293e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 237.137371,
+   "excel_rel": 2.2512901670226315e-14,
+   "model_rel": 2.111784160651102e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 237.137371,
+   "excel_rel": 7.399086758934268e-14,
+   "model_rel": 7.584199930586517e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 237.137371,
+   "excel_rel": 4.425051887613099e-14,
+   "model_rel": 4.737474617625989e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 237.137371,
+   "excel_rel": 3.754849240645211e-15,
+   "model_rel": 5.351473620897955e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 237.137371,
+   "excel_rel": 1.3557472569194761e-14,
+   "model_rel": 1.8359005126380612e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 237.137371,
+   "excel_rel": 6.38777423414088e-15,
+   "model_rel": 4.129757359295615e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 237.137371,
+   "excel_rel": 7.323618925259115e-15,
+   "model_rel": 4.34155890878661e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 237.137371,
+   "excel_rel": 1.5923361465977884e-14,
+   "model_rel": 1.5736591639132934e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 237.137371,
+   "excel_rel": 1.9829815375483567e-14,
+   "model_rel": 3.4259913048762516e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 237.137371,
+   "excel_rel": 1.0128776195511792e-15,
+   "model_rel": 1.7938313701591633e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 237.137371,
+   "excel_rel": 1.6667566340947273e-14,
+   "model_rel": 1.6667566340947273e-14,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.5,
+   "df": 316.227766,
+   "excel_rel": 1.1002131001820342e-14,
+   "model_rel": 1.1181946678404313e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 316.227766,
+   "excel_rel": 3.023930320801306e-15,
+   "model_rel": 2.4123212065818897e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 316.227766,
+   "excel_rel": 1.4058810781297642e-14,
+   "model_rel": 1.4058810781297642e-14,
+   "excel_equals_model": true
+  },
+  {
+   "t": 1.5,
+   "df": 316.227766,
+   "excel_rel": 3.404293530136136e-14,
+   "model_rel": 3.7548153492019324e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 316.227766,
+   "excel_rel": 2.7185300662628736e-14,
+   "model_rel": 3.826233426224096e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 316.227766,
+   "excel_rel": 2.681678407937883e-14,
+   "model_rel": 2.160850475474723e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 316.227766,
+   "excel_rel": 2.4805553338927808e-14,
+   "model_rel": 2.3431873693674176e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 316.227766,
+   "excel_rel": 6.57266043353766e-15,
+   "model_rel": 3.245718434558082e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 316.227766,
+   "excel_rel": 2.196044265307689e-14,
+   "model_rel": 2.129663327766259e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 316.227766,
+   "excel_rel": 8.104186870807131e-15,
+   "model_rel": 1.2326444323078726e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 316.227766,
+   "excel_rel": 1.4567031956838428e-14,
+   "model_rel": 1.5454128197462207e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 316.227766,
+   "excel_rel": 1.1345716281928309e-14,
+   "model_rel": 1.1155695308819893e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 316.227766,
+   "excel_rel": 2.690201250261617e-15,
+   "model_rel": 5.418829834855697e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 421.696503,
+   "excel_rel": 3.9934597401857026e-16,
+   "model_rel": 3.9934597401857026e-16,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 421.696503,
+   "excel_rel": 8.409155464017585e-15,
+   "model_rel": 8.776233688827353e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 421.696503,
+   "excel_rel": 3.6216344843389386e-14,
+   "model_rel": 3.5867090672868195e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 421.696503,
+   "excel_rel": 5.473115019904475e-14,
+   "model_rel": 5.349171792372053e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 421.696503,
+   "excel_rel": 3.3880236992283815e-14,
+   "model_rel": 5.5385162367339326e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 421.696503,
+   "excel_rel": 2.4614471135990556e-14,
+   "model_rel": 2.4766113857925464e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 421.696503,
+   "excel_rel": 9.509564200820694e-15,
+   "model_rel": 3.711704588428634e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 421.696503,
+   "excel_rel": 3.924192679248869e-14,
+   "model_rel": 3.8269181067228765e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 421.696503,
+   "excel_rel": 5.656510920046357e-15,
+   "model_rel": 9.94671567814419e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 421.696503,
+   "excel_rel": 2.3762357211197976e-15,
+   "model_rel": 1.6760918273328897e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 421.696503,
+   "excel_rel": 2.3151351558477837e-14,
+   "model_rel": 9.056144105854616e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 421.696503,
+   "excel_rel": 6.389971174769925e-15,
+   "model_rel": 2.2257553672754697e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 421.696503,
+   "excel_rel": 9.664683944757555e-15,
+   "model_rel": 6.655545400244808e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 562.341325,
+   "excel_rel": 1.782259678683875e-14,
+   "model_rel": 1.782259678683875e-14,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 562.341325,
+   "excel_rel": 2.2279843652261515e-14,
+   "model_rel": 2.130074272141042e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 562.341325,
+   "excel_rel": 1.285088482874494e-15,
+   "model_rel": 4.115591035386452e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 562.341325,
+   "excel_rel": 1.5940082241754516e-13,
+   "model_rel": 1.6250372353362147e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 562.341325,
+   "excel_rel": 2.5165257415236606e-15,
+   "model_rel": 2.2285573806890805e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 562.341325,
+   "excel_rel": 5.315829291697388e-15,
+   "model_rel": 1.116102444972992e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 562.341325,
+   "excel_rel": 1.3391854362571274e-14,
+   "model_rel": 1.0560836237865315e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 562.341325,
+   "excel_rel": 4.249205544304641e-15,
+   "model_rel": 4.249205544304641e-15,
+   "excel_equals_model": true
+  },
+  {
+   "t": 8.0,
+   "df": 562.341325,
+   "excel_rel": 1.4470039370390686e-14,
+   "model_rel": 1.1818087840956288e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 562.341325,
+   "excel_rel": 3.382484576284152e-14,
+   "model_rel": 2.5962192364113626e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 562.341325,
+   "excel_rel": 2.897201111671588e-14,
+   "model_rel": 2.910374806215953e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 562.341325,
+   "excel_rel": 7.111036904347313e-14,
+   "model_rel": 9.960753859713863e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 562.341325,
+   "excel_rel": 6.438797265084439e-14,
+   "model_rel": 6.41638054878496e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 749.894209,
+   "excel_rel": 1.4494432005215688e-15,
+   "model_rel": 1.2695689489230767e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 749.894209,
+   "excel_rel": 3.283818885879239e-14,
+   "model_rel": 3.21037361645384e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 749.894209,
+   "excel_rel": 1.5598198791634926e-14,
+   "model_rel": 1.5073903724045897e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 749.894209,
+   "excel_rel": 2.522702423966098e-13,
+   "model_rel": 2.4895701619054716e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 749.894209,
+   "excel_rel": 2.503280742126873e-14,
+   "model_rel": 8.540624766230788e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 749.894209,
+   "excel_rel": 2.8090325242947814e-14,
+   "model_rel": 4.5971062524955305e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 749.894209,
+   "excel_rel": 9.908006478470859e-15,
+   "model_rel": 1.6526651317020772e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 749.894209,
+   "excel_rel": 3.2781062404047076e-14,
+   "model_rel": 3.4532681909957885e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 749.894209,
+   "excel_rel": 2.1347696827609164e-16,
+   "model_rel": 1.2164485331907682e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 749.894209,
+   "excel_rel": 1.8787206978758465e-14,
+   "model_rel": 1.956702365694238e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 749.894209,
+   "excel_rel": 1.0273082471092841e-14,
+   "model_rel": 3.200210020152182e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 749.894209,
+   "excel_rel": 3.667471857743917e-14,
+   "model_rel": 3.590866790599018e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 749.894209,
+   "excel_rel": 1.0613585707719171e-14,
+   "model_rel": 6.705122946815728e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 1000.0,
+   "excel_rel": 3.0016358183081534e-14,
+   "model_rel": 2.983647324109215e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 1000.0,
+   "excel_rel": 4.4331181107517495e-14,
+   "model_rel": 4.518815374103182e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 1000.0,
+   "excel_rel": 1.5534073622467525e-13,
+   "model_rel": 1.5534073622467525e-13,
+   "excel_equals_model": true
+  },
+  {
+   "t": 1.5,
+   "df": 1000.0,
+   "excel_rel": 1.0822415894327621e-13,
+   "model_rel": 1.1381962168048553e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 1000.0,
+   "excel_rel": 3.811010099932341e-14,
+   "model_rel": 3.856490816830105e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 1000.0,
+   "excel_rel": 6.36695315289934e-14,
+   "model_rel": 6.398303096970789e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 1000.0,
+   "excel_rel": 1.796308955441054e-14,
+   "model_rel": 2.3144182403176794e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 1000.0,
+   "excel_rel": 2.6305347545911527e-14,
+   "model_rel": 2.825669186432243e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 1000.0,
+   "excel_rel": 1.06954747844827e-15,
+   "model_rel": 2.220610852047789e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 1000.0,
+   "excel_rel": 3.4301051816360296e-14,
+   "model_rel": 3.490868358106472e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 1000.0,
+   "excel_rel": 2.308637319005584e-14,
+   "model_rel": 2.29197784612513e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 1000.0,
+   "excel_rel": 6.245740549490985e-14,
+   "model_rel": 6.318849262529643e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 1000.0,
+   "excel_rel": 1.127584466018965e-13,
+   "model_rel": 1.1250063080634128e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 1333.521432,
+   "excel_rel": 1.1114691285891864e-14,
+   "model_rel": 1.0934798325680555e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 1333.521432,
+   "excel_rel": 4.53219727711207e-14,
+   "model_rel": 4.5199536197108605e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 1333.521432,
+   "excel_rel": 1.639719251917669e-13,
+   "model_rel": 1.6467129606246048e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 1333.521432,
+   "excel_rel": 2.170812041627322e-13,
+   "model_rel": 2.1604439632460715e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 1333.521432,
+   "excel_rel": 2.0875637262655184e-14,
+   "model_rel": 4.28904854168975e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 1333.521432,
+   "excel_rel": 3.3020928468609875e-14,
+   "model_rel": 2.639717896959646e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 1333.521432,
+   "excel_rel": 8.719360789466318e-15,
+   "model_rel": 1.903732374659839e-18,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 1333.521432,
+   "excel_rel": 6.771253134666003e-14,
+   "model_rel": 6.706076859117852e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 1333.521432,
+   "excel_rel": 8.512753602927603e-14,
+   "model_rel": 8.395026812975486e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 1333.521432,
+   "excel_rel": 1.2122921848471157e-14,
+   "model_rel": 2.6896040924019966e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 1333.521432,
+   "excel_rel": 9.560154731163937e-14,
+   "model_rel": 9.511567922498219e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 1333.521432,
+   "excel_rel": 3.2457108886397e-14,
+   "model_rel": 3.3018645108101786e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 1333.521432,
+   "excel_rel": 1.3920047417259212e-14,
+   "model_rel": 9.98826697148988e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 1778.27941,
+   "excel_rel": 7.691249986259645e-14,
+   "model_rel": 7.691249986259645e-14,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 1778.27941,
+   "excel_rel": 1.2464802777869976e-13,
+   "model_rel": 1.248929187969329e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 1778.27941,
+   "excel_rel": 1.2571341332579065e-13,
+   "model_rel": 1.2571341332579065e-13,
+   "excel_equals_model": true
+  },
+  {
+   "t": 1.5,
+   "df": 1778.27941,
+   "excel_rel": 1.2724864726112483e-13,
+   "model_rel": 1.2475920751047675e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 1778.27941,
+   "excel_rel": 1.385523171725705e-13,
+   "model_rel": 2.0178224878177562e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 1778.27941,
+   "excel_rel": 7.612030349214285e-14,
+   "model_rel": 1.1652067569491161e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 1778.27941,
+   "excel_rel": 9.105057261582012e-14,
+   "model_rel": 1.18797640572388e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 1778.27941,
+   "excel_rel": 5.129396710850131e-14,
+   "model_rel": 4.747936462014187e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 1778.27941,
+   "excel_rel": 3.327993528550251e-14,
+   "model_rel": 3.6652598016941494e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 1778.27941,
+   "excel_rel": 7.777469601245339e-14,
+   "model_rel": 7.721570683948777e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 1778.27941,
+   "excel_rel": 8.525360945429946e-15,
+   "model_rel": 9.653033366515985e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 1778.27941,
+   "excel_rel": 6.445964566516275e-14,
+   "model_rel": 6.445964566516275e-14,
+   "excel_equals_model": true
+  },
+  {
+   "t": 40.0,
+   "df": 1778.27941,
+   "excel_rel": 1.2638506263058342e-13,
+   "model_rel": 1.2624283915008194e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 2371.373706,
+   "excel_rel": 2.2079136471637e-16,
+   "model_rel": 2.2079136471637e-16,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 2371.373706,
+   "excel_rel": 5.4439339518994786e-17,
+   "model_rel": 5.442481827004111e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 2371.373706,
+   "excel_rel": 1.3489628435483348e-15,
+   "model_rel": 5.747880976080795e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 2371.373706,
+   "excel_rel": 5.883760009889853e-15,
+   "model_rel": 1.343829007696049e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 2371.373706,
+   "excel_rel": 5.09300553858087e-14,
+   "model_rel": 2.035361323976848e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 2371.373706,
+   "excel_rel": 2.975762513902777e-14,
+   "model_rel": 4.2316993851103976e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 2371.373706,
+   "excel_rel": 4.052652538435317e-14,
+   "model_rel": 3.32605374270284e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 2371.373706,
+   "excel_rel": 9.548723547925552e-15,
+   "model_rel": 1.9180413052903033e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 2371.373706,
+   "excel_rel": 4.8285520653432945e-15,
+   "model_rel": 4.178135036551239e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 2371.373706,
+   "excel_rel": 2.5444346553094025e-14,
+   "model_rel": 2.6176103310655977e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 2371.373706,
+   "excel_rel": 6.566902842814614e-15,
+   "model_rel": 7.248795345573463e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 2371.373706,
+   "excel_rel": 4.1424214494176707e-13,
+   "model_rel": 3.8454261026658386e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 2371.373706,
+   "excel_rel": 8.163297578769086e-13,
+   "model_rel": 7.0240089887594e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 3162.27766,
+   "excel_rel": 1.0548622547783101e-16,
+   "model_rel": 1.3648342904970216e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 3162.27766,
+   "excel_rel": 1.1250065538118618e-15,
+   "model_rel": 2.678058942926311e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 3162.27766,
+   "excel_rel": 1.2904534105379036e-15,
+   "model_rel": 1.990055445783109e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 3162.27766,
+   "excel_rel": 6.598781187941035e-16,
+   "model_rel": 8.962831605370807e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 3162.27766,
+   "excel_rel": 5.6181263948181917e-14,
+   "model_rel": 6.835859577022088e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 3162.27766,
+   "excel_rel": 9.996956879636878e-14,
+   "model_rel": 1.4220818391333865e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 3162.27766,
+   "excel_rel": 3.435494213198758e-14,
+   "model_rel": 5.21340866629077e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 3162.27766,
+   "excel_rel": 3.032653101934217e-14,
+   "model_rel": 3.522190632111068e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 3162.27766,
+   "excel_rel": 1.8480783880796656e-14,
+   "model_rel": 9.587455637253346e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 3162.27766,
+   "excel_rel": 2.9399381053184116e-15,
+   "model_rel": 2.258231451610721e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 3162.27766,
+   "excel_rel": 4.3783686500042036e-14,
+   "model_rel": 7.172145070968103e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 3162.27766,
+   "excel_rel": 8.833942238475839e-15,
+   "model_rel": 8.208150232570802e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 3162.27766,
+   "excel_rel": 8.506417524173746e-14,
+   "model_rel": 2.855102868480938e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 4216.965034,
+   "excel_rel": 2.1850507642055725e-16,
+   "model_rel": 5.011325356864411e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 4216.965034,
+   "excel_rel": 1.3724894161403148e-16,
+   "model_rel": 1.0767307170877072e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 4216.965034,
+   "excel_rel": 6.520110113957451e-16,
+   "model_rel": 2.9258547134660564e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 4216.965034,
+   "excel_rel": 5.726284375300344e-15,
+   "model_rel": 1.1588071559294068e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 4216.965034,
+   "excel_rel": 1.5566861450519113e-14,
+   "model_rel": 8.098372626565348e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 4216.965034,
+   "excel_rel": 2.0144283266011292e-14,
+   "model_rel": 5.3841135591733506e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 4216.965034,
+   "excel_rel": 7.670917348603226e-14,
+   "model_rel": 1.0426519680388123e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 4216.965034,
+   "excel_rel": 1.1825366358628678e-15,
+   "model_rel": 2.322729924707963e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 4216.965034,
+   "excel_rel": 1.1406961333182696e-14,
+   "model_rel": 1.3757430229002796e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 4216.965034,
+   "excel_rel": 2.585187508696034e-14,
+   "model_rel": 2.49410667179955e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 4216.965034,
+   "excel_rel": 8.669749920983429e-15,
+   "model_rel": 9.81996096233635e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 4216.965034,
+   "excel_rel": 1.686145989306788e-13,
+   "model_rel": 1.7050945744273942e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 40.0,
+   "df": 4216.965034,
+   "excel_rel": 1.3077171836344946e-13,
+   "model_rel": 3.5773405212182293e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 5623.413252,
+   "excel_rel": 2.4951515585595875e-16,
+   "model_rel": 1.688805598197273e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 5623.413252,
+   "excel_rel": 5.352999975676348e-16,
+   "model_rel": 1.6790849651706176e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 5623.413252,
+   "excel_rel": 1.0113042422416785e-15,
+   "model_rel": 3.1162839066775053e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 5623.413252,
+   "excel_rel": 3.865214113821217e-15,
+   "model_rel": 3.4499307540840547e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 5623.413252,
+   "excel_rel": 3.2242408912396334e-13,
+   "model_rel": 1.8211753522112188e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 5623.413252,
+   "excel_rel": 3.503220539682564e-14,
+   "model_rel": 8.251896151646993e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 5623.413252,
+   "excel_rel": 9.292074042676002e-15,
+   "model_rel": 6.442716809863021e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 5623.413252,
+   "excel_rel": 2.979943205673047e-14,
+   "model_rel": 2.0526512946386708e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 5623.413252,
+   "excel_rel": 2.5983492387177766e-14,
+   "model_rel": 2.900937688301786e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 5623.413252,
+   "excel_rel": 6.431347101072843e-14,
+   "model_rel": 6.554262120054997e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 5623.413252,
+   "excel_rel": 1.3975559593297513e-13,
+   "model_rel": 1.530759386813954e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 5623.413252,
+   "excel_rel": 1.2367702649968018e-13,
+   "model_rel": 6.74908366226284e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 7498.942093,
+   "excel_rel": 1.6187345692160672e-16,
+   "model_rel": 1.8039274918558537e-17,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 7498.942093,
+   "excel_rel": 9.336643076278096e-16,
+   "model_rel": 1.668460030311807e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 7498.942093,
+   "excel_rel": 9.178077378015555e-16,
+   "model_rel": 3.066665226209111e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 7498.942093,
+   "excel_rel": 4.991210619335495e-15,
+   "model_rel": 2.2915852255568272e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 7498.942093,
+   "excel_rel": 1.0224575257425527e-13,
+   "model_rel": 5.670099641219148e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 7498.942093,
+   "excel_rel": 7.984832285712663e-14,
+   "model_rel": 1.2451859208206282e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 7498.942093,
+   "excel_rel": 5.656997144885247e-15,
+   "model_rel": 8.321949085885916e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 7498.942093,
+   "excel_rel": 1.0727704189581658e-14,
+   "model_rel": 5.2188970909666943e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 7498.942093,
+   "excel_rel": 2.844567387692921e-14,
+   "model_rel": 2.0315427143844197e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 7498.942093,
+   "excel_rel": 1.9586255540362135e-14,
+   "model_rel": 2.209253140632246e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 7498.942093,
+   "excel_rel": 2.6008501375313525e-14,
+   "model_rel": 3.053491702133468e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 7498.942093,
+   "excel_rel": 8.782426787788967e-14,
+   "model_rel": 8.94497563881018e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 10000.0,
+   "excel_rel": 5.968208931194849e-16,
+   "model_rel": 9.566484963746914e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 10000.0,
+   "excel_rel": 4.642718904937536e-16,
+   "model_rel": 2.559828431477821e-17,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 10000.0,
+   "excel_rel": 2.5356894050804844e-15,
+   "model_rel": 2.7106187477390044e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 10000.0,
+   "excel_rel": 8.80778870921943e-16,
+   "model_rel": 6.803375643915242e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 10000.0,
+   "excel_rel": 3.8526098455879245e-13,
+   "model_rel": 6.374225114121575e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 10000.0,
+   "excel_rel": 2.2239033136604837e-13,
+   "model_rel": 2.394209344326024e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 10000.0,
+   "excel_rel": 3.022664337228336e-14,
+   "model_rel": 5.797597254276682e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 10000.0,
+   "excel_rel": 2.9680156897151988e-15,
+   "model_rel": 2.765436063912513e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 10000.0,
+   "excel_rel": 5.078652103859582e-14,
+   "model_rel": 3.080988062749159e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 10000.0,
+   "excel_rel": 3.1668178876790805e-14,
+   "model_rel": 4.116533567599016e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 10000.0,
+   "excel_rel": 1.3190971238976003e-13,
+   "model_rel": 1.3400601901039516e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 10000.0,
+   "excel_rel": 2.1189120751178194e-13,
+   "model_rel": 2.1348468011207344e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 13335.214322,
+   "excel_rel": 1.691222702435398e-16,
+   "model_rel": 1.907069374976605e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 13335.214322,
+   "excel_rel": 1.239453535726951e-15,
+   "model_rel": 1.4766175566670095e-17,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 13335.214322,
+   "excel_rel": 2.9101672802040533e-15,
+   "model_rel": 1.5107058512489145e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 13335.214322,
+   "excel_rel": 6.974507634454967e-15,
+   "model_rel": 1.7566805846149135e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 13335.214322,
+   "excel_rel": 5.025639978747145e-13,
+   "model_rel": 4.508887174910356e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 13335.214322,
+   "excel_rel": 8.42754829542563e-14,
+   "model_rel": 1.9298496531345178e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 13335.214322,
+   "excel_rel": 8.60564789654574e-14,
+   "model_rel": 1.7139240322227593e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 13335.214322,
+   "excel_rel": 7.618352372848638e-15,
+   "model_rel": 4.76634231280681e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 13335.214322,
+   "excel_rel": 3.879726383227765e-14,
+   "model_rel": 5.110156803105062e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 13335.214322,
+   "excel_rel": 1.0231611090050193e-14,
+   "model_rel": 2.781063751938262e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 13335.214322,
+   "excel_rel": 1.8396372766820595e-14,
+   "model_rel": 2.1526710326331486e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 13335.214322,
+   "excel_rel": 1.1001380333792166e-13,
+   "model_rel": 1.689581391332049e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 17782.7941,
+   "excel_rel": 1.8680875754295944e-17,
+   "model_rel": 1.9859608123104175e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 17782.7941,
+   "excel_rel": 8.257718612210599e-16,
+   "model_rel": 2.1342371047922568e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 17782.7941,
+   "excel_rel": 1.0108468694231812e-15,
+   "model_rel": 4.860413283792111e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 17782.7941,
+   "excel_rel": 2.9462965552259306e-15,
+   "model_rel": 1.1462050841911578e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 17782.7941,
+   "excel_rel": 2.399960065604331e-13,
+   "model_rel": 1.1369127179063492e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 17782.7941,
+   "excel_rel": 4.802815880665731e-14,
+   "model_rel": 2.1886744739664572e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 17782.7941,
+   "excel_rel": 1.936037685119192e-13,
+   "model_rel": 5.232224265327149e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 17782.7941,
+   "excel_rel": 8.15083207981642e-14,
+   "model_rel": 1.2777314462353687e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 17782.7941,
+   "excel_rel": 4.705948637889457e-14,
+   "model_rel": 6.633116579462772e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 17782.7941,
+   "excel_rel": 9.113728576320964e-15,
+   "model_rel": 3.466185936460555e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 17782.7941,
+   "excel_rel": 3.1642829888523724e-14,
+   "model_rel": 3.482113684629618e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 17782.7941,
+   "excel_rel": 9.705702375866122e-14,
+   "model_rel": 9.357970270011074e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 23713.737057,
+   "excel_rel": 2.257254750873293e-16,
+   "model_rel": 5.855567883326121e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 23713.737057,
+   "excel_rel": 2.889767018976015e-16,
+   "model_rel": 2.00904500766376e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 23713.737057,
+   "excel_rel": 1.997615301154732e-16,
+   "model_rel": 6.749237520951396e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 23713.737057,
+   "excel_rel": 1.7373311370222074e-15,
+   "model_rel": 6.3632896525166794e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 23713.737057,
+   "excel_rel": 4.405925531768289e-13,
+   "model_rel": 7.743365377327566e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 23713.737057,
+   "excel_rel": 2.1673639384341176e-14,
+   "model_rel": 5.442970270296986e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 23713.737057,
+   "excel_rel": 1.2455915792522413e-13,
+   "model_rel": 1.387870163914161e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 23713.737057,
+   "excel_rel": 5.5495000093387633e-14,
+   "model_rel": 1.330611882175817e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 23713.737057,
+   "excel_rel": 1.4478803758410132e-14,
+   "model_rel": 6.891131376919132e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 23713.737057,
+   "excel_rel": 1.666569706943111e-14,
+   "model_rel": 1.8364468089471358e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 23713.737057,
+   "excel_rel": 6.331842715056293e-14,
+   "model_rel": 5.3777711792370757e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 23713.737057,
+   "excel_rel": 2.6967179681035726e-13,
+   "model_rel": 2.1507249012844385e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 31622.776602,
+   "excel_rel": 5.688423412314928e-17,
+   "model_rel": 3.0294775575106804e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 31622.776602,
+   "excel_rel": 1.6930384751133692e-16,
+   "model_rel": 8.104625804132296e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 31622.776602,
+   "excel_rel": 1.3037413353022524e-15,
+   "model_rel": 2.1784336520487924e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 31622.776602,
+   "excel_rel": 1.2171528531021874e-15,
+   "model_rel": 5.786847673989467e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 31622.776602,
+   "excel_rel": 4.3735523101592025e-13,
+   "model_rel": 1.085825752972127e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 31622.776602,
+   "excel_rel": 4.589501926750203e-13,
+   "model_rel": 6.829155966622037e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 31622.776602,
+   "excel_rel": 5.515955217468104e-13,
+   "model_rel": 6.830936820754301e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 31622.776602,
+   "excel_rel": 3.4492194205234416e-14,
+   "model_rel": 8.141914406201023e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 31622.776602,
+   "excel_rel": 9.398110504148841e-15,
+   "model_rel": 1.1601012672087252e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 31622.776602,
+   "excel_rel": 1.4213537969362284e-13,
+   "model_rel": 1.5421014464849037e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 31622.776602,
+   "excel_rel": 6.677234052217529e-14,
+   "model_rel": 6.453247433388694e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 31622.776602,
+   "excel_rel": 2.2685651706810638e-13,
+   "model_rel": 2.275570606725322e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 42169.650343,
+   "excel_rel": 6.838393001752772e-17,
+   "model_rel": 2.483001786562555e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 42169.650343,
+   "excel_rel": 6.556591726488039e-16,
+   "model_rel": 1.1455438948884387e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 42169.650343,
+   "excel_rel": 3.596322731317611e-16,
+   "model_rel": 1.0593903467340628e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 42169.650343,
+   "excel_rel": 1.32272430741679e-15,
+   "model_rel": 1.6901520477505527e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 42169.650343,
+   "excel_rel": 2.632560478786553e-12,
+   "model_rel": 2.4529380672148894e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 42169.650343,
+   "excel_rel": 1.7067734737145522e-12,
+   "model_rel": 1.447018263058213e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 42169.650343,
+   "excel_rel": 2.7063220637044024e-13,
+   "model_rel": 5.084574262589248e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 42169.650343,
+   "excel_rel": 3.3803550350521233e-14,
+   "model_rel": 1.5564195629180536e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 42169.650343,
+   "excel_rel": 2.4004292959549244e-13,
+   "model_rel": 2.221101047054564e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 42169.650343,
+   "excel_rel": 1.657625999037039e-14,
+   "model_rel": 1.334510204322052e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 42169.650343,
+   "excel_rel": 1.68035217050245e-13,
+   "model_rel": 2.0282456126644235e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 42169.650343,
+   "excel_rel": 1.2562169587341675e-13,
+   "model_rel": 1.8200995157806848e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 56234.132519,
+   "excel_rel": 7.781030962402138e-17,
+   "model_rel": 1.8769746985138174e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.75,
+   "df": 56234.132519,
+   "excel_rel": 1.4550196379590204e-15,
+   "model_rel": 1.3618240185005054e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 56234.132519,
+   "excel_rel": 1.9042922112060372e-16,
+   "model_rel": 1.5899516978285941e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 56234.132519,
+   "excel_rel": 9.494792007997112e-15,
+   "model_rel": 1.6764998761220865e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 56234.132519,
+   "excel_rel": 1.8284288533823785e-12,
+   "model_rel": 2.015071949792049e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 56234.132519,
+   "excel_rel": 4.425770399143107e-13,
+   "model_rel": 1.6303448455249777e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 56234.132519,
+   "excel_rel": 2.444882115474356e-13,
+   "model_rel": 1.3308539500691786e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 56234.132519,
+   "excel_rel": 7.19169308170511e-13,
+   "model_rel": 1.1895939405011456e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 56234.132519,
+   "excel_rel": 2.5630792581023395e-14,
+   "model_rel": 6.872165264501274e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 56234.132519,
+   "excel_rel": 2.8339990782008333e-14,
+   "model_rel": 4.3069205546883235e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 56234.132519,
+   "excel_rel": 3.430967842029546e-14,
+   "model_rel": 5.034072030877965e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 56234.132519,
+   "excel_rel": 1.2934976850314704e-13,
+   "model_rel": 1.1945094613204434e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 74989.420933,
+   "excel_rel": 8.235842820522506e-16,
+   "model_rel": 8.235842820522506e-16,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 74989.420933,
+   "excel_rel": 5.668796319145025e-16,
+   "model_rel": 1.637610524727924e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 74989.420933,
+   "excel_rel": 1.2324078427030098e-15,
+   "model_rel": 8.668829921207025e-16,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 74989.420933,
+   "excel_rel": 1.6323742672653718e-15,
+   "model_rel": 3.917320400079838e-15,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 74989.420933,
+   "excel_rel": 1.892863576070172e-12,
+   "model_rel": 1.5515853635898995e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 74989.420933,
+   "excel_rel": 2.014947852322767e-12,
+   "model_rel": 2.1031761136341407e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 74989.420933,
+   "excel_rel": 4.112189094693592e-13,
+   "model_rel": 1.5308512441832855e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 74989.420933,
+   "excel_rel": 1.132133813659339e-13,
+   "model_rel": 3.295871379845347e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 74989.420933,
+   "excel_rel": 2.9586636095676063e-13,
+   "model_rel": 1.9068057157247187e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 74989.420933,
+   "excel_rel": 1.929322271694351e-13,
+   "model_rel": 9.902218234421798e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 74989.420933,
+   "excel_rel": 3.558314265132793e-14,
+   "model_rel": 4.3761630089526023e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 74989.420933,
+   "excel_rel": 2.0541042965379946e-13,
+   "model_rel": 1.6201134114834557e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 0.5,
+   "df": 99999.99999999999,
+   "excel_rel": 3.8522990779972915e-16,
+   "model_rel": 3.8522990779972915e-16,
+   "excel_equals_model": true
+  },
+  {
+   "t": 0.75,
+   "df": 99999.99999999999,
+   "excel_rel": 3.99240378462461e-16,
+   "model_rel": 3.1824875319932674e-17,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.0,
+   "df": 99999.99999999999,
+   "excel_rel": 5.649647014161869e-16,
+   "model_rel": 4.0140657932717425e-17,
+   "excel_equals_model": false
+  },
+  {
+   "t": 1.5,
+   "df": 99999.99999999999,
+   "excel_rel": 8.023827924780602e-15,
+   "model_rel": 1.3216928239355357e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 2.0,
+   "df": 99999.99999999999,
+   "excel_rel": 3.158734730945536e-12,
+   "model_rel": 6.970913005131342e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 3.0,
+   "df": 99999.99999999999,
+   "excel_rel": 1.955311038277022e-12,
+   "model_rel": 2.082181191637558e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 4.0,
+   "df": 99999.99999999999,
+   "excel_rel": 5.968587149924347e-13,
+   "model_rel": 1.087963594104622e-12,
+   "excel_equals_model": false
+  },
+  {
+   "t": 6.0,
+   "df": 99999.99999999999,
+   "excel_rel": 3.895186950074376e-13,
+   "model_rel": 4.5135055993145325e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 8.0,
+   "df": 99999.99999999999,
+   "excel_rel": 4.189924974792525e-13,
+   "model_rel": 6.729240117011062e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 12.0,
+   "df": 99999.99999999999,
+   "excel_rel": 1.480141790604755e-13,
+   "model_rel": 2.2768378590928656e-13,
+   "excel_equals_model": false
+  },
+  {
+   "t": 16.0,
+   "df": 99999.99999999999,
+   "excel_rel": 5.20797106009994e-14,
+   "model_rel": 1.0275852157738923e-14,
+   "excel_equals_model": false
+  },
+  {
+   "t": 24.0,
+   "df": 99999.99999999999,
+   "excel_rel": 2.5530824400225147e-14,
+   "model_rel": 4.5994415786794375e-14,
+   "excel_equals_model": false
+  }
+ ]
+}
