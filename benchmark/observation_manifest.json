@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-25T13:06:14Z",
-  "commit_sha": "23095a0",
+  "generated_utc": "2026-11-25T19:07:23Z",
+  "commit_sha": "2a6cf70",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -30,7 +30,7 @@
     "benchmark/envelope_probe/M_STATS_PROBDIST_ENVPROBE.bas": "sha256:7001714e110d1b92572ff314e9bfdbcf8c79be657673fe1b2e5f423f8a27d710",
     "benchmark/error_behavior/M_STATS_PROBDIST_ERB.bas": "sha256:ebab9170fccc913e1da4397777a107dc70c92f1bf22a687715fedf5a0a9868ea",
     "benchmark/excel_comparison/M_STATS_PROBDIST_XLCMP.bas": "sha256:4362852f6a1858be54ff3f5a264c401abe337f633a8afcdc13f841c6a424c316",
-    "benchmark/excel_function_map/M_STATS_PROBDIST_XFM.bas": "sha256:5bafd7b3703007a0aa1af486fd5496fb03b822a1c15a467171b15ca974cd20ca",
+    "benchmark/excel_function_map/M_STATS_PROBDIST_XFM.bas": "sha256:7f24f249059c01e4feaac3f0ddd207c934f2bc43c47b05d4e0d5a3c3e9b17ac4",
     "benchmark/expm1_saturation/M_STATS_PROBDIST_EXPM1PROBE.bas": "sha256:120015422d675c5b417a06bebc9a03d4fb8dda2527b5cfcac28f8c2b291988ab",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:d332cad0a17d4bb78d8d2d1a682697d8f2e2cb379315de0ccd0f8ef3664161dd",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:460e230db92910215bd20af8e474e133d1be2ae23b42608b248b077e48f5d01c",
@@ -63,7 +63,7 @@
     "benchmark/stirling_overflow_probe/M_STATS_PROBDIST_STIRLINGPROBE.bas": "sha256:6a6f4a640df2d7f569710fa3ff75240757eb2379744f97e5cfb084d9bef02492",
     "benchmark/survival_boundary/M_STATS_PROBDIST_SURVBOUND.bas": "sha256:5bfc37ba05afe07e6a0456515b6e8c9dbf2e5cea028e454bff2cd1c135c658e6",
     "benchmark/t_density_large_df/M_STATS_PROBDIST_TDENS.bas": "sha256:27ad78c1e271cc7086fb92139e2a5f4b82092658482ba8e1927ebaf40915d03e",
-    "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:6ea76d1463a56ff0f84f5106293f463a03df1fda7535e8f3e78ef371c46ca73f",
+    "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:9fe85a7b67fd989497ea2cd902bee946b65c93b268d5059fd2d49020d471bc77",
     "src/modules/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:a8c0fdc466ade29cedecb71e09cccf48c2ddb95ba7d45940c7e61305190d0c1a",
     "src/modules/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
     "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:2567b47ef8885a5abef31ea8f9a32e0ec528100f68b2fc4f286b3b93da0df724",

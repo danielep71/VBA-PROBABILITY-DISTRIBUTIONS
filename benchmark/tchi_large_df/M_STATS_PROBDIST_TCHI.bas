@@ -143,60 +143,121 @@ Private Function EvaluateTChi( _
     ByVal A2 As Double) _
     As String
 '
-'==============================================================================
-' EvaluateTChi
+'------------------------------------------------------------------------------
+'                            EVALUATE ONE GRID ROW
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Dispatches the public Student t and Chi-square functions and returns a
-'   string token: a full-precision number on success, or ERROR on any error.
+'   Evaluates the function a grid row names and returns a string token: a
+'   full-precision number on success, or ERROR on any error
+'
+' WHY THIS EXISTS
+'   The export loop needs one place that maps a grid name to a call and turns
+'   every kind of failure into the same token, so a failed row is flagged by
+'   the analysis instead of being counted as a pass
 '
 ' INPUTS
-'   FuncName    contract function name from the grid
-'   A1          evaluation point (x for CDF/survival, probability for inverse)
-'   A2          degrees of freedom
+'   FuncName
+'     Function name from the grid: a contract function of the library, or
+'     Excel_T_DIST_RT for Excel's own right-tail Student t
+'
+'   A1
+'     Evaluation point (x for CDF and survival, probability for inverse)
+'
+'   A2
+'     Degrees of freedom
 '
 ' RETURNS
-'   Full-precision hi;lo token, or the literal ERROR.
-'==============================================================================
+'   Full-precision hi;lo token, or the literal ERROR
 '
+' BEHAVIOR
+'   - Library names call the public K_STATS_ function
+'   - Excel_T_DIST_RT calls WorksheetFunction.T_Dist_RT, so that Excel and the
+'     library are measured on the same arguments (#365). Excel truncates the
+'     degrees of freedom to an integer
+'   - An unknown name returns ERROR
+'
+' ERROR POLICY
+'   A CVErr, a non-numeric result and a runtime error, including the one
+'   WorksheetFunction raises where the sheet would show an error value, all
+'   return ERROR. Nothing is raised to the caller
+'
+' DEPENDENCIES
+'   - K_STATS_StudentT_Cumulative, K_STATS_StudentT_Survival,
+'     K_STATS_StudentT_InverseCumulative
+'   - K_STATS_ChiSquare_Cumulative, K_STATS_ChiSquare_Survival,
+'     K_STATS_ChiSquare_InverseCumulative
+'   - Application.WorksheetFunction.T_Dist_RT
+'   - FormatFullPrecision
+'
+' NOTES
+'   None
+'
+' UPDATED
+'   2026-11-25
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim V                   As Variant         'Raw function result
+    Const PROC_NAME         As String = "M_STATS_PROBDIST_TCHI.EvaluateTChi"
+
+    Dim RawValue            As Variant         'Raw function result
+
+'------------------------------------------------------------------------------
+' INITIALIZE
+'------------------------------------------------------------------------------
+    'Turn any runtime error into the ERROR token
+        On Error GoTo ErrorHandler
+
 '------------------------------------------------------------------------------
 ' DISPATCH
 '------------------------------------------------------------------------------
-    On Error GoTo Err_Handler
+    'Call the function the row names
+        Select Case FuncName
+            Case "StudentT_Cumulative"
+                RawValue = K_STATS_StudentT_Cumulative(A1, A2)
+            Case "StudentT_Survival"
+                RawValue = K_STATS_StudentT_Survival(A1, A2)
+            Case "StudentT_InverseCumulative"
+                RawValue = K_STATS_StudentT_InverseCumulative(A1, A2)
+            Case "ChiSquare_Cumulative"
+                RawValue = K_STATS_ChiSquare_Cumulative(A1, A2)
+            Case "ChiSquare_Survival"
+                RawValue = K_STATS_ChiSquare_Survival(A1, A2)
+            Case "ChiSquare_InverseCumulative"
+                RawValue = K_STATS_ChiSquare_InverseCumulative(A1, A2)
+            Case "Excel_T_DIST_RT"
+                RawValue = Application.WorksheetFunction.T_Dist_RT(A1, A2)
+            Case Else
+                EvaluateTChi = "ERROR"
+                Exit Function
+        End Select
 
-    Select Case FuncName
-        Case "StudentT_Cumulative":         V = K_STATS_StudentT_Cumulative(A1, A2)
-        Case "StudentT_Survival":           V = K_STATS_StudentT_Survival(A1, A2)
-        Case "StudentT_InverseCumulative":  V = K_STATS_StudentT_InverseCumulative(A1, A2)
-        Case "ChiSquare_Cumulative":        V = K_STATS_ChiSquare_Cumulative(A1, A2)
-        Case "ChiSquare_Survival":          V = K_STATS_ChiSquare_Survival(A1, A2)
-        Case "ChiSquare_InverseCumulative": V = K_STATS_ChiSquare_InverseCumulative(A1, A2)
-
-        Case Else
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Format a number at full precision; flag anything else
+        If IsError(RawValue) Then
             EvaluateTChi = "ERROR"
-            Exit Function
-    End Select
+        ElseIf Not IsNumeric(RawValue) Then
+            EvaluateTChi = "ERROR"
+        Else
+            EvaluateTChi = FormatFullPrecision(CDbl(RawValue))
+        End If
+
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' EXIT PROCEDURE
 '------------------------------------------------------------------------------
-    If IsError(V) Then
-        EvaluateTChi = "ERROR"
-    ElseIf Not IsNumeric(V) Then
-        EvaluateTChi = "ERROR"
-    Else
-        EvaluateTChi = FormatFullPrecision(CDbl(V))
-    End If
-    Exit Function
+    'Exit before the error handler
+        Exit Function
 
 '------------------------------------------------------------------------------
 ' ERROR HANDLER
 '------------------------------------------------------------------------------
-Err_Handler:
-    EvaluateTChi = "ERROR"
+ErrorHandler:
+    'Report the failure as a token
+        EvaluateTChi = "ERROR"
+
 End Function
 
 
