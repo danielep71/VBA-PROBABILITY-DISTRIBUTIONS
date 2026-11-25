@@ -51,9 +51,10 @@ evaluation at its own working precision:
     references.
 
 The grid also holds the 130 seam rows of the #210 study (regime "seam"), which
-student_t_large_df_study/seam_study.py defines, and the 32 rows of #213 above
-|t| = 8 (regime "above8"), which above8_study.py defines; build() takes both
-from there.
+student_t_large_df_study/seam_study.py defines, the 32 rows of #213 above
+|t| = 8 (regime "above8"), which above8_study.py defines, and the 314 survival
+rows of #365 below df = 1E5 (regime "below1e5"), which below1e5_study.py
+defines; build() takes all three from there.
 
 The committed grid holds Excel observations. Re-reference it, changing
 reference cells only, with
@@ -261,6 +262,7 @@ def build():
 
     rows += seam_rows()
     rows += above8_rows()
+    rows += below1e5_rows()
     return rows, dropped
 
 
@@ -281,6 +283,14 @@ def above8_rows():
     sys.path.insert(0, os.path.join(os.path.dirname(HERE), "student_t_large_df_study"))
     import above8_study
     return above8_study.rows()
+
+
+def below1e5_rows():
+    """The #365 survival rows below df = 1E5 (regime "below1e5"), from the study
+    that owns them, as for the seam rows."""
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "student_t_large_df_study"))
+    import below1e5_study
+    return below1e5_study.rows()
 
 
 def main():
