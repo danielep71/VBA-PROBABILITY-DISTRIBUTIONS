@@ -87,8 +87,8 @@ evaluated them there.
 
 | Rows | Regime | What they hold |
 | ---: | --- | --- |
-| 144 | `below1e5_holdout` | `StudentT_Survival(t, df)` at 12 df from 2048 to 99999 and 12 t from 1.74 to 16, all served by the rule |
-| 36 | `below1e5_holdout` | `StudentT_Cumulative(-t, df)` at t in {2.25, 6.2, 13.7}, same df |
+| 144 | `below1e5_holdout` | `StudentT_Survival(t, df)` at 12 df from 2048 to 99999 and 12 t from 1.74 to 16, all served by the rule (one t replaced by Amendment 1) |
+| 36 | `below1e5_holdout` | `StudentT_Cumulative(-t, df)` at t in {2.25, 6.2, 13.6}, same df |
 | 12 | `below1e5_holdout` | `StudentT_InverseCumulative(p, df)` at the correctly rounded lower-tail probability of t in {2.25, 9.1}, six df |
 | 9 | `below1e5_seam` | the survival at the Doubles on either side of `t = 16`, at df in {2048, 9999, 50000} |
 | 6 | `below1e5_seam` | the survival at the Doubles on either side of df = 1999, at t in {4, 8} |
@@ -146,3 +146,25 @@ The bounds are not retuned and the result is recorded.
   `IncompleteBeta.StudentTLargeDFFarTail` is extended to df below 1E5.
 - Both stay within the 1.3E-12 guarantee and above the 1E-13 that holds
   where the rule or the expansion answers.
+
+## Amendment 1 — 2026-11-25, after the first wave
+
+Disclosed, and not a retuning: no bound, rule or prediction changes.
+
+One of the twelve holdout values of t, the tenth, equalled a shape that the
+routing holdout of #307 reserves: `gamma_route_study/check_disjoint.py`, a
+standing check of the evidence suite, requires that number to occur nowhere
+else in the repository. The registration commit did not run that suite, so
+the clash was found only when the first wave (run 45618391642, at `23095a0`)
+was applied.
+
+- The 24 rows at that value (12 survival, 12 cumulative) are replaced by the
+  same rows at `t = 13.6`. This file and `below1e5_study.py` no longer write
+  the old value.
+- The first wave had already exported the 24 replaced rows: every one was
+  within G1, worst 1.87E-14. They are not part of the evidence any more, and
+  that figure is recorded here so that their removal hides nothing.
+- The other 497 rows of the three regimes keep the observations of the first
+  wave, which accepted G1 to G5 on the registered rows. The 24 new rows are
+  exported by a second wave of the same source and judged by the same rules.
+- The model was not run on the new points before they were written.
