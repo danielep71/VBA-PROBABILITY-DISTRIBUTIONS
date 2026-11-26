@@ -2342,7 +2342,7 @@ Private Function PROB_TryDeviancePair( _
 '   error of the deviance is the relative error of the result. In one Double
 '   a deviance of size D carries D * 2^-53, and between the mean and about
 '   three times the mean it is also a difference of two larger numbers.
-'   PROB_TryDeviancePart lost up to 1.6E-12 that way where Excel is closer
+'   PROB_TryDeviancePart loses accuracy that way where Excel is closer
 '   (#498)
 '
 ' INPUTS
@@ -2537,8 +2537,8 @@ Public Function PROB_TryPoissonMassPair( _
 '   the deviance carried as a pair of Doubles to the exponential
 '
 ' WHY THIS EXISTS
-'   The logarithm of the mass in one Double lost up to 4.8E-13 relative far
-'   from the mean, where Excel is closer (#498)
+'   The logarithm of the mass in one Double loses accuracy far from the
+'   mean, where Excel is closer (#498)
 '
 ' INPUTS
 '   K
@@ -2623,10 +2623,9 @@ Public Function PROB_TryBinomialMassPair( _
 '   with both deviances and both means carried as pairs of Doubles
 '
 ' WHY THIS EXISTS
-'   The logarithm of the mass in one Double lost up to 1.6E-12 relative far
-'   from the mean, where Excel is closer (#498). Besides the deviances, the
-'   means N * p and N * (1 - p), rounded to one Double, alone cost up to
-'   1E-13
+'   The logarithm of the mass in one Double loses accuracy far from the
+'   mean, where Excel is closer (#498). Besides the deviances, the means
+'   N * p and N * (1 - p) lose accuracy when rounded to one Double
 '
 ' INPUTS
 '   K
@@ -2743,9 +2742,9 @@ Public Function PROB_TryGammaDensityPair( _
 '   standardized argument X / ScaleParam carried as pairs of Doubles
 '
 ' WHY THIS EXISTS
-'   The logarithm of the density in one Double lost up to 7.7E-13 relative
-'   far from the mean, where Excel is closer (#498). The chi-square density
-'   is this one at Shape = df / 2 and ScaleParam = 2
+'   The logarithm of the density in one Double loses accuracy far from the
+'   mean, where Excel is closer (#498). The chi-square density is this one
+'   at Shape = df / 2 and ScaleParam = 2
 '
 ' INPUTS
 '   X
