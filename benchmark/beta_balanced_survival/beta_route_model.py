@@ -471,17 +471,28 @@ def beta_cumulative(x, a, b, trace=None, **variant):
     return beta_regularized(x, D(1 - X(x)), a, b, trace, **variant)
 
 
-def beta_density(x, a, b):
-    """K_STATS_Beta_Density for 0 < x < 1: the Loader log-density.
+def beta_density(x, a, b, pair=True):
+    """K_STATS_Beta_Density for 0 < x < 1.
 
-    Ported only to validate the Loader branch against the density
-    observations, which reach PROB_TryBetaLogPdf at every shape."""
+    Since #501 the density comes from PROB_TryBetaDensityPair, whose port is
+    ../density_pair_study/density_model.py; the Loader log-density
+    (PROB_TryBetaLogPdf) is the fallback where the pair route returns FALSE,
+    and pair=False asks for it."""
     if not 0 < x < 1:
         raise NotModelled("density support edge")
     if max(a, b) > C["PROB_DENSITY_SHAPE_MAX"]:
         raise NotModelled("density shape envelope")
     if min(a, b) < 0.5:
         raise NotModelled("shape below 0.5: PROB_StirlingError small-argument recursion")
+    if pair:
+        import sys                                      # the port imports this module
+        here = os.path.join(os.path.dirname(HERE), "density_pair_study")
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import density_model
+        value = density_model.beta_density_pair(x, a, b)
+        if value is not None:
+            return value
     one_minus_x = D(1 - X(x))
     log_pdf = beta_log_pdf(x, one_minus_x, a, b, math.log(x), log1p(-x))
     try:

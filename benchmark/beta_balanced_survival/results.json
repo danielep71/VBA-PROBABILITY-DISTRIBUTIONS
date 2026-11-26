@@ -1,7 +1,7 @@
 {
  "binding": {
   "continuous:K_STATS_Beta_Cumulative": "4635ebada58095530c35db83034d99346cd883cae3f47b7c2e90328b26ac1153",
-  "continuous:K_STATS_Beta_Density": "9e03e5b84ca132a1c7652594cd5e860a1a5ec0a791dac12203f24be478ecb38a",
+  "continuous:K_STATS_Beta_Density": "fa6de4aafdaac489c3040f6b385cb88e119be0255bc7173554b174dcace3ebbe",
   "continuous:K_STATS_Beta_Survival": "d506676f2ddbca5ffded2bc02c8c92cd74cb4b05ebb720e871772f6e6ce5a0d9",
   "core:PROB_Log1p": "80f61ebba4e7f85f16a85c32df3f88ae91dc35348e6a89c389fb543db8a256ec",
   "core:PROB_TryExp": "55ccf9c562420f058a796ac195eb9fe650c81612ce5783c1e39739f340e7b13b",
@@ -23,8 +23,8 @@
     "observations": 34
    },
    "Beta_Density": {
-    "exact": 57,
-    "max_ulps": 0,
+    "exact": 56,
+    "max_ulps": 2,
     "observations": 57
    },
    "Beta_Survival": {
@@ -58,9 +58,9 @@
     "observations": 14
    }
   },
-  "exact": 246,
+  "exact": 245,
   "limit_ulps": 2,
-  "max_ulps": 0,
+  "max_ulps": 2,
   "observations": 246,
   "predates_source": {
    "beta_f_unbalanced": {
@@ -70,8 +70,8 @@
     "why": "exported 2026-07-19, before the Loader dispatch of PROB_TryBetaRegularized (2026-07-29) and the later changes to PROB_TryBetaLogPdf, PROB_TryDeviancePart and PROB_StirlingError"
    },
    "prefactor_rule": {
-    "exact": 118,
-    "max_ulps": 517,
+    "exact": 49,
+    "max_ulps": 27840934413,
     "observations": 141,
     "why": "exported before the prefactor rule of #175 (candidate 8721b6c, 2026-11-26), which changed the dispatch of PROB_TryBetaRegularized and the far branch of PROB_TryDeviancePart; these sets have no unattended export and were not exported again in that wave"
    }

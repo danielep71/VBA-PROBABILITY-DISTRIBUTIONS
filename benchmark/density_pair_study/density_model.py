@@ -39,6 +39,10 @@ M = P.M
 HALF_LOG_TWO_PI = P.HALF_LOG_TWO_PI
 
 
+RATIO_MIN, RATIO_MAX = M.C["PROB_BD0_RATIO_MIN"], M.C["PROB_BD0_RATIO_MAX"]
+X, R = M.X, M.D            # 64-bit intermediates inside an expression; the store rounds
+
+
 def _total(pair, doubles):
     for v in doubles:
         pair = P.add(pair, (v, 0.0))
@@ -46,22 +50,40 @@ def _total(pair, doubles):
 
 
 def _exp(pair):
-    return math.exp(pair[0]) * (1.0 + pair[1])
+    """PROB_TryExpPair: Exp(high) * (1 + low), one expression."""
+    return R(X(math.exp(pair[0])) * (1 + X(pair[1])))
+
+
+def _in_range(*values):
+    return all(math.isfinite(v) and RATIO_MIN <= v <= RATIO_MAX for v in values)
 
 
 def _beta_core(x, y, a, b):
-    """The Loader log-density of the Beta without its two logarithms, as a pair; x and y pairs."""
+    """PROB_TryBetaCorePair: the Loader log-density of the Beta without its two
+    logarithms, as a pair; x and y pairs. None where a deviance has no pair."""
     n = P.two_sum(a, b)
-    core = P.add(P.neg(P.deviance(a, P.mul(n, x))), P.neg(P.deviance(b, P.mul(n, y))))
-    return _total(core, (0.5 * (math.log(a) + math.log(b) - math.log(n[0])), -HALF_LOG_TWO_PI,
-                         -M.stirling_error(a), -M.stirling_error(b), M.stirling_error(n[0])))
+    mx, my = P.mul(n, x), P.mul(n, y)
+    if not _in_range(a, b, mx[0], my[0]):
+        return None
+    core = P.add(P.neg(P.deviance(a, mx)), P.neg(P.deviance(b, my)))
+    half_logs = R(X(0.5) * (X(math.log(a)) + X(math.log(b)) - X(math.log(n[0]))))
+    return _total(core, (half_logs, -HALF_LOG_TWO_PI, -M.stirling_error(a),
+                         -M.stirling_error(b), M.stirling_error(n[0])))
+
+
+def beta_density_pair(x, a, b):
+    """PROB_TryBetaDensityPair, or None where it returns FALSE."""
+    core = _beta_core((x, 0.0), P.two_sum(1.0, -x), a, b)
+    if core is None:
+        return None
+    return _exp(_total(core, (-math.log(x), -M.log1p(-x))))
 
 
 def beta_density(x, a, b, rule=True):
     if not rule:
-        return M.beta_density(x, a, b)
-    core = _beta_core((x, 0.0), P.two_sum(1.0, -x), a, b)
-    return _exp(_total(core, (-math.log(x), -M.log1p(-x))))
+        return M.beta_density(x, a, b, pair=False)
+    value = beta_density_pair(x, a, b)
+    return M.beta_density(x, a, b, pair=False) if value is None else value
 
 
 def f_density(x, d1, d2, rule=True):
@@ -70,7 +92,8 @@ def f_density(x, d1, d2, rule=True):
         r = P.div(P.two_prod(x, d1), (d2, 0.0))
         one_plus = P.add((1.0, 0.0), r)
         core = _beta_core(P.div(r, one_plus), P.div((1.0, 0.0), one_plus), a, b)
-        return _exp(_total(core, (-math.log(x),)))
+        if core is not None:
+            return _exp(_total(core, (-math.log(x),)))
     log_ratio = math.log(x) + math.log(d1) - math.log(d2)
     if log_ratio >= 0:
         e = math.exp(-log_ratio)

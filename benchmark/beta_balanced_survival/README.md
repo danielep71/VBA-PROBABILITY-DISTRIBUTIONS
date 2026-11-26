@@ -277,6 +277,19 @@ source of now.
   counted apart, under `fidelity.predates_source`.
 - The contracts are unchanged. Tightening them is a separate change.
 
+## After #501 (2026-11-26)
+
+`K_STATS_Beta_Density` no longer reaches `PROB_TryBetaLogPdf`: it takes the
+pair route of #501 (`../density_pair_study/RESULT.md`), and the Loader
+log-density is its fallback. `beta_route_model.beta_density` ports that:
+the pair route from `../density_pair_study/density_model.py`, then the
+log-density. It returns Excel's Double at 56 of the 57 Beta density
+observations it evaluates and is two units away at the other.
+
+The Beta density observations therefore no longer validate the Loader branch.
+The Beta cumulative and survival observations do, since #175 sends them there
+at every shape from 1/2.
+
 ## Reproduce
 
 ```
