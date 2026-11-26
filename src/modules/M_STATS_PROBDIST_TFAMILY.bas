@@ -828,6 +828,10 @@ Public Function K_STATS_ChiSquare_Density( _
 '     - Returns 0 for X < 0
 '     - At X = 0 the density is 0 for df > 2, 0.5 for df = 2, and unbounded
 '       for df < 2. The unbounded case returns CVErr(xlErrNum), matching Excel
+'     - On the direct branch the density comes from PROB_TryGammaDensityPair
+'       at Shape = df / 2 and scale 2, which carries the deviance as a pair
+'       of Doubles to the exponential (#498); where that route does not
+'       apply, from PROB_TryGammaLogPdf
 '
 ' ERROR POLICY
 '   Invalid numeric domains return CVErr(xlErrNum)
@@ -837,7 +841,8 @@ Public Function K_STATS_ChiSquare_Density( _
 '   No MsgBox is raised
 '
 ' DEPENDENCIES
-'   PROB_TF_ValidateXAndDF, PROB_TryGammaLogPdf, PROB_TryExp, PROB_SetStatus
+'   PROB_TF_ValidateXAndDF, PROB_TryGammaDensityPair, PROB_TryGammaLogPdf,
+'   PROB_TryExp, PROB_SetStatus
 '
 ' NOTES
 '   None
@@ -846,7 +851,7 @@ Public Function K_STATS_ChiSquare_Density( _
 '   CHISQ.DIST(X, DegreesFreedom, FALSE)
 '
 ' UPDATED
-'   2026-11-13
+'   2026-11-26
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -919,11 +924,17 @@ Public Function K_STATS_ChiSquare_Density( _
         StandardX = 0.5 * X
 
     'A positive X whose half is stored as zero, or as a subnormal below the
-    'measured cutoff, takes the log-domain form; every other argument keeps the
-    'stable Loader log-density of the shared Gamma kernel (Shape=df/2, Scale=2)
-    '(#13)
+    'measured cutoff, takes the log-domain form; every other argument takes the
+    'pair deviance of the Gamma density at Shape=df/2, Scale=2 (#498), or the
+    'Loader log-density of the shared Gamma kernel where the pair route does
+    'not apply (#13)
         If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
             = PROB_PRC_DIRECT Then
+            If PROB_TryGammaDensityPair(X, HalfDF, 2#, Log(X) - Log(2#), Log(2#), _
+                                        Density) Then
+                K_STATS_ChiSquare_Density = Density
+                GoTo Return_Success
+            End If
             If Not PROB_TryGammaLogPdf(StandardX, HalfDF, Log(X) - Log(2#), Log(2#), _
                                        LogDensity, FailMsg) Then
                 GoTo Fail_Num

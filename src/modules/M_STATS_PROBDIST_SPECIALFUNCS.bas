@@ -219,6 +219,10 @@ Private Const PROB_BETAINV_FAST_EPS    As Double = 8.9E-16 'Beta inverse: stop o
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
 Private Const PROB_BD0_RATIO_MIN        As Double = 1E-100 'Smallest deviance argument whose ratio is formed directly (#175)
 Private Const PROB_BD0_RATIO_MAX        As Double = 1E+100 'Largest deviance argument whose ratio is formed directly (#175)
+Private Const PROB_BP_LOG_TWO_HIGH      As Double = 0.693147180559945 + 3.33066907387547E-16 'Log(2), the Double nearest to it, from two 15-digit literals (#498)
+Private Const PROB_BP_LOG_TWO_LOW       As Double = 2.3190468138463E-17 'Log(2) minus PROB_BP_LOG_TWO_HIGH (#498)
+Private Const PROB_BP_ATANH_MAX_TERMS   As Long = 80       'Terms allowed to the pair logarithm of a ratio; about 22 are used (#498)
+Private Const PROB_BP_ATANH_STOP        As Double = 1E-34  'A series term at most this share of the sum ends the pair logarithm (#498)
 Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y deviance argument is formed in log space to preserve the caller''s stable logs
 
 'Positive-ratio dispatch cutoffs for ICR-P1-01A (#13). Both derive from
@@ -2315,6 +2319,518 @@ Private Function PROB_BP_InRange( _
     If Abs(VH) > 1E+100 Then Exit Function
     If Abs(VL) > 1E+100 Then Exit Function
     PROB_BP_InRange = True
+End Function
+
+
+Private Function PROB_TryDeviancePair( _
+    ByVal X As Double, _
+    ByVal MeanH As Double, _
+    ByVal MeanL As Double, _
+    ByRef DevH As Double, _
+    ByRef DevL As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                FORM THE LOADER DEVIANCE AS A PAIR OF DOUBLES
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns bd0(X, Mean) = X * Log(X / Mean) + Mean - X as a pair of Doubles
+'   whose sum is exact far below one unit of its high part
+'
+' WHY THIS EXISTS
+'   A mass function or density is Exp of minus the deviance, so the absolute
+'   error of the deviance is the relative error of the result. In one Double
+'   a deviance of size D carries D * 2^-53, and between the mean and about
+'   three times the mean it is also a difference of two larger numbers.
+'   PROB_TryDeviancePart lost up to 1.6E-12 that way where Excel is closer
+'   (#498)
+'
+' INPUTS
+'   X
+'     Observed count or shape, a Double
+'
+'   MeanH
+'     High part of the mean
+'
+'   MeanL
+'     Low part of the mean; zero when the mean is a Double
+'
+'   DevH
+'     Receives the high part of the deviance
+'
+'   DevL
+'     Receives the low part of the deviance
+'
+' RETURNS
+'   TRUE with the pair set. FALSE, with the pair untouched, when X or the
+'   mean is outside PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX or not finite,
+'   or when the series does not settle; the caller then takes
+'   PROB_TryDeviancePart
+'
+' BEHAVIOR
+'   - Scales X by a power of two so that it is within a factor Sqr(2) of the
+'     mean; the scaling is exact
+'   - Forms W = (S - Mean) / (S + Mean) in pairs, and
+'     Log(X / Mean) = K * Log(2) + 2 * (W + W^3 / 3 + W^5 / 5 + ...)
+'   - Returns X * Log(X / Mean) + (Mean - X), in pairs
+'   - One form serves every distance from the mean, X = Mean included, where
+'     W is zero and the deviance is zero
+'
+' ERROR POLICY
+'   Raises nothing: every operation stays inside the guarded range
+'
+' DEPENDENCIES
+'   PROB_BP_Sum, PROB_BP_Add, PROB_BP_Mul, PROB_BP_Div, PROB_IsFinite
+'
+' NOTES
+'   Every operation of the pair arithmetic is stored in a Double: VBA keeps
+'   64-bit intermediates inside an expression, and the error-free transforms
+'   do not survive them. benchmark/deviance_pair_study holds the model, the
+'   registration and the measurements
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Exponent            As Long            'K, the power of two that scales X
+    Dim StepIdx             As Long            'Scaling step index
+    Dim TermIdx             As Long            'Series term index
+    Dim Scaled              As Double          'S = X / 2^K
+    Dim NumH                As Double          'S - Mean, high part
+    Dim NumL                As Double          'S - Mean, low part
+    Dim DenH                As Double          'S + Mean, high part
+    Dim DenL                As Double          'S + Mean, low part
+    Dim WH                  As Double          'W, high part
+    Dim WL                  As Double          'W, low part
+    Dim W2H                 As Double          'W squared, high part
+    Dim W2L                 As Double          'W squared, low part
+    Dim PowH                As Double          'Current odd power of W, high part
+    Dim PowL                As Double          'Current odd power of W, low part
+    Dim TermH               As Double          'Current series term, high part
+    Dim TermL               As Double          'Current series term, low part
+    Dim SumH                As Double          'Series sum, high part
+    Dim SumL                As Double          'Series sum, low part
+    Dim LogH                As Double          'Log(X / Mean), high part
+    Dim LogL                As Double          'Log(X / Mean), low part
+    Dim ShiftH              As Double          'K * Log(2), high part
+    Dim ShiftL              As Double          'K * Log(2), low part
+    Dim GapH                As Double          'Mean - X, high part
+    Dim GapL                As Double          'Mean - X, low part
+    Dim Settled             As Boolean         'TRUE once the series has settled
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave arguments outside the guarded range to the caller
+        If Not PROB_IsFinite(X) Then Exit Function
+        If Not PROB_IsFinite(MeanH) Then Exit Function
+        If Not PROB_IsFinite(MeanL) Then Exit Function
+        If X < PROB_BD0_RATIO_MIN Or X > PROB_BD0_RATIO_MAX Then Exit Function
+        If MeanH < PROB_BD0_RATIO_MIN Or MeanH > PROB_BD0_RATIO_MAX Then Exit Function
+
+'------------------------------------------------------------------------------
+' SCALE X TOWARDS THE MEAN
+'------------------------------------------------------------------------------
+    'Take the power of two nearest to the ratio
+        Exponent = CLng(Log(X / MeanH) / Log(2#))
+    'Divide or multiply by two, exactly, that many times
+        Scaled = X
+        If Exponent > 0 Then
+            For StepIdx = 1 To Exponent
+                Scaled = Scaled * 0.5
+            Next StepIdx
+        ElseIf Exponent < 0 Then
+            For StepIdx = 1 To -Exponent
+                Scaled = Scaled * 2#
+            Next StepIdx
+        End If
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE RATIO
+'------------------------------------------------------------------------------
+    'Form W = (S - Mean) / (S + Mean)
+        PROB_BP_Add Scaled, 0#, -MeanH, -MeanL, NumH, NumL
+        PROB_BP_Add Scaled, 0#, MeanH, MeanL, DenH, DenL
+        PROB_BP_Div NumH, NumL, DenH, DenL, WH, WL
+        PROB_BP_Mul WH, WL, WH, WL, W2H, W2L
+    'Sum W + W^3 / 3 + W^5 / 5 + ... until a term no longer counts
+        SumH = WH
+        SumL = WL
+        PowH = WH
+        PowL = WL
+        Settled = False
+        For TermIdx = 1 To PROB_BP_ATANH_MAX_TERMS
+            PROB_BP_Mul PowH, PowL, W2H, W2L, PowH, PowL
+            PROB_BP_Div PowH, PowL, 2# * CDbl(TermIdx) + 1#, 0#, TermH, TermL
+            PROB_BP_Add SumH, SumL, TermH, TermL, SumH, SumL
+            If Abs(TermH) <= PROB_BP_ATANH_STOP * Abs(SumH) Then
+                Settled = True
+                Exit For
+            End If
+        Next TermIdx
+        If Not Settled Then Exit Function
+    'Add K * Log(2) to twice the sum
+        PROB_BP_Mul CDbl(Exponent), 0#, PROB_BP_LOG_TWO_HIGH, PROB_BP_LOG_TWO_LOW, _
+            ShiftH, ShiftL
+        PROB_BP_Add 2# * SumH, 2# * SumL, ShiftH, ShiftL, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Return X * Log(X / Mean) + (Mean - X)
+        PROB_BP_Mul X, 0#, LogH, LogL, LogH, LogL
+        PROB_BP_Add MeanH, MeanL, -X, 0#, GapH, GapL
+        PROB_BP_Add LogH, LogL, GapH, GapL, DevH, DevL
+        PROB_TryDeviancePair = True
+
+End Function
+
+
+Private Function PROB_TryExpPair( _
+    ByVal LogH As Double, _
+    ByVal LogL As Double, _
+    ByRef Result As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                   EXPONENTIATE A LOGARITHM HELD AS A PAIR
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns Exp(LogH + LogL) as Exp(LogH) * (1 + LogL)
+'
+' RETURNS
+'   TRUE with Result set; FALSE when Exp(LogH) overflows a Double
+'
+' NOTES
+'   LogL is at most half a unit of LogH, so 1 + LogL stands for Exp(LogL) to
+'   well below one unit of the result
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the high part and apply the low part as a factor
+        If Not PROB_TryExp(LogH, Result) Then Exit Function
+        Result = Result * (1# + LogL)
+        PROB_TryExpPair = True
+
+End Function
+
+
+Public Function PROB_TryPoissonMassPair( _
+    ByVal K As Double, _
+    ByVal Mean As Double, _
+    ByRef Mass As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                COMPUTE THE POISSON MASS FROM A PAIR DEVIANCE
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Poisson mass at K for a positive K and a positive Mean, with
+'   the deviance carried as a pair of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The logarithm of the mass in one Double lost up to 4.8E-13 relative far
+'   from the mean, where Excel is closer (#498)
+'
+' INPUTS
+'   K
+'     Event count, a positive integer held in a Double
+'
+'   Mean
+'     Poisson mean, positive
+'
+'   Mass
+'     Receives the mass
+'
+' RETURNS
+'   TRUE with Mass set. FALSE, with Mass not to be used, when the pair route
+'   does not apply; the caller then takes the logarithm in one Double
+'
+' BEHAVIOR
+'   - Forms bd0(K, Mean) as a pair
+'   - Adds the Stirling error, PROB_HALF_LOG_TWO_PI and Log(K) / 2, the
+'     Doubles the one-Double route uses, to the pair
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryDeviancePair, PROB_TryExpPair, PROB_BP_Add, PROB_StirlingError
+'
+' NOTES
+'   The caller handles K = 0 and a zero mean before it comes here
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim DevH                As Double          'bd0(K, Mean), high part
+    Dim DevL                As Double          'bd0(K, Mean), low part
+    Dim LogH                As Double          'Logarithm of the mass, high part
+    Dim LogL                As Double          'Logarithm of the mass, low part
+    Dim HalfLog             As Double          'Log(K) / 2
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges to the caller
+        If Not (K > 0# And Mean > 0#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Form the deviance as a pair
+        If Not PROB_TryDeviancePair(K, Mean, 0#, DevH, DevL) Then Exit Function
+    'Add the other terms of the logarithm to the pair
+        HalfLog = 0.5 * Log(K)
+        PROB_BP_Add -DevH, -DevL, -PROB_StirlingError(K), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_HALF_LOG_TWO_PI, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -HalfLog, 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryPoissonMassPair = PROB_TryExpPair(LogH, LogL, Mass)
+
+End Function
+
+
+Public Function PROB_TryBinomialMassPair( _
+    ByVal K As Double, _
+    ByVal Trials As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Mass As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                COMPUTE THE BINOMIAL MASS FROM PAIR DEVIANCES
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Binomial mass at K for 0 < K < N and 0 < ProbSuccess < 1,
+'   with both deviances and both means carried as pairs of Doubles
+'
+' WHY THIS EXISTS
+'   The logarithm of the mass in one Double lost up to 1.6E-12 relative far
+'   from the mean, where Excel is closer (#498). Besides the deviances, the
+'   means N * p and N * (1 - p), rounded to one Double, alone cost up to
+'   1E-13
+'
+' INPUTS
+'   K
+'     Success count, an integer held in a Double
+'
+'   Trials
+'     Trial count, an integer held in a Double
+'
+'   ProbSuccess
+'     Success probability
+'
+'   Mass
+'     Receives the mass
+'
+' RETURNS
+'   TRUE with Mass set. FALSE, with Mass not to be used, when the pair route
+'   does not apply; the caller then takes the logarithm in one Double
+'
+' BEHAVIOR
+'   - Forms 1 - p and N * p exactly, and N * (1 - p), as pairs
+'   - Forms bd0(K, N * p) and bd0(N - K, N * (1 - p)) as pairs
+'   - Adds the three Stirling errors, PROB_HALF_LOG_TWO_PI and the half
+'     logarithms, the Doubles the one-Double route uses, to the pair
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryDeviancePair, PROB_TryExpPair, PROB_BP_Sum, PROB_BP_Add,
+'   PROB_BP_Mul, PROB_StirlingError
+'
+' NOTES
+'   The caller handles K = 0, K = N and a probability of zero or one before
+'   it comes here
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Failures            As Double          'N - K
+    Dim QH                  As Double          '1 - p, high part
+    Dim QL                  As Double          '1 - p, low part
+    Dim NpH                 As Double          'N * p, high part
+    Dim NpL                 As Double          'N * p, low part
+    Dim NqH                 As Double          'N * (1 - p), high part
+    Dim NqL                 As Double          'N * (1 - p), low part
+    Dim DevKH               As Double          'bd0(K, N * p), high part
+    Dim DevKL               As Double          'bd0(K, N * p), low part
+    Dim DevJH               As Double          'bd0(N - K, N * (1 - p)), high part
+    Dim DevJL               As Double          'bd0(N - K, N * (1 - p)), low part
+    Dim LogH                As Double          'Logarithm of the mass, high part
+    Dim LogL                As Double          'Logarithm of the mass, low part
+    Dim HalfLogs            As Double          '(Log(K) + Log(N - K) - Log(N)) / 2
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges to the caller
+        If Not (K > 0# And K < Trials) Then Exit Function
+        If Not (ProbSuccess > 0# And ProbSuccess < 1#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE MEANS AND THE DEVIANCES
+'------------------------------------------------------------------------------
+    'Form the failure count, exact for integers
+        Failures = Trials - K
+    'Form 1 - p and the two means as pairs
+        PROB_BP_Sum 1#, -ProbSuccess, QH, QL
+        PROB_BP_Mul Trials, 0#, ProbSuccess, 0#, NpH, NpL
+        PROB_BP_Mul Trials, 0#, QH, QL, NqH, NqL
+    'Form the two deviances as pairs
+        If Not PROB_TryDeviancePair(K, NpH, NpL, DevKH, DevKL) Then Exit Function
+        If Not PROB_TryDeviancePair(Failures, NqH, NqL, DevJH, DevJL) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Add the other terms of the logarithm to the pair
+        HalfLogs = 0.5 * (Log(K) + Log(Failures) - Log(Trials))
+        PROB_BP_Add -DevKH, -DevKL, -DevJH, -DevJL, LogH, LogL
+        PROB_BP_Add LogH, LogL, PROB_StirlingError(Trials), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_StirlingError(K), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_StirlingError(Failures), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_HALF_LOG_TWO_PI, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -HalfLogs, 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryBinomialMassPair = PROB_TryExpPair(LogH, LogL, Mass)
+
+End Function
+
+
+Public Function PROB_TryGammaDensityPair( _
+    ByVal X As Double, _
+    ByVal Shape As Double, _
+    ByVal ScaleParam As Double, _
+    ByVal LogRatio As Double, _
+    ByVal LogScale As Double, _
+    ByRef Density As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                COMPUTE THE GAMMA DENSITY FROM A PAIR DEVIANCE
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Gamma density at a positive X, with the deviance and the
+'   standardized argument X / ScaleParam carried as pairs of Doubles
+'
+' WHY THIS EXISTS
+'   The logarithm of the density in one Double lost up to 7.7E-13 relative
+'   far from the mean, where Excel is closer (#498). The chi-square density
+'   is this one at Shape = df / 2 and ScaleParam = 2
+'
+' INPUTS
+'   X
+'     Argument, positive
+'
+'   Shape
+'     Shape parameter, positive
+'
+'   ScaleParam
+'     Scale parameter, positive
+'
+'   LogRatio
+'     Log(X / ScaleParam), as the caller forms it
+'
+'   LogScale
+'     Log(ScaleParam), as the caller forms it
+'
+'   Density
+'     Receives the density
+'
+' RETURNS
+'   TRUE with Density set. FALSE, with Density not to be used, when the pair
+'   route does not apply; the caller then takes PROB_TryGammaLogPdf
+'
+' BEHAVIOR
+'   - Forms X / ScaleParam as a pair
+'   - Forms bd0(Shape, X / ScaleParam) as a pair
+'   - Adds Log(Shape) / 2, LogRatio, PROB_HALF_LOG_TWO_PI, the Stirling error
+'     and LogScale, the Doubles PROB_TryGammaLogPdf uses, to the pair
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryDeviancePair, PROB_TryExpPair, PROB_BP_Add, PROB_BP_Div,
+'   PROB_StirlingError
+'
+' NOTES
+'   The caller keeps X = 0, the validation and the positive-ratio subnormal
+'   branch
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim StandardH           As Double          'X / ScaleParam, high part
+    Dim StandardL           As Double          'X / ScaleParam, low part
+    Dim DevH                As Double          'bd0(Shape, X / ScaleParam), high part
+    Dim DevL                As Double          'bd0(Shape, X / ScaleParam), low part
+    Dim LogH                As Double          'Logarithm of the density, high part
+    Dim LogL                As Double          'Logarithm of the density, low part
+    Dim HalfLog             As Double          'Log(Shape) / 2
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges and the extreme magnitudes to the caller
+        If Not (X > 0# And Shape > 0# And ScaleParam > 0#) Then Exit Function
+        If X < PROB_BD0_RATIO_MIN Or X > PROB_BD0_RATIO_MAX Then Exit Function
+        If ScaleParam < PROB_BD0_RATIO_MIN Or ScaleParam > PROB_BD0_RATIO_MAX Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE DENSITY
+'------------------------------------------------------------------------------
+    'Form the standardized argument and the deviance as pairs
+        PROB_BP_Div X, 0#, ScaleParam, 0#, StandardH, StandardL
+        If Not PROB_TryDeviancePair(Shape, StandardH, StandardL, DevH, DevL) Then Exit Function
+    'Add the other terms of the logarithm to the pair
+        HalfLog = 0.5 * Log(Shape)
+        PROB_BP_Add -DevH, -DevL, HalfLog, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -LogRatio, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_HALF_LOG_TWO_PI, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_StirlingError(Shape), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -LogScale, 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryGammaDensityPair = PROB_TryExpPair(LogH, LogL, Density)
+
 End Function
 
 Private Function PROB_TryBetaContinuedFractionPair( _

@@ -36,11 +36,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "beta_balanced_survival")
 import beta_route_model as M  # noqa: E402
 
 SPLITTER = 134217729.0                                   # 2^27 + 1
-LOG_TWO = (0.6931471805599453, 2.3190468138462996e-17)   # Log 2 as a pair
+LOG_TWO = (0.693147180559945 + 3.33066907387547e-16, 2.3190468138463e-17)   # the source's literals
 ATANH_MAX_TERMS = 80
 ATANH_STOP = 1e-34
 HALF_LOG_TWO_PI = M.C["PROB_HALF_LOG_TWO_PI"]
-LOG_UNDERFLOW = -745.0
 
 
 def two_sum(a, b):
@@ -109,12 +108,10 @@ def deviance(x, mean):
 
 
 def _finish(terms):
-    """Exp of a sum of Doubles and pairs: Exp(high) * (1 + low)."""
+    """Exp of a sum of Doubles and pairs: Exp(high) * (1 + low), as PROB_TryExpPair."""
     total = (0.0, 0.0)
     for t in terms:
         total = add(total, t if isinstance(t, tuple) else (t, 0.0))
-    if total[0] < LOG_UNDERFLOW:
-        return 0.0
     return math.exp(total[0]) * (1.0 + total[1])
 
 

@@ -223,6 +223,9 @@ Public Function K_STATS_Gamma_Density( _
 '     - If X / ScaleParam overflows, the exponential tail makes the density
 '       zero
 '     - Mathematically valid exponential underflow returns zero
+'     - On the direct branch the density comes from PROB_TryGammaDensityPair,
+'       which carries the deviance as a pair of Doubles to the exponential
+'       (#498); where that route does not apply, from PROB_TryGammaLogPdf
 '
 ' ERROR POLICY
 '   Invalid parameters, a density pole or density overflow return #NUM!
@@ -231,7 +234,7 @@ Public Function K_STATS_Gamma_Density( _
 '
 ' DEPENDENCIES
 '   PROB_CN_ValidateXShapeScale, PROB_TryDivide, PROB_TryExp,
-'   PROB_TryGammaLogPdf, PROB_SetStatus
+'   PROB_TryGammaDensityPair, PROB_TryGammaLogPdf, PROB_SetStatus
 '
 ' NOTES
 '   None
@@ -243,7 +246,7 @@ Public Function K_STATS_Gamma_Density( _
 '   Worksheet formulas, M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-11-13
+'   2026-11-26
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -327,10 +330,16 @@ Public Function K_STATS_Gamma_Density( _
         LogRatio = Log(X) - Log(ScaleParam)
 
     'A positive ratio stored as zero, or as a subnormal below the measured
-    'cutoff, takes the log-domain form; every other argument keeps the stable
-    'Loader log-density of the shared kernel (#13)
+    'cutoff, takes the log-domain form; every other argument takes the pair
+    'deviance (#498), or the Loader log-density of the shared kernel where the
+    'pair route does not apply (#13)
         If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
             = PROB_PRC_DIRECT Then
+            If PROB_TryGammaDensityPair(X, Shape, ScaleParam, LogRatio, _
+                                        Log(ScaleParam), Density) Then
+                K_STATS_Gamma_Density = Density
+                GoTo Return_Success
+            End If
             If Not PROB_TryGammaLogPdf(StandardX, Shape, LogRatio, Log(ScaleParam), _
                                        LogDensity, FailMsg) Then
                 GoTo Fail_Num
