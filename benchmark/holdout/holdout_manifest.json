@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-26T12:15:08Z",
-  "commit_sha": "87a4a9e",
+  "generated_utc": "2026-11-26T13:01:02Z",
+  "commit_sha": "e9fc3b7",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -20,15 +20,15 @@
     "expected_error"
   ],
   "observation_row_count": 659,
-  "observation_grid_sha256": "sha256:99c75439eaacbb340cf97e8e20d5f016be5a16faffb2622d6f207db961b2694f",
+  "observation_grid_sha256": "sha256:866f1d74a6d9e0e9d71998055a87ed54cce7447e3f4f4c61c1fe68f0b260f7e1",
   "source_binding": {
     "benchmark/holdout/M_STATS_PROBDIST_HOLDOUT.bas": "sha256:914a68538334c0fa127eb4f88cfa8301ce8862d53ee3b093f88d5cbd84f251f5",
-    "src/modules/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:a8c0fdc466ade29cedecb71e09cccf48c2ddb95ba7d45940c7e61305190d0c1a",
+    "src/modules/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:7632f307fc1bf4bf29e3450d5690b9b193e2222c8f40469ac73a65e4fec5c58e",
     "src/modules/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
-    "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:2567b47ef8885a5abef31ea8f9a32e0ec528100f68b2fc4f286b3b93da0df724",
+    "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:728beea0ffbfb58c17cb7dd489806369f2c69e3d909f046ca5bd9dd33f7c880a",
     "src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:4a5ebe5bce5f9e3d4e9e2b6c7d02b5cb3f4af0c915043646068ada245e8847ee",
-    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:c7ddce0b69620bac71d76f9edd72638bda848ba702bf83ffb5e60b0eba276517",
-    "src/modules/M_STATS_PROBDIST_TFAMILY.bas": "sha256:8807a33333b3dde84f659463df234fb4156b02b19cf13cdf5613f6d24ddca5f1"
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:9060df071afac45881742dc172ccdbb8258c805bb6aca5e8a5fc0b24701551e4",
+    "src/modules/M_STATS_PROBDIST_TFAMILY.bas": "sha256:5caa1053dbdc021de7ac3199591bc871c5d2888a8f9d3bb44361df4cf1b4cda6"
   },
   "contract_registry_sha256": "sha256:5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89",
   "environment": {
