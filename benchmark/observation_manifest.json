@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-26T09:27:37Z",
-  "commit_sha": "8721b6c",
+  "generated_utc": "2026-11-26T12:15:08Z",
+  "commit_sha": "87a4a9e",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -30,7 +30,7 @@
     "benchmark/envelope_probe/M_STATS_PROBDIST_ENVPROBE.bas": "sha256:7001714e110d1b92572ff314e9bfdbcf8c79be657673fe1b2e5f423f8a27d710",
     "benchmark/error_behavior/M_STATS_PROBDIST_ERB.bas": "sha256:ebab9170fccc913e1da4397777a107dc70c92f1bf22a687715fedf5a0a9868ea",
     "benchmark/excel_comparison/M_STATS_PROBDIST_XLCMP.bas": "sha256:4362852f6a1858be54ff3f5a264c401abe337f633a8afcdc13f841c6a424c316",
-    "benchmark/excel_function_map/M_STATS_PROBDIST_XFM.bas": "sha256:144db67d7e2248a83f2a55a46c2258fd8a099479037284c6ac899dcc132453f4",
+    "benchmark/excel_function_map/M_STATS_PROBDIST_XFM.bas": "sha256:005295c1486841813dc73293895a96d46ddfefd33cd9af7c3d887a6b1d68c243",
     "benchmark/expm1_saturation/M_STATS_PROBDIST_EXPM1PROBE.bas": "sha256:120015422d675c5b417a06bebc9a03d4fb8dda2527b5cfcac28f8c2b291988ab",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:d332cad0a17d4bb78d8d2d1a682697d8f2e2cb379315de0ccd0f8ef3664161dd",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:460e230db92910215bd20af8e474e133d1be2ae23b42608b248b077e48f5d01c",
