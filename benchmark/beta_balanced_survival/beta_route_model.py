@@ -68,6 +68,7 @@ BOUND_PROCEDURES = (
     ("continuous", "K_STATS_Beta_Cumulative"),
     ("continuous", "K_STATS_Beta_Density"),
     ("special", "PROB_TryBetaRegularized"),
+    ("special", "PROB_IBetaUsesLoader"),
     ("special", "PROB_TryBetaContinuedFraction"),
     ("special", "PROB_LogBeta"),
     ("special", "PROB_LogGamma"),
@@ -80,7 +81,8 @@ BOUND_PROCEDURES = (
 )
 CONSTANT_NAMES = (
     "PROB_HALF_LOG_TWO_PI", "PROB_HALF_LOG_PI", "PROB_NUM_EPS", "PROB_FPMIN",
-    "PROB_BETA_MAX_ITER", "PROB_IBETA_LOADER_MIN_SHAPE", "PROB_HALF_DIFF_CUTOFF",
+    "PROB_BETA_MAX_ITER", "PROB_IBETA_LOADER_MIN_SHAPE", "PROB_IBETA_LOADER_MIN_EACH",
+    "PROB_BD0_RATIO_MIN", "PROB_BD0_RATIO_MAX", "PROB_HALF_DIFF_CUTOFF",
     "PROB_LOGBETA_STABLE_RATIO", "PROB_LANCZOS_G", "PROB_BD0_MAX_ITER",
     "PROB_MACH_EPS", "PROB_BLP_TINY_PRODUCT", "PROB_DENSITY_SHAPE_MAX",
 ) + tuple(f"PROB_LANCZOS_P{k}" for k in range(9))
@@ -304,7 +306,13 @@ def deviance_part(x, mean):
                 return new
             s = new
         raise NotModelled("deviance series did not converge")
-    r = D(X(x) * (X(math.log(x)) - X(math.log(mean))) + X(mean) - X(x))
+    if (x < C["PROB_BD0_RATIO_MIN"] or x > C["PROB_BD0_RATIO_MAX"]
+            or mean < C["PROB_BD0_RATIO_MIN"] or mean > C["PROB_BD0_RATIO_MAX"]):
+        r = D(X(x) * (X(math.log(x)) - X(math.log(mean))) + X(mean) - X(x))
+    elif X(x) >= X(0.5) * X(mean) and X(x) <= 2 * X(mean):
+        r = D(X(x) * X(log1p(D(X(diff) / X(mean)))) - X(diff))
+    else:
+        r = D(X(x) * X(math.log(D(X(x) / X(mean)))) - X(diff))
     if r < 0:
         if abs(X(r)) <= X(C["PROB_MACH_EPS"]) * (X(x) + X(mean)):
             return 0.0
@@ -403,14 +411,20 @@ def beta_regularized(x, y, a, b, trace=None, lanczos=SOURCE_LANCZOS,
       lanczos=coeffs      PROB_LogGamma with another coefficient set.
       prefactor="loader"  the Loader branch (PROB_TryBetaLogPdf) at every
                           A + B, as if PROB_IBETA_LOADER_MIN_SHAPE were 0.
+      prefactor="sum"     the dispatch before #175: the Loader branch from
+                          A + B = PROB_IBETA_LOADER_MIN_SHAPE only.
     """
     if x <= 0:
         return 0.0
     if y <= 0:
         return 1.0
-    loader = X(a) + X(b) >= X(C["PROB_IBETA_LOADER_MIN_SHAPE"])
+    by_sum = X(a) + X(b) >= X(C["PROB_IBETA_LOADER_MIN_SHAPE"])
+    loader = by_sum or (a >= C["PROB_IBETA_LOADER_MIN_EACH"]
+                        and b >= C["PROB_IBETA_LOADER_MIN_EACH"])       # PROB_IBetaUsesLoader
     if prefactor == "loader":
         loader = True
+    elif prefactor == "sum":
+        loader = by_sum
     elif prefactor is not None:
         raise ValueError(f"unknown prefactor {prefactor!r}")
     if loader:
