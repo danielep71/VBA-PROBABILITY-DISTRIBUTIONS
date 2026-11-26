@@ -1,7 +1,8 @@
 # The incomplete-beta prefactor and the far deviance (#175)
 
-**Status (2026-11-26): registered.** The rule and its acceptance rules are in
-`PREREGISTRATION.md`. No production source has changed yet.
+**Status (2026-11-26): registered, candidate written.** The rule and its
+acceptance rules are in `PREREGISTRATION.md`, with Amendment 1. The candidate
+is in `src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas`; the Excel wave judges it.
 
 | File | Role |
 | --- | --- |

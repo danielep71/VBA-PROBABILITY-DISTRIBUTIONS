@@ -198,3 +198,28 @@ bounds are not retuned and the result is recorded.
   tail above `|t| = 16`.
 - The incomplete beta at very large shapes near the mean (#495).
 - The residual of the far deviance at large `X`, described above.
+
+## Amendment 1 — 2026-11-26, before the candidate is run in Excel
+
+Two points found while writing the rule in VBA. Neither changes a bound, a
+rule or a prediction, and no export of the candidate existed when they were
+made.
+
+- **R1 also governs `PROB_TryBetaTailsPair`.** That procedure forms the same
+  prefactor for the beta inverse, and its header says so. Leaving it on the
+  old dispatch would make the inverse solve a function that differs from the
+  forward call by the very error this rule removes. One private predicate,
+  `PROB_IBetaUsesLoader`, now decides for both. The registration said the
+  inverses only inherit the forward functions; with this they also change
+  where their own tails are formed, for shapes in the region of R1. They are
+  judged by their contracts in the gate and by the floor grid under H4.
+- **R2 keeps the two logarithms at extreme magnitudes.** `X / MeanPart`
+  overflows in VBA, as a run-time error, when the arguments are far enough
+  apart. With either argument outside 1E-100 to 1E+100 the far branch is the
+  expression of before. The model's points and the holdout are far inside
+  that range.
+
+`beta_balanced_survival/beta_route_model.py` ports the source as amended;
+`prefactor_model.py` restores the dispatch and the far deviance of before for
+the comparison, and reproduces the figures above unchanged.
+
