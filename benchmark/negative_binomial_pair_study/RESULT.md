@@ -48,7 +48,7 @@ Every changed row of every exported grid is a `NegativeBinomial_PMF` or a
 
 | Grid | Rows changed | Of which |
 | --- | ---: | --- |
-| holdout of #504 | 96 of 100 | 52 `nb`, 44 `ge`; 91 improved, 5 rose, by at most 2.8E-16 |
+| holdout of #504 | 96 of 100 | 51 `nb`, 45 `ge`; 91 improved, 5 rose, by at most 2.8E-16 |
 | floor grid of #493 | 34 | 25 `NegativeBinomial_PMF`, 9 `Geometric_PMF`; 6 rose, by at most 3.4E-16 |
 | holdout of #496 | 27 | all 27 `NegativeBinomial_PMF`; one rose, by 1.3E-16 |
 | main grid | 29 | 22 `NegativeBinomial_PMF`, 7 `Geometric_PMF` |
