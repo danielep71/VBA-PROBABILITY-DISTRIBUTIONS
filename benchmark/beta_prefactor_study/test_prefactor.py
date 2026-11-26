@@ -90,5 +90,31 @@ class Rules(unittest.TestCase):
         self.assertTrue(any(f.startswith("H4") for f in self.failures(floor_new=True)))
 
 
+class LibraryAlone(unittest.TestCase):
+    """A point Excel did not answer still carries the library's own error."""
+
+    def rows(self, library):
+        return [{"kind": "hg:P001:Hypergeometric_PMF", "excel_formula": "F", "kstats_call": "K",
+                 "reference": "0.25", "observed_excel": "ERROR", "observed_kstats": library}]
+
+    def point(self, library):
+        import struct
+        rows = self.rows("ERROR" if library is None
+                         else struct.pack(">d", library).hex().upper())
+        points, _ = S.FC.judge(rows)
+        return S.with_library(points, rows)[0]
+
+    def test_not_compared_keeps_the_library_error(self):
+        p = self.point(0.25 * (1 + 1e-12))
+        self.assertEqual(p["verdict"], "not compared")
+        self.assertAlmostEqual(p["library_rel"], 1e-12, delta=1e-15)
+
+    def test_not_compared_and_no_library_number(self):
+        p = self.point(None)
+        self.assertEqual(p["verdict"], "not compared")
+        self.assertTrue(p["library_missing"])
+        self.assertNotIn("library_rel", p)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -194,12 +194,12 @@ def judge(holdout, elsewhere, before):
         prior = before["holdout"][k]
         c["worst_before"] = max(c["worst_before"], prior["library_rel"] or 0.0)
         c["inferior_before"] += prior["verdict"] == "inferior"
-        if p["verdict"] == "library error":
+        if p["verdict"] == "library error" or p.get("library_missing"):
             failures.append(f"J2 {p['kstats_call']}: the library returns an error")
             continue
         e = p.get("library_rel")
         if e is None:
-            continue                                   # not compared with Excel: no number there
+            continue                                   # a count, not a relative error
         c["worst"] = max(c["worst"], e)
         if e > ACCURACY:
             failures.append(f"J1 {p['kstats_call']}: {e:.3g} above {ACCURACY:g}")

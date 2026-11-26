@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-26T15:36:52Z",
-  "commit_sha": "84740c8",
+  "generated_utc": "2026-11-26T18:25:51Z",
+  "commit_sha": "db24a3d",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:3753212eca9938552879a374015d8aa5a16f201f46d5d71d08282fee31b8e9dc",
+  "observation_grid_sha256": "sha256:40691ac55728d0cef3d47432d5a2b608235f5fbdf98b985f0852cb4ac91b36c5",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:76b888340008325ec486429baabee256c699574308b947ee8894f082ef398090",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -30,7 +30,7 @@
     "benchmark/envelope_probe/M_STATS_PROBDIST_ENVPROBE.bas": "sha256:7001714e110d1b92572ff314e9bfdbcf8c79be657673fe1b2e5f423f8a27d710",
     "benchmark/error_behavior/M_STATS_PROBDIST_ERB.bas": "sha256:ebab9170fccc913e1da4397777a107dc70c92f1bf22a687715fedf5a0a9868ea",
     "benchmark/excel_comparison/M_STATS_PROBDIST_XLCMP.bas": "sha256:4362852f6a1858be54ff3f5a264c401abe337f633a8afcdc13f841c6a424c316",
-    "benchmark/excel_function_map/M_STATS_PROBDIST_XFM.bas": "sha256:8b28aad4efeb14d3790462dcf10c2a1bf74cd7d3acb56d69980d0259611059f8",
+    "benchmark/excel_function_map/M_STATS_PROBDIST_XFM.bas": "sha256:71323ab357990ba86c99b8e7c1fc815658e3d6ca75c5c4dfd956ece6110f07d2",
     "benchmark/expm1_saturation/M_STATS_PROBDIST_EXPM1PROBE.bas": "sha256:120015422d675c5b417a06bebc9a03d4fb8dda2527b5cfcac28f8c2b291988ab",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENV.bas": "sha256:d332cad0a17d4bb78d8d2d1a682697d8f2e2cb379315de0ccd0f8ef3664161dd",
     "benchmark/f_envelope/M_STATS_PROBDIST_FENVBL.bas": "sha256:460e230db92910215bd20af8e474e133d1be2ae23b42608b248b077e48f5d01c",
@@ -66,9 +66,9 @@
     "benchmark/tchi_large_df/M_STATS_PROBDIST_TCHI.bas": "sha256:9fe85a7b67fd989497ea2cd902bee946b65c93b268d5059fd2d49020d471bc77",
     "src/modules/M_STATS_PROBDIST_CONTINUOUS.bas": "sha256:3a9415b96e78bc162d84869237d996104475865943f6a5223daf0f3b92f6b63c",
     "src/modules/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
-    "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:728beea0ffbfb58c17cb7dd489806369f2c69e3d909f046ca5bd9dd33f7c880a",
+    "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:798c6477aa1a9c4d231dc4cc0688bc2b44bb7541761394cfd4e89861f5c40617",
     "src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:4a5ebe5bce5f9e3d4e9e2b6c7d02b5cb3f4af0c915043646068ada245e8847ee",
-    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:bc20719b9eb61828f0715c073923372c833b5d8b1779e5493ddbffdff654f678",
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:5e4f6817e486230ee41541938e13aee58e99411f48b0e86d835732e3b3c8d8ef",
     "src/modules/M_STATS_PROBDIST_TFAMILY.bas": "sha256:1172d95d97c0f65875886621d42dc010870b940494f75c5be422c66d90e14c46",
     "tests/M_STATS_PROBDIST_TEST.bas": "sha256:8e4173fd47c423cfb4692cc5fb4e0b63ecbcb710de60ecd62ca647cea1efb471"
   },

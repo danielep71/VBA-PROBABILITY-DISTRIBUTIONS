@@ -233,11 +233,35 @@ def read(path):
 
 def verdicts(path):
     """{kind: point} from an exported grid in the floor format; exits on a blank row."""
-    points, blank = FC.judge(read(path))
+    rows = read(path)
+    points, blank = FC.judge(rows)
     if blank:
         raise SystemExit(f"FAIL: {blank} row(s) of {os.path.basename(path)} hold no observation: "
                          "export the grid first")
-    return {p["kind"]: p for p in points}
+    return {p["kind"]: p for p in with_library(points, rows)}
+
+
+def with_library(points, rows):
+    """Give every point its own library error, whatever Excel returned.
+
+    floor_check.judge does not look at the library where no Excel formulation
+    returned a number: the point is "not compared" and carries no error. A
+    study's accuracy rule judges the library alone, so it needs the error
+    there too, and needs to know when the library returned no number.
+    """
+    library = {}
+    for r in rows:
+        library.setdefault(r["kind"], (r["observed_kstats"], r["reference"]))
+    for p in points:
+        if "library_rel" in p or p["verdict"] == "library error":
+            continue
+        observed, ref = library[p["kind"]]
+        value = FC.value(observed)
+        if value is None:
+            p["library_missing"] = True
+        elif p["function"] not in FB.DISCRETE_INVERSE:
+            p["library_rel"] = FC.rel(value, ref)
+    return points
 
 
 def defect_points():

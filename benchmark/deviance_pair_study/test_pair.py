@@ -158,5 +158,22 @@ class Study(unittest.TestCase):
             self.assertIn(call, calls)
 
 
+class NotComparedWithExcel(unittest.TestCase):
+    """A point Excel did not answer is still judged on the library alone."""
+
+    def failures(self, **point):
+        holdout, elsewhere, before = case()
+        holdout["pm:P000:Poisson_PMF"] = dict(kind="pm:P000:Poisson_PMF", verdict="not compared",
+                                 kstats_call="K", **point)
+        return sorted({f.split()[0] for f in S.judge(holdout, elsewhere, before)[0]})
+
+    def test_an_inaccurate_library_value_fails_the_accuracy_rule(self):
+        self.assertEqual(self.failures(library_rel=5e-13), ["J1"])
+        self.assertEqual(self.failures(library_rel=1e-15), [])
+
+    def test_a_library_error_fails_whatever_excel_returned(self):
+        self.assertEqual(self.failures(library_missing=True), ["J2"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,8 +3,8 @@
  "floor": 1e-14,
  "points": 1403,
  "verdicts": {
-  "not inferior": 1300,
-  "inferior": 54,
+  "not inferior": 1301,
+  "inferior": 53,
   "not compared": 49
  },
  "by_function": {
@@ -104,8 +104,7 @@
    "not inferior": 19
   },
   "Hypergeometric_PMF": {
-   "not inferior": 18,
-   "inferior": 1
+   "not inferior": 19
   },
   "Hypergeometric_Survival": {
    "not inferior": 16
@@ -809,21 +808,6 @@
    "library_rel": 3.5616777123088154e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L309:Hypergeometric_PMF",
-   "source": "holdout",
-   "line": 309,
-   "function": "Hypergeometric_PMF",
-   "kstats_call": "K_STATS_Hypergeometric_PMF(100;200;2000;50000)",
-   "reference": "2.66136676589306601164893449521e-84",
-   "excel_formula": "HYPGEOM.DIST(100;200;2000;50000;FALSE)",
-   "excel": 2.6613667658931154e-84,
-   "excel_rel": 1.854409922416638e-14,
-   "library": 2.661366765892973e-84,
-   "library_rel": 3.488244584948925e-14,
-   "verdict": "inferior",
-   "disposition": "issue #496"
   },
   {
    "kind": "main:L1760:F_Cumulative",
