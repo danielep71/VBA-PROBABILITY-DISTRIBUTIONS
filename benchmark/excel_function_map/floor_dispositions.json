@@ -13,13 +13,6 @@
    "excel_rel": 5.82e-16
   },
   {
-   "point": "holdout:L309:Hypergeometric_PMF",
-   "issue": "#496",
-   "kstats_call": "K_STATS_Hypergeometric_PMF(100;200;2000;50000)",
-   "library_rel": 1.2e-13,
-   "excel_rel": 1.85e-14
-  },
-  {
    "point": "holdout:L44:Beta_InverseCumulative",
    "issue": "#494",
    "kstats_call": "K_STATS_Beta_InverseCumulative(0.0001;0.42;700)",
