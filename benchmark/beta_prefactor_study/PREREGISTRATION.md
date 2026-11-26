@@ -222,4 +222,3 @@ made.
 `beta_balanced_survival/beta_route_model.py` ports the source as amended;
 `prefactor_model.py` restores the dispatch and the far deviance of before for
 the comparison, and reproduces the figures above unchanged.
-
