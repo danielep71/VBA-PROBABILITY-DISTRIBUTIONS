@@ -794,57 +794,66 @@ Public Function K_STATS_ChiSquare_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_ChiSquare_Density
+'------------------------------------------------------------------------------
+'                        RETURN THE CHI-SQUARE DENSITY
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the chi-square probability density function at X.
+'   Returns the chi-square probability density function at X
 '
 ' WHY THIS EXISTS
-'   Chi-square densities appear in likelihood surfaces, Bayesian variance priors
-'   and simulation acceptance ratios.
-'
-' WORKSHEET EQUIVALENT
-'   CHISQ.DIST(X, DegreesFreedom, FALSE)
+'   Chi-square densities appear in likelihood surfaces, Bayesian variance
+'   priors and simulation acceptance ratios
 '
 ' INPUTS
 '   X
-'     Evaluation point.
-'     The density is zero for X < 0.
+'     Evaluation point
+'     The density is zero for X < 0
 '
 '   DegreesFreedom
-'     Chi-square degrees of freedom.
-'     Must be strictly positive.
+'     Chi-square degrees of freedom
+'     Must be strictly positive
 '
 '   Status
-'     Optional ByRef diagnostic message.
+'     Optional ByRef diagnostic message
 '
 ' RETURNS
 '   Variant
-'     Success => Double density value.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'     Success => Double density value
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue)
 '
 ' BEHAVIOR
 '   Degrees of freedom beyond PROB_DENSITY_SHAPE_MAX are REJECTED. The density
 '   carries its OWN envelope, separate from PROB_CHI_MAX_DF, which governs the
-'   chi-square probability surfaces.
-'   - Returns 0 for X < 0.
-'   - At X = 0 the density is 0 for df > 2, 0.5 for df = 2, and unbounded for
-'     df < 2. The unbounded case returns CVErr(xlErrNum), matching Excel.
+'   chi-square probability surfaces
+'     - Returns 0 for X < 0
+'     - At X = 0 the density is 0 for df > 2, 0.5 for df = 2, and unbounded
+'       for df < 2. The unbounded case returns CVErr(xlErrNum), matching Excel
+'     - On the direct branch the density comes from PROB_TryGammaDensityPair
+'       at Shape = df / 2 and scale 2, which carries the deviance as a pair
+'       of Doubles to the exponential (#498); where that route does not
+'       apply, from PROB_TryGammaLogPdf
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Overflow returns CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   Invalid numeric domains return CVErr(xlErrNum)
+'   Overflow returns CVErr(xlErrNum)
+'   Unexpected runtime errors return CVErr(xlErrValue)
+'   Detailed diagnostic messages are written to Status
+'   No MsgBox is raised
 '
 ' DEPENDENCIES
-'   - PROB_TF_ValidateXAndDF
-'   - PROB_TryGammaLogPdf, PROB_TryExp
-'   - PROB_SetStatus
-'==============================================================================
+'   PROB_TF_ValidateXAndDF, PROB_TryGammaDensityPair, PROB_TryGammaLogPdf,
+'   PROB_TryExp, PROB_SetStatus
 '
+' NOTES
+'   None
+'
+' WORKSHEET EQUIVALENT
+'   CHISQ.DIST(X, DegreesFreedom, FALSE)
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -915,11 +924,17 @@ Public Function K_STATS_ChiSquare_Density( _
         StandardX = 0.5 * X
 
     'A positive X whose half is stored as zero, or as a subnormal below the
-    'measured cutoff, takes the log-domain form; every other argument keeps the
-    'stable Loader log-density of the shared Gamma kernel (Shape=df/2, Scale=2)
-    '(#13)
+    'measured cutoff, takes the log-domain form; every other argument takes the
+    'pair deviance of the Gamma density at Shape=df/2, Scale=2 (#498), or the
+    'Loader log-density of the shared Gamma kernel where the pair route does
+    'not apply (#13)
         If PROB_ClassifyPositiveRatio(True, StandardX, PROB_PRS_CUTOFF_48BIT) _
             = PROB_PRC_DIRECT Then
+            If PROB_TryGammaDensityPair(X, HalfDF, 2#, Log(X) - Log(2#), Log(2#), _
+                                        Density) Then
+                K_STATS_ChiSquare_Density = Density
+                GoTo Return_Success
+            End If
             If Not PROB_TryGammaLogPdf(StandardX, HalfDF, Log(X) - Log(2#), Log(2#), _
                                        LogDensity, FailMsg) Then
                 GoTo Fail_Num
@@ -941,17 +956,13 @@ Public Function K_STATS_ChiSquare_Density( _
         K_STATS_ChiSquare_Density = Density
 
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' EXIT PROCEDURE
 '------------------------------------------------------------------------------
 Return_Success:
     'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
     'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
     'Write diagnostics
         PROB_SetStatus Status, FailMsg
@@ -968,6 +979,7 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_ChiSquare_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_ChiSquare_Density = CVErr(xlErrValue)
+
 End Function
 
 Public Function K_STATS_ChiSquare_Cumulative( _

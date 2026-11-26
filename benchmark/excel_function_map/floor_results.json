@@ -3,8 +3,8 @@
  "floor": 1e-14,
  "points": 1403,
  "verdicts": {
-  "not inferior": 1293,
-  "inferior": 61,
+  "not inferior": 1295,
+  "inferior": 59,
   "not compared": 49
  },
  "by_function": {
@@ -32,8 +32,7 @@
    "not inferior": 53
   },
   "Binomial_PMF": {
-   "not inferior": 33,
-   "inferior": 2
+   "not inferior": 35
   },
   "Binomial_Survival": {
    "not inferior": 21,
@@ -753,21 +752,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L799:Binomial_PMF",
-   "source": "main",
-   "line": 799,
-   "function": "Binomial_PMF",
-   "kstats_call": "K_STATS_Binomial_PMF(900900;1000000;0.9)",
-   "reference": "0.00001465459993933562022982296",
-   "excel_formula": "BINOM.DIST(900900;1000000;0.9;FALSE)",
-   "excel": 1.4654599939335067e-05,
-   "excel_rel": 3.7757977645485555e-14,
-   "library": 1.4654599939336207e-05,
-   "library_rel": 4.004055330888289e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "main:L742:Binomial_Survival",
    "source": "main",
    "line": 742,
@@ -869,21 +853,6 @@
    "excel_rel": 1.481090377471424e-14,
    "library": 0.6913744504289246,
    "library_rel": 3.1993179394126634e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L163:Binomial_PMF",
-   "source": "holdout",
-   "line": 163,
-   "function": "Binomial_PMF",
-   "kstats_call": "K_STATS_Binomial_PMF(50424;500000;0.1)",
-   "reference": "0.000255467968152600065698577640594",
-   "excel_formula": "BINOM.DIST(50424;500000;0.1;FALSE)",
-   "excel": 0.0002554679681526039,
-   "excel_rel": 1.491100640279798e-14,
-   "library": 0.0002554679681525932,
-   "library_rel": 2.689224382935261e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
