@@ -244,8 +244,8 @@ Public Function K_STATS_StudentT_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_StudentT_Density
+'------------------------------------------------------------------------------
+'                         RETURN THE STUDENT T DENSITY
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns the Student t probability density function at X.
@@ -253,9 +253,6 @@ Public Function K_STATS_StudentT_Density( _
 ' WHY THIS EXISTS
 '   Student t densities are used in regression diagnostics, likelihood examples,
 '   robust residual analysis and inference with an estimated variance.
-'
-' WORKSHEET EQUIVALENT
-'   T.DIST(X, DegreesFreedom, FALSE)
 '
 ' INPUTS
 '   X
@@ -283,25 +280,36 @@ Public Function K_STATS_StudentT_Density( _
 '   so the cancellation that limits the others never forms. Measured
 '   machine-precise to df 1E20 in benchmark/t_density_large_df; a cap here
 '   would reject correct results.
-'   - Validates X and DegreesFreedom.
-'   - Uses the log-density form for numerical stability.
-'   - Underflow of the far tail is a valid zero.
+'     - Validates X and DegreesFreedom.
+'     - Uses the log-density form for numerical stability.
+'     - Underflow of the far tail is a valid zero.
+'     - The density comes from PROB_TryStudentTDensityPair, Loader's form
+'       with its large terms as pairs of Doubles (#501); where that route
+'       does not apply, from PROB_TryStudentTPDF, which the paragraph above
+'       describes
 '
 ' ERROR POLICY
-'   - Invalid numeric domains return CVErr(xlErrNum).
-'   - Unexpected runtime errors return CVErr(xlErrValue).
-'   - Detailed diagnostic messages are written to Status.
-'   - No MsgBox is raised.
+'   Invalid numeric domains return CVErr(xlErrNum).
+'   Unexpected runtime errors return CVErr(xlErrValue).
+'   Detailed diagnostic messages are written to Status.
+'   No MsgBox is raised.
 '
 ' DEPENDENCIES
-'   - PROB_TF_ValidateXAndDF
-'   - PROB_TryStudentTPDF
-'   - PROB_SetStatus
+'   PROB_TF_ValidateXAndDF
+'   PROB_TryStudentTDensityPair
+'   PROB_TryStudentTPDF
+'   PROB_SetStatus
+'
+' NOTES
+'   Envelope and dependency documentation brought current
+'
+' WORKSHEET EQUIVALENT
+'   T.DIST(X, DegreesFreedom, FALSE)
 '
 ' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
-'==============================================================================
-'
+'   2026-11-26
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -331,23 +339,21 @@ Public Function K_STATS_StudentT_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
-    'Evaluate the density kernel
-        If Not PROB_TryStudentTPDF(X, DegreesFreedom, Density, FailMsg) Then GoTo Fail_Num
+    'Take Loader's form with pairs where it applies (#501); the kernel elsewhere
+        If Not PROB_TryStudentTDensityPair(X, DegreesFreedom, Density) Then
+            If Not PROB_TryStudentTPDF(X, DegreesFreedom, Density, FailMsg) Then GoTo Fail_Num
+        End If
 
     'Return the density
         K_STATS_StudentT_Density = Density
 
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' EXIT PROCEDURE
 '------------------------------------------------------------------------------
     'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
     'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
     'Write diagnostics
         PROB_SetStatus Status, FailMsg
@@ -364,6 +370,7 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_StudentT_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_StudentT_Density = CVErr(xlErrValue)
+
 End Function
 
 Public Function K_STATS_StudentT_Cumulative( _
@@ -1466,8 +1473,8 @@ Public Function K_STATS_F_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_F_Density
+'------------------------------------------------------------------------------
+'                             RETURN THE F DENSITY
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns the F probability density at X.
@@ -1477,14 +1484,18 @@ Public Function K_STATS_F_Density( _
 '   and nested-model diagnostics. The logarithmic implementation supports
 '   extreme degree ratios without forming X * DegreesFreedom1 / DegreesFreedom2.
 '
-' WORKSHEET EQUIVALENT
-'   F.DIST(X, DegreesFreedom1, DegreesFreedom2, FALSE)
-'
 ' INPUTS
-'   X                 Evaluation point. Values below zero have density zero.
-'   DegreesFreedom1   Positive numerator degrees of freedom.
-'   DegreesFreedom2   Positive denominator degrees of freedom.
-'   Status            Optional ByRef diagnostic message.
+'   X
+'     Evaluation point. Values below zero have density zero.
+'
+'   DegreesFreedom1
+'     Positive numerator degrees of freedom.
+'
+'   DegreesFreedom2
+'     Positive denominator degrees of freedom.
+'
+'   Status
+'     Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
@@ -1495,35 +1506,46 @@ Public Function K_STATS_F_Density( _
 '   Degrees of freedom beyond PROB_DENSITY_SHAPE_MAX are REJECTED. The density
 '   carries its OWN envelope, separate from the F probability cap above, and
 '   is not governed by PROB_F_MAX_DF.
-'   - Returns zero below the support.
-'   - At X = 0, returns #NUM! for DegreesFreedom1 < 2, one for
-'     DegreesFreedom1 = 2, and zero for DegreesFreedom1 > 2.
-'   - Forms the scaled ratio only through its logarithm.
-'   - Uses separate positive- and negative-log-ratio forms to prevent
-'     cancellation between large logarithmic terms.
-'   - Mathematically valid exponential underflow returns zero.
+'     - Returns zero below the support.
+'     - At X = 0, returns #NUM! for DegreesFreedom1 < 2, one for
+'       DegreesFreedom1 = 2, and zero for DegreesFreedom1 > 2.
+'     - Forms the scaled ratio only through its logarithm.
+'     - Uses separate positive- and negative-log-ratio forms to prevent
+'       cancellation between large logarithmic terms.
+'     - Mathematically valid exponential underflow returns zero.
+'     - For a positive X the density comes from PROB_TryFDensityPair, which
+'       carries the Beta arguments and the deviances as pairs of Doubles to
+'       the exponential (#501); where that route does not apply, from the
+'       logarithmic form below
 '
 ' ERROR POLICY
-'   - Invalid parameters, a density pole or density overflow return #NUM!.
-'   - Unexpected runtime errors return #VALUE!.
-'   - Diagnostics are written to Status.
+'   Invalid parameters, a density pole or density overflow return #NUM!.
+'   Unexpected runtime errors return #VALUE!.
+'   Diagnostics are written to Status.
 '
 ' DEPENDENCIES
-'   - PROB_TF_ValidateXAndTwoDF
-'   - PROB_TF_LogOnePlusExp
-'   - PROB_Log1p
-'   - PROB_TryBetaLogPdf
-'   - PROB_TryExp
-'   - PROB_SetStatus
+'   PROB_TF_ValidateXAndTwoDF
+'   PROB_TF_LogOnePlusExp
+'   PROB_Log1p
+'   PROB_TryFDensityPair
+'   PROB_TryBetaLogPdf
+'   PROB_TryExp
+'   PROB_SetStatus
+'
+' NOTES
+'   Envelope and dependency documentation brought current
+'
+' WORKSHEET EQUIVALENT
+'   F.DIST(X, DegreesFreedom1, DegreesFreedom2, FALSE)
 '
 ' CALLED FROM
-'   - Worksheet formulas
-'   - M_STATS_PROBDIST_TEST
+'   Worksheet formulas
+'   M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-08-11 - Envelope and dependency documentation brought current
-'==============================================================================
-'
+'   2026-11-26
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -1599,6 +1621,12 @@ Public Function K_STATS_F_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE LOG-DENSITY
 '------------------------------------------------------------------------------
+    'Take the density from the pair deviances where that route applies (#501)
+        If PROB_TryFDensityPair(X, DegreesFreedom1, DegreesFreedom2, Density) Then
+            K_STATS_F_Density = Density
+            GoTo Return_Success
+        End If
+
     'Form the half-degree parameters
         HalfDF1 = 0.5 * DegreesFreedom1
         HalfDF2 = 0.5 * DegreesFreedom2
@@ -1663,17 +1691,13 @@ Public Function K_STATS_F_Density( _
         K_STATS_F_Density = Density
 
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' EXIT PROCEDURE
 '------------------------------------------------------------------------------
 Return_Success:
     'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
     'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
     'Write diagnostics
         PROB_SetStatus Status, FailMsg
@@ -1690,6 +1714,7 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_F_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_F_Density = CVErr(xlErrValue)
+
 End Function
 
 Public Function K_STATS_F_Cumulative( _

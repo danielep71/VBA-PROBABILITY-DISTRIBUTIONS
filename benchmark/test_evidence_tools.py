@@ -56,6 +56,7 @@ commands = (
     ("beta_prefactor_study/test_prefactor.py",),
     ("beta_prefactor_study/test_prefactor2.py",),
     ("deviance_pair_study/test_pair.py",),
+    ("density_pair_study/test_density.py",),
     ("tchi_large_df/test_tchi_merge.py",),
     ("gamma_cf_study/coverage/test_precision_probe.py",),
     ("gamma_cf_study/coverage/test_precision_v2.py",),

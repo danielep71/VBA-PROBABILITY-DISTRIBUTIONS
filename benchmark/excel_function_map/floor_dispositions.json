@@ -69,13 +69,6 @@
    "excel_rel": 1e-15
   },
   {
-   "point": "main:L116:StudentT_Density",
-   "issue": "#494",
-   "kstats_call": "K_STATS_StudentT_Density(20;30)",
-   "library_rel": 1.37e-14,
-   "excel_rel": 1.78e-15
-  },
-  {
    "point": "main:L1181:NegativeBinomial_Cumulative",
    "issue": "#494",
    "kstats_call": "K_STATS_NegativeBinomial_Cumulative(882;5000;0.85)",
@@ -95,13 +88,6 @@
    "kstats_call": "K_STATS_StudentT_Survival(2;1000)",
    "library_rel": 3.81e-14,
    "excel_rel": 8.52e-16
-  },
-  {
-   "point": "main:L136:StudentT_Density",
-   "issue": "#494",
-   "kstats_call": "K_STATS_StudentT_Density(20;1000)",
-   "library_rel": 1.93e-14,
-   "excel_rel": 1.35e-14
   },
   {
    "point": "main:L1417:Beta_Cumulative",
@@ -137,13 +123,6 @@
    "kstats_call": "K_STATS_Beta_Cumulative(0.75;0.001;9.9E-05)",
    "library_rel": 1.81e-14,
    "excel_rel": 1.41e-15
-  },
-  {
-   "point": "main:L1646:Beta_Density",
-   "issue": "#495",
-   "kstats_call": "K_STATS_Beta_Density(0.990099009910842;1E+20;1E+18)",
-   "library_rel": 2.47e-08,
-   "excel_rel": 2.37e-08
   },
   {
    "point": "main:L1700:Beta_Cumulative",
@@ -214,20 +193,6 @@
    "kstats_call": "K_STATS_F_Survival(1;100000000;100000000)",
    "library_rel": 7.77e-13,
    "excel_rel": 0.0
-  },
-  {
-   "point": "main:L1815:StudentT_Density",
-   "issue": "#494",
-   "kstats_call": "K_STATS_StudentT_Density(3;100000000)",
-   "library_rel": 1.2e-14,
-   "excel_rel": 3.58e-16
-  },
-  {
-   "point": "main:L1830:StudentT_Density",
-   "issue": "#494",
-   "kstats_call": "K_STATS_StudentT_Density(3;1E+18)",
-   "library_rel": 1.81e-14,
-   "excel_rel": 6.39e-17
   },
   {
    "point": "main:L444:Beta_Density",

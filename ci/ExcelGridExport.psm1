@@ -48,7 +48,7 @@ $script:StudyGridNames = @(
     "glq_lower_q", "gbr_binary64_map", "prs_gamma_holdout2", "prs_chisquare_holdout2",
     "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout",
     "bic_baseline", "bic_holdout", "gcp_profile", "xfm_examples", "erb_survey",
-    "xfl_floor", "xfp_prefactor", "xfp_prefactor2", "xdp_pair"
+    "xfl_floor", "xfp_prefactor", "xfp_prefactor2", "xdp_pair", "xdn_pair"
 )
 
 function Get-StudyGridNames {
@@ -118,7 +118,8 @@ function Get-ExportGridSpec {
                      "gis_holdout2", "fip_baseline", "fip_holdout",
                      "bic_baseline", "bic_holdout", "gcp_profile",
                      "xfm_examples", "erb_survey", "xfl_floor",
-                     "xfp_prefactor", "xfp_prefactor2", "xdp_pair")]
+                     "xfp_prefactor", "xfp_prefactor2", "xdp_pair",
+                     "xdn_pair")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -327,6 +328,12 @@ function Get-ExportGridSpec {
                 -FileName "deviance_pair_holdout_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_DeviancePairHoldout" `
                 -Columns 7 -KeyColumns 5 -SuccessPrefix "Deviance pair holdout complete: "
+        }
+        "xdn_pair" {
+            return New-GeneratedGridSpec -Folder "excel_function_map" -Name "xdn_pair" `
+                -FileName "density_pair_holdout_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_DensityPairHoldout" `
+                -Columns 7 -KeyColumns 5 -SuccessPrefix "Density pair holdout complete: "
         }
         "erb_survey" {
             return New-GeneratedGridSpec -Folder "error_behavior" -Name "erb_survey" `

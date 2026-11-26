@@ -1198,8 +1198,8 @@ Public Function K_STATS_Beta_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Beta_Density
+'------------------------------------------------------------------------------
+'                           RETURN THE BETA DENSITY
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Returns the Beta probability density at X for shapes Alpha and Beta.
@@ -1209,14 +1209,18 @@ Public Function K_STATS_Beta_Density( _
 '   kernel PROB_TryBetaLogPdf, so large shape parameters never form or subtract
 '   large log-gamma values.
 '
-' WORKSHEET EQUIVALENT
-'   BETA.DIST(X, Alpha, Beta, FALSE)
-'
 ' INPUTS
-'   X       Evaluation point. Values outside [0, 1] have density zero.
-'   Alpha   Positive first Beta shape parameter.
-'   Beta    Positive second Beta shape parameter.
-'   Status  Optional ByRef diagnostic message.
+'   X
+'     Evaluation point. Values outside [0, 1] have density zero.
+'
+'   Alpha
+'     Positive first Beta shape parameter.
+'
+'   Beta
+'     Positive second Beta shape parameter.
+'
+'   Status
+'     Optional ByRef diagnostic message.
 '
 ' RETURNS
 '   Variant
@@ -1229,29 +1233,39 @@ Public Function K_STATS_Beta_Density( _
 '   measured (benchmark/density_large_shape) and is shared with the Gamma,
 '   Chi-square and F densities; beyond it the Loader deviance decomposition
 '   below reaches its own n*x accuracy floor.
-'   - Handles both endpoint poles explicitly.
-'   - Uses PROB_Log1p(-X) near the right endpoint.
-'   - Mathematically valid underflow returns zero.
+'     - Handles both endpoint poles explicitly.
+'     - Uses PROB_Log1p(-X) near the right endpoint.
+'     - Mathematically valid underflow returns zero.
+'     - Inside the support the density comes from PROB_TryBetaDensityPair,
+'       which carries the deviances as pairs of Doubles to the exponential
+'       (#501); where that route does not apply, from PROB_TryBetaLogPdf
 '
 ' ERROR POLICY
-'   - Invalid inputs, endpoint poles or density overflow return #NUM!.
-'   - Unexpected runtime errors return #VALUE!.
+'   Invalid inputs, endpoint poles or density overflow return #NUM!.
+'   Unexpected runtime errors return #VALUE!.
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXTwoShapes
-'   - PROB_Log1p
-'   - PROB_TryBetaLogPdf
-'   - PROB_TryExp
-'   - PROB_SetStatus
+'   PROB_CN_ValidateXTwoShapes
+'   PROB_Log1p
+'   PROB_TryBetaDensityPair
+'   PROB_TryBetaLogPdf
+'   PROB_TryExp
+'   PROB_SetStatus
+'
+' NOTES
+'   Loader reroute (CR-P1-01) and density envelope documented
+'
+' WORKSHEET EQUIVALENT
+'   BETA.DIST(X, Alpha, Beta, FALSE)
 '
 ' CALLED FROM
-'   - Worksheet formulas
-'   - M_STATS_PROBDIST_TEST
+'   Worksheet formulas
+'   M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-08-11 - Loader reroute (CR-P1-01) and density envelope documented
-'==============================================================================
-'
+'   2026-11-26
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -1324,6 +1338,12 @@ Public Function K_STATS_Beta_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
+    'Take the density from the pair deviances where that route applies (#501)
+        If PROB_TryBetaDensityPair(X, Alpha, Beta, Log(X), PROB_Log1p(-X), Density) Then
+            K_STATS_Beta_Density = Density
+            GoTo Return_Success
+        End If
+
     'Stable Loader log-density via the shared kernel (no large-shape cancellation).
     'The complement is passed explicitly; the kernel never reforms 1 - X.
         OneMinusX = 1# - X
@@ -1343,17 +1363,13 @@ Public Function K_STATS_Beta_Density( _
         K_STATS_Beta_Density = Density
 
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' EXIT PROCEDURE
 '------------------------------------------------------------------------------
 Return_Success:
     'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
     'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
     'Write diagnostics
         PROB_SetStatus Status, FailMsg
@@ -1370,6 +1386,7 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_Beta_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_Beta_Density = CVErr(xlErrValue)
+
 End Function
 
 
