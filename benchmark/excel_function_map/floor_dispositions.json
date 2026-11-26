@@ -6,13 +6,6 @@
  },
  "points": [
   {
-   "point": "holdout:L163:Binomial_PMF",
-   "issue": "#494",
-   "kstats_call": "K_STATS_Binomial_PMF(50424;500000;0.1)",
-   "library_rel": 2.69e-14,
-   "excel_rel": 1.49e-14
-  },
-  {
    "point": "holdout:L175:Binomial_Survival",
    "issue": "#494",
    "kstats_call": "K_STATS_Binomial_Survival(3751936;5000000;0.75)",
@@ -326,13 +319,6 @@
    "kstats_call": "K_STATS_Binomial_Survival(900000;1000000;0.9)",
    "library_rel": 3.57e-14,
    "excel_rel": 2.76e-15
-  },
-  {
-   "point": "main:L799:Binomial_PMF",
-   "issue": "#494",
-   "kstats_call": "K_STATS_Binomial_PMF(900900;1000000;0.9)",
-   "library_rel": 4e-14,
-   "excel_rel": 3.78e-14
   },
   {
    "point": "main:L802:Binomial_Survival",
