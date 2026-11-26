@@ -6708,15 +6708,20 @@ Private Function PROB_DS_TryNegativeBinomialPMF( _
 '   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
 '
 ' BEHAVIOR
-'   - Takes the logarithm of the mass from PROB_DS_TryNegativeBinomialLogMass
-'   - Returns zero for an impossible outcome
-'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'   - Takes the mass from PROB_TryNegativeBinomialMassPair, which carries the
+'     Binomial logarithm and Log(R / (R + X)) as pairs of Doubles to the
+'     exponential (#504)
+'   - Where that route does not apply (X = 0), takes the logarithm of the
+'     mass from PROB_DS_TryNegativeBinomialLogMass, returns zero for an
+'     impossible outcome, and exponentiates it
+'   - Clamps final round-off to 0 and 1
 '
 ' ERROR POLICY
 '   Raises nothing; a failure is the FALSE return with FailMsg
 '
 ' DEPENDENCIES
-'   PROB_DS_TryNegativeBinomialLogMass, PROB_TryExp
+'   PROB_TryNegativeBinomialMassPair, PROB_DS_TryNegativeBinomialLogMass,
+'   PROB_TryExp
 '
 ' NOTES
 '   None
@@ -6730,15 +6735,24 @@ Private Function PROB_DS_TryNegativeBinomialPMF( _
 '------------------------------------------------------------------------------
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Impossible or below Double range
+    Dim HasMass             As Boolean         'TRUE once the pair route has returned the mass
+
+'------------------------------------------------------------------------------
+' TAKE THE PAIR ROUTE
+'------------------------------------------------------------------------------
+    'Take the mass from the pair logarithms; the zero count is refused there
+        HasMass = PROB_TryNegativeBinomialMassPair(X, R, ProbSuccess, Result)
 
 '------------------------------------------------------------------------------
 ' TAKE THE LOGARITHM OF THE MASS
 '------------------------------------------------------------------------------
     'Take the logarithm of the mass from the shared kernel
-        If Not PROB_DS_TryNegativeBinomialLogMass( _
-            X, R, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+        If Not HasMass Then
+            If Not PROB_DS_TryNegativeBinomialLogMass( _
+                X, R, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+        End If
     'Return zero for an impossible outcome
-        If IsCertainZero Then
+        If Not HasMass And IsCertainZero Then
             Result = 0#
             PROB_DS_TryNegativeBinomialPMF = True
             Exit Function
@@ -6748,9 +6762,11 @@ Private Function PROB_DS_TryNegativeBinomialPMF( _
 ' RETURN VALUE
 '------------------------------------------------------------------------------
     'Exponentiate the logarithm; underflow is a valid zero
-        If Not PROB_TryExp(LogMass, Result) Then
-            FailMsg = "Negative binomial mass exponentiation failed"
-            Exit Function
+        If Not HasMass Then
+            If Not PROB_TryExp(LogMass, Result) Then
+                FailMsg = "Negative binomial mass exponentiation failed"
+                Exit Function
+            End If
         End If
     'Clamp final round-off
         If Result < 0# Then Result = 0#
@@ -7167,15 +7183,18 @@ Private Function PROB_DS_TryGeometricPMF( _
 '   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
 '
 ' BEHAVIOR
-'   - Takes the logarithm of the mass from PROB_DS_TryGeometricLogMass
-'   - Returns zero for an impossible outcome
-'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'   - Takes the mass from PROB_TryGeometricMassPair, which carries
+'     K * Log(1 - p) as a pair of Doubles to the exponential (#504)
+'   - Where that route does not apply (K = 0, or p = 1), takes the logarithm
+'     of the mass from PROB_DS_TryGeometricLogMass, returns zero for an
+'     impossible outcome, and exponentiates it
+'   - Clamps final round-off to 0 and 1
 '
 ' ERROR POLICY
 '   Raises nothing; a failure is the FALSE return with FailMsg
 '
 ' DEPENDENCIES
-'   PROB_DS_TryGeometricLogMass, PROB_TryExp
+'   PROB_TryGeometricMassPair, PROB_DS_TryGeometricLogMass, PROB_TryExp
 '
 ' NOTES
 '   None
@@ -7189,15 +7208,24 @@ Private Function PROB_DS_TryGeometricPMF( _
 '------------------------------------------------------------------------------
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Impossible or below Double range
+    Dim HasMass             As Boolean         'TRUE once the pair route has returned the mass
+
+'------------------------------------------------------------------------------
+' TAKE THE PAIR ROUTE
+'------------------------------------------------------------------------------
+    'Take the mass from the pair logarithms; the zero count is refused there
+        HasMass = PROB_TryGeometricMassPair(K, ProbSuccess, Result)
 
 '------------------------------------------------------------------------------
 ' TAKE THE LOGARITHM OF THE MASS
 '------------------------------------------------------------------------------
     'Take the logarithm of the mass from the shared kernel
-        If Not PROB_DS_TryGeometricLogMass( _
-            K, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+        If Not HasMass Then
+            If Not PROB_DS_TryGeometricLogMass( _
+                K, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
+        End If
     'Return zero for an impossible outcome
-        If IsCertainZero Then
+        If Not HasMass And IsCertainZero Then
             Result = 0#
             PROB_DS_TryGeometricPMF = True
             Exit Function
@@ -7207,9 +7235,11 @@ Private Function PROB_DS_TryGeometricPMF( _
 ' RETURN VALUE
 '------------------------------------------------------------------------------
     'Exponentiate the logarithm; underflow is a valid zero
-        If Not PROB_TryExp(LogMass, Result) Then
-            FailMsg = "Geometric mass exponentiation failed"
-            Exit Function
+        If Not HasMass Then
+            If Not PROB_TryExp(LogMass, Result) Then
+                FailMsg = "Geometric mass exponentiation failed"
+                Exit Function
+            End If
         End If
     'Clamp final round-off
         If Result < 0# Then Result = 0#
