@@ -1,12 +1,12 @@
 # The Hypergeometric mass function as pairs of Doubles (#496)
 
-**Status (2026-11-26): accepted by its rules, one departure open.** The rule
+**Status (2026-11-26): accepted.** The rule
 passed M1 to M4 in Excel (`RESULT.md`) and is in `src/`: no point of the 69
 Hypergeometric points of the holdout is inferior to Excel, against 10 before.
 The registration said the cumulative and survival functions would keep their
 results; they take their anchor mass from the changed procedure and 14 of
-their observations moved, by at most 3.2E-16 for the worse. `RESULT.md` records
-it.
+their observations moved, by at most 3.2E-16 for the worse. The maintainer
+accepted the candidate with that scope; `RESULT.md` records it.
 
 The mass is a product of two Binomial masses over a third, at `p = n / N`.
 Each logarithm is one Double today, and `p` is rounded before any of them

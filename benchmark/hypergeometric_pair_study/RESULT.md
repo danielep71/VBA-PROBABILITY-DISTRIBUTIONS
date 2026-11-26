@@ -7,10 +7,10 @@ it and passed the regression, 3,067 of 3,067 assertions. The export was
 judged on the run's artifact before it was applied, then applied as
 `8ff608e`.
 
-**Verdict: ACCEPTED by its rules, with one departure from the registration
-that the maintainer decides on.** M1 to M4 hold, and the strict accuracy gate
-passes on the main grid and the consolidated holdout with no contract
-changed. The departure is below.
+**Verdict: ACCEPTED.** M1 to M4 hold, and the strict accuracy gate passes on
+the main grid and the consolidated holdout with no contract changed. The
+rule reaches further than the registration said; the maintainer accepted the
+candidate with the scope it really has (2026-11-26). The departure is below.
 
     python hyper_study.py --check
 
@@ -63,13 +63,16 @@ further, none by more than 3.2E-16, which is about one unit of a Double; the
 gates pass. No rule of the
 registration judges these functions apart from M4, which holds.
 
-The two ways out, for the maintainer:
+There were two ways out: keep the candidate with the scope it really has,
+the mass function and through their anchor the cumulative and survival
+functions; or restrict the rule to `K_STATS_Hypergeometric_PMF`, as
+registered, with one more wave. The maintainer chose the first on
+2026-11-26: the change is at the level of rounding, and a sum that starts
+from the mass should start from the accurate one.
 
-- keep the candidate, with the scope it really has: the mass function, and
-  through their anchor the cumulative and survival functions;
-- restrict the rule to `K_STATS_Hypergeometric_PMF`, as registered, which
-  moves the call out of `PROB_DS_TryHypergeometricPMF` and needs one more
-  wave.
+Since then the callers of a procedure are listed, before a registration, by
+a scan of every module procedure by procedure, and the registration names
+them.
 
 `K_STATS_Hypergeometric_LogPMF` is not changed, as registered.
 
