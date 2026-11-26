@@ -182,60 +182,70 @@ Public Function K_STATS_Gamma_Density( _
     Optional ByRef Status As String = "") _
     As Variant
 '
-'==============================================================================
-' K_STATS_Gamma_Density
+'------------------------------------------------------------------------------
+'                           RETURN THE GAMMA DENSITY
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns the Gamma probability density at X.
+'   Returns the Gamma probability density at X
 '
 ' WHY THIS EXISTS
 '   Gamma densities are used for positive skewed quantities, waiting times and
 '   severity models. The calculation is performed in the logarithmic domain so
-'   large or small parameter combinations do not form unstable powers directly.
-'
-' WORKSHEET EQUIVALENT
-'   GAMMA.DIST(X, Shape, ScaleParam, FALSE)
+'   large or small parameter combinations do not form unstable powers directly
 '
 ' INPUTS
-'   X           Evaluation point. Values below zero have density zero.
-'   Shape       Positive Gamma shape parameter.
-'   ScaleParam  Positive Gamma scale parameter.
-'   Status      Optional ByRef diagnostic message.
+'   X
+'     Evaluation point. Values below zero have density zero
+'
+'   Shape
+'     Positive Gamma shape parameter
+'
+'   ScaleParam
+'     Positive Gamma scale parameter
+'
+'   Status
+'     Optional ByRef diagnostic message
 '
 ' RETURNS
 '   Variant
-'     Success => Double density.
-'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue).
+'     Success => Double density
+'     Failure => CVErr(xlErrNum) or CVErr(xlErrValue)
 '
 ' BEHAVIOR
 '   Shape parameters beyond PROB_DENSITY_SHAPE_MAX are REJECTED with
 '   CVErr(xlErrNum) rather than answered inaccurately. That envelope is
 '   measured (benchmark/density_large_shape) and is shared with the Beta,
 '   Chi-square and F densities; it is separate from the incomplete-gamma
-'   convergence range that governs the cumulative and survival surfaces.
-'   - Returns zero below the support.
-'   - At X = 0, returns #NUM! for Shape < 1, 1 / ScaleParam for Shape = 1,
-'     and zero for Shape > 1.
-'   - If X / ScaleParam overflows, the exponential tail makes the density zero.
-'   - Mathematically valid exponential underflow returns zero.
+'   convergence range that governs the cumulative and survival surfaces
+'     - Returns zero below the support
+'     - At X = 0, returns #NUM! for Shape < 1, 1 / ScaleParam for Shape = 1,
+'       and zero for Shape > 1
+'     - If X / ScaleParam overflows, the exponential tail makes the density
+'       zero
+'     - Mathematically valid exponential underflow returns zero
 '
 ' ERROR POLICY
-'   - Invalid parameters, a density pole or density overflow return #NUM!.
-'   - Unexpected runtime errors return #VALUE!.
-'   - Diagnostics are written to Status.
+'   Invalid parameters, a density pole or density overflow return #NUM!
+'   Unexpected runtime errors return #VALUE!
+'   Diagnostics are written to Status
 '
 ' DEPENDENCIES
-'   - PROB_CN_ValidateXShapeScale
-'   - PROB_TryDivide
-'   - PROB_TryExp
-'   - PROB_TryGammaLogPdf
-'   - PROB_SetStatus
+'   PROB_CN_ValidateXShapeScale, PROB_TryDivide, PROB_TryExp,
+'   PROB_TryGammaLogPdf, PROB_SetStatus
+'
+' NOTES
+'   None
+'
+' WORKSHEET EQUIVALENT
+'   GAMMA.DIST(X, Shape, ScaleParam, FALSE)
 '
 ' CALLED FROM
-'   - Worksheet formulas
-'   - M_STATS_PROBDIST_TEST
-'==============================================================================
+'   Worksheet formulas, M_STATS_PROBDIST_TEST
 '
+' UPDATED
+'   2026-11-13
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -342,17 +352,13 @@ Public Function K_STATS_Gamma_Density( _
         K_STATS_Gamma_Density = Density
 
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' EXIT PROCEDURE
 '------------------------------------------------------------------------------
 Return_Success:
     'Clear diagnostic status
         PROB_SetStatus Status, vbNullString
     'Exit before failure and error-handler blocks
         Exit Function
-
-'------------------------------------------------------------------------------
-' FAIL - NUMERIC
-'------------------------------------------------------------------------------
 Fail_Num:
     'Write diagnostics
         PROB_SetStatus Status, FailMsg
@@ -369,6 +375,7 @@ Err_Handler:
         PROB_SetStatus Status, "Unexpected error in K_STATS_Gamma_Density: " & Err.Description
     'Return worksheet value error
         K_STATS_Gamma_Density = CVErr(xlErrValue)
+
 End Function
 
 

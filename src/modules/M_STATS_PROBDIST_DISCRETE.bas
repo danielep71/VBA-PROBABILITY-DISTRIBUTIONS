@@ -6356,40 +6356,87 @@ Private Function PROB_DS_TryBinomialPMF( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_DS_TryBinomialPMF
+'------------------------------------------------------------------------------
+'                          COMPUTE THE BINOMIAL MASS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the Binomial mass by exponentiating the shared log-mass kernel.
-'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'   Computes the Binomial mass at K successes in n trials
+'
+' WHY THIS EXISTS
+'   K_STATS_Binomial_PMF needs the mass as a value, and the logarithm of the
+'   mass is shared with the log-mass function and the other discrete kernels
+'
+' INPUTS
+'   K
+'     Success count, an integer held in a Double
+'
+'   n
+'     Trial count, an integer held in a Double
+'
+'   ProbSuccess
+'     Success probability, from 0 to 1
+'
+'   Result
+'     Receives the mass
+'
+'   FailMsg
+'     Receives the failure text
+'
+' RETURNS
+'   TRUE with Result set, from 0 to 1. A certain-zero outcome or a deep-tail
+'   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
+'
+' BEHAVIOR
+'   - Takes the logarithm of the mass from PROB_DS_TryBinomialLogMass
+'   - Returns zero for an impossible outcome
+'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return with FailMsg
+'
+' DEPENDENCIES
+'   PROB_DS_TryBinomialLogMass, PROB_TryExp
+'
+' NOTES
+'   None
 '
 ' UPDATED
-'   2026-07-19 - Now a thin exponentiation over PROB_DS_TryBinomialLogMass.
-'==============================================================================
-'
+'   2026-07-19
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
 
+'------------------------------------------------------------------------------
+' TAKE THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Take the logarithm of the mass from the shared kernel
         If Not PROB_DS_TryBinomialLogMass( _
             K, n, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
-
+    'Return zero for an impossible outcome
         If IsCertainZero Then
             Result = 0#
             PROB_DS_TryBinomialPMF = True
             Exit Function
         End If
 
-    'The true mass cannot overflow; negative underflow is a valid zero
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate: the true mass cannot overflow, and underflow is a valid zero
         If Not PROB_TryExp(LogMass, Result) Then
             FailMsg = "Binomial mass exponentiation failed"
             Exit Function
         End If
-
     'Clamp harmless final round-off
         If Result < 0# Then Result = 0#
         If Result > 1# Then Result = 1#
-
+    'Report success
         PROB_DS_TryBinomialPMF = True
+
 End Function
 
 
@@ -6463,38 +6510,84 @@ Private Function PROB_DS_TryPoissonPMF( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_DS_TryPoissonPMF
+'------------------------------------------------------------------------------
+'                           COMPUTE THE POISSON MASS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the Poisson mass by exponentiating the shared log-mass kernel.
-'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'   Computes the Poisson mass at K events for a given mean
+'
+' WHY THIS EXISTS
+'   K_STATS_Poisson_PMF needs the mass as a value, and the logarithm of the
+'   mass is shared with the log-mass function and the other discrete kernels
+'
+' INPUTS
+'   K
+'     Event count, an integer held in a Double
+'
+'   Mean
+'     Poisson mean, zero or positive
+'
+'   Result
+'     Receives the mass
+'
+'   FailMsg
+'     Receives the failure text
+'
+' RETURNS
+'   TRUE with Result set, from 0 to 1. A certain-zero outcome or a deep-tail
+'   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
+'
+' BEHAVIOR
+'   - Takes the logarithm of the mass from PROB_DS_TryPoissonLogMass
+'   - Returns zero for an impossible outcome
+'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return with FailMsg
+'
+' DEPENDENCIES
+'   PROB_DS_TryPoissonLogMass, PROB_TryExp
+'
+' NOTES
+'   None
 '
 ' UPDATED
-'   2026-07-19 - Now a thin exponentiation over PROB_DS_TryPoissonLogMass.
-'==============================================================================
-'
+'   2026-07-19
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Outcome is impossible under a zero mean
 
+'------------------------------------------------------------------------------
+' TAKE THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Take the logarithm of the mass from the shared kernel
         If Not PROB_DS_TryPoissonLogMass( _
             K, Mean, LogMass, IsCertainZero, FailMsg) Then Exit Function
-
+    'Return zero for an impossible outcome
         If IsCertainZero Then
             Result = 0#
             PROB_DS_TryPoissonPMF = True
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the logarithm; underflow is a valid zero
         If Not PROB_TryExp(LogMass, Result) Then
             FailMsg = "Poisson mass exponentiation failed"
             Exit Function
         End If
-
+    'Clamp final round-off
         If Result < 0# Then Result = 0#
         If Result > 1# Then Result = 1#
-
+    'Report success
         PROB_DS_TryPoissonPMF = True
+
 End Function
 
 
