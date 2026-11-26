@@ -199,9 +199,18 @@ PREDATES = {
                          "PROB_TryBetaRegularized (2026-07-29) and the later changes "
                          "to PROB_TryBetaLogPdf, PROB_TryDeviancePart and "
                          "PROB_StirlingError",
+    "prefactor_rule": "exported before the prefactor rule of #175 (candidate 8721b6c, "
+                      "2026-11-26), which changed the dispatch of PROB_TryBetaRegularized "
+                      "and the far branch of PROB_TryDeviancePart; these sets have no "
+                      "unattended export and were not exported again in that wave",
 }
 # holdout_older was re-exported on 2026-11-06 (#81, run 42210983927) and is
 # compared like every other grid since.
+# The sets below hold observations of the source of before #175: the study
+# grids without an unattended export, and the rows of the main grid that the
+# main exporter does not fill (every evidence_set but "main grid").
+NOT_EXPORTED_SINCE_175 = ("beta_f_unbalanced/", "cdf_large_shape/", "density_large_shape/",
+                          "excel_comparison/")
 
 
 def reaches_loader(q, r):
@@ -221,6 +230,15 @@ def predates(grid, q, r):
     return None
 
 
+def predates_175(grid, q, r):
+    """True for a row the rule of #175 can change that was not exported after it."""
+    if q not in ("Beta_Density", "Beta_Survival", "Beta_Cumulative"):
+        return False
+    if grid.startswith(NOT_EXPORTED_SINCE_175):
+        return True
+    return (grid == GRIDS[0]) and r.get("evidence_set") != "main grid"
+
+
 def fidelity():
     per, old = {}, {}
     refused = 0
@@ -237,7 +255,7 @@ def fidelity():
             refused += 1
             continue
         d = ulp_distance(modelled, float(parse_observed(raw)))
-        reason = predates(g, q, r)
+        reason = predates(g, q, r) or ("prefactor_rule" if predates_175(g, q, r) else None)
         if reason:
             o = old.setdefault(reason, {"why": PREDATES[reason], "observations": 0,
                                         "exact": 0, "max_ulps": 0})

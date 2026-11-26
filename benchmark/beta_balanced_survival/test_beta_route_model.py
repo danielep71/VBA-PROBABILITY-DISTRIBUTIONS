@@ -12,8 +12,8 @@ Fixture for the balanced Beta_Survival measurement (#163, README.md).
      Beta_Cumulative error, recomputed against the binary64-argument
      references, equals results.json.
   3. The #163 point: the model returns the committed observation of
-     Beta_Survival(0.82, 2.7, 3.4) bit for bit; its error exceeds 5E-15; with
-     PROB_LogBeta exact, or with the Loader prefactor, it does not.
+     Beta_Survival(0.82, 2.7, 3.4) bit for bit. Until #175 its error exceeded
+     5E-15; the rule of #175 takes the Loader prefactor there and it is below.
   4. Each sweep's recorded worst point for each function and variant
      reproduces. The full sweeps take about two minutes and are re-run by
      `python3 measure_balanced_survival.py --check`, not here.
@@ -70,8 +70,11 @@ row = [r for r in obs["rows"] if r["grid"].startswith("holdout_older/")
        and r["function"] == "Beta_Survival" and r["x"] == "0.82"]
 check(len(row) == 1, "Beta_Survival(0.82, 2.7, 3.4) not found in holdout_older")
 if row:
-    check(row[0]["gate_error"] > S.THRESHOLD and row[0]["binary64_error"] > S.THRESHOLD,
-          f"#163 point no longer exceeds 5E-15: {row[0]}")
+    # Until #175 the point measured 5.45E-15, above the threshold. The rule of
+    # #175 takes the Loader prefactor here, and the observation exported after
+    # it is within the threshold.
+    check(row[0]["gate_error"] < S.THRESHOLD and row[0]["binary64_error"] < S.THRESHOLD,
+          f"#163 point is not below 5E-15 after the rule of #175: {row[0]}")
     observed = [r for r in S.read_rows("holdout_older/holdout_older_grid.csv")
                 if r["function"] == "Beta_Survival" and r["arg1"] == "0.82"][0]
     check(M.beta_survival(0.82, 2.7, 3.4) == float(S.parse_observed(observed["observed_vba"])),
