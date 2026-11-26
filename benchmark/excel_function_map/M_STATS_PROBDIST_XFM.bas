@@ -71,6 +71,7 @@ End Sub
 
 
 Public Sub Export_ExcelFloor()
+
 '
 '------------------------------------------------------------------------------
 '                         EXPORT THE EXCEL FLOOR GRID
@@ -136,6 +137,7 @@ End Sub
 
 
 Public Sub Export_PrefactorHoldout()
+
 '
 '------------------------------------------------------------------------------
 '                      EXPORT THE PREFACTOR HOLDOUT GRID
@@ -197,6 +199,73 @@ Public Sub Export_PrefactorHoldout()
         MsgBox "Prefactor holdout complete: " & Filled & _
             " observation(s) written to" & vbCrLf & Path, _
             vbInformation, "Prefactor holdout"
+
+End Sub
+
+
+Public Sub Export_PrefactorHoldout2()
+
+'
+'------------------------------------------------------------------------------
+'                   EXPORT THE SECOND PREFACTOR HOLDOUT GRID
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Fills the two observation columns of prefactor_holdout2_grid.csv
+'
+' WHY THIS EXISTS
+'   The first candidate of the incomplete-beta prefactor rule (#175) was
+'   rejected on the first holdout, which is revealed since. The second
+'   registration is judged on points of its own, again against Excel's
+'   functions at the same points
+'
+' INPUTS
+'   None
+'
+' RETURNS
+'   Nothing
+'
+' BEHAVIOR
+'   - Locates prefactor_holdout2_grid.csv beside the workbook, or asks for it
+'   - Evaluates every formula of the grid through ExportFile
+'   - Reports the number of rows written
+'
+' ERROR POLICY
+'   ExportFile reports a failure itself and leaves the grid as found; this
+'   macro then stops without a message of its own
+'
+' DEPENDENCIES
+'   ExportFile
+'
+' NOTES
+'   ci/Export-ExcelGrids.ps1 runs it on the runner as the study export
+'   xfp_prefactor2; benchmark/beta_prefactor_study/prefactor_study2.py judges
+'   the result
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Path                As String          'File written
+    Dim Filled              As Long            'Rows written, or -1
+
+'------------------------------------------------------------------------------
+' EXPORT THE GRID
+'------------------------------------------------------------------------------
+    'Evaluate every formula of the grid
+        Filled = ExportFile("prefactor_holdout2_grid.csv", "Prefactor holdout 2", Path)
+    'Stop when the export failed or was cancelled
+        If Filled < 0 Then Exit Sub
+
+'------------------------------------------------------------------------------
+' REPORT
+'------------------------------------------------------------------------------
+    'Report the rows written
+        MsgBox "Prefactor holdout 2 complete: " & Filled & _
+            " observation(s) written to" & vbCrLf & Path, _
+            vbInformation, "Prefactor holdout 2"
 
 End Sub
 

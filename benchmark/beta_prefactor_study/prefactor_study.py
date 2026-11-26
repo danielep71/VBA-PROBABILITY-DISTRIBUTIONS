@@ -216,9 +216,9 @@ def build(check):
         with open(GRID, encoding="utf-8") as f:
             committed = [line.split(",")[:5] for line in f.read().splitlines()]
         if committed != [line.split(",")[:5] for line in text.splitlines()]:
-            print("FAIL: prefactor_holdout_grid.csv differs from prefactor_study.py; rebuild it")
+            print(f"FAIL: {os.path.basename(GRID)} differs from its generator; rebuild it")
             return 1
-        print(f"PASS: prefactor_holdout_grid.csv matches its generator ({len(design())} points)")
+        print(f"PASS: {os.path.basename(GRID)} matches its generator ({len(design())} points)")
         return 0
     with open(GRID, "w", encoding="utf-8", newline="") as f:
         f.write(text)

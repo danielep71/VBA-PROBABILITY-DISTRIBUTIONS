@@ -26,12 +26,17 @@ The two points of H2:
 | `Beta_Cumulative(0.993276, 700, 3)` | 7.6E-17 | 1.66E-14 | 7.6E-17 |
 | `Beta_Density(0.812111, 150, 90)` | 5.2E-15 | 1.26E-14 | 2.5E-16 |
 
-The first is a real loss. At shapes 700 and 3 the literal form was correctly
-rounded and the Loader form is not: with one shape small and the other
-large, the literal form's log-beta goes through `PROB_LogGammaDelta`, which
-is accurate, and the Lanczos error that the rule removes is not there to
-remove. The registration treated every pair of shapes from 1/2 alike. The
-second is at the level of rounding: the far deviance moved by 7E-15.
+The first is a loss of 1.7E-14 at a point where the literal form happened to
+be correctly rounded. The second is at the level of rounding: the far
+deviance moved by 7E-15.
+
+*Correction, 2026-11-26.* This section first said that with one shape small
+and the other large the literal form is exact, and that the region of R1 was
+therefore too wide. The model does not support that: for shapes with a ratio
+below 0.1 the rule is better at 404 development points and worse at 22
+(`PREREGISTRATION_2.md`). The loss at this point is the scatter of two forms
+that each carry a few units of rounding, not a region where the old form
+wins.
 
 ## The predictions
 
@@ -68,8 +73,8 @@ that frozen comparison has to be re-based when a prefactor rule is adopted.
 
 ## What the second registration takes from this
 
-- R1 applied to shapes where the literal form was already exact. The region
-  has to follow the literal form's own error, not a bound on each shape.
+- The region of R1 stays: the model finds no part of it where the old form
+  is better on the whole.
 - H2 counted a point crossing 1E-14 by a few E-15 the same as a real loss.
   A criterion that separates the two has to be written before new data are
   seen, and judged on points this wave has not revealed.
