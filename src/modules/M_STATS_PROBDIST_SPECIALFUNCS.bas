@@ -2395,36 +2395,76 @@ Private Function PROB_TryBetaTailsPair( _
     Optional ByVal Binary64 As Boolean = False) _
     As Boolean
 '
-'==============================================================================
-' PROB_TryBetaTailsPair
+'------------------------------------------------------------------------------
+'                      BOTH TAILS OF THE INCOMPLETE BETA
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Both tails of I_X(A, B) at a Double X, for the beta inverse (#35): the
 '   lower tail I_X(A, B) and the upper tail 1 - I_X(A, B). The smaller of
-'   the two is computed directly; the other is its complement.
+'   the two is computed directly; the other is its complement
 '
-' BEHAVIOR
-'   - The factor is that of PROB_TryBetaRegularized, with Y = 1 - X.
-'   - Below the mean the continued fraction gives the lower tail. From the
-'     mean it gives the upper tail, at the argument 1 - X carried as an exact
-'     pair of Doubles.
-'   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
-'     declines, the binary64 fraction answers as before #35.
-'   - With Binary64 the pair fraction is not tried: the binary64 fraction
-'     answers, stopped at PROB_BETAINV_FAST_EPS, at the rounded argument
-'     (#359). From the mean that argument, 1 - X, is no longer exact.
+' WHY THIS EXISTS
+'   The beta inverse solves for the tail that is small, and needs it without
+'   the cancellation of one minus the other. From the mean the argument 1 - X
+'   is carried as an exact pair of Doubles, which a single Double cannot hold
+'
+' INPUTS
+'   X
+'     Argument, a Double
+'
+'   A
+'     First shape; A > 0
+'
+'   B
+'     Second shape; B > 0
+'
+'   LowerTail
+'     Receives I_X(A, B), in [0, 1]
+'
+'   UpperTail
+'     Receives 1 - I_X(A, B), in [0, 1]
+'
+'   FailMsg
+'     Receives the failure description when the function returns FALSE
+'
+'   Binary64
+'     Optional. TRUE skips the pair fraction (#359)
 '
 ' RETURNS
 '   Boolean
-'     TRUE  => LowerTail and UpperTail are set, each in [0, 1].
-'     FALSE => the factor overflowed or no fraction converged (FailMsg set).
+'     TRUE  => LowerTail and UpperTail are set, each in [0, 1]
+'     FALSE => the factor overflowed or no fraction converged (FailMsg set)
+'
+' BEHAVIOR
+'   - The factor is that of PROB_TryBetaRegularized, with Y = 1 - X
+'   - Below the mean the continued fraction gives the lower tail. From the
+'     mean it gives the upper tail, at the argument 1 - X carried as an exact
+'     pair of Doubles
+'   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
+'     declines, the binary64 fraction answers as before #35
+'   - With Binary64 the pair fraction is not tried: the binary64 fraction
+'     answers, stopped at PROB_BETAINV_FAST_EPS, at the rounded argument
+'     (#359). From the mean that argument, 1 - X, is no longer exact
+'
+' ERROR POLICY
+'   Predictable numerical failure is reported through FALSE and FailMsg.
+'   Nothing is raised
 '
 ' DEPENDENCIES
 '   - PROB_TryBetaLogPdf, PROB_LogBeta, PROB_TryExp
 '   - PROB_TryBetaContinuedFractionPair, PROB_TryBetaContinuedFraction
 '   - PROB_BP_Add
-'==============================================================================
 '
+' NOTES
+'   None
+'
+' UPDATED
+'   2026-11-16
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim Y                   As Double          '1 - X, rounded
     Dim YH                  As Double          '1 - X, high part
     Dim YL                  As Double          '1 - X, low part
@@ -2433,66 +2473,84 @@ Private Function PROB_TryBetaTailsPair( _
     Dim CFValue             As Double          'Continued-fraction value
     Dim Value               As Double          'The tail computed directly
 
-    If X <= 0# Then
-        LowerTail = 0#
-        UpperTail = 1#
-        PROB_TryBetaTailsPair = True
-        Exit Function
-    End If
-
-    Y = 1# - X
-    If Y <= 0# Then
-        LowerTail = 1#
-        UpperTail = 0#
-        PROB_TryBetaTailsPair = True
-        Exit Function
-    End If
-
-    If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
-        If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+'------------------------------------------------------------------------------
+' HANDLE BOUNDARIES
+'------------------------------------------------------------------------------
+    'Return both tails exactly at or below zero
+        If X <= 0# Then
+            LowerTail = 0#
+            UpperTail = 1#
+            PROB_TryBetaTailsPair = True
             Exit Function
         End If
-        LogBt = LogBt + Log(X) + Log(Y)
-    Else
-        LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
-    End If
-
-    If Not PROB_TryExp(LogBt, Bt) Then
-        FailMsg = "Incomplete beta factor overflowed for A = " & A & _
-                  ", B = " & B
-        Exit Function
-    End If
-
-    If X < (A + 1#) / (A + B + 2#) Then
-        If Binary64 Then
-            If Not PROB_TryBetaContinuedFraction( _
-                A, B, X, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
-        ElseIf Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
-            If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
+    'Form the rounded complement and return both tails exactly at or above one
+        Y = 1# - X
+        If Y <= 0# Then
+            LowerTail = 1#
+            UpperTail = 0#
+            PROB_TryBetaTailsPair = True
+            Exit Function
         End If
-        Value = Bt * CFValue / A
-        If Value < 0# Then Value = 0#
-        If Value > 1# Then Value = 1#
-        LowerTail = Value
-        UpperTail = 1# - Value
-    Else
-        If Binary64 Then
-            If Not PROB_TryBetaContinuedFraction( _
-                B, A, Y, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
-        Else
-            PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
-            If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
-                If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+
+'------------------------------------------------------------------------------
+' COMPUTE COMMON FACTOR
+'------------------------------------------------------------------------------
+    'Form the log of X^A * Y^B / Beta(A, B) as PROB_TryBetaRegularized does
+        If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
+            If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+                Exit Function
             End If
+            LogBt = LogBt + Log(X) + Log(Y)
+        Else
+            LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
         End If
-        Value = Bt * CFValue / B
-        If Value < 0# Then Value = 0#
-        If Value > 1# Then Value = 1#
-        UpperTail = Value
-        LowerTail = 1# - Value
-    End If
+    'Exponentiate; underflow to zero is a valid result at the far edges
+        If Not PROB_TryExp(LogBt, Bt) Then
+            FailMsg = "Incomplete beta factor overflowed for A = " & A & _
+                ", B = " & B
+            Exit Function
+        End If
 
-    PROB_TryBetaTailsPair = True
+'------------------------------------------------------------------------------
+' EVALUATE CONTINUED FRACTION
+'------------------------------------------------------------------------------
+    'Below the mean the fraction gives the lower tail; from the mean it gives
+    'the upper tail, at 1 - X carried as an exact pair unless Binary64 is set
+        If X < (A + 1#) / (A + B + 2#) Then
+            If Binary64 Then
+                If Not PROB_TryBetaContinuedFraction( _
+                    A, B, X, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
+            ElseIf Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
+                If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
+            End If
+            Value = Bt * CFValue / A
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            LowerTail = Value
+            UpperTail = 1# - Value
+        Else
+            If Binary64 Then
+                If Not PROB_TryBetaContinuedFraction( _
+                    B, A, Y, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
+            Else
+                PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
+                If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
+                    If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+                End If
+            End If
+            Value = Bt * CFValue / B
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            UpperTail = Value
+            LowerTail = 1# - Value
+        End If
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report that both tails are set
+        PROB_TryBetaTailsPair = True
+
 End Function
 
 Public Function PROB_TryBetaLowerNearOne( _
