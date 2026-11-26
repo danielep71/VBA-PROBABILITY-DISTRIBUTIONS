@@ -475,6 +475,76 @@ Public Sub Export_HypergeometricPairHoldout()
 End Sub
 
 
+Public Sub Export_NegativeBinomialPairHoldout()
+
+'
+'------------------------------------------------------------------------------
+'                EXPORT THE NEGATIVE BINOMIAL PAIR HOLDOUT GRID
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Fills the two observation columns of
+'   negative_binomial_pair_holdout_grid.csv
+'
+' WHY THIS EXISTS
+'   The rule that carries the Negative Binomial and Geometric mass functions
+'   as pairs of Doubles (#504) is judged on points no source has evaluated in Excel, and
+'   against Excel's own functions at the same points. The grid has the format
+'   of the Excel floor grid, so the same evaluator fills both sides
+'
+' INPUTS
+'   None
+'
+' RETURNS
+'   Nothing
+'
+' BEHAVIOR
+'   - Locates negative_binomial_pair_holdout_grid.csv beside the workbook,
+'     or asks for it
+'   - Evaluates every formula of the grid through ExportFile
+'   - Reports the number of rows written
+'
+' ERROR POLICY
+'   ExportFile reports a failure itself and leaves the grid as found; this
+'   macro then stops without a message of its own
+'
+' DEPENDENCIES
+'   ExportFile
+'
+' NOTES
+'   ci/Export-ExcelGrids.ps1 runs it on the runner as the study export
+'   xnb_pair; benchmark/negative_binomial_pair_study/nb_study.py judges
+'   the result
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Path                As String          'File written
+    Dim Filled              As Long            'Rows written, or -1
+
+'------------------------------------------------------------------------------
+' EXPORT THE GRID
+'------------------------------------------------------------------------------
+    'Evaluate every formula of the grid
+        Filled = ExportFile("negative_binomial_pair_holdout_grid.csv", _
+            "Negative Binomial pair holdout", Path)
+    'Stop when the export failed or was cancelled
+        If Filled < 0 Then Exit Sub
+
+'------------------------------------------------------------------------------
+' REPORT
+'------------------------------------------------------------------------------
+    'Report the rows written
+        MsgBox "Negative Binomial pair holdout complete: " & Filled & _
+            " observation(s) written to" & vbCrLf & Path, _
+            vbInformation, "Negative Binomial pair holdout"
+
+End Sub
+
+
 Private Function ExportFile( _
     ByVal FileName As String, _
     ByVal Title As String, _
