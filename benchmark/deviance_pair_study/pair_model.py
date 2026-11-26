@@ -94,7 +94,7 @@ def log_ratio(x, mean):
         term = mul(term, w2)
         piece = div(term, (2.0 * j + 1.0, 0.0))
         total = add(total, piece)
-        if abs(piece[0]) < ATANH_STOP * abs(total[0]):
+        if abs(piece[0]) <= ATANH_STOP * abs(total[0]):     # also x equal to the mean: w is zero
             break
     else:
         raise ArithmeticError("atanh series did not converge")
@@ -139,13 +139,19 @@ def binomial_pmf(k, n, p, rule=True):
                     - HALF_LOG_TWO_PI - corr)
 
 
-def gamma_density(x, shape, rule=True):
-    """The Gamma density at scale one."""
+def gamma_density(x, shape, scale=1.0, rule=True):
+    """K_STATS_Gamma_Density on its direct branch; the chi-square density is shape df / 2, scale 2."""
+    log_ratio_ = math.log(x) - math.log(scale)
     if rule:
-        return _finish([neg(deviance(shape, x)), 0.5 * math.log(shape), -math.log(x),
-                        -HALF_LOG_TWO_PI, -M.stirling_error(shape)])
-    return math.exp(-M.deviance_part(shape, x) + 0.5 * math.log(shape) - math.log(x)
-                    - HALF_LOG_TWO_PI - M.stirling_error(shape))
+        standard = div((x, 0.0), (scale, 0.0))
+        return _finish([neg(deviance(shape, standard)), 0.5 * math.log(shape), -log_ratio_,
+                        -HALF_LOG_TWO_PI, -M.stirling_error(shape), -math.log(scale)])
+    return math.exp(-M.deviance_part(shape, x / scale) + 0.5 * math.log(shape) - log_ratio_
+                    - HALF_LOG_TWO_PI - M.stirling_error(shape) - math.log(scale))
+
+
+def chisquare_density(x, df, rule=True):
+    return gamma_density(x, 0.5 * df, 2.0, rule=rule)
 
 
 def reference(fn, *args, dps=60):
@@ -156,7 +162,8 @@ def reference(fn, *args, dps=60):
         if fn == "binomial":
             return mp.binomial(a[1], a[0]) * a[2] ** a[0] * (1 - a[2]) ** (a[1] - a[0])
         if fn == "gamma":
-            return mp.exp((a[1] - 1) * mp.log(a[0]) - a[0] - mp.loggamma(a[1]))
+            scale = a[2] if len(a) > 2 else mp.mpf(1)
+            return mp.exp((a[1] - 1) * mp.log(a[0] / scale) - a[0] / scale - mp.loggamma(a[1])) / scale
         if fn == "deviance":
             return a[0] * mp.log(a[0] / a[1]) + a[1] - a[0]
     raise ValueError(fn)
