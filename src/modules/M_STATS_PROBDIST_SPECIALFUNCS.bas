@@ -2687,6 +2687,124 @@ Public Function PROB_TryPoissonMassPair( _
 End Function
 
 
+Private Function PROB_TryBinomialLogPair( _
+    ByVal K As Double, _
+    ByVal Trials As Double, _
+    ByVal ProbH As Double, _
+    ByVal ProbL As Double, _
+    ByRef LogH As Double, _
+    ByRef LogL As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'              FORM THE LOGARITHM OF THE BINOMIAL MASS AS A PAIR
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the logarithm of the Binomial mass at K for 0 < K < Trials, as a
+'   pair of Doubles, for a success probability that is itself a pair
+'
+' WHY THIS EXISTS
+'   The Binomial mass exponentiates this logarithm (#498), and the
+'   Hypergeometric mass adds two of them and subtracts a third at a
+'   probability n / N that is not a Double (#496). In one Double each term
+'   loses accuracy far from the mean
+'
+' INPUTS
+'   K
+'     Success count, an integer held in a Double
+'
+'   Trials
+'     Trial count, an integer held in a Double
+'
+'   ProbH
+'     High part of the success probability
+'
+'   ProbL
+'     Low part of the success probability; zero when it is a Double
+'
+'   LogH
+'     Receives the high part of the logarithm
+'
+'   LogL
+'     Receives the low part of the logarithm
+'
+' RETURNS
+'   TRUE with the pair set. FALSE, with the pair not to be used, on an edge
+'   (K = 0, K = Trials, a probability of zero or one) or when a deviance
+'   cannot be formed as a pair
+'
+' BEHAVIOR
+'   - Forms 1 - p, Trials * p and Trials * (1 - p) as pairs
+'   - Forms bd0(K, Trials * p) and bd0(Trials - K, Trials * (1 - p)) as pairs
+'   - Adds the three Stirling errors, PROB_HALF_LOG_TWO_PI and the half
+'     logarithms, the Doubles PROB_DS_TryBinomialLogMass uses, to the pair
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryDeviancePair, PROB_BP_Add, PROB_BP_Mul, PROB_StirlingError
+'
+' NOTES
+'   With a Double probability the pair operations reduce to those
+'   PROB_TryBinomialMassPair had before this procedure was split out of it
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Failures            As Double          'Trials - K
+    Dim QH                  As Double          '1 - p, high part
+    Dim QL                  As Double          '1 - p, low part
+    Dim NpH                 As Double          'Trials * p, high part
+    Dim NpL                 As Double          'Trials * p, low part
+    Dim NqH                 As Double          'Trials * (1 - p), high part
+    Dim NqL                 As Double          'Trials * (1 - p), low part
+    Dim DevKH               As Double          'bd0(K, Trials * p), high part
+    Dim DevKL               As Double          'bd0(K, Trials * p), low part
+    Dim DevJH               As Double          'bd0(Trials - K, Trials * (1 - p)), high part
+    Dim DevJL               As Double          'bd0(Trials - K, Trials * (1 - p)), low part
+    Dim HalfLogs            As Double          '(Log(K) + Log(Trials - K) - Log(Trials)) / 2
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges to the caller
+        If Not (K > 0# And K < Trials) Then Exit Function
+        If Not (ProbH > 0# And ProbH < 1#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE MEANS AND THE DEVIANCES
+'------------------------------------------------------------------------------
+    'Form the failure count, exact for integers
+        Failures = Trials - K
+    'Form 1 - p and the two means as pairs
+        PROB_BP_Add 1#, 0#, -ProbH, -ProbL, QH, QL
+        PROB_BP_Mul Trials, 0#, ProbH, ProbL, NpH, NpL
+        PROB_BP_Mul Trials, 0#, QH, QL, NqH, NqL
+    'Form the two deviances as pairs
+        If Not PROB_TryDeviancePair(K, NpH, NpL, DevKH, DevKL) Then Exit Function
+        If Not PROB_TryDeviancePair(Failures, NqH, NqL, DevJH, DevJL) Then Exit Function
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Add the other terms of the logarithm to the pair
+        HalfLogs = 0.5 * (Log(K) + Log(Failures) - Log(Trials))
+        PROB_BP_Add -DevKH, -DevKL, -DevJH, -DevJL, LogH, LogL
+        PROB_BP_Add LogH, LogL, PROB_StirlingError(Trials), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_StirlingError(K), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_StirlingError(Failures), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_HALF_LOG_TWO_PI, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -HalfLogs, 0#, LogH, LogL
+        PROB_TryBinomialLogPair = True
+
+End Function
+
+
 Public Function PROB_TryBinomialMassPair( _
     ByVal K As Double, _
     ByVal Trials As Double, _
@@ -2724,18 +2842,14 @@ Public Function PROB_TryBinomialMassPair( _
 '   does not apply; the caller then takes the logarithm in one Double
 '
 ' BEHAVIOR
-'   - Forms 1 - p and N * p exactly, and N * (1 - p), as pairs
-'   - Forms bd0(K, N * p) and bd0(N - K, N * (1 - p)) as pairs
-'   - Adds the three Stirling errors, PROB_HALF_LOG_TWO_PI and the half
-'     logarithms, the Doubles the one-Double route uses, to the pair
+'   - Takes the logarithm of the mass as a pair from PROB_TryBinomialLogPair
 '   - Returns Exp(high) * (1 + low)
 '
 ' ERROR POLICY
 '   Raises nothing; a failure is the FALSE return
 '
 ' DEPENDENCIES
-'   PROB_TryDeviancePair, PROB_TryExpPair, PROB_BP_Sum, PROB_BP_Add,
-'   PROB_BP_Mul, PROB_StirlingError
+'   PROB_TryBinomialLogPair, PROB_TryExpPair
 '
 ' NOTES
 '   The caller handles K = 0, K = N and a probability of zero or one before
@@ -2748,58 +2862,134 @@ Public Function PROB_TryBinomialMassPair( _
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
-    Dim Failures            As Double          'N - K
-    Dim QH                  As Double          '1 - p, high part
-    Dim QL                  As Double          '1 - p, low part
-    Dim NpH                 As Double          'N * p, high part
-    Dim NpL                 As Double          'N * p, low part
-    Dim NqH                 As Double          'N * (1 - p), high part
-    Dim NqL                 As Double          'N * (1 - p), low part
-    Dim DevKH               As Double          'bd0(K, N * p), high part
-    Dim DevKL               As Double          'bd0(K, N * p), low part
-    Dim DevJH               As Double          'bd0(N - K, N * (1 - p)), high part
-    Dim DevJL               As Double          'bd0(N - K, N * (1 - p)), low part
     Dim LogH                As Double          'Logarithm of the mass, high part
     Dim LogL                As Double          'Logarithm of the mass, low part
-    Dim HalfLogs            As Double          '(Log(K) + Log(N - K) - Log(N)) / 2
-
-'------------------------------------------------------------------------------
-' VALIDATE INPUTS
-'------------------------------------------------------------------------------
-    'Leave the edges to the caller
-        If Not (K > 0# And K < Trials) Then Exit Function
-        If Not (ProbSuccess > 0# And ProbSuccess < 1#) Then Exit Function
-
-'------------------------------------------------------------------------------
-' FORM THE MEANS AND THE DEVIANCES
-'------------------------------------------------------------------------------
-    'Form the failure count, exact for integers
-        Failures = Trials - K
-    'Form 1 - p and the two means as pairs
-        PROB_BP_Sum 1#, -ProbSuccess, QH, QL
-        PROB_BP_Mul Trials, 0#, ProbSuccess, 0#, NpH, NpL
-        PROB_BP_Mul Trials, 0#, QH, QL, NqH, NqL
-    'Form the two deviances as pairs
-        If Not PROB_TryDeviancePair(K, NpH, NpL, DevKH, DevKL) Then Exit Function
-        If Not PROB_TryDeviancePair(Failures, NqH, NqL, DevJH, DevJL) Then Exit Function
 
 '------------------------------------------------------------------------------
 ' FORM THE LOGARITHM OF THE MASS
 '------------------------------------------------------------------------------
-    'Add the other terms of the logarithm to the pair
-        HalfLogs = 0.5 * (Log(K) + Log(Failures) - Log(Trials))
-        PROB_BP_Add -DevKH, -DevKL, -DevJH, -DevJL, LogH, LogL
-        PROB_BP_Add LogH, LogL, PROB_StirlingError(Trials), 0#, LogH, LogL
-        PROB_BP_Add LogH, LogL, -PROB_StirlingError(K), 0#, LogH, LogL
-        PROB_BP_Add LogH, LogL, -PROB_StirlingError(Failures), 0#, LogH, LogL
-        PROB_BP_Add LogH, LogL, -PROB_HALF_LOG_TWO_PI, 0#, LogH, LogL
-        PROB_BP_Add LogH, LogL, -HalfLogs, 0#, LogH, LogL
+    'Take the logarithm as a pair; the edges are refused there
+        If Not PROB_TryBinomialLogPair(K, Trials, ProbSuccess, 0#, LogH, LogL) Then Exit Function
 
 '------------------------------------------------------------------------------
 ' RETURN VALUE
 '------------------------------------------------------------------------------
     'Exponentiate the pair
         PROB_TryBinomialMassPair = PROB_TryExpPair(LogH, LogL, Mass)
+
+End Function
+
+
+Public Function PROB_TryHypergeometricMassPair( _
+    ByVal K As Double, _
+    ByVal SampleSize As Double, _
+    ByVal Successes As Double, _
+    ByVal Population As Double, _
+    ByRef Mass As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'             COMPUTE THE HYPERGEOMETRIC MASS FROM PAIR LOGARITHMS
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Hypergeometric mass at K where each of its three Binomial
+'   terms is away from its edges, with the sampling fraction and the three
+'   logarithms carried as pairs of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The mass is dbinom(K; S, p) * dbinom(n - K; N - S, p) / dbinom(n; N, p)
+'   at p = n / N. With each logarithm in one Double and p rounded before any
+'   of them sees it, the mass loses accuracy far from the mean, where Excel
+'   is closer (#496)
+'
+' INPUTS
+'   K
+'     Sample successes, an integer held in a Double
+'
+'   SampleSize
+'     Sample size n, an integer held in a Double
+'
+'   Successes
+'     Population successes S, an integer held in a Double
+'
+'   Population
+'     Population size N, an integer held in a Double
+'
+'   Mass
+'     Receives the mass
+'
+' RETURNS
+'   TRUE with Mass set. FALSE, with Mass not to be used, when the pair route
+'   does not apply; the caller then takes the logarithm in one Double
+'
+' BEHAVIOR
+'   - Returns FALSE unless 0 < K < S, 0 < n - K < N - S and 0 < n < N
+'   - Forms p = n / N as a pair
+'   - Takes the three Binomial logarithms as pairs, adds the first two and
+'     subtracts the third, in pairs
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryBinomialLogPair, PROB_TryExpPair, PROB_BP_Add, PROB_BP_Div
+'
+' NOTES
+'   benchmark/hypergeometric_pair_study holds the model, the registration
+'   and the measurements
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim ProbH               As Double          'p = n / N, high part
+    Dim ProbL               As Double          'p = n / N, low part
+    Dim FirstH              As Double          'Log dbinom(K; S, p), high part
+    Dim FirstL              As Double          'Log dbinom(K; S, p), low part
+    Dim SecondH             As Double          'Log dbinom(n - K; N - S, p), high part
+    Dim SecondL             As Double          'Log dbinom(n - K; N - S, p), low part
+    Dim ThirdH              As Double          'Log dbinom(n; N, p), high part
+    Dim ThirdL              As Double          'Log dbinom(n; N, p), low part
+    Dim LogH                As Double          'Logarithm of the mass, high part
+    Dim LogL                As Double          'Logarithm of the mass, low part
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges of the third term to the caller; the first two are
+    'refused where their logarithms are formed
+        If Not (SampleSize > 0# And SampleSize < Population) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Form the sampling fraction as a pair
+        PROB_BP_Div SampleSize, 0#, Population, 0#, ProbH, ProbL
+    'Take the three Binomial logarithms as pairs
+        If Not PROB_TryBinomialLogPair(K, Successes, ProbH, ProbL, FirstH, FirstL) Then
+            Exit Function
+        End If
+        If Not PROB_TryBinomialLogPair(SampleSize - K, Population - Successes, _
+            ProbH, ProbL, SecondH, SecondL) Then
+            Exit Function
+        End If
+        If Not PROB_TryBinomialLogPair(SampleSize, Population, ProbH, ProbL, _
+            ThirdH, ThirdL) Then
+            Exit Function
+        End If
+    'Add the first two and subtract the third
+        PROB_BP_Add FirstH, FirstL, SecondH, SecondL, LogH, LogL
+        PROB_BP_Add LogH, LogL, -ThirdH, -ThirdL, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryHypergeometricMassPair = PROB_TryExpPair(LogH, LogL, Mass)
 
 End Function
 

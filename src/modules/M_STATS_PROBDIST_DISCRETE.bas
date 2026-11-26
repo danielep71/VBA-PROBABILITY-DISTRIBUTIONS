@@ -6807,21 +6807,26 @@ Private Function PROB_DS_TryHypergeometricPMF( _
 '   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
 '
 ' BEHAVIOR
-'   - Takes the logarithm of the mass from PROB_DS_TryHypergeometricLogMass
-'   - Returns zero for an impossible outcome
-'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'   - Takes the mass from PROB_TryHypergeometricMassPair, which carries the
+'     sampling fraction and the three Binomial logarithms as pairs of Doubles
+'     to the exponential (#496)
+'   - Where that route does not apply (an edge of a Binomial term), takes
+'     the logarithm of the mass from PROB_DS_TryHypergeometricLogMass,
+'     returns zero for an impossible outcome, and exponentiates it
+'   - Clamps final round-off to 0 and 1
 '
 ' ERROR POLICY
 '   Raises nothing; a failure is the FALSE return with FailMsg
 '
 ' DEPENDENCIES
-'   PROB_DS_TryHypergeometricLogMass, PROB_TryExp
+'   PROB_TryHypergeometricMassPair, PROB_DS_TryHypergeometricLogMass,
+'   PROB_TryExp
 '
 ' NOTES
 '   None
 '
 ' UPDATED
-'   2026-07-21
+'   2026-11-26
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -6829,15 +6834,24 @@ Private Function PROB_DS_TryHypergeometricPMF( _
 '------------------------------------------------------------------------------
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Impossible or below Double range
+    Dim HasMass             As Boolean         'TRUE once the pair route has returned the mass
+
+'------------------------------------------------------------------------------
+' TAKE THE PAIR ROUTE
+'------------------------------------------------------------------------------
+    'Take the mass from the pair logarithms; the edges are refused there
+        HasMass = PROB_TryHypergeometricMassPair(K, n, Kp, Np, Result)
 
 '------------------------------------------------------------------------------
 ' TAKE THE LOGARITHM OF THE MASS
 '------------------------------------------------------------------------------
     'Take the logarithm of the mass from the shared kernel
-        If Not PROB_DS_TryHypergeometricLogMass( _
-            K, n, Kp, Np, LogMass, IsCertainZero, FailMsg) Then Exit Function
+        If Not HasMass Then
+            If Not PROB_DS_TryHypergeometricLogMass( _
+                K, n, Kp, Np, LogMass, IsCertainZero, FailMsg) Then Exit Function
+        End If
     'Return zero for an impossible outcome
-        If IsCertainZero Then
+        If Not HasMass And IsCertainZero Then
             Result = 0#
             PROB_DS_TryHypergeometricPMF = True
             Exit Function
@@ -6847,9 +6861,11 @@ Private Function PROB_DS_TryHypergeometricPMF( _
 ' RETURN VALUE
 '------------------------------------------------------------------------------
     'Exponentiate the logarithm; underflow is a valid zero
-        If Not PROB_TryExp(LogMass, Result) Then
-            FailMsg = "Hypergeometric mass exponentiation failed"
-            Exit Function
+        If Not HasMass Then
+            If Not PROB_TryExp(LogMass, Result) Then
+                FailMsg = "Hypergeometric mass exponentiation failed"
+                Exit Function
+            End If
         End If
     'Clamp final round-off
         If Result < 0# Then Result = 0#
