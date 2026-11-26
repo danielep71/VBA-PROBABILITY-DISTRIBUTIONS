@@ -95,7 +95,9 @@ def judge(rows):
             v = value(r["observed_excel"])
             if v is not None:
                 excel.append((r["excel_formula"], v))
-        p = {"kind": kind, "source": source, "line": int(line.lstrip("L")), "function": fn,
+        where = line.lstrip("L")          # a source line of a grid, or a study's own label
+        p = {"kind": kind, "source": source, "line": int(where) if where.isdigit() else where,
+             "function": fn,
              "kstats_call": group[0]["kstats_call"], "reference": ref}
         if not excel:
             p["verdict"] = "not compared"
