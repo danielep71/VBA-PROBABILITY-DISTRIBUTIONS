@@ -81,6 +81,28 @@ was measured. The rule replaces one continued fraction in Doubles by the pair
 fraction of #35 on the rows it serves; what that costs per call is not
 known, and the criterion of #365 that asks for it is open.
 
+## After #175 (2026-11-26)
+
+The prefactor rule of #175 changes the rows this rule does not serve: 129 of
+the map rows. G2 held them to their export of 2026-11-25, so
+`below1e5_before.json` is frozen again from the export of candidate `8721b6c`
+(run 45789721558), as the registration of #175 said it would be. G2 now
+holds those rows to that export.
+
+Of the 129 rows, 98 are closer to the reference and 31 further; their worst
+falls from 8.2E-13 to 3.1E-13. The rows that got worse are at `|t|` of 24 and
+40, the largest `survival(40, 3162.28)` from 8.5E-14 to 3.1E-13. On the map,
+17 rows are above 1E-13 (24 before), every one at `|t|` above 16: 5 with df
+below 1999 (worst 1.3E-13) and 12 from 1999 (worst 3.1E-13).
+
+Against `T.DIST.RT` (`--compare`, `below1e5_excel.json`) the library is
+inferior at 40 of 140 points, 61 before: 31 with df below 1999, and 9 with df
+from 1999 at `|t|` above 16. Ten of the 40 are above 1E-13, at most 2.8E-13,
+every one at `|t|` of 17, 24 or 40. Up to `|t|` = 16 no compared point is
+above 6E-14.
+
+The figures under "What remains" are those of before #175.
+
 ## What remains
 
 - `df < 1999`: up to 2.5E-13, the factor through log-gamma (#175).
