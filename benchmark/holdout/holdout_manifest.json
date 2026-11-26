@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "evidence_kind": "independent_holdout",
-  "generated_utc": "2026-11-26T13:50:05Z",
-  "commit_sha": "52c961c",
+  "generated_utc": "2026-11-26T15:00:48Z",
+  "commit_sha": "1ff715e",
   "grid_schema_version": "holdout/arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
