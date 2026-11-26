@@ -111,5 +111,22 @@ class Study(unittest.TestCase):
         self.assertEqual(self.rules(new_error=2e-14, more=True), ["M4"])
 
 
+class NotComparedWithExcel(unittest.TestCase):
+    """A point Excel did not answer is still judged on the library alone."""
+
+    def failures(self, **point):
+        holdout, elsewhere, before = case()
+        holdout["hg:P000:Hypergeometric_PMF"] = dict(kind="hg:P000:Hypergeometric_PMF", verdict="not compared",
+                                 kstats_call="K", **point)
+        return sorted({f.split()[0] for f in S.judge(holdout, elsewhere, before)[0]})
+
+    def test_an_inaccurate_library_value_fails_the_accuracy_rule(self):
+        self.assertEqual(self.failures(library_rel=5e-13), ["M1"])
+        self.assertEqual(self.failures(library_rel=1e-15), [])
+
+    def test_a_library_error_fails_whatever_excel_returned(self):
+        self.assertEqual(self.failures(library_missing=True), ["M2"])
+
+
 if __name__ == "__main__":
     unittest.main()
