@@ -255,6 +255,28 @@ worst from 6.70E-14 to 1.11E-14 and the `large` worst from 1.38E-13 to
 4.82E-14. Either change moves `PROB_LogGamma` or `PROB_TryBetaRegularized`
 results that other frozen contracts are measured on.
 
+## After #175 (2026-11-26)
+
+The second repair named above is in the source: `PROB_TryBetaRegularized`
+takes the Loader prefactor whenever both shapes are at least 1/2
+(`../beta_prefactor_study/RESULT_2.md`). The sections above describe the
+route and the measurement of before; `results.json` is measured again on the
+source of now.
+
+- `Beta_Survival(0.82, 2.7, 3.4)` measures 1.8E-16 in Excel (5.45E-15
+  before).
+- The model's sweeps: `domain` worst 1.42E-14 (6.70E-14 before), `large`
+  worst 4.58E-15 (1.38E-13 before). The variants `exact_lb`, `lanczos17` and
+  `loader_prefactor` now equal `source`, since the route no longer reads
+  `PROB_LogBeta` in this region.
+- Fidelity: the model returns Excel's Double at all 246 observations it
+  evaluates among those exported after the rule. 141 Beta observations of
+  sets that were not exported again (`beta_f_unbalanced`, `cdf_large_shape`,
+  `density_large_shape`, `excel_comparison`, and the rows of the main grid
+  outside the main exporter) are those of the source of before and are
+  counted apart, under `fidelity.predates_source`.
+- The contracts are unchanged. Tightening them is a separate change.
+
 ## Reproduce
 
 ```

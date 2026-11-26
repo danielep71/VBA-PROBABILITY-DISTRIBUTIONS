@@ -3,14 +3,14 @@
  "floor": 1e-14,
  "points": 1403,
  "verdicts": {
-  "not inferior": 1231,
-  "inferior": 123,
+  "not inferior": 1293,
+  "inferior": 61,
   "not compared": 49
  },
  "by_function": {
   "Beta_Cumulative": {
-   "not inferior": 31,
-   "inferior": 14
+   "not inferior": 35,
+   "inferior": 10
   },
   "Beta_Density": {
    "not inferior": 43,
@@ -21,23 +21,23 @@
    "inferior": 3
   },
   "Beta_Survival": {
-   "not inferior": 37,
-   "inferior": 8
+   "not inferior": 43,
+   "inferior": 2
   },
   "Binomial_Cumulative": {
-   "not inferior": 28,
-   "inferior": 7
+   "not inferior": 29,
+   "inferior": 6
   },
   "Binomial_InverseCumulative": {
    "not inferior": 53
   },
   "Binomial_PMF": {
-   "not inferior": 32,
-   "inferior": 3
+   "not inferior": 33,
+   "inferior": 2
   },
   "Binomial_Survival": {
-   "not inferior": 14,
-   "inferior": 20
+   "not inferior": 21,
+   "inferior": 13
   },
   "ChiSquare_Cumulative": {
    "not inferior": 33,
@@ -64,20 +64,19 @@
    "not inferior": 5
   },
   "F_Cumulative": {
-   "not inferior": 19,
-   "inferior": 8
+   "not inferior": 24,
+   "inferior": 3
   },
   "F_Density": {
    "not inferior": 26,
    "not compared": 27
   },
   "F_InverseCumulative": {
-   "not inferior": 50,
-   "inferior": 1
+   "not inferior": 51
   },
   "F_Survival": {
-   "not inferior": 17,
-   "inferior": 10
+   "not inferior": 24,
+   "inferior": 3
   },
   "Gamma_Cumulative": {
    "not inferior": 28
@@ -103,12 +102,11 @@
    "not inferior": 15
   },
   "Hypergeometric_Cumulative": {
-   "not inferior": 18,
-   "inferior": 1
+   "not inferior": 19
   },
   "Hypergeometric_PMF": {
-   "not inferior": 16,
-   "inferior": 3
+   "not inferior": 18,
+   "inferior": 1
   },
   "Hypergeometric_Survival": {
    "not inferior": 16
@@ -129,15 +127,15 @@
    "not inferior": 5
   },
   "NegativeBinomial_Cumulative": {
-   "not inferior": 27,
-   "inferior": 7
+   "not inferior": 32,
+   "inferior": 2
   },
   "NegativeBinomial_PMF": {
    "not inferior": 34
   },
   "NegativeBinomial_Survival": {
-   "not inferior": 17,
-   "inferior": 17
+   "not inferior": 32,
+   "inferior": 2
   },
   "NormalStandard_Cumulative": {
    "not inferior": 9
@@ -188,20 +186,18 @@
    "not inferior": 11
   },
   "StudentT_Cumulative": {
-   "not inferior": 36,
-   "inferior": 1
+   "not inferior": 37
   },
   "StudentT_Density": {
    "not inferior": 52,
    "inferior": 4
   },
   "StudentT_InverseCumulative": {
-   "not inferior": 25,
-   "inferior": 2
+   "not inferior": 27
   },
   "StudentT_Survival": {
-   "not inferior": 32,
-   "inferior": 5
+   "not inferior": 36,
+   "inferior": 1
   },
   "Weibull_Cumulative": {
    "not inferior": 5
@@ -397,21 +393,6 @@
    "disposition": "issue #495"
   },
   {
-   "kind": "main:L1144:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1144,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(118;500;0.85)",
-   "reference": "0.002401764598008704999114921",
-   "excel_formula": "1-NEGBINOM.DIST(118;500;0.85;TRUE)",
-   "excel": 0.002401764598008782,
-   "excel_rel": 3.208468220977897e-14,
-   "library": 0.002401764598009878,
-   "library_rel": 4.883790071644246e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
    "kind": "main:L826:Binomial_Survival",
    "source": "main",
    "line": 826,
@@ -457,36 +438,6 @@
    "disposition": "issue #495"
   },
   {
-   "kind": "holdout:L256:NegativeBinomial_Survival",
-   "source": "holdout",
-   "line": 256,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(354;200;0.4)",
-   "reference": "0.0270981150567301843947844738718",
-   "excel_formula": "1-NEGBINOM.DIST(354;200;0.4;TRUE)",
-   "excel": 0.02709811505673021,
-   "excel_rel": 9.38092675397321e-16,
-   "library": 0.027098115056724173,
-   "library_rel": 2.2183894121648433e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L1140:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1140,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(88;500;0.85)",
-   "reference": "0.4808121286507476932268625",
-   "excel_formula": "1-NEGBINOM.DIST(88;500;0.85;TRUE)",
-   "excel": 0.48081212865074696,
-   "excel_rel": 1.5216248859508036e-15,
-   "library": 0.48081212865084244,
-   "library_rel": 1.9705735103484513e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
    "kind": "main:L788:Binomial_Survival",
    "source": "main",
    "line": 788,
@@ -500,21 +451,6 @@
    "library_rel": 1.8520636962816905e-13,
    "verdict": "inferior",
    "disposition": "issue #495"
-  },
-  {
-   "kind": "main:L1139:NegativeBinomial_Cumulative",
-   "source": "main",
-   "line": 1139,
-   "function": "NegativeBinomial_Cumulative",
-   "kstats_call": "K_STATS_NegativeBinomial_Cumulative(88;500;0.85)",
-   "reference": "0.5191878713492523067731375",
-   "excel_formula": "NEGBINOM.DIST(88;500;0.85;TRUE)",
-   "excel": 0.519187871349253,
-   "excel_rel": 1.4091540669481601e-15,
-   "library": 0.5191878713491576,
-   "library_rel": 1.8249186786878116e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
   },
   {
    "kind": "main:L1701:Beta_Survival",
@@ -545,36 +481,6 @@
    "library_rel": 1.6942003355617055e-13,
    "verdict": "inferior",
    "disposition": "issue #495"
-  },
-  {
-   "kind": "main:L129:StudentT_Survival",
-   "source": "main",
-   "line": 129,
-   "function": "StudentT_Survival",
-   "kstats_call": "K_STATS_StudentT_Survival(1;1000)",
-   "reference": "0.1587762090423361535412041",
-   "excel_formula": "T.DIST(-1;1000;TRUE)",
-   "excel": 0.15877620904233616,
-   "excel_rel": 6.483033443050296e-17,
-   "library": 0.1587762090423115,
-   "library_rel": 1.5534073622444124e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L1070:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1070,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(200;50;0.2)",
-   "reference": "0.4747826270597183598188516",
-   "excel_formula": "1-NEGBINOM.DIST(200;50;0.2;TRUE)",
-   "excel": 0.4747826270597192,
-   "excel_rel": 1.7415330198318917e-15,
-   "library": 0.4747826270597918,
-   "library_rel": 1.5467169868352308e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
   },
   {
    "kind": "main:L840:Binomial_Survival",
@@ -637,111 +543,6 @@
    "disposition": "issue #495"
   },
   {
-   "kind": "main:L1069:NegativeBinomial_Cumulative",
-   "source": "main",
-   "line": 1069,
-   "function": "NegativeBinomial_Cumulative",
-   "kstats_call": "K_STATS_NegativeBinomial_Cumulative(200;50;0.2)",
-   "reference": "0.5252173729402816401811484",
-   "excel_formula": "NEGBINOM.DIST(200;50;0.2;TRUE)",
-   "excel": 0.5252173729402808,
-   "excel_rel": 1.5742998325400875e-15,
-   "library": 0.5252173729402082,
-   "library_rel": 1.3981912864314568e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L2145:Beta_Survival",
-   "source": "main",
-   "line": 2145,
-   "function": "Beta_Survival",
-   "kstats_call": "K_STATS_Beta_Survival(0.410058;50;100)",
-   "reference": "0.0256390167028006614104286913489",
-   "excel_formula": "BETA.DIST(1-0.410058;100;50;TRUE)",
-   "excel": 0.025639016702800565,
-   "excel_rel": 3.7659021127378194e-15,
-   "library": 0.025639016702797116,
-   "library_rel": 1.38273021095393e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L2147:Beta_Survival",
-   "source": "main",
-   "line": 2147,
-   "function": "Beta_Survival",
-   "kstats_call": "K_STATS_Beta_Survival(0.333333;50;100)",
-   "reference": "0.492318061371478191394216062880",
-   "excel_formula": "1-BETA.DIST(0.333333;50;100;TRUE)",
-   "excel": 0.4923180613714784,
-   "excel_rel": 3.772015109256728e-16,
-   "library": 0.49231806137154427,
-   "library_rel": 1.3421697234513947e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L2148:Beta_Cumulative",
-   "source": "main",
-   "line": 2148,
-   "function": "Beta_Cumulative",
-   "kstats_call": "K_STATS_Beta_Cumulative(0.666667;100;50)",
-   "reference": "0.492318061371478191394216062880",
-   "excel_formula": "BETA.DIST(0.666667;100;50;TRUE)",
-   "excel": 0.4923180613714784,
-   "excel_rel": 3.772015109256728e-16,
-   "library": 0.49231806137154427,
-   "library_rel": 1.3421697234513947e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L2146:Beta_Cumulative",
-   "source": "main",
-   "line": 2146,
-   "function": "Beta_Cumulative",
-   "kstats_call": "K_STATS_Beta_Cumulative(0.333333;50;100)",
-   "reference": "0.507681938628521808605783937120",
-   "excel_formula": "BETA.DIST(0.333333;50;100;TRUE)",
-   "excel": 0.5076819386285216,
-   "excel_rel": 3.657863368292905e-16,
-   "library": 0.5076819386284557,
-   "library_rel": 1.302645332587458e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "main:L2149:Beta_Survival",
-   "source": "main",
-   "line": 2149,
-   "function": "Beta_Survival",
-   "kstats_call": "K_STATS_Beta_Survival(0.666667;100;50)",
-   "reference": "0.507681938628521808605783937120",
-   "excel_formula": "1-BETA.DIST(0.666667;100;50;TRUE)",
-   "excel": 0.5076819386285216,
-   "excel_rel": 3.657863368292905e-16,
-   "library": 0.5076819386284557,
-   "library_rel": 1.302645332587458e-13,
-   "verdict": "inferior",
-   "disposition": "issue #175"
-  },
-  {
-   "kind": "holdout:L309:Hypergeometric_PMF",
-   "source": "holdout",
-   "line": 309,
-   "function": "Hypergeometric_PMF",
-   "kstats_call": "K_STATS_Hypergeometric_PMF(100;200;2000;50000)",
-   "reference": "2.66136676589306601164893449521e-84",
-   "excel_formula": "HYPGEOM.DIST(100;200;2000;50000;FALSE)",
-   "excel": 2.6613667658931154e-84,
-   "excel_rel": 1.854409922416638e-14,
-   "library": 2.6613667658927464e-84,
-   "library_rel": 1.2009005471294002e-13,
-   "verdict": "inferior",
-   "disposition": "issue #496"
-  },
-  {
    "kind": "main:L1758:F_Cumulative",
    "source": "main",
    "line": 1758,
@@ -772,36 +573,6 @@
    "disposition": "issue #495"
   },
   {
-   "kind": "main:L142:StudentT_InverseCumulative",
-   "source": "main",
-   "line": 142,
-   "function": "StudentT_InverseCumulative",
-   "kstats_call": "K_STATS_StudentT_InverseCumulative(0.95;1000)",
-   "reference": "1.646378817285464284022887",
-   "excel_formula": "T.INV(0.95;1000)",
-   "excel": 1.6463788172854321,
-   "excel_rel": 1.9538171993120984e-14,
-   "library": 1.6463788172856286,
-   "library_rel": 9.98204308359994e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1084:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1084,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(50;50;0.5)",
-   "reference": "0.4602053813064106192509365",
-   "excel_formula": "1-NEGBINOM.DIST(50;50;0.5;TRUE)",
-   "excel": 0.46020538130641064,
-   "excel_rel": 5.2823100700329126e-17,
-   "library": 0.460205381306366,
-   "library_rel": 9.69277151607926e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "holdout:L44:Beta_InverseCumulative",
    "source": "holdout",
    "line": 44,
@@ -813,51 +584,6 @@
    "excel_rel": 2.200254454013034e-15,
    "library": 3.2101824215135803e-13,
    "library_rel": 9.294914903612605e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1676:Beta_Cumulative",
-   "source": "main",
-   "line": 1676,
-   "function": "Beta_Cumulative",
-   "kstats_call": "K_STATS_Beta_Cumulative(0.5;100;100)",
-   "reference": "0.4999999999999999999999999999618389",
-   "excel_formula": "BETA.DIST(0.5;100;100;TRUE)",
-   "excel": 0.4999999999999999,
-   "excel_rel": 2.2204460492495499e-16,
-   "library": 0.5000000000000421,
-   "library_rel": 8.415490526658694e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1677:Beta_Survival",
-   "source": "main",
-   "line": 1677,
-   "function": "Beta_Survival",
-   "kstats_call": "K_STATS_Beta_Survival(0.5;100;100)",
-   "reference": "0.5000000000000000000000000000381611",
-   "excel_formula": "1-BETA.DIST(0.5;100;100;TRUE)",
-   "excel": 0.5000000000000001,
-   "excel_rel": 2.2204460492495499e-16,
-   "library": 0.5000000000000421,
-   "library_rel": 8.415490526658679e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1083:NegativeBinomial_Cumulative",
-   "source": "main",
-   "line": 1083,
-   "function": "NegativeBinomial_Cumulative",
-   "kstats_call": "K_STATS_NegativeBinomial_Cumulative(50;50;0.5)",
-   "reference": "0.5397946186935893807490635",
-   "excel_formula": "NEGBINOM.DIST(50;50;0.5;TRUE)",
-   "excel": 0.5397946186935894,
-   "excel_rel": 4.503467496288805e-17,
-   "library": 0.539794618693634,
-   "library_rel": 8.263634828870416e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -892,36 +618,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L1102:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1102,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(18;50;0.85)",
-   "reference": "0.004412459028808121811366855",
-   "excel_formula": "1-NEGBINOM.DIST(18;50;0.85;TRUE)",
-   "excel": 0.004412459028808158,
-   "excel_rel": 8.14894511324885e-15,
-   "library": 0.004412459028807809,
-   "library_rel": 7.08726200491414e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L2139:Beta_Survival",
-   "source": "main",
-   "line": 2139,
-   "function": "Beta_Survival",
-   "kstats_call": "K_STATS_Beta_Survival(0.99;14;19)",
-   "reference": "3.06840641066203455897252529027e-30",
-   "excel_formula": "BETA.DIST(1-0.99;19;14;TRUE)",
-   "excel": 3.0684064106620112e-30,
-   "excel_rel": 7.61319134412023e-15,
-   "library": 3.068406410661829e-30,
-   "library_rel": 6.698238042195225e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "holdout:L175:Binomial_Survival",
    "source": "holdout",
    "line": 175,
@@ -933,51 +629,6 @@
    "excel_rel": 5.821507998017726e-16,
    "library": 0.022735718300452647,
    "library_rel": 6.6047104346423e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L2142:Beta_Cumulative",
-   "source": "main",
-   "line": 2142,
-   "function": "Beta_Cumulative",
-   "kstats_call": "K_STATS_Beta_Cumulative(0.3;14;19)",
-   "reference": "0.0694421352374211267698140596193",
-   "excel_formula": "BETA.DIST(0.3;14;19;TRUE)",
-   "excel": 0.06944213523742115,
-   "excel_rel": 3.955387557013235e-16,
-   "library": 0.069442135237417,
-   "library_rel": 5.935865141068131e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L2141:Beta_Survival",
-   "source": "main",
-   "line": 2141,
-   "function": "Beta_Survival",
-   "kstats_call": "K_STATS_Beta_Survival(0.7;19;14)",
-   "reference": "0.0694421352374212218897778281766",
-   "excel_formula": "BETA.DIST(1-0.7;14;19;TRUE)",
-   "excel": 0.06944213523742117,
-   "excel_rel": 7.743874812004878e-16,
-   "library": 0.06944213523741725,
-   "library_rel": 5.713118222006297e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1074:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1074,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(294;50;0.2)",
-   "reference": "0.003546335632678496439794098",
-   "excel_formula": "1-NEGBINOM.DIST(294;50;0.2;TRUE)",
-   "excel": 0.0035463356326785878,
-   "excel_rel": 2.574974359582133e-14,
-   "library": 0.0035463356326783137,
-   "library_rel": 5.153744453118684e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -997,21 +648,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L135:StudentT_Survival",
-   "source": "main",
-   "line": 135,
-   "function": "StudentT_Survival",
-   "kstats_call": "K_STATS_StudentT_Survival(5;1000)",
-   "reference": "0.0000003383628182324315190927772",
-   "excel_formula": "T.DIST(-5;1000;TRUE)",
-   "excel": 3.383628182324281e-07,
-   "excel_rel": 1.0136281323678374e-14,
-   "library": 3.3836281823244805e-07,
-   "library_rel": 4.8848372852979883e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "main:L802:Binomial_Survival",
    "source": "main",
    "line": 802,
@@ -1023,21 +659,6 @@
    "excel_rel": 2.691570074447819e-15,
    "library": 0.001326850248391681,
    "library_rel": 4.8777405761105145e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L247:NegativeBinomial_Survival",
-   "source": "holdout",
-   "line": 247,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(22;20;0.6)",
-   "reference": "0.0375047459500639458414223437963",
-   "excel_formula": "1-NEGBINOM.DIST(22;20;0.6;TRUE)",
-   "excel": 0.03750474595006392,
-   "excel_rel": 6.2444713646041725e-16,
-   "library": 0.037504745950062125,
-   "library_rel": 4.854300985662485e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -1102,6 +723,21 @@
    "disposition": "issue #494"
   },
   {
+   "kind": "main:L132:StudentT_Survival",
+   "source": "main",
+   "line": 132,
+   "function": "StudentT_Survival",
+   "kstats_call": "K_STATS_StudentT_Survival(2;1000)",
+   "reference": "0.02288517324662582002439686",
+   "excel_formula": "T.DIST(-2;1000;TRUE)",
+   "excel": 0.02288517324662584,
+   "excel_rel": 8.517131432969745e-16,
+   "library": 0.02288517324662489,
+   "library_rel": 4.0687341623327987e-14,
+   "verdict": "inferior",
+   "disposition": "issue #494"
+  },
+  {
    "kind": "main:L1435:Beta_Cumulative",
    "source": "main",
    "line": 1435,
@@ -1162,36 +798,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L132:StudentT_Survival",
-   "source": "main",
-   "line": 132,
-   "function": "StudentT_Survival",
-   "kstats_call": "K_STATS_StudentT_Survival(2;1000)",
-   "reference": "0.02288517324662582002439686",
-   "excel_formula": "T.DIST(-2;1000;TRUE)",
-   "excel": 0.02288517324662584,
-   "excel_rel": 8.517131432969745e-16,
-   "library": 0.022885173246624948,
-   "library_rel": 3.811010099912133e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L658:Binomial_Survival",
-   "source": "main",
-   "line": 658,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(10;20;0.5)",
-   "reference": "0.4119014739990234375",
-   "excel_formula": "1-BINOM.DIST(10;20;0.5;TRUE)",
-   "excel": 0.41190147399902344,
-   "excel_rel": 0.0,
-   "library": 0.4119014739990079,
-   "library_rel": 3.773504909766126e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "holdout:L45:Beta_InverseCumulative",
    "source": "holdout",
    "line": 45,
@@ -1237,49 +843,19 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L1097:NegativeBinomial_Cumulative",
-   "source": "main",
-   "line": 1097,
-   "function": "NegativeBinomial_Cumulative",
-   "kstats_call": "K_STATS_NegativeBinomial_Cumulative(8;50;0.85)",
-   "reference": "0.4880498144943980618026767",
-   "excel_formula": "NEGBINOM.DIST(8;50;0.85;TRUE)",
-   "excel": 0.488049814494398,
-   "excel_rel": 1.4049028607571574e-16,
-   "library": 0.48804981449441526,
-   "library_rel": 3.523288251359645e-14,
+   "kind": "holdout:L309:Hypergeometric_PMF",
+   "source": "holdout",
+   "line": 309,
+   "function": "Hypergeometric_PMF",
+   "kstats_call": "K_STATS_Hypergeometric_PMF(100;200;2000;50000)",
+   "reference": "2.66136676589306601164893449521e-84",
+   "excel_formula": "HYPGEOM.DIST(100;200;2000;50000;FALSE)",
+   "excel": 2.6613667658931154e-84,
+   "excel_rel": 1.854409922416638e-14,
+   "library": 2.661366765892973e-84,
+   "library_rel": 3.488244584948925e-14,
    "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1098:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1098,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(8;50;0.85)",
-   "reference": "0.5119501855056019381973233",
-   "excel_formula": "1-NEGBINOM.DIST(8;50;0.85;TRUE)",
-   "excel": 0.511950185505602,
-   "excel_rel": 1.3393150349150075e-16,
-   "library": 0.5119501855055848,
-   "library_rel": 3.3479606236894035e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1028:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1028,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(20;5;0.2)",
-   "reference": "0.4206743092521315282874368",
-   "excel_formula": "1-NEGBINOM.DIST(20;5;0.2;TRUE)",
-   "excel": 0.4206743092521318,
-   "excel_rel": 6.077273731793195e-16,
-   "library": 0.42067430925214516,
-   "library_rel": 3.2409496942889146e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
+   "disposition": "issue #496"
   },
   {
    "kind": "main:L1760:F_Cumulative",
@@ -1297,111 +873,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L1088:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1088,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(80;50;0.5)",
-   "reference": "0.003164342255377134406439385",
-   "excel_formula": "1-NEGBINOM.DIST(80;50;0.5;TRUE)",
-   "excel": 0.003164342255377095,
-   "excel_rel": 1.2448690014687236e-14,
-   "library": 0.00316434225537704,
-   "library_rel": 2.985435157631858e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L244:F_Survival",
-   "source": "main",
-   "line": 244,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(1;10;30)",
-   "reference": "0.4654242904944112524390221",
-   "excel_formula": "F.DIST.RT(1;10;30)",
-   "excel": 0.46542429049441114,
-   "excel_rel": 2.38539983335141e-16,
-   "library": 0.46542429049442513,
-   "library_rel": 2.981749790720325e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L248:F_Survival",
-   "source": "main",
-   "line": 248,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(10;10;30)",
-   "reference": "0.0000004105278385297914701624083",
-   "excel_formula": "F.DIST.RT(10;10;30)",
-   "excel": 4.105278385297935e-07,
-   "excel_rel": 4.917301052226319e-15,
-   "library": 4.105278385297793e-07,
-   "library_rel": 2.964260094448064e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L128:StudentT_Cumulative",
-   "source": "main",
-   "line": 128,
-   "function": "StudentT_Cumulative",
-   "kstats_call": "K_STATS_StudentT_Cumulative(1;1000)",
-   "reference": "0.8412237909576638464587959",
-   "excel_formula": "T.DIST(1;1000;TRUE)",
-   "excel": 0.8412237909576639,
-   "excel_rel": 2.075792562158483e-17,
-   "library": 0.8412237909576885,
-   "library_rel": 2.9319681008407865e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L138:StudentT_Survival",
-   "source": "main",
-   "line": 138,
-   "function": "StudentT_Survival",
-   "kstats_call": "K_STATS_StudentT_Survival(20;1000)",
-   "reference": "2.031144249762385656855025e-75",
-   "excel_formula": "T.DIST(-20;1000;TRUE)",
-   "excel": 2.0311442497624279e-75,
-   "excel_rel": 2.077930180217833e-14,
-   "library": 2.0311442497624443e-75,
-   "library_rel": 2.887595131915442e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L148:Binomial_Survival",
-   "source": "holdout",
-   "line": 148,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(43;50;0.75)",
-   "reference": "0.019390872160392712233558207529",
-   "excel_formula": "BINOM.DIST.RANGE(50;0.75;43+1;50)",
-   "excel": 0.01939087216039274,
-   "excel_rel": 1.4693274474843273e-15,
-   "library": 0.019390872160392158,
-   "library_rel": 2.8589510706209254e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L140:StudentT_InverseCumulative",
-   "source": "main",
-   "line": 140,
-   "function": "StudentT_InverseCumulative",
-   "kstats_call": "K_STATS_StudentT_InverseCumulative(0.05;1000)",
-   "reference": "-1.64637881728546468862007",
-   "excel_formula": "T.INV(0.05;1000)",
-   "excel": -1.6463788172854321,
-   "excel_rel": 1.9783921743270885e-14,
-   "library": -1.6463788172855094,
-   "library_rel": 2.7150308521739155e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "holdout:L163:Binomial_PMF",
    "source": "holdout",
    "line": 163,
@@ -1413,216 +884,6 @@
    "excel_rel": 1.491100640279798e-14,
    "library": 0.0002554679681525932,
    "library_rel": 2.689224382935261e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L139:Binomial_Survival",
-   "source": "holdout",
-   "line": 139,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(9;50;0.1)",
-   "reference": "0.024537935704591465058195992901",
-   "excel_formula": "BINOM.DIST.RANGE(50;0.1;9+1;50)",
-   "excel": 0.024537935704591465,
-   "excel_rel": 1.130872818346678e-17,
-   "library": 0.024537935704590806,
-   "library_rel": 2.6853009803217696e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L259:F_Survival",
-   "source": "main",
-   "line": 259,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(10;100;100)",
-   "reference": "4.452739341551166613970913e-26",
-   "excel_formula": "F.DIST.RT(10;100;100)",
-   "excel": 4.4527393415511933e-26,
-   "excel_rel": 5.9932316183709915e-15,
-   "library": 4.452739341551048e-26,
-   "library_rel": 2.661924963440232e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L657:Binomial_Cumulative",
-   "source": "main",
-   "line": 657,
-   "function": "Binomial_Cumulative",
-   "kstats_call": "K_STATS_Binomial_Cumulative(10;20;0.5)",
-   "reference": "0.5880985260009765625",
-   "excel_formula": "BINOM.DIST(10;20;0.5;TRUE)",
-   "excel": 0.5880985260009766,
-   "excel_rel": 0.0,
-   "library": 0.5880985260009921,
-   "library_rel": 2.6429452987145188e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L243:F_Cumulative",
-   "source": "main",
-   "line": 243,
-   "function": "F_Cumulative",
-   "kstats_call": "K_STATS_F_Cumulative(1;10;30)",
-   "reference": "0.5345757095055887475609779",
-   "excel_formula": "F.DIST(1;10;30;TRUE)",
-   "excel": 0.5345757095055889,
-   "excel_rel": 2.0768302884728432e-16,
-   "library": 0.5345757095055749,
-   "library_rel": 2.5960378597474565e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L257:F_Survival",
-   "source": "main",
-   "line": 257,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(2;100;100)",
-   "reference": "0.0003091368626070543984378357",
-   "excel_formula": "F.DIST.RT(2;100;100)",
-   "excel": 0.00030913686260705437,
-   "excel_rel": 1.0746030005508746e-16,
-   "library": 0.0003091368626070464,
-   "library_rel": 2.5885317720759242e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L648:Binomial_Survival",
-   "source": "main",
-   "line": 648,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(2;20;0.02)",
-   "reference": "0.007068693403814063623882276",
-   "excel_formula": "BINOM.DIST.RANGE(20;0.02;2+1;20)",
-   "excel": 0.007068693403814066,
-   "excel_rel": 3.9437605088421963e-16,
-   "library": 0.007068693403813889,
-   "library_rel": 2.476008264889218e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L662:Binomial_Survival",
-   "source": "main",
-   "line": 662,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(16;20;0.5)",
-   "reference": "0.00128841400146484375",
-   "excel_formula": "1-BINOM.DIST(16;20;0.5;TRUE)",
-   "excel": 0.0012884140014648438,
-   "excel_rel": 0.0,
-   "library": 0.001288414001464812,
-   "library_rel": 2.4571840573435885e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L241:F_Cumulative",
-   "source": "main",
-   "line": 241,
-   "function": "F_Cumulative",
-   "kstats_call": "K_STATS_F_Cumulative(0.25;10;30)",
-   "reference": "0.01254787763995718445896061",
-   "excel_formula": "F.DIST(0.25;10;30;TRUE)",
-   "excel": 0.012547877639957168,
-   "excel_rel": 1.327395499726933e-15,
-   "library": 0.012547877639956878,
-   "library_rel": 2.4414871230731535e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L288:Hypergeometric_PMF",
-   "source": "holdout",
-   "line": 288,
-   "function": "Hypergeometric_PMF",
-   "kstats_call": "K_STATS_Hypergeometric_PMF(0;60;300;500)",
-   "reference": "2.70317559496756410430587800638e-27",
-   "excel_formula": "HYPGEOM.DIST(0;60;300;500;FALSE)",
-   "excel": 2.7031755949675665e-27,
-   "excel_rel": 9.009002894078124e-16,
-   "library": 2.70317559496763e-27,
-   "library_rel": 2.439017569337875e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L290:Hypergeometric_Cumulative",
-   "source": "holdout",
-   "line": 290,
-   "function": "Hypergeometric_Cumulative",
-   "kstats_call": "K_STATS_Hypergeometric_Cumulative(0;60;300;500)",
-   "reference": "2.70317559496756410430587800638e-27",
-   "excel_formula": "HYPGEOM.DIST(0;60;300;500;TRUE)",
-   "excel": 2.7031755949675665e-27,
-   "excel_rel": 9.009002894078124e-16,
-   "library": 2.70317559496763e-27,
-   "library_rel": 2.439017569337875e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1032:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1032,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(50;5;0.2)",
-   "reference": "0.008650829147836742962145394",
-   "excel_formula": "1-NEGBINOM.DIST(50;5;0.2;TRUE)",
-   "excel": 0.00865082914783677,
-   "excel_rel": 3.0529575015917267e-15,
-   "library": 0.008650829147836533,
-   "library_rel": 2.4218693423550097e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L246:F_Survival",
-   "source": "main",
-   "line": 246,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(2;10;30)",
-   "reference": "0.069613708076384256",
-   "excel_formula": "F.DIST.RT(2;10;30)",
-   "excel": 0.0696137080763842,
-   "excel_rel": 7.917321410390735e-16,
-   "library": 0.06961370807638258,
-   "library_rel": 2.4116178121314554e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1046:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1046,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(14;5;0.5)",
-   "reference": "0.00960540771484375",
-   "excel_formula": "1-NEGBINOM.DIST(14;5;0.5;TRUE)",
-   "excel": 0.00960540771484375,
-   "excel_rel": 0.0,
-   "library": 0.00960540771484352,
-   "library_rel": 2.401961781886407e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1027:NegativeBinomial_Cumulative",
-   "source": "main",
-   "line": 1027,
-   "function": "NegativeBinomial_Cumulative",
-   "kstats_call": "K_STATS_NegativeBinomial_Cumulative(20;5;0.2)",
-   "reference": "0.5793256907478684717125632",
-   "excel_formula": "NEGBINOM.DIST(20;5;0.2;TRUE)",
-   "excel": 0.5793256907478682,
-   "excel_rel": 4.4129804185930315e-16,
-   "library": 0.5793256907478548,
-   "library_rel": 2.3629806358523874e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -1762,66 +1023,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L250:F_InverseCumulative",
-   "source": "main",
-   "line": 250,
-   "function": "F_InverseCumulative",
-   "kstats_call": "K_STATS_F_InverseCumulative(0.5;10;30)",
-   "reference": "0.9553965764236232476584563",
-   "excel_formula": "F.INV(0.5;10;30)",
-   "excel": 0.9553965764236232,
-   "excel_rel": 6.091997058332236e-17,
-   "library": 0.9553965764236387,
-   "library_rel": 1.6207844988712872e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L718:Binomial_Survival",
-   "source": "main",
-   "line": 718,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(928;1000;0.9)",
-   "reference": "0.0008603277739877558413736572",
-   "excel_formula": "BINOM.DIST.RANGE(1000;0.9;928+1;1000)",
-   "excel": 0.0008603277739877536,
-   "excel_rel": 2.621493871995712e-15,
-   "library": 0.0008603277739877421,
-   "library_rel": 1.597982470336779e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L254:F_Cumulative",
-   "source": "main",
-   "line": 254,
-   "function": "F_Cumulative",
-   "kstats_call": "K_STATS_F_Cumulative(1;100;100)",
-   "reference": "0.5",
-   "excel_formula": "F.DIST(1;100;100;TRUE)",
-   "excel": 0.5000000000000003,
-   "excel_rel": 6.661338147750939e-16,
-   "library": 0.5000000000000071,
-   "library_rel": 1.4210854715202004e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L255:F_Survival",
-   "source": "main",
-   "line": 255,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(1;100;100)",
-   "reference": "0.5",
-   "excel_formula": "F.DIST.RT(1;100;100)",
-   "excel": 0.49999999999999967,
-   "excel_rel": 6.661338147750939e-16,
-   "library": 0.5000000000000071,
-   "library_rel": 1.4210854715202004e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "main:L116:StudentT_Density",
    "source": "main",
    "line": 116,
@@ -1837,51 +1038,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L118:StudentT_Survival",
-   "source": "main",
-   "line": 118,
-   "function": "StudentT_Survival",
-   "kstats_call": "K_STATS_StudentT_Survival(20;30)",
-   "reference": "3.374541832885643200616054e-19",
-   "excel_formula": "T.DIST(-20;30;TRUE)",
-   "excel": 3.3745418328856443e-19,
-   "excel_rel": 3.1562561467280516e-16,
-   "library": 3.374541832885689e-19,
-   "library_rel": 1.3584944362075238e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L672:Binomial_Survival",
-   "source": "main",
-   "line": 672,
-   "function": "Binomial_Survival",
-   "kstats_call": "K_STATS_Binomial_Survival(18;20;0.9)",
-   "reference": "0.3917469981251678324552752",
-   "excel_formula": "1-BINOM.DIST(18;20;0.9;TRUE)",
-   "excel": 0.3917469981251678,
-   "excel_rel": 1.3908026022123918e-16,
-   "library": 0.39174699812517294,
-   "library_rel": 1.3039162557755596e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L252:F_Cumulative",
-   "source": "main",
-   "line": 252,
-   "function": "F_Cumulative",
-   "kstats_call": "K_STATS_F_Cumulative(0.25;100;100)",
-   "reference": "1.328619963186033594255562e-11",
-   "excel_formula": "F.DIST(0.25;100;100;TRUE)",
-   "excel": 1.3286199631860257e-11,
-   "excel_rel": 5.911079254046243e-15,
-   "library": 1.3286199631860165e-11,
-   "library_rel": 1.2842216011245923e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "main:L770:Binomial_Survival",
    "source": "main",
    "line": 770,
@@ -1893,21 +1049,6 @@
    "excel_rel": 1.3062566801909952e-16,
    "library": 0.4981192841221687,
    "library_rel": 1.2239378833068066e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1042:NegativeBinomial_Survival",
-   "source": "main",
-   "line": 1042,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(5;5;0.5)",
-   "reference": "0.376953125",
-   "excel_formula": "1-NEGBINOM.DIST(5;5;0.5;TRUE)",
-   "excel": 0.376953125,
-   "excel_rel": 0.0,
-   "library": 0.3769531249999954,
-   "library_rel": 1.222280768250535e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -1942,51 +1083,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "holdout_older:L61:F_Survival",
-   "source": "holdout_older",
-   "line": 61,
-   "function": "F_Survival",
-   "kstats_call": "K_STATS_F_Survival(2.1;6;14)",
-   "reference": "0.118566652101510315478693428502",
-   "excel_formula": "F.DIST.RT(2.1;6;14)",
-   "excel": 0.11856665210151018,
-   "excel_rel": 1.1110287464571948e-15,
-   "library": 0.11856665210150895,
-   "library_rel": 1.15281493533378e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L238:NegativeBinomial_Survival",
-   "source": "holdout",
-   "line": 238,
-   "function": "NegativeBinomial_Survival",
-   "kstats_call": "K_STATS_NegativeBinomial_Survival(12;2;0.3)",
-   "reference": "0.0474756150994300083903359945858",
-   "excel_formula": "1-NEGBINOM.DIST(12;2;0.3;TRUE)",
-   "excel": 0.04747561509942999,
-   "excel_rel": 3.703791774050103e-16,
-   "library": 0.04747561509942947,
-   "library_rel": 1.1332154853256976e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L715:Binomial_PMF",
-   "source": "main",
-   "line": 715,
-   "function": "Binomial_PMF",
-   "kstats_call": "K_STATS_Binomial_PMF(928;1000;0.9)",
-   "reference": "0.0004097806572471411781468417",
-   "excel_formula": "BINOM.DIST(928;1000;0.9;FALSE)",
-   "excel": 0.0004097806572471418,
-   "excel_rel": 1.5144979719219872e-15,
-   "library": 0.00040978065724713654,
-   "library_rel": 1.1317685401202272e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "holdout:L511:Beta_Cumulative",
    "source": "holdout",
    "line": 511,
@@ -1998,21 +1094,6 @@
    "excel_rel": 7.992938136665189e-16,
    "library": 0.0789581214939531,
    "library_rel": 1.1152479519791834e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout_older:L62:F_Cumulative",
-   "source": "holdout_older",
-   "line": 62,
-   "function": "F_Cumulative",
-   "kstats_call": "K_STATS_F_Cumulative(0.7;9;9)",
-   "reference": "0.301861089924140917352093114382",
-   "excel_formula": "F.DIST(0.7;9;9;TRUE)",
-   "excel": 0.301861089924141,
-   "excel_rel": 3.162613605516194e-16,
-   "library": 0.30186108992413757,
-   "library_rel": 1.1085312049267109e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -2043,21 +1124,6 @@
    "excel_rel": 5.265137134638941e-17,
    "library": 0.5046130945599796,
    "library_rel": 1.0613357337265925e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "holdout:L296:Hypergeometric_PMF",
-   "source": "holdout",
-   "line": 296,
-   "function": "Hypergeometric_PMF",
-   "kstats_call": "K_STATS_Hypergeometric_PMF(60;60;300;500)",
-   "reference": "3.4716021178238233386087392847e-15",
-   "excel_formula": "HYPGEOM.DIST(60;60;300;500;FALSE)",
-   "excel": 3.4716021178238277e-15,
-   "excel_rel": 1.24453730163571e-15,
-   "library": 3.47160211782386e-15,
-   "library_rel": 1.0561070710808736e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   }

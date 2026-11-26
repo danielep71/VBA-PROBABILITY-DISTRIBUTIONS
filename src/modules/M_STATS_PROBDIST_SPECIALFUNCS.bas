@@ -217,6 +217,8 @@ Private Const PROB_INV_MAX_ITER        As Long = 200      'Safeguarded Newton it
 Private Const PROB_BETAINV_FAST_ITER   As Long = 60       'Beta inverse: binary64 Newton iterations before the pair loop takes over (#359)
 Private Const PROB_BETAINV_FAST_EPS    As Double = 8.9E-16 'Beta inverse: stop of the binary64 fraction inside the Newton loop; admits a last change of up to 4 * 2^-52 (#359)
 Private Const PROB_BD0_MAX_ITER         As Long = 1000     'Loader deviance series iteration guard
+Private Const PROB_BD0_RATIO_MIN        As Double = 1E-100 'Smallest deviance argument whose ratio is formed directly (#175)
+Private Const PROB_BD0_RATIO_MAX        As Double = 1E+100 'Largest deviance argument whose ratio is formed directly (#175)
 Private Const PROB_BLP_TINY_PRODUCT As Double = 1E-300 'Below this the N*X / N*Y deviance argument is formed in log space to preserve the caller''s stable logs
 
 'Positive-ratio dispatch cutoffs for ICR-P1-01A (#13). Both derive from
@@ -258,6 +260,7 @@ Public Enum PROB_PositiveRatioClass
     PROB_PRC_HARD_UNDERFLOW = 2        'Positive ratio stored as zero
 End Enum
 Private Const PROB_IBETA_LOADER_MIN_SHAPE As Double = 1000# 'A + B at or above which the incomplete-beta factor uses the Loader decomposition instead of the literal form (measured crossover; see the COMPUTE COMMON FACTOR comment in PROB_TryBetaRegularized and benchmark/cdf_large_shape)
+Private Const PROB_IBETA_LOADER_MIN_EACH As Double = 0.5 'Both shapes at or above which the incomplete-beta factor uses the Loader decomposition at any A + B (#175)
 Public Const PROB_DENSITY_SHAPE_MAX As Double = 1E+20 'Validated large-shape density envelope (Gamma/Chi-square/Beta/F); measured, benchmark/density_large_shape
 Private Const PROB_HALF_DIFF_CUTOFF    As Double = 20#    'Z at or above which the asymptotic half-difference wins
 Private Const PROB_LOGBETA_STABLE_RATIO As Double = 0.1     'Small/Large below this uses the stable LogGamma difference (validated by the committed seam study and independent holdout)
@@ -1419,40 +1422,76 @@ Public Function PROB_TryDeviancePart( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_TryDeviancePart
+'------------------------------------------------------------------------------
+'                          LOADER DEVIANCE COMPONENT
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Computes Loader's deviance component
 '
 '       bd0(X, MeanPart) = X * Log(X / MeanPart) + MeanPart - X
 '
-'   without cancellation when X is close to MeanPart.
+'   without cancellation when X is close to MeanPart
 '
-' PREFER THE LOG-PDF HELPERS
+' WHY THIS EXISTS
+'   The saddle-point form of a density or of an incomplete-beta prefactor is
+'   exp(-bd0) times a slowly varying factor. Near the mean the three terms of
+'   bd0 cancel, and the literal expression loses every digit; the series does
+'   not
+'
+' INPUTS
+'   X
+'     Observed part; X >= 0
+'
+'   MeanPart
+'     Expected part; MeanPart > 0
+'
+'   Result
+'     Receives the non-negative deviance component
+'
+'   FailMsg
+'     Receives the failure description when the function returns FALSE
+'
+' RETURNS
+'   Boolean
+'     TRUE  => Result contains the non-negative deviance component
+'     FALSE => The bounded series did not converge, or the direct expression
+'              was negative by more than rounding
+'
+' BEHAVIOR
+'   - X <= 0 returns the limit MeanPart
+'   - Abs(X - MeanPart) < 0.1 * (X + MeanPart): Loader's convergent odd-power
+'     series
+'   - Otherwise the direct expression, with one logarithm of a ratio (#175):
+'       X * Log1p((X - MeanPart) / MeanPart) - (X - MeanPart) while X is
+'       within a factor of two of MeanPart, where X - MeanPart is exact;
+'       X * Log(X / MeanPart) - (X - MeanPart) beyond it
+'   - With an argument outside PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX the
+'     ratio could overflow, and the two logarithms are subtracted instead
+'
+' ERROR POLICY
+'   Predictable numerical failure is reported through FALSE and FailMsg.
+'   Nothing is raised
+'
+' DEPENDENCIES
+'   - PROB_Log1p
+'   - PROB_BD0_MAX_ITER, PROB_BD0_RATIO_MIN, PROB_BD0_RATIO_MAX, PROB_MACH_EPS
+'
+' NOTES
+'   Subtracting Log(X) - Log(MeanPart) rounds each logarithm at its own size,
+'   and the difference loses a factor of about Log(X) / Log(X / MeanPart):
+'   3.7E-13 in an incomplete-beta prefactor at shapes of a few hundred, and
+'   4.9E-12 in a Gamma density, both measured in Excel before #175
+'
 '   This is a low-level primitive with a fragile contract. The Beta case needs
 '   the DECOMPOSITION bd0(A, N*X) + bd0(B, N*Y) rather than a raw deviance, and
 '   passing the wrong arrangement produces a plausible wrong number rather than
 '   an error. PROB_TryGammaLogPdf and PROB_TryBetaLogPdf encapsulate the correct
-'   arrangements and should be used in preference to calling this directly.
-'
-' PRECONDITION
-'   X >= 0 and MeanPart > 0.
-'
-' METHOD
-'   Uses Loader's convergent odd-power series when
-'   Abs(X-MeanPart) < 0.1 * (X+MeanPart); otherwise uses the direct expression
-'   with Log(X)-Log(MeanPart), avoiding overflow in X/MeanPart.
-'
-' RETURNS
-'   Boolean
-'     TRUE  => Result contains the non-negative deviance component.
-'     FALSE => The bounded series did not converge.
+'   arrangements and should be used in preference to calling this directly
 '
 ' UPDATED
-'   2026-07-19 - Loader bd0 implementation with an explicit iteration guard.
-'==============================================================================
-'
+'   2026-11-26
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -1478,52 +1517,55 @@ Public Function PROB_TryDeviancePart( _
         End If
 
 '------------------------------------------------------------------------------
-' CHOOSE NUMERICAL BRANCH
+' USE THE SERIES NEAR EQUALITY
 '------------------------------------------------------------------------------
+    'Form the difference and the sum that choose the branch
         Difference = X - MeanPart
         SumArguments = X + MeanPart
-
-    'Use the convergent series near equality
+    'Sum the convergent series until a term no longer changes the sum
         If Abs(Difference) < 0.1 * SumArguments Then
             V = Difference / SumArguments
             V2 = V * V
             SumValue = Difference * V
             Ej = 2# * X * V
-
             For IterIdx = 1 To PROB_BD0_MAX_ITER
                 Ej = Ej * V2
                 Term = Ej / (2# * CDbl(IterIdx) + 1#)
                 NewSum = SumValue + Term
-
                 If NewSum = SumValue Then
                     Result = NewSum
                     PROB_TryDeviancePart = True
                     Exit Function
                 End If
-
                 ScaleValue = Abs(NewSum)
                 If ScaleValue < 1# Then ScaleValue = 1#
-
                 If Abs(Term) <= PROB_MACH_EPS * ScaleValue Then
                     Result = NewSum
                     PROB_TryDeviancePart = True
                     Exit Function
                 End If
-
                 SumValue = NewSum
             Next IterIdx
-
             FailMsg = "Loader deviance series failed to converge in " & _
                       PROB_BD0_MAX_ITER & " iterations"
             Exit Function
         End If
 
 '------------------------------------------------------------------------------
-' DIRECT BRANCH
+' USE THE DIRECT EXPRESSION AWAY FROM EQUALITY
 '------------------------------------------------------------------------------
-    'Away from equality the direct expression is well conditioned
-        Result = X * (Log(X) - Log(MeanPart)) + MeanPart - X
-
+    'Away from equality the direct expression is well conditioned once it
+    'takes one logarithm of a ratio: Log1p of the exact difference within a
+    'factor of two, the ratio itself beyond it, and the two logarithms only
+    'where a ratio of the arguments could overflow
+        If X < PROB_BD0_RATIO_MIN Or X > PROB_BD0_RATIO_MAX _
+            Or MeanPart < PROB_BD0_RATIO_MIN Or MeanPart > PROB_BD0_RATIO_MAX Then
+            Result = X * (Log(X) - Log(MeanPart)) + MeanPart - X
+        ElseIf X >= 0.5 * MeanPart And X <= 2# * MeanPart Then
+            Result = X * PROB_Log1p(Difference / MeanPart) - Difference
+        Else
+            Result = X * Log(X / MeanPart) - Difference
+        End If
     'Clamp a tiny negative round-off to the mathematical lower bound zero
         If Result < 0# Then
             If Abs(Result) <= PROB_MACH_EPS * (X + MeanPart) Then
@@ -1534,7 +1576,12 @@ Public Function PROB_TryDeviancePart( _
             End If
         End If
 
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report a valid deviance component
         PROB_TryDeviancePart = True
+
 End Function
 
 
@@ -1800,6 +1847,49 @@ End Function
 ' REGULARIZED INCOMPLETE BETA
 '==============================================================================
 
+Private Function PROB_IBetaUsesLoader( _
+    ByVal A As Double, _
+    ByVal B As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                CHOOSE THE FORM OF THE INCOMPLETE-BETA FACTOR
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Says whether the factor X^A * Y^B / Beta(A, B) takes the Loader
+'   decomposition (TRUE) or the literal form (FALSE) at shapes A and B
+'
+' WHY THIS EXISTS
+'   PROB_TryBetaRegularized and PROB_TryBetaTailsPair must form the same
+'   factor, or the beta inverse solves a different function from the one the
+'   forward call returns. One predicate keeps them together
+'
+' RETURNS
+'   TRUE from A + B = PROB_IBETA_LOADER_MIN_SHAPE, where the literal form
+'   degrades without bound (8.5E-13 at A = B = 1E4), and whenever both shapes
+'   are at least PROB_IBETA_LOADER_MIN_EACH, where it lost up to 5.0E-13 in
+'   Excel to the Loader form's few E-15 (#175). FALSE with a shape below
+'   that and A + B below the first bound: the literal form the tiny-shape
+'   contracts were validated against
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Take the Loader form at large shapes and wherever both are at least 1/2
+        If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
+            PROB_IBetaUsesLoader = True
+        ElseIf A >= PROB_IBETA_LOADER_MIN_EACH And B >= PROB_IBETA_LOADER_MIN_EACH Then
+            PROB_IBetaUsesLoader = True
+        Else
+            PROB_IBetaUsesLoader = False
+        End If
+
+End Function
+
 Public Function PROB_TryBetaRegularized( _
     ByVal X As Double, _
     ByVal Y As Double, _
@@ -1809,35 +1899,73 @@ Public Function PROB_TryBetaRegularized( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_TryBetaRegularized
+'------------------------------------------------------------------------------
+'                         REGULARIZED INCOMPLETE BETA
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes the regularized incomplete beta function I_X(A, B).
+'   Computes the regularized incomplete beta function I_X(A, B)
 '
-' PRECONDITION
-'   A > 0, B > 0, X >= 0, Y >= 0, and X + Y = 1 in exact arithmetic.
+' WHY THIS EXISTS
+'   The Beta, F, Student t, Binomial and Negative binomial probabilities all
+'   reduce to I_X(A, B). The caller passes both X and its complement Y, each
+'   computed from a form that does not cancel, and this routine never forms
+'   1 - X or 1 - Y internally. That one change is what makes the Student t CDF
+'   exact near zero: with a single argument, X = df / (df + x^2) rounds to
+'   exactly 1 as soon as x^2/df drops below 1.1E-16, and the CDF collapses to
+'   exactly 0.5, losing eight digits
 '
-' WHY TWO ARGUMENTS
-'   The caller passes both X and its complement Y, each computed from a form that
-'   does not cancel. This routine never forms 1 - X or 1 - Y internally. That one
-'   change is what makes the Student t CDF exact near zero: with a single
-'   argument, X = df / (df + x^2) rounds to exactly 1 as soon as x^2/df drops
-'   below 1.1E-16, and the CDF collapses to exactly 0.5, losing eight digits.
+' INPUTS
+'   X
+'     Argument; X >= 0
+'
+'   Y
+'     Complement of the argument; Y >= 0, and X + Y = 1 in exact arithmetic
+'
+'   A
+'     First shape; A > 0
+'
+'   B
+'     Second shape; B > 0
+'
+'   Result
+'     Receives I_X(A, B); left unchanged on failure
+'
+'   FailMsg
+'     Receives the failure description when the function returns FALSE
 '
 ' RETURNS
 '   Boolean
-'     TRUE  => Result holds I_X(A, B).
+'     TRUE  => Result holds I_X(A, B)
 '     FALSE => the continued fraction did not converge; FailMsg says so and
-'              Result is left unchanged.
+'              Result is left unchanged
+'
+' BEHAVIOR
+'   - X <= 0 returns 0 and Y <= 0 returns 1, exactly
+'   - The common factor X^A * Y^B / Beta(A, B) is formed in logs: the Loader
+'     decomposition where PROB_IBetaUsesLoader says so, the literal form
+'     elsewhere
+'   - The continued fraction is evaluated at X below the mean and at Y, with
+'     the shapes swapped, elsewhere
+'   - The result is clamped to the closed unit interval
+'
+' ERROR POLICY
+'   Predictable numerical failure is reported through FALSE and FailMsg.
+'   Nothing is raised
 '
 ' DEPENDENCIES
+'   - PROB_IBetaUsesLoader
 '   - PROB_LogBeta
-'   - PROB_TryBetaLogPdf (A + B >= PROB_IBETA_LOADER_MIN_SHAPE)
+'   - PROB_TryBetaLogPdf
 '   - PROB_TryExp
 '   - PROB_TryBetaContinuedFraction
-'==============================================================================
 '
+' NOTES
+'   None
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
 '------------------------------------------------------------------------------
 ' DECLARE
 '------------------------------------------------------------------------------
@@ -1855,7 +1983,6 @@ Public Function PROB_TryBetaRegularized( _
             PROB_TryBetaRegularized = True
             Exit Function
         End If
-
         If Y <= 0# Then
             Result = 1#
             PROB_TryBetaRegularized = True
@@ -1867,28 +1994,23 @@ Public Function PROB_TryBetaRegularized( _
 '------------------------------------------------------------------------------
     'Compute the log of X^A * Y^B / Beta(A, B); this factor is symmetric under
     'the simultaneous swap (X,A) <-> (Y,B), so one value serves both branches
-    'CR-P1-02 regime dispatch. The literal form cancels two quantities of size
-    'N*Log(N), so above the crossover it degrades without bound (at A = B = 1E4
-    'it is already wrong by 8.5E-13, at 1E16 by 8.5E-01). The Loader
-    'decomposition removes that subtraction. Below the crossover the literal
-    'form is measured to be at least as accurate - both sit at ~1E-15 near
-    'A + B = 200 - and it is the form the frozen tiny and unbalanced contracts
-    'were validated against, so it is retained there. The density carries A-1
-    'and B-1 powers while this factor carries A and B, hence the two added logs.
-        If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
+    'The literal form subtracts quantities of size N*Log(N) and takes its
+    'log-beta from a 15-digit Lanczos sum; the Loader decomposition removes
+    'that subtraction (PROB_IBetaUsesLoader says where each is used). The
+    'density carries A-1 and B-1 powers while this factor carries A and B,
+    'hence the two added logs
+        If PROB_IBetaUsesLoader(A, B) Then
             If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
                 Exit Function
             End If
-
             LogBt = LogBt + Log(X) + Log(Y)
         Else
             LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
         End If
-
     'Exponentiate; underflow to zero is a valid result at the far edges
         If Not PROB_TryExp(LogBt, Bt) Then
             FailMsg = "Incomplete beta factor overflowed for A = " & A & _
-                      ", B = " & B
+                ", B = " & B
             Exit Function
         End If
 
@@ -1906,16 +2028,15 @@ Public Function PROB_TryBetaRegularized( _
         End If
 
 '------------------------------------------------------------------------------
-' RETURN SUCCESS
+' RETURN VALUE
 '------------------------------------------------------------------------------
     'Clamp small numerical overshoots at the closed unit interval
         If Value < 0# Then Value = 0#
         If Value > 1# Then Value = 1#
-
-    'Return the regularized value
+    'Return the regularized value and report success
         Result = Value
-    'Return success
         PROB_TryBetaRegularized = True
+
 End Function
 
 
@@ -2338,36 +2459,76 @@ Private Function PROB_TryBetaTailsPair( _
     Optional ByVal Binary64 As Boolean = False) _
     As Boolean
 '
-'==============================================================================
-' PROB_TryBetaTailsPair
+'------------------------------------------------------------------------------
+'                      BOTH TAILS OF THE INCOMPLETE BETA
 '------------------------------------------------------------------------------
 ' PURPOSE
 '   Both tails of I_X(A, B) at a Double X, for the beta inverse (#35): the
 '   lower tail I_X(A, B) and the upper tail 1 - I_X(A, B). The smaller of
-'   the two is computed directly; the other is its complement.
+'   the two is computed directly; the other is its complement
 '
-' BEHAVIOR
-'   - The factor is that of PROB_TryBetaRegularized, with Y = 1 - X.
-'   - Below the mean the continued fraction gives the lower tail. From the
-'     mean it gives the upper tail, at the argument 1 - X carried as an exact
-'     pair of Doubles.
-'   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
-'     declines, the binary64 fraction answers as before #35.
-'   - With Binary64 the pair fraction is not tried: the binary64 fraction
-'     answers, stopped at PROB_BETAINV_FAST_EPS, at the rounded argument
-'     (#359). From the mean that argument, 1 - X, is no longer exact.
+' WHY THIS EXISTS
+'   The beta inverse solves for the tail that is small, and needs it without
+'   the cancellation of one minus the other. From the mean the argument 1 - X
+'   is carried as an exact pair of Doubles, which a single Double cannot hold
+'
+' INPUTS
+'   X
+'     Argument, a Double
+'
+'   A
+'     First shape; A > 0
+'
+'   B
+'     Second shape; B > 0
+'
+'   LowerTail
+'     Receives I_X(A, B), in [0, 1]
+'
+'   UpperTail
+'     Receives 1 - I_X(A, B), in [0, 1]
+'
+'   FailMsg
+'     Receives the failure description when the function returns FALSE
+'
+'   Binary64
+'     Optional. TRUE skips the pair fraction (#359)
 '
 ' RETURNS
 '   Boolean
-'     TRUE  => LowerTail and UpperTail are set, each in [0, 1].
-'     FALSE => the factor overflowed or no fraction converged (FailMsg set).
+'     TRUE  => LowerTail and UpperTail are set, each in [0, 1]
+'     FALSE => the factor overflowed or no fraction converged (FailMsg set)
+'
+' BEHAVIOR
+'   - The factor is that of PROB_TryBetaRegularized, with Y = 1 - X
+'   - Below the mean the continued fraction gives the lower tail. From the
+'     mean it gives the upper tail, at the argument 1 - X carried as an exact
+'     pair of Doubles
+'   - The pair fraction PROB_TryBetaContinuedFractionPair answers. Where it
+'     declines, the binary64 fraction answers as before #35
+'   - With Binary64 the pair fraction is not tried: the binary64 fraction
+'     answers, stopped at PROB_BETAINV_FAST_EPS, at the rounded argument
+'     (#359). From the mean that argument, 1 - X, is no longer exact
+'
+' ERROR POLICY
+'   Predictable numerical failure is reported through FALSE and FailMsg.
+'   Nothing is raised
 '
 ' DEPENDENCIES
-'   - PROB_TryBetaLogPdf, PROB_LogBeta, PROB_TryExp
+'   - PROB_IBetaUsesLoader, PROB_TryBetaLogPdf, PROB_LogBeta, PROB_TryExp
 '   - PROB_TryBetaContinuedFractionPair, PROB_TryBetaContinuedFraction
 '   - PROB_BP_Add
-'==============================================================================
 '
+' NOTES
+'   None
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim Y                   As Double          '1 - X, rounded
     Dim YH                  As Double          '1 - X, high part
     Dim YL                  As Double          '1 - X, low part
@@ -2376,66 +2537,84 @@ Private Function PROB_TryBetaTailsPair( _
     Dim CFValue             As Double          'Continued-fraction value
     Dim Value               As Double          'The tail computed directly
 
-    If X <= 0# Then
-        LowerTail = 0#
-        UpperTail = 1#
-        PROB_TryBetaTailsPair = True
-        Exit Function
-    End If
-
-    Y = 1# - X
-    If Y <= 0# Then
-        LowerTail = 1#
-        UpperTail = 0#
-        PROB_TryBetaTailsPair = True
-        Exit Function
-    End If
-
-    If A + B >= PROB_IBETA_LOADER_MIN_SHAPE Then
-        If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+'------------------------------------------------------------------------------
+' HANDLE BOUNDARIES
+'------------------------------------------------------------------------------
+    'Return both tails exactly at or below zero
+        If X <= 0# Then
+            LowerTail = 0#
+            UpperTail = 1#
+            PROB_TryBetaTailsPair = True
             Exit Function
         End If
-        LogBt = LogBt + Log(X) + Log(Y)
-    Else
-        LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
-    End If
-
-    If Not PROB_TryExp(LogBt, Bt) Then
-        FailMsg = "Incomplete beta factor overflowed for A = " & A & _
-                  ", B = " & B
-        Exit Function
-    End If
-
-    If X < (A + 1#) / (A + B + 2#) Then
-        If Binary64 Then
-            If Not PROB_TryBetaContinuedFraction( _
-                A, B, X, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
-        ElseIf Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
-            If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
+    'Form the rounded complement and return both tails exactly at or above one
+        Y = 1# - X
+        If Y <= 0# Then
+            LowerTail = 1#
+            UpperTail = 0#
+            PROB_TryBetaTailsPair = True
+            Exit Function
         End If
-        Value = Bt * CFValue / A
-        If Value < 0# Then Value = 0#
-        If Value > 1# Then Value = 1#
-        LowerTail = Value
-        UpperTail = 1# - Value
-    Else
-        If Binary64 Then
-            If Not PROB_TryBetaContinuedFraction( _
-                B, A, Y, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
-        Else
-            PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
-            If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
-                If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+
+'------------------------------------------------------------------------------
+' COMPUTE COMMON FACTOR
+'------------------------------------------------------------------------------
+    'Form the log of X^A * Y^B / Beta(A, B) as PROB_TryBetaRegularized does
+        If PROB_IBetaUsesLoader(A, B) Then
+            If Not PROB_TryBetaLogPdf(X, Y, A, B, Log(X), Log(Y), LogBt, FailMsg) Then
+                Exit Function
             End If
+            LogBt = LogBt + Log(X) + Log(Y)
+        Else
+            LogBt = A * Log(X) + B * Log(Y) - PROB_LogBeta(A, B)
         End If
-        Value = Bt * CFValue / B
-        If Value < 0# Then Value = 0#
-        If Value > 1# Then Value = 1#
-        UpperTail = Value
-        LowerTail = 1# - Value
-    End If
+    'Exponentiate; underflow to zero is a valid result at the far edges
+        If Not PROB_TryExp(LogBt, Bt) Then
+            FailMsg = "Incomplete beta factor overflowed for A = " & A & _
+                ", B = " & B
+            Exit Function
+        End If
 
-    PROB_TryBetaTailsPair = True
+'------------------------------------------------------------------------------
+' EVALUATE CONTINUED FRACTION
+'------------------------------------------------------------------------------
+    'Below the mean the fraction gives the lower tail; from the mean it gives
+    'the upper tail, at 1 - X carried as an exact pair unless Binary64 is set
+        If X < (A + 1#) / (A + B + 2#) Then
+            If Binary64 Then
+                If Not PROB_TryBetaContinuedFraction( _
+                    A, B, X, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
+            ElseIf Not PROB_TryBetaContinuedFractionPair(A, B, X, 0#, CFValue) Then
+                If Not PROB_TryBetaContinuedFraction(A, B, X, CFValue, FailMsg) Then Exit Function
+            End If
+            Value = Bt * CFValue / A
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            LowerTail = Value
+            UpperTail = 1# - Value
+        Else
+            If Binary64 Then
+                If Not PROB_TryBetaContinuedFraction( _
+                    B, A, Y, CFValue, FailMsg, PROB_BETAINV_FAST_EPS) Then Exit Function
+            Else
+                PROB_BP_Add 1#, 0#, -X, 0#, YH, YL
+                If Not PROB_TryBetaContinuedFractionPair(B, A, YH, YL, CFValue) Then
+                    If Not PROB_TryBetaContinuedFraction(B, A, Y, CFValue, FailMsg) Then Exit Function
+                End If
+            End If
+            Value = Bt * CFValue / B
+            If Value < 0# Then Value = 0#
+            If Value > 1# Then Value = 1#
+            UpperTail = Value
+            LowerTail = 1# - Value
+        End If
+
+'------------------------------------------------------------------------------
+' RETURN SUCCESS
+'------------------------------------------------------------------------------
+    'Report that both tails are set
+        PROB_TryBetaTailsPair = True
+
 End Function
 
 Public Function PROB_TryBetaLowerNearOne( _
