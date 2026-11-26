@@ -80,7 +80,7 @@
 | | |
 |---:|:---|
 | **112** | worksheet-facing `K_STATS_` functions across **17** distribution surfaces |
-| **3,067** | of 3,067 deterministic VBA assertions passed in the retained Excel run on `84740c8`; regression sources unchanged since |
+| **3,067** | of 3,067 deterministic VBA assertions passed in the retained Excel run on `1b71dd1`; regression sources unchanged since |
 | **13,005** | further VBA assertions declared in 8 study and slow production batteries, run on the Excel runner apart from the pull-request regression; their result is in each run's log, not in the retained record |
 | **179** | active accuracy contracts (180 registry rows; 1 characterization-only): 179 PASS, 0 FAIL, 0 PENDING |
 | **2,215** | observation rows; main grid 1,859: 1,859 claimed, 0 exempt, 0 without a disposition |
@@ -95,8 +95,8 @@
 <!-- BEGIN generated: evidence state via benchmark/render_readme_assurance.py. Do not hand-edit. -->
 **Evidence state.** Generated from the committed records listed in [benchmark/PROVENANCE.md](benchmark/PROVENANCE.md#readme-assurance-block). Documentation and tooling commits do not re-run Excel; the Excel evidence stays current only while the regression source content is unchanged.
 
-- **Excel regression** — 3,067/3,067 assertions passed on `84740c8` (Excel 16.0 build 20719, 64-bit; finished 2026-11-26). Regression sources are unchanged since that run.
-- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `84740c8`).
+- **Excel regression** — 3,067/3,067 assertions passed on `1b71dd1` (Excel 16.0 build 20719, 64-bit; finished 2026-11-26). Regression sources are unchanged since that run.
+- **Main-grid observations** — 2,215 rows bound to the current source by `observation_manifest.json` (exported from `1b71dd1`).
 - **Main-grid export certification** — certified by the retained Excel record.
 - **Main-grid coverage** — complete: every one of 1,859 main-grid rows is claimed or exempt.
 - **Contract verdicts** — 179 PASS, 0 FAIL, 0 KNOWN LIMITATION, 0 PENDING; 1 characterization-only. Verdicts are scored against each contract's guarantee; 0 passing contract(s) exceed the stricter measured target, which is reported and never gates ([#327](https://github.com/danielep71/VBA-PROBABILITY-DISTRIBUTIONS/issues/327)).
