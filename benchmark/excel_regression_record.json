@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
-  "candidate_sha": "c5c84e1dfccebe58e856b272cc1e5434db9005af",
+  "candidate_sha": "2eeb392201640ac8fb74dc1fbfa869f1d68627be",
   "execution": "automated",
-  "started_at": "2026-11-26T06:52:49.6952264Z",
-  "finished_at": "2026-11-26T07:00:44.6835663Z",
+  "started_at": "2026-11-26T08:42:40.6205210Z",
+  "finished_at": "2026-11-26T08:49:40.2808449Z",
   "runner": {
     "class": "self-hosted-excel",
     "identity": "self-hosted-excel",
     "workflow": {
       "repository": "danielep71/VBA-PROBABILITY-DISTRIBUTIONS",
       "path": ".github/workflows/excel-vba-regression.yml",
-      "sha": "c5c84e1dfccebe58e856b272cc1e5434db9005af",
-      "run_id": 45771196114,
+      "sha": "2eeb392201640ac8fb74dc1fbfa869f1d68627be",
+      "run_id": 45785388153,
       "run_attempt": 1
     }
   },
@@ -52,7 +52,7 @@
     },
     {
       "path": "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas",
-      "sha256": "sha256:c425b92caa37e326e366dd7ff1b614d987bf8ffcf3bf8fe919ff906400a28208"
+      "sha256": "sha256:13eba4f295bdcb9adfe24e11d2e55aac5b171c944362c2a75ce29a2aee93b863"
     },
     {
       "path": "src/modules/M_STATS_PROBDIST_TFAMILY.bas",
@@ -89,7 +89,7 @@
   },
   "log": {
     "path": "test-result.txt",
-    "sha256": "sha256:709ad589a2a167968e385c69c9ba58c370bf28c3118588dfbc55e858fb0c9533"
+    "sha256": "sha256:de7d873fe3c3acb97a03f0d3a5de6c685ebcd1b2e5fc50edecfaf080959154e7"
   },
   "grids": {
     "benchmark/probability_accuracy_grid.csv": {
@@ -97,14 +97,14 @@
       "sha256": "sha256:ad5e23297c60de978277f5694279e2b679190e61804245ba6a00b212bdd930e2",
       "raw_sha256": "sha256:3a23901480f6242d35a749f934d4070027c86a9482ba7db157b4b590266028f4",
       "row_count": 2215,
-      "exported_utc": "2026-11-26T07:09:00Z"
+      "exported_utc": "2026-11-26T08:58:05Z"
     },
     "benchmark/holdout/holdout_grid.csv": {
       "exported": true,
       "sha256": "sha256:c513fd9e2caf75b25090710b1dfb166bb7afd6cd63f4330adbacc4edbc74b5b6",
       "raw_sha256": "sha256:b5efd98026eafc610c726fbb970d3086af148fe614e1df738dbc8e28c7293f77",
       "row_count": 659,
-      "exported_utc": "2026-11-26T07:09:00Z"
+      "exported_utc": "2026-11-26T08:58:05Z"
     }
   }
 }
