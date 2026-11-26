@@ -1,8 +1,8 @@
 # The Loader deviance as a pair of Doubles (#498)
 
-**Status (2026-11-26): registered.** `PREREGISTRATION.md` fixes the rule, the
-holdout and the rules of judgement. No file under `src/` changes until the
-holdout has been exported from the source of today.
+**Status (2026-11-26): accepted.** The rule passed J1 to J4 in Excel
+(`RESULT.md`) and is in `src/`: no point of the 180 of the holdout is
+inferior to Excel, against 57 before.
 
 After #175 five densities and mass functions far from the mean are still less
 accurate than Excel by more than 1E-13 (`../beta_prefactor_study/RESULT_2.md`).
@@ -26,6 +26,8 @@ of #175 has none of them above 1E-13.
 | File | Role |
 | --- | --- |
 | `PREREGISTRATION.md` | the defect, the mechanism, the rule, the rows, rules J1 to J4, predictions |
+| `pair_before.json` | the verdicts of the source of before on the holdout, the floor grid and the two holdouts of #175 |
+| `RESULT.md` | the wave against J1 to J4 and the predictions: accepted |
 | `pair_model.py` | the pair arithmetic, the deviance, the four functions with and without the rule |
 | `pair_study.py` | builds the holdout grid, keeps the verdicts of the source of before, judges the export |
 | `test_pair.py` | the transforms, the deviance against 60-digit values, the five points, each rule on made-up verdicts |
