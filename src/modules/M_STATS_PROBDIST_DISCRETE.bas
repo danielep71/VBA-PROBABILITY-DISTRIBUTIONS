@@ -6677,38 +6677,87 @@ Private Function PROB_DS_TryNegativeBinomialPMF( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_DS_TryNegativeBinomialPMF
+'------------------------------------------------------------------------------
+'                      COMPUTE THE NEGATIVE BINOMIAL MASS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Negative binomial mass by exponentiating the shared log-mass kernel.
-'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'   Computes the Negative Binomial mass at X failures before the R-th success
+'
+' WHY THIS EXISTS
+'   K_STATS_NegativeBinomial_PMF needs the mass as a value, and the logarithm
+'   of the mass is shared with the log-mass function
+'
+' INPUTS
+'   X
+'     Failures before the R-th success, an integer held in a Double
+'
+'   R
+'     Successes, an integer held in a Double
+'
+'   ProbSuccess
+'     Probability of success on a trial
+'
+'   Result
+'     Receives the mass
+'
+'   FailMsg
+'     Receives the failure text
+'
+' RETURNS
+'   TRUE with Result set, from 0 to 1. A certain-zero outcome or a deep-tail
+'   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
+'
+' BEHAVIOR
+'   - Takes the logarithm of the mass from PROB_DS_TryNegativeBinomialLogMass
+'   - Returns zero for an impossible outcome
+'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return with FailMsg
+'
+' DEPENDENCIES
+'   PROB_DS_TryNegativeBinomialLogMass, PROB_TryExp
+'
+' NOTES
+'   None
 '
 ' UPDATED
-'   2026-07-21
-'==============================================================================
-'
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
     Dim LogMass             As Double          'Natural logarithm of the mass
     Dim IsCertainZero       As Boolean         'Impossible or below Double range
 
+'------------------------------------------------------------------------------
+' TAKE THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Take the logarithm of the mass from the shared kernel
         If Not PROB_DS_TryNegativeBinomialLogMass( _
             X, R, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
-
+    'Return zero for an impossible outcome
         If IsCertainZero Then
             Result = 0#
             PROB_DS_TryNegativeBinomialPMF = True
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the logarithm; underflow is a valid zero
         If Not PROB_TryExp(LogMass, Result) Then
             FailMsg = "Negative binomial mass exponentiation failed"
             Exit Function
         End If
-
+    'Clamp final round-off
         If Result < 0# Then Result = 0#
         If Result > 1# Then Result = 1#
-
+    'Report success
         PROB_DS_TryNegativeBinomialPMF = True
+
 End Function
 
 
@@ -7089,38 +7138,85 @@ Private Function PROB_DS_TryGeometricPMF( _
     ByRef FailMsg As String) _
     As Boolean
 '
-'==============================================================================
-' PROB_DS_TryGeometricPMF
+'------------------------------------------------------------------------------
+'                          COMPUTE THE GEOMETRIC MASS
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Computes p*(1-p)^K by exponentiating the shared log-mass kernel.
-'   A certain-zero outcome or deep-tail underflow is a valid zero.
+'   Computes the Geometric mass p * (1 - p) ^ K at K failures before the first
+'   success
+'
+' WHY THIS EXISTS
+'   K_STATS_Geometric_PMF needs the mass as a value, and the logarithm of the
+'   mass is shared with the log-mass function
+'
+' INPUTS
+'   K
+'     Failures before the first success, an integer held in a Double
+'
+'   ProbSuccess
+'     Probability of success on a trial
+'
+'   Result
+'     Receives the mass
+'
+'   FailMsg
+'     Receives the failure text
+'
+' RETURNS
+'   TRUE with Result set, from 0 to 1. A certain-zero outcome or a deep-tail
+'   underflow is a valid zero. FALSE with FailMsg set when the kernel fails
+'
+' BEHAVIOR
+'   - Takes the logarithm of the mass from PROB_DS_TryGeometricLogMass
+'   - Returns zero for an impossible outcome
+'   - Exponentiates the logarithm and clamps final round-off to 0 and 1
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return with FailMsg
+'
+' DEPENDENCIES
+'   PROB_DS_TryGeometricLogMass, PROB_TryExp
+'
+' NOTES
+'   None
 '
 ' UPDATED
-'   2026-07-19 - Now a thin exponentiation over PROB_DS_TryGeometricLogMass.
-'==============================================================================
-'
-    Dim LogMass             As Double          'Natural logarithm of the mass
-    Dim IsCertainZero       As Boolean         'Outcome is impossible or below Double range
+'   2026-11-26
+'------------------------------------------------------------------------------
 
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogMass             As Double          'Natural logarithm of the mass
+    Dim IsCertainZero       As Boolean         'Impossible or below Double range
+
+'------------------------------------------------------------------------------
+' TAKE THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Take the logarithm of the mass from the shared kernel
         If Not PROB_DS_TryGeometricLogMass( _
             K, ProbSuccess, LogMass, IsCertainZero, FailMsg) Then Exit Function
-
+    'Return zero for an impossible outcome
         If IsCertainZero Then
             Result = 0#
             PROB_DS_TryGeometricPMF = True
             Exit Function
         End If
 
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the logarithm; underflow is a valid zero
         If Not PROB_TryExp(LogMass, Result) Then
             FailMsg = "Geometric mass exponentiation failed"
             Exit Function
         End If
-
+    'Clamp final round-off
         If Result < 0# Then Result = 0#
         If Result > 1# Then Result = 1#
-
+    'Report success
         PROB_DS_TryGeometricPMF = True
+
 End Function
 
 
