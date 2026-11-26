@@ -3,8 +3,8 @@
  "floor": 1e-14,
  "points": 1403,
  "verdicts": {
-  "not inferior": 1295,
-  "inferior": 59,
+  "not inferior": 1300,
+  "inferior": 54,
   "not compared": 49
  },
  "by_function": {
@@ -13,8 +13,8 @@
    "inferior": 10
   },
   "Beta_Density": {
-   "not inferior": 43,
-   "inferior": 2
+   "not inferior": 44,
+   "inferior": 1
   },
   "Beta_InverseCumulative": {
    "not inferior": 67,
@@ -188,8 +188,7 @@
    "not inferior": 37
   },
   "StudentT_Density": {
-   "not inferior": 52,
-   "inferior": 4
+   "not inferior": 56
   },
   "StudentT_InverseCumulative": {
    "not inferior": 27
@@ -211,21 +210,6 @@
  "undisposed": 0,
  "stale_dispositions": [],
  "inferior": [
-  {
-   "kind": "main:L1646:Beta_Density",
-   "source": "main",
-   "line": 1646,
-   "function": "Beta_Density",
-   "kstats_call": "K_STATS_Beta_Density(0.990099009910842;1E+20;1E+18)",
-   "reference": "24560847397.68268551296026985083465",
-   "excel_formula": "BETA.DIST(0.990099009910842;1E+20;1E+18;FALSE)",
-   "excel": 24560847980.956337,
-   "excel_rel": 2.3748107791963613e-08,
-   "library": 24560848003.134815,
-   "library_rel": 2.4651109137229057e-08,
-   "verdict": "inferior",
-   "disposition": "issue #495"
-  },
   {
    "kind": "holdout_older:L23:NormalStandard_InverseCumulativeFast",
    "source": "holdout_older",
@@ -866,8 +850,8 @@
    "excel_formula": "BETA.DIST(0.998702335795568;1000;0.8;FALSE)",
    "excel": 222.80435159329994,
    "excel_rel": 2.2147699286777842e-14,
-   "library": 222.80435159330005,
-   "library_rel": 2.265795340393772e-14,
+   "library": 222.8043515933,
+   "library_rel": 2.240282634535778e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -932,21 +916,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L136:StudentT_Density",
-   "source": "main",
-   "line": 136,
-   "function": "StudentT_Density",
-   "kstats_call": "K_STATS_StudentT_Density(20;1000)",
-   "reference": "2.908838671235477622574256e-74",
-   "excel_formula": "T.DIST(20;1000;FALSE)",
-   "excel": 2.908838671235517e-74,
-   "excel_rel": 1.351004548779156e-14,
-   "library": 2.9088386712354215e-74,
-   "library_rel": 1.9297816257546976e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "main:L1453:Beta_Cumulative",
    "source": "main",
    "line": 1453,
@@ -962,21 +931,6 @@
    "disposition": "issue #494"
   },
   {
-   "kind": "main:L1830:StudentT_Density",
-   "source": "main",
-   "line": 1830,
-   "function": "StudentT_Density",
-   "kstats_call": "K_STATS_StudentT_Density(3;1E+18)",
-   "reference": "0.004431848411938007244296003081159951",
-   "excel_formula": "T.DIST(3;1E+18;FALSE)",
-   "excel": 0.0044318484119380075,
-   "excel_rel": 6.385432854100544e-17,
-   "library": 0.004431848411937927,
-   "library_rel": 1.8137273989755335e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
    "kind": "main:L746:Binomial_Survival",
    "source": "main",
    "line": 746,
@@ -988,21 +942,6 @@
    "excel_rel": 7.24799952280648e-16,
    "library": 0.0013453777323640995,
    "library_rel": 1.7487906047480608e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L116:StudentT_Density",
-   "source": "main",
-   "line": 116,
-   "function": "StudentT_Density",
-   "kstats_call": "K_STATS_StudentT_Density(20;30)",
-   "reference": "4.719652257446182044412632e-19",
-   "excel_formula": "T.DIST(20;30;FALSE)",
-   "excel": 4.719652257446174e-19,
-   "excel_rel": 1.7774394229980466e-15,
-   "library": 4.719652257446247e-19,
-   "library_rel": 1.3729071204188662e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
@@ -1033,21 +972,6 @@
    "excel_rel": 1.296466713765792e-16,
    "library": 0.5018807158778312,
    "library_rel": 1.2037042428757772e-14,
-   "verdict": "inferior",
-   "disposition": "issue #494"
-  },
-  {
-   "kind": "main:L1815:StudentT_Density",
-   "source": "main",
-   "line": 1815,
-   "function": "StudentT_Density",
-   "kstats_call": "K_STATS_StudentT_Density(3;100000000)",
-   "reference": "0.004431849098874519391106234208430025",
-   "excel_formula": "T.DIST(3;100000000;FALSE)",
-   "excel": 0.004431849098874518,
-   "excel_rel": 3.576446184979642e-16,
-   "library": 0.0044318490988745724,
-   "library_rel": 1.1972150073100712e-14,
    "verdict": "inferior",
    "disposition": "issue #494"
   },
