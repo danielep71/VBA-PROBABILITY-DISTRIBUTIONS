@@ -1236,6 +1236,9 @@ Public Function K_STATS_Beta_Density( _
 '     - Handles both endpoint poles explicitly.
 '     - Uses PROB_Log1p(-X) near the right endpoint.
 '     - Mathematically valid underflow returns zero.
+'     - Inside the support the density comes from PROB_TryBetaDensityPair,
+'       which carries the deviances as pairs of Doubles to the exponential
+'       (#501); where that route does not apply, from PROB_TryBetaLogPdf
 '
 ' ERROR POLICY
 '   Invalid inputs, endpoint poles or density overflow return #NUM!.
@@ -1244,6 +1247,7 @@ Public Function K_STATS_Beta_Density( _
 ' DEPENDENCIES
 '   PROB_CN_ValidateXTwoShapes
 '   PROB_Log1p
+'   PROB_TryBetaDensityPair
 '   PROB_TryBetaLogPdf
 '   PROB_TryExp
 '   PROB_SetStatus
@@ -1259,7 +1263,7 @@ Public Function K_STATS_Beta_Density( _
 '   M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-08-11
+'   2026-11-26
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -1334,6 +1338,12 @@ Public Function K_STATS_Beta_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
+    'Take the density from the pair deviances where that route applies (#501)
+        If PROB_TryBetaDensityPair(X, Alpha, Beta, Log(X), PROB_Log1p(-X), Density) Then
+            K_STATS_Beta_Density = Density
+            GoTo Return_Success
+        End If
+
     'Stable Loader log-density via the shared kernel (no large-shape cancellation).
     'The complement is passed explicitly; the kernel never reforms 1 - X.
         OneMinusX = 1# - X

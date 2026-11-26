@@ -283,6 +283,10 @@ Public Function K_STATS_StudentT_Density( _
 '     - Validates X and DegreesFreedom.
 '     - Uses the log-density form for numerical stability.
 '     - Underflow of the far tail is a valid zero.
+'     - The density comes from PROB_TryStudentTDensityPair, Loader's form
+'       with its large terms as pairs of Doubles (#501); where that route
+'       does not apply, from PROB_TryStudentTPDF, which the paragraph above
+'       describes
 '
 ' ERROR POLICY
 '   Invalid numeric domains return CVErr(xlErrNum).
@@ -292,6 +296,7 @@ Public Function K_STATS_StudentT_Density( _
 '
 ' DEPENDENCIES
 '   PROB_TF_ValidateXAndDF
+'   PROB_TryStudentTDensityPair
 '   PROB_TryStudentTPDF
 '   PROB_SetStatus
 '
@@ -302,7 +307,7 @@ Public Function K_STATS_StudentT_Density( _
 '   T.DIST(X, DegreesFreedom, FALSE)
 '
 ' UPDATED
-'   2026-08-11
+'   2026-11-26
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -334,8 +339,10 @@ Public Function K_STATS_StudentT_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE DENSITY
 '------------------------------------------------------------------------------
-    'Evaluate the density kernel
-        If Not PROB_TryStudentTPDF(X, DegreesFreedom, Density, FailMsg) Then GoTo Fail_Num
+    'Take Loader's form with pairs where it applies (#501); the kernel elsewhere
+        If Not PROB_TryStudentTDensityPair(X, DegreesFreedom, Density) Then
+            If Not PROB_TryStudentTPDF(X, DegreesFreedom, Density, FailMsg) Then GoTo Fail_Num
+        End If
 
     'Return the density
         K_STATS_StudentT_Density = Density
@@ -1506,6 +1513,10 @@ Public Function K_STATS_F_Density( _
 '     - Uses separate positive- and negative-log-ratio forms to prevent
 '       cancellation between large logarithmic terms.
 '     - Mathematically valid exponential underflow returns zero.
+'     - For a positive X the density comes from PROB_TryFDensityPair, which
+'       carries the Beta arguments and the deviances as pairs of Doubles to
+'       the exponential (#501); where that route does not apply, from the
+'       logarithmic form below
 '
 ' ERROR POLICY
 '   Invalid parameters, a density pole or density overflow return #NUM!.
@@ -1516,6 +1527,7 @@ Public Function K_STATS_F_Density( _
 '   PROB_TF_ValidateXAndTwoDF
 '   PROB_TF_LogOnePlusExp
 '   PROB_Log1p
+'   PROB_TryFDensityPair
 '   PROB_TryBetaLogPdf
 '   PROB_TryExp
 '   PROB_SetStatus
@@ -1531,7 +1543,7 @@ Public Function K_STATS_F_Density( _
 '   M_STATS_PROBDIST_TEST
 '
 ' UPDATED
-'   2026-08-11
+'   2026-11-26
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -1609,6 +1621,12 @@ Public Function K_STATS_F_Density( _
 '------------------------------------------------------------------------------
 ' COMPUTE LOG-DENSITY
 '------------------------------------------------------------------------------
+    'Take the density from the pair deviances where that route applies (#501)
+        If PROB_TryFDensityPair(X, DegreesFreedom1, DegreesFreedom2, Density) Then
+            K_STATS_F_Density = Density
+            GoTo Return_Success
+        End If
+
     'Form the half-degree parameters
         HalfDF1 = 0.5 * DegreesFreedom1
         HalfDF2 = 0.5 * DegreesFreedom2

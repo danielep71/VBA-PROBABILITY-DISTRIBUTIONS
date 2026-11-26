@@ -2322,71 +2322,64 @@ Private Function PROB_BP_InRange( _
 End Function
 
 
-Private Function PROB_TryDeviancePair( _
+Private Function PROB_TryLogRatioPair( _
     ByVal X As Double, _
     ByVal MeanH As Double, _
     ByVal MeanL As Double, _
-    ByRef DevH As Double, _
-    ByRef DevL As Double) _
+    ByRef LogH As Double, _
+    ByRef LogL As Double) _
     As Boolean
 '
 '------------------------------------------------------------------------------
-'                FORM THE LOADER DEVIANCE AS A PAIR OF DOUBLES
+'              FORM THE LOGARITHM OF A RATIO AS A PAIR OF DOUBLES
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Returns bd0(X, Mean) = X * Log(X / Mean) + Mean - X as a pair of Doubles
-'   whose sum is exact far below one unit of its high part
+'   Returns Log(X / Mean) as a pair of Doubles, for a Double X and a mean
+'   that is itself a pair
 '
 ' WHY THIS EXISTS
-'   A mass function or density is Exp of minus the deviance, so the absolute
-'   error of the deviance is the relative error of the result. In one Double
-'   a deviance of size D carries D * 2^-53, and between the mean and about
-'   three times the mean it is also a difference of two larger numbers.
-'   PROB_TryDeviancePart loses accuracy that way where Excel is closer
-'   (#498)
+'   The pair deviance and the densities that carry a large logarithm to
+'   their exponential need Log(X / Mean) to far below one unit of a Double
+'   (#498, #501). Log returns one Double
 '
 ' INPUTS
 '   X
-'     Observed count or shape, a Double
+'     Numerator, a Double
 '
 '   MeanH
-'     High part of the mean
+'     High part of the denominator
 '
 '   MeanL
-'     Low part of the mean; zero when the mean is a Double
+'     Low part of the denominator; zero when it is a Double
 '
-'   DevH
-'     Receives the high part of the deviance
+'   LogH
+'     Receives the high part of the logarithm
 '
-'   DevL
-'     Receives the low part of the deviance
+'   LogL
+'     Receives the low part of the logarithm
 '
 ' RETURNS
 '   TRUE with the pair set. FALSE, with the pair untouched, when X or the
 '   mean is outside PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX or not finite,
-'   or when the series does not settle; the caller then takes
-'   PROB_TryDeviancePart
+'   or when the series does not settle
 '
 ' BEHAVIOR
 '   - Scales X by a power of two so that it is within a factor Sqr(2) of the
 '     mean; the scaling is exact
 '   - Forms W = (S - Mean) / (S + Mean) in pairs, and
 '     Log(X / Mean) = K * Log(2) + 2 * (W + W^3 / 3 + W^5 / 5 + ...)
-'   - Returns X * Log(X / Mean) + (Mean - X), in pairs
-'   - One form serves every distance from the mean, X = Mean included, where
-'     W is zero and the deviance is zero
+'   - At X = Mean, W is zero and so is the logarithm
 '
 ' ERROR POLICY
 '   Raises nothing: every operation stays inside the guarded range
 '
 ' DEPENDENCIES
-'   PROB_BP_Sum, PROB_BP_Add, PROB_BP_Mul, PROB_BP_Div, PROB_IsFinite
+'   PROB_BP_Add, PROB_BP_Mul, PROB_BP_Div, PROB_IsFinite
 '
 ' NOTES
 '   Every operation of the pair arithmetic is stored in a Double: VBA keeps
 '   64-bit intermediates inside an expression, and the error-free transforms
-'   do not survive them. benchmark/deviance_pair_study holds the model, the
-'   registration and the measurements
+'   do not survive them
 '
 ' UPDATED
 '   2026-11-26
@@ -2413,12 +2406,8 @@ Private Function PROB_TryDeviancePair( _
     Dim TermL               As Double          'Current series term, low part
     Dim SumH                As Double          'Series sum, high part
     Dim SumL                As Double          'Series sum, low part
-    Dim LogH                As Double          'Log(X / Mean), high part
-    Dim LogL                As Double          'Log(X / Mean), low part
     Dim ShiftH              As Double          'K * Log(2), high part
     Dim ShiftL              As Double          'K * Log(2), low part
-    Dim GapH                As Double          'Mean - X, high part
-    Dim GapL                As Double          'Mean - X, low part
     Dim Settled             As Boolean         'TRUE once the series has settled
 
 '------------------------------------------------------------------------------
@@ -2476,6 +2465,96 @@ Private Function PROB_TryDeviancePair( _
         PROB_BP_Mul CDbl(Exponent), 0#, PROB_BP_LOG_TWO_HIGH, PROB_BP_LOG_TWO_LOW, _
             ShiftH, ShiftL
         PROB_BP_Add 2# * SumH, 2# * SumL, ShiftH, ShiftL, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Report the logarithm as formed
+        PROB_TryLogRatioPair = True
+
+End Function
+
+
+Private Function PROB_TryDeviancePair( _
+    ByVal X As Double, _
+    ByVal MeanH As Double, _
+    ByVal MeanL As Double, _
+    ByRef DevH As Double, _
+    ByRef DevL As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                FORM THE LOADER DEVIANCE AS A PAIR OF DOUBLES
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns bd0(X, Mean) = X * Log(X / Mean) + Mean - X as a pair of Doubles
+'   whose sum is exact far below one unit of its high part
+'
+' WHY THIS EXISTS
+'   A mass function or density is Exp of minus the deviance, so the absolute
+'   error of the deviance is the relative error of the result. In one Double
+'   a deviance of size D carries D * 2^-53, and between the mean and about
+'   three times the mean it is also a difference of two larger numbers.
+'   PROB_TryDeviancePart loses accuracy that way where Excel is closer
+'   (#498)
+'
+' INPUTS
+'   X
+'     Observed count or shape, a Double
+'
+'   MeanH
+'     High part of the mean
+'
+'   MeanL
+'     Low part of the mean; zero when the mean is a Double
+'
+'   DevH
+'     Receives the high part of the deviance
+'
+'   DevL
+'     Receives the low part of the deviance
+'
+' RETURNS
+'   TRUE with the pair set. FALSE, with the pair untouched, when X or the
+'   mean is outside PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX or not finite,
+'   or when the series of the logarithm does not settle; the caller then
+'   takes PROB_TryDeviancePart
+'
+' BEHAVIOR
+'   - Takes Log(X / Mean) as a pair from PROB_TryLogRatioPair
+'   - Returns X * Log(X / Mean) + (Mean - X), in pairs
+'   - One form serves every distance from the mean, X = Mean included, where
+'     W is zero and the deviance is zero
+'
+' ERROR POLICY
+'   Raises nothing: every operation stays inside the guarded range
+'
+' DEPENDENCIES
+'   PROB_TryLogRatioPair, PROB_BP_Add, PROB_BP_Mul
+'
+' NOTES
+'   Every operation of the pair arithmetic is stored in a Double: VBA keeps
+'   64-bit intermediates inside an expression, and the error-free transforms
+'   do not survive them. benchmark/deviance_pair_study holds the model, the
+'   registration and the measurements
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim LogH                As Double          'Log(X / Mean), high part
+    Dim LogL                As Double          'Log(X / Mean), low part
+    Dim GapH                As Double          'Mean - X, high part
+    Dim GapL                As Double          'Mean - X, low part
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE RATIO
+'------------------------------------------------------------------------------
+    'Take Log(X / Mean) as a pair; the range is validated there
+        If Not PROB_TryLogRatioPair(X, MeanH, MeanL, LogH, LogL) Then Exit Function
 
 '------------------------------------------------------------------------------
 ' RETURN VALUE
@@ -2829,6 +2908,459 @@ Public Function PROB_TryGammaDensityPair( _
 '------------------------------------------------------------------------------
     'Exponentiate the pair
         PROB_TryGammaDensityPair = PROB_TryExpPair(LogH, LogL, Density)
+
+End Function
+
+
+Private Function PROB_TryBetaCorePair( _
+    ByVal XH As Double, _
+    ByVal XL As Double, _
+    ByVal YH As Double, _
+    ByVal YL As Double, _
+    ByVal Alpha As Double, _
+    ByVal BetaShape As Double, _
+    ByRef CoreH As Double, _
+    ByRef CoreL As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'              FORM THE LOADER LOG-DENSITY OF THE BETA AS A PAIR
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns, as a pair of Doubles, the Loader logarithm of the Beta density
+'   at X without its two terms -Log(X) and -Log(Y): the two deviances, the
+'   half-logarithms, the constant and the three Stirling errors
+'
+' WHY THIS EXISTS
+'   PROB_TryBetaLogPdf holds the two deviances in one Double each, and
+'   forms Alpha + BetaShape, N * X and N * Y in Doubles before the deviances
+'   see them. Far from the mean that is where the Beta and F densities lose
+'   accuracy to Excel (#501). The Beta density adds -Log(X) and -Log(Y) to
+'   this pair; in the F density those two terms cancel
+'
+' INPUTS
+'   XH
+'     High part of X
+'
+'   XL
+'     Low part of X
+'
+'   YH
+'     High part of Y = 1 - X
+'
+'   YL
+'     Low part of Y
+'
+'   Alpha
+'     First shape, positive
+'
+'   BetaShape
+'     Second shape, positive
+'
+'   CoreH
+'     Receives the high part
+'
+'   CoreL
+'     Receives the low part
+'
+' RETURNS
+'   TRUE with the pair set. FALSE, with the pair not to be used, when a
+'   deviance cannot be formed as a pair; the caller then takes
+'   PROB_TryBetaLogPdf
+'
+' BEHAVIOR
+'   - Forms N = Alpha + BetaShape exactly, and N * X and N * Y as pairs
+'   - Forms bd0(Alpha, N * X) and bd0(BetaShape, N * Y) as pairs
+'   - Adds the half-logarithms, PROB_HALF_LOG_TWO_PI and the three Stirling
+'     errors, the Doubles PROB_TryBetaLogPdf uses, to the pair
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryDeviancePair, PROB_BP_Sum, PROB_BP_Add, PROB_BP_Mul,
+'   PROB_StirlingError
+'
+' NOTES
+'   benchmark/density_pair_study holds the model, the registration and the
+'   measurements
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim NH                  As Double          'Alpha + BetaShape, high part
+    Dim NL                  As Double          'Alpha + BetaShape, low part
+    Dim MXH                 As Double          'N * X, high part
+    Dim MXL                 As Double          'N * X, low part
+    Dim MYH                 As Double          'N * Y, high part
+    Dim MYL                 As Double          'N * Y, low part
+    Dim DevAH               As Double          'bd0(Alpha, N * X), high part
+    Dim DevAL               As Double          'bd0(Alpha, N * X), low part
+    Dim DevBH               As Double          'bd0(BetaShape, N * Y), high part
+    Dim DevBL               As Double          'bd0(BetaShape, N * Y), low part
+    Dim HalfLogs            As Double          '(Log(Alpha) + Log(BetaShape) - Log(N)) / 2
+
+'------------------------------------------------------------------------------
+' FORM THE MEANS AND THE DEVIANCES
+'------------------------------------------------------------------------------
+    'Form N exactly and the two means as pairs
+        PROB_BP_Sum Alpha, BetaShape, NH, NL
+        PROB_BP_Mul NH, NL, XH, XL, MXH, MXL
+        PROB_BP_Mul NH, NL, YH, YL, MYH, MYL
+    'Form the two deviances as pairs
+        If Not PROB_TryDeviancePair(Alpha, MXH, MXL, DevAH, DevAL) Then Exit Function
+        If Not PROB_TryDeviancePair(BetaShape, MYH, MYL, DevBH, DevBL) Then Exit Function
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Add the other terms of the logarithm to the pair
+        HalfLogs = 0.5 * (Log(Alpha) + Log(BetaShape) - Log(NH))
+        PROB_BP_Add -DevAH, -DevAL, -DevBH, -DevBL, CoreH, CoreL
+        PROB_BP_Add CoreH, CoreL, HalfLogs, 0#, CoreH, CoreL
+        PROB_BP_Add CoreH, CoreL, -PROB_HALF_LOG_TWO_PI, 0#, CoreH, CoreL
+        PROB_BP_Add CoreH, CoreL, -PROB_StirlingError(Alpha), 0#, CoreH, CoreL
+        PROB_BP_Add CoreH, CoreL, -PROB_StirlingError(BetaShape), 0#, CoreH, CoreL
+        PROB_BP_Add CoreH, CoreL, PROB_StirlingError(NH), 0#, CoreH, CoreL
+        PROB_TryBetaCorePair = True
+
+End Function
+
+
+Public Function PROB_TryBetaDensityPair( _
+    ByVal X As Double, _
+    ByVal Alpha As Double, _
+    ByVal BetaShape As Double, _
+    ByVal LogX As Double, _
+    ByVal LogY As Double, _
+    ByRef Density As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                 COMPUTE THE BETA DENSITY FROM PAIR DEVIANCES
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Beta density at X strictly between 0 and 1, with the
+'   deviances and their means carried as pairs of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The logarithm of the density in one Double loses accuracy far from the
+'   mean, where Excel is closer (#501)
+'
+' INPUTS
+'   X
+'     Argument, strictly between 0 and 1
+'
+'   Alpha
+'     First shape, positive
+'
+'   BetaShape
+'     Second shape, positive
+'
+'   LogX
+'     Log(X), as the caller forms it
+'
+'   LogY
+'     Log(1 - X), as the caller forms it
+'
+'   Density
+'     Receives the density
+'
+' RETURNS
+'   TRUE with Density set. FALSE, with Density not to be used, when the pair
+'   route does not apply; the caller then takes PROB_TryBetaLogPdf
+'
+' BEHAVIOR
+'   - Forms 1 - X exactly, as a pair
+'   - Takes the Loader logarithm without its two logarithms from
+'     PROB_TryBetaCorePair, and adds -LogX and -LogY
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryBetaCorePair, PROB_TryExpPair, PROB_BP_Sum, PROB_BP_Add
+'
+' NOTES
+'   The caller keeps the validation, the shape envelope and the two
+'   endpoints
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim YH                  As Double          '1 - X, high part
+    Dim YL                  As Double          '1 - X, low part
+    Dim LogH                As Double          'Logarithm of the density, high part
+    Dim LogL                As Double          'Logarithm of the density, low part
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the endpoints and the outside of the support to the caller
+        If Not (X > 0# And X < 1#) Then Exit Function
+        If Not (Alpha > 0# And BetaShape > 0#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE DENSITY
+'------------------------------------------------------------------------------
+    'Form 1 - X exactly and take the Loader logarithm as a pair
+        PROB_BP_Sum 1#, -X, YH, YL
+        If Not PROB_TryBetaCorePair(X, 0#, YH, YL, Alpha, BetaShape, LogH, LogL) Then
+            Exit Function
+        End If
+    'Add the two logarithms the Beta density keeps
+        PROB_BP_Add LogH, LogL, -LogX, 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -LogY, 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryBetaDensityPair = PROB_TryExpPair(LogH, LogL, Density)
+
+End Function
+
+
+Public Function PROB_TryFDensityPair( _
+    ByVal X As Double, _
+    ByVal DegreesFreedom1 As Double, _
+    ByVal DegreesFreedom2 As Double, _
+    ByRef Density As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                  COMPUTE THE F DENSITY FROM PAIR DEVIANCES
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the F density at a positive X, with the Beta arguments, the
+'   deviances and their means carried as pairs of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The F density is a Beta density at U = r / (1 + r), r = X * d1 / d2.
+'   Formed through an exponential and rounded, U and V = 1 / (1 + r) move
+'   the deviances far from the mean, where Excel is closer (#501)
+'
+' INPUTS
+'   X
+'     Argument, positive
+'
+'   DegreesFreedom1
+'     Numerator degrees of freedom, positive
+'
+'   DegreesFreedom2
+'     Denominator degrees of freedom, positive
+'
+'   Density
+'     Receives the density
+'
+' RETURNS
+'   TRUE with Density set. FALSE, with Density not to be used, when the pair
+'   route does not apply; the caller then takes its logarithmic form
+'
+' BEHAVIOR
+'   - Returns FALSE with an argument, or the ratio r, outside
+'     PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX
+'   - Forms r, U and V as pairs
+'   - Takes the Loader logarithm of the Beta density at shapes d1 / 2 and
+'     d2 / 2 without its two logarithms, which cancel against those the F
+'     density adds, and adds -Log(X)
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing: the range is checked before any pair operation
+'
+' DEPENDENCIES
+'   PROB_TryBetaCorePair, PROB_TryExpPair, PROB_BP_Add, PROB_BP_Mul,
+'   PROB_BP_Div, PROB_IsFinite
+'
+' NOTES
+'   The caller keeps the validation, the shape envelope and X = 0
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Ratio               As Double          'r = X * d1 / d2, as a Double, for the range check
+    Dim RH                  As Double          'r, high part
+    Dim RL                  As Double          'r, low part
+    Dim OnePlusH            As Double          '1 + r, high part
+    Dim OnePlusL            As Double          '1 + r, low part
+    Dim UH                  As Double          'U = r / (1 + r), high part
+    Dim UL                  As Double          'U, low part
+    Dim VH                  As Double          'V = 1 / (1 + r), high part
+    Dim VL                  As Double          'V, low part
+    Dim LogH                As Double          'Logarithm of the density, high part
+    Dim LogL                As Double          'Logarithm of the density, low part
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges and the extreme magnitudes to the caller
+        If Not PROB_IsFinite(X) Then Exit Function
+        If X < PROB_BD0_RATIO_MIN Or X > PROB_BD0_RATIO_MAX Then Exit Function
+        If DegreesFreedom1 < PROB_BD0_RATIO_MIN Or DegreesFreedom1 > PROB_BD0_RATIO_MAX Then
+            Exit Function
+        End If
+        If DegreesFreedom2 < PROB_BD0_RATIO_MIN Or DegreesFreedom2 > PROB_BD0_RATIO_MAX Then
+            Exit Function
+        End If
+    'Leave an extreme ratio to the caller: the three magnitudes cannot overflow it
+        Ratio = X / DegreesFreedom2
+        Ratio = Ratio * DegreesFreedom1
+        If Ratio < PROB_BD0_RATIO_MIN Or Ratio > PROB_BD0_RATIO_MAX Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE BETA ARGUMENTS
+'------------------------------------------------------------------------------
+    'Form r = X * d1 / d2 as a pair
+        PROB_BP_Mul X, 0#, DegreesFreedom1, 0#, RH, RL
+        PROB_BP_Div RH, RL, DegreesFreedom2, 0#, RH, RL
+    'Form U = r / (1 + r) and V = 1 / (1 + r) as pairs
+        PROB_BP_Add 1#, 0#, RH, RL, OnePlusH, OnePlusL
+        PROB_BP_Div RH, RL, OnePlusH, OnePlusL, UH, UL
+        PROB_BP_Div 1#, 0#, OnePlusH, OnePlusL, VH, VL
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE DENSITY
+'------------------------------------------------------------------------------
+    'Take the Loader logarithm of the Beta density as a pair
+        If Not PROB_TryBetaCorePair(UH, UL, VH, VL, 0.5 * DegreesFreedom1, _
+            0.5 * DegreesFreedom2, LogH, LogL) Then
+            Exit Function
+        End If
+    'Add the one logarithm the F density keeps
+        PROB_BP_Add LogH, LogL, -Log(X), 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryFDensityPair = PROB_TryExpPair(LogH, LogL, Density)
+
+End Function
+
+
+Public Function PROB_TryStudentTDensityPair( _
+    ByVal X As Double, _
+    ByVal DegreesFreedom As Double, _
+    ByRef Density As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                COMPUTE THE STUDENT T DENSITY IN LOADER'S FORM
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Student t density at X in Loader's form, with its deviance
+'   and its logarithm carried as pairs of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The logarithmic form multiplies Log(1 + X^2 / df) by (df + 1) / 2 and
+'   rounds the product at its own size, and takes its constant from a
+'   difference of log-gammas. Both lose accuracy to Excel (#501). Loader's
+'   form has no log-gamma:
+'
+'     Exp(-bd0(df / 2, (df + 1) / 2) + d((df + 1) / 2) - d(df / 2)
+'         + (df + 1) / 2 * Log(df / (df + X^2))) / Sqr(2 * Pi)
+'
+'   with d the Stirling error
+'
+' INPUTS
+'   X
+'     Evaluation point
+'
+'   DegreesFreedom
+'     Degrees of freedom, positive
+'
+'   Density
+'     Receives the density
+'
+' RETURNS
+'   TRUE with Density set. FALSE, with Density not to be used, when the pair
+'   route does not apply; the caller then takes PROB_TryStudentTPDF
+'
+' BEHAVIOR
+'   - Returns FALSE with X beyond PROB_BD0_RATIO_MAX in size, or with df or
+'     df + X^2 outside PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX
+'   - Forms df + X^2 as a pair, and Log(df / (df + X^2)) as a pair
+'   - Forms bd0(df / 2, (df + 1) / 2) as a pair
+'   - Adds the two Stirling errors and PROB_HALF_LOG_TWO_PI to the pair
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing: X is bounded before it is squared
+'
+' DEPENDENCIES
+'   PROB_TryLogRatioPair, PROB_TryDeviancePair, PROB_TryExpPair,
+'   PROB_BP_Add, PROB_BP_Mul, PROB_StirlingError, PROB_IsFinite
+'
+' NOTES
+'   PROB_TryStudentTPDF is not changed: the Student t inverse and the
+'   central mass call it too
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim HalfDF              As Double          'df / 2
+    Dim HalfDFPlus          As Double          '(df + 1) / 2
+    Dim SquareH             As Double          'X squared, high part
+    Dim SquareL             As Double          'X squared, low part
+    Dim TotalH              As Double          'df + X squared, high part
+    Dim TotalL              As Double          'df + X squared, low part
+    Dim LogH                As Double          'Logarithm of the density, high part
+    Dim LogL                As Double          'Logarithm of the density, low part
+    Dim DevH                As Double          'bd0(df / 2, (df + 1) / 2), high part
+    Dim DevL                As Double          'bd0(df / 2, (df + 1) / 2), low part
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the extreme magnitudes to the caller, before X is squared
+        If Not PROB_IsFinite(X) Then Exit Function
+        If Abs(X) > PROB_BD0_RATIO_MAX Then Exit Function
+        If Not (DegreesFreedom > 0#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE DENSITY
+'------------------------------------------------------------------------------
+    'Form df + X^2 as a pair
+        PROB_BP_Mul X, 0#, X, 0#, SquareH, SquareL
+        PROB_BP_Add SquareH, SquareL, DegreesFreedom, 0#, TotalH, TotalL
+    'Form (df + 1) / 2 * Log(df / (df + X^2)) as a pair
+        HalfDF = 0.5 * DegreesFreedom
+        HalfDFPlus = 0.5 * (DegreesFreedom + 1#)
+        If Not PROB_TryLogRatioPair(DegreesFreedom, TotalH, TotalL, LogH, LogL) Then
+            Exit Function
+        End If
+        PROB_BP_Mul HalfDFPlus, 0#, LogH, LogL, LogH, LogL
+    'Subtract the deviance of the two half degrees of freedom
+        If Not PROB_TryDeviancePair(HalfDF, HalfDFPlus, 0#, DevH, DevL) Then Exit Function
+        PROB_BP_Add LogH, LogL, -DevH, -DevL, LogH, LogL
+    'Add the two Stirling errors and the constant
+        PROB_BP_Add LogH, LogL, PROB_StirlingError(HalfDFPlus), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_StirlingError(HalfDF), 0#, LogH, LogL
+        PROB_BP_Add LogH, LogL, -PROB_HALF_LOG_TWO_PI, 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryStudentTDensityPair = PROB_TryExpPair(LogH, LogL, Density)
 
 End Function
 
