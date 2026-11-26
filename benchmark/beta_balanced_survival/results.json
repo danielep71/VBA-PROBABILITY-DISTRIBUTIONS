@@ -11,8 +11,8 @@
   "special:PROB_StirlingError": "80c310ce6519ddecf41d2508970cbc7ee20eed9e43073884772c34ec207ed2ad",
   "special:PROB_TryBetaContinuedFraction": "19ce7288097c3ab7ad37d680e43e0266a03fd6b74339ffbc81468ae4124b6bcf",
   "special:PROB_TryBetaLogPdf": "872e689fab7923d2c56111e85dbd091f4b93e6d3d3c619054b793225c9fab623",
-  "special:PROB_TryBetaRegularized": "5924dd38d4497d8d32f2bb38473f8e64fa0a4f71e3ac9679e4c2605a52c55cc6",
-  "special:PROB_TryDeviancePart": "0743e5942ab56c2a5e111df7f9156f2072b36efc7f23cb8561deea1ab93a4d52"
+  "special:PROB_TryBetaRegularized": "2096b8886c4d4dcef84eb2eb218f659cec4926902e22405f93b60c07ccdcb636",
+  "special:PROB_TryDeviancePart": "33169caf29e0e9aebc1d287806327e14747bfcff8baaa7bfae41ac67615889a2"
  },
  "fidelity": {
   "by_function": {
