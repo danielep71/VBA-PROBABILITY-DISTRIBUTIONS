@@ -49,7 +49,7 @@ $script:StudyGridNames = @(
     "grh_route_holdout", "gis_holdout", "gis_holdout2", "fip_baseline", "fip_holdout",
     "bic_baseline", "bic_holdout", "gcp_profile", "xfm_examples", "erb_survey",
     "xfl_floor", "xfp_prefactor", "xfp_prefactor2", "xdp_pair", "xdn_pair", "xhg_pair",
-    "xnb_pair"
+    "xnb_pair", "xtt_tail"
 )
 
 function Get-StudyGridNames {
@@ -120,7 +120,8 @@ function Get-ExportGridSpec {
                      "bic_baseline", "bic_holdout", "gcp_profile",
                      "xfm_examples", "erb_survey", "xfl_floor",
                      "xfp_prefactor", "xfp_prefactor2", "xdp_pair",
-                     "xdn_pair", "xhg_pair", "xnb_pair")]
+                     "xdn_pair", "xhg_pair", "xnb_pair",
+                     "xtt_tail")]
         [string]$Name,
 
         [ValidateSet("full", "missing-only")]
@@ -347,6 +348,12 @@ function Get-ExportGridSpec {
                 -FileName "negative_binomial_pair_holdout_grid.csv" `
                 -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_NegativeBinomialPairHoldout" `
                 -Columns 7 -KeyColumns 5 -SuccessPrefix "Negative Binomial pair holdout complete: "
+        }
+        "xtt_tail" {
+            return New-GeneratedGridSpec -Folder "excel_function_map" -Name "xtt_tail" `
+                -FileName "student_t_far_tail_holdout_grid.csv" `
+                -Exporter "M_STATS_PROBDIST_XFM.bas" -Macro "Export_StudentTFarTailHoldout" `
+                -Columns 7 -KeyColumns 5 -SuccessPrefix "Student t far-tail holdout complete: "
         }
         "erb_survey" {
             return New-GeneratedGridSpec -Folder "error_behavior" -Name "erb_survey" `

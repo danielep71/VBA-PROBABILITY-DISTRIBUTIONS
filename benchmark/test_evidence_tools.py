@@ -59,6 +59,7 @@ commands = (
     ("density_pair_study/test_density.py",),
     ("hypergeometric_pair_study/test_hyper.py",),
     ("negative_binomial_pair_study/test_nb.py",),
+    ("student_t_far_tail_study/test_tt.py",),
     ("tchi_large_df/test_tchi_merge.py",),
     ("gamma_cf_study/coverage/test_precision_probe.py",),
     ("gamma_cf_study/coverage/test_precision_v2.py",),
