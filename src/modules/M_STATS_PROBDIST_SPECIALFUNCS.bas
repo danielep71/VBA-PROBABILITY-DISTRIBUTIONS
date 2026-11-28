@@ -2994,6 +2994,195 @@ Public Function PROB_TryHypergeometricMassPair( _
 End Function
 
 
+Public Function PROB_TryNegativeBinomialMassPair( _
+    ByVal X As Double, _
+    ByVal R As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Mass As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'           COMPUTE THE NEGATIVE BINOMIAL MASS FROM PAIR LOGARITHMS
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Negative Binomial mass at X failures before the R-th success,
+'   for X > 0, with the Binomial logarithm and the logarithm of R / (R + X)
+'   carried as pairs of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The mass is dbinom(R; R + X, p) * R / (R + X). With the Binomial
+'   logarithm in one Double the mass loses accuracy far from the mean, where
+'   Excel is closer (#504)
+'
+' INPUTS
+'   X
+'     Failures, an integer held in a Double
+'
+'   R
+'     Successes, an integer held in a Double
+'
+'   ProbSuccess
+'     Probability of success on a trial
+'
+'   Mass
+'     Receives the mass
+'
+' RETURNS
+'   TRUE with Mass set. FALSE, with Mass not to be used, when the pair route
+'   does not apply; the caller then takes the logarithm in one Double
+'
+' BEHAVIOR
+'   - Returns FALSE unless X > 0
+'   - Takes the logarithm of dbinom(R; R + X, p) as a pair
+'   - Adds Log(R / (R + X)) as a pair
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryBinomialLogPair, PROB_TryLogRatioPair, PROB_TryExpPair,
+'   PROB_BP_Add
+'
+' NOTES
+'   benchmark/negative_binomial_pair_study holds the model, the registration
+'   and the measurements
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Trials              As Double          'R + X
+    Dim BinH                As Double          'Log dbinom(R; R + X, p), high part
+    Dim BinL                As Double          'Log dbinom(R; R + X, p), low part
+    Dim RatioH              As Double          'Log(R / (R + X)), high part
+    Dim RatioL              As Double          'Log(R / (R + X)), low part
+    Dim LogH                As Double          'Logarithm of the mass, high part
+    Dim LogL                As Double          'Logarithm of the mass, low part
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the zero count to the caller
+        If Not (X > 0#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Form the number of trials, exact for integers
+        Trials = R + X
+    'Take the Binomial logarithm as a pair
+        If Not PROB_TryBinomialLogPair(R, Trials, ProbSuccess, 0#, BinH, BinL) Then
+            Exit Function
+        End If
+    'Take the logarithm of R / (R + X) as a pair
+        If Not PROB_TryLogRatioPair(R, Trials, 0#, RatioH, RatioL) Then Exit Function
+    'Add the two
+        PROB_BP_Add BinH, BinL, RatioH, RatioL, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryNegativeBinomialMassPair = PROB_TryExpPair(LogH, LogL, Mass)
+
+End Function
+
+
+Public Function PROB_TryGeometricMassPair( _
+    ByVal K As Double, _
+    ByVal ProbSuccess As Double, _
+    ByRef Mass As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'               COMPUTE THE GEOMETRIC MASS FROM A PAIR LOGARITHM
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Geometric mass p * (1 - p) ^ K for K > 0 and 0 < p < 1, with
+'   K * Log(1 - p) carried as a pair of Doubles to the exponential
+'
+' WHY THIS EXISTS
+'   The product K * Log(1 - p) is as large as the logarithm of the mass, and
+'   in one Double its rounding is carried whole into the mass; far in the
+'   tail Excel is closer (#504)
+'
+' INPUTS
+'   K
+'     Failures before the first success, an integer held in a Double
+'
+'   ProbSuccess
+'     Probability of success on a trial
+'
+'   Mass
+'     Receives the mass
+'
+' RETURNS
+'   TRUE with Mass set. FALSE, with Mass not to be used, when the pair route
+'   does not apply; the caller then takes the logarithm in one Double
+'
+' BEHAVIOR
+'   - Returns FALSE unless K > 0 and 0 < p < 1
+'   - Forms 1 - p exactly as a pair, and its logarithm as a pair
+'   - Multiplies by K in pairs and adds Log(p)
+'   - Returns Exp(high) * (1 + low)
+'
+' ERROR POLICY
+'   Raises nothing; a failure is the FALSE return
+'
+' DEPENDENCIES
+'   PROB_TryLogRatioPair, PROB_TryExpPair, PROB_BP_Sum, PROB_BP_Mul,
+'   PROB_BP_Add
+'
+' NOTES
+'   benchmark/negative_binomial_pair_study holds the model, the registration
+'   and the measurements
+'
+' UPDATED
+'   2026-11-26
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim QH                  As Double          '1 - p, high part
+    Dim QL                  As Double          '1 - p, low part
+    Dim InvH                As Double          'Log(1 / (1 - p)), high part
+    Dim InvL                As Double          'Log(1 / (1 - p)), low part
+    Dim LogH                As Double          'Logarithm of the mass, high part
+    Dim LogL                As Double          'Logarithm of the mass, low part
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the zero count and the certain outcomes to the caller
+        If Not (K > 0#) Then Exit Function
+        If Not (ProbSuccess > 0# And ProbSuccess < 1#) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE LOGARITHM OF THE MASS
+'------------------------------------------------------------------------------
+    'Form 1 - p exactly
+        PROB_BP_Sum 1#, -ProbSuccess, QH, QL
+    'Take the logarithm of 1 / (1 - p) as a pair
+        If Not PROB_TryLogRatioPair(1#, QH, QL, InvH, InvL) Then Exit Function
+    'Multiply by the count; the sign makes it K * Log(1 - p)
+        PROB_BP_Mul K, 0#, -InvH, -InvL, LogH, LogL
+    'Add the logarithm of p
+        PROB_BP_Add LogH, LogL, Log(ProbSuccess), 0#, LogH, LogL
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Exponentiate the pair
+        PROB_TryGeometricMassPair = PROB_TryExpPair(LogH, LogL, Mass)
+
+End Function
+
+
 Public Function PROB_TryGammaDensityPair( _
     ByVal X As Double, _
     ByVal Shape As Double, _
