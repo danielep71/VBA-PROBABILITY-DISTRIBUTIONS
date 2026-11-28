@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_utc": "2026-11-28T16:50:43Z",
-  "commit_sha": "dc7cbb5",
+  "generated_utc": "2026-11-28T18:24:47Z",
+  "commit_sha": "215094d",
   "grid_schema_version": "arg4+expected_error/v1",
   "grid_schema_columns": [
     "function",
@@ -18,7 +18,7 @@
     "evidence_set",
     "expected_error"
   ],
-  "observation_grid_sha256": "sha256:9b98a37ca10f7e0641a6a5876480243fd4277ea347da09a7a28d7628bbaee435",
+  "observation_grid_sha256": "sha256:da6c439a4dfec154589219ef450e3b6fee8dee0452b7acd1e843afca59b6ef6d",
   "source_binding": {
     "benchmark/M_STATS_PROBDIST_ACCURACYEXPORT.bas": "sha256:76b888340008325ec486429baabee256c699574308b947ee8894f082ef398090",
     "benchmark/beta_f_unbalanced/M_STATS_PROBDIST_BETAF_INV.bas": "sha256:866f00c7d2d46612ee1adef8ec1217854e73602e45ee6a73442c368382231189",
@@ -68,9 +68,9 @@
     "src/modules/M_STATS_PROBDIST_CORE.bas": "sha256:a7a78beaf899b9b26bf11b9754de66e4f3cf074395483e08d87574270d87eba0",
     "src/modules/M_STATS_PROBDIST_DISCRETE.bas": "sha256:1a5fb165f4630c94fc31ca03b8816f6f4d5946f6c761d0a15e48738baabc3fa1",
     "src/modules/M_STATS_PROBDIST_NORMALFAMILY.bas": "sha256:4a5ebe5bce5f9e3d4e9e2b6c7d02b5cb3f4af0c915043646068ada245e8847ee",
-    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:a9e82172c6ba20b2c8c618cd116ee5c74181905bdf38af4e74bbc99609d07213",
-    "src/modules/M_STATS_PROBDIST_TFAMILY.bas": "sha256:1172d95d97c0f65875886621d42dc010870b940494f75c5be422c66d90e14c46",
-    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:8e4173fd47c423cfb4692cc5fb4e0b63ecbcb710de60ecd62ca647cea1efb471"
+    "src/modules/M_STATS_PROBDIST_SPECIALFUNCS.bas": "sha256:a603f627788888cd87093edb6ed0a366f0db9d4b9c03e98cdc67ecb85d6e10f9",
+    "src/modules/M_STATS_PROBDIST_TFAMILY.bas": "sha256:627e8b2eb2ebb5adb2244aabb33bbbe647d05688be3f783b5c9258cd1d74d3fd",
+    "tests/M_STATS_PROBDIST_TEST.bas": "sha256:fb2325ce1a939976f70df35f011d1910fbbf0640bc567b1c043472aae30a2923"
   },
   "contract_registry_sha256": "sha256:5dcbde5a3622b12b3bf1e98eaebf2e2def1f021c77d8e73c99d76df6e0f5fa89",
   "environment": {
