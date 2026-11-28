@@ -212,12 +212,14 @@ def freeze_before():
 
     First frozen at 35c3b78, before the rule. Frozen again at 8721b6c, after
     the prefactor rule of #175, which changes those rows by design
-    (BELOW1E5_RESULT.md)."""
+    (BELOW1E5_RESULT.md). Frozen a third time at 215094d, after the pair
+    rule beyond |t| = 16 (../student_t_far_tail_study), which changes the
+    rows with t above 16 by design and judges them itself."""
     found = grid_rows(REGIME)
     if any(PP.observed(r["observed_vba"]) is None for r in found):
         raise SystemExit("refusing: a map row holds no number")
     with open(BEFORE, "w", encoding="utf-8", newline="\n") as f:
-        json.dump({"issue": "#365", "source": "tchi_large_df export at 8721b6c, after the rule of #175",
+        json.dump({"issue": "#365", "source": "tchi_large_df export at 215094d, after the rule of #175 and the far-tail rule of #365",
                    "observed_vba": {key(r): r["observed_vba"] for r in found}}, f, indent=1)
         f.write("\n")
     print(f"kept {len(found)} observations in {BEFORE}")

@@ -4,9 +4,9 @@
  "compared": 140,
  "excel_unusable": [],
  "floor": 1e-14,
- "excel_closer": 82,
- "library_inferior": 40,
- "library_worst": 2.8201474144791186e-13,
+ "excel_closer": 58,
+ "library_inferior": 17,
+ "library_worst": 4.895502906647635e-14,
  "excel_worst": 7.210646395462469e-13,
  "points": [
   {
@@ -75,21 +75,21 @@
   {
    "t": 17.0,
    "df": 100.0,
-   "library_rel": 5.909618771444894e-15,
+   "library_rel": 7.508192564130513e-17,
    "excel_rel": 2.169531049775927e-15,
    "served": false
   },
   {
    "t": 24.0,
    "df": 100.0,
-   "library_rel": 2.4631859242788124e-16,
+   "library_rel": 1.8995265783104452e-16,
    "excel_rel": 3.2438514096435246e-15,
    "served": false
   },
   {
    "t": 40.0,
    "df": 100.0,
-   "library_rel": 2.9404874242863703e-14,
+   "library_rel": 1.907746720223026e-16,
    "excel_rel": 4.8514469949582765e-15,
    "served": false
   },
@@ -159,21 +159,21 @@
   {
    "t": 17.0,
    "df": 316.0,
-   "library_rel": 1.4837336122885483e-14,
+   "library_rel": 4.2005227359422347e-16,
    "excel_rel": 7.517792014783767e-15,
    "served": false
   },
   {
    "t": 24.0,
    "df": 316.0,
-   "library_rel": 6.587241153644379e-16,
+   "library_rel": 2.95352377604555e-16,
    "excel_rel": 9.197959952721686e-15,
    "served": false
   },
   {
    "t": 40.0,
    "df": 316.0,
-   "library_rel": 8.232581022059127e-14,
+   "library_rel": 3.8556928533154094e-16,
    "excel_rel": 2.3025928124742665e-14,
    "served": false
   },
@@ -243,21 +243,21 @@
   {
    "t": 17.0,
    "df": 562.0,
-   "library_rel": 4.1649886718453845e-14,
+   "library_rel": 1.2446219877854528e-16,
    "excel_rel": 7.236231779625437e-15,
    "served": false
   },
   {
    "t": 24.0,
    "df": 562.0,
-   "library_rel": 5.906008681470057e-14,
+   "library_rel": 3.922957629150155e-17,
    "excel_rel": 1.38051946664346e-14,
    "served": false
   },
   {
    "t": 40.0,
    "df": 562.0,
-   "library_rel": 2.594007553691148e-14,
+   "library_rel": 7.64038031664213e-17,
    "excel_rel": 9.977340638740702e-15,
    "served": false
   },
@@ -327,21 +327,21 @@
   {
    "t": 17.0,
    "df": 1000.0,
-   "library_rel": 5.023355940804504e-14,
+   "library_rel": 1.1794421732927078e-16,
    "excel_rel": 1.4524465084645998e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 1000.0,
-   "library_rel": 3.41277791924303e-14,
+   "library_rel": 5.0544153141817444e-17,
    "excel_rel": 1.0102992195957145e-14,
    "served": false
   },
   {
    "t": 40.0,
    "df": 1000.0,
-   "library_rel": 1.127584466018965e-13,
+   "library_rel": 3.5963953515661084e-17,
    "excel_rel": 2.542194002036617e-15,
    "served": false
   },
@@ -411,21 +411,21 @@
   {
    "t": 17.0,
    "df": 1778.0,
-   "library_rel": 2.2342279974004527e-14,
+   "library_rel": 3.315236163725625e-16,
    "excel_rel": 4.8717929048524816e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 1778.0,
-   "library_rel": 4.752507690744167e-14,
+   "library_rel": 2.5989848382245e-16,
    "excel_rel": 1.0916979326478476e-14,
    "served": false
   },
   {
    "t": 40.0,
    "df": 1778.0,
-   "library_rel": 1.4690352641410211e-13,
+   "library_rel": 6.854527341214511e-17,
    "excel_rel": 4.50775650364997e-14,
    "served": false
   },
@@ -495,21 +495,21 @@
   {
    "t": 17.0,
    "df": 1998.0,
-   "library_rel": 5.775330326017994e-14,
+   "library_rel": 1.5378082597748732e-18,
    "excel_rel": 1.842431490054094e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 1998.0,
-   "library_rel": 1.4991455927158417e-13,
+   "library_rel": 1.0145776295011252e-16,
    "excel_rel": 4.539152594124243e-14,
    "served": false
   },
   {
    "t": 40.0,
    "df": 1998.0,
-   "library_rel": 1.299316641121405e-13,
+   "library_rel": 7.803046015330692e-17,
    "excel_rel": 7.628667119528993e-14,
    "served": false
   },
@@ -579,21 +579,21 @@
   {
    "t": 17.0,
    "df": 1999.0,
-   "library_rel": 6.283067637348798e-14,
+   "library_rel": 4.0042446306095006e-16,
    "excel_rel": 7.020953015154126e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 1999.0,
-   "library_rel": 1.199356048072011e-13,
+   "library_rel": 4.702246446071744e-16,
    "excel_rel": 5.5254787333089216e-14,
    "served": false
   },
   {
    "t": 40.0,
    "df": 1999.0,
-   "library_rel": 2.8201474144791186e-13,
+   "library_rel": 2.942330209709177e-16,
    "excel_rel": 2.0189132604172095e-14,
    "served": false
   },
@@ -663,21 +663,21 @@
   {
    "t": 17.0,
    "df": 2371.0,
-   "library_rel": 4.163992377406265e-14,
+   "library_rel": 1.4633474423615618e-16,
    "excel_rel": 6.048932436288599e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 2371.0,
-   "library_rel": 6.28368892252987e-14,
+   "library_rel": 5.3528200200461144e-17,
    "excel_rel": 2.1902502678518867e-14,
    "served": false
   },
   {
    "t": 40.0,
    "df": 2371.0,
-   "library_rel": 1.6755542398322673e-13,
+   "library_rel": 2.308026222142634e-16,
    "excel_rel": 1.1178055019622258e-13,
    "served": false
   },
@@ -747,14 +747,14 @@
   {
    "t": 17.0,
    "df": 5623.0,
-   "library_rel": 4.764658064805442e-14,
+   "library_rel": 2.5778022856952897e-16,
    "excel_rel": 2.4475113955866507e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 5623.0,
-   "library_rel": 1.1408742299582087e-13,
+   "library_rel": 2.4033531698021233e-16,
    "excel_rel": 1.6922736983345294e-13,
    "served": false
   },
@@ -824,14 +824,14 @@
   {
    "t": 17.0,
    "df": 10000.0,
-   "library_rel": 1.0259043679235781e-13,
+   "library_rel": 5.3214602511274705e-17,
    "excel_rel": 2.8803453720902526e-13,
    "served": false
   },
   {
    "t": 24.0,
    "df": 10000.0,
-   "library_rel": 2.1189120751178194e-13,
+   "library_rel": 1.5853574804785676e-16,
    "excel_rel": 1.5870905947705288e-13,
    "served": false
   },
@@ -901,14 +901,14 @@
   {
    "t": 17.0,
    "df": 42170.0,
-   "library_rel": 3.1893751480099545e-14,
+   "library_rel": 5.078494913007953e-16,
    "excel_rel": 1.0886454531421497e-14,
    "served": false
   },
   {
    "t": 24.0,
    "df": 42170.0,
-   "library_rel": 9.140642230291347e-14,
+   "library_rel": 6.499012257177336e-16,
    "excel_rel": 7.210646395462469e-13,
    "served": false
   },
@@ -978,14 +978,14 @@
   {
    "t": 17.0,
    "df": 99999.0,
-   "library_rel": 1.5290237991556642e-13,
+   "library_rel": 3.6222153554248407e-17,
    "excel_rel": 4.126799571990746e-15,
    "served": false
   },
   {
    "t": 24.0,
    "df": 99999.0,
-   "library_rel": 1.4253038962240976e-13,
+   "library_rel": 7.006306411265347e-17,
    "excel_rel": 3.9066396244632775e-14,
    "served": false
   }
