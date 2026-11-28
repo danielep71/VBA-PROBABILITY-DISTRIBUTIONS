@@ -82,10 +82,19 @@ def _survival(t, df):
 
 
 def _quantile(p, df):
-    """The quantile of the lower-tail probability p: negative."""
+    """The quantile of the lower-tail probability p: negative.
+
+    The root is taken on the logarithm of the tail. On the tail itself a
+    residual of the size of p, far below the working precision, stops the
+    search wherever it starts.
+    """
     seed = -mp.sqrt(df * (mp.exp(-2 * mp.log(p) / df) - 1)) if df < 200 else \
         -mp.sqrt(-2 * mp.log(p))
-    return mp.findroot(lambda x: _survival(-x, df) - p, seed)
+    target = mp.log(p)
+    root = mp.findroot(lambda x: mp.log(_survival(-x, df)) - target, seed)
+    if abs(_survival(-root, df) / p - 1) > mp.mpf(10) ** -40:
+        raise SystemExit(f"no quantile for p = {p}, df = {df}")
+    return root
 
 
 S1.REFERENCE.setdefault("StudentT_Cumulative", lambda t, df: _survival(-t, df))

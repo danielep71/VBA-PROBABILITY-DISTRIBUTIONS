@@ -169,3 +169,23 @@ bounds are not retuned and the result is recorded.
   `PROB_TryBetaRegularized` (#495 holds the large shapes).
 - Tails below 1E-290.
 - The cost per call of the pair route, which is measured before the release.
+
+## Amendment 1, 2026-11-28: the references of the inverse rows
+
+Made after the export of the source of before (Excel run 46165628350,
+evidence `0378656`) and before any VBA of the rule.
+
+The registered grid held a wrong reference at 10 of the 15 `in` rows. The
+quantile was searched as the root of the tail minus `p`; with `p` at 1E-70 or
+below, a residual of that size is under the working precision and the search
+stopped where it started. The export showed it: the library and `T.INV`
+agreed with each other to 16 digits and with the reference to one.
+
+`tt_study.py` now takes the root on the logarithm of the tail and fails if
+the tail at the root is not `p` to 40 digits. The ten references were
+rewritten; no point, formula, call or observation changed, and no other row.
+On the corrected references the library is within 1.5E-15 at all 15 rows.
+
+Nothing else of the registration changes. Rule T4 and prediction 5 stand as
+written, and are now judged on references that are what the registration
+says they are.
