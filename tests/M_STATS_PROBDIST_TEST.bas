@@ -625,105 +625,73 @@ End Sub
 
 
 Private Sub RunTFamilySuite()
-
 '
-'------------------------------------------------------------------------------
-'                            RUN THE T-FAMILY SUITE
+'==============================================================================
+' RunTFamilySuite
 '------------------------------------------------------------------------------
 ' PURPOSE
-'   Runs the Student t, chi-square and F family test sections
-'
-' WHY THIS EXISTS
-'   The test entry points run one suite per production module, and time each
-'   section of it
-'
-' INPUTS
-'   None
-'
-' RETURNS
-'   Nothing
+'   Runs the Student t, chi-square and F family test sections.
 '
 ' BEHAVIOR
-'   - Prints one section heading
-'   - Executes silent passing assertions
-'   - Records detailed output only when an assertion fails
-'   - Records the time each section took
-'
-' ERROR POLICY
-'   Installs no handler: an error raised by a section reaches the entry point
+'   - Prints one section heading.
+'   - Executes silent passing assertions.
+'   - Records detailed output only when an assertion fails.
 '
 ' DEPENDENCIES
 '   - Test section procedures in this module
-'   - TimingStart, TimingLap
 '
-' NOTES
-'   Called from the public test entry points
+' CALLED FROM
+'   - Public test entry points
+'==============================================================================
 '
-' UPDATED
-'   2026-11-28
-'------------------------------------------------------------------------------
-
-'------------------------------------------------------------------------------
-' START THE SUITE
-'------------------------------------------------------------------------------
-    'Print the suite heading and start its clock
-        Debug.Print "== SUITE: M_STATS_PROBDIST_TFAMILY"
-        TimingStart "RunTFamilySuite"
-
-'------------------------------------------------------------------------------
-' RUN THE SECTIONS
-'------------------------------------------------------------------------------
-    'Run the Student t sections
-        Test_TF_StudentTDensity
-        TimingLap "Test_TF_StudentTDensity"
-        Test_TF_StudentTCumulative
-        TimingLap "Test_TF_StudentTCumulative"
-        Test_TF_StudentTCentralRegion
-        TimingLap "Test_TF_StudentTCentralRegion"
-        Test_TF_StudentTSurvival
-        TimingLap "Test_TF_StudentTSurvival"
-        Test_TF_StudentTInverse
-        TimingLap "Test_TF_StudentTInverse"
-        Test_TF_StudentTRoundTrips
-        TimingLap "Test_TF_StudentTRoundTrips"
-        Test_TF_StudentTSymmetry
-        TimingLap "Test_TF_StudentTSymmetry"
-        Test_TF_StudentTLargeDFTail
-        TimingLap "Test_TF_StudentTLargeDFTail"
-        Test_TF_StudentTLargeDFQuantile
-        TimingLap "Test_TF_StudentTLargeDFQuantile"
-        Test_TF_StudentTAboveEight
-        TimingLap "Test_TF_StudentTAboveEight"
-        Test_TF_StudentTFarTail
-        TimingLap "Test_TF_StudentTFarTail"
-    'Run the chi-square sections
-        Test_TF_ChiSquareDensity
-        TimingLap "Test_TF_ChiSquareDensity"
-        Test_TF_ChiSquareCumulative
-        TimingLap "Test_TF_ChiSquareCumulative"
-        Test_TF_ChiSquareLargeDF
-        TimingLap "Test_TF_ChiSquareLargeDF"
-        Test_TF_ChiSquareSurvival
-        TimingLap "Test_TF_ChiSquareSurvival"
-        Test_TF_ChiSquareInverse
-        TimingLap "Test_TF_ChiSquareInverse"
-    'Run the F sections
-        Test_TF_FDensity
-        TimingLap "Test_TF_FDensity"
-        Test_TF_FCumulative
-        TimingLap "Test_TF_FCumulative"
-        Test_TF_FSurvival
-        TimingLap "Test_TF_FSurvival"
-        Test_TF_FInverse
-        TimingLap "Test_TF_FInverse"
-        Test_TF_FInversePair
-        TimingLap "Test_TF_FInversePair"
-    'Run the sections on the error contract and the support edges
-        Test_TF_ErrorContract
-        TimingLap "Test_TF_ErrorContract"
-        Test_TF_SupportEdges
-        TimingLap "Test_TF_SupportEdges"
-
+    Debug.Print "== SUITE: M_STATS_PROBDIST_TFAMILY"
+    TimingStart "RunTFamilySuite"
+    Test_TF_StudentTDensity
+    TimingLap "Test_TF_StudentTDensity"
+    Test_TF_StudentTCumulative
+    TimingLap "Test_TF_StudentTCumulative"
+    Test_TF_StudentTCentralRegion
+    TimingLap "Test_TF_StudentTCentralRegion"
+    Test_TF_StudentTSurvival
+    TimingLap "Test_TF_StudentTSurvival"
+    Test_TF_StudentTInverse
+    TimingLap "Test_TF_StudentTInverse"
+    Test_TF_StudentTRoundTrips
+    TimingLap "Test_TF_StudentTRoundTrips"
+    Test_TF_StudentTSymmetry
+    TimingLap "Test_TF_StudentTSymmetry"
+    Test_TF_StudentTLargeDFTail
+    TimingLap "Test_TF_StudentTLargeDFTail"
+    Test_TF_StudentTLargeDFQuantile
+    TimingLap "Test_TF_StudentTLargeDFQuantile"
+    Test_TF_StudentTAboveEight
+    TimingLap "Test_TF_StudentTAboveEight"
+    Test_TF_StudentTFarTail
+    TimingLap "Test_TF_StudentTFarTail"
+    Test_TF_ChiSquareDensity
+    TimingLap "Test_TF_ChiSquareDensity"
+    Test_TF_ChiSquareCumulative
+    TimingLap "Test_TF_ChiSquareCumulative"
+    Test_TF_ChiSquareLargeDF
+    TimingLap "Test_TF_ChiSquareLargeDF"
+    Test_TF_ChiSquareSurvival
+    TimingLap "Test_TF_ChiSquareSurvival"
+    Test_TF_ChiSquareInverse
+    TimingLap "Test_TF_ChiSquareInverse"
+    Test_TF_FDensity
+    TimingLap "Test_TF_FDensity"
+    Test_TF_FCumulative
+    TimingLap "Test_TF_FCumulative"
+    Test_TF_FSurvival
+    TimingLap "Test_TF_FSurvival"
+    Test_TF_FInverse
+    TimingLap "Test_TF_FInverse"
+    Test_TF_FInversePair
+    TimingLap "Test_TF_FInversePair"
+    Test_TF_ErrorContract
+    TimingLap "Test_TF_ErrorContract"
+    Test_TF_SupportEdges
+    TimingLap "Test_TF_SupportEdges"
 End Sub
 
 
