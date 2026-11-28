@@ -193,7 +193,7 @@ Private Const PROB_CHI_MAX_DF     As Double = 100000000# 'Chi-square envelope; v
 Private Const PROB_T_LDF_MIN_DF   As Double = 100000#  'Smallest df the expansion serves
 Private Const PROB_T_LDF_MAX_ABS_T As Double = 8#      'Largest Abs(X) the expansion serves
 Private Const PROB_T_NEAR_ONE_MAX_ABS_T As Double = 1E+100 'Largest Abs(X) squared directly above it (#213)
-Private Const PROB_T_NEAR_ONE_BELOW_MAX_ABS_T As Double = 16# 'Largest Abs(X) squared directly below that df (#365)
+Private Const PROB_T_NEAR_ONE_BELOW_MAX_ABS_T As Double = 16# 'Largest Abs(X) squared directly below that df; above it the pair route answers (#365)
 Private Const PROB_T_INV_SQRT_TWO_PI As Double = _
     0.398942280401433 - 2.77555756156289E-16
 Private Const PROB_T_LDF_G1_0 As Double = 0.25
@@ -2372,6 +2372,9 @@ Private Function PROB_TryStudentTTail( _
 '       small argument formed directly (#213)
 '     - DF < PROB_T_LDF_MIN_DF and AbsX <= PROB_T_NEAR_ONE_BELOW_MAX_ABS_T:
 '       the same form, where PROB_TryBetaLowerNearOne serves it (#365)
+'     - DF < PROB_T_LDF_MIN_DF above that: the incomplete beta with its
+'       arguments, its prefactor and its fraction as pairs of Doubles, where
+'       PROB_TryStudentTTailPair serves it (#365)
 '     - Otherwise: one half of the regularized incomplete beta
 '
 ' ERROR POLICY
@@ -2385,6 +2388,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TF_TrySquareRatioPair
 '   - PROB_TryBetaRegularized
 '   - PROB_TryBetaLowerNearOne
+'   - PROB_TryStudentTTailPair
 '   - PROB_TryDivide
 '   - PROB_PI
 '
@@ -2397,7 +2401,7 @@ Private Function PROB_TryStudentTTail( _
 '   - PROB_TryStudentTInvTail
 '
 ' UPDATED
-'   2026-11-25
+'   2026-11-28
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -2493,8 +2497,8 @@ Private Function PROB_TryStudentTTail( _
     'square is harmless at this size - and let the fraction take its
     'complement as an exact pair. Below that df the same loss reaches
     '3.2E-12 (#365), and the same form answers up to a smaller AbsX: beyond
-    'it the final exponential sets the error and the form gains nothing.
-    'Where that route declines, the general route below answers as before
+    'it the final exponential sets the error, and the pair route below
+    'answers. Where a route declines, the general route answers as before
         If DegreesFreedom >= PROB_T_LDF_MIN_DF Then
             NearOneMaxAbsT = PROB_T_NEAR_ONE_MAX_ABS_T
         Else
@@ -2508,6 +2512,17 @@ Private Function PROB_TryStudentTTail( _
                 PROB_TryStudentTTail = True
                 Exit Function
             End If
+        End If
+    'Beyond that AbsX below that df the logarithm of the prefactor, of the
+    'size of AbsX squared over two, loses the last digits in one Double.
+    'Carry the two beta arguments, that logarithm and the fraction as pairs
+    '(#365)
+        If DegreesFreedom < PROB_T_LDF_MIN_DF And AbsX > PROB_T_NEAR_ONE_BELOW_MAX_ABS_T Then
+            If PROB_TryStudentTTailPair(AbsX, DegreesFreedom, Result) Then
+                PROB_TryStudentTTail = True
+                Exit Function
+            End If
+            Result = 0#
         End If
     'Form DF / (DF + X squared) and its complement without squaring X
         If Not PROB_TF_TrySquareRatioPair( _

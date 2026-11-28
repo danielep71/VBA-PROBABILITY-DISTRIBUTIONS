@@ -69,7 +69,7 @@ def pair_tail(abs_t, df):
     r = P.div(P.two_prod(abs_t, abs_t), (df, 0.0))
     one_plus = P.add((1.0, 0.0), r)
     y, x = P.div(r, one_plus), P.div((1.0, 0.0), one_plus)
-    if not x[0] < (a + 1.0) / (a + b + 2.0):
+    if not x[0] < (a + 1.0) / (a + 2.5):
         return None
     core = D._beta_core(x, y, a, b)
     if core is None:

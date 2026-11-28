@@ -3743,6 +3743,137 @@ Public Function PROB_TryStudentTDensityPair( _
 
 End Function
 
+
+Public Function PROB_TryStudentTTailPair( _
+    ByVal AbsX As Double, _
+    ByVal DegreesFreedom As Double, _
+    ByRef Tail As Double) _
+    As Boolean
+'
+'------------------------------------------------------------------------------
+'                  COMPUTE THE STUDENT T FAR TAIL FROM PAIRS
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Returns the Student t right-tail probability P(T > AbsX), with the two
+'   beta arguments, the logarithm of the incomplete-beta prefactor and the
+'   continued fraction carried as pairs of Doubles
+'
+' WHY THIS EXISTS
+'   Far in the tail the logarithm of the prefactor is of the size of
+'   AbsX squared over two. In one Double, at arguments rounded to one Double
+'   each, its rounding reaches the result, where Excel is closer (#365)
+'
+' INPUTS
+'   AbsX
+'     Absolute evaluation point, positive
+'
+'   DegreesFreedom
+'     Degrees of freedom, positive
+'
+'   Tail
+'     Receives the right-tail probability
+'
+' RETURNS
+'   TRUE with Tail set. FALSE, with Tail not to be used, when the pair route
+'   does not apply; the caller then takes its route in one Double
+'
+' BEHAVIOR
+'   - Returns FALSE with an argument, or the ratio r = AbsX^2 / df, outside
+'     PROB_BD0_RATIO_MIN to PROB_BD0_RATIO_MAX
+'   - Forms r, Y = r / (1 + r) and X = 1 / (1 + r) as pairs
+'   - Returns FALSE unless X is below the mean of the Beta distribution,
+'     where the continued fraction of the lower tail converges
+'   - Takes the logarithm of X^A * Y^B / Beta(A, B), A = df / 2 and B = 1 / 2,
+'     as a pair: the Loader logarithm of the Beta density without its two
+'     logarithms
+'   - Takes the continued fraction at the pair X
+'   - Returns Exp(high) * (1 + low) * fraction / A / 2
+'
+' ERROR POLICY
+'   Raises nothing: the range is checked before any pair operation, and the
+'   pair procedures report through their return value
+'
+' DEPENDENCIES
+'   PROB_TryBetaCorePair, PROB_TryBetaContinuedFractionPair, PROB_TryExpPair,
+'   PROB_BP_Add, PROB_BP_Mul, PROB_BP_Div, PROB_IsFinite
+'
+' NOTES
+'   The caller keeps the validation, the closed forms and the region where
+'   this route is taken
+'
+' UPDATED
+'   2026-11-28
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Dim Ratio               As Double          'r = AbsX^2 / df, as a Double, for the range check
+    Dim A                   As Double          'First beta shape, df / 2
+    Dim RH                  As Double          'r, high part
+    Dim RL                  As Double          'r, low part
+    Dim OnePlusH            As Double          '1 + r, high part
+    Dim OnePlusL            As Double          '1 + r, low part
+    Dim XH                  As Double          'X = 1 / (1 + r), high part
+    Dim XL                  As Double          'X, low part
+    Dim YH                  As Double          'Y = r / (1 + r), high part
+    Dim YL                  As Double          'Y, low part
+    Dim LogH                As Double          'Logarithm of the prefactor, high part
+    Dim LogL                As Double          'Logarithm of the prefactor, low part
+    Dim Factor              As Double          'Prefactor X^A * Y^B / Beta(A, B)
+    Dim Fraction            As Double          'Continued fraction at X
+
+'------------------------------------------------------------------------------
+' VALIDATE INPUTS
+'------------------------------------------------------------------------------
+    'Leave the edges and the extreme magnitudes to the caller
+        If Not PROB_IsFinite(AbsX) Then Exit Function
+        If AbsX < PROB_BD0_RATIO_MIN Or AbsX > PROB_BD0_RATIO_MAX Then Exit Function
+        If DegreesFreedom < PROB_BD0_RATIO_MIN Or DegreesFreedom > PROB_BD0_RATIO_MAX Then
+            Exit Function
+        End If
+    'Leave an extreme ratio to the caller: the two magnitudes cannot overflow it
+        Ratio = AbsX / DegreesFreedom
+        Ratio = Ratio * AbsX
+        If Ratio < PROB_BD0_RATIO_MIN Or Ratio > PROB_BD0_RATIO_MAX Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE BETA ARGUMENTS
+'------------------------------------------------------------------------------
+    'Form r = AbsX^2 / df as a pair
+        PROB_BP_Mul AbsX, 0#, AbsX, 0#, RH, RL
+        PROB_BP_Div RH, RL, DegreesFreedom, 0#, RH, RL
+    'Form Y = r / (1 + r) and X = 1 / (1 + r) as pairs
+        PROB_BP_Add 1#, 0#, RH, RL, OnePlusH, OnePlusL
+        PROB_BP_Div RH, RL, OnePlusH, OnePlusL, YH, YL
+        PROB_BP_Div 1#, 0#, OnePlusH, OnePlusL, XH, XL
+    'Leave the argument at or above the mean to the caller
+        A = 0.5 * DegreesFreedom
+        If Not XH < (A + 1#) / (A + 2.5) Then Exit Function
+
+'------------------------------------------------------------------------------
+' FORM THE PREFACTOR AND THE FRACTION
+'------------------------------------------------------------------------------
+    'Take the logarithm of the prefactor as a pair
+        If Not PROB_TryBetaCorePair(XH, XL, YH, YL, A, 0.5, LogH, LogL) Then
+            Exit Function
+        End If
+    'Take the continued fraction at the pair argument
+        If Not PROB_TryBetaContinuedFractionPair(A, 0.5, XH, XL, Fraction) Then
+            Exit Function
+        End If
+    'Exponentiate the pair
+        If Not PROB_TryExpPair(LogH, LogL, Factor) Then Exit Function
+
+'------------------------------------------------------------------------------
+' RETURN VALUE
+'------------------------------------------------------------------------------
+    'Halve the lower incomplete beta at X
+        Tail = 0.5 * (Factor * Fraction / A)
+        PROB_TryStudentTTailPair = True
+
+End Function
+
 Private Function PROB_TryBetaContinuedFractionPair( _
     ByVal A As Double, _
     ByVal B As Double, _

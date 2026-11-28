@@ -694,6 +694,8 @@ Private Sub RunTFamilySuite()
         TimingLap "Test_TF_StudentTLargeDFQuantile"
         Test_TF_StudentTAboveEight
         TimingLap "Test_TF_StudentTAboveEight"
+        Test_TF_StudentTFarTail
+        TimingLap "Test_TF_StudentTFarTail"
     'Run the chi-square sections
         Test_TF_ChiSquareDensity
         TimingLap "Test_TF_ChiSquareDensity"
@@ -4494,6 +4496,113 @@ Private Sub Test_TF_StudentTAboveEight()
     AssertRelClose "A8 t inv(6.22161740140344e-16,1e7)", _
         K_STATS_StudentT_InverseCumulative(6.22161740140344E-16, 10000000#), _
         -7.99999999999999, TOL_A8_INV
+End Sub
+
+
+Private Sub Test_TF_StudentTFarTail()
+
+'
+'------------------------------------------------------------------------------
+'                         TEST THE STUDENT T FAR TAIL
+'------------------------------------------------------------------------------
+' PURPOSE
+'   Pins the Student t tail beyond Abs(X) = 16 below df = 1E5, where the
+'   incomplete beta is carried as pairs of Doubles (#365)
+'
+' WHY THIS EXISTS
+'   With the logarithm of the prefactor in one Double the survival there was
+'   less accurate than T.DIST.RT, by up to 2.8E-13 on the comparison rows of
+'   the issue. The tolerance of the rule's rows is below that, so the route
+'   of before fails them
+'
+' INPUTS
+'   None
+'
+' RETURNS
+'   Nothing
+'
+' BEHAVIOR
+'   - Prints one section heading
+'   - Asserts the survival at four comparison rows of the issue, each named
+'     with the error of the route of before, and the cumulative at the
+'     negative of two of them
+'   - Asserts the survival at a small df and a very large argument
+'   - Asserts the survival at Abs(X) = 16 and at df = 1E5, where the rule
+'     does not answer, at the forward guarantee
+'   - Asserts one inverse whose quantile is beyond -16, at the inverse
+'     guarantee
+'
+' ERROR POLICY
+'   Installs no handler: the assertions record a failure and continue
+'
+' DEPENDENCIES
+'   - Production functions under test
+'   - AssertRelClose
+'
+' NOTES
+'   References are the correctly rounded Doubles of 60-digit values of
+'   I_x(df/2, 1/2) / 2 and of its inverse
+'   (benchmark/student_t_far_tail_study/tt_study.py), restored from split
+'   literals. Called from RunTFamilySuite
+'
+' UPDATED
+'   2026-11-28
+'------------------------------------------------------------------------------
+
+'------------------------------------------------------------------------------
+' DECLARE
+'------------------------------------------------------------------------------
+    Const TOL_FAR_TAIL      As Double = 0.00000000000002   '2E-14 relative
+
+'------------------------------------------------------------------------------
+' PRINT THE HEADING
+'------------------------------------------------------------------------------
+    'Name the section in the log
+        Debug.Print "-- Student t far tail below df = 1E5 (#365)"
+
+'------------------------------------------------------------------------------
+' ASSERT THE RULE
+'------------------------------------------------------------------------------
+    'Assert the survival at four comparison rows of the issue
+        AssertRelClose "t sf(40, 1999) (route of before 2.8E-13)", _
+            K_STATS_StudentT_Survival(40#, 1999#), _
+            7.67081549735203E-258 - 4.62129760221396E-273, TOL_FAR_TAIL
+        AssertRelClose "t sf(24, 10000) (route of before 2.1E-13)", _
+            K_STATS_StudentT_Survival(24#, 10000#), _
+            4.21587174221768E-124 - 4.19867256722943E-139, TOL_FAR_TAIL
+        AssertRelClose "t sf(17, 99999) (route of before 1.5E-13)", _
+            K_STATS_StudentT_Survival(17#, 99999#), _
+            5.06468552808257E-65 - 3.37350334183377E-80, TOL_FAR_TAIL
+        AssertRelClose "t sf(24, 1998) (route of before 1.5E-13)", _
+            K_STATS_StudentT_Survival(24#, 1998#), _
+            2.35426527885539E-112 - 4.61648930889287E-128, TOL_FAR_TAIL
+    'Assert the cumulative at the negative argument
+        AssertRelClose "t cdf(-40, 1999)", _
+            K_STATS_StudentT_Cumulative(-40#, 1999#), _
+            7.67081549735203E-258 - 4.62129760221396E-273, TOL_FAR_TAIL
+        AssertRelClose "t cdf(-17, 99999)", _
+            K_STATS_StudentT_Cumulative(-17#, 99999#), _
+            5.06468552808257E-65 - 3.37350334183377E-80, TOL_FAR_TAIL
+    'Assert a small df at a very large argument
+        AssertRelClose "t sf(1E+30, 5)", _
+            K_STATS_StudentT_Survival(1E+30, 5#), _
+            9.49016724556236E-150, TOL_FAR_TAIL
+
+'------------------------------------------------------------------------------
+' ASSERT THE EDGES AND THE INVERSE
+'------------------------------------------------------------------------------
+    'Assert the survival where the rule does not answer
+        AssertRelClose "t sf(16, 10000) at the t edge", _
+            K_STATS_StudentT_Survival(16#, 10000#), _
+            3.23986922631687E-57 + 4.52783953941336E-72, TOL_REL_GUARANTEE
+        AssertRelClose "t sf(17, 1E+05) at the df edge", _
+            K_STATS_StudentT_Survival(17#, 100000#), _
+            5.06467492056485E-65, TOL_REL_GUARANTEE
+    'Assert an inverse whose quantile is beyond -16
+        AssertRelClose "t inv(1E-150, 20000)", _
+            K_STATS_StudentT_InverseCumulative(1E-150, 20000#), _
+            -26.3477191854781 - 1.4210854715202E-14, TOL_REL_INV_GUARANTEE
+
 End Sub
 
 
